@@ -137,7 +137,7 @@ namespace VirtualPaper
             //first run Setup-Wizard show..
             if (userSetting.Settings.IsFirstRun)
             {
-                Services.GetRequiredService<IUIRunnerService>().ShowUI();
+                //Services.GetRequiredService<IUIRunnerService>().ShowUI();
             }
 
             #region 事件绑定

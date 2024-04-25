@@ -138,7 +138,8 @@
                         x:Name="NavView" 
                         PaneDisplayMode="Top"
                         SelectionFollowsFocus="Enabled" 
-                        IsBackButtonVisible="Collapsed"                        
+                        IsBackButtonVisible="Collapsed"      
+                        IsSettingsVisible="False"
                         SelectedItem="{Binding SelectedNav, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         SelectionChanged="NavigationView_SelectionChanged"
                         MenuItemsSource="{Binding NavsMenuItems, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">

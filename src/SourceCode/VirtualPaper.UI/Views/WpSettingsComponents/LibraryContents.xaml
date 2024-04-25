@@ -21,7 +21,7 @@
             HorizontalContentAlignment="Left"
             VerticalContentAlignment="Center"
             ItemsSource="{Binding LibraryWallpapers}"
-            SelectionMode="Extended"
+            SelectionMode="Single"
             IsItemInvokedEnabled="True"
             RightTapped="ItemsView_RightTapped"            
             ItemInvoked="ItemsView_ItemInvoked">

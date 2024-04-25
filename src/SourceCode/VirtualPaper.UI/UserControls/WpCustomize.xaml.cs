@@ -31,7 +31,7 @@ namespace VirtualPaper.UI.UserControls
             _userSettings = App.Services.GetRequiredService<IUserSettingsClient>();
             _desktopWpControl = App.Services.GetRequiredService<IWallpaperControlClient>();
             _monitorManager = App.Services.GetRequiredService<IMonitorManagerClient>();
-            _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
+            //_dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
         }
 
         public WpCustomize(
@@ -126,7 +126,7 @@ namespace VirtualPaper.UI.UserControls
                         Margin = _margin,
                         Minimum = (double)item.Value["Min"],
                         Maximum = (double)item.Value["Max"],
-                        Value = (double)item.Value["Value"],
+                        Value = (double)item.Value["Value"],                       
                     };
                     if (item.Value["Step"] != null && !string.IsNullOrWhiteSpace(item.Value["Step"].ToString()))
                     {
@@ -138,8 +138,7 @@ namespace VirtualPaper.UI.UserControls
                     }
                     slider.ValueChanged += Slider_ValueChanged;
                     Slider_ValueChanged(slider);
-                    //slider.GotFocus += Slider_GotFocus;
-                    //slider.LostFocus += Slider_LostFocus;
+
 
                     obj = slider;
                 }
@@ -808,7 +807,7 @@ namespace VirtualPaper.UI.UserControls
         private readonly IUserSettingsClient _userSettings;
         private readonly IWallpaperControlClient _desktopWpControl;
         private readonly IMonitorManagerClient _monitorManager;
-        private readonly DispatcherQueue _dispatcherQueue;
+        //private readonly DispatcherQueue _dispatcherQueue;
         private readonly object _restoreLock = new();
         private EventHandler<DoubleValueChangedEventArgs> _doubleValueChanged;
         private EventHandler<BoolValueChangedEventArgs> _boolValueChanged;

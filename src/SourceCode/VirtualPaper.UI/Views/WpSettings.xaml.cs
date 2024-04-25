@@ -95,13 +95,15 @@ namespace VirtualPaper.UI.Views
             NavigationView sender,
             NavigationViewSelectionChangedEventArgs args)
         {
-            if (args.IsSettingsSelected == true)
+            string tag = args.SelectedItemContainer.Tag.ToString();
+
+            if (args.IsSettingsSelected == true) // Settgins
             {
-                //NavView_Navigate(typeof(SettingsPage), args.RecommendedNavigationTransitionInfo);
+                _viewModel.TryNavPage(tag);
             }
             else if (args.SelectedItemContainer != null)
-            {
-                string tag = args.SelectedItemContainer.Tag.ToString();
+            {               
+
 
                 _viewModel.TryNavPage(tag);
             }

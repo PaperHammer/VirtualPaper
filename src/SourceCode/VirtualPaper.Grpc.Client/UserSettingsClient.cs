@@ -181,7 +181,7 @@ namespace VirtualPaper.Grpc.Client
                 IsUpdated = settings.IsUpdated,
                 IsAutoStart = settings.IsAutoStart,
                 IsFirstRun = settings.IsFirstRun,
-                SysTrayIcon = settings.SysTrayIcon,
+                //SysTrayIcon = settings.SysTrayIcon,
 
                 WallpaperDir = settings.WallpaperDir,
 
@@ -224,8 +224,8 @@ namespace VirtualPaper.Grpc.Client
 
                 ProcessTimerInterval = settings.ProcessTimerInterval,
 
-                WebDebugPort = settings.WebDebugPort,
-                IsCefDiskCache = settings.IsCefDiskCache,
+                //WebDebugPort = settings.WebDebugPort,
+                //IsCefDiskCache = settings.IsCefDiskCache,
             };
         }
 
@@ -242,7 +242,7 @@ namespace VirtualPaper.Grpc.Client
                 ApplicationThemeBackground = (Common.AppThemeBackground)settings.ApplicationThemeBackground,
                 AppVersion = settings.AppVersion,
                 ApplicationThemeBackgroundPath = settings.ApplicationThemeBackgroundPath,
-                ThemeBundleVersion = settings.ThemeBundleVersion,
+                //ThemeBundleVersion = settings.ThemeBundleVersion,
                 Language = settings.Language,
                 IsUpdated = settings.IsUpdated,
                 IsAutoStart = settings.IsAutoStart,
@@ -291,8 +291,8 @@ namespace VirtualPaper.Grpc.Client
 
                 ProcessTimerInterval = settings.ProcessTimerInterval,
 
-                WebDebugPort = settings.WebDebugPort,
-                IsCefDiskCache = settings.IsCefDiskCache,
+                //WebDebugPort = settings.WebDebugPort,
+                //IsCefDiskCache = settings.IsCefDiskCache,
             };
         }
 

@@ -40,7 +40,8 @@ namespace VirtualPaper.Cores.Tray
             _notifyIcon.DoubleClick += (s, args) => uiRunner.ShowUI();
             _notifyIcon.Icon = Properties.Icons.virtualpaper;
             _notifyIcon.Text = "Virtual Paper";
-            _notifyIcon.Visible = userSettings.Settings.SysTrayIcon;
+            _notifyIcon.Visible = true;
+            //_notifyIcon.Visible = userSettings.Settings.SysTrayIcon;
             _notifyIcon.ContextMenuStrip = new()
             {
                 ForeColor = Color.AliceBlue,

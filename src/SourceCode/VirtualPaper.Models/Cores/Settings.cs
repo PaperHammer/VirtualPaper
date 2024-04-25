@@ -17,12 +17,12 @@ namespace VirtualPaper.Models.Cores
         public AppThemeBackground ApplicationThemeBackground { get; set; }
         public string AppVersion { get; set; } = string.Empty;
         public string ApplicationThemeBackgroundPath { get; set; } = string.Empty;
-        public int ThemeBundleVersion { get; set; }
+        //public int ThemeBundleVersion { get; set; }
         public string Language { get; set; } = string.Empty;
         public bool IsUpdated { get; set; }
         public bool IsAutoStart { get; set; }
         public bool IsFirstRun { get; set; }
-        public bool SysTrayIcon { get; } = true;
+        //public bool SysTrayIcon { get; } = true;
         #endregion
 
         #region dirs
@@ -59,15 +59,6 @@ namespace VirtualPaper.Models.Cores
         public int ProcessTimerInterval { get; set; }
         #endregion
 
-        #region others
-        public string WebDebugPort { get; set; } = string.Empty;
-        public bool IsCefDiskCache { get; set; }
-        #endregion
-
-        #region
-        public int WallpaperBundleVersion { get; set; }
-        #endregion
-
         public Settings()
         {
             WallpaperArrangement = WallpaperArrangement.Per;
@@ -84,8 +75,8 @@ namespace VirtualPaper.Models.Cores
             MouseInputMovAlways = true;
 
             WallpaperDir = Path.Combine(Constants.CommonPaths.AppDataDir, "Library");
-            WebDebugPort = string.Empty;
-            ThemeBundleVersion = -1;
+            //WebDebugPort = string.Empty;
+            //ThemeBundleVersion = -1;
             WallpaperScaling = WallpaperScaler.fill;
             ApplicationTheme = AppTheme.Dark;
             RemoteDesktop = AppWpRunRulesEnum.Pause;
@@ -95,7 +86,7 @@ namespace VirtualPaper.Models.Cores
             ApplicationThemeBackgroundPath = string.Empty;
             ApplicationThemeBackground = AppThemeBackground.default_mica;
 
-            WallpaperBundleVersion = -1;
+            //WallpaperBundleVersion = -1;
 
             try
             {

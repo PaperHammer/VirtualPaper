@@ -95,10 +95,10 @@ namespace VirtualPaper.GrpcServers
                 InputForward = (Grpc.Service.UserSetting.InputForwardMode)_userSetting.Settings.InputForward,
                 MouseInputMovAlways = _userSetting.Settings.MouseInputMovAlways,
                 WallpaperDir = _userSetting.Settings.WallpaperDir,
-                WebDebugPort = _userSetting.Settings.WebDebugPort,
+                //WebDebugPort = _userSetting.Settings.WebDebugPort,
                 IsAudioOnlyOnDesktop = _userSetting.Settings.IsAudioOnlyOnDesktop,
                 IsAutoStart = _userSetting.Settings.IsAutoStart,
-                IsCefDiskCache = _userSetting.Settings.IsCefDiskCache,
+                //IsCefDiskCache = _userSetting.Settings.IsCefDiskCache,
                 ApplicationTheme = (Grpc.Service.UserSetting.AppTheme)_userSetting.Settings.ApplicationTheme,
                 RemoteDesktopPause = (Grpc.Service.UserSetting.AppRulesEnum)_userSetting.Settings.RemoteDesktop,
                 PowerSaveModePause = (Grpc.Service.UserSetting.AppRulesEnum)_userSetting.Settings.PowerSaving,
@@ -159,9 +159,9 @@ namespace VirtualPaper.GrpcServers
             _userSetting.Settings.InputForward = (Common.InputForwardMode)request.InputForward;
             _userSetting.Settings.MouseInputMovAlways = request.MouseInputMovAlways;
             _userSetting.Settings.WallpaperDir = request.WallpaperDir;
-            _userSetting.Settings.WebDebugPort = request.WebDebugPort;
+            //_userSetting.Settings.WebDebugPort = request.WebDebugPort;
             _userSetting.Settings.IsAudioOnlyOnDesktop = request.IsAudioOnlyOnDesktop;
-            _userSetting.Settings.IsCefDiskCache = request.IsCefDiskCache;
+            //_userSetting.Settings.IsCefDiskCache = request.IsCefDiskCache;
             _userSetting.Settings.ApplicationTheme = (Common.AppTheme)request.ApplicationTheme;
             _userSetting.Settings.RemoteDesktop = (Common.AppWpRunRulesEnum)request.RemoteDesktopPause;
             _userSetting.Settings.PowerSaving = (Common.AppWpRunRulesEnum)request.PowerSaveModePause;

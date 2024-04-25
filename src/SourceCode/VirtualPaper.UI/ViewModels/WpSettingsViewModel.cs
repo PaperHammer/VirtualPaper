@@ -290,11 +290,7 @@ namespace VirtualPaper.UI.ViewModels
             }
         }
 
-        //internal void Cancel()
-        //{
-        //    _cancellationTokenSourceForApply?.Cancel();
-        //    _wpConfigViewModel?.Cancel();
-        //}
+
 
         internal void TryNavPage(string tag)
         {
@@ -302,6 +298,7 @@ namespace VirtualPaper.UI.ViewModels
 
             Page page;
             if (tag == "WpConfig") page = GetTargetMonitorWallpaperInfo();
+            else if (tag == "Settings") page = InstanceUtil<Page>.TryGetInstanceByName("WpNavSettgins", "");
             else page = InstanceUtil<Page>.TryGetInstanceByName(tag, "");
 
             if (FramePage != page)

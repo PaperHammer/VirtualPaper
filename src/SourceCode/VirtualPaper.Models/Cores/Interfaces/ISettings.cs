@@ -19,7 +19,7 @@ namespace VirtualPaper.Models.Cores.Interfaces
         bool IsUpdated { get; set; }
         bool IsAutoStart { get; set; }
         bool IsFirstRun { get; set; }
-        bool SysTrayIcon { get; }
+        //bool SysTrayIcon { get; }
         #endregion
 
         #region dirs
@@ -75,16 +75,16 @@ namespace VirtualPaper.Models.Cores.Interfaces
         int ProcessTimerInterval { get; set; }
         #endregion
 
-        #region others
-        string WebDebugPort { get; set; }
-        bool IsCefDiskCache { get; set; }
-        #endregion
+        //#region others
+        //string WebDebugPort { get; set; }
+        //bool IsCefDiskCache { get; set; }
+        //#endregion
 
-        #region
-        /// <summary>
-        /// wallpaper 版本
-        /// </summary>
-        int WallpaperBundleVersion { get; set; }
-        #endregion
+        //#region
+        ///// <summary>
+        ///// wallpaper 版本
+        ///// </summary>
+        //int WallpaperBundleVersion { get; set; }
+        //#endregion
     }
 }

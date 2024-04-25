@@ -290,8 +290,6 @@ namespace VirtualPaper.UI.ViewModels
             }
         }
 
-
-
         internal void TryNavPage(string tag)
         {
             IsLoading(true);

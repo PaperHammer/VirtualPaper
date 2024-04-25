@@ -75,8 +75,6 @@ namespace VirtualPaper.Models.Cores
             MouseInputMovAlways = true;
 
             WallpaperDir = Path.Combine(Constants.CommonPaths.AppDataDir, "Library");
-            //WebDebugPort = string.Empty;
-            //ThemeBundleVersion = -1;
             WallpaperScaling = WallpaperScaler.fill;
             ApplicationTheme = AppTheme.Dark;
             RemoteDesktop = AppWpRunRulesEnum.Pause;
@@ -85,8 +83,6 @@ namespace VirtualPaper.Models.Cores
             IsUpdated = false;
             ApplicationThemeBackgroundPath = string.Empty;
             ApplicationThemeBackground = AppThemeBackground.default_mica;
-
-            //WallpaperBundleVersion = -1;
 
             try
             {

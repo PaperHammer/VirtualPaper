@@ -45,12 +45,6 @@ Windows 10.0.19041.0 及以上
 ## Support
 欢迎提出宝贵的建议
 
-#### 程序员
-欢迎代码贡献.
-
-#### 设计师
-帮助改进UI/UX，[前往..](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Needs-Triage&projects=&template=feature_request.yml)
-
 #### 地方化
 指出 Virtual Paper 的翻译错误或翻译为更多语言.[前往..](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Issue-Bug%2CArea-Localization%2CIssue-Translation%2CNeeds-Triage&projects=&template=translation_issue.yml)
 
@@ -58,12 +52,6 @@ Windows 10.0.19041.0 及以上
 建议新功能或提交错误报告以改进 Vierual Paper.[前往..](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Issue-Bug%2CNeeds-Triage&projects=&template=bug_report.yml)
 
 ## Want to help out? here are some options..
-
-#### Programmer
-Code contributions are welcome.
-
-#### Designer
-Help improve UI/UX of Virtual Paper[head for..](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Needs-Triage&projects=&template=feature_request.yml)
 
 #### Localization
 Point out translation errors or translations of Virtual Paper into more languages.[head fore..](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Issue-Bug%2CArea-Localization%2CIssue-Translation%2CNeeds-Triage&projects=&template=translation_issue.yml)

@@ -41,7 +41,6 @@ namespace VirtualPaper.Cores.Tray
             _notifyIcon.Icon = Properties.Icons.virtualpaper;
             _notifyIcon.Text = "Virtual Paper";
             _notifyIcon.Visible = true;
-            //_notifyIcon.Visible = userSettings.Settings.SysTrayIcon;
             _notifyIcon.ContextMenuStrip = new()
             {
                 ForeColor = Color.AliceBlue,
@@ -93,15 +92,6 @@ namespace VirtualPaper.Cores.Tray
             _notifyIcon.ContextMenuStrip.Items.Add(new ContextMenuTheme.StripSeparatorCustom().stripSeparator);
             _notifyIcon.ContextMenuStrip.Items.Add(App.GetResourceDicString("Systray_TextReportBug"), Properties.Icons.icon_bug).Click += (s, e) =>
             {
-                //if (diagnosticMenu is null)
-                //{
-                //    diagnosticMenu = new DiagnosticMenu();
-                //    diagnosticMenu.Closed += (s, e) => diagnosticMenu = null;
-                //    diagnosticMenu.ShowAsync();
-                //}
-
-                //DebugLog debugLog = new();
-                //debugLog.Show();
                 Process.Start("https://github.com/PaperHammer/virtualpaper/issues");
             };
             
@@ -331,7 +321,7 @@ namespace VirtualPaper.Cores.Tray
         #endregion
 
         //private readonly Random _random = new();
-        private readonly NotifyIcon _notifyIcon = new(), _n2 = new();
+        private readonly NotifyIcon _notifyIcon = new();
         private readonly ToolStripMenuItem _pauseBtn;
         //private readonly ToolStripMenuItem _customiseWallpaperBtn;
         //private readonly ToolStripMenuItem _updateBtn;

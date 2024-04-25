@@ -17,12 +17,10 @@ namespace VirtualPaper.Models.Cores
         public AppThemeBackground ApplicationThemeBackground { get; set; }
         public string AppVersion { get; set; } = string.Empty;
         public string ApplicationThemeBackgroundPath { get; set; } = string.Empty;
-        //public int ThemeBundleVersion { get; set; }
         public string Language { get; set; } = string.Empty;
         public bool IsUpdated { get; set; }
         public bool IsAutoStart { get; set; }
         public bool IsFirstRun { get; set; }
-        //public bool SysTrayIcon { get; } = true;
         #endregion
 
         #region dirs

@@ -57,9 +57,7 @@ Windows 10.0.19041.0 及以上
 #### 建议和错误报告
 建议新功能或提交错误报告以改进 Vierual Paper.[前往..](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Issue-Bug%2CNeeds-Triage&projects=&template=bug_report.yml)
 
-#
-
-Want to help out? here are some options..
+## Want to help out? here are some options..
 
 #### Programmer
 Code contributions are welcome.
@@ -72,3 +70,6 @@ Point out translation errors or translations of Virtual Paper into more language
 
 #### Suggestions & Bug report
 Suggest new features or file bug reports to improve Virtual Paper.[head for..](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Issue-Bug%2CNeeds-Triage&projects=&template=bug_report.yml)
+
+## License
+Virtual Paper is licensed under [GPL-v3.](https://github.com/PaperHammer/VirtualPaper/blob/main/LICENSE)

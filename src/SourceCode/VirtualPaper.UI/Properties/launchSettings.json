@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "VirtualPaper.UI (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "VirtualPaper.UI (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

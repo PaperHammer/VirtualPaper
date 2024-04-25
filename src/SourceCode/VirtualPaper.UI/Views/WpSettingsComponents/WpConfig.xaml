@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VirtualPaper.UI.Views.WpSettingsComponents.WpConfig"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.UI.Views.WpSettingsComponents"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vms="using:VirtualPaper.UI.ViewModels.WpSettingsComponents"
+    xmlns:uc="using:VirtualPaper.UI.UserControls"
+    xmlns:cvs="using:VirtualPaper.UI.Utils.Converters"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <cvs:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
+    </Page.Resources>
+
+    <Grid
+        x:Name="GridMain">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+
+        <Grid 
+            Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="120"/>
+            </Grid.RowDefinitions>
+
+            <WebView2
+                x:Name="Webview2" 
+                Grid.Row="0"
+                Margin="10"
+                Visibility="Collapsed"/>
+            
+            <Button 
+                x:Name="BtnContent"
+                Grid.Row="0"
+                Margin="10"
+                Padding="0"
+                AllowDrop="True"
+                DragOver="Button_DragOver"
+                Drop="Button_Drop"
+                BorderThickness="0"
+                Background="Transparent"
+                Click="ImportButton_Click"                
+                VerticalAlignment="Stretch"
+                HorizontalAlignment="Stretch"
+                VerticalContentAlignment="Center"
+                HorizontalContentAlignment="Center">
+                <Button.Content>
+                    <Grid>
+                        <TextBlock 
+                            Text="{Binding TextUpdateWallpaper}"
+                            FontSize="18"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
+                            Foreground="{ThemeResource AccentFillColorTertiaryBrush}"/>
+
+                    </Grid>
+                </Button.Content>
+            </Button>
+
+            <Border 
+                Grid.Row="1"
+                Margin="10"
+                BorderBrush="{ThemeResource TextFillColorDisabledBrush}"
+                BorderThickness="1"
+                Padding="6">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                                Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding TextResolution}" FontSize="12"/>
+                        <TextBlock Text="{Binding Wallpaper.Resolution}" FontSize="12"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding TextAspectRatio}" FontSize="12"/>
+                        <TextBlock Text="{Binding Wallpaper.AspectRatio}" FontSize="12"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding TextFileSize}" FontSize="12"/>
+                        <TextBlock Text="{Binding Wallpaper.FileSize}" FontSize="12"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding TextType}" FontSize="12"/>
+                        <TextBlock Text="{Binding Wallpaper.Type, Converter={StaticResource EnumDescriptionConverter }}" FontSize="12"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding TextFileExtension}" FontSize="12"/>
+                        <TextBlock Text="{Binding Wallpaper.FileExtension}" FontSize="12"/>
+                    </StackPanel>
+
+                    <HyperlinkButton 
+                        Grid.Row="1"
+                        Grid.Column="3"
+                        Content="{Binding TextDetailedInfo}" 
+                        Click="DetailedInfoButton_Click"
+                        Padding="0"
+                        Margin="0"
+                        FontSize="12"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <InfoBar
+            Margin="10"
+            Grid.Column="0"
+            IsOpen="{Binding InfoBarIsOpen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            Severity="{Binding InfoBarSeverity}"
+            Title="{Binding InfobarTitle}"
+            Message="{Binding InfobarMsg}" />
+
+        <Border 
+            x:Name="BdrCustomize"
+            Grid.Column="1" 
+            BorderBrush="{ThemeResource TextFillColorDisabledBrush}"
+            Margin="10" 
+            BorderThickness="1"
+            HorizontalAlignment="Stretch"
+            Padding="6">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <TextBlock
+                    Grid.Row="0"
+                    Text="{Binding TextWpConfigCustomize}"
+                    FontSize="16"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+
+                <Frame
+                    Margin="10 20"
+                    Grid.Row="1"                    
+                    Content="{Binding WpCustomizePage}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

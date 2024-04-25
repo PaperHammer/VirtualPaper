@@ -1,0 +1,55 @@
+﻿using System.Collections.ObjectModel;
+using VirtualPaper.Common.Utils.IPC;
+using VirtualPaper.Grpc.Service.WallpaperControl;
+using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.WallpaperMetaData;
+
+namespace VirtualPaper.Grpc.Client.Interfaces
+{
+    public interface IWallpaperControlClient : IDisposable
+    {
+        ReadOnlyCollection<WallpaperBasicData> Wallpapers { get; }
+        string BaseDirectory { get; }
+        Version AssemblyVersion { get; }
+
+        Task<WpMetaData> GetWallpaperAsync(string folderPath);
+
+        Task<SetWallpaperResponse> SetWallpaperAsync(IMetaData metaData, IMonitor monitor, CancellationToken cancellationToken);
+        Task<SetWallpaperResponse> SetWallpaperAsync(string folderPath, string monitorId);
+
+        Task CloseAllWallpapersAsync();
+        Task CloseWallpaperAsync(IMonitor monitor);
+        
+        Task RestartAllWallpaperAsync();
+
+        Task<WpMetaData?> CreateWallpaperAsync(string folderPath, string filePath, Common.WallpaperType type, CancellationToken token);
+
+        void SendMessageWallpaper(IMetaData metaData, IpcMessage msg);
+        void SendMessageWallpaper(IMonitor monitor, IMetaData metaData, IpcMessage msg);
+
+        Task PreviewWallpaperAsync(IMetaData metaData);
+        Task TakeScreenshotAsync(string monitorId, string savePath);
+
+        Task ChangeWallpaperLayoutFolrderPath(string previousDir, string newDir);
+
+        event EventHandler? WallpaperChanged;
+        event EventHandler<Exception>? WallpaperError;
+        event EventHandler<WallpaperUpdatedData>? WallpaperUpdated;
+    }
+
+    public class WallpaperBasicData
+    {
+        public string FolderPath { get; set; } = string.Empty;
+        //public string WpCustomizePath { get; set; } = string.Empty;
+        public string WpCustomizePathUsing { get; set; } = string.Empty;
+        public string ThumbnailPath { get; set; } = string.Empty;
+        public IMonitor? Monitor { get; set; }
+        public Common.WallpaperType Tyep { get; set; }
+    }
+
+    public class WallpaperUpdatedData
+    {
+        public IMetaData? MetaData { get; set; }
+        public Common.UpdateWallpaperState UpdateState { get; set; }
+    }
+}

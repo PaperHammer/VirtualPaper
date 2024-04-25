@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap mp">
+
+	<Identity
+	  Name="883b1ac5-f6c9-44c1-ae8e-18fe27811c04"
+	  Publisher="CN=PaperHammer"
+	  Version="1.0.0.0" />
+
+	<mp:PhoneIdentity PhoneProductId="883b1ac5-f6c9-44c1-ae8e-18fe27811c04" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+
+	<Properties>
+		<DisplayName>VirtualPaper.UI</DisplayName>
+		<PublisherDisplayName>PaperHammer</PublisherDisplayName>
+		<Logo>Assets\StoreLogo.png</Logo>
+	</Properties>
+
+	<Dependencies>
+		<TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
+		<TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
+	</Dependencies>
+
+	<Resources>
+		<!--<Resource Language="x-generate"/>-->
+		<Resource Language="zh-CN"/>
+		<Resource Language="en-US"/>
+	</Resources>
+
+	<Applications>
+		<Application Id="App"
+		  Executable="$targetnametoken$.exe"
+		  EntryPoint="$targetentrypoint$">
+			<uap:VisualElements
+			  DisplayName="VirtualPaper.UI"
+			  Description="VirtualPaper.UI"
+			  BackgroundColor="transparent"
+			  Square150x150Logo="Assets\Square150x150Logo.png"
+			  Square44x44Logo="Assets\Square44x44Logo.png">
+				<uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"  Square71x71Logo="Assets\Square71x71Logo.png" Square310x310Logo="Assets\Square310x310Logo.png">
+					<uap:ShowNameOnTiles>
+						<uap:ShowOn Tile="square310x310Logo"/>
+					</uap:ShowNameOnTiles>
+				</uap:DefaultTile >
+				<uap:SplashScreen Image="Assets\SplashScreen.png" />
+				<uap:LockScreen BadgeLogo="Assets\BadgeLogo.png" Notification="badgeAndTileText"/>
+			</uap:VisualElements>
+			<Extensions>
+				<desktop:Extension Category="windows.startupTask" Executable="Build\VirtualPaper.exe" EntryPoint="Windows.FullTrustApplication">
+					<desktop:StartupTask TaskId="AppStartup" Enabled="false" DisplayName="Virtual Paper" />
+				</desktop:Extension>
+			</Extensions>
+		</Application>
+	</Applications>
+
+	<Capabilities>
+		<rescap:Capability Name="runFullTrust" />
+	</Capabilities>
+</Package>

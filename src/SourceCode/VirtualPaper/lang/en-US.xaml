@@ -1,0 +1,55 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"                    
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib" 
+                    xml:space="preserve">
+
+    <sys:String x:Key="Virtual_Paper_isRunning">Virtu Alpeper is running in the background</sys:String>
+    
+    <sys:String x:Key="Preview_Title">Preview</sys:String>
+    <sys:String x:Key="DataLoading">Data loading, please wait</sys:String>
+
+    <sys:String x:Key="WpControl_VirtualPaperExceptionWorkerWSetupFail">
+        Some setup is required to work properly:
+        &#9;1. Press the Win+R keys to open the run. &#10;
+        &#9;2. Enter the SystemPropertiesPerformance.exe in "Run" and click "OK" to open the performance options. &#10;
+        &#9;3. Enable/tick "Animation Controls and Elements in Window" (or uncheck if already checked) and apply. &#10;
+        &#9;4. Click "Apply" and then press "OK" to close the window. &#10;
+        If that still doesn't work, shut down and restart or reboot the system. (Not working in some Windows 10 preview builds)
+    </sys:String>
+    <sys:String x:Key="WpControl_TextFileNotFound">The target file could not be found</sys:String>
+
+    <sys:String x:Key="Systray_TextOpenApp">Open the UI</sys:String>
+    <sys:String x:Key="Systray_TextCloseAllWallpapers">Close all wallpapers</sys:String>
+    <sys:String x:Key="Systray_TextPauseWallpapers">Pause all wallpapers</sys:String>
+    <sys:String x:Key="Systray_TextCustomizeWallpaper">Customize wallpaper effects</sys:String>
+    <sys:String x:Key="Systray_TextReportBug">Report bugs</sys:String>
+    <sys:String x:Key="Systray_TextExit">Exit</sys:String>
+
+    <sys:String x:Key="UIRunnerService_VirtualPaperExceptionGeneral">
+An error has occurred, try restarting the program to fix the problem. If it happens more than once, please report the error or contact the developer and download it again
+    </sys:String>
+    <sys:String x:Key="UIRunnerService_Error">Error</sys:String>
+
+    <sys:String x:Key="AppUpdater_Update_Text_BtnDownload">Download</sys:String>
+    <sys:String x:Key="AppUpdater_Update_Text_BtnInstall">Install</sys:String>
+    <sys:String x:Key="AppUpdater_Update_ExceptionAppUpdateFail">
+&#10;The update failed; try downloading the installer to update manually from:
+&#10;https://github.com/PaperHammer/VirtualPaper/releases
+    </sys:String>
+    <sys:String x:Key="AppUpdater_Update_DescriptionCancelQuestion">Closing the window will terminate the download, do you want to continue?</sys:String>
+    <sys:String x:Key="AppUpdater_Propt">Prompt</sys:String>
+    <sys:String x:Key="AppUpdater_TextError">Error</sys:String>
+
+    <sys:String x:Key="WndProcMsg_DescExplorerCrash">
+A serious error has occurred!
+&#10;Windows Explorer has restarted twice in the last 30 seconds! This could be a conflict between Virtual Paper and Windows or other desktop personalization software. To avoid further problems, all wallpapers have been terminated.
+    </sys:String>
+    <sys:String x:Key="WndProcMsg_TitleAppName">Virtual Paper</sys:String>
+    <sys:String x:Key="WndProcMsg_TextError">Error</sys:String>
+
+    <sys:String x:Key="WpUtils_TextFileOpenFailed">The target file may be corrupted</sys:String>
+
+    <sys:String x:Key="Find_New_Verison">Find New Vesion</sys:String>
+
+    <sys:String x:Key="Update_WindowTitle">Updater</sys:String>
+</ResourceDictionary>

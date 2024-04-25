@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VirtualPaper.UI.Views.WpSettings"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.UI.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vms="using:VirtualPaper.UI.ViewModels"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    Loaded="Page_Loaded">
+
+    <Grid
+        x:Name="GridMain">
+        <ContentControl
+            x:Name="ContentControlMain"
+            IsEnabled="{Binding IsEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            HorizontalContentAlignment="Stretch"
+            VerticalContentAlignment="Stretch">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="74"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Grid
+                    Grid.Row="0"
+                    Margin="20 10"
+                    x:Name="GridControlBtns">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock 
+                        Grid.Column="0"
+                        Text="{Binding Text_Title}"
+                        VerticalAlignment="Center"
+                        FontSize="24"/>
+
+                    <StackPanel
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal">
+                        <Button 
+                            x:Name="BtnClose"
+                            Height="33"
+                            MinWidth="66"
+                            Margin="10 0 0 0"
+                            Content="{Binding Text_Close}"
+                            Background="DarkGoldenrod"
+                            Click="BtnClose_Click"/>
+                        <Button 
+                            x:Name="BtnRestore"
+                            Height="33"
+                            MinWidth="66"
+                            Margin="10 0 0 0"
+                            Content="{Binding Text_Restore}"
+                            Click="BtnRestore_Click"/>
+                        <Button 
+                            x:Name="BtnDetect"
+                            Height="33"
+                            MinWidth="66"
+                            Margin="10 0 0 0"
+                            Content="{Binding Text_Detect}"
+                            Click="BtnDetect_Click"/>
+                        <Button 
+                            x:Name="BtnIdentify"
+                            Height="33"
+                            MinWidth="66"
+                            Margin="10 0 0 0"
+                            Content="{Binding Text_Identify}"
+                            Click="BtnIdentify_Click"/>
+                        <Button 
+                            x:Name="BtnPreview"
+                            Height="33"
+                            MinWidth="66"
+                            Margin="10 0 0 0"
+                            Content="{Binding Text_Preview}"
+                            Click="BtnPreview_Click"/>
+                        <Button 
+                            x:Name="BtnApply"
+                            Height="33"
+                            MinWidth="66"
+                            Margin="10 0 0 0"
+                            Content="{Binding Text_Apply}"
+                            Click="BtnApply_Click"/>
+                    </StackPanel>
+                </Grid>
+
+                <Grid
+                    Grid.Row="1"
+                    Margin="20 10">
+                    <ListView 
+                        x:Name="ListViewThuMonitors"
+                        ItemsSource="{Binding Monitors}"
+                        SelectedIndex="{Binding ThuMonitorSelectedIdx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Height="160"
+                        ScrollViewer.HorizontalScrollMode="Enabled"
+                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                        ScrollViewer.VerticalScrollMode="Disabled"
+                        ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                        SelectionMode="Single"
+                        SelectionChanged="ListViewThuMonitors_SelectionChanged">
+                        <ListView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsStackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Border
+                                    Height="120" 
+                                    Width="192" 
+                                    VerticalAlignment="Center" 
+                                    BorderThickness="2"
+                                    BorderBrush="{ThemeResource ApplicationForegroundThemeBrush}">
+                                    <TextBlock 
+                                        Text="{Binding Index}" 
+                                        FontSize="30" 
+                                        HorizontalAlignment="Center" 
+                                        VerticalAlignment="Center"/>
+                                </Border>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+
+                <Grid
+                    Grid.Row="2"
+                    Margin="10">
+                    <NavigationView 
+                        x:Name="NavView" 
+                        PaneDisplayMode="Top"
+                        SelectionFollowsFocus="Enabled" 
+                        IsBackButtonVisible="Collapsed"                        
+                        SelectedItem="{Binding SelectedNav, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        SelectionChanged="NavigationView_SelectionChanged"
+                        MenuItemsSource="{Binding NavsMenuItems, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <Frame 
+                            x:Name="ContentFrame"
+                            Content="{Binding FramePage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    </NavigationView>
+                </Grid>
+            </Grid>
+        </ContentControl>
+
+        <StackPanel
+            Orientation="Vertical"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Center">
+            <ProgressRing 
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                IsActive="True"
+                Visibility="{Binding LoadingVisibility}"
+                Height="80"
+                Width="80"
+                Margin="50 20"
+                Background="Transparent"/>
+
+            <TextBlock
+                Margin="50 20"
+                Visibility="{Binding LoadingVisibility}"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                FontSize="18"
+                Text="{Binding Text_Loading}"/>
+
+            <!--<Button
+                x:Name="BtnCancel"
+                Margin="50 20"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                Width="100"
+                Height="40"
+                Visibility="{Binding LoadingVisibility}"                
+                Content="{Binding Text_Cancel}"
+                Click="BtnCancel_Click"/>-->
+        </StackPanel>
+    </Grid>
+</Page>

@@ -1,0 +1,288 @@
+﻿using NLog;
+using System.Diagnostics;
+using System.IO;
+using System.Windows;
+using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Cores.Monitor;
+using VirtualPaper.Services.Interfaces;
+using MessageBox = System.Windows.MessageBox;
+using UAC = UACHelper.UACHelper;
+
+namespace VirtualPaper.Services
+{
+    public class UIRunnerService : IUIRunnerService
+    {
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private Process? _processUI;
+        private readonly IMonitorManager _displayManager;
+        private bool _isFirstRun = true;
+        private Native.RECT prevWindowRect = new() { Left = 50, Top = 50, Right = 925, Bottom = 925 };
+        private readonly string _fileName, _workingDirectory;
+
+        public UIRunnerService(IMonitorManager displayManager)
+        {
+            this._displayManager = displayManager;
+
+            if (UAC.IsElevated)
+            {
+                _logger.Warn("Process is running elevated, UI may not function properly.");
+            }
+
+            if (Constants.ApplicationType.IsMSIX)
+            {
+                _fileName = Path.Combine(Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\")), "VirtualPaper.UI.exe");
+                _workingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\"));
+            }
+            else
+            {
+                _fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "UI", "VirtualPaper.UI.exe");
+                _workingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "UI");
+            }
+        }
+
+        public void ShowUI()
+        {
+            if (_processUI != null)
+            {
+                try
+                {
+                    _processUI.StandardInput.WriteLine("WM SHOW");
+                }
+                catch (Exception e)
+                {
+                    _logger.Error(e);
+                }
+            }
+            else
+            {
+                try
+                {
+                    _processUI = new Process
+                    {
+                        StartInfo = new ProcessStartInfo
+                        {
+                            FileName = _fileName,
+                            RedirectStandardInput = true,
+                            RedirectStandardOutput = false,
+                            RedirectStandardError = false,
+                            UseShellExecute = false,
+                            WorkingDirectory = _workingDirectory,                            
+                        },
+                        EnableRaisingEvents = true
+                    };
+                    _processUI.Exited += Proc_UI_Exited;
+                    _processUI.OutputDataReceived += Proc_OutputDataReceived;
+                    _processUI.Start();
+                    //winui writing debug information into output stream :/
+                    //_processUI.BeginOutputReadLine();
+                    //_processUI.BeginErrorReadLine();
+                }
+                catch (Exception e)
+                {
+                    _logger.Error(e);
+                    _processUI = null;
+                    _ = MessageBox.Show(
+                        $"{App.GetResourceDicString("UIRunnerService_VirtualPaperExceptionGeneral")}\nEXCEPTION:\n{e.Message}",
+                        App.GetResourceDicString("UIRunnerService_Error"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+
+                if (!_isFirstRun)
+                {
+                    try
+                    {
+                        SetWindowRect(_processUI, prevWindowRect);
+                    }
+                    catch (Exception ie)
+                    {
+                        _logger.Error($"Failed to restore windowrect: {ie.Message}");
+                    }
+                }
+                _isFirstRun = false;
+            }
+        }
+
+        public void RestartUI()
+        {
+            if (_processUI != null)
+            {
+                try
+                {
+                    _processUI.Exited -= Proc_UI_Exited;
+                    _processUI.OutputDataReceived -= Proc_OutputDataReceived;
+                    _ = Native.GetWindowRect(_processUI.MainWindowHandle, out prevWindowRect);
+                    if (!_processUI.Responding || !_processUI.CloseMainWindow() || !_processUI.WaitForExit(500))
+                    {
+                        _processUI.Kill();
+                    }
+                    _processUI.Dispose();
+                }
+                catch (Exception e)
+                {
+                    _logger.Error(e);
+                }
+                finally
+                {
+                    _processUI = null;
+                }
+            }
+            ShowUI();
+        }
+
+        public void CloseUI()
+        {
+            if (_processUI == null)
+                return;
+
+            try
+            {
+                _ = Native.GetWindowRect(_processUI.MainWindowHandle, out prevWindowRect);
+                if (!_processUI.Responding || !_processUI.CloseMainWindow() || !_processUI.WaitForExit(3500))
+                {
+                    _processUI.Kill();
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e);
+            }
+        }
+
+        public void SaveRectUI()
+        {
+            if (_processUI == null)
+                return;
+
+            _ = Native.GetWindowRect(_processUI.MainWindowHandle, out prevWindowRect);
+        }
+
+        //public void ShowCustomisWallpaperePanel()
+        //{
+        //    if (_processUI is null)
+        //    {
+        //        try
+        //        {
+        //            var proc = new Process
+        //            {
+        //                StartInfo = new ProcessStartInfo
+        //                {
+        //                    FileName = _fileName,
+        //                    UseShellExecute = false,
+        //                    Arguments = "--trayWidget true",
+        //                    WorkingDirectory = _workingDirectory,
+        //                },
+        //            };
+        //            proc.Start();
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            _logger.Error(e);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        _processUI?.StandardInput.WriteLine("LM SHOWCUSTOMISEPANEL");
+        //    }
+        //}
+
+        //public void SetBusyUI(bool isBusy) => _processUI?.StandardInput.WriteLine(isBusy ? "LM SHOWBUSY" : "LM HIDEBUSY");
+        //public IntPtr HwndUI => _processUI?.MainWindowHandle ?? IntPtr.Zero;
+        public bool IsVisibleUI => _processUI != null && Native.IsWindowVisible(_processUI.MainWindowHandle);
+
+        private void Proc_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            //When the redirected stream is closed, a null line is sent to the event handler.
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                //Ref: https://github.com/cyanfish/grpc-dotnet-namedpipes/issues/8
+                _logger.Info($"UI: {e.Data}");
+            }
+        }
+
+        private void Proc_UI_Exited(object? sender, EventArgs e)
+        {
+            if (_processUI == null) return;
+
+            _processUI.Exited -= Proc_UI_Exited;
+            _processUI.OutputDataReceived -= Proc_OutputDataReceived;
+            _processUI.Dispose();
+            _processUI = null;
+        }
+
+        #region helpers
+        private void SetWindowRect(Process proc, Native.RECT rect)
+        {
+            ArgumentNullException.ThrowIfNull(proc);
+
+            while (proc.WaitForInputIdle(-1) != true || proc.MainWindowHandle == IntPtr.Zero)
+            {
+                proc.Refresh();
+            }
+
+            Native.SetWindowPos(proc.MainWindowHandle,
+                0,
+                rect.Left,
+                rect.Top,
+                (rect.Right - rect.Left),
+                (rect.Bottom - rect.Top),
+                (int)Native.SetWindowPosFlags.SWP_SHOWWINDOW);
+
+            //Monitor disconnected fallback.
+            if (!IsOnScreen(proc.MainWindowHandle))
+            {
+                Native.SetWindowPos(proc.MainWindowHandle,
+                         0,
+                         _displayManager.PrimaryMonitor.Bounds.Left + 50,
+                         _displayManager.PrimaryMonitor.Bounds.Top + 50,
+                         0,
+                         0,
+                         (int)Native.SetWindowPosFlags.SWP_NOSIZE);
+            }
+        }
+
+        /// <summary>
+        /// 检查窗口是否完全位于屏幕区域之外
+        /// </summary>
+        private bool IsOnScreen(IntPtr hwnd)
+        {
+            if (Native.GetWindowRect(hwnd, out Native.RECT winRect) != 0)
+            {
+                var rect = new Rectangle(
+                    winRect.Left,
+                    winRect.Top,
+                    (winRect.Right - winRect.Left),
+                    (winRect.Bottom - winRect.Top));
+                return _displayManager.Monitors.Any(s => s.WorkingArea.IntersectsWith(rect));
+            }
+            return false;
+        }
+        #endregion
+
+        #region dispose
+        private bool _isDisposed;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_isDisposed)
+            {
+                if (disposing)
+                {
+                    try
+                    {
+                        _processUI?.Kill();
+                    }
+                    catch { }
+                }
+                _isDisposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+    }
+}

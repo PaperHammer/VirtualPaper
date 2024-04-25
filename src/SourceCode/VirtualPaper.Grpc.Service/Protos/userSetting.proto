@@ -1,0 +1,185 @@
+syntax = "proto3";
+package VirtualPaper.Grpc.Service.UserSetting;
+import "google/protobuf/empty.proto";
+
+service UserSettingService {
+	rpc GetAppRulesSettings (google.protobuf.Empty) returns (AppRulesSettings);
+	rpc SetAppRulesSettings (AppRulesSettings) returns (google.protobuf.Empty);
+	rpc GetSettings (google.protobuf.Empty) returns (SettingsData);
+	rpc SetSettings (SettingsData) returns (google.protobuf.Empty);	
+}
+
+message SettingsData {
+	AppRulesEnum app_focus_pause = 1;
+	AppRulesEnum app_fullscreen_pause = 2;
+    AppTheme application_theme = 3;
+    AppRulesEnum battery_pause = 4;
+    AppRulesEnum power_save_mode_pause = 5;
+    AppRulesEnum remote_desktop_pause = 6;
+    AppThemeBackground application_theme_background = 7;
+    string app_version = 8;
+    string application_theme_background_path = 9;
+    int32 theme_bundle_version = 10;
+    string language = 11;    
+    bool is_updated = 12;
+    bool is_auto_start = 13;
+    bool is_first_run = 14;
+    bool sys_tray_icon = 15;
+
+    string wallpaper_dir = 16;
+
+    MonitorData selected_monitor = 17;
+    VirtualPaperMediaPlayer video_player = 18;
+    VirtualPaperGifPlayer gif_player = 19;
+    VirtualPaperPicturePlayer picture_player = 20;
+    VirtualPaperWebBrowser web_browser = 21;
+    int32 audio_volume_global = 22;
+    bool is_audio_only_on_desktop = 23;
+    DisplayPauseEnum display_pause_settings = 24;
+    bool is_video_player_hw_accel = 25;
+    WallpaperScaler wallpaper_scaling = 26;
+    int32 wallpaper_wait_time = 27;
+    StreamQualitySuggestion stream_quality = 28;
+    bool desktop_auto_wallpaper = 29;
+
+    TaskbarTheme system_taskbar_theme = 30;
+
+    InputForwardMode input_forward = 31;
+    bool mouse_input_mov_always = 32;
+
+    WallpaperArrangement wallpaper_arrangement = 33;
+
+    bool is_screensaver_lock_on_resume = 34;
+    bool is_screensaver_empty_screen_show_black = 35;
+
+    int32 process_timer_interval = 36;
+    ProcessMonitorAlgorithm process_monitor_algorithm = 37;
+
+    string web_debug_port = 38;
+    bool is_cef_disk_cache = 39;
+}
+
+message AppRulesSettings {
+  repeated AppRulesData app_rules = 1;
+}
+
+message AppRulesData {
+  string app_name = 1;
+  AppRulesEnum rule = 2;
+}
+
+enum AppRulesEnum {
+    pause = 0;
+    ignore = 1;
+    kill = 2;
+}
+
+enum AppTheme {
+    auto = 0;
+    light = 1;
+    dark = 2;
+}
+
+enum AppThemeBackground {
+    defaultMica = 0;
+    defaultAcrylic = 1;
+    dynamic = 2;
+    custom = 3;
+}
+
+message MonitorData {
+	string device_id = 1;
+    string device_name = 2;
+    string display_name = 3;
+
+    int32 h_monitor = 4;
+    bool is_primary = 5;
+
+    Rectangle working_area = 6;
+    Rectangle bounds = 7;
+
+    int32 index = 9;
+}
+
+message Rectangle {
+	int32 x = 1;
+	int32 y = 2;
+	int32 width = 3;
+	int32 height = 4;
+	int32 bottom = 5;
+	int32 left = 6;
+	int32 right = 7;
+	int32 top = 8;
+}
+
+enum VirtualPaperMediaPlayer {
+    wmf = 0;
+    mpv = 1;
+    vlc = 2;
+}
+
+enum VirtualPaperGifPlayer {
+    mpv_ = 0;
+}
+
+enum VirtualPaperPicturePlayer {
+    winApi = 0;
+    mpv__ = 1;
+    wmf_ = 2;
+}
+
+enum VirtualPaperWebBrowser {
+    cef = 0;
+    webview2 = 1;
+}
+
+enum DisplayPauseEnum {
+    perdisplay = 0;
+    alldisplay = 1;
+}
+
+enum WallpaperScaler{        
+    none = 0;
+    fill = 1;
+    uniform = 2;
+    uniformFill = 3;
+    autofit = 4;
+}
+
+enum StreamQualitySuggestion {
+    lowest = 0;
+    low = 1;
+    lowMedium = 2;
+    medium = 3;
+    mediumHigh = 4;
+    high = 5;
+    highest = 6;
+}
+
+enum TaskbarTheme {
+    none_ = 0;
+    clear = 1;
+    blur = 2;
+    fluent = 3;
+    color = 4;
+    wallpaper = 5;
+    wallpaperFluent = 6;
+}
+
+enum InputForwardMode {
+    off = 0;
+    mouse = 1;
+    mousekeybord = 2;
+}
+
+enum WallpaperArrangement {
+    per = 0;
+    span = 1;
+    duplicate = 2;
+}
+
+enum ProcessMonitorAlgorithm {
+    foreground = 0;
+    all = 1;
+    gamemode = 2;
+}

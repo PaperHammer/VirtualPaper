@@ -1,0 +1,203 @@
+﻿using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
+using NLog;
+using VirtualPaper.Cores.Monitor;
+using VirtualPaper.Cores.Tray;
+using VirtualPaper.Grpc.Service.UserSetting;
+using VirtualPaper.Models.Cores;
+using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Services.Interfaces;
+using VirtualPaper.Utils;
+using Rectangle = VirtualPaper.Grpc.Service.UserSetting.Rectangle;
+
+namespace VirtualPaper.GrpcServers
+{
+    internal class UserSettingServer(
+        IMonitorManager monitorManager,
+        IUserSettingsService userSetting,
+        IUIRunnerService uiRunner,
+        //ISystray sysTray,
+        ITaskbarService taskbar) : UserSettingService.UserSettingServiceBase
+    {
+        public override Task<AppRulesSettings> GetAppRulesSettings(Empty request, ServerCallContext context)
+        {
+            var resp = new AppRulesSettings();
+            foreach (var app in _userSetting.AppRules)
+            {
+                resp.AppRules.Add(new AppRulesData
+                {
+                    AppName = app.AppName,
+                    Rule = (Grpc.Service.UserSetting.AppRulesEnum)((int)app.Rule)
+                });
+            }
+
+            return Task.FromResult(resp);
+        }
+
+        public override Task<Empty> SetAppRulesSettings(AppRulesSettings request, ServerCallContext context)
+        {
+            _userSetting.AppRules.Clear();
+            foreach (var item in request.AppRules)
+            {
+                _userSetting.AppRules.Add(new ApplicationRules(item.AppName, (Common.AppWpRunRulesEnum)(int)item.Rule));
+            }
+
+            try
+            {
+                return Task.FromResult(new Empty());
+            }
+            finally
+            {
+                lock (appRulesWriteLock)
+                {
+                    _userSetting.Save<List<IApplicationRules>>();
+                }
+            }
+        }
+
+        public override Task<SettingsData> GetSettings(Empty request, ServerCallContext context)
+        {
+            var settings = _userSetting.Settings;
+            var resp = new SettingsData()
+            {
+                SelectedMonitor = new MonitorData()
+                {
+                    DeviceId = settings.SelectedMonitor.DeviceId ?? string.Empty,
+                    DeviceName = settings.SelectedMonitor.DeviceName ?? string.Empty,
+                    DisplayName = settings.SelectedMonitor.MonitorName ?? string.Empty,
+                    HMonitor = settings.SelectedMonitor.HMonitor.ToInt32(),
+                    IsPrimary = settings.SelectedMonitor.IsPrimary,
+                    WorkingArea = new Rectangle()
+                    {
+                        X = settings.SelectedMonitor.WorkingArea.X,
+                        Y = settings.SelectedMonitor.WorkingArea.Y,
+                        Width = settings.SelectedMonitor.WorkingArea.Width,
+                        Height = settings.SelectedMonitor.WorkingArea.Height
+                    },
+                    Bounds = new Rectangle()
+                    {
+                        X = settings.SelectedMonitor.Bounds.X,
+                        Y = settings.SelectedMonitor.Bounds.Y,
+                        Width = settings.SelectedMonitor.Bounds.Width,
+                        Height = settings.SelectedMonitor.Bounds.Height
+                    }, 
+                    Index = settings.SelectedMonitor.Index
+                },
+                WallpaperArrangement = (Grpc.Service.UserSetting.WallpaperArrangement)_userSetting.Settings.WallpaperArrangement,
+                AppVersion = _userSetting.Settings.AppVersion,
+                IsFirstRun = _userSetting.Settings.IsFirstRun,
+                AppFocusPause = (Grpc.Service.UserSetting.AppRulesEnum)_userSetting.Settings.AppFocus,
+                AppFullscreenPause = (Grpc.Service.UserSetting.AppRulesEnum)_userSetting.Settings.AppFullscreen,
+                BatteryPause = (Grpc.Service.UserSetting.AppRulesEnum)_userSetting.Settings.BatteryPoweredn,
+                WallpaperWaitTime = _userSetting.Settings.WallpaperWaitTime,
+                ProcessTimerInterval = _userSetting.Settings.ProcessTimerInterval,
+                WallpaperScaling = (Grpc.Service.UserSetting.WallpaperScaler)_userSetting.Settings.WallpaperScaling,
+                InputForward = (Grpc.Service.UserSetting.InputForwardMode)_userSetting.Settings.InputForward,
+                MouseInputMovAlways = _userSetting.Settings.MouseInputMovAlways,
+                WallpaperDir = _userSetting.Settings.WallpaperDir,
+                WebDebugPort = _userSetting.Settings.WebDebugPort,
+                IsAudioOnlyOnDesktop = _userSetting.Settings.IsAudioOnlyOnDesktop,
+                IsAutoStart = _userSetting.Settings.IsAutoStart,
+                IsCefDiskCache = _userSetting.Settings.IsCefDiskCache,
+                ApplicationTheme = (Grpc.Service.UserSetting.AppTheme)_userSetting.Settings.ApplicationTheme,
+                RemoteDesktopPause = (Grpc.Service.UserSetting.AppRulesEnum)_userSetting.Settings.RemoteDesktop,
+                PowerSaveModePause = (Grpc.Service.UserSetting.AppRulesEnum)_userSetting.Settings.PowerSaving,
+                IsScreensaverEmptyScreenShowBlack = _userSetting.Settings.IsScreensaverEmptyScreenShowBlack,
+                IsScreensaverLockOnResume = _userSetting.Settings.IsScreensaverLockOnResume,
+                Language = _userSetting.Settings.Language,
+                DisplayPauseSettings = (Grpc.Service.UserSetting.DisplayPauseEnum)_userSetting.Settings.StatuMechanism,
+                IsUpdated = _userSetting.Settings.IsUpdated,
+                ApplicationThemeBackground = (Grpc.Service.UserSetting.AppThemeBackground)_userSetting.Settings.ApplicationThemeBackground,
+                ApplicationThemeBackgroundPath = _userSetting.Settings.ApplicationThemeBackgroundPath,
+            };
+            return Task.FromResult(resp);
+        }
+
+        public override Task<Empty> SetSettings(SettingsData request, ServerCallContext context)
+        {
+            bool restartRequired = (Common.AppTheme)request.ApplicationTheme != _userSetting.Settings.ApplicationTheme || request.Language != _userSetting.Settings.Language;
+
+            if (request.IsAutoStart != _userSetting.Settings.IsAutoStart)
+            {
+                _userSetting.Settings.IsAutoStart = request.IsAutoStart;
+                try
+                {
+                    _ = WindowsAutoStart.SetAutoStart(_userSetting.Settings.IsAutoStart);
+                }
+                catch (Exception e)
+                {
+                    _logger.Error(e);
+                }
+            }
+
+            if ((Common.TaskbarTheme)request.SystemTaskbarTheme != _userSetting.Settings.SystemTaskbarTheme)
+            {
+                _userSetting.Settings.SystemTaskbarTheme = (Common.TaskbarTheme)request.SystemTaskbarTheme;
+                _taskbar.Start(_userSetting.Settings.SystemTaskbarTheme);
+            }
+
+            if ((Common.AppTheme)request.ApplicationTheme != _userSetting.Settings.ApplicationTheme)
+            {
+                App.ChangeTheme((Common.AppTheme)request.ApplicationTheme);
+            }
+
+            if (request.Language != _userSetting.Settings.Language)
+            {
+                App.ChangeLanguage(request.Language);
+            }
+
+            _userSetting.Settings.SelectedMonitor = _monitorManager.Monitors.FirstOrDefault(x => request.SelectedMonitor.DeviceId == x.DeviceId) ?? _monitorManager.PrimaryMonitor;
+            _userSetting.Settings.WallpaperArrangement = (Common.WallpaperArrangement)((int)request.WallpaperArrangement);
+            _userSetting.Settings.AppVersion = request.AppVersion;
+            _userSetting.Settings.IsFirstRun = request.IsFirstRun;
+            _userSetting.Settings.AppFocus = (Common.AppWpRunRulesEnum)((int)request.AppFocusPause);
+            _userSetting.Settings.AppFullscreen = (Common.AppWpRunRulesEnum)((int)request.AppFullscreenPause);
+            _userSetting.Settings.BatteryPoweredn = (Common.AppWpRunRulesEnum)((int)request.BatteryPause);
+            _userSetting.Settings.WallpaperWaitTime = request.WallpaperWaitTime;
+            _userSetting.Settings.ProcessTimerInterval = request.ProcessTimerInterval;
+            _userSetting.Settings.WallpaperScaling = (Common.WallpaperScaler)((int)request.WallpaperScaling);
+            _userSetting.Settings.InputForward = (Common.InputForwardMode)request.InputForward;
+            _userSetting.Settings.MouseInputMovAlways = request.MouseInputMovAlways;
+            _userSetting.Settings.WallpaperDir = request.WallpaperDir;
+            _userSetting.Settings.WebDebugPort = request.WebDebugPort;
+            _userSetting.Settings.IsAudioOnlyOnDesktop = request.IsAudioOnlyOnDesktop;
+            _userSetting.Settings.IsCefDiskCache = request.IsCefDiskCache;
+            _userSetting.Settings.ApplicationTheme = (Common.AppTheme)request.ApplicationTheme;
+            _userSetting.Settings.RemoteDesktop = (Common.AppWpRunRulesEnum)request.RemoteDesktopPause;
+            _userSetting.Settings.PowerSaving = (Common.AppWpRunRulesEnum)request.PowerSaveModePause;
+            _userSetting.Settings.IsScreensaverEmptyScreenShowBlack = request.IsScreensaverEmptyScreenShowBlack;
+            _userSetting.Settings.IsScreensaverLockOnResume = request.IsScreensaverLockOnResume;
+            _userSetting.Settings.Language = request.Language;
+            _userSetting.Settings.StatuMechanism = (Common.StatuMechanismEnum)request.DisplayPauseSettings;
+            _userSetting.Settings.IsUpdated = request.IsUpdated;
+            _userSetting.Settings.ApplicationThemeBackground = (Common.AppThemeBackground)request.ApplicationThemeBackground;
+            _userSetting.Settings.ApplicationThemeBackgroundPath = request.ApplicationThemeBackgroundPath;
+
+            try
+            {
+                return Task.FromResult(new Empty());
+            }
+            finally
+            {
+                lock (settingsWriteLock)
+                {
+                    _userSetting.Save<ISettings>();
+                    if (restartRequired)
+                    {
+                        _uiRunner.RestartUI();
+                    }
+                }
+            }
+        }
+
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly IMonitorManager _monitorManager = monitorManager;
+        private readonly IUserSettingsService _userSetting = userSetting;
+        private readonly IUIRunnerService _uiRunner = uiRunner;
+        //private readonly ISystray _sysTray = sysTray;
+        private readonly ITaskbarService _taskbar = taskbar;
+        private readonly object appRulesWriteLock = new();
+        private readonly object settingsWriteLock = new();
+    }
+
+}

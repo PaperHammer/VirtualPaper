@@ -1,0 +1,32 @@
+﻿<Window x:Class="VirtualPaper.Views.IdentifyWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:VirtualPaper.Views"
+        xmlns:vms="clr-namespace:VirtualPaper.ViewModels"
+        mc:Ignorable="d"
+        Title="IdentifyWindow" 
+        Height="160" 
+        Width="300"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True">
+    
+    <Border
+        Height="160"
+        Width="300"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center"
+        Background="#4cc2ff"
+        BorderThickness="0">
+        <TextBlock
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Foreground="White"
+            FontSize="80"
+            Text="{Binding Index}"/>
+    </Border>
+</Window>

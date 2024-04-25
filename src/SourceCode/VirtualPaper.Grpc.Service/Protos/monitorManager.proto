@@ -1,0 +1,37 @@
+syntax = "proto3";
+package VirtualPaper.Grpc.Service.MonitorManager;
+import "google/protobuf/empty.proto";
+
+service MonitorManagerService {
+	rpc GetMonitors (google.protobuf.Empty) returns (GetMonitorsResponse);
+	rpc GetVirtualScreenBounds (google.protobuf.Empty) returns (Rectangle);
+	rpc IdentifyMonitors (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc SubscribeMonitorChanged (google.protobuf.Empty) returns (stream google.protobuf.Empty);
+}
+
+message GetMonitorsResponse {
+	repeated MonitorData monitors = 1;
+}
+
+message MonitorData {
+	string device_id = 1;
+    string device_name = 2;
+    string display_name = 3;
+
+    int32 h_monitor = 4;
+    bool is_primary = 5;
+
+    Rectangle working_area = 6;
+    Rectangle bounds = 7;
+}
+
+message Rectangle {
+	int32 x = 1;
+	int32 y = 2;
+	int32 width = 3;
+	int32 height = 4;
+	int32 bottom = 5;
+	int32 left = 6;
+	int32 right = 7;
+	int32 top = 8;
+}

@@ -1,0 +1,43 @@
+﻿<Window x:Class="VirtualPaper.Views.Preview.WebPreviewer"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:VirtualPaper.Views.Preview"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        mc:Ignorable="d"
+        Title="{DynamicResource Preview_Title}" Height="800" Width="1400"
+        Background="#1a1a1a"
+        Icon="../../virtualpaper.ico"
+        Closing="Window_Closing">
+
+    <Grid>
+        <wv2:WebView2
+            x:Name="Webview2" 
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="Collapsed"/>
+
+        <StackPanel
+            x:Name="skPanel"
+            Orientation="Vertical"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Center">
+            <TextBlock
+                Margin="15"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                Text="{DynamicResource Preview_DataLoading}"
+                Foreground="White"
+                FontSize="24"/>
+            <ProgressBar 
+                Margin="15"
+                Foreground="SkyBlue"
+                Background="Transparent"
+                BorderThickness="0"
+                Height="10"
+                Width="500"
+                IsIndeterminate="True" />
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,146 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+</head>
+
+<body>
+    <div class="content">
+    </div>
+</body>
+</html>
+
+<script>
+    let curFilter = "saturate(s#) hue-rotate(d#deg) brightness(b#) contrast(c#)";
+    let curVideoElementId = null; // 存储当前视频元素的ID
+    let filter = null;
+    let volume = 0;
+    let speed = 0.0;
+    let muted = false;
+
+    function virtualPaperSourceReload(wallpaperType, filePath) {
+        if (curVideoElementId) {
+            handleVideoCleanup(); // 清空视频缓存
+            curVideoElementId = null;
+        }
+
+        const element = document.querySelector('.content');
+        element.innerHTML = '';
+
+        if (wallpaperType && filePath) {
+            let elementToInsert;
+            switch (wallpaperType) {
+                case 'gif':
+                case 'picture':
+                    elementToInsert = `<img class="full-screen" src="${filePath}" />`;
+                    break;
+                case 'video':
+                    curVideoElementId = 'videoEle';
+                    elementToInsert = `
+                  <video id="videoEle" class="full-screen" loop>
+                      <source src="${filePath}">
+                  </video>`;
+                    break;
+                default:
+                    return;
+            }
+
+            element.insertAdjacentHTML('beforeend', elementToInsert);
+        }
+
+        return "success";
+    }
+
+    function virtualPaperPropertyListener(propertyType, val) {
+        switch (propertyType) {
+            case "Volume":
+                volume = parseFloat(val);
+                break;
+            case "Speed":
+                speed = parseFloat(val);
+                break;
+            case "Muted":
+                muted = val;
+                break;
+            case "Saturation":
+                curFilter = curFilter.replace(new RegExp('s#', 'g'), parseFloat(val));
+                break;
+            case "Hue":
+                curFilter = curFilter.replace(new RegExp('d#', 'g'), parseInt(val));
+                break;
+            case "Brightness":
+                curFilter = curFilter.replace(new RegExp('b#', 'g'), parseFloat(val));
+                break;
+            case "Contrast":
+                curFilter = curFilter.replace(new RegExp('c#', 'g'), parseFloat(val));
+                break;
+        }
+
+        return "success";
+    }
+
+    function applyFilter() {
+        const element = document.querySelector('.full-screen');
+
+        if (element)
+            element.style.filter = curFilter.trim();
+
+        if (curVideoElementId) {
+            element.volume = volume;
+            element.playbackRate = speed;
+            element.muted = muted;
+        }
+
+        return "success";
+    }
+
+    function virtualPaperPlaybackChanged(isPaused) {
+        var videoElement = document.getElementById('videoEle');
+        if (videoElement) {
+            if (isPaused) videoElement.pause();
+            else videoElement.play();
+        }
+    }
+
+    function virtualPaperAudioMuteChanged(isMuted) {
+        var videoElement = document.getElementById('videoEle');
+        if (videoElement) {
+            videoElement.muted = isMuted;
+        }
+    }
+
+    //在某些浏览器（例如 Chrome 70.0）中，如果没有设置 muted 属性，autoplay 将不会生效。
+    function play() {
+        var videoElement = document.getElementById('videoEle');
+        videoElement.play();
+    }
+
+    function handleVideoCleanup() {
+        var videoElement = document.getElementById('videoEle');
+        videoElement.pause();
+        videoElement.removeAttribute('src');
+        videoElement = null;
+    }
+</script>
+
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
+
+    .content {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .full-screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+</style>

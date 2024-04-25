@@ -1,0 +1,23 @@
+﻿<Window x:Class="VirtualPaper.Views.DebugLog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:VirtualPaper.Views"
+        xmlns:dj="clr-namespace:DJ;assembly=NLogViewer"
+        Title="Virtual Paper Debugger"
+        Width="1200"
+        Height="700"
+        Style="{DynamicResource WindowUI}"
+        WindowStartupLocation="CenterScreen"
+        mc:Ignorable="d">
+
+    <Grid>
+        <dj:NLogViewer
+            Name="LogViewer"
+            Margin="25"
+            MaxCount="1000" 
+            InfoBackground="#69a1b7"
+            ErrorBackground="DarkRed"/>
+    </Grid>
+</Window>

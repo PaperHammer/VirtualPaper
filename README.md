@@ -43,7 +43,7 @@ The following files are supported:
 Windows 10.0.19041.0 及以上
 ##### [Installer (Windows 10 10.0.19041.0 or above)](https://github.com/PaperHammer/VirtualPaper/releases/latest)
 
-## 提供帮助
+## Support
 欢迎提出宝贵的建议
 
 #### 地方化
@@ -51,8 +51,6 @@ Windows 10.0.19041.0 及以上
 
 #### 建议和错误报告
 建议新功能或提交错误报告以改进 Vierual Paper.[前往..](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Issue-Bug%2CNeeds-Triage&projects=&template=bug_report.yml)
-
-## Want to help out? here are some options..
 
 #### Localization
 Point out translation errors or translations of Virtual Paper into more languages.[head fore..](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Issue-Bug%2CArea-Localization%2CIssue-Translation%2CNeeds-Triage&projects=&template=translation_issue.yml)

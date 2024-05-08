@@ -76,6 +76,8 @@
                         Height="35"
                         Width="100"
                         BorderThickness="1"
+                        Content="{DynamicResource AppUpdater_Update_Text_BtnDownload}"
+                        FontSize="16"
                         Background="SkyBlue"
                         Click="BtnDownload_Click"/>
                     <Button 
@@ -86,6 +88,8 @@
                         Visibility="Collapsed"
                         Background="DarkGreen"
                         BorderThickness="1"
+                        Content="{DynamicResource AppUpdater_Update_Text_BtnInstall}"
+                        FontSize="16"
                         Click="BtnInstall_Click"/>
                 </Grid>
             </StackPanel>

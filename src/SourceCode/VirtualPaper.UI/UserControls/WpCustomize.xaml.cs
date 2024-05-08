@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -10,6 +9,7 @@ using System.IO;
 using System.Linq;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Models;
+using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.ObserverMode;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Grpc.Client.Interfaces;
@@ -21,7 +21,7 @@ using VirtualPaper.Models.WallpaperMetaData;
 
 namespace VirtualPaper.UI.UserControls
 {
-    public sealed partial class WpCustomize : UserControl
+    public sealed partial class WpCustomize : UserControl, IDisposable
     {
         #region init
         private WpCustomize()
@@ -29,14 +29,27 @@ namespace VirtualPaper.UI.UserControls
             this.InitializeComponent();
 
             _userSettings = App.Services.GetRequiredService<IUserSettingsClient>();
-            _desktopWpControl = App.Services.GetRequiredService<IWallpaperControlClient>();
+            _wpControl = App.Services.GetRequiredService<IWallpaperControlClient>();
             _monitorManager = App.Services.GetRequiredService<IMonitorManagerClient>();
-            //_dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
+            //_dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;            
+        }
+
+        public WpCustomize(IMetaData metaData) : this() // import to library
+        {
+            var wpInfo = GetWpCustomizeDetails(metaData, _userSettings.Settings.WallpaperArrangement, _userSettings.Settings.SelectedMonitor);
+
+            metaData.WpCustomizePathUsing = wpInfo.Item1;
+            metaData.WpCustomizePathTmp = Path.Combine(metaData.FolderPath, "WpCustomizePathTmp.json");
+            if (!File.Exists(metaData.WpCustomizePathTmp))
+            {
+                File.Copy(metaData.WpCustomizePath, metaData.WpCustomizePathTmp, true);
+            }
         }
 
         public WpCustomize(
-            IMetaData metaData, 
-            EventHandler<DoubleValueChangedEventArgs> doubleValueChanged, 
+            IMonitor monitor,
+            IMetaData metaData,
+            EventHandler<DoubleValueChangedEventArgs> doubleValueChanged,
             EventHandler<BoolValueChangedEventArgs> boolValueChanged,
             EventHandler<StringValueChangedEventArgs> stringValueChanged) : this()
         {
@@ -44,14 +57,18 @@ namespace VirtualPaper.UI.UserControls
             _boolValueChanged = boolValueChanged;
             _stringValueChanged = stringValueChanged;
 
+            _monitor = monitor;
             _metaData = metaData;
             try
             {
                 var wpInfo = GetWpCustomizeDetails(metaData, _userSettings.Settings.WallpaperArrangement, _userSettings.Settings.SelectedMonitor);
 
-                metaData.WpCustomizePathUsing = wpInfo.Item1;              
+                metaData.WpCustomizePathUsing = wpInfo.Item1;
                 metaData.WpCustomizePathTmp = Path.Combine(metaData.FolderPath, "WpCustomizePathTmp.json");
-                File.Copy(metaData.WpCustomizePathUsing, metaData.WpCustomizePathTmp, true);
+                if (!File.Exists(metaData.WpCustomizePathTmp))
+                {
+                    File.Copy(metaData.WpCustomizePath, metaData.WpCustomizePathTmp, true);
+                }
 
                 this._wpCustomizePathUsing = metaData.WpCustomizePathUsing;
                 this._wpCustomizePathTmp = metaData.WpCustomizePathTmp;
@@ -63,7 +80,7 @@ namespace VirtualPaper.UI.UserControls
             }
             ReadUI();
         }
-         
+
         private void ReadUI()
         {
             try
@@ -126,7 +143,7 @@ namespace VirtualPaper.UI.UserControls
                         Margin = _margin,
                         Minimum = (double)item.Value["Min"],
                         Maximum = (double)item.Value["Max"],
-                        Value = (double)item.Value["Value"],                       
+                        Value = (double)item.Value["Value"],
                     };
                     if (item.Value["Step"] != null && !string.IsNullOrWhiteSpace(item.Value["Step"].ToString()))
                     {
@@ -162,24 +179,24 @@ namespace VirtualPaper.UI.UserControls
                     Textbox_TextChanged(tb);
                     obj = tb;
                 }
-                else if (uiElementType.Equals("Button", StringComparison.OrdinalIgnoreCase))
-                {
-                    var btn = new Button
-                    {
-                        Name = item.Key,
-                        Content = item.Value["Value"].ToString(),
-                        MaxWidth = _minWidth,
-                        MinWidth = _minWidth,
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                        Margin = _margin
-                    };
-                    if (item.Value["Help"] != null && !string.IsNullOrWhiteSpace(item.Value["Help"].ToString()))
-                    {
-                        ToolTipService.SetToolTip(btn, new ToolTip() { Content = (string)item.Value["Help"] });
-                    }
-                    btn.Click += Btn_Click;
-                    obj = btn;
-                }
+                //else if (uiElementType.Equals("Button", StringComparison.OrdinalIgnoreCase))
+                //{
+                //    var btn = new Button
+                //    {
+                //        Name = item.Key,
+                //        Content = item.Value["Value"].ToString(),
+                //        MaxWidth = _minWidth,
+                //        MinWidth = _minWidth,
+                //        HorizontalAlignment = HorizontalAlignment.Left,
+                //        Margin = _margin
+                //    };
+                //    if (item.Value["Help"] != null && !string.IsNullOrWhiteSpace(item.Value["Help"].ToString()))
+                //    {
+                //        ToolTipService.SetToolTip(btn, new ToolTip() { Content = (string)item.Value["Help"] });
+                //    }
+                //    btn.Click += Btn_Click;
+                //    obj = btn;
+                //}
                 //else if (uiElementType.Equals("Color", StringComparison.OrdinalIgnoreCase))
                 //{
                 //    var selectedColorBrush = GetSolidColorBrush(item.Value["Value"].ToString());
@@ -546,26 +563,23 @@ namespace VirtualPaper.UI.UserControls
             {
                 BtnRestoreDefault.IsEnabled = false;
 
-                //if (RestoreCustomize(_metaData, _wpCustomizePathUsing))
-                //{
                 File.Copy(_metaData.WpCustomizePath, _metaData.WpCustomizePathTmp, true);
                 skPanel.Children.Clear();
                 ReadUI();
-                //}
 
                 BtnRestoreDefault.IsEnabled = true;
             }
         }
 
-        private void Btn_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var item = (Button)sender;
-                //WallpaperSendMsg(new VirtualPaperButton() { Name = item.Name });
-            }
-            catch { }
-        }
+        //private void Btn_Click(object sender, RoutedEventArgs e)
+        //{
+        //    try
+        //    {
+        //        var item = (Button)sender;
+        //        //WallpaperSendMsg(new VirtualPaperButton() { Name = item.Name });
+        //    }
+        //    catch { }
+        //}
         #endregion
 
         #region checkbox
@@ -619,11 +633,11 @@ namespace VirtualPaper.UI.UserControls
         //        switch (_userSettings.Settings.WallpaperArrangement)
         //        {
         //            case WallpaperArrangement.Per:
-        //                _desktopWpControl.SendMessageWallpaper(_monitor, _metaData, msg);
+        //                _wpControl.SendMessageWallpaperAsync(_monitor, _metaData, msg);
         //                break;
-        //            case WallpaperArrangement.Span:
+        //            case WallpaperArrangement.Expand:
         //            case WallpaperArrangement.Duplicate:
-        //                _desktopWpControl.SendMessageWallpaper(_metaData, msg);
+        //                _wpControl.SendMessageWallpaperAsync(_metaData, msg);
         //                break;
         //        }
         //    });
@@ -664,23 +678,23 @@ namespace VirtualPaper.UI.UserControls
 
             string wpCustomizePathUsing = string.Empty;
             IMonitor monitor = null;
-            var items = _desktopWpControl.Wallpapers.ToList().FindAll(x => x.FolderPath == metaData.FolderPath);
+            var items = _wpControl.Wallpapers.ToList().FindAll(x => x.FolderPath == metaData.FolderPath);
             if (items.Count == 0)
             {
                 try
                 {
                     monitor = selectedMonitor;
                     var dataFolder = Path.Combine(_userSettings.Settings.WallpaperDir, Constants.CommonPaths.TempDir);
-                    if (monitor?.Index.ToString() != null)
+                    if (monitor?.Content != null)
                     {
                         string wpdataFolder = null;
                         switch (arrangement)
                         {
                             case WallpaperArrangement.Per:
-                                wpdataFolder = Path.Combine(dataFolder, metaData.FolderPath, monitor.Index.ToString());
+                                wpdataFolder = Path.Combine(dataFolder, metaData.FolderPath, monitor.Content);
                                 break;
-                            case WallpaperArrangement.Span:
-                                wpdataFolder = Path.Combine(dataFolder, metaData.FolderPath, "Span");
+                            case WallpaperArrangement.Expand:
+                                wpdataFolder = Path.Combine(dataFolder, metaData.FolderPath, "Expand");
                                 break;
                             case WallpaperArrangement.Duplicate:
                                 wpdataFolder = Path.Combine(dataFolder, metaData.FolderPath, "Duplicate");
@@ -723,7 +737,7 @@ namespace VirtualPaper.UI.UserControls
                             monitor = index != -1 ? items[index].Monitor : items[0].Monitor;
                         }
                         break;
-                    case WallpaperArrangement.Span:
+                    case WallpaperArrangement.Expand:
                     case WallpaperArrangement.Duplicate:
                         {
                             wpCustomizePathUsing = items[0].WpCustomizePathUsing;
@@ -770,6 +784,50 @@ namespace VirtualPaper.UI.UserControls
         //    };
         //}
 
+        internal async void SendMessage()
+        {
+            await _wpControl.SendMessageWallpaperAsync(_monitor, _metaData, new VirtualPaperInitFilterCmd());
+
+            foreach (var item in _wpCustomizeData)
+            {
+                string uiElementType = item.Value["Type"].ToString();
+                if (uiElementType.Equals("Slider", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _wpControl.SendMessageWallpaperAsync(_monitor, _metaData, new VirtualPaperSlider()
+                    {
+                        Name = item.Key,
+                        Value = (double)item.Value["Value"]
+                    });
+                }
+                else if (uiElementType.Equals("Textbox", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _wpControl.SendMessageWallpaperAsync(_monitor, _metaData, new VirtualPaperTextBox()
+                    {
+                        Name = item.Key,
+                        Value = item.Value["Value"].ToString(),
+                    });
+                }
+                else if (uiElementType.Equals("CheckBox", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _wpControl.SendMessageWallpaperAsync(_monitor, _metaData, new VirtualPaperCheckbox()
+                    {
+                        Name = item.Key,
+                        Value = (bool)item.Value["Value"],
+                    });
+                }
+                else if (uiElementType.Equals("Dropdown", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _wpControl.SendMessageWallpaperAsync(_monitor, _metaData, new VirtualPaperDropdown()
+                    {
+                        Name = item.Key,
+                        Value = (int)item.Value["Value"],
+                    });
+                }
+            }
+
+            await _wpControl.SendMessageWallpaperAsync(_monitor, _metaData, new VirtualPaperApplyCmd());
+        }
+
         private void OnCustomizeValueChanged(DoubleValueChangedEventArgs e)
         {
             UpdatePropertyFile(false);
@@ -788,24 +846,40 @@ namespace VirtualPaper.UI.UserControls
             _stringValueChanged?.Invoke(this, e);
         }
 
+        #region dispose
+        private bool _isDisposed;
+        private void Dispose(bool disposing)
+        {
+            if (!_isDisposed)
+            {
+                if (disposing)
+                {
+                    _doubleValueChanged -= _observer.OnCustomizeValueChanged;
+                    _boolValueChanged -= _observer.OnCustomizeValueChanged;
+                    _stringValueChanged -= _observer.OnCustomizeValueChanged;
+                }
+                _isDisposed = true;
+            }
+        }
+
         public void Dispose()
         {
-            _doubleValueChanged -= _observer.OnCustomizeValueChanged;
-            _boolValueChanged -= _observer.OnCustomizeValueChanged;
-            _stringValueChanged -= _observer.OnCustomizeValueChanged;
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
+        #endregion
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private string _wpCustomizePathUsing;
         private string _wpCustomizePathTmp;
         private IMetaData _metaData;
-        //private IMonitor _monitor;
+        private IMonitor _monitor;
         private JObject _wpCustomizeData;
         private readonly Thickness _margin = new(0, 0, 20, 10);
         private readonly double _minWidth = 200;
         private readonly ICustomizeValueChangedObserver _observer;
         private readonly IUserSettingsClient _userSettings;
-        private readonly IWallpaperControlClient _desktopWpControl;
+        private readonly IWallpaperControlClient _wpControl;
         private readonly IMonitorManagerClient _monitorManager;
         //private readonly DispatcherQueue _dispatcherQueue;
         private readonly object _restoreLock = new();

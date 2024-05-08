@@ -1,13 +1,15 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using NLog;
 using System;
 using System.Diagnostics;
-using VirtualPaper.Grpc.Client.Interfaces;
+using System.Numerics;
 using VirtualPaper.Models.WallpaperMetaData;
 using VirtualPaper.UI.ViewModels.WpSettingsComponents;
+using Windows.ApplicationModel.DataTransfer;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -41,18 +43,19 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
         private void ItemsView_RightTapped(object sender, RightTappedRoutedEventArgs e)
         {
             var dataContext = ((FrameworkElement)e.OriginalSource).DataContext;
-            _rightTrappedItem = dataContext as IMetaData;
+            _rightTrappedItem = dataContext as MetaData;
+            var itemsView = (ItemsView)sender;
 
             if (_rightTrappedItem == null)
             {
                 //Hide()方法可能无效是因为MenuFlyout是由ContextFlyout属性触发
                 //ItemsViewMenu.Hide();
-                var itemsView = (ItemsView)sender;
+                //var itemsView = (ItemsView)sender;
                 itemsView.ContextFlyout = null;
             }
             else
             {
-                ItemsView.ContextFlyout = ItemsViewMenu;
+                itemsView.ContextFlyout = ItemsViewMenu;
             }
         }
 
@@ -81,10 +84,10 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
                         await _viewModel.PreviewAsync(_rightTrappedItem);
                         break;
                     case "Import":
-                        await _viewModel.ImportAsync(_rightTrappedItem.FilePath);
+                        _viewModel.Import(_rightTrappedItem);
                         break;
                     case "Apply":
-                        await _viewModel.ImportAsync(_rightTrappedItem.FilePath);
+                        _viewModel.Import(_rightTrappedItem);
                         await _viewModel.ApplyAsync(this.XamlRoot);
                         break;
                     case "ShowOnDisk":
@@ -102,8 +105,50 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             }
         }
 
+        private void ItemsView_DragOver(object sender, DragEventArgs e)
+        {
+            e.AcceptedOperation = DataPackageOperation.Copy;
+        }
+
+        private async void ItemsView_Drop(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            {
+                var items = await e.DataView.GetStorageItemsAsync();
+                await _viewModel.TryDropFileAsync(items, this.XamlRoot);
+            }
+            e.Handled = true;
+        }
+
+        private void ItemGrid_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            CreateOrUpdateSpringAnimation(1.5f);
+
+            (sender as UIElement).StartAnimation(_springAnimation);
+        }
+
+        private void ItemGrid_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            CreateOrUpdateSpringAnimation(1.0f);
+
+            (sender as UIElement).StartAnimation(_springAnimation);
+        }
+
+        private void CreateOrUpdateSpringAnimation(float finalValue)
+        {
+            if (_springAnimation == null)
+            {
+                _springAnimation = _compositor.CreateSpringVector3Animation();
+                _springAnimation.Target = "Scale";
+            }
+
+            _springAnimation.FinalValue = new Vector3(finalValue);
+        }
+
         private LibraryContentsViewModel _viewModel;
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private IMetaData _rightTrappedItem;
+        private Compositor _compositor = App.Services.GetRequiredService<MainWindow>().Compositor;
+        private SpringVector3NaturalMotionAnimation _springAnimation;        
     }
 }

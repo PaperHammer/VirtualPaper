@@ -2,31 +2,31 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Files;
-using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.Models.WallpaperMetaData;
 using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels.WpSettingsComponents;
 using VirtualPaper.UI.Views.Utils;
 using VirtualPaper.UI.Views.WpSettingsComponents;
 using WinUI3Localizer;
+using Monitor = VirtualPaper.Models.Cores.Monitor;
 
 namespace VirtualPaper.UI.ViewModels
 {
     public class WpSettingsViewModel : ObservableObject
     {
-        public ObservableCollection<IMonitor> Monitors { get; set; } = [];
+        public ObservableList<IMonitor> Monitors { get; set; } = [];
+
         public string Text_Title { get; set; } = string.Empty;
         public string Text_Close { get; set; } = string.Empty;
         public string Text_Restore { get; set; } = string.Empty;
@@ -37,11 +37,18 @@ namespace VirtualPaper.UI.ViewModels
         public string Text_Cancel { get; set; } = string.Empty;
         public string Text_Loading { get; set; } = string.Empty;
 
-        private int _thuMonitorSelectedIdx = 0;
-        public int ThuMonitorSelectedIdx
+        private int _monitorSelectedIdx = 0;
+        public int MonitorSelectedIdx
         {
-            get => _thuMonitorSelectedIdx;
-            set { _thuMonitorSelectedIdx = value; OnPropertyChanged(); }
+            get => _monitorSelectedIdx;
+            set
+            {
+                if (_monitorSelectedIdx == value) return;
+
+                _monitorSelectedIdx = value;
+                OnPropertyChanged();
+                _ = UpdateWpConfig();                
+            }
         }
 
         public List<NavigationViewItem> NavsMenuItems { get; set; } = [];
@@ -74,6 +81,34 @@ namespace VirtualPaper.UI.ViewModels
             set { _selectedNav = value; OnPropertyChanged(); }
         }
 
+        private bool _infoBarIsOpen = false;
+        public bool InfoBarIsOpen
+        {
+            get => _infoBarIsOpen;
+            set { _infoBarIsOpen = value; OnPropertyChanged(); }
+        }
+
+        private string _infobarTitle;
+        public string InfobarTitle
+        {
+            get { return _infobarTitle; }
+            set { _infobarTitle = value; OnPropertyChanged(); }
+        }
+
+        private string _infobarMsg;
+        public string InfobarMsg
+        {
+            get { return _infobarMsg; }
+            set { _infobarMsg = value; OnPropertyChanged(); }
+        }
+
+        private InfoBarSeverity _infoBarSeverity;
+        public InfoBarSeverity InfoBarSeverity
+        {
+            get { return _infoBarSeverity; }
+            set { _infoBarSeverity = value; OnPropertyChanged(); }
+        }
+
         public WpSettingsViewModel(
             IMonitorManagerClient monitorManagerClient,
             IWallpaperControlClient wallpaperControlClient,
@@ -86,6 +121,7 @@ namespace VirtualPaper.UI.ViewModels
             InitText();
         }
 
+        #region Init
         private void InitText()
         {
             _localizer = Localizer.Get();
@@ -100,15 +136,18 @@ namespace VirtualPaper.UI.ViewModels
             Text_Cancel = _localizer.GetLocalizedString("WpSettings_Text_Cancel");
             Text_Loading = _localizer.GetLocalizedString("WpSettings_Text_Loading");
 
+            InfobarTitle = _localizer.GetLocalizedString("Wpconfig_InfobarTitle");
+
             NavsMenuItems = [
                 new() {
-                Content = _localizer.GetLocalizedString("WpSettings_NavHeader_WpConfig"),
-                Tag = "WpConfig"
+                    Content = _localizer.GetLocalizedString("WpSettings_NavHeader_WpConfig"),
+                    Tag = "WpConfig"
                 },
-                new(){
-                Content = _localizer.GetLocalizedString("WpSettings_NavHeader_LibraryContents"),
-                Tag = "LibraryContents"
-            }];
+                new() {
+                    Content = _localizer.GetLocalizedString("WpSettings_NavHeader_LibraryContents"),
+                    Tag = "LibraryContents"
+                }
+            ];
         }
 
         internal void InitNavItems()
@@ -116,44 +155,53 @@ namespace VirtualPaper.UI.ViewModels
             SelectedNav = NavsMenuItems[0];
         }
 
-        internal void InitMonitors()
+        internal void InitUpdateLayout()
         {
-            Monitors.Clear();
-            foreach (var monitor in _monitorManagerClient.Monitors)
+            _monitors.Clear();
+            switch (_userSettingsClient.Settings.WallpaperArrangement)
             {
-                Monitors.Add(monitor);
+                case WallpaperArrangement.Per:
+                    {
+                        foreach (var monitor in _monitorManagerClient.Monitors)
+                        {
+                            _monitors.Add(monitor);
+                        }
+                    }
+                    break;
+                case WallpaperArrangement.Expand:
+                    {
+                        _monitors.Add(new Monitor(null, "Expand"));
+                    }
+                    break;
+                case WallpaperArrangement.Duplicate:
+                    {
+                        _monitors.Add(new Monitor(null, "Duplicate"));
+                    }
+                    break;
             }
 
-            if (Monitors.Count > 0) ThuMonitorSelectedIdx = 0;
+            Monitors.SetRange(_monitors);
+            if (Monitors.Count > 0)
+            {
+                MonitorSelectedIdx = 0;
+            }
         }
+        #endregion
 
-        internal void IsLoading(bool isLoading)
-        {
-            if (isLoading)
-            {
-                IsEnable = false;
-                LoadingVisibility = Visibility.Visible;
-            }
-            else
-            {
-                IsEnable = true;
-                LoadingVisibility = Visibility.Collapsed;
-            }
-        }
-
+        #region Control Buttons
         internal void Close()
         {
-            _wpConfigViewModel?.Close(Monitors[ThuMonitorSelectedIdx]);
+            _wpConfigViewModel?.Close(Monitors[MonitorSelectedIdx]);
         }
 
-        internal async Task Restore()
+        internal async Task RestoreAsync()
         {
-            await _wpConfigViewModel?.RestoreAsync(Monitors[ThuMonitorSelectedIdx]);
+            await _wpConfigViewModel?.RestoreAsync(Monitors[MonitorSelectedIdx]);
         }
 
         internal async Task DetectAsync(XamlRoot xamlRoot)
         {
-            InitMonitors();
+            InitUpdateLayout();
             await new ContentDialog()
             {
                 // XamlRoot must be set in the case of a ContentDialog running in a Desktop app
@@ -172,12 +220,7 @@ namespace VirtualPaper.UI.ViewModels
 
         internal async Task PreviewAsync()
         {
-            if (_wpConfigViewModel == null
-                || _wpConfigViewModel.Wallpaper == null
-                || _wpConfigViewModel.Wallpaper.FolderPath == string.Empty
-                || _wpConfigViewModel.Wallpaper.WpCustomizePathTmp == string.Empty) return;
-
-            await _wallpaperControlClient.PreviewWallpaperAsync(_wpConfigViewModel.Wallpaper);
+            await _wpConfigViewModel.PreviewWallpaperAsync();
         }
 
         internal async Task ApplyAsync(XamlRoot xamlRoot)
@@ -187,12 +230,10 @@ namespace VirtualPaper.UI.ViewModels
                 _cancellationTokenSourceForApply = new();
                 IsLoading(true);
 
-                #region 合法性检测
-                if (_wpConfigViewModel == null
-                || _wpConfigViewModel.Wallpaper == null
-                || _wpConfigViewModel.Wallpaper.FolderPath == string.Empty) return;
+                #region 合法性检测                
+                if (_wpConfigViewModel == null || !_wpConfigViewModel.IsLegal()) return;
 
-                if (ThuMonitorSelectedIdx >= Monitors.Count)
+                if (MonitorSelectedIdx >= Monitors.Count)
                 {
                     _ = await new ContentDialog()
                     {
@@ -208,52 +249,45 @@ namespace VirtualPaper.UI.ViewModels
                 #endregion
 
                 #region 本地导入时录入信息
-                var dialogResult = await new ContentDialog()
+                string folderName = _wpConfigViewModel.InitUid();
+
+                var detailedInfoViewModel = new DetailedInfoViewModel(_wpConfigViewModel.Wallpaper, true);
+                var cd = new ContentDialog()
                 {
                     XamlRoot = xamlRoot,
                     Title = _localizer.GetLocalizedString("Dialog_Title_Edit"),
-                    Content = new DetailedInfoView()
-                    {
-                        DataContext = new DetailedInfoViewModel(_wpConfigViewModel.Wallpaper, true),
-                    },
+                    Content = new DetailedInfoView() { DataContext = detailedInfoViewModel },
                     PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm"),
                     DefaultButton = ContentDialogButton.Primary,
-                }.ShowAsync();
+                };
+                var dialogResult = await cd.ShowAsync();
                 if (dialogResult != ContentDialogResult.Primary) return;
                 #endregion
 
-                #region 拷贝入库并更新数据
-                DirectoryInfo info = new(_wpConfigViewModel.Wallpaper.FolderPath);
-                string tagetFolder = Path.Combine(_userSettingsClient.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallDir, info.Name);
-                if (!Directory.Exists(tagetFolder))
-                {
-                    FileUtil.DirectoryCopy(
-                        _wpConfigViewModel.Wallpaper.FolderPath,
-                        tagetFolder,
-                        true);
-                }
-                string oldFolderPath = _wpConfigViewModel.Wallpaper.FolderPath;
-
-                _wpConfigViewModel.Wallpaper.FolderPath = _wpConfigViewModel.Wallpaper.FolderPath.Replace(oldFolderPath, tagetFolder);
-                _wpConfigViewModel.Wallpaper.ThumbnailPath = _wpConfigViewModel.Wallpaper.ThumbnailPath.Replace(oldFolderPath, tagetFolder);
-                _wpConfigViewModel.Wallpaper.WpCustomizePath = _wpConfigViewModel.Wallpaper.WpCustomizePath.Replace(oldFolderPath, tagetFolder);
-                _wpConfigViewModel.Wallpaper.WpCustomizePathUsing = _wpConfigViewModel.Wallpaper.WpCustomizePathUsing.Replace(oldFolderPath, tagetFolder);
-                _wpConfigViewModel.Wallpaper.WpCustomizePathTmp = _wpConfigViewModel.Wallpaper.WpCustomizePathTmp.Replace(oldFolderPath, tagetFolder);
-
-                //_wpConfigViewModel.Wallpaper.FolderPath = tagetFolder;
-                //_wpConfigViewModel.Wallpaper.ThumbnailPath = Path.Combine(tagetFolder, Path.GetFileName(_wpConfigViewModel.Wallpaper.ThumbnailPath));
-                //_wpConfigViewModel.Wallpaper.WpCustomizePath = Path.Combine(tagetFolder, "WpCustomize.json");
-
-                JsonStorage<IMetaData>.StoreData(Path.Combine(_wpConfigViewModel.Wallpaper.FolderPath, "MetaData.json"), _wpConfigViewModel.Wallpaper);
+                #region 应用修改（避免第一次导入时的修改无法生效）
+                _wpConfigViewModel.Apply();
                 #endregion
 
-                #region 执行操作
-                _wpConfigViewModel.Apply();
+                #region 拷贝入库并更新数据
+                _wpConfigViewModel.Wallpaper.Title = detailedInfoViewModel.Title;
+                _wpConfigViewModel.Wallpaper.Desc = detailedInfoViewModel.Desc;
+                _wpConfigViewModel.Wallpaper.Tags = detailedInfoViewModel.Tags;
+                _wpConfigViewModel.UpdateMetaData(folderName);
+                #endregion
+
+                TryAddToLibrary();
+
+                #region 执行操作                
+                if (_wallpaperControlClient.Wallpapers.FirstOrDefault(x => x.VirtualPaperUid == _wpConfigViewModel.Wallpaper.VirtualPaperUid) != null)
+                {
+                    _wpConfigViewModel.WpCustomizePage.SendMessage();
+                    return;
+                }
 
                 SetWallpaperResponse response =
                     await _wallpaperControlClient.SetWallpaperAsync(
                         _wpConfigViewModel.Wallpaper,
-                        Monitors[ThuMonitorSelectedIdx],
+                        Monitors[MonitorSelectedIdx],
                         _cancellationTokenSourceForApply.Token);
                 if (!response.IsWorked)
                 {
@@ -270,17 +304,16 @@ namespace VirtualPaper.UI.ViewModels
             }
             catch (OperationCanceledException)
             {
-                _wpConfigViewModel?.OperationCanceled();
+                OperationCanceled();
             }
             catch (RpcException ex)
             {
-                if (ex.StatusCode == StatusCode.Cancelled)
-                    _wpConfigViewModel?.OperationCanceled();
-                else _wpConfigViewModel?.ErrOccoured(ex);
+                if (ex.StatusCode == StatusCode.Cancelled) OperationCanceled();
+                else ErrOccoured(ex);
             }
             catch (Exception ex)
             {
-                _wpConfigViewModel?.ErrOccoured(ex);
+                ErrOccoured(ex);
             }
             finally
             {
@@ -289,64 +322,88 @@ namespace VirtualPaper.UI.ViewModels
                 _cancellationTokenSourceForApply = null;
             }
         }
+        #endregion
+
+        internal void ErrOccoured(Exception ex)
+        {
+            InfoBarSeverity = InfoBarSeverity.Error;
+            InfobarMsg = _localizer.GetLocalizedString("Wpconfig_InfobarMsg_Err");
+            InfoBarIsOpen = true;
+
+            _logger.Error(ex);
+        }
+
+        internal void OperationCanceled()
+        {
+            InfoBarSeverity = InfoBarSeverity.Informational;
+            InfobarMsg = _localizer.GetLocalizedString("Wpconfig_InfobarMsg_Cancel");
+            InfoBarIsOpen = true;
+
+            _logger.Info(InfobarMsg);
+        }
+
+        internal void IsLoading(bool isLoading)
+        {
+            if (isLoading)
+            {
+                IsEnable = false;
+                LoadingVisibility = Visibility.Visible;
+            }
+            else
+            {
+                IsEnable = true;
+                LoadingVisibility = Visibility.Collapsed;
+            }
+        }
 
         internal void TryNavPage(string tag)
         {
             IsLoading(true);
 
-            Page page;
-            if (tag == "WpConfig") page = GetTargetMonitorWallpaperInfo();
-            else if (tag == "Settings") page = InstanceUtil<Page>.TryGetInstanceByName("WpNavSettgins", "");
+            _tag = tag;
+            Page page = null;
+            if (tag == "WpConfig") _ = UpdateWpConfig();
+            else if (tag == "Settings") page = App.Services.GetRequiredService<WpNavSettgins>();
             else page = InstanceUtil<Page>.TryGetInstanceByName(tag, "");
 
-            if (FramePage != page)
+            if (page != null && FramePage != page)
             {
                 FramePage = page;
-            }            
+            }
 
             IsLoading(false);
         }
 
-        internal Page GetTargetMonitorWallpaperInfo()
+        internal Page UpdateWpConfig()
         {
-            string idx = (ThuMonitorSelectedIdx + 1).ToString();
+            if (_monitorSelectedIdx < 0) return null;
+
+            string idx = (MonitorSelectedIdx + 1).ToString();
             Page page = InstanceUtil<Page>.TryGetInstanceByName("WpConfig", idx, idx);
             _wpConfigViewModel = ((WpConfig)page).DataContext as WpConfigViewModel;
-            _wpConfigViewModel._onIsLoading += IsLoading;            
+
+            if (_tag == "WpConfig")
+            {
+                FramePage = page;
+            }
 
             return page;
         }
 
-        internal bool Delete(string folderPath)
+        private void TryAddToLibrary()
         {
-            try
-            {
-                DirectoryInfo di = new(folderPath);
-                di.Delete(true);
-
-                return true;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        internal void AddToLibrary()
-        {
-            if (_wpConfigViewModel == null
-                || _wpConfigViewModel.Wallpaper == null
-                || _wpConfigViewModel.Wallpaper.FolderPath == string.Empty) return;
-
             var viewModel = App.Services.GetRequiredService<LibraryContentsViewModel>();
-            viewModel.LibraryWallpapers.Add(_wpConfigViewModel.Wallpaper);
+            viewModel.AddToLibrary(_wpConfigViewModel.Wallpaper);
         }
 
+        private string _tag;
+        private IList<IMonitor> _monitors = [];
         private ILocalizer _localizer;
         private IMonitorManagerClient _monitorManagerClient;
         private IWallpaperControlClient _wallpaperControlClient;
         private IUserSettingsClient _userSettingsClient;
         private WpConfigViewModel _wpConfigViewModel;
         private CancellationTokenSource _cancellationTokenSourceForApply;
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

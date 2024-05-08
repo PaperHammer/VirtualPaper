@@ -2,13 +2,15 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UI.Utils;
-using Windows.ApplicationModel.Resources;
 using Windows.Storage.Pickers;
 using WinUI3Localizer;
 

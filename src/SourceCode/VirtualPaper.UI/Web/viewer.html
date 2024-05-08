@@ -24,7 +24,7 @@
 
     let volume = 0;
     let speed = 0.0;
-    let muted = false;
+    //let muted = false;
 
     function virtualPaperSourceReload(wallpaperType, filePath) {
         if (curVideoElementId) {
@@ -45,9 +45,9 @@
                 case 'video':
                     curVideoElementId = 'videoEle';
                     elementToInsert = `
-                  <video id="videoEle" class="full-screen" loop controls>
-                      <source src="${filePath}">
-                  </video>`;
+                        <video id="videoEle" class="full-screen" loop controls>
+                            <source src="${filePath}">
+                        </video>`;
                     break;
                 default:
                     return;
@@ -67,9 +67,9 @@
             case "Speed":
                 speed = parseFloat(val);
                 break;
-            case "Muted":
-                muted = val;
-                break;
+            //case "Muted":
+            //    muted = val;
+            //    break;
             case "Saturation":
                 saturate = parseFloat(val);
                 break;
@@ -102,7 +102,7 @@
         if (curVideoElementId) {
             element.volume = volume;
             element.playbackRate = speed;
-            element.muted = muted;
+            //element.muted = muted;
         }
 
         return "success";

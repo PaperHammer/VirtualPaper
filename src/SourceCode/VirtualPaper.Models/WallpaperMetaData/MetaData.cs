@@ -10,7 +10,7 @@ namespace VirtualPaper.Models.WallpaperMetaData
     {
         public string VirtualPaperUid { get; set; } = string.Empty; // online
         public ApplicationInfo AppInfo { get; set; } = new(); // apply online
-        public string Title { get; set; } = string.Empty; // apply online
+        public string Title { get; set; } = string.Empty;// apply online
         public string Desc { get; set; } = string.Empty; // apply online
         public string Authors { get; set; } = string.Empty; // online
         public string PublishDate { get; set; } = string.Empty; // online
@@ -36,7 +36,7 @@ namespace VirtualPaper.Models.WallpaperMetaData
         public bool IsDownloading { get; set; } // local run
         public float DownloadingProgress { get; set; } // local run
         public string DownloadingProgressText { get; set; } = string.Empty; // local run
-        public List<string> Arguments { get; set; } = []; // local run
+        //public List<string> Arguments { get; set; } = []; // local run
 
         public MetaData() { }
 
@@ -49,7 +49,7 @@ namespace VirtualPaper.Models.WallpaperMetaData
         {
             this.FolderPath = folderPath;
             string dataPath = Path.Combine(folderPath, "wpMetaData.json");
-            
+
             var metaData = JsonStorage<MetaData>.LoadData(dataPath);
             Init(metaData);
         }
@@ -70,6 +70,13 @@ namespace VirtualPaper.Models.WallpaperMetaData
             this.FilePath = metaData.FilePath;
             this.ThumbnailPath = metaData.ThumbnailPath;
             this.WpCustomizePath = metaData.WpCustomizePath;
+            this.WpCustomizePathUsing = metaData.WpCustomizePathUsing;
+            this.WpCustomizePathTmp = metaData.WpCustomizePathTmp;
+
+            this.Resolution = metaData.Resolution;
+            this.AspectRatio = metaData.AspectRatio;
+            this.FileSize = metaData.FileSize;
+            this.FileExtension = metaData.FileExtension;
 
             this.State = metaData.State;
             this.IsStartup = metaData.IsStartup;
@@ -77,13 +84,6 @@ namespace VirtualPaper.Models.WallpaperMetaData
             this.IsDownloading = metaData.IsDownloading;
             this.DownloadingProgress = metaData.DownloadingProgress;
             this.DownloadingProgressText = metaData.DownloadingProgressText;
-            this.Arguments = metaData.Arguments;
-
-            if (Arguments.Count < 2)
-            {
-                Arguments.Add("");
-                Arguments.Add("");
-            }
         }
 
         public enum RunningState

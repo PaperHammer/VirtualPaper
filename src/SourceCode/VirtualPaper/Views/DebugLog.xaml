@@ -8,6 +8,7 @@
         Title="Virtual Paper Debugger"
         Width="1200"
         Height="700"
+        ShowActivated="True"        
         Style="{DynamicResource WindowUI}"
         WindowStartupLocation="CenterScreen"
         mc:Ignorable="d">

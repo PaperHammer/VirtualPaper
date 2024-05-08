@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:cvs="using:VirtualPaper.UI.Utils.Converters"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
 
     <Page.Resources>
         <cvs:BooleanToVisibilityConverter x:Key="VisibilityConverter" />
@@ -35,7 +35,7 @@
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -61,7 +61,7 @@
                                 FontSize="16"/>
                             <TextBlock 
                                 Grid.Row="1" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding Version_LastCheckDate}"/>
                             <HyperlinkButton
                                 Grid.Row="2"
@@ -194,7 +194,7 @@
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -219,7 +219,7 @@
                                 Text="{Binding AppearanceAndAction_AutoStart}"/>
                             <TextBlock 
                                 Grid.Row="1" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding AppearanceAndAction_AutoStatExplain}"/>
                         </Grid>
 
@@ -235,7 +235,7 @@
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -253,7 +253,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="auto"/>
-                                <!--<RowDefinition Height="auto"/>-->
+                                <RowDefinition Height="auto"/>
                             </Grid.RowDefinitions>
 
                             <TextBlock 
@@ -261,14 +261,14 @@
                                 Text="{Binding AppearanceAndAction_AppTheme}"/>
                             <TextBlock 
                                 Grid.Row="1" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding AppearanceAndAction_AppThemeExplain}"/>
-                            <!--<HyperlinkButton 
+                            <HyperlinkButton 
                                 Grid.Row="2" 
                                 Margin="0"
                                 Padding="0"
                                 Content="{Binding AppearanceAndAction_AppThemeHyperlink}"
-                                Click="HyperlinkButton_Click"/>-->
+                                Click="HyperlinkButton_Click"/>
                         </Grid>
 
                         <ComboBox 
@@ -281,11 +281,73 @@
                     </Grid>
 
                     <Grid
+                        x:Name="SystemBackdrop"
+                        Height="90"
+                        Margin="0 5"
+                        Padding="20 0"
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <FontIcon
+                            Grid.Column="0" 
+                            Margin="0 0 20 0"
+                            Glyph="&#xE727;"/>
+
+                        <Grid
+                            Grid.Column="1"
+                            VerticalAlignment="Center">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock 
+                                Grid.Row="0" 
+                                Text="{Binding AppearanceAndAction_AppSystemBackdrop}"/>
+                            <TextBlock 
+                                Grid.Row="1" 
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Text="{Binding AppearanceAndAction_AppSystemBackdropExplain}"/>
+                            <StackPanel
+                                Grid.Row="2"
+                                Margin="0"
+                                Padding="0"
+                                Orientation="Horizontal">
+                                <HyperlinkButton 
+                                    Margin="0"
+                                    Padding="0"
+                                    Content="{Binding AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink}"
+                                    NavigateUri="https://learn.microsoft.com/en-us/windows/apps/design/style/mica"/>
+                            <HyperlinkButton 
+                                    Margin="15 0 0 0"
+                                    Padding="0"
+                                    Content="{Binding AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink}"
+                                    NavigateUri="https://learn.microsoft.com/en-us/windows/apps/design/style/acrylic"/>
+                            </StackPanel>
+                            
+                        </Grid>
+
+                        <ComboBox 
+                            x:Name="AppSystemBackdropCombo"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            ItemsSource="{Binding SystemBackdrops}"
+                            SelectedIndex="{Binding SeletedSystemBackdropIndx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            Width="200" />
+                    </Grid>
+
+                    <Grid
                         x:Name="Language"
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -310,7 +372,7 @@
                                 Text="{Binding AppearanceAndAction_AppLanguage}"/>
                             <TextBlock 
                                 Grid.Row="1" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding AppearanceAndAction_AppLanguageExplain}"/>
                         </Grid>
 
@@ -331,7 +393,7 @@
                         Padding="20 0"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Left"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Expander.Header>
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -358,7 +420,7 @@
                                     <TextBlock
                                         Grid.Row="1"                                        
                                         Text="{Binding AppearanceAndAction_AppFileStorageExplain}"
-                                        Foreground="{StaticResource TextFillColorTertiaryBrush}"/>
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                                 </Grid>
                             </Grid>
                         </Expander.Header>

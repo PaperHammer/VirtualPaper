@@ -21,7 +21,7 @@ namespace VirtualPaper.Factories
                 try
                 {
                     //extract last digits of the Monitor class DeviceName, eg: \\.\DISPLAY4 -> 4
-                    var monitorNumber = monitor.Index.ToString();
+                    var monitorNumber = monitor.Content;
                     if (monitorNumber != null)
                     {
                         //Create a directory with the wp foldername in SaveData/wpdata/, copy wpConfig.json into this.
@@ -32,8 +32,8 @@ namespace VirtualPaper.Factories
                             case WallpaperArrangement.Per:
                                 wpdataFolder = Path.Combine(dataFolder, new DirectoryInfo(mateData.FolderPath).Name, monitorNumber);
                                 break;
-                            case WallpaperArrangement.Span:
-                                wpdataFolder = Path.Combine(dataFolder, new DirectoryInfo(mateData.FolderPath).Name, "Span");
+                            case WallpaperArrangement.Expand:
+                                wpdataFolder = Path.Combine(dataFolder, new DirectoryInfo(mateData.FolderPath).Name, "Expand");
                                 break;
                             case WallpaperArrangement.Duplicate:
                                 wpdataFolder = Path.Combine(dataFolder, new DirectoryInfo(mateData.FolderPath).Name, "Duplicate");

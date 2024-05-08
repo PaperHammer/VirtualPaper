@@ -25,8 +25,7 @@
     <sys:String x:Key="Systray_TextReportBug">Report bugs</sys:String>
     <sys:String x:Key="Systray_TextExit">Exit</sys:String>
 
-    <sys:String x:Key="UIRunnerService_VirtualPaperExceptionGeneral">
-An error has occurred, try restarting the program to fix the problem. If it happens more than once, please report the error or contact the developer and download it again
+    <sys:String x:Key="UIRunnerService_VirtualPaperExceptionGeneral">An error has occurred, try restarting the program to fix the problem. If it happens more than once, please report the error or contact the developer and download it again
     </sys:String>
     <sys:String x:Key="UIRunnerService_Error">Error</sys:String>
 

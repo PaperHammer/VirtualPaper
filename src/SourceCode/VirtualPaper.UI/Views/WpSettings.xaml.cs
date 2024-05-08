@@ -24,7 +24,7 @@ namespace VirtualPaper.UI.Views
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            _viewModel.InitMonitors();
+            _viewModel.InitUpdateLayout();
 
             // NavView doesn't load any page by default, so load home page.
             _viewModel.InitNavItems();
@@ -44,7 +44,7 @@ namespace VirtualPaper.UI.Views
         {
             BtnRestore.IsEnabled = false;
 
-            await _viewModel.Restore();
+            await _viewModel.RestoreAsync();
 
             await Task.Delay(3000);
             BtnRestore.IsEnabled = true;
@@ -79,16 +79,10 @@ namespace VirtualPaper.UI.Views
         {
             BtnApply.IsEnabled = false;
 
-            _viewModel.AddToLibrary();
             await _viewModel.ApplyAsync(this.XamlRoot);
 
             await Task.Delay(3000);
             BtnApply.IsEnabled = true;
-        }
-
-        private void ListViewThuMonitors_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            _viewModel.TryNavPage("WpConfig");
         }
 
         private void NavigationView_SelectionChanged(
@@ -96,17 +90,7 @@ namespace VirtualPaper.UI.Views
             NavigationViewSelectionChangedEventArgs args)
         {
             string tag = args.SelectedItemContainer.Tag.ToString();
-
-            if (args.IsSettingsSelected == true) // Settgins
-            {
-                _viewModel.TryNavPage(tag);
-            }
-            else if (args.SelectedItemContainer != null)
-            {               
-
-
-                _viewModel.TryNavPage(tag);
-            }
+            _viewModel.TryNavPage(tag);
         }
 
         private WpSettingsViewModel _viewModel;

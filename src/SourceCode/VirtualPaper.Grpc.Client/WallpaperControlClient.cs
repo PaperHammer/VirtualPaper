@@ -64,19 +64,23 @@ namespace VirtualPaper.Grpc.Client
             });
         }
 
-        public async Task PreviewWallpaperAsync(IMetaData metaData)
+        public async Task PreviewWallpaperAsync(IMetaData metaData, bool isLibraryPreview)
         {
             WpMetaData wpData = new()
             {
                 Type = (Service.WallpaperControl.WallpaperType)metaData.Type,
                 FolderPath = metaData.FolderPath,
                 FilePath = metaData.FilePath,
-                WpCustomizePath = metaData.WpCustomizePath,
-                WpCustomizePathTmp = metaData.WpCustomizePathTmp
+                WpCustomizePath = metaData.WpCustomizePath, // library
+                WpCustomizePathTmp = metaData.WpCustomizePathTmp, // control
+                WpCustomizePathUsing = metaData.WpCustomizePathUsing,
             };
 
             await _client.PreviewWallpaperAsync(
-                new PreviewWallpaperRequest() { WpMetaData = wpData });
+                new PreviewWallpaperRequest() { 
+                    WpMetaData = wpData,
+                    IsLibraryPreview = isLibraryPreview
+                });
         }
 
         public async Task<WpMetaData> GetWallpaperAsync(string folderPath)
@@ -97,17 +101,6 @@ namespace VirtualPaper.Grpc.Client
                 RunningState = (RunningState)(int)metaData.State,
             };
             return await _client.SetWallpaperAsync(request, cancellationToken: cancellationToken);
-        }
-
-        public async Task<SetWallpaperResponse> SetWallpaperAsync(string folderPath, string monitorId)
-        {
-            var request = new SetWallpaperRequest
-            {
-                FolderPath = folderPath,
-                MonitorId = monitorId,
-                RunningState = RunningState.Ready,
-            };
-            return await _client.SetWallpaperAsync(request);
         }
 
         public async Task RestartAllWallpaperAsync()
@@ -144,19 +137,19 @@ namespace VirtualPaper.Grpc.Client
             await _client.ChangeWallpaperLayoutFolrderPathAsync(request);
         }
 
-        public void SendMessageWallpaper(IMetaData metaData, IpcMessage msg)
-        {
-            _client.SendMessageWallpaper(new WallpaperMessageRequest()
-            {
-                MonitorId = string.Empty,
-                FolderPath = metaData.FolderPath,
-                Msg = JsonUtil.Serialize(msg),
-            });
-        }
+        //public async Task SendMessageWallpaperAsync(IMetaData metaData, IpcMessage msg)
+        //{
+        //    await _client.SendMessageWallpaperAsync(new WallpaperMessageRequest()
+        //    {
+        //        MonitorId = string.Empty,
+        //        FolderPath = metaData.FolderPath,
+        //        Msg = JsonUtil.Serialize(msg),
+        //    });
+        //}
 
-        public void SendMessageWallpaper(IMonitor monitor, IMetaData metaData, IpcMessage msg)
+        public async Task SendMessageWallpaperAsync(IMonitor monitor, IMetaData metaData, IpcMessage msg)
         {
-            _client.SendMessageWallpaper(new WallpaperMessageRequest()
+            await _client.SendMessageWallpaperAsync(new WallpaperMessageRequest()
             {
                 MonitorId = monitor.DeviceId,
                 FolderPath = metaData.FolderPath,
@@ -188,6 +181,7 @@ namespace VirtualPaper.Grpc.Client
             {
                 wallpapers.Add(new WallpaperBasicData()
                 {
+                    VirtualPaperUid = item.VirtualPaperUid,
                     FolderPath = item.FolderPath,
                     ThumbnailPath = item.ThumbnailPath,
                     WpCustomizePathUsing = item.WpCustomizePathUsing,
@@ -199,7 +193,7 @@ namespace VirtualPaper.Grpc.Client
                         DeviceName = item.Monitor.DeviceName,
                         HMonitor = new IntPtr(item.Monitor.HMonitor),
                         IsPrimary = item.Monitor.IsPrimary,
-                        Index = item.Monitor.Index,
+                        Content = item.Monitor.Content,
                         Bounds = new System.Drawing.Rectangle(
                         item.Monitor.Bounds.X,
                         item.Monitor.Bounds.Y,

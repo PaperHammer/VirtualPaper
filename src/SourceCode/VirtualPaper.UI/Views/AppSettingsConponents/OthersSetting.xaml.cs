@@ -21,10 +21,5 @@ namespace VirtualPaper.UI.Views.AppSettingsConponents
         }
 
         private OtherSettingViewModel _viewModel;
-
-        //private void DocumentBtn_Clcik(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
-        //{
-        //    Process.Start("https://github.com/PaperHammer/virtualpaper/wiki");
-        //}
     }
 }

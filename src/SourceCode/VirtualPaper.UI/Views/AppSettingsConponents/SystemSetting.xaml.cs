@@ -16,7 +16,7 @@ namespace VirtualPaper.UI.Views.AppSettingsConponents
         public SystemSetting()
         {
             this.InitializeComponent();
-            _viewModel = App.Services.GetRequiredService<SystemSettingViewModel>(); ;
+            _viewModel = App.Services.GetRequiredService<SystemSettingViewModel>();
             this.DataContext = _viewModel;
         }
 

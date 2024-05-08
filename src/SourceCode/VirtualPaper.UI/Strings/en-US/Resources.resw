@@ -160,7 +160,7 @@
     <value>Type</value>
   </data>
   <data name="DetailedInfo_TextVirtualPaperUid" xml:space="preserve">
-    <value>VP-Uid</value>
+    <value>vpUid</value>
   </data>
   <data name="Dialog_Btn_Cancel" xml:space="preserve">
     <value>Cancel</value>
@@ -187,13 +187,11 @@
     <value>An exception occurs when reading a file, make sure that the target file can be accessed properly</value>
   </data>
   <data name="Dialog_Content_TryDropFileErr" xml:space="preserve">
-    <value>File types are not supported, only the following file types are supported:
+    <value>Only the import of a single file is supported;
+Only the following file types are supported:
   GIF .gif
   Still images .jpg .jpeg .bmp .png
   Video .mp4 .webm</value>
-  </data>
-  <data name="Dialog_Content_TryDropMuchFile" xml:space="preserve">
-    <value>Only a single file can be imported</value>
   </data>
   <data name="Dialog_Content_WallpaperDirectoryChangePathInvalid" xml:space="preserve">
     <value>You can't set the storage directory to the root of your application data</value>
@@ -235,7 +233,7 @@
     <value>Import the editing area</value>
   </data>
   <data name="MenuFlyout_Text_Preview" xml:space="preserve">
-    <value>Previe</value>
+    <value>Preview</value>
   </data>
   <data name="MenuFlyout_Text_ShowOnDisk" xml:space="preserve">
     <value>Open the directory where the file is located</value>
@@ -258,6 +256,18 @@
   <data name="Settings_General_AppearanceAndAction_AppLanguageExplain" xml:space="preserve">
     <value>Changing the language requires a restart of the UI</value>
   </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop" xml:space="preserve">
+    <value>UI background texture</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdropExplain" xml:space="preserve">
+    <value>Changing the background texture requires a restart of the UI</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink" xml:space="preserve">
+    <value>Acrylic</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink" xml:space="preserve">
+    <value>Mica</value>
+  </data>
   <data name="Settings_General_AppearanceAndAction_AppTheme" xml:space="preserve">
     <value>App Theme</value>
   </data>
@@ -278,6 +288,15 @@
   </data>
   <data name="Settings_General_AppearanceAndAction_AutoStatExplain" xml:space="preserve">
     <value>Virtual Paper automatically launches to automatically restore wallpaper settings when powered on</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdAcrylic" xml:space="preserve">
+    <value>Acrylic</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdDefault" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdMica" xml:space="preserve">
+    <value>Mica</value>
   </data>
   <data name="Settings_General_AppearanceAndAction__themeDark" xml:space="preserve">
     <value>Drak</value>
@@ -328,7 +347,7 @@
     <value>Check for updates</value>
   </data>
   <data name="Settings_General_Version_UpdateErr" xml:space="preserve">
-    <value>The detection failed, and the network was checked</value>
+    <value>The detection failed, try to check the network</value>
   </data>
   <data name="Settings_General_Version_UptoNewest" xml:space="preserve">
     <value>It's the latest version!</value>
@@ -390,10 +409,10 @@ Author: PaperHammer</value>
     <value>On</value>
   </data>
   <data name="Settings_Perforemance_Play_OthersFocus" xml:space="preserve">
-    <value>When other applications are focused</value>
+    <value>When the focus app is full-screen</value>
   </data>
   <data name="Settings_Perforemance_Play_OthersFocusExplain" xml:space="preserve">
-    <value>The state of the wallpaper when other apps gain focus</value>
+    <value>The state of the wallpaper when the focus app is set to full screen</value>
   </data>
   <data name="Settings_Perforemance_Play_OthersFullScreen" xml:space="preserve">
     <value>Other apps when they are in full screen</value>
@@ -461,6 +480,27 @@ Author: PaperHammer</value>
   <data name="Settings_System_Text_Developer" xml:space="preserve">
     <value>Developers</value>
   </data>
+  <data name="Settings_WpNav_Text_WpArrange" xml:space="preserve">
+    <value>Wallpaper layout way</value>
+  </data>
+  <data name="Settings_WpNav_WpArrange_Duplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="Settings_WpNav_WpArrange_DuplicateExplain" xml:space="preserve">
+    <value>The other displays are the same as the main display wallpaper</value>
+  </data>
+  <data name="Settings_WpNav_WpArrange_Expand" xml:space="preserve">
+    <value>Expand</value>
+  </data>
+  <data name="Settings_WpNav_WpArrange_ExpandExplain" xml:space="preserve">
+    <value>With the main display wallpaper as the main body, it spans the display to all displays</value>
+  </data>
+  <data name="Settings_WpNav_WpArrange_Per" xml:space="preserve">
+    <value>Per</value>
+  </data>
+  <data name="Settings_WpNav_WpArrange_PerExplain" xml:space="preserve">
+    <value>The wallpapers for each monitor are displayed independently</value>
+  </data>
   <data name="SidebarAccount" xml:space="preserve">
     <value>Account</value>
   </data>
@@ -472,6 +512,9 @@ Author: PaperHammer</value>
   </data>
   <data name="SidebarWpSettings" xml:space="preserve">
     <value>Local</value>
+  </data>
+  <data name="String1" xml:space="preserve">
+    <value />
   </data>
   <data name="WpConfigViewMdoel_TextAspectRatio" xml:space="preserve">
     <value>Aspect Ratio：</value>

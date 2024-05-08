@@ -8,9 +8,14 @@ using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Factories
 {
-    public class WallpaperFactory(IWallpaperConfigFolderFactory wpConfigFolderFactory) : IWallpaperFactory
+    public class WallpaperFactory : IWallpaperFactory
     {
-        public IWallpaper CreateWallpaper(IMetaData metaData, IMonitor monitor, IUserSettingsService userSettings, bool isPreview = false)
+        public IWallpaper CreateWallpaper(
+            IMetaData metaData,
+            IMonitor monitor,
+            IUserSettingsService userSettings,
+            bool isPreview = false,
+            bool isLibraryPreview = false)
         {
             switch (metaData.Type)
             {
@@ -21,7 +26,8 @@ namespace VirtualPaper.Factories
                         return new Webviewer(
                             metaData,
                             monitor,
-                            isPreview);
+                            isPreview,
+                            isLibraryPreview);
                     }
 
                 //case WallpaperType.web:

@@ -18,8 +18,7 @@ namespace VirtualPaper.Services
         public List<IWallpaperLayout> WallpaperLayout { get; private set; } = [];
 
         public UserSettingsService(
-            IMonitorManager moitorManager,
-            ITaskbarService taskbarSevice)
+            IMonitorManager moitorManager)
         {
             Load<ISettings>();
             Load<List<IApplicationRules>>();
@@ -27,11 +26,7 @@ namespace VirtualPaper.Services
 
             Settings.SelectedMonitor = Settings.SelectedMonitor != null ?
                 moitorManager.Monitors.FirstOrDefault(x => x.Equals(Settings.SelectedMonitor)) ?? moitorManager.PrimaryMonitor : moitorManager.PrimaryMonitor;
-
-            //Settings.VideoPlayer = IsVideoPlayerAvailable(Settings.VideoPlayer) ? Settings.VideoPlayer : VirtualPaperMediaPlayer.mpv;
-            //Settings.GifPlayer = IsGifPlayerAvailable(Settings.GifPlayer) ? Settings.GifPlayer : VirtualPaperGifPlayer.mpv;
-            //Settings.WebBrowser = IsWebPlayerAvailable(Settings.WebBrowser) ? Settings.WebBrowser : VirtualPaperWebBrowser.cef;
-
+           
             //previous installed appversion is different from current instance..    
             if (!Settings.AppVersion.Equals(Assembly.GetExecutingAssembly().GetName().Version.ToString(), StringComparison.OrdinalIgnoreCase))
             {
@@ -52,11 +47,6 @@ namespace VirtualPaper.Services
             catch (Exception e)
             {
                 _logger.Error(e);
-            }
-
-            if (Settings.SystemTaskbarTheme != TaskbarTheme.none)
-            {
-                taskbarSevice.Start(Settings.SystemTaskbarTheme);
             }
         }
 
@@ -129,44 +119,6 @@ namespace VirtualPaper.Services
                 throw new InvalidCastException($"ValueType not found: {typeof(T)}");
             }
         }
-
-        #region helpers
-        private bool IsVideoPlayerAvailable(VirtualPaperMediaPlayer mp)
-        {
-            return mp switch
-            {
-                //VirtualPaperMediaPlayer.libvlc => false, //depreciated
-                //VirtualPaperMediaPlayer.libmpv => false, //depreciated
-                VirtualPaperMediaPlayer.wmf => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "wmf", "VirtualPaper.PlayerWmf.exe")),
-                //VirtualPaperMediaPlayer.libvlcExt => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "libVLCPlayer", "libVLCPlayer.exe")),
-                //VirtualPaperMediaPlayer.libmpvExt => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "libMPVPlayer", "libMPVPlayer.exe")),
-                VirtualPaperMediaPlayer.mpv => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "mpv.exe")),
-                VirtualPaperMediaPlayer.vlc => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "vlc", "vlc.exe")),
-                _ => false,
-            };
-        }
-
-        private bool IsGifPlayerAvailable(VirtualPaperGifPlayer gp)
-        {
-            return gp switch
-            {
-                //VirtualPaperGifPlayer.win10Img => false, //xaml island
-                //VirtualPaperGifPlayer.libmpvExt => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "libMPVPlayer", "libMPVPlayer.exe")),
-                VirtualPaperGifPlayer.mpv => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "mpv.exe")),
-                _ => false,
-            };
-        }
-
-        private bool IsWebPlayerAvailable(VirtualPaperWebBrowser wp)
-        {
-            return wp switch
-            {
-                VirtualPaperWebBrowser.cef => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "Cef", "VirtualPaper.PlayerCefSharp.exe")),
-                VirtualPaperWebBrowser.webview2 => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "Wv2", "VirtualPaper.PlayerWebView2.exe")),
-                _ => false,
-            };
-        }
-        #endregion
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly string _settingsPath = Constants.CommonPaths.UserSettingsPath;

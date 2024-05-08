@@ -2,9 +2,6 @@
 {
     public interface ICommandsClient
     {
-        Task ScreensaverConfigure();
-        Task ScreensaverPreview(int previewHandle);
-        Task ScreensaverShow(bool show);
         Task ShowUI();
         Task CloseUI();
         Task RestartUI();

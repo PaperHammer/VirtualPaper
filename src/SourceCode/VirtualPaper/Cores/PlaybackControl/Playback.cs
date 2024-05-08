@@ -30,13 +30,11 @@ namespace VirtualPaper.Cores.PlaybackControl
         public Playback(
             IUserSettingsService userSettings,
             IWallpaperControl wpControl,
-            IMonitorManager monitoeManger,
-            IScreensaverService screenSaver)
+            IMonitorManager monitoeManger)
         {
             this._userSettings = userSettings;
             this._wpControl = wpControl;
             this._monitorManger = monitoeManger;
-            this._screenSaver = screenSaver;
 
             Initialize();
             wpControl.WallpaperReset += (s, e) => FindNewMonitorAndResetHandles();
@@ -124,11 +122,7 @@ namespace VirtualPaper.Cores.PlaybackControl
 
         private void ProcessMonitor(object? sender, EventArgs e)
         {
-            if (_screenSaver.IsRunning) // 屏保
-            {
-                ChangeState(AppWpRunRulesEnum.KeepRun);
-            }
-            else if (WallpaperPlaybackMode == PlaybackMode.Paused || _isLockScreen ||
+            if (WallpaperPlaybackMode == PlaybackMode.Paused || _isLockScreen ||
                 (_isRemoteSession && _userSettings.Settings.RemoteDesktop == AppWpRunRulesEnum.Pause))
             {
                 ChangeState(AppWpRunRulesEnum.Pause);
@@ -169,12 +163,15 @@ namespace VirtualPaper.Cores.PlaybackControl
             var isDesktop = false;
             var fHandle = Native.GetForegroundWindow(); // 当前最前台进程
 
+            #region 白名单判断
             if (IsWhitelistedClass(fHandle))
             {
                 ChangeState(AppWpRunRulesEnum.KeepRun);
                 return;
             }
+            #endregion
 
+            #region 预设内容
             try
             {
                 _ = Native.GetWindowThreadProcessId(fHandle, out int processID);
@@ -187,12 +184,12 @@ namespace VirtualPaper.Cores.PlaybackControl
                     return;
                 }
 
-                //is it vp or its plugins..
-                if (fProcess.Id == _virtualPaperPid || IsPlugin(fProcess.Id))
-                {
-                    ChangeState(AppWpRunRulesEnum.KeepRun);
-                    return;
-                }
+                ////is it vp or its plugins..
+                //if (fProcess.Id == _virtualPaperPid || IsPlugin(fProcess.Id))
+                //{
+                //    ChangeState(AppWpRunRulesEnum.KeepRun);
+                //    return;
+                //}
 
                 //looping through custom rules for user defined..
                 // 对于指定前台进程的预设置操作
@@ -212,16 +209,17 @@ namespace VirtualPaper.Cores.PlaybackControl
                 ChangeState(AppWpRunRulesEnum.KeepRun);
                 return;
             }
+            #endregion
 
+            #region 关于桌面焦点、应用程序是否最大化/覆盖全屏的检测
             try
             {
                 // 关于桌面焦点、应用程序是否最大化/覆盖全屏的检测
-
                 if (!(fHandle.Equals(Native.GetDesktopWindow()) 
                     || fHandle.Equals(Native.GetShellWindow())))
                 {
+                    #region 单屏
                     // 单屏
-
                     if (!_monitorManger.IsMultiScreen() ||
                         _userSettings.Settings.StatuMechanism == StatuMechanismEnum.All)
                     //_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate)
@@ -238,19 +236,7 @@ namespace VirtualPaper.Cores.PlaybackControl
                         else if (Native.IsZoomed(fHandle) || IsZoomedCustom(fHandle))
                         {
                             //maximised window or window covering whole screen.
-                            switch (_userSettings.Settings.AppFullscreen)
-                            {
-                                case AppWpRunRulesEnum.Silence:
-                                    SilenceWallpapers();
-                                    break;
-                                case AppWpRunRulesEnum.Pause:
-                                    PauseWallpapers();
-                                    break;
-                                case AppWpRunRulesEnum.KeepRun:
-                                    PlayWallpapers();
-                                    UnSilenceWallpapers();
-                                    break;
-                            }
+                            ChangeState(_userSettings.Settings.AppFullscreen);
                         }
                         else
                         {
@@ -258,19 +244,21 @@ namespace VirtualPaper.Cores.PlaybackControl
                             ChangeState(_userSettings.Settings.AppFocus);
                         }
                     }
+                    #endregion
 
+                    #region 多屏
                     // 多屏
                     else
                     {
                         // 仅聚焦屏幕播放声音
-                        IMonitor focusedScreen;
+                        IMonitor? focusedScreen;
                         if ((focusedScreen = MapWindowToMonitor(fHandle)) != null)
                         {
                             //unpausing the rest of _wallpapers.
                             //only one window can be foreground!
                             foreach (var item in _monitorManger.Monitors)
                             {
-                                if (_userSettings.Settings.WallpaperArrangement != WallpaperArrangement.Span &&
+                                if (_userSettings.Settings.WallpaperArrangement != WallpaperArrangement.Expand &&
                                     !focusedScreen.Equals(item))
                                 {
                                     ChangeState(AppWpRunRulesEnum.KeepRun, item);
@@ -291,7 +279,7 @@ namespace VirtualPaper.Cores.PlaybackControl
                             ChangeState(AppWpRunRulesEnum.Silence, focusedScreen);
                         }
                         // 说明在其他焦点应用程序上
-                        else if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Span)
+                        else if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand)
                         {
                             // 跨越多屏                            
                             if (IsZoomedSpan(fHandle))
@@ -302,27 +290,6 @@ namespace VirtualPaper.Cores.PlaybackControl
                             else //window is not greater >90%
                             {
                                 ChangeState(_userSettings.Settings.AppFocus);
-                                //switch (_userSettings.Settings.AppFocus)
-                                //{
-                                //    case AppWpRunRulesEnum.Silence:
-                                //        SilenceWallpapers();
-                                //        break;
-                                //    case AppWpRunRulesEnum.Pause:
-                                //        PauseWallpapers();
-                                //        break;
-                                //    case AppWpRunRulesEnum.KeepRun:
-                                //        PlayWallpapers();
-                                //        UnSilenceWallpapers();
-                                //        break;
-                                //}
-                                //if (_userSettings.Settings.AppFocus == AppWpRunRulesEnum.Pause)
-                                //{
-                                //    PauseWallpapers();
-                                //}
-                                //else
-                                //{
-                                //    PlayWallpapers();
-                                //}
                             }
                         }
                         else if (Native.IsZoomed(fHandle) || IsZoomedCustom(fHandle))
@@ -336,6 +303,7 @@ namespace VirtualPaper.Cores.PlaybackControl
                             ChangeState(_userSettings.Settings.AppFocus, focusedScreen);
                         }
                     }
+                    #endregion
 
                     if (isDesktop)
                     {
@@ -348,13 +316,14 @@ namespace VirtualPaper.Cores.PlaybackControl
                 }
             }
             catch { }
+            #endregion
         }
 
         private bool IsWhitelistedClass(IntPtr hwnd)
         {
             const int maxChars = 256;
-            StringBuilder className = new StringBuilder(maxChars);
-            return Native.GetClassName((int)hwnd, className, maxChars) > 0 && _classWhiteList.Any(x => x.Equals(className.ToString(), StringComparison.Ordinal));
+            StringBuilder className = new(maxChars);
+            return Native.GetClassName(hwnd, className, maxChars) > 0 && _classWhiteList.Any(x => x.Equals(className.ToString(), StringComparison.Ordinal));
         }
 
         private void PauseWallpapers()
@@ -475,10 +444,10 @@ namespace VirtualPaper.Cores.PlaybackControl
             }
         }
 
-        private bool IsPlugin(int pid)
-        {
-            return _wpControl.Wallpapers.Any(x => x.Proc != null && x.Proc.Id == pid);
-        }
+        //private bool IsPlugin(int pid)
+        //{
+        //    return _wpControl.Wallpapers.Any(x => x.Proc != null && x.Proc.Id == pid);
+        //}
 
         /// <summary>
         /// Checks if hWnd window size is >95% for its running screen.
@@ -608,6 +577,5 @@ namespace VirtualPaper.Cores.PlaybackControl
         private readonly IUserSettingsService _userSettings;
         private readonly IWallpaperControl _wpControl;
         private readonly IMonitorManager _monitorManger;
-        private readonly IScreensaverService _screenSaver;
     }
 }

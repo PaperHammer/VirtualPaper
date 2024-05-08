@@ -33,13 +33,17 @@ namespace VirtualPaper.Cores.Players.Web
         public Webviewer(
             IMetaData metaData,
             IMonitor monitor,
-            bool isPreview)
+            bool isPreview,
+            bool isLibrarypreview)
         {
             _isPreview = isPreview;
 
             if (isPreview)
             {
-                _webPreviewer = new(metaData.Type, metaData.FilePath, metaData.WpCustomizePathTmp);
+                _webPreviewer = new(
+                    metaData.Type, 
+                    metaData.FilePath, 
+                    isLibrarypreview ? metaData.WpCustomizePath : metaData.WpCustomizePathTmp);
                 return;
             }
 

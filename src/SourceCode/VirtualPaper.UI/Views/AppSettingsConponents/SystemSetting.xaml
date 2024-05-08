@@ -7,14 +7,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
 
     <Grid
         Margin="15 0">
         <ScrollView>
             <StackPanel
                 Orientation="Vertical">
-
+                
                 <StackPanel
                     x:Name="Developer"
                     Margin="0 20 0 0"
@@ -31,7 +31,7 @@
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -56,7 +56,7 @@
                                 Text="{Binding Developer_Debug}"/>
                             <TextBlock 
                                 Grid.Row="1" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding Developer_DebugExplain}"/>
                         </Grid>
 
@@ -72,7 +72,7 @@
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -97,7 +97,7 @@
                                 Text="{Binding Developer_Log}"/>
                             <TextBlock 
                                 Grid.Row="1" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding Developer_LogExplain}"/>
                         </Grid>
 

@@ -25,8 +25,7 @@
     <sys:String x:Key="Systray_TextReportBug">报告漏洞</sys:String>
     <sys:String x:Key="Systray_TextExit">退出</sys:String>
     
-    <sys:String x:Key="UIRunnerService_VirtualPaperExceptionGeneral">
-发生错误，尝试重启程序以解决问题。若多次发生，请上报错误或联系开发者，并重新下载
+    <sys:String x:Key="UIRunnerService_VirtualPaperExceptionGeneral">发生错误，尝试重启程序以解决问题。若多次发生，请上报错误或联系开发者，并重新下载
     </sys:String>
     <sys:String x:Key="UIRunnerService_Error">错误</sys:String>
     
@@ -40,8 +39,7 @@
     <sys:String x:Key="AppUpdater_Propt">提示</sys:String>
     <sys:String x:Key="AppUpdater_TextError">错误</sys:String>
     
-    <sys:String x:Key="WndProcMsg_DescExplorerCrash">
-发生严重错误!
+    <sys:String x:Key="WndProcMsg_DescExplorerCrash">发生严重错误!
 &#10;Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virtual Paper 与 Windows 或者其他桌面个性化软件之间出现冲突。为避免更多问题，已将所有壁纸终止。
     </sys:String>
     <sys:String x:Key="WndProcMsg_TitleAppName">Virtual Paper</sys:String>

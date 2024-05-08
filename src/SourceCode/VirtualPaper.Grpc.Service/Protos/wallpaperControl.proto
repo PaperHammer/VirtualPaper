@@ -40,6 +40,7 @@ message CloseWallpaperMonitorRequest {
 
 message PreviewWallpaperRequest {
 	WpMetaData wp_meta_data = 1;
+	bool is_library_preview = 2;
 }
 
 message SetWallpaperRequest {
@@ -81,11 +82,12 @@ message ChangePathRequest {
 }
 
 message GetWallpapersResponse {
-  string folder_path = 1;
-  MonitorData monitor = 2;
-  string wp_customize_path_using = 3;
-  string thumbnail_path = 4;
-  WallpaperType type = 5;
+	string virtual_paper_uid = 1;
+	string folder_path = 2;
+	MonitorData monitor = 3;
+	string wp_customize_path_using = 4;
+	string thumbnail_path = 5;
+	WallpaperType type = 6;
 }
 
 message WallpaperErrorResponse {
@@ -112,20 +114,18 @@ message WpMetaData {
     WallpaperType type = 7;
     string partition = 8;
     string tags = 9;	
-        
+
     string folder_path = 10;
     string file_path = 11;
     string wp_customize_path = 14;
-    string wp_customize_path_using = 15;
-    string wp_customize_path_tmp = 16;
+    string wp_customize_path_tmp = 15;
+    string wp_customize_path_using = 16;
 	string thumbnail_path = 17;
 
 	string resolution = 18;
 	string aspect_Ratio = 19;
 	string file_size = 20;
 	string file_extension = 21;
-	
-	repeated string arguments = 22;
 }
 
 message MonitorData {
@@ -133,7 +133,7 @@ message MonitorData {
   string device_name = 2;
   string display_name = 3;
   int32 h_monitor = 4;
-  int32 index = 5;
+  string content = 5;
   bool is_primary = 6;
   Rectangle bounds = 7;
   Rectangle working_area = 8;

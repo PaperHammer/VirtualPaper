@@ -104,7 +104,5 @@ namespace VirtualPaper.Models.WallpaperMetaData
         float DownloadingProgress { get; set; }
 
         string DownloadingProgressText { get; set; }
-
-        List<string> Arguments { get; set; } //start commandline args
     }
 }

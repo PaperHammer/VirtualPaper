@@ -211,7 +211,7 @@ namespace VirtualPaper.Views.WindowsMsg
                     {
                         if (IsInputAllowed(wallpaper.MetaData.Type))
                         {
-                            if (display.Equals(wallpaper.Monitor) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Span)
+                            if (display.Equals(wallpaper.Monitor) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand)
                             {
                                 //ref:
                                 //https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keydown
@@ -267,7 +267,7 @@ namespace VirtualPaper.Views.WindowsMsg
                 {
                     if (IsInputAllowed(wallpaper.MetaData.Type))
                     {
-                        if (wallpaper.Monitor.Equals(display) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Span)
+                        if (wallpaper.Monitor.Equals(display) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand)
                         {
                             //The low-order word specifies the x-coordinate of the cursor, the high-order word specifies the y-coordinate of the cursor.
                             //ref: https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-mousemove
@@ -299,7 +299,7 @@ namespace VirtualPaper.Views.WindowsMsg
         {
             if (_displayManager.IsMultiScreen())
             {
-                if (arrangement == WallpaperArrangement.Span)
+                if (arrangement == WallpaperArrangement.Expand)
                 {
                     var screenArea = _displayManager.VirtualScreenBounds;
                     x -= screenArea.Location.X;

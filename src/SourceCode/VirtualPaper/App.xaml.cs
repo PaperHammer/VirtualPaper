@@ -181,8 +181,6 @@ namespace VirtualPaper
                 .AddSingleton<IWallpaperFactory, WallpaperFactory>()
                 .AddSingleton<IWallpaperConfigFolderFactory, WallpaperConfigFolderFactory>()
 
-                .AddSingleton<IScreensaverService, ScreensaverService>()
-                .AddSingleton<ITaskbarService, TaskbarService>()
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IWatchdogService, WatchdogService>()

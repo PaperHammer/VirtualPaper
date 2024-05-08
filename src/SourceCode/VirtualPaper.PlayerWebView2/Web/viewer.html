@@ -13,7 +13,8 @@
 </html>
 
 <script>
-    let curFilter = "saturate(s#) hue-rotate(d#deg) brightness(b#) contrast(c#)";
+    const templateFilter = "saturate(s#) hue-rotate(d#deg) brightness(b#) contrast(c#)";
+    let curFilter = "";
     let curVideoElementId = null; // 存储当前视频元素的ID
     let filter = null;
     let volume = 0;
@@ -53,7 +54,11 @@
         return "success";
     }
 
-    function virtualPaperPropertyListener(propertyType, val) {
+    function virtualPaperInitFilter() {
+        curFilter = templateFilter;
+    }
+
+    function virtualPaperPropertyListener(propertyType, val) {       
         switch (propertyType) {
             case "Volume":
                 volume = parseFloat(val);

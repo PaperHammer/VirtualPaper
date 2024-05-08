@@ -12,9 +12,9 @@ namespace VirtualPaper.Models.Cores.Interfaces
         AppWpRunRulesEnum BatteryPoweredn { get; set; }
         AppWpRunRulesEnum PowerSaving { get; set; }
         AppWpRunRulesEnum RemoteDesktop { get; set; }
-        AppThemeBackground ApplicationThemeBackground { get; set; }
+        AppSystemBackdrop SystemBackdrop { get; set; }
         string AppVersion { get; set; }
-        string ApplicationThemeBackgroundPath { get; set; }
+        //string ApplicationThemeBackgroundPath { get; set; }
         string Language { get; set; }        
         bool IsUpdated { get; set; }
         bool IsAutoStart { get; set; }
@@ -44,10 +44,6 @@ namespace VirtualPaper.Models.Cores.Interfaces
         /// 加载延时
         /// </summary>
         int WallpaperWaitTime { get; set; }
-        #endregion
-
-        #region taskBar
-        TaskbarTheme SystemTaskbarTheme { get; set; }
         #endregion
 
         #region input

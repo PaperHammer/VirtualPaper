@@ -15,29 +15,35 @@
 
     <Grid>
         <ItemsView 
-            x:Name="ItemsView"            
+            x:Name="ItemsViewer"            
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             HorizontalContentAlignment="Left"
-            VerticalContentAlignment="Center"
+            VerticalContentAlignment="Center"            
             ItemsSource="{Binding LibraryWallpapers}"
             SelectionMode="Single"
+            AllowDrop="True"
+            DragOver="ItemsView_DragOver"
+            Drop="ItemsView_Drop"
             IsItemInvokedEnabled="True"
-            RightTapped="ItemsView_RightTapped"            
+            RightTapped="ItemsView_RightTapped"
             ItemInvoked="ItemsView_ItemInvoked">
             <ItemsView.ItemTemplate>
                 <DataTemplate>
                     <ItemContainer 
                         AutomationProperties.Name="{Binding Title}">
-                        <Grid>
-                            <Image 
-                                Height="200"
-                                Width="300"
+                        <Grid
+                            x:Name="ItemGrid"
+                            Height="200"
+                            Width="320">
+                            <Image                                 
                                 Source="{Binding ThumbnailPath}"
-                                Stretch="UniformToFill" 
-                                HorizontalAlignment="Center" 
-                                VerticalAlignment="Center"
-                                ImageFailed="Image_ImageFailed"/>
+                                Stretch="Uniform" 
+                                HorizontalAlignment="Stretch" 
+                                VerticalAlignment="Stretch"
+                                ImageFailed="Image_ImageFailed"
+                                PointerEntered="ItemGrid_PointerEntered"
+                                PointerExited="ItemGrid_PointerExited"/>
                             <StackPanel 
                                 Orientation="Vertical" 
                                 Height="60" 
@@ -47,7 +53,7 @@
                                 Opacity=".75">
                                 <TextBlock 
                                     Text="{Binding Title}" 
-                                    FontSize="20"
+                                    FontSize="18"
                                     TextWrapping="Wrap"
                                     HorizontalTextAlignment="Left"
                                     Foreground="{ThemeResource SystemControlForegroundAltHighBrush}"/>
@@ -58,9 +64,9 @@
             </ItemsView.ItemTemplate>
             <ItemsView.Layout>
                 <UniformGridLayout 
-                    MinRowSpacing="5" 
-                    MinColumnSpacing="5" 
-                    MaximumRowsOrColumns="5"/>
+                    MinRowSpacing="8" 
+                    MinColumnSpacing="8"                     
+                    MaximumRowsOrColumns="-1"/>
             </ItemsView.Layout>
             <ItemsView.ContextFlyout>
                 <MenuFlyout
@@ -119,7 +125,7 @@
                         Click="ContextMenu_Click">
                         <MenuFlyoutItem.Icon>
                             <FontIcon Glyph="&#xE74D;" 
-                                      Foreground="Goldenrod"/>
+                              Foreground="Goldenrod"/>
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
                 </MenuFlyout>

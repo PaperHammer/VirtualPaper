@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vms="using:VirtualPaper.UI.ViewModels"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
     Loaded="Page_Loaded">
 
     <Grid
@@ -33,7 +33,8 @@
                     x:Name="GridControlBtns">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
 
                     <TextBlock 
@@ -42,8 +43,17 @@
                         VerticalAlignment="Center"
                         FontSize="24"/>
 
-                    <StackPanel
+                    <InfoBar
                         Grid.Column="1"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        IsOpen="{Binding InfoBarIsOpen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Severity="{Binding InfoBarSeverity}"
+                        Title="{Binding InfobarTitle}"
+                        Message="{Binding InfobarMsg}" />
+
+                    <StackPanel
+                        Grid.Column="2"
                         VerticalAlignment="Center"
                         HorizontalAlignment="Right"
                         Orientation="Horizontal">
@@ -96,23 +106,24 @@
                 <Grid
                     Grid.Row="1"
                     Margin="20 10">
-                    <ListView 
-                        x:Name="ListViewThuMonitors"
+                    <GridView 
+                        x:Name="GridViewMonitors"
                         ItemsSource="{Binding Monitors}"
-                        SelectedIndex="{Binding ThuMonitorSelectedIdx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        Height="160"
+                        SelectedIndex="{Binding MonitorSelectedIdx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                        
+                        IsItemClickEnabled="True"
                         ScrollViewer.HorizontalScrollMode="Enabled"
                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
                         ScrollViewer.VerticalScrollMode="Disabled"
                         ScrollViewer.VerticalScrollBarVisibility="Hidden"
-                        SelectionMode="Single"
-                        SelectionChanged="ListViewThuMonitors_SelectionChanged">
-                        <ListView.ItemsPanel>
+                        SelectionMode="Single">
+                        <GridView.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <ItemsStackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                                <ItemsStackPanel 
+                                    Orientation="Horizontal" 
+                                    HorizontalAlignment="Center"/>
                             </ItemsPanelTemplate>
-                        </ListView.ItemsPanel>
-                        <ListView.ItemTemplate>
+                        </GridView.ItemsPanel>
+                        <GridView.ItemTemplate>
                             <DataTemplate>
                                 <Border
                                     Height="120" 
@@ -121,14 +132,14 @@
                                     BorderThickness="2"
                                     BorderBrush="{ThemeResource ApplicationForegroundThemeBrush}">
                                     <TextBlock 
-                                        Text="{Binding Index}" 
+                                        Text="{Binding Content}" 
                                         FontSize="30" 
                                         HorizontalAlignment="Center" 
                                         VerticalAlignment="Center"/>
                                 </Border>
                             </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                        </GridView.ItemTemplate>
+                    </GridView>
                 </Grid>
 
                 <Grid
@@ -137,9 +148,7 @@
                     <NavigationView 
                         x:Name="NavView" 
                         PaneDisplayMode="Top"
-                        SelectionFollowsFocus="Enabled" 
-                        IsBackButtonVisible="Collapsed"      
-                        IsSettingsVisible="False"
+                        IsBackButtonVisible="Collapsed"                        
                         SelectedItem="{Binding SelectedNav, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         SelectionChanged="NavigationView_SelectionChanged"
                         MenuItemsSource="{Binding NavsMenuItems, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">

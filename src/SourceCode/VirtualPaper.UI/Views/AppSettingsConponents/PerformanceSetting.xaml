@@ -7,7 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
 
     <Grid
         Margin="15 0">
@@ -30,7 +30,7 @@
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -55,7 +55,7 @@
                                 Text="{Binding Play_OthersFullScreen}"/>
                             <TextBlock 
                                 Grid.Row="1" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding Play_OthersFullScreenExplain}"/>
                         </Grid>
 
@@ -73,7 +73,7 @@
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -98,7 +98,7 @@
                                 Text="{Binding Play_OthersFocus}"/>
                             <TextBlock 
                                 Grid.Row="1" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding Play_OthersFocusExplain}"/>
                         </Grid>
 
@@ -116,7 +116,7 @@
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -160,7 +160,7 @@
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -185,7 +185,7 @@
                                 Text="{Binding Laptop_BatteryPoweredn}"/>
                             <TextBlock 
                                 Grid.Row="1" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding Laptop_BatteryPowerednExplain}"/>
                         </Grid>
 
@@ -203,7 +203,7 @@
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -228,7 +228,7 @@
                                 Text="{Binding Laptop_PowerSaving}"/>
                             <TextBlock 
                                 Grid.Row="1" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding Laptop_PowerSavingExplain}"/>
                         </Grid>
 
@@ -258,7 +258,7 @@
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -283,7 +283,7 @@
                                 Text="{Binding System_RemoteDesktop}"/>
                             <TextBlock 
                                 Grid.Row="1" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding System_RemoteDesktopExplain}"/>
                         </Grid>
 
@@ -301,7 +301,7 @@
                         Height="90"
                         Margin="0 5"
                         Padding="20 0"
-                        Background="{StaticResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto"/>
                             <ColumnDefinition Width="*"/>
@@ -327,11 +327,11 @@
                                 Text="{Binding System_StatuMechanism}"/>
                             <TextBlock 
                                 Grid.Row="1" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding System_StatuMechanismExplain_ForPer}"/>
                             <TextBlock 
                                 Grid.Row="2" 
-                                Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="{Binding System_StatuMechanismExplain_ForAll}"/>
                         </Grid>
 

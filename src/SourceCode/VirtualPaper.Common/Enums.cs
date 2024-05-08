@@ -17,44 +17,15 @@ namespace VirtualPaper.Common
         Dark,
     }
 
-    /// <summary>
-    /// Combines with <see cref="AppTheme"/>
-    /// </summary>
-    public enum AppThemeBackground
+    public enum AppSystemBackdrop
     {
-        default_mica,
-        default_acrylic,
-        dynamic,
-        custom
+        Default,
+        Mica,
+        Acrylic
     }
     #endregion
 
     #region play utils
-    public enum VirtualPaperMediaPlayer
-    {
-        mpv,
-        wmf,
-        vlc
-    }
-
-    public enum VirtualPaperGifPlayer
-    {
-        mpv
-    }
-
-    public enum VirtualPaperPicturePlayer
-    {
-        mpv,
-        winApi,
-        wmf
-    }
-
-    public enum VirtualPaperWebBrowser
-    {
-        webview2,
-        cef,
-    }
-
     public enum PlaybackMode
     {
         [Description("All Wallpapers Silence")]
@@ -67,7 +38,7 @@ namespace VirtualPaper.Common
 
     public enum StatuMechanismEnum
     {
-        Perdisplay,
+        Per,
         All
     }
 
@@ -82,27 +53,7 @@ namespace VirtualPaper.Common
         uniformFill,
         auto
     }
-    #endregion
-
-    #region taskBar
-    public enum TaskbarTheme
-    {
-        [Description("System default.")]
-        none,
-        [Description("Fully transparent.")]
-        clear,
-        [Description("Blurred.")]
-        blur,
-        [Description("Fluent design.")]
-        fluent,
-        [Description("User defined color.")]
-        color,
-        [Description("Wallpaper color avg.")]
-        wallpaper,
-        [Description("Wallpaper color avg fluet style.")]
-        wallpaperFluent,
-    }
-    #endregion
+    #endregion 
 
     #region input
     public enum InputForwardMode
@@ -124,8 +75,8 @@ namespace VirtualPaper.Common
         /// <summary>
         /// 同一壁纸跨越多个显示器
         /// </summary>
-        [Description("Span Across All Display(s)")]
-        Span,
+        [Description("Expand Across All Display(s)")]
+        Expand,
         /// <summary>
         /// 复制主显示器壁纸
         /// </summary>
@@ -214,35 +165,6 @@ namespace VirtualPaper.Common
     }
     #endregion
 
-    #region process uitls
-    //public enum ProcessMonitorAlgorithm
-    //{
-    //    foreground,
-    //    all,
-    //    gamemode
-    //}
-    #endregion
-
-    #region video
-    public enum StreamQualitySuggestion
-    {
-        [Description("144p")]
-        lowest,
-        [Description("240p")]
-        low,
-        [Description("360p")]
-        lowMedium,
-        [Description("480p")]
-        medium,
-        [Description("720p")]
-        mediumHigh,
-        [Description("1080p")]
-        high,
-        [Description("1081p")]
-        highest
-    }
-    #endregion
-
     public enum UpdateWallpaperState
     {
         changed,
@@ -304,7 +226,6 @@ namespace VirtualPaper.Common
         public Contrast Contrast { get; set; }
         public Speed Speed { get; set; }
         public Volume Volume { get; set; }
-        public Muted Muted { get; set; }
 
         public VideoAndGifCostumize()
         {
@@ -314,7 +235,6 @@ namespace VirtualPaper.Common
             Contrast = new();
             Speed = new();
             Volume = new();
-            Muted = new();
 
             _properties = new Dictionary<string, dynamic>
             {
@@ -324,7 +244,6 @@ namespace VirtualPaper.Common
                 { nameof(Contrast), Contrast },
                 { nameof(Speed), Speed },
                 { nameof(Volume), Volume },
-                { nameof(Muted), Muted },
             };
         }
 
@@ -412,13 +331,6 @@ namespace VirtualPaper.Common
         public double Max { get; init; } = 1;
         public double Min { get; init; } = 0;
         public double Step { get; init; } = 0.01;
-    }
-
-    public class Muted
-    {
-        public string Type { get; set; } = "CheckBox";
-        public string Text { get; set; } = "Mute";
-        public bool Value { get; set; }
     }
     #endregion
 }

@@ -14,9 +14,9 @@ namespace VirtualPaper.Models.Cores
         public AppWpRunRulesEnum BatteryPoweredn { get; set; }
         public AppWpRunRulesEnum PowerSaving { get; set; }
         public AppWpRunRulesEnum RemoteDesktop { get; set; }
-        public AppThemeBackground ApplicationThemeBackground { get; set; }
+        public AppSystemBackdrop SystemBackdrop { get; set; }
         public string AppVersion { get; set; } = string.Empty;
-        public string ApplicationThemeBackgroundPath { get; set; } = string.Empty;
+        //public string ApplicationThemeBackgroundPath { get; set; } = string.Empty;
         public string Language { get; set; } = string.Empty;
         public bool IsUpdated { get; set; }
         public bool IsAutoStart { get; set; }
@@ -33,10 +33,6 @@ namespace VirtualPaper.Models.Cores
         public StatuMechanismEnum StatuMechanism { get; set; }
         public WallpaperScaler WallpaperScaling { get; set; }
         public int WallpaperWaitTime { get; set; }
-        #endregion
-
-        #region taskBar
-        public TaskbarTheme SystemTaskbarTheme { get; set; }
         #endregion
 
         #region input
@@ -77,10 +73,8 @@ namespace VirtualPaper.Models.Cores
             ApplicationTheme = AppTheme.Dark;
             RemoteDesktop = AppWpRunRulesEnum.Pause;
             PowerSaving = AppWpRunRulesEnum.KeepRun;
-            SystemTaskbarTheme = TaskbarTheme.none;
             IsUpdated = false;
-            ApplicationThemeBackgroundPath = string.Empty;
-            ApplicationThemeBackground = AppThemeBackground.default_mica;
+            SystemBackdrop = AppSystemBackdrop.Default;
 
             try
             {

@@ -4,34 +4,37 @@ using WinUI3Localizer;
 
 namespace VirtualPaper.UI.ViewModels
 {
-    internal class DetailedInfoViewModel : ObservableObject
+    internal class DetailedInfoViewModel// : ObservableObject
     {
         public string VirtualPaperUid { get; set; } = string.Empty;
 
-        private string _title = string.Empty;
-        public string Title
-        {
-            get => _title;
-            set { _title = value; _metaData.Title = value; OnPropertyChanged(); }
-        }
+        //private string _title = string.Empty;
+        //public string Title
+        //{
+        //    get => _title;
+        //    set { _title = value; _metaData.Title = value; OnPropertyChanged(); }
+        //}
+        public string Title { get; set; } = string.Empty;
 
-        private string _desc = string.Empty;
-        public string Desc
-        {
-            get => _desc;
-            set { _desc = value; _metaData.Desc = value; OnPropertyChanged(); }
-        }
+        //private string _desc = string.Empty;
+        //public string Desc
+        //{
+        //    get => _desc;
+        //    set { _desc = value; _metaData.Desc = value; OnPropertyChanged(); }
+        //}
+        public string Desc { get; set; } = string.Empty;
 
         public string Type { get; set; } = string.Empty;
         public string Authors { get; set; } = string.Empty;
         public string PublishDate { get; set; } = string.Empty;
 
-        private string _tags = string.Empty;
-        public string Tags
-        {
-            get => _tags;
-            set { _tags = value; _metaData.Tags = value; OnPropertyChanged(); }
-        }
+        //private string _tags = string.Empty;
+        //public string Tags
+        //{
+        //    get => _tags;
+        //    set { _tags = value; _metaData.Tags = value; OnPropertyChanged(); }
+        //}
+        public string Tags { get; set; } = string.Empty;
 
         public string Resolution { get; set; } = string.Empty;
         public string AspectRatio { get; set; } = string.Empty;
@@ -54,7 +57,6 @@ namespace VirtualPaper.UI.ViewModels
         public DetailedInfoViewModel(IMetaData metaData, bool isEditable = false)
         {
             if (metaData == null) return;
-            _metaData = metaData;
 
             _localizer = Localizer.Get();
 
@@ -85,6 +87,5 @@ namespace VirtualPaper.UI.ViewModels
         }
 
         private ILocalizer _localizer;
-        private IMetaData _metaData;
     }
 }

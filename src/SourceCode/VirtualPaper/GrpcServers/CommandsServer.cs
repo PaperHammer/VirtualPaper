@@ -11,11 +11,9 @@ namespace VirtualPaper.GrpcServers
     internal class CommandsServer : CommandsService.CommandsServiceBase
     {
         public CommandsServer(
-            IUIRunnerService runner, 
-            IScreensaverService screensaver)
+            IUIRunnerService runner)
         {
             this._runner = runner;
-            this._screensaver = screensaver;
         }
 
         public override Task<Empty> ShowUI(Empty _, ServerCallContext context)
@@ -50,30 +48,6 @@ namespace VirtualPaper.GrpcServers
             return Task.FromResult(new Empty());
         }
 
-        public override Task<Empty> Screensaver(ScreensaverRequest request, ServerCallContext context)
-        {
-            switch (request.State)
-            {
-                case ScreensaverState.Start:
-                    _screensaver.Start();
-                    break;
-                case ScreensaverState.Stop:
-                    _screensaver.Stop();
-                    break;
-                case ScreensaverState.Preview:
-                    _ = Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(delegate
-                    {
-                        _screensaver.CreatePreview(new IntPtr(request.PreviewHwnd));
-                    }));
-                    break;
-                case ScreensaverState.Configure:
-                    //TODO: Open control panel or cutomise panel
-                    _runner.ShowUI();
-                    break;
-            }
-            return Task.FromResult(new Empty());
-        }
-
         public override Task<Empty> ShutDown(Empty _, ServerCallContext context)
         {
             try
@@ -94,6 +68,5 @@ namespace VirtualPaper.GrpcServers
 
         private DebugLog _debugLogWindow;
         private readonly IUIRunnerService _runner;
-        private readonly IScreensaverService _screensaver;
     }
 }

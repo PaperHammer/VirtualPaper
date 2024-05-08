@@ -33,31 +33,6 @@ namespace VirtualPaper.Grpc.Client
             await _client.ShowDebugViewAsync(new Empty());
         }
 
-        public async Task ScreensaverShow(bool show)
-        {
-            await _client.ScreensaverAsync(new ScreensaverRequest()
-            {
-                State = show ? ScreensaverState.Start : ScreensaverState.Stop,
-            });
-        }
-
-        public async Task ScreensaverConfigure()
-        {
-            await _client.ScreensaverAsync(new ScreensaverRequest()
-            {
-                State = ScreensaverState.Configure,
-            });
-        }
-
-        public async Task ScreensaverPreview(int previewHandle)
-        {
-            await _client.ScreensaverAsync(new ScreensaverRequest()
-            {
-                State = ScreensaverState.Preview,
-                PreviewHwnd = previewHandle,
-            });
-        }
-
         public async Task ShutDown()
         {
             await _client.ShutDownAsync(new Empty());

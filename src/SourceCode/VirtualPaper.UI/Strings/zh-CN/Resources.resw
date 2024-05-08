@@ -160,7 +160,7 @@
     <value>类型</value>
   </data>
   <data name="DetailedInfo_TextVirtualPaperUid" xml:space="preserve">
-    <value>VP-Uid</value>
+    <value>vpUid</value>
   </data>
   <data name="Dialog_Btn_Cancel" xml:space="preserve">
     <value>取消</value>
@@ -187,13 +187,11 @@
     <value>读取文件时发生异常，请确保目标文件可以被正常访问</value>
   </data>
   <data name="Dialog_Content_TryDropFileErr" xml:space="preserve">
-    <value>文件类型不在支持范围内，仅支持以下文件类型：
+    <value>仅支持单个文件的导入;
+仅支持以下文件类型：
   动图 .gif
   静态图片 .jpg  .jpeg  .bmp  .png
   视频 .mp4  .webm</value>
-  </data>
-  <data name="Dialog_Content_TryDropMuchFile" xml:space="preserve">
-    <value>仅支持单个文件的导入</value>
   </data>
   <data name="Dialog_Content_WallpaperDirectoryChangePathInvalid" xml:space="preserve">
     <value>无法将存储目录设置为应用程序数据根目录</value>
@@ -258,6 +256,18 @@
   <data name="Settings_General_AppearanceAndAction_AppLanguageExplain" xml:space="preserve">
     <value>修改语言需要重启 UI 界面</value>
   </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop" xml:space="preserve">
+    <value>UI 背景纹理</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdropExplain" xml:space="preserve">
+    <value>修改背景纹理需要重启 UI 界面</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink" xml:space="preserve">
+    <value>亚克力</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink" xml:space="preserve">
+    <value>云母</value>
+  </data>
   <data name="Settings_General_AppearanceAndAction_AppTheme" xml:space="preserve">
     <value>应用主题</value>
   </data>
@@ -278,6 +288,15 @@
   </data>
   <data name="Settings_General_AppearanceAndAction_AutoStatExplain" xml:space="preserve">
     <value>Virtual Paper 自启动以此在开机时自动还原壁纸设置</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdAcrylic" xml:space="preserve">
+    <value>亚克力</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdDefault" xml:space="preserve">
+    <value>默认</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdMica" xml:space="preserve">
+    <value>云母</value>
   </data>
   <data name="Settings_General_AppearanceAndAction__themeDark" xml:space="preserve">
     <value>深色</value>
@@ -396,10 +415,10 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>当其他应用程序获得焦点时壁纸的状态</value>
   </data>
   <data name="Settings_Perforemance_Play_OthersFullScreen" xml:space="preserve">
-    <value>其他应用程序全屏时</value>
+    <value>焦点应用程序全屏时</value>
   </data>
   <data name="Settings_Perforemance_Play_OthersFullScreenExplain" xml:space="preserve">
-    <value>当其他应用程序/游戏设置为全屏时壁纸的状态</value>
+    <value>当焦点应用程序设置为全屏时壁纸的状态</value>
   </data>
   <data name="Settings_Perforemance_Play__playStatu_KeepRun" xml:space="preserve">
     <value>保持运行</value>
@@ -460,6 +479,27 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Settings_System_Text_Developer" xml:space="preserve">
     <value>开发者</value>
+  </data>
+  <data name="Settings_WpNav_Text_WpArrange" xml:space="preserve">
+    <value>壁纸布局方式</value>
+  </data>
+  <data name="Settings_WpNav_WpArrange_Duplicate" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="Settings_WpNav_WpArrange_DuplicateExplain" xml:space="preserve">
+    <value>其他显示器与主显示器壁纸保持一致</value>
+  </data>
+  <data name="Settings_WpNav_WpArrange_Expand" xml:space="preserve">
+    <value>跨越</value>
+  </data>
+  <data name="Settings_WpNav_WpArrange_ExpandExplain" xml:space="preserve">
+    <value>以主显示器壁纸为主体，跨越显示到所有显示器上</value>
+  </data>
+  <data name="Settings_WpNav_WpArrange_Per" xml:space="preserve">
+    <value>独立</value>
+  </data>
+  <data name="Settings_WpNav_WpArrange_PerExplain" xml:space="preserve">
+    <value>每个显示器的壁纸独立显示</value>
   </data>
   <data name="SidebarAccount" xml:space="preserve">
     <value>账户</value>

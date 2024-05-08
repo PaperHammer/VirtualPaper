@@ -9,7 +9,7 @@ namespace VirtualPaper.Models.Cores.Interfaces
         string MonitorName { get; set; }
 
         IntPtr HMonitor { get; set; }
-        int Index { get; set; }
+        string Content { get; set; }
         bool IsPrimary { get; set; }
 
         Rectangle WorkingArea { get; set; }

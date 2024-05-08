@@ -1,17 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
+using VirtualPaper.UI.ViewModels;
+using VirtualPaper.UI.ViewModels.WpSettingsComponents;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -26,6 +17,16 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
         public WpNavSettgins()
         {
             this.InitializeComponent();
+            _viewModel = App.Services.GetRequiredService<WpNavSettginsViewModel>();
+            this.DataContext = _viewModel;
         }
+
+        private async void RadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            var tag = ((RadioButton)sender).Tag.ToString();
+            await _viewModel.UpdateWpArrange(tag);
+        }
+
+        private WpNavSettginsViewModel _viewModel;
     }
 }

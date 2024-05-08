@@ -174,14 +174,12 @@ namespace VirtualPaper.Grpc.Client
                 BatteryPause = (Service.UserSetting.AppRulesEnum)settings.BatteryPoweredn,
                 PowerSaveModePause = (Service.UserSetting.AppRulesEnum)settings.PowerSaving,
                 RemoteDesktopPause = (Service.UserSetting.AppRulesEnum)settings.RemoteDesktop,
-                ApplicationThemeBackground = (Service.UserSetting.AppThemeBackground)settings.ApplicationThemeBackground,
+                SystemBackdrop = (Service.UserSetting.AppSystemBackdrop) settings.SystemBackdrop,
                 AppVersion = settings.AppVersion,
-                ApplicationThemeBackgroundPath = settings.ApplicationThemeBackgroundPath,
                 Language = settings.Language,
                 IsUpdated = settings.IsUpdated,
                 IsAutoStart = settings.IsAutoStart,
                 IsFirstRun = settings.IsFirstRun,
-                //SysTrayIcon = settings.SysTrayIcon,
 
                 WallpaperDir = settings.WallpaperDir,
 
@@ -208,11 +206,9 @@ namespace VirtualPaper.Grpc.Client
                     }
                 },
                 IsAudioOnlyOnDesktop = settings.IsAudioOnlyOnDesktop,
-                DisplayPauseSettings = (Service.UserSetting.DisplayPauseEnum)settings.StatuMechanism,
+                StatuMechanism = (Service.UserSetting.StatuMechanismEnum)settings.StatuMechanism,
                 WallpaperScaling = (Service.UserSetting.WallpaperScaler)settings.WallpaperScaling,
                 WallpaperWaitTime = settings.WallpaperWaitTime,
-
-                SystemTaskbarTheme = (Service.UserSetting.TaskbarTheme)settings.SystemTaskbarTheme,
 
                 InputForward = (Service.UserSetting.InputForwardMode)settings.InputForward,
                 MouseInputMovAlways = settings.MouseInputMovAlways,
@@ -223,9 +219,6 @@ namespace VirtualPaper.Grpc.Client
                 IsScreensaverEmptyScreenShowBlack = settings.IsScreensaverEmptyScreenShowBlack,
 
                 ProcessTimerInterval = settings.ProcessTimerInterval,
-
-                //WebDebugPort = settings.WebDebugPort,
-                //IsCefDiskCache = settings.IsCefDiskCache,
             };
         }
 
@@ -239,10 +232,8 @@ namespace VirtualPaper.Grpc.Client
                 BatteryPoweredn = (Common.AppWpRunRulesEnum)settings.BatteryPause,
                 PowerSaving = (Common.AppWpRunRulesEnum)settings.PowerSaveModePause,
                 RemoteDesktop = (Common.AppWpRunRulesEnum)settings.RemoteDesktopPause,
-                ApplicationThemeBackground = (Common.AppThemeBackground)settings.ApplicationThemeBackground,
+                SystemBackdrop = (Common.AppSystemBackdrop)settings.SystemBackdrop,
                 AppVersion = settings.AppVersion,
-                ApplicationThemeBackgroundPath = settings.ApplicationThemeBackgroundPath,
-                //ThemeBundleVersion = settings.ThemeBundleVersion,
                 Language = settings.Language,
                 IsUpdated = settings.IsUpdated,
                 IsAutoStart = settings.IsAutoStart,
@@ -271,15 +262,13 @@ namespace VirtualPaper.Grpc.Client
                         Width = settings.SelectedMonitor.Bounds.Width,
                         Height = settings.SelectedMonitor.Bounds.Height
                     },
-                    Index = settings.SelectedMonitor.Index,
+                    Content = settings.SelectedMonitor.Content,
                 },
                 
                 IsAudioOnlyOnDesktop = settings.IsAudioOnlyOnDesktop,
-                StatuMechanism = (Common.StatuMechanismEnum)settings.DisplayPauseSettings,
+                StatuMechanism = (Common.StatuMechanismEnum)settings.StatuMechanism,
                 WallpaperScaling = (Common.WallpaperScaler)settings.WallpaperScaling,
                 WallpaperWaitTime = settings.WallpaperWaitTime,
-
-                SystemTaskbarTheme = (Common.TaskbarTheme)settings.SystemTaskbarTheme,
 
                 InputForward = (Common.InputForwardMode)settings.InputForward,
                 MouseInputMovAlways = settings.MouseInputMovAlways,
@@ -290,9 +279,6 @@ namespace VirtualPaper.Grpc.Client
                 IsScreensaverEmptyScreenShowBlack = settings.IsScreensaverEmptyScreenShowBlack,
 
                 ProcessTimerInterval = settings.ProcessTimerInterval,
-
-                //WebDebugPort = settings.WebDebugPort,
-                //IsCefDiskCache = settings.IsCefDiskCache,
             };
         }
 

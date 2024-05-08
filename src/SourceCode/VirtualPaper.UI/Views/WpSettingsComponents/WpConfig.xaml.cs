@@ -35,7 +35,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             InitWebview2();
             InitCustomizeData();
 
-            _idx = int.Parse(args);
+            _content = args;
             _viewModel = new(InitWebviewContent);
             _viewModel.DoubleValueChanged += OnCustomizeValueChanged;
             _viewModel.BoolValueChanged += OnCustomizeValueChanged;
@@ -54,6 +54,8 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             var env = await CoreWebView2Environment.CreateWithOptionsAsync(null, Constants.CommonPaths.TempWebView2Dir, _environmentOptions);
             await Webview2.EnsureCoreWebView2Async(env);
 
+            //Webview2.CoreWebView2.OpenDevToolsWindow();
+
             Webview2.NavigationCompleted += Webview2_NavigationCompleted;
 
             Webview2.CoreWebView2.Navigate(Path.Combine(_workingDir, "Web\\viewer.html"));
@@ -61,7 +63,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
 
         private async void Webview2_NavigationCompleted(WebView2 sender, CoreWebView2NavigationCompletedEventArgs args)
         {
-            await _viewModel.InitWp(_idx);
+            await _viewModel.InitWp(_content);
         }
 
         private async Task InitWebviewContent(WallpaperType type = WallpaperType.unknown, string filePath = null, string wpCustomizePathUsing = null)
@@ -85,14 +87,20 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             //picker.FileTypeFilter.Add(".exe");
             //picker.FileTypeFilter.Add(".html");
             //picker.FileTypeFilter.Add(".htm");
+
+            picker.FileTypeFilter.Add(".apng");
             picker.FileTypeFilter.Add(".gif");
+
             picker.FileTypeFilter.Add(".jpg");
             picker.FileTypeFilter.Add(".jpeg");
             picker.FileTypeFilter.Add(".png");
             picker.FileTypeFilter.Add(".bmp");
+            picker.FileTypeFilter.Add(".svg");
+            picker.FileTypeFilter.Add(".webp");
+            picker.FileTypeFilter.Add(".wmf");
+
             picker.FileTypeFilter.Add(".mp4");
             picker.FileTypeFilter.Add(".webm");
-            //picker.FileTypeFilter.Add(".mpv");
 
             StorageFile file = await picker.PickSingleFileAsync();
             if (file != null)
@@ -277,7 +285,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
         }
         #endregion
 
-        private int _idx;
+        private string _content;
         private WpConfigViewModel _viewModel;
         private readonly CoreWebView2EnvironmentOptions _environmentOptions = new()
         {

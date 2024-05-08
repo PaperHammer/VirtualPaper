@@ -49,7 +49,7 @@ namespace VirtualPaper.Grpc.Client
                     DeviceName = monitor.DeviceName,
                     MonitorName = monitor.DisplayName,
                     HMonitor = monitor.HMonitor,
-                    Index = i + 1,
+                    Content = (i + 1).ToString(),
                     IsPrimary = monitor.IsPrimary,
                     Bounds = new Rectangle(
                         monitor.Bounds.X,

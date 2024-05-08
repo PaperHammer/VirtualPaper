@@ -1565,7 +1565,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetWindowPos(IntPtr hwnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
 
-        [DllImport("user32.dll")]
+        [DllImport("user32.dll")]        
         public static extern IntPtr GetDesktopWindow();
 
         [DllImport("Shell32.dll")]

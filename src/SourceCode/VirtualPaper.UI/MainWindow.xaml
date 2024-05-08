@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <winex:WindowEx
     x:Class="VirtualPaper.UI.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -15,16 +14,52 @@
     Closed="WindowEx_Closed"
     TaskBarIcon="virtualpaper.ico"
     Title="Virtual Paper">
-        
-    <NavigationView         
-        x:Name="NavView"
-        PaneDisplayMode="Left"        
-        Loaded="NavView_Loaded"     
-        SelectionChanged="NavigationView_SelectionChanged"
-        IsSettingsVisible="False"        
-        AlwaysShowHeader="False"
-        IsBackEnabled="False"
-        IsBackButtonVisible="Collapsed">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid 
+            x:Name="AppTitleBar" 
+            Height="32">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="LeftPaddingColumn" Width="0" />
+                <ColumnDefinition x:Name="IconColumn" Width="Auto" />
+                <ColumnDefinition x:Name="TitleColumn" Width="Auto" />
+                <ColumnDefinition x:Name="LeftDragColumn" Width="*" />
+                <ColumnDefinition x:Name="RightDragColumn" Width="*" />
+                <ColumnDefinition x:Name="RightPaddingColumn" Width="0" />
+            </Grid.ColumnDefinitions>
+            
+            <Image
+                x:Name="TitleBarIcon"
+                Grid.Column="1"
+                Width="16"
+                Height="16"
+                Margin="8,0,0,0"
+                VerticalAlignment="Center"
+                Source="ms-appx:///Assets/icon-vp-48.png" />
+            <TextBlock
+                x:Name="TitleTextBlock"
+                Grid.Column="2"
+                Margin="8,0,0,0"
+                VerticalAlignment="Center"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="Virtual Wallpaper" />
+        </Grid>
+
+        <NavigationView         
+            x:Name="NavView"
+            Grid.Row="1"
+            PaneDisplayMode="Left"        
+            Loaded="NavView_Loaded"     
+            SelectionChanged="NavigationView_SelectionChanged"
+            IsSettingsVisible="False"        
+            AlwaysShowHeader="False"
+            IsBackEnabled="False"
+            IsBackButtonVisible="Collapsed">
         <NavigationView.MenuItems>
             <NavigationViewItem 
                 Content="{Binding SidebarGallery}"
@@ -52,4 +87,6 @@
         <Frame 
             x:Name="ContentFrame"/>
     </NavigationView>
+    </Grid>
+    
 </winex:WindowEx>

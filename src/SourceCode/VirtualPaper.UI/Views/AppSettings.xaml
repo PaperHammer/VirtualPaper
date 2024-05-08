@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vms="using:VirtualPaper.UI.ViewModels"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
 
     <Page.DataContext>
         <vms:AppSettingsViewModel/>
@@ -24,7 +24,7 @@
             x:Name="SelBar"
             Grid.Row="0"
             SelectionChanged="SelectorBar_SelectionChanged"
-            Background="{StaticResource SolidBackgroundFillColorSecondaryBrush}"
+            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
             HorizontalAlignment="Stretch">
             <SelectorBarItem x:Name="s1" Text="{Binding SelBarItem1}" Tag="GeneralView" IsSelected="True"/>
             <SelectorBarItem x:Name="s2" Text="{Binding SelBarItem2}" Tag="PerformanceView"/>

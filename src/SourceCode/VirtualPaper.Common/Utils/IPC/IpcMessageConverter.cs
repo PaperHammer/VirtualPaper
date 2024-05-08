@@ -15,6 +15,8 @@ namespace VirtualPaper.Common.Utils.IPC
             JObject jo = JObject.Load(reader);
             return (MessageType)jo["Type"].Value<int>() switch
             {
+                MessageType.cmd_apply => jo.ToObject<VirtualPaperApplyCmd>(serializer),
+                MessageType.cmd_initFilter => jo.ToObject<VirtualPaperInitFilterCmd>(serializer),
                 MessageType.cmd_reload => jo.ToObject<VirtualPaperReloadCmd>(serializer),
                 MessageType.cmd_close => jo.ToObject<VirtualPaperCloseCmd>(serializer),
                 MessageType.cmd_screenshot => jo.ToObject<VirtualPaperScreenshotCmd>(serializer),

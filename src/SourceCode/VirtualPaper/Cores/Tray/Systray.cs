@@ -92,7 +92,14 @@ namespace VirtualPaper.Cores.Tray
             _notifyIcon.ContextMenuStrip.Items.Add(new ContextMenuTheme.StripSeparatorCustom().stripSeparator);
             _notifyIcon.ContextMenuStrip.Items.Add(App.GetResourceDicString("Systray_TextReportBug"), Properties.Icons.icon_bug).Click += (s, e) =>
             {
-                Process.Start("https://github.com/PaperHammer/virtualpaper/issues");
+                ProcessStartInfo startInfo = new()
+                {
+                    FileName = "cmd",
+                    Arguments = $"/c start https://github.com/PaperHammer/virtualpaper/issues",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                Process.Start(startInfo);
             };
             
             //Exit app
@@ -236,7 +243,7 @@ namespace VirtualPaper.Cores.Tray
         //                }
         //            }
         //            break;
-        //        case WallpaperArrangement.Span:
+        //        case WallpaperArrangement.Expand:
         //        case WallpaperArrangement.Duplicate:
         //            {
         //                try

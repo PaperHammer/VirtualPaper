@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using NLog;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -37,9 +36,7 @@ namespace VirtualPaper.Cores.Desktop
 
         public WallpaperControl(IUserSettingsService userSettings,
             IMonitorManager monitorManager,
-            ITaskbarService tkbService,
             IWatchdogService watchdog,
-            IUIRunnerService uiRunner,
             IWallpaperFactory wallpaperFactory)
         {
             this._userSettings = userSettings;
@@ -125,13 +122,13 @@ namespace VirtualPaper.Cores.Desktop
             {
                 tmp.ForEach(x =>
                 {
+                    x.Close();
                     if (x.Proc != null)
                     {
                         _watchdog.Remove(x.Proc.Id);
-                    }
-                    x.Close();
+                    }                    
                 });
-                _wallpapers.RemoveAll(x => tmp.Contains(x));
+                _wallpapers.RemoveAll(tmp.Contains);
 
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
             }
@@ -174,7 +171,7 @@ namespace VirtualPaper.Cores.Desktop
             try
             {
                 var wallpaperLayout = _userSettings.WallpaperLayout;
-                if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Span ||
+                if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand ||
                     _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate)
                 {
                     if (wallpaperLayout.Count != 0)
@@ -194,11 +191,16 @@ namespace VirtualPaper.Cores.Desktop
             }
         }
 
-        public void PreviewWallpaper(IMetaData metaData)
+        public void PreviewWallpaper(IMetaData metaData, bool isLibraryPreview)
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                IWallpaper instance = _wallpaperFactory.CreateWallpaper(metaData, _monitorManager.PrimaryMonitor, _userSettings, true);
+                IWallpaper instance = _wallpaperFactory.CreateWallpaper(
+                    metaData, 
+                    _monitorManager.PrimaryMonitor, 
+                    _userSettings, 
+                    true, 
+                    isLibraryPreview);
                 instance.ShowAsync();
             });
         }
@@ -225,14 +227,20 @@ namespace VirtualPaper.Cores.Desktop
             });
         }
 
-        public void SendMessageWallpaper(string infoPath, IpcMessage msg)
+        //public void SendMessageWallpaper(string folderPath, IpcMessage msg)
+        //{
+
+        //}
+
+        public void SendMessageWallpaper(IMonitor monitor, string folderPath, IpcMessage msg)
         {
-
-        }
-
-        public void SendMessageWallpaper(IMonitor monitor, string infoPath, IpcMessage msg)
-        {
-
+            _wallpapers.ForEach(x =>
+            {
+                if (x.MetaData.FolderPath == folderPath && x.Monitor == monitor)
+                {
+                    x.SendMessage(msg);
+                }
+            });
         }
 
         public IMetaData CreateWallpaper(string folderPath, string filePath, WallpaperType type, CancellationToken token)
@@ -435,7 +443,7 @@ namespace VirtualPaper.Cores.Desktop
                                 }
                             }
                             break;
-                        case WallpaperArrangement.Span:
+                        case WallpaperArrangement.Expand:
                             {
                                 CloseAllWallpapers();
                                 IWallpaper instance = _wallpaperFactory.CreateWallpaper(metaData, monitor, _userSettings);
@@ -549,10 +557,7 @@ namespace VirtualPaper.Cores.Desktop
                 _logger.Info("Monitor settings changed, monitor(s):");
                 _monitorManager.Monitors.ToList().ForEach(x => _logger.Info(x.DeviceName + " " + x.Bounds));
 
-                App.Services.GetRequiredService<IScreensaverService>().Stop();
-
                 RefreshWallpaper();
-                //RestoreDisconnectedWallpapers();
             }
         }
 
@@ -584,13 +589,6 @@ namespace VirtualPaper.Cores.Desktop
                                 x.Close();
                             });
 
-                            //var newOrphans = orphanWallpapers.FindAll(
-                            //    oldOrphan => _wallpapersDisconnected.Find(
-                            //        newOrphan => newOrphan.Monitor.Equals(oldOrphan.Monitor)) == null);
-                            //foreach (var item in newOrphans)
-                            //{
-                            //    _wallpapersDisconnected.Add(new WallpaperLayout((Models.Cores.Monitor)item.Monitor, item.MetaData.FolderPath));
-                            //}
                             _wallpapers.RemoveAll(x => orphanWallpapers.Contains(x));
                         }
                         break;
@@ -605,7 +603,7 @@ namespace VirtualPaper.Cores.Desktop
                             _wallpapers.RemoveAll(x => orphanWallpapers.Contains(x));
                         }
                         break;
-                    case WallpaperArrangement.Span:
+                    case WallpaperArrangement.Expand:
                         //Only update metaData rect.
                         break;
                 }
@@ -625,13 +623,13 @@ namespace VirtualPaper.Cores.Desktop
 
         private void UpdateWallpaperRect()
         {
-            if (_monitorManager.IsMultiScreen() && _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Span)
+            if (_monitorManager.IsMultiScreen() && _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand)
             {
                 if (_wallpapers.Count != 0)
                 {
                     //Wallpapers[0].Play();
                     var screenArea = _monitorManager.VirtualScreenBounds;
-                    _logger.Info($"Updating metaData rect(Span): ({screenArea.Width}, {screenArea.Height}).");
+                    _logger.Info($"Updating metaData rect(Expand): ({screenArea.Width}, {screenArea.Height}).");
                     //For Play/Pause, setting the new metadata.
                     Wallpapers[0].Monitor = _monitorManager.PrimaryMonitor;
                     Native.SetWindowPos(Wallpapers[0].Handle, 1, 0, 0, screenArea.Width, screenArea.Height, 0x0010);
@@ -786,10 +784,10 @@ namespace VirtualPaper.Cores.Desktop
             var success = TrySetParentWorkerW(handle);
 
             //fill wp into the whole _workerW area.
-            _logger.Info($"Sending wallpaper(Span): ({prct.Left}, {prct.Top}, {prct.Right - prct.Left}, {prct.Bottom - prct.Top}).");
+            _logger.Info($"Sending wallpaper(Expand): ({prct.Left}, {prct.Top}, {prct.Right - prct.Left}, {prct.Bottom - prct.Top}).");
             if (!Native.SetWindowPos(handle, 1, 0, 0, prct.Right - prct.Left, prct.Bottom - prct.Top, 0x0010))
             {
-                //LogUtil.LogWin32Error("Failed to set Span wallpaper");
+                //LogUtil.LogWin32Error("Failed to set Expand wallpaper");
             }
             DesktopUtil.RefreshDesktop();
             return success;

@@ -35,7 +35,7 @@
                 Grid.Row="0"
                 Margin="10"
                 Visibility="Collapsed"/>
-            
+
             <Button 
                 x:Name="BtnContent"
                 Grid.Row="0"
@@ -59,7 +59,6 @@
                             VerticalAlignment="Center"
                             HorizontalAlignment="Center"
                             Foreground="{ThemeResource AccentFillColorTertiaryBrush}"/>
-
                     </Grid>
                 </Button.Content>
             </Button>
@@ -119,14 +118,6 @@
                 </Grid>
             </Border>
         </Grid>
-
-        <InfoBar
-            Margin="10"
-            Grid.Column="0"
-            IsOpen="{Binding InfoBarIsOpen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-            Severity="{Binding InfoBarSeverity}"
-            Title="{Binding InfobarTitle}"
-            Message="{Binding InfobarMsg}" />
 
         <Border 
             x:Name="BdrCustomize"

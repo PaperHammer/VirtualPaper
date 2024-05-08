@@ -129,7 +129,6 @@
 		<None Remove="Views\AppSettingsConponents\OthersSetting.xaml" />
 		<None Remove="Views\AppSettingsConponents\PerformanceSetting.xaml" />
 		<None Remove="Views\AppSettingsConponents\SystemSetting.xaml" />
-		<None Remove="Views\AppSettingsConponents\WallpaperSetting.xaml" />
 		<None Remove="Views\Gallery.xaml" />
 		<None Remove="Views\Utils\ColorEyeDropWindow.xaml" />
 		<None Remove="Views\Utils\DetailedInfoView.xaml" />
@@ -188,9 +187,6 @@
 		  <Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\AppSettingsConponents\SystemSetting.xaml">
-		  <Generator>MSBuild:Compile</Generator>
-		</Page>
-		<Page Update="Views\AppSettingsConponents\WallpaperSetting.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\AppSettingsConponents\PerformanceSetting.xaml">

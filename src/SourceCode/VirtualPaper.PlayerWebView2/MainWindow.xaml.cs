@@ -80,10 +80,18 @@ namespace VirtualPaper.Webviewer
                             {
                                 var close = false;
                                 var obj = JsonConvert.DeserializeObject<IpcMessage>(msg, new JsonSerializerSettings() { Converters = { new IpcMessageConverter() } });
+
                                 this.Dispatcher.Invoke(() =>
                                 {
                                     switch (obj.Type)
                                     {
+                                        case MessageType.cmd_initFilter:
+                                            _ = ExecuteScriptFunctionAsync("virtualPaperInitFilter");
+                                            break;
+                                        case MessageType.cmd_apply:
+                                            _ = ExecuteScriptFunctionAsync("applyFilter");
+                                            _ = ExecuteScriptFunctionAsync("play");
+                                            break;
                                         case MessageType.cmd_reload:
                                             Webview2?.Reload();
                                             break;
@@ -131,17 +139,17 @@ namespace VirtualPaper.Webviewer
                                             var cb = (VirtualPaperCheckbox)obj;
                                             _ = ExecuteScriptFunctionAsync("virtualPaperPropertyListener", cb.Name, cb.Value);
                                             break;
-                                        case MessageType.vp_button:
-                                            var btn = (VirtualPaperButton)obj;
-                                            if (btn.IsDefault)
-                                            {
-                                                _ = RestoreWpCustomizeAsync(_startArgs.WpCustomizeFilePath);
-                                            }
-                                            else
-                                            {
-                                                _ = ExecuteScriptFunctionAsync("virtualPaperPropertyListener", btn.Name, true);
-                                            }
-                                            break;
+                                        //case MessageType.vp_button:
+                                        //    var btn = (VirtualPaperButton)obj;
+                                        //    if (btn.IsDefault)
+                                        //    {
+                                        //        _ = RestoreWpCustomizeAsync(_startArgs.WpCustomizeFilePath);
+                                        //    }
+                                        //    else
+                                        //    {
+                                        //        _ = ExecuteScriptFunctionAsync("virtualPaperPropertyListener", btn.Name, true);
+                                        //    }
+                                        //    break;
                                         case MessageType.cmd_close:
                                             close = true;
                                             break;
@@ -172,6 +180,7 @@ namespace VirtualPaper.Webviewer
             }
             finally
             {
+                Webview2?.Dispose();                
                 Application.Current.Dispatcher.Invoke(Application.Current.Shutdown);
             }
         }
@@ -221,6 +230,8 @@ namespace VirtualPaper.Webviewer
             try
             {
                 if (wpCustomizeFilePath == null) return;
+
+                await ExecuteScriptFunctionAsync("virtualPaperInitFilter");
 
                 foreach (var item in JsonUtil.ReadJObject(wpCustomizeFilePath))
                 {
@@ -275,6 +286,12 @@ namespace VirtualPaper.Webviewer
             }
             script.Append(");");
 
+            //App.WriteToParent(new VirtualPaperMessageConsole()
+            //{
+            //    MsgType = ConsoleMessageType.Log,
+            //    Message = script.ToString(),
+            //});
+
             string res = await Webview2.ExecuteScriptAsync(script.ToString());
 
             return res;
@@ -286,10 +303,5 @@ namespace VirtualPaper.Webviewer
         }; // workaround: avoid cache
         private StartArgs _startArgs;
         private bool _isPaused = false;
-
-        private class WallpaperPlaybackState
-        {
-            public bool IsPaused { get; set; }
-        }
     }
 }

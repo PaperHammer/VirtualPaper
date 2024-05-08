@@ -15,19 +15,18 @@ namespace VirtualPaper.Grpc.Client.Interfaces
         Task<WpMetaData> GetWallpaperAsync(string folderPath);
 
         Task<SetWallpaperResponse> SetWallpaperAsync(IMetaData metaData, IMonitor monitor, CancellationToken cancellationToken);
-        Task<SetWallpaperResponse> SetWallpaperAsync(string folderPath, string monitorId);
 
         Task CloseAllWallpapersAsync();
         Task CloseWallpaperAsync(IMonitor monitor);
         
         Task RestartAllWallpaperAsync();
 
-        Task<WpMetaData?> CreateWallpaperAsync(string folderPath, string filePath, Common.WallpaperType type, CancellationToken token);
+        Task<WpMetaData?> CreateWallpaperAsync(string folderPath, string filePath, Common.WallpaperType type, CancellationToken token = default);
 
-        void SendMessageWallpaper(IMetaData metaData, IpcMessage msg);
-        void SendMessageWallpaper(IMonitor monitor, IMetaData metaData, IpcMessage msg);
+        //Task SendMessageWallpaperAsync(IMetaData metaData, IpcMessage msg);
+        Task SendMessageWallpaperAsync(IMonitor monitor, IMetaData metaData, IpcMessage msg);
 
-        Task PreviewWallpaperAsync(IMetaData metaData);
+        Task PreviewWallpaperAsync(IMetaData metaData, bool isLibraryPreview);
         Task TakeScreenshotAsync(string monitorId, string savePath);
 
         Task ChangeWallpaperLayoutFolrderPath(string previousDir, string newDir);
@@ -39,6 +38,7 @@ namespace VirtualPaper.Grpc.Client.Interfaces
 
     public class WallpaperBasicData
     {
+        public string VirtualPaperUid { get; set; } = string.Empty;
         public string FolderPath { get; set; } = string.Empty;
         //public string WpCustomizePath { get; set; } = string.Empty;
         public string WpCustomizePathUsing { get; set; } = string.Empty;

@@ -1,5 +1,6 @@
-﻿using VirtualPaper.Models.Mvvm;
-using Windows.ApplicationModel.Resources;
+﻿using Microsoft.Extensions.DependencyInjection;
+using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Models.Mvvm;
 using WinUI3Localizer;
 
 namespace VirtualPaper.UI.ViewModels
@@ -15,6 +16,7 @@ namespace VirtualPaper.UI.ViewModels
         public MainWindowViewModel()
         {
             _localizer = Localizer.Get();
+            _userSettingsClient = App.Services.GetRequiredService<IUserSettingsClient>();
 
             InitText();
         }
@@ -29,5 +31,6 @@ namespace VirtualPaper.UI.ViewModels
         }
 
         private ILocalizer _localizer;
+        private IUserSettingsClient _userSettingsClient;
     }
 }

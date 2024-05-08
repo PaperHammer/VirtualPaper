@@ -7,7 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
 
     <Grid
         Margin="15 0">
@@ -46,7 +46,7 @@
 
                         <TextBlock 
                             Grid.Column="1"
-                            Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             TextWrapping="Wrap"
                             Text="{Binding About_Basic}"/>
                     </Grid>
@@ -98,7 +98,7 @@
                                         Text="{Binding More_Document}"/>
                                     <TextBlock 
                                         Grid.Row="1" 
-                                        Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                         Text="{Binding More_DocumentExplain}"/>
                                 </Grid>
 
@@ -144,7 +144,7 @@
                                         Text="{Binding More_SourceCode}"/>
                                     <TextBlock 
                                         Grid.Row="1" 
-                                        Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                         Text="{Binding More_SourceCodeExplain}"/>
                                 </Grid>
 
@@ -190,7 +190,7 @@
                                         Text="{Binding More_RequestFunc}"/>
                                     <TextBlock 
                                         Grid.Row="1" 
-                                        Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                         Text="{Binding More_RequestFuncExplain}"/>
                                 </Grid>
 
@@ -236,7 +236,7 @@
                                         Text="{Binding More_ReportBug}"/>
                                     <TextBlock 
                                         Grid.Row="1" 
-                                        Foreground="{StaticResource TextFillColorTertiaryBrush}"
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                         Text="{Binding More_ReportBugExplain}"/>
                                 </Grid>
 

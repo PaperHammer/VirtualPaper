@@ -69,13 +69,15 @@ namespace VirtualPaper.UI
         {
             var provider = new ServiceCollection()
                 .AddSingleton<MainWindow>()
-                .AddSingleton<Account>()
-                .AddSingleton<AppSettings>()
+
+                .AddTransient<Account>()
+                .AddTransient<AppSettings>()
                 .AddSingleton<Gallery>()
                 .AddSingleton<WpSettings>()
-
+                
                 .AddSingleton<LibraryContents>()
                 .AddSingleton<WpConfig>()
+                .AddTransient<WpNavSettgins>()
 
                 .AddSingleton<ColorEyeDropWindow>()
 
@@ -87,10 +89,11 @@ namespace VirtualPaper.UI
 
                 .AddSingleton<WpSettingsViewModel>()
                 .AddSingleton<LibraryContentsViewModel>()
-                .AddSingleton<GeneralSettingViewModel>()
-                .AddSingleton<PerformanceSettingViewModel>()
-                .AddSingleton<SystemSettingViewModel>()
-                .AddSingleton<OtherSettingViewModel>()
+                .AddTransient<WpNavSettginsViewModel>()
+                .AddTransient<GeneralSettingViewModel>()
+                .AddTransient<PerformanceSettingViewModel>()
+                .AddTransient<SystemSettingViewModel>()
+                .AddTransient<OtherSettingViewModel>()
 
                 .AddHttpClient()
 

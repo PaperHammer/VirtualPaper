@@ -94,7 +94,7 @@ namespace VirtualPaper.Cores.Monitor
             for (int i = 0; i < hMonitors.Count; i++)
             {
                 var monitor = GetMonitorByHMonitor(hMonitors[i]);
-                monitor.Index = i + 1;
+                monitor.Content = (i + 1).ToString();
             }
 
             // 移除旧显示器

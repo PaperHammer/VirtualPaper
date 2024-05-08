@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -47,6 +46,10 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         public string AppearanceAndAction_AppTheme { get; set; } = string.Empty;
         public string AppearanceAndAction_AppThemeExplain { get; set; } = string.Empty;
         public string AppearanceAndAction_AppThemeHyperlink { get; set; } = string.Empty;
+        public string AppearanceAndAction_AppSystemBackdrop { get; set; } = string.Empty;
+        public string AppearanceAndAction_AppSystemBackdropExplain { get; set; } = string.Empty;
+        public string AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink { get; set; } = string.Empty;
+        public string AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink { get; set; } = string.Empty;
         public string AppearanceAndAction_AppLanguage { get; set; } = string.Empty;
         public string AppearanceAndAction_AppLanguageExplain { get; set; } = string.Empty;
         public string AppearanceAndAction_AppFileStorage { get; set; } = string.Empty;
@@ -71,6 +74,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         }
 
         public List<string> Themes { get; set; } = [];
+        public List<string> SystemBackdrops { get; set; } = [];
         public List<LanguagesModel> Languages { get; set; } = [];
 
         private string _autoStartStatu = string.Empty;
@@ -154,6 +158,21 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
                 OnPropertyChanged();
             }
         }
+        
+        private int _seletedSystemBackdropIndx;
+        public int SeletedSystemBackdropIndx
+        {
+            get => _seletedSystemBackdropIndx;
+            set
+            {
+                _seletedSystemBackdropIndx = value;
+                if (_userSettingsClient.Settings.SystemBackdrop == (AppSystemBackdrop)value) return;
+
+                _userSettingsClient.Settings.SystemBackdrop = (AppSystemBackdrop)value;
+                UpdateSettingsConfigFile();
+                OnPropertyChanged();
+            }
+        }
 
         private LanguagesModel _selectedLanguage;
         public LanguagesModel SelectedLanguage
@@ -227,6 +246,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         {
             _appUpdater.UpdateChecked += AppUpdater_UpdateChecked;
             _seletedThemeIndx = (int)_userSettingsClient.Settings.ApplicationTheme;
+            _seletedSystemBackdropIndx = (int)_userSettingsClient.Settings.SystemBackdrop;
             _selectedLanguage = SupportedLanguages.GetLanguage(_userSettingsClient.Settings.Language);
             IsAutoStart = _userSettingsClient.Settings.IsAutoStart;
             WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
@@ -258,6 +278,13 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             _themeDark = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction__themeDark");
             _themeLight = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction__themeLight");
             _themeFollowSystem = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction__themeFollowSystem");
+            AppearanceAndAction_AppSystemBackdrop = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppSystemBackdrop");
+            AppearanceAndAction_AppSystemBackdropExplain = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppSystemBackdropExplain");
+            AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink");
+            AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink");
+            _sysbdDefault = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction__sysbdDefault");
+            _sysbdMica = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction__sysbdMica");
+            _sysbdAcrylic = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction__sysbdAcrylic");
             AppearanceAndAction_AppLanguage = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppLanguage");
             AppearanceAndAction_AppLanguageExplain = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppLanguageExplain");
             AppearanceAndAction_AppFileStorage = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppFileStorage");
@@ -270,6 +297,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         {
             Themes = [_themeFollowSystem, _themeLight, _themeDark];
             Languages = [.. SupportedLanguages.Languages];
+            SystemBackdrops = [_sysbdDefault, _sysbdMica, _sysbdAcrylic];
         }
 
         private void ChangeAutoShartStatu(bool isAutoStart)
@@ -425,6 +453,9 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         private string _themeDark = string.Empty;
         private string _themeLight = string.Empty;
         private string _themeFollowSystem = string.Empty;
+        private string _sysbdDefault = string.Empty;
+        private string _sysbdMica = string.Empty;
+        private string _sysbdAcrylic = string.Empty;
         private IAppUpdaterClient _appUpdater;
         private IUserSettingsClient _userSettingsClient;
         private IWallpaperControlClient _wpControlClient;

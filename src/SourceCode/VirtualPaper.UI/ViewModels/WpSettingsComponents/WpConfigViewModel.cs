@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,6 +17,7 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.Models.WallpaperMetaData;
 using VirtualPaper.UI.UserControls;
+using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.Views.Utils;
 using Windows.Storage;
 using WinUI3Localizer;
@@ -25,8 +25,6 @@ using WallpaperType = VirtualPaper.Common.WallpaperType;
 
 namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
 {
-    //public delegate Task LoadSourceDelegate(WallpaperType type, string filePath);
-
     internal class WpConfigViewModel : ObservableObject
     {
         public event EventHandler<DoubleValueChangedEventArgs> DoubleValueChanged;
@@ -49,34 +47,6 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             set { _wallpaper = value; OnPropertyChanged(); }
         }
 
-        private bool _infoBarIsOpen = false;
-        public bool InfoBarIsOpen
-        {
-            get => _infoBarIsOpen;
-            set { _infoBarIsOpen = value; OnPropertyChanged(); }
-        }
-
-        private string _infobarTitle;
-        public string InfobarTitle
-        {
-            get { return _infobarTitle; }
-            set { _infobarTitle = value; OnPropertyChanged(); }
-        }
-
-        private string _infobarMsg;
-        public string InfobarMsg
-        {
-            get { return _infobarMsg; }
-            set { _infobarMsg = value; OnPropertyChanged(); }
-        }
-
-        private InfoBarSeverity _infoBarSeverity;
-        public InfoBarSeverity InfoBarSeverity
-        {
-            get { return _infoBarSeverity; }
-            set { _infoBarSeverity = value; OnPropertyChanged(); }
-        }
-
         private WpCustomize _wpCustomizePage;
         public WpCustomize WpCustomizePage
         {
@@ -87,8 +57,11 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
         public WpConfigViewModel(Func<WallpaperType, string, string, Task> initWebviewContent)
         {
             _localizer = Localizer.Get();
+            _userSettingsClient = App.Services.GetRequiredService<IUserSettingsClient>();
             _wallpaperControlClient = App.Services.GetRequiredService<IWallpaperControlClient>();
+            _wpSettingsViewModel = App.Services.GetRequiredService<WpSettingsViewModel>();
 
+            _onIsLoading = App.Services.GetRequiredService<WpSettingsViewModel>().IsLoading;
             _onUpdateSource = initWebviewContent;
 
             InitText();
@@ -105,17 +78,28 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             TextFileExtension = _localizer.GetLocalizedString("WpConfigViewMdoel_TextFileExtension");
             TextFileSize = _localizer.GetLocalizedString("WpConfigViewMdoel_TextFileSize");
             TextDetailedInfo = _localizer.GetLocalizedString("WpConfigViewMdoel_TextDetailedInfo");
-            InfobarTitle = _localizer.GetLocalizedString("Wpconfig_InfobarTitle");
         }
 
-        internal async Task InitWp(int idx)
+        internal async Task InitWp(string content)
         {
             try
             {
                 Loading();
                 _cancellationTokenSourceForInitWpUI = new CancellationTokenSource();
 
-                var wpBasicData = _wallpaperControlClient.Wallpapers.FirstOrDefault(x => x.Monitor.Index == idx);
+                WallpaperBasicData wpBasicData;
+                if (content == "Expend" || content == "Duplicate")
+                {
+                    _monitor = App.Services.GetRequiredService<WpSettingsViewModel>().Monitors[0];
+                    wpBasicData = _wallpaperControlClient.Wallpapers.FirstOrDefault();
+                }
+                else
+                {
+                    _monitor = App.Services.GetRequiredService<WpSettingsViewModel>().Monitors[int.Parse(content) - 1];
+                    wpBasicData = _wallpaperControlClient.Wallpapers.FirstOrDefault(x => x.Monitor.Content == content);
+                }
+
+
                 WpMetaData data = wpBasicData == null ? null : await _wallpaperControlClient.GetWallpaperAsync(wpBasicData.FolderPath);
 
                 if (data != null)
@@ -139,19 +123,16 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
                         FilePath = data.FilePath,
                         ThumbnailPath = data.ThumbnailPath,
                         WpCustomizePath = data.WpCustomizePath,
+                        WpCustomizePathTmp = data.WpCustomizePathTmp,
+                        WpCustomizePathUsing = data.WpCustomizePathUsing,
 
                         Resolution = data.Resolution,
                         AspectRatio = data.AspectRatio,
                         FileExtension = data.FileExtension,
                         FileSize = data.FileSize,
-
-                        Arguments = [.. data.Arguments],
                     };
-                    if (Wallpaper.Arguments.Count < 2)
-                    {
-                        Wallpaper.Arguments.Add("");
-                        Wallpaper.Arguments.Add("");
-                    }
+
+                    File.Copy(Wallpaper.WpCustomizePathUsing, Wallpaper.WpCustomizePathTmp, true);
                 }
                 else
                 {
@@ -164,11 +145,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             }
             catch (Exception ex)
             {
-                InfoBarSeverity = InfoBarSeverity.Error;
-                InfobarMsg = _localizer.GetLocalizedString("Wpconfig_InfobarMsg_Err");
-                InfoBarIsOpen = true;
-
-                _logger.Error(ex);
+                _wpSettingsViewModel.ErrOccoured(ex);
             }
             finally
             {
@@ -180,35 +157,23 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
 
         internal async Task TryDropFileAsync(IReadOnlyList<IStorageItem> items, XamlRoot xamlRoot)
         {
-            if (items.Count > 1)
+            var res = WallpaperUtil.TrytoDropFile(items);
+            bool statu = res.Item1;
+            string content = res.Item2;
+
+            if (!statu || !FileUtil.IsValidFolderPath(content))
             {
                 _ = await new ContentDialog()
                 {
                     XamlRoot = xamlRoot,
                     Title = _localizer.GetLocalizedString("Dialog_Title_Prompt"),
-                    Content = _localizer.GetLocalizedString("Dialog_Content_TryDropMuchFile"),
+                    Content = content + "\nInVailid",
                     PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm")
                 }.ShowAsync();
-                return;
             }
-
-            foreach (var item in items)
+            else
             {
-                if (item is StorageFile file)
-                {
-                    WallpaperType fileType = GetFileTypeFromPath(file.Path);
-                    if (fileType == WallpaperType.unknown)
-                    {
-                        _ = await new ContentDialog()
-                        {
-                            XamlRoot = xamlRoot,
-                            Title = _localizer.GetLocalizedString("Dialog_Title_Prompt"),
-                            Content = _localizer.GetLocalizedString("Dialog_Content_TryDropFileErr"),
-                            PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm")
-                        }.ShowAsync();
-                    }
-                    else await TryImportFromLocalAsync(file.Path);
-                }
+                await TryImportFromLocalAsync(content);
             }
         }
 
@@ -242,14 +207,9 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
                         AspectRatio = wpData.AspectRatio,
                         FileExtension = wpData.FileExtension,
                         FileSize = wpData.FileSize,
-
-                        Arguments = [.. wpData.Arguments],
                     };
 
-                    _cancellationTokenSourceForImport.Token.ThrowIfCancellationRequested();
                     JsonStorage<IMetaData>.StoreData(Path.Combine(wpData.FolderPath, "MetaData.json"), metaData);
-
-                    _cancellationTokenSourceForImport.Token.ThrowIfCancellationRequested();
 
                     Wallpaper = metaData;
 
@@ -259,11 +219,11 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             }
             catch (OperationCanceledException)
             {
-                OperationCanceled();
+                _wpSettingsViewModel.OperationCanceled();
             }
             catch (Exception ex)
             {
-                ErrOccoured(ex);
+                _wpSettingsViewModel.ErrOccoured(ex);
             }
             finally
             {
@@ -273,20 +233,27 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             }
         }
 
-        internal void ErrOccoured(Exception ex)
+        internal void TryImportFromLocal(IMetaData metaData)
         {
-            InfoBarSeverity = InfoBarSeverity.Error;
-            InfobarMsg = _localizer.GetLocalizedString("Wpconfig_InfobarMsg_Err");
-            InfoBarIsOpen = true;
+            try
+            {
+                Loading();
 
-            _logger.Error(ex);
-        }
+                File.Copy(metaData.WpCustomizePath, metaData.WpCustomizePathUsing, true);
+                File.Copy(metaData.WpCustomizePath, metaData.WpCustomizePathTmp, true);
+                Wallpaper = metaData;
 
-        internal void OperationCanceled()
-        {
-            InfoBarSeverity = InfoBarSeverity.Informational;
-            InfobarMsg = _localizer.GetLocalizedString("Wpconfig_InfobarMsg_Cancel");
-            InfoBarIsOpen = true;
+                InitBasicInfo();
+                InitCustomize(metaData);
+            }
+            catch (Exception ex)
+            {
+                _wpSettingsViewModel.ErrOccoured(ex);
+            }
+            finally
+            {
+                Loaded();
+            }
         }
 
         internal void Cancel()
@@ -300,9 +267,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             Wallpaper = null;
             WpCustomizePage = null;
 
-            await InitWp(monitor.Index);
-
-            //return Task.CompletedTask;
+            await InitWp(monitor.Content);
         }
 
         internal async void Close(IMonitor monitor)
@@ -312,6 +277,13 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
 
             await _wallpaperControlClient.CloseWallpaperAsync(monitor);
             await _onUpdateSource?.Invoke(WallpaperType.unknown, null, null);
+        }
+
+        internal async Task PreviewWallpaperAsync()
+        {
+            if (Wallpaper == null || Wallpaper.FolderPath == null || Wallpaper.FolderPath.Length == 0) return;
+
+            await _wallpaperControlClient.PreviewWallpaperAsync(Wallpaper, false);
         }
 
         internal void Apply()
@@ -357,23 +329,8 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             }
             catch (Exception ex)
             {
-                ShowErr(xamlRoot);
-                _logger.Error(ex);
+                _wpSettingsViewModel.ErrOccoured(ex);
             }
-        }
-
-        private WallpaperType GetFileTypeFromPath(string filePath)
-        {
-            string extension = Path.GetExtension(filePath)?.ToLowerInvariant();
-
-            return extension switch
-            {
-                //".html" or ".htm" => WallpaperType.web,
-                ".gif" => WallpaperType.gif,
-                ".jpg" or ".jpeg" or ".png" or ".bmp" => WallpaperType.picture,
-                ".mp4" or ".webm" => WallpaperType.video,
-                _ => WallpaperType.unknown,
-            };
         }
 
         private void Loading()
@@ -396,14 +353,14 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
         {
             if (Wallpaper == null) return;
 
-            WpCustomizePage = new(Wallpaper, DoubleValueChanged, BoolValueChanged, StringValueChanged);
+            WpCustomizePage = new(_monitor, Wallpaper, DoubleValueChanged, BoolValueChanged, StringValueChanged);
         }
 
         private void InitCustomize(IMetaData metaData)
         {
             if (metaData == null) return;
 
-            WpCustomizePage = new(metaData, DoubleValueChanged, BoolValueChanged, StringValueChanged);
+            WpCustomizePage = new(_monitor, metaData, DoubleValueChanged, BoolValueChanged, StringValueChanged);
         }
 
         internal async void ShowErr(XamlRoot xamlRoot)
@@ -417,15 +374,56 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
                 DefaultButton = ContentDialogButton.Primary,
             }.ShowAsync();
         }
+
+        internal bool IsLegal()
+        {
+            if (Wallpaper == null || Wallpaper.FolderPath == string.Empty) return false;
+            return true;
+        }
+
+        internal string InitUid()
+        {
+            string folderName = WallpaperUtil.InitUid(Wallpaper);
+           
+            return folderName;
+        }
+
+        internal void UpdateMetaData(string folderName)
+        {
+            string tagetFolder = Path.Combine(
+                    _userSettingsClient.Settings.WallpaperDir,
+                    Constants.CommonPartialPaths.WallpaperInstallDir,
+                    folderName);
+            if (!Directory.Exists(tagetFolder))
+            {
+                FileUtil.DirectoryCopy(
+                    Wallpaper.FolderPath,
+                    tagetFolder,
+                    true);
+            }
+            string oldFolderPath = Wallpaper.FolderPath;
+
+            if (oldFolderPath != tagetFolder)
+            {
+                Wallpaper.FolderPath = Wallpaper.FolderPath.Replace(oldFolderPath, tagetFolder);
+                Wallpaper.ThumbnailPath = Wallpaper.ThumbnailPath.Replace(oldFolderPath, tagetFolder);
+                Wallpaper.WpCustomizePath = Wallpaper.WpCustomizePath.Replace(oldFolderPath, tagetFolder);
+                Wallpaper.WpCustomizePathUsing = Wallpaper.WpCustomizePathUsing.Replace(oldFolderPath, tagetFolder);
+                Wallpaper.WpCustomizePathTmp = Wallpaper.WpCustomizePathTmp.Replace(oldFolderPath, tagetFolder);
+            }
+
+            JsonStorage<IMetaData>.StoreData(Path.Combine(Wallpaper.FolderPath, "MetaData.json"), Wallpaper);
+        }
         #endregion
 
         private ILocalizer _localizer;
+        private IMonitor _monitor;
+        private IUserSettingsClient _userSettingsClient;
         private IWallpaperControlClient _wallpaperControlClient;
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private CancellationTokenSource _cancellationTokenSourceForImport;
         private CancellationTokenSource _cancellationTokenSourceForInitWpUI;
-
-        internal Func<WallpaperType, string, string, Task> _onUpdateSource;
-        internal Action<bool> _onIsLoading;
+        private Action<bool> _onIsLoading;
+        private Func<WallpaperType, string, string, Task> _onUpdateSource;
+        private WpSettingsViewModel _wpSettingsViewModel;
     }
 }

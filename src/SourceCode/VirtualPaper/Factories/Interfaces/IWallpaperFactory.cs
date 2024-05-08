@@ -7,6 +7,11 @@ namespace VirtualPaper.Factories.Interfaces
 {
     public interface IWallpaperFactory
     {
-        IWallpaper CreateWallpaper(IMetaData mateData, IMonitor monitor, IUserSettingsService userSettings, bool isPreview = false);
+        IWallpaper CreateWallpaper(
+            IMetaData mateData,
+            IMonitor monitor,
+            IUserSettingsService userSettings,
+            bool isPreview = false,
+            bool isLibrayPreview = false);
     }
 }

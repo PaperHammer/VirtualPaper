@@ -51,6 +51,7 @@ namespace VirtualPaper.GrpcServers
             try
             {
                 var wpData = request.WpMetaData;
+                bool isLibraryPreview = request.IsLibraryPreview;
                 IMetaData metaData = new MetaData()
                 {
                     Type = (Common.WallpaperType)wpData.Type,
@@ -58,7 +59,7 @@ namespace VirtualPaper.GrpcServers
                     FilePath = wpData.FilePath,
                     WpCustomizePathTmp = wpData.WpCustomizePathTmp
                 };
-                _wallpaperControl.PreviewWallpaper(metaData);
+                _wallpaperControl.PreviewWallpaper(metaData, isLibraryPreview);
             }
             catch (Exception e)
             {
@@ -100,17 +101,17 @@ namespace VirtualPaper.GrpcServers
 
         public override Task<Empty> SendMessageWallpaper(WallpaperMessageRequest request, ServerCallContext context)
         {
-            var ipcMag = JsonConvert.DeserializeObject<IpcMessage>(request.Msg, new JsonSerializerSettings() { Converters = { new IpcMessageConverter() } });
+            var ipcMsg = JsonConvert.DeserializeObject<IpcMessage>(request.Msg, new JsonSerializerSettings() { Converters = { new IpcMessageConverter() } });
 
-            if (string.IsNullOrEmpty(request.MonitorId))
-            {
-                _wallpaperControl.SendMessageWallpaper(request.FolderPath, ipcMag);
-            }
-            else
-            {
-                var display = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
-                _wallpaperControl.SendMessageWallpaper(display, request.FolderPath, ipcMag);
-            }
+            //if (string.IsNullOrEmpty(request.MonitorId))
+            //{
+            //    _wallpaperControl.SendMessageWallpaper(request.FolderPath, ipcMsg);
+            //}
+            //else
+            //{
+            var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
+            _wallpaperControl.SendMessageWallpaper(monitor, request.FolderPath, ipcMsg);
+            //}
             return Task.FromResult(new Empty());
         }
 
@@ -129,7 +130,7 @@ namespace VirtualPaper.GrpcServers
                             }
                         }
                         break;
-                    case WallpaperArrangement.Span:
+                    case WallpaperArrangement.Expand:
                     case WallpaperArrangement.Duplicate:
                         if (_wallpaperControl.Wallpapers.Any())
                         {
@@ -153,6 +154,7 @@ namespace VirtualPaper.GrpcServers
                 {
                     var item = new GetWallpapersResponse()
                     {
+                        VirtualPaperUid = wallpaper.MetaData.VirtualPaperUid,
                         FolderPath = wallpaper.MetaData.FolderPath,
                         Monitor = new MonitorData()
                         {
@@ -161,7 +163,7 @@ namespace VirtualPaper.GrpcServers
                             DisplayName = wallpaper.Monitor.MonitorName,
                             HMonitor = wallpaper.Monitor.HMonitor.ToInt32(),
                             IsPrimary = wallpaper.Monitor.IsPrimary,
-                            Index = wallpaper.Monitor.Index,
+                            Content = wallpaper.Monitor.Content,
                             WorkingArea = new Grpc.Service.WallpaperControl.Rectangle()
                             {
                                 X = wallpaper.Monitor.WorkingArea.X,
@@ -214,6 +216,8 @@ namespace VirtualPaper.GrpcServers
                 resp.FilePath = metaData.FilePath;
                 resp.ThumbnailPath = metaData.ThumbnailPath;
                 resp.WpCustomizePath = metaData.WpCustomizePath;
+                resp.WpCustomizePathTmp = metaData.WpCustomizePathTmp;
+                resp.WpCustomizePathUsing = metaData.WpCustomizePathUsing;
 
                 resp.Resolution = metaData.Resolution;
                 resp.AspectRatio = metaData.AspectRatio;
@@ -254,9 +258,6 @@ namespace VirtualPaper.GrpcServers
                 resp.AspectRatio = wpProperty.AspectRatio;
                 resp.FileExtension = wpProperty.FileExtension;
                 resp.FileSize = wpProperty.FileSize;
-
-                resp.Arguments.Add("");
-                resp.Arguments.Add("");
             }
             catch (Exception) { }
 

@@ -39,11 +39,11 @@ namespace VirtualPaper.Models.Cores
             set { _hMonitor = value; OnPropertyChanged(); }
         }
 
-        private int _index;
-        public int Index
+        private string _content = string.Empty;
+        public string Content
         {
-            get => _index;
-            set { _index = value; OnPropertyChanged(); }
+            get => _content;
+            set { _content = value; OnPropertyChanged(); }
         }
 
         private bool _isPrimary;
@@ -70,7 +70,11 @@ namespace VirtualPaper.Models.Cores
 
         public Monitor() { }
 
-        public Monitor(string deviceName) => DeviceName = deviceName;
+        public Monitor(string deviceName, string content = "")
+        {
+            DeviceName = deviceName;
+            Content = content;
+        }
 
         public bool Equals(IMonitor? other)
         {

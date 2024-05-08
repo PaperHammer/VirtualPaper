@@ -45,13 +45,13 @@ namespace VirtualPaper.Cores.Desktop
         /// </summary>
         void RestoreWallpaper();
 
-        void PreviewWallpaper(IMetaData metaData);
+        void PreviewWallpaper(IMetaData metaData, bool isLibraryPreview);
 
         void SeekWallpaper(IMetaData metaData, float seek, PlaybackPosType type);
         void SeekWallpaper(IMonitor monitor, float seek, PlaybackPosType type);
 
-        void SendMessageWallpaper(string infoPath, IpcMessage msg);
-        void SendMessageWallpaper(IMonitor monitor, string infoPath, IpcMessage msg);
+        //void SendMessageWallpaper(string folderPath, IpcMessage msg);
+        void SendMessageWallpaper(IMonitor monitor, string folderPath, IpcMessage msg);
 
         IMetaData GetWallpaper(string folderPath);
         Task<SetWallpaperResponse> SetWallpaperAsync(IMetaData metaData, IMonitor monitor, CancellationToken cancellationToken);

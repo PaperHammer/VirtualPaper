@@ -15,6 +15,8 @@ namespace VirtualPaper.Common.Utils.IPC
         msg_wploaded,
         msg_screenshot,
 
+        cmd_apply,
+        cmd_initFilter,
         cmd_reload,
         cmd_close,
         cmd_screenshot,
@@ -100,6 +102,18 @@ namespace VirtualPaper.Common.Utils.IPC
     }
 
     [Serializable]
+    public class VirtualPaperApplyCmd : IpcMessage
+    {
+        public VirtualPaperApplyCmd() : base(MessageType.cmd_apply) { }
+    }
+    
+    [Serializable]
+    public class VirtualPaperInitFilterCmd : IpcMessage
+    {
+        public VirtualPaperInitFilterCmd() : base(MessageType.cmd_initFilter) { }
+    }
+    
+    [Serializable]
     public class VirtualPaperSuspendCmd : IpcMessage
     {
         public VirtualPaperSuspendCmd() : base(MessageType.cmd_suspend) { }
@@ -119,13 +133,6 @@ namespace VirtualPaper.Common.Utils.IPC
         public bool IsMuted { get; set; }
     }
 
-    //[Serializable]
-    //public class VirtualPaperVolumeCmd : IpcMessage
-    //{
-    //    public int Volume { get; set; }
-    //    public VirtualPaperVolumeCmd() : base(MessageType.cmd_volume) { }
-    //}
-
     [Serializable]
     public class VirtualPaperSystemInformation : IpcMessage
     {
@@ -133,19 +140,11 @@ namespace VirtualPaper.Common.Utils.IPC
         public VirtualPaperSystemInformation() : base(MessageType.cmd_reload) { }
     }
 
-    //[Serializable]
-    //public class VirtualPaperSystemNowPlaying : IpcMessage
-    //{
-    //    public NowPlayingEventArgs? Info { get; set; }
-    //    public VirtualPaperSystemNowPlaying() : base(MessageType.lsp_nowplaying) { }
-    //}
-
     [Serializable]
     public class VirtualPaperSlider : IpcMessage
     {
         public string Name { get; set; } = string.Empty;
         public double Value { get; set; }
-        public double Step { get; set; }
         public VirtualPaperSlider() : base(MessageType.vp_slider) { }
     }
 

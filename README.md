@@ -1,8 +1,7 @@
 # VirtualPaper
 [![GitHub release](https://img.shields.io/badge/release-v0.2.0.0-blue)](https://github.com/PaperHammer/VirtualPaper/releases)
-[![Github Download](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2FPaperHammer%2FVirtualPaper%2Freleases%2Fassets%2F164201175&query=download_count&label=Download&color=Green)](https://github.com/PaperHammer/VirtualPaper/releases)
 [![GitHub stars](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2FPaperHammer%2FVirtualPaper&query=stargazers_count&label=Stars&color=pink)](https://github.com/PaperHammer/VirtualPaper/stargazers)
-[![Documentation](https://img.shields.io/badge/Docs-Wiki-blue)](https://github.com/PaperHammer/VirtualPaper/wiki)
+[![Documentation](https://img.shields.io/badge/Docs-Wiki-green)](https://github.com/PaperHammer/VirtualPaper/wiki)
 [![Issues](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2FPaperHammer%2FVirtualPaper&query=open_issues&label=Issues&color=orange)](https://github.com/PaperHammer/VirtualPaper/issues)
 
 一款开源、免费、运行在windows10+上的轻量级壁纸管理软件

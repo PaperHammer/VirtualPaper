@@ -1,5 +1,5 @@
 # VirtualPaper
-[![GitHub release](https://img.shields.io/badge/release-v0.1.1.0-blue)](https://github.com/PaperHammer/VirtualPaper/releases)
+[![GitHub release](https://img.shields.io/badge/release-v0.2.0.0-blue)](https://github.com/PaperHammer/VirtualPaper/releases)
 [![Github Download](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2FPaperHammer%2FVirtualPaper%2Freleases%2Fassets%2F164201175&query=download_count&label=Download&color=Green)](https://github.com/PaperHammer/VirtualPaper/releases)
 [![GitHub stars](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2FPaperHammer%2FVirtualPaper&query=stargazers_count&label=Stars&color=pink)](https://github.com/PaperHammer/VirtualPaper/stargazers)
 [![Documentation](https://img.shields.io/badge/Docs-Wiki-blue)](https://github.com/PaperHammer/VirtualPaper/wiki)
@@ -38,6 +38,12 @@ The following files are supported:
 | Motion Picture | .gif .apng |
 | Still image | .jpg .jpeg .bmp .png .svg .webp|
 | Video | .mp4 .webm |
+---
+不依赖 Windows 系统的屏幕保护服务
+
+Screen saver services that don't rely on Windows
+
+<img src="/resources/screensaver.png" width="600" height="338"/>
 
 ## Download
 Windows 10.0.19041.0 及以上

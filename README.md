@@ -9,6 +9,8 @@
 
 An open-source, free, lightweight wallpaper management software that runs on Windows 10+
 
+**The required operating environment: .NET 8.0**
+
 ## Contents
 - [About](#about)
 - [Features](#features)

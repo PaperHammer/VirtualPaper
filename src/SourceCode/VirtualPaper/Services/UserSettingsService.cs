@@ -1,5 +1,4 @@
 ﻿using NLog;
-using System.IO;
 using System.Reflection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
@@ -15,7 +14,7 @@ namespace VirtualPaper.Services
     {
         public ISettings Settings { get; private set; }
         public List<IApplicationRules> AppRules { get; private set; } = [];
-        public List<IWallpaperLayout> WallpaperLayout { get; private set; } = [];
+        public List<IWallpaperLayout> WallpaperLayouts { get; private set; } = [];
 
         public UserSettingsService(
             IMonitorManager moitorManager)
@@ -85,12 +84,12 @@ namespace VirtualPaper.Services
             {
                 try
                 {
-                    WallpaperLayout = new List<IWallpaperLayout>(JsonStorage<List<WallpaperLayout>>.LoadData(_wallpaperLayoutPath));
+                    WallpaperLayouts = new List<IWallpaperLayout>(JsonStorage<List<WallpaperLayout>>.LoadData(_wallpaperLayoutPath));
                 }
                 catch (Exception e)
                 {
                     _logger.Error(e.ToString());
-                    WallpaperLayout = [];
+                    WallpaperLayouts = [];
                     Save<List<IWallpaperLayout>>();
                 }
             }
@@ -112,7 +111,7 @@ namespace VirtualPaper.Services
             }
             else if (typeof(T) == typeof(List<IWallpaperLayout>))
             {
-                JsonStorage<List<IWallpaperLayout>>.StoreData(_wallpaperLayoutPath, WallpaperLayout);
+                JsonStorage<List<IWallpaperLayout>>.StoreData(_wallpaperLayoutPath, WallpaperLayouts);
             }
             else
             {

@@ -10,8 +10,9 @@ service WallpaperControlService {
 	
 	rpc PreviewWallpaper (PreviewWallpaperRequest) returns (google.protobuf.Empty);
 	rpc SetWallpaper (SetWallpaperRequest) returns (SetWallpaperResponse);
+	rpc ModifyPreview (ModifyPreviewRequest) returns (google.protobuf.Empty);
 
-	rpc RestartAllWallpaper (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc RestartAllWallpaper (google.protobuf.Empty) returns (RestartWallpaperResponse);
     
     rpc SendMessageWallpaper(WallpaperMessageRequest) returns (google.protobuf.Empty);
     
@@ -26,7 +27,6 @@ service WallpaperControlService {
     
 	rpc SubscribeWallpaperChanged (google.protobuf.Empty) returns (stream google.protobuf.Empty);
     rpc SubscribeWallpaperError (google.protobuf.Empty) returns (stream WallpaperErrorResponse);
-    rpc SubscribeUpdateWallpaper (google.protobuf.Empty) returns (stream UpdateWallpaperResponse);          
 }
 
 message GetCoreStatsResponse {
@@ -43,6 +43,12 @@ message PreviewWallpaperRequest {
 	bool is_library_preview = 2;
 }
 
+message ModifyPreviewRequest {
+	string control_name = 1;
+	string property_name = 2;
+	string value = 3;
+}
+
 message SetWallpaperRequest {
   string folder_path = 1;
   string monitor_id = 2;
@@ -50,7 +56,12 @@ message SetWallpaperRequest {
 }
 
 message SetWallpaperResponse {
-	bool is_worked = 1;
+	bool is_finished = 1;
+	string msg = 2;
+}
+
+message RestartWallpaperResponse {
+	bool is_finished = 1;
 	string msg = 2;
 }
 
@@ -93,15 +104,6 @@ message GetWallpapersResponse {
 message WallpaperErrorResponse {
 	ErrorType error = 1;
 	string error_msg = 2;
-}
-
-message UpdateWallpaperResponse {
-	UpdateWallpaperState state_ = 1;
-	string folder_path = 2;
-	string title = 3;
-	string description = 4;
-	string authors = 5;
-	string thumbnail_path_ = 7;
 }
 
 message WpMetaData {
@@ -185,10 +187,4 @@ enum RunningState {
 	cmdImport = 2;
 	multiImport = 3;
 	edit = 4;
-}
-
-enum UpdateWallpaperState {
-	changed = 0;
-	remove = 1;
-    done = 2;
 }

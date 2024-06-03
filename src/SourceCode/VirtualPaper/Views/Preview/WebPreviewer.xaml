@@ -5,8 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VirtualPaper.Views.Preview"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        xmlns:lang="clr-namespace:VirtualPaper.lang"
         mc:Ignorable="d"
-        Title="{DynamicResource Preview_Title}" Height="800" Width="1400"
+        Title="{Binding [Preview_Title], Source={x:Static lang:LanguageManager.Instance}}" 
+        Height="800" 
+        Width="1400"
         Background="#1a1a1a"
         Icon="../../virtualpaper.ico"
         Closing="Window_Closing">
@@ -16,7 +19,9 @@
             x:Name="Webview2" 
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            Visibility="Collapsed"/>
+            Visibility="Collapsed"
+            AllowDrop="False"
+            PreviewKeyDown="Webview2_PreviewKeyDown"/>
 
         <StackPanel
             x:Name="skPanel"
@@ -27,7 +32,7 @@
                 Margin="15"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                Text="{DynamicResource Preview_DataLoading}"
+                Text="{Binding [Preview_DataLoading], Source={x:Static lang:LanguageManager.Instance}}"
                 Foreground="White"
                 FontSize="24"/>
             <ProgressBar 

@@ -12,9 +12,9 @@
         Left="-9999"
         Loaded="Window_Loaded"
         ResizeMode="NoResize"
-        ShowActivated="False"
+        ShowInTaskbar="False"
         WindowStartupLocation="Manual"
-        WindowStyle="None"
+        WindowStyle="None"        
         mc:Ignorable="d">
 
     <Grid>

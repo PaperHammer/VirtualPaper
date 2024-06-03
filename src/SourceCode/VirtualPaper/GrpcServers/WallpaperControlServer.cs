@@ -69,11 +69,34 @@ namespace VirtualPaper.GrpcServers
             return Task.FromResult(new Empty());
         }
 
-        public override Task<Empty> RestartAllWallpaper(Empty request, ServerCallContext context)
+        public override Task<Empty> ModifyPreview(ModifyPreviewRequest request, ServerCallContext context)
         {
-            _wallpaperControl.RestoreWallpaper();
+            try
+            {
+                _wallpaperControl.ModifyPreview(request.ControlName, request.PropertyName, request.Value);
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e.ToString());
+            }
 
             return Task.FromResult(new Empty());
+        }
+
+        public override Task<RestartWallpaperResponse> RestartAllWallpaper(Empty request, ServerCallContext context)
+        {
+            RestartWallpaperResponse response = new();
+
+            try
+            {
+                response = _wallpaperControl.RestoreWallpaper();
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e.ToString());
+            }
+
+            return Task.FromResult(response);
         }
 
         public override async Task<SetWallpaperResponse> SetWallpaper(SetWallpaperRequest request, ServerCallContext context)
@@ -94,6 +117,7 @@ namespace VirtualPaper.GrpcServers
             catch (Exception e)
             {
                 _logger.Error(e.ToString());
+                response.Msg = e.ToString();
             }
 
             return await Task.FromResult(response);
@@ -103,15 +127,9 @@ namespace VirtualPaper.GrpcServers
         {
             var ipcMsg = JsonConvert.DeserializeObject<IpcMessage>(request.Msg, new JsonSerializerSettings() { Converters = { new IpcMessageConverter() } });
 
-            //if (string.IsNullOrEmpty(request.MonitorId))
-            //{
-            //    _wallpaperControl.SendMessageWallpaper(request.FolderPath, ipcMsg);
-            //}
-            //else
-            //{
             var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
             _wallpaperControl.SendMessageWallpaper(monitor, request.FolderPath, ipcMsg);
-            //}
+
             return Task.FromResult(new Empty());
         }
 
@@ -294,48 +312,6 @@ namespace VirtualPaper.GrpcServers
                     }
 
                     await responseStream.WriteAsync(new Empty());
-                }
-            }
-            catch (Exception e)
-            {
-                _logger.Error(e);
-            }
-        }
-
-        public override async Task SubscribeUpdateWallpaper(Empty _, IServerStreamWriter<UpdateWallpaperResponse> responseStream, ServerCallContext context)
-        {
-            try
-            {
-                while (!context.CancellationToken.IsCancellationRequested)
-                {
-                    UpdateWallpaperResponse? resp = null;
-                    var tcs = new TaskCompletionSource<bool>();
-                    _wallpaperControl.WallpaperUpdated += WallpaperUpdated;
-                    void WallpaperUpdated(object? s, WallpaperUpdateArgs e)
-                    {
-                        resp = new UpdateWallpaperResponse()
-                        {
-                            Title = e.MetaData.Title ?? string.Empty,
-                            Description = e.MetaData.Desc ?? string.Empty,
-                            ThumbnailPath = e.MetaData.ThumbnailPath ?? string.Empty,
-                            FolderPath = e.FolderPath ?? string.Empty,
-                            State = (Grpc.Service.WallpaperControl.UpdateWallpaperState)(int)e.UpdatedType,
-                            Authors = e.MetaData.Authors,
-                        };
-
-                        _wallpaperControl.WallpaperUpdated -= WallpaperUpdated;
-                        tcs.TrySetResult(true);
-                    }
-                    using var item = context.CancellationToken.Register(() => { tcs.TrySetResult(false); });
-                    await tcs.Task;
-
-                    if (context.CancellationToken.IsCancellationRequested)
-                    {
-                        _wallpaperControl.WallpaperUpdated -= WallpaperUpdated;
-                        break;
-                    }
-
-                    await responseStream.WriteAsync(resp);
                 }
             }
             catch (Exception e)

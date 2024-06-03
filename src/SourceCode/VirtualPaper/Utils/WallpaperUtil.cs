@@ -7,6 +7,7 @@ using System.Windows.Media.Imaging;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.lang;
 using VirtualPaper.Models.WallpaperMetaData;
 using Size = OpenCvSharp.Size;
 
@@ -19,7 +20,7 @@ namespace VirtualPaper.Utils
             if (File.Exists(Path.Combine(folderPath, "MetaData.json")))
             {
                 MetaData metaData = JsonStorage<MetaData>.LoadData(Path.Combine(folderPath, "MetaData.json"));
-                
+
                 return metaData ?? throw new Exception("Corrupted wallpaper metadata");
             }
             throw new Exception("Wallpaper not found.");
@@ -88,7 +89,7 @@ namespace VirtualPaper.Utils
                 if (token.IsCancellationRequested)
                 {
                     throw new OperationCanceledException("The video frame reading was canceled.");
-                }                
+                }
             }
 
             using (var ms = new MemoryStream())
@@ -157,7 +158,7 @@ namespace VirtualPaper.Utils
             }
             catch (Exception)
             {
-                throw new InvalidOperationException($"{App.GetResourceDicString("WpUtils_TextFileOpenFailed")} ({Path.GetExtension(filePath)})");
+                throw new InvalidOperationException($"{LanguageManager.Instance["WpUtils_TextFileOpenFailed"]} ({Path.GetExtension(filePath)})");
             }
 
             return fileProperty;

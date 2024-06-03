@@ -5,24 +5,27 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.UserSetting;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
+using Monitor = VirtualPaper.Models.Cores.Monitor;
+using ProcInfoData = VirtualPaper.Grpc.Service.UserSetting.ProcInfoData;
 using WallpaperArrangement = VirtualPaper.Grpc.Service.UserSetting.WallpaperArrangement;
 
 namespace VirtualPaper.Grpc.Client
 {
     public class UserSettingsClient : IUserSettingsClient
     {
-        public ISettings Settings { get; private set; }
-
+        public ISettings Settings { get; private set; } = new Settings();
         public List<IApplicationRules> AppRules { get; private set; } = [];
+        public List<IWallpaperLayout> WallpaperLayouts { get; private set; } = [];
 
         public UserSettingsClient()
         {
-            _client = new(new NamedPipeChannel(".", Constants.SingleInstance.GrpcPipeServerName));
+            _client = new UserSettingService.UserSettingServiceClient(new NamedPipeChannel(".", Constants.SingleInstance.GrpcPipeServerName));
 
             Task.Run(async () =>
             {
                 await LoadAsync<ISettings>().ConfigureAwait(false);
                 await LoadAsync<List<IApplicationRules>>().ConfigureAwait(false);
+                await LoadAsync<List<IWallpaperLayout>>().ConfigureAwait(false);
             }).Wait();
         }
 
@@ -35,6 +38,10 @@ namespace VirtualPaper.Grpc.Client
             else if (typeof(T) == typeof(List<IApplicationRules>))
             {
                 AppRules = GetAppRulesSettings();
+            }
+            else if (typeof(T) == typeof(List<IWallpaperLayout>))
+            {
+                WallpaperLayouts = GetWallpaperLayouts();
             }
             else
             {
@@ -51,6 +58,10 @@ namespace VirtualPaper.Grpc.Client
             else if (typeof(T) == typeof(List<IApplicationRules>))
             {
                 AppRules = await GetAppRulesSettingsAsync().ConfigureAwait(false);
+            }
+            else if (typeof(T) == typeof(List<IWallpaperLayout>))
+            {
+                WallpaperLayouts = await GetWallpaperLayoutsAsync().ConfigureAwait(false);
             }
             else
             {
@@ -133,6 +144,74 @@ namespace VirtualPaper.Grpc.Client
             }
             return appRules;
         }
+        
+        private List<IWallpaperLayout> GetWallpaperLayouts()
+        {
+            var wallpaperLoayouts = new List<IWallpaperLayout>();
+            var resp = _client.GetWallpaperLayouts(new Empty());
+            foreach (var item in resp.WallpaperLayouts)
+            {
+                var monitor = new Monitor()
+                {
+                    DeviceId = item.Monitor.DeviceId,
+                    DeviceName = item.Monitor.DeviceName,
+                    MonitorName = item.Monitor.DisplayName,
+                    HMonitor = item.Monitor.HMonitor,
+                    IsPrimary = item.Monitor.IsPrimary,
+                    WorkingArea = new()
+                    {
+                        X = item.Monitor.WorkingArea.X,
+                        Y = item.Monitor.WorkingArea.Y,
+                        Width = item.Monitor.WorkingArea.Width,
+                        Height = item.Monitor.WorkingArea.Height,
+                    },
+                    Bounds = new()
+                    {
+                        X = item.Monitor.Bounds.X,
+                        Y = item.Monitor.Bounds.Y,
+                        Width = item.Monitor.Bounds.Width,
+                        Height = item.Monitor.Bounds.Height,
+                    },
+                    Content = item.Monitor.Content,
+                };
+                wallpaperLoayouts.Add(new WallpaperLayout(monitor, item.FolderPath));
+            }
+            return wallpaperLoayouts;
+        }
+
+        private async Task<List<IWallpaperLayout>> GetWallpaperLayoutsAsync()
+        {
+            var wallpaperLoayouts = new List<IWallpaperLayout>();
+            var resp = await _client.GetWallpaperLayoutsAsync(new Empty());
+            foreach (var item in resp.WallpaperLayouts)
+            {
+                var monitor = new Monitor()
+                {
+                    DeviceId = item.Monitor.DeviceId,
+                    DeviceName = item.Monitor.DeviceName,
+                    MonitorName = item.Monitor.DisplayName,
+                    HMonitor = item.Monitor.HMonitor,
+                    IsPrimary = item.Monitor.IsPrimary,
+                    WorkingArea = new()
+                    {
+                        X = item.Monitor.WorkingArea.X,
+                        Y = item.Monitor.WorkingArea.Y,
+                        Width = item.Monitor.WorkingArea.Width,
+                        Height = item.Monitor.WorkingArea.Height,
+                    },
+                    Bounds = new()
+                    {
+                        X = item.Monitor.Bounds.X,
+                        Y = item.Monitor.Bounds.Y,
+                        Width = item.Monitor.Bounds.Width,
+                        Height = item.Monitor.Bounds.Height,
+                    },
+                    Content = item.Monitor.Content,
+                };
+                wallpaperLoayouts.Add(new WallpaperLayout(monitor, item.FolderPath));
+            }
+            return wallpaperLoayouts;
+        }
 
         private void SetAppRulesSettings()
         {
@@ -163,10 +242,9 @@ namespace VirtualPaper.Grpc.Client
         }
 
         #region helpers
-
         private SettingsData CreateGrpcSettings(ISettings settings)
         {
-            return new SettingsData()
+            var data =new SettingsData()
             {
                 AppFocusPause = (Service.UserSetting.AppRulesEnum)settings.AppFocus,
                 AppFullscreenPause = (Service.UserSetting.AppRulesEnum)settings.AppFullscreen,
@@ -174,7 +252,7 @@ namespace VirtualPaper.Grpc.Client
                 BatteryPause = (Service.UserSetting.AppRulesEnum)settings.BatteryPoweredn,
                 PowerSaveModePause = (Service.UserSetting.AppRulesEnum)settings.PowerSaving,
                 RemoteDesktopPause = (Service.UserSetting.AppRulesEnum)settings.RemoteDesktop,
-                SystemBackdrop = (Service.UserSetting.AppSystemBackdrop) settings.SystemBackdrop,
+                SystemBackdrop = (Service.UserSetting.AppSystemBackdrop)settings.SystemBackdrop,
                 AppVersion = settings.AppVersion,
                 Language = settings.Language,
                 IsUpdated = settings.IsUpdated,
@@ -215,16 +293,32 @@ namespace VirtualPaper.Grpc.Client
 
                 WallpaperArrangement = (WallpaperArrangement)settings.WallpaperArrangement,
 
-                IsScreensaverLockOnResume = settings.IsScreensaverLockOnResume,
-                IsScreensaverEmptyScreenShowBlack = settings.IsScreensaverEmptyScreenShowBlack,
+                //IsScreensaverLockOnResume = settings.IsScreensaverLockOnResume,
+                //IsScreensaverEmptyScreenShowBlack = settings.IsScreensaverEmptyScreenShowBlack,
 
                 ProcessTimerInterval = settings.ProcessTimerInterval,
+                
+                IsScreenSaverOn = settings.IsScreenSaverOn,
+                IsRunningLock = settings.IsRunningLock,
+                WaitingTime = settings.WaitingTime,
+                ScreenSaverEffect = (ScrEffectEnum)settings.ScreenSaverEffect,
             };
+            foreach (var proc in settings.WhiteListScr)
+            {
+                data.WhiteListScr.Add(new  ProcInfoData()
+                {
+                    ProcName = proc.ProcName,
+                    IconPath = proc.IconPath,
+                    IsRunning = proc.IsRunning,
+                });
+            }
+
+            return data;
         }
 
         private ISettings CreateSettingsFromGrpc(SettingsData settings)
         {
-            return new Settings()
+            var data = new Settings()
             {
                 AppFocus = (Common.AppWpRunRulesEnum)settings.AppFocusPause,
                 AppFullscreen = (Common.AppWpRunRulesEnum)settings.AppFullscreenPause,
@@ -275,13 +369,28 @@ namespace VirtualPaper.Grpc.Client
 
                 WallpaperArrangement = (Common.WallpaperArrangement)settings.WallpaperArrangement,
 
-                IsScreensaverLockOnResume = settings.IsScreensaverLockOnResume,
-                IsScreensaverEmptyScreenShowBlack = settings.IsScreensaverEmptyScreenShowBlack,
+                //IsScreensaverLockOnResume = settings.IsScreensaverLockOnResume,
+                //IsScreensaverEmptyScreenShowBlack = settings.IsScreensaverEmptyScreenShowBlack,
 
                 ProcessTimerInterval = settings.ProcessTimerInterval,
-            };
-        }
 
+                IsScreenSaverOn = settings.IsScreenSaverOn,
+                IsRunningLock = settings.IsRunningLock,
+                WaitingTime = settings.WaitingTime,
+                ScreenSaverEffect = (ScrEffect)settings.ScreenSaverEffect,
+            };
+            foreach (var proc in settings.WhiteListScr)
+            {
+                data.WhiteListScr.Add(new Models.ProcInfo()
+                {
+                    ProcName = proc.ProcName,
+                    IconPath = proc.IconPath,
+                    IsRunning = proc.IsRunning,
+                });
+            }
+
+            return data;
+        }
         #endregion
 
         private readonly UserSettingService.UserSettingServiceClient _client;

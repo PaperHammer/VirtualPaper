@@ -12,6 +12,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Models;
 using VirtualPaper.Common.Utils.ObserverMode;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.UI.ViewModels;
 using VirtualPaper.UI.ViewModels.WpSettingsComponents;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
@@ -28,19 +29,28 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
     /// </summary>
     public sealed partial class WpConfig : Page, ICustomizeValueChangedObserver, IDisposable
     {
-        public WpConfig(string args)
+        public WpConfig()
         {
             this.InitializeComponent();
-            
-            InitWebview2();
-            InitCustomizeData();
 
-            _content = args;
+            var wpSettingsVm = App.Services.GetRequiredService<WpSettingsViewModel>();
+            _content = wpSettingsVm.Monitors[wpSettingsVm.MonitorSelectedIdx].Content;
+                        
+            InitCustomizeData();
+            InitWebview2();
+            
             _viewModel = new(InitWebviewContent);
             _viewModel.DoubleValueChanged += OnCustomizeValueChanged;
             _viewModel.BoolValueChanged += OnCustomizeValueChanged;
             _viewModel.StringValueChanged += OnCustomizeValueChanged;
             this.DataContext = _viewModel;
+        }
+
+        public async void InitContent()
+        {
+            var wpSettingsVm = App.Services.GetRequiredService<WpSettingsViewModel>();
+            _content = wpSettingsVm.Monitors[wpSettingsVm.MonitorSelectedIdx].Content;
+            await _viewModel.InitWp(_content);
         }
 
         private void InitCustomizeData()
@@ -105,7 +115,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             StorageFile file = await picker.PickSingleFileAsync();
             if (file != null)
             {
-                await _viewModel.TryImportFromLocalAsync(file.Path);
+                await _viewModel.TryImportFromLocalAsync(file.Path, this.XamlRoot);
             }
         }
 
@@ -238,10 +248,11 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             return res;
         }
 
-        public void OnCustomizeValueChanged(object sender, DoubleValueChangedEventArgs args)
+        public async void OnCustomizeValueChanged(object sender, DoubleValueChangedEventArgs args)
         {
             ModifyCustomizeProperty(args.PropertyName, args.Value);
             ModifySource(args.ControlName, args.PropertyName, args.Value.ToString());
+            await _viewModel.ModifyPreviewAsync(args.ControlName, args.PropertyName, args.Value.ToString());
         }
 
         public void OnCustomizeValueChanged(object sender, BoolValueChangedEventArgs args)
@@ -273,6 +284,9 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
                 if (disposing)
                 {
                     Webview2?.Close();
+                    _viewModel.DoubleValueChanged -= OnCustomizeValueChanged;
+                    _viewModel.BoolValueChanged -= OnCustomizeValueChanged;
+                    _viewModel.StringValueChanged -= OnCustomizeValueChanged;
                 }
                 _isDisposed = true;
             }

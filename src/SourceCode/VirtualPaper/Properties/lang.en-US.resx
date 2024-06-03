@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -117,20 +117,107 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="appicon_96" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\appicon_96.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Preview_DataLoading" xml:space="preserve">
+    <value>Loading data, please wait</value>
   </data>
-  <data name="icon_appwindow" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\icon_appwindow.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Preview_Title" xml:space="preserve">
+    <value>Preview</value>
   </data>
-  <data name="icon_bug" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\icon_bug.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Virtual_Paper_isRunning" xml:space="preserve">
+    <value>Virtual Paper is running in the background</value>
   </data>
-  <data name="icon_close" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\icon_close.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Virtual_Paper_isRunning_Greetings" xml:space="preserve">
+    <value>Have a great day!</value>
   </data>
-  <data name="virtualpaper" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\virtualpaper.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="WpControl_VirtualPaperExceptionWorkerWSetupFail" xml:space="preserve">
+    <value>A few settings are required for it to work:
+1. Press Win + R to open the operation.
+2. Enter SystemPropertiesPerformance.exe in "Run" and click "OK" to open the performance options.
+3. Enable/check "Animation controls and elements within the window" (uncheck if already checked) and apply.
+4. Close the window by clicking Apply and then OK.
+If it still doesn't work, shut down and restart or reboot the system.(Doesn't work in some Windows 10 preview versions)</value>
+  </data>
+  <data name="AppUpdater_Update_ExceptionAppUpdateFail" xml:space="preserve">
+    <value>Update failed; please try downloading the installer manual update from the following address:
+https://github.com/PaperHammer/VirtualPaper/releases</value>
+  </data>
+  <data name="AppUpdater_Update_Text_BtnDownload" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="AppUpdater_Update_Text_BtnInstall" xml:space="preserve">
+    <value>Installation</value>
+  </data>
+  <data name="Systray_TextCloseAllWallpapers" xml:space="preserve">
+    <value>Close all wallpapers</value>
+  </data>
+  <data name="Systray_TextCustomizeWallpaper" xml:space="preserve">
+    <value>Customize your wallpaper effects</value>
+  </data>
+  <data name="Systray_TextDEBubble" xml:space="preserve">
+    <value>Bubble</value>
+  </data>
+  <data name="Systray_TextDENone" xml:space="preserve">
+    <value>N/A</value>
+  </data>
+  <data name="Systray_TextDynamicEffect" xml:space="preserve">
+    <value>Animation</value>
+  </data>
+  <data name="Systray_TextExit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="Systray_TextIsOnScrSaver" xml:space="preserve">
+    <value>Enable screensaver</value>
+  </data>
+  <data name="Systray_TextIsRunningLock" xml:space="preserve">
+    <value>Show login screen when restoring</value>
+  </data>
+  <data name="Systray_TextOpenApp" xml:space="preserve">
+    <value>Open the main UI</value>
+  </data>
+  <data name="Systray_TextOpenScrSaverSet" xml:space="preserve">
+    <value>Screensaver</value>
+  </data>
+  <data name="Systray_TextPauseWallpapers" xml:space="preserve">
+    <value>Pause all wallpapers</value>
+  </data>
+  <data name="Systray_TextReportBug" xml:space="preserve">
+    <value>Report bug</value>
+  </data>
+  <data name="UIRunnerService_Error" xml:space="preserve">
+    <value>Incorrect</value>
+  </data>
+  <data name="UIRunnerService_VirtualPaperExceptionGeneral" xml:space="preserve">
+    <value>An error occurred, try restarting the program to fix the problem. If this happens more than once, please report the bug or contact the developer and re-download</value>
+  </data>
+  <data name="WpControl_TextFileNotFound" xml:space="preserve">
+    <value>Unable to find target file</value>
+  </data>
+  <data name="AppUpdater_Propt" xml:space="preserve">
+    <value>Prompt</value>
+  </data>
+  <data name="AppUpdater_TextError" xml:space="preserve">
+    <value>Incorrect</value>
+  </data>
+  <data name="AppUpdater_Update_DescriptionCancelQuestion" xml:space="preserve">
+    <value>Closing the window will terminate the download, do you want to continue?</value>
+  </data>
+  <data name="WndProcMsg_DescExplorerCrash" xml:space="preserve">
+    <value>A serious error has occurred
+Windows Explorer restarted twice in the last 30 seconds!This could be a conflict between Virtual Paper and Windows or other desktop personalization software.To avoid more problems, all wallpapers have been terminated.</value>
+  </data>
+  <data name="Find_New_Verison" xml:space="preserve">
+    <value>Detect a newer version</value>
+  </data>
+  <data name="Update_WindowTitle" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="WndProcMsg_TextError" xml:space="preserve">
+    <value>Incorrect</value>
+  </data>
+  <data name="WndProcMsg_TitleAppName" xml:space="preserve">
+    <value>Virtual Paper</value>
+  </data>
+  <data name="WpUtils_TextFileOpenFailed" xml:space="preserve">
+    <value>Destination file may be corrupted</value>
   </data>
 </root>

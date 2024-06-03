@@ -25,11 +25,5 @@ namespace VirtualPaper.PlayerWebView2
             Default = null,
             HelpText = "WpCustomize filepath.")]
         public string WpCustomizeFilePath { get; set; } = string.Empty;
-
-        //[Option("Pause-event",
-        //    Required = false,
-        //    HelpText = "Wallpaper playback changed notify")]
-        //public bool PauseEvent { get; set; }
-
     }
 }

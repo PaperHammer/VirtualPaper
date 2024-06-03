@@ -11,6 +11,7 @@ namespace VirtualPaper.Models.Cores.Interfaces
         IntPtr HMonitor { get; set; }
         string Content { get; set; }
         bool IsPrimary { get; set; }
+        string ThumbnailPath { get; set; }
 
         Rectangle WorkingArea { get; set; }
         Rectangle Bounds { get; set; }

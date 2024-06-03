@@ -20,23 +20,25 @@ namespace VirtualPaper.Webviewer
     {
         public MainWindow(string[] args)
         {
-            InitializeComponent();
+            InitializeComponent();        
 
             Parser.Default.ParseArguments<StartArgs>(args)
                 .WithParsed((x) => _startArgs = x)
-                .WithNotParsed(HandleParseError);
+                .WithNotParsed(HandleParseError);            
         }
 
         protected override async void OnContentRendered(EventArgs e) // 2
         {
             base.OnContentRendered(e);
-
+            
             try
             {
                 await InitializeWebView();
                 App.WriteToParent(new VirtualPaperMessageHwnd()
                 {
-                    Hwnd = Webview2.Handle.ToInt32()
+                    //Hwnd = new WindowInteropHelper(this).Handle,
+                    Hwnd = Webview2.Handle,
+                    //Hwnd = ((HwndSource)PresentationSource.FromVisual(Webview2)).Handle,
                 });
             }
             finally
@@ -180,7 +182,7 @@ namespace VirtualPaper.Webviewer
             }
             finally
             {
-                Webview2?.Dispose();                
+                Webview2?.Dispose();
                 Application.Current.Dispatcher.Invoke(Application.Current.Shutdown);
             }
         }

@@ -6,9 +6,6 @@
     xmlns:local="using:VirtualPaper.UI.Views.WpSettingsComponents"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:vms="using:VirtualPaper.UI.ViewModels.WpSettingsComponents"
-    xmlns:models="using:VirtualPaper.Models.WallpaperMetaData"
-    xmlns:utils="using:VirtualPaper.UI.Utils"
     mc:Ignorable="d"
     x:Name="Page"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -36,7 +33,7 @@
                             x:Name="ItemGrid"
                             Height="200"
                             Width="320">
-                            <Image                                 
+                            <Image
                                 Source="{Binding ThumbnailPath}"
                                 Stretch="Uniform" 
                                 HorizontalAlignment="Stretch" 
@@ -49,8 +46,7 @@
                                 Height="60" 
                                 VerticalAlignment="Bottom" 
                                 Padding="5,1"  
-                                Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}" 
-                                Opacity=".75">
+                                Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
                                 <TextBlock 
                                     Text="{Binding Title}" 
                                     FontSize="18"
@@ -131,28 +127,5 @@
                 </MenuFlyout>
             </ItemsView.ContextFlyout>
         </ItemsView>
-
-        <StackPanel
-            Orientation="Vertical"
-            VerticalAlignment="Center"
-            HorizontalAlignment="Center">
-            <ProgressRing 
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                IsActive="True"
-                Visibility="{Binding LoadingVisibility}"
-                Height="80"
-                Width="80"
-                Margin="50 20"
-                Background="Transparent"/>
-
-            <TextBlock
-                Margin="50 20"
-                Visibility="{Binding LoadingVisibility}"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                FontSize="18"
-                Text="{Binding Text_Loading}"/>
-        </StackPanel>
     </Grid>
 </Page>

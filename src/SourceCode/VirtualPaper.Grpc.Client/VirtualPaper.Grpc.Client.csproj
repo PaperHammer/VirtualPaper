@@ -15,6 +15,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="GrpcDotNetNamedPipes" Version="3.0.0" />
+		<PackageReference Include="NLog" Version="5.3.2" />
 	</ItemGroup>
 
 	<ItemGroup>

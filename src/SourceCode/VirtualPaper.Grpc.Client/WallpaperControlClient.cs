@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using GrpcDotNetNamedPipes;
+using NLog;
 using System.Collections.ObjectModel;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
@@ -24,12 +25,11 @@ namespace VirtualPaper.Grpc.Client
 
         public event EventHandler? WallpaperChanged;
         public event EventHandler<Exception>? WallpaperError;
-        public event EventHandler<WallpaperUpdatedData>? WallpaperUpdated;
 
         public WallpaperControlClient()
         {
             _client = new WallpaperControlService.WallpaperControlServiceClient(new NamedPipeChannel(".", Constants.SingleInstance.GrpcPipeServerName));
-
+            
             //TODO: Wait timeout
             Task.Run(async () =>
             {
@@ -41,12 +41,9 @@ namespace VirtualPaper.Grpc.Client
 
             _cancellationTokenWallpaperChanged = new CancellationTokenSource();
             _wallpaperChangedTask = Task.Run(() => SubscribeWallpaperChangedStream(_cancellationTokenWallpaperChanged.Token));
-           
+
             _cancellationTokenWallpaperError = new CancellationTokenSource();
             _wallpaperErrorTask = Task.Run(() => SubscribeWallpaperErrorStream(_cancellationTokenWallpaperError.Token));
-            
-            _cancellationTokenWallpaperUpdated = new CancellationTokenSource();
-            _wallpaperUpdatedTask = Task.Run(() => SubscribeWallpaperUpdatedStream(_cancellationTokenWallpaperUpdated.Token));
         }
 
         private async Task<GetCoreStatsResponse> GetCoreStats() => await _client.GetCoreStatsAsync(new Empty());
@@ -77,10 +74,23 @@ namespace VirtualPaper.Grpc.Client
             };
 
             await _client.PreviewWallpaperAsync(
-                new PreviewWallpaperRequest() { 
+                new PreviewWallpaperRequest()
+                {
                     WpMetaData = wpData,
                     IsLibraryPreview = isLibraryPreview
                 });
+        }
+
+        public async Task ModifyPreviewAsync(string controlName, string propertyName, string val)
+        {
+            ModifyPreviewRequest modifyPreviewRequest = new()
+            {
+                ControlName = controlName,
+                PropertyName = propertyName,
+                Value = val
+            };
+
+            await _client.ModifyPreviewAsync(modifyPreviewRequest);
         }
 
         public async Task<WpMetaData> GetWallpaperAsync(string folderPath)
@@ -90,7 +100,7 @@ namespace VirtualPaper.Grpc.Client
         }
 
         public async Task<SetWallpaperResponse> SetWallpaperAsync(
-            IMetaData metaData, 
+            IMetaData metaData,
             IMonitor monitor,
             CancellationToken cancellationToken)
         {
@@ -103,9 +113,9 @@ namespace VirtualPaper.Grpc.Client
             return await _client.SetWallpaperAsync(request, cancellationToken: cancellationToken);
         }
 
-        public async Task RestartAllWallpaperAsync()
+        public async Task<RestartWallpaperResponse> RestartAllWallpaperAsync()
         {
-            await _client.RestartAllWallpaperAsync(new Empty());
+            return await _client.RestartAllWallpaperAsync(new Empty());
         }
 
         public async Task<WpMetaData?> CreateWallpaperAsync(string folderPath, string filePath, Common.WallpaperType type, CancellationToken token)
@@ -219,7 +229,7 @@ namespace VirtualPaper.Grpc.Client
                 using var call = _client.SubscribeWallpaperChanged(new Empty());
                 while (await call.ResponseStream.MoveNext(token))
                 {
-                    await _wallpaperChangedLock.WaitAsync();
+                    await _wallpaperChangedLock.WaitAsync(token);
                     try
                     {
                         var response = call.ResponseStream.Current;
@@ -236,7 +246,7 @@ namespace VirtualPaper.Grpc.Client
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                _logger.Error(e);
             }
         }
 
@@ -265,38 +275,7 @@ namespace VirtualPaper.Grpc.Client
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
-
-                throw;
-            }
-        }
-
-        private async Task SubscribeWallpaperUpdatedStream(CancellationToken token)
-        {
-            try
-            {
-                using var call = _client.SubscribeUpdateWallpaper(new Empty());
-                while (await call.ResponseStream.MoveNext(token))
-                {
-                    var resp = call.ResponseStream.Current;
-                    var data = new WallpaperUpdatedData()
-                    {
-                        MetaData = new MetaData()
-                        {
-                            Title = resp.Title,
-                            Desc = resp.Description,
-                            Authors = resp.Authors,
-                            ThumbnailPath = resp.ThumbnailPath,
-                            FolderPath = resp.FolderPath,
-                        },
-                        UpdateState = (Common.UpdateWallpaperState)(int)resp.State,
-                    };
-                    WallpaperUpdated?.Invoke(this, data);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
+                _logger.Error(e);
             }
         }
 
@@ -310,8 +289,7 @@ namespace VirtualPaper.Grpc.Client
                 {
                     _cancellationTokenWallpaperChanged?.Cancel();
                     _cancellationTokenWallpaperError?.Cancel();
-                    _cancellationTokenWallpaperUpdated?.Cancel();
-                    Task.WaitAll(_wallpaperChangedTask, _wallpaperErrorTask, _wallpaperUpdatedTask);
+                    Task.WaitAll(_wallpaperChangedTask, _wallpaperErrorTask);
                 }
                 _disposed = true;
             }
@@ -327,7 +305,8 @@ namespace VirtualPaper.Grpc.Client
         private readonly List<WallpaperBasicData> _wallpapers = [];
         private readonly WallpaperControlService.WallpaperControlServiceClient _client;
         private readonly SemaphoreSlim _wallpaperChangedLock = new(1, 1);
-        private readonly CancellationTokenSource _cancellationTokenWallpaperChanged, _cancellationTokenWallpaperError, _cancellationTokenWallpaperUpdated;
-        private readonly Task _wallpaperChangedTask, _wallpaperErrorTask, _wallpaperUpdatedTask;
+        private readonly CancellationTokenSource _cancellationTokenWallpaperChanged, _cancellationTokenWallpaperError;
+        private readonly Task _wallpaperChangedTask, _wallpaperErrorTask;
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

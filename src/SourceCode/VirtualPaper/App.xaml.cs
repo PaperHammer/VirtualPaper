@@ -1,5 +1,6 @@
 ﻿using GrpcDotNetNamedPipes;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Win32;
 using NLog;
 using System.Diagnostics;
@@ -11,10 +12,11 @@ using VirtualPaper.Common.Models;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Cores.AppUpdate;
+using VirtualPaper.Cores.CommClients;
 using VirtualPaper.Cores.Desktop;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.PlaybackControl;
-using VirtualPaper.Cores.Tray;
+using VirtualPaper.Cores.ScreenSaver;
 using VirtualPaper.Factories;
 using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Grpc.Service.Commands;
@@ -23,13 +25,16 @@ using VirtualPaper.Grpc.Service.Update;
 using VirtualPaper.Grpc.Service.UserSetting;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.GrpcServers;
+using VirtualPaper.lang;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.ScreenSaver.Grpc.Service.ScrCommands;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils.Theme;
 using VirtualPaper.Views;
 using VirtualPaper.Views.WindowsMsg;
+using Wpf.Ui.Appearance;
 using Application = System.Windows.Application;
 using AppTheme = VirtualPaper.Common.AppTheme;
 using MessageBox = System.Windows.MessageBox;
@@ -84,9 +89,12 @@ namespace VirtualPaper
             try
             {
                 // 创建必要目录, eg: C:\Users\<User>\AppData\Local
+                Directory.CreateDirectory(Constants.CommonPaths.WpStoreDir);
+                Directory.CreateDirectory(Constants.CommonPaths.ScrSaverDir);
                 Directory.CreateDirectory(Constants.CommonPaths.AppDataDir);
                 Directory.CreateDirectory(Constants.CommonPaths.LogDir);
                 Directory.CreateDirectory(Constants.CommonPaths.TempDir);
+                Directory.CreateDirectory(Constants.CommonPaths.ExeIconDir);
                 Directory.CreateDirectory(Path.Combine(Constants.CommonPaths.TempDir, Constants.CommonPartialPaths.WallpaperInstallDir));
             }
             catch (Exception ex)
@@ -95,6 +103,9 @@ namespace VirtualPaper
                 ShutDown();
                 return;
             }
+
+            string scrFilePath = Path.Combine(Constants.CommonPaths.ScrSaverDir, "scr.html");
+            File.WriteAllText(scrFilePath, Constants.ScrSaverHtml);
             #endregion
 
             #region 初始化核心组件
@@ -105,46 +116,71 @@ namespace VirtualPaper
             #endregion
 
             // 用户配置
-            var userSetting = Services.GetRequiredService<IUserSettingsService>();
-            if (!FileUtil.IsValidFolderPath(userSetting.Settings.WallpaperDir))
-                userSetting.Settings.WallpaperDir = Constants.CommonPaths.WpStoreDir;
-            CreateWallpaperDir(userSetting.Settings.WallpaperDir);
+            var userSettings = Services.GetRequiredService<IUserSettingsService>();
+            userSettings.Settings.WallpaperDir = Constants.CommonPaths.WpStoreDir;
+            CreateWallpaperDir(userSettings.Settings.WallpaperDir);
             // 初始化语言包
-            ChangeLanguage(userSetting.Settings.Language);
+            ChangeLanguage(userSettings.Settings.Language);
 
-            userSetting.Save<ISettings>();
+            userSettings.Save<ISettings>();
 
             #region 启动相关后台服务
-            // 启动针对从 Windows 发出的到该窗口的消息监听服务
-            Services.GetRequiredService<WndProcMsgWindow>().Show();
-            // 启动针对从外部设备发出的到该窗口的消息监听服务
-            Services.GetRequiredService<RawInputMsgWindow>().Show();
-            // 启动壁纸行为/状态监听服务
-            Services.GetRequiredService<IPlayback>().Start();
-            // 启动托盘（后台）服务
-            Services.GetRequiredService<ISystray>();
+            try
+            {
+                // 启动针对从 Windows 发出的到该窗口的消息监听服务
+                Services.GetRequiredService<WndProcMsgWindow>().Show();
+                // 启动针对从外部设备发出的到该窗口的消息监听服务
+                Services.GetRequiredService<RawInputMsgWindow>().Show();
+                // 启动壁纸行为/状态监听服务
+                Services.GetRequiredService<IPlayback>().Start();
+                // 启动托盘（后台）服务
+                Services.GetRequiredService<MainWindow>().Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Core runtime error, please restart or reinstall.\n" + ex.Message);
+                return;
+            }
             #endregion
 
-            if (userSetting.Settings.IsUpdated || userSetting.Settings.IsFirstRun)
+            if (userSettings.Settings.IsUpdated || userSettings.Settings.IsFirstRun)
             {
-                SplashWindow? spl = userSetting.Settings.IsFirstRun ? new(0, 500) : null; spl?.Show();
+                SplashWindow? spl = userSettings.Settings.IsFirstRun ? new(0, 500) : null; spl?.Show();
                 spl?.Close();
             }
 
-            //restore wallpaper(s) from previous run.
-            Services.GetRequiredService<IWallpaperControl>().RestoreWallpaper();
-
-            //first run Setup-Wizard show..
-            if (userSetting.Settings.IsFirstRun)
+            try
             {
-                Services.GetRequiredService<IUIRunnerService>().ShowUI();
+                //restore wallpaper(s) from previous run.
+                var wpControl = Services.GetRequiredService<IWallpaperControl>();
+                wpControl.RestoreWallpaper();
+
+                // 启动屏保服务（需要在"还原壁纸"后进行）
+                bool isScrOn = userSettings.Settings.IsScreenSaverOn;
+                var wl = userSettings.WallpaperLayouts;
+                if (isScrOn && wl.Count > 0)
+                {
+                    var metaData = wpControl.GetWallpaper(wl[0].FolderPath);
+                    Services.GetRequiredService<IScrControl>().Start(metaData);
+                }
+
+                //first run Setup-Wizard show..
+                if (userSettings.Settings.IsFirstRun)
+                {
+                    Services.GetRequiredService<IUIRunnerService>().ShowUI();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Core runtime error, please restart or reinstall.\n" + ex.Message);
+                return;
             }
 
             #region 事件绑定
             //need to load theme later stage of startu to update..
             this.Startup += (s, e) =>
             {
-                ChangeTheme(userSetting.Settings.ApplicationTheme);                
+                ChangeTheme(userSettings.Settings.ApplicationTheme);
             };
 
             //Ref: https://github.com/Kinnara/ModernWpf/blob/master/ModernWpf/Helpers/ColorsHelper.cs
@@ -152,7 +188,7 @@ namespace VirtualPaper
             {
                 if (e.Category == UserPreferenceCategory.General)
                 {
-                    if (userSetting.Settings.ApplicationTheme == AppTheme.Auto)
+                    if (userSettings.Settings.ApplicationTheme == AppTheme.Auto)
                     {
                         ChangeTheme(AppTheme.Auto);
                     }
@@ -176,7 +212,7 @@ namespace VirtualPaper
                 .AddSingleton<IWallpaperControl, WallpaperControl>()
                 .AddSingleton<IMonitorManager, MonitorManager>()
                 .AddSingleton<IPlayback, Playback>()
-                .AddSingleton<ISystray, Systray>()
+                .AddSingleton<IScrControl, ScrControl>()
 
                 .AddSingleton<IWallpaperFactory, WallpaperFactory>()
                 .AddSingleton<IWallpaperConfigFolderFactory, WallpaperConfigFolderFactory>()
@@ -192,9 +228,14 @@ namespace VirtualPaper
                 .AddSingleton<UserSettingServer>()
                 .AddSingleton<AppUpdateServer>()
                 .AddSingleton<CommandsServer>()
+                .AddSingleton<ScrCommandsServer>()
 
                 .AddSingleton<WndProcMsgWindow>()
                 .AddSingleton<RawInputMsgWindow>()
+                .AddSingleton<MainWindow>()
+                .AddTransient<DebugLog>()
+
+                .AddTransient<TrayCommand>()
 
                 .BuildServiceProvider();
 
@@ -210,6 +251,7 @@ namespace VirtualPaper
             UserSettingService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<UserSettingServer>());
             UpdateService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<AppUpdateServer>());
             CommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<CommandsServer>());
+            ScrCommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<ScrCommandsServer>());
             server.Start();
 
             return server;
@@ -234,31 +276,21 @@ namespace VirtualPaper
             // 在异步编程中，如果一个Task（任务）完成了但其结果（无论是成功还是失败）未被观察（即没有使用await关键字等待或订阅Result属性），那么UnobservedTaskException事件会在垃圾回收时触发。
             //ref: https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.taskscheduler.unobservedtaskexception?redirectedfrom=MSDN&view=net-6.0
             TaskScheduler.UnobservedTaskException += (s, e) =>
-            {
                 LogUnhandledException(e.Exception, "TaskScheduler.UnobservedTaskException");
-            };
         }
 
-        private static AppTheme _currentTheme = AppTheme.Dark;
         public static void ChangeTheme(AppTheme theme)
         {
-            theme = theme == AppTheme.Auto ? ThemeUtil.GetWindowsTheme() : theme;
-            if (_currentTheme == theme)
-                return;
-
-            _currentTheme = theme;
-            Uri uri = theme switch
-            {
-                AppTheme.Light => new Uri("Themes/Light.xaml", UriKind.Relative),
-                AppTheme.Dark => new Uri("Themes/Dark.xaml", UriKind.Relative),
-                _ => new Uri("Themes/Dark.xaml", UriKind.Relative)
-            };
-
             try
             {
-                ResourceDictionary resourceDict = Application.LoadComponent(uri) as ResourceDictionary;
-                Application.Current.Resources.MergedDictionaries.Clear();
-                Application.Current.Resources.MergedDictionaries.Add(resourceDict);
+                theme = theme == AppTheme.Auto ? ThemeUtil.GetWindowsTheme() : theme;
+                ApplicationTheme applicationTheme = theme == AppTheme.Light
+                    ? ApplicationTheme.Light : ApplicationTheme.Dark;
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    ApplicationThemeManager.Apply(applicationTheme, updateAccent: false);
+                });
             }
             catch (Exception e)
             {
@@ -266,37 +298,46 @@ namespace VirtualPaper
             }
             _logger.Info($"Theme changed: {theme}");
         }
+        //private static AppTheme _currentTheme = AppTheme.Dark;
+        //public static void ChangeTheme(AppTheme theme)
+        //{
+        //    theme = theme == AppTheme.Auto ? ThemeUtil.GetWindowsTheme() : theme;
+        //    if (_currentTheme == theme)
+        //        return;
+
+        //    _currentTheme = theme;
+        //    Uri uri = theme switch
+        //    {
+        //        AppTheme.Light => new Uri("Themes/Light.xaml", UriKind.Relative),
+        //        AppTheme.Dark => new Uri("Themes/Dark.xaml", UriKind.Relative),
+        //        _ => new Uri("Themes/Dark.xaml", UriKind.Relative)
+        //    };
+
+        //    try
+        //    {
+        //        ResourceDictionary resourceDict = Application.LoadComponent(uri) as ResourceDictionary;
+        //        Application.Current.Resources.MergedDictionaries.Clear();
+        //        Application.Current.Resources.MergedDictionaries.Add(resourceDict);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        _logger.Error(e);
+        //    }
+        //    _logger.Info($"Theme changed: {theme}");
+        //}
 
         private static string _lang = string.Empty;
         public static void ChangeLanguage(string lang)
         {
             if (lang == string.Empty || _lang == lang) return;
 
-            ResourceDictionary? langRd = null;
-            try
+            Application.Current.Dispatcher.Invoke(() =>
             {
-                //根据名字载入语言文件
-                langRd = Application.LoadComponent(new Uri(@"lang\" + lang + ".xaml", UriKind.Relative)) as ResourceDictionary;
-            }
-            catch (Exception e2)
-            {
-                MessageBox.Show(e2.Message);
-            }
-
-            if (langRd != null)
-            {
-                _resourceDic = Application.Current.Resources;
-                //如果已使用其他语言,先清空
-                if (_resourceDic.MergedDictionaries.Count > 0)
-                {
-                    _resourceDic.MergedDictionaries.Clear();
-                }
-                _resourceDic.MergedDictionaries.Add(langRd);
-                _lang = lang;
-            }
+                LanguageManager.Instance.ChangeLanguage(new(lang));
+            });
         }
 
-        private static AppUpdater updateWindow;
+        private static AppUpdater? updateWindow;
         public static void AppUpdateDialog(Uri uri, string changelog)
         {
             updateNotify = false;
@@ -315,7 +356,6 @@ namespace VirtualPaper
         private static bool updateNotify = false;
         private void AppUpdateChecked(object sender, AppUpdaterEventArgs e)
         {
-            var sysTray = Services.GetRequiredService<ISystray>();
             _ = Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new ThreadStart(delegate
             {
                 if (e.UpdateStatus == AppUpdateStatus.available)
@@ -324,9 +364,9 @@ namespace VirtualPaper
                     {
                         updateNotifyAmt--;
                         updateNotify = true;
-                        sysTray?.ShowBalloonNotification(4000,
-                            "Virtual Paper",
-                            GetResourceDicString("Find_New_Verison"));
+                        new ToastContentBuilder()
+                            .AddText(LanguageManager.Instance["Find_New_Verison"])
+                            .Show();
                     }
 
                     //If UI program already running then notification is displayed withing the it.
@@ -339,17 +379,13 @@ namespace VirtualPaper
             }));
         }
 
-        public static string GetResourceDicString(string key)
-        {
-            return Application.Current.TryFindResource(key) as string ?? "";
-        }
-
         public static void ShutDown()
         {
             try
             {
                 ((ServiceProvider)Services)?.Dispose();
                 ((App)Current)._grpcServer?.Dispose();
+                ToastNotificationManagerCompat.Uninstall();
             }
             catch (InvalidOperationException) { /* not initialised */ }
 
@@ -360,6 +396,5 @@ namespace VirtualPaper
         private readonly Mutex _mutex = new(false, Constants.SingleInstance.UniqueAppUid);
         private readonly NamedPipeServer _grpcServer;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static ResourceDictionary _resourceDic = [];
     }
 }

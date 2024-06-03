@@ -4,6 +4,10 @@
 
     <SolidColorBrush x:Key="BackgroundMediumBrush">#dcdcdc</SolidColorBrush>
 
+    <SolidColorBrush x:Key="MenuBackground">#f9f9f9</SolidColorBrush>
+    <SolidColorBrush x:Key="MenuMouseOverForeground">#f0f0f0</SolidColorBrush>
+    <SolidColorBrush x:Key="MenuBorderForeground">#e5e5e5</SolidColorBrush>
+
     <Style TargetType="{x:Type Label}">
         <Setter Property="Foreground" Value="Black" />
     </Style>

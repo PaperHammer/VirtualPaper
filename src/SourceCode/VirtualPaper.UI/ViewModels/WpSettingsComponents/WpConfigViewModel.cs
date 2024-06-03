@@ -25,7 +25,7 @@ using WallpaperType = VirtualPaper.Common.WallpaperType;
 
 namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
 {
-    internal class WpConfigViewModel : ObservableObject
+    public class WpConfigViewModel : ObservableObject
     {
         public event EventHandler<DoubleValueChangedEventArgs> DoubleValueChanged;
         public event EventHandler<BoolValueChangedEventArgs> BoolValueChanged;
@@ -80,15 +80,17 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             TextDetailedInfo = _localizer.GetLocalizedString("WpConfigViewMdoel_TextDetailedInfo");
         }
 
-        internal async Task InitWp(string content)
+        public async Task InitWp(string content)
         {
             try
             {
+                App.Services.GetRequiredService<WpSettingsViewModel>().WpConfigViewModel = this;
+
                 Loading();
                 _cancellationTokenSourceForInitWpUI = new CancellationTokenSource();
 
                 WallpaperBasicData wpBasicData;
-                if (content == "Expend" || content == "Duplicate")
+                if (content == "Expand" || content == "Duplicate")
                 {
                     _monitor = App.Services.GetRequiredService<WpSettingsViewModel>().Monitors[0];
                     wpBasicData = _wallpaperControlClient.Wallpapers.FirstOrDefault();
@@ -98,7 +100,6 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
                     _monitor = App.Services.GetRequiredService<WpSettingsViewModel>().Monitors[int.Parse(content) - 1];
                     wpBasicData = _wallpaperControlClient.Wallpapers.FirstOrDefault(x => x.Monitor.Content == content);
                 }
-
 
                 WpMetaData data = wpBasicData == null ? null : await _wallpaperControlClient.GetWallpaperAsync(wpBasicData.FolderPath);
 
@@ -150,6 +151,11 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             finally
             {
                 Loaded();
+                if (App._isNeedReslease)
+                {
+                    App._semaphoreSlimForLib.Release();
+                    App._isNeedReslease = false;
+                }
                 _cancellationTokenSourceForInitWpUI?.Dispose();
                 _cancellationTokenSourceForInitWpUI = null;
             }
@@ -157,12 +163,15 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
 
         internal async Task TryDropFileAsync(IReadOnlyList<IStorageItem> items, XamlRoot xamlRoot)
         {
+            Loading();
+
             var res = WallpaperUtil.TrytoDropFile(items);
             bool statu = res.Item1;
             string content = res.Item2;
 
-            if (!statu || !FileUtil.IsValidFolderPath(content))
+            if (!statu)
             {
+                Loaded();
                 _ = await new ContentDialog()
                 {
                     XamlRoot = xamlRoot,
@@ -173,11 +182,11 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             }
             else
             {
-                await TryImportFromLocalAsync(content);
+                await TryImportFromLocalAsync(content, xamlRoot);
             }
         }
 
-        internal async Task TryImportFromLocalAsync(string filePath)
+        internal async Task TryImportFromLocalAsync(string filePath, XamlRoot xamlRoot)
         {
             try
             {
@@ -216,6 +225,16 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
                     InitBasicInfo();
                     InitCustomize(metaData);
                 }
+                else
+                {
+                    _ = await new ContentDialog()
+                    {
+                        XamlRoot = xamlRoot,
+                        Title = _localizer.GetLocalizedString("Dialog_Title_Prompt"),
+                        Content = filePath + "\nInVailid",
+                        PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm")
+                    }.ShowAsync();
+                }
             }
             catch (OperationCanceledException)
             {
@@ -245,6 +264,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
 
                 InitBasicInfo();
                 InitCustomize(metaData);
+                Wallpaper.State = MetaData.RunningState.ready;
             }
             catch (Exception ex)
             {
@@ -256,11 +276,11 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             }
         }
 
-        internal void Cancel()
-        {
-            _cancellationTokenSourceForImport?.Cancel();
-            _cancellationTokenSourceForInitWpUI?.Cancel();
-        }
+        //internal void Cancel()
+        //{
+        //    _cancellationTokenSourceForImport?.Cancel();
+        //    _cancellationTokenSourceForInitWpUI?.Cancel();
+        //}
 
         internal async Task RestoreAsync(IMonitor monitor)
         {
@@ -284,6 +304,11 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             if (Wallpaper == null || Wallpaper.FolderPath == null || Wallpaper.FolderPath.Length == 0) return;
 
             await _wallpaperControlClient.PreviewWallpaperAsync(Wallpaper, false);
+        }
+
+        internal async Task ModifyPreviewAsync(string controlName, string propertyName, string val)
+        {
+            await _wallpaperControlClient.ModifyPreviewAsync(controlName, propertyName, val);
         }
 
         internal void Apply()
@@ -384,7 +409,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
         internal string InitUid()
         {
             string folderName = WallpaperUtil.InitUid(Wallpaper);
-           
+
             return folderName;
         }
 

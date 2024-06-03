@@ -7,6 +7,7 @@ using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
+using ProcInfoData = VirtualPaper.Grpc.Service.UserSetting.ProcInfoData;
 using Rectangle = VirtualPaper.Grpc.Service.UserSetting.Rectangle;
 
 namespace VirtualPaper.GrpcServers
@@ -16,6 +17,42 @@ namespace VirtualPaper.GrpcServers
         IUserSettingsService userSetting,
         IUIRunnerService uiRunner) : UserSettingService.UserSettingServiceBase
     {
+        public override Task<WallpaperLayoutsSettings> GetWallpaperLayouts(Empty request, ServerCallContext context)
+        {
+            var resp = new WallpaperLayoutsSettings();
+            foreach (var wl in _userSetting.WallpaperLayouts)
+            {
+                resp.WallpaperLayouts.Add(new WallpaperLayoutData
+                {
+                    Monitor = new()
+                    {
+                        DeviceId = wl.Monitor.DeviceId,
+                        DeviceName = wl.Monitor.DeviceName,
+                        DisplayName = wl.Monitor.MonitorName,
+                        HMonitor = (int)wl.Monitor.HMonitor,
+                        WorkingArea = new()
+                        {
+                            X = wl.Monitor.WorkingArea.X,
+                            Y = wl.Monitor.WorkingArea.Y,
+                            Width = wl.Monitor.WorkingArea.Width,
+                            Height = wl.Monitor.WorkingArea.Height,                            
+                        },
+                        Bounds = new()
+                        {
+                            X = wl.Monitor.Bounds.X,
+                            Y = wl.Monitor.Bounds.Y,
+                            Width = wl.Monitor.Bounds.Width,
+                            Height = wl.Monitor.Bounds.Height,
+                        },
+                        Content = wl.Monitor.Content,
+                    },
+                    FolderPath = wl.FolderPath,
+                });
+            }
+
+            return Task.FromResult(resp);
+        }
+
         public override Task<AppRulesSettings> GetAppRulesSettings(Empty request, ServerCallContext context)
         {
             var resp = new AppRulesSettings();
@@ -97,13 +134,25 @@ namespace VirtualPaper.GrpcServers
                 ApplicationTheme = (Grpc.Service.UserSetting.AppTheme)_userSetting.Settings.ApplicationTheme,
                 RemoteDesktopPause = (Grpc.Service.UserSetting.AppRulesEnum)_userSetting.Settings.RemoteDesktop,
                 PowerSaveModePause = (Grpc.Service.UserSetting.AppRulesEnum)_userSetting.Settings.PowerSaving,
-                IsScreensaverEmptyScreenShowBlack = _userSetting.Settings.IsScreensaverEmptyScreenShowBlack,
-                IsScreensaverLockOnResume = _userSetting.Settings.IsScreensaverLockOnResume,
                 Language = _userSetting.Settings.Language,
                 StatuMechanism = (Grpc.Service.UserSetting.StatuMechanismEnum)_userSetting.Settings.StatuMechanism,
                 IsUpdated = _userSetting.Settings.IsUpdated,
                 SystemBackdrop = (Grpc.Service.UserSetting.AppSystemBackdrop)_userSetting.Settings.SystemBackdrop,
+                IsScreenSaverOn = _userSetting.Settings.IsScreenSaverOn,
+                IsRunningLock = _userSetting.Settings.IsRunningLock,
+                WaitingTime = _userSetting.Settings.WaitingTime,
+                ScreenSaverEffect = (ScrEffectEnum)_userSetting.Settings.ScreenSaverEffect,
             };
+            foreach (var proc in settings.WhiteListScr)
+            {
+                resp.WhiteListScr.Add(new ProcInfoData()
+                {
+                    ProcName = proc.ProcName,
+                    IconPath = proc.IconPath,
+                    IsRunning = proc.IsRunning,
+                });
+            }
+
             return Task.FromResult(resp);
         }
 
@@ -154,12 +203,25 @@ namespace VirtualPaper.GrpcServers
             _userSetting.Settings.ApplicationTheme = (Common.AppTheme)request.ApplicationTheme;
             _userSetting.Settings.RemoteDesktop = (Common.AppWpRunRulesEnum)request.RemoteDesktopPause;
             _userSetting.Settings.PowerSaving = (Common.AppWpRunRulesEnum)request.PowerSaveModePause;
-            _userSetting.Settings.IsScreensaverEmptyScreenShowBlack = request.IsScreensaverEmptyScreenShowBlack;
-            _userSetting.Settings.IsScreensaverLockOnResume = request.IsScreensaverLockOnResume;
             _userSetting.Settings.Language = request.Language;
             _userSetting.Settings.StatuMechanism = (Common.StatuMechanismEnum)request.StatuMechanism;
             _userSetting.Settings.IsUpdated = request.IsUpdated;
             _userSetting.Settings.SystemBackdrop = (Common.AppSystemBackdrop)request.SystemBackdrop;
+            _userSetting.Settings.IsScreenSaverOn = request.IsScreenSaverOn;
+            _userSetting.Settings.IsRunningLock = request.IsRunningLock;
+            _userSetting.Settings.WaitingTime = request.WaitingTime;
+            _userSetting.Settings.ScreenSaverEffect = (Common.ScrEffect)request.ScreenSaverEffect;
+            
+            _userSetting.Settings.WhiteListScr = [];
+            foreach (var proc in request.WhiteListScr)
+            {
+                _userSetting.Settings.WhiteListScr.Add(new Models.ProcInfo()
+                {
+                    ProcName = proc.ProcName,
+                    IconPath = proc.IconPath,
+                    IsRunning = proc.IsRunning,
+                });
+            }
 
             try
             {
@@ -185,5 +247,4 @@ namespace VirtualPaper.GrpcServers
         private readonly object appRulesWriteLock = new();
         private readonly object settingsWriteLock = new();
     }
-
 }

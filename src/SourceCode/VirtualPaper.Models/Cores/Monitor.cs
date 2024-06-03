@@ -53,6 +53,15 @@ namespace VirtualPaper.Models.Cores
             set { _isPrimary = value; OnPropertyChanged(); }
         }
 
+        [JsonIgnore]
+        private string _thumbnailPath = "";
+        [JsonIgnore]
+        public string ThumbnailPath
+        {
+            get { return _thumbnailPath; }
+            set { _thumbnailPath = value; OnPropertyChanged(); }
+        }
+
         private Rectangle _bounds = Rectangle.Empty;
         public Rectangle Bounds
         {

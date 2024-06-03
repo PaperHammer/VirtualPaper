@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.IO;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Cores.Interfaces;
 
@@ -44,23 +45,28 @@ namespace VirtualPaper.Models.Cores
         public WallpaperArrangement WallpaperArrangement { get; set; }
         #endregion
 
-        #region screen saver
-        public bool IsScreensaverLockOnResume { get; set; }
-        public bool IsScreensaverEmptyScreenShowBlack { get; set; }
-        #endregion
-
         #region process utils
         public int ProcessTimerInterval { get; set; }
+        #endregion
+
+        #region screen saver
+        public bool IsScreenSaverOn { get; set; }
+        public bool IsRunningLock { get; set; }
+        public int WaitingTime { get; set; }
+        public ScrEffect ScreenSaverEffect { get; set; }
+        public List<ProcInfo> WhiteListScr { get; set; }
         #endregion
 
         public Settings()
         {
             WallpaperArrangement = WallpaperArrangement.Per;
-            AppVersion = System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString();
+            AppVersion = System.Reflection.Assembly.GetEntryAssembly()?.GetName()?.Version?.ToString() ?? "";
             IsFirstRun = true;
             AppFocus = AppWpRunRulesEnum.KeepRun;
             AppFullscreen = AppWpRunRulesEnum.Pause;
             BatteryPoweredn = AppWpRunRulesEnum.KeepRun;
+
+            SelectedMonitor = new();
 
             WallpaperWaitTime = 20000; // 20sec
             ProcessTimerInterval = 500; //reduce to 250 for quicker response.
@@ -75,6 +81,12 @@ namespace VirtualPaper.Models.Cores
             PowerSaving = AppWpRunRulesEnum.KeepRun;
             IsUpdated = false;
             SystemBackdrop = AppSystemBackdrop.Default;
+
+            IsScreenSaverOn = false;
+            IsRunningLock = false;
+            WaitingTime = 1; // minutes
+            ScreenSaverEffect = ScrEffect.None;
+            WhiteListScr = [];
 
             try
             {

@@ -480,8 +480,56 @@ Author: PaperHammer</value>
   <data name="Settings_System_Text_Developer" xml:space="preserve">
     <value>Developers</value>
   </data>
+  <data name="Settings_WpNav_Text_VpScreenSaver" xml:space="preserve">
+    <value>Screen saver</value>
+  </data>
   <data name="Settings_WpNav_Text_WpArrange" xml:space="preserve">
     <value>Wallpaper layout way</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_Add" xml:space="preserve">
+    <value>Add to list</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_DynamicEffects" xml:space="preserve">
+    <value>Screen saver dynamic effects</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_DynamicEffectsExplain" xml:space="preserve">
+    <value>It is recommended to turn this on when using a static image as a screen saver background.</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_RunningLock" xml:space="preserve">
+    <value>The login screen is displayed at the time of recovery</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_RunningLockExplain" xml:space="preserve">
+    <value>For the security of your device data, it is recommended to turn on this option</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_ScreenSaver" xml:space="preserve">
+    <value>Whether to turn on screen saver</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_ScreenSaverExplain" xml:space="preserve">
+    <value>Use the wallpaper that your primary display is using in Virtual Paper as the screensaver background</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_ScreenSaverStatu_Off" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_ScreenSaverStatu_On" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_SeekFromList" xml:space="preserve">
+    <value>Search in the list</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_WaitingTime" xml:space="preserve">
+    <value>Minutes waited:</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_WhiteListExplain" xml:space="preserve">
+    <value>Any app in the list won't trigger a screen saver when it's running in the foreground</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_WhiteListTitle" xml:space="preserve">
+    <value>App White List</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver__effectBubble" xml:space="preserve">
+    <value>Bubble</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver__effectNone" xml:space="preserve">
+    <value>None</value>
   </data>
   <data name="Settings_WpNav_WpArrange_Duplicate" xml:space="preserve">
     <value>Duplicate</value>
@@ -513,9 +561,6 @@ Author: PaperHammer</value>
   <data name="SidebarWpSettings" xml:space="preserve">
     <value>Local</value>
   </data>
-  <data name="String1" xml:space="preserve">
-    <value />
-  </data>
   <data name="WpConfigViewMdoel_TextAspectRatio" xml:space="preserve">
     <value>Aspect Ratio：</value>
   </data>
@@ -540,13 +585,13 @@ Author: PaperHammer</value>
   <data name="WpConfigViewMdoel_TextWpConfigCustomize" xml:space="preserve">
     <value>Available custom settings</value>
   </data>
-  <data name="Wpconfig_InfobarMsg_Cancel" xml:space="preserve">
+  <data name="WpConfig_InfobarMsg_Cancel" xml:space="preserve">
     <value>The operation has been canceled</value>
   </data>
-  <data name="Wpconfig_InfobarMsg_Err" xml:space="preserve">
+  <data name="WpConfig_InfobarMsg_Err" xml:space="preserve">
     <value>An error has occurred</value>
   </data>
-  <data name="Wpconfig_InfobarTitle" xml:space="preserve">
+  <data name="WpConfig_InfobarTitle" xml:space="preserve">
     <value>Prompt</value>
   </data>
   <data name="WpControl_Err_File_Not_Found" xml:space="preserve">
@@ -561,11 +606,11 @@ Author: PaperHammer</value>
   <data name="WpControl_Err_Set_Child_WokerW_Failed" xml:space="preserve">
     <value>An error occurred while applying the changes, try again or reinstall the program. If it happens more than once, please contact the developer</value>
   </data>
-  <data name="WpSettings_NavHeader_LibraryContents" xml:space="preserve">
+  <data name="WpSettings_SidebarLibraryContents" xml:space="preserve">
     <value>Library contents</value>
   </data>
-  <data name="WpSettings_NavHeader_WpConfig" xml:space="preserve">
-    <value>Current wallpapers</value>
+  <data name="WpSettings_SidebarWpConfig" xml:space="preserve">
+    <value>Current wallpaper</value>
   </data>
   <data name="WpSettings_Text_Apply" xml:space="preserve">
     <value>Apply</value>

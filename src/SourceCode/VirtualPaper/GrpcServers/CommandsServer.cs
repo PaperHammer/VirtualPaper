@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows.Threading;
 using VirtualPaper.Grpc.Service.Commands;
 using VirtualPaper.Services.Interfaces;
@@ -36,15 +37,19 @@ namespace VirtualPaper.GrpcServers
 
         public override Task<Empty> ShowDebugView(Empty _, ServerCallContext context)
         {
-            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(delegate
-            {
-                if (_debugLogWindow == null)
+            Application.Current.Dispatcher.BeginInvoke(
+                DispatcherPriority.Normal,
+                new ThreadStart(delegate
                 {
-                    _debugLogWindow = new DebugLog();
-                    _debugLogWindow.Closed += (s, e) => _debugLogWindow = null;
-                    _debugLogWindow.Show();
-                }
-            }));
+                    App.Services.GetRequiredService<DebugLog>().Show();
+                    //if (_debugLogWindow == null)
+                    //{
+                    //    _debugLogWindow = new DebugLog();
+                    //    _debugLogWindow.Closed += (s, e) => _debugLogWindow = null;
+                    //    _debugLogWindow.Show();
+                    //}
+                }));
+
             return Task.FromResult(new Empty());
         }
 
@@ -66,7 +71,7 @@ namespace VirtualPaper.GrpcServers
             return Task.FromResult(new Empty());
         }
 
-        private DebugLog _debugLogWindow;
+        //private DebugLog? _debugLogWindow;
         private readonly IUIRunnerService _runner;
     }
 }

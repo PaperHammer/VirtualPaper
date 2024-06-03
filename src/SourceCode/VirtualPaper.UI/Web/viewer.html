@@ -7,7 +7,7 @@
 </head>
 
 <body>
-    <div class="content">
+    <div class="content" draggable="false" >
     </div>
 </body>
 </html>
@@ -40,12 +40,12 @@
             switch (wallpaperType) {
                 case 'gif':
                 case 'picture':
-                    elementToInsert = `<img class="full-screen" src="${filePath}" />`;
+                    elementToInsert = `<img draggable="false" class="full-screen" src="${filePath}" />`;
                     break;
                 case 'video':
                     curVideoElementId = 'videoEle';
                     elementToInsert = `
-                        <video id="videoEle" class="full-screen" loop controls>
+                        <video draggable="false" id="videoEle" class="full-screen" loop controls>
                             <source src="${filePath}">
                         </video>`;
                     break;
@@ -67,9 +67,6 @@
             case "Speed":
                 speed = parseFloat(val);
                 break;
-            //case "Muted":
-            //    muted = val;
-            //    break;
             case "Saturation":
                 saturate = parseFloat(val);
                 break;
@@ -138,6 +135,6 @@
         position: relative;
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: fill;
     }
 </style>

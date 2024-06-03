@@ -46,7 +46,7 @@
                 Drop="Button_Drop"
                 BorderThickness="0"
                 Background="Transparent"
-                Click="ImportButton_Click"                
+                Click="ImportButton_Click"
                 VerticalAlignment="Stretch"
                 HorizontalAlignment="Stretch"
                 VerticalContentAlignment="Center"
@@ -55,7 +55,8 @@
                     <Grid>
                         <TextBlock 
                             Text="{Binding TextUpdateWallpaper}"
-                            FontSize="18"
+                            FontSize="20"
+                            FontWeight="Black"
                             VerticalAlignment="Center"
                             HorizontalAlignment="Center"
                             Foreground="{ThemeResource AccentFillColorTertiaryBrush}"/>
@@ -97,7 +98,8 @@
                         <TextBlock Text="{Binding Wallpaper.FileSize}" FontSize="12"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="{Binding TextType}" FontSize="12"/>
                         <TextBlock Text="{Binding Wallpaper.Type, Converter={StaticResource EnumDescriptionConverter }}" FontSize="12"/>
                     </StackPanel>

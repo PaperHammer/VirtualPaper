@@ -260,20 +260,5 @@ namespace VirtualPaper.Common.Utils.Files
                 adjustedSize,
                 SizeSuffixes[mag]);
         }
-
-        /// <summary>
-        /// 是否有效的文件，文件夹路径
-        /// </summary>
-        /// <param name="val"></param>
-        /// <returns>是，返回true；不是返回false</returns>
-        public static bool IsValidFolderPath(string val)
-        {
-            if (val.Length < 1) return false;
-
-            Regex regex = new(@"^([a-zA-Z]:\\)([-\u4e00-\u9fa5\w\s.()~!@#$%^&()\[\]{}+=]+\\?)*$");
-            Match result = regex.Match(val);
-
-            return result.Success;
-        }
     }
 }

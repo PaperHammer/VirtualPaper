@@ -1,0 +1,223 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppUpdater_Propt" xml:space="preserve">
+    <value>提示</value>
+  </data>
+  <data name="AppUpdater_TextError" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="AppUpdater_Update_DescriptionCancelQuestion" xml:space="preserve">
+    <value>关闭窗口将终止下载，是否继续？</value>
+  </data>
+  <data name="AppUpdater_Update_ExceptionAppUpdateFail" xml:space="preserve">
+    <value>更新失败；请尝试从以下地址下载安装程序手动更新:
+https://github.com/PaperHammer/VirtualPaper/releases</value>
+  </data>
+  <data name="AppUpdater_Update_Text_BtnDownload" xml:space="preserve">
+    <value>下载</value>
+  </data>
+  <data name="AppUpdater_Update_Text_BtnInstall" xml:space="preserve">
+    <value>安装</value>
+  </data>
+  <data name="Find_New_Verison" xml:space="preserve">
+    <value>发现新版本</value>
+  </data>
+  <data name="Preview_DataLoading" xml:space="preserve">
+    <value>数据加载中，请稍后</value>
+  </data>
+  <data name="Preview_Title" xml:space="preserve">
+    <value>预览</value>
+  </data>
+  <data name="Systray_TextCloseAllWallpapers" xml:space="preserve">
+    <value>关闭所有壁纸</value>
+  </data>
+  <data name="Systray_TextCustomizeWallpaper" xml:space="preserve">
+    <value>自定义壁纸效果</value>
+  </data>
+  <data name="Systray_TextDEBubble" xml:space="preserve">
+    <value>气泡</value>
+  </data>
+  <data name="Systray_TextDENone" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="Systray_TextDynamicEffect" xml:space="preserve">
+    <value>动态效果</value>
+  </data>
+  <data name="Systray_TextExit" xml:space="preserve">
+    <value>退出</value>
+  </data>
+  <data name="Systray_TextIsOnScrSaver" xml:space="preserve">
+    <value>启用屏保</value>
+  </data>
+  <data name="Systray_TextIsRunningLock" xml:space="preserve">
+    <value>恢复时显示登录界面</value>
+  </data>
+  <data name="Systray_TextOpenApp" xml:space="preserve">
+    <value>打开主界面</value>
+  </data>
+  <data name="Systray_TextOpenScrSaverSet" xml:space="preserve">
+    <value>屏幕保护</value>
+  </data>
+  <data name="Systray_TextPauseWallpapers" xml:space="preserve">
+    <value>暂停所有壁纸</value>
+  </data>
+  <data name="Systray_TextReportBug" xml:space="preserve">
+    <value>报告漏洞</value>
+  </data>
+  <data name="UIRunnerService_Error" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="UIRunnerService_VirtualPaperExceptionGeneral" xml:space="preserve">
+    <value>发生错误，尝试重启程序以解决问题。若多次发生，请上报错误或联系开发者，并重新下载</value>
+  </data>
+  <data name="Update_WindowTitle" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="Virtual_Paper_isRunning" xml:space="preserve">
+    <value>Virtual Paper 正在后台运行</value>
+  </data>
+  <data name="Virtual_Paper_isRunning_Greetings" xml:space="preserve">
+    <value>愿你有美好的一天！</value>
+  </data>
+  <data name="WndProcMsg_DescExplorerCrash" xml:space="preserve">
+    <value>发生严重错误!
+Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virtual Paper 与 Windows 或者其他桌面个性化软件之间出现冲突。为避免更多问题，已将所有壁纸终止。</value>
+  </data>
+  <data name="WndProcMsg_TextError" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="WndProcMsg_TitleAppName" xml:space="preserve">
+    <value>Virtual Paper</value>
+  </data>
+  <data name="WpControl_TextFileNotFound" xml:space="preserve">
+    <value>无法找到目标文件</value>
+  </data>
+  <data name="WpControl_VirtualPaperExceptionWorkerWSetupFail" xml:space="preserve">
+    <value>需要进行一些设置才能正常运行:
+1. 按Win+R键，打开运行。
+2. 在 "运行 "中输入SystemPropertiesPerformance.exe，点击 "确定"，打开性能选项。
+3. 启用/勾选 "窗口内的动画控件和元素"（如果已经勾选，则取消勾选）并应用。
+4. 点击 "应用"，然后按 "确定"，关闭该窗口。
+如果还是不行，关闭并重新启动或重启系统。(在某些 Windows 10 预览版本中不工作)</value>
+  </data>
+  <data name="WpUtils_TextFileOpenFailed" xml:space="preserve">
+    <value>目标文件可能已损坏</value>
+  </data>
+</root>

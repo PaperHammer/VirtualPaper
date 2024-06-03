@@ -44,26 +44,24 @@ namespace VirtualPaper.Cores.Players.Web
                     metaData.Type, 
                     metaData.FilePath, 
                     isLibrarypreview ? metaData.WpCustomizePath : metaData.WpCustomizePathTmp);
+                _webPreviewer.Reset += ResetPreviewer;
                 return;
             }
 
-            string workingDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins", "Webviewer");
-            string fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins", "Webviewer", "VirtualPaper.PlayerWebView2.exe");
-
             StringBuilder cmdArgs = new();
-            cmdArgs.Append($" --working-dir {workingDir}");
+            cmdArgs.Append($" --working-dir {_workingDir}");
             cmdArgs.Append($" --file-path {metaData.FilePath}");
             cmdArgs.Append(" --wallpaper-type " + metaData.Type.ToString());
             cmdArgs.Append($" --customize-file-path {metaData.WpCustomizePathUsing}");
 
             ProcessStartInfo start = new()
             {
-                FileName = fileName,
+                FileName = _fileName,
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                WorkingDirectory = workingDir,
+                WorkingDirectory = _workingDir,
                 Arguments = cmdArgs.ToString(),
             };
 
@@ -84,16 +82,25 @@ namespace VirtualPaper.Cores.Players.Web
             SendMessage(new VirtualPaperCloseCmd());
         }
 
+        public void ClosePreview()
+        {
+            if (_webPreviewer != null)
+            {
+                _webPreviewer.Close();
+                _webPreviewer = null;
+            }
+        }
+
         public void Pause()
         {
             if (MetaData.Type == WallpaperType.video)
-                SendMessage(new VirtualPaperSuspendCmd()); //"{\"Type\":7}"
+                SendMessage(new VirtualPaperSuspendCmd());
         }
 
         public void Play()
         {
             if (MetaData.Type == WallpaperType.video)
-                SendMessage(new VirtualPaperResumeCmd()); //"{\"Type\":7}"
+                SendMessage(new VirtualPaperResumeCmd());
         }
 
         public Task ScreenCapture(string filePath) { return Task.FromResult(string.Empty); }
@@ -101,7 +108,7 @@ namespace VirtualPaper.Cores.Players.Web
         public void SetMute(bool mute)
         {
             if (MetaData.Type == WallpaperType.video)
-                SendMessage(new VirtualPaperMuted() { IsMuted = mute }); //"{\"Type\":8}"
+                SendMessage(new VirtualPaperMuted() { IsMuted = mute });
         }
 
         public void SetPlaybackPos(float pos, PlaybackPosType type) { }
@@ -154,10 +161,22 @@ namespace VirtualPaper.Cores.Players.Web
             return true;
         }
 
+        public void Modify(string controlName, string propertyName, string value)
+        {
+            if (_webPreviewer == null) return;
+
+            _webPreviewer.ModifySource(controlName, propertyName, value);
+        }
+
+        private void ResetPreviewer()
+        {
+            _webPreviewer = null;
+        }
+
         public void Stop()
         {
             Pause();
-        }
+        }        
 
         private void Terminate()
         {
@@ -213,6 +232,7 @@ namespace VirtualPaper.Cores.Players.Web
                             var handle = new IntPtr(((VirtualPaperMessageHwnd)obj).Hwnd);
 
                             var chrome_WidgetWin_0 = Native.FindWindowEx(handle, IntPtr.Zero, "Chrome_WidgetWin_0", null);
+                            //var chrome_WidgetWin_0 = EnumerateChildWindows(handle, "Chrome_WidgetWin_0");
                             if (!chrome_WidgetWin_0.Equals(IntPtr.Zero))
                             {
                                 this.InputHandle = Native.FindWindowEx(chrome_WidgetWin_0, IntPtr.Zero, "Chrome_WidgetWin_1", null);
@@ -242,6 +262,30 @@ namespace VirtualPaper.Cores.Players.Web
             }
         }
 
+        //private IntPtr EnumerateChildWindows(IntPtr parentHandle, string targetClassName)
+        //{
+        //    IntPtr childHandle = Native.FindWindowEx(parentHandle, IntPtr.Zero, null, null); // 开始枚举第一个子窗口
+
+        //    while (childHandle != IntPtr.Zero)
+        //    {
+        //        // 如果找到了目标窗口，返回其句柄
+        //        var targetHandel = Native.FindWindowEx(childHandle, IntPtr.Zero, targetClassName, null);
+        //        if (targetHandel != IntPtr.Zero)
+        //            return targetHandel;
+
+        //        // 否则，递归检查此子窗口的子窗口
+        //        IntPtr resultFromChild = EnumerateChildWindows(childHandle, targetClassName);
+        //        if (resultFromChild != IntPtr.Zero)
+        //            return resultFromChild;
+
+        //        // 移动到下一个兄弟窗口
+        //        childHandle = Native.FindWindowEx(parentHandle, childHandle, null, null);
+        //    }
+
+        //    // 如果没有找到，返回IntPtr.Zero
+        //    return IntPtr.Zero;
+        //}
+
         private void Proc_Exited(object? sender, EventArgs e)
         {
             Proc.OutputDataReceived -= Proc_OutputDataReceived;
@@ -250,57 +294,59 @@ namespace VirtualPaper.Cores.Players.Web
             IsExited = true;
         }
 
-        private async Task<Exception?> WaitForProcessWithTimeoutAsync()
-        {
-            var cancellationTokenSource = new CancellationTokenSource(_timeout);
+        //private async Task<Exception?> WaitForProcessWithTimeoutAsync()
+        //{
+        //    var cancellationTokenSource = new CancellationTokenSource(_timeout);
 
-            try
-            {
-                // 创建一个任务用于等待进程退出
-                var processWaitTask = Task.Run(() => Proc?.WaitForExitAsync(cancellationTokenSource.Token), cancellationTokenSource.Token);
+        //    try
+        //    {
+        //        // 创建一个任务用于等待进程退出
+        //        var processWaitTask = Task.Run(() => Proc?.WaitForExitAsync(cancellationTokenSource.Token), cancellationTokenSource.Token);
 
-                // 使用 WhenAny 等待进程结束或超时
-                var completedTask = await Task.WhenAny(processWaitTask, Task.Delay(_timeout));
+        //        // 使用 WhenAny 等待进程结束或超时
+        //        var completedTask = await Task.WhenAny(processWaitTask, Task.Delay(_timeout));
 
-                // 如果是进程结束的任务先完成
-                if (completedTask == processWaitTask)
-                {
-                    // 获取进程退出代码并决定是否抛出异常
-                    int exitCode = Proc.ExitCode;
-                    if (exitCode != 0)
-                    {
-                        return new Exception($"The process ends with a non-zero exit code {exitCode}");
-                    }
-                    return null;
-                }
-                else
-                {
-                    // 超时则取消进程并抛出异常
-                    cancellationTokenSource.Cancel();
-                    Proc?.Kill();
-                    return new TimeoutException("Process start timeout");
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // 当取消令牌被触发时（即超时）
-                Proc?.Kill();
-                return new TimeoutException("Process start timeout");
-            }
-            catch (Exception)
-            {
-                Proc?.Kill();
-                return new TimeoutException("An Error occurred");
-            }
-        }
+        //        // 如果是进程结束的任务先完成
+        //        if (completedTask == processWaitTask)
+        //        {
+        //            // 获取进程退出代码并决定是否抛出异常
+        //            int exitCode = Proc.ExitCode;
+        //            if (exitCode != 0)
+        //            {
+        //                return new Exception($"The process ends with a non-zero exit code {exitCode}");
+        //            }
+        //            return null;
+        //        }
+        //        else
+        //        {
+        //            // 超时则取消进程并抛出异常
+        //            cancellationTokenSource.Cancel();
+        //            Proc?.Kill();
+        //            return new TimeoutException("Process start timeout");
+        //        }
+        //    }
+        //    catch (OperationCanceledException)
+        //    {
+        //        // 当取消令牌被触发时（即超时）
+        //        Proc?.Kill();
+        //        return new TimeoutException("Process start timeout");
+        //    }
+        //    catch (Exception)
+        //    {
+        //        Proc?.Kill();
+        //        return new TimeoutException("An Error occurred");
+        //    }
+        //}
 
-        private WebPreviewer _webPreviewer;
+        private WebPreviewer? _webPreviewer;
         private bool _isPreview;
         private readonly TaskCompletionSource<Exception> _tcsProcessWait = new();
         private static int _globalCount;
         private readonly int _uniqueId;
         private bool _isInitialized;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private readonly int _timeout = 50000;
+        //private readonly int _timeout = 50000;
+        private readonly string _workingDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins", "Webviewer");
+        private readonly string _fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins", "Webviewer", "VirtualPaper.PlayerWebView2.exe");
     }
 }

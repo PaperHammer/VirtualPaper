@@ -8,7 +8,7 @@ service CommandsService {
   rpc RestartUI (google.protobuf.Empty) returns (google.protobuf.Empty);
   rpc ShowDebugView (google.protobuf.Empty) returns (google.protobuf.Empty);
   rpc ShutDown (google.protobuf.Empty) returns (google.protobuf.Empty);
-  rpc SaveRectUI(google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc SaveRectUI (google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
 message ScreensaverRequest {

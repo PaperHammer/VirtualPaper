@@ -6,10 +6,7 @@ using VirtualPaper.Services.Interfaces;
 namespace VirtualPaper.Services
 {
     public class WatchdogService : IWatchdogService
-    {
-        private Process? _subProcess;
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
+    {       
         public bool IsRunning { get; private set; }
 
         public void Start()
@@ -25,6 +22,7 @@ namespace VirtualPaper.Services
                 RedirectStandardInput = true,
                 UseShellExecute = false,
             };
+
             _subProcess = new Process
             {
                 StartInfo = start,
@@ -70,5 +68,8 @@ namespace VirtualPaper.Services
                 _logger.Error("Failed to communicate with watchdog service: " + e.Message);
             }
         }
+
+        private Process? _subProcess;
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

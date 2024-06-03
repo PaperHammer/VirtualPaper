@@ -119,8 +119,6 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             set { _version = value; OnPropertyChanged(); }
         }
 
-
-
         private bool _isStoped = true;
         public bool IsStoped
         {
@@ -224,7 +222,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient)
         {
-            dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
+            _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
 
             _appUpdater = appUpdater;
             _userSettingsClient = userSettingsClient;
@@ -248,6 +246,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             _seletedThemeIndx = (int)_userSettingsClient.Settings.ApplicationTheme;
             _seletedSystemBackdropIndx = (int)_userSettingsClient.Settings.SystemBackdrop;
             _selectedLanguage = SupportedLanguages.GetLanguage(_userSettingsClient.Settings.Language);
+            
             IsAutoStart = _userSettingsClient.Settings.IsAutoStart;
             WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
         }
@@ -321,7 +320,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
 
         private void AppUpdater_UpdateChecked(object sender, AppUpdaterEventArgs e)
         {
-            _ = dispatcherQueue.TryEnqueue(() =>
+            _ = _dispatcherQueue.TryEnqueue(() =>
             {
                 MenuUpdate(e.UpdateStatus, e.UpdateDate, e.UpdateVersion);
             });
@@ -459,6 +458,6 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         private IAppUpdaterClient _appUpdater;
         private IUserSettingsClient _userSettingsClient;
         private IWallpaperControlClient _wpControlClient;
-        private DispatcherQueue dispatcherQueue;
+        private DispatcherQueue _dispatcherQueue;
     }
 }

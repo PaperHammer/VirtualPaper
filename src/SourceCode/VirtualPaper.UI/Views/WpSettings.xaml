@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vms="using:VirtualPaper.UI.ViewModels"
+    xmlns:ucs="using:VirtualPaper.UI.UserControls"
     mc:Ignorable="d"
     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
     Loaded="Page_Loaded">
@@ -14,7 +15,7 @@
     <Grid
         x:Name="GridMain">
         <ContentControl
-            x:Name="ContentControlMain"
+            x:Name="contentControlMain"
             IsEnabled="{Binding IsEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
@@ -109,13 +110,13 @@
                     <GridView 
                         x:Name="GridViewMonitors"
                         ItemsSource="{Binding Monitors}"
-                        SelectedIndex="{Binding MonitorSelectedIdx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                        
+                        SelectedIndex="{Binding MonitorSelectedIdx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         IsItemClickEnabled="True"
+                        SelectionMode="Single"
                         ScrollViewer.HorizontalScrollMode="Enabled"
                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
                         ScrollViewer.VerticalScrollMode="Disabled"
-                        ScrollViewer.VerticalScrollBarVisibility="Hidden"
-                        SelectionMode="Single">
+                        ScrollViewer.VerticalScrollBarVisibility="Hidden">
                         <GridView.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <ItemsStackPanel 
@@ -125,6 +126,12 @@
                         </GridView.ItemsPanel>
                         <GridView.ItemTemplate>
                             <DataTemplate>
+                                <!--<Grid>
+                                    <Image
+                                        Height="120" 
+                                        Width="192" 
+                                        Source="{Binding ThumbnailPath}"
+                                        Opacity="0.6"/>-->
                                 <Border
                                     Height="120" 
                                     Width="192" 
@@ -133,10 +140,11 @@
                                     BorderBrush="{ThemeResource ApplicationForegroundThemeBrush}">
                                     <TextBlock 
                                         Text="{Binding Content}" 
-                                        FontSize="30" 
+                                        FontSize="40" 
                                         HorizontalAlignment="Center" 
                                         VerticalAlignment="Center"/>
                                 </Border>
+                                <!--</Grid>-->
                             </DataTemplate>
                         </GridView.ItemTemplate>
                     </GridView>
@@ -148,13 +156,25 @@
                     <NavigationView 
                         x:Name="NavView" 
                         PaneDisplayMode="Top"
-                        IsBackButtonVisible="Collapsed"                        
-                        SelectedItem="{Binding SelectedNav, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Loaded="NavView_Loaded"     
                         SelectionChanged="NavigationView_SelectionChanged"
-                        MenuItemsSource="{Binding NavsMenuItems, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        IsSettingsVisible="True"        
+                        AlwaysShowHeader="False"
+                        IsBackEnabled="False"
+                        IsBackButtonVisible="Collapsed">
+
+                        <NavigationView.MenuItems>
+                            <NavigationViewItem 
+                                Content="{Binding SidebarWpConfig}"
+                                Tag="VirtualPaper.UI.Views.WpSettingsComponents.WpConfig">
+                            </NavigationViewItem>
+                            <NavigationViewItem 
+                                Content="{Binding SidebarLibraryContents}" 
+                                Tag="VirtualPaper.UI.Views.WpSettingsComponents.LibraryContents"/>
+                        </NavigationView.MenuItems>
+
                         <Frame 
-                            x:Name="ContentFrame"
-                            Content="{Binding FramePage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            x:Name="ContentFrame"/>
                     </NavigationView>
                 </Grid>
             </Grid>
@@ -165,18 +185,20 @@
             VerticalAlignment="Center"
             HorizontalAlignment="Center">
             <ProgressRing 
+                x:Name="progressBar"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
                 IsActive="True"
-                Visibility="{Binding LoadingVisibility}"
+                Visibility="{Binding LoadingVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 Height="80"
                 Width="80"
                 Margin="50 20"
                 Background="Transparent"/>
 
             <TextBlock
+                x:Name="proTbk"
                 Margin="50 20"
-                Visibility="{Binding LoadingVisibility}"
+                Visibility="{Binding LoadingVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
                 FontSize="18"
@@ -189,7 +211,7 @@
                 HorizontalAlignment="Center"
                 Width="100"
                 Height="40"
-                Visibility="{Binding LoadingVisibility}"                
+                Visibility="{Binding LoadingVisibility}"
                 Content="{Binding Text_Cancel}"
                 Click="BtnCancel_Click"/>-->
         </StackPanel>

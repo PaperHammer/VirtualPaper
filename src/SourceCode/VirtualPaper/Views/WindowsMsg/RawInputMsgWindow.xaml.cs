@@ -1,4 +1,5 @@
 ﻿using Linearstar.Windows.RawInput;
+using Linearstar.Windows.RawInput.Native;
 using NLog;
 using System.Windows;
 using System.Windows.Interop;
@@ -26,10 +27,13 @@ namespace VirtualPaper.Views.WindowsMsg
         public event EventHandler<KeyboardClickRawArgs>? KeyboardClickRaw;
         //public event EventHandler<KeyboardClickRawArgs>? KeyboardUpRaw;
 
-        public RawInputMsgWindow(IUserSettingsService userSettings, IWallpaperControl desktopCore, IMonitorManager displayManager)
+        public RawInputMsgWindow(
+            IUserSettingsService userSettings, 
+            IWallpaperControl desktopCore, 
+            IMonitorManager displayManager)
         {
             this._userSettings = userSettings;
-            this._desktopCore = desktopCore;
+            this._wpControl = desktopCore;
             this._displayManager = displayManager;
 
             InitializeComponent();
@@ -37,21 +41,26 @@ namespace VirtualPaper.Views.WindowsMsg
             desktopCore.WallpaperReset += (s, e) => FindDesktopAndResetHandles();
         }
 
+        private void Window_Activated(object sender, EventArgs e)
+        {
+            this.Hide();
+        }
+
         private void FindDesktopAndResetHandles()
         {
-            workerWOrig = IntPtr.Zero;
-            progman = IntPtr.Zero;
+            _workerWOrig = IntPtr.Zero;
+            _progman = IntPtr.Zero;
 
-            progman = Native.FindWindow("Progman", null);
-            var folderView = Native.FindWindowEx(progman, IntPtr.Zero, "SHELLDLL_DefView", null);
+            _progman = Native.FindWindow("Progman", null);
+            var folderView = Native.FindWindowEx(_progman, IntPtr.Zero, "SHELLDLL_DefView", null);
             if (folderView == IntPtr.Zero)
             {
                 // 若桌面层不在 Progman 下，循环浏览 WorkerW 句柄并找到正确的句柄
                 do
                 {
-                    workerWOrig = Native.FindWindowEx(Native.GetDesktopWindow(), workerWOrig, "WorkerW", null);
-                    folderView = Native.FindWindowEx(workerWOrig, IntPtr.Zero, "SHELLDLL_DefView", null);
-                } while (folderView == IntPtr.Zero && workerWOrig != IntPtr.Zero);
+                    _workerWOrig = Native.FindWindowEx(Native.GetDesktopWindow(), _workerWOrig, "WorkerW", null);
+                    folderView = Native.FindWindowEx(_workerWOrig, IntPtr.Zero, "SHELLDLL_DefView", null);
+                } while (folderView == IntPtr.Zero && _workerWOrig != IntPtr.Zero);
             }
         }
 
@@ -125,29 +134,29 @@ namespace VirtualPaper.Views.WindowsMsg
 
                         switch (mouse.Mouse.Buttons)
                         {
-                            case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.LeftButtonDown:
+                            case RawMouseButtonFlags.LeftButtonDown:
                                 ForwardMessageMouse(P.X, P.Y, (int)Native.WM.LBUTTONDOWN, (IntPtr)0x0001);
-                                MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.left));
+                                MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.Left));
                                 break;
-                            case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.LeftButtonUp:
+                            case RawMouseButtonFlags.LeftButtonUp:
                                 ForwardMessageMouse(P.X, P.Y, (int)Native.WM.LBUTTONUP, (IntPtr)0x0001);
-                                MouseUpRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.left));
+                                MouseUpRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.Left));
                                 break;
-                            case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.RightButtonDown:
+                            case RawMouseButtonFlags.RightButtonDown:
                                 //issue: click being skipped; desktop already has its own rightclick contextmenu.
                                 //ForwardMessage(M.X, M.Y, (int)Native.WM.RBUTTONDOWN, (IntPtr)0x0002);
-                                MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.right));
+                                MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.Right));
                                 break;
-                            case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.RightButtonUp:
+                            case RawMouseButtonFlags.RightButtonUp:
                                 //issue: click being skipped; desktop already has its own rightclick contextmenu.
                                 //ForwardMessage(M.X, M.Y, (int)Native.WM.RBUTTONUP, (IntPtr)0x0002);
-                                MouseUpRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.right));
+                                MouseUpRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.Right));
                                 break;
-                            case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None:
+                            case RawMouseButtonFlags.None:
                                 ForwardMessageMouse(P.X, P.Y, (int)Native.WM.MOUSEMOVE, (IntPtr)0x0020);
                                 MouseMoveRaw?.Invoke(this, new MouseRawArgs(P.X, P.Y));
                                 break;
-                            case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.MouseWheel:
+                            case RawMouseButtonFlags.MouseWheel:
                                 //Disabled, not tested yet.
                                 /*
                                 https://github.com/ivarboms/game-engine/blob/master/Input/RawInput.cpp
@@ -179,11 +188,12 @@ namespace VirtualPaper.Views.WindowsMsg
                     case RawInputKeyboardData keyboard:
                         ForwardMessageKeyboard((int)keyboard.Keyboard.WindowMessage,
                             (IntPtr)keyboard.Keyboard.VirutalKey, keyboard.Keyboard.ScanCode,
-                            (keyboard.Keyboard.Flags != Linearstar.Windows.RawInput.Native.RawKeyboardFlags.Up));
-                        KeyboardClickRaw?.Invoke(this, new KeyboardClickRawArgs());
+                            (keyboard.Keyboard.Flags != RawKeyboardFlags.Up));
+                        KeyboardClickRaw?.Invoke(this, new KeyboardClickRawArgs(keyboard.Keyboard.VirutalKey));
                         break;
                 }
             }
+
             return IntPtr.Zero;
         }
 
@@ -207,7 +217,7 @@ namespace VirtualPaper.Views.WindowsMsg
                         return;
 
                     var display = _displayManager.GetMonitorByPoint(new(P.X, P.Y));
-                    foreach (var wallpaper in _desktopCore.Wallpapers)
+                    foreach (var wallpaper in _wpControl.Wallpapers)
                     {
                         if (IsInputAllowed(wallpaper.MetaData.Type))
                         {
@@ -263,7 +273,7 @@ namespace VirtualPaper.Views.WindowsMsg
             {
                 var display = _displayManager.GetMonitorByPoint(new(x, y));
                 var mouse = CalculateMousePos(x, y, display, _userSettings.Settings.WallpaperArrangement);
-                foreach (var wallpaper in _desktopCore.Wallpapers)
+                foreach (var wallpaper in _wpControl.Wallpapers)
                 {
                     if (IsInputAllowed(wallpaper.MetaData.Type))
                     {
@@ -341,22 +351,22 @@ namespace VirtualPaper.Views.WindowsMsg
         private bool IsDesktop()
         {
             IntPtr hWnd = Native.GetForegroundWindow();
-            return (IntPtr.Equals(hWnd, workerWOrig) || IntPtr.Equals(hWnd, progman));
+            return (IntPtr.Equals(hWnd, _workerWOrig) || IntPtr.Equals(hWnd, _progman));
         }
 
         #endregion
 
-        IntPtr progman, workerWOrig;
+        IntPtr _progman, _workerWOrig;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IUserSettingsService _userSettings;
-        private readonly IWallpaperControl _desktopCore;
+        private readonly IWallpaperControl _wpControl;
         private readonly IMonitorManager _displayManager;
     }
 
     public enum RawInputMouseBtn
     {
-        left,
-        right
+        Left,
+        Right
     }
 
     public class MouseRawArgs(int x, int y) : EventArgs
@@ -370,8 +380,8 @@ namespace VirtualPaper.Views.WindowsMsg
         public RawInputMouseBtn Button { get; } = btn;
     }
 
-    public class KeyboardClickRawArgs : EventArgs
+    public class KeyboardClickRawArgs(int rawKeyboard) : EventArgs
     {
-        //todo
+        public int Key { get; set; } = rawKeyboard;
     }
 }

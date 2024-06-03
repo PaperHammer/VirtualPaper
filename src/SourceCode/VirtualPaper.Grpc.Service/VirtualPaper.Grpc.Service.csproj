@@ -13,15 +13,6 @@
 		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
 	</PropertyGroup>-->
 
-	<!--保证外部引用-->
-	<ItemGroup>
-		<None Remove="Protos\monitorManager.proto" />
-		<None Remove="Protos\userSetting.proto" />
-		<None Remove="Protos\wallpaperControl.proto" />
-		<None Remove="Protos\update.proto" />
-		<None Remove="Protos\commands.proto" />
-	</ItemGroup>
-
 	<ItemGroup>
 		<PackageReference Include="Google.Protobuf" Version="3.26.1" />
 		<PackageReference Include="Grpc.Core" Version="2.46.6" />
@@ -43,6 +34,7 @@
 		<Protobuf Include="Protos\wallpaperControl.proto" />
 		<Protobuf Include="Protos\update.proto" />
 		<Protobuf Include="Protos\commands.proto" />
+		<Protobuf Include="Protos\scrCommands.proto" />
 	</ItemGroup>
 
 </Project>

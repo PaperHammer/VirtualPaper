@@ -12,7 +12,7 @@
     MinWidth="1400"    
     MinHeight="850"    
     Closed="WindowEx_Closed"
-    TaskBarIcon="virtualpaper.ico"
+    TaskBarIcon="virtualpaper.ico"      
     Title="Virtual Paper">
 
     <Grid>
@@ -32,7 +32,7 @@
                 <ColumnDefinition x:Name="RightDragColumn" Width="*" />
                 <ColumnDefinition x:Name="RightPaddingColumn" Width="0" />
             </Grid.ColumnDefinitions>
-            
+
             <Image
                 x:Name="TitleBarIcon"
                 Grid.Column="1"
@@ -60,33 +60,35 @@
             AlwaysShowHeader="False"
             IsBackEnabled="False"
             IsBackButtonVisible="Collapsed">
-        <NavigationView.MenuItems>
-            <NavigationViewItem 
-                Content="{Binding SidebarGallery}"
-                Tag="Gallery">
-                <NavigationViewItem.Icon>
-                    <FontIcon 
-                        Glyph="&#xE91B;"/>
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem 
-                Content="{Binding SidebarWpSettings}" 
-                Tag="WpSettings" 
-                Icon="Library"/>
-        </NavigationView.MenuItems>
-        <NavigationView.FooterMenuItems>
-            <NavigationViewItem 
-                Content="{Binding SidebarAccount}" 
-                Tag="Account" 
-                Icon="Contact" />
-            <NavigationViewItem 
-                Content="{Binding SidebarAppSettings}" 
-                Tag="AppSettings" 
-                Icon="Setting" />
-        </NavigationView.FooterMenuItems>
-        <Frame 
-            x:Name="ContentFrame"/>
-    </NavigationView>
+
+            <NavigationView.MenuItems>
+                <NavigationViewItem 
+                    Content="{Binding SidebarGallery}"
+                    Tag="VirtualPaper.UI.Views.Gallery">
+                    <NavigationViewItem.Icon>
+                        <FontIcon 
+                            Glyph="&#xE91B;"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem 
+                    Content="{Binding SidebarWpSettings}" 
+                    Tag="VirtualPaper.UI.Views.WpSettings" 
+                    Icon="Library"/>
+            </NavigationView.MenuItems>
+
+            <NavigationView.FooterMenuItems>
+                <NavigationViewItem 
+                    Content="{Binding SidebarAccount}" 
+                    Tag="VirtualPaper.UI.Views.Account" 
+                    Icon="Contact" />
+                <NavigationViewItem 
+                    Content="{Binding SidebarAppSettings}" 
+                    Tag="VirtualPaper.UI.Views.AppSettings" 
+                    Icon="Setting" />
+            </NavigationView.FooterMenuItems>
+
+            <Frame 
+                x:Name="ContentFrame"/>
+        </NavigationView>
     </Grid>
-    
 </winex:WindowEx>

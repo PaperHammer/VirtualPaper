@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Reflection;
 
 namespace VirtualPaper.Common
 {
@@ -22,6 +23,14 @@ namespace VirtualPaper.Common
         Default,
         Mica,
         Acrylic
+    }
+
+    public enum ScrEffect
+    {
+        [Description("None")]
+        None,
+        [Description("Bubble")]
+        Bubble,
     }
     #endregion
 

@@ -4,10 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VirtualPaper.Views"
+        xmlns:lang="clr-namespace:VirtualPaper.lang"
         xmlns:mdxam="clr-namespace:MdXaml;assembly=MdXaml"
-        Title="{DynamicResource Update_WindowTitle}"
+        Title="{Binding [Update_WindowTitle], Source={x:Static lang:LanguageManager.Instance}}"
         mc:Ignorable="d"
-        Style="{DynamicResource WindowUI}"
         Height="500" Width="900"
         ResizeMode="CanMinimize"
         WindowStartupLocation="CenterScreen"
@@ -76,7 +76,8 @@
                         Height="35"
                         Width="100"
                         BorderThickness="1"
-                        Content="{DynamicResource AppUpdater_Update_Text_BtnDownload}"
+                        HorizontalAlignment="Center"
+                        Content="{Binding [AppUpdater_Update_Text_BtnDownload], Source={x:Static lang:LanguageManager.Instance}}"
                         FontSize="16"
                         Background="SkyBlue"
                         Click="BtnDownload_Click"/>
@@ -88,7 +89,7 @@
                         Visibility="Collapsed"
                         Background="DarkGreen"
                         BorderThickness="1"
-                        Content="{DynamicResource AppUpdater_Update_Text_BtnInstall}"
+                        Content="{Binding [AppUpdater_Update_Text_BtnInstall], Source={x:Static lang:LanguageManager.Instance}}"
                         FontSize="16"
                         Click="BtnInstall_Click"/>
                 </Grid>

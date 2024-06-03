@@ -9,7 +9,7 @@ namespace VirtualPaper.Services.Interfaces
     {
         ISettings Settings { get; }
         List<IApplicationRules> AppRules { get; }
-        List<IWallpaperLayout> WallpaperLayout { get; }
+        List<IWallpaperLayout> WallpaperLayouts { get; }
         void Save<T>();
         void Load<T>();
     }

@@ -13,19 +13,35 @@ namespace VirtualPaper.GrpcServers
     {
         public override async Task<Empty> CheckUpdate(Empty _, ServerCallContext context)
         {
-            await _updater.CheckUpdate(0);
+            try
+            {
+                await _updater.CheckUpdate(0);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex);
+            }
+
             return await Task.FromResult(new Empty());
         }
 
         public override Task<Empty> StartDownload(Empty _, ServerCallContext context)
         {
-            if (updater.Status == AppUpdateStatus.available)
+            try
             {
-                System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(delegate
+                if (_updater.Status == AppUpdateStatus.available)
                 {
-                    App.AppUpdateDialog(updater.LastCheckUri, updater.LastCheckChangelog);
-                }));
+                    System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(delegate
+                    {
+                        App.AppUpdateDialog(_updater.LastCheckUri, _updater.LastCheckChangelog);
+                    }));
+                }
             }
+            catch (Exception ex)
+            {
+                _logger.Error(ex);
+            }
+
             return Task.FromResult(new Empty());
         }
 

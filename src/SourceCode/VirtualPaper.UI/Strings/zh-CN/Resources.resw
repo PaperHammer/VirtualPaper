@@ -278,7 +278,7 @@
     <value>Windows 主题设置</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AutoStart" xml:space="preserve">
-    <value>开机自动启</value>
+    <value>开机自启动</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AutoStartStatu_Off" xml:space="preserve">
     <value>关闭</value>
@@ -480,8 +480,56 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Settings_System_Text_Developer" xml:space="preserve">
     <value>开发者</value>
   </data>
+  <data name="Settings_WpNav_Text_VpScreenSaver" xml:space="preserve">
+    <value>屏幕保护</value>
+  </data>
   <data name="Settings_WpNav_Text_WpArrange" xml:space="preserve">
     <value>壁纸布局方式</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_Add" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_DynamicEffects" xml:space="preserve">
+    <value>屏幕保护动态效果</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_DynamicEffectsExplain" xml:space="preserve">
+    <value>当使用静态图像作为屏幕保护背景时，建议开启此项</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_RunningLock" xml:space="preserve">
+    <value>在恢复时显示登录界面</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_RunningLockExplain" xml:space="preserve">
+    <value>为了您的设备数据安全，建议开启此选项</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_ScreenSaver" xml:space="preserve">
+    <value>是否开启屏幕保护</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_ScreenSaverExplain" xml:space="preserve">
+    <value>将主显示器在 Virtual Paper 中正在使用的壁纸作为屏保背景</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_ScreenSaverStatu_Off" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_ScreenSaverStatu_On" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_SeekFromList" xml:space="preserve">
+    <value>名单中搜索</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_WaitingTime" xml:space="preserve">
+    <value>等待的分钟数：</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_WhiteListExplain" xml:space="preserve">
+    <value>列表中的应用在最前台运行时，将不会触发屏幕保护</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver_WhiteListTitle" xml:space="preserve">
+    <value>白名单</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver__effectBubble" xml:space="preserve">
+    <value>气泡</value>
+  </data>
+  <data name="Settings_WpNav_VpScreenSaver__effectNone" xml:space="preserve">
+    <value>无</value>
   </data>
   <data name="Settings_WpNav_WpArrange_Duplicate" xml:space="preserve">
     <value>复制</value>
@@ -537,13 +585,13 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="WpConfigViewMdoel_TextWpConfigCustomize" xml:space="preserve">
     <value>可用自定义设置</value>
   </data>
-  <data name="Wpconfig_InfobarMsg_Cancel" xml:space="preserve">
+  <data name="WpConfig_InfobarMsg_Cancel" xml:space="preserve">
     <value>操作已取消</value>
   </data>
-  <data name="Wpconfig_InfobarMsg_Err" xml:space="preserve">
+  <data name="WpConfig_InfobarMsg_Err" xml:space="preserve">
     <value>发生错误</value>
   </data>
-  <data name="Wpconfig_InfobarTitle" xml:space="preserve">
+  <data name="WpConfig_InfobarTitle" xml:space="preserve">
     <value>提示</value>
   </data>
   <data name="WpControl_Err_File_Not_Found" xml:space="preserve">
@@ -558,10 +606,10 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="WpControl_Err_Set_Child_WokerW_Failed" xml:space="preserve">
     <value>在应用更改时发生错误，请重试或重新安装程序。若多次发生请联系开发者</value>
   </data>
-  <data name="WpSettings_NavHeader_LibraryContents" xml:space="preserve">
+  <data name="WpSettings_SidebarLibraryContents" xml:space="preserve">
     <value>库内容</value>
   </data>
-  <data name="WpSettings_NavHeader_WpConfig" xml:space="preserve">
+  <data name="WpSettings_SidebarWpConfig" xml:space="preserve">
     <value>当前壁纸</value>
   </data>
   <data name="WpSettings_Text_Apply" xml:space="preserve">

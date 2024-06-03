@@ -7,15 +7,14 @@ namespace VirtualPaper.Models.Cores.Interfaces
     {
         #region for app
         AppWpRunRulesEnum AppFullscreen { get; set; }
-        AppWpRunRulesEnum AppFocus { get; set; }        
+        AppWpRunRulesEnum AppFocus { get; set; }
         AppTheme ApplicationTheme { get; set; }
         AppWpRunRulesEnum BatteryPoweredn { get; set; }
         AppWpRunRulesEnum PowerSaving { get; set; }
         AppWpRunRulesEnum RemoteDesktop { get; set; }
         AppSystemBackdrop SystemBackdrop { get; set; }
         string AppVersion { get; set; }
-        //string ApplicationThemeBackgroundPath { get; set; }
-        string Language { get; set; }        
+        string Language { get; set; }
         bool IsUpdated { get; set; }
         bool IsAutoStart { get; set; }
         bool IsFirstRun { get; set; }
@@ -55,19 +54,16 @@ namespace VirtualPaper.Models.Cores.Interfaces
         WallpaperArrangement WallpaperArrangement { get; set; }
         #endregion
 
-        #region screen saver
-        /// <summary>
-        /// 恢复时屏幕保护程序是否锁定
-        /// </summary>
-        bool IsScreensaverLockOnResume { get; set; }
-        /// <summary>
-        /// 屏幕保护程序是否空屏显示黑色
-        /// </summary>
-        bool IsScreensaverEmptyScreenShowBlack { get; set; }
-        #endregion
-
         #region process utils
         int ProcessTimerInterval { get; set; }
+        #endregion
+
+        #region screen saver
+        bool IsScreenSaverOn { get; set; }
+        bool IsRunningLock { get; set; }
+        int WaitingTime { get; set; }
+        ScrEffect ScreenSaverEffect { get; set; }
+        List<ProcInfo> WhiteListScr { get; set; }
         #endregion
     }
 }

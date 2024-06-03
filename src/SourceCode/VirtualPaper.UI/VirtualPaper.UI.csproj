@@ -135,7 +135,7 @@
 		<None Remove="Views\WpSettings.xaml" />
 		<None Remove="Views\WpSettingsComponents\LibraryContents.xaml" />
 		<None Remove="Views\WpSettingsComponents\WpConfig.xaml" />
-		<None Remove="Views\WpSettingsComponents\WpNavSettgins.xaml" />
+		<None Remove="Views\WpSettingsComponents\WpNavSettings.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -145,7 +145,8 @@
 		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240404000" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
-		<PackageReference Include="NLog" Version="5.2.8" />
+		<PackageReference Include="NLog" Version="5.3.2" />
+		<PackageReference Include="System.Drawing.Common" Version="8.0.6" />
 		<PackageReference Include="Vanara.PInvoke.ComCtl32" Version="4.0.0" />
 		<PackageReference Include="Vanara.PInvoke.DwmApi" Version="4.0.0" />
 		<PackageReference Include="Vanara.PInvoke.User32" Version="4.0.0" />
@@ -177,7 +178,7 @@
 	  </Content>
 	</ItemGroup>
 	<ItemGroup>
-		<Page Update="Views\WpSettingsComponents\WpNavSettgins.xaml">
+		<Page Update="Views\WpSettingsComponents\WpNavSettings.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</Page>
 		<None Update="virtualpaper.ico">

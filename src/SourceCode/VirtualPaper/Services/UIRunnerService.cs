@@ -5,6 +5,7 @@ using System.Windows;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.Monitor;
+using VirtualPaper.lang;
 using VirtualPaper.Services.Interfaces;
 using MessageBox = System.Windows.MessageBox;
 using UAC = UACHelper.UACHelper;
@@ -13,13 +14,6 @@ namespace VirtualPaper.Services
 {
     public class UIRunnerService : IUIRunnerService
     {
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private Process? _processUI;
-        private readonly IMonitorManager _displayManager;
-        private bool _isFirstRun = true;
-        private Native.RECT prevWindowRect = new() { Left = 50, Top = 50, Right = 925, Bottom = 925 };
-        private readonly string _fileName, _workingDirectory;
-
         public UIRunnerService(IMonitorManager displayManager)
         {
             this._displayManager = displayManager;
@@ -47,7 +41,8 @@ namespace VirtualPaper.Services
             {
                 try
                 {
-                    _processUI.StandardInput.WriteLine("WM SHOW");
+                    _logger.Warn("UI is already running");
+                    //_processUI.StandardInput.WriteLine("WM SHOW");
                 }
                 catch (Exception e)
                 {
@@ -83,8 +78,8 @@ namespace VirtualPaper.Services
                     _logger.Error(e);
                     _processUI = null;
                     _ = MessageBox.Show(
-                        $"{App.GetResourceDicString("UIRunnerService_VirtualPaperExceptionGeneral")}\nEXCEPTION:\n{e.Message}",
-                        App.GetResourceDicString("UIRunnerService_Error"),
+                        $"{LanguageManager.Instance["UIRunnerService_VirtualPaperExceptionGeneral"]}\nEXCEPTION:\n{e.Message}",
+                        LanguageManager.Instance["UIRunnerService_Error"],
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
                 }
@@ -110,6 +105,9 @@ namespace VirtualPaper.Services
             {
                 try
                 {
+                    //App.Services.GetRequiredService<MainWindow>().Close();
+                    //App.Services.GetRequiredService<MainWindow>().Show();
+
                     _processUI.Exited -= Proc_UI_Exited;
                     _processUI.OutputDataReceived -= Proc_OutputDataReceived;
                     _ = Native.GetWindowRect(_processUI.MainWindowHandle, out prevWindowRect);
@@ -117,7 +115,7 @@ namespace VirtualPaper.Services
                     {
                         _processUI.Kill();
                     }
-                    _processUI.Dispose();
+                    _processUI.Dispose();                    
                 }
                 catch (Exception e)
                 {
@@ -284,5 +282,12 @@ namespace VirtualPaper.Services
             GC.SuppressFinalize(this);
         }
         #endregion
+
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private Process? _processUI;
+        private IMonitorManager _displayManager;
+        private bool _isFirstRun = true;
+        private Native.RECT prevWindowRect = new() { Left = 50, Top = 50, Right = 925, Bottom = 925 };
+        private readonly string _fileName, _workingDirectory;
     }
 }

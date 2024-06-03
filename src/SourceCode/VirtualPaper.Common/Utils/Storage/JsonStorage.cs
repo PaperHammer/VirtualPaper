@@ -44,7 +44,7 @@ namespace VirtualPaper.Common.Utils.Storage
             };
             var tmp = (T)serializer.Deserialize(file, typeof(T));
 
-            return tmp == null ? throw new ArgumentNullException("json null/corrupt") : tmp;
+            return tmp == null ? throw new ArgumentNullException($"json null/corrupt: {filePath}") : tmp;
         }
 
         public static void StoreData(string filePath, T data)

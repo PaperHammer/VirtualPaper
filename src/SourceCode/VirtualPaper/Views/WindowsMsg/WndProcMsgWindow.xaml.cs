@@ -4,6 +4,7 @@ using System.Windows.Interop;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.Desktop;
 using VirtualPaper.Cores.Monitor;
+using VirtualPaper.lang;
 using MessageBox = System.Windows.MessageBox;
 
 namespace VirtualPaper.Views.WindowsMsg
@@ -56,8 +57,8 @@ namespace VirtualPaper.Views.WindowsMsg
                     else
                     {
                         _logger.Warn("Explorer restarted multiple times in the last 30s.");
-                        _ = Task.Run(() => MessageBox.Show(App.GetResourceDicString("WndProcMsg_DescExplorerCrash"),
-                                $"{App.GetResourceDicString("WndProcMsg_TitleAppName")} - {App.GetResourceDicString("WndProcMsg_TextError")}",
+                        _ = Task.Run(() => MessageBox.Show(LanguageManager.Instance["WndProcMsg_DescExplorerCrash"],
+                                $"{LanguageManager.Instance["WndProcMsg_TitleAppName"]} - {LanguageManager.Instance["WndProcMsg_TextError"]}",
                                 MessageBoxButton.OK, MessageBoxImage.Error));
                         _wpControl.CloseAllWallpapers();
                         _ = _wpControl.ResetWallpaperAsync();

@@ -19,7 +19,7 @@ namespace VirtualPaper.Grpc.Client.Interfaces
         Task CloseAllWallpapersAsync();
         Task CloseWallpaperAsync(IMonitor monitor);
         
-        Task RestartAllWallpaperAsync();
+        Task<RestartWallpaperResponse> RestartAllWallpaperAsync();
 
         Task<WpMetaData?> CreateWallpaperAsync(string folderPath, string filePath, Common.WallpaperType type, CancellationToken token = default);
 
@@ -28,28 +28,21 @@ namespace VirtualPaper.Grpc.Client.Interfaces
 
         Task PreviewWallpaperAsync(IMetaData metaData, bool isLibraryPreview);
         Task TakeScreenshotAsync(string monitorId, string savePath);
+        Task ModifyPreviewAsync(string controlName, string propertyName, string val);
 
         Task ChangeWallpaperLayoutFolrderPath(string previousDir, string newDir);
 
         event EventHandler? WallpaperChanged;
         event EventHandler<Exception>? WallpaperError;
-        event EventHandler<WallpaperUpdatedData>? WallpaperUpdated;
     }
 
     public class WallpaperBasicData
     {
         public string VirtualPaperUid { get; set; } = string.Empty;
         public string FolderPath { get; set; } = string.Empty;
-        //public string WpCustomizePath { get; set; } = string.Empty;
         public string WpCustomizePathUsing { get; set; } = string.Empty;
         public string ThumbnailPath { get; set; } = string.Empty;
         public IMonitor? Monitor { get; set; }
         public Common.WallpaperType Tyep { get; set; }
-    }
-
-    public class WallpaperUpdatedData
-    {
-        public IMetaData? MetaData { get; set; }
-        public Common.UpdateWallpaperState UpdateState { get; set; }
     }
 }

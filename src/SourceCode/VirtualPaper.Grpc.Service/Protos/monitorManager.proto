@@ -23,6 +23,8 @@ message MonitorData {
 
     Rectangle working_area = 6;
     Rectangle bounds = 7;
+
+	string thumbnail_path = 8;
 }
 
 message Rectangle {

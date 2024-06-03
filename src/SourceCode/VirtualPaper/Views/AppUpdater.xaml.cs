@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Shell;
 using VirtualPaper.Common;
+using VirtualPaper.lang;
 using VirtualPaper.Services.Interfaces;
 using DownloadProgressEventArgs = VirtualPaper.Services.Interfaces.DownloadProgressEventArgs;
 using IDownloadService = VirtualPaper.Services.Interfaces.IDownloadService;
@@ -18,14 +19,19 @@ namespace VirtualPaper.Views
     /// </summary>
     public partial class AppUpdater : Window
     {
+        public AppUpdater()
+        {
+            InitializeComponent();
+        }
+
         public AppUpdater(Uri fileUri, string changelogText)
         {
             InitializeComponent();
 
             if (fileUri != null)
             {
-                BtnDownload.Content = App.GetResourceDicString("AppUpdater_Update_Text_BtnDownload");
-                BtnInstall.Content = App.GetResourceDicString("AppUpdater_Update_Text_BtnInstall");
+                BtnDownload.Content = LanguageManager.Instance["AppUpdater_Update_Text_BtnDownload"];
+                BtnInstall.Content = LanguageManager.Instance["AppUpdater_Update_Text_BtnInstall"];
 
                 _suggestedFileName = fileUri.Segments.Last();
                 _fileUrl = fileUri;
@@ -70,7 +76,7 @@ namespace VirtualPaper.Views
                 else
                 {
                     TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Error;
-                    Changelog.Markdown = App.GetResourceDicString("AppUpdater_Update_ExceptionAppUpdateFail");
+                    Changelog.Markdown = LanguageManager.Instance["AppUpdater_Update_ExceptionAppUpdateFail"];
                     _forceClose = true;
                 }
             }));
@@ -81,8 +87,8 @@ namespace VirtualPaper.Views
             if (_forceClose != true && _download != null)
             {
                 if (MessageBox.Show(
-                    App.GetResourceDicString("AppUpdater_Update_DescriptionCancelQuestion"),
-                    App.GetResourceDicString("AppUpdater_Propt"), 
+                    LanguageManager.Instance["AppUpdater_Update_DescriptionCancelQuestion"],
+                    LanguageManager.Instance["AppUpdater_Propt"], 
                     MessageBoxButton.YesNo, 
                     MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
@@ -122,7 +128,7 @@ namespace VirtualPaper.Views
             {
                 _logger.Error(ex);
                 TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Error;
-                Changelog.Markdown = App.GetResourceDicString("AppUpdater_Update_ExceptionAppUpdateFail");
+                Changelog.Markdown = LanguageManager.Instance["AppUpdater_Update_ExceptionAppUpdateFail"];
                 _forceClose = true;
                 BtnDownload.IsEnabled = true;
             }
@@ -144,8 +150,8 @@ namespace VirtualPaper.Views
                 {
                     _logger.Error(ex);
                     MessageBox.Show(
-                        App.GetResourceDicString("AppUpdater_Update_ExceptionAppUpdateFail"),
-                        App.GetResourceDicString("AppUpdater_TextError"));
+                        LanguageManager.Instance["AppUpdater_Update_ExceptionAppUpdateFail"],
+                        LanguageManager.Instance["AppUpdater_TextError"]);
                 }
             }
         }
@@ -157,11 +163,11 @@ namespace VirtualPaper.Views
         }
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private IDownloadService _download;
+        private IDownloadService? _download;
         private readonly Uri _fileUrl;
         private bool _forceClose = false;
         private bool _isDownloadComplete = false;
-        private readonly string _suggestedFileName;
+        private readonly string _suggestedFileName = string.Empty;
         private string _savePath = string.Empty;
     }
 }

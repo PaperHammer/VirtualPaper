@@ -61,6 +61,8 @@ namespace VirtualPaper.Cores
 
         void Close();
 
+        void ClosePreview();
+
         /// <summary>
         /// 发送 ipc 消息到壁纸窗口
         /// </summary>
@@ -80,6 +82,8 @@ namespace VirtualPaper.Cores
         /// <param name="pos">Range 0 - 100</param>
         void SetPlaybackPos(float pos, PlaybackPosType type);
         
+        void Modify(string controlName, string propertyName, string value);
+
         /// <summary>
         /// 截图保存当前壁纸（.jpg）
         /// </summary>

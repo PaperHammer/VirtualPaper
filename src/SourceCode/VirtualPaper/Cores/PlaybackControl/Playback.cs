@@ -8,6 +8,7 @@ using VirtualPaper.Common.Utils.Hardware;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.Desktop;
 using VirtualPaper.Cores.Monitor;
+using VirtualPaper.Cores.ScreenSaver;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 
@@ -30,11 +31,13 @@ namespace VirtualPaper.Cores.PlaybackControl
         public Playback(
             IUserSettingsService userSettings,
             IWallpaperControl wpControl,
+            IScrControl scrControl,
             IMonitorManager monitoeManger)
         {
-            this._userSettings = userSettings;
-            this._wpControl = wpControl;
-            this._monitorManger = monitoeManger;
+            _userSettings = userSettings;
+            _wpControl = wpControl;
+            _scrControl = scrControl;
+            _monitorManger = monitoeManger;
 
             Initialize();
             wpControl.WallpaperReset += (s, e) => FindNewMonitorAndResetHandles();
@@ -122,7 +125,11 @@ namespace VirtualPaper.Cores.PlaybackControl
 
         private void ProcessMonitor(object? sender, EventArgs e)
         {
-            if (WallpaperPlaybackMode == PlaybackMode.Paused || _isLockScreen ||
+            if (_scrControl.IsRunning)
+            {
+                ChangeState(AppWpRunRulesEnum.Pause);
+            }
+            else if (WallpaperPlaybackMode == PlaybackMode.Paused || _isLockScreen ||
                 (_isRemoteSession && _userSettings.Settings.RemoteDesktop == AppWpRunRulesEnum.Pause))
             {
                 ChangeState(AppWpRunRulesEnum.Pause);
@@ -222,7 +229,7 @@ namespace VirtualPaper.Cores.PlaybackControl
                     // 单屏
                     if (!_monitorManger.IsMultiScreen() ||
                         _userSettings.Settings.StatuMechanism == StatuMechanismEnum.All)
-                    //_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate)
+                    //_userSettingsService.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate)
                     {
                         // 检查前台窗口是否为桌面环境的一部分
                         if (IntPtr.Equals(fHandle, _workerWOrig) || IntPtr.Equals(fHandle, _progman))
@@ -261,7 +268,7 @@ namespace VirtualPaper.Cores.PlaybackControl
                                 if (_userSettings.Settings.WallpaperArrangement != WallpaperArrangement.Expand &&
                                     !focusedScreen.Equals(item))
                                 {
-                                    ChangeState(AppWpRunRulesEnum.KeepRun, item);
+                                    ChangeState(AppWpRunRulesEnum.Silence, item);
                                 }
                             }
                         }
@@ -577,5 +584,6 @@ namespace VirtualPaper.Cores.PlaybackControl
         private readonly IUserSettingsService _userSettings;
         private readonly IWallpaperControl _wpControl;
         private readonly IMonitorManager _monitorManger;
+        private readonly IScrControl _scrControl;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using GrpcDotNetNamedPipes;
+using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Models;
 using VirtualPaper.Grpc.Client.Interfaces;
@@ -17,12 +18,15 @@ namespace VirtualPaper.Grpc.Client
         public Version LastCheckVersion { get; private set; } = new Version(0, 0, 0, 0);
         public string LastCheckChangelog { get; private set; } = string.Empty;
         public Uri LastCheckUri { get; private set; }
-       
+
         public AppUpdaterClient()
         {
             _client = new UpdateService.UpdateServiceClient(new NamedPipeChannel(".", Constants.SingleInstance.GrpcPipeServerName));
 
-            Task.Run(UpdateStatusRefresh).Wait();
+            Task.Run(() =>
+            {
+                UpdateStatusRefresh().ConfigureAwait(false);
+            }).Wait();
 
             _cancellationTokenUpdateChecked = new CancellationTokenSource();
             _updateCheckedChangedTask = Task.Run(() => SubscribeUpdateCheckedStream(_cancellationTokenUpdateChecked.Token));
@@ -74,7 +78,7 @@ namespace VirtualPaper.Grpc.Client
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                _logger.Error(e);
             }
         }
 
@@ -104,5 +108,6 @@ namespace VirtualPaper.Grpc.Client
         private readonly SemaphoreSlim _updateCheckedLock = new(1, 1);
         private readonly CancellationTokenSource _cancellationTokenUpdateChecked;
         private readonly Task _updateCheckedChangedTask;
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

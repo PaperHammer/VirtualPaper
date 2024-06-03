@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Text;
 using System.Windows;
+using System.Windows.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
 
@@ -13,6 +14,8 @@ namespace VirtualPaper.Views.Preview
     /// </summary>
     public partial class WebPreviewer : Window
     {
+        public Action? Reset { get; internal set; }
+
         public WebPreviewer(WallpaperType type, string filePath, string wpCustomizePathUsing)
         {
             InitializeComponent();
@@ -34,24 +37,31 @@ namespace VirtualPaper.Views.Preview
             Webview2.CoreWebView2.Navigate(Path.Combine(_workingDir, "Plugins\\UI\\Web\\viewer.html"));
         }
 
+        private void Webview2_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key >= Key.F1 && e.Key <= Key.F12)
+            {
+                e.Handled = true;
+            }
+        }
+
         private async void Webview2_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs args)
         {
+            await Webview2.CoreWebView2.ExecuteScriptAsync(
+                @"
+                    document.addEventListener('contextmenu', function(event) {
+                        event.preventDefault();
+                    }, false);
+                "
+            );
+            await Task.Delay(600);
+
             await LoadSourceAsync(_type, _filePath);
             await RestoreWpCustomizeAsync(_wpCustomizePathUsing);
         }
 
         private async Task LoadSourceAsync(WallpaperType type, string filePath)
         {
-            //await WaitForWebViewInitialization();
-            //await WaitForWbViewNavCompleted();
-
-            //Webview2.CoreWebView2.PostWebMessageAsJson(jsonMsg);
-
-            //skPanel.Visibility = Visibility.Collapsed;
-            //Webview2.Visibility = Visibility.Visible;
-
-            //ModifySource(_modifyJsonMsg); // 一定要在 LoadSourceAsync 完成后再调用 Modify
-
             try
             {
                 if (filePath == null)
@@ -62,6 +72,7 @@ namespace VirtualPaper.Views.Preview
 
                 await ExecuteScriptFunctionAsync("virtualPaperSourceReload", type.ToString(), filePath);
                 Webview2.Visibility = Visibility.Visible;
+                skPanel.Visibility = Visibility.Collapsed;
             }
             catch { Webview2.Visibility = Visibility.Collapsed; }
         }
@@ -99,13 +110,38 @@ namespace VirtualPaper.Views.Preview
             catch { }
         }
 
-        //public async void ModifySource(string jsonMsg)
-        //{
-        //    await WaitForWebViewInitialization();
-        //    await WaitForWbViewNavCompleted();
+        public async void ModifySource(string uiElementType, string propertyName, string value)
+        {
+            await _semaphoreSlimWallpaperModifyLock.WaitAsync();
 
-        //    Webview2.CoreWebView2.PostWebMessageAsJson(jsonMsg);
-        //}
+            try
+            {
+                if (!uiElementType.Equals("Button", StringComparison.OrdinalIgnoreCase) && !uiElementType.Equals("Label", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (uiElementType.Equals("Slider", StringComparison.OrdinalIgnoreCase) ||
+                        uiElementType.Equals("Dropdown", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await ExecuteScriptFunctionAsync("virtualPaperPropertyListener", propertyName, double.Parse(value));
+                    }
+                    else if (uiElementType.Equals("Checkbox", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await ExecuteScriptFunctionAsync("virtualPaperPropertyListener", propertyName, bool.Parse(value));
+                    }
+                    else if (uiElementType.Equals("Color", StringComparison.OrdinalIgnoreCase) || uiElementType.Equals("Textbox", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await ExecuteScriptFunctionAsync("virtualPaperPropertyListener", propertyName, (string)value);
+                    }
+                }
+
+                await ExecuteScriptFunctionAsync("applyFilter");
+                await ExecuteScriptFunctionAsync("play");
+            }
+            catch { }
+            finally
+            {
+                _semaphoreSlimWallpaperModifyLock.Release();
+            }
+        }
 
         //credit: https://stackoverflow.com/questions/62835549/equivalent-of-webbrowser-invokescriptstring-object-in-webview2
         private async Task<string> ExecuteScriptFunctionAsync(string functionName, params object[] parameters)
@@ -130,31 +166,19 @@ namespace VirtualPaper.Views.Preview
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            Webview2.Dispose();
+            Reset?.Invoke();
+            Webview2?.Dispose();
             Webview2 = null;
         }
-
-        //private async Task WaitForWebViewInitialization()
-        //{
-        //    await _webViewReady.Task;
-        //}
-
-        //private async Task WaitForWbViewNavCompleted()
-        //{
-        //    await _webViewNavCom.Task;
-        //}
 
         private readonly CoreWebView2EnvironmentOptions _environmentOptions = new()
         {
             AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1"
         }; // workaround: avoid cache
         private string _workingDir = AppDomain.CurrentDomain.BaseDirectory;
-        //private string _loadJsonMsg = string.Empty;
-        //private string _modifyJsonMsg = string.Empty;
-        //private TaskCompletionSource<bool> _webViewReady = new();
-        //private TaskCompletionSource<bool> _webViewNavCom = new();
         private WallpaperType _type;
         private string _filePath = string.Empty;
         private string _wpCustomizePathUsing = string.Empty;
+        private readonly SemaphoreSlim _semaphoreSlimWallpaperModifyLock = new(1, 1);
     }
 }

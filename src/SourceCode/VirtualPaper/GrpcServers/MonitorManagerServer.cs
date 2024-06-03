@@ -41,7 +41,8 @@ namespace VirtualPaper.GrpcServers
                             Y = monitor.WorkingArea.Y,
                             Width = monitor.WorkingArea.Width,
                             Height = monitor.WorkingArea.Height
-                        }
+                        },
+                        ThumbnailPath = monitor.ThumbnailPath,
                     };
                     resp.Monitors.Add(item);
                 }
@@ -82,7 +83,7 @@ namespace VirtualPaper.GrpcServers
                         Top = monitor.WorkingArea.Top,
                     };
                     identifyWindow.Show();
-                    await Task.Delay(1000);
+                    await Task.Delay(2000);
                     identifyWindow.Close();
                 }
             }));

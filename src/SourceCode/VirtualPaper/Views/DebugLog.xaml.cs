@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using Wpf.Ui.Controls;
 
 namespace VirtualPaper.Views
 {
@@ -10,6 +11,11 @@ namespace VirtualPaper.Views
         public DebugLog()
         {
             InitializeComponent();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.Activate();
         }
     }
 }

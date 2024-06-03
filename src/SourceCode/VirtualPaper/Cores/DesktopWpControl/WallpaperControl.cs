@@ -12,6 +12,7 @@ using VirtualPaper.Common.Utils.Shell;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Grpc.Service.WallpaperControl;
+using VirtualPaper.lang;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.WallpaperMetaData;
@@ -29,17 +30,17 @@ namespace VirtualPaper.Cores.Desktop
         public nint DesktopWorkerW => _workerW;
         public ReadOnlyCollection<IWallpaper> Wallpapers => _wallpapers.AsReadOnly();
 
-        public event EventHandler<WallpaperUpdateArgs>? WallpaperUpdated;
         public event EventHandler? WallpaperChanged;
         public event EventHandler<Exception>? WallpaperError;
         public event EventHandler? WallpaperReset;
 
-        public WallpaperControl(IUserSettingsService userSettings,
+        public WallpaperControl(
+            IUserSettingsService userSettings,
             IMonitorManager monitorManager,
             IWatchdogService watchdog,
             IWallpaperFactory wallpaperFactory)
         {
-            this._userSettings = userSettings;
+            this._userSettingsService = userSettings;
             this._monitorManager = monitorManager;
             this._watchdog = watchdog;
             this._wallpaperFactory = wallpaperFactory;
@@ -113,6 +114,7 @@ namespace VirtualPaper.Cores.Desktop
                 _watchdog.Clear();
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
             }
+            _logger.Info("Closed all wallpapers");
         }
 
         public void CloseWallpaper(IMonitor monitor)
@@ -130,6 +132,7 @@ namespace VirtualPaper.Cores.Desktop
                 });
                 _wallpapers.RemoveAll(tmp.Contains);
 
+                _logger.Info("Closed wallpaper at monitor: " + monitor.DeviceName);
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -156,7 +159,7 @@ namespace VirtualPaper.Cores.Desktop
                 foreach (var item in originalWallpapers)
                 {
                     SetWallpaperAsync(item.MetaData, item.Monitor);
-                    if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate)
+                    if (_userSettingsService.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate)
                         break;
                 }
             }
@@ -166,13 +169,16 @@ namespace VirtualPaper.Cores.Desktop
             }
         }
 
-        public void RestoreWallpaper()
+        public RestartWallpaperResponse RestoreWallpaper()
         {
+            RestartWallpaperResponse response = new();
+
             try
             {
-                var wallpaperLayout = _userSettings.WallpaperLayout;
-                if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand ||
-                    _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate)
+                _logger.Info("Restore wallpapers...");
+                var wallpaperLayout = _userSettingsService.WallpaperLayouts.ToList();
+                if (_userSettingsService.Settings.WallpaperArrangement == WallpaperArrangement.Expand ||
+                    _userSettingsService.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate)
                 {
                     if (wallpaperLayout.Count != 0)
                     {
@@ -180,28 +186,44 @@ namespace VirtualPaper.Cores.Desktop
                         SetWallpaperAsync(metaData, _monitorManager.PrimaryMonitor);
                     }
                 }
-                else if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Per)
+                else if (_userSettingsService.Settings.WallpaperArrangement == WallpaperArrangement.Per)
                 {
                     RestoreWallpaper(wallpaperLayout);
                 }
+
+                response.IsFinished = true;
             }
             catch (Exception e)
             {
                 _logger.Error($"Failed to restore wallpaper: {e}");
+                response.Msg = e.Message;
             }
+
+            return response;
         }
 
         public void PreviewWallpaper(IMetaData metaData, bool isLibraryPreview)
-        {
+        {            
             Application.Current.Dispatcher.Invoke(() =>
             {
-                IWallpaper instance = _wallpaperFactory.CreateWallpaper(
-                    metaData, 
-                    _monitorManager.PrimaryMonitor, 
-                    _userSettings, 
-                    true, 
+                _previewInstance?.ClosePreview();
+
+                _previewInstance = _wallpaperFactory.CreateWallpaper(
+                    metaData,
+                    _monitorManager.PrimaryMonitor,
+                    _userSettingsService,
+                    true,
                     isLibraryPreview);
-                instance.ShowAsync();
+                _previewInstance.ShowAsync();
+            });
+        }
+
+        public void ModifyPreview(string controlName, string propertyName, string value)
+        {
+            if (_previewInstance == null) return;
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                _previewInstance.Modify(controlName, propertyName, value);
             });
         }
 
@@ -307,7 +329,7 @@ namespace VirtualPaper.Cores.Desktop
             await _semaphoreSlimWallpaperLoadingLock.WaitAsync(cancellationToken);
             SetWallpaperResponse response = new()
             {
-                IsWorked = true,
+                IsFinished = true,
             };
 
             try
@@ -370,10 +392,11 @@ namespace VirtualPaper.Cores.Desktop
                     if (IntPtr.Equals(_workerW, IntPtr.Zero))
                     {
                         _logger.Error("Failed to setup core, WorkerW handle not found..");
-                        WallpaperError?.Invoke(this, new WorkerWException(App.GetResourceDicString("WpControl_VirtualPaperExceptionWorkerWSetupFail")));
+                        WallpaperError?.Invoke(this, new WorkerWException(LanguageManager.Instance
+                            ["WpControl_VirtualPaperExceptionWorkerWSetupFail"]));
                         WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
-                        response.IsWorked = false;
+                        response.IsFinished = false;
                         response.Msg = "WpControl_Err_Setup_Core_Failed";
 
                         return response;
@@ -392,7 +415,7 @@ namespace VirtualPaper.Cores.Desktop
                     _logger.Info($"Skipping wallpaper, monitor {monitor.DeviceName} not found.");
                     WallpaperError?.Invoke(this, new ScreenNotFoundException($"Mnotir {monitor.DeviceName} not found."));
 
-                    response.IsWorked = false;
+                    response.IsFinished = false;
                     response.Msg = "WpControl_Err_Monitor_Not_Found";
 
                     return response;
@@ -402,10 +425,11 @@ namespace VirtualPaper.Cores.Desktop
                     //Only checking for wallpapers outside folder.
                     //This was before core separation, now the check can be simplified with just FolderPath != null.
                     _logger.Info($"Skipping wallpaper, file {metaData.FilePath} not found.");
-                    WallpaperError?.Invoke(this, new WallpaperNotFoundException($"{App.GetResourceDicString("WpControl_TextFileNotFound")}\n{metaData.FilePath}"));
+                    WallpaperError?.Invoke(this, new WallpaperNotFoundException($"{LanguageManager.Instance
+                            ["WpControl_TextFileNotFound"]}\n{metaData.FilePath}"));
                     WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
-                    response.IsWorked = false;
+                    response.IsFinished = false;
                     response.Msg = "WpControl_Err_File_Not_Found";
 
                     return response;
@@ -417,11 +441,11 @@ namespace VirtualPaper.Cores.Desktop
                 bool isStarted = false;
                 try
                 {
-                    switch (_userSettings.Settings.WallpaperArrangement)
+                    switch (_userSettingsService.Settings.WallpaperArrangement)
                     {
                         case WallpaperArrangement.Per:
                             {
-                                IWallpaper instance = _wallpaperFactory.CreateWallpaper(metaData, monitor, _userSettings);
+                                IWallpaper instance = _wallpaperFactory.CreateWallpaper(metaData, monitor, _userSettingsService);
                                 CloseWallpaper(instance.Monitor);
                                 isStarted = await instance.ShowAsync(cancellationToken);
 
@@ -430,7 +454,7 @@ namespace VirtualPaper.Cores.Desktop
                                     isStarted = false;
                                     _logger.Error("Failed to set wallpaper as child of WorkerW");
 
-                                    response.IsWorked = false;
+                                    response.IsFinished = false;
                                     response.Msg = "WpControl_Err_Set_Child_WokerW_Failed";
                                 }
 
@@ -440,13 +464,14 @@ namespace VirtualPaper.Cores.Desktop
                                         _watchdog.Add(instance.Proc.Id);
 
                                     _wallpapers.Add(instance);
+                                    monitor.ThumbnailPath = metaData.ThumbnailPath;
                                 }
                             }
                             break;
                         case WallpaperArrangement.Expand:
                             {
                                 CloseAllWallpapers();
-                                IWallpaper instance = _wallpaperFactory.CreateWallpaper(metaData, monitor, _userSettings);
+                                IWallpaper instance = _wallpaperFactory.CreateWallpaper(metaData, monitor, _userSettingsService);
                                 isStarted = await instance.ShowAsync(cancellationToken);
 
                                 if (isStarted && !TrySetWallpaperSpanMonitor(instance.Handle))
@@ -454,7 +479,7 @@ namespace VirtualPaper.Cores.Desktop
                                     isStarted = false;
                                     _logger.Error("Failed to set wallpaper as child of WorkerW");
 
-                                    response.IsWorked = false;
+                                    response.IsFinished = false;
                                     response.Msg = "WpControl_Err_Set_Child_WokerW_Failed";
                                 }
 
@@ -464,6 +489,7 @@ namespace VirtualPaper.Cores.Desktop
                                         _watchdog.Add(instance.Proc.Id);
 
                                     _wallpapers.Add(instance);
+                                    monitor.ThumbnailPath = metaData.ThumbnailPath;
                                 }
                             }
                             break;
@@ -472,7 +498,7 @@ namespace VirtualPaper.Cores.Desktop
                                 CloseAllWallpapers();
                                 foreach (var item in _monitorManager.Monitors)
                                 {
-                                    IWallpaper instance = _wallpaperFactory.CreateWallpaper(metaData, item, _userSettings);
+                                    IWallpaper instance = _wallpaperFactory.CreateWallpaper(metaData, item, _userSettingsService);
                                     isStarted = await instance.ShowAsync(cancellationToken);
 
                                     if (isStarted && !TrySetWallpaperPerMonitor(instance.Handle, instance.Monitor))
@@ -480,7 +506,7 @@ namespace VirtualPaper.Cores.Desktop
                                         isStarted = false;
                                         _logger.Error("Failed to set wallpaper as child of WorkerW");
 
-                                        response.IsWorked = false;
+                                        response.IsFinished = false;
                                         response.Msg = "WpControl_Err_Set_Child_WokerW_Failed";
                                     }
 
@@ -490,6 +516,7 @@ namespace VirtualPaper.Cores.Desktop
                                             _watchdog.Add(instance.Proc.Id);
 
                                         _wallpapers.Add(instance);
+                                        monitor.ThumbnailPath = metaData.ThumbnailPath;
                                     }
                                 }
                             }
@@ -500,9 +527,10 @@ namespace VirtualPaper.Cores.Desktop
                 }
                 catch (Win32Exception ex)
                 {
-                    response.IsWorked = false;
+                    response.IsFinished = false;
 
                     _logger.Error(ex);
+                    response.Msg = ex.Message;
                     if (ex.NativeErrorCode == 2) //ERROR_FILE_NOT_FOUND
                         WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(ex.Message));
                     else
@@ -510,7 +538,8 @@ namespace VirtualPaper.Cores.Desktop
                 }
                 catch (Exception ex2)
                 {
-                    response.IsWorked = false;
+                    response.IsFinished = false;
+                    response.Msg = ex2.Message;
 
                     _logger.Error(ex2);
                     WallpaperError?.Invoke(this, ex2);
@@ -519,7 +548,8 @@ namespace VirtualPaper.Cores.Desktop
             }
             catch (Exception e)
             {
-                response.IsWorked = false;
+                response.IsFinished = false;
+                response.Msg = e.Message;
 
                 _logger.Error(e.ToString());
                 WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(e.Message));
@@ -538,14 +568,14 @@ namespace VirtualPaper.Cores.Desktop
         {
             lock (_layoutChangeLock)
             {
-                var wpLayouts = _userSettings.WallpaperLayout;
+                var wpLayouts = _userSettingsService.WallpaperLayouts;
                 for (int i = 0; i < wpLayouts.Count; ++i)
                 {
                     var wpLayout = wpLayouts[i];
                     wpLayout.FolderPath = wpLayout.FolderPath.Replace(previousDir, newDir);
                 }
 
-                _userSettings.Save<List<IWallpaperLayout>>();
+                _userSettingsService.Save<List<IWallpaperLayout>>();
             }
         }
 
@@ -572,12 +602,12 @@ namespace VirtualPaper.Cores.Desktop
                         monitor => wallpaper.Monitor.Equals(monitor)) == null);
 
                 //Updating user selected monitor to primary if disconnected.
-                _userSettings.Settings.SelectedMonitor =
-                    allScreens.Find(x => _userSettings.Settings.SelectedMonitor.Equals(x)) ??
+                _userSettingsService.Settings.SelectedMonitor =
+                    allScreens.Find(x => _userSettingsService.Settings.SelectedMonitor.Equals(x)) ??
                     _monitorManager.PrimaryMonitor;
-                _userSettings.Save<ISettings>();
+                _userSettingsService.Save<ISettings>();
 
-                switch (_userSettings.Settings.WallpaperArrangement)
+                switch (_userSettingsService.Settings.WallpaperArrangement)
                 {
                     case WallpaperArrangement.Per:
                         //No screens running metaData needs to be removed.
@@ -623,7 +653,7 @@ namespace VirtualPaper.Cores.Desktop
 
         private void UpdateWallpaperRect()
         {
-            if (_monitorManager.IsMultiScreen() && _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand)
+            if (_monitorManager.IsMultiScreen() && _userSettingsService.Settings.WallpaperArrangement == WallpaperArrangement.Expand)
             {
                 if (_wallpapers.Count != 0)
                 {
@@ -702,17 +732,17 @@ namespace VirtualPaper.Cores.Desktop
         {
             lock (_layoutWriteLock)
             {
-                _userSettings.WallpaperLayout.Clear();
+                _userSettingsService.WallpaperLayouts.Clear();
                 _wallpapers.ForEach(wallpaper =>
                 {
-                    _userSettings.WallpaperLayout.Add(new WallpaperLayout(
+                    _userSettingsService.WallpaperLayouts.Add(new WallpaperLayout(
                             (Models.Cores.Monitor)wallpaper.Monitor,
                             wallpaper.MetaData.FolderPath));
                 });
 
                 try
                 {
-                    _userSettings.Save<List<IWallpaperLayout>>();
+                    _userSettingsService.Save<List<IWallpaperLayout>>();
                 }
                 catch (Exception e)
                 {
@@ -876,7 +906,7 @@ namespace VirtualPaper.Cores.Desktop
                 if (ret.Equals(IntPtr.Zero))
                     return false;
 
-                //_workerW is assumed as progman in win7, this is untested with All fn's: addwallpaper(), wp Pause, resize events.. 
+                //_workerW is assumed as _progman in win7, this is untested with All fn's: addwallpaper(), wp Pause, resize events.. 
                 _workerW = progman;
             }
             else
@@ -927,9 +957,10 @@ namespace VirtualPaper.Cores.Desktop
         private readonly List<IWallpaper> _wallpapers = [];
         private IntPtr _progman, _workerW;
         private bool _isInitialized = false;
+        private IWallpaper? _previewInstance;
         private readonly SemaphoreSlim _semaphoreSlimWallpaperLoadingLock = new(1, 1);
 
-        private readonly IUserSettingsService _userSettings;
+        private readonly IUserSettingsService _userSettingsService;
         private readonly IWallpaperFactory _wallpaperFactory;
         private readonly IWatchdogService _watchdog;
         private readonly IMonitorManager _monitorManager;

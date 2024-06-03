@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using GrpcDotNetNamedPipes;
+using NLog;
 using System.Collections.ObjectModel;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
@@ -23,7 +24,7 @@ namespace VirtualPaper.Grpc.Client
 
         public MonitorManagerClient()
         {
-            _client = new(new NamedPipeChannel(".", Constants.SingleInstance.GrpcPipeServerName));
+            _client = new MonitorManagerService.MonitorManagerServiceClient(new NamedPipeChannel(".", Constants.SingleInstance.GrpcPipeServerName));
            
             Task.Run(async () =>
             {
@@ -61,6 +62,7 @@ namespace VirtualPaper.Grpc.Client
                         monitor.WorkingArea.Y,
                         monitor.WorkingArea.Width,
                         monitor.WorkingArea.Height),
+                    ThumbnailPath = monitor.ThumbnailPath,
                 });
             }
 
@@ -109,7 +111,7 @@ namespace VirtualPaper.Grpc.Client
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                _logger.Error(e);
             }
         }
 
@@ -121,6 +123,8 @@ namespace VirtualPaper.Grpc.Client
             {
                 if (disposing)
                 {
+                    _cancellationTokeneMonitorChanged?.Cancel();
+                    _monitorChangedTask?.Wait();
                 }
                 
                 _isDisposed = true;
@@ -139,5 +143,6 @@ namespace VirtualPaper.Grpc.Client
         private readonly SemaphoreSlim _monitorChangedLock = new(1, 1);
         private readonly CancellationTokenSource _cancellationTokeneMonitorChanged;
         private readonly Task _monitorChangedTask;
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

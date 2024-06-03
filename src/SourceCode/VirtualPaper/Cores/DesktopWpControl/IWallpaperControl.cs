@@ -43,9 +43,10 @@ namespace VirtualPaper.Cores.Desktop
         /// <summary>
         /// 还原壁纸
         /// </summary>
-        void RestoreWallpaper();
+        RestartWallpaperResponse RestoreWallpaper();
 
         void PreviewWallpaper(IMetaData metaData, bool isLibraryPreview);
+        void ModifyPreview(string controlName, string propertyName, string value);
 
         void SeekWallpaper(IMetaData metaData, float seek, PlaybackPosType type);
         void SeekWallpaper(IMonitor monitor, float seek, PlaybackPosType type);
@@ -58,16 +59,12 @@ namespace VirtualPaper.Cores.Desktop
         IMetaData CreateWallpaper(string folderPath, string filePath, WallpaperType type, CancellationToken token);
         FileProperty TryGetProeprtyInfo(string filePath, WallpaperType type);
         void ChangeWallpaperLayoutFolrderPath(string previousDir, string newDir);
+        
 
         /// <summary>
         /// Wallpaper set/update/removed.
         /// </summary>
         public event EventHandler? WallpaperChanged;
-
-        /// <summary>
-        /// Update/remove preview clips, metadata or wallpaper.
-        /// </summary>
-        public event EventHandler<WallpaperUpdateArgs> WallpaperUpdated;
 
         /// <summary>
         /// Errors occured in wallpaper core.
@@ -78,12 +75,5 @@ namespace VirtualPaper.Cores.Desktop
         /// Wallpaper core services restarted.
         /// </summary>
         public event EventHandler? WallpaperReset;
-    }
-
-    public class WallpaperUpdateArgs : EventArgs
-    {
-        public UpdateWallpaperState UpdatedType { get; set; }
-        public IMetaData? MetaData { get; set; }
-        public string FolderPath { get; set; } = string.Empty;
     }
 }

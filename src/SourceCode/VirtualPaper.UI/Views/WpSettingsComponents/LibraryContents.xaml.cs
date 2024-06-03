@@ -87,8 +87,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
                         _viewModel.Import(_rightTrappedItem);
                         break;
                     case "Apply":
-                        _viewModel.Import(_rightTrappedItem);
-                        await _viewModel.ApplyAsync(this.XamlRoot);
+                        await _viewModel.ApplyAsync(_rightTrappedItem, this.XamlRoot);
                         break;
                     case "ShowOnDisk":
                         Process.Start("Explorer", "/select," + _rightTrappedItem.FilePath);

@@ -1,9 +1,5 @@
 ﻿using Newtonsoft.Json;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
 using System.Windows;
-using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.IPC;
 
 namespace VirtualPaper.Webviewer

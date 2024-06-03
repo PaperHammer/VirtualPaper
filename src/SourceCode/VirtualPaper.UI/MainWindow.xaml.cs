@@ -3,14 +3,17 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels;
+using VirtualPaper.UI.Views;
 using WinRT.Interop;
 using WinUIEx;
 
@@ -61,38 +64,8 @@ namespace VirtualPaper.UI
                 this.UseImmersiveDarkModeEx(userSettings.Settings.ApplicationTheme == AppTheme.Dark);
             }
 
+            this.Activate();
             //using Gdi32.SafeHRGN rgn = InitTransparent();           
-        }
-
-        //public void Changedtransparent(bool isTransparent)
-        //{
-        //    if (isTransparent) NavView.Opacity = 0.5;
-        //    else NavView.Opacity = 1;
-        //    TransparentHelper.SetTransparent(this, isTransparent);
-        //}
-
-        // ref: https://learn.microsoft.com/zh-cn/windows/apps/design/controls/navigationview#backwards-navigation
-        private void NavView_Loaded(
-            object sender,
-            RoutedEventArgs e)
-        {
-            // Add handler for ContentFrame navigation.
-            //ContentFrame.Navigated += On_Navigated;
-
-            // NavView doesn't load any page by default, so load home page.
-            NavView.SelectedItem = NavView.MenuItems[0];
-        }
-
-        private void NavigationView_SelectionChanged(
-            NavigationView sender,
-            NavigationViewSelectionChangedEventArgs args)
-        {
-            if (args.IsSettingsSelected == false && args.SelectedItemContainer != null)
-            {
-                string tag = args.SelectedItemContainer.Tag.ToString();
-                Page page = InstanceUtil<Page>.TryGetInstanceByName(tag, "");
-                ContentFrame.Content = page;
-            }
         }
 
         private void WindowEx_Closed(object sender, WindowEventArgs args)
@@ -111,6 +84,70 @@ namespace VirtualPaper.UI
                 _userSettingsClient.Settings.IsUpdated = false;
                 _userSettingsClient.Save<ISettings>();
                 this.Close();
+            }
+
+            App.ShutDown();
+        }
+
+        //public void Changedtransparent(bool isTransparent)
+        //{
+        //    if (isTransparent) NavView.Opacity = 0.5;
+        //    else NavView.Opacity = 1;
+        //    TransparentHelper.SetTransparent(this, isTransparent);
+        //}
+
+        // ref: https://learn.microsoft.com/zh-cn/windows/apps/design/controls/navigationview#backwards-navigation
+        private void NavView_Loaded(
+            object sender,
+            RoutedEventArgs e)
+        {
+            // Add handler for ContentFrame navigation.
+            ContentFrame.Navigated += On_Navigated;
+
+            // NavView doesn't load any page by default, so load home page.
+            NavView.SelectedItem = NavView.MenuItems[0];
+        }
+
+        private void NavigationView_SelectionChanged(
+            NavigationView sender,
+            NavigationViewSelectionChangedEventArgs args)
+        {
+            if (args.SelectedItemContainer != null)
+            {
+                Type navPageType = Type.GetType(args.SelectedItemContainer.Tag.ToString());
+                NavView_Navigate(navPageType, args.RecommendedNavigationTransitionInfo);
+            }
+        }
+
+        private void NavView_Navigate(
+            Type navPageType,
+            NavigationTransitionInfo transitionInfo)
+        {
+            // Get the page type before navigation so you can prevent duplicate
+            // entries in the backstack.
+            Type preNavPageType = ContentFrame.CurrentSourcePageType;
+
+            // Only navigate if the selected page isn't currently loaded.
+            if (navPageType is not null && !Type.Equals(preNavPageType, navPageType))
+            {
+                ContentFrame.Navigate(navPageType, null, transitionInfo);
+            }
+        }
+
+        private void On_Navigated(object sender, NavigationEventArgs e)
+        {
+            if (ContentFrame.SourcePageType != null)
+            {
+                // Select the nav view item that corresponds to the page being navigated to.
+                var item = 
+                    NavView.MenuItems
+                    .OfType<NavigationViewItem>()
+                    .FirstOrDefault(i => i.Tag.Equals(ContentFrame.SourcePageType.FullName.ToString()), null) 
+                    ?? NavView.FooterMenuItems
+                        .OfType<NavigationViewItem>()
+                        .First(i => i.Tag.Equals(ContentFrame.SourcePageType.FullName.ToString()));
+
+                NavView.SelectedItem = item;
             }
         }
 

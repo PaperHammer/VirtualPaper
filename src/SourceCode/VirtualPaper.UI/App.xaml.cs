@@ -4,18 +4,17 @@ using NLog;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.UI.CommServers;
 using VirtualPaper.UI.ViewModels;
 using VirtualPaper.UI.ViewModels.AppSettings;
 using VirtualPaper.UI.ViewModels.WpSettingsComponents;
-using VirtualPaper.UI.Views;
-using VirtualPaper.UI.Views.Utils;
-using VirtualPaper.UI.Views.WpSettingsComponents;
 using Windows.Storage;
 using WinUI3Localizer;
 using static VirtualPaper.Common.Constants;
@@ -30,6 +29,9 @@ namespace VirtualPaper.UI
     /// </summary>
     public partial class App : Application
     {
+        public static bool _isNeedReslease = false;
+        public static SemaphoreSlim _semaphoreSlimForLib = new(0, 1);
+
         public static IServiceProvider Services
         {
             get
@@ -70,30 +72,22 @@ namespace VirtualPaper.UI
             var provider = new ServiceCollection()
                 .AddSingleton<MainWindow>()
 
-                .AddTransient<Account>()
-                .AddTransient<AppSettings>()
-                .AddSingleton<Gallery>()
-                .AddSingleton<WpSettings>()
-                
-                .AddSingleton<LibraryContents>()
-                .AddSingleton<WpConfig>()
-                .AddTransient<WpNavSettgins>()
-
-                .AddSingleton<ColorEyeDropWindow>()
-
                 .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
                 .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()
                 .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
                 .AddSingleton<ICommandsClient, CommandsClient>()
+                .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
 
                 .AddSingleton<WpSettingsViewModel>()
                 .AddSingleton<LibraryContentsViewModel>()
-                .AddTransient<WpNavSettginsViewModel>()
+                .AddSingleton<WpNavSettingsViewModel>()
                 .AddTransient<GeneralSettingViewModel>()
                 .AddTransient<PerformanceSettingViewModel>()
                 .AddTransient<SystemSettingViewModel>()
                 .AddTransient<OtherSettingViewModel>()
+
+                .AddSingleton<TrayCommand>()
 
                 .AddHttpClient()
 
@@ -120,9 +114,14 @@ namespace VirtualPaper.UI
             {
                 await InitializeLocalizerForUnpackaged(_userSettings.Settings.Language);
             }
-            var m_window = Services.GetRequiredService<MainWindow>();
-            m_window.Activate();
+
+            Services.GetRequiredService<MainWindow>();
+            //var m_window = Services.GetRequiredService<MainWindow>();
+            //m_window.Activate();
             //}
+
+            // 避免文字无法初始化
+            Services.GetRequiredService<TrayCommand>();
         }
 
         // ref: https://github.com/AndrewKeepCoding/WinUI3Localizer
@@ -143,7 +142,6 @@ namespace VirtualPaper.UI
 
         private async Task InitializeLocalizerForPackaged(string lang)
         {
-
             // Initialize a "Strings" folder in the "LocalFolder" for the packaged app.
             StorageFolder localFolder = ApplicationData.Current.LocalFolder;
             StorageFolder stringsFolder = await localFolder.CreateFolderAsync(
@@ -225,7 +223,19 @@ namespace VirtualPaper.UI
                 LogUnhandledException(e.UnhandledError);
         }
 
-        //private Window m_window;
+        public static void ShutDown()
+        {
+            try
+            {
+                Task.Run(() =>
+                {
+                    ((ServiceProvider)App.Services)?.Dispose();
+                    _logger.Info("UI was closed");
+                });
+            }
+            catch (InvalidOperationException) { }
+        }
+
         private IServiceProvider _serviceProvider;
         private IUserSettingsClient _userSettings;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();

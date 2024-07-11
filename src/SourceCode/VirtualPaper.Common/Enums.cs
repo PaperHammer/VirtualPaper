@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Reflection;
 
 namespace VirtualPaper.Common
 {
@@ -99,6 +98,7 @@ namespace VirtualPaper.Common
     {
         [Description("Unknown")]
         unknown,
+
         /// <summary>
         /// 应用程序
         /// </summary>
@@ -172,29 +172,33 @@ namespace VirtualPaper.Common
         heic
         */
     }
+
+    public enum ObjectFit
+    {
+        Fill,
+        Contain,
+        Cover,
+        None,
+        ScaleDown
+    }
     #endregion
 
-    public enum UpdateWallpaperState
-    {
-        changed,
-        remove,
-        done
-    }
-
     #region costumise
-    public class PictureCostumise
+    public class UniverseCostumise
     {
         public Saturation Saturation { get; set; }
         public Hue Hue { get; set; }
         public Brightness Brightness { get; set; }
         public Contrast Contrast { get; set; }
+        public Scaling Scaling { get; set; }
 
-        public PictureCostumise()
+        public UniverseCostumise()
         {
             Saturation = new();
             Hue = new();
             Brightness = new();
             Contrast = new();
+            Scaling = new();
 
             _properties = new Dictionary<string, dynamic>
             {
@@ -202,57 +206,7 @@ namespace VirtualPaper.Common
                 { nameof(Hue), Hue },
                 { nameof(Brightness), Brightness },
                 { nameof(Contrast), Contrast },
-            };
-        }
-
-        public void ModifyPropertyValue<T>(string propertyName, T value)
-        {
-            if (_properties.TryGetValue(propertyName, out dynamic property))
-            {
-                if (value >= property.Min && value <= property.Max)
-                {
-                    property.Value = value;
-                }
-                else
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value), $"The value must be between {property.Min} and {property.Max} for the {propertyName} property.");
-                }
-            }
-            else
-            {
-                throw new ArgumentException($"Invalid property name: {propertyName}");
-            }
-        }
-
-        private readonly Dictionary<string, dynamic> _properties;
-    }
-
-    public class VideoAndGifCostumize
-    {
-        public Saturation Saturation { get; set; }
-        public Hue Hue { get; set; }
-        public Brightness Brightness { get; set; }
-        public Contrast Contrast { get; set; }
-        public Speed Speed { get; set; }
-        public Volume Volume { get; set; }
-
-        public VideoAndGifCostumize()
-        {
-            Saturation = new();
-            Hue = new();
-            Brightness = new();
-            Contrast = new();
-            Speed = new();
-            Volume = new();
-
-            _properties = new Dictionary<string, dynamic>
-            {
-                { nameof(Saturation), Saturation },
-                { nameof(Hue), Hue },
-                { nameof(Brightness), Brightness },
-                { nameof(Contrast), Contrast },
-                { nameof(Speed), Speed },
-                { nameof(Volume), Volume },
+                { nameof(Scaling), Scaling },
             };
         }
 
@@ -279,7 +233,111 @@ namespace VirtualPaper.Common
             }
         }
 
-        private readonly Dictionary<string, dynamic> _properties;
+        protected readonly Dictionary<string, dynamic> _properties;
+    }
+
+    public class PictureCostumise : UniverseCostumise
+    {
+        //public Saturation Saturation { get; set; }
+        //public Hue Hue { get; set; }
+        //public Brightness Brightness { get; set; }
+        //public Contrast Contrast { get; set; }
+
+        //public PictureCostumise()
+        //{
+        //    //Saturation = new();
+        //    //Hue = new();
+        //    //Brightness = new();
+        //    //Contrast = new();
+
+        //    //_properties = new Dictionary<string, dynamic>
+        //    //{
+        //    //    { nameof(Saturation), Saturation },
+        //    //    { nameof(Hue), Hue },
+        //    //    { nameof(Brightness), Brightness },
+        //    //    { nameof(Contrast), Contrast },
+        //    //    { nameof(Scaling), Scaling },
+        //    //};
+        //}
+
+        //public void ModifyPropertyValue<T>(string propertyName, T value)
+        //{
+        //    if (_properties.TryGetValue(propertyName, out dynamic property))
+        //    {
+        //        if (value >= property.Min && value <= property.Max)
+        //        {
+        //            property.Value = value;
+        //        }
+        //        else
+        //        {
+        //            throw new ArgumentOutOfRangeException(nameof(value), $"The value must be between {property.Min} and {property.Max} for the {propertyName} property.");
+        //        }
+        //    }
+        //    else
+        //    {
+        //        throw new ArgumentException($"Invalid property name: {propertyName}");
+        //    }
+        //}
+
+        //private readonly Dictionary<string, dynamic> _properties;
+    }
+
+    public class VideoAndGifCostumize : UniverseCostumise
+    {
+        //public Saturation Saturation { get; set; }
+        //public Hue Hue { get; set; }
+        //public Brightness Brightness { get; set; }
+        //public Contrast Contrast { get; set; }
+        public Speed Speed { get; set; }
+        public Volume Volume { get; set; }
+
+        public VideoAndGifCostumize()
+        {
+            //Saturation = new();
+            //Hue = new();
+            //Brightness = new();
+            //Contrast = new();
+            Speed = new();
+            Volume = new();
+
+            _properties[nameof(Speed)] = Speed;
+            _properties[nameof(Volume)] = Volume;
+            //_properties = new Dictionary<string, dynamic>
+            //{
+            //    { nameof(Saturation), Saturation },
+            //    { nameof(Hue), Hue },
+            //    { nameof(Brightness), Brightness },
+            //    { nameof(Contrast), Contrast },
+            //    { nameof(Scaling), Scaling },
+            //    { nameof(Speed), Speed },
+            //    { nameof(Volume), Volume },
+            //};
+        }
+
+        //public void ModifyPropertyValue<T>(string propertyName, T value)
+        //{
+        //    if (_properties.TryGetValue(propertyName, out dynamic property))
+        //    {
+        //        if (typeof(T) == typeof(bool))
+        //        {
+        //            property.Value = value;
+        //        }
+        //        else if (value >= property.Min && value <= property.Max)
+        //        {
+        //            property.Value = value;
+        //        }
+        //        else
+        //        {
+        //            throw new ArgumentOutOfRangeException(nameof(value), $"The value must be between {property.Min} and {property.Max} for the {propertyName} property.");
+        //        }
+        //    }
+        //    else
+        //    {
+        //        throw new ArgumentException($"Invalid property name: {propertyName}");
+        //    }
+        //}
+
+        //private readonly Dictionary<string, dynamic> _properties;
     }
 
     public class Saturation
@@ -320,6 +378,15 @@ namespace VirtualPaper.Common
         public double Max { get; init; } = 10;
         public double Min { get; init; } = 0;
         public double Step { get; init; } = 0.1;
+    }
+
+    public class Scaling
+    {
+        public string Type { get; set; } = "Dropdown";
+        public string Text { get; set; } = "Scale Way";
+        public int Value { get; set; } = 0;
+        public List<string> Items { get; set; } = ["Fill", "Contain", "Cover", "None", "Scale-Down"];
+        public string Help { get; set; } = "";
     }
 
     public class Speed

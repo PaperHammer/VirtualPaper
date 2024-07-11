@@ -21,6 +21,7 @@ namespace VirtualPaper.UI.Utils.Converters
 
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
+        public object ConvertBack(object value, Type targetType, object parameter, string language) 
+            => throw new NotSupportedException();
     }
 }

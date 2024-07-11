@@ -15,7 +15,7 @@
     </Page.Resources>
 
     <Grid
-        Margin="15 0">
+        Margin="15 0 15 15">
         <ScrollView>
             <StackPanel
                 Orientation="Vertical">

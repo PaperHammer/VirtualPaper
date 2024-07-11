@@ -20,6 +20,10 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Runtime.CompilerServices;
 using NLog;
 using VirtualPaper.UI.Views.WpSettingsComponents;
+using VirtualPaper.UI.Services.Interfaces;
+using System.Threading;
+using Windows.System.UserProfile;
+using Windows.Storage;
 
 namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
 {
@@ -31,7 +35,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
         public int WpArrangSelected
         {
             get { return _wpArrangSelected; }
-            set {_wpArrangSelected = value; OnPropertyChanged();}
+            set { _wpArrangSelected = value; OnPropertyChanged(); }
         }
 
         public string Text_WpArrange { get; set; } = string.Empty;
@@ -128,10 +132,12 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
         public ObservableCollection<ProcInfo> ProcsFiltered { get; set; } = [];
 
         public WpNavSettingsViewModel(
+            IDialogService dialogService,
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient,
             IScrCommandsClient scrCommandsClient)
         {
+            _dialogService = dialogService;
             _userSettingsClient = userSettingsClient;
             _wallpaperControlClient = wallpaperControlClient;
             _scrCommandsClient = scrCommandsClient;
@@ -231,7 +237,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             });
         }
 
-        internal async Task UpdateWpArrange(string tag, XamlRoot xamlRoot)
+        internal async Task UpdateWpArrangeAsync(string tag)
         {
             try
             {
@@ -248,14 +254,10 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
                 var response = await _wallpaperControlClient.RestartAllWallpaperAsync();
                 if (response.IsFinished != true)
                 {
-                    _ = await new ContentDialog()
-                    {
-                        XamlRoot = xamlRoot,
-                        Title = _localizer.GetLocalizedString("Dialog_Title_Error"),
-                        Content = response.Msg,
-                        PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm"),
-                        DefaultButton = ContentDialogButton.Primary,
-                    }.ShowAsync();
+                    await _dialogService.ShowDialogAsync(
+                        _localizer.GetLocalizedString("Dialog_Content_ApplyError")
+                        , _localizer.GetLocalizedString("Dialog_Title_Error")
+                        , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
                 }
             }
             catch { }
@@ -294,37 +296,32 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
 
         private void Loading()
         {
-            CheckLoadingEvent();
-            _onIsLoading?.Invoke(true);
+            Check();
+            _onLoading?.Invoke(true, false, null);
         }
 
         private void Loaded()
         {
-            CheckLoadingEvent();
-            _onIsLoading?.Invoke(false);
+            Check();
+            _onLoaded?.Invoke();
         }
 
-        private void CheckLoadingEvent()
-        {
-            if (_onIsLoading == null)
-            {
-                CheckViewModel();
-                _onIsLoading = _wpSettingsViewModel.IsLoading;
-            }
-        }
-
-        private void CheckViewModel()
+        private void Check()
         {
             _wpSettingsViewModel ??= App.Services.GetRequiredService<WpSettingsViewModel>();
+            _onLoading ??= _wpSettingsViewModel.Loading;
+            _onLoaded ??= _wpSettingsViewModel.Loaded;
         }
 
         private ILocalizer _localizer;
-        private readonly IUserSettingsClient _userSettingsClient;
-        private readonly IWallpaperControlClient _wallpaperControlClient;
-        private readonly IScrCommandsClient _scrCommandsClient;
+        private IDialogService _dialogService;
+        private IUserSettingsClient _userSettingsClient;
+        private IWallpaperControlClient _wallpaperControlClient;
+        private IScrCommandsClient _scrCommandsClient;
         private string _effectNone = string.Empty;
         private string _effectBubble = string.Empty;
-        private Action<bool> _onIsLoading;
+        private Action<bool, bool, CancellationTokenSource[]> _onLoading;
+        private Action _onLoaded;
         private WpSettingsViewModel _wpSettingsViewModel;
         internal ObservableCollection<ProcInfo> _whiteListScr = [];
         private DispatcherQueue _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;

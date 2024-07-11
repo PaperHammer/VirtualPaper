@@ -1,5 +1,4 @@
 ﻿using System.Windows;
-using Wpf.Ui.Controls;
 
 namespace VirtualPaper.Views
 {

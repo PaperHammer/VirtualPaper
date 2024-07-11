@@ -32,10 +32,7 @@ namespace VirtualPaper.Cores.ScreenSaver
             _msgWindow.MouseUpRaw += MsgWindow_MouseUpRaw;
             _msgWindow.KeyboardClickRaw += MsgWindow_KeyboardClickRaw;
 
-            _dispatcherTimer = new()
-            {
-                Interval = TimeSpan.FromMinutes(_waitingTime),
-            };
+            _dispatcherTimer = new();
 
             foreach (var proc in userSettingsService.Settings.WhiteListScr)
             {
@@ -58,7 +55,6 @@ namespace VirtualPaper.Cores.ScreenSaver
             try
             {
                 _metaData = metaData;
-                _waitingTime = _userSettingsService.Settings.WaitingTime;
                 _isRunningLock = _userSettingsService.Settings.IsRunningLock;
 
                 StartTimerTask();
@@ -97,6 +93,7 @@ namespace VirtualPaper.Cores.ScreenSaver
         {
             if (_metaData == null) return;
 
+            _dispatcherTimer.Interval = TimeSpan.FromMinutes(_userSettingsService.Settings.WaitingTime);
             _dispatcherTimer.Tick += DispatcherTimer_Tick;
             _dispatcherTimer.Start();
         }
@@ -121,13 +118,6 @@ namespace VirtualPaper.Cores.ScreenSaver
                     Native.LockWorkStation();
                 }
             }
-            //else
-            //{
-            //    if (Proc == null)
-            //    {
-            //        _semaphoreScrStop.Release();
-            //    }
-            //}
         }
 
         private void InitScr(IMetaData metaData)
@@ -343,7 +333,6 @@ namespace VirtualPaper.Cores.ScreenSaver
         private IWatchdogService _watchdog;
         private RawInputMsgWindow _msgWindow;
         private IMetaData? _metaData;
-        private int _waitingTime = 1; // 分钟(minutes) default
         private DispatcherTimer _dispatcherTimer;
         private bool _isRunningLock = false;
         private readonly ConcurrentDictionary<string, bool> _scrWhiteListProcState = [];

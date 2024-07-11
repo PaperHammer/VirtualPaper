@@ -93,6 +93,25 @@ namespace VirtualPaper.Grpc.Client
             await _client.ModifyPreviewAsync(modifyPreviewRequest);
         }
 
+        public async Task<UpdateWpResponse> UpdateWpAsync(
+            IMonitor monitor, IMetaData metaData, CancellationToken token)
+        {
+            WpMetaData wpData = new()
+            {
+                Type = (Service.WallpaperControl.WallpaperType)metaData.Type,
+                FolderPath = metaData.FolderPath,
+                FilePath = metaData.FilePath,
+                WpCustomizePathUsing = metaData.WpCustomizePathUsing,
+            };
+
+            return await _client.UpdateWpAsync(
+                new UpdateWpRequest()
+                {
+                    WpMetaData = wpData,
+                    MonitorId = monitor.DeviceId,
+                }, cancellationToken: token);
+        }
+
         public async Task<WpMetaData> GetWallpaperAsync(string folderPath)
         {
             return await _client.GetWallpaperAsync(
@@ -100,9 +119,7 @@ namespace VirtualPaper.Grpc.Client
         }
 
         public async Task<SetWallpaperResponse> SetWallpaperAsync(
-            IMetaData metaData,
-            IMonitor monitor,
-            CancellationToken cancellationToken)
+            IMonitor monitor, IMetaData metaData, CancellationToken token)
         {
             var request = new SetWallpaperRequest
             {
@@ -110,7 +127,7 @@ namespace VirtualPaper.Grpc.Client
                 MonitorId = monitor.DeviceId,
                 RunningState = (RunningState)(int)metaData.State,
             };
-            return await _client.SetWallpaperAsync(request, cancellationToken: cancellationToken);
+            return await _client.SetWallpaperAsync(request, cancellationToken: token);
         }
 
         public async Task<RestartWallpaperResponse> RestartAllWallpaperAsync()
@@ -137,7 +154,16 @@ namespace VirtualPaper.Grpc.Client
             return null;
         }
 
-        public async Task ChangeWallpaperLayoutFolrderPath(string previousDir, string newDir)
+        public async Task ResetWpCustomizeAsync(string wpCustomizePathTmp, Service.WallpaperControl.WallpaperType type)
+        {
+            await _client.ResetWpCustomizeAsync(new()
+            {
+                WpCustomizePath = wpCustomizePathTmp,
+                Type = type
+            });
+        }
+
+        public async Task ChangeWallpaperLayoutFolrderPathAsync(string previousDir, string newDir)
         {
             var request = new ChangePathRequest()
             {
@@ -276,7 +302,7 @@ namespace VirtualPaper.Grpc.Client
             catch (Exception e)
             {
                 _logger.Error(e);
-            }
+            }        
         }
 
         #region dispose

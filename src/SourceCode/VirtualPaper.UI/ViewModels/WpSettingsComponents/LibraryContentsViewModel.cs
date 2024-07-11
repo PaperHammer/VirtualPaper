@@ -7,23 +7,25 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.Models.WallpaperMetaData;
+using VirtualPaper.UI.Services.Interfaces;
 using VirtualPaper.UI.UserControls;
 using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels.AppSettings;
+using VirtualPaper.UI.ViewModels.Utils;
 using VirtualPaper.UI.Views.Utils;
-using VirtualPaper.UI.Views.WpSettingsComponents;
 using Windows.Storage;
+using Windows.System.UserProfile;
 using WinUI3Localizer;
+using static VirtualPaper.UI.Services.Interfaces.IDialogService;
 
 namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
 {
@@ -36,6 +38,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
         public string MenuFlyout_Text_Preview { get; set; } = string.Empty;
         public string MenuFlyout_Text_Import { get; set; } = string.Empty;
         public string MenuFlyout_Text_Apply { get; set; } = string.Empty;
+        public string MenuFlyout_Text_ApplyToLockBG { get; set; } = string.Empty;
         public string MenuFlyout_Text_ShowOnDisk { get; set; } = string.Empty;
         public string MenuFlyout_Text_Export { get; set; } = string.Empty;
         public string MenuFlyout_Text_Delete { get; set; } = string.Empty;
@@ -48,14 +51,21 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
         }
 
         public LibraryContentsViewModel(
+            IDialogService dialogService,
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient,
             GeneralSettingViewModel generalSettingViewModel)
         {
+            _dialogService = dialogService;
             _userSettingsClient = userSettingsClient;
-            _wallpaperControlClient = wallpaperControlClient;            
+            _wallpaperControlClient = wallpaperControlClient;
 
             generalSettingViewModel.WallpaperDirChanged += (s, e) => WallpaperDirectoryUpdate(e);
+
+            _wpSettingsViewModel = App.Services.GetRequiredService<WpSettingsViewModel>();
+            _onLoading = _wpSettingsViewModel.Loading;
+            _onLoaded = _wpSettingsViewModel.Loaded;
+            _onUpdatingValue = _wpSettingsViewModel.UpdateProgressbarValue;
 
             InitColletions();
             InitText();
@@ -81,6 +91,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             MenuFlyout_Text_Preview = _localizer.GetLocalizedString("MenuFlyout_Text_Preview");
             MenuFlyout_Text_Import = _localizer.GetLocalizedString("MenuFlyout_Text_Import");
             MenuFlyout_Text_Apply = _localizer.GetLocalizedString("MenuFlyout_Text_Apply");
+            MenuFlyout_Text_ApplyToLockBG = _localizer.GetLocalizedString("MenuFlyout_Text_ApplyToLockBG");
             MenuFlyout_Text_ShowOnDisk = _localizer.GetLocalizedString("MenuFlyout_Text_ShowOnDisk");
             MenuFlyout_Text_Export = _localizer.GetLocalizedString("MenuFlyout_Text_Export");
             MenuFlyout_Text_Delete = _localizer.GetLocalizedString("MenuFlyout_Text_Delete");
@@ -90,7 +101,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
         {
             try
             {
-                Loading();
+                Loading(false, false, []);
                 LibraryWallpapers.Clear();
 
                 foreach (var item in ScanWallpaperFolders(_wallpaperScanFolders))
@@ -106,28 +117,24 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             }
             finally
             {
-                Loaded();
+                Loaded([]);
             }
         }
 
-        internal async Task Preview(string folderPath, XamlRoot xamlRoot)
+        internal async Task DetailedInfoAsync(IMetaData metaData)
         {
             try
             {
-                var metaData = LibraryWallpapers.FirstOrDefault(x => x.FolderPath == folderPath, null);
-                if (metaData == null)
-                {
-                    _ = await new ContentDialog()
-                    {
-                        XamlRoot = xamlRoot,
-                        Title = _localizer.GetLocalizedString("Dialog_Title_Prompt"),
-                        Content = _localizer.GetLocalizedString("Dialog_Content_PreviewLibraryContentFailed"),
-                        PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm")
-                    }.ShowAsync();
-                    return;
-                }
+                bool isExists = await CheckFileExistsAsync(metaData);
+                if (!isExists) return;
 
-                await _wallpaperControlClient.PreviewWallpaperAsync(metaData, true);
+                var detailedInfoViewModel = new DetailedInfoViewModel(metaData, false, true, false);
+                var detailedInfoView = new DetailedInfoView(detailedInfoViewModel);
+                var dialogRes = await _dialogService.ShowDialogWithoutTitleAsync(
+                    detailedInfoView,
+                    _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
+
+                if (dialogRes != DialogResult.Primary) return;
             }
             catch (Exception ex)
             {
@@ -135,32 +142,25 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             }
         }
 
-        internal async void DetailedInfo(IMetaData rightTrappedItem, XamlRoot xamlRoot)
+        internal async Task EditInfoAsync(IMetaData metaData)
         {
             try
             {
-                var detailedInfoViewModel = new DetailedInfoViewModel(rightTrappedItem, false);
-                await ShowDetailedInfoPop(detailedInfoViewModel, xamlRoot);
-            }
-            catch (Exception ex)
-            {
-                _wpSettingsViewModel.ErrOccoured(ex);
-            }
-        }
+                bool isExists = await CheckFileExistsAsync(metaData);
+                if (!isExists) return;
 
-        internal async void EditInfo(IMetaData rightTrappedItem, XamlRoot xamlRoot)
-        {
-            try
-            {
-                var detailedInfoViewModel = new DetailedInfoViewModel(rightTrappedItem, true);
-                bool res = await ShowDetailedInfoPop(detailedInfoViewModel, xamlRoot);
-                if (!res) return;
+                var detailedInfoViewModel = new DetailedInfoViewModel(metaData, true, true, false);
+                var detailedInfoView = new DetailedInfoView(detailedInfoViewModel);
+                var dialogRes = await _dialogService.ShowDialogWithoutTitleAsync(
+                    detailedInfoView,
+                    _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
 
-                rightTrappedItem.Title = detailedInfoViewModel.Title;
-                rightTrappedItem.Desc = detailedInfoViewModel.Desc;
-                rightTrappedItem.Tags = detailedInfoViewModel.Tags;
-                JsonStorage<IMetaData>.StoreData(Path.Combine(rightTrappedItem.FolderPath, "MetaData.json"), rightTrappedItem);
-                UpdateWallpaper(rightTrappedItem);
+                if (dialogRes != DialogResult.Primary) return;
+
+                metaData.Title = detailedInfoViewModel.Title;
+                metaData.Desc = detailedInfoViewModel.Desc;
+                JsonStorage<IMetaData>.StoreData(Path.Combine(metaData.FolderPath, "MetaData.json"), metaData);
+                UpdateLibWallpaper(metaData);
             }
             catch (Exception ex)
             {
@@ -170,62 +170,105 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
 
         internal async Task PreviewAsync(IMetaData metaData)
         {
+            bool isExists = await CheckFileExistsAsync(metaData);
+            if (!isExists) return;
+
             await _wallpaperControlClient.PreviewWallpaperAsync(metaData, true);
         }
 
-        internal async void Import(IMetaData metaData)
+        internal async Task ImportAsync(IMetaData metaData)
         {
             try
             {
-                App._isNeedReslease = true;
+                bool isExists = await CheckFileExistsAsync(metaData);
+                if (!isExists) return;
+
+                Loading(false, false, []);
+
+                App.IsNeedReslease = true;
                 WpSettingsViewModel wpSettingsViewModel = App.Services.GetRequiredService<WpSettingsViewModel>();
                 wpSettingsViewModel.ResetNavSeletedItem();
-                await App._semaphoreSlimForLib.WaitAsync();
+                await App.SemaphoreSlimForLib.WaitAsync();
                 WpConfigViewModel wpConfigViewModel = wpSettingsViewModel.WpConfigViewModel;
-                //var tup = await GetViewModelsAsync();
-                wpConfigViewModel.TryImportFromLocal(metaData);
+                wpConfigViewModel.TryImportFromLib(metaData);
             }
             catch (Exception ex)
             {
                 _wpSettingsViewModel.ErrOccoured(ex);
             }
+            finally
+            {
+                Loaded([]);
+            }
         }
 
-        internal async Task ApplyAsync(IMetaData metaData, XamlRoot xamlRoot)
+        internal async Task ApplyAsync(IMetaData metaData)
         {
             try
             {
-                App._isNeedReslease = true;
+                bool isExists = await CheckFileExistsAsync(metaData);
+                if (!isExists) return;
+
+                Loading(true, false, []);
+
+                App.IsNeedReslease = true;
                 WpSettingsViewModel wpSettingsViewModel = App.Services.GetRequiredService<WpSettingsViewModel>();
                 wpSettingsViewModel.ResetNavSeletedItem();
-                await App._semaphoreSlimForLib.WaitAsync();
+                await App.SemaphoreSlimForLib.WaitAsync();
                 WpConfigViewModel wpConfigViewModel = wpSettingsViewModel.WpConfigViewModel;
-                wpConfigViewModel.TryImportFromLocal(metaData);
-                await wpSettingsViewModel.ApplyAsync(xamlRoot);
+                wpConfigViewModel.TryImportFromLib(metaData);
+                await wpSettingsViewModel.ApplyAsync();
             }
             catch (Exception ex)
             {
                 _wpSettingsViewModel.ErrOccoured(ex);
             }
+            finally
+            {
+                Loaded([]);
+            }
         }
 
-        internal async Task DeleteAsync(IMetaData rightTrappedItem, XamlRoot xamlRoot)
+        internal async Task ApplyToLockBGAsync(IMetaData metaData)
         {
             try
             {
-                var dialogResult = await new ContentDialog()
+                bool isExists = await CheckFileExistsAsync(metaData);
+                if (!isExists) return;
+
+                if (metaData.Type != WallpaperType.picture && metaData.Type != WallpaperType.gif)
                 {
-                    XamlRoot = xamlRoot,
-                    Title = _localizer.GetLocalizedString("Dialog_Title_Prompt"),
-                    Content = _localizer.GetLocalizedString("Dialog_Content_LibraryDelete"),
-                    PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm"),
-                    SecondaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Cancel"),
-                    DefaultButton = ContentDialogButton.Primary,
-                }.ShowAsync();
+                    await _dialogService.ShowDialogAsync(
+                        _localizer.GetLocalizedString("Dialog_Content_OnlyPictureAndGif")
+                        , _localizer.GetLocalizedString("Dialog_Title_Prompt")
+                        , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
+                    return;
+                }
 
-                if (dialogResult != ContentDialogResult.Primary) return;
+                StorageFile storageFile = await StorageFile.GetFileFromPathAsync(metaData.FilePath);
+                await LockScreen.SetImageFileAsync(storageFile);
+
+                _wpSettingsViewModel.ShowMessge("Msg_LockScreenSet_Successful", InfoBarSeverity.Success);
+            }
+            catch (Exception ex)
+            {
+                _wpSettingsViewModel.ErrOccoured(ex);
+            }
+        }
+
+        internal async Task DeleteAsync(IMetaData rightTrappedItem)
+        {
+            try
+            {
+                var dialogRes = await _dialogService.ShowDialogAsync(
+                    _localizer.GetLocalizedString("Dialog_Content_LibraryDelete")
+                    , _localizer.GetLocalizedString("Dialog_Title_Prompt")
+                    , _localizer.GetLocalizedString("Dialog_Btn_Confirm")
+                    , _localizer.GetLocalizedString("Dialog_Btn_Cancel"));
+                if (dialogRes != DialogResult.Primary) return;
 
                 bool isUsing = false;
+                await _userSettingsClient.LoadAsync<List<IWallpaperLayout>>();
                 foreach (var wl in _userSettingsClient.WallpaperLayouts)
                 {
                     if (wl.FolderPath == rightTrappedItem.FolderPath)
@@ -236,23 +279,19 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
                 }
                 if (isUsing)
                 {
-                    _ = await new ContentDialog()
-                    {
-                        XamlRoot = xamlRoot,
-                        Title = _localizer.GetLocalizedString("Dialog_Title_Prompt"),
-                        Content = _localizer.GetLocalizedString("Dialog_Content_WpIsUsing"),
-                        PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm"),
-                        DefaultButton = ContentDialogButton.Primary,
-                    }.ShowAsync();
+                    await _dialogService.ShowDialogAsync(
+                        _localizer.GetLocalizedString("Dialog_Content_WpIsUsing")
+                        , _localizer.GetLocalizedString("Dialog_Title_Prompt")
+                        , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
 
                     return;
                 }
 
-                DirectoryInfo di = new(rightTrappedItem.FolderPath);
-                di.Delete(true);
                 string uid = rightTrappedItem.VirtualPaperUid;
                 _uid2idx.Remove(uid, out _);
                 LibraryWallpapers.Remove(rightTrappedItem);
+                DirectoryInfo di = new(rightTrappedItem.FolderPath);
+                di.Delete(true);
             }
             catch (Exception ex)
             {
@@ -264,9 +303,9 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
         {
             try
             {
-                if (wallpaper == null)
-                    return;
-                UpdateWallpaper(wallpaper);
+                if (wallpaper == null) return;
+
+                UpdateLibWallpaper(wallpaper);
             }
             catch (Exception ex)
             {
@@ -274,7 +313,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             }
         }
 
-        private void UpdateWallpaper(IMetaData wallpaper)
+        private void UpdateLibWallpaper(IMetaData wallpaper)
         {
             if (_uid2idx.TryGetValue(wallpaper.VirtualPaperUid, out int idx))
             {
@@ -287,159 +326,142 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             }
         }
 
-        internal async Task TryDropFileAsync(IReadOnlyList<IStorageItem> items, XamlRoot xamlRoot)
+        internal async Task TryDropFileAsync(IReadOnlyList<IStorageItem> items)
         {
             try
             {
-                var res = WallpaperUtil.TrytoDropFile(items);
-                bool statu = res.Item1;
-                string content = res.Item2;
-
-                if (!statu)
-                {
-                    _ = await new ContentDialog()
-                    {
-                        XamlRoot = xamlRoot,
-                        Title = _localizer.GetLocalizedString("Dialog_Title_Prompt"),
-                        Content = content + "\nInVailid",
-                        PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm")
-                    }.ShowAsync();
-                }
-                else
-                {
-                    await TryImportFromLocalAsync(content, xamlRoot);
-                }
+                _ctsImport = new CancellationTokenSource();
+                Loading(true, true, [_ctsImport]);
+                List<string> filePaths = await WallpaperUtil.ImportMultipleFileAsync(items);
+                await TryImportFromLocalAsync(filePaths);
             }
-            catch (Exception ex)
+            finally
             {
-                _wpSettingsViewModel.ErrOccoured(ex);
+                Loaded([_ctsImport]);
             }
         }
 
-        private async Task TryImportFromLocalAsync(string filePath, XamlRoot xamlRoot)
+        private async Task TryImportFromLocalAsync(List<string> filePaths)
         {
             try
             {
-                Loading();
-                _cancellationTokenSourceForImport = new CancellationTokenSource();
+                int finishedCnt = 0;
+                _onUpdatingValue?.Invoke(0, filePaths.Count);
 
-                WallpaperType type;
-                if ((type = FileFilter.GetFileType(filePath)) != (WallpaperType)(-1))
+                foreach (string filePath in filePaths)
                 {
-                    var wpData = await _wallpaperControlClient.CreateWallpaperAsync(
-                        Constants.CommonPaths.TempDir,
-                        filePath,
-                        type);
-
-                    MetaData metaData = new()
+                    try
                     {
-                        Type = (WallpaperType)wpData.Type,
-                        FolderPath = wpData.FolderPath,
-                        FilePath = wpData.FilePath,
-                        ThumbnailPath = wpData.ThumbnailPath,
-                        WpCustomizePath = wpData.WpCustomizePath,
-                        State = MetaData.RunningState.ready,
-                        IsSubscribed = true,
+                        WallpaperType type;
+                        if ((type = FileFilter.GetFileType(filePath)) != (WallpaperType)(-1))
+                        {
+                            var wpData = await _wallpaperControlClient.CreateWallpaperAsync(
+                                Constants.CommonPaths.TempDir,
+                                filePath,
+                                type,
+                                _ctsImport.Token);
 
-                        Resolution = wpData.Resolution,
-                        AspectRatio = wpData.AspectRatio,
-                        FileExtension = wpData.FileExtension,
-                        FileSize = wpData.FileSize,
-                    };
+                            IMetaData metaData = new MetaData()
+                            {
+                                Type = (WallpaperType)wpData.Type,
+                                FolderPath = wpData.FolderPath,
+                                FilePath = wpData.FilePath,
+                                ThumbnailPath = wpData.ThumbnailPath,
+                                WpCustomizePath = wpData.WpCustomizePath,
+                                State = MetaData.RunningState.ready,
+                                IsSubscribed = true,
 
-                    string folderName = WallpaperUtil.InitUid(metaData);
+                                Resolution = wpData.Resolution,
+                                AspectRatio = wpData.AspectRatio,
+                                FileExtension = wpData.FileExtension,
+                                FileSize = wpData.FileSize,
+                            };
 
-                    var detailedInfoViewModel = new DetailedInfoViewModel(metaData, true);
-                    var dialogResult = await new ContentDialog()
-                    {
-                        XamlRoot = xamlRoot,
-                        Title = _localizer.GetLocalizedString("Dialog_Title_Edit"),
-                        Content = new DetailedInfoView() { DataContext = detailedInfoViewModel },
-                        PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm"),
-                        DefaultButton = ContentDialogButton.Primary,
-                    }.ShowAsync();
-                    if (dialogResult != ContentDialogResult.Primary) return;
+                            string folderName = WallpaperUtil.InitUid(metaData);
 
-                    InitCustomize(metaData);
+                            var detailedInfoViewModel = new DetailedInfoViewModel(metaData, true, false, false);
+                            var dialogRes = await _dialogService.ShowDialogWithoutTitleAsync(
+                                new DetailedInfoView(detailedInfoViewModel)
+                                , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
+                            if (dialogRes != DialogResult.Primary) return;
 
-                    string tagetFolder = Path.Combine(
-                        _userSettingsClient.Settings.WallpaperDir,
-                        Constants.CommonPartialPaths.WallpaperInstallDir,
-                        folderName);
-                    if (!Directory.Exists(tagetFolder))
-                    {
-                        FileUtil.DirectoryCopy(
-                            metaData.FolderPath,
-                            tagetFolder,
-                            true);
+                            InitCustomize(metaData);
+
+                            string tagetFolder = Path.Combine(
+                                _userSettingsClient.Settings.WallpaperDir,
+                                Constants.CommonPartialPaths.WallpaperInstallDir,
+                                folderName);
+                            if (!Directory.Exists(tagetFolder))
+                            {
+                                FileUtil.DirectoryCopy(
+                                    metaData.FolderPath,
+                                    tagetFolder,
+                                    true);
+                            }
+                            string oldFolderPath = metaData.FolderPath;
+
+                            if (oldFolderPath != tagetFolder)
+                            {
+                                metaData.FolderPath = metaData.FolderPath.Replace(oldFolderPath, tagetFolder);
+                                metaData.ThumbnailPath = metaData.ThumbnailPath.Replace(oldFolderPath, tagetFolder);
+                                metaData.WpCustomizePath = metaData.WpCustomizePath.Replace(oldFolderPath, tagetFolder);
+                                metaData.WpCustomizePathUsing = metaData.WpCustomizePathUsing.Replace(oldFolderPath, tagetFolder);
+                                metaData.WpCustomizePathTmp = metaData.WpCustomizePathTmp.Replace(oldFolderPath, tagetFolder);
+                            }
+
+                            metaData.Title = detailedInfoViewModel.Title;
+                            metaData.Desc = detailedInfoViewModel.Desc;
+                            metaData.Tags = detailedInfoViewModel.Tags;
+                            JsonStorage<IMetaData>.StoreData(Path.Combine(metaData.FolderPath, "MetaData.json"), metaData);
+
+                            AddToLibrary(metaData);
+                        }
+                        else
+                        {
+                            await _dialogService.ShowDialogAsync(
+                               $"\"{filePath}\"\n" + _localizer.GetLocalizedString("Dialog_Content_ImportFileFailed")
+                               , _localizer.GetLocalizedString("Dialog_Title_Prompt")
+                               , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
+                        }
+
+                        _onUpdatingValue?.Invoke(++finishedCnt, filePaths.Count);
+
                     }
-                    string oldFolderPath = metaData.FolderPath;
-
-                    if (oldFolderPath != tagetFolder)
+                    catch (Exception ex)
                     {
-                        metaData.FolderPath = metaData.FolderPath.Replace(oldFolderPath, tagetFolder);
-                        metaData.ThumbnailPath = metaData.ThumbnailPath.Replace(oldFolderPath, tagetFolder);
-                        metaData.WpCustomizePath = metaData.WpCustomizePath.Replace(oldFolderPath, tagetFolder);
-                        metaData.WpCustomizePathUsing = metaData.WpCustomizePathUsing.Replace(oldFolderPath, tagetFolder);
-                        metaData.WpCustomizePathTmp = metaData.WpCustomizePathTmp.Replace(oldFolderPath, tagetFolder);
+                        _wpSettingsViewModel.ErrOccoured(ex);
                     }
 
-                    metaData.Title = detailedInfoViewModel.Title;
-                    metaData.Desc = detailedInfoViewModel.Desc;
-                    metaData.Tags = detailedInfoViewModel.Tags;
-                    JsonStorage<IMetaData>.StoreData(Path.Combine(metaData.FolderPath, "MetaData.json"), metaData);
-
-                    AddToLibrary(metaData);
+                    if (_ctsImport.IsCancellationRequested)
+                        throw new OperationCanceledException();
                 }
             }
             catch (OperationCanceledException)
             {
                 _wpSettingsViewModel.OperationCanceled();
             }
-            catch (Exception ex)
+        }
+
+        internal async void ShowErr()
+        {
+            await _dialogService.ShowDialogAsync(
+                _localizer.GetLocalizedString("Dialog_Title_LibraryContentErr")
+                , _localizer.GetLocalizedString("Dialog_Title_Prompt")
+                , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
+        }
+
+        private void Loading(bool cancelEnable, bool progressbarEnable, CancellationTokenSource[] cts)
+        {
+            _onLoading?.Invoke(cancelEnable, progressbarEnable, cts);
+        }
+
+        private void Loaded(CancellationTokenSource[] cts)
+        {
+            foreach (var item in cts)
             {
-                _wpSettingsViewModel.ErrOccoured(ex);
+                item?.Dispose();
             }
-            finally
-            {
-                Loaded();
-                _cancellationTokenSourceForImport?.Dispose();
-                _cancellationTokenSourceForImport = null;
-            }
-        }
-
-        internal async void ShowErr(XamlRoot xamlRoot)
-        {
-            _ = await new ContentDialog()
-            {
-                XamlRoot = xamlRoot,
-                Title = _localizer.GetLocalizedString("Dialog_Title_Prompt"),
-                Content = _localizer.GetLocalizedString("Dialog_Title_LibraryContentErr"),
-                PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm"),
-                DefaultButton = ContentDialogButton.Primary,
-            }.ShowAsync();
-        }
-
-        #region utils
-        private void Loading()
-        {
-            Check();
-            _onIsLoading?.Invoke(true);
-        }
-
-        private void Loaded()
-        {
-            Check();
-            _onIsLoading?.Invoke(false);
-        }
-
-        private void Check()
-        {
-            if (_onIsLoading == null)
-            {
-                _wpSettingsViewModel = App.Services.GetRequiredService<WpSettingsViewModel>();
-                _onIsLoading = _wpSettingsViewModel.IsLoading;
-            }
+            _onLoaded?.Invoke();
         }
 
         private void InitCustomize(IMetaData metaData)
@@ -447,27 +469,6 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
             if (metaData == null) return;
 
             _ = new WpCustomize(metaData);
-        }
-
-        private async Task<bool> ShowDetailedInfoPop(
-            //bool fromLocal,
-            //IMetaData rightTrappedItem,
-            DetailedInfoViewModel detailedInfoViewModel,
-            XamlRoot xamlRoot)
-        {
-            //if (fromLocal)
-            //    rightTrappedItem = JsonStorage<MetaData>.LoadData(Path.Combine(rightTrappedItem.FolderPath, "MetaData.json"));
-
-            var dialogResult = await new ContentDialog()
-            {
-                XamlRoot = xamlRoot,
-                Title = _localizer.GetLocalizedString("Dialog_Title_About"),
-                Content = new DetailedInfoView() { DataContext = detailedInfoViewModel },
-                PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm"),
-                DefaultButton = ContentDialogButton.Primary,
-            }.ShowAsync();
-
-            return dialogResult == ContentDialogResult.Primary;
         }
 
         /// <summary>
@@ -527,14 +528,29 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents
                 }
             }
         }
-        #endregion
+
+        private async Task<bool> CheckFileExistsAsync(IMetaData metaData)
+        {
+            if (metaData == null || !File.Exists(metaData.FilePath))
+            {
+                await _dialogService.ShowDialogAsync(
+                    _localizer.GetLocalizedString("Dialog_Content_FileNotExists")
+                    , _localizer.GetLocalizedString("Dialog_Title_Prompt")
+                    , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
+                return false;
+            }
+            return true;
+        }
 
         private ILocalizer _localizer;
+        private IDialogService _dialogService;
         private IWallpaperControlClient _wallpaperControlClient;
         private IUserSettingsClient _userSettingsClient;
         private List<string> _wallpaperScanFolders;
-        private Action<bool> _onIsLoading;
-        private CancellationTokenSource _cancellationTokenSourceForImport;
+        private Action<bool, bool, CancellationTokenSource[]> _onLoading;
+        private Action _onLoaded;
+        private Action<int, int> _onUpdatingValue;
+        private CancellationTokenSource _ctsImport;
         private WpSettingsViewModel _wpSettingsViewModel;
         private ConcurrentDictionary<string, int> _uid2idx = [];
     }

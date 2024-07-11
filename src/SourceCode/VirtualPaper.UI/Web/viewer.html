@@ -28,8 +28,7 @@
 
     function virtualPaperSourceReload(wallpaperType, filePath) {
         if (curVideoElementId) {
-            handleVideoCleanup(); // 清空视频缓存
-            curVideoElementId = null;
+            videoRelease(); // 清空视频缓存            
         }
 
         const element = document.querySelector('.content');
@@ -79,6 +78,9 @@
             case "Contrast":
                 contrast = parseFloat(val)
                 break;
+            case "Scaling":
+                objectFitChanged(val);
+                break;
         }
 
         filter = tmplateFilter;
@@ -111,11 +113,40 @@
         videoElement.play();
     }
 
-    function handleVideoCleanup() {
+    function videoRelease() {
+        curVideoElementId = null;
         var videoElement = document.getElementById('videoEle');
         videoElement.pause();
         videoElement.removeAttribute('src');
         videoElement = null;
+    }
+
+    function objectFitChanged(value) {
+        var element = document.querySelector('.full-screen');
+        var newFit;
+
+        switch (value) {
+            case 0:
+                newFit = 'fill';
+                break;
+            case 1:
+                newFit = 'contain';
+                break;
+            case 2:
+                newFit = 'cover';
+                break;
+            case 3:
+                newFit = 'none'
+                break;
+            case 4:
+                newFit = 'scale-down';
+                break;
+            default:
+                newFit = 'fill';
+                break;
+        }
+
+        element.style.objectFit = newFit;
     }
 </script>
 

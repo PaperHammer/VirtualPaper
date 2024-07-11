@@ -13,6 +13,7 @@ using VirtualPaper.Common.Utils.Localization;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UI.Services.Interfaces;
 using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels.WpSettingsComponents;
 using Windows.Storage;
@@ -219,9 +220,11 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
 
         public GeneralSettingViewModel(
             IAppUpdaterClient appUpdater,
+            IDialogService dialogService,
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient)
         {
+            _dialogService = dialogService;
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
 
             _appUpdater = appUpdater;
@@ -362,15 +365,16 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             folderPicker.SetOwnerWindow(App.Services.GetRequiredService<MainWindow>());
             folderPicker.FileTypeFilter.Add("*");
             var folder = await folderPicker.PickSingleFolderAsync();
+            if (folder == null)
+            {
+                return;
+            }
             if (folder.Path == Constants.CommonPaths.AppDataDir)
             {
-                _ = await new ContentDialog()
-                {
-                    XamlRoot = xamlRoot,
-                    Title = _localizer.GetLocalizedString("Dialog_Title_Prompt"),
-                    Content = _localizer.GetLocalizedString("Dialog_Content_WallpaperDirectoryChangePathInvalid"),
-                    PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm")
-                }.ShowAsync();
+                await _dialogService.ShowDialogAsync(
+                        _localizer.GetLocalizedString("Dialog_Content_WallpaperDirectoryChangePathInvalid")
+                        , _localizer.GetLocalizedString("Dialog_Title_Prompt")
+                        , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
                 return;
             }
             if (folder != null && !string.Equals(folder.Path, _userSettingsClient.Settings.WallpaperDir, StringComparison.OrdinalIgnoreCase))
@@ -444,7 +448,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
 
         private async void UpdateWallpaperLayoutConfigFile(string previousDir, string newDir)
         {
-            await _wpControlClient.ChangeWallpaperLayoutFolrderPath(previousDir, newDir);
+            await _wpControlClient.ChangeWallpaperLayoutFolrderPathAsync(previousDir, newDir);
             await _wpControlClient.RestartAllWallpaperAsync();
         }
 
@@ -456,6 +460,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         private string _sysbdMica = string.Empty;
         private string _sysbdAcrylic = string.Empty;
         private IAppUpdaterClient _appUpdater;
+        private IDialogService _dialogService;
         private IUserSettingsClient _userSettingsClient;
         private IWallpaperControlClient _wpControlClient;
         private DispatcherQueue _dispatcherQueue;

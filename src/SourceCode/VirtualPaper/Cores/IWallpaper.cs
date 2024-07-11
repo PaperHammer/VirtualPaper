@@ -50,7 +50,7 @@ namespace VirtualPaper.Cores
         /// </summary>
         /// <returns></returns>
         bool IsLoaded { get; }
-        
+
         Task<bool> ShowAsync(CancellationToken cancellationToken = default);
 
         void Pause();
@@ -68,7 +68,7 @@ namespace VirtualPaper.Cores
         /// </summary>
         /// <param name="ipcMsg"></param>
         void SendMessage(IpcMessage ipcMsg);
-        
+
         /// <summary>
         /// Mute/disable audio track.
         /// </summary>
@@ -81,15 +81,17 @@ namespace VirtualPaper.Cores
         /// </summary>
         /// <param name="pos">Range 0 - 100</param>
         void SetPlaybackPos(float pos, PlaybackPosType type);
-        
+
         void Modify(string controlName, string propertyName, string value);
 
+        void Update(IMetaData metaData);
         /// <summary>
         /// 截图保存当前壁纸（.jpg）
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
         Task ScreenCapture(string filePath);
+
     }
 
     public enum PlaybackPosType

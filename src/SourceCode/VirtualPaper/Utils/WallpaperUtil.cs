@@ -35,12 +35,12 @@ namespace VirtualPaper.Utils
             }
             else if (type == WallpaperType.video)
             {
-                VideoAndGifCostumize videoAndGifCostumize = new();
+                VideoAndGifCostumize videoAndGifCostumize = new();             
                 JsonStorage<VideoAndGifCostumize>.StoreData(wpCustomizePath, videoAndGifCostumize);
             }
         }
 
-        public static void TryCreateGif(string filePath, string thumbnailPath, WallpaperType type, CancellationToken token)
+        public static void CreateGif(string filePath, string thumbnailPath, WallpaperType type, CancellationToken token)
         {
             GifBitmapEncoder gEnc = new();
             if (type == WallpaperType.picture)
@@ -133,7 +133,7 @@ namespace VirtualPaper.Utils
                             int height = capture.FrameHeight;
                             double ratio = (double)width / height;
 
-                            fileProperty.Resolution = $"{width} * {height} {fps:0.00}帧";
+                            fileProperty.Resolution = $"{width} * {height} ({fps:0.00} fps)";
                             fileProperty.AspectRatio = GetRatio(ratio);
 
                             capture.Release();

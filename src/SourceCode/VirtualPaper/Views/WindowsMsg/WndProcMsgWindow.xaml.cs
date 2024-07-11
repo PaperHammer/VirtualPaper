@@ -2,8 +2,8 @@
 using System.Windows;
 using System.Windows.Interop;
 using VirtualPaper.Common.Utils.PInvoke;
-using VirtualPaper.Cores.Desktop;
 using VirtualPaper.Cores.Monitor;
+using VirtualPaper.Cores.WpControl;
 using VirtualPaper.lang;
 using MessageBox = System.Windows.MessageBox;
 

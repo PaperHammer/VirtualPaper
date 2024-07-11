@@ -1,15 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Grpc.Client.Interfaces;
-using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UI.Services.Interfaces;
 using VirtualPaper.UI.Utils;
 using Windows.Storage.Pickers;
 using WinUI3Localizer;
@@ -27,9 +23,11 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         public string Log { get; set; } = string.Empty;
 
         public SystemSettingViewModel(
-            ICommandsClient commandsClient)
+            ICommandsClient commandsClient,
+            IDialogService dialogService)
         {
             _commandClient = commandsClient;
+            _dialogService = dialogService;
 
             InitText();
         }
@@ -52,7 +50,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             _commandClient.ShowDebugView();
         }
 
-        internal async Task ExportLogs(XamlRoot xamlRoot)
+        internal async Task ExportLogsAsync()
         {
             var filePicker = new FileSavePicker();
             filePicker.SetOwnerWindow(App.Services.GetRequiredService<MainWindow>());
@@ -67,18 +65,17 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
                 }
                 catch (Exception ex)
                 {
-                    await new ContentDialog()
-                    {
-                        XamlRoot = xamlRoot,
-                        Title = _localizer.GetLocalizedString("Dialog_Title_Prompt"),
-                        Content = ex.Message,
-                        PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm")
-                    }.ShowAsync();
+                    await _dialogService.ShowDialogAsync(
+                        ex.Message
+                        , _localizer.GetLocalizedString("Dialog_Title_Prompt")
+                        , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
+                    return;
                 }
             }
         }
 
         private ILocalizer _localizer;
         private ICommandsClient _commandClient;
+        private IDialogService _dialogService;
     }
 }

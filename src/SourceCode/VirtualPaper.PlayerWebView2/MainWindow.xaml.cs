@@ -20,17 +20,17 @@ namespace VirtualPaper.Webviewer
     {
         public MainWindow(string[] args)
         {
-            InitializeComponent();        
+            InitializeComponent();
 
             Parser.Default.ParseArguments<StartArgs>(args)
                 .WithParsed((x) => _startArgs = x)
-                .WithNotParsed(HandleParseError);            
+                .WithNotParsed(HandleParseError);
         }
 
         protected override async void OnContentRendered(EventArgs e) // 2
         {
             base.OnContentRendered(e);
-            
+
             try
             {
                 await InitializeWebView();
@@ -118,9 +118,15 @@ namespace VirtualPaper.Webviewer
                                             _isPaused = false;
                                             break;
                                         case MessageType.cmd_muted:
-                                            var m = (VirtualPaperMuted)obj;
-                                            _ = ExecuteScriptFunctionAsync("virtualPaperAudioMuteChanged", m.IsMuted);
+                                            var muted = (VirtualPaperMuted)obj;
+                                            _ = ExecuteScriptFunctionAsync("virtualPaperAudioMuteChanged", muted.IsMuted);
                                             break;
+                                        case MessageType.cmd_update:
+                                            var update = (VirtualPaperUpdate)obj;
+                                            _ = LoadSourceAsync(update.FilePath, update.WpType);
+                                            _ = LoadWpCustomizeAsync(update.WpCustomizePathUsing);
+                                            break;
+
                                         case MessageType.vp_slider:
                                             var sl = (VirtualPaperSlider)obj;
                                             _ = ExecuteScriptFunctionAsync("virtualPaperPropertyListener", sl.Name, sl.Value);
@@ -141,11 +147,12 @@ namespace VirtualPaper.Webviewer
                                             var cb = (VirtualPaperCheckbox)obj;
                                             _ = ExecuteScriptFunctionAsync("virtualPaperPropertyListener", cb.Name, cb.Value);
                                             break;
+
                                         //case MessageType.vp_button:
                                         //    var btn = (VirtualPaperButton)obj;
                                         //    if (btn.IsDefault)
                                         //    {
-                                        //        _ = RestoreWpCustomizeAsync(_startArgs.WpCustomizeFilePath);
+                                        //        _ = LoadWpCustomizeAsync(_startArgs.WpCustomizeFilePath);
                                         //    }
                                         //    else
                                         //    {
@@ -210,24 +217,24 @@ namespace VirtualPaper.Webviewer
 
         private async void Webview2_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
-            await LoadSourceAsync(_startArgs.FilePath);
-            await RestoreWpCustomizeAsync(_startArgs.WpCustomizeFilePath);
+            await LoadSourceAsync(_startArgs.FilePath, _startArgs.WallpaperType);
+            await LoadWpCustomizeAsync(_startArgs.WpCustomizeFilePath);
 
             App.WriteToParent(new VirtualPaperMessageWallpaperLoaded() { Success = true });
         }
 
-        private async Task LoadSourceAsync(string filePath)
+        private async Task LoadSourceAsync(string filePath, string wpType)
         {
             try
             {
                 if (filePath == null) return;
 
-                await ExecuteScriptFunctionAsync("virtualPaperSourceReload", _startArgs.WallpaperType, filePath);
+                await ExecuteScriptFunctionAsync("virtualPaperSourceReload", wpType, filePath);
             }
             catch { }
         }
 
-        private async Task RestoreWpCustomizeAsync(string wpCustomizeFilePath)
+        private async Task LoadWpCustomizeAsync(string wpCustomizeFilePath)
         {
             try
             {
@@ -243,7 +250,7 @@ namespace VirtualPaper.Webviewer
                         if (uiElementType.Equals("Slider", StringComparison.OrdinalIgnoreCase) ||
                             uiElementType.Equals("Dropdown", StringComparison.OrdinalIgnoreCase))
                         {
-                            await ExecuteScriptFunctionAsync("virtualPaperPropertyListener", item.Key, (string)item.Value["Value"]);
+                            await ExecuteScriptFunctionAsync("virtualPaperPropertyListener", item.Key, (double)item.Value["Value"]);
                         }
                         else if (uiElementType.Equals("Checkbox", StringComparison.OrdinalIgnoreCase))
                         {

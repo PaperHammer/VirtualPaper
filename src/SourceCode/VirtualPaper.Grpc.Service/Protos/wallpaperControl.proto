@@ -3,30 +3,32 @@ package VirtualPaper.Grpc.Service.WallpaperControl;
 import "google/protobuf/empty.proto";
 
 service WallpaperControlService {
-	rpc GetCoreStats (google.protobuf.Empty) returns (GetCoreStatsResponse);
+	rpc GetCoreStats(google.protobuf.Empty) returns (GetCoreStatsResponse);
 	
 	rpc CloseAllWallpapers(google.protobuf.Empty) returns (google.protobuf.Empty);
     rpc CloseWallpaperMonitor(CloseWallpaperMonitorRequest) returns (google.protobuf.Empty);
 	
-	rpc PreviewWallpaper (PreviewWallpaperRequest) returns (google.protobuf.Empty);
-	rpc SetWallpaper (SetWallpaperRequest) returns (SetWallpaperResponse);
-	rpc ModifyPreview (ModifyPreviewRequest) returns (google.protobuf.Empty);
+	rpc PreviewWallpaper(PreviewWallpaperRequest) returns (google.protobuf.Empty);
+	rpc SetWallpaper(SetWallpaperRequest) returns (SetWallpaperResponse);
+	rpc UpdateWp(UpdateWpRequest) returns (UpdateWpResponse);
+	rpc ModifyPreview(ModifyPreviewRequest) returns (google.protobuf.Empty);
 
-	rpc RestartAllWallpaper (google.protobuf.Empty) returns (RestartWallpaperResponse);
+	rpc RestartAllWallpaper(google.protobuf.Empty) returns (RestartWallpaperResponse);
+	rpc ResetWpCustomize(ResetWpCustomizeRequest) returns (google.protobuf.Empty);
     
     rpc SendMessageWallpaper(WallpaperMessageRequest) returns (google.protobuf.Empty);
     
     rpc TakeScreenshot(WallpaperScreenshotRequest) returns (google.protobuf.Empty);
 	
-	rpc GetWallpapers (google.protobuf.Empty) returns (stream GetWallpapersResponse);
-	rpc GetWallpaper (GetWallpaperRequest) returns (WpMetaData);
+	rpc GetWallpapers(google.protobuf.Empty) returns (stream GetWallpapersResponse);
+	rpc GetWallpaper(GetWallpaperRequest) returns (WpMetaData);
 
-	rpc CreateWallpaper (CreateWallpaperRequest) returns (WpMetaData);
+	rpc CreateWallpaper(CreateWallpaperRequest) returns (WpMetaData);
 
-	rpc ChangeWallpaperLayoutFolrderPath (ChangePathRequest) returns (google.protobuf.Empty);
+	rpc ChangeWallpaperLayoutFolrderPath(ChangePathRequest) returns (google.protobuf.Empty);
     
-	rpc SubscribeWallpaperChanged (google.protobuf.Empty) returns (stream google.protobuf.Empty);
-    rpc SubscribeWallpaperError (google.protobuf.Empty) returns (stream WallpaperErrorResponse);
+	rpc SubscribeWallpaperChanged(google.protobuf.Empty) returns (stream google.protobuf.Empty);
+    rpc SubscribeWallpaperError(google.protobuf.Empty) returns (stream WallpaperErrorResponse);
 }
 
 message GetCoreStatsResponse {
@@ -49,20 +51,32 @@ message ModifyPreviewRequest {
 	string value = 3;
 }
 
+message ResetWpCustomizeRequest {
+	string wp_customize_path = 1;
+	WallpaperType type = 2;
+}
+
 message SetWallpaperRequest {
-  string folder_path = 1;
-  string monitor_id = 2;
-  RunningState running_state = 3;
+	string folder_path = 1;
+	string monitor_id = 2;
+	RunningState running_state = 3;
+}
+
+message UpdateWpRequest {
+	WpMetaData wp_meta_data = 1;
+	string monitor_id = 2;
+}
+
+message UpdateWpResponse {
+	bool is_finished = 1;
 }
 
 message SetWallpaperResponse {
 	bool is_finished = 1;
-	string msg = 2;
 }
 
 message RestartWallpaperResponse {
 	bool is_finished = 1;
-	string msg = 2;
 }
 
 message WallpaperMessageRequest {
@@ -113,21 +127,22 @@ message WpMetaData {
     string desc  = 4;
     string authors = 5;
 	string publish_date = 6;
-    WallpaperType type = 7;
-    string partition = 8;
-    string tags = 9;	
+	double rating = 7;
+    WallpaperType type = 8;
+    string partition = 9;
+    string tags = 10;
 
-    string folder_path = 10;
-    string file_path = 11;
-    string wp_customize_path = 14;
-    string wp_customize_path_tmp = 15;
-    string wp_customize_path_using = 16;
-	string thumbnail_path = 17;
+    string folder_path = 11;
+    string file_path = 12;
+    string wp_customize_path = 13;
+    string wp_customize_path_tmp = 14;
+    string wp_customize_path_using = 15;
+	string thumbnail_path = 16;
 
-	string resolution = 18;
-	string aspect_Ratio = 19;
-	string file_size = 20;
-	string file_extension = 21;
+	string resolution = 17;
+	string aspect_Ratio = 18;
+	string file_size = 19;
+	string file_extension = 20;
 }
 
 message MonitorData {

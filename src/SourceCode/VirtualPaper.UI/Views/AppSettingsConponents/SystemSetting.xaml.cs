@@ -27,7 +27,7 @@ namespace VirtualPaper.UI.Views.AppSettingsConponents
 
         private async void LogButton_Click(object sender, RoutedEventArgs e)
         {
-            await _viewModel.ExportLogs(this.XamlRoot);
+            await _viewModel.ExportLogsAsync();
         }
 
         private SystemSettingViewModel _viewModel;

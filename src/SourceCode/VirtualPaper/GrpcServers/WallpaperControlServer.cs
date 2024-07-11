@@ -6,8 +6,8 @@ using System.Diagnostics;
 using System.Reflection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
-using VirtualPaper.Cores.Desktop;
 using VirtualPaper.Cores.Monitor;
+using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.Models.WallpaperMetaData;
 using VirtualPaper.Services.Interfaces;
@@ -32,7 +32,7 @@ namespace VirtualPaper.GrpcServers
 
         public override Task<Empty> CloseAllWallpapers(Empty request, ServerCallContext context)
         {
-            _wallpaperControl.CloseAllWallpapers();
+            _wpControl.CloseAllWallpapers();
             return Task.FromResult(new Empty());
         }
 
@@ -41,7 +41,7 @@ namespace VirtualPaper.GrpcServers
             var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
             if (monitor != null)
             {
-                _wallpaperControl.CloseWallpaper(monitor);
+                _wpControl.CloseWallpaper(monitor);
             }
             return Task.FromResult(new Empty());
         }
@@ -59,7 +59,7 @@ namespace VirtualPaper.GrpcServers
                     FilePath = wpData.FilePath,
                     WpCustomizePathTmp = wpData.WpCustomizePathTmp
                 };
-                _wallpaperControl.PreviewWallpaper(metaData, isLibraryPreview);
+                _wpControl.PreviewWallpaper(metaData, isLibraryPreview);
             }
             catch (Exception e)
             {
@@ -73,7 +73,7 @@ namespace VirtualPaper.GrpcServers
         {
             try
             {
-                _wallpaperControl.ModifyPreview(request.ControlName, request.PropertyName, request.Value);
+                _wpControl.ModifyPreview(request.ControlName, request.PropertyName, request.Value);
             }
             catch (Exception e)
             {
@@ -83,13 +83,39 @@ namespace VirtualPaper.GrpcServers
             return Task.FromResult(new Empty());
         }
 
+        public override async Task<UpdateWpResponse> UpdateWp(UpdateWpRequest request, ServerCallContext context)
+        {
+            UpdateWpResponse response = new();
+
+            try
+            {
+                WpMetaData wpData = request.WpMetaData;
+                IMetaData metaData = new MetaData()
+                {
+                    Type = (Common.WallpaperType)wpData.Type,
+                    FolderPath = wpData.FolderPath,
+                    FilePath = wpData.FilePath,
+                    WpCustomizePathUsing = wpData.WpCustomizePathUsing,
+                };
+
+                response = _wpControl.UpdateWp(
+                    request.MonitorId, metaData, context.CancellationToken);
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e.ToString());
+            }
+            
+            return await Task.FromResult(response);
+        }
+
         public override Task<RestartWallpaperResponse> RestartAllWallpaper(Empty request, ServerCallContext context)
         {
             RestartWallpaperResponse response = new();
 
             try
             {
-                response = _wallpaperControl.RestoreWallpaper();
+                response = _wpControl.RestoreWallpaper();
             }
             catch (Exception e)
             {
@@ -109,7 +135,7 @@ namespace VirtualPaper.GrpcServers
                 metaData.State = (MetaData.RunningState)(int)request.RunningState;
                 var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
 
-                response = await _wallpaperControl.SetWallpaperAsync(
+                response = await _wpControl.SetWallpaperAsync(
                     metaData,
                     monitor ?? _monitorManager.PrimaryMonitor,
                     context.CancellationToken);
@@ -117,7 +143,6 @@ namespace VirtualPaper.GrpcServers
             catch (Exception e)
             {
                 _logger.Error(e.ToString());
-                response.Msg = e.ToString();
             }
 
             return await Task.FromResult(response);
@@ -128,7 +153,7 @@ namespace VirtualPaper.GrpcServers
             var ipcMsg = JsonConvert.DeserializeObject<IpcMessage>(request.Msg, new JsonSerializerSettings() { Converters = { new IpcMessageConverter() } });
 
             var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
-            _wallpaperControl.SendMessageWallpaper(monitor, request.FolderPath, ipcMsg);
+            _wpControl.SendMessageWallpaper(monitor, request.FolderPath, ipcMsg);
 
             return Task.FromResult(new Empty());
         }
@@ -141,7 +166,7 @@ namespace VirtualPaper.GrpcServers
                 {
                     case WallpaperArrangement.Per:
                         {
-                            var wallpaper = _wallpaperControl.Wallpapers.FirstOrDefault(x => request.MonitorId == x.Monitor.DeviceId);
+                            var wallpaper = _wpControl.Wallpapers.FirstOrDefault(x => request.MonitorId == x.Monitor.DeviceId);
                             if (wallpaper is not null)
                             {
                                 await wallpaper.ScreenCapture(request.SavePath);
@@ -150,9 +175,9 @@ namespace VirtualPaper.GrpcServers
                         break;
                     case WallpaperArrangement.Expand:
                     case WallpaperArrangement.Duplicate:
-                        if (_wallpaperControl.Wallpapers.Any())
+                        if (_wpControl.Wallpapers.Any())
                         {
-                            await _wallpaperControl.Wallpapers[0].ScreenCapture(request.SavePath);
+                            await _wpControl.Wallpapers[0].ScreenCapture(request.SavePath);
                         }
                         break;
                 }
@@ -168,7 +193,7 @@ namespace VirtualPaper.GrpcServers
         {
             try
             {
-                foreach (var wallpaper in _wallpaperControl.Wallpapers)
+                foreach (var wallpaper in _wpControl.Wallpapers)
                 {
                     var item = new GetWallpapersResponse()
                     {
@@ -215,7 +240,7 @@ namespace VirtualPaper.GrpcServers
             var resp = new WpMetaData();
             try
             {
-                IMetaData metaData = _wallpaperControl.GetWallpaper(request.FolderPath);
+                IMetaData metaData = _wpControl.GetWallpaper(request.FolderPath);
 
                 resp.VirtualPaperUid = metaData.VirtualPaperUid;
                 resp.AppInfo = new()
@@ -227,6 +252,7 @@ namespace VirtualPaper.GrpcServers
                 resp.Desc = metaData.Desc;
                 resp.Authors = metaData.Authors;
                 resp.PublishDate = metaData.PublishDate;
+                resp.Rating = metaData.Rating;
                 resp.Type = (Grpc.Service.WallpaperControl.WallpaperType)metaData.Type;
                 resp.Partition = metaData.Partition;
                 resp.Tags = metaData.Tags;
@@ -260,7 +286,7 @@ namespace VirtualPaper.GrpcServers
             {
                 var token = context.CancellationToken;
 
-                var metaData = _wallpaperControl.CreateWallpaper(folderPath, filePath, type, token);
+                var metaData = _wpControl.CreateWallpaper(folderPath, filePath, type, token);
                 token.ThrowIfCancellationRequested(); // 在等待结果前检查取消请求
 
                 resp.Type = (Grpc.Service.WallpaperControl.WallpaperType)metaData.Type;
@@ -269,7 +295,7 @@ namespace VirtualPaper.GrpcServers
                 resp.ThumbnailPath = metaData.ThumbnailPath;
                 resp.WpCustomizePath = metaData.WpCustomizePath;
 
-                var wpProperty = _wallpaperControl.TryGetProeprtyInfo(filePath, type);
+                var wpProperty = _wpControl.TryGetProeprtyInfo(filePath, type);
                 token.ThrowIfCancellationRequested(); // 在等待结果前检查取消请求
 
                 resp.Resolution = wpProperty.Resolution;
@@ -282,9 +308,18 @@ namespace VirtualPaper.GrpcServers
             return await Task.FromResult(resp);
         }
 
+        public override Task<Empty> ResetWpCustomize(ResetWpCustomizeRequest request, ServerCallContext context)
+        {
+            _wpControl.ResetWpCustomize(
+                request.WpCustomizePath, 
+                (Common.WallpaperType)request.Type);
+
+            return Task.FromResult(new Empty());
+        }
+
         public override Task<Empty> ChangeWallpaperLayoutFolrderPath(ChangePathRequest request, ServerCallContext context)
         {
-            _wallpaperControl.ChangeWallpaperLayoutFolrderPath(request.PreviousDir, request.NewDir);
+            _wpControl.ChangeWallpaperLayoutFolrderPath(request.PreviousDir, request.NewDir);
 
             return Task.FromResult(new Empty());
         }
@@ -296,10 +331,10 @@ namespace VirtualPaper.GrpcServers
                 while (!context.CancellationToken.IsCancellationRequested)
                 {
                     var tcs = new TaskCompletionSource<bool>();
-                    _wallpaperControl.WallpaperChanged += WallpaperChanged;
+                    _wpControl.WallpaperChanged += WallpaperChanged;
                     void WallpaperChanged(object? s, EventArgs e)
                     {
-                        _wallpaperControl.WallpaperChanged -= WallpaperChanged;
+                        _wpControl.WallpaperChanged -= WallpaperChanged;
                         tcs.TrySetResult(true);
                     }
                     using var item = context.CancellationToken.Register(() => { tcs.TrySetResult(false); });
@@ -307,7 +342,7 @@ namespace VirtualPaper.GrpcServers
 
                     if (context.CancellationToken.IsCancellationRequested)
                     {
-                        _wallpaperControl.WallpaperChanged -= WallpaperChanged;
+                        _wpControl.WallpaperChanged -= WallpaperChanged;
                         break;
                     }
 
@@ -328,10 +363,10 @@ namespace VirtualPaper.GrpcServers
                 {
                     var resp = new WallpaperErrorResponse();
                     var tcs = new TaskCompletionSource<bool>();
-                    _wallpaperControl.WallpaperError += WallpaperError;
+                    _wpControl.WallpaperError += WallpaperError;
                     void WallpaperError(object? s, Exception e)
                     {
-                        _wallpaperControl.WallpaperError -= WallpaperError;
+                        _wpControl.WallpaperError -= WallpaperError;
 
                         resp.ErrorMsg = e.Message ?? string.Empty;
                         resp.Error = e switch
@@ -352,7 +387,7 @@ namespace VirtualPaper.GrpcServers
 
                     if (context.CancellationToken.IsCancellationRequested)
                     {
-                        _wallpaperControl.WallpaperError -= WallpaperError;
+                        _wpControl.WallpaperError -= WallpaperError;
                         break;
                     }
 
@@ -366,7 +401,7 @@ namespace VirtualPaper.GrpcServers
         }
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private readonly IWallpaperControl _wallpaperControl = desktopWpControl;
+        private readonly IWallpaperControl _wpControl = desktopWpControl;
         private readonly IMonitorManager _monitorManager = monitorManager;
         private readonly IUserSettingsService _userSetting = userSetting;
     }

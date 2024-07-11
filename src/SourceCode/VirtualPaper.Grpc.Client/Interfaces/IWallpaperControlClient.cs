@@ -13,8 +13,8 @@ namespace VirtualPaper.Grpc.Client.Interfaces
         Version AssemblyVersion { get; }
 
         Task<WpMetaData> GetWallpaperAsync(string folderPath);
-
-        Task<SetWallpaperResponse> SetWallpaperAsync(IMetaData metaData, IMonitor monitor, CancellationToken cancellationToken);
+        Task<UpdateWpResponse> UpdateWpAsync(IMonitor monitor, IMetaData metaData, CancellationToken token);
+        Task<SetWallpaperResponse> SetWallpaperAsync(IMonitor monitor, IMetaData metaData, CancellationToken cancellationToken);
 
         Task CloseAllWallpapersAsync();
         Task CloseWallpaperAsync(IMonitor monitor);
@@ -30,7 +30,9 @@ namespace VirtualPaper.Grpc.Client.Interfaces
         Task TakeScreenshotAsync(string monitorId, string savePath);
         Task ModifyPreviewAsync(string controlName, string propertyName, string val);
 
-        Task ChangeWallpaperLayoutFolrderPath(string previousDir, string newDir);
+        Task ChangeWallpaperLayoutFolrderPathAsync(string previousDir, string newDir);
+        
+        Task ResetWpCustomizeAsync(string wpCustomizePathTmp, WallpaperType type);        
 
         event EventHandler? WallpaperChanged;
         event EventHandler<Exception>? WallpaperError;

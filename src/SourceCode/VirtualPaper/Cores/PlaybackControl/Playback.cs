@@ -6,9 +6,9 @@ using System.Windows.Threading;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Hardware;
 using VirtualPaper.Common.Utils.PInvoke;
-using VirtualPaper.Cores.Desktop;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.ScreenSaver;
+using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 

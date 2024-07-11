@@ -8,6 +8,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using VirtualPaper.UI.ViewModels;
+using VirtualPaper.UI.ViewModels.WpSettingsComponents;
 using VirtualPaper.UI.Views.WpSettingsComponents;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -38,6 +39,11 @@ namespace VirtualPaper.UI.Views
         {
             _viewModel.InitUpdateLayout();
         }
+
+        //private void BtnCancel_Click(object sender, RoutedEventArgs e)
+        //{
+        //    _viewModel.Cancel();
+        //}
 
         #region btn_click
         private async void BtnClose_Click(object sender, RoutedEventArgs e)
@@ -89,13 +95,14 @@ namespace VirtualPaper.UI.Views
         {
             BtnApply.IsEnabled = false;
 
-            await _viewModel.ApplyAsync(this.XamlRoot);
+            await _viewModel.ApplyAsync();
 
             await Task.Delay(3000);
             BtnApply.IsEnabled = true;
         }
         #endregion
 
+        #region nav
         private void NavToDefault()
         {
             NavView.SelectedItem = NavView.MenuItems[0];
@@ -170,6 +177,7 @@ namespace VirtualPaper.UI.Views
                 _logger.Error(ex);
             }
         }
+        #endregion
 
         private WpSettingsViewModel _viewModel;
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();

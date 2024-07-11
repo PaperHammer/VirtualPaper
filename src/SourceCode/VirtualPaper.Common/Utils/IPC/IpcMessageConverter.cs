@@ -23,6 +23,7 @@ namespace VirtualPaper.Common.Utils.IPC
                 MessageType.cmd_suspend => jo.ToObject<VirtualPaperSuspendCmd>(serializer),
                 MessageType.cmd_resume => jo.ToObject<VirtualPaperResumeCmd>(serializer),
                 MessageType.cmd_muted => jo.ToObject<VirtualPaperMuted>(serializer),
+                MessageType.cmd_update => jo.ToObject<VirtualPaperUpdate>(serializer),
                 //MessageType.cmd_volume => jo.ToObject<VirtualPaperVolumeCmd>(serializer),
                 //MessageType.lsp_perfcntr => jo.ToObject<VirtualPaperSystemInformation>(serializer),
                 //MessageType.lsp_nowplaying => jo.ToObject<VirtualPaperSystemNowPlaying>(serializer),

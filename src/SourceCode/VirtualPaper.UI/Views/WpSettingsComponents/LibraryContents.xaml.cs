@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -7,6 +8,7 @@ using NLog;
 using System;
 using System.Diagnostics;
 using System.Numerics;
+using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Models.WallpaperMetaData;
 using VirtualPaper.UI.ViewModels.WpSettingsComponents;
 using Windows.ApplicationModel.DataTransfer;
@@ -25,6 +27,12 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
         {
             this.InitializeComponent();
 
+            uint interval = Native.GetDoubleClickTime();
+            _doubleClickMaxTime = TimeSpan.FromMilliseconds(interval);
+            _clickTimer = new DispatcherTimer();
+            _clickTimer.Interval = TimeSpan.FromMilliseconds(interval);
+            _clickTimer.Tick += ClickTimer_Tick;
+
             _viewModel = App.Services.GetRequiredService<LibraryContentsViewModel>();
             this.DataContext = _viewModel;
         }
@@ -34,10 +42,59 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             _logger.Error($"Image loading failed: {e.ErrorMessage}");
         }
 
-        private async void ItemsView_ItemInvoked(ItemsView sender, ItemsViewItemInvokedEventArgs args)
+        // ref: https://learn.microsoft.com/zh-cn/dotnet/desktop/winforms/input-mouse/how-to-distinguish-between-clicks-and-double-clicks?view=netdesktop-8.0
+        private async void SingleClickAction()
         {
-            var md = (IMetaData)args.InvokedItem;
-            await _viewModel.Preview(md.FolderPath, this.XamlRoot);
+            await _viewModel.DetailedInfoAsync((IMetaData)ItemsViewer.SelectedItem);
+        }
+
+        private async void DoubleClickAction(MetaData _pointerPressedItem)
+        {
+            await _viewModel.PreviewAsync(_pointerPressedItem);
+        }
+
+        private void ClickTimer_Tick(object sender, object e)
+        {
+            _inDoubleClick = false;
+            _clickTimer.Stop();
+
+            SingleClickAction();
+        }
+
+        private void ItemsViewer_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            var dataContext = ((FrameworkElement)e.OriginalSource).DataContext;
+            if (dataContext is not MetaData _pointerPressedItem) return;
+
+            // ref: https://learn.microsoft.com/zh-cn/uwp/api/windows.ui.xaml.uielement.pointerpressed?view=winrt-26100
+            Pointer ptr = e.Pointer;
+            if (ptr.PointerDeviceType == PointerDeviceType.Mouse)
+            {                
+                PointerPoint ptrPt = e.GetCurrentPoint(ItemsViewer);
+                if (!ptrPt.Properties.IsLeftButtonPressed) return;
+
+                if (_inDoubleClick)
+                {
+                    _inDoubleClick = false;
+
+                    TimeSpan length = DateTime.Now - _lastClick;
+
+                    // If double click is valid, respond
+                    if (length < _doubleClickMaxTime)
+                    {
+                        _clickTimer.Stop();
+                        DoubleClickAction(_pointerPressedItem);
+                    }
+
+                    return;
+                }
+
+                // Double click was invalid, restart 
+                _clickTimer.Stop();
+                _clickTimer.Start();
+                _lastClick = DateTime.Now;
+                _inDoubleClick = true;
+            }
         }
 
         private void ItemsView_RightTapped(object sender, RightTappedRoutedEventArgs e)
@@ -57,13 +114,15 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             {
                 itemsView.ContextFlyout = ItemsViewMenu;
             }
+
+            e.Handled = true;
         }
 
         private async void ContextMenu_Click(object sender, RoutedEventArgs e)
         {
             if (_rightTrappedItem == null)
             {
-                _viewModel.ShowErr(this.XamlRoot);
+                _viewModel.ShowErr();
                 return;
             }
 
@@ -75,31 +134,34 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
                 switch (name)
                 {
                     case "DetailedInfo":
-                        _viewModel.DetailedInfo(_rightTrappedItem, this.XamlRoot);
+                        await _viewModel.DetailedInfoAsync(_rightTrappedItem);
                         break;
                     case "EditInfo":
-                        _viewModel.EditInfo(_rightTrappedItem, this.XamlRoot);
+                        await _viewModel.EditInfoAsync(_rightTrappedItem);
                         break;
                     case "Preview":
                         await _viewModel.PreviewAsync(_rightTrappedItem);
                         break;
                     case "Import":
-                        _viewModel.Import(_rightTrappedItem);
+                        await _viewModel.ImportAsync(_rightTrappedItem);
                         break;
                     case "Apply":
-                        await _viewModel.ApplyAsync(_rightTrappedItem, this.XamlRoot);
+                        await _viewModel.ApplyAsync(_rightTrappedItem);
+                        break;
+                    case "LockBackground":
+                        await _viewModel.ApplyToLockBGAsync(_rightTrappedItem);
                         break;
                     case "ShowOnDisk":
                         Process.Start("Explorer", "/select," + _rightTrappedItem.FilePath);
                         break;
                     case "Delete":
-                        await _viewModel.DeleteAsync(_rightTrappedItem, this.XamlRoot);
+                        await _viewModel.DeleteAsync(_rightTrappedItem);
                         break;
                 }
             }
             catch (Exception ex)
             {
-                _viewModel.ShowErr(this.XamlRoot);
+                _viewModel.ShowErr();
                 _logger.Error(ex);
             }
         }
@@ -114,14 +176,14 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
                 var items = await e.DataView.GetStorageItemsAsync();
-                await _viewModel.TryDropFileAsync(items, this.XamlRoot);
+                await _viewModel.TryDropFileAsync(items);
             }
             e.Handled = true;
         }
 
         private void ItemGrid_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
-            CreateOrUpdateSpringAnimation(1.5f);
+            CreateOrUpdateSpringAnimation(1.04f);
 
             (sender as UIElement).StartAnimation(_springAnimation);
         }
@@ -132,13 +194,15 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
 
             (sender as UIElement).StartAnimation(_springAnimation);
         }
-
+       
         private void CreateOrUpdateSpringAnimation(float finalValue)
         {
             if (_springAnimation == null)
             {
                 _springAnimation = _compositor.CreateSpringVector3Animation();
                 _springAnimation.Target = "Scale";
+                _springAnimation.DampingRatio = 0.4f;
+                _springAnimation.Period = TimeSpan.FromMilliseconds(50);
             }
 
             _springAnimation.FinalValue = new Vector3(finalValue);
@@ -148,6 +212,11 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private IMetaData _rightTrappedItem;
         private Compositor _compositor = App.Services.GetRequiredService<MainWindow>().Compositor;
-        private SpringVector3NaturalMotionAnimation _springAnimation;        
+        private SpringVector3NaturalMotionAnimation _springAnimation;
+
+        private bool _inDoubleClick;
+        private DateTime _lastClick;
+        private TimeSpan _doubleClickMaxTime;
+        private DispatcherTimer _clickTimer;
     }
 }

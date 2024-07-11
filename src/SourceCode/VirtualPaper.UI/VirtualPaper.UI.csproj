@@ -132,6 +132,7 @@
 		<None Remove="Views\Gallery.xaml" />
 		<None Remove="Views\Utils\ColorEyeDropWindow.xaml" />
 		<None Remove="Views\Utils\DetailedInfoView.xaml" />
+		<None Remove="Views\Utils\LoadingUsrctrl.xaml" />
 		<None Remove="Views\WpSettings.xaml" />
 		<None Remove="Views\WpSettingsComponents\LibraryContents.xaml" />
 		<None Remove="Views\WpSettingsComponents\WpConfig.xaml" />
@@ -181,6 +182,12 @@
 		<Page Update="Views\WpSettingsComponents\WpNavSettings.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</Page>
+		<Page Update="Views\Utils\DetailedInfoView.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Utils\LoadingUsrctrl.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</Page>
 		<None Update="virtualpaper.ico">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
@@ -194,9 +201,6 @@
 		  <Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\AppSettingsConponents\GeneralSetting.xaml">
-		  <Generator>MSBuild:Compile</Generator>
-		</Page>
-		<Page Update="Views\Utils\DetailedInfoView.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</Page>
 		<None Update="Web\viewer.html">

@@ -23,6 +23,7 @@ namespace VirtualPaper.Common.Utils.IPC
         cmd_suspend, // 挂起
         cmd_resume, // 恢复
         cmd_muted, // 恢复
+        cmd_update,
         //cmd_volume,
         //lsp_perfcntr,
         //lsp_nowplaying,
@@ -48,6 +49,16 @@ namespace VirtualPaper.Common.Utils.IPC
         png,
         webp,
         bmp
+    }
+
+    [Serializable]
+    public class VirtualPaperUpdate : IpcMessage
+    {
+        public string FilePath { get; set; } = string.Empty;
+        public string WpCustomizePathUsing { get; set; } = string.Empty;
+        public string WpType { get; set; } = string.Empty;
+        public ConsoleMessageType MsgType { get; set; }
+        public VirtualPaperUpdate() : base(MessageType.cmd_update) { }
     }
 
     [Serializable]

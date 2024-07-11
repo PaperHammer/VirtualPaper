@@ -32,7 +32,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
         private async void RadioButton_Checked(object sender, RoutedEventArgs e)
         {
             var tag = ((RadioButton)sender).Tag.ToString();
-            await _viewModel.UpdateWpArrange(tag, this.XamlRoot);
+            await _viewModel.UpdateWpArrangeAsync(tag);
         }
 
         private void IsRunningLock_Checked(object sender, RoutedEventArgs e)
@@ -120,6 +120,6 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             }
         }
         
-        private WpNavSettingsViewModel _viewModel;        
+        private WpNavSettingsViewModel _viewModel;
     }
 }

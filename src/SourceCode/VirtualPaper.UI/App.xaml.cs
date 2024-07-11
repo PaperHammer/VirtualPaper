@@ -12,6 +12,8 @@ using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UI.CommServers;
+using VirtualPaper.UI.Services;
+using VirtualPaper.UI.Services.Interfaces;
 using VirtualPaper.UI.ViewModels;
 using VirtualPaper.UI.ViewModels.AppSettings;
 using VirtualPaper.UI.ViewModels.WpSettingsComponents;
@@ -29,8 +31,8 @@ namespace VirtualPaper.UI
     /// </summary>
     public partial class App : Application
     {
-        public static bool _isNeedReslease = false;
-        public static SemaphoreSlim _semaphoreSlimForLib = new(0, 1);
+        public static bool IsNeedReslease { get; set; } = false;
+        public static SemaphoreSlim SemaphoreSlimForLib { get; } = new(0, 1);
 
         public static IServiceProvider Services
         {
@@ -55,7 +57,6 @@ namespace VirtualPaper.UI
                 Process.GetCurrentProcess().Kill();
             }
 #endif
-
             _logger.Info("Starting...");
 
             this.InitializeComponent();
@@ -88,6 +89,8 @@ namespace VirtualPaper.UI
                 .AddTransient<OtherSettingViewModel>()
 
                 .AddSingleton<TrayCommand>()
+
+                .AddSingleton<IDialogService, DialogService>()
 
                 .AddHttpClient()
 

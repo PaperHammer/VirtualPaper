@@ -2,11 +2,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Hosting;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Newtonsoft.Json.Linq;
 using NLog;
 using System;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Models;
 using VirtualPaper.Common.Utils.IPC;
@@ -49,10 +53,12 @@ namespace VirtualPaper.UI.UserControls
         public WpCustomize(
             IMonitor monitor,
             IMetaData metaData,
+            EventHandler<IntValueChangedEventArgs> intValueChanged,
             EventHandler<DoubleValueChangedEventArgs> doubleValueChanged,
             EventHandler<BoolValueChangedEventArgs> boolValueChanged,
             EventHandler<StringValueChangedEventArgs> stringValueChanged) : this()
         {
+            _intValueChanged = intValueChanged;
             _doubleValueChanged = doubleValueChanged;
             _boolValueChanged = boolValueChanged;
             _stringValueChanged = stringValueChanged;
@@ -81,7 +87,7 @@ namespace VirtualPaper.UI.UserControls
             ReadUI();
         }
 
-        private void ReadUI()
+        private async void ReadUI()
         {
             try
             {
@@ -91,10 +97,17 @@ namespace VirtualPaper.UI.UserControls
                 }
                 GenerateUIElements();
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                BtnRestoreDefault.Visibility = Visibility.Collapsed;
-                _logger.Error(e);
+                //BtnRestoreDefault.Visibility = Visibility.Collapsed;
+
+                _logger.Info($"{_wpCustomizePathTmp} read failed, restoring...");
+
+                await App.Services.GetRequiredService<IWallpaperControlClient>().ResetWpCustomizeAsync(
+                    _wpCustomizePathTmp,
+                    (Grpc.Service.WallpaperControl.WallpaperType)_metaData.Type);
+                this._wpCustomizeData = JsonUtil.ReadJObject(_wpCustomizePathTmp);
+                GenerateUIElements();
             }
         }
 
@@ -130,6 +143,8 @@ namespace VirtualPaper.UI.UserControls
                 return;
             }
 
+            var wpType = _metaData.Type;
+
             UIElement obj = null;
             foreach (var item in _wpCustomizeData)
             {
@@ -141,8 +156,8 @@ namespace VirtualPaper.UI.UserControls
                         Name = item.Key,
                         MinWidth = _minWidth,
                         Margin = _margin,
-                        Minimum = (double)item.Value["Min"],
                         Maximum = (double)item.Value["Max"],
+                        Minimum = (double)item.Value["Min"],
                         Value = (double)item.Value["Value"],
                     };
                     if (item.Value["Step"] != null && !string.IsNullOrWhiteSpace(item.Value["Step"].ToString()))
@@ -155,8 +170,6 @@ namespace VirtualPaper.UI.UserControls
                     }
                     slider.ValueChanged += Slider_ValueChanged;
                     Slider_ValueChanged(slider);
-
-
                     obj = slider;
                 }
                 else if (uiElementType.Equals("Textbox", StringComparison.OrdinalIgnoreCase))
@@ -178,63 +191,7 @@ namespace VirtualPaper.UI.UserControls
                     tb.TextChanged += Textbox_TextChanged;
                     Textbox_TextChanged(tb);
                     obj = tb;
-                }
-                //else if (uiElementType.Equals("Button", StringComparison.OrdinalIgnoreCase))
-                //{
-                //    var btn = new Button
-                //    {
-                //        Name = item.Key,
-                //        Content = item.Value["Value"].ToString(),
-                //        MaxWidth = _minWidth,
-                //        MinWidth = _minWidth,
-                //        HorizontalAlignment = HorizontalAlignment.Left,
-                //        Margin = _margin
-                //    };
-                //    if (item.Value["Help"] != null && !string.IsNullOrWhiteSpace(item.Value["Help"].ToString()))
-                //    {
-                //        ToolTipService.SetToolTip(btn, new ToolTip() { Content = (string)item.Value["Help"] });
-                //    }
-                //    btn.Click += Btn_Click;
-                //    obj = btn;
-                //}
-                //else if (uiElementType.Equals("Color", StringComparison.OrdinalIgnoreCase))
-                //{
-                //    var selectedColorBrush = GetSolidColorBrush(item.Value["Value"].ToString());
-                //    var panel = new StackPanel()
-                //    {
-                //        Name = item.Key,
-                //        Margin = _margin,
-                //        Orientation = Orientation.Horizontal
-                //    };
-                //    var colorPickerBtn = new ColorPickerButton()
-                //    {
-                //        SelectedColor = selectedColorBrush.Color,
-                //        Width = 60,
-                //        Height = 33,
-                //    };
-                //    var eyeDropBtn = new Button()
-                //    {
-                //        //Tag = item.Key, //used for searching the splitbtn
-                //        //HorizontalAlignment = HorizontalAlignment.Right,
-                //        Margin = new Thickness(5, 0, 0, 0),
-                //        Width = 40,
-                //        Height = 33,
-                //        Content = new FontIcon
-                //        {
-                //            Glyph = "\uEF3C",
-                //            FontSize = 15,
-                //        },
-                //    };
-                //    panel.Children.Add(colorPickerBtn);
-                //    panel.Children.Add(eyeDropBtn);
-                //    colorPickerBtn.Loaded += (_, _) =>
-                //    {
-                //        colorPickerBtn.ColorPicker.Tag = panel;
-                //        colorPickerBtn.ColorPicker.ColorChanged += ColorPicker_ColorChanged;
-                //    };
-                //    eyeDropBtn.Click += EyeDropBtn_Click;
-                //    obj = panel;
-                //}
+                }                
                 else if (uiElementType.Equals("CheckBox", StringComparison.OrdinalIgnoreCase))
                 {
                     var chk = new CheckBox
@@ -261,7 +218,7 @@ namespace VirtualPaper.UI.UserControls
                     var cmbBox = new ComboBox()
                     {
                         Name = item.Key,
-                        MaxWidth = _minWidth,
+                        //MaxWidth = _minWidth,
                         MinWidth = _minWidth,
                         HorizontalAlignment = HorizontalAlignment.Left,
                         Margin = _margin,
@@ -279,58 +236,6 @@ namespace VirtualPaper.UI.UserControls
                     ComboBox_SelectionChanged(cmbBox);
                     obj = cmbBox;
                 }
-                //else if (uiElementType.Equals("FolderDropdown", StringComparison.OrdinalIgnoreCase))
-                //{
-                //    var panel = new StackPanel()
-                //    {
-                //        Name = item.Key,
-                //        Margin = _margin,
-                //        Orientation = Orientation.Horizontal,
-                //        HorizontalAlignment = HorizontalAlignment.Left,
-                //    };
-                //    var cmbBox = new ComboBox
-                //    {
-                //        //Tag = item.Key,
-                //        MaxWidth = _minWidth,
-                //        MinWidth = _minWidth,
-                //        MinHeight = 35,
-                //    };
-                //    var fileOpenBtn = new Button()
-                //    {
-                //        //Tag = item.Key,
-                //        Content = new FontIcon
-                //        {
-                //            Glyph = "\uE8E5",
-                //        },
-                //        Margin = new Thickness(5, 0, 0, 0),
-                //    };
-                //    if (item.Value["Help"] != null && !string.IsNullOrWhiteSpace(item.Value["Help"].ToString()))
-                //    {
-                //        ToolTipService.SetToolTip(cmbBox, new ToolTip() { Content = (string)item.Value["Help"] });
-                //    }
-
-                //    try
-                //    {
-                //        var destDir = Path.Combine(Path.GetDirectoryName(_metaData.FilePath), item.Value["Folder"].ToString());
-                //        Directory.CreateDirectory(destDir);
-                //        //filter syntax: "*.jpg|*.png"
-                //        var files = GetFileNames(destDir, item.Value["Filter"].ToString(), SearchOption.TopDirectoryOnly);
-                //        foreach (var file in files)
-                //        {
-                //            cmbBox.Items.Add(file);
-                //        }
-                //        cmbBox.SelectedIndex = Array.FindIndex(files, x => x.Contains(item.Value["Value"].ToString())); //returns -1 if not found, none selected.
-                //    }
-                //    catch (Exception ie1)
-                //    {
-                //        _logger.Error($"FolderDropDown({item.Key}) failed to initialize: {ie1.Message}");
-                //    }
-                //    cmbBox.SelectionChanged += FolderCmbBox_SelectionChanged;
-                //    fileOpenBtn.Click += FolderDropDownOpenFileBtn_Click;
-                //    panel.Children.Add(cmbBox);
-                //    panel.Children.Add(fileOpenBtn);
-                //    obj = panel;
-                //}
                 else if (uiElementType.Equals("Label", StringComparison.OrdinalIgnoreCase))
                 {
                     var label = new TextBlock
@@ -358,7 +263,6 @@ namespace VirtualPaper.UI.UserControls
                     {
                         Text = item.Value["Text"].ToString(),
                         HorizontalAlignment = HorizontalAlignment.Left,
-                        //MaxWidth = _minWidth,
                         MinWidth = _minWidth,
                         Margin = _margin
                     };
@@ -399,7 +303,7 @@ namespace VirtualPaper.UI.UserControls
                 var item = (ComboBox)sender;
                 //WallpaperSendMsg(new VirtualPaperDropdown() { Name = item.Name, Value = item.SelectedIndex });
                 _wpCustomizeData[item.Name]["Value"] = item.SelectedIndex;
-                OnCustomizeValueChanged(new DoubleValueChangedEventArgs { PropertyName = item.Name, Value = item.SelectedIndex });
+                OnCustomizeValueChanged(new IntValueChangedEventArgs { ControlName = "Dropdown", PropertyName = item.Name, Value = item.SelectedIndex });
                 UpdatePropertyFile(false);
             }
             catch { }
@@ -563,12 +467,29 @@ namespace VirtualPaper.UI.UserControls
             {
                 BtnRestoreDefault.IsEnabled = false;
 
+                RotateSymbolIcon();
+
                 File.Copy(_metaData.WpCustomizePath, _metaData.WpCustomizePathTmp, true);
                 skPanel.Children.Clear();
                 ReadUI();
 
                 BtnRestoreDefault.IsEnabled = true;
             }
+        }
+
+        private void RotateSymbolIcon()
+        {
+            // 获取页面资源中的Storyboard
+            var storyboard = Resources["RotateStoryboard"] as Storyboard;
+
+            // 确保SymbolIcon有一个初始的RotateTransform，如果还没有的话
+            if (SymbolIconElement.RenderTransform is not RotateTransform rotateTransform)
+            {
+                SymbolIconElement.RenderTransform = new RotateTransform();
+            }
+
+            // 开始动画
+            storyboard.Begin();
         }
 
         //private void Btn_Click(object sender, RoutedEventArgs e)
@@ -820,7 +741,7 @@ namespace VirtualPaper.UI.UserControls
                     await _wpControl.SendMessageWallpaperAsync(_monitor, _metaData, new VirtualPaperDropdown()
                     {
                         Name = item.Key,
-                        Value = (int)item.Value["Value"],
+                        Value =  (int)item.Value["Value"],
                     });
                 }
             }
@@ -828,6 +749,12 @@ namespace VirtualPaper.UI.UserControls
             await _wpControl.SendMessageWallpaperAsync(_monitor, _metaData, new VirtualPaperApplyCmd());
         }
 
+        private void OnCustomizeValueChanged(IntValueChangedEventArgs e)
+        {
+            UpdatePropertyFile(false);
+            _intValueChanged?.Invoke(this, e);
+        }
+        
         private void OnCustomizeValueChanged(DoubleValueChangedEventArgs e)
         {
             UpdatePropertyFile(false);
@@ -854,6 +781,7 @@ namespace VirtualPaper.UI.UserControls
             {
                 if (disposing)
                 {
+                    _intValueChanged -= _observer.OnCustomizeValueChanged;
                     _doubleValueChanged -= _observer.OnCustomizeValueChanged;
                     _boolValueChanged -= _observer.OnCustomizeValueChanged;
                     _stringValueChanged -= _observer.OnCustomizeValueChanged;
@@ -883,6 +811,7 @@ namespace VirtualPaper.UI.UserControls
         private readonly IMonitorManagerClient _monitorManager;
         //private readonly DispatcherQueue _dispatcherQueue;
         private readonly object _restoreLock = new();
+        private EventHandler<IntValueChangedEventArgs> _intValueChanged;
         private EventHandler<DoubleValueChangedEventArgs> _doubleValueChanged;
         private EventHandler<BoolValueChangedEventArgs> _boolValueChanged;
         private EventHandler<StringValueChangedEventArgs> _stringValueChanged;

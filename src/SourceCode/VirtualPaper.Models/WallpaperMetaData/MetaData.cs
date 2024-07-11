@@ -15,6 +15,7 @@ namespace VirtualPaper.Models.WallpaperMetaData
         public string Desc { get; set; } = string.Empty; // apply online
         public string Authors { get; set; } = string.Empty; // online
         public string PublishDate { get; set; } = string.Empty; // online
+        public double Rating { get; set; } = -1;// online
         public WallpaperType Type { get; set; }
         public string Partition { get; set; } = string.Empty; // online
         public string Tags { get; set; } = string.Empty; // online

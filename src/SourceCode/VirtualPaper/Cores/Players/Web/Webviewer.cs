@@ -22,7 +22,7 @@ namespace VirtualPaper.Cores.Players.Web
 
         public nint InputHandle { get; private set; }
 
-        public IMetaData MetaData { get; }
+        public IMetaData MetaData { get; private set; }
 
         public IMonitor Monitor { get; set; }
 
@@ -41,8 +41,8 @@ namespace VirtualPaper.Cores.Players.Web
             if (isPreview)
             {
                 _webPreviewer = new(
-                    metaData.Type, 
-                    metaData.FilePath, 
+                    metaData.Type,
+                    metaData.FilePath,
                     isLibrarypreview ? metaData.WpCustomizePath : metaData.WpCustomizePathTmp);
                 _webPreviewer.Reset += ResetPreviewer;
                 return;
@@ -113,7 +113,7 @@ namespace VirtualPaper.Cores.Players.Web
 
         public void SetPlaybackPos(float pos, PlaybackPosType type) { }
 
-        public async Task<bool> ShowAsync(CancellationToken cancellationToken)
+        public async Task<bool> ShowAsync(CancellationToken token)
         {
             if (_isPreview)
             {
@@ -127,18 +127,18 @@ namespace VirtualPaper.Cores.Players.Web
 
             try
             {
-                cancellationToken.ThrowIfCancellationRequested(); // 在开始前检查一次
+                token.ThrowIfCancellationRequested(); // 在开始前检查一次
 
                 Proc.Exited += Proc_Exited;
                 Proc.OutputDataReceived += Proc_OutputDataReceived;
                 Proc.Start();
                 Proc.BeginOutputReadLine();
 
-                using var registration = cancellationToken.Register(() =>
+                using var registration = token.Register(() =>
                 {
                     _tcsProcessWait.TrySetCanceled();
                 });
-                cancellationToken.ThrowIfCancellationRequested(); // 在结束前再检查一次
+                token.ThrowIfCancellationRequested(); // 在结束前再检查一次
 
                 await _tcsProcessWait.Task;
                 if (_tcsProcessWait.Task.Result is not null)
@@ -168,6 +168,17 @@ namespace VirtualPaper.Cores.Players.Web
             _webPreviewer.ModifySource(controlName, propertyName, value);
         }
 
+        public void Update(IMetaData metaData)
+        {
+            this.MetaData = metaData;
+            SendMessage(new VirtualPaperUpdate()
+            {
+                WpType = metaData.Type.ToString(),
+                FilePath = metaData.FilePath,
+                WpCustomizePathUsing = metaData.WpCustomizePathUsing
+            });
+        }
+
         private void ResetPreviewer()
         {
             _webPreviewer = null;
@@ -176,7 +187,7 @@ namespace VirtualPaper.Cores.Players.Web
         public void Stop()
         {
             Pause();
-        }        
+        }
 
         private void Terminate()
         {
@@ -210,7 +221,16 @@ namespace VirtualPaper.Cores.Players.Web
             //When the redirected stream is closed, a null line is sent to the event handler.
             if (!string.IsNullOrEmpty(e.Data))
             {
-                _logger.Info($"Webview2-{_uniqueId}: {e.Data}");
+                VirtualPaperMessageConsole messageConsole = System.Text.Json.JsonSerializer.Deserialize<VirtualPaperMessageConsole>(e.Data.ToString());
+                if (messageConsole.MsgType == ConsoleMessageType.Error)
+                {
+                    _logger.Error($"Webview2-{_uniqueId}: {messageConsole.Message}");
+                }
+                else
+                {
+                    _logger.Info($"Webview2-{_uniqueId}: {e.Data}");
+                }
+
                 if (!_isInitialized || !IsLoaded)
                 {
                     IpcMessage obj;

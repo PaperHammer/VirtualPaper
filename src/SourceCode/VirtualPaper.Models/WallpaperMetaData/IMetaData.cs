@@ -37,6 +37,11 @@ namespace VirtualPaper.Models.WallpaperMetaData
         string PublishDate { get; set; }
 
         /// <summary>
+        /// 评分
+        /// </summary>
+        double Rating { get; set; }
+
+        /// <summary>
         /// 壁纸类型
         /// </summary>
         WallpaperType Type { get; set; }

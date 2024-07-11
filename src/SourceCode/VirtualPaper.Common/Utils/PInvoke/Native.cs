@@ -8,6 +8,9 @@ namespace VirtualPaper.Common.Utils.PInvoke
 #pragma warning disable CA1707, CA1401, CA1712
     public static class Native
     {
+        [DllImport("user32.dll")]
+        public static extern uint GetDoubleClickTime();
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool QueryFullProcessImageName([In] IntPtr hProcess, [In] int dwFlags, [Out] StringBuilder lpExeName, ref int lpdwSize);
 

@@ -36,11 +36,12 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             var wpSettingsVm = App.Services.GetRequiredService<WpSettingsViewModel>();
             _content = wpSettingsVm.Monitors[wpSettingsVm.MonitorSelectedIdx].Content;
                         
-            InitCustomizeData();
+            //InitCustomizeData();
             InitWebview2();
             
             _viewModel = new(InitWebviewContent);
             _viewModel.DoubleValueChanged += OnCustomizeValueChanged;
+            _viewModel.IntValueChanged += OnCustomizeValueChanged;
             _viewModel.BoolValueChanged += OnCustomizeValueChanged;
             _viewModel.StringValueChanged += OnCustomizeValueChanged;
             this.DataContext = _viewModel;
@@ -53,11 +54,11 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             await _viewModel.InitWp(_content);
         }
 
-        private void InitCustomizeData()
-        {
-            _pictureAndGifCostumise = new();
-            _videoCostumize = new();
-        }
+        //private void InitCustomizeData()
+        //{
+        //    _pictureAndGifCostumise = new();
+        //    _videoCostumize = new();
+        //}
 
         private async void InitWebview2()
         {
@@ -79,7 +80,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
         private async Task InitWebviewContent(WallpaperType type = WallpaperType.unknown, string filePath = null, string wpCustomizePathUsing = null)
         {
             await LoadSourceAsync(type, filePath);
-            await RestoreWpCustomizeAsync(wpCustomizePathUsing);
+            await LoadWpCustomizeAsync(wpCustomizePathUsing);
         }
 
         private async void ImportButton_Click(object sender, RoutedEventArgs e)
@@ -115,13 +116,13 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             StorageFile file = await picker.PickSingleFileAsync();
             if (file != null)
             {
-                await _viewModel.TryImportFromLocalAsync(file.Path, this.XamlRoot);
+                await _viewModel.TryImportFromLocalAsync(file.Path);
             }
         }
 
         private async void DetailedInfoButton_Click(object sender, RoutedEventArgs e)
         {
-            await _viewModel.ShowDetailedInfoPop(this.XamlRoot);
+            await _viewModel.ShowDetailedInfoAsync();
         }
 
         private async void Button_Drop(object sender, DragEventArgs e)
@@ -129,7 +130,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
                 var items = await e.DataView.GetStorageItemsAsync();
-                await _viewModel.TryDropFileAsync(items, this.XamlRoot);
+                await _viewModel.DropFileAsync(items);
             }
             e.Handled = true;
         }
@@ -161,7 +162,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             }
         }
 
-        private async Task RestoreWpCustomizeAsync(string wpCustomizeFilePath)
+        private async Task LoadWpCustomizeAsync(string wpCustomizeFilePath)
         {
             try
             {
@@ -194,6 +195,12 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             catch { }
         }
 
+        /// <summary>
+        /// 修改“当前壁纸”界面展示的壁纸
+        /// </summary>
+        /// <param name="uiElementType"></param>
+        /// <param name="propertyName"></param>
+        /// <param name="value"></param>
         public async void ModifySource(string uiElementType, string propertyName, string value)
         {
             await _semaphoreSlimWallpaperModifyLock.WaitAsync();
@@ -213,7 +220,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
                     }
                     else if (uiElementType.Equals("Color", StringComparison.OrdinalIgnoreCase) || uiElementType.Equals("Textbox", StringComparison.OrdinalIgnoreCase))
                     {
-                        await ExecuteScriptFunctionAsync("virtualPaperPropertyListener", propertyName, (string)value);
+                        await ExecuteScriptFunctionAsync("virtualPaperPropertyListener", propertyName, value);
                     }
                 }
 
@@ -250,30 +257,39 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
 
         public async void OnCustomizeValueChanged(object sender, DoubleValueChangedEventArgs args)
         {
-            ModifyCustomizeProperty(args.PropertyName, args.Value);
+            //ModifyCustomizeProperty(args.PropertyName, args.Value);
             ModifySource(args.ControlName, args.PropertyName, args.Value.ToString());
             await _viewModel.ModifyPreviewAsync(args.ControlName, args.PropertyName, args.Value.ToString());
         }
 
-        public void OnCustomizeValueChanged(object sender, BoolValueChangedEventArgs args)
+        public async void OnCustomizeValueChanged(object sender, IntValueChangedEventArgs args)
         {
-            ModifyCustomizeProperty(args.PropertyName, args.Value);
+            //ModifyCustomizeProperty(args.PropertyName, args.Value);
             ModifySource(args.ControlName, args.PropertyName, args.Value.ToString());
+            await _viewModel.ModifyPreviewAsync(args.ControlName, args.PropertyName, args.Value.ToString());
         }
 
-        public void OnCustomizeValueChanged(object sender, StringValueChangedEventArgs args)
+        public async void OnCustomizeValueChanged(object sender, BoolValueChangedEventArgs args)
         {
-            ModifyCustomizeProperty(args.PropertyName, args.Value);
+            //ModifyCustomizeProperty(args.PropertyName, args.Value);
             ModifySource(args.ControlName, args.PropertyName, args.Value.ToString());
+            await _viewModel.ModifyPreviewAsync(args.ControlName, args.PropertyName, args.Value.ToString());
         }
 
-        private void ModifyCustomizeProperty<T>(string propertyName, T val)
+        public async void OnCustomizeValueChanged(object sender, StringValueChangedEventArgs args)
         {
-            if (_viewModel.Wallpaper.Type == WallpaperType.picture || _viewModel.Wallpaper.Type == WallpaperType.gif)
-                _pictureAndGifCostumise.ModifyPropertyValue(propertyName, val);
-            else if (_viewModel.Wallpaper.Type == WallpaperType.video)
-                _videoCostumize.ModifyPropertyValue(propertyName, val);
+            //ModifyCustomizeProperty(args.PropertyName, args.Value);
+            ModifySource(args.ControlName, args.PropertyName, args.Value.ToString());
+            await _viewModel.ModifyPreviewAsync(args.ControlName, args.PropertyName, args.Value.ToString());
         }
+
+        //private void ModifyCustomizeProperty<T>(string propertyName, T val)
+        //{
+        //    if (_viewModel.Wallpaper.Type == WallpaperType.picture || _viewModel.Wallpaper.Type == WallpaperType.gif)
+        //        _pictureAndGifCostumise.ModifyPropertyValue(propertyName, val);
+        //    else if (_viewModel.Wallpaper.Type == WallpaperType.video)
+        //        _videoCostumize.ModifyPropertyValue(propertyName, val);
+        //}
 
         #region Dispose
         private bool _isDisposed = false;
@@ -284,6 +300,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
                 if (disposing)
                 {
                     Webview2?.Close();
+                    _viewModel.IntValueChanged -= OnCustomizeValueChanged;
                     _viewModel.DoubleValueChanged -= OnCustomizeValueChanged;
                     _viewModel.BoolValueChanged -= OnCustomizeValueChanged;
                     _viewModel.StringValueChanged -= OnCustomizeValueChanged;
@@ -306,8 +323,8 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents
             AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1"
         }; // workaround: avoid cache
         private readonly string _workingDir = AppDomain.CurrentDomain.BaseDirectory;
-        private PictureCostumise _pictureAndGifCostumise;
-        private VideoAndGifCostumize _videoCostumize;
+        //private PictureCostumise _pictureAndGifCostumise;
+        //private VideoAndGifCostumize _videoCostumize;
         private readonly SemaphoreSlim _semaphoreSlimWallpaperLoadingLock = new(1, 1);
         private readonly SemaphoreSlim _semaphoreSlimWallpaperModifyLock = new(1, 1);
 

@@ -50,7 +50,7 @@
                 Text="Virtual Wallpaper" />
         </Grid>
 
-        <NavigationView         
+        <NavigationView
             x:Name="NavView"
             Grid.Row="1"
             PaneDisplayMode="Left"        

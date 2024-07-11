@@ -129,38 +129,56 @@
   <data name="AppSettings_SelBarItem4_Others" xml:space="preserve">
     <value>其他</value>
   </data>
+  <data name="DetailedInfo_Rating" xml:space="preserve">
+    <value>分数：</value>
+  </data>
   <data name="DetailedInfo_TextAspectRadio" xml:space="preserve">
-    <value>比例</value>
+    <value>比例：</value>
   </data>
   <data name="DetailedInfo_TextAuthors" xml:space="preserve">
-    <value>作者</value>
+    <value>作者：</value>
   </data>
   <data name="DetailedInfo_TextDesc" xml:space="preserve">
-    <value>描述</value>
+    <value>描述：</value>
+  </data>
+  <data name="DetailedInfo_TextDownload" xml:space="preserve">
+    <value>下载</value>
   </data>
   <data name="DetailedInfo_TextFileExtension" xml:space="preserve">
-    <value>文件类型（扩展名）</value>
+    <value>文件类型（扩展名）：</value>
   </data>
   <data name="DetailedInfo_TextFileSize" xml:space="preserve">
-    <value>文件大小</value>
+    <value>文件大小：</value>
+  </data>
+  <data name="DetailedInfo_TextPreview" xml:space="preserve">
+    <value>预览</value>
   </data>
   <data name="DetailedInfo_TextPublishDate" xml:space="preserve">
-    <value>发布日期</value>
+    <value>发布日期：</value>
   </data>
   <data name="DetailedInfo_TextResolution" xml:space="preserve">
-    <value>分辨率</value>
+    <value>分辨率：</value>
+  </data>
+  <data name="DetailedInfo_TextScore" xml:space="preserve">
+    <value>评分</value>
+  </data>
+  <data name="DetailedInfo_TextScoreSubmit" xml:space="preserve">
+    <value>提交</value>
+  </data>
+  <data name="DetailedInfo_TextScoreTilte" xml:space="preserve">
+    <value>灵感共鸣，从您的评价开始</value>
   </data>
   <data name="DetailedInfo_TextTags" xml:space="preserve">
-    <value>标签（逗号分隔）</value>
+    <value>标签（逗号分隔）：</value>
   </data>
   <data name="DetailedInfo_TextTtile" xml:space="preserve">
     <value>标题</value>
   </data>
   <data name="DetailedInfo_TextType" xml:space="preserve">
-    <value>类型</value>
+    <value>类型：</value>
   </data>
   <data name="DetailedInfo_TextVirtualPaperUid" xml:space="preserve">
-    <value>vpUid</value>
+    <value>vp_uid：</value>
   </data>
   <data name="Dialog_Btn_Cancel" xml:space="preserve">
     <value>取消</value>
@@ -168,30 +186,43 @@
   <data name="Dialog_Btn_Confirm" xml:space="preserve">
     <value>确认</value>
   </data>
+  <data name="Dialog_Content_ApplyError" xml:space="preserve">
+    <value>应用壁纸失败，请重试</value>
+  </data>
+  <data name="Dialog_Content_FileNotExists" xml:space="preserve">
+    <value>该文件可能已被删除或移动</value>
+  </data>
   <data name="Dialog_Content_GetMonitorsAsync" xml:space="preserve">
     <value>可用显示器数量：</value>
+  </data>
+  <data name="Dialog_Content_ImportFileFailed" xml:space="preserve">
+    <value>该文件无法导入
+1. 仅支持单个文件的导入;
+2. 仅支持以下文件类型：
+    动图 .gif
+    静态图片 .jpg  .jpeg  .bmp  .png
+    视频 .mp4  .webm</value>
   </data>
   <data name="Dialog_Content_LibraryContentErr" xml:space="preserve">
     <value>无法执行操作，该文件可能已损坏</value>
   </data>
   <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
-    <value>是否删除该文件？注意：该操作不可逆！！！</value>
+    <value>是否删除该文件？
+注意：该操作不可逆！！！</value>
   </data>
   <data name="Dialog_Content_MinotorUninstall" xml:space="preserve">
     <value>选定的显示器不可用或已断开连接</value>
+  </data>
+  <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
+    <value>仅支持以下文件类型：
+    动图 .gif
+    静态图片 .jpg  .jpeg  .bmp  .png</value>
   </data>
   <data name="Dialog_Content_PreviewLibraryContentFailed" xml:space="preserve">
     <value>无法在指定目录下找到有效的文件</value>
   </data>
   <data name="Dialog_Content_ReadMetaDataFialed" xml:space="preserve">
     <value>读取文件时发生异常，请确保目标文件可以被正常访问</value>
-  </data>
-  <data name="Dialog_Content_TryDropFileErr" xml:space="preserve">
-    <value>仅支持单个文件的导入;
-仅支持以下文件类型：
-  动图 .gif
-  静态图片 .jpg  .jpeg  .bmp  .png
-  视频 .mp4  .webm</value>
   </data>
   <data name="Dialog_Content_WallpaperDirectoryChangePathInvalid" xml:space="preserve">
     <value>无法将存储目录设置为应用程序数据根目录</value>
@@ -217,6 +248,9 @@
   <data name="MenuFlyout_Text_Apply" xml:space="preserve">
     <value>应用</value>
   </data>
+  <data name="MenuFlyout_Text_ApplyToLockBG" xml:space="preserve">
+    <value>应用到锁屏背景</value>
+  </data>
   <data name="MenuFlyout_Text_Delete" xml:space="preserve">
     <value>从磁盘中删除</value>
   </data>
@@ -237,6 +271,9 @@
   </data>
   <data name="MenuFlyout_Text_ShowOnDisk" xml:space="preserve">
     <value>打开文件所在目录</value>
+  </data>
+  <data name="Msg_LockScreenSet_Successful" xml:space="preserve">
+    <value>已修改锁屏背景</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppFileStorage" xml:space="preserve">
     <value>存储路径</value>
@@ -590,9 +627,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="WpConfig_InfobarMsg_Err" xml:space="preserve">
     <value>发生错误</value>
-  </data>
-  <data name="WpConfig_InfobarTitle" xml:space="preserve">
-    <value>提示</value>
   </data>
   <data name="WpControl_Err_File_Not_Found" xml:space="preserve">
     <value>目标文件不存在</value>

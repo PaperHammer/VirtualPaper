@@ -57,7 +57,7 @@ namespace VirtualPaper.Views.Preview
             await Task.Delay(600);
 
             await LoadSourceAsync(_type, _filePath);
-            await RestoreWpCustomizeAsync(_wpCustomizePathUsing);
+            await LoadWpCustomizeAsync(_wpCustomizePathUsing);
         }
 
         private async Task LoadSourceAsync(WallpaperType type, string filePath)
@@ -77,7 +77,7 @@ namespace VirtualPaper.Views.Preview
             catch { Webview2.Visibility = Visibility.Collapsed; }
         }
 
-        private async Task RestoreWpCustomizeAsync(string wpCustomizeFilePath)
+        private async Task LoadWpCustomizeAsync(string wpCustomizeFilePath)
         {
             try
             {
@@ -91,7 +91,7 @@ namespace VirtualPaper.Views.Preview
                         if (uiElementType.Equals("Slider", StringComparison.OrdinalIgnoreCase) ||
                             uiElementType.Equals("Dropdown", StringComparison.OrdinalIgnoreCase))
                         {
-                            await ExecuteScriptFunctionAsync("virtualPaperPropertyListener", item.Key, (string)item.Value["Value"]);
+                            await ExecuteScriptFunctionAsync("virtualPaperPropertyListener", item.Key, (double)item.Value["Value"]);
                         }
                         else if (uiElementType.Equals("Checkbox", StringComparison.OrdinalIgnoreCase))
                         {

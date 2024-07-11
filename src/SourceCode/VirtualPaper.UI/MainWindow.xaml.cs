@@ -27,6 +27,8 @@ namespace VirtualPaper.UI
     /// </summary>
     public sealed partial class MainWindow : WindowEx
     {
+        public List<WindowEx> ChildWindows { get; } = [];
+
         public MainWindow(
             IUserSettingsClient userSettings)
         {
@@ -84,6 +86,11 @@ namespace VirtualPaper.UI
                 _userSettingsClient.Settings.IsUpdated = false;
                 _userSettingsClient.Save<ISettings>();
                 this.Close();
+            }
+
+            foreach (var window in ChildWindows)
+            {
+                window?.Close();
             }
 
             App.ShutDown();

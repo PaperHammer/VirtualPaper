@@ -13,10 +13,14 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UI.Services.Interfaces;
+using VirtualPaper.UI.UserControls;
+using VirtualPaper.UI.ViewModels.Utils;
 using VirtualPaper.UI.ViewModels.WpSettingsComponents;
 using VirtualPaper.UI.Views.Utils;
 using VirtualPaper.UI.Views.WpSettingsComponents;
 using WinUI3Localizer;
+using static VirtualPaper.UI.Services.Interfaces.IDialogService;
 using Monitor = VirtualPaper.Models.Cores.Monitor;
 
 namespace VirtualPaper.UI.ViewModels
@@ -35,8 +39,8 @@ namespace VirtualPaper.UI.ViewModels
         public string Text_Identify { get; set; } = string.Empty;
         public string Text_Preview { get; set; } = string.Empty;
         public string Text_Apply { get; set; } = string.Empty;
-        public string Text_Cancel { get; set; } = string.Empty;
-        public string Text_Loading { get; set; } = string.Empty;
+        //public string Text_Cancel { get; set; } = string.Empty;
+        //public string Text_Loading { get; set; } = string.Empty;
         public string SidebarWpConfig { get; set; } = string.Empty;
         public string SidebarLibraryContents { get; set; } = string.Empty;
         public WpConfigViewModel WpConfigViewModel { get; set; } = null;
@@ -48,7 +52,7 @@ namespace VirtualPaper.UI.ViewModels
             set
             {
                 int newValue = value < 0 ? _monitorSelectedIdx : value;
-                
+
                 if (_monitorSelectedIdx == newValue) return;
                 _monitorSelectedIdx = newValue;
                 OnPropertyChanged();
@@ -65,6 +69,14 @@ namespace VirtualPaper.UI.ViewModels
             set { _isEnable = value; OnPropertyChanged(); }
         }
 
+        //private Visibility _cancelVisibility = Visibility.Visible;
+        //public Visibility CancelVisibility
+        //{
+        //    get { return _cancelVisibility; }
+        //    set { _cancelVisibility = value; OnPropertyChanged(); }
+        //}
+
+        #region loading
         private Visibility _loadingVisibility = Visibility.Visible;
         public Visibility LoadingVisibility
         {
@@ -72,18 +84,47 @@ namespace VirtualPaper.UI.ViewModels
             set { _loadingVisibility = value; OnPropertyChanged(); }
         }
 
+        private int _curValue;
+        public int CurValue
+        {
+            get { return _curValue; }
+            set { _curValue = value; OnPropertyChanged(); }
+        }
+
+        private int _totalValue;
+        public int TotalValue
+        {
+            get { return _totalValue; }
+            set { _totalValue = value; OnPropertyChanged(); }
+        }
+
+        private bool _cancelEanble;
+        public bool CancelEnable
+        {
+            get { return _cancelEanble; }
+            set { _cancelEanble = value; OnPropertyChanged(); }
+        }
+
+        private bool _progressbarEnable;
+        public bool ProgressbarEnable
+        {
+            get { return _progressbarEnable; }
+            set { _progressbarEnable = value; OnPropertyChanged(); }
+        }
+
+        private CancellationTokenSource[] _ctsTokens = [];
+        public CancellationTokenSource[] CtsTokens
+        {
+            get { return _ctsTokens; }
+            set { _ctsTokens = value; OnPropertyChanged(); }
+        }
+        #endregion
+
         private bool _infoBarIsOpen = false;
         public bool InfoBarIsOpen
         {
             get => _infoBarIsOpen;
             set { _infoBarIsOpen = value; OnPropertyChanged(); }
-        }
-
-        private string _infobarTitle;
-        public string InfobarTitle
-        {
-            get { return _infobarTitle; }
-            set { _infobarTitle = value; OnPropertyChanged(); }
         }
 
         private string _infobarMsg;
@@ -100,13 +141,22 @@ namespace VirtualPaper.UI.ViewModels
             set { _infoBarSeverity = value; OnPropertyChanged(); }
         }
 
+        private object _frameContainer;
+        public object FrameContainer
+        {
+            get { return _frameContainer; }
+            set { _frameContainer = value; OnPropertyChanged(); }
+        }
+
         public WpSettingsViewModel(
+            IDialogService dialogService,
             IMonitorManagerClient monitorManagerClient,
             IWallpaperControlClient wallpaperControlClient,
             IUserSettingsClient userSettingsClient)
         {
+            _dialogService = dialogService;
             _monitorManagerClient = monitorManagerClient;
-            _wallpaperControlClient = wallpaperControlClient;
+            _wpControl = wallpaperControlClient;
             _userSettingsClient = userSettingsClient;
 
             App.Services.GetRequiredService<WpNavSettingsViewModel>().InitUpdateLayout = InitUpdateLayout;
@@ -126,10 +176,8 @@ namespace VirtualPaper.UI.ViewModels
             Text_Identify = _localizer.GetLocalizedString("WpSettings_Text_Identify");
             Text_Preview = _localizer.GetLocalizedString("WpSettings_Text_Preview");
             Text_Apply = _localizer.GetLocalizedString("WpSettings_Text_Apply");
-            Text_Cancel = _localizer.GetLocalizedString("WpSettings_Text_Cancel");
-            Text_Loading = _localizer.GetLocalizedString("WpSettings_Text_Loading");
-
-            InfobarTitle = _localizer.GetLocalizedString("WpConfig_InfobarTitle");
+            //Text_Cancel = _localizer.GetLocalizedString("WpSettings_Text_Cancel");
+            //Text_Loading = _localizer.GetLocalizedString("WpSettings_Text_Loading");
 
             SidebarWpConfig = _localizer.GetLocalizedString("WpSettings_SidebarWpConfig");
             SidebarLibraryContents = _localizer.GetLocalizedString("WpSettings_SidebarLibraryContents");
@@ -178,7 +226,7 @@ namespace VirtualPaper.UI.ViewModels
         internal void Close()
         {
             WpConfigViewModel?.Close(Monitors[MonitorSelectedIdx]);
-            Monitors[MonitorSelectedIdx].ThumbnailPath = string.Empty;
+            //Monitors[MonitorSelectedIdx].ThumbnailPath = string.Empty;
         }
 
         internal async Task RestoreAsync()
@@ -190,15 +238,10 @@ namespace VirtualPaper.UI.ViewModels
         {
             InitUpdateLayout();
 
-            await new ContentDialog()
-            {
-                // XamlRoot must be set in the case of a ContentDialog running in a Desktop app
-                // ref: https://learn.microsoft.com/zh-cn/windows/windows-app-sdk/api/winrt/microsoft.ui.xaml.controls.contentdialog?
-                XamlRoot = xamlRoot,
-                Title = _localizer.GetLocalizedString("Dialog_Title_Prompt"),
-                Content = _localizer.GetLocalizedString("Dialog_Content_GetMonitorsAsync") + Monitors.Count,
-                PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm")
-            }.ShowAsync();
+            await _dialogService.ShowDialogAsync(
+                _localizer.GetLocalizedString("Dialog_Content_GetMonitorsAsync") + Monitors.Count
+                , _localizer.GetLocalizedString("Dialog_Title_Prompt")
+                , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
         }
 
         internal async Task IdentifyAsync()
@@ -207,30 +250,26 @@ namespace VirtualPaper.UI.ViewModels
         }
 
         internal async Task PreviewAsync()
-        {
+        {            
             await WpConfigViewModel.PreviewWallpaperAsync();
         }
 
-        internal async Task ApplyAsync(XamlRoot xamlRoot)
+        internal async Task ApplyAsync()
         {
             try
             {
-                _cancellationTokenSourceForApply = new();
-                IsLoading(true);
+                _ctsApply = new();
+                Loading(true, false, [_ctsApply]);
 
                 #region 合法性检测                
                 if (WpConfigViewModel == null || !WpConfigViewModel.IsLegal()) return;
 
                 if (MonitorSelectedIdx >= Monitors.Count)
                 {
-                    _ = await new ContentDialog()
-                    {
-                        XamlRoot = xamlRoot,
-                        Title = _localizer.GetLocalizedString("Dialog_Title_Error"),
-                        Content = _localizer.GetLocalizedString("Dialog_Content_MinotorUninstall"),
-                        PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm"),
-                        DefaultButton = ContentDialogButton.Primary,
-                    }.ShowAsync();
+                    await _dialogService.ShowDialogAsync(
+                        _localizer.GetLocalizedString("Dialog_Content_MinotorUninstall")
+                        , _localizer.GetLocalizedString("Dialog_Title_Error")
+                        , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
 
                     return;
                 }
@@ -239,17 +278,11 @@ namespace VirtualPaper.UI.ViewModels
                 #region 本地导入时录入信息
                 string folderName = WpConfigViewModel.InitUid();
 
-                var detailedInfoViewModel = new DetailedInfoViewModel(WpConfigViewModel.Wallpaper, true);
-                var cd = new ContentDialog()
-                {
-                    XamlRoot = xamlRoot,
-                    Title = _localizer.GetLocalizedString("Dialog_Title_Edit"),
-                    Content = new DetailedInfoView() { DataContext = detailedInfoViewModel },
-                    PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm"),
-                    DefaultButton = ContentDialogButton.Primary,
-                };
-                var dialogResult = await cd.ShowAsync();
-                if (dialogResult != ContentDialogResult.Primary) return;
+                var detailedInfoViewModel = new DetailedInfoViewModel(WpConfigViewModel.Wallpaper, true, false, false);
+                var dialogRes = await _dialogService.ShowDialogWithoutTitleAsync(
+                    new DetailedInfoView(detailedInfoViewModel)
+                    , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
+                if (dialogRes != DialogResult.Primary) return;
                 #endregion
 
                 #region 应用修改（避免第一次导入时的修改无法生效）
@@ -261,32 +294,35 @@ namespace VirtualPaper.UI.ViewModels
                 WpConfigViewModel.Wallpaper.Desc = detailedInfoViewModel.Desc;
                 WpConfigViewModel.Wallpaper.Tags = detailedInfoViewModel.Tags;
                 WpConfigViewModel.UpdateMetaData(folderName);
+                AddToLibrary();
                 #endregion
 
-                TryAddToLibrary();
-
-                #region 执行操作                
-                if (_wallpaperControlClient.Wallpapers.FirstOrDefault(x => x.VirtualPaperUid == WpConfigViewModel.Wallpaper.VirtualPaperUid) != null)
+                #region 执行操作             
+                // 同一显示器 同一壁纸 更改自定义设置
+                if (_wpControl.Wallpapers.FirstOrDefault(x => x.VirtualPaperUid == WpConfigViewModel.Wallpaper.VirtualPaperUid) != null)
                 {
                     WpConfigViewModel.WpCustomizePage.SendMessage();
                     return;
                 }
 
-                SetWallpaperResponse response =
-                    await _wallpaperControlClient.SetWallpaperAsync(
-                        WpConfigViewModel.Wallpaper,
-                        Monitors[MonitorSelectedIdx],
-                        _cancellationTokenSourceForApply.Token);
-                if (!response.IsFinished)
+                // 同一显示器 更换壁纸
+                UpdateWpResponse updateResponse = await _wpControl.UpdateWpAsync(
+                    Monitors[MonitorSelectedIdx],
+                    WpConfigViewModel.Wallpaper,
+                    _ctsApply.Token);
+                if (updateResponse.IsFinished) return;
+
+                // 对某一显示器第一次应用壁纸
+                SetWallpaperResponse setUesponse = await _wpControl.SetWallpaperAsync(
+                   Monitors[MonitorSelectedIdx],
+                   WpConfigViewModel.Wallpaper,
+                    _ctsApply.Token);
+                if (!setUesponse.IsFinished)
                 {
-                    _ = await new ContentDialog()
-                    {
-                        XamlRoot = xamlRoot,
-                        Title = _localizer.GetLocalizedString("Dialog_Title_Error"),
-                        Content = response.Msg,
-                        PrimaryButtonText = _localizer.GetLocalizedString("Dialog_Btn_Confirm"),
-                        DefaultButton = ContentDialogButton.Primary,
-                    }.ShowAsync();
+                    await _dialogService.ShowDialogAsync(
+                        _localizer.GetLocalizedString("Dialog_Content_ApplyError")
+                        , _localizer.GetLocalizedString("Dialog_Title_Error")
+                        , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
                 }
 
                 //Monitors[MonitorSelectedIdx].ThumbnailPath = WpConfigViewModel.Wallpaper.ThumbnailPath;
@@ -307,46 +343,78 @@ namespace VirtualPaper.UI.ViewModels
             }
             finally
             {
-                IsLoading(false);
-                _cancellationTokenSourceForApply?.Dispose();
-                _cancellationTokenSourceForApply = null;
+                Loaded();
+                _ctsApply?.Dispose();
+                _ctsApply = null;
             }
         }
         #endregion
 
         internal void ErrOccoured(Exception ex)
         {
+            _logger.Error(ex.Message);
             InfoBarSeverity = InfoBarSeverity.Error;
             InfobarMsg = _localizer.GetLocalizedString("WpConfig_InfobarMsg_Err");
             InfoBarIsOpen = true;
-
-            _logger.Error(ex);
         }
 
         internal void OperationCanceled()
         {
+            _logger.Info(InfobarMsg);
             InfoBarSeverity = InfoBarSeverity.Informational;
             InfobarMsg = _localizer.GetLocalizedString("WpConfig_InfobarMsg_Cancel");
             InfoBarIsOpen = true;
-
-            _logger.Info(InfobarMsg);
         }
 
-        internal void IsLoading(bool isLoading)
+        internal void ShowMessge(string msg, InfoBarSeverity infoBarSeverity)
         {
-            if (isLoading)
-            {
-                IsEnable = false;
-                LoadingVisibility = Visibility.Visible;
-            }
-            else
-            {
-                IsEnable = true;
-                LoadingVisibility = Visibility.Collapsed;
-            }
+            _logger.Info(InfobarMsg);
+            InfoBarSeverity = infoBarSeverity;
+            InfobarMsg = _localizer.GetLocalizedString(msg);
+            InfoBarIsOpen = true;
         }
 
-        private void TryAddToLibrary()
+        internal void Loading(
+            bool cancelEnable,
+            bool progressbarEnable,
+            CancellationTokenSource[] cts)
+        {
+            IsEnable = false;
+            CtsTokens = cts;
+            CancelEnable = cancelEnable;
+            ProgressbarEnable = progressbarEnable;
+            LoadingVisibility = Visibility.Visible;
+
+            //_loadingUsrctrlViewModel = new LoadingUsrctrlViewModel(cancelEnable, progressbarEnable, cts);
+            //_loadingUsrctrl = new() { DataContext = _loadingUsrctrlViewModel };
+
+            //IsEnable = false;
+            //_updateLoadingprogressbar = _loadingUsrctrlViewModel.UpdateProgressbarValue;
+            //FrameContainer ??= _loadingUsrctrl;
+        }
+
+        internal void Loaded()
+        {
+            IsEnable = true;
+            LoadingVisibility = Visibility.Collapsed;
+            //_loadingUsrctrlViewModel = null;
+            //_updateLoadingprogressbar = null;
+        }
+
+        internal void UpdateProgressbarValue(int curValue, int toltalValue)
+        {
+            //_updateLoadingprogressbar?.Invoke(curValue, toltalValue);
+            TotalValue = toltalValue;
+            CurValue = curValue;
+        }
+
+        //internal void Cancel()
+        //{
+        //    WpConfigViewModel.Cancel();
+        //    App.Services.GetRequiredService<LibraryContentsViewModel>().Cancel();
+        //}
+
+        private void AddToLibrary()
         {
             var viewModel = App.Services.GetRequiredService<LibraryContentsViewModel>();
             viewModel.AddToLibrary(WpConfigViewModel.Wallpaper);
@@ -354,10 +422,14 @@ namespace VirtualPaper.UI.ViewModels
 
         private IList<IMonitor> _monitors = [];
         private ILocalizer _localizer;
+        private IDialogService _dialogService;
         private IMonitorManagerClient _monitorManagerClient;
-        private IWallpaperControlClient _wallpaperControlClient;
+        private IWallpaperControlClient _wpControl;
         private IUserSettingsClient _userSettingsClient;
-        private CancellationTokenSource _cancellationTokenSourceForApply;
+        //private Action<int, int> _updateLoadingprogressbar;
+        private CancellationTokenSource _ctsApply;
+        //private LoadingUsrctrl _loadingUsrctrl;
+        //private LoadingUsrctrlViewModel _loadingUsrctrlViewModel;
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

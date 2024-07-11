@@ -11,24 +11,26 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
-        <ItemsView 
+        <ItemsView             
             x:Name="ItemsViewer"            
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             HorizontalContentAlignment="Left"
             VerticalContentAlignment="Center"            
-            ItemsSource="{Binding LibraryWallpapers}"
-            SelectionMode="Single"
+            ItemsSource="{Binding LibraryWallpapers}"            
             AllowDrop="True"
             DragOver="ItemsView_DragOver"
             Drop="ItemsView_Drop"
-            IsItemInvokedEnabled="True"
-            RightTapped="ItemsView_RightTapped"
-            ItemInvoked="ItemsView_ItemInvoked">
+            SelectionMode="Single"
+            PointerPressed="ItemsViewer_PointerPressed"
+            RightTapped="ItemsView_RightTapped">
             <ItemsView.ItemTemplate>
                 <DataTemplate>
                     <ItemContainer 
-                        AutomationProperties.Name="{Binding Title}">
+                        AutomationProperties.Name="{Binding Title}"
+                        PointerEntered="ItemGrid_PointerEntered"
+                        PointerExited="ItemGrid_PointerExited"
+                        FocusVisualPrimaryBrush="{ThemeResource SystemBaseHighColor}">
                         <Grid
                             x:Name="ItemGrid"
                             Height="200"
@@ -38,9 +40,7 @@
                                 Stretch="Uniform" 
                                 HorizontalAlignment="Stretch" 
                                 VerticalAlignment="Stretch"
-                                ImageFailed="Image_ImageFailed"
-                                PointerEntered="ItemGrid_PointerEntered"
-                                PointerExited="ItemGrid_PointerExited"/>
+                                ImageFailed="Image_ImageFailed"/>
                             <StackPanel 
                                 Orientation="Vertical" 
                                 Height="60" 
@@ -60,8 +60,8 @@
             </ItemsView.ItemTemplate>
             <ItemsView.Layout>
                 <UniformGridLayout 
-                    MinRowSpacing="8" 
-                    MinColumnSpacing="8"                     
+                    MinRowSpacing="15" 
+                    MinColumnSpacing="15"                     
                     MaximumRowsOrColumns="-1"/>
             </ItemsView.Layout>
             <ItemsView.ContextFlyout>
@@ -105,6 +105,14 @@
                         Click="ContextMenu_Click" >
                         <MenuFlyoutItem.Icon>
                             <FontIcon Glyph="&#xE8FB;" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem 
+                        x:Name="LockBackground" 
+                        Text="{Binding MenuFlyout_Text_ApplyToLockBG}"
+                        Click="ContextMenu_Click" >
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="&#xEE3F;" />
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
                     <MenuFlyoutItem

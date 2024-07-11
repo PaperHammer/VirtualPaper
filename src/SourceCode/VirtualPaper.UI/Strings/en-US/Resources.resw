@@ -129,38 +129,56 @@
   <data name="AppSettings_SelBarItem4_Others" xml:space="preserve">
     <value>Others</value>
   </data>
+  <data name="DetailedInfo_Rating" xml:space="preserve">
+    <value>Rating：</value>
+  </data>
   <data name="DetailedInfo_TextAspectRadio" xml:space="preserve">
-    <value>Aspect Radio</value>
+    <value>Aspect Radio：</value>
   </data>
   <data name="DetailedInfo_TextAuthors" xml:space="preserve">
-    <value>Authors</value>
+    <value>Authors：</value>
   </data>
   <data name="DetailedInfo_TextDesc" xml:space="preserve">
-    <value>Description</value>
+    <value>Description：</value>
+  </data>
+  <data name="DetailedInfo_TextDownload" xml:space="preserve">
+    <value>Download</value>
   </data>
   <data name="DetailedInfo_TextFileExtension" xml:space="preserve">
-    <value>File Type（Extension）</value>
+    <value>File Type（Extension）：</value>
   </data>
   <data name="DetailedInfo_TextFileSize" xml:space="preserve">
-    <value>File Size</value>
+    <value>File Size：</value>
+  </data>
+  <data name="DetailedInfo_TextPreview" xml:space="preserve">
+    <value>Preview</value>
   </data>
   <data name="DetailedInfo_TextPublishDate" xml:space="preserve">
-    <value>Publish Date</value>
+    <value>Publish Date：</value>
   </data>
   <data name="DetailedInfo_TextResolution" xml:space="preserve">
-    <value>Resolution</value>
+    <value>Resolution：</value>
+  </data>
+  <data name="DetailedInfo_TextScore" xml:space="preserve">
+    <value>Score</value>
+  </data>
+  <data name="DetailedInfo_TextScoreSubmit" xml:space="preserve">
+    <value>Submit</value>
+  </data>
+  <data name="DetailedInfo_TextScoreTilte" xml:space="preserve">
+    <value>Inspiration resonates, starting with your appraise</value>
   </data>
   <data name="DetailedInfo_TextTags" xml:space="preserve">
-    <value>Tags (comma separated)</value>
+    <value>Tags (comma separated)：</value>
   </data>
   <data name="DetailedInfo_TextTtile" xml:space="preserve">
     <value>Title</value>
   </data>
   <data name="DetailedInfo_TextType" xml:space="preserve">
-    <value>Type</value>
+    <value>Type：</value>
   </data>
   <data name="DetailedInfo_TextVirtualPaperUid" xml:space="preserve">
-    <value>vpUid</value>
+    <value>vp_uid：</value>
   </data>
   <data name="Dialog_Btn_Cancel" xml:space="preserve">
     <value>Cancel</value>
@@ -168,30 +186,43 @@
   <data name="Dialog_Btn_Confirm" xml:space="preserve">
     <value>Confirm</value>
   </data>
+  <data name="Dialog_Content_ApplyError" xml:space="preserve">
+    <value>Failed to apply wallpaper, please try again</value>
+  </data>
+  <data name="Dialog_Content_FileNotExists" xml:space="preserve">
+    <value>The file may have been deleted or moved</value>
+  </data>
   <data name="Dialog_Content_GetMonitorsAsync" xml:space="preserve">
     <value>Number of monitors available:</value>
+  </data>
+  <data name="Dialog_Content_ImportFileFailed" xml:space="preserve">
+    <value>The file cannot be imported
+1. Only the import of a single file is supported;
+2. Only the following file types are supported:
+    GIF: .gif
+    Still images: .jpg .jpeg .bmp .png
+    Video: .mp4 .webm</value>
   </data>
   <data name="Dialog_Content_LibraryContentErr" xml:space="preserve">
     <value>The operation could not be performed and the file may be corrupted</value>
   </data>
   <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
-    <value>Do you delete the file?Note: This operation is irreversible!!</value>
+    <value>Do you delete the file?
+Note: This operation is irreversible!!</value>
   </data>
   <data name="Dialog_Content_MinotorUninstall" xml:space="preserve">
     <value>The selected display is unavailable or disconnected</value>
+  </data>
+  <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
+    <value>Only the following file types are supported:
+    GIF: .gif
+    Still images: .jpg .jpeg .bmp .png</value>
   </data>
   <data name="Dialog_Content_PreviewLibraryContentFailed" xml:space="preserve">
     <value>Unable to find a valid file in the specified directory</value>
   </data>
   <data name="Dialog_Content_ReadMetaDataFialed" xml:space="preserve">
     <value>An exception occurs when reading a file, make sure that the target file can be accessed properly</value>
-  </data>
-  <data name="Dialog_Content_TryDropFileErr" xml:space="preserve">
-    <value>Only the import of a single file is supported;
-Only the following file types are supported:
-  GIF .gif
-  Still images .jpg .jpeg .bmp .png
-  Video .mp4 .webm</value>
   </data>
   <data name="Dialog_Content_WallpaperDirectoryChangePathInvalid" xml:space="preserve">
     <value>You can't set the storage directory to the root of your application data</value>
@@ -217,6 +248,9 @@ Only the following file types are supported:
   <data name="MenuFlyout_Text_Apply" xml:space="preserve">
     <value>Apply</value>
   </data>
+  <data name="MenuFlyout_Text_ApplyToLockBG" xml:space="preserve">
+    <value>Apply to lock screen background</value>
+  </data>
   <data name="MenuFlyout_Text_Delete" xml:space="preserve">
     <value>Remove from disk</value>
   </data>
@@ -237,6 +271,9 @@ Only the following file types are supported:
   </data>
   <data name="MenuFlyout_Text_ShowOnDisk" xml:space="preserve">
     <value>Open the directory where the file is located</value>
+  </data>
+  <data name="Msg_LockScreenSet_Successful" xml:space="preserve">
+    <value>Lock-screen-bg has been modified</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppFileStorage" xml:space="preserve">
     <value>Storage path</value>
@@ -590,9 +627,6 @@ Author: PaperHammer</value>
   </data>
   <data name="WpConfig_InfobarMsg_Err" xml:space="preserve">
     <value>An error has occurred</value>
-  </data>
-  <data name="WpConfig_InfobarTitle" xml:space="preserve">
-    <value>Prompt</value>
   </data>
   <data name="WpControl_Err_File_Not_Found" xml:space="preserve">
     <value>The target file does not exist</value>

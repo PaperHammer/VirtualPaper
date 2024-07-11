@@ -50,7 +50,6 @@
                         HorizontalAlignment="Center"
                         IsOpen="{Binding InfoBarIsOpen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         Severity="{Binding InfoBarSeverity}"
-                        Title="{Binding InfobarTitle}"
                         Message="{Binding InfobarMsg}" />
 
                     <StackPanel
@@ -180,40 +179,81 @@
             </Grid>
         </ContentControl>
 
-        <StackPanel
+        <!--<Frame
+            x:Name="loadingFrame"
+            Content="{Binding FrameContainer}"
+            Visibility="{Binding LoadingVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>-->
+        <ucs:LoadingUsrctrl
+            CancelEnable="{Binding CancelEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            ProgressbarEnable="{Binding ProgressbarEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            CtsTokens="{Binding CtsTokens, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            TotalValue="{Binding TotalValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            CurValue="{Binding CurValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            Visibility="{Binding LoadingVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <!--<StackPanel
+            Visibility="{Binding LoadingVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
             Orientation="Vertical"
             VerticalAlignment="Center"
             HorizontalAlignment="Center">
-            <ProgressRing 
-                x:Name="progressBar"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                IsActive="True"
-                Visibility="{Binding LoadingVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                Height="80"
-                Width="80"
-                Margin="50 20"
-                Background="Transparent"/>
+            <Grid
+                Margin="20"
+                HorizontalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
 
-            <TextBlock
-                x:Name="proTbk"
-                Margin="50 20"
-                Visibility="{Binding LoadingVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                FontSize="18"
-                Text="{Binding Text_Loading}"/>
+                <ProgressRing 
+                    x:Name="progressBar"
+                    Grid.Column="0"
+                    Margin="0 0 20 0"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    IsActive="True"
+                    Height="25"
+                    Width="25"
+                    Background="Transparent"/>
 
-            <!--<Button
+                <TextBlock
+                    x:Name="proTbk"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    FontSize="20"
+                    Text="{Binding Text_Loading}"/>
+            </Grid>
+
+            <Grid
+                Margin="20"
+                HorizontalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <ProgressBar 
+                    Grid.Column="0"
+                    Margin="0 0 20 0"
+                    Width="340" 
+                    Value="{Binding ImportValue}"
+                    Maximum="{Binding ImportTotalCnt}"/>
+
+                <TextBlock
+                    Grid.Column="1"
+                    FontWeight="Bold"
+                    Text="{Binding ImportValueString}"/>
+            </Grid>
+
+            <Button
                 x:Name="BtnCancel"
-                Margin="50 20"
+                Margin="20"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
                 Width="100"
                 Height="40"
-                Visibility="{Binding LoadingVisibility}"
+                Visibility="{Binding CancelVisibility}"
                 Content="{Binding Text_Cancel}"
-                Click="BtnCancel_Click"/>-->
-        </StackPanel>
+                Click="BtnCancel_Click"/>
+        </StackPanel>-->
     </Grid>
 </Page>

@@ -2,8 +2,8 @@
 using System.IO;
 using System.IO.Pipes;
 using System.Security.Principal;
-using VirtualPaper.Cores.Desktop;
 using VirtualPaper.Cores.ScreenSaver;
+using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.WallpaperMetaData;
 using VirtualPaper.Services.Interfaces;
 

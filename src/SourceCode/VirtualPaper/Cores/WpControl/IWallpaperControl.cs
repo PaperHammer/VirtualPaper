@@ -4,10 +4,9 @@ using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.WallpaperMetaData;
-using UpdateWallpaperState = VirtualPaper.Common.UpdateWallpaperState;
 using WallpaperType = VirtualPaper.Common.WallpaperType;
 
-namespace VirtualPaper.Cores.Desktop
+namespace VirtualPaper.Cores.WpControl
 {
     /// <summary>
     /// 桌面壁纸控制
@@ -55,11 +54,12 @@ namespace VirtualPaper.Cores.Desktop
         void SendMessageWallpaper(IMonitor monitor, string folderPath, IpcMessage msg);
 
         IMetaData GetWallpaper(string folderPath);
-        Task<SetWallpaperResponse> SetWallpaperAsync(IMetaData metaData, IMonitor monitor, CancellationToken cancellationToken);
+        Task<SetWallpaperResponse> SetWallpaperAsync(IMetaData metaData, IMonitor monitor, CancellationToken token);
+        UpdateWpResponse UpdateWp(string monitorId, IMetaData metaData, CancellationToken token);
         IMetaData CreateWallpaper(string folderPath, string filePath, WallpaperType type, CancellationToken token);
         FileProperty TryGetProeprtyInfo(string filePath, WallpaperType type);
         void ChangeWallpaperLayoutFolrderPath(string previousDir, string newDir);
-        
+        void ResetWpCustomize(string wpCustomizePath, WallpaperType type);
 
         /// <summary>
         /// Wallpaper set/update/removed.

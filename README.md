@@ -46,6 +46,20 @@ Screen saver services that don't rely on Windows
 
 <img src="/resources/screensaver.png" width="600" height="338"/>
 
+---
+快速设置锁屏背景图片
+
+Quickly set the lock screen background image
+
+<img src="/resources/lock_background.png" width="370" height="400"/>
+
+---
+多种现代化主题风格
+
+Many modern theme styles
+
+<img src="/resources/ui_texture.png" width="700" height="80"/>
+
 ## Download
 Windows 10.0.19041.0 及以上
 ##### [Installer (Windows 10 10.0.19041.0 or above)](https://github.com/PaperHammer/VirtualPaper/releases/latest)

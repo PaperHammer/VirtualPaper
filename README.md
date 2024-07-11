@@ -51,7 +51,7 @@ Screen saver services that don't rely on Windows
 
 Quickly set the lock screen background image
 
-<img src="/resources/lock_background.png" width="576" height="597"/>
+<img src="/resources/lock_background.png" width="370" height="400"/>
 
 ---
 多种现代化主题风格

@@ -199,7 +199,7 @@
     <value>该文件无法导入
 1. 仅支持单个文件的导入;
 2. 仅支持以下文件类型：
-    动图 .gif
+    动图 .gif  .apng
     静态图片 .jpg  .jpeg  .bmp  .png
     视频 .mp4  .webm</value>
   </data>

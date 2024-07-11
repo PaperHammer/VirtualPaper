@@ -199,7 +199,7 @@
     <value>The file cannot be imported
 1. Only the import of a single file is supported;
 2. Only the following file types are supported:
-    GIF: .gif
+    GIF: .gif  .apng
     Still images: .jpg .jpeg .bmp .png
     Video: .mp4 .webm</value>
   </data>

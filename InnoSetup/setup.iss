@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Virtual_Paper"
-#define MyAppVersion "0.2.0.0"
+#define MyAppVersion "0.2.1.0"
 #define MyAppPublisher "PaperHammer"
 #define MyAppURL "https://github.com/PaperHammer/VirtualPaper"
 #define MyAppExeName "VirtualPaper.exe"

@@ -8,7 +8,7 @@
 		<UseWindowsForms>True</UseWindowsForms>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<AssemblyVersion>0.2.0.0</AssemblyVersion>
+		<AssemblyVersion>0.2.1.0</AssemblyVersion>
 		<ApplicationIcon>virtualpaper.ico</ApplicationIcon>
 		<PackageIcon>appicon_128.png</PackageIcon>
 	</PropertyGroup>

@@ -10,7 +10,7 @@
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<AssemblyVersion>0.2.1.0</AssemblyVersion>
 		<ApplicationIcon>virtualpaper.ico</ApplicationIcon>
-		<PackageIcon>appicon_128.png</PackageIcon>
+		<PackageIcon>Resources\appicon_128.png</PackageIcon>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -23,17 +23,16 @@
 		</Content>
 	</ItemGroup>
 
-	<ItemGroup>
-		<!--<None Remove="Cores\Tray\q3vopw4l.egi~" />-->
-		<None Remove="appicon_128.png" />
-		<None Remove="Resources\appicon_128.png" />
+	<!--<ItemGroup>
+		--><!--<None Remove="Cores\Tray\q3vopw4l.egi~" />--><!--
 		<None Remove="Resources\appicon_180.png" />
+		<None Remove="Resources\appicon_128.png" />
 		<None Remove="Resources\appicon_96.png" />
 		<None Remove="Resources\splash.png" />
 		<None Remove="Resources\Update\bg.png" />
 		<None Remove="Resources\Update\splashCol.png" />
 		<None Remove="virtualpaper.ico" />
-	</ItemGroup>
+	</ItemGroup>-->
 
 	<!--<ItemGroup>
 	  <Page Remove="lang\en-US.xaml" />
@@ -74,9 +73,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Resource Include="appicon_128.png">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Resource>
 		<Resource Include="Resources\appicon_128.png" />
 		<Resource Include="Resources\appicon_180.png" />
 		<Resource Include="Resources\appicon_96.png" />
@@ -101,6 +97,13 @@
 	    <Generator>PublicResXFileCodeGenerator</Generator>
 	    <LastGenOutput>lang.Designer.cs</LastGenOutput>
 	  </EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Resources\appicon_128.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 
 </Project>

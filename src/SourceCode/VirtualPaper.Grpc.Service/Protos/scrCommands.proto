@@ -1,40 +1,12 @@
 syntax = "proto3";
-package VirtualPaper.ScreenSaver.Grpc.Service.ScrCommands;
+package VirtualPaper.Grpc.Service.ScrCommands;
 import "google/protobuf/empty.proto";
+import "Protos/models.proto";
 
-service ScrCommandsService {
-  rpc Start (WpMetaData) returns (google.protobuf.Empty);
-  rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty);
-  rpc ChangeLockStatu(LockData) returns (google.protobuf.Empty);
-  rpc AddToWhiteList(ProcInfoData) returns (google.protobuf.Empty);
-  rpc RemoveFromWhiteList(ProcInfoData) returns (google.protobuf.Empty);
+service Grpc_ScrCommandsService {
+	rpc Start (VirtualPaper.Grpc.Service.Models.Grpc_WpBasicData) returns (google.protobuf.Empty);
+	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc ChangeLockStatu(VirtualPaper.Grpc.Service.Models.Grpc_LockData) returns (google.protobuf.Empty);
+	rpc AddToWhiteList(VirtualPaper.Grpc.Service.Models.Grpc_ProcInfoData) returns (google.protobuf.Empty);
+	rpc RemoveFromWhiteList(VirtualPaper.Grpc.Service.Models.Grpc_ProcInfoData) returns (google.protobuf.Empty);
 }
-
-message WpMetaData {
-    WallpaperType type = 1;	
-    string file_path = 2;
-}
-
-message LockData {
-	bool is_lock = 1;
-}
-
-message ProcInfoData {
-    string proc_name = 1;
-    string icon_path = 2;
-    bool is_running = 3;
-}
-
-enum WallpaperType {
-	app = 0;
-	web = 1;
-	webaudio = 2;
-	bizhawk = 3;
-	unity = 4;
-	unityaudio = 5;
-	godot = 6;	
-	gif = 7;
-	picture = 8;
-	video = 9;
-}
-

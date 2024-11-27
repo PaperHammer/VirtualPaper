@@ -8,7 +8,9 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     x:Name="Page"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    Loaded="Page_Loaded"    
+    NavigationCacheMode="Enabled">
 
     <Grid>
         <ItemsView             
@@ -27,7 +29,7 @@
             <ItemsView.ItemTemplate>
                 <DataTemplate>
                     <ItemContainer 
-                        AutomationProperties.Name="{Binding Title}"
+                        AutomationProperties.Name="{Binding BasicData.Title}"
                         PointerEntered="ItemGrid_PointerEntered"
                         PointerExited="ItemGrid_PointerExited"
                         FocusVisualPrimaryBrush="{ThemeResource SystemBaseHighColor}">
@@ -36,7 +38,7 @@
                             Height="200"
                             Width="320">
                             <Image
-                                Source="{Binding ThumbnailPath}"
+                                Source="{Binding BasicData.ThumbnailPath}"
                                 Stretch="Uniform" 
                                 HorizontalAlignment="Stretch" 
                                 VerticalAlignment="Stretch"
@@ -48,7 +50,7 @@
                                 Padding="5,1"  
                                 Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
                                 <TextBlock 
-                                    Text="{Binding Title}" 
+                                    Text="{Binding BasicData.Title}" 
                                     FontSize="18"
                                     TextWrapping="Wrap"
                                     HorizontalTextAlignment="Left"
@@ -76,6 +78,14 @@
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
                     <MenuFlyoutItem
+                        x:Name="Update"
+                        Text="{Binding MenuFlyout_Text_Update}"
+                        Click="ContextMenu_Click">
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="&#xE753;" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem
                         x:Name="EditInfo"
                         Text="{Binding MenuFlyout_Text_EditInfo}"
                         Click="ContextMenu_Click">
@@ -91,14 +101,14 @@
                             <FontIcon Glyph="&#xE8A1;" />
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
-                    <MenuFlyoutItem 
+                    <!--<MenuFlyoutItem 
                         x:Name="Import" 
                         Text="{Binding MenuFlyout_Text_Import}"
                         Click="ContextMenu_Click" >
                         <MenuFlyoutItem.Icon>
                             <FontIcon Glyph="&#xE8B5;" />
                         </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
+                    </MenuFlyoutItem>-->
                     <MenuFlyoutItem 
                         x:Name="Apply" 
                         Text="{Binding MenuFlyout_Text_Apply}"

@@ -2,22 +2,22 @@
 using Microsoft.UI.Xaml;
 using System;
 using System.Threading.Tasks;
+using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
-using VirtualPaper.Models.WallpaperMetaData;
+using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.Services.Interfaces;
+using VirtualPaper.UIComponent.Utils;
 using WinUI3Localizer;
 
-namespace VirtualPaper.UI.ViewModels.Utils
-{
-    public class DetailedInfoViewModel
-    {
+namespace VirtualPaper.UI.ViewModels.Utils {
+    public class DetailedInfoViewModel {
         public string Title { get; set; } = string.Empty;
         public string ThumbnailPath { get; set; } = string.Empty;
         public double Rating { get; set; } = -1;
         public double RatingShow { get; set; } = 0;
         public string Authors { get; set; } = string.Empty;
         public string Desc { get; set; } = string.Empty;
-        public string VirtualPaperUid { get; set; } = string.Empty;
+        public string WallPaperUid { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
         public string PublishDate { get; set; } = string.Empty;
         public string Tags { get; set; } = string.Empty;
@@ -25,84 +25,94 @@ namespace VirtualPaper.UI.ViewModels.Utils
         public string AspectRatio { get; set; } = string.Empty;
         public string FileExtension { get; set; } = string.Empty;
         public string FileSize { get; set; } = string.Empty;
+        public string TextVersion { get; set; } = string.Empty;
 
-        public string DetailedInfo_TextScore { get; init; } = string.Empty;
-        public string DetailedInfo_TextScoreTilte { get; init; } = string.Empty;
-        public string DetailedInfo_TextScoreSubmit { get; init; } = string.Empty;
-        public string DetailedInfo_TextPreview { get; init; } = string.Empty;
-        public string DetailedInfo_TextDownload { get; init; } = string.Empty;
-        public string DetailedInfo_TextRating { get; init; } = string.Empty;
-        public string DetailedInfo_TextAuthors { get; init; } = string.Empty;
-        public string DetailedInfo_TextDesc { get; init; } = string.Empty;
-        public string DetailedInfo_TextVirtualPaperUid { get; init; } = string.Empty;
-        public string DetailedInfo_TextType { get; init; } = string.Empty;
-        public string DetailedInfo_TextPublishDate { get; init; } = string.Empty;
-        public string DetailedInfo_TextTags { get; init; } = string.Empty;
-        public string DetailedInfo_TextResolution { get; init; } = string.Empty;
-        public string DetailedInfo_TextAspectRadio { get; init; } = string.Empty;
-        public string DetailedInfo_TextFileExtension { get; init; } = string.Empty;
-        public string DetailedInfo_TextFileSize { get; init; } = string.Empty;
+        public string DetailedInfo_TextScore { get; set; } = string.Empty;
+        public string DetailedInfo_TextScoreTilte { get; set; } = string.Empty;
+        public string DetailedInfo_TextScoreSubmit { get; set; } = string.Empty;
+        public string DetailedInfo_TextPreview { get; set; } = string.Empty;
+        public string DetailedInfo_TextDownload { get; set; } = string.Empty;
+        public string DetailedInfo_TextRating { get; set; } = string.Empty;
+        public string DetailedInfo_TextAuthors { get; set; } = string.Empty;
+        public string DetailedInfo_TextDesc { get; set; } = string.Empty;
+        public string DetailedInfo_TextVirtualPaperUid { get; set; } = string.Empty;
+        public string DetailedInfo_TextRType { get; set; } = string.Empty;
+        public string DetailedInfo_TextPublishDate { get; set; } = string.Empty;
+        public string DetailedInfo_TextTags { get; set; } = string.Empty;
+        public string DetailedInfo_TextResolution { get; set; } = string.Empty;
+        public string DetailedInfo_TextAspectRadio { get; set; } = string.Empty;
+        public string DetailedInfo_TextFileExtension { get; set; } = string.Empty;
+        public string DetailedInfo_TextFileSize { get; set; } = string.Empty;
+        public string DetailedInfo_TextVersionInfo { get; set; } = string.Empty;
         public bool EditEnable { get; set; } = false;
 
         public Visibility BtnScoreVisibility { get; set; }
         public Visibility BtnDownloadVisibility { get; set; }
 
-        public DetailedInfoViewModel(
-            IMetaData metaData, 
-            bool editEnable,
-            bool scoredEnable,
-            bool downloadEnable)
-        {
-            if (metaData == null) return;
-
-            _localizer = Localizer.Get();
-            this._metaData = metaData;
+        public DetailedInfoViewModel() {
             this._dialogService = App.Services.GetRequiredService<IDialogService>();
-            this._wallpaperControlClient = App.Services.GetRequiredService<IWallpaperControlClient>();
-
-            this.DetailedInfo_TextScore = _localizer.GetLocalizedString("DetailedInfo_TextScore");
-            this.DetailedInfo_TextScoreTilte = _localizer.GetLocalizedString("DetailedInfo_TextScoreTilte");
-            this.DetailedInfo_TextScoreSubmit = _localizer.GetLocalizedString("DetailedInfo_TextScoreSubmit");
-            this.DetailedInfo_TextPreview = _localizer.GetLocalizedString("DetailedInfo_TextPreview");
-            this.DetailedInfo_TextDownload = _localizer.GetLocalizedString("DetailedInfo_TextDownload");
-            this.DetailedInfo_TextRating = _localizer.GetLocalizedString("DetailedInfo_Rating");
-
-            this.DetailedInfo_TextVirtualPaperUid = _localizer.GetLocalizedString("DetailedInfo_TextVirtualPaperUid");
-            this.DetailedInfo_TextType = _localizer.GetLocalizedString("DetailedInfo_TextType");
-            this.DetailedInfo_TextAuthors = _localizer.GetLocalizedString("DetailedInfo_TextAuthors");
-            this.DetailedInfo_TextDesc = _localizer.GetLocalizedString("DetailedInfo_TextDesc");
-            this.DetailedInfo_TextPublishDate = _localizer.GetLocalizedString("DetailedInfo_TextPublishDate");
-            this.DetailedInfo_TextTags = _localizer.GetLocalizedString("DetailedInfo_TextTags");
-            this.DetailedInfo_TextResolution = _localizer.GetLocalizedString("DetailedInfo_TextResolution");
-            this.DetailedInfo_TextAspectRadio = _localizer.GetLocalizedString("DetailedInfo_TextAspectRadio");
-            this.DetailedInfo_TextFileExtension = _localizer.GetLocalizedString("DetailedInfo_TextFileExtension");
-            this.DetailedInfo_TextFileSize = _localizer.GetLocalizedString("DetailedInfo_TextFileSize");
-
-            this.VirtualPaperUid = metaData.VirtualPaperUid;
-            this.ThumbnailPath = metaData.ThumbnailPath;
-            this.Rating = metaData.Rating;
-            this.RatingShow = Math.Max(0, this.Rating);
-            this.Title = metaData.Title;
-            this.Desc = metaData.Desc;
-            this.Type = metaData.Type.ToString();
-            this.Authors = string.Join(",", metaData.Authors);
-            this.PublishDate = metaData.PublishDate;
-            this.Tags = string.Join(",", metaData.Tags);
-            this.Resolution = metaData.Resolution;
-            this.AspectRatio = metaData.AspectRatio;
-            this.FileExtension = metaData.FileExtension;
-            this.FileSize = metaData.FileSize;
+            this._wpControlClient = App.Services.GetRequiredService<IWallpaperControlClient>();
             
-            this.EditEnable = editEnable;
-            this.BtnScoreVisibility = VirtualPaperUid.StartsWith("VP") && scoredEnable 
-                ? Visibility.Visible : Visibility.Collapsed;
-            this.BtnDownloadVisibility = downloadEnable
-                ? Visibility.Visible : Visibility.Collapsed;
+            _localizer = LanguageUtil.LocalizerInstacne;
+            
+            InitText();
         }
 
-        internal async Task PreviewAsync()
-        {
-            await _wallpaperControlClient.PreviewWallpaperAsync(_metaData, true);
+        private void InitText() {
+
+
+            this.DetailedInfo_TextScore = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextScore);
+            this.DetailedInfo_TextScoreTilte = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextScoreTilte);
+            this.DetailedInfo_TextScoreSubmit = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextScoreSubmit);
+            this.DetailedInfo_TextPreview = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextPreview);
+            this.DetailedInfo_TextDownload = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextDownload);
+            this.DetailedInfo_TextRating = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_Rating);
+
+            this.DetailedInfo_TextVirtualPaperUid = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextVirtualPaperUid);
+            this.DetailedInfo_TextRType = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextRType);
+            this.DetailedInfo_TextAuthors = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextAuthors);
+            this.DetailedInfo_TextDesc = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextDesc);
+            this.DetailedInfo_TextPublishDate = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextPublishDate);
+            this.DetailedInfo_TextTags = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextTags);
+            this.DetailedInfo_TextResolution = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextResolution);
+            this.DetailedInfo_TextAspectRadio = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextAspectRadio);
+            this.DetailedInfo_TextFileExtension = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextFileExtension);
+            this.DetailedInfo_TextFileSize = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextFileSize);
+            this.DetailedInfo_TextVersionInfo = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextVersionInfo);
+        }
+
+        public DetailedInfoViewModel(
+            IWpMetadata data,
+            bool editEnable,
+            bool scoredEnable,
+            bool downloadEnable) : this() {
+            this._data = data;
+
+            this.WallPaperUid = data.BasicData.WallpaperUid;
+            this.ThumbnailPath = data.BasicData.ThumbnailPath;
+            this.Rating = data.BasicData.Rating;
+            this.RatingShow = Math.Max(0, this.Rating);
+            this.Title = data.BasicData.Title;
+            this.Desc = data.BasicData.Desc;
+            //this.Type = data.BasicData.Type.ToString();
+            this.Authors = string.Join(",", data.BasicData.Authors);
+            this.PublishDate = data.BasicData.PublishDate;
+            this.Tags = string.Join(",", data.BasicData.Tags);
+            this.Resolution = data.BasicData.Resolution;
+            this.AspectRatio = data.BasicData.AspectRatio;
+            this.FileExtension = data.BasicData.FileExtension;
+            this.FileSize = data.BasicData.FileSize;
+            this.TextVersion = data.BasicData.AppInfo.AppVersion + "_" + data.BasicData.AppInfo.FileVersion;
+
+            this.EditEnable = editEnable;
+            this.BtnScoreVisibility = WallPaperUid.StartsWith("VP") && scoredEnable
+                ? Visibility.Visible : Visibility.Collapsed;
+            this.BtnDownloadVisibility = downloadEnable
+            ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        internal async Task PreviewAsync() {
+            await _wpControlClient.PreviewWallpaperAsync(_data);
         }
 
         //internal async Task SubmitSocreAsync(double rating)
@@ -111,8 +121,8 @@ namespace VirtualPaper.UI.ViewModels.Utils
         //}
 
         private ILocalizer _localizer;
-        private IMetaData _metaData;
+        private IWpMetadata _data;
         private IDialogService _dialogService;
-        private IWallpaperControlClient _wallpaperControlClient;
+        private IWallpaperControlClient _wpControlClient;
     }
 }

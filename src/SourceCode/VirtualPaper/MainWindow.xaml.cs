@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using VirtualPaper.Common;
-using VirtualPaper.Cores.CommClients;
+using VirtualPaper.Cores.TrayControl;
 using VirtualPaper.Cores.PlaybackControl;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.lang;
@@ -14,19 +14,16 @@ using VirtualPaper.Services.Interfaces;
 using Wpf.Ui.Controls;
 using MenuItem = System.Windows.Controls.MenuItem;
 
-namespace VirtualPaper
-{
+namespace VirtualPaper {
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class MainWindow : Window
-    {
+    public partial class MainWindow : Window {
         public MainWindow(
             IUIRunnerService uiRunner,
             IUserSettingsService userSettingsService,
             IWallpaperControl wpControl,
-            IPlayback playbackMonitor)
-        {
+            IPlayback playbackMonitor) {
             InitializeComponent();
 
             _uiRunnerService = uiRunner;
@@ -37,64 +34,52 @@ namespace VirtualPaper
             _playbackMonitor.PlaybackModeChanged += Playback_PlaybackStateChanged;
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             notifyIcon.Dispose();
             ToastNotificationManagerCompat.Uninstall();
         }
 
-        private void Window_SourceInitialized(object sender, EventArgs e)
-        {
+        private void Window_SourceInitialized(object sender, EventArgs e) {
             new ToastContentBuilder()
                 .AddText(LanguageManager.Instance["Virtual_Paper_isRunning"])
                 .AddText(LanguageManager.Instance["Virtual_Paper_isRunning_Greetings"])
                 .Show();
         }
 
-        private void NotifyIcon_LeftDoubleClick(Wpf.Ui.Tray.Controls.NotifyIcon sender, RoutedEventArgs e)
-        {
+        private void NotifyIcon_LeftDoubleClick(Wpf.Ui.Tray.Controls.NotifyIcon sender, RoutedEventArgs e) {
             _uiRunnerService.ShowUI();
             e.Handled = true;
         }
 
-        private void OpenAppMenuItem_Click(object sender, RoutedEventArgs e)
-        {
+        private void OpenAppMenuItem_Click(object sender, RoutedEventArgs e) {
             _uiRunnerService.ShowUI();
         }
 
-        private void CloseAllWpMenuItem_Click(object sender, RoutedEventArgs e)
-        {
+        private void CloseAllWpMenuItem_Click(object sender, RoutedEventArgs e) {
             _wpControl.CloseAllWallpapers();
         }
 
-        private void PauseAllWpMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            if (_playbackMonitor.WallpaperPlaybackMode == PlaybackMode.Play)
-            {
+        private void PauseAllWpMenuItem_Click(object sender, RoutedEventArgs e) {
+            if (_playbackMonitor.WallpaperPlaybackMode == PlaybackMode.Play) {
                 _playbackMonitor.WallpaperPlaybackMode = PlaybackMode.Paused;
-                pauseMenuItem.Icon = new SymbolIcon()
-                {
+                pauseMenuItem.Icon = new SymbolIcon() {
                     Height = 25,
                     Width = 25,
                     Symbol = SymbolRegular.Checkmark20,
                 };
             }
-            else
-            {
+            else {
                 _playbackMonitor.WallpaperPlaybackMode = PlaybackMode.Play;
                 pauseMenuItem.IsChecked = false;
-                pauseMenuItem.Icon = new SymbolIcon()
-                {
+                pauseMenuItem.Icon = new SymbolIcon() {
                     Height = 25,
                     Width = 25,
                 };
             }
         }
 
-        private void ReportBugMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            ProcessStartInfo startInfo = new()
-            {
+        private void ReportBugMenuItem_Click(object sender, RoutedEventArgs e) {
+            ProcessStartInfo startInfo = new() {
                 FileName = "cmd",
                 Arguments = $"/c start https://github.com/PaperHammer/virtualpaper/issues",
                 UseShellExecute = false,
@@ -103,77 +88,63 @@ namespace VirtualPaper
             Process.Start(startInfo);
         }
 
-        private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
-        {
+        private void ExitMenuItem_Click(object sender, RoutedEventArgs e) {
             App.ShutDown();
         }
 
-        private void Playback_PlaybackStateChanged(object? sender, PlaybackMode e)
-        {
-            _ = System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new ThreadStart(delegate
-            {
+        private void Playback_PlaybackStateChanged(object? sender, PlaybackMode e) {
+            _ = System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new ThreadStart(delegate {
                 pauseMenuItem.IsChecked = e == PlaybackMode.Paused;
             }));
         }
 
-        private void IsOnSrcsaver(object sender, RoutedEventArgs e)
-        {
+        private void IsOnSrcsaver(object sender, RoutedEventArgs e) {
             ChangeScrStatu((MenuItem)sender);
         }
 
-        private void IsOnRunningLock(object sender, RoutedEventArgs e)
-        {
+        private void IsOnRunningLock(object sender, RoutedEventArgs e) {
             ChangeRunLockStatu((MenuItem)sender);
         }
 
-        private void ChangeRunLockStatu(MenuItem mi)
-        {
+        private void ChangeRunLockStatu(MenuItem mi) {
             string tag = mi.Tag.ToString()!;
             SetRunLock(!(tag == "On"));
 
             UpdateSettings();
         }
 
-        private void ChangeScrStatu(MenuItem mi)
-        {
+        private void ChangeScrStatu(MenuItem mi) {
             string tag = mi.Tag.ToString()!;
             SetScr(!(tag == "On"));
 
             UpdateSettings();
         }
 
-        private void DeNone_Click(object sender, RoutedEventArgs e)
-        {
+        private void DeNone_Click(object sender, RoutedEventArgs e) {
             ResetDe();
-            deNone.Icon = new SymbolIcon()
-                { Height = 25, Width = 25, Symbol = SymbolRegular.CircleSmall20 };
+            deNone.Icon = new SymbolIcon() { Height = 25, Width = 25, Symbol = SymbolRegular.CircleSmall20 };
             deNone.Tag = "On";
 
             UpdateSettings();
         }
 
-        private void DeBubble_Click(object sender, RoutedEventArgs e)
-        {
+        private void DeBubble_Click(object sender, RoutedEventArgs e) {
             ResetDe();
-            deBubble.Icon = new SymbolIcon()
-                { Height = 25, Width = 25, Symbol = SymbolRegular.CircleSmall20 };
+            deBubble.Icon = new SymbolIcon() { Height = 25, Width = 25, Symbol = SymbolRegular.CircleSmall20 };
             deBubble.Tag = "On";
 
             UpdateSettings();
         }
 
-        private void SrcsaverSubOpen(object sender, RoutedEventArgs e)
-        {
-            if (sender == e.Source)
-            {
+        private void SrcsaverSubOpen(object sender, RoutedEventArgs e) {
+            if (sender == e.Source) {
                 InitScrData();
                 srcsaverMenuItem.IsSubmenuOpen = true;
                 Keyboard.Focus(srcsaver);
             }
         }
 
-        private void InitScrData()
-        {
+        private void InitScrData() {
             bool isOn = _userSettingsService.Settings.IsScreenSaverOn;
             SetScr(isOn);
 
@@ -182,25 +153,20 @@ namespace VirtualPaper
 
             ResetDe();
             var de = _userSettingsService.Settings.ScreenSaverEffect;
-            switch (de)
-            {
+            switch (de) {
                 case ScrEffect.None:
-                    deNone.Icon = new SymbolIcon()
-                        { Height = 25, Width = 25, Symbol = SymbolRegular.CircleSmall20 };
+                    deNone.Icon = new SymbolIcon() { Height = 25, Width = 25, Symbol = SymbolRegular.CircleSmall20 };
                     deNone.Tag = "On";
                     break;
                 case ScrEffect.Bubble:
-                    deBubble.Icon = new SymbolIcon()
-                        { Height = 25, Width = 25, Symbol = SymbolRegular.CircleSmall20 };
+                    deBubble.Icon = new SymbolIcon() { Height = 25, Width = 25, Symbol = SymbolRegular.CircleSmall20 };
                     deBubble.Tag = "On";
                     break;
             }
         }
 
-        private void SetRunLock(bool isOn)
-        {
-            lockScr.Icon = new SymbolIcon()
-            {
+        private void SetRunLock(bool isOn) {
+            lockScr.Icon = new SymbolIcon() {
                 Height = 25,
                 Width = 25,
                 Symbol = isOn ? SymbolRegular.Checkmark20 : SymbolRegular.Empty,
@@ -208,10 +174,8 @@ namespace VirtualPaper
             lockScr.Tag = isOn ? "On" : "Off";
         }
 
-        private void SetScr(bool isOn)
-        {
-            srcsaver.Icon = new SymbolIcon()
-            {
+        private void SetScr(bool isOn) {
+            srcsaver.Icon = new SymbolIcon() {
                 Height = 25,
                 Width = 25,
                 Symbol = isOn ? SymbolRegular.Checkmark20 : SymbolRegular.Empty,
@@ -221,18 +185,14 @@ namespace VirtualPaper
             deBubble.IsEnabled = isOn;
         }
 
-        private void ResetDe()
-        {
-            deNone.Icon = new SymbolIcon()
-                { Height = 25, Width = 25, Symbol = SymbolRegular.Empty };
+        private void ResetDe() {
+            deNone.Icon = new SymbolIcon() { Height = 25, Width = 25, Symbol = SymbolRegular.Empty };
             deNone.Tag = "Off";
-            deBubble.Icon = new SymbolIcon()
-                { Height = 25, Width = 25, Symbol = SymbolRegular.Empty };
+            deBubble.Icon = new SymbolIcon() { Height = 25, Width = 25, Symbol = SymbolRegular.Empty };
             deBubble.Tag = "Off";
         }
 
-        private void UpdateSettings()
-        {
+        private void UpdateSettings() {
             _userSettingsService.Settings.IsScreenSaverOn = srcsaver.Tag.ToString() == "On";
             _userSettingsService.Settings.IsRunningLock = lockScr.Tag.ToString() == "On";
             _userSettingsService.Settings.ScreenSaverEffect
@@ -247,9 +207,9 @@ namespace VirtualPaper
             pipeClient.SendMsgToUI("UPDATE_SCRSETTINGS");
         }
 
-        private IUIRunnerService _uiRunnerService;
-        private IWallpaperControl _wpControl;
-        private IPlayback _playbackMonitor;
-        private IUserSettingsService _userSettingsService;
+        private readonly IUIRunnerService _uiRunnerService;
+        private readonly IWallpaperControl _wpControl;
+        private readonly IPlayback _playbackMonitor;
+        private readonly IUserSettingsService _userSettingsService;
     }
 }

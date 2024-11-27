@@ -1,7 +1,7 @@
-﻿using Google.Protobuf.WellKnownTypes;
+﻿using System.Collections.ObjectModel;
+using Google.Protobuf.WellKnownTypes;
 using GrpcDotNetNamedPipes;
 using NLog;
-using System.Collections.ObjectModel;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.MonitorManager;
@@ -9,10 +9,8 @@ using VirtualPaper.Models.Cores.Interfaces;
 using Monitor = VirtualPaper.Models.Cores.Monitor;
 using Rectangle = System.Drawing.Rectangle;
 
-namespace VirtualPaper.Grpc.Client
-{
-    public class MonitorManagerClient : IMonitorManagerClient
-    {
+namespace VirtualPaper.Grpc.Client {
+    public partial class MonitorManagerClient : IMonitorManagerClient {
 
         public event EventHandler? MonitorChanged;
 
@@ -22,12 +20,10 @@ namespace VirtualPaper.Grpc.Client
 
         public Rectangle VirtulScreenBounds { get; private set; }
 
-        public MonitorManagerClient()
-        {
-            _client = new MonitorManagerService.MonitorManagerServiceClient(new NamedPipeChannel(".", Constants.SingleInstance.GrpcPipeServerName));
-           
-            Task.Run(async () =>
-            {
+        public MonitorManagerClient() {
+            _client = new Grpc_MonitorManagerService.Grpc_MonitorManagerServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
+
+            Task.Run(async () => {
                 _monitors.AddRange(await GetMonitorsAsync().ConfigureAwait(false));
                 VirtulScreenBounds = await GetVirtualScreenBounds().ConfigureAwait(false);
                 PrimaryMonitor = _monitors.FirstOrDefault(x => x.IsPrimary);
@@ -37,27 +33,24 @@ namespace VirtualPaper.Grpc.Client
             _monitorChangedTask = Task.Run(() => SubscribeMonitorChangedStream(_cancellationTokeneMonitorChanged.Token));
         }
 
-        private async Task<IEnumerable<IMonitor>> GetMonitorsAsync()
-        {
+        private async Task<IEnumerable<IMonitor>> GetMonitorsAsync() {
             var resp = await _client.GetMonitorsAsync(new Empty());
             List<IMonitor> monitors = [];
-            for (int i = 0; i < resp.Monitors.Count; i++) 
-            {
+            for (int i = 0; i < resp.Monitors.Count; i++) {
                 var monitor = resp.Monitors[i];
-                monitors.Add(new Monitor()
-                {
+                monitors.Add(new Monitor() {
                     DeviceId = monitor.DeviceId,
                     DeviceName = monitor.DeviceName,
-                    MonitorName = monitor.DisplayName,
+                    MonitorName = monitor.MonitorName,
                     HMonitor = monitor.HMonitor,
                     Content = (i + 1).ToString(),
                     IsPrimary = monitor.IsPrimary,
-                    Bounds = new Rectangle(
+                    Bounds = new(
                         monitor.Bounds.X,
                         monitor.Bounds.Y,
                         monitor.Bounds.Width,
                         monitor.Bounds.Height),
-                    WorkingArea = new Rectangle(
+                    WorkingArea = new(
                         monitor.WorkingArea.X,
                         monitor.WorkingArea.Y,
                         monitor.WorkingArea.Width,
@@ -69,13 +62,11 @@ namespace VirtualPaper.Grpc.Client
             return monitors;
         }
 
-        public async Task IdentifyMonitorsAsync()
-        {
+        public async Task IdentifyMonitorsAsync() {
             await _client.IdentifyMonitorsAsync(new Empty());
         }
 
-        private async Task<Rectangle> GetVirtualScreenBounds()
-        {
+        private async Task<Rectangle> GetVirtualScreenBounds() {
             var resp = await _client.GetVirtualScreenBoundsAsync(new Empty());
             var vsb = new Rectangle(
                         resp.X,
@@ -85,16 +76,12 @@ namespace VirtualPaper.Grpc.Client
             return vsb;
         }
 
-        private async Task SubscribeMonitorChangedStream(CancellationToken token)
-        {
-            try
-            {
+        private async Task SubscribeMonitorChangedStream(CancellationToken token) {
+            try {
                 using var call = _client.SubscribeMonitorChanged(new Empty());
-                while (await call.ResponseStream.MoveNext(token))
-                {
+                while (await call.ResponseStream.MoveNext(token)) {
                     await _monitorChangedLock.WaitAsync();
-                    try
-                    {
+                    try {
                         var response = call.ResponseStream.Current;
 
                         _monitors.Clear();
@@ -103,42 +90,36 @@ namespace VirtualPaper.Grpc.Client
                         PrimaryMonitor = _monitors.FirstOrDefault(x => x.IsPrimary);
                         MonitorChanged?.Invoke(this, EventArgs.Empty);
                     }
-                    finally
-                    {
+                    finally {
                         _monitorChangedLock.Release();
                     }
                 }
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 _logger.Error(e);
             }
         }
 
         #region dispose
         private bool _isDisposed;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_isDisposed)
-            {
-                if (disposing)
-                {
+        protected virtual void Dispose(bool disposing) {
+            if (!_isDisposed) {
+                if (disposing) {
                     _cancellationTokeneMonitorChanged?.Cancel();
                     _monitorChangedTask?.Wait();
                 }
-                
+
                 _isDisposed = true;
             }
         }
 
-        public void Dispose()
-        {
+        public void Dispose() {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
         #endregion
 
-        private MonitorManagerService.MonitorManagerServiceClient _client;
+        private Grpc_MonitorManagerService.Grpc_MonitorManagerServiceClient _client;
         private readonly List<IMonitor> _monitors = [];
         private readonly SemaphoreSlim _monitorChangedLock = new(1, 1);
         private readonly CancellationTokenSource _cancellationTokeneMonitorChanged;

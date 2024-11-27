@@ -1,31 +1,32 @@
 ﻿using System.ComponentModel;
+using System.Text.Json.Serialization;
 
-namespace VirtualPaper.Common
-{
+namespace VirtualPaper.Common {
     #region for App
-    public enum AppWpRunRulesEnum
-    {
+    public enum AppParallaxRulesEnum {
+        Pause,
+        KeepRun,
+    }
+
+    public enum AppWpRunRulesEnum {
         Silence,
         Pause,
         KeepRun,
     }
 
-    public enum AppTheme
-    {
+    public enum AppTheme {
         Auto,
         Light,
         Dark,
     }
 
-    public enum AppSystemBackdrop
-    {
+    public enum AppSystemBackdrop {
         Default,
         Mica,
         Acrylic
     }
 
-    public enum ScrEffect
-    {
+    public enum ScrEffect {
         [Description("None")]
         None,
         [Description("Bubble")]
@@ -34,8 +35,7 @@ namespace VirtualPaper.Common
     #endregion
 
     #region play utils
-    public enum PlaybackMode
-    {
+    public enum PlaybackMode {
         [Description("All Wallpapers Silence")]
         Silence,
         [Description("All Wallpapers Paused")]
@@ -44,8 +44,7 @@ namespace VirtualPaper.Common
         Play
     }
 
-    public enum StatuMechanismEnum
-    {
+    public enum StatuMechanismEnum {
         Per,
         All
     }
@@ -53,8 +52,7 @@ namespace VirtualPaper.Common
     /// <summary>
     /// Similar to <see href="https://docs.microsoft.com/en-us/dotnet/api/system.windows.media.stretch?view=netcore-3.1">System.Media.Stretch</see>
     /// </summary>
-    public enum WallpaperScaler
-    {
+    public enum WallpaperScaler {
         none,
         fill,
         uniform,
@@ -64,8 +62,7 @@ namespace VirtualPaper.Common
     #endregion 
 
     #region input
-    public enum InputForwardMode
-    {
+    public enum InputForwardMode {
         off,
         mouse,
         mousekeyboard,
@@ -73,8 +70,7 @@ namespace VirtualPaper.Common
     #endregion
 
     #region screen settings
-    public enum WallpaperArrangement
-    {
+    public enum WallpaperArrangement {
         /// <summary>
         /// 各显示器独立显示
         /// </summary>
@@ -93,88 +89,28 @@ namespace VirtualPaper.Common
     }
     #endregion
 
-    #region wallpaper type
-    public enum WallpaperType
-    {
-        [Description("Unknown")]
-        unknown,
-
-        /// <summary>
-        /// 应用程序
-        /// </summary>
-        [Description("Application")]
-        app,
-
-        /// <summary>
-        /// 网页
-        /// </summary>
-        [Description("Webpage")]
-        web,
-
-        /// <summary>
-        /// 带有音频可视化功能的网页
-        /// </summary>
-        [Description("Webpage Audio Visualiser")]
-        webaudio,
-
-        //[Description("Webpage Link")] //"ValueType" tab only, not for "Library"! 
-        //url,
-
-        /// <summary>
-        /// Bizhawk 模拟器
-        /// </summary>
-        [Description("Bizhawk Emulator")]
-        bizhawk,
-
-        /// <summary>
-        /// Unity 游戏
-        /// </summary>
-        [Description("Unity Game")]
-        unity,
-
-        /// <summary>
-        /// 带有音频可视化的Unity应用
-        /// </summary>
-        [Description("Unity Audio Visualiser")]
-        unityaudio,
-
-        /// <summary>
-        /// Godot 游戏
-        /// </summary>
-        [Description("Godot Game")]
-        godot,
-
-        /// <summary>
-        /// 动态GIF图片
-        /// </summary>
-        [Description("Animated Gif")]
-        gif,
-
-        /// <summary>
-        /// 静态图片
-        /// </summary>
-        [Description("Static picture")]
-        picture,
-
-        /// <summary>
-        /// 视频
-        /// </summary>
-        [Description("Video")]
-        video,
-
-        /// <summary>
-        /// 视频流
-        /// </summary>
-        //[Description("Video Streams")]
-        //videostream,
-        /*
-        [Description("Animated sequence HEIC file")]
-        heic
-        */
+    #region type    
+    public enum FileType {
+        FUnknown,
+        FPicture,
+        FGif,
+        FVideo,
+    }
+    
+    public enum RuntimeType {
+        RUnknown,
+        RImage,
+        RImage3D,
+        RVideo,
     }
 
-    public enum ObjectFit
-    {
+    public enum WallpaperCreateType {
+        None,
+        Img,
+        DepthImg,
+    }
+
+    public enum ObjectFit {
         Fill,
         Contain,
         Cover,
@@ -184,21 +120,25 @@ namespace VirtualPaper.Common
     #endregion
 
     #region costumise
-    public class UniverseCostumise
-    {
-        public Saturation Saturation { get; set; }
-        public Hue Hue { get; set; }
-        public Brightness Brightness { get; set; }
-        public Contrast Contrast { get; set; }
-        public Scaling Scaling { get; set; }
+    public class UniverseCostumise {
+        [JsonPropertyOrder(1)]
+        public Saturation Saturation { get; }
 
-        public UniverseCostumise()
-        {
+        [JsonPropertyOrder(2)]
+        public Hue Hue { get; }
+
+        [JsonPropertyOrder(3)]
+        public Brightness Brightness { get; }
+
+        [JsonPropertyOrder(4)]
+        public Contrast Contrast { get; }
+
+
+        public UniverseCostumise() {
             Saturation = new();
             Hue = new();
             Brightness = new();
             Contrast = new();
-            Scaling = new();
 
             _properties = new Dictionary<string, dynamic>
             {
@@ -206,29 +146,22 @@ namespace VirtualPaper.Common
                 { nameof(Hue), Hue },
                 { nameof(Brightness), Brightness },
                 { nameof(Contrast), Contrast },
-                { nameof(Scaling), Scaling },
             };
         }
 
-        public void ModifyPropertyValue<T>(string propertyName, T value)
-        {
-            if (_properties.TryGetValue(propertyName, out dynamic property))
-            {
-                if (typeof(T) == typeof(bool))
-                {
+        public void ModifyPropertyValue<T>(string propertyName, T value) {
+            if (_properties.TryGetValue(propertyName, out dynamic property)) {
+                if (typeof(T) == typeof(bool)) {
                     property.Value = value;
                 }
-                else if (value >= property.Min && value <= property.Max)
-                {
+                else if (value >= property.Min && value <= property.Max) {
                     property.Value = value;
                 }
-                else
-                {
+                else {
                     throw new ArgumentOutOfRangeException(nameof(value), $"The value must be between {property.Min} and {property.Max} for the {propertyName} property.");
                 }
             }
-            else
-            {
+            else {
                 throw new ArgumentException($"Invalid property name: {propertyName}");
             }
         }
@@ -236,174 +169,159 @@ namespace VirtualPaper.Common
         protected readonly Dictionary<string, dynamic> _properties;
     }
 
-    public class PictureCostumise : UniverseCostumise
-    {
-        //public Saturation Saturation { get; set; }
-        //public Hue Hue { get; set; }
-        //public Brightness Brightness { get; set; }
-        //public Contrast Contrast { get; set; }
+    public class PictureAndGifCostumise : UniverseCostumise {
 
-        //public PictureCostumise()
-        //{
-        //    //Saturation = new();
-        //    //Hue = new();
-        //    //Brightness = new();
-        //    //Contrast = new();
+        [JsonPropertyOrder(5)]
+        public Scaling Scaling { get; }
 
-        //    //_properties = new Dictionary<string, dynamic>
-        //    //{
-        //    //    { nameof(Saturation), Saturation },
-        //    //    { nameof(Hue), Hue },
-        //    //    { nameof(Brightness), Brightness },
-        //    //    { nameof(Contrast), Contrast },
-        //    //    { nameof(Scaling), Scaling },
-        //    //};
-        //}
+        [JsonPropertyOrder(6)]
+        public Parallax Parallax { get; }
 
-        //public void ModifyPropertyValue<T>(string propertyName, T value)
-        //{
-        //    if (_properties.TryGetValue(propertyName, out dynamic property))
-        //    {
-        //        if (value >= property.Min && value <= property.Max)
-        //        {
-        //            property.Value = value;
-        //        }
-        //        else
-        //        {
-        //            throw new ArgumentOutOfRangeException(nameof(value), $"The value must be between {property.Min} and {property.Max} for the {propertyName} property.");
-        //        }
-        //    }
-        //    else
-        //    {
-        //        throw new ArgumentException($"Invalid property name: {propertyName}");
-        //    }
-        //}
+        public PictureAndGifCostumise() {
+            Scaling = new();
+            Parallax = new();
 
-        //private readonly Dictionary<string, dynamic> _properties;
+            _properties[nameof(Parallax)] = Parallax;
+            _properties[nameof(Scaling)] = Scaling;
+        }
     }
 
-    public class VideoAndGifCostumize : UniverseCostumise
-    {
-        //public Saturation Saturation { get; set; }
-        //public Hue Hue { get; set; }
-        //public Brightness Brightness { get; set; }
-        //public Contrast Contrast { get; set; }
-        public Speed Speed { get; set; }
-        public Volume Volume { get; set; }
+    public class VideoCostumize : UniverseCostumise {
+        [JsonPropertyOrder(8)]
+        public Speed Speed { get; }
 
-        public VideoAndGifCostumize()
-        {
-            //Saturation = new();
-            //Hue = new();
-            //Brightness = new();
-            //Contrast = new();
+        [JsonPropertyOrder(9)]
+        public Volume Volume { get; }
+
+        [JsonPropertyOrder(10)]
+        public Scaling Scaling { get; }
+
+        [JsonPropertyOrder(11)]
+        public Parallax Parallax { get; }
+
+        public VideoCostumize() {
             Speed = new();
             Volume = new();
+            Parallax = new();
+            Scaling = new();
 
             _properties[nameof(Speed)] = Speed;
             _properties[nameof(Volume)] = Volume;
-            //_properties = new Dictionary<string, dynamic>
-            //{
-            //    { nameof(Saturation), Saturation },
-            //    { nameof(Hue), Hue },
-            //    { nameof(Brightness), Brightness },
-            //    { nameof(Contrast), Contrast },
-            //    { nameof(Scaling), Scaling },
-            //    { nameof(Speed), Speed },
-            //    { nameof(Volume), Volume },
-            //};
+            _properties[nameof(Parallax)] = Parallax;
+            _properties[nameof(Scaling)] = Scaling;
         }
-
-        //public void ModifyPropertyValue<T>(string propertyName, T value)
-        //{
-        //    if (_properties.TryGetValue(propertyName, out dynamic property))
-        //    {
-        //        if (typeof(T) == typeof(bool))
-        //        {
-        //            property.Value = value;
-        //        }
-        //        else if (value >= property.Min && value <= property.Max)
-        //        {
-        //            property.Value = value;
-        //        }
-        //        else
-        //        {
-        //            throw new ArgumentOutOfRangeException(nameof(value), $"The value must be between {property.Min} and {property.Max} for the {propertyName} property.");
-        //        }
-        //    }
-        //    else
-        //    {
-        //        throw new ArgumentException($"Invalid property name: {propertyName}");
-        //    }
-        //}
-
-        //private readonly Dictionary<string, dynamic> _properties;
     }
 
-    public class Saturation
-    {
+    public class Picture3DCostumize : UniverseCostumise {
+
+    }
+
+    public class Saturation {
         public string Type { get; init; } = "Slider";
         public string Text { get; init; } = "Saturation";
-        public double Value { get; set; } = 1;
+
+        private double val = 1;
+        public double Value {
+            get => val;
+            set => val = (value < 0 || value > 10) ? 1 : value;
+        }
+
         public double Max { get; init; } = 10;
         public double Min { get; init; } = 0;
         public double Step { get; init; } = 0.1;
     }
 
-    public class Hue
-    {
+    public class Hue {
         public string Type { get; init; } = "Slider";
         public string Text { get; init; } = "Hue";
-        public double Value { get; set; } = 0;
+
+        private double val = 0;
+        public double Value {
+            get => val;
+            set => val = Math.Min(359, Math.Max(0, value));
+        }
+
         public double Max { get; init; } = 359;
         public double Min { get; init; } = 0;
         public int Step { get; init; } = 1;
     }
 
-    public class Brightness
-    {
+    public class Brightness {
         public string Type { get; init; } = "Slider";
         public string Text { get; init; } = "Brightness";
-        public double Value { get; set; } = 1;
+
+        private double val = 1;
+        public double Value {
+            get => val;
+            set => val = (value < 0 || value > 2) ? 1 : value;
+        }
+
         public double Max { get; init; } = 2;
         public double Min { get; init; } = 0;
         public double Step { get; init; } = 0.1;
     }
 
-    public class Contrast
-    {
+    public class Contrast {
         public string Type { get; init; } = "Slider";
         public string Text { get; init; } = "Contrast";
-        public double Value { get; set; } = 1;
+
+        private double val = 1;
+        public double Value {
+            get => val;
+            set => val = (value < 0 || value > 10) ? 1 : value;
+        }
+
         public double Max { get; init; } = 10;
         public double Min { get; init; } = 0;
         public double Step { get; init; } = 0.1;
     }
 
-    public class Scaling
-    {
-        public string Type { get; set; } = "Dropdown";
-        public string Text { get; set; } = "Scale Way";
-        public int Value { get; set; } = 0;
-        public List<string> Items { get; set; } = ["Fill", "Contain", "Cover", "None", "Scale-Down"];
-        public string Help { get; set; } = "";
+    public class Scaling {
+        public string Type { get; init; } = "Dropdown";
+        public string Text { get; init; } = "Scale Way";
+
+        private int val = 0;
+        public int Value {
+            get => val;
+            set => val = Math.Min(4, Math.Max(0, value));
+        }
+
+        public List<string> Items { get; init; } = ["Fill", "Contain", "Cover", "None", "Scale-Down"];
+        public string Help { get; init; } = "Customze_Help_Scaling";
     }
 
-    public class Speed
-    {
+    public class Parallax {
+        public string Type { get; init; } = "CheckBox";
+        public string Text { get; init; } = "Parallax";
+        public bool Value { get; set; } = false;
+        public string Help { get; init; } = "Customze_Help_Parallax";
+    }
+
+    public class Speed {
         public string Type { get; init; } = "Slider";
         public string Text { get; init; } = "Speed";
-        public double Value { get; set; } = 1.0;
+
+        private double val = 1;
+        public double Value {
+            get => val;
+            set => val = (value < 0.25 || value > 5) ? 1 : value;
+        }
+
         public double Max { get; init; } = 5;
         public double Min { get; init; } = 0.25;
         public double Step { get; init; } = 0.05;
     }
 
-    public class Volume
-    {
+    public class Volume {
         public string Type { get; init; } = "Slider";
         public string Text { get; init; } = "Volume";
-        public double Value { get; set; } = 0.8;
+
+        private double val = 0.8;
+        public double Value {
+            get => val;
+            set => val = (value < 0 || value > 1) ? 0.8 : value;
+        }
+
         public double Max { get; init; } = 1;
         public double Min { get; init; } = 0;
         public double Step { get; init; } = 0.01;

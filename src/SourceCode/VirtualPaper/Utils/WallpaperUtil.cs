@@ -8,43 +8,96 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.lang;
-using VirtualPaper.Models.WallpaperMetaData;
+using VirtualPaper.Models.Cores;
+using VirtualPaper.Models.Cores.Interfaces;
 using Size = OpenCvSharp.Size;
 
-namespace VirtualPaper.Utils
-{
-    public static class WallpaperUtil
-    {
-        public static IMetaData ScanWallpaperFolder(string folderPath)
-        {
-            if (File.Exists(Path.Combine(folderPath, "MetaData.json")))
-            {
-                MetaData metaData = JsonStorage<MetaData>.LoadData(Path.Combine(folderPath, "MetaData.json"));
-
-                return metaData ?? throw new Exception("Corrupted wallpaper metadata");
+namespace VirtualPaper.Utils {
+    public static class WallpaperUtil {
+        public static IWpMetadata GetWallpaperByFolder(string folderPath) {
+            WpMetadata data = new();
+            if (File.Exists(Path.Combine(folderPath, "wp_metadata_basic.json"))) {
+                data.BasicData = JsonStorage<WpBasicData>.LoadData(Path.Combine(folderPath, "wp_metadata_basic.json"))
+                    ?? throw new Exception("Corrupted wallpaper metadata");
             }
-            throw new Exception("Wallpaper not found.");
+
+            if (File.Exists(Path.Combine(folderPath, "wp_metadata_runtime.json"))) {
+                data.RuntimeData = JsonStorage<WpRuntimeData>.LoadData(Path.Combine(folderPath, "wp_metadata_runtime.json"))
+                    ?? throw new Exception("Corrupted wallpaper effect metadata");
+            }
+
+            return data;
         }
 
-        public static void CreateCustomizeFile(string wpCustomizePath, WallpaperType type)
-        {
-            if (type == WallpaperType.picture || type == WallpaperType.gif)
-            {
-                PictureCostumise pictureCostumize = new();
-                JsonStorage<PictureCostumise>.StoreData(wpCustomizePath, pictureCostumize);
+        public static string CreateWpEffectFileTemplate(
+            string folderPath,
+            RuntimeType rtype) {
+            string wpEffectFilePathTemplate = Path.Combine(folderPath, "wpEffectFilePathTemplate.json");
+            if (!File.Exists(wpEffectFilePathTemplate)) {
+                File.Create(wpEffectFilePathTemplate).Close();
             }
-            else if (type == WallpaperType.video)
-            {
-                VideoAndGifCostumize videoAndGifCostumize = new();             
-                JsonStorage<VideoAndGifCostumize>.StoreData(wpCustomizePath, videoAndGifCostumize);
+
+            switch (rtype) {
+                case RuntimeType.RImage:
+                    PictureAndGifCostumise pictureAndGifCostumize = new();
+                    JsonStorage<PictureAndGifCostumise>.StoreData(wpEffectFilePathTemplate, pictureAndGifCostumize);
+                    break;
+                case RuntimeType.RImage3D:
+                    Picture3DCostumize picture3DCostumize = new();
+                    JsonStorage<Picture3DCostumize>.StoreData(wpEffectFilePathTemplate, picture3DCostumize);
+                    break;
+                case RuntimeType.RVideo:
+                    VideoCostumize videoCostumize = new();
+                    JsonStorage<VideoCostumize>.StoreData(wpEffectFilePathTemplate, videoCostumize);
+                    break;
+                default:
+                    break;
             }
+
+            return wpEffectFilePathTemplate;
         }
 
-        public static void CreateGif(string filePath, string thumbnailPath, WallpaperType type, CancellationToken token)
-        {
+        public static string CreateWpEffectFileTemporary(
+            string folderPath,
+            string wpEffectFilePathTemplate) {
+            string wpEffectFilePathTemporary = Path.Combine(folderPath, "wpEffectFilePathTemporary.json");
+            File.Copy(wpEffectFilePathTemplate, wpEffectFilePathTemporary, true);
+
+            return wpEffectFilePathTemporary;
+        }
+
+        public static string CreateWpEffectFileUsing(
+            string folderPath,
+            string wpEffectFilePathTemplate,
+            string monitorContent,
+            WallpaperArrangement arrangement) {
+            string wpEffectFilePathUsing = string.Empty;
+            if (wpEffectFilePathTemplate != null) {
+                if (monitorContent != null) {
+                    string wpdataUsingFolder = string.Empty;
+                    switch (arrangement) {
+                        case WallpaperArrangement.Per:
+                            wpdataUsingFolder = Path.Combine(folderPath, monitorContent);
+                            break;
+                        case WallpaperArrangement.Expand:
+                            wpdataUsingFolder = Path.Combine(folderPath, "Expand");
+                            break;
+                        case WallpaperArrangement.Duplicate:
+                            wpdataUsingFolder = Path.Combine(folderPath, "Duplicate");
+                            break;
+                    }
+                    Directory.CreateDirectory(wpdataUsingFolder);
+                    wpEffectFilePathUsing = Path.Combine(wpdataUsingFolder, "wpEffectFilePathUsing.json");
+                    File.Copy(wpEffectFilePathTemplate, wpEffectFilePathUsing, true);
+                }
+            }
+
+            return wpEffectFilePathUsing;
+        }
+
+        public static void CreateGif(string filePath, string coverFilePath, FileType ftype, CancellationToken token) {
             GifBitmapEncoder gEnc = new();
-            if (type == WallpaperType.picture)
-            {
+            if (ftype == FileType.FPicture) {
                 Bitmap bitmap = new(filePath);
                 var src = Imaging.CreateBitmapSourceFromHBitmap(
                     bitmap.GetHbitmap(),
@@ -54,19 +107,16 @@ namespace VirtualPaper.Utils
                 gEnc.Frames.Add(BitmapFrame.Create(src));
                 bitmap.Dispose();
             }
-            else if (type == WallpaperType.video || type == WallpaperType.gif)
-            {
+            else if (ftype == FileType.FVideo || ftype == FileType.FGif) {
                 using var cap = new VideoCapture(filePath);
-                if (!cap.IsOpened())
-                {
+                if (!cap.IsOpened()) {
                     throw new Exception("An Error occoured");
                 }
 
                 int frameCnt = cap.FrameCount;
                 int frameLimit = Math.Min(frameCnt, 60);
 
-                for (int i = 0; i < frameLimit && !token.IsCancellationRequested; i++)
-                {
+                for (int i = 0; i < frameLimit && !token.IsCancellationRequested; i++) {
                     cap.Set(VideoCaptureProperties.PosFrames, i);
                     using Mat frame = new();
                     cap.Read(frame);
@@ -86,31 +136,26 @@ namespace VirtualPaper.Utils
                     bitmap.Dispose();
                 }
 
-                if (token.IsCancellationRequested)
-                {
+                if (token.IsCancellationRequested) {
                     throw new OperationCanceledException("The video frame reading was canceled.");
                 }
             }
 
-            using (var ms = new MemoryStream())
-            {
-                gEnc.Save(ms);
-                var fileBytes = ms.ToArray();
-                // This is the NETSCAPE2.0 Application Extension.
-                // 创建循环动画
-                var applicationExtension = new byte[] { 33, 255, 11, 78, 69, 84, 83, 67, 65, 80, 69, 50, 46, 48, 3, 1, 0, 0, 0 };
-                var newBytes = new List<byte>();
-                newBytes.AddRange(fileBytes.Take(13));
-                newBytes.AddRange(applicationExtension);
-                newBytes.AddRange(fileBytes.Skip(13));
-                File.WriteAllBytes(thumbnailPath, [.. newBytes]);
-            }
+            using var ms = new MemoryStream();
+            gEnc.Save(ms);
+            var fileBytes = ms.ToArray();
+            // This is the NETSCAPE2.0 Application Extension.
+            // 创建循环动画
+            var applicationExtension = new byte[] { 33, 255, 11, 78, 69, 84, 83, 67, 65, 80, 69, 50, 46, 48, 3, 1, 0, 0, 0 };
+            var newBytes = new List<byte>();
+            newBytes.AddRange(fileBytes.Take(13));
+            newBytes.AddRange(applicationExtension);
+            newBytes.AddRange(fileBytes.Skip(13));
+            File.WriteAllBytes(coverFilePath, [.. newBytes]);
         }
 
-        public static FileProperty TryGetProeprtyInfo(string filePath, WallpaperType type)
-        {
-            FileProperty fileProperty = new()
-            {
+        public static FileProperty GetWpProperty(string filePath, FileType ftype) {
+            FileProperty fileProperty = new() {
                 FileExtension = Path.GetExtension(filePath)
             };
 
@@ -119,66 +164,52 @@ namespace VirtualPaper.Utils
             if (size == 0) fileProperty.FileSize = (fileInfo.Length / 1024.0).ToString("0.00") + " KB";
             else fileProperty.FileSize = (fileInfo.Length / 1024.0 / 1024.0).ToString("0.00") + " MB";
 
-            try
-            {
-                switch (type)
-                {
-                    case WallpaperType.video or WallpaperType.gif:
-                        {
-                            using var capture = new VideoCapture(filePath);
-                            if (!capture.IsOpened()) throw new();
+            switch (ftype) {
+                case FileType.FVideo or FileType.FGif: {
+                    using var capture = new VideoCapture(filePath);
+                    if (!capture.IsOpened()) throw new();
 
-                            var fps = capture.Fps;
-                            int width = capture.FrameWidth;
-                            int height = capture.FrameHeight;
-                            double ratio = (double)width / height;
+                    var fps = capture.Fps;
+                    int width = capture.FrameWidth;
+                    int height = capture.FrameHeight;
+                    double ratio = (double)width / height;
 
-                            fileProperty.Resolution = $"{width} * {height} ({fps:0.00} fps)";
-                            fileProperty.AspectRatio = GetRatio(ratio);
+                    fileProperty.Resolution = $"{width} * {height} ({fps:0.00} fps)";
+                    fileProperty.AspectRatio = GetRatio(ratio);
 
-                            capture.Release();
+                    capture.Release();
 
-                            break;
-                        }
-                    case WallpaperType.picture:
-                        {
-                            using var img = new Mat(filePath);
-
-                            Size sz = img.Size();
-                            int width = sz.Width;
-                            int height = sz.Height;
-                            double ratio = (double)width / height;
-
-                            fileProperty.Resolution = $"{width} * {height}";
-                            fileProperty.AspectRatio = GetRatio(ratio);
-
-                            break;
-                        }
+                    break;
                 }
-            }
-            catch (Exception)
-            {
-                throw new InvalidOperationException($"{LanguageManager.Instance["WpUtils_TextFileOpenFailed"]} ({Path.GetExtension(filePath)})");
+                case FileType.FPicture: {
+                    using var img = new Mat(filePath);
+
+                    Size sz = img.Size();
+                    int width = sz.Width;
+                    int height = sz.Height;
+                    double ratio = (double)width / height;
+
+                    fileProperty.Resolution = $"{width} * {height}";
+                    fileProperty.AspectRatio = GetRatio(ratio);
+
+                    break;
+                }
             }
 
             return fileProperty;
         }
 
-        private static string GetRatio(double aspectRatio)
-        {
-            if (Math.Abs(aspectRatio - 1.6) < 0.01)
-            {
+        private static string GetRatio(double aspectRatio) {
+            if (Math.Abs(aspectRatio - 1.6) < 0.01) {
                 return "16:10";
             }
-            else if (Math.Abs(aspectRatio - 1.7778) < 0.01)
-            {
+            else if (Math.Abs(aspectRatio - 1.7778) < 0.01) {
                 return "16:9";
             }
-            else if (Math.Abs(aspectRatio - 1.3333) < 0.01)
-            {
+            else if (Math.Abs(aspectRatio - 1.3333) < 0.01) {
                 return "4:3";
             }
-            return "Unknown";
+            return "FUnknown";
         }
     }
 }

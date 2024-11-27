@@ -127,7 +127,7 @@
     <value>Virtual Paper is running in the background</value>
   </data>
   <data name="Virtual_Paper_isRunning_Greetings" xml:space="preserve">
-    <value>Have a nice day!</value>
+    <value>Have a great day!</value>
   </data>
   <data name="WpControl_VirtualPaperExceptionWorkerWSetupFail" xml:space="preserve">
     <value>A few settings are required for it to work:

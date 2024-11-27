@@ -1,12 +1,9 @@
 ﻿using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 
-namespace VirtualPaper.Common.Utils.Archive
-{
-    public static class ZipCreate
-    {
-        public class FileData
-        {
+namespace VirtualPaper.Common.Utils.Archive {
+    public static class ZipCreate {
+        public class FileData {
             public List<string> Files { get; set; } = [];
             public string ParentDirectory { get; set; } = string.Empty;
         }
@@ -16,21 +13,17 @@ namespace VirtualPaper.Common.Utils.Archive
         /// </summary>
         /// <param name="outPathname">Destination .zip filepath./</param>
         /// <param name="folders">Source folder path(s).</param>
-        public static void CreateZip(string outPathname, List<string> folders)
-        {
+        public static void CreateZip(string outPathname, List<string> folders) {
             using (FileStream fsOut = File.Create(outPathname))
-            using (var zipStream = new ZipOutputStream(fsOut))
-            {
+            using (var zipStream = new ZipOutputStream(fsOut)) {
                 //0-9, 9 being the highest level of compression
                 zipStream.SetLevel(9);
 
-                for (int i = 0; i < folders.Count; i++)
-                {
+                for (int i = 0; i < folders.Count; i++) {
                     var folder = folders[i];
                     int folderOffset = folder.Length + (folder.EndsWith('\\') ? 0 : 1);
                     var files = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories);
-                    for (int j = 0; j < files.Length; j++)
-                    {
+                    for (int j = 0; j < files.Length; j++) {
                         var file = files[j];
                         var fi = new FileInfo(file);
 
@@ -40,8 +33,7 @@ namespace VirtualPaper.Common.Utils.Archive
                         // Remove drive from name and fix slash direction
                         entryName = ZipEntry.CleanName(entryName);
 
-                        var newEntry = new ZipEntry(entryName)
-                        {
+                        var newEntry = new ZipEntry(entryName) {
                             // Note the zip format stores 2 second granularity
                             DateTime = fi.LastWriteTime,
 
@@ -60,8 +52,7 @@ namespace VirtualPaper.Common.Utils.Archive
                         // Zip the file in buffered chunks
                         // the "using" will close the stream even if an exception occurs
                         var buffer = new byte[4096];
-                        using (FileStream fsInput = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                        {
+                        using (FileStream fsInput = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
                             StreamUtils.Copy(fsInput, zipStream, buffer);
                         }
                         zipStream.CloseEntry();
@@ -96,20 +87,16 @@ namespace VirtualPaper.Common.Utils.Archive
         /// </example>
         /// <param name="outPathname">Destination .zip filepath.</param>
         /// <param name="fileData">List of file(s) and its corresponding parent directory.</param>
-        public static void CreateZip(string outPathname, List<FileData> fileData)
-        {
+        public static void CreateZip(string outPathname, List<FileData> fileData) {
             using (FileStream fsOut = File.Create(outPathname))
-            using (var zipStream = new ZipOutputStream(fsOut))
-            {
+            using (var zipStream = new ZipOutputStream(fsOut)) {
                 //0-9, 9 being the highest level of compression
                 zipStream.SetLevel(9);
 
-                for (int i = 0; i < fileData.Count; i++)
-                {
+                for (int i = 0; i < fileData.Count; i++) {
                     var item = fileData[i];
                     int folderOffset = item.ParentDirectory.Length + (item.ParentDirectory.EndsWith("\\") ? 0 : 1);
-                    for (int j = 0; j < item.Files.Count; j++)
-                    {
+                    for (int j = 0; j < item.Files.Count; j++) {
                         var file = item.Files[j];
                         var fi = new FileInfo(file);
 
@@ -119,8 +106,7 @@ namespace VirtualPaper.Common.Utils.Archive
                         // Remove drive from name and fix slash direction
                         entryName = ZipEntry.CleanName(entryName);
 
-                        var newEntry = new ZipEntry(entryName)
-                        {
+                        var newEntry = new ZipEntry(entryName) {
                             // Note the zip format stores 2 second granularity
                             DateTime = fi.LastWriteTime,
 
@@ -139,8 +125,7 @@ namespace VirtualPaper.Common.Utils.Archive
                         // Zip the file in buffered chunks
                         // the "using" will close the stream even if an exception occurs
                         var buffer = new byte[4096];
-                        using (FileStream fsInput = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                        {
+                        using (FileStream fsInput = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
                             StreamUtils.Copy(fsInput, zipStream, buffer);
                         }
                         zipStream.CloseEntry();

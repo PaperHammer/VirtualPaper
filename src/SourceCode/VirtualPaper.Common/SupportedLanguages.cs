@@ -1,10 +1,8 @@
 ﻿using System.Collections.ObjectModel;
 using VirtualPaper.Common.Utils.Localization;
 
-namespace VirtualPaper.Common
-{
-    public static class SupportedLanguages
-    {
+namespace VirtualPaper.Common {
+    public static class SupportedLanguages {
         private readonly static LanguagesModel[] languages = [
             new("简体中文(zh-CN)", ["zh-CN"]),
             new("English(en-US)", ["en-US"])

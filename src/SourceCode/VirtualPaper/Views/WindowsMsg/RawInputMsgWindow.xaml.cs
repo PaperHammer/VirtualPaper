@@ -29,22 +29,35 @@ namespace VirtualPaper.Views.WindowsMsg
 
         public RawInputMsgWindow(
             IUserSettingsService userSettings, 
-            IWallpaperControl desktopCore, 
+            IWallpaperControl wpControl, 
             IMonitorManager displayManager)
         {
             this._userSettings = userSettings;
-            this._wpControl = desktopCore;
-            this._displayManager = displayManager;
+            this._wpControl = wpControl;
+            this._monitorManager = displayManager;
 
             InitializeComponent();
             this.InputMode = InputForwardMode.mousekeyboard;
-            desktopCore.WallpaperReset += (s, e) => FindDesktopAndResetHandles();
+            wpControl.WallpaperReset += (s, e) => FindDesktopAndResetHandles();
         }
 
-        private void Window_Activated(object sender, EventArgs e)
-        {
-            this.Hide();
-        }
+        //public Point GetMousePos()
+        //{
+        //    if (!Native.GetCursorPos(out Native.POINT P))
+        //    {
+        //        return Point.Empty;
+        //    }
+
+        //    var display = _monitorManager.GetMonitorByPoint(new(P.X, P.Y));
+        //    var mouse = CalculateMousePos(P.X, P.Y, display, _userSettings.Settings.WallpaperArrangement);
+
+        //    return mouse;
+        //}
+
+        //private void Window_Activated(object sender, EventArgs e)
+        //{
+        //    this.Hide();
+        //}
 
         private void FindDesktopAndResetHandles()
         {
@@ -216,10 +229,10 @@ namespace VirtualPaper.Views.WindowsMsg
                     if (!Native.GetCursorPos(out Native.POINT P))
                         return;
 
-                    var display = _displayManager.GetMonitorByPoint(new(P.X, P.Y));
+                    var display = _monitorManager.GetMonitorByPoint(new(P.X, P.Y));
                     foreach (var wallpaper in _wpControl.Wallpapers)
                     {
-                        if (IsInputAllowed(wallpaper.MetaData.Type))
+                        if (IsInputAllowed(wallpaper.Data.RType))
                         {
                             if (display.Equals(wallpaper.Monitor) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand)
                             {
@@ -235,7 +248,7 @@ namespace VirtualPaper.Views.WindowsMsg
                                  * lParam = isPressed ? (lParam |= 0u << 31) : (lParam |= 1u << 31); //transition state
                                  */
                                 lParam = isPressed ? lParam : (lParam |= 3u << 30);
-                                Native.PostMessageW(wallpaper.InputHandle, msg, wParam, (UIntPtr)lParam);
+                                Native.PostMessageW(wallpaper.Handle, msg, wParam, (UIntPtr)lParam);
                             }
                         }
                     }
@@ -271,11 +284,11 @@ namespace VirtualPaper.Views.WindowsMsg
 
             try
             {
-                var display = _displayManager.GetMonitorByPoint(new(x, y));
+                var display = _monitorManager.GetMonitorByPoint(new(x, y));
                 var mouse = CalculateMousePos(x, y, display, _userSettings.Settings.WallpaperArrangement);
                 foreach (var wallpaper in _wpControl.Wallpapers)
                 {
-                    if (IsInputAllowed(wallpaper.MetaData.Type))
+                    if (IsInputAllowed(wallpaper.Data.RType))
                     {
                         if (wallpaper.Monitor.Equals(display) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand)
                         {
@@ -284,7 +297,7 @@ namespace VirtualPaper.Views.WindowsMsg
                             uint lParam = Convert.ToUInt32(mouse.Y);
                             lParam <<= 16;
                             lParam |= Convert.ToUInt32(mouse.X);
-                            Native.PostMessageW(wallpaper.InputHandle, msg, wParam, (UIntPtr)lParam);
+                            Native.PostMessageW(wallpaper.Handle, msg, wParam, (UIntPtr)lParam);
                         }
                     }
                 }
@@ -307,11 +320,11 @@ namespace VirtualPaper.Views.WindowsMsg
         /// <returns>本地化的游标值</returns>
         private Point CalculateMousePos(int x, int y, IMonitor monitor, WallpaperArrangement arrangement)
         {
-            if (_displayManager.IsMultiScreen())
+            if (_monitorManager.IsMultiScreen())
             {
                 if (arrangement == WallpaperArrangement.Expand)
                 {
-                    var screenArea = _displayManager.VirtualScreenBounds;
+                    var screenArea = _monitorManager.VirtualScreenBounds;
                     x -= screenArea.Location.X;
                     y -= screenArea.Location.Y;
                 }
@@ -324,22 +337,13 @@ namespace VirtualPaper.Views.WindowsMsg
             return new Point(x, y);
         }
 
-        private static bool IsInputAllowed(WallpaperType category)
+        private static bool IsInputAllowed(RuntimeType category)
         {
             return category switch
-            {
-                WallpaperType.app => true,
-                WallpaperType.web => true,
-                WallpaperType.webaudio => true,
-                //WallpaperType.url => true,
-                WallpaperType.bizhawk => true,
-                WallpaperType.unity => true,
-                WallpaperType.godot => true,
-                WallpaperType.video => false,
-                WallpaperType.gif => false,
-                WallpaperType.unityaudio => true,
-                //WallpaperType.videostream => false,
-                WallpaperType.picture => false,
+            {                
+                RuntimeType.RImage => false,
+                RuntimeType.RImage3D => false,
+                RuntimeType.RVideo => false,
                 _ => false,
             };
         }
@@ -360,7 +364,7 @@ namespace VirtualPaper.Views.WindowsMsg
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IUserSettingsService _userSettings;
         private readonly IWallpaperControl _wpControl;
-        private readonly IMonitorManager _displayManager;
+        private readonly IMonitorManager _monitorManager;
     }
 
     public enum RawInputMouseBtn

@@ -1,92 +1,36 @@
-﻿using Newtonsoft.Json;
-using System.Drawing;
+﻿using System.Drawing;
+using System.Text.Json.Serialization;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.Mvvm;
 
-namespace VirtualPaper.Models.Cores
-{
-    public class Monitor : ObservableObject, IMonitor
-    {
+namespace VirtualPaper.Models.Cores {
+    public class Monitor : IMonitor {
         [JsonIgnore]
         public bool IsStale { get; set; }
 
         #region Properties
-        private string _deviceId = string.Empty;
-        public string DeviceId
-        {
-            get => _deviceId;
-            set { _deviceId = value; OnPropertyChanged(); }
-        }
+        public string DeviceId { get; set; } = string.Empty;
+        public string DeviceName { get; set; } = string.Empty;
+        public string MonitorName { get; set; } = string.Empty;
+        [JsonConverter(typeof(IntPtrJsonConverter))]
+        public IntPtr HMonitor { get; set; }
+        public string Content { get; set; } = string.Empty;
+        public bool IsPrimary { get; set; }
+        public string ThumbnailPath { get; set; } = string.Empty;
+        public bool HasWallpaper { get; set; }
 
-        private string _deviceName = string.Empty;
-        public string DeviceName
-        {
-            get => _deviceName;
-            set { _deviceName = value; OnPropertyChanged(); }
-        }
-
-        private string _monitorName = string.Empty;
-        public string MonitorName
-        {
-            get => _monitorName;
-            set { _monitorName = value; OnPropertyChanged(); }
-        }
-
-        private IntPtr _hMonitor = IntPtr.Zero;
-        public IntPtr HMonitor
-        {
-            get => _hMonitor;
-            set { _hMonitor = value; OnPropertyChanged(); }
-        }
-
-        private string _content = string.Empty;
-        public string Content
-        {
-            get => _content;
-            set { _content = value; OnPropertyChanged(); }
-        }
-
-        private bool _isPrimary;
-        public bool IsPrimary
-        {
-            get => _isPrimary;
-            set { _isPrimary = value; OnPropertyChanged(); }
-        }
-
-        [JsonIgnore]
-        private string _thumbnailPath = "";
-        [JsonIgnore]
-        public string ThumbnailPath
-        {
-            get { return _thumbnailPath; }
-            set { _thumbnailPath = value; OnPropertyChanged(); }
-        }
-
-        private Rectangle _bounds = Rectangle.Empty;
-        public Rectangle Bounds
-        {
-            get => _bounds;
-            set { _bounds = value; OnPropertyChanged(); }
-        }
-
-        private Rectangle _workingArea = Rectangle.Empty;
-        public Rectangle WorkingArea
-        {
-            get => _workingArea;
-            set { _workingArea = value; OnPropertyChanged(); }
-        }
+        public Rectangle Bounds { get; set; }
+        public Rectangle WorkingArea { get; set; }
         #endregion
 
         public Monitor() { }
 
-        public Monitor(string deviceName, string content = "")
-        {
+        public Monitor(string deviceName, string content = "") {
             DeviceName = deviceName;
             Content = content;
         }
 
-        public bool Equals(IMonitor? other)
-        {
+        public bool Equals(IMonitor? other) {
             return other != null && other.DeviceId == this.DeviceId;
         }
     }

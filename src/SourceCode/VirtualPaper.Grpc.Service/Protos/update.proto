@@ -1,27 +1,11 @@
 syntax = "proto3";
 package VirtualPaper.Grpc.Service.Update;
 import "google/protobuf/empty.proto";
-import "google/protobuf/timestamp.proto";
+import "Protos/models.proto";
 
-service UpdateService {
-	  rpc CheckUpdate (google.protobuf.Empty) returns (google.protobuf.Empty);
-	  rpc GetUpdateStatus (google.protobuf.Empty) returns (UpdateResponse);
-	  rpc StartDownload (google.protobuf.Empty) returns (google.protobuf.Empty);
-	  rpc SubscribeUpdateChecked (google.protobuf.Empty) returns (stream google.protobuf.Empty);
-}
-
-message UpdateResponse {
-	UpdateStatus status = 1;
-	string version = 2;
-	string url = 3;
-	string changelog = 4;
-	google.protobuf.Timestamp time = 5;
-}
-
-enum UpdateStatus {
-	uptodate = 0;
-	available = 1;
-	invalid = 2;
-	notchecked = 3;
-	error = 4;
+service Grpc_UpdateService {
+	rpc CheckUpdate (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc GetUpdateStatus (google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.Models.Grpc_UpdateResponse);
+	rpc StartDownload (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc SubscribeUpdateChecked (google.protobuf.Empty) returns (stream google.protobuf.Empty);
 }

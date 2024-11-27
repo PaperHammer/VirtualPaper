@@ -4,21 +4,21 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VirtualPaper.ScreenSaver"
-        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         xmlns:rxnav="https://github.com/reactivemarbles/CrissCross"
+        Width="800"
+        Height="450"
         mc:Ignorable="d"
         WindowStyle="None"
-        ResizeMode="NoResize"
+        ResizeMode="NoResize"        
         ShowInTaskbar="False"
+        Topmost="True"
         WindowState="Maximized"
-        Closing="Window_Closing"
-        Topmost="True">
+        Closing="Window_Closing">
 
     <Grid>
         <rxnav:WebView2Wpf 
-            x:Name="Webview"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch">
+            x:Name="Webview2"
+            AutoDispose="True">
             <Canvas
                 x:Name="canvas"
                 Background="Transparent"/>

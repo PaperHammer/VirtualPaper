@@ -2,10 +2,8 @@
 using System.Drawing.Imaging;
 using VirtualPaper.Common.Utils.PInvoke;
 
-namespace VirtualPaper.Utils
-{
-    public static class CaptureScreen
-    {
+namespace VirtualPaper.Utils {
+    public static class CaptureScreen {
         /// <summary>
         /// 捕获屏幕前景图像
         /// </summary>
@@ -14,23 +12,18 @@ namespace VirtualPaper.Utils
         /// <param name="y"></param>
         /// <param name="width"></param>
         /// <param name="height"></param>
-        public static void CopyScreen(string savePath, int x, int y, int width, int height)
-        {
-            using (var screenBmp = new Bitmap(width, height, PixelFormat.Format32bppArgb))
-            {
-                using (var bmpGraphics = Graphics.FromImage(screenBmp))
-                {
+        public static void CopyScreen(string savePath, int x, int y, int width, int height) {
+            using (var screenBmp = new Bitmap(width, height, PixelFormat.Format32bppArgb)) {
+                using (var bmpGraphics = Graphics.FromImage(screenBmp)) {
                     bmpGraphics.CopyFromScreen(x, y, 0, 0, screenBmp.Size);
                     screenBmp.Save(savePath, ImageFormat.Jpeg);
                 }
             }
         }
 
-        public static Bitmap CopyScreen(int x, int y, int width, int height)
-        {
+        public static Bitmap CopyScreen(int x, int y, int width, int height) {
             var screenBmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-            using (var bmpGraphics = Graphics.FromImage(screenBmp))
-            {
+            using (var bmpGraphics = Graphics.FromImage(screenBmp)) {
                 bmpGraphics.CopyFromScreen(x, y, 0, 0, screenBmp.Size);
                 return screenBmp;
             }
@@ -41,8 +34,7 @@ namespace VirtualPaper.Utils
         /// </summary>
         /// <param name="hWnd">Window handle</param>
         /// <returns></returns>
-        public static Bitmap CaptureWindow(IntPtr hWnd)
-        {
+        public static Bitmap CaptureWindow(IntPtr hWnd) {
             _ = Native.GetWindowRect(hWnd, out Native.RECT rect);
             var region = Rectangle.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom);
 
@@ -61,17 +53,14 @@ namespace VirtualPaper.Utils
             success = Native.BitBlt(memoryDc, 0, 0, region.Width, region.Height, winDc, region.Left, region.Top,
                 Native.TernaryRasterOperations.SRCCOPY | Native.TernaryRasterOperations.CAPTUREBLT);
 
-            try
-            {
-                if (!success)
-                {
+            try {
+                if (!success) {
                     throw new Win32Exception();
                 }
 
                 result = Image.FromHbitmap(bitmap);
             }
-            finally
-            {
+            finally {
                 Native.SelectObject(memoryDc, oldBitmap);
                 Native.DeleteObject(bitmap);
                 Native.DeleteDC(memoryDc);

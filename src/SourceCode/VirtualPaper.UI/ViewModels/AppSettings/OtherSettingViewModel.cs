@@ -1,10 +1,9 @@
 ﻿using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Utils;
 using WinUI3Localizer;
 
-namespace VirtualPaper.UI.ViewModels.AppSettings
-{
-    public class OtherSettingViewModel : ObservableObject
-    {
+namespace VirtualPaper.UI.ViewModels.AppSettings {
+    public partial class OtherSettingViewModel : ObservableObject {
         public string Text_About { get; set; } = string.Empty;
         public string About_Basic { get; set; } = string.Empty;
         public string Text_More { get; set; } = string.Empty;
@@ -19,10 +18,13 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
 
         public string More_RequestFunc_Link { get; } = "https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Needs-Triage&projects=&template=feature_request.yml";
 
-        public OtherSettingViewModel()
-        {
-            _localizer = Localizer.Get();
+        public OtherSettingViewModel() {
+            _localizer = LanguageUtil.LocalizerInstacne;
 
+            InitText();
+        }
+
+        private void InitText() {
             Text_About = _localizer.GetLocalizedString("Settings_Others_Text_About");
             About_Basic = _localizer.GetLocalizedString("Settings_Others_About_Basic");
             Text_More = _localizer.GetLocalizedString("Settings_Others_Text_More");
@@ -36,6 +38,6 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             More_ReportBugExplain = _localizer.GetLocalizedString("Settings_Others_More_ReportBugExplain");
         }
 
-        private ILocalizer _localizer;
+        private readonly ILocalizer _localizer;
     }
 }

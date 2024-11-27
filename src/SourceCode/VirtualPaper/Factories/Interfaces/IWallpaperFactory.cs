@@ -1,17 +1,13 @@
 ﻿using VirtualPaper.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.WallpaperMetaData;
 using VirtualPaper.Services.Interfaces;
 
-namespace VirtualPaper.Factories.Interfaces
-{
-    public interface IWallpaperFactory
-    {
-        IWallpaper CreateWallpaper(
-            IMetaData mateData,
+namespace VirtualPaper.Factories.Interfaces {
+    public interface IWallpaperFactory {
+        IWallpaperPlaying CreatePlayer(
+            IWpPlayerData data,
             IMonitor monitor,
             IUserSettingsService userSettings,
-            bool isPreview = false,
-            bool isLibrayPreview = false);
+            bool isPreview = false);
     }
 }

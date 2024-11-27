@@ -3,13 +3,12 @@ using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Utils;
 using Windows.ApplicationModel.Resources;
 using WinUI3Localizer;
 
-namespace VirtualPaper.UI.ViewModels.AppSettings
-{
-    internal class PerformanceSettingViewModel : ObservableObject
-    {
+namespace VirtualPaper.UI.ViewModels.AppSettings {
+    public partial class PerformanceSettingViewModel : ObservableObject {
         public List<string> PlayStatus { get; set; } = [];
         public List<string> StatuMechanisms { get; set; } = [];
         public string Text_Play { get; set; } = string.Empty;
@@ -31,11 +30,9 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         public string System_StatuMechanismExplain_ForAll { get; set; } = string.Empty;
 
         private int _selectedFullScreenPlayStatuIndex;
-        public int SelectedFullScreenPlayStatuIndex
-        {
+        public int SelectedFullScreenPlayStatuIndex {
             get { return _selectedFullScreenPlayStatuIndex; }
-            set
-            {
+            set {
                 _selectedFullScreenPlayStatuIndex = value;
                 if (_userSettingsClient.Settings.AppFullscreen == (AppWpRunRulesEnum)value) return;
 
@@ -46,12 +43,10 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         }
 
         private int _selectedFocusPlayStatuIndex;
-        public int SelectedFocusPlayStatuIndex
-        {
+        public int SelectedFocusPlayStatuIndex {
             get { return _selectedFocusPlayStatuIndex; }
-            set
-            {
-                _selectedFocusPlayStatuIndex = value; 
+            set {
+                _selectedFocusPlayStatuIndex = value;
                 if (_userSettingsClient.Settings.AppFocus == (AppWpRunRulesEnum)value) return;
 
                 _userSettingsClient.Settings.AppFocus = (AppWpRunRulesEnum)value;
@@ -61,22 +56,19 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         }
 
         private string _audioStatu = string.Empty;
-        public string AudioStatu
-        {
+        public string AudioStatu {
             get => _audioStatu;
             set { _audioStatu = value; OnPropertyChanged(); }
         }
 
         private bool _isAudioOnlyOnDesktop;
-        public bool IsAudioOnlyOnDesktop
-        {
+        public bool IsAudioOnlyOnDesktop {
             get { return _isAudioOnlyOnDesktop; }
-            set
-            {
-                _isAudioOnlyOnDesktop = value;  
+            set {
+                _isAudioOnlyOnDesktop = value;
                 ChangeAudioStatu(value);
-                if (_userSettingsClient.Settings.IsAudioOnlyOnDesktop == value) return;                
-               
+                if (_userSettingsClient.Settings.IsAudioOnlyOnDesktop == value) return;
+
                 _userSettingsClient.Settings.IsAudioOnlyOnDesktop = value;
                 UpdateSettingsConfigFile();
                 OnPropertyChanged();
@@ -84,11 +76,9 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         }
 
         private int _selectedBatteryPowerednPlayStatuIndex;
-        public int SelectedBatteryPowerednPlayStatuIndex
-        {
+        public int SelectedBatteryPowerednPlayStatuIndex {
             get { return _selectedBatteryPowerednPlayStatuIndex; }
-            set
-            {
+            set {
                 _selectedBatteryPowerednPlayStatuIndex = value;
                 if (_userSettingsClient.Settings.BatteryPoweredn == (AppWpRunRulesEnum)value) return;
 
@@ -99,11 +89,9 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         }
 
         private int _selectedPowerSavingPlayStatuIndex;
-        public int SelectedPowerSavingPlayStatuIndex
-        {
+        public int SelectedPowerSavingPlayStatuIndex {
             get { return _selectedPowerSavingPlayStatuIndex; }
-            set
-            {
+            set {
                 _selectedPowerSavingPlayStatuIndex = value;
                 if (_userSettingsClient.Settings.PowerSaving == (AppWpRunRulesEnum)value) return;
 
@@ -114,11 +102,9 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         }
 
         private int _selectedRemoteDesktopPlayStatuIndex;
-        public int SelectedRemoteDesktopPlayStatuIndex
-        {
+        public int SelectedRemoteDesktopPlayStatuIndex {
             get { return _selectedRemoteDesktopPlayStatuIndex; }
-            set
-            {
+            set {
                 _selectedRemoteDesktopPlayStatuIndex = value;
                 if (_userSettingsClient.Settings.RemoteDesktop == (AppWpRunRulesEnum)value) return;
 
@@ -129,11 +115,9 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         }
 
         private int _selectedStatuMechanismPlayStatuIndex;
-        public int SelectedStatuMechanismPlayStatuIndex
-        {
+        public int SelectedStatuMechanismPlayStatuIndex {
             get { return _selectedStatuMechanismPlayStatuIndex; }
-            set
-            {
+            set {
                 _selectedStatuMechanismPlayStatuIndex = value;
                 if (_userSettingsClient.Settings.StatuMechanism == (StatuMechanismEnum)value) return;
 
@@ -144,17 +128,16 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         }
 
         public PerformanceSettingViewModel(
-            IUserSettingsClient userSettingsClient)
-        {
+            IUserSettingsClient userSettingsClient) {
             _userSettingsClient = userSettingsClient;
+            _localizer = LanguageUtil.LocalizerInstacne;
 
             InitText();
             InitCollections();
             InitContent();
         }
 
-        private void InitContent()
-        {
+        private void InitContent() {
             _selectedFullScreenPlayStatuIndex = (int)_userSettingsClient.Settings.AppFullscreen;
             _selectedFocusPlayStatuIndex = (int)_userSettingsClient.Settings.AppFocus;
             IsAudioOnlyOnDesktop = _userSettingsClient.Settings.IsAudioOnlyOnDesktop;
@@ -164,16 +147,12 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             _selectedStatuMechanismPlayStatuIndex = (int)_userSettingsClient.Settings.StatuMechanism;
         }
 
-        private void InitCollections()
-        {
+        private void InitCollections() {
             PlayStatus = [_playStatu_Silence, _playStatu_Pause, _playStatu_KeepRun];
             StatuMechanisms = [_statuMechanism_per, _statuMechanism_all];
         }
 
-        private void InitText()
-        {
-            _localizer = Localizer.Get();
-
+        private void InitText() {
             Text_Play = _localizer.GetLocalizedString("Settings_Perforemance_Text_Play");
             Play_OthersFullScreen = _localizer.GetLocalizedString("Settings_Perforemance_Play_OthersFullScreen");
             Play_OthersFullScreenExplain = _localizer.GetLocalizedString("Settings_Perforemance_Play_OthersFullScreenExplain");
@@ -198,24 +177,20 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             _statuMechanism_all = _localizer.GetLocalizedString("Settings_Perforemance_System__statuMechanism_all");
         }
 
-        private void ChangeAudioStatu(bool isAudioOnlyOnDesktop)
-        {
-            if (isAudioOnlyOnDesktop)
-            {
+        private void ChangeAudioStatu(bool isAudioOnlyOnDesktop) {
+            if (isAudioOnlyOnDesktop) {
                 AudioStatu = _localizer.GetLocalizedString("Settings_Perforemance_Play_Audio_OnlyDesktop_On");
             }
-            else
-            {
+            else {
                 AudioStatu = _localizer.GetLocalizedString("Settings_Perforemance_Play_Audio_OnlyDesktop_Off");
             }
         }
 
-        private async void UpdateSettingsConfigFile()
-        {
+        private async void UpdateSettingsConfigFile() {
             await _userSettingsClient.SaveAsync<ISettings>();
         }
 
-        private ILocalizer _localizer;
+        private readonly ILocalizer _localizer;
         private string _playStatu_Silence = string.Empty;
         private string _playStatu_Pause = string.Empty;
         private string _playStatu_KeepRun = string.Empty;

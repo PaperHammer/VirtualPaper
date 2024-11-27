@@ -2,23 +2,11 @@
 package VirtualPaper.Grpc.Service.Commands;
 import "google/protobuf/empty.proto";
 
-service CommandsService {
-  rpc ShowUI (google.protobuf.Empty) returns (google.protobuf.Empty);
-  rpc CloseUI (google.protobuf.Empty) returns (google.protobuf.Empty);
-  rpc RestartUI (google.protobuf.Empty) returns (google.protobuf.Empty);
-  rpc ShowDebugView (google.protobuf.Empty) returns (google.protobuf.Empty);
-  rpc ShutDown (google.protobuf.Empty) returns (google.protobuf.Empty);
-  rpc SaveRectUI (google.protobuf.Empty) returns (google.protobuf.Empty);
-}
-
-message ScreensaverRequest {
-	ScreensaverState state = 1;
-	int32 preview_hwnd = 2;
-}
-
-enum ScreensaverState {
-	start = 0;
-	stop = 1;
-	preview = 2;
-	configure = 3;
+service Grpc_CommandsService {
+	rpc ShowUI (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc CloseUI (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc RestartUI (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc ShowDebugView (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc ShutDown (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc SaveRectUI (google.protobuf.Empty) returns (google.protobuf.Empty);
 }

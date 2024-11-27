@@ -1,19 +1,18 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 using System.Globalization;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UI.Services.Interfaces;
 using VirtualPaper.UI.Utils;
+using VirtualPaper.UIComponent.Utils;
 using Windows.Storage.Pickers;
 using WinUI3Localizer;
 
-namespace VirtualPaper.UI.ViewModels.AppSettings
-{
-    public class SystemSettingViewModel : ObservableObject
-    {
+namespace VirtualPaper.UI.ViewModels.AppSettings {
+    public partial class SystemSettingViewModel : ObservableObject {
         public string Text_Developer { get; set; } = string.Empty;
         public string Developer_Debug { get; set; } = string.Empty;
         public string Developer_DebugExplain { get; set; } = string.Empty;
@@ -24,18 +23,16 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
 
         public SystemSettingViewModel(
             ICommandsClient commandsClient,
-            IDialogService dialogService)
-        {
+            IDialogService dialogService) {
             _commandClient = commandsClient;
             _dialogService = dialogService;
+            
+            _localizer = LanguageUtil.LocalizerInstacne;
 
             InitText();
         }
 
-        private void InitText()
-        {
-            _localizer = Localizer.Get();
-
+        private void InitText() {           
             Text_Developer = _localizer.GetLocalizedString("Settings_System_Text_Developer");
             Developer_Debug = _localizer.GetLocalizedString("Settings_System_Developer_Debug");
             Developer_DebugExplain = _localizer.GetLocalizedString("Settings_System_Developer_DebugExplain");
@@ -45,26 +42,21 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             Log = _localizer.GetLocalizedString("Settings_System_Log");
         }
 
-        internal void OpenDebugView()
-        {
+        internal void OpenDebugView() {
             _commandClient.ShowDebugView();
         }
 
-        internal async Task ExportLogsAsync()
-        {
+        internal async Task ExportLogsAsync() {
             var filePicker = new FileSavePicker();
             filePicker.SetOwnerWindow(App.Services.GetRequiredService<MainWindow>());
             filePicker.FileTypeChoices.Add("Compressed archive", [".zip"]);
             filePicker.SuggestedFileName = "virtualpaper_log_" + DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
             var file = await filePicker.PickSaveFileAsync();
-            if (file != null)
-            {
-                try
-                {
+            if (file != null) {
+                try {
                     LogUtil.ExportLogFiles(file.Path);
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     await _dialogService.ShowDialogAsync(
                         ex.Message
                         , _localizer.GetLocalizedString("Dialog_Title_Prompt")
@@ -74,8 +66,8 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             }
         }
 
-        private ILocalizer _localizer;
-        private ICommandsClient _commandClient;
-        private IDialogService _dialogService;
+        private readonly ILocalizer _localizer;
+        private readonly ICommandsClient _commandClient;
+        private readonly IDialogService _dialogService;
     }
 }

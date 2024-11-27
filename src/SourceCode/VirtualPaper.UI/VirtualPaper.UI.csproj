@@ -6,10 +6,12 @@
 		<RootNamespace>VirtualPaper.UI</RootNamespace>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<Platforms>x86;x64;ARM64</Platforms>
-		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
 		<PublishProfile>win-$(Platform).pubxml</PublishProfile>
 		<UseWinUI>true</UseWinUI>
 		<EnableMsixTooling>true</EnableMsixTooling>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<ApplicationIcon>virtualpaper.ico</ApplicationIcon>
 	</PropertyGroup>
 
@@ -17,6 +19,7 @@
 	<!--ref: https://learn.microsoft.com/zh-cn/dotnet/core/compatibility/sdk/6.0/duplicate-files-in-output-->
 	<PropertyGroup>
 		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+		<DefaultLanguage>zh-CN</DefaultLanguage>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(IsMsixRelease)' != 'true'">
@@ -40,7 +43,7 @@
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <PackageCertificateThumbprint>AFCC4AADFFAC311F4E8090D3AF1B8F278AB907BC</PackageCertificateThumbprint>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
-    -->		
+    -->
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(IsMsixRelease)' == 'true'">
@@ -51,20 +54,17 @@
 		</Content>
 	</ItemGroup>
 
-	<ItemGroup>
-		<Content Include="Strings\**\*.resw">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-	</ItemGroup>
-
 	<PropertyGroup>
-		<!-- Output UI build to Core plugins directory -->
 		<OutputPath>..\VirtualPaper\Plugins\UI\</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<DefaultLanguage>zh-CN</DefaultLanguage>
+		<DefaultLanguage>zh-cn</DefaultLanguage>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Views\WpSettingsComponents\WpConfig.xaml.cs" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<Content Include="Nlog.config">
@@ -76,6 +76,8 @@
 		<None Remove="Assets\BadgeLogo.scale-100.png" />
 		<None Remove="Assets\BadgeLogo.scale-125.png" />
 		<None Remove="Assets\icon-vp-48.png" />
+		<None Remove="Assets\icons8-image-96.png" />
+		<None Remove="Assets\icons8-picture-94.png" />
 		<None Remove="Assets\LockScreenLogo.scale-200.png" />
 		<None Remove="Assets\splashCol.png" />
 		<None Remove="Assets\SplashScreen.scale-100.png" />
@@ -122,7 +124,6 @@
 		<None Remove="Assets\Wide310x150Logo.scale-150.png" />
 		<None Remove="Assets\Wide310x150Logo.scale-200.png" />
 		<None Remove="Assets\Wide310x150Logo.scale-400.png" />
-		<None Remove="UserControls\WpCustomize.xaml" />
 		<None Remove="Views\Account.xaml" />
 		<None Remove="Views\AppSettings.xaml" />
 		<None Remove="Views\AppSettingsConponents\GeneralSetting.xaml" />
@@ -130,29 +131,29 @@
 		<None Remove="Views\AppSettingsConponents\PerformanceSetting.xaml" />
 		<None Remove="Views\AppSettingsConponents\SystemSetting.xaml" />
 		<None Remove="Views\Gallery.xaml" />
+		<None Remove="Views\Project.xaml" />
 		<None Remove="Views\Utils\ColorEyeDropWindow.xaml" />
 		<None Remove="Views\Utils\DetailedInfoView.xaml" />
 		<None Remove="Views\Utils\LoadingUsrctrl.xaml" />
+		<None Remove="Views\Utils\WallpaperCreateView.xaml" />
 		<None Remove="Views\WpSettings.xaml" />
 		<None Remove="Views\WpSettingsComponents\LibraryContents.xaml" />
 		<None Remove="Views\WpSettingsComponents\WpConfig.xaml" />
-		<None Remove="Views\WpSettingsComponents\WpNavSettings.xaml" />
+		<None Remove="Views\WpSettingsComponents\WpRuntimeSettings.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="ColorCode.WinUI" Version="2.0.15" />
 		<PackageReference Include="H.Hooks" Version="1.6.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240404000" />
-		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
-		<PackageReference Include="NLog" Version="5.3.2" />
-		<PackageReference Include="System.Drawing.Common" Version="8.0.6" />
-		<PackageReference Include="Vanara.PInvoke.ComCtl32" Version="4.0.0" />
-		<PackageReference Include="Vanara.PInvoke.DwmApi" Version="4.0.0" />
-		<PackageReference Include="Vanara.PInvoke.User32" Version="4.0.0" />
+		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.2.0" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.240923002" />
+		<PackageReference Include="Vanara.PInvoke.ComCtl32" Version="4.0.3" />
+		<PackageReference Include="Vanara.PInvoke.DwmApi" Version="4.0.3" />
+		<PackageReference Include="Vanara.PInvoke.User32" Version="4.0.3" />
 		<PackageReference Include="WinUI3Localizer" Version="2.2.0" />
-		<PackageReference Include="WinUIEx" Version="2.3.4" />
+		<PackageReference Include="WinUIEx" Version="2.4.2" />
 		<Manifest Include="$(ApplicationManifest)" />
 	</ItemGroup>
 
@@ -165,57 +166,57 @@
 		<ProjectCapability Include="Msix" />
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
+		<Content Update="Assets\icon-vp-48.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\icons8-image-96.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\icons8-picture-94.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\splashCol.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\virtualpaperICON.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 	<ItemGroup>
-	  <Content Update="Assets\icon-vp-48.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
-	  <Content Update="Assets\splashCol.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
-	  <Content Update="Assets\virtualpaperICON.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
-	</ItemGroup>
-	<ItemGroup>
-		<Page Update="Views\WpSettingsComponents\WpNavSettings.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+		<Page Update="Views\WpSettingsComponents\WpRuntimeSettings.xaml">
+			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Utils\DetailedInfoView.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Utils\LoadingUsrctrl.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Utils\WallpaperCreateView.xaml">
+			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<None Update="virtualpaper.ico">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<Page Update="Views\AppSettingsConponents\OthersSetting.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\AppSettingsConponents\SystemSetting.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\AppSettingsConponents\PerformanceSetting.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\AppSettingsConponents\GeneralSetting.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</Page>
-		<None Update="Web\viewer.html">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		<None Update="Players\Web\default.html">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<Page Update="Views\WpSettingsComponents\LibraryContents.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Utils\ColorEyeDropWindow.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-		<Page Update="UserControls\WpCustomize.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-		<Page Update="Views\WpSettingsComponents\WpConfig.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 	</ItemGroup>
@@ -233,6 +234,9 @@
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 	</ItemGroup>
+	<ItemGroup>
+		<Folder Include="ViewModels\ProjectsComponents\" />
+	</ItemGroup>
 
 	<!-- 
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution 
@@ -242,4 +246,18 @@
 	<PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
 		<HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
 	</PropertyGroup>
+	<ItemGroup>
+		<CustomAdditionalCompileInputs Remove="Views\Project.xaml" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Page Remove="Views\WpSettingsComponents\WpConfig.xaml" />
+	</ItemGroup>
+	<ItemGroup>
+		<Resource Remove="Views\Project.xaml" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\VirtualPaper.DataAssistor\VirtualPaper.DataAssistor.csproj" />
+		<ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
+		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
+	</ItemGroup>
 </Project>

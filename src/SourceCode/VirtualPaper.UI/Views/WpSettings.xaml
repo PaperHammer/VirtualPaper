@@ -7,16 +7,19 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vms="using:VirtualPaper.UI.ViewModels"
-    xmlns:ucs="using:VirtualPaper.UI.UserControls"
+    xmlns:cvs="using:VirtualPaper.UI.Utils.Converters"
     mc:Ignorable="d"
     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-    Loaded="Page_Loaded">
+    NavigationCacheMode="Enabled">
+
+    <Page.Resources>
+        <cvs:ThumbnailPathConvert x:Key="ThumbnailPathConvert"/>
+    </Page.Resources>
 
     <Grid
         x:Name="GridMain">
         <ContentControl
             x:Name="contentControlMain"
-            IsEnabled="{Binding IsEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             HorizontalContentAlignment="Stretch"
@@ -28,6 +31,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
+                <!--控制栏-->
                 <Grid
                     Grid.Row="0"
                     Margin="20 10"
@@ -44,14 +48,6 @@
                         VerticalAlignment="Center"
                         FontSize="24"/>
 
-                    <InfoBar
-                        Grid.Column="1"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Center"
-                        IsOpen="{Binding InfoBarIsOpen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        Severity="{Binding InfoBarSeverity}"
-                        Message="{Binding InfobarMsg}" />
-
                     <StackPanel
                         Grid.Column="2"
                         VerticalAlignment="Center"
@@ -65,13 +61,6 @@
                             Content="{Binding Text_Close}"
                             Background="DarkGoldenrod"
                             Click="BtnClose_Click"/>
-                        <Button 
-                            x:Name="BtnRestore"
-                            Height="33"
-                            MinWidth="66"
-                            Margin="10 0 0 0"
-                            Content="{Binding Text_Restore}"
-                            Click="BtnRestore_Click"/>
                         <Button 
                             x:Name="BtnDetect"
                             Height="33"
@@ -87,22 +76,16 @@
                             Content="{Binding Text_Identify}"
                             Click="BtnIdentify_Click"/>
                         <Button 
-                            x:Name="BtnPreview"
+                            x:Name="BtnAdjust"
                             Height="33"
                             MinWidth="66"
                             Margin="10 0 0 0"
                             Content="{Binding Text_Preview}"
-                            Click="BtnPreview_Click"/>
-                        <Button 
-                            x:Name="BtnApply"
-                            Height="33"
-                            MinWidth="66"
-                            Margin="10 0 0 0"
-                            Content="{Binding Text_Apply}"
-                            Click="BtnApply_Click"/>
+                            Click="BtnAdjust_Click"/>
                     </StackPanel>
                 </Grid>
 
+                <!--目标显示器-->
                 <Grid
                     Grid.Row="1"
                     Margin="20 10">
@@ -125,25 +108,23 @@
                         </GridView.ItemsPanel>
                         <GridView.ItemTemplate>
                             <DataTemplate>
-                                <!--<Grid>
-                                    <Image
-                                        Height="120" 
-                                        Width="192" 
-                                        Source="{Binding ThumbnailPath}"
-                                        Opacity="0.6"/>-->
                                 <Border
                                     Height="120" 
                                     Width="192" 
                                     VerticalAlignment="Center" 
                                     BorderThickness="2"
                                     BorderBrush="{ThemeResource ApplicationForegroundThemeBrush}">
-                                    <TextBlock 
-                                        Text="{Binding Content}" 
-                                        FontSize="40" 
-                                        HorizontalAlignment="Center" 
-                                        VerticalAlignment="Center"/>
+                                    <Grid>
+                                        <Image
+                                            Source="{Binding ThumbnailPath, Converter={StaticResource ThumbnailPathConvert}}"/>
+
+                                        <TextBlock 
+                                            Text="{Binding Content}" 
+                                            FontSize="40" 
+                                            HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                                    </Grid>
                                 </Border>
-                                <!--</Grid>-->
                             </DataTemplate>
                         </GridView.ItemTemplate>
                     </GridView>
@@ -152,108 +133,27 @@
                 <Grid
                     Grid.Row="2"
                     Margin="10">
-                    <NavigationView 
-                        x:Name="NavView" 
-                        PaneDisplayMode="Top"
-                        Loaded="NavView_Loaded"     
-                        SelectionChanged="NavigationView_SelectionChanged"
-                        IsSettingsVisible="True"        
-                        AlwaysShowHeader="False"
-                        IsBackEnabled="False"
-                        IsBackButtonVisible="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-                        <NavigationView.MenuItems>
-                            <NavigationViewItem 
-                                Content="{Binding SidebarWpConfig}"
-                                Tag="VirtualPaper.UI.Views.WpSettingsComponents.WpConfig">
-                            </NavigationViewItem>
-                            <NavigationViewItem 
-                                Content="{Binding SidebarLibraryContents}" 
-                                Tag="VirtualPaper.UI.Views.WpSettingsComponents.LibraryContents"/>
-                        </NavigationView.MenuItems>
+                    <SelectorBar 
+                        x:Name="SelBar"
+                        Grid.Row="0"
+                        SelectionChanged="SelectorBar_SelectionChanged"
+                        Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                        HorizontalAlignment="Stretch">
+                        <SelectorBarItem x:Name="s1" Text="{Binding SelBarItem1}" Tag="LibraryContents" IsSelected="True"/>
+                        <SelectorBarItem x:Name="s2" Text="{Binding SelBarItem2}" Tag="WpRuntimeSettings"/>
+                    </SelectorBar>
 
-                        <Frame 
-                            x:Name="ContentFrame"/>
-                    </NavigationView>
+                    <Frame 
+                        x:Name="ContentFrame" 
+                        Grid.Row="1"
+                        IsNavigationStackEnabled="False"/>
                 </Grid>
             </Grid>
         </ContentControl>
-
-        <!--<Frame
-            x:Name="loadingFrame"
-            Content="{Binding FrameContainer}"
-            Visibility="{Binding LoadingVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>-->
-        <ucs:LoadingUsrctrl
-            CancelEnable="{Binding CancelEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-            ProgressbarEnable="{Binding ProgressbarEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-            CtsTokens="{Binding CtsTokens, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-            TotalValue="{Binding TotalValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-            CurValue="{Binding CurValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-            Visibility="{Binding LoadingVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-        <!--<StackPanel
-            Visibility="{Binding LoadingVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-            Orientation="Vertical"
-            VerticalAlignment="Center"
-            HorizontalAlignment="Center">
-            <Grid
-                Margin="20"
-                HorizontalAlignment="Center">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                </Grid.ColumnDefinitions>
-
-                <ProgressRing 
-                    x:Name="progressBar"
-                    Grid.Column="0"
-                    Margin="0 0 20 0"
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Center"
-                    IsActive="True"
-                    Height="25"
-                    Width="25"
-                    Background="Transparent"/>
-
-                <TextBlock
-                    x:Name="proTbk"
-                    Grid.Column="1"
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Center"
-                    FontSize="20"
-                    Text="{Binding Text_Loading}"/>
-            </Grid>
-
-            <Grid
-                Margin="20"
-                HorizontalAlignment="Center">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                </Grid.ColumnDefinitions>
-
-                <ProgressBar 
-                    Grid.Column="0"
-                    Margin="0 0 20 0"
-                    Width="340" 
-                    Value="{Binding ImportValue}"
-                    Maximum="{Binding ImportTotalCnt}"/>
-
-                <TextBlock
-                    Grid.Column="1"
-                    FontWeight="Bold"
-                    Text="{Binding ImportValueString}"/>
-            </Grid>
-
-            <Button
-                x:Name="BtnCancel"
-                Margin="20"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                Width="100"
-                Height="40"
-                Visibility="{Binding CancelVisibility}"
-                Content="{Binding Text_Cancel}"
-                Click="BtnCancel_Click"/>
-        </StackPanel>-->
     </Grid>
 </Page>

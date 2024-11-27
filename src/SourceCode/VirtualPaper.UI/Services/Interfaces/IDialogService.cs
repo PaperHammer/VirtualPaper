@@ -1,12 +1,10 @@
 ﻿using System.Threading.Tasks;
 
-namespace VirtualPaper.UI.Services.Interfaces
-{
-    public interface IDialogService
-    {
+namespace VirtualPaper.UI.Services.Interfaces {
+    public interface IDialogService {
         Task ShowDialogAsync(
-            string message, 
-            string title, 
+            string message,
+            string title,
             string primaryBtnText);
 
         Task<DialogResult> ShowDialogAsync(
@@ -15,7 +13,7 @@ namespace VirtualPaper.UI.Services.Interfaces
             string primaryBtnText,
             string secondaryBtnText,
             bool isDefaultPrimary = true);
-        
+
         Task<DialogResult> ShowDialogAsync(
             object content,
             string title,
@@ -27,8 +25,7 @@ namespace VirtualPaper.UI.Services.Interfaces
             string primaryBtnText,
             bool isDefaultPrimary = true);
 
-        public enum DialogResult
-        {
+        public enum DialogResult {
             None,
             Primary,
             Seconday

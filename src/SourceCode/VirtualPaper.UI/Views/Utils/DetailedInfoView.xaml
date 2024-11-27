@@ -245,7 +245,7 @@
                                 FontSize="16"/>
                             <TextBlock
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{Binding VirtualPaperUid}"
+                                Text="{Binding WallPaperUid}"
                                 TextWrapping="Wrap"
                                 FontSize="16"/>
                         </StackPanel>
@@ -254,7 +254,7 @@
                             Margin="5 0 5 15"
                             Orientation="Vertical">
                             <TextBlock 
-                                Text="{Binding DetailedInfo_TextType}"
+                                Text="{Binding DetailedInfo_TextRType}"
                                 FontSize="16"/>
                             <TextBlock
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -338,6 +338,19 @@
                             <TextBlock
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Text="{Binding FileSize}"
+                                TextWrapping="Wrap"
+                                FontSize="16"/>
+                        </StackPanel>
+
+                        <StackPanel
+                            Margin="5 0 5 15"
+                            Orientation="Vertical">
+                            <TextBlock 
+                                Text="{Binding DetailedInfo_TextVersionInfo}"
+                                FontSize="16"/>
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{Binding TextVersion}"
                                 TextWrapping="Wrap"
                                 FontSize="16"/>
                         </StackPanel>

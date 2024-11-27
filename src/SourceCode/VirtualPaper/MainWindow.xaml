@@ -6,17 +6,17 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:tray="http://schemas.lepo.co/wpfui/2022/xaml/tray"
         xmlns:local="clr-namespace:VirtualPaper"
-        xmlns:lang="clr-namespace:VirtualPaper.lang"
-        mc:Ignorable="d"
+        xmlns:lang="clr-namespace:VirtualPaper.lang"        
         Closing="Window_Closing"
         SourceInitialized="Window_SourceInitialized"
-        Left="-99999"
         ShowInTaskbar="False"
-        Title="TrayIconWindow" 
+        Left="-99999"
+        Title="TrayIconWindow"
         Height="450" 
         Width="800"
+        WindowStartupLocation="Manual"
         Visibility="Hidden"
-        WindowStartupLocation="Manual">
+        mc:Ignorable="d">
 
     <Grid>
         <tray:NotifyIcon

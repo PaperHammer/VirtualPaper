@@ -1,8 +1,8 @@
-﻿using Microsoft.Win32;
-using NLog;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using System.Windows.Threading;
+using Microsoft.Win32;
+using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Hardware;
 using VirtualPaper.Common.Utils.PInvoke;
@@ -12,18 +12,15 @@ using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 
-namespace VirtualPaper.Cores.PlaybackControl
-{
+namespace VirtualPaper.Cores.PlaybackControl {
     /// <summary>
     /// System monitor logic to Pause/unpause wallpaper playback.
     /// </summary>
-    public class Playback : IPlayback
-    {
+    public class Playback : IPlayback {
         public event EventHandler<PlaybackMode>? PlaybackModeChanged;
 
         private PlaybackMode _wallpaperPlayback;
-        public PlaybackMode WallpaperPlaybackMode
-        {
+        public PlaybackMode WallpaperPlaybackMode {
             get => _wallpaperPlayback;
             set { _wallpaperPlayback = value; PlaybackModeChanged?.Invoke(this, _wallpaperPlayback); }
         }
@@ -32,8 +29,7 @@ namespace VirtualPaper.Cores.PlaybackControl
             IUserSettingsService userSettings,
             IWallpaperControl wpControl,
             IScrControl scrControl,
-            IMonitorManager monitoeManger)
-        {
+            IMonitorManager monitoeManger) {
             _userSettings = userSettings;
             _wpControl = wpControl;
             _scrControl = scrControl;
@@ -43,282 +39,243 @@ namespace VirtualPaper.Cores.PlaybackControl
             wpControl.WallpaperReset += (s, e) => FindNewMonitorAndResetHandles();
         }
 
-        private void FindNewMonitorAndResetHandles()
-        {
+
+        public void Start() {
+            _dispatcherTimer.Start();
+        }
+
+        public void Stop() {
+            _dispatcherTimer.Stop();
+        }
+
+        #region private
+        private void FindNewMonitorAndResetHandles() {
             _workerWOrig = IntPtr.Zero;
             _progman = IntPtr.Zero;
 
             _progman = Native.FindWindow("Progman", null);
             var folderView = Native.FindWindowEx(_progman, IntPtr.Zero, "SHELLDLL_DefView", null);
-            if (folderView == IntPtr.Zero)
-            {
-                do
-                {
+            if (folderView == IntPtr.Zero) {
+                do {
                     _workerWOrig = Native.FindWindowEx(Native.GetDesktopWindow(), _workerWOrig, "WorkerW", null);
                     folderView = Native.FindWindowEx(_workerWOrig, IntPtr.Zero, "SHELLDLL_DefView", null);
                 } while (folderView == IntPtr.Zero && _workerWOrig != IntPtr.Zero);
             }
         }
 
-        private void Initialize()
-        {
+        private void Initialize() {
             InitializeTimer();
             WallpaperPlaybackMode = PlaybackMode.Play;
 
-            try
-            {
+            try {
                 using Process process = Process.GetCurrentProcess();
                 _virtualPaperPid = process.Id;
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 _logger.Error("Failed to retrieve Virtual Paper Pid:" + e.Message);
             }
 
             _isLockScreen = IsSystemLocked();
-            if (_isLockScreen)
-            {
+            if (_isLockScreen) {
                 _logger.Info("Lockscreen Session already started!");
             }
             SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
         }
 
-        private void InitializeTimer()
-        {
+        private void InitializeTimer() {
             _dispatcherTimer.Tick += new EventHandler(ProcessMonitor);
             _dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, _userSettings.Settings.ProcessTimerInterval);
         }
 
-        private void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
-        {
-            if (e.Reason == SessionSwitchReason.RemoteConnect)
-            {
+        private void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e) {
+            if (e.Reason == SessionSwitchReason.RemoteConnect) {
                 _isRemoteSession = true;
                 _logger.Info("Remote Desktop Session started!");
             }
-            else if (e.Reason == SessionSwitchReason.RemoteDisconnect)
-            {
+            else if (e.Reason == SessionSwitchReason.RemoteDisconnect) {
                 _isRemoteSession = false;
                 _logger.Info("Remote Desktop Session ended!");
             }
-            else if (e.Reason == SessionSwitchReason.SessionLock)
-            {
+            else if (e.Reason == SessionSwitchReason.SessionLock) {
                 _isLockScreen = true;
                 _logger.Info("Lockscreen Session started!");
             }
-            else if (e.Reason == SessionSwitchReason.SessionUnlock)
-            {
+            else if (e.Reason == SessionSwitchReason.SessionUnlock) {
                 _isLockScreen = false;
                 _logger.Info("Lockscreen Session ended!");
             }
         }
 
-        public void Start()
-        {
-            _dispatcherTimer.Start();
-        }
-
-        public void Stop()
-        {
-            _dispatcherTimer.Stop();
-        }
-
-        private void ProcessMonitor(object? sender, EventArgs e)
-        {
-            if (_scrControl.IsRunning)
-            {
-                ChangeState(AppWpRunRulesEnum.Pause);
+        private void ProcessMonitor(object? sender, EventArgs e) {
+            if (_scrControl.IsRunning) {
+                ChangeWpState(AppWpRunRulesEnum.Pause);
             }
             else if (WallpaperPlaybackMode == PlaybackMode.Paused || _isLockScreen ||
-                (_isRemoteSession && _userSettings.Settings.RemoteDesktop == AppWpRunRulesEnum.Pause))
-            {
-                ChangeState(AppWpRunRulesEnum.Pause);
+                (_isRemoteSession && _userSettings.Settings.RemoteDesktop == AppWpRunRulesEnum.Pause)) {
+                ChangeWpState(AppWpRunRulesEnum.Pause);
             }
             else if (WallpaperPlaybackMode == PlaybackMode.Silence || _isLockScreen ||
-                (_isRemoteSession && _userSettings.Settings.RemoteDesktop == AppWpRunRulesEnum.Silence))
-            {
-                ChangeState(AppWpRunRulesEnum.Silence);
+                (_isRemoteSession && _userSettings.Settings.RemoteDesktop == AppWpRunRulesEnum.Silence)) {
+                ChangeWpState(AppWpRunRulesEnum.Silence);
             }
             else if (PowerUtil.GetACPowerStatus() == PowerUtil.ACLineStatus.Offline &&
-                _userSettings.Settings.BatteryPoweredn == AppWpRunRulesEnum.Pause)
-            {
-                ChangeState(AppWpRunRulesEnum.Pause);
+                _userSettings.Settings.BatteryPoweredn == AppWpRunRulesEnum.Pause) {
+                ChangeWpState(AppWpRunRulesEnum.Pause);
             }
             else if (PowerUtil.GetACPowerStatus() == PowerUtil.ACLineStatus.Offline &&
-                _userSettings.Settings.BatteryPoweredn == AppWpRunRulesEnum.Silence)
-            {
-                ChangeState(AppWpRunRulesEnum.Silence);
+                _userSettings.Settings.BatteryPoweredn == AppWpRunRulesEnum.Silence) {
+                ChangeWpState(AppWpRunRulesEnum.Silence);
             }
             else if (PowerUtil.GetBatterySaverStatus() == PowerUtil.SystemStatusFlag.On &&
-                _userSettings.Settings.PowerSaving == AppWpRunRulesEnum.Pause)
-            {
-                ChangeState(AppWpRunRulesEnum.Pause);
+                _userSettings.Settings.PowerSaving == AppWpRunRulesEnum.Pause) {
+                ChangeWpState(AppWpRunRulesEnum.Pause);
             }
             else if (PowerUtil.GetBatterySaverStatus() == PowerUtil.SystemStatusFlag.On &&
-                _userSettings.Settings.PowerSaving == AppWpRunRulesEnum.Silence)
-            {
-                ChangeState(AppWpRunRulesEnum.Silence);
+                _userSettings.Settings.PowerSaving == AppWpRunRulesEnum.Silence) {
+                ChangeWpState(AppWpRunRulesEnum.Silence);
             }
-            else
-            {
+            else {
                 AdjustWpBehaviourBaseOnForegroundApp();
             }
         }
 
-        private void AdjustWpBehaviourBaseOnForegroundApp()
-        {
+        private void AdjustWpBehaviourBaseOnForegroundApp() {
             var isDesktop = false;
             var fHandle = Native.GetForegroundWindow(); // 当前最前台进程
 
             #region 白名单判断
-            if (IsWhitelistedClass(fHandle))
-            {
-                ChangeState(AppWpRunRulesEnum.KeepRun);
+            if (IsWhitelistedClass(fHandle)) {
+                ChangeWpState(AppWpRunRulesEnum.KeepRun);
                 return;
             }
             #endregion
 
             #region 预设内容
-            try
-            {
+            try {
                 _ = Native.GetWindowThreadProcessId(fHandle, out int processID);
                 using Process fProcess = Process.GetProcessById(processID);
 
                 //process with no name, possibly overlay or some other service pgm; resume playback.
-                if (string.IsNullOrEmpty(fProcess.ProcessName) || fHandle.Equals(IntPtr.Zero))
-                {
-                    ChangeState(AppWpRunRulesEnum.KeepRun);
+                if (string.IsNullOrEmpty(fProcess.ProcessName) || fHandle.Equals(IntPtr.Zero)) {
+                    ChangeWpState(AppWpRunRulesEnum.KeepRun);
                     return;
                 }
 
                 ////is it vp or its plugins..
                 //if (fProcess.Id == _virtualPaperPid || IsPlugin(fProcess.Id))
                 //{
-                //    ChangeState(AppWpRunRulesEnum.KeepRun);
+                //    ChangeWpState(AppWpRunRulesEnum.KeepRun);
                 //    return;
                 //}
 
                 //looping through custom rules for user defined..
                 // 对于指定前台进程的预设置操作
-                for (int i = 0; i < _userSettings.AppRules.Count; i++)
-                {
+                for (int i = 0; i < _userSettings.AppRules.Count; i++) {
                     var item = _userSettings.AppRules[i];
-                    if (string.Equals(item.AppName, fProcess.ProcessName, StringComparison.Ordinal))
-                    {
-                        ChangeState(item.Rule);
+                    if (string.Equals(item.AppName, fProcess.ProcessName, StringComparison.Ordinal)) {
+                        ChangeWpState(item.Rule);
                         return;
                     }
                 }
             }
-            catch
-            {
+            catch {
                 //failed to get process info.. maybe remote process; resume playback.
-                ChangeState(AppWpRunRulesEnum.KeepRun);
+                ChangeWpState(AppWpRunRulesEnum.KeepRun);
                 return;
             }
             #endregion
 
             #region 关于桌面焦点、应用程序是否最大化/覆盖全屏的检测
-            try
-            {
+            try {
                 // 关于桌面焦点、应用程序是否最大化/覆盖全屏的检测
-                if (!(fHandle.Equals(Native.GetDesktopWindow()) 
-                    || fHandle.Equals(Native.GetShellWindow())))
-                {
+                if (!(fHandle.Equals(Native.GetDesktopWindow())
+                    || fHandle.Equals(Native.GetShellWindow()))) {
                     #region 单屏
                     // 单屏
                     if (!_monitorManger.IsMultiScreen() ||
                         _userSettings.Settings.StatuMechanism == StatuMechanismEnum.All)
-                    //_userSettingsService.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate)
+                    //_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate)
                     {
                         // 检查前台窗口是否为桌面环境的一部分
-                        if (IntPtr.Equals(fHandle, _workerWOrig) || IntPtr.Equals(fHandle, _progman))
-                        {
+                        if (IntPtr.Equals(fHandle, _workerWOrig) || IntPtr.Equals(fHandle, _progman)) {
                             // 用户焦点在桌面
                             //win10 and win7 desktop foreground while running.
                             isDesktop = true;
-                            ChangeState(AppWpRunRulesEnum.KeepRun);
+                            ChangeParralaxState(AppParallaxRulesEnum.KeepRun);
+                            ChangeWpState(AppWpRunRulesEnum.KeepRun);
                         }
                         // 检查前台窗口是否最大化或几乎覆盖整个屏幕
-                        else if (Native.IsZoomed(fHandle) || IsZoomedCustom(fHandle))
-                        {
+                        else if (Native.IsZoomed(fHandle) || IsZoomedCustom(fHandle)) {
                             //maximised window or window covering whole screen.
-                            ChangeState(_userSettings.Settings.AppFullscreen);
+                            ChangeWpState(_userSettings.Settings.AppFullscreen);
+                            ChangeParralaxState(AppParallaxRulesEnum.Pause);
                         }
-                        else
-                        {
+                        else {
                             //window is just in focus, not covering screen.
-                            ChangeState(_userSettings.Settings.AppFocus);
+                            ChangeWpState(_userSettings.Settings.AppFocus);
+                            ChangeParralaxState(AppParallaxRulesEnum.Pause);
                         }
                     }
                     #endregion
 
                     #region 多屏
                     // 多屏
-                    else
-                    {
+                    else {
                         // 仅聚焦屏幕播放声音
                         IMonitor? focusedScreen;
-                        if ((focusedScreen = MapWindowToMonitor(fHandle)) != null)
-                        {
+                        if ((focusedScreen = MapWindowToMonitor(fHandle)) != null) {
                             //unpausing the rest of _wallpapers.
                             //only one window can be foreground!
-                            foreach (var item in _monitorManger.Monitors)
-                            {
+                            foreach (var item in _monitorManger.Monitors) {
                                 if (_userSettings.Settings.WallpaperArrangement != WallpaperArrangement.Expand &&
-                                    !focusedScreen.Equals(item))
-                                {
-                                    ChangeState(AppWpRunRulesEnum.Silence, item);
+                                    !focusedScreen.Equals(item)) {
+                                    ChangeWpState(AppWpRunRulesEnum.Silence, item);
                                 }
                             }
                         }
-                        else
-                        {
+                        else {
                             //no monitor connected?
                             return;
                         }
 
                         // 检查前台窗口是否为桌面环境的一部分
-                        if (IntPtr.Equals(fHandle, _workerWOrig) || IntPtr.Equals(fHandle, _progman))
-                        {
+                        if (IntPtr.Equals(fHandle, _workerWOrig) || IntPtr.Equals(fHandle, _progman)) {
                             //win10 and win7 desktop foreground while running.
                             isDesktop = true;
-                            ChangeState(AppWpRunRulesEnum.Silence, focusedScreen);
+                            ChangeWpState(AppWpRunRulesEnum.Silence, focusedScreen);
+                            ChangeParralaxState(AppParallaxRulesEnum.KeepRun, focusedScreen);
                         }
                         // 说明在其他焦点应用程序上
-                        else if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand)
-                        {
+                        else if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand) {
                             // 跨越多屏                            
-                            if (IsZoomedSpan(fHandle))
-                            {
-                                ChangeState(AppWpRunRulesEnum.Pause);
+                            if (IsZoomedSpan(fHandle)) {
+                                ChangeWpState(AppWpRunRulesEnum.Pause);
                                 //PauseWallpapers();
                             }
                             else //window is not greater >90%
                             {
-                                ChangeState(_userSettings.Settings.AppFocus);
+                                ChangeWpState(_userSettings.Settings.AppFocus);
                             }
+                            ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
                         }
-                        else if (Native.IsZoomed(fHandle) || IsZoomedCustom(fHandle))
-                        {
+                        else if (Native.IsZoomed(fHandle) || IsZoomedCustom(fHandle)) {
                             //maximised window or window covering whole screen.
-                            ChangeState(_userSettings.Settings.AppFullscreen, focusedScreen);
+                            ChangeWpState(_userSettings.Settings.AppFullscreen, focusedScreen);
+                            ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
                         }
-                        else
-                        {
+                        else {
                             //window is just in focus, not covering screen.
-                            ChangeState(_userSettings.Settings.AppFocus, focusedScreen);
+                            ChangeWpState(_userSettings.Settings.AppFocus, focusedScreen);
+                            ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
                         }
                     }
                     #endregion
 
-                    if (isDesktop)
-                    {
-                        ChangeState(AppWpRunRulesEnum.KeepRun);
+                    if (isDesktop) {
+                        ChangeWpState(AppWpRunRulesEnum.KeepRun);
                     }
-                    else if (_userSettings.Settings.IsAudioOnlyOnDesktop)
-                    {
-                        ChangeState(AppWpRunRulesEnum.Silence);
+                    else if (_userSettings.Settings.IsAudioOnlyOnDesktop) {
+                        ChangeWpState(AppWpRunRulesEnum.Silence);
                     }
                 }
             }
@@ -326,125 +283,144 @@ namespace VirtualPaper.Cores.PlaybackControl
             #endregion
         }
 
-        private bool IsWhitelistedClass(IntPtr hwnd)
-        {
+        private bool IsWhitelistedClass(IntPtr hwnd) {
             const int maxChars = 256;
             StringBuilder className = new(maxChars);
             return Native.GetClassName(hwnd, className, maxChars) > 0 && _classWhiteList.Any(x => x.Equals(className.ToString(), StringComparison.Ordinal));
         }
 
-        private void PauseWallpapers()
-        {
-            foreach (var x in _wpControl.Wallpapers)
-            {
+        private void PauseWallpapers() {
+            foreach (var x in _wpControl.Wallpapers) {
                 x.Pause();
             }
         }
 
-        private void PlayWallpapers()
-        {
-            foreach (var x in _wpControl.Wallpapers)
-            {
+        private void PlayWallpapers() {
+            foreach (var x in _wpControl.Wallpapers) {
                 x.Play();
             }
         }
 
-        private void PauseWallpaper(IMonitor monitor)
-        {
-            foreach (var x in _wpControl.Wallpapers)
-            {
-                if (x.Monitor.Equals(monitor))
-                {
+        private void PauseParallaxs() {
+            foreach (var x in _wpControl.Wallpapers) {
+                x.PauseParallax();
+            }
+        }
+
+        private void PlayParallaxs() {
+            foreach (var x in _wpControl.Wallpapers) {
+                x.PlayParallax();
+            }
+        }
+
+        private void PauseWallpaper(IMonitor monitor) {
+            foreach (var x in _wpControl.Wallpapers) {
+                if (x.Monitor.Equals(monitor)) {
                     x.Pause();
                 }
             }
         }
 
-        private void PlayWallpaper(IMonitor monitor)
-        {
-            foreach (var x in _wpControl.Wallpapers)
-            {
-                if (x.Monitor.Equals(monitor))
-                {
+        private void PlayWallpaper(IMonitor monitor) {
+            foreach (var x in _wpControl.Wallpapers) {
+                if (x.Monitor.Equals(monitor)) {
                     x.Play();
                 }
             }
         }
 
-        private void SilenceWallpapers()
-        {
-            foreach (var x in _wpControl.Wallpapers)
-            {
+        private void PauseParallax(IMonitor monitor) {
+            foreach (var x in _wpControl.Wallpapers) {
+                if (x.Monitor.Equals(monitor)) {
+                    x.PauseParallax();
+                }
+            }
+        }
+
+        private void PlayParallax(IMonitor monitor) {
+            foreach (var x in _wpControl.Wallpapers) {
+                if (x.Monitor.Equals(monitor)) {
+                    x.PlayParallax();
+                }
+            }
+        }
+
+        private void SilenceWallpapers() {
+            foreach (var x in _wpControl.Wallpapers) {
                 x.SetMute(true);
             }
         }
 
-        private void UnSilenceWallpapers()
-        {
-            foreach (var x in _wpControl.Wallpapers)
-            {
+        private void UnSilenceWallpapers() {
+            foreach (var x in _wpControl.Wallpapers) {
                 x.SetMute(false);
             }
         }
 
-        private void SilenceWallpaper(IMonitor monitor)
-        {
-            foreach (var x in _wpControl.Wallpapers)
-            {
-                if (x.Monitor.Equals(monitor))
-                {
+        private void SilenceWallpaper(IMonitor monitor) {
+            foreach (var x in _wpControl.Wallpapers) {
+                if (x.Monitor.Equals(monitor)) {
                     x.SetMute(true);
                 }
             }
         }
 
-        private void UnSilenceWallpaper(IMonitor monitor)
-        {
-            foreach (var x in _wpControl.Wallpapers)
-            {
-                if (x.Monitor.Equals(monitor))
-                {
+        private void UnSilenceWallpaper(IMonitor monitor) {
+            foreach (var x in _wpControl.Wallpapers) {
+                if (x.Monitor.Equals(monitor)) {
                     x.SetMute(false);
                 }
             }
         }
 
-        #region utils
-        public void ChangeState(AppWpRunRulesEnum nextState, IMonitor? targetMonitor = null)
-        {
-            switch (nextState)
-            {
+        public void ChangeParralaxState(AppParallaxRulesEnum nextState, IMonitor? targetMonitor = null) {
+            switch (nextState) {
+                case AppParallaxRulesEnum.KeepRun:
+                    if (targetMonitor == null) {
+                        PlayParallaxs();
+                    }
+                    else {
+                        PlayParallax(targetMonitor);
+                    }
+                    break;
+                case AppParallaxRulesEnum.Pause:
+                    if (targetMonitor == null) {
+                        PauseParallaxs();
+                    }
+                    else {
+                        PauseParallax(targetMonitor);
+                    }
+                    break;
+            }
+        }
+
+        public void ChangeWpState(AppWpRunRulesEnum nextState, IMonitor? targetMonitor = null) {
+            switch (nextState) {
                 case AppWpRunRulesEnum.KeepRun:
-                    if (targetMonitor == null)
-                    {
+                    if (targetMonitor == null) {
                         PlayWallpapers();
                         UnSilenceWallpapers();
                     }
-                    else
-                    {
+                    else {
                         PlayWallpaper(targetMonitor);
                         UnSilenceWallpaper(targetMonitor);
                     }
                     break;
                 case AppWpRunRulesEnum.Silence:
-                    if (targetMonitor == null)
-                    {
+                    if (targetMonitor == null) {
                         PlayWallpapers();
                         SilenceWallpapers();
                     }
-                    else
-                    {
+                    else {
                         PlayWallpaper(targetMonitor);
                         SilenceWallpaper(targetMonitor);
                     }
                     break;
                 case AppWpRunRulesEnum.Pause:
-                    if (targetMonitor == null)
-                    {
+                    if (targetMonitor == null) {
                         PauseWallpapers();
                     }
-                    else
-                    {
+                    else {
                         PauseWallpaper(targetMonitor);
                     }
                     break;
@@ -460,10 +436,8 @@ namespace VirtualPaper.Cores.PlaybackControl
         /// Checks if hWnd window size is >95% for its running screen.
         /// </summary>
         /// <returns>True if window dimensions are greater.</returns>
-        private bool IsZoomedCustom(IntPtr hWnd)
-        {
-            try
-            {
+        private bool IsZoomedCustom(IntPtr hWnd) {
+            try {
                 Rectangle screenBounds;
                 _ = Native.GetWindowRect(hWnd, out Native.RECT appBounds);
                 screenBounds = _monitorManger.GetMonitorByHWnd(hWnd).Bounds;
@@ -473,8 +447,7 @@ namespace VirtualPaper.Cores.PlaybackControl
                 else
                     return false;
             }
-            catch
-            {
+            catch {
                 return false;
             }
         }
@@ -484,14 +457,11 @@ namespace VirtualPaper.Cores.PlaybackControl
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        private IMonitor? MapWindowToMonitor(IntPtr handle)
-        {
-            try
-            {
+        private IMonitor? MapWindowToMonitor(IntPtr handle) {
+            try {
                 return _monitorManger.GetMonitorByHWnd(handle);
             }
-            catch
-            {
+            catch {
                 return null;
             }
         }
@@ -501,8 +471,7 @@ namespace VirtualPaper.Cores.PlaybackControl
         /// </summary>
         /// <param name="hWnd"></param>
         /// <returns></returns>
-        private bool IsZoomedSpan(IntPtr hWnd)
-        {
+        private bool IsZoomedSpan(IntPtr hWnd) {
             _ = Native.GetWindowRect(hWnd, out Native.RECT appBounds);
             var screenArea = _monitorManger.VirtualScreenBounds;
             // If foreground app 95% working-area( - taskbar of monitor)
@@ -517,15 +486,12 @@ namespace VirtualPaper.Cores.PlaybackControl
         /// This should be enough for just checking before subscribing to the Lock/Unlocked windows event.
         /// </summary>
         /// <returns>True if lockscreen is active.</returns>
-        private bool IsSystemLocked()
-        {
+        private bool IsSystemLocked() {
             bool result = false;
             var fHandle = Native.GetForegroundWindow();
-            try
-            {
+            try {
                 _ = Native.GetWindowThreadProcessId(fHandle, out int processID);
-                using (Process fProcess = Process.GetProcessById(processID))
-                {
+                using (Process fProcess = Process.GetProcessById(processID)) {
                     result = fProcess.ProcessName.Equals("LockApp", StringComparison.OrdinalIgnoreCase);
                 }
             }
@@ -536,12 +502,9 @@ namespace VirtualPaper.Cores.PlaybackControl
 
         #region dispoae
         private bool _isDisposed;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_isDisposed)
-            {
-                if (disposing)
-                {
+        protected virtual void Dispose(bool disposing) {
+            if (!_isDisposed) {
+                if (disposing) {
                     _dispatcherTimer.Stop();
                     SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
                 }
@@ -549,14 +512,13 @@ namespace VirtualPaper.Cores.PlaybackControl
             }
         }
 
-        public void Dispose()
-        {
+        public void Dispose() {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
         #endregion
 
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly string[] _classWhiteList =
         [
             //startmeu, taskview (win10), action center etc

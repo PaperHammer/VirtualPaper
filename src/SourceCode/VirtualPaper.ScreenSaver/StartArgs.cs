@@ -1,9 +1,7 @@
 ﻿using CommandLine;
 
-namespace VirtualPaper.ScreenSaver
-{
-    public class StartArgs
-    {
+namespace VirtualPaper.ScreenSaver {
+    public class StartArgs {
         [Option("file-path",
             Required = true,
             HelpText = "The target-file to load.")]

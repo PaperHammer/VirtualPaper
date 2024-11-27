@@ -1,8 +1,6 @@
-﻿namespace VirtualPaper.Common.Utils.Files.Models
-{
-    public class FileData(WallpaperType type, string[] extensions)
-    {
-        public WallpaperType Type { get; set; } = type;
+﻿namespace VirtualPaper.Common.Utils.Files.Models {
+    public class FileData(FileType ftype, string[] extensions) {
+        public FileType FType { get; set; } = ftype;
         public string[] Extentions { get; set; } = extensions;
     }
 }

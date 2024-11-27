@@ -1,24 +1,18 @@
-﻿namespace VirtualPaper.Common.Extensions
-{
-    public static class TaskExtensions
-    {
+﻿namespace VirtualPaper.Common.Extensions {
+    public static class TaskExtensions {
         //Ref: https://www.youtube.com/watch?v=O1Tx-k4Vao0
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Bug", "S3168:\"async\" methods should not return \"void\"", Justification = "Error is handled as event")]
-        public async static void Await(this Task task, Action completedCallBack, Action<Exception> errorCallBack)
-        {
-            try
-            {
+        public async static void Await(this Task task, Action completedCallBack, Action<Exception> errorCallBack) {
+            try {
                 await task;
                 completedCallBack?.Invoke();
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 errorCallBack?.Invoke(ex);
             }
         }
 
-        public static void TaskWaitCancel(this CancellationTokenSource cts)
-        {
+        public static void TaskWaitCancel(this CancellationTokenSource cts) {
             if (cts == null)
                 return;
 
@@ -26,15 +20,12 @@
             cts.Dispose();
         }
 
-        public static bool IsTaskWaitCompleted(this Task task)
-        {
-            if (task != null)
-            {
+        public static bool IsTaskWaitCompleted(this Task task) {
+            if (task != null) {
                 if ((task.IsCompleted == false
                 || task.Status == TaskStatus.Running
                 || task.Status == TaskStatus.WaitingToRun
-                || task.Status == TaskStatus.WaitingForActivation))
-                {
+                || task.Status == TaskStatus.WaitingForActivation)) {
                     return false;
                 }
                 return true;

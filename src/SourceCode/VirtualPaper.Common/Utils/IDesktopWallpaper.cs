@@ -1,13 +1,11 @@
 ﻿using System.Runtime.InteropServices;
 using VirtualPaper.Common.Utils.PInvoke;
 
-namespace VirtualPaper.Common.Utils
-{
+namespace VirtualPaper.Common.Utils {
     //Ref:
     //https://bitbucket.org/ciniml/desktopwallpaper/
     [ComImport, Guid("B92B56A9-8B55-4E14-9A89-0199BBB6F93B"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    public interface IDesktopWallpaper
-    {
+    public interface IDesktopWallpaper {
         void SetWallpaper([MarshalAs(UnmanagedType.LPWStr)] string monitorID, [MarshalAs(UnmanagedType.LPWStr)] string wallpaper);
         [return: MarshalAs(UnmanagedType.LPWStr)]
         string GetWallpaper([MarshalAs(UnmanagedType.LPWStr)] string monitorID);
@@ -54,8 +52,7 @@ namespace VirtualPaper.Common.Utils
     /// <summary>
     /// This enumeration is used to set and get slideshow _optionsStore.
     /// </summary> 
-    public enum DesktopSlideshowOptions
-    {
+    public enum DesktopSlideshowOptions {
         ShuffleImages = 0x01,     // When set, indicates that the order in which images in the slideshow are displayed can be randomized.
     }
 
@@ -63,8 +60,7 @@ namespace VirtualPaper.Common.Utils
     /// <summary>
     /// This enumeration is used by GetStatus to indicate the current status of the slideshow.
     /// </summary>
-    public enum DesktopSlideshowState
-    {
+    public enum DesktopSlideshowState {
         Enabled = 0x01,
         Slideshow = 0x02,
         DisabledByRemoteSession = 0x04,
@@ -74,8 +70,7 @@ namespace VirtualPaper.Common.Utils
     /// <summary>
     /// This enumeration is used by the AdvanceSlideshow method to indicate whether to advance the slideshow forward or backward.
     /// </summary>
-    public enum DesktopSlideshowDirection
-    {
+    public enum DesktopSlideshowDirection {
         Forward = 0,
         Backward = 1,
     }
@@ -84,8 +79,7 @@ namespace VirtualPaper.Common.Utils
     /// This enumeration indicates the wallpaper position for All monitors. (This includes when slideshows are running.)
     /// The wallpaper position specifies how the image that is assigned to a monitor should be displayed.
     /// </summary>
-    public enum DesktopWallpaperPosition
-    {
+    public enum DesktopWallpaperPosition {
         Center = 0,
         Tile = 1,
         Stretch = 2,
@@ -98,7 +92,6 @@ namespace VirtualPaper.Common.Utils
     /// CoClass DesktopWallpaper
     /// </summary>
     [ComImport, Guid("C2CF3110-460E-4fc1-B9D0-8A1C0C9CC4BD")]
-    public class DesktopWallpaperClass
-    {
+    public class DesktopWallpaperClass {
     }
 }

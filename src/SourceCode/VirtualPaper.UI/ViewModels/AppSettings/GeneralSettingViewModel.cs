@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,7 +16,7 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UI.Services.Interfaces;
 using VirtualPaper.UI.Utils;
-using VirtualPaper.UI.ViewModels.WpSettingsComponents;
+using VirtualPaper.UIComponent.Utils;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.System;
@@ -23,11 +24,9 @@ using WinUI3Localizer;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 using DispatcherQueueController = Microsoft.UI.Dispatching.DispatcherQueueController;
 
-namespace VirtualPaper.UI.ViewModels.AppSettings
-{
-    public class GeneralSettingViewModel : ObservableObject
-    {
-        public event EventHandler<string[]> WallpaperDirChanged;
+namespace VirtualPaper.UI.ViewModels.AppSettings {
+    public partial class GeneralSettingViewModel : ObservableObject {
+        public event EventHandler WallpaperInstallDirChanged;
 
         public string Text_Version { get; set; } = string.Empty;
         public string Version_Release_Notes { get; set; } = string.Empty;
@@ -60,10 +59,8 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
 
         public bool IsWinStore => Constants.ApplicationType.IsMSIX;
 
-        public string AppVersionText
-        {
-            get
-            {
+        public string AppVersionText {
+            get {
                 var ver = "v" + _wpControlClient.AssemblyVersion;
                 if (Constants.ApplicationType.IsTestBuild)
                     ver += "b";
@@ -79,60 +76,51 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         public List<LanguagesModel> Languages { get; set; } = [];
 
         private string _autoStartStatu = string.Empty;
-        public string AutoStartStatu
-        {
+        public string AutoStartStatu {
             get => _autoStartStatu;
             set { _autoStartStatu = value; OnPropertyChanged(); }
         }
 
         private Visibility _infoBar_Version_FindNew = Visibility.Collapsed;
-        public Visibility InfoBar_Version_FindNew
-        {
+        public Visibility InfoBar_Version_FindNew {
             get => _infoBar_Version_FindNew;
             set { _infoBar_Version_FindNew = value; OnPropertyChanged(); }
         }
 
         private Visibility _infoBar_Version_UpdateErr = Visibility.Collapsed;
-        public Visibility InfoBar_Version_UpdateErr
-        {
+        public Visibility InfoBar_Version_UpdateErr {
             get => _infoBar_Version_UpdateErr;
             set { _infoBar_Version_UpdateErr = value; OnPropertyChanged(); }
         }
 
         private Visibility _infoBar_Version_UptoNewest = Visibility.Collapsed;
-        public Visibility InfoBar_Version_UptoNewest
-        {
+        public Visibility InfoBar_Version_UptoNewest {
             get => _infoBar_Version_UptoNewest;
             set { _infoBar_Version_UptoNewest = value; OnPropertyChanged(); }
         }
 
         private string _version_LastCheckDate = string.Empty;
-        public string Version_LastCheckDate
-        {
+        public string Version_LastCheckDate {
             get => _version_LastCheckDate;
             set { _version_LastCheckDate = value; OnPropertyChanged(); }
         }
 
         private string _version = string.Empty;
-        public string Version
-        {
+        public string Version {
             get => _version;
             set { _version = value; OnPropertyChanged(); }
         }
 
         private bool _isStoped = true;
-        public bool IsStoped
-        {
+        public bool IsStoped {
             get => _isStoped;
             set { _isStoped = value; OnPropertyChanged(); }
         }
 
         private bool _isAutoStart;
-        public bool IsAutoStart
-        {
+        public bool IsAutoStart {
             get => _isAutoStart;
-            set
-            {
+            set {
                 _isAutoStart = value;
                 ChangeAutoShartStatu(value);
                 if (_userSettingsClient.Settings.IsAutoStart == value) return;
@@ -144,11 +132,9 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         }
 
         private int _seletedThemeIndx;
-        public int SeletedThemeIndx
-        {
+        public int SeletedThemeIndx {
             get => _seletedThemeIndx;
-            set
-            {
+            set {
                 _seletedThemeIndx = value;
                 if (_userSettingsClient.Settings.ApplicationTheme == (AppTheme)value) return;
 
@@ -157,13 +143,11 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
                 OnPropertyChanged();
             }
         }
-        
+
         private int _seletedSystemBackdropIndx;
-        public int SeletedSystemBackdropIndx
-        {
+        public int SeletedSystemBackdropIndx {
             get => _seletedSystemBackdropIndx;
-            set
-            {
+            set {
                 _seletedSystemBackdropIndx = value;
                 if (_userSettingsClient.Settings.SystemBackdrop == (AppSystemBackdrop)value) return;
 
@@ -174,37 +158,31 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         }
 
         private LanguagesModel _selectedLanguage;
-        public LanguagesModel SelectedLanguage
-        {
+        public LanguagesModel SelectedLanguage {
             get => _selectedLanguage;
-            set
-            {
+            set {
                 _selectedLanguage = value;
                 if (_userSettingsClient.Settings.Language == value.Language) return;
 
-                if (value.Codes.FirstOrDefault(x => x == _userSettingsClient.Settings.Language) == null)
-                {
+                if (value.Codes.FirstOrDefault(x => x == _userSettingsClient.Settings.Language) == null) {
                     _userSettingsClient.Settings.Language = value.Codes[0];
                     UpdateSettingsConfigFile();
-                    App.LanguageChanged(value.Codes[0]);
+                    LanguageUtil.LanguageChanged(value.Codes[0]);
                     OnPropertyChanged();
                 }
             }
         }
 
         private string _wallpaperDir = string.Empty;
-        public string WallpaperDir
-        {
+        public string WallpaperDir {
             get { return _wallpaperDir; }
             set { _wallpaperDir = value; OnPropertyChanged(); }
         }
 
         private bool _wallpaperDirectoryChangeOngoing;
-        public bool WallpaperDirectoryChangeOngoing
-        {
+        public bool WallpaperDirectoryChangeOngoing {
             get { return _wallpaperDirectoryChangeOngoing; }
-            set
-            {
+            set {
                 _wallpaperDirectoryChangeOngoing = value;
                 OnPropertyChanged();
                 IsWallpaperDirectoryChangeEnable = !value;
@@ -212,8 +190,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
         }
 
         private bool _isWallpaperDirectoryChangeEnable = true;
-        public bool IsWallpaperDirectoryChangeEnable
-        {
+        public bool IsWallpaperDirectoryChangeEnable {
             get { return _isWallpaperDirectoryChangeEnable; }
             set { _isWallpaperDirectoryChangeEnable = value; OnPropertyChanged(); }
         }
@@ -222,8 +199,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             IAppUpdaterClient appUpdater,
             IDialogService dialogService,
             IUserSettingsClient userSettingsClient,
-            IWallpaperControlClient wallpaperControlClient)
-        {
+            IWallpaperControlClient wallpaperControlClient) {
             _dialogService = dialogService;
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
 
@@ -231,33 +207,30 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
 
+            _localizer = LanguageUtil.LocalizerInstacne;
+
             InitText();
             InitCollections();
             InitContent();
         }
 
-        private void InfoBarVisibilityRestore()
-        {
+        private void InfoBarVisibilityRestore() {
             InfoBar_Version_FindNew = Visibility.Collapsed;
             InfoBar_Version_UpdateErr = Visibility.Collapsed;
             InfoBar_Version_UptoNewest = Visibility.Collapsed;
         }
 
-        private void InitContent()
-        {
+        private void InitContent() {
             _appUpdater.UpdateChecked += AppUpdater_UpdateChecked;
             _seletedThemeIndx = (int)_userSettingsClient.Settings.ApplicationTheme;
             _seletedSystemBackdropIndx = (int)_userSettingsClient.Settings.SystemBackdrop;
             _selectedLanguage = SupportedLanguages.GetLanguage(_userSettingsClient.Settings.Language);
-            
+
             IsAutoStart = _userSettingsClient.Settings.IsAutoStart;
             WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
         }
 
-        private void InitText()
-        {
-            _localizer = Localizer.Get();
-
+        private void InitText() {
             Text_Version = _localizer.GetLocalizedString("Settings_General_Text_Version");
             Version_Release_Notes = _localizer.GetLocalizedString("Settings_General_Version_Release_Notes");
             Version_UpdateCheck = _localizer.GetLocalizedString("Settings_General_Version_UpdateCheck");
@@ -295,44 +268,35 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             AppearanceAndAction_AppFileStorage_OpenTooltip = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppFileStorage_OpenTooltip");
         }
 
-        private void InitCollections()
-        {
+        private void InitCollections() {
             Themes = [_themeFollowSystem, _themeLight, _themeDark];
             Languages = [.. SupportedLanguages.Languages];
             SystemBackdrops = [_sysbdDefault, _sysbdMica, _sysbdAcrylic];
         }
 
-        private void ChangeAutoShartStatu(bool isAutoStart)
-        {
-            if (isAutoStart)
-            {
+        private void ChangeAutoShartStatu(bool isAutoStart) {
+            if (isAutoStart) {
                 AutoStartStatu = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AutoStartStatu_On");
             }
-            else
-            {
+            else {
                 AutoStartStatu = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AutoStartStatu_Off");
             }
         }
 
-        internal async Task CheckUpdateAsync()
-        {
+        internal async Task CheckUpdateAsync() {
             InfoBarVisibilityRestore();
 
             await _appUpdater.CheckUpdate();
         }
 
-        private void AppUpdater_UpdateChecked(object sender, AppUpdaterEventArgs e)
-        {
-            _ = _dispatcherQueue.TryEnqueue(() =>
-            {
+        private void AppUpdater_UpdateChecked(object sender, AppUpdaterEventArgs e) {
+            _ = _dispatcherQueue.TryEnqueue(() => {
                 MenuUpdate(e.UpdateStatus, e.UpdateDate, e.UpdateVersion);
             });
         }
 
-        private void MenuUpdate(AppUpdateStatus status, DateTime date, Version version)
-        {
-            switch (status)
-            {
+        private void MenuUpdate(AppUpdateStatus status, DateTime date, Version version) {
+            switch (status) {
                 case AppUpdateStatus.uptodate:
                     InfoBar_Version_UptoNewest = Visibility.Visible;
                     break;
@@ -350,8 +314,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             Version_LastCheckDate += status == AppUpdateStatus.notchecked ? "" : $"{date}";
         }
 
-        internal async Task StartDownloadAsync()
-        {
+        internal async Task StartDownloadAsync() {
             IsStoped = false;
 
             await _appUpdater.StartUpdate();
@@ -359,110 +322,104 @@ namespace VirtualPaper.UI.ViewModels.AppSettings
             IsStoped = true;
         }
 
-        internal async void WallpaperDirectoryChange(XamlRoot xamlRoot)
-        {
+        internal async void WallpaperDirectoryChange() {
             var folderPicker = new FolderPicker();
             folderPicker.SetOwnerWindow(App.Services.GetRequiredService<MainWindow>());
             folderPicker.FileTypeFilter.Add("*");
+
             var folder = await folderPicker.PickSingleFolderAsync();
-            if (folder == null)
-            {
+            if (folder == null) {
                 return;
             }
-            if (folder.Path == Constants.CommonPaths.AppDataDir)
-            {
+            if (folder.Path == Constants.CommonPaths.AppDataDir) {
                 await _dialogService.ShowDialogAsync(
-                        _localizer.GetLocalizedString("Dialog_Content_WallpaperDirectoryChangePathInvalid")
-                        , _localizer.GetLocalizedString("Dialog_Title_Prompt")
-                        , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
+                        _localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_WallpaperDirectoryChangePathInvalid)
+                        , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
+                        , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
                 return;
             }
-            if (folder != null && !string.Equals(folder.Path, _userSettingsClient.Settings.WallpaperDir, StringComparison.OrdinalIgnoreCase))
-            {
+
+            if (folder != null && !string.Equals(folder.Path, _userSettingsClient.Settings.WallpaperDir, StringComparison.OrdinalIgnoreCase)) {
                 await WallpaperDirectoryChange(folder.Path);
             }
         }
 
-        internal async void OpenFolder()
-        {
+        internal async void OpenFolder() {
             var folder = await StorageFolder.GetFolderFromPathAsync(WallpaperDir);
             await Launcher.LaunchFolderAsync(folder);
         }
 
-        private async Task WallpaperDirectoryChange(string newDir)
-        {
-            try
-            {
-                var parentDir = Directory.GetParent(newDir).ToString();
-                if (parentDir != null)
-                {
-                    if (Directory.Exists(Path.Combine(parentDir, Constants.CommonPartialPaths.WallpaperInstallDir)))
-                    {
-                        //User selected wrong directory, needs the SaveData folder also(root).
-                        newDir = parentDir;
-                    }
+        private async Task WallpaperDirectoryChange(string destRootFolderPath) {
+            string destFolderPath = string.Empty;
+            WallpaperDirectoryChangeOngoing = true;
+
+            try {
+                #region 构建目标路径
+                destFolderPath = Path.Combine(destRootFolderPath, Constants.FolderName.WpStoreFolderName);
+                #endregion
+
+                #region 更新代替换文件中的路径，并移动文件
+                bool isDirChanged = await WallpaperUtil.WallpaperDirectoryUpdateAsync(
+                    [_userSettingsClient.Settings.WallpaperDir], destFolderPath);
+                if (!isDirChanged) {
+                    BasicUIComponentUtil.ShowMsg(true, Constants.LocalText.InfobarMsg_Err, InfoBarSeverity.Error);
+                    return;
                 }
+                #endregion             
 
-                WallpaperDirectoryChangeOngoing = true;
-                //create destination directory's if not exist.
-                Directory.CreateDirectory(Path.Combine(newDir, Constants.CommonPartialPaths.WallpaperInstallDir));
+                #region 更新存储的运行信息，重启壁纸
+                var previousDirFolderPath = _userSettingsClient.Settings.WallpaperDir;
+                _userSettingsClient.Settings.WallpaperDir = destFolderPath;
+                UpdateSettingsConfigFile();
+                WallpaperInstallDirChanged?.Invoke(this, EventArgs.Empty);
+                WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
+                await _wpControlClient.ChangeWallpaperLayoutFolrderPathAsync(previousDirFolderPath, destFolderPath);
+                var response = await _wpControlClient.RestartAllWallpapersAsync();
+                if (!response.IsFinished) {
+                    throw new Exception("Restart all wallpapers failed");
+                }
+                #endregion
 
-                await Task.Run(() =>
-                {
-                    FileUtil.DirectoryCopy(Path.Combine(WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallDir),
-                        Path.Combine(newDir, Constants.CommonPartialPaths.WallpaperInstallDir), true);
-                });
+                #region 删除原目录下的文件
+                _ = await FileUtil.TryDeleteDirectoryAsync(previousDirFolderPath, 1000, 3000);
+                #endregion
+
             }
-            catch (Exception)
-            {
-                //TODO: Log
-                return;
+            catch (OperationCanceledException) {
+                BasicUIComponentUtil.ShowMsg(true, Constants.LocalText.InfobarMsg_Cancel, InfoBarSeverity.Warning);
+                if (destFolderPath != string.Empty) {
+                    FileUtil.EmptyDirectory(destFolderPath);
+                }
             }
-            finally
-            {
-                WallpaperDir = newDir;
+            catch (Exception ex) {
+                BasicUIComponentUtil.ShowMsg(true, Constants.LocalText.InfobarMsg_Err, InfoBarSeverity.Error);
+                _logger.Error(ex);
+                if (destFolderPath != string.Empty) {
+                    FileUtil.EmptyDirectory(destFolderPath);
+                }
+            }
+            finally {
+                WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
                 WallpaperDirectoryChangeOngoing = false;
             }
-
-            //exit All running wp's immediately
-            //await _wpControlClient.CloseAllWallpapersAsync();
-
-            var previousDir = _userSettingsClient.Settings.WallpaperDir;
-            _userSettingsClient.Settings.WallpaperDir = newDir;
-            UpdateSettingsConfigFile();
-            WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
-
-            if (WallpaperDirChanged == null) _ = App.Services.GetRequiredService<LibraryContentsViewModel>();
-            WallpaperDirChanged?.Invoke(this, [previousDir, newDir]);
-
-            UpdateWallpaperLayoutConfigFile(previousDir, newDir);
-
-            //not deleting the root folder, what if the user selects a folder that is not used by vp alone!
-            _ = await FileUtil.TryDeleteDirectoryAsync(Path.Combine(previousDir, Constants.CommonPartialPaths.WallpaperInstallDir), 1000, 3000);
         }
 
-        private async void UpdateSettingsConfigFile()
-        {
+        private async void UpdateSettingsConfigFile() {
             await _userSettingsClient.SaveAsync<ISettings>();
         }
 
-        private async void UpdateWallpaperLayoutConfigFile(string previousDir, string newDir)
-        {
-            await _wpControlClient.ChangeWallpaperLayoutFolrderPathAsync(previousDir, newDir);
-            await _wpControlClient.RestartAllWallpaperAsync();
-        }
-
-        private ILocalizer _localizer;
+        private readonly ILocalizer _localizer;
+        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private string _themeDark = string.Empty;
         private string _themeLight = string.Empty;
         private string _themeFollowSystem = string.Empty;
         private string _sysbdDefault = string.Empty;
         private string _sysbdMica = string.Empty;
         private string _sysbdAcrylic = string.Empty;
-        private IAppUpdaterClient _appUpdater;
-        private IDialogService _dialogService;
-        private IUserSettingsClient _userSettingsClient;
-        private IWallpaperControlClient _wpControlClient;
-        private DispatcherQueue _dispatcherQueue;
+        private readonly IAppUpdaterClient _appUpdater;
+        private readonly IDialogService _dialogService;
+        private readonly IUserSettingsClient _userSettingsClient;
+        private readonly IWallpaperControlClient _wpControlClient;
+        private readonly DispatcherQueue _dispatcherQueue;
     }
 }

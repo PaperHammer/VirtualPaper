@@ -1,30 +1,32 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 
-namespace VirtualPaper.Common.Utils.Storage
-{
-    public class JsonUtil
-    {
-        public static void Write(string path, JObject rss)
-        {
-            File.WriteAllText(path, rss.ToString());
+namespace VirtualPaper.Common.Utils.Storage {
+    public class JsonUtil {
+        #region system.text.json
+        public static void Write(string filePath, JsonNode jsonNode) {
+            using FileStream fs = new(filePath, FileMode.Create, FileAccess.Write);
+            using Utf8JsonWriter writer = new(fs);
+            jsonNode.WriteTo(writer);
+        }
+        
+        public static void Write(string filePath, JsonElement jsonElement) {
+            using FileStream fs = new(filePath, FileMode.Create, FileAccess.Write);
+            using Utf8JsonWriter writer = new(fs);
+            jsonElement.WriteTo(writer);
         }
 
-        public static JObject ReadJObject(string path)
-        {
-            var json = File.ReadAllText(path);
-            return JObject.Parse(json);
+        public static JsonNode GetWritableJson(string filePath) {
+            var json = File.ReadAllText(filePath);
+
+            return JsonNode.Parse(json)!;
         }
 
-        public static JToken ReadJToken(string path)
-        {
-            var json = File.ReadAllText(path);
-            return JToken.Parse(json);
-        }
+        public static JsonElement GetReadonlyJson(string filePath) {
+            var json = File.ReadAllText(filePath);
 
-        public static string Serialize(object obj)
-        {
-            return JsonConvert.SerializeObject(obj);
+            return JsonDocument.Parse(json).RootElement;
         }
+        #endregion
     }
 }

@@ -11,10 +11,9 @@
         Left="-99999"
         ShowInTaskbar="False"
         SourceInitialized="Window_SourceInitialized"
-        Visibility="Hidden"
         WindowStartupLocation="Manual"
-        mc:Ignorable="d"
-        Activated="Window_Activated">
+        Visibility="Hidden"
+        mc:Ignorable="d">
 
     <Grid />
 </Window>

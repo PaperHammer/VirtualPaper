@@ -11,14 +11,19 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
-    <PackageReference Include="CrissCross.WPF" Version="2.0.0" />
-    <PackageReference Include="CrissCross.WPF.WebView2" Version="2.0.0" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2535.41" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="CrissCross.WPF" Version="2.1.0" />
+    <PackageReference Include="CrissCross.WPF.WebView2" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2792.45" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Players\Web\default.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 	<PropertyGroup>

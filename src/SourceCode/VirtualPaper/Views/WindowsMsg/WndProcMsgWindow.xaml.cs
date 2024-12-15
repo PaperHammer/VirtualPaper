@@ -25,6 +25,13 @@ namespace VirtualPaper.Views.WindowsMsg {
             base.OnSourceInitialized(e);
             var source = PresentationSource.FromVisual(this) as HwndSource;
             source?.AddHook(WndProc);
+            var helper = new WindowInteropHelper(this);
+            HiddenWindowForWPF(helper);
+        }
+
+        private static void HiddenWindowForWPF(WindowInteropHelper helper) {
+            var exStyle = Native.GetWindowLong(helper.Handle, Native.GWL_EXSTYLE);
+            Native.SetWindowLong(helper.Handle, Native.GWL_EXSTYLE, exStyle | Native.WS_EX_TOOLWINDOW | Native.WS_EX_NOACTIVATE);
         }
 
         /// <summary>

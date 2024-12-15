@@ -6,6 +6,20 @@ using System.Text;
 namespace VirtualPaper.Common.Utils.PInvoke {
 #pragma warning disable CA1707, CA1401, CA1712
     public static class Native {
+        public static int GWL_STYLE = -16;
+        public static long WS_POPUP = 0x80000000;
+        public static long WS_CHILD = 0x40000000;
+
+        public static int MAX_WINDOW_TEXT_LENGTH = 1024;
+        public static int MAX_CLASS_NAME_LENGTH = 256;
+
+        [DllImport("user32.dll")]
+        public static extern bool EnumChildWindows(IntPtr hwndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        public static int GWL_EXSTYLE = -20;
+        public static int WS_EX_TOOLWINDOW = 0x80;
+        public static int WS_EX_NOACTIVATE = 0x08000000;
+
         [DllImport("Shcore.dll", SetLastError = true)]
         public static extern int GetDpiForMonitor(IntPtr hmonitor, Monitor_DPI_Type dpiType, out uint dpiX, out uint dpiY);
 
@@ -1351,7 +1365,7 @@ namespace VirtualPaper.Common.Utils.PInvoke {
 
         public const int GWL_HWNDPARENT = (-8);
 
-        public static IntPtr SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong) {
+        public static IntPtr SetWindowLong(IntPtr hWnd, int nIndex, long dwNewLong) {
             if (IntPtr.Size == 4) {
                 return SetWindowLongPtr32(hWnd, nIndex, dwNewLong);
             }
@@ -1359,10 +1373,10 @@ namespace VirtualPaper.Common.Utils.PInvoke {
         }
 
         [DllImport("User32.dll", CharSet = CharSet.Auto, EntryPoint = "SetWindowLong")]
-        public static extern IntPtr SetWindowLongPtr32(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+        public static extern IntPtr SetWindowLongPtr32(IntPtr hWnd, int nIndex, long dwNewLong);
 
         [DllImport("User32.dll", CharSet = CharSet.Auto, EntryPoint = "SetWindowLongPtr")]
-        public static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+        public static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, long dwNewLong);
 
         // This helper static method is required because the 32-bit version of user32.dll does not contain this API
         // (on any versions of Windows), so linking the method will fail at run-time. The bridge dispatches the request
@@ -1657,7 +1671,7 @@ namespace VirtualPaper.Common.Utils.PInvoke {
         }
 
         [DllImport("user32.dll", SetLastError = true)]
-        public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+        public static extern long GetWindowLong(IntPtr hWnd, int nIndex);
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetForegroundWindow();

@@ -3,6 +3,7 @@ using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Models.EffectValue;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.UIComponent.Container;
@@ -33,13 +34,23 @@ namespace VirtualPaper.PlayerWeb.Utils {
             appWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
         }
 
-        #region effect-config-window
-        internal static void OpenEffectConfigWindow(StartArgs startArgs) {
+        #region detail-page
+        internal static void AddDetailsPage() {
+            if (_details == null) {
+                _details = new(_startArgs.WpBasicDataFilePath);
+
+                _toolContainer.AddContent(Constants.LocalText.WpConfigViewMdoel_TextDetailedInfo, "Details", _details);
+            }
+        }
+        #endregion
+
+        #region effect-config-page
+        internal static void AddEffectConfigPage() {
             if (_effectConfig == null) {
                 _effectConfig = new(
-                    startArgs.WpEffectFilePathUsing,
-                    startArgs.WpEffectFilePathTemporary,
-                    startArgs.WpEffectFilePathTemplate);
+                    _startArgs.WpEffectFilePathUsing,
+                    _startArgs.WpEffectFilePathTemporary,
+                    _startArgs.WpEffectFilePathTemplate);
 
                 _effectConfig.DoubleValueChanged += EffectConfig_DoubleValueChanged;
                 _effectConfig.IntValueChanged += EffectConfig_IntValueChanged;
@@ -47,9 +58,9 @@ namespace VirtualPaper.PlayerWeb.Utils {
 
                 _effectConfig.ApplyChange += EffectConfig_ApplyChange;
                 ToolWindowClose += _effectConfig.Closing;
-            }
 
-            OpenToolWindow(startArgs, _effectConfig);
+                _toolContainer.AddContent(Constants.LocalText.WpConfigViewMdoel_TextWpEffectConfig, "EffectConfig", _effectConfig);
+            }
         }
 
         private static void EffectConfig_ApplyChange(object sender, EventArgs e) {
@@ -58,11 +69,11 @@ namespace VirtualPaper.PlayerWeb.Utils {
         }
 
         private static void EffectConfig_DoubleValueChanged(object sender, DoubleValueChangedEventArgs e) {
-            _mainWindow.ExecuteScriptFunctionAsync(Fileds.PropertyListener, e.PropertyName, e.Value);
+            _ = _mainWindow.ExecuteScriptFunctionAsync(Fileds.PropertyListener, e.PropertyName, e.Value);
         }
 
         private static void EffectConfig_IntValueChanged(object sender, IntValueChangedEventArgs e) {
-            _mainWindow.ExecuteScriptFunctionAsync(Fileds.PropertyListener, e.PropertyName, e.Value);
+            _ = _mainWindow.ExecuteScriptFunctionAsync(Fileds.PropertyListener, e.PropertyName, e.Value);
         }
 
         private static void EffectConfig_BoolValueChanged(object sender, BoolValueChangedEventArgs e) {
@@ -70,38 +81,33 @@ namespace VirtualPaper.PlayerWeb.Utils {
         }
         #endregion
 
-        private static void OpenToolWindow(StartArgs startArgs, object content) {
+        internal static void OpenToolWindow(StartArgs startArgs) {
             if (_toolContainer == null) {
+                _startArgs = startArgs;
                 _toolContainer = new(
                    startArgs.WindowStyleType,
                    startArgs.ApplicationTheme,
                    _mainWindow.AppWindow.TitleBar.ButtonForegroundColor,
-                   content,
-                   (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"],
-                   (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"]);
-                
+                   _mainWindow.WindowCaptionForegroundDisabled,
+                   _mainWindow.WindowCaptionForeground);
+
                 _toolContainer.Closed += ToolContainer_Closed;
-                static void ToolContainer_Closed(object sender, WindowEventArgs args) {
+                static void ToolContainer_Closed(object _, WindowEventArgs __) {
                     _toolContainer.Closed -= ToolContainer_Closed;
                     ToolWindowClose?.Invoke(_toolContainer, EventArgs.Empty);
-                    
+
                     _effectConfig = null;
                     _toolContainer = null;
                     ToolWindowClose = null;
                 }
-                SetToolWindowActive();
+                SetToolWindowParent();
                 _toolContainer.Show();
             }
         }
 
-        private static void SetToolWindowActive() {
+        private static void SetToolWindowParent() {
             IntPtr toolHwnd = GetWindowHwnd(_toolContainer);
-            //WindowId toolWindowId = Win32Interop.GetWindowIdFromWindow(toolHwnd);
-            //AppWindow toolAppWindow = AppWindow.GetFromWindowId(toolWindowId);
-            //OverlappedPresenter presenter = toolAppWindow.Presenter as OverlappedPresenter;
-
             Native.SetWindowLong(toolHwnd, Native.GWL_HWNDPARENT, GetWindowHwnd(_mainWindow));
-            //presenter.IsModal = true;
         }
 
         internal static nint GetWindowHwnd(WindowEx windowEx) {
@@ -113,7 +119,9 @@ namespace VirtualPaper.PlayerWeb.Utils {
         }
 
         private static EffectConfig _effectConfig;
+        private static Details _details;
         private static ToolContainer _toolContainer;
         private readonly static MainWindow _mainWindow;
+        private static StartArgs _startArgs;
     }
 }

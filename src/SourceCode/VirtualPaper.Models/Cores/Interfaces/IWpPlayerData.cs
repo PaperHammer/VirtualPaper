@@ -8,13 +8,13 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         /// 壁纸运行时类型
         /// </summary>
         RuntimeType RType { get; set; }
-        string FilePath {  get; set; }
-        string DepthFilePath {  get; set; }
+        string FilePath { get; set; }
+        string DepthFilePath { get; set; }
         string FolderPath { get; set; }
         string ThumbnailPath { get; set; }
-        string WpEffectFilePathTemplate {  get; set; }
-        string WpEffectFilePathTemporary {  get; set; }
-        string WpEffectFilePathUsing {  get; set; }
+        string WpEffectFilePathTemplate { get; set; }
+        string WpEffectFilePathTemporary { get; set; }
+        string WpEffectFilePathUsing { get; set; }
 
         IWpMetadata GetMetadata();
     }

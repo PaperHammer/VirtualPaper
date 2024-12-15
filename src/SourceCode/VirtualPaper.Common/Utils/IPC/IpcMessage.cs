@@ -7,15 +7,16 @@ namespace VirtualPaper.Common.Utils.IPC {
     [JsonDerivedType(typeof(VirtualPaperUpdateCmd), "cmd_update")]
     [JsonDerivedType(typeof(VirtualPaperMessageConsole), "msg_console")]
     [JsonDerivedType(typeof(VirtualPaperMessageHwnd), "msg_hwnd")]
+    [JsonDerivedType(typeof(VirtualPaperMessageProcId), "msg_procid")]
     [JsonDerivedType(typeof(VirtualPaperMessageScreenshot), "msg_screenshot")]
     [JsonDerivedType(typeof(VirtualPaperMessageWallpaperLoaded), "msg_wploaded")]
     [JsonDerivedType(typeof(VirtualPaperMessageRECT), "msg_rect")]
+    [JsonDerivedType(typeof(VirtualPaperMessageClosed), "msg_closed")]
     [JsonDerivedType(typeof(VirtualPaperCloseCmd), "cmd_close")]
     [JsonDerivedType(typeof(VirtualPaperReloadCmd), "cmd_reload")]
     [JsonDerivedType(typeof(VirtualPaperScreenshotCmd), "cmd_screenshot")]
     [JsonDerivedType(typeof(VirtualPaperApplyCmd), "cmd_apply")]
-    [JsonDerivedType(typeof(VirtualPaperPreviewOnCmd), "cmd_preview_on")]
-    [JsonDerivedType(typeof(VirtualPaperPreviewOffCmd), "cmd_preview_off")]
+    [JsonDerivedType(typeof(VirtualPaperActiveCmd), "cmd_active")]
     [JsonDerivedType(typeof(VirtualPaperSuspendCmd), "cmd_suspend")]
     [JsonDerivedType(typeof(VirtualPaperResumeCmd), "cmd_resume")]
     [JsonDerivedType(typeof(VirtualPaperParallaxSuspendCmd), "cmd_suspend_parallax")]
@@ -34,15 +35,16 @@ namespace VirtualPaper.Common.Utils.IPC {
 
     public enum MessageType {
         msg_hwnd,
+        msg_procid,
         msg_console,
         msg_wploaded,
         msg_screenshot,
         msg_rect,
         msg_info,
+        msg_closed,
 
         cmd_apply,
-        cmd_preview_on,
-        cmd_preview_off,
+        cmd_active,
         cmd_reload,
         cmd_close,
         cmd_screenshot,
@@ -96,6 +98,12 @@ namespace VirtualPaper.Common.Utils.IPC {
     }
 
     [Serializable]
+    public class VirtualPaperMessageProcId : IpcMessage {
+        public long ProcId { get; set; }
+        public VirtualPaperMessageProcId() : base(MessageType.msg_procid) { }
+    }
+
+    [Serializable]
     public class VirtualPaperMessageScreenshot : IpcMessage {
         public string FileName { get; set; } = string.Empty;
         public bool Success { get; set; }
@@ -106,6 +114,11 @@ namespace VirtualPaper.Common.Utils.IPC {
     public class VirtualPaperMessageWallpaperLoaded : IpcMessage {
         public bool Success { get; set; }
         public VirtualPaperMessageWallpaperLoaded() : base(MessageType.msg_wploaded) { }
+    }
+    
+    [Serializable]
+    public class VirtualPaperMessageClosed : IpcMessage {
+        public VirtualPaperMessageClosed() : base(MessageType.msg_closed) { }
     }
 
     [Serializable]
@@ -141,13 +154,8 @@ namespace VirtualPaper.Common.Utils.IPC {
     }
     
     [Serializable]
-    public class VirtualPaperPreviewOnCmd : IpcMessage {
-        public VirtualPaperPreviewOnCmd() : base(MessageType.cmd_preview_on) { }
-    }
-    
-    [Serializable]
-    public class VirtualPaperPreviewOffCmd : IpcMessage {
-        public VirtualPaperPreviewOffCmd() : base(MessageType.cmd_preview_off) { }
+    public class VirtualPaperActiveCmd : IpcMessage {
+        public VirtualPaperActiveCmd() : base(MessageType.cmd_active) { }
     }
 
     [Serializable]

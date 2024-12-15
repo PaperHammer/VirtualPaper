@@ -1,5 +1,7 @@
 ﻿import * as THREE from './three.module.min.js';
 
+let mouse;
+
 function init3D(imgFilePath, depthFilePath) {
     /*背景/场景*/
     const scene = new THREE.Scene();
@@ -7,8 +9,7 @@ function init3D(imgFilePath, depthFilePath) {
 
     /*相机*/
     const fov = 100 // 视野范围
-    const aspect = 2; // 相机默认值 = 2, 画布的宽高比
-    //const aspect = window.innerWidth / window.innerHeight; // 相机默认值 = 2, 画布的宽高比
+    const aspect = window.innerWidth / window.innerHeight; // 相机默认值 = 2, 画布的宽高比
     const near = 0.1 // 近平面
     const far = 1000 // 远平面
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
@@ -20,7 +21,7 @@ function init3D(imgFilePath, depthFilePath) {
     const dapthTexture = textureLoader.load(depthFilePath);//加载深度图
 
     /*鼠标坐标2维向量*/
-    const mouse = new THREE.Vector2();
+    mouse = new THREE.Vector2();
 
     /*创建平面*/
     const geometry = new THREE.PlaneGeometry(16, 10);
@@ -31,7 +32,6 @@ function init3D(imgFilePath, depthFilePath) {
             uTexture: { value: texture },
             uDepthTexture: { value: dapthTexture },
             uMouse: { value: mouse },
-
         },
         vertexShader: `
             varying vec2 vUv;
@@ -75,18 +75,12 @@ function init3D(imgFilePath, depthFilePath) {
     });
 
     const container = document.getElementById('content');
+    container.classList.add('source');
     container.appendChild(renderer.domElement); // 向指定 div 中添加
-
-
-    /*监听鼠标计算位移量*/
-    window.addEventListener('mousemove', (event) => {
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = (event.clientY / window.innerHeight) * 2 - 1;
-    });
 
     /*监听窗口变化*/
     window.addEventListener('resize', () => {
-        //camera.aspect = window.innerWidth / window.innerHeight;
+        camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
 
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -96,4 +90,22 @@ function init3D(imgFilePath, depthFilePath) {
     return 'init success';
 }
 
+function mouseMove3D(x, y) {
+    if (mouse) {
+        mouse.x = (x / window.innerWidth) * 2 - 1;
+        mouse.y = (y / window.innerHeight) * 2 - 1;
+        console.log(mouse.x, mouse.y);
+    }
+}
+
+function mouseOut3D() {
+    if (mouse) {
+        mouse.x = 0;
+        mouse.y = 0;
+    }
+}
+
+
 window.init = init3D;
+window.mouseMove = mouseMove3D;
+window.mouseOut = mouseOut3D;

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading;
 using Microsoft.UI.Xaml.Controls;
-using NLog;
+using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 using WinUI3Localizer;
@@ -16,7 +14,7 @@ namespace VirtualPaper.UI.ViewModels {
         public string SidebarAppSettings { get; private set; }
 
         #region loading
-        private bool _frameIsEnable = false;
+        private bool _frameIsEnable;
         public bool FrameIsEnable {
             get { return _frameIsEnable; }
             set { _frameIsEnable = value; OnPropertyChanged(); }
@@ -52,6 +50,18 @@ namespace VirtualPaper.UI.ViewModels {
             set { _progressbarEnable = value; OnPropertyChanged(); }
         }
 
+        private string _textLoading;
+        public string TextLoading {
+            get { return _textLoading; }
+            set { _textLoading = value; OnPropertyChanged(); }
+        }
+
+        private string _textCancel;
+        public string TextCancel {
+            get { return _textCancel; }
+            set { _textCancel = value; OnPropertyChanged(); }
+        }
+
         private CancellationTokenSource[] _ctsTokens;
         public CancellationTokenSource[] CtsTokens {
             get { return _ctsTokens; }
@@ -81,16 +91,18 @@ namespace VirtualPaper.UI.ViewModels {
 
         public MainWindowViewModel() {
             _localizer = LanguageUtil.LocalizerInstacne;
-            
+
             InitText();
         }
 
         private void InitText() {
-            SidebarGallery = _localizer.GetLocalizedString("SidebarGallery");
-            SidebarWpSettings = _localizer.GetLocalizedString("SidebarWpSettings");
-            SidebarProject = _localizer.GetLocalizedString("SidebarProject");
-            SidebarAccount = _localizer.GetLocalizedString("SidebarAccount");
-            SidebarAppSettings = _localizer.GetLocalizedString("SidebarAppSettings");
+            SidebarGallery = _localizer.GetLocalizedString(Constants.LocalText.SidebarGallery);
+            SidebarWpSettings = _localizer.GetLocalizedString(Constants.LocalText.SidebarWpSettings);
+            SidebarProject = _localizer.GetLocalizedString(Constants.LocalText.SidebarProject);
+            SidebarAccount = _localizer.GetLocalizedString(Constants.LocalText.SidebarAccount);
+            SidebarAppSettings = _localizer.GetLocalizedString(Constants.LocalText.SidebarAppSettings);
+            TextLoading = _localizer.GetLocalizedString(Constants.LocalText.Text_Loading);
+            TextCancel = _localizer.GetLocalizedString(Constants.LocalText.Text_Cancel);
         }
 
         #region loading_ui_logic
@@ -107,7 +119,7 @@ namespace VirtualPaper.UI.ViewModels {
             LoadingIsVisiable = true;
             CtsTokens = cts;
             CancelEnable = cancelEnable;
-            ProgressbarEnable = progressbarEnable;           
+            ProgressbarEnable = progressbarEnable;
         }
 
         internal void Loaded(CancellationTokenSource[] cts) {
@@ -126,8 +138,8 @@ namespace VirtualPaper.UI.ViewModels {
         }
 
         internal void UpdateProgressbarValue(int curValue, int toltalValue) {
-            TotalValue = toltalValue;
             CurValue = curValue;
+            TotalValue = toltalValue;
         }
         #endregion
 
@@ -136,7 +148,6 @@ namespace VirtualPaper.UI.ViewModels {
             bool isNeedLocallizer,
             string msg,
             InfoBarSeverity infoBarSeverity) {
-            _logger.Info(InfobarMsg);
             InfoBarSeverity = infoBarSeverity;
             InfobarMsg = isNeedLocallizer ? _localizer.GetLocalizedString(msg) : msg;
             InfoBarIsOpen = true;
@@ -144,7 +155,6 @@ namespace VirtualPaper.UI.ViewModels {
         #endregion
 
         private readonly ILocalizer _localizer;
-        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly SemaphoreSlim _loadingSemaphoreSlim = new(1, 1);
     }
 }

@@ -25,7 +25,8 @@
             Drop="ItemsView_Drop"
             SelectionMode="Single"
             PointerPressed="ItemsViewer_PointerPressed"
-            RightTapped="ItemsView_RightTapped">
+            RightTapped="ItemsView_RightTapped"
+            PreviewKeyDown="ItemsViewer_PreviewKeyDown">
             <ItemsView.ItemTemplate>
                 <DataTemplate>
                     <ItemContainer 
@@ -101,14 +102,6 @@
                             <FontIcon Glyph="&#xE8A1;" />
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
-                    <!--<MenuFlyoutItem 
-                        x:Name="Import" 
-                        Text="{Binding MenuFlyout_Text_Import}"
-                        Click="ContextMenu_Click" >
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="&#xE8B5;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>-->
                     <MenuFlyoutItem 
                         x:Name="Apply" 
                         Text="{Binding MenuFlyout_Text_Apply}"

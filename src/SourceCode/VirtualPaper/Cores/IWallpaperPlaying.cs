@@ -7,7 +7,7 @@ namespace VirtualPaper.Cores
     /// <summary>
     /// 播放时的壁纸对象
     /// </summary>
-    public interface IWallpaperPlaying
+    public interface IWallpaperPlaying : IDisposable
     {
         /// <summary>
         /// Get process information.
@@ -16,16 +16,16 @@ namespace VirtualPaper.Cores
         Process Proc { get; }
 
         /// <summary>
-        /// Get window handle.
+        /// Get web-window handle.
         /// </summary>
         /// <returns></returns>
-        IntPtr Handle { get; }
+        nint Handle { get; }
 
         ///// <summary>
-        ///// Get handle to input window.
+        ///// Get web-window handle.
         ///// </summary>
         ///// <returns></returns>
-        //IntPtr InputHandle { get; }
+        //nint ProcHandle { get; }
 
         /// <summary>
         /// 壁纸元数据
@@ -66,8 +66,6 @@ namespace VirtualPaper.Cores
 
         void Close();
 
-        //void ClosePreview();
-
         /// <summary>
         /// 发送 ipc 消息到壁纸窗口
         /// </summary>
@@ -86,8 +84,6 @@ namespace VirtualPaper.Cores
         /// </summary>
         /// <param name="pos">Range 0 - 100</param>
         void SetPlaybackPos(float pos, PlaybackPosType type);
-
-        //void Modify(string controlName, string propertyName, string value);
 
         void Update(IWpPlayerData data);
         /// <summary>

@@ -7,7 +7,7 @@
         
         void ShowUI();
         void CloseUI();
-        void RestartUI();        
+        void RestartUI();
         void SaveRectUI();
     }
 }

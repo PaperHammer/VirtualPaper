@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.PInvoke;
@@ -13,10 +14,9 @@ using UAC = UACHelper.UACHelper;
 namespace VirtualPaper.Services {
     public class UIRunnerService : IUIRunnerService {
         public UIRunnerService(
-            IMonitorManager monitorManager,
-            IWatchdogService watchdogService) {
+            IMonitorManager monitorManager) {
             _monitorManager = monitorManager;
-            _watchdogService = watchdogService;
+            //_watchdogService = watchdogService;
 
             if (UAC.IsElevated) {
                 _logger.Warn("Process is running elevated, UI may not function properly.");
@@ -37,7 +37,7 @@ namespace VirtualPaper.Services {
             if (_processUI != null) {
                 try {
                     _logger.Warn("UI is already running");
-                    //_processUI.StandardInput.WriteLine("WM SHOW");
+                    _processUI.StandardInput.WriteLine("WM SHOW");
                 }
                 catch (Exception e) {
                     _logger.Error(e);
@@ -59,9 +59,10 @@ namespace VirtualPaper.Services {
                     _processUI.Exited += Proc_UI_Exited;
                     _processUI.OutputDataReceived += Proc_OutputDataReceived;
                     _processUI.Start();
+                    App.Jobs.AddProcess(_processUI.Id);
 
-                    if (!_watchdogService.IsRunning) _watchdogService.Start();
-                    _watchdogService.Add(_processUI.Id);
+                    //if (!_watchdogService.IsRunning) _watchdogService.Start();
+                    //_watchdogService.Add(_processUI.Id);
                     //winui writing debug information into output stream :/
                     //_processUI.BeginOutputReadLine();
                     //_processUI.BeginErrorReadLine();
@@ -251,7 +252,7 @@ namespace VirtualPaper.Services {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private Process? _processUI;
         private IMonitorManager _monitorManager;
-        private IWatchdogService _watchdogService;
+        //private IWatchdogService _watchdogService;
         private bool _isFirstRun = true;
         private Native.RECT prevWindowRect = new() { Left = 50, Top = 50, Right = 925, Bottom = 925 };
         private readonly string _fileName, _workingDir;

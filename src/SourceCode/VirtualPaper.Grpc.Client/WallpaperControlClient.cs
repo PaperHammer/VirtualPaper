@@ -51,6 +51,10 @@ namespace VirtualPaper.Grpc.Client {
             });
         }
 
+        public async Task CloseAllPreviewAsync() {
+            await _client.CloseAllPreviewAsync(new Empty());
+        }
+
         public async Task<Grpc_WpMetaData> GetWallpaperAsync(string folderPath) {
             Grpc_WpMetaData grpc_data = await _client.GetWallpaperAsync(
                 new Grpc_GetWallpaperRequest() { FolderPath = folderPath });
@@ -58,34 +62,17 @@ namespace VirtualPaper.Grpc.Client {
             return grpc_data;
         }
 
-        public async Task<bool> PreviewWallpaperAsync(IWpMetadata data) {
+        public async Task<bool> PreviewWallpaperAsync(IWpMetadata data, CancellationToken token) {
             Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayerData(data);
-            //Grpc_WpPlayerData wpPlayerdata = new() {
-            //    WallpaperUid = data.BasicData.WallpaperUid,
-            //    RType = (Grpc_RuntimeType)data.RuntimeData.RType,
-            //    FilePath = data.BasicData.FilePath,
-            //    FolderPath = data.BasicData.FolderPath,
-            //    ThumbnailPath = data.BasicData.ThumbnailPath,
-            //    WpEffectFilePathTemplate = data.RuntimeData.WpEffectFilePathTemplate,
-            //    WpEffectFilePathTemporary = data.RuntimeData.WpEffectFilePathTemporary, // control
-            //    WpEffectFilePathUsing = data.RuntimeData.WpEffectFilePathUsing,
-            //};
 
             var response = await _client.PreviewWallpaperAsync(
                 new Grpc_PreviewWallpaperRequest() {
                     WpPlayerData = wpPlayerdata,
-                });
+                },
+                cancellationToken: token);
 
             return response.IsStarted;
         }
-
-        //public async Task PreviewWallpaperAsync(string monitorContent) {
-        //    await _client.PreviewWallpaperAsync(
-        //        new Grpc_PreviewWallpaperRequest() {
-        //            MonitorContet = monitorContent,
-        //            IsCurrentWp = true,
-        //        });
-        //}
 
         public async Task<Grpc_RestartWallpaperResponse> RestartAllWallpapersAsync() {
             Grpc_RestartWallpaperResponse response = await _client.RestartAllWallpapersAsync(new Empty());
@@ -96,7 +83,8 @@ namespace VirtualPaper.Grpc.Client {
         public async Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(
             IMonitor monitor, IWpMetadata metaData, CancellationToken token) {
             var request = new Grpc_SetWallpaperRequest {
-                FolderPath = metaData.BasicData.FolderPath,
+                WpBasicData = DataAssist.BasicDataToGrpcData(metaData.BasicData),
+                WpRuntimeData = DataAssist.RuntimeDataToGrpcData(metaData.RuntimeData),
                 MonitorId = monitor.DeviceId,
             };
 

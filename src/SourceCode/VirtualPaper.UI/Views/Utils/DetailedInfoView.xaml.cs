@@ -54,6 +54,6 @@ namespace VirtualPaper.UI.Views.Utils {
         }
 
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private DetailedInfoViewModel _viewModel;
+        private readonly DetailedInfoViewModel _viewModel;
     }
 }

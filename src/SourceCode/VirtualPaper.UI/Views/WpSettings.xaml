@@ -138,7 +138,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <SelectorBar 
+                    <SelectorBar
                         x:Name="SelBar"
                         Grid.Row="0"
                         SelectionChanged="SelectorBar_SelectionChanged"

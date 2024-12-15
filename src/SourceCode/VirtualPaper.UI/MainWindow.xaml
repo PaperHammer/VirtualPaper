@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:winex="using:WinUIEx"
-    xmlns:loading="using:VirtualPaper.UIComponent.Feedback"
+    xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
     mc:Ignorable="d"
     Width="1400"
     Height="850"
@@ -55,10 +55,10 @@
         <NavigationView
             x:Name="NavView"
             Grid.Row="1"
-            PaneDisplayMode="Left"        
-            Loaded="NavView_Loaded"     
+            PaneDisplayMode="Left"
+            Loaded="NavView_Loaded"
             SelectionChanged="NavigationView_SelectionChanged"
-            IsSettingsVisible="False"        
+            IsSettingsVisible="False"
             AlwaysShowHeader="False"
             IsBackEnabled="False"
             IsBackButtonVisible="Collapsed">
@@ -114,12 +114,14 @@
                     MaxWidth="900"/>
                 
                 <!--¼ÓÔØ½çÃæ-->
-                <loading:Loading
+                <feedback:Loading                    
                     CancelEnable="{Binding CancelEnable}"
                     ProgressbarEnable="{Binding ProgressbarEnable}"
                     CtsTokens="{Binding CtsTokens}"
                     TotalValue="{Binding TotalValue}"
                     CurValue="{Binding CurValue}"
+                    TextLoading="{Binding TextLoading}"
+                    TextCancel="{Binding TextCancel}"
                     Visibility="{Binding LoadingIsVisiable}"/>
             </Grid>
         </NavigationView>

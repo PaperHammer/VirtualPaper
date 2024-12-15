@@ -38,21 +38,22 @@ using Wpf.Ui.Appearance;
 using Application = System.Windows.Application;
 using AppTheme = VirtualPaper.Common.AppTheme;
 using MessageBox = System.Windows.MessageBox;
+using static VirtualPaper.Common.Constants;
 
 namespace VirtualPaper {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
     public partial class App : Application {
+        internal static Logger Log => LogManager.GetCurrentClassLogger();
+        internal static JobService Jobs => Services.GetRequiredService<JobService>();
+        internal static IUserSettingsService IUserSettgins => Services.GetRequiredService<IUserSettingsService>();
+
         public static IServiceProvider Services {
             get {
                 IServiceProvider serviceProvider = ((App)Current)._serviceProvider;
                 return serviceProvider ?? throw new InvalidOperationException("The service provider is not initialized");
             }
-        }
-
-        public static IUserSettingsService IUserSettgins {
-            get => Services.GetRequiredService<IUserSettingsService>();
         }
 
         public App() {
@@ -72,7 +73,7 @@ namespace VirtualPaper {
             #endregion
 
             SetupUnhandledExceptionLogging(); // 初始化异常处理机制
-            _logger.Info(LogUtil.GetHardwareInfo()); // 记录硬件信息
+            Log.Info(LogUtil.GetHardwareInfo()); // 记录硬件信息
 
             #region 必要路径处理
             try {
@@ -156,7 +157,7 @@ namespace VirtualPaper {
                 }
 
                 //first run Setup-Wizard show..
-                if (userSettings.Settings.IsFirstRun) {
+                if (true || userSettings.Settings.IsFirstRun) {
                     Services.GetRequiredService<IUIRunnerService>().ShowUI();
                 }
             }
@@ -199,9 +200,10 @@ namespace VirtualPaper {
                 .AddSingleton<IWallpaperFactory, WallpaperFactory>()
                 .AddSingleton<IWallpaperConfigFolderFactory, WallpaperConfigFolderFactory>()
 
+                .AddSingleton<JobService>()
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
-                .AddSingleton<IWatchdogService, WatchdogService>()
+                //.AddSingleton<IWatchdogService, WatchdogService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
 
@@ -238,7 +240,9 @@ namespace VirtualPaper {
             return server;
         }
 
-        private void LogUnhandledException(Exception exception, string source) => _logger.Error(exception);
+        private void LogUnhandledException(Exception exception, string source)
+            => Log.Error(exception);
+
         private void SetupUnhandledExceptionLogging() {
             // 当.NET应用程序域中的任何线程抛出了未捕获的异常时，会触发此事件。
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
@@ -265,9 +269,9 @@ namespace VirtualPaper {
                 });
             }
             catch (Exception e) {
-                _logger.Error(e);
+                Log.Error(e);
             }
-            _logger.Info($"Theme changed: {theme}");
+            Log.Info($"Theme changed: {theme}");
         }
 
         public static void ChangeLanguage(string lang) {
@@ -308,7 +312,7 @@ namespace VirtualPaper {
                         AppUpdateDialog(e.UpdateUri, e.ChangeLog);
                     }
                 }
-                _logger.Info($"AppUpdate status: {e.UpdateStatus}");
+                Log.Info($"AppUpdate status: {e.UpdateStatus}");
             }));
         }
 
@@ -326,6 +330,5 @@ namespace VirtualPaper {
         private readonly IServiceProvider _serviceProvider;
         private readonly Mutex _mutex = new(false, Constants.CoreField.UniqueAppUid);
         private readonly NamedPipeServer _grpcServer;
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

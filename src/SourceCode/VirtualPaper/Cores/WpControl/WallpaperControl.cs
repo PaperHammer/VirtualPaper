@@ -36,11 +36,11 @@ namespace VirtualPaper.Cores.WpControl {
         public WallpaperControl(
             IUserSettingsService userSettings,
             IMonitorManager monitorManager,
-            IWatchdogService watchdog,
+            //IWatchdogService watchdog,
             IWallpaperFactory wallpaperFactory) {
             this._userSettings = userSettings;
             this._monitorManager = monitorManager;
-            this._watchdog = watchdog;
+            //this._watchdog = watchdog;
             this._wallpaperFactory = wallpaperFactory;
 
             if (SystemParameters.HighContrast)
@@ -90,7 +90,7 @@ namespace VirtualPaper.Cores.WpControl {
             if (_wallpapers.Count > 0) {
                 _wallpapers.ForEach(x => x.Close());
                 _wallpapers.Clear();
-                _watchdog.Clear();
+                //_watchdog.Clear();
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
             }
             _logger.Info("Closed all wallpapers");
@@ -101,14 +101,20 @@ namespace VirtualPaper.Cores.WpControl {
             if (tmp.Count > 0) {
                 tmp.ForEach(x => {
                     x.Close();
-                    if (x.Proc != null) {
-                        _watchdog.Remove(x.Proc.Id);
-                    }
+                    //if (x.Proc != null) {
+                    //    _watchdog.Remove(x.Proc.Id);
+                    //}
                 });
                 _wallpapers.RemoveAll(tmp.Contains);
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
                 _logger.Info("Closed wallpaper at monitor: " + monitor.DeviceName);
+            }
+        }
+
+        public void CloseAllPreview() {
+            foreach (var kvp in _previews) {
+                kvp.Value.Close();
             }
         }
 
@@ -118,40 +124,43 @@ namespace VirtualPaper.Cores.WpControl {
             return metaData;
         }
 
-        public async Task<bool> PreviewWallpaperAsync(IWpPlayerData data, bool isCurrentWp) {
-            IWallpaperPlaying? playingData;
-            playingData = _wallpapers.Find(x => x.Data.WallpaperUid == data.WallpaperUid);
+        public async Task<bool> PreviewWallpaperAsync(IWpPlayerData data, bool isCurrentWp, CancellationToken token) {
+            _previews.TryGetValue((data.WallpaperUid, data.RType), out IWallpaperPlaying? playingData);
             if (playingData != null) {
-                playingData.SendMessage(new VirtualPaperPreviewOnCmd());
+                playingData.SendMessage(new VirtualPaperActiveCmd());
                 return true;
             }
 
-            _previews.TryGetValue((data.WallpaperUid, data.RType), out playingData);
-            if (playingData != null) {
-                playingData.SendMessage(new VirtualPaperPreviewOnCmd());
-                return true;
-            }
+            try {
+                playingData = _wallpaperFactory.CreatePlayer(
+                    data,
+                    _monitorManager.PrimaryMonitor,
+                    _userSettings,
+                    true);
 
-            playingData = _wallpaperFactory.CreatePlayer(
-                data,
-                _monitorManager.PrimaryMonitor,
-                _userSettings,
-                true);
-            playingData.Closing += IWallpaperPlayingClosing;
-            void IWallpaperPlayingClosing(object? s, EventArgs e) {
-                playingData.Closing -= IWallpaperPlayingClosing;
-                _wallpapers.Remove(playingData);
+                playingData.Closing += IWallpaperPlayingClosing;
+                void IWallpaperPlayingClosing(object? s, EventArgs e) {
+                    playingData.Closing -= IWallpaperPlayingClosing;
+                    _previews.Remove((data.WallpaperUid, data.RType));
+                }
+
+                _previews[(data.WallpaperUid, data.RType)] = playingData;
+                bool isStarted = await playingData.ShowAsync(token);
+
+                return isStarted;
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested) {
                 _previews.Remove((data.WallpaperUid, data.RType));
-                _watchdog.Remove(playingData.Proc.Id);
-            }
-            _previews[(data.WallpaperUid, data.RType)] = playingData;
-            bool isStarted = await playingData.ShowAsync();
+                playingData?.Dispose();
 
-            if (isStarted && playingData.Proc != null) {
-                _watchdog.Add(playingData.Proc.Id);
+                return false;
             }
+            catch (Exception ex) {
+                _logger.Error($"An error occurred while showing wallpaper: {ex.Message}");
+                _previews.Remove((data.WallpaperUid, data.RType));
 
-            return isStarted;
+                throw;
+            }
         }
 
         public async Task ResetWallpaperAsync() {
@@ -224,50 +233,7 @@ namespace VirtualPaper.Cores.WpControl {
                         _logger.Warn("Highcontrast mode detected, some functionalities may not work properly!");
                     }
 
-                    // Fetch the Progman window
-                    _progman = Native.FindWindow("Progman", null);
-
-                    IntPtr result = IntPtr.Zero;
-
-                    // Send 0x052C to Progman. This message directs Progman to spawn a 
-                    // WorkerW behind the desktop icons. If it is already there, nothing 
-                    // happens.
-                    Native.SendMessageTimeout(_progman,
-                                           0x052C,
-                                           new IntPtr(0xD),
-                                           new IntPtr(0x1),
-                                           Native.SendMessageTimeoutFlags.SMTO_NORMAL,
-                                           1000,
-                                           out result);
-                    // Spy++ output
-                    // .....
-                    // 0x00010190 "" WorkerW
-                    //   ...
-                    //   0x000100EE "" SHELLDLL_DefView
-                    //     0x000100F0 "FolderView" SysListView32
-                    // 0x00100B8A "" WorkerW       <-- This is the WorkerW instance we are after!
-                    // 0x000100EC "Program Manager" Progman
-                    _workerW = IntPtr.Zero;
-
-                    // We enumerate All Windows, until we find one, that has the SHELLDLL_DefView 
-                    // as a child. 
-                    // If we found that window, we take its next sibling and assign it to _workerW.
-                    Native.EnumWindows(new Native.EnumWindowsProc((tophandle, topparamhandle) => {
-                        IntPtr p = Native.FindWindowEx(tophandle,
-                                                    IntPtr.Zero,
-                                                    "SHELLDLL_DefView",
-                                                    IntPtr.Zero);
-
-                        if (p != IntPtr.Zero) {
-                            // Gets the WorkerW Window after the current one.
-                            _workerW = Native.FindWindowEx(IntPtr.Zero,
-                                                           tophandle,
-                                                           "WorkerW",
-                                                           IntPtr.Zero);
-                        }
-
-                        return true;
-                    }), IntPtr.Zero);
+                    _workerW = CreateWorkerW();
 
                     if (IntPtr.Equals(_workerW, IntPtr.Zero)) {
                         _logger.Error("Failed to setup core, WorkerW handle not found..");
@@ -283,7 +249,7 @@ namespace VirtualPaper.Cores.WpControl {
                         _logger.Info("Core initialized..");
                         _isInitialized = true;
                         WallpaperReset?.Invoke(this, EventArgs.Empty);
-                        _watchdog.Start();
+                        //_watchdog.Start();
                     }
                 }
 
@@ -308,16 +274,59 @@ namespace VirtualPaper.Cores.WpControl {
                     return response;
                 }
 
-                if (!_watchdog.IsRunning)
-                    _watchdog.Start();
+                //if (!_watchdog.IsRunning)
+                //    _watchdog.Start();
                 #endregion
 
                 bool isStarted = false;
-                try {
-                    switch (_userSettings.Settings.WallpaperArrangement) {
-                        case WallpaperArrangement.Per: {
-                                IWallpaperPlaying instance = _wallpaperFactory.CreatePlayer(data, monitor, _userSettings);
-                                CloseWallpaper(instance.Monitor);
+
+                switch (_userSettings.Settings.WallpaperArrangement) {
+                    case WallpaperArrangement.Per: {
+                            IWallpaperPlaying instance = _wallpaperFactory.CreatePlayer(data, monitor, _userSettings);
+                            CloseWallpaper(instance.Monitor);
+                            isStarted = await instance.ShowAsync(token);
+
+                            if (isStarted && !TrySetWallpaperPerMonitor(instance, instance.Monitor)) {
+                                isStarted = false;
+                                _logger.Error("Failed to set wallpaper as child of WorkerW");
+
+                                response.IsFinished = false;
+                            }
+
+                            if (isStarted) {
+                                if (instance.Proc != null)
+                                    App.Jobs.AddProcess(instance.Proc.Id);
+
+                                _wallpapers.Add(instance);
+                                monitor.ThumbnailPath = data.ThumbnailPath;
+                            }
+                        }
+                        break;
+                    case WallpaperArrangement.Expand: {
+                            CloseAllWallpapers();
+                            IWallpaperPlaying instance = _wallpaperFactory.CreatePlayer(data, monitor, _userSettings);
+                            isStarted = await instance.ShowAsync(token);
+
+                            if (isStarted && !TrySetWallpaperSpanMonitor(instance)) {
+                                isStarted = false;
+                                _logger.Error("Failed to set wallpaper as child of WorkerW");
+
+                                response.IsFinished = false;
+                            }
+
+                            if (isStarted) {
+                                if (instance.Proc != null)
+                                    App.Jobs.AddProcess(instance.Proc.Id);
+
+                                _wallpapers.Add(instance);
+                                monitor.ThumbnailPath = data.ThumbnailPath;
+                            }
+                        }
+                        break;
+                    case WallpaperArrangement.Duplicate: {
+                            CloseAllWallpapers();
+                            foreach (var item in _monitorManager.Monitors) {
+                                IWallpaperPlaying instance = _wallpaperFactory.CreatePlayer(data, item, _userSettings);
                                 isStarted = await instance.ShowAsync(token);
 
                                 if (isStarted && !TrySetWallpaperPerMonitor(instance, instance.Monitor)) {
@@ -329,81 +338,37 @@ namespace VirtualPaper.Cores.WpControl {
 
                                 if (isStarted) {
                                     if (instance.Proc != null)
-                                        _watchdog.Add(instance.Proc.Id);
+                                        App.Jobs.AddProcess(instance.Proc.Id);
 
                                     _wallpapers.Add(instance);
                                     monitor.ThumbnailPath = data.ThumbnailPath;
                                 }
                             }
-                            break;
-                        case WallpaperArrangement.Expand: {
-                                CloseAllWallpapers();
-                                IWallpaperPlaying instance = _wallpaperFactory.CreatePlayer(data, monitor, _userSettings);
-                                isStarted = await instance.ShowAsync(token);
-
-                                if (isStarted && !TrySetWallpaperSpanMonitor(instance)) {
-                                    isStarted = false;
-                                    _logger.Error("Failed to set wallpaper as child of WorkerW");
-
-                                    response.IsFinished = false;
-                                }
-
-                                if (isStarted) {
-                                    if (instance.Proc != null)
-                                        _watchdog.Add(instance.Proc.Id);
-
-                                    _wallpapers.Add(instance);
-                                    monitor.ThumbnailPath = data.ThumbnailPath;
-                                }
-                            }
-                            break;
-                        case WallpaperArrangement.Duplicate: {
-                                CloseAllWallpapers();
-                                foreach (var item in _monitorManager.Monitors) {
-                                    IWallpaperPlaying instance = _wallpaperFactory.CreatePlayer(data, item, _userSettings);
-                                    isStarted = await instance.ShowAsync(token);
-
-                                    if (isStarted && !TrySetWallpaperPerMonitor(instance, instance.Monitor)) {
-                                        isStarted = false;
-                                        _logger.Error("Failed to set wallpaper as child of WorkerW");
-
-                                        response.IsFinished = false;
-                                    }
-
-                                    if (isStarted) {
-                                        if (instance.Proc != null)
-                                            _watchdog.Add(instance.Proc.Id);
-
-                                        _wallpapers.Add(instance);
-                                        monitor.ThumbnailPath = data.ThumbnailPath;
-                                    }
-                                }
-                            }
-                            break;
-                    }
-                    if (isStarted) {
-                        response.IsFinished = true;
-                        WallpaperChanged?.Invoke(this, EventArgs.Empty);
-                    }
+                        }
+                        break;
                 }
-                catch (Win32Exception ex) {
-                    _logger.Error(ex);
-                    if (ex.NativeErrorCode == 2) //ERROR_FILE_NOT_FOUND
-                        WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(ex.Message));
-                    else
-                        WallpaperError?.Invoke(this, ex);
-                }
-                catch (Exception ex2) {
-                    _logger.Error(ex2);
-                    WallpaperError?.Invoke(this, ex2);
+                if (isStarted) {
+                    response.IsFinished = true;
                     WallpaperChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
-            catch (Exception e) {
-                _logger.Error(e.ToString());
-                WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(e.Message));
+            catch (Win32Exception ex) {
+                _logger.Error(ex);
+                if (ex.NativeErrorCode == 2) //ERROR_FILE_NOT_FOUND
+                    WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(ex.Message));
+                else
+                    WallpaperError?.Invoke(this, ex);
+            }
+            catch (Exception ex) {
+                _logger.Error(ex);
+                WallpaperError?.Invoke(this, ex);
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
             }
+            //catch (Exception e) {
+            //    _logger.Error(e.ToString());
+            //    WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(e.Message));
+            //    WallpaperChanged?.Invoke(this, EventArgs.Empty);
+            //}
             finally {
                 _semaphoreSlimWallpaperLoadingLock.Release();
             }
@@ -687,13 +652,6 @@ namespace VirtualPaper.Cores.WpControl {
             IMonitor monitor = _wallpapers.Find(x => x.Data.WallpaperUid == wpUid)!.Monitor;
             return DataAssist.MonitorDataToGrpc(monitor);
         }
-
-        //public void ModifyPreview(string controlName, string propertyName, string value) {
-        //    if (_previewInstance == null) return;
-        //    Application.Current.Dispatcher.Invoke(() => {
-        //        _previewInstance.Modify(controlName, propertyName, value);
-        //    });
-        //}
         #endregion
 
         #region private utils
@@ -865,7 +823,7 @@ namespace VirtualPaper.Cores.WpControl {
         /// <param name="handle">window handle of process to add as wallpaper</param>
         /// <param name="targetMonitor">monitorstring of monitor to sent wp to.</param>
         private bool TrySetWallpaperPerMonitor(IWallpaperPlaying wallpaper, IMonitor targetMonitor) {
-            IntPtr handle = wallpaper.Handle;
+            IntPtr handle = wallpaper.Proc.MainWindowHandle;
             Native.RECT prct = new();
             _logger.Info($"Sending wallpaper(Monitor): {targetMonitor.DeviceName} | {targetMonitor.Bounds}");
             //Position the wp fullscreen to corresponding monitor.
@@ -874,14 +832,7 @@ namespace VirtualPaper.Cores.WpControl {
             }
 
             _ = Native.MapWindowPoints(handle, _workerW, ref prct, 2);
-            var success = TrySetParentWorkerW(handle);
-
-            //wallpaper.SendMessage(new VirtualPaperMessageRECT() {
-            //    X = prct.Left,
-            //    Y = prct.Top,
-            //    Width = targetMonitor.Bounds.Width,
-            //    Height = targetMonitor.Bounds.Height
-            //});
+            var success = TrySetParentWorkerW(wallpaper.Handle) && TrySetParentWorkerW(handle);
 
             //Position the wp window relative to the new parent window(_workerW).
             if (!Native.SetWindowPos(handle, 1, prct.Left, prct.Top, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, 0x0010)) {
@@ -976,6 +927,7 @@ namespace VirtualPaper.Cores.WpControl {
                                                 "WorkerW",
                                                 IntPtr.Zero);
             }
+
             return _workerW;
         }
 
@@ -1045,12 +997,10 @@ namespace VirtualPaper.Cores.WpControl {
         private readonly Dictionary<(string, RuntimeType), IWallpaperPlaying> _previews = [];
         private IntPtr _progman, _workerW;
         private bool _isInitialized = false;
-        //private IWallpaperPlaying? _previewInstance;
         private readonly SemaphoreSlim _semaphoreSlimWallpaperLoadingLock = new(1, 1);
-
         private readonly IUserSettingsService _userSettings;
         private readonly IWallpaperFactory _wallpaperFactory;
-        private readonly IWatchdogService _watchdog;
+        //private readonly IWatchdogService _watchdog;
         private readonly IMonitorManager _monitorManager;
     }
 }

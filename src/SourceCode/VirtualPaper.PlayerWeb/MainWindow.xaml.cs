@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -17,6 +18,7 @@ using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.PlayerWeb.Utils;
 using VirtualPaper.PlayerWeb.ViewModel;
+using VirtualPaper.UIComponent.Utils.Extensions;
 using WinRT.Interop;
 using WinUIEx;
 
@@ -28,10 +30,16 @@ namespace VirtualPaper.PlayerWeb {
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainWindow : WindowEx {
-        private bool _isFocusOn;
-        public bool IsFocusOn {
-            get { return _isFocusOn; }
-            set { _isFocusOn = value; ParallaxSet(); }
+        public SolidColorBrush WindowCaptionForeground { get; private set; }
+        public SolidColorBrush WindowCaptionForegroundDisabled { get; private set; }
+
+        private bool _isFocusOnWindow;
+        public bool IsFocusOnWindow {
+            get { return _isFocusOnWindow; }
+            set {
+                _isFocusOnWindow = value;
+                ParallaxControl();
+            }
         }
 
         public MainWindow(StartArgs startArgs) {
@@ -45,6 +53,9 @@ namespace VirtualPaper.PlayerWeb {
             this.ContentGrid.DataContext = _viewModel;
 
             if (_startArgs.IsPreview) {
+                WindowCaptionForeground = (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
+                WindowCaptionForegroundDisabled = (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
+
                 SetWindowStyle();
                 SetWindowTitleBar();
             }
@@ -61,16 +72,14 @@ namespace VirtualPaper.PlayerWeb {
 
         private async void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
             if (args.WindowActivationState == WindowActivationState.Deactivated) {
-                TitleTextBlock.Foreground =
-                    (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
+                TitleTextBlock.Foreground = WindowCaptionForegroundDisabled;
 
-                IsFocusOn = false;
+                IsFocusOnWindow = false;
             }
             else {
-                TitleTextBlock.Foreground =
-                    (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
+                TitleTextBlock.Foreground = WindowCaptionForeground;
 
-                IsFocusOn = true;
+                IsFocusOnWindow = true;
             }
 
             if (_isFirstRun) {
@@ -80,29 +89,48 @@ namespace VirtualPaper.PlayerWeb {
                 await InitializeWebViewAsync();
 
                 if (_startArgs.IsPreview) {
-                    WindowUtil.OpenEffectConfigWindow(_startArgs);
+                    WindowUtil.OpenToolWindow(_startArgs);
+                    WindowUtil.AddEffectConfigPage();
+                    WindowUtil.AddDetailsPage();
                 }
                 else {
                     WindowUtil.SetWindowAsBackground();
                 }
 
-                App.WriteToParent(new VirtualPaperMessageHwnd() {
-                    Hwnd = WindowUtil.GetWindowHwnd(this),
-                });
                 _ = StdInListener();
             }
         }
 
         private void WindowEx_Closed(object sender, WindowEventArgs args) {
-            WindowUtil.CloseToolWindow();
+            Closing();
+        }
 
-            App.WriteToParent(new VirtualPaperPreviewOffCmd());
+        private void Webview2_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+            e.Handled = true; // ×èÖ¹£¨Êó±êµÈ£©Ö¸Õë²Ù×÷
+        }
+
+        private void Webview2_PreviewKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e) {
+            e.Handled = true;  // ×èÖ¹¼üÅÌ²Ù×÷
+        }
+
+        private void Closing() {
+            this.Hide();
+
+            WindowUtil.CloseToolWindow();
+            StopParallaxLoop();
+
+            _dispatcherQueue.TryEnqueue(() => {
+                Webview2?.Close();
+                App.AppInstance.Exit();
+            });
+
+            App.WriteToParent(new VirtualPaperMessageClosed());
         }
 
         private async Task StdInListener() {
             try {
                 await Task.Run(async () => {
-                    while (true) {
+                    while (!_isClose) {
                         var msg = await Console.In.ReadLineAsync();
                         if (string.IsNullOrEmpty(msg)) {
                             //When the redirected stream is closed, a null line is sent to the event handler. 
@@ -112,150 +140,164 @@ namespace VirtualPaper.PlayerWeb {
 #endif
                         }
                         else {
-                            try {
-                                var close = false;
-                                var obj = JsonSerializer.Deserialize<IpcMessage>(msg);
-
-                                _dispatcherQueue.TryEnqueue(async () => {
-                                    switch (obj.Type) {
-                                        //case MessageType.msg_rect:
-                                        //    var rc = (VirtualPaperMessageRECT)obj;
-                                        //    _windowRc.X = rc.X;
-                                        //    _windowRc.Y = rc.Y;
-                                        //    _windowRc.Width = rc.Width;
-                                        //    _windowRc.Height = rc.Height;
-                                        //    break;
-                                        case MessageType.cmd_close:
-                                            close = true;
-                                            break;
-                                        case MessageType.cmd_apply:
-                                            await ExecuteScriptFunctionAsync(Fileds.ApplyFilter);
-                                            await ExecuteScriptFunctionAsync(Fileds.Play);
-                                            break;
-                                        case MessageType.cmd_preview_on:
-                                            this.BringToFront();
-                                            //WindowUtil.OpenEffectConfigWindow(_startArgs);
-                                            break;
-                                        case MessageType.cmd_reload:
-                                            Webview2?.Reload();
-                                            break;
-                                        case MessageType.cmd_suspend:
-                                            if (!_isPaused) {
-                                                await ExecuteScriptFunctionAsync(Fileds.PlaybackChanged, true);
-                                            }
-                                            _isPaused = true;
-                                            break;
-                                        case MessageType.cmd_resume:
-                                            if (_isPaused) {
-                                                await ExecuteScriptFunctionAsync(Fileds.PlaybackChanged, false);
-                                            }
-                                            _isPaused = false;
-                                            break;
-                                        case MessageType.cmd_muted:
-                                            var muted = (VirtualPaperMutedCmd)obj;
-                                            await ExecuteScriptFunctionAsync(Fileds.AudioMuteChanged, muted.IsMuted);
-                                            break;
-                                        case MessageType.cmd_update:
-                                            var update = (VirtualPaperUpdateCmd)obj;
-                                            await LoadSourceAsync(update.FilePath, update.WpType);
-                                            LoadWpEffect(update.WpEffectFilePathUsing);
-                                            break;
-                                        case MessageType.cmd_suspend_parallax:
-                                            _isFocusOnDesk = false;
-                                            ParallaxSet();
-                                            break;
-                                        case MessageType.cmd_resume_parallax:
-                                            _isFocusOnDesk = true;
-                                            ParallaxSet();
-                                            break;
-
-                                        case MessageType.vp_slider:
-                                            var sl = (VirtualPaperSlider)obj;
-                                            await ExecuteScriptFunctionAsync(Fileds.PropertyListener, sl.Name, sl.Value);
-                                            break;
-                                        case MessageType.vp_textbox:
-                                            var tb = (VirtualPaperTextBox)obj;
-                                            await ExecuteScriptFunctionAsync(Fileds.PropertyListener, tb.Name, tb.Value);
-                                            break;
-                                        case MessageType.vp_dropdown:
-                                            var dd = (VirtualPaperDropdown)obj;
-                                            await ExecuteScriptFunctionAsync(Fileds.PropertyListener, dd.Name, dd.Value);
-                                            break;
-                                        case MessageType.vp_cpicker:
-                                            var cp = (VirtualPaperColorPicker)obj;
-                                            await ExecuteScriptFunctionAsync(Fileds.PropertyListener, cp.Name, cp.Value);
-                                            break;
-                                        case MessageType.vp_chekbox:
-                                            var cb = (VirtualPaperCheckbox)obj;
-                                            ExecuteCheckBoxSet(cb.Name, cb.Value);
-                                            break;
-                                    }
-                                });
-
-                                if (close) break;
-                            }
-                            catch (Exception ie) {
-                                App.WriteToParent(new VirtualPaperMessageConsole() {
-                                    MsgType = ConsoleMessageType.Error,
-                                    Message = $"Ipc action Error: {ie.Message}"
-                                });
-                            }
+                            HandleIpcMessage(msg);
                         }
                     }
                 });
             }
             catch (Exception e) {
-                App.WriteToParent(new VirtualPaperMessageConsole() {
+                App.WriteToParent(new VirtualPaperMessageConsole {
                     MsgType = ConsoleMessageType.Error,
-                    Message = $"Ipc stdin Error: {e.Message}",
+                    Message = $"Ipc stdin Error: {e.Message}"
                 });
             }
             finally {
-                _dispatcherQueue.TryEnqueue(() => {
-                    Webview2?.Close();
-                    App.AppInstance.Exit();
+                Closing();
+            }
+        }
+
+        private async void HandleIpcMessage(string message) {
+            try {
+                var obj = JsonSerializer.Deserialize<IpcMessage>(message);
+                switch (obj.Type) {
+                    case MessageType.cmd_close:
+                        HandleCloseCommand();
+                        break;
+                    case MessageType.cmd_apply:
+                        _ = ExecuteScriptFunctionAsync(Fileds.ApplyFilter);
+                        _ = ExecuteScriptFunctionAsync(Fileds.Play);
+                        break;
+                    case MessageType.cmd_active:
+                        this.BringToFront();
+                        break;
+                    case MessageType.cmd_reload:
+                        Webview2?.Reload();
+                        break;
+                    case MessageType.cmd_suspend:
+                        await HandlePlaybackCommandAsync(true);
+                        break;
+                    case MessageType.cmd_resume:
+                        await HandlePlaybackCommandAsync(false);
+                        break;
+                    case MessageType.cmd_muted:
+                        await HandleMuteCommandAsync((VirtualPaperMutedCmd)obj);
+                        break;
+                    case MessageType.cmd_update:
+                        await HandleUpdateCommandAsync((VirtualPaperUpdateCmd)obj);
+                        break;
+                    case MessageType.cmd_suspend_parallax:
+                        _isFocusOnDesk = false;
+                        ParallaxControl();
+                        break;
+                    case MessageType.cmd_resume_parallax:
+                        _isFocusOnDesk = true;
+                        ParallaxControl();
+                        break;
+
+                    case MessageType.vp_slider:
+                        var sl = (VirtualPaperSlider)obj;
+                        HandleVpMsg(sl.Name, sl.Value);
+                        break;
+                    case MessageType.vp_textbox:
+                        var tb = (VirtualPaperTextBox)obj;
+                        HandleVpMsg(tb.Name, tb.Value);
+                        break;
+                    case MessageType.vp_dropdown:
+                        var dd = (VirtualPaperDropdown)obj;
+                        HandleVpMsg(dd.Name, dd.Value);
+                        break;
+                    case MessageType.vp_cpicker:
+                        var cp = (VirtualPaperColorPicker)obj;
+                        HandleVpMsg(cp.Name, cp.Value);
+                        break;
+                    case MessageType.vp_chekbox:
+                        var cb = (VirtualPaperCheckbox)obj;
+                        ExecuteCheckBoxSet(cb.Name, cb.Value);
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unsupported message type: {obj.Type}");
+                }
+            }
+            catch (Exception e) {
+                App.WriteToParent(new VirtualPaperMessageConsole {
+                    MsgType = ConsoleMessageType.Error,
+                    Message = $"Ipc action Error: {e.Message}"
                 });
             }
         }
 
-        private async void ParallaxSet() {
+        #region handel_ipcmessage
+        private void HandleVpMsg(string propertyName, object propertyValue) {
+            _ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, propertyName, propertyValue);
+        }
+
+        private void HandleCloseCommand() {
+            _isClose = true;
+            StopParallaxLoop();
+        }
+
+        private async Task HandlePlaybackCommandAsync(bool pause) {
+            if (_isPaused == pause) return;
+
+            await ExecuteScriptFunctionAsync(Fileds.PlaybackChanged, pause);
+            _isPaused = pause;
+        }
+
+        private async Task HandleMuteCommandAsync(VirtualPaperMutedCmd muted) {
+            await ExecuteScriptFunctionAsync(Fileds.AudioMuteChanged, muted.IsMuted);
+        }
+
+        private async Task HandleUpdateCommandAsync(VirtualPaperUpdateCmd update) {
+            await LoadSource(update.FilePath, update.WpType);
+            LoadWpEffect(update.WpEffectFilePathUsing);
+        }
+        #endregion
+
+        private void StopParallaxLoop() {
+            _isParallaxOn = false;
+        }
+
+        private void ParallaxControl() {
             try {
                 if (_isParallaxOn &&
-                    (_isFocusOnDesk || _startArgs.IsPreview && IsFocusOn)) {
-                    if (Interlocked.CompareExchange(ref _isParallaxRunning, 1, -1) == 1) return;
+                    (_isFocusOnDesk || _startArgs.IsPreview && IsFocusOnWindow)) {
+                    if (Interlocked.CompareExchange(ref _isParallaxRunning, 1, 0) == 1) return;
 
                     App.WriteToParent(new VirtualPaperMessageConsole() {
                         MsgType = ConsoleMessageType.Log,
                         Message = $"Parallax is On.",
                     });
 
-                    _ctsParallax = null;
-                    _ctsParallax = new CancellationTokenSource();
-                    await Task.Run(async () => {
-                        while (!_ctsParallax.IsCancellationRequested) {
-                            var pos = RawInput.GetMousePos();
-                            int mouseX = pos.X, mouseY = pos.Y;
+                    _ = Task.Run(async () => {
+                        try {
+                            while (_isParallaxRunning == 1) {
+                                var pos = RawInput.GetMousePos();
+                                int mouseX = pos.X, mouseY = pos.Y;
 
-                            if (_windowRc.Left <= mouseX && mouseX <= _windowRc.Right &&
-                                _windowRc.Top <= mouseY && mouseY <= _windowRc.Bottom) {
-                                await ExecuteScriptFunctionAsync(
-                                    Fileds.MouseMove, mouseX, mouseY);
-                            }
-                            else {
-                                await ExecuteScriptFunctionAsync(Fileds.MouseOut);
-                            }
+                                if (_windowRc.Left <= mouseX && mouseX <= _windowRc.Right &&
+                                    _windowRc.Top <= mouseY && mouseY <= _windowRc.Bottom) {
+                                    _ = ExecuteScriptFunctionAsync(
+                                       Fileds.MouseMove, mouseX, mouseY);
+                                }
+                                else {
+                                    _ = ExecuteScriptFunctionAsync(Fileds.MouseOut);
+                                }
 
-                            await Task.Delay(100, _ctsParallax.Token);
+                                await Task.Delay(100);
+                            }
                         }
-                    }, _ctsParallax.Token);
+                        catch (Exception e) {
+                            App.WriteToParent(new VirtualPaperMessageConsole {
+                                MsgType = ConsoleMessageType.Error,
+                                Message = $"[ParallaxControl] error: {e.Message}"
+                            });
+                        }
+                    });
                 }
                 else {
-                    if (Interlocked.CompareExchange(ref _isParallaxRunning, -1, 1) == -1) return;
+                    if (Interlocked.CompareExchange(ref _isParallaxRunning, 0, 1) == 0) return;
 
-                    if (_ctsParallax != null && !_ctsParallax.IsCancellationRequested) {
-                        _ctsParallax?.Cancel();
-                    }
-                    await ExecuteScriptFunctionAsync(Fileds.MouseOut);
+                    _ = ExecuteScriptFunctionAsync(Fileds.MouseOut);
 
                     App.WriteToParent(new VirtualPaperMessageConsole() {
                         MsgType = ConsoleMessageType.Log,
@@ -266,16 +308,14 @@ namespace VirtualPaper.PlayerWeb {
             catch (Exception e) {
                 App.WriteToParent(new VirtualPaperMessageConsole() {
                     MsgType = ConsoleMessageType.Error,
-                    Message = $"Function ['ParallaxSet'] an error occured: {e.Message}",
+                    Message = $"Function ['ParallaxControl'] an error occured: {e.Message}",
                 });
             }
         }
 
         private async Task InitializeWebViewAsync() {
             var env = await CoreWebView2Environment.CreateWithOptionsAsync(null, Constants.CommonPaths.TempWebView2Dir, _environmentOptions);
-            await Webview2.EnsureCoreWebView2Async(env);
-
-            Webview2.CoreWebView2.OpenDevToolsWindow();
+            await Webview2.EnsureCoreWebView2Async(env);           
 
             Webview2.CoreWebView2.ProcessFailed += (s, e) => {
                 App.WriteToParent(new VirtualPaperMessageConsole() {
@@ -294,21 +334,12 @@ namespace VirtualPaper.PlayerWeb {
                     playingFile));
         }
 
-        private string GetPlayingFile() {
-            return _startArgs.RuntimeType switch {
-                "RImage" => Constants.PlayingFile.PlayerWeb,
-                "RImage3D" => Constants.PlayingFile.PlayerWeb3D,
-                "RVideo" => Constants.PlayingFile.PlayerWeb,
-                _ => throw new ArgumentException(nameof(_startArgs.RuntimeType)),
-            };
-        }
-
         private async void Webview2_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e) {
             switch (_startArgs.RuntimeType) {
                 case "RImage":
                 case "RVideo":
-                    await ExecuteScriptFunctionAsync(Fileds.Init, _windowRc.Right - _windowRc.Left, _windowRc.Bottom - _windowRc.Top);
-                    await LoadSourceAsync(_startArgs.FilePath, _startArgs.RuntimeType);
+                    _ = ExecuteScriptFunctionAsync(Fileds.Init, _windowRc.Right - _windowRc.Left, _windowRc.Bottom - _windowRc.Top);
+                    await LoadSource(_startArgs.FilePath, _startArgs.RuntimeType);
                     break;
                 case "RImage3D":
                     await ExecuteScriptFunctionAsync(Fileds.Init, _startArgs.FilePath, _startArgs.DepthFilePath);
@@ -317,30 +348,31 @@ namespace VirtualPaper.PlayerWeb {
                     break;
             }
             LoadWpEffect(_startArgs.WpEffectFilePathUsing);
-            await ExecuteScriptFunctionAsync(Fileds.Play);
+            _ = ExecuteScriptFunctionAsync(Fileds.Play);
 
-            App.WriteToParent(new VirtualPaperMessageWallpaperLoaded() {
-                Success = true
+            App.WriteToParent(new VirtualPaperMessageProcId() {
+                ProcId = Webview2.CoreWebView2.BrowserProcessId,
             });
+            //Webview2.CoreWebView2.OpenDevToolsWindow();
 
             _viewModel.Loaded([]);
         }
 
-        private async Task LoadSourceAsync(string filePath, string wpType) {
+        private async Task LoadSource(string filePath, string wpType) {
             try {
-                if (filePath == null) return;
+                if (string.IsNullOrEmpty(filePath)) return;
 
                 await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, wpType, filePath);
             }
             catch (Exception ex) {
                 App.WriteToParent(new VirtualPaperMessageConsole() {
                     MsgType = ConsoleMessageType.Error,
-                    Message = $"Process fail: {ex}",
+                    Message = $"Process fail: {ex.Message}",
                 });
             }
         }
 
-        private async void LoadWpEffect(string wpEffectFilePath) {
+        private void LoadWpEffect(string wpEffectFilePath) {
             try {
                 if (wpEffectFilePath == null) return;
 
@@ -349,13 +381,13 @@ namespace VirtualPaper.PlayerWeb {
                     if (!uiElementType.Equals("Button", StringComparison.OrdinalIgnoreCase) && !uiElementType.Equals("Label", StringComparison.OrdinalIgnoreCase)) {
                         if (uiElementType.Equals("Slider", StringComparison.OrdinalIgnoreCase) ||
                             uiElementType.Equals("Dropdown", StringComparison.OrdinalIgnoreCase)) {
-                            await ExecuteScriptFunctionAsync(Fileds.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
+                            _ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
                         }
                         else if (uiElementType.Equals("Checkbox", StringComparison.OrdinalIgnoreCase)) {
                             ExecuteCheckBoxSet(item.Name, bool.Parse(item.Value.GetProperty("Value").ToString()));
                         }
                         else if (uiElementType.Equals("Color", StringComparison.OrdinalIgnoreCase) || uiElementType.Equals("Textbox", StringComparison.OrdinalIgnoreCase)) {
-                            await ExecuteScriptFunctionAsync(Fileds.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
+                            _ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
                         }
                     }
                 }
@@ -372,7 +404,6 @@ namespace VirtualPaper.PlayerWeb {
             switch (propertyName) {
                 case "Parallax":
                     _isParallaxOn = val;
-                    ParallaxSet();
                     break;
                 default:
                     break;
@@ -394,28 +425,40 @@ namespace VirtualPaper.PlayerWeb {
 
 #if DEBUG
             string cmd = sb_script.ToString();
+            Debug.WriteLine(cmd);
 #endif
 
             string script = string.Empty;
-
-            script = await Webview2.ExecuteScriptAsync(sb_script.ToString());
+            await _dispatcherQueue.EnqueueOrInvoke(async () => {
+                if (Webview2.CoreWebView2 == null) { // ???
+                    await Webview2.EnsureCoreWebView2Async();
+                }
+                await Webview2.ExecuteScriptAsync(sb_script.ToString());
+            });
 
             return script;
-        }
-
-        // ×èÖ¹£¨Êó±êµÈ£©Ö¸Õë²Ù×÷
-        private void Webview2_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
-            e.Handled = true;
-        }
-
-        // ×èÖ¹¼üÅÌ²Ù×÷
-        private void Webview2_PreviewKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e) {
-            e.Handled = true;
         }
 
         private void SetPositionAndSize() {
             _windowRc = RawInput.GetWindowRECT(this);
         }
+
+        private string GetPlayingFile() {
+            return _startArgs.RuntimeType switch {
+                "RImage" => Constants.PlayingFile.PlayerWeb,
+                "RImage3D" => Constants.PlayingFile.PlayerWeb3D,
+                "RVideo" => Constants.PlayingFile.PlayerWeb,
+                _ => throw new ArgumentException(nameof(_startArgs.RuntimeType)),
+            };
+        }
+
+        //private bool GetParallaxMainControl() {
+        //    return _startArgs.RuntimeType switch {
+        //        "RImage" => _isParallaxOnForDefault,
+        //        "RImage3D" => _isParallaxOnFor3D,
+        //        _ => false
+        //    };
+        //}
 
         #region window title bar
         private void SetWindowStyle() {
@@ -511,19 +554,22 @@ namespace VirtualPaper.PlayerWeb {
         }
         #endregion
 
-        private readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
+        private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
             AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1"
         }; // workaround: avoid cache
         private readonly StartArgs _startArgs;
-        private bool _isPaused = false;
-        private CancellationTokenSource _ctsParallax;
-        private bool _isParallaxOn = false;
-        private bool _isFocusOnDesk = false;
-        private int _isParallaxRunning = -1;
+        private static bool _isPaused = false;
+        //private static bool _isParallaxOnForDefault = false;
+        //private static bool _isParallaxOnFor3D = true;
+        private static bool _isParallaxOn = true;
+        //private static int _isParallaxForDefaultRunning = 0;
+        private static int _isParallaxRunning = 0;
+        private static bool _isFocusOnDesk = false;
         private Native.RECT _windowRc;
         private readonly DispatcherQueue _dispatcherQueue;
         private readonly string _filePath = string.Empty;
-        private bool _isFirstRun = true;
+        private static bool _isFirstRun = true;
         private readonly MainWindowViewModel _viewModel;
+        private static bool _isClose = false;
     }
 }

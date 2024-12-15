@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    x:Name="self"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -43,13 +44,13 @@
                 HorizontalAlignment="Center"
                 FontSize="20"
                 FontWeight="Bold"
-                Text="{x:Bind TextLoading}"/>
+                Text="{Binding TextLoading, ElementName=self}"/>
         </Grid>
 
         <Grid
             Margin="20"
             HorizontalAlignment="Center"
-            Visibility="{x:Bind ProgressbarEnable, Converter={StaticResource BooleanToVisibilityConverter}}">
+            Visibility="{Binding ProgressbarEnable, Converter={StaticResource BooleanToVisibilityConverter}, ElementName=self}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
@@ -59,13 +60,13 @@
                 Grid.Column="0"
                 Margin="0 0 20 0"
                 Width="340" 
-                Value="{x:Bind CurValue}"
-                Maximum="{x:Bind TotalValue}"/>
+                Value="{Binding CurValue, ElementName=self}"
+                Maximum="{Binding TotalValue, ElementName=self}"/>
 
             <TextBlock
                 Grid.Column="1"
                 FontWeight="Bold"
-                Text="{x:Bind ValueString}"/>
+                Text="{Binding ValueString, ElementName=self}"/>
         </Grid>
 
         <Button
@@ -75,8 +76,8 @@
             HorizontalAlignment="Center"
             Width="100" 
             Height="40"
-            Visibility="{x:Bind CancelEnable, Converter={StaticResource BooleanToVisibilityConverter}}"
-            Content="{x:Bind TextCancel}"
+            Visibility="{Binding CancelEnable, Converter={StaticResource BooleanToVisibilityConverter}, ElementName=self}"
+            Content="{Binding TextCancel, ElementName=self}"
             Click="BtnCancel_Click"/>
     </StackPanel>
 </UserControl>

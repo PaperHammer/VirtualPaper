@@ -8,355 +8,371 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:cvs="using:VirtualPaper.UI.Utils.Converters"
     mc:Ignorable="d"
+    xmlns:loading="using:VirtualPaper.UIComponent.Feedback"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
         <cvs:DecimalPlaceConverter x:Key="DecimalPlaceConverter"/>
     </Page.Resources>
 
-    <Grid
+    <Grid        
         Padding="5">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
-
-        <Grid
-            Grid.Row="0"
-            Margin="0 0 0 10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="auto"/>
-            </Grid.ColumnDefinitions>
-
-            <TextBox
-                Grid.Column="0"
-                HorizontalAlignment="Stretch"
-                MaxLength="50"
-                IsEnabled="{Binding EditEnable}"
-                FontSize="20"
-                Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                TextWrapping="Wrap" />
-
-            <StackPanel
-                Grid.Column="1"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Right"
-                Orientation="Horizontal">
-
-                <Button 
-                    x:Name="BtnScore"
-                    Height="33"
-                    MinWidth="66"
-                    Margin="10 0 0 0"
-                    Content="{Binding DetailedInfo_TextScore}"
-                    Visibility="{Binding BtnScoreVisibility}">
-                    <Button.Flyout>
-                        <Flyout>
-                            <Grid
-                                MinWidth="260">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition/>
-                                    <RowDefinition/>
-                                    <RowDefinition/>
-                                </Grid.RowDefinitions>
-
-                                <TextBlock
-                                    Grid.Row="0"
-                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                    Text="{Binding DetailedInfo_TextScoreTilte}"/>
-
-                                <Grid
-                                    Grid.Row="1"
-                                    HorizontalAlignment="Center">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition/>
-                                        <RowDefinition/>
-                                    </Grid.RowDefinitions>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="auto"/>
-                                        <ColumnDefinition/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <RatingControl 
-                                        Grid.Row="0"
-                                        Grid.Column="0"
-                                        AutomationProperties.Name="RatingControl with placeholder"
-                                        Margin="0 8 0 0"
-                                        IsReadOnly="True"
-                                        Value="{x:Bind Rating, Mode=TwoWay}"/>
-
-                                    <StackPanel 
-                                        Grid.Row="1"
-                                        Grid.Column="0"
-                                        Width="200">
-                                        <Slider 
-                                            x:Name="slider" 
-                                            Value="{x:Bind RatingShow, Mode=TwoWay}"
-                                            Minimum="0" 
-                                            Maximum="5"
-                                            StepFrequency="0.1" 
-                                            SmallChange="0.1" 
-                                            IsFocusEngagementEnabled="False"/>
-                                    </StackPanel>
-
-                                    <TextBlock
-                                        Grid.RowSpan="2"
-                                        Grid.Column="1"
-                                        Margin="20 2 0 0"
-                                        Text="{x:Bind slider.Value, Mode=TwoWay, Converter={StaticResource DecimalPlaceConverter}}"
-                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                        FontSize="18"
-                                        VerticalAlignment="Center"/>
-                                </Grid>
-
-                                <Button
-                                    Grid.Row="2"
-                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                    Content="{Binding DetailedInfo_TextScoreSubmit}"
-                                    HorizontalAlignment="Right"
-                                    Click="BtnSubmitScore_Click"/>
-                            </Grid>
-
-                        </Flyout>
-                    </Button.Flyout>
-                </Button>
-               
-                <Button 
-                    x:Name="BtnPreview"
-                    Height="33"
-                    MinWidth="66"
-                    Margin="10 0 0 0"
-                    Content="{Binding DetailedInfo_TextPreview}"
-                    Click="BtnPreview_Click"/>
-                
-                <Button 
-                    x:Name="BtnDownload"
-                    Height="33"
-                    MinWidth="66"
-                    Margin="10 0 0 0"
-                    Content="{Binding DetailedInfo_TextDownload}"
-                    Click="BtnDownload_Click"
-                    Visibility="{Binding BtnDownloadVisibility}"/>
-            </StackPanel>
-        </Grid>
-
-        <Grid
-            Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-
-            <Grid
-                Grid.Column="0"
-                Margin="0 0 5 0">
+        <Frame 
+            IsEnabled="{Binding FrameIsEnable}">
+            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
+                    <RowDefinition/>
                 </Grid.RowDefinitions>
 
-                <Image
+                <Grid
                     Grid.Row="0"
-                    Height="300"
-                    Width="480"
-                    Source="{Binding ThumbnailPath}"
-                    Stretch="Uniform" 
-                    HorizontalAlignment="Stretch" 
-                    VerticalAlignment="Stretch"
-                    ImageFailed="Image_ImageFailed"/>
+                    Margin="0 0 0 10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel
-                    Grid.Row="1"
-                    Orientation="Horizontal">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                        Text="{Binding DetailedInfo_TextRating}"
-                        VerticalAlignment="Center"
-                        FontSize="16"/>
-
-                    <RatingControl 
-                        AutomationProperties.Name="RatingControl with placeholder"
-                        Margin="8 8 0 0"
-                        IsReadOnly="True"
-                        Value="{Binding Rating}"/>
-
-                    <TextBlock
-                        Margin="20 2 0 0"
-                        Text="{Binding RatingShow}"
-                        Foreground="Orange"
-                        FontWeight="Black"
-                        FontSize="18"
-                        VerticalAlignment="Center"/>
-                </StackPanel>
-
-                <StackPanel
-                    Grid.Row="2"
-                    Margin="0 5 0 0"
-                    Orientation="Horizontal">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                        Text="{Binding DetailedInfo_TextAuthors}"
-                        FontSize="16"/>
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{Binding Authors}"
-                        VerticalAlignment="Center"
-                        TextWrapping="Wrap" />
-                </StackPanel>
-
-                <StackPanel
-                    Grid.Row="3"
-                    Margin="0 12 0 0"
-                    Orientation="Vertical">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                        Text="{Binding DetailedInfo_TextDesc}"
-                        FontSize="16"/>
                     <TextBox
-                        MaxLength="200"
+                        Grid.Column="0"
+                        HorizontalAlignment="Stretch"
+                        MaxLength="50"
                         IsEnabled="{Binding EditEnable}"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{Binding Desc, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        TextWrapping="Wrap"
-                        FontSize="16"/>
-                </StackPanel>
-            </Grid>
+                        FontSize="20"
+                        Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                        TextWrapping="Wrap" />
 
-            <Grid
-                Grid.Column="1"
-                Margin="5 0 0 0">
-                <ScrollViewer
-                    Width="500"
-                    HorizontalAlignment="Stretch"
-                    HorizontalScrollBarVisibility="Visible"
-                    VerticalScrollBarVisibility="Auto">
-                    <StackPanel 
-                        Orientation="Vertical">
+                    <StackPanel
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal">
 
-                        <StackPanel
-                            Margin="5 0 5 15"
-                            Orientation="Vertical">
-                            <TextBlock 
-                                Text="{Binding DetailedInfo_TextVirtualPaperUid}"
-                                FontSize="16"/>
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{Binding WallPaperUid}"
-                                TextWrapping="Wrap"
-                                FontSize="16"/>
-                        </StackPanel>
+                        <Button 
+                            x:Name="BtnScore"
+                            Height="33"
+                            MinWidth="66"
+                            Margin="10 0 0 0"
+                            Content="{Binding DetailedInfo_TextScore}"
+                            Visibility="{Binding BtnScoreVisibility}">
+                            <Button.Flyout>
+                                <Flyout>
+                                    <Grid
+                                        MinWidth="260">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                        </Grid.RowDefinitions>
 
-                        <StackPanel
-                            Margin="5 0 5 15"
-                            Orientation="Vertical">
-                            <TextBlock 
-                                Text="{Binding DetailedInfo_TextRType}"
-                                FontSize="16"/>
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{Binding Type}"
-                                TextWrapping="Wrap"
-                                FontSize="16"/>
-                        </StackPanel>
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                            Text="{Binding DetailedInfo_TextScoreTilte}"/>
 
-                        <StackPanel
-                            Margin="5 0 5 15"
-                            Orientation="Vertical">
-                            <TextBlock 
-                                Text="{Binding DetailedInfo_TextPublishDate}"
-                                FontSize="16"/>
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{Binding PublishDate}"
-                                TextWrapping="Wrap" 
-                                FontSize="16"/>
-                        </StackPanel>
+                                        <Grid
+                                            Grid.Row="1"
+                                            HorizontalAlignment="Center">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition/>
+                                                <RowDefinition/>
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="auto"/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
 
-                        <StackPanel
-                            Margin="5 0 5 15"
-                            Orientation="Vertical">
-                            <TextBlock 
-                                Text="{Binding DetailedInfo_TextTags}"
-                                FontSize="16"/>
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{Binding Tags}"
-                                VerticalAlignment="Center"
-                                TextWrapping="Wrap"
-                                FontSize="16"/>
-                        </StackPanel>
+                                            <RatingControl 
+                                                Grid.Row="0"
+                                                Grid.Column="0"
+                                                AutomationProperties.Name="RatingControl with placeholder"
+                                                Margin="0 8 0 0"
+                                                IsReadOnly="True"
+                                                Value="{x:Bind Rating, Mode=TwoWay}"/>
 
-                        <StackPanel
-                            Margin="5 0 5 15"
-                            Orientation="Vertical">
-                            <TextBlock 
-                                Text="{Binding DetailedInfo_TextResolution}"
-                                FontSize="16"/>
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{Binding Resolution}"
-                                TextWrapping="Wrap" 
-                                FontSize="16"/>
-                        </StackPanel>
+                                            <StackPanel 
+                                                Grid.Row="1"
+                                                Grid.Column="0"
+                                                Width="200">
+                                                <Slider 
+                                                    x:Name="slider" 
+                                                    Value="{x:Bind RatingShow, Mode=TwoWay}"
+                                                    Minimum="0" 
+                                                    Maximum="5"
+                                                    StepFrequency="0.1" 
+                                                    SmallChange="0.1" 
+                                                    IsFocusEngagementEnabled="False"/>
+                                            </StackPanel>
 
-                        <StackPanel
-                            Margin="5 0 5 15"
-                            Orientation="Vertical">
-                            <TextBlock 
-                                Text="{Binding DetailedInfo_TextAspectRadio}"
-                                FontSize="16"/>
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{Binding AspectRatio}"
-                                TextWrapping="Wrap"
-                                FontSize="16"/>
-                        </StackPanel>
+                                            <TextBlock
+                                                Grid.RowSpan="2"
+                                                Grid.Column="1"
+                                                Margin="20 2 0 0"
+                                                Text="{x:Bind slider.Value, Mode=TwoWay, Converter={StaticResource DecimalPlaceConverter}}"
+                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                                FontSize="18"
+                                                VerticalAlignment="Center"/>
+                                        </Grid>
 
-                        <StackPanel
-                            Margin="5 0 5 15"
-                            Orientation="Vertical">
-                            <TextBlock 
-                                Text="{Binding DetailedInfo_TextFileExtension}"
-                                FontSize="16"/>
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{Binding FileExtension}"
-                                TextWrapping="Wrap"
-                                FontSize="16"/>
-                        </StackPanel>
+                                        <Button
+                                            Grid.Row="2"
+                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                            Content="{Binding DetailedInfo_TextScoreSubmit}"
+                                            HorizontalAlignment="Right"
+                                            Click="BtnSubmitScore_Click"/>
+                                    </Grid>
 
-                        <StackPanel
-                            Margin="5 0 5 15"
-                            Orientation="Vertical">
-                            <TextBlock 
-                                Text="{Binding DetailedInfo_TextFileSize}"
-                                FontSize="16"/>
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{Binding FileSize}"
-                                TextWrapping="Wrap"
-                                FontSize="16"/>
-                        </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
 
-                        <StackPanel
-                            Margin="5 0 5 15"
-                            Orientation="Vertical">
-                            <TextBlock 
-                                Text="{Binding DetailedInfo_TextVersionInfo}"
-                                FontSize="16"/>
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{Binding TextVersion}"
-                                TextWrapping="Wrap"
-                                FontSize="16"/>
-                        </StackPanel>
+                        <Button 
+                            x:Name="BtnPreview"
+                            Height="33"
+                            MinWidth="66"
+                            Margin="10 0 0 0"
+                            Content="{Binding DetailedInfo_TextPreview}"
+                            Click="BtnPreview_Click"/>
+
+                        <Button 
+                            x:Name="BtnDownload"
+                            Height="33"
+                            MinWidth="66"
+                            Margin="10 0 0 0"
+                            Content="{Binding DetailedInfo_TextDownload}"
+                            Click="BtnDownload_Click"
+                            Visibility="{Binding BtnDownloadVisibility}"/>
                     </StackPanel>
-                </ScrollViewer>
+                </Grid>
+
+                <Grid
+                    Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+
+                    <Grid
+                        Grid.Column="0"
+                        Margin="0 0 5 0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Image
+                            Grid.Row="0"
+                            Height="300"
+                            Width="480"
+                            Source="{Binding ThumbnailPath}"
+                            Stretch="Uniform" 
+                            HorizontalAlignment="Stretch" 
+                            VerticalAlignment="Stretch"
+                            ImageFailed="Image_ImageFailed"/>
+
+                        <StackPanel
+                            Grid.Row="1"
+                            Orientation="Horizontal">
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Text="{Binding DetailedInfo_TextRating}"
+                                VerticalAlignment="Center"
+                                FontSize="16"/>
+
+                            <RatingControl 
+                                AutomationProperties.Name="RatingControl with placeholder"
+                                Margin="8 8 0 0"
+                                IsReadOnly="True"
+                                Value="{Binding Rating}"/>
+
+                            <TextBlock
+                                Margin="20 2 0 0"
+                                Text="{Binding RatingShow}"
+                                Foreground="Orange"
+                                FontWeight="Black"
+                                FontSize="18"
+                                VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Row="2"
+                            Margin="0 5 0 0"
+                            Orientation="Horizontal">
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Text="{Binding DetailedInfo_TextAuthors}"
+                                FontSize="16"/>
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{Binding Authors}"
+                                VerticalAlignment="Center"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Row="3"
+                            Margin="0 12 0 0"
+                            Orientation="Vertical">
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Text="{Binding DetailedInfo_TextDesc}"
+                                FontSize="16"/>
+                            <TextBox
+                                MaxLength="200"
+                                IsEnabled="{Binding EditEnable}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{Binding Desc, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                TextWrapping="Wrap"
+                                FontSize="16"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid
+                        Grid.Column="1"
+                        Margin="5 0 0 0">
+                        <ScrollViewer
+                            Width="500"
+                            HorizontalAlignment="Stretch"
+                            HorizontalScrollBarVisibility="Visible"
+                            VerticalScrollBarVisibility="Auto">
+                            <StackPanel 
+                                Orientation="Vertical">
+                                <StackPanel
+                                    Margin="5 0 5 15"
+                                    Orientation="Vertical">
+                                    <TextBlock 
+                                        Text="{Binding DetailedInfo_TextVirtualPaperUid}"
+                                        FontSize="16"/>
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding WallPaperUid}"
+                                        TextWrapping="Wrap"
+                                        FontSize="16"/>
+                                </StackPanel>
+
+                                <StackPanel
+                                    Margin="5 0 5 15"
+                                    Orientation="Vertical">
+                                    <TextBlock 
+                                        Text="{Binding DetailedInfo_TextRType}"
+                                        FontSize="16"/>
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding Type}"
+                                        TextWrapping="Wrap"
+                                        FontSize="16"/>
+                                </StackPanel>
+
+                                <StackPanel
+                                    Margin="5 0 5 15"
+                                    Orientation="Vertical">
+                                    <TextBlock 
+                                        Text="{Binding DetailedInfo_TextPublishDate}"
+                                        FontSize="16"/>
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding PublishDate}"
+                                        TextWrapping="Wrap" 
+                                        FontSize="16"/>
+                                </StackPanel>
+
+                                <StackPanel
+                                    Margin="5 0 5 15"
+                                    Orientation="Vertical">
+                                    <TextBlock 
+                                        Text="{Binding DetailedInfo_TextTags}"
+                                        FontSize="16"/>
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding Tags}"
+                                        VerticalAlignment="Center"
+                                        TextWrapping="Wrap"
+                                        FontSize="16"/>
+                                </StackPanel>
+
+                                <StackPanel
+                                    Margin="5 0 5 15"
+                                    Orientation="Vertical">
+                                    <TextBlock 
+                                        Text="{Binding DetailedInfo_TextResolution}"
+                                        FontSize="16"/>
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding Resolution}"
+                                        TextWrapping="Wrap" 
+                                        FontSize="16"/>
+                                </StackPanel>
+
+                                <StackPanel
+                                    Margin="5 0 5 15"
+                                    Orientation="Vertical">
+                                    <TextBlock 
+                                        Text="{Binding DetailedInfo_TextAspectRadio}"
+                                        FontSize="16"/>
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding AspectRatio}"
+                                        TextWrapping="Wrap"
+                                        FontSize="16"/>
+                                </StackPanel>
+
+                                <StackPanel
+                                    Margin="5 0 5 15"
+                                    Orientation="Vertical">
+                                    <TextBlock 
+                                        Text="{Binding DetailedInfo_TextFileExtension}"
+                                        FontSize="16"/>
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding FileExtension}"
+                                        TextWrapping="Wrap"
+                                        FontSize="16"/>
+                                </StackPanel>
+
+                                <StackPanel
+                                    Margin="5 0 5 15"
+                                    Orientation="Vertical">
+                                    <TextBlock 
+                                        Text="{Binding DetailedInfo_TextFileSize}"
+                                        FontSize="16"/>
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding FileSize}"
+                                        TextWrapping="Wrap"
+                                        FontSize="16"/>
+                                </StackPanel>
+
+                                <StackPanel
+                                    Margin="5 0 5 15"
+                                    Orientation="Vertical">
+                                    <TextBlock 
+                                        Text="{Binding DetailedInfo_TextVersionInfo}"
+                                        FontSize="16"/>
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding TextVersion}"
+                                        TextWrapping="Wrap"
+                                        FontSize="16"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
             </Grid>
-        </Grid>
+        </Frame>
+
+        <loading:Loading
+            Grid.RowSpan="2"
+            CancelEnable="{Binding CancelEnable}"
+            ProgressbarEnable="{Binding ProgressbarEnable}"
+            CtsTokens="{Binding CtsTokens}"
+            TotalValue="{Binding TotalValue}"
+            CurValue="{Binding CurValue}"
+            TextLoading="{Binding TextLoading}"
+            TextCancel="{Binding TextCancel}"
+            Visibility="{Binding LoadingIsVisiable}"/>
     </Grid>
 </Page>

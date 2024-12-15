@@ -1,13 +1,12 @@
-﻿using OpenCvSharp;
-using OpenCvSharp.Extensions;
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
+using OpenCvSharp;
+using OpenCvSharp.Extensions;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.Storage;
-using VirtualPaper.lang;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using Size = OpenCvSharp.Size;

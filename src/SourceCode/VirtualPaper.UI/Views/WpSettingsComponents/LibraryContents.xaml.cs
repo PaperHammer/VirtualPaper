@@ -8,7 +8,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using NLog;
-using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels.WpSettingsComponents;
@@ -25,12 +24,6 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
         public LibraryContents() {
             this.InitializeComponent();
 
-            uint interval = Native.GetDoubleClickTime();
-            _doubleClickMaxTime = TimeSpan.FromMilliseconds(interval);
-            _clickTimer = new DispatcherTimer();
-            _clickTimer.Interval = TimeSpan.FromMilliseconds(interval);
-            _clickTimer.Tick += ClickTimer_Tick;
-
             _compositor = App.Services.GetRequiredService<MainWindow>().Compositor;
             _logger = LogManager.GetCurrentClassLogger();
             _viewModel = App.Services.GetRequiredService<LibraryContentsViewModel>();
@@ -40,25 +33,13 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             await _viewModel.InitContentsAsync();
         }
+
         private void Image_ImageFailed(object sender, ExceptionRoutedEventArgs e) {
             _logger.Error($"RImage loading failed: {e.ErrorMessage}");
         }
 
-        // ref: https://learn.microsoft.com/zh-cn/dotnet/desktop/winforms/input-mouse/how-to-distinguish-between-clicks-and-double-clicks?view=netdesktop-8.0
-        private async void SingleClickAction() {
-            await _viewModel.DetailedInfoAsync(
-                (IWpMetadata)ItemsViewer.SelectedItem);
-        }
-
-        private async void DoubleClickAction(IWpMetadata data) {
+        private async void SingleClickAction(IWpMetadata data) {
             await _viewModel.PreviewAsync(data);
-        }
-
-        private void ClickTimer_Tick(object sender, object e) {
-            _inDoubleClick = false;
-            _clickTimer.Stop();
-
-            SingleClickAction();
         }
 
         private void ItemsViewer_PointerPressed(object sender, PointerRoutedEventArgs e) {
@@ -71,25 +52,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
                 PointerPoint ptrPt = e.GetCurrentPoint(ItemsViewer);
                 if (!ptrPt.Properties.IsLeftButtonPressed) return;
 
-                if (_inDoubleClick) {
-                    _inDoubleClick = false;
-
-                    TimeSpan length = DateTime.Now - _lastClick;
-
-                    // If double click is valid, respond
-                    if (length < _doubleClickMaxTime) {
-                        _clickTimer.Stop();
-                        DoubleClickAction(data);
-                    }
-
-                    return;
-                }
-
-                // Double click was invalid, restart 
-                _clickTimer.Stop();
-                _clickTimer.Start();
-                _lastClick = DateTime.Now;
-                _inDoubleClick = true;
+                SingleClickAction(data);
             }
         }
 
@@ -184,14 +147,14 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
             _springAnimation.FinalValue = new Vector3(finalValue);
         }
 
+        private void ItemsViewer_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
+            e.Handled = true;
+        }
+
         private readonly LibraryContentsViewModel _viewModel;
         private readonly Logger _logger;
         private IWpMetadata _data;
         private readonly Compositor _compositor;
         private SpringVector3NaturalMotionAnimation _springAnimation;
-        private bool _inDoubleClick;
-        private DateTime _lastClick;
-        private readonly TimeSpan _doubleClickMaxTime;
-        private readonly DispatcherTimer _clickTimer;
     }
 }

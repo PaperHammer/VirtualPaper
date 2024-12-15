@@ -45,6 +45,7 @@
             public static string PlayerWeb { get; } = Path.Combine("Plugins", "PlayerWeb", "win-x64");
             public static string ScrSaver { get; } = Path.Combine("Plugins", "ScrSaver");
             public static string UI { get; } = Path.Combine("Plugins", "UI", "win-x64");
+            public static string ML { get; } = Path.Combine("Plugins", "ML", "Models");
         }
 
         public static class ModuleName {
@@ -263,6 +264,11 @@
             public static string Text_Project_View_Terminate { get; } = "Text_Project_View_Terminate";
             public static string InfobarMsg_Cancel { get; } = "InfobarMsg_Cancel";
             public static string InfobarMsg_Err { get; } = "InfobarMsg_Err";
+            public static string Wp_TextEditInfo { get; } = "Wp_TextEditInfo";
+            public static string Wp_Edits_TextTitle { get; } = "Wp_Edits_TextTitle";
+            public static string Wp_Edits_TextDesc { get; } = "Wp_Edits_TextDesc";
+            public static string Wp_Edits_TextTags { get; } = "Wp_Edits_TextTags";
+            public static string Wp_Edits_TextSave { get; } = "Wp_Edits_TextSave";
             public static string WpConfigViewMdoel_TextAspectRatio { get; } = "WpConfigViewMdoel_TextAspectRatio";
             public static string WpConfigViewMdoel_TextDetailedInfo { get; } = "WpConfigViewMdoel_TextDetailedInfo";
             public static string WpConfigViewMdoel_TextFileExtension { get; } = "WpConfigViewMdoel_TextFileExtension";

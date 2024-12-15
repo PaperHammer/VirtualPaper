@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -15,6 +14,7 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels;
+using VirtualPaper.UIComponent.Utils.Extensions;
 using WinRT.Interop;
 using WinUIEx;
 
@@ -26,16 +26,26 @@ namespace VirtualPaper.UI {
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainWindow : WindowEx {
-        public List<WindowEx> ChildWindows { get; } = [];
+        //public List<WindowEx> ChildWindows { get; } = [];
+
+        public string WindowStyleType { get; private set; }
+        public SolidColorBrush WindowCaptionForeground { get; private set; }
+        public SolidColorBrush WindowCaptionForegroundDisabled { get; private set; }
 
         public MainWindow(
+            MainWindowViewModel mainWindowViewModel,
+            IWallpaperControlClient wallpaperControlClient,
             IUserSettingsClient userSettingsClient) {
-            _userSettingsClient = userSettingsClient;
+            _wpControl = wallpaperControlClient;
+            _userSettings = userSettingsClient;
 
             this.InitializeComponent();
 
-            _viewModel = App.Services.GetRequiredService<MainWindowViewModel>();
+            _viewModel = mainWindowViewModel;
             this.NavView.DataContext = _viewModel;
+
+            WindowCaptionForeground = (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
+            WindowCaptionForegroundDisabled = (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
 
             SetWindowStyle();
             SetWindowTitleBar();
@@ -51,7 +61,7 @@ namespace VirtualPaper.UI {
                 titleBar.ExtendsContentIntoTitleBar = true;
                 titleBar.ButtonBackgroundColor = Colors.Transparent;
                 titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-                titleBar.ButtonForegroundColor = ((SolidColorBrush)App.Current.Resources["WindowCaptionForeground"]).Color;
+                titleBar.ButtonForegroundColor = WindowCaptionForeground.Color;
 
                 AppTitleBar.Loaded += AppTitleBar_Loaded;
                 AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
@@ -59,12 +69,13 @@ namespace VirtualPaper.UI {
             }
             else {
                 AppTitleBar.Visibility = Visibility.Collapsed;
-                this.UseImmersiveDarkModeEx(_userSettingsClient.Settings.ApplicationTheme == AppTheme.Dark);
+                this.UseImmersiveDarkModeEx(_userSettings.Settings.ApplicationTheme == AppTheme.Dark);
             }
         }
 
         private void SetWindowStyle() {
-            string type = _userSettingsClient.Settings.SystemBackdrop.ToString();
+            string type = _userSettings.Settings.SystemBackdrop.ToString();
+            WindowStyleType = type;
             this.SystemBackdrop = type switch {
                 "Mica" => new MicaBackdrop(),
                 "Acrylic" => new DesktopAcrylicBackdrop(),
@@ -74,33 +85,33 @@ namespace VirtualPaper.UI {
 
         private void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
             if (args.WindowActivationState == WindowActivationState.Deactivated) {
-                TitleTextBlock.Foreground =
-                    (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
+                TitleTextBlock.Foreground = WindowCaptionForegroundDisabled;
             }
             else {
-                TitleTextBlock.Foreground =
-                    (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
+                TitleTextBlock.Foreground = WindowCaptionForeground;
             }
         }
 
-        private void WindowEx_Closed(object sender, WindowEventArgs args) {
-            if (_userSettingsClient.Settings.IsFirstRun) {
+        private async void WindowEx_Closed(object sender, WindowEventArgs args) {
+            await _wpControl.CloseAllPreviewAsync();
+
+            if (_userSettings.Settings.IsFirstRun) {
                 args.Handled = true;
-                _userSettingsClient.Settings.IsFirstRun = false;
-                _userSettingsClient.Save<ISettings>();
+                _userSettings.Settings.IsFirstRun = false;
+                _userSettings.Save<ISettings>();
                 this.Close();
             }
 
-            if (_userSettingsClient.Settings.IsUpdated) {
+            if (_userSettings.Settings.IsUpdated) {
                 args.Handled = true;
-                _userSettingsClient.Settings.IsUpdated = false;
-                _userSettingsClient.Save<ISettings>();
+                _userSettings.Settings.IsUpdated = false;
+                _userSettings.Save<ISettings>();
                 this.Close();
             }
 
-            foreach (var window in ChildWindows) {
-                window?.Close();
-            }
+            //foreach (var window in ChildWindows) {
+            //    window?.Close();
+            //}
 
             App.ShutDown();
         }
@@ -262,7 +273,8 @@ namespace VirtualPaper.UI {
 
         //ComCtl32.SUBCLASSPROC wndProcHandler;
 
-        private readonly IUserSettingsClient _userSettingsClient;
+        private readonly IUserSettingsClient _userSettings;
+        private readonly IWallpaperControlClient _wpControl;
         private readonly MainWindowViewModel _viewModel;
     }
 }

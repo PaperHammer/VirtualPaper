@@ -1,22 +1,23 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json;
-using NLog;
+using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Shell;
+using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Cores.Players.Web {
-    internal class PlayerWeb : IWallpaperPlaying {
-        public Process Proc { get; }
+    internal partial class PlayerWeb : IWallpaperPlaying {
+        public Process Proc { get; private set; }
 
         public nint Handle { get; private set; }
-
-        //public nint InputHandle { get; private set; }
+        
+        //public nint ProcHandle { get; private set; }
 
         public IWpPlayerData Data { get; private set; }
 
@@ -32,43 +33,27 @@ namespace VirtualPaper.Cores.Players.Web {
             IWpPlayerData data,
             IMonitor monitor,
             bool isPreview) {
-            //_isPreview = isPreview;
-
             string workingDir = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
                 Constants.WorkingDir.PlayerWeb);
 
-            //string playingFile = data.RType switch {
-            //    RuntimeType.RImage => Constants.PlayingFile.PlayerWeb,                
-            //    RuntimeType.RImage3D => Constants.PlayingFile.PlayerWeb3D,
-            //    RuntimeType.RVideo => Constants.PlayingFile.PlayerWeb,
-            //    _ => string.Empty,
-            //};
-
-            //if (isPreview) {
-            //    _previewerWeb = new(
-            //        data.RType,
-            //        data.FilePath,
-            //        isCurrentWp ? data.WpEffectFilePathTemporary : data.WpEffectFilePathTemplate,
-            //        playingFile);
-            //    _previewerWeb.Reset += ResetPreviewer;
-            //    return;
-            //}
-
-            _startParams = [data.FilePath, data.RType.ToString(), data.WpEffectFilePathUsing];
             StringBuilder cmdArgs = new();
-            cmdArgs.Append($" --file-path {data.FilePath}");
-            if (data.DepthFilePath != null && data.DepthFilePath != string.Empty) {
+            CheckParams(data);
+            cmdArgs.Append($" -f {data.FilePath}");
+            if (data.RType == RuntimeType.RImage3D) {
                 cmdArgs.Append($" --depth-file-path {data.DepthFilePath}");
             }
-            cmdArgs.Append($" --effect-file-path-using {data.WpEffectFilePathUsing}");
+            cmdArgs.Append($" -b {Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName)}");
+            cmdArgs.Append($" -e {data.WpEffectFilePathUsing}");
             cmdArgs.Append($" --effect-file-path-temporary {data.WpEffectFilePathTemporary}");
             cmdArgs.Append($" --effect-file-path-template {data.WpEffectFilePathTemplate}");
-            cmdArgs.Append($" --runtime-type {data.RType.ToString()}");
-            cmdArgs.Append($" --is-preview {isPreview}");
+            cmdArgs.Append($" -r {data.RType.ToString()}");
+            if (isPreview) {
+                cmdArgs.Append($" --is-preview");
+            }
             cmdArgs.Append($" --window-style-type {App.IUserSettgins.Settings.SystemBackdrop}");
-            cmdArgs.Append($" --app-theme {App.IUserSettgins.Settings.ApplicationTheme}");
-            cmdArgs.Append($" --app-language {App.IUserSettgins.Settings.Language}");
+            cmdArgs.Append($" -t {App.IUserSettgins.Settings.ApplicationTheme}");
+            cmdArgs.Append($" -l {App.IUserSettgins.Settings.Language}");
 
             ProcessStartInfo start = new() {
                 FileName = Path.Combine(
@@ -93,16 +78,19 @@ namespace VirtualPaper.Cores.Players.Web {
             _uniqueId = _globalCount++;
         }
 
+        private void CheckParams(IWpPlayerData data) {
+            if (string.IsNullOrEmpty(data.FilePath) ||
+                string.IsNullOrEmpty(data.WpEffectFilePathUsing) ||
+                string.IsNullOrEmpty(data.WpEffectFilePathTemplate) ||
+                string.IsNullOrEmpty(data.WpEffectFilePathTemporary) ||
+                data.RType == RuntimeType.RImage3D && string.IsNullOrEmpty(data.DepthFilePath)) {
+                throw new Exception("启动 Player 时, 缺少必要参数");
+            }
+        }
+
         public void Close() {
             SendMessage(new VirtualPaperCloseCmd());
         }
-
-        //public void ClosePreview() {
-        //    if (_previewerWeb != null) {
-        //        _previewerWeb.Close();
-        //        _previewerWeb = null;
-        //    }
-        //}
 
         public void Pause() {
             if (Data.RType == RuntimeType.RVideo)
@@ -132,26 +120,16 @@ namespace VirtualPaper.Cores.Players.Web {
         public void SetPlaybackPos(float pos, PlaybackPosType type) { }
 
         public async Task<bool> ShowAsync(CancellationToken token) {
-            //if (_isPreview) {
-            //    _previewerWeb?.Show();
-            //    _previewerWeb?.Activate();
-            //    return true;
-            //}
-
             if (Proc is null)
                 return false;
 
             try {
                 token.ThrowIfCancellationRequested(); // 在开始前检查一次
 
-                bool paraAvaliable = ValidateStartParameters();
-                if (!paraAvaliable) {
-                    throw new ArgumentException("缺少必要的启动参数");
-                }
-
                 Proc.Exited += Proc_Exited;
                 Proc.OutputDataReceived += Proc_OutputDataReceived;
                 Proc.Start();
+                App.Jobs.AddProcess(Proc.Id);
                 Proc.BeginOutputReadLine();
 
                 using var registration = token.Register(() => {
@@ -164,31 +142,18 @@ namespace VirtualPaper.Cores.Players.Web {
                     throw _tcsProcessWait.Task.Result;
             }
             catch (OperationCanceledException ex) {
-                _logger.Warn(ex);
+                App.Log.Warn(ex);
                 Terminate();
                 throw;
             }
             catch (Exception ex) {
-                _logger.Error(ex);
+                App.Log.Error(ex);
                 Terminate();
                 throw;
             }
 
             return true;
         }
-
-        private bool ValidateStartParameters() {
-            foreach (var para in _startParams)
-                if (para == null || para.Length == 0)
-                    return false;
-            return true;
-        }
-
-        //public void Modify(string controlName, string propertyName, string value) {
-        //    if (_previewerWeb == null) return;
-
-        //    _previewerWeb.ModifySource(controlName, propertyName, value);
-        //}
 
         public void Update(IWpPlayerData data) {
             this.Data = data;
@@ -199,10 +164,6 @@ namespace VirtualPaper.Cores.Players.Web {
             });
         }
 
-        //private void ResetPreviewer() {
-        //    _previewerWeb = null;
-        //}
-
         public void Stop() {
             Pause();
         }
@@ -210,7 +171,9 @@ namespace VirtualPaper.Cores.Players.Web {
         private void Terminate() {
             try {
                 Closing?.Invoke(this, EventArgs.Empty);
+                Closing = null;
                 Proc?.Kill();
+                Proc?.Dispose();
             }
             catch { }
             DesktopUtil.RefreshDesktop();
@@ -225,7 +188,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 Proc?.StandardInput.WriteLine(msg);
             }
             catch (Exception e) {
-                _logger.Error($"Stdin write fail: {e.Message}");
+                App.Log.Error($"Stdin write fail: {e.Message}");
             }
         }
 
@@ -234,37 +197,33 @@ namespace VirtualPaper.Cores.Players.Web {
             if (!string.IsNullOrEmpty(e.Data)) {
                 VirtualPaperMessageConsole messageConsole = JsonSerializer.Deserialize<VirtualPaperMessageConsole>(e.Data);
                 if (messageConsole.MsgType == ConsoleMessageType.Error) {
-                    _logger.Error($"PlayerWeb-{_uniqueId}: {messageConsole.Message}");
+                    App.Log.Error($"PlayerWeb-{_uniqueId}: {messageConsole.Message}");
                 }
                 else {
-                    _logger.Info($"PlayerWeb-{_uniqueId}: {e.Data}");
+                    App.Log.Info($"PlayerWeb-{_uniqueId}: {e.Data}");
                 }
 
-                IpcMessage obj; 
+                IpcMessage obj;
                 try {
                     obj = JsonSerializer.Deserialize<IpcMessage>(e.Data) ?? throw new("null msg recieved");
                 }
                 catch (Exception ex) {
-                    _logger.Error($"Ipcmessage parse Error: {ex.Message}");
+                    App.Log.Error($"Ipcmessage parse Error: {ex.Message}");
                     return;
                 }
                 if (!_isInitialized || !IsLoaded) {
-                    if (obj.Type == MessageType.msg_hwnd) {
+                    if (obj.Type == MessageType.msg_procid) {
                         Exception? error = null;
                         try {
-                            var handle = new IntPtr(((VirtualPaperMessageHwnd)obj).Hwnd);
+                            nint procid = new(((VirtualPaperMessageProcId)obj).ProcId);
+                            Process process = Process.GetProcessById((int)procid);
+                            Handle = process.MainWindowHandle; // chrome_widgetwin_1
 
-                            var chrome_WidgetWin_0 = Native.FindWindowEx(handle, IntPtr.Zero, "Chrome_WidgetWin_0", null);
-                            //var chrome_WidgetWin_0 = EnumerateChildWindows(handle, "Chrome_WidgetWin_0");
-                            //if (!chrome_WidgetWin_0.Equals(IntPtr.Zero)) {
-                            //    this.InputHandle = Native.FindWindowEx(chrome_WidgetWin_0, IntPtr.Zero, "Chrome_WidgetWin_1", null);
-                            //}
-                            Handle = Proc.GetProcessWindow(true);
-
-                            if (IntPtr.Equals(Handle, IntPtr.Zero)) {
+                            if (Equals(Handle, IntPtr.Zero)) {
                                 throw new Exception("Browser input/window handle NULL.");
                             }
-                        }
+
+                            ConvertPopupToChildWindow(Handle);}
                         catch (Exception ie) {
                             error = ie;
                         }
@@ -278,40 +237,105 @@ namespace VirtualPaper.Cores.Players.Web {
                     }
                 }
                 else {
-                    if (obj.Type == MessageType.cmd_preview_off) {
+                    if (obj.Type == MessageType.msg_closed) {
                         this.Closing?.Invoke(this, EventArgs.Empty);
                     }
                 }
             }
         }
 
-        private static IntPtr EnumerateChildWindows(IntPtr parentHandle, string targetClassName) {
-            IntPtr childHandle = Native.FindWindowEx(parentHandle, IntPtr.Zero, null, null); // 开始枚举第一个子窗口
+        public static void ConvertPopupToChildWindow(IntPtr hwnd) {
+            // Get the current window style
+            long style = Native.GetWindowLong(hwnd, Native.GWL_STYLE);
 
-            while (childHandle != IntPtr.Zero) {
-                // 如果找到了目标窗口，返回其句柄
-                var targetHandel = Native.FindWindowEx(childHandle, IntPtr.Zero, targetClassName, null);
-                if (targetHandel != IntPtr.Zero)
-                    return targetHandel;
+            // Remove WS_POPUP and add WS_CHILD style
+            style &= ~Native.WS_POPUP;
+            style |= Native.WS_CHILD;
 
-                // 否则，递归检查此子窗口的子窗口
-                IntPtr resultFromChild = EnumerateChildWindows(childHandle, targetClassName);
-                if (resultFromChild != IntPtr.Zero)
-                    return resultFromChild;
+            // Apply the new window style
+            Native.SetWindowLong(hwnd, Native.GWL_STYLE, style);
 
-                // 移动到下一个兄弟窗口
-                childHandle = Native.FindWindowEx(parentHandle, childHandle, null, null);
-            }
-
-            // 如果没有找到，返回IntPtr.Zero
-            return IntPtr.Zero;
+            // Set the new parent window
+            // Native.SetParent(hwnd, newParentHwnd);
         }
+
+        ///// <summary>
+        ///// 查找指定父窗口下的最后一个类名为 targetClassName 的子窗口。
+        ///// </summary>
+        ///// <param name="parentHandle">父窗口的句柄。</param>
+        ///// <param name="targetClassName">目标子窗口的类名。</param>
+        ///// <returns>符合条件的最后一个窗口句柄，如果没有找到则为 nint.Zero。</returns>
+        //public static nint FindLastChildWindow(nint parentHandle, string targetClassName) {
+        //    nint lastMatchingHandle = nint.Zero;
+
+        //    Native.EnumChildWindows(parentHandle, (hWnd, param) => {
+        //        StringBuilder className = new(Native.MAX_CLASS_NAME_LENGTH);
+        //        _ = Native.GetClassName(hWnd, className, className.Capacity);
+
+        //        if (className.ToString() == targetClassName) {
+        //            lastMatchingHandle = hWnd;
+        //        }
+
+        //        // Recursively check child windows of the current window
+        //        FindLastChildWindow(hWnd, targetClassName);
+
+        //        return true; // Continue enumeration
+        //    }, IntPtr.Zero);
+
+        //    return lastMatchingHandle;
+        //}
+
+        ///// <summary>
+        ///// 查找指定父窗口下的所有名为 targetWindowTitleOrClass 的子窗口，并重新设置它们的父窗口。
+        ///// </summary>
+        ///// <param name="parentHandle">父窗口的句柄。</param>
+        ///// <param name="targetWindowTitleOrClass">目标子窗口的标题或类名。</param>
+        ///// <param name="newParentHandle">新的父窗口的句柄。</param>
+        //public static void ReparentAllWindowsNamed(nint parentHandle, string targetWindowTitleOrClass, nint newParentHandle) {
+        //    // Enumerate all child windows of the given parent handle and re-parent matching windows
+        //    Native.EnumChildWindows(parentHandle, (hWnd, param) =>
+        //    {
+        //        StringBuilder className = new(Native.MAX_CLASS_NAME_LENGTH);
+        //        _ = Native.GetClassName(hWnd, className, Native.MAX_CLASS_NAME_LENGTH);
+
+        //        // Check if the window's class name or title matches the target
+        //        if (className.ToString() == targetWindowTitleOrClass) {
+        //            // Change the parent of the found window
+        //            Native.SetParent(hWnd, newParentHandle);
+        //            Console.WriteLine($"Reparented 'Intermediate D3D Window' with handle: {hWnd}");
+        //        }
+
+        //        // Continue enumeration
+        //        return true;
+        //    }, nint.Zero);
+        //}
+
+        //private static IntPtr EnumerateChildWindows(IntPtr parentHandle, string targetClassName) {
+        //    IntPtr childHandle = Native.FindWindowEx(parentHandle, IntPtr.Zero, null, null); // 开始枚举第一个子窗口
+
+        //    while (childHandle != IntPtr.Zero) {
+        //        // 如果找到了目标窗口，返回其句柄
+        //        var targetHandel = Native.FindWindowEx(childHandle, IntPtr.Zero, targetClassName, null);
+        //        if (targetHandel != IntPtr.Zero)
+        //            return targetHandel;
+
+        //        // 否则，递归检查此子窗口的子窗口
+        //        IntPtr resultFromChild = EnumerateChildWindows(childHandle, targetClassName);
+        //        if (resultFromChild != IntPtr.Zero)
+        //            return resultFromChild;
+
+        //        // 移动到下一个兄弟窗口
+        //        childHandle = Native.FindWindowEx(parentHandle, childHandle, null, null);
+        //    }
+
+        //    // 如果没有找到，返回IntPtr.Zero
+        //    return IntPtr.Zero;
+        //}
 
         private void Proc_Exited(object? sender, EventArgs e) {
             _tcsProcessWait.TrySetResult(null);
             Proc.OutputDataReceived -= Proc_OutputDataReceived;
-            Proc?.Dispose();
-            DesktopUtil.RefreshDesktop();
+            Terminate();
             IsExited = true;
         }
 
@@ -359,14 +383,34 @@ namespace VirtualPaper.Cores.Players.Web {
         //    }
         //}
 
-        private readonly List<string> _startParams;
-        //private PreviewerWeb? _previewerWeb;
-        //private readonly bool _isPreview;
+        #region dispose
+        private bool _isDisposed;
+        private void Dispose(bool disposing) {
+            if (!_isDisposed) {
+                if (disposing) {
+                    Closing = null;
+                }
+
+                Proc = null;
+                Handle = default;
+                Data = null;
+                Monitor = null;
+
+                _isDisposed = true;
+            }
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+
         private readonly TaskCompletionSource<Exception> _tcsProcessWait = new();
         private static int _globalCount;
         private readonly int _uniqueId;
         private bool _isInitialized;
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        //private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         //private readonly int _timeout = 50000;
     }
 }

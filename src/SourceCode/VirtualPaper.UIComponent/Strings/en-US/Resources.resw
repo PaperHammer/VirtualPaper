@@ -159,7 +159,7 @@ Scale-down: The size is the same as the one in None or Contain, depending on whi
     <value>Download</value>
   </data>
   <data name="DetailedInfo_TextFileExtension" xml:space="preserve">
-    <value>File Type（Extension）：</value>
+    <value>File Type：</value>
   </data>
   <data name="DetailedInfo_TextFileSize" xml:space="preserve">
     <value>File Size：</value>
@@ -192,7 +192,7 @@ Scale-down: The size is the same as the one in None or Contain, depending on whi
     <value>Title</value>
   </data>
   <data name="DetailedInfo_TextVersionInfo" xml:space="preserve">
-    <value>Version infomation</value>
+    <value>Version infomation：</value>
   </data>
   <data name="DetailedInfo_TextVirtualPaperUid" xml:space="preserve">
     <value>vp_uid：</value>
@@ -310,6 +310,9 @@ Note: This operation is irreversible！</value>
   </data>
   <data name="MenuFlyout_Text_Update" xml:space="preserve">
     <value>Update</value>
+  </data>
+  <data name="Msg_Save_Succeded" xml:space="preserve">
+    <value>Saved</value>
   </data>
   <data name="Project_Edit_Copy" xml:space="preserve">
     <value>Copy</value>
@@ -792,5 +795,20 @@ Author: PaperHammer</value>
   </data>
   <data name="WpSettings_Text_Title" xml:space="preserve">
     <value>Control Center</value>
+  </data>
+  <data name="Wp_Edits_TextDesc" xml:space="preserve">
+    <value>Description：</value>
+  </data>
+  <data name="Wp_Edits_TextSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Wp_Edits_TextTags" xml:space="preserve">
+    <value>Tags：</value>
+  </data>
+  <data name="Wp_Edits_TextTitle" xml:space="preserve">
+    <value>Title：</value>
+  </data>
+  <data name="Wp_TextEditInfo" xml:space="preserve">
+    <value>Edits</value>
   </data>
 </root>

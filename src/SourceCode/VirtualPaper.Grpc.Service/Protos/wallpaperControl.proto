@@ -6,6 +6,7 @@ import "Protos/models.proto";
 service Grpc_WallpaperControlService {
 	rpc CloseAllWallpapers(google.protobuf.Empty) returns (google.protobuf.Empty);
     rpc CloseWallpaperByMonitor(VirtualPaper.Grpc.Service.Models.Grpc_CloseWallpaperByMonitorRequest) returns (google.protobuf.Empty);	
+    rpc CloseAllPreview(google.protobuf.Empty) returns (google.protobuf.Empty);	
 	rpc GetWallpaper(VirtualPaper.Grpc.Service.Models.Grpc_GetWallpaperRequest) returns (VirtualPaper.Grpc.Service.Models.Grpc_WpMetaData);
 	rpc GetWallpapers(google.protobuf.Empty) returns (stream VirtualPaper.Grpc.Service.Models.Grpc_WpMetaData);
 	rpc PreviewWallpaper(VirtualPaper.Grpc.Service.Models.Grpc_PreviewWallpaperRequest) returns (VirtualPaper.Grpc.Service.Models.Grpc_PreviewWallpaperResponse);

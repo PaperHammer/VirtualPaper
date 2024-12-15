@@ -13,14 +13,14 @@ namespace VirtualPaper.UIComponent.Feedback {
             set { SetValue(CancelEnableProperty, value); }
         }
         public static readonly DependencyProperty CancelEnableProperty =
-            DependencyProperty.Register("CancelEnable", typeof(bool), typeof(Loading), new PropertyMetadata(true));
+            DependencyProperty.Register("CancelEnable", typeof(bool), typeof(Loading), new PropertyMetadata(false));
 
         public bool ProgressbarEnable {
             get { return (bool)GetValue(ProgressbarEnableProperty); }
             set { SetValue(ProgressbarEnableProperty, value); }
         }
         public static readonly DependencyProperty ProgressbarEnableProperty =
-            DependencyProperty.Register("ProgressbarEnable", typeof(bool), typeof(Loading), new PropertyMetadata(true));
+            DependencyProperty.Register("ProgressbarEnable", typeof(bool), typeof(Loading), new PropertyMetadata(false));
 
         public CancellationTokenSource[] CtsTokens {
             get { return (CancellationTokenSource[])GetValue(CtsTokensProperty); }
@@ -43,26 +43,26 @@ namespace VirtualPaper.UIComponent.Feedback {
         public static readonly DependencyProperty ImportValueProperty =
             DependencyProperty.Register("CurValue", typeof(int), typeof(Loading), new PropertyMetadata(0, UpdateValue));
 
-        public string ValueString {
-            get { return (string)GetValue(ValueStringProperty); }
-            set { SetValue(ValueStringProperty, value); }
-        }
-        public static readonly DependencyProperty ValueStringProperty =
-            DependencyProperty.Register("ValueString", typeof(string), typeof(Loading), new PropertyMetadata(string.Empty));
-
         public string TextLoading {
             get { return (string)GetValue(TextLoadingProperty); }
             set { SetValue(TextLoadingProperty, value); }
         }
         public static readonly DependencyProperty TextLoadingProperty =
             DependencyProperty.Register("TextLoading", typeof(string), typeof(Loading), new PropertyMetadata("Loading..."));
-        
+
         public string TextCancel {
             get { return (string)GetValue(TextCancelProperty); }
             set { SetValue(TextCancelProperty, value); }
         }
         public static readonly DependencyProperty TextCancelProperty =
             DependencyProperty.Register("TextCancel", typeof(string), typeof(Loading), new PropertyMetadata("Cancel"));
+
+        private string ValueString {
+            get { return (string)GetValue(ValueStringProperty); }
+            set { SetValue(ValueStringProperty, value); }
+        }
+        private static readonly DependencyProperty ValueStringProperty =
+            DependencyProperty.Register("ValueString", typeof(string), typeof(Loading), new PropertyMetadata(string.Empty));
 
         public Loading() {
             this.InitializeComponent();

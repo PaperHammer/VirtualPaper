@@ -61,7 +61,7 @@
 //            IWallpaperControlClient wpControlClient,
 //            WpSettingsViewModel wpSettingsViewModel) {
 //            _dialogService = dialogService;
-//            _userSettingsClient = userSettingsClient;
+//            _userSettings = userSettingsClient;
 //            _wpControlClient = wpControlClient;
 //            _wpSettingsViewModel = wpSettingsViewModel;
 
@@ -231,7 +231,7 @@
 //                   Wallpaper.RuntimeData.FolderPath,
 //                   Wallpaper.RuntimeData.WpEffectFilePathTemplate,
 //                   _wpSettingsViewModel.GetSelectedMonitor().Content,
-//                   (int)_userSettingsClient.Settings.WallpaperArrangement);
+//                   (int)_userSettings.Settings.WallpaperArrangement);
 //                Wallpaper.RuntimeData.WpEffectFilePathUsing = wpEffectFilePathusing;
 //                #endregion
 
@@ -252,7 +252,7 @@
 //                Wallpaper.BasicData.Desc = detailedInfoViewModel.Desc;
 //                Wallpaper.BasicData.Tags = detailedInfoViewModel.Tags;
 //                string tagetFolder = Path.Combine(
-//                    _userSettingsClient.Settings.WallpaperDir,
+//                    _userSettings.Settings.WallpaperDir,
 //                    Wallpaper.BasicData.FolderName);
 //                if (Wallpaper.BasicData.FolderPath != tagetFolder) {
 //                    Wallpaper.MoveTo(tagetFolder);
@@ -364,7 +364,7 @@
 
 //        private ILocalizer _localizer;
 //        private readonly IDialogService _dialogService;
-//        private readonly IUserSettingsClient _userSettingsClient;
+//        private readonly IUserSettingsClient _userSettings;
 //        private readonly IWallpaperControlClient _wpControlClient;
 //        private CancellationTokenSource _ctsImport;
 //        private CancellationTokenSource _ctsApply;

@@ -46,10 +46,26 @@
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Text="Effect Connfig" />
         </Grid>
-        
-        <Frame
-            x:Name="frame"
-            Grid.Row="1"            
-            Padding="10"/>
+
+        <Grid
+            Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <SelectorBar
+                x:Name="SelBar"
+                Grid.Row="0"
+                SelectionChanged="SelectorBar_SelectionChanged"
+                HorizontalAlignment="Stretch"/>
+
+            <Frame 
+                x:Name="FrameComp" 
+                Grid.Row="1"
+                Margin="5 0 5 5"
+                CornerRadius="5"
+                IsNavigationStackEnabled="False"/>
+        </Grid>
     </Grid>
 </winex:WindowEx>

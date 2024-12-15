@@ -19,10 +19,10 @@ namespace VirtualPaper.Cores.ScreenSaver {
 
         public ScrControl(
             IUserSettingsService userSettingsService,
-            IWatchdogService watchdogService,
+            //IWatchdogService watchdogService,
             RawInputMsgWindow msgWindow) {
             _userSettingsService = userSettingsService;
-            _watchdog = watchdogService;
+            //_watchdog = watchdogService;
             _msgWindow = msgWindow;
 
             _msgWindow.MouseMoveRaw += MsgWindow_MouseMoveRaw;
@@ -147,7 +147,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
                     Proc.Start();
                     Proc.BeginOutputReadLine();
 
-                    _watchdog.Add(Proc.Id);
+                    //_watchdog.Add(Proc.Id);
                     _logger.Info("ScreenSaver is started.");
                 }
             }
@@ -192,7 +192,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
             try {
                 StopTimeTask();
                 if (Proc != null) {
-                    _watchdog.Remove(Proc.Id);
+                    //_watchdog.Remove(Proc.Id);
                     Proc.Kill();
                     Proc.Dispose();
                     _logger.Info("Proc was Killed");
@@ -284,7 +284,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
 
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private IUserSettingsService _userSettingsService;
-        private IWatchdogService _watchdog;
+        //private IWatchdogService _watchdog;
         private RawInputMsgWindow _msgWindow;
         private IWpBasicData? _data;
         private DispatcherTimer _dispatcherTimer;

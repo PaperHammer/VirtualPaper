@@ -41,6 +41,10 @@ namespace VirtualPaper.Models.Cores {
                 FilePath = BasicData.FilePath,
                 FolderPath = BasicData.FolderPath,
                 WpEffectFilePathUsing = RuntimeData.WpEffectFilePathUsing,
+                WpEffectFilePathTemplate = RuntimeData.WpEffectFilePathTemplate,
+                WpEffectFilePathTemporary = RuntimeData.WpEffectFilePathTemporary,
+                ThumbnailPath = BasicData.ThumbnailPath,
+                DepthFilePath = RuntimeData.DepthFilePath,
             };
 
             return playerData;

@@ -135,8 +135,9 @@ message Grpc_ModifyPreviewRequest {
 }
 
 message Grpc_SetWallpaperRequest {
-	string folder_path = 1;
-	string monitor_id = 2;
+	Grpc_WpBasicData wp_basic_data = 1;
+	Grpc_WpRuntimeData wp_runtime_data = 2;
+	string monitor_id = 3;
 }
 
 message Grpc_UpdateWpRequest {
@@ -276,6 +277,7 @@ message Grpc_WpPlayerData {
 	string wp_effect_file_path_template = 6;
     string wp_effect_file_path_temporary = 7;
     string wp_effect_file_path_using = 8;
+    string depth_file_path = 9;
 }
 
 message Grpc_WpMetaData {

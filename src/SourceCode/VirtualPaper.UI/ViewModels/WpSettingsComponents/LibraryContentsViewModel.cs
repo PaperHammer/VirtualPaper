@@ -3,11 +3,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Models;
@@ -19,10 +21,14 @@ using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels.AppSettings;
 using VirtualPaper.UI.ViewModels.Utils;
 using VirtualPaper.UI.Views.Utils;
+using VirtualPaper.UIComponent.Container;
+using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Storage;
 using Windows.System.UserProfile;
+using WinRT.Interop;
 using WinUI3Localizer;
+using WinUIEx;
 using static VirtualPaper.UI.Services.Interfaces.IDialogService;
 
 namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
@@ -100,13 +106,81 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 bool isAvailable = await CheckFileAvailableAsync(data);
                 if (!isAvailable) return;
 
-                var detailedInfoViewModel = new DetailedInfoViewModel(data, false, true, false);
-                var detailedInfoView = new DetailedInfoView(detailedInfoViewModel);
-                var dialogRes = await _dialogService.ShowDialogWithoutTitleAsync(
-                    detailedInfoView,
-                    _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
+                if (_wp2TocDetail.TryGetValue(data.BasicData.FilePath, out ToolContainer toolContainer)) {
+                    toolContainer.BringToFront();
+                    return;
+                }
 
-                if (dialogRes != DialogResult.Primary) return;
+                var mainWindow = App.Services.GetRequiredService<MainWindow>();
+                toolContainer = new(
+                   mainWindow.WindowStyleType,
+                   _userSettingsClient.Settings.ApplicationTheme,
+                   mainWindow.AppWindow.TitleBar.ButtonForegroundColor,
+                   mainWindow.WindowCaptionForegroundDisabled,
+                   mainWindow.WindowCaptionForeground);
+
+                toolContainer.Closed += ToolContainer_Closed;
+                void ToolContainer_Closed(object _, WindowEventArgs __) {
+                    toolContainer.Closed -= ToolContainer_Closed;
+                    _wp2TocDetail.Remove(data.BasicData.FilePath);
+                }
+
+                SetToolWindowParent(toolContainer, mainWindow);
+                AddDetailsPage(data, toolContainer);
+                _wp2TocDetail[data.BasicData.FilePath] = toolContainer;
+                toolContainer.Show();
+            }
+            catch (Exception ex) {
+                BasicUIComponentUtil.ShowExp(ex);
+            }
+        }
+
+        internal async Task EditInfoAsync(IWpMetadata data) {
+            try {
+                bool isAvailable = await CheckFileAvailableAsync(data);
+                if (!isAvailable) return;
+
+                //var detailedInfoViewModel = new DetailedInfoViewModel(data, true, true, false);
+                //var detailedInfoView = new DetailedInfoView(detailedInfoViewModel);
+                //var dialogRes = await _dialogService.ShowDialogWithoutTitleAsync(
+                //    detailedInfoView,
+                //    _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
+
+                //if (dialogRes != DialogResult.Primary) return;
+
+                if (_wp2TocEdit.TryGetValue(data.BasicData.FilePath, out ToolContainer toolContainer)) {
+                    toolContainer.BringToFront();
+                    return;
+                }
+
+                var mainWindow = App.Services.GetRequiredService<MainWindow>();
+                toolContainer = new(
+                   mainWindow.WindowStyleType,
+                   _userSettingsClient.Settings.ApplicationTheme,
+                   mainWindow.AppWindow.TitleBar.ButtonForegroundColor,
+                   mainWindow.WindowCaptionForegroundDisabled,
+                   mainWindow.WindowCaptionForeground);
+
+                toolContainer.Closed += ToolContainer_Closed;
+                void ToolContainer_Closed(object _, WindowEventArgs __) {
+                    toolContainer.Closed -= ToolContainer_Closed;
+                    Edits edits = toolContainer.GetContentByTag($"Edits_{data.BasicData.FilePath}") as Edits;
+                    if (edits.IsSaved) {
+                        data.BasicData.Title = edits.Title;
+                        data.BasicData.Desc = edits.Desc;
+                        data.BasicData.Tags = string.Join(';', edits.TagList);
+                        data.BasicData.Save();
+                        UpdateLib(data);
+                        BasicUIComponentUtil.ShowMsg(true, "Msg_Save_Succeded", InfoBarSeverity.Success);
+                    }
+
+                    _wp2TocEdit.Remove(data.BasicData.FilePath);
+                }
+
+                SetToolWindowParent(toolContainer, mainWindow);
+                AddEditsPage(data, toolContainer);
+                _wp2TocEdit[data.BasicData.FilePath] = toolContainer;
+                toolContainer.Show();
             }
             catch (Exception ex) {
                 BasicUIComponentUtil.ShowExp(ex);
@@ -143,42 +217,19 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             }
         }
 
-        internal async Task EditInfoAsync(IWpMetadata data) {
-            try {
-                bool isAvailable = await CheckFileAvailableAsync(data);
-                if (!isAvailable) return;
-
-                var detailedInfoViewModel = new DetailedInfoViewModel(data, true, true, false);
-                var detailedInfoView = new DetailedInfoView(detailedInfoViewModel);
-                var dialogRes = await _dialogService.ShowDialogWithoutTitleAsync(
-                    detailedInfoView,
-                    _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
-
-                if (dialogRes != DialogResult.Primary) return;
-
-                data.BasicData.Title = detailedInfoViewModel.Title;
-                data.BasicData.Desc = detailedInfoViewModel.Desc;
-                data.BasicData.Save();
-                UpdateLib(data);
-            }
-            catch (Exception ex) {
-                BasicUIComponentUtil.ShowExp(ex);
-            }
-        }
-
         internal async Task PreviewAsync(IWpMetadata data) {
             try {
                 await _previewSemaphoreSlim.WaitAsync();
                 bool isAvailable = await CheckFileAvailableAsync(data);
                 if (!isAvailable) return;
-                
+
                 _ctsPreview = new CancellationTokenSource();
                 BasicUIComponentUtil.Loading(true, false, [_ctsPreview]);
 
                 isAvailable = await PreRun(data, _ctsPreview);
-                if (!isAvailable) return;              
+                if (!isAvailable) return;
 
-                bool isStarted = await _wpControlClient.PreviewWallpaperAsync(data);
+                bool isStarted = await _wpControlClient.PreviewWallpaperAsync(data, _ctsPreview.Token);
                 if (!isStarted) {
                     throw new Exception("Preview Failed.");
                 }
@@ -200,27 +251,27 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 await _applySemaphoreSlim.WaitAsync();
                 bool isAvailable = await CheckFileAvailableAsync(data);
                 if (!isAvailable) return;
-                
+
                 _ctsApply = new CancellationTokenSource();
                 BasicUIComponentUtil.Loading(true, false, [_ctsApply]);
 
                 isAvailable = await PreRun(data, _ctsApply);
                 if (!isAvailable) return;
 
-                #region 本地导入时录入信息
-                var detailedInfoViewModel = new DetailedInfoViewModel(data, true, false, false);
-                var dialogRes = await _dialogService.ShowDialogWithoutTitleAsync(
-                    new DetailedInfoView(detailedInfoViewModel)
-                    , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
-                if (dialogRes != DialogResult.Primary) return;
-                #endregion
+                //#region 本地导入时录入信息
+                //var detailedInfoViewModel = new DetailedInfoViewModel(data, true, false, false);
+                //var dialogRes = await _dialogService.ShowDialogWithoutTitleAsync(
+                //    new DetailedInfoView(detailedInfoViewModel)
+                //    , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
+                //if (dialogRes != DialogResult.Primary) return;
+                //#endregion
 
-                #region 拷贝入库并更新数据
-                data.BasicData.Title = detailedInfoViewModel.Title;
-                data.BasicData.Desc = detailedInfoViewModel.Desc;
-                data.BasicData.Tags = detailedInfoViewModel.Tags;
-                data.Save();
-                #endregion
+                //#region 拷贝入库并更新数据
+                //data.BasicData.Title = detailedInfoViewModel.Title;
+                //data.BasicData.Desc = detailedInfoViewModel.Desc;
+                //data.BasicData.Tags = detailedInfoViewModel.Tags;
+                //data.Save();
+                //#endregion
 
                 #region 执行操作
                 // 具体应该如何实现交给 core 判断，不应该由 ui 层决定
@@ -375,26 +426,16 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
 
                             await SetBasicDataAsync(importValue, wallpaper, tagetFolder, _ctsImport);
                             if (wallpaper.BasicData.IsSingleRType) {
-                                await SetRuntimeDataAsync(wallpaper, _ctsImport);
-                                if (wallpaper.RuntimeData.RType == RuntimeType.RUnknown)
+                                bool isAVailable = await SetRuntimeDataAsync(wallpaper, _ctsImport);
+                                if (!isAVailable)
                                     return;
                             }
                             #endregion
 
-                            #region 展示读取结果
-                            var detailedInfoViewModel = new DetailedInfoViewModel(
-                                wallpaper, true, false, false);
-                            var dialogRes = await _dialogService.ShowDialogWithoutTitleAsync(
-                                new DetailedInfoView(detailedInfoViewModel)
-                                , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
-                            if (dialogRes != DialogResult.Primary) return;
+                            if (_ctsImport.IsCancellationRequested)
+                                throw new OperationCanceledException();
 
-                            wallpaper.BasicData.Title = detailedInfoViewModel.Title;
-                            wallpaper.BasicData.Desc = detailedInfoViewModel.Desc;
-                            wallpaper.BasicData.Tags = detailedInfoViewModel.Tags;
-                            #endregion
-
-                            #region 存入库中                            
+                            #region 存入库中
                             wallpaper.Save();
                             UpdateLib(wallpaper);
                             #endregion
@@ -430,9 +471,9 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             data.BasicData = DataAssist.GrpcToBasicData(wpMetadataBasic);
         }
 
-        private async Task SetRuntimeDataAsync(IWpMetadata data, CancellationTokenSource token) {
+        private async Task<bool> SetRuntimeDataAsync(IWpMetadata data, CancellationTokenSource token) {
             var rtype = await SetWallpaperRuntimeTypeAsync(data.BasicData.FType);
-            if (rtype == RuntimeType.RUnknown) return;
+            if (rtype == RuntimeType.RUnknown) return false;
 
             var wpMetadataRuntime = await _wpControlClient.CreateRuntimeDataAsync(
                 data.BasicData.FilePath,
@@ -440,6 +481,8 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 rtype,
                 token.Token);
             data.RuntimeData = DataAssist.GrpcToRuntimeData(wpMetadataRuntime);
+
+            return true;
         }
 
         private async Task<RuntimeType> SetWallpaperRuntimeTypeAsync(FileType ftype) {
@@ -517,9 +560,8 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         private async Task<bool> PreRun(IWpMetadata data, CancellationTokenSource token) {
             #region 若是非单一 RType 则先选择运行类型
             if (!data.BasicData.IsSingleRType) {
-                await SetRuntimeDataAsync(data, token);
-
-                if (data.RuntimeData.RType == RuntimeType.RUnknown) return false;
+                bool isAvailable = await SetRuntimeDataAsync(data, token);
+                if (!isAvailable) return false;
             }
             #endregion
 
@@ -534,6 +576,21 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             return true;
         }
 
+        private void AddDetailsPage(IWpMetadata data, ToolContainer toolContainer) {
+            Details details = new(data.BasicData);
+            toolContainer.AddContent(Constants.LocalText.WpConfigViewMdoel_TextDetailedInfo, $"Details_{data.BasicData.FilePath}", details);
+        }
+
+        private void AddEditsPage(IWpMetadata data, ToolContainer toolContainer) {
+            Edits edits = new(data.BasicData, toolContainer);
+            toolContainer.AddContent(Constants.LocalText.Wp_TextEditInfo, $"Edits_{data.BasicData.FilePath}", edits);
+        }
+
+        private static void SetToolWindowParent(WindowEx childWindow, WindowEx parentWindow) {
+            IntPtr toolHwnd = WindowNative.GetWindowHandle(childWindow);
+            Native.SetWindowLong(toolHwnd, Native.GWL_HWNDPARENT, WindowNative.GetWindowHandle(parentWindow));
+        }
+
         private readonly ILocalizer _localizer;
         private readonly IDialogService _dialogService;
         private readonly IWallpaperControlClient _wpControlClient;
@@ -543,8 +600,9 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         private CancellationTokenSource _ctsImport, _ctsUpdate, _ctsApply, _ctsApplyLockBG, _ctsPreview;
         private readonly ConcurrentDictionary<string, int> _uid2idx = [];
         private readonly static object _lockAddToLib = new();
-        private readonly SemaphoreSlim _importSemaphoreSlim = new(1, 1);
         private readonly SemaphoreSlim _applySemaphoreSlim = new(1, 1);
         private readonly SemaphoreSlim _previewSemaphoreSlim = new(1, 1);
+        private static readonly Dictionary<string, ToolContainer> _wp2TocDetail = [];
+        private static readonly Dictionary<string, ToolContainer> _wp2TocEdit = [];
     }
 }

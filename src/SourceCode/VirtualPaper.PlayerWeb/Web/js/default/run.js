@@ -6,16 +6,15 @@ let centerY = containerHeight / 2;
 let parallaxBackground;
 
 let curVideoElementId = null; // 存储当前视频元素的ID
-let volume = 0;
-let speed = 0.0;
-//let muted = false;
+let volume = 0.8;
+let speed = 1.0;
+let muted = false;
 
 function init(width, height) {
     containerWidth = width;
     containerHeight = height;
     centerX = containerWidth / 2;
     centerY = containerHeight / 2;
-    parallaxBackground = document.getElementById('content');
 
     return 'init success';
 }
@@ -26,20 +25,20 @@ function resourceLoad(wallpaperType, filePath) {
     }
 
     const element = document.querySelector('.root');
-    const oldContent = document.getElementById('content');
+    const oldContent = document.getElementById('content');   
 
     let newElement;
     switch (wallpaperType) {
         case 'RImage':
             newElement = `
-                <div id="content" class="background fade-in" draggable="false">
+                <div id="content" class="fade-in" draggable="false">
                     <img draggable="false" class="source" src="${filePath}" alt=""/>
                 </div>`;
             break;
         case 'RVideo':
             curVideoElementId = 'videoEle';
             newElement = `
-                <div id="content" class="background fade-in" draggable="false">
+                <div id="content" class="fade-in" draggable="false">
                     <video draggable="false" id="videoEle" class="source" loop>
                         <source src="${filePath}" type="video/mp4">
                     </video>
@@ -52,7 +51,7 @@ function resourceLoad(wallpaperType, filePath) {
     if (newElement) {
         // 动态插入新内容后立即移除旧内容，以减少闪烁
         element.insertAdjacentHTML('beforeend', newElement);
-        //const newContent = document.getElementById('content');
+        parallaxBackground = document.getElementById('content');
 
         if (oldContent) {
             oldContent.setAttribute('class', 'fade-out');

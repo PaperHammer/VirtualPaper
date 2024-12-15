@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.UI.Services.Interfaces;
 using static VirtualPaper.UI.Services.Interfaces.IDialogService;
@@ -11,13 +12,15 @@ namespace VirtualPaper.UI.Services {
             string message,
             string title,
             string primaryBtnText) {
-            await new ContentDialog() {
+            var dialog = new ContentDialog() {
                 Title = title,
                 Content = new TextBlock() { Text = message },
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = ContentDialogButton.Primary,
                 XamlRoot = App.Services.GetRequiredService<MainWindow>().Content.XamlRoot,
-            }.ShowAsync();
+            };
+
+            await dialog.ShowAsync();
         }
 
         public async Task<DialogResult> ShowDialogAsync(object content,

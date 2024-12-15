@@ -38,8 +38,8 @@ namespace VirtualPaper.PlayerWeb {
             SessionEnding += App_SessionEnding;
             SetupUnhandledExceptionLogging();
 
-            ////string s = "a --file-path C:\\Users\\PaperHammer\\Desktop\\1P.mp4 --effect-file-path-using D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\1\\wpEffectFilePathUsing.json --effect-file-path-temporary D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemporary.json --effect-file-path-template D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemplate.json --runtime-type RVideo --is-preview True --window-style-type Default --app-theme Light --app-language zh-CN";
-            ////string s = "a --file-path D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\of14a2lw.buk.jpg --effect-file-path-using D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\1\\wpEffectFilePathUsing.json --effect-file-path-temporary D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemporary.json --effect-file-path-template D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemplate.json --runtime-type RImage --is-preview True --window-style-type Default --app-theme Light --app-language zh-CN";
+            //string s = "a --file-path C:\\Users\\PaperHammer\\Desktop\\1P.mp4 --effect-file-path-using D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\1\\wpEffectFilePathUsing.json --effect-file-path-temporary D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemporary.json --effect-file-path-template D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemplate.json --runtime-type RVideo --is-preview True --window-style-type Default --app-theme Light --app-language zh-CN";
+            //string s = "a -f D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\of14a2lw.buk.jpg -b D:\\_%TEMP2\\wallpapers\\0ei3uyvo.zpf\\wp_metadata_basic.json -e D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\1\\wpEffectFilePathUsing.json --effect-file-path-temporary D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemporary.json --effect-file-path-template D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemplate.json -r RImage --window-style-type Default -t Light -l zh-CN";
             //string s = "a  --file-path D:\\ProgramDemos\\VSCodeDemos\\Temp\\WEB\\3d\\Images\\img29.jpg --depth-file-path D:\\ProgramDemos\\VSCodeDemos\\Temp\\WEB\\3d\\Images\\_img29.jpg --effect-file-path-using D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\1\\wpEffectFilePathUsing.json --effect-file-path-temporary D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemporary.json --effect-file-path-template D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemplate.json --runtime-type RImage3D --is-preview True --window-style-type Default --app-theme Light --app-language zh-CN";
             //string[] startArgs = s.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1..];
             string[] startArgs = Environment.GetCommandLineArgs()[1..];
@@ -47,10 +47,8 @@ namespace VirtualPaper.PlayerWeb {
             Parser.Default.ParseArguments<StartArgs>(startArgs)
                 .WithParsed((x) => _startArgs = x)
                 .WithNotParsed(HandleParseError);
-            foreach (string arg in startArgs) {
-                if (arg == null || arg == string.Empty) {
-                    throw new NoNullAllowedException(nameof(StartArgs));
-                }
+            if (_startArgs == null) {
+                throw new NoNullAllowedException(nameof(StartArgs));
             }
 
             SetAppTheme(_startArgs.ApplicationTheme);
@@ -61,9 +59,6 @@ namespace VirtualPaper.PlayerWeb {
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
         protected override async void OnLaunched(LaunchActivatedEventArgs args) {
-            // ref: https://github.com/microsoft/WindowsAppSDK/issues/1687
-            //ApplicationLanguages.PrimaryLanguageOverride = _userSettingsClient.Settings.Language;
-
             // ref: https://github.com/AndrewKeepCoding/WinUI3Localizer
             if (Constants.ApplicationType.IsMSIX) {
                 await LanguageUtil.InitializeLocalizerForPackaged(_startArgs.Language);
@@ -74,7 +69,7 @@ namespace VirtualPaper.PlayerWeb {
 
             // 避免文字无法初始化
             MainWindowInstance = new MainWindow(_startArgs);
-            MainWindowInstance.Show();
+            MainWindowInstance.Activate();
         }
 
         /// <summary>

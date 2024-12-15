@@ -37,8 +37,9 @@ namespace VirtualPaper.Cores.WpControl {
         #region wallpaper actions
         void CloseAllWallpapers();
         void CloseWallpaper(IMonitor monitor);
+        void CloseAllPreview();
         IWpMetadata GetWallpaper(string folderPath);
-        Task<bool> PreviewWallpaperAsync(IWpPlayerData data, bool isCurrentWp);
+        Task<bool> PreviewWallpaperAsync(IWpPlayerData data, bool isCurrentWp, CancellationToken toke);
         Task ResetWallpaperAsync();
         Grpc_RestartWallpaperResponse RestoreWallpaper();
         Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, CancellationToken token);

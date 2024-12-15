@@ -65,6 +65,7 @@ namespace VirtualPaper.DataAssistor {
                 WpEffectFilePathTemplate = data.RuntimeData.WpEffectFilePathTemplate,
                 WpEffectFilePathTemporary = data.RuntimeData.WpEffectFilePathTemporary, // control
                 WpEffectFilePathUsing = data.RuntimeData.WpEffectFilePathUsing,
+                DepthFilePath = data.RuntimeData.DepthFilePath,
             };
 
             return grpc_WpPlayerData;
@@ -129,7 +130,8 @@ namespace VirtualPaper.DataAssistor {
                 ThumbnailPath = source.ThumbnailPath,
                 WpEffectFilePathTemplate = source.WpEffectFilePathTemplate,
                 WpEffectFilePathTemporary = source.WpEffectFilePathTemporary,
-                WpEffectFilePathUsing = source.WpEffectFilePathUsing
+                WpEffectFilePathUsing = source.WpEffectFilePathUsing,
+                DepthFilePath = source.DepthFilePath,
             };
 
             return playerData;

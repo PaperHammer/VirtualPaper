@@ -159,7 +159,7 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
     <value>下载</value>
   </data>
   <data name="DetailedInfo_TextFileExtension" xml:space="preserve">
-    <value>文件类型（扩展名）：</value>
+    <value>文件类型：</value>
   </data>
   <data name="DetailedInfo_TextFileSize" xml:space="preserve">
     <value>文件大小：</value>
@@ -192,7 +192,7 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
     <value>标题</value>
   </data>
   <data name="DetailedInfo_TextVersionInfo" xml:space="preserve">
-    <value>版本信息</value>
+    <value>版本信息：</value>
   </data>
   <data name="DetailedInfo_TextVirtualPaperUid" xml:space="preserve">
     <value>vp_uid：</value>
@@ -310,6 +310,9 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   </data>
   <data name="MenuFlyout_Text_Update" xml:space="preserve">
     <value>更新</value>
+  </data>
+  <data name="Msg_Save_Succeded" xml:space="preserve">
+    <value>已保存</value>
   </data>
   <data name="Project_Edit_Copy" xml:space="preserve">
     <value>复制</value>
@@ -792,5 +795,20 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="WpSettings_Text_Title" xml:space="preserve">
     <value>控制中心</value>
+  </data>
+  <data name="Wp_Edits_TextDesc" xml:space="preserve">
+    <value>简介：</value>
+  </data>
+  <data name="Wp_Edits_TextSave" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="Wp_Edits_TextTags" xml:space="preserve">
+    <value>标签：</value>
+  </data>
+  <data name="Wp_Edits_TextTitle" xml:space="preserve">
+    <value>标题：</value>
+  </data>
+  <data name="Wp_TextEditInfo" xml:space="preserve">
+    <value>编辑</value>
   </data>
 </root>

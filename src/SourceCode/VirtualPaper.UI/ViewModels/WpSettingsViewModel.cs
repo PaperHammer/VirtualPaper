@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
@@ -7,6 +8,7 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UI.Services.Interfaces;
+using VirtualPaper.UI.Utils;
 using VirtualPaper.UIComponent.Utils;
 using WinUI3Localizer;
 using Monitor = VirtualPaper.Models.Cores.Monitor;
@@ -50,7 +52,7 @@ namespace VirtualPaper.UI.ViewModels {
         }
 
         #region Init
-        private void InitText() {          
+        private void InitText() {
             Text_Title = _localizer.GetLocalizedString(Constants.LocalText.WpSettings_Text_Title);
             Text_Close = _localizer.GetLocalizedString(Constants.LocalText.Text_Close);
             Text_Detect = _localizer.GetLocalizedString(Constants.LocalText.Text_Detect);
@@ -106,10 +108,28 @@ namespace VirtualPaper.UI.ViewModels {
         }
 
         internal async Task PreviewAsync() {
-            if (!Monitors[MonitorSelectedIdx].HasWallpaper) return;
+            try {
+                await _previewSemaphoreSlim.WaitAsync();
+                if (!Monitors[MonitorSelectedIdx].HasWallpaper) return;
 
-            IWpMetadata data =  _wpControlClient.GetWpMetadataByMonitorThu(Monitors[MonitorSelectedIdx].ThumbnailPath);
-            await _wpControlClient.PreviewWallpaperAsync(data);
+                _ctsPreview = new CancellationTokenSource();
+                BasicUIComponentUtil.Loading(true, false, [_ctsPreview]);
+                IWpMetadata data = _wpControlClient.GetWpMetadataByMonitorThu(Monitors[MonitorSelectedIdx].ThumbnailPath);
+                bool isStarted = await _wpControlClient.PreviewWallpaperAsync(data, _ctsPreview.Token);
+                if (!isStarted) {
+                    throw new Exception("Preview Failed.");
+                }
+            }
+            catch (OperationCanceledException) {
+                BasicUIComponentUtil.ShowCanceled();
+            }
+            catch (Exception ex) {
+                BasicUIComponentUtil.ShowExp(ex);
+            }
+            finally {
+                BasicUIComponentUtil.Loaded([_ctsPreview]);
+                _previewSemaphoreSlim.Release();
+            }
         }
 
         internal string GetSelectedMonitorContent() {
@@ -127,5 +147,7 @@ namespace VirtualPaper.UI.ViewModels {
         private readonly IMonitorManagerClient _monitorManagerClient;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
+        private readonly SemaphoreSlim _previewSemaphoreSlim = new(1, 1);
+        private CancellationTokenSource _ctsPreview;
     }
 }

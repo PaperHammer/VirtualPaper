@@ -8,7 +8,7 @@ using WinUI3Localizer;
 namespace VirtualPaper.PlayerWeb.ViewModel {
     internal partial class MainWindowViewModel : ObservableObject {
         #region loading
-        private bool _frameIsEnable = false;
+        private bool _frameIsEnable;
         public bool FrameIsEnable {
             get { return _frameIsEnable; }
             set { _frameIsEnable = value; OnPropertyChanged(); }

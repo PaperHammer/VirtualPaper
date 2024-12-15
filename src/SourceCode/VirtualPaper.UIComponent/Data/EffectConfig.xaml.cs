@@ -127,6 +127,7 @@ namespace VirtualPaper.UIComponent.Data {
                     CheckBox chk = null;
                     if (_controls.TryGetValue(item.Key, out UIElement value)) {
                         chk = value as CheckBox;
+                        chk.IsChecked = (bool)item.Value["Value"];
                         chk.Content = item.Value["Text"].ToString();
                     }
                     else {
@@ -440,7 +441,6 @@ namespace VirtualPaper.UIComponent.Data {
 
             File.Copy(_wpEffectFilePathTemplate, _wpEffectFilePathTemporary, true);
             RemoveAllUIElement();
-            //GC.Collect(); //todo: 待改进处理内存泄漏的方式
             InitUI();
 
             await Task.Delay(1000);

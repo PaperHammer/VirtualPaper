@@ -11,27 +11,23 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 using Point = System.Drawing.Point;
 
-namespace VirtualPaper.Views.WindowsMsg
-{
+namespace VirtualPaper.Views.WindowsMsg {
     /// <summary>
     /// 使用 DirectX RawInput 进行鼠标输入检索并响应到壁纸
     /// ref: https://docs.microsoft.com/en-us/windows/win32/inputdev/raw-input
     /// </summary>
-    public partial class RawInputMsgWindow : Window
-    {
+    public partial class RawInputMsgWindow : Window {
         #region setup               
         public InputForwardMode InputMode { get; private set; }
         public event EventHandler<MouseRawArgs>? MouseMoveRaw;
         public event EventHandler<MouseClickRawArgs>? MouseDownRaw;
         public event EventHandler<MouseClickRawArgs>? MouseUpRaw;
         public event EventHandler<KeyboardClickRawArgs>? KeyboardClickRaw;
-        //public event EventHandler<KeyboardClickRawArgs>? KeyboardUpRaw;
 
         public RawInputMsgWindow(
-            IUserSettingsService userSettings, 
-            IWallpaperControl wpControl, 
-            IMonitorManager displayManager)
-        {
+            IUserSettingsService userSettings,
+            IWallpaperControl wpControl,
+            IMonitorManager displayManager) {
             this._userSettings = userSettings;
             this._wpControl = wpControl;
             this._monitorManager = displayManager;
@@ -41,49 +37,37 @@ namespace VirtualPaper.Views.WindowsMsg
             wpControl.WallpaperReset += (s, e) => FindDesktopAndResetHandles();
         }
 
-        //public Point GetMousePos()
-        //{
-        //    if (!Native.GetCursorPos(out Native.POINT P))
-        //    {
-        //        return Point.Empty;
-        //    }
+        protected override void OnSourceInitialized(EventArgs e) {
+            base.OnSourceInitialized(e);
+            var helper = new WindowInteropHelper(this);
+            HiddenWindowForWPF(helper);
+        }
 
-        //    var display = _monitorManager.GetMonitorByPoint(new(P.X, P.Y));
-        //    var mouse = CalculateMousePos(P.X, P.Y, display, _userSettings.Settings.WallpaperArrangement);
+        private static void HiddenWindowForWPF(WindowInteropHelper helper) {
+            var exStyle = Native.GetWindowLong(helper.Handle, Native.GWL_EXSTYLE);
+            Native.SetWindowLong(helper.Handle, Native.GWL_EXSTYLE, exStyle | Native.WS_EX_TOOLWINDOW | Native.WS_EX_NOACTIVATE);
+        }
 
-        //    return mouse;
-        //}
-
-        //private void Window_Activated(object sender, EventArgs e)
-        //{
-        //    this.Hide();
-        //}
-
-        private void FindDesktopAndResetHandles()
-        {
+        private void FindDesktopAndResetHandles() {
             _workerWOrig = IntPtr.Zero;
             _progman = IntPtr.Zero;
 
             _progman = Native.FindWindow("Progman", null);
             var folderView = Native.FindWindowEx(_progman, IntPtr.Zero, "SHELLDLL_DefView", null);
-            if (folderView == IntPtr.Zero)
-            {
+            if (folderView == IntPtr.Zero) {
                 // 若桌面层不在 Progman 下，循环浏览 WorkerW 句柄并找到正确的句柄
-                do
-                {
+                do {
                     _workerWOrig = Native.FindWindowEx(Native.GetDesktopWindow(), _workerWOrig, "WorkerW", null);
                     folderView = Native.FindWindowEx(_workerWOrig, IntPtr.Zero, "SHELLDLL_DefView", null);
                 } while (folderView == IntPtr.Zero && _workerWOrig != IntPtr.Zero);
             }
         }
 
-        private void Window_SourceInitialized(object sender, EventArgs e)
-        {
+        private void Window_SourceInitialized(object sender, EventArgs e) {
             var windowInteropHelper = new WindowInteropHelper(this);
             var hwnd = windowInteropHelper.Handle;
 
-            switch (InputMode)
-            {
+            switch (InputMode) {
                 case InputForwardMode.off:
                     this.Close();
                     break;
@@ -104,10 +88,8 @@ namespace VirtualPaper.Views.WindowsMsg
             source.AddHook(Hook);
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            switch (InputMode)
-            {
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
+            switch (InputMode) {
                 case InputForwardMode.off:
                     break;
                 case InputForwardMode.mouse:
@@ -122,11 +104,9 @@ namespace VirtualPaper.Views.WindowsMsg
         #endregion
 
         #region input forward
-        protected IntPtr Hook(IntPtr hwnd, int msg, IntPtr wparam, IntPtr lparam, ref bool handled)
-        {
+        protected IntPtr Hook(IntPtr hwnd, int msg, IntPtr wparam, IntPtr lparam, ref bool handled) {
             // You can read inputs by processing the WM_INPUT message.
-            if (msg == (int)Native.WM.INPUT)
-            {
+            if (msg == (int)Native.WM.INPUT) {
                 // Create an RawInputData from the handle stored in lParam.
                 var data = RawInputData.FromHandle(lparam);
 
@@ -136,17 +116,14 @@ namespace VirtualPaper.Views.WindowsMsg
 
                 // The data will be an instance of either RawInputMouseData, RawInputKeyboardData, or RawInputHidData.
                 // They contain the raw input data in their properties.
-                switch (data)
-                {
+                switch (data) {
                     case RawInputMouseData mouse:
                         //RawInput only gives relative mouse movement value.. 
-                        if (!Native.GetCursorPos(out Native.POINT P))
-                        {
+                        if (!Native.GetCursorPos(out Native.POINT P)) {
                             break;
                         }
 
-                        switch (mouse.Mouse.Buttons)
-                        {
+                        switch (mouse.Mouse.Buttons) {
                             case RawMouseButtonFlags.LeftButtonDown:
                                 ForwardMessageMouse(P.X, P.Y, (int)Native.WM.LBUTTONDOWN, (IntPtr)0x0001);
                                 MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.Left));
@@ -218,24 +195,18 @@ namespace VirtualPaper.Views.WindowsMsg
         /// <param name="wParam">Virtual-Key code.</param>
         /// <param name="scanCode">OEM code of the key.</param>
         /// <param name="isPressed">Key is pressed.</param>
-        private void ForwardMessageKeyboard(int msg, IntPtr wParam, int scanCode, bool isPressed)
-        {
-            try
-            {
+        private void ForwardMessageKeyboard(int msg, IntPtr wParam, int scanCode, bool isPressed) {
+            try {
                 //Don't forward when not on desktop.
-                if (_userSettings.Settings.InputForward == InputForwardMode.mousekeyboard && IsDesktop())
-                {
+                if (_userSettings.Settings.InputForward == InputForwardMode.mousekeyboard && IsDesktop()) {
                     //Detect active wp based on cursor pos, better way to do this?
                     if (!Native.GetCursorPos(out Native.POINT P))
                         return;
 
                     var display = _monitorManager.GetMonitorByPoint(new(P.X, P.Y));
-                    foreach (var wallpaper in _wpControl.Wallpapers)
-                    {
-                        if (IsInputAllowed(wallpaper.Data.RType))
-                        {
-                            if (display.Equals(wallpaper.Monitor) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand)
-                            {
+                    foreach (var wallpaper in _wpControl.Wallpapers) {
+                        if (IsInputAllowed(wallpaper.Data.RType)) {
+                            if (display.Equals(wallpaper.Monitor) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand) {
                                 //ref:
                                 //https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keydown
                                 //https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keyup
@@ -254,8 +225,7 @@ namespace VirtualPaper.Views.WindowsMsg
                     }
                 }
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 _logger.Error("Keyboard Forwarding Errors:" + e.Message);
             }
         }
@@ -268,30 +238,23 @@ namespace VirtualPaper.Views.WindowsMsg
         /// <param name="y">Cursor pos y</param>
         /// <param name="msg">mouse message</param>
         /// <param name="wParam">additional msg parameter</param>
-        private void ForwardMessageMouse(int x, int y, int msg, IntPtr wParam)
-        {
-            if (_userSettings.Settings.InputForward == InputForwardMode.off)
-            {
+        private void ForwardMessageMouse(int x, int y, int msg, IntPtr wParam) {
+            if (_userSettings.Settings.InputForward == InputForwardMode.off) {
                 return;
             }
             else if (!IsDesktop()) //Don't forward when not on desktop.
             {
-                if (msg != (int)Native.WM.MOUSEMOVE || !_userSettings.Settings.MouseInputMovAlways)
-                {
+                if (msg != (int)Native.WM.MOUSEMOVE || !_userSettings.Settings.MouseInputMovAlways) {
                     return;
                 }
             }
 
-            try
-            {
+            try {
                 var display = _monitorManager.GetMonitorByPoint(new(x, y));
                 var mouse = CalculateMousePos(x, y, display, _userSettings.Settings.WallpaperArrangement);
-                foreach (var wallpaper in _wpControl.Wallpapers)
-                {
-                    if (IsInputAllowed(wallpaper.Data.RType))
-                    {
-                        if (wallpaper.Monitor.Equals(display) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand)
-                        {
+                foreach (var wallpaper in _wpControl.Wallpapers) {
+                    if (IsInputAllowed(wallpaper.Data.RType)) {
+                        if (wallpaper.Monitor.Equals(display) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand) {
                             //The low-order word specifies the x-coordinate of the cursor, the high-order word specifies the y-coordinate of the cursor.
                             //ref: https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-mousemove
                             uint lParam = Convert.ToUInt32(mouse.Y);
@@ -302,8 +265,7 @@ namespace VirtualPaper.Views.WindowsMsg
                     }
                 }
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 _logger.Error("Mouse Forwarding Errors:" + e.Message);
             }
         }
@@ -318,12 +280,9 @@ namespace VirtualPaper.Views.WindowsMsg
         /// <param name="y">Cursor pos y</param>
         /// <param name="monitor">Target monitor device</param>
         /// <returns>本地化的游标值</returns>
-        private Point CalculateMousePos(int x, int y, IMonitor monitor, WallpaperArrangement arrangement)
-        {
-            if (_monitorManager.IsMultiScreen())
-            {
-                if (arrangement == WallpaperArrangement.Expand)
-                {
+        private Point CalculateMousePos(int x, int y, IMonitor monitor, WallpaperArrangement arrangement) {
+            if (_monitorManager.IsMultiScreen()) {
+                if (arrangement == WallpaperArrangement.Expand) {
                     var screenArea = _monitorManager.VirtualScreenBounds;
                     x -= screenArea.Location.X;
                     y -= screenArea.Location.Y;
@@ -337,10 +296,8 @@ namespace VirtualPaper.Views.WindowsMsg
             return new Point(x, y);
         }
 
-        private static bool IsInputAllowed(RuntimeType category)
-        {
-            return category switch
-            {                
+        private static bool IsInputAllowed(RuntimeType category) {
+            return category switch {
                 RuntimeType.RImage => false,
                 RuntimeType.RImage3D => false,
                 RuntimeType.RVideo => false,
@@ -352,8 +309,7 @@ namespace VirtualPaper.Views.WindowsMsg
         /// Is foreground wallpaper desktop.
         /// </summary>
         /// <returns></returns>
-        private bool IsDesktop()
-        {
+        private bool IsDesktop() {
             IntPtr hWnd = Native.GetForegroundWindow();
             return (IntPtr.Equals(hWnd, _workerWOrig) || IntPtr.Equals(hWnd, _progman));
         }
@@ -367,25 +323,21 @@ namespace VirtualPaper.Views.WindowsMsg
         private readonly IMonitorManager _monitorManager;
     }
 
-    public enum RawInputMouseBtn
-    {
+    public enum RawInputMouseBtn {
         Left,
         Right
     }
 
-    public class MouseRawArgs(int x, int y) : EventArgs
-    {
+    public class MouseRawArgs(int x, int y) : EventArgs {
         public int X { get; } = x;
         public int Y { get; } = y;
     }
 
-    public class MouseClickRawArgs(int x, int y, RawInputMouseBtn btn) : MouseRawArgs(x, y)
-    {
+    public class MouseClickRawArgs(int x, int y, RawInputMouseBtn btn) : MouseRawArgs(x, y) {
         public RawInputMouseBtn Button { get; } = btn;
     }
 
-    public class KeyboardClickRawArgs(int rawKeyboard) : EventArgs
-    {
+    public class KeyboardClickRawArgs(int rawKeyboard) : EventArgs {
         public int Key { get; set; } = rawKeyboard;
     }
 }

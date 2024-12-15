@@ -1,13 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.Extensions;
 using Windows.UI;
 using WinRT.Interop;
+using WinUI3Localizer;
 using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -22,22 +28,20 @@ namespace VirtualPaper.UIComponent.Container {
             string windowStyleType,
             AppTheme appTheme,
             Color? buttonForegroundColor,
-            object content,
             Brush titleTextBlockForegroundDisabled,
             Brush titleTextBlockForeground) {
+            _selectIdx2Content = [];
             _windowStyleType = windowStyleType;
             _buttonForegroundColor = buttonForegroundColor;
             _appTheme = appTheme;
-            _containerContent = content;
             _titleTextBlockForegroundDisabled = titleTextBlockForegroundDisabled;
             _titleTextBlockForeground = titleTextBlockForeground;
+            _localizer = LanguageUtil.LocalizerInstacne;
 
             this.InitializeComponent();
 
             SetWindowStyle();
             SetWindowTitleBar();
-
-            frame.Content = _containerContent;
         }
 
         private void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
@@ -47,6 +51,32 @@ namespace VirtualPaper.UIComponent.Container {
             else {
                 TitleTextBlock.Foreground = _titleTextBlockForeground;
             }
+        }
+
+        public void AddContent(string text, string tag, object content) {
+            _selectIdx2Content[SelBar.Items.Count] = (tag, content);
+            SelBar.Items.Add(new SelectorBarItem() {
+                Name = $"s{SelBar.Items.Count}",
+                Text = _localizer.GetLocalizedString(text),
+                Tag = tag,
+                IsSelected = SelBar.Items.Count == 0,
+            });
+        }
+
+        public object GetContentByTag(string tag) {
+            return _selectIdx2Content.FirstOrDefault(x => x.Value.Item1 == tag).Value.Item2;
+        }
+
+        private void SelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args) {
+            SelectorBarItem selectedItem = sender.SelectedItem;
+            int currentSelectedIndex = sender.Items.IndexOf(selectedItem);
+
+            var slideNavigationTransitionEffect = currentSelectedIndex - _previousSelectedIndex > 0 ? SlideNavigationTransitionEffect.FromRight : SlideNavigationTransitionEffect.FromLeft;
+
+            _selectIdx2Content.TryGetValue(currentSelectedIndex, out (string, object) value);
+            FrameComp.Navigate(typeof(PageContainer), value.Item2, new SlideNavigationTransitionInfo() { Effect = slideNavigationTransitionEffect });
+
+            _previousSelectedIndex = currentSelectedIndex;
         }
 
         #region window title bar
@@ -143,11 +173,13 @@ namespace VirtualPaper.UIComponent.Container {
         }
         #endregion
 
-        private readonly object _containerContent;
         private readonly string _windowStyleType;
         private readonly Color? _buttonForegroundColor;
         private readonly AppTheme _appTheme;
         private readonly Brush _titleTextBlockForegroundDisabled;
         private readonly Brush _titleTextBlockForeground;
+        private readonly Dictionary<int, (string, object)> _selectIdx2Content;
+        private readonly ILocalizer _localizer;
+        private int _previousSelectedIndex = 0;
     }
 }

@@ -35,6 +35,12 @@ namespace VirtualPaper.GrpcServers {
             return Task.FromResult(new Empty());
         }
 
+        public override Task<Empty> CloseAllPreview(Empty request, ServerCallContext context) {
+            _wpControl.CloseAllPreview();
+
+            return Task.FromResult(new Empty());
+        }
+
         public override async Task<Grpc_WpMetaData> GetWallpaper(Grpc_GetWallpaperRequest request, ServerCallContext context) {
             Grpc_WpMetaData resp = new();
             IWpMetadata data = _wpControl.GetWallpaper(request.FolderPath);
@@ -55,12 +61,12 @@ namespace VirtualPaper.GrpcServers {
 
                 await responseStream.WriteAsync(resp);
             }
-        }        
+        }
 
         public override async Task<Grpc_PreviewWallpaperResponse> PreviewWallpaper(Grpc_PreviewWallpaperRequest request, ServerCallContext context) {
             bool isCurrentWp = request.IsCurrentWp;
             WpPlayerData data = DataAssist.GrpcToPlayerData(request.WpPlayerData);
-            bool isStarted = await _wpControl.PreviewWallpaperAsync(data, isCurrentWp);
+            bool isStarted = await _wpControl.PreviewWallpaperAsync(data, isCurrentWp, context.CancellationToken);
 
             Grpc_PreviewWallpaperResponse response = new() {
                 IsStarted = isStarted,
@@ -76,7 +82,10 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override async Task<Grpc_SetWallpaperResponse> SetWallpaper(Grpc_SetWallpaperRequest request, ServerCallContext context) {
-            var metaData = WallpaperUtil.GetWallpaperByFolder(request.FolderPath);
+            WpMetadata metaData = new() {
+                BasicData = DataAssist.GrpcToBasicData(request.WpBasicData),
+                RuntimeData = DataAssist.GrpcToRuntimeData(request.WpRuntimeData),
+            };
             var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
 
             Grpc_SetWallpaperResponse response = await _wpControl.SetWallpaperAsync(
@@ -89,13 +98,6 @@ namespace VirtualPaper.GrpcServers {
 
         public override Task<Empty> UpdateWallpaper(Grpc_UpdateWpRequest request, ServerCallContext context) {
             Grpc_WpPlayerData data = request.WpPlayerData;
-            //WpPlayerData playerData = new() {
-            //    WallpaperUid = data.WallpaperUid,
-            //    RType = (RuntimeType)data.RType,
-            //    FilePath = data.FilePath,
-            //    FolderPath = data.FolderPath,
-            //    WpEffectFilePathUsing = data.WpEffectFilePathUsing,
-            //};
 
             WpPlayerData playerData = DataAssist.GrpcToPlayerData(data);
 
@@ -112,29 +114,6 @@ namespace VirtualPaper.GrpcServers {
             var data = _wpControl.CreateMetadataBasic(request.FolderPath, request.FilePath, (FileType)request.FType, token);
 
             Grpc_WpBasicData grpc_data = DataAssist.BasicDataToGrpcData(data);
-            //grpc_data.WallpaperUid = data.WallpaperUid;
-            //grpc_data.AppInfo = new() {
-            //    AppName = data.AppInfo.AppName,
-            //    AppVersion = data.AppInfo.AppVersion,
-            //    FileVersion = data.AppInfo.FileVersion,
-            //};
-            //grpc_data.Title = data.Title;
-            //grpc_data.Desc = data.Desc;
-            //grpc_data.Authors = data.Authors;
-            //grpc_data.PublishDate = data.PublishDate;
-            //grpc_data.Rating = data.Rating;
-            //grpc_data.Partition = data.Partition;
-            //grpc_data.Tags = data.Tags;
-            //grpc_data.FolderName = data.FolderName;
-            //grpc_data.FolderPath = data.FolderPath;
-            //grpc_data.FilePath = data.FilePath;
-            //grpc_data.ThumbnailPath = data.ThumbnailPath;
-            //grpc_data.Resolution = data.Resolution;
-            //grpc_data.AspectRatio = data.AspectRatio;
-            //grpc_data.FileSize = data.FileSize;
-            //grpc_data.FileExtension = data.FileExtension;
-            //grpc_data.FType = (Grpc_FileType)data.FType;
-            //grpc_data.IsSubscribed = data.IsSubscribed;
 
             return await Task.FromResult(grpc_data);
         }
@@ -146,15 +125,6 @@ namespace VirtualPaper.GrpcServers {
                 (RuntimeType)request.RType);
 
             Grpc_WpRuntimeData grpc_data = DataAssist.RuntimeDataToGrpcData(data);
-            //grpc_data.AppInfo = new() {
-            //    AppName = data.AppInfo.AppName,
-            //    AppVersion = data.AppInfo.AppVersion,
-            //    FileVersion = data.AppInfo.FileVersion,
-            //};
-            //grpc_data.FolderPath = data.FolderPath;
-            //grpc_data.WpEffectFilePathTemplate = data.WpEffectFilePathTemplate;
-            //grpc_data.WpEffectFilePathTemporary = data.WpEffectFilePathTemporary;
-            //grpc_data.WpEffectFilePathUsing = string.Empty;
 
             return await Task.FromResult(grpc_data);
         }
@@ -184,12 +154,6 @@ namespace VirtualPaper.GrpcServers {
 
             return Task.FromResult(grpc_data);
         }
-
-        //public override Task<Empty> ModifyPreview(Grpc_ModifyPreviewRequest request, ServerCallContext context) {
-        //    _wpControl.ModifyPreview(request.ControlName, request.PropertyName, request.Value);
-
-        //    return Task.FromResult(new Empty());
-        //}
 
         public override Task<Empty> SendMessageWallpaper(Grpc_WallpaperMessageRequest request, ServerCallContext context) {
             var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
@@ -229,28 +193,6 @@ namespace VirtualPaper.GrpcServers {
 
             data.WallpaperUid = string.Empty;
             Grpc_WpBasicData grpc_data = DataAssist.BasicDataToGrpcData(data);
-            //grpc_data.AppInfo = new() {
-            //    AppName = data.AppInfo.AppName,
-            //    AppVersion = data.AppInfo.AppVersion,
-            //    FileVersion = data.AppInfo.FileVersion,
-            //};
-            //grpc_data.Title = data.Title;
-            //grpc_data.Desc = data.Desc;
-            //grpc_data.Authors = data.Authors;
-            //grpc_data.PublishDate = data.PublishDate;
-            //grpc_data.Rating = data.Rating;
-            //grpc_data.Partition = data.Partition;
-            //grpc_data.Tags = data.Tags;
-            //grpc_data.FolderName = data.FolderName;
-            //grpc_data.FolderPath = data.FolderPath;
-            //grpc_data.FilePath = data.FilePath;
-            //grpc_data.ThumbnailPath = data.ThumbnailPath;
-            //grpc_data.Resolution = data.Resolution;
-            //grpc_data.AspectRatio = data.AspectRatio;
-            //grpc_data.FileSize = data.FileSize;
-            //grpc_data.FileExtension = data.FileExtension;
-            //grpc_data.FType = (Grpc_FileType)data.FType;
-            //grpc_data.IsSubscribed = data.IsSubscribed;
 
             return await Task.FromResult(grpc_data);
         }
@@ -264,15 +206,6 @@ namespace VirtualPaper.GrpcServers {
                 token);
 
             Grpc_WpRuntimeData grpc_data = DataAssist.RuntimeDataToGrpcData(data);
-            //grpc_data.AppInfo = new() {
-            //    AppName = data.AppInfo.AppName,
-            //    AppVersion = data.AppInfo.AppVersion,
-            //    FileVersion = data.AppInfo.FileVersion,
-            //};
-            //grpc_data.FolderPath = data.FolderPath;
-            //grpc_data.WpEffectFilePathTemplate = data.WpEffectFilePathTemplate;
-            //grpc_data.WpEffectFilePathTemporary = data.WpEffectFilePathTemporary;
-            //grpc_data.RType = (Grpc_RuntimeType)data.RType;
 
             return await Task.FromResult(grpc_data);
         }

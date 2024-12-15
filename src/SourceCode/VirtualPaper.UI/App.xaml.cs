@@ -93,7 +93,7 @@ namespace VirtualPaper.UI {
         /// <param name="args">Details about the launch request and process.</param>
         protected override async void OnLaunched(LaunchActivatedEventArgs args) {
             // ref: https://github.com/microsoft/WindowsAppSDK/issues/1687
-            //ApplicationLanguages.PrimaryLanguageOverride = _userSettingsClient.Settings.Language;
+            //ApplicationLanguages.PrimaryLanguageOverride = _userSettings.Settings.Language;
 
             // ref: https://github.com/AndrewKeepCoding/WinUI3Localizer
             if (Constants.ApplicationType.IsMSIX) {
@@ -151,8 +151,8 @@ namespace VirtualPaper.UI {
             catch (InvalidOperationException) { }
         }
 
-        private IServiceProvider _serviceProvider;
-        private IUserSettingsClient _userSettings;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IUserSettingsClient _userSettings;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

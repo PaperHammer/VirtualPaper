@@ -11,7 +11,9 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Models;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Localization;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UI.Services.Interfaces;
@@ -359,7 +361,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
                 #endregion
 
                 #region 更新代替换文件中的路径，并移动文件
-                bool isDirChanged = await WallpaperUtil.WallpaperDirectoryUpdateAsync(
+                bool isDirChanged = await WallpaperDirectoryUpdateAsync(
                     [_userSettingsClient.Settings.WallpaperDir], destFolderPath);
                 if (!isDirChanged) {
                     BasicUIComponentUtil.ShowMsg(true, Constants.LocalText.InfobarMsg_Err, InfoBarSeverity.Error);
@@ -406,6 +408,47 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
 
         private async void UpdateSettingsConfigFile() {
             await _userSettingsClient.SaveAsync<ISettings>();
+        }
+
+        private static async Task<bool> WallpaperDirectoryUpdateAsync(List<string> wallpaperInstallFolders, string destFolderPath) {
+            bool allOperationsSuccessful = true;
+
+            try {
+                await foreach (var libData in GetWpBasicDataByInstallFoldersAsync(wallpaperInstallFolders)) {
+                    var data = libData.BasicData;
+                    data.MoveTo(Path.Combine(destFolderPath, data.FolderName));
+                }
+            }
+            catch (Exception ex) {
+                allOperationsSuccessful = false;
+                BasicUIComponentUtil.ShowExp(ex);
+            }
+
+            return allOperationsSuccessful;
+        }
+
+        private static async IAsyncEnumerable<WpLibData> GetWpBasicDataByInstallFoldersAsync(List<string> folderPaths) {
+            int idx = 0;
+            foreach (string storeDir in folderPaths) {
+                DirectoryInfo root = new(storeDir);
+                DirectoryInfo[] folders = root.GetDirectories();
+
+                foreach (DirectoryInfo folder in folders) {
+                    string[] files = Directory.GetFiles(folder.FullName);
+                    WpLibData libData = new();
+                    foreach (string file in files) {
+                        if (Path.GetFileName(file) == Constants.Field.WpBasicDataFileName) {
+                            libData.BasicData = await JsonStorage<WpBasicData>.LoadDataAsync(file);
+
+                            if (libData.BasicData.IsAvailable()) {
+                                libData.Idx = idx++;
+                                yield return libData;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private readonly ILocalizer _localizer;

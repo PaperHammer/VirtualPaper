@@ -16,7 +16,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
     /// <summary>
     /// System monitor logic to Pause/unpause wallpaper playback.
     /// </summary>
-    public class Playback : IPlayback {
+    public partial class Playback : IPlayback {
         public event EventHandler<PlaybackMode>? PlaybackModeChanged;
 
         private PlaybackMode _wallpaperPlayback;
@@ -72,12 +72,12 @@ namespace VirtualPaper.Cores.PlaybackControl {
                 _virtualPaperPid = process.Id;
             }
             catch (Exception e) {
-                _logger.Error("Failed to retrieve Virtual Paper Pid:" + e.Message);
+                App.Log.Error("Failed to retrieve Virtual Paper Pid:" + e.Message);
             }
 
             _isLockScreen = IsSystemLocked();
             if (_isLockScreen) {
-                _logger.Info("Lockscreen Session already started!");
+                App.Log.Info("Lockscreen Session already started!");
             }
             SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
         }
@@ -90,19 +90,19 @@ namespace VirtualPaper.Cores.PlaybackControl {
         private void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e) {
             if (e.Reason == SessionSwitchReason.RemoteConnect) {
                 _isRemoteSession = true;
-                _logger.Info("Remote Desktop Session started!");
+                App.Log.Info("Remote Desktop Session started!");
             }
             else if (e.Reason == SessionSwitchReason.RemoteDisconnect) {
                 _isRemoteSession = false;
-                _logger.Info("Remote Desktop Session ended!");
+                App.Log.Info("Remote Desktop Session ended!");
             }
             else if (e.Reason == SessionSwitchReason.SessionLock) {
                 _isLockScreen = true;
-                _logger.Info("Lockscreen Session started!");
+                App.Log.Info("Lockscreen Session started!");
             }
             else if (e.Reason == SessionSwitchReason.SessionUnlock) {
                 _isLockScreen = false;
-                _logger.Info("Lockscreen Session ended!");
+                App.Log.Info("Lockscreen Session ended!");
             }
         }
 
@@ -518,7 +518,6 @@ namespace VirtualPaper.Cores.PlaybackControl {
         }
         #endregion
 
-        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly string[] _classWhiteList =
         [
             //startmeu, taskview (win10), action center etc
@@ -539,7 +538,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
 
             "_cls_desk_"
         ];
-        private IntPtr _workerWOrig, _progman;
+        private nint _workerWOrig, _progman;
         private readonly DispatcherTimer _dispatcherTimer = new();
         private bool _isLockScreen, _isRemoteSession;
         private int _virtualPaperPid = 0;

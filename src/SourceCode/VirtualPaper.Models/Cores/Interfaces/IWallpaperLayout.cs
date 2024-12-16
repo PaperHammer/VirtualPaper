@@ -4,6 +4,6 @@
     /// </summary>
     public interface IWallpaperLayout {
         string FolderPath { get; set; }
-        Monitor Monitor { get; set; }
+        string MonitorDeviceId { get; set; }
     }
 }

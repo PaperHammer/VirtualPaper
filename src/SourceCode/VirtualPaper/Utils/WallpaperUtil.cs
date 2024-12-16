@@ -15,14 +15,14 @@ namespace VirtualPaper.Utils {
     public static class WallpaperUtil {
         public static IWpMetadata GetWallpaperByFolder(string folderPath) {
             WpMetadata data = new();
-            if (File.Exists(Path.Combine(folderPath, "wp_metadata_basic.json"))) {
-                data.BasicData = JsonStorage<WpBasicData>.LoadData(Path.Combine(folderPath, "wp_metadata_basic.json"))
-                    ?? throw new Exception("Corrupted wallpaper metadata");
+            if (File.Exists(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName))) {
+                data.BasicData = JsonStorage<WpBasicData>.LoadData(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName))
+                    ?? throw new Exception("Corrupted wallpaper bacis-data");
             }
 
-            if (File.Exists(Path.Combine(folderPath, "wp_metadata_runtime.json"))) {
-                data.RuntimeData = JsonStorage<WpRuntimeData>.LoadData(Path.Combine(folderPath, "wp_metadata_runtime.json"))
-                    ?? throw new Exception("Corrupted wallpaper effect metadata");
+            if (File.Exists(Path.Combine(folderPath, Constants.Field.WpRuntimeDataFileName))) {
+                data.RuntimeData = JsonStorage<WpRuntimeData>.LoadData(Path.Combine(folderPath, Constants.Field.WpRuntimeDataFileName))
+                    ?? throw new Exception("Corrupted wallpaper runtime-data");
             }
 
             return data;
@@ -31,7 +31,7 @@ namespace VirtualPaper.Utils {
         public static string CreateWpEffectFileTemplate(
             string folderPath,
             RuntimeType rtype) {
-            string wpEffectFilePathTemplate = Path.Combine(folderPath, "wpEffectFilePathTemplate.json");
+            string wpEffectFilePathTemplate = Path.Combine(folderPath, Constants.Field.WpEffectFilePathTemplate);
             if (!File.Exists(wpEffectFilePathTemplate)) {
                 File.Create(wpEffectFilePathTemplate).Close();
             }
@@ -59,7 +59,7 @@ namespace VirtualPaper.Utils {
         public static string CreateWpEffectFileTemporary(
             string folderPath,
             string wpEffectFilePathTemplate) {
-            string wpEffectFilePathTemporary = Path.Combine(folderPath, "wpEffectFilePathTemporary.json");
+            string wpEffectFilePathTemporary = Path.Combine(folderPath, Constants.Field.WpEffectFilePathTemporary);
             File.Copy(wpEffectFilePathTemplate, wpEffectFilePathTemporary, true);
 
             return wpEffectFilePathTemporary;
@@ -86,7 +86,7 @@ namespace VirtualPaper.Utils {
                             break;
                     }
                     Directory.CreateDirectory(wpdataUsingFolder);
-                    wpEffectFilePathUsing = Path.Combine(wpdataUsingFolder, "wpEffectFilePathUsing.json");
+                    wpEffectFilePathUsing = Path.Combine(wpdataUsingFolder, Constants.Field.WpEffectFilePathUsing);
                     File.Copy(wpEffectFilePathTemplate, wpEffectFilePathUsing, true);
                 }
             }

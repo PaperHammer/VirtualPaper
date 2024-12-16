@@ -6,11 +6,15 @@
     xmlns:local="using:VirtualPaper.UI.Views.WpSettingsComponents"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d"
     x:Name="Page"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-    Loaded="Page_Loaded"    
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"   
     NavigationCacheMode="Enabled">
+
+    <Page.Resources>
+        <cvs:ImageSourceConverter x:Key="ImageSourceConverter" />
+    </Page.Resources>
 
     <Grid>
         <ItemsView             
@@ -18,8 +22,8 @@
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             HorizontalContentAlignment="Left"
-            VerticalContentAlignment="Center"            
-            ItemsSource="{Binding LibraryWallpapers}"            
+            VerticalContentAlignment="Center"
+            ItemsSource="{Binding LibraryWallpapers}"
             AllowDrop="True"
             DragOver="ItemsView_DragOver"
             Drop="ItemsView_Drop"
@@ -30,7 +34,7 @@
             <ItemsView.ItemTemplate>
                 <DataTemplate>
                     <ItemContainer 
-                        AutomationProperties.Name="{Binding BasicData.Title}"
+                        AutomationProperties.Name="{Binding Title}"
                         PointerEntered="ItemGrid_PointerEntered"
                         PointerExited="ItemGrid_PointerExited"
                         FocusVisualPrimaryBrush="{ThemeResource SystemBaseHighColor}">
@@ -39,7 +43,7 @@
                             Height="200"
                             Width="320">
                             <Image
-                                Source="{Binding BasicData.ThumbnailPath}"
+                                Source="{Binding ThumbnailPath}"
                                 Stretch="Uniform" 
                                 HorizontalAlignment="Stretch" 
                                 VerticalAlignment="Stretch"
@@ -51,7 +55,7 @@
                                 Padding="5,1"  
                                 Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
                                 <TextBlock 
-                                    Text="{Binding BasicData.Title}" 
+                                    Text="{Binding Title}" 
                                     FontSize="18"
                                     TextWrapping="Wrap"
                                     HorizontalTextAlignment="Left"

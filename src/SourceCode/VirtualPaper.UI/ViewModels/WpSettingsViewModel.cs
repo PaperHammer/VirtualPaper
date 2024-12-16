@@ -64,7 +64,7 @@ namespace VirtualPaper.UI.ViewModels {
         }
 
         internal void UpdateMonitorLayout() {
-            _monitors.Clear();
+            Monitors.Clear();
             switch (_userSettingsClient.Settings.WallpaperArrangement) {
                 case WallpaperArrangement.Per: {
                         foreach (var monitor in _monitorManagerClient.Monitors) {
@@ -73,11 +73,11 @@ namespace VirtualPaper.UI.ViewModels {
                     }
                     break;
                 case WallpaperArrangement.Expand: {
-                        _monitors.Add(new Monitor(null, "Expand"));
+                        _monitors.Add(new Monitor("Expand"));
                     }
                     break;
                 case WallpaperArrangement.Duplicate: {
-                        _monitors.Add(new Monitor(null, "Duplicate"));
+                        _monitors.Add(new Monitor("Duplicate"));
                     }
                     break;
             }
@@ -115,7 +115,7 @@ namespace VirtualPaper.UI.ViewModels {
                 _ctsPreview = new CancellationTokenSource();
                 BasicUIComponentUtil.Loading(true, false, [_ctsPreview]);
                 IWpMetadata data = _wpControlClient.GetWpMetadataByMonitorThu(Monitors[MonitorSelectedIdx].ThumbnailPath);
-                bool isStarted = await _wpControlClient.PreviewWallpaperAsync(data, _ctsPreview.Token);
+                bool isStarted = await _wpControlClient.PreviewWallpaperAsync(data.BasicData, data.RuntimeData.RType, _ctsPreview.Token);
                 if (!isStarted) {
                     throw new Exception("Preview Failed.");
                 }

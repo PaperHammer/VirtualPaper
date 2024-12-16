@@ -55,17 +55,17 @@ namespace VirtualPaper.DataAssistor {
             return grpc_WpRuntimeData;
         }
 
-        public static Grpc_WpPlayerData MetadataToGrpcPlayerData(IWpMetadata data) {
+        public static Grpc_WpPlayerData MetadataToGrpcPlayerData(IWpBasicData data, RuntimeType rtype) {
             Grpc_WpPlayerData grpc_WpPlayerData = new() {
-                WallpaperUid = data.BasicData.WallpaperUid,
-                RType = (Grpc_RuntimeType)data.RuntimeData.RType,
-                FilePath = data.BasicData.FilePath,
-                FolderPath = data.BasicData.FolderPath,
-                ThumbnailPath = data.BasicData.ThumbnailPath,
-                WpEffectFilePathTemplate = data.RuntimeData.WpEffectFilePathTemplate,
-                WpEffectFilePathTemporary = data.RuntimeData.WpEffectFilePathTemporary, // control
-                WpEffectFilePathUsing = data.RuntimeData.WpEffectFilePathUsing,
-                DepthFilePath = data.RuntimeData.DepthFilePath,
+                WallpaperUid = data.WallpaperUid,
+                RType = (Grpc_RuntimeType)rtype,
+                FilePath = data.FilePath,
+                FolderPath = data.FolderPath,
+                //ThumbnailPath = data.BasicData.ThumbnailPath,
+                //WpEffectFilePathTemplate = data.RuntimeData.WpEffectFilePathTemplate,
+                //WpEffectFilePathTemporary = data.RuntimeData.WpEffectFilePathTemporary, // control
+                //WpEffectFilePathUsing = data.RuntimeData.WpEffectFilePathUsing,
+                //DepthFilePath = data.RuntimeData.DepthFilePath,
             };
 
             return grpc_WpPlayerData;
@@ -127,11 +127,11 @@ namespace VirtualPaper.DataAssistor {
                 RType = (RuntimeType)source.RType,
                 FilePath = source.FilePath,
                 FolderPath = source.FolderPath,
-                ThumbnailPath = source.ThumbnailPath,
-                WpEffectFilePathTemplate = source.WpEffectFilePathTemplate,
-                WpEffectFilePathTemporary = source.WpEffectFilePathTemporary,
-                WpEffectFilePathUsing = source.WpEffectFilePathUsing,
-                DepthFilePath = source.DepthFilePath,
+                //ThumbnailPath = source.ThumbnailPath,
+                //WpEffectFilePathTemplate = source.WpEffectFilePathTemplate,
+                //WpEffectFilePathTemporary = source.WpEffectFilePathTemporary,
+                //WpEffectFilePathUsing = source.WpEffectFilePathUsing,
+                //DepthFilePath = source.DepthFilePath,
             };
 
             return playerData;
@@ -140,9 +140,9 @@ namespace VirtualPaper.DataAssistor {
         public static Models.Cores.Monitor GrpToMonitorData(Grpc_MonitorData grpc_monitor) {
             Models.Cores.Monitor monitor = new() {
                 DeviceId = grpc_monitor.DeviceId,
-                DeviceName = grpc_monitor.DeviceName,
-                MonitorName = grpc_monitor.MonitorName,
-                HMonitor = grpc_monitor.HMonitor,
+                //DeviceName = grpc_monitor.DeviceName,
+                //MonitorName = grpc_monitor.MonitorName,
+                //HMonitor = grpc_monitor.HMonitor,
                 Content = grpc_monitor.Content,
                 IsPrimary = grpc_monitor.IsPrimary,
                 Bounds = new() {
@@ -166,9 +166,9 @@ namespace VirtualPaper.DataAssistor {
         public static Grpc_MonitorData MonitorDataToGrpc(IMonitor monitor) {
             Grpc_MonitorData grpc_data = new() {
                 DeviceId = monitor.DeviceId,
-                DeviceName = monitor.DeviceName,
-                MonitorName = monitor.MonitorName,
-                HMonitor = (int)monitor.HMonitor,
+                //DeviceName = monitor.DeviceName,
+                //MonitorName = monitor.MonitorName,
+                //HMonitor = (int)monitor.HMonitor,
                 Content = monitor.Content,
                 IsPrimary = monitor.IsPrimary,
                 Bounds = new() {
@@ -187,6 +187,13 @@ namespace VirtualPaper.DataAssistor {
             };
 
             return grpc_data;
+        }
+
+        public static void FromRuntimeDataGetPlayerData(IWpPlayerData data, IWpRuntimeData wpRuntimeData) {
+            data.WpEffectFilePathTemporary = wpRuntimeData.WpEffectFilePathTemporary;
+            data.WpEffectFilePathTemplate = wpRuntimeData.WpEffectFilePathTemplate;
+            data.WpEffectFilePathUsing = wpRuntimeData.WpEffectFilePathUsing;
+            data.DepthFilePath = wpRuntimeData.DepthFilePath;
         }
     }
 }

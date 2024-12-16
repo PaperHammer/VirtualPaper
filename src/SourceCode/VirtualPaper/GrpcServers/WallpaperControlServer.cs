@@ -11,7 +11,6 @@ using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
-using VirtualPaper.Utils;
 using static VirtualPaper.Common.Errors;
 
 namespace VirtualPaper.GrpcServers {
@@ -82,64 +81,65 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override async Task<Grpc_SetWallpaperResponse> SetWallpaper(Grpc_SetWallpaperRequest request, ServerCallContext context) {
-            WpMetadata metaData = new() {
-                BasicData = DataAssist.GrpcToBasicData(request.WpBasicData),
-                RuntimeData = DataAssist.GrpcToRuntimeData(request.WpRuntimeData),
-            };
+            //WpMetadata metaData = new() {
+            //    BasicData = DataAssist.GrpcToBasicData(request.),
+            //    RuntimeData = DataAssist.GrpcToRuntimeData(request.WpRuntimeData),
+            //};
+            WpPlayerData wpPlayerData = DataAssist.GrpcToPlayerData(request.WpPlayerData);
             var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
 
             Grpc_SetWallpaperResponse response = await _wpControl.SetWallpaperAsync(
-                metaData.GetPlayerData(),
+                wpPlayerData,
                 monitor ?? _monitorManager.PrimaryMonitor,
                 context.CancellationToken);
 
             return await Task.FromResult(response);
         }
 
-        public override Task<Empty> UpdateWallpaper(Grpc_UpdateWpRequest request, ServerCallContext context) {
-            Grpc_WpPlayerData data = request.WpPlayerData;
+        //public override Task<Empty> UpdateWallpaper(Grpc_UpdateWpRequest request, ServerCallContext context) {
+        //    Grpc_WpPlayerData data = request.WpPlayerData;
 
-            WpPlayerData playerData = DataAssist.GrpcToPlayerData(data);
+        //    WpPlayerData playerData = DataAssist.GrpcToPlayerData(data);
 
-            _wpControl.UpdateWallpaper(
-                request.MonitorId, playerData, context.CancellationToken);
+        //    _wpControl.UpdateWallpaper(
+        //        request.MonitorId, playerData, context.CancellationToken);
 
-            return Task.FromResult(new Empty());
-        }
+        //    return Task.FromResult(new Empty());
+        //}
         #endregion
 
         #region data
         public override async Task<Grpc_WpBasicData> CreateMetadataBasic(Grpc_CreateMetadataBasicRequest request, ServerCallContext context) {
             var token = context.CancellationToken;
-            var data = _wpControl.CreateMetadataBasic(request.FolderPath, request.FilePath, (FileType)request.FType, token);
+            var data = _wpControl.CreateMetadataBasic(request.FilePath, (FileType)request.FType, token);
 
             Grpc_WpBasicData grpc_data = DataAssist.BasicDataToGrpcData(data);
 
             return await Task.FromResult(grpc_data);
         }
 
-        public override async Task<Grpc_WpRuntimeData> CreateMetadataRuntime(Grpc_CreateMetadataRuntimeRequest request, ServerCallContext context) {
-            var data = _wpControl.CreateMetadataRuntime(
-                request.FilePath,
-                request.FolderPath,
-                (RuntimeType)request.RType);
+        //public override async Task<Grpc_WpRuntimeData> CreateMetadataRuntime(Grpc_CreateMetadataRuntimeRequest request, ServerCallContext context) {
+        //    var data = _wpControl.CreateMetadataRuntime(
+        //        request.FilePath,
+        //        request.FolderPath,
+        //        (RuntimeType)request.RType);
 
-            Grpc_WpRuntimeData grpc_data = DataAssist.RuntimeDataToGrpcData(data);
+        //    Grpc_WpRuntimeData grpc_data = DataAssist.RuntimeDataToGrpcData(data);
 
-            return await Task.FromResult(grpc_data);
-        }
+        //    return await Task.FromResult(grpc_data);
+        //}
 
-        public override async Task<Grpc_StringValue> CreateMetadataRuntimeUsing(Grpc_CreateMetadataRuntimeRequest request, ServerCallContext context) {
-            Grpc_StringValue grpc_data = new();
-            var data = _wpControl.CreateMetadataRuntimeUsing(
-                request.FolderPath,
-                request.WpEffectFilePathTemplate,
-                request.MonitorContent);
+        //public override async Task<Grpc_StringValue> CreateMetadataRuntimeUsing(Grpc_CreateMetadataRuntimeRequest request, ServerCallContext context) {
+        //    Grpc_StringValue grpc_data = new();
+        //    var data = _wpControl.CreateMetadataRuntimeUsing(
+        //        request.FolderPath,
+        //        request.WpEffectFilePathTemplate,
+        //        request.MonitorContent);
 
-            grpc_data.Value = data;
+        //    grpc_data.Value = data;
 
-            return await Task.FromResult(grpc_data);
-        }
+        //    return await Task.FromResult(grpc_data);
+        //}
         #endregion
 
         #region utils
@@ -197,18 +197,18 @@ namespace VirtualPaper.GrpcServers {
             return await Task.FromResult(grpc_data);
         }
 
-        public override async Task<Grpc_WpRuntimeData> UpdateRuntimeData(Grpc_UpdateRuntimeDataRequest request, ServerCallContext context) {
-            var token = context.CancellationToken;
+        //public override async Task<Grpc_WpRuntimeData> UpdateRuntimeData(Grpc_UpdateRuntimeDataRequest request, ServerCallContext context) {
+        //    var token = context.CancellationToken;
 
-            var data = _wpControl.UpdateMetadataRuntime(
-                request.FolderPath,
-                (RuntimeType)request.RType,
-                token);
+        //    var data = _wpControl.UpdateMetadataRuntime(
+        //        request.FolderPath,
+        //        (RuntimeType)request.RType,
+        //        token);
 
-            Grpc_WpRuntimeData grpc_data = DataAssist.RuntimeDataToGrpcData(data);
+        //    Grpc_WpRuntimeData grpc_data = DataAssist.RuntimeDataToGrpcData(data);
 
-            return await Task.FromResult(grpc_data);
-        }
+        //    return await Task.FromResult(grpc_data);
+        //}
         #endregion
 
         #region private utils

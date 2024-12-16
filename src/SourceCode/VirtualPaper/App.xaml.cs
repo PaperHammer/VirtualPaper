@@ -157,7 +157,7 @@ namespace VirtualPaper {
                 }
 
                 //first run Setup-Wizard show..
-                if (true || userSettings.Settings.IsFirstRun) {
+                if (userSettings.Settings.IsFirstRun) {
                     Services.GetRequiredService<IUIRunnerService>().ShowUI();
                 }
             }

@@ -62,8 +62,8 @@ namespace VirtualPaper.Grpc.Client {
             return grpc_data;
         }
 
-        public async Task<bool> PreviewWallpaperAsync(IWpMetadata data, CancellationToken token) {
-            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayerData(data);
+        public async Task<bool> PreviewWallpaperAsync(IWpBasicData data, RuntimeType rtype, CancellationToken token) {
+            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayerData(data, rtype);
 
             var response = await _client.PreviewWallpaperAsync(
                 new Grpc_PreviewWallpaperRequest() {
@@ -81,10 +81,11 @@ namespace VirtualPaper.Grpc.Client {
         }
 
         public async Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(
-            IMonitor monitor, IWpMetadata metaData, CancellationToken token) {
+            IMonitor monitor, IWpBasicData data, RuntimeType rtype, CancellationToken token) {
+            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayerData(data, rtype);
+
             var request = new Grpc_SetWallpaperRequest {
-                WpBasicData = DataAssist.BasicDataToGrpcData(metaData.BasicData),
-                WpRuntimeData = DataAssist.RuntimeDataToGrpcData(metaData.RuntimeData),
+                WpPlayerData = wpPlayerdata,
                 MonitorId = monitor.DeviceId,
             };
 
@@ -93,73 +94,64 @@ namespace VirtualPaper.Grpc.Client {
             return response;
         }
 
-        public async Task UpdateWallpaperAsync(
-            IMonitor monitor, IWpMetadata data, CancellationToken token) {
-            Grpc_WpPlayerData grpc_data = new() {
-                RType = (Grpc_RuntimeType)data.RuntimeData.RType,
-                FolderPath = data.BasicData.FolderPath,
-                FilePath = data.BasicData.FilePath,
-                WpEffectFilePathUsing = data.RuntimeData.WpEffectFilePathUsing,
-            };
+        //public async Task UpdateWallpaperAsync(
+        //    IMonitor monitor, IWpMetadata data, CancellationToken token) {
+        //    Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayerData(data, rtype);
 
-            await _client.UpdateWallpaperAsync(
-                new Grpc_UpdateWpRequest() {
-                    WpPlayerData = grpc_data,
-                    MonitorId = monitor.DeviceId,
-                }, cancellationToken: token);
-        }
+        //    await _client.UpdateWallpaperAsync(
+        //        new Grpc_UpdateWpRequest() {
+        //            WpPlayerData = wpPlayerdata,
+        //            MonitorId = monitor.DeviceId,
+        //        }, cancellationToken: token);
+        //}
         #endregion
 
         #region data
         public async Task<Grpc_WpBasicData?> CreateBasicDataAsync(
-            string folderPath,
             string filePath,
             FileType ftype,
             CancellationToken token) {
             Grpc_WpBasicData grpc_data = await _client.CreateMetadataBasicAsync(
                 new Grpc_CreateMetadataBasicRequest() {
-                    FolderPath = folderPath,
                     FilePath = filePath,
                     FType = (Grpc_FileType)ftype
                 },
-                null,
-                null,
-                token);
-
-            return grpc_data;
-        }
-
-        public async Task<Grpc_WpRuntimeData?> CreateRuntimeDataAsync(
-            string filePath,
-            string folderPath,
-            RuntimeType rtype,
-            CancellationToken token) {
-            Grpc_WpRuntimeData grpc_data = await _client.CreateMetadataRuntimeAsync(
-                new Grpc_CreateMetadataRuntimeRequest() {
-                    FilePath = filePath,
-                    FolderPath = folderPath,
-                    RType = (Grpc_RuntimeType)rtype,
-                },
                 cancellationToken: token);
 
             return grpc_data;
         }
 
-        public async Task<string?> CreateRuntimeDataUsingAsync(
-            string folderPath,
-            string wpEffectFilePathTemplate,
-            string monitorContent,
-            CancellationToken token = default) {
-            Grpc_StringValue res = await _client.CreateMetadataRuntimeUsingAsync(
-                new Grpc_CreateMetadataRuntimeRequest() {
-                    FolderPath = folderPath,
-                    WpEffectFilePathTemplate = wpEffectFilePathTemplate,
-                    MonitorContent = monitorContent,
-                },
-                cancellationToken: token);
+        //public async Task<Grpc_WpRuntimeData?> CreateRuntimeDataAsync(
+        //    string filePath,
+        //    string folderPath,
+        //    RuntimeType rtype,
+        //    CancellationToken token) {
+        //    Grpc_WpRuntimeData grpc_data = await _client.CreateMetadataRuntimeAsync(
+        //        new Grpc_CreateMetadataRuntimeRequest() {
+        //            FilePath = filePath,
+        //            FolderPath = folderPath,
+        //            RType = (Grpc_RuntimeType)rtype,
+        //        },
+        //        cancellationToken: token);
 
-            return res.Value;
-        }
+        //    return grpc_data;
+        //}
+
+        //public async Task<string?> CreateRuntimeDataUsingAsync(
+        //    string folderPath,
+        //    string wpEffectFilePathTemplate,
+        //    string monitorContent,
+        //    CancellationToken token = default) {
+        //    Grpc_StringValue res = await _client.CreateMetadataRuntimeUsingAsync(
+        //        new Grpc_CreateMetadataRuntimeRequest() {
+        //            FolderPath = folderPath,
+        //            WpEffectFilePathTemplate = wpEffectFilePathTemplate,
+        //            MonitorContent = monitorContent,
+        //        },
+        //        cancellationToken: token);
+
+        //    return res.Value;
+        //}
 
         public IWpMetadata GetWpMetadataByMonitorThu(string thumbnailPath) {
             return _wallpapers.Find(x => x.BasicData.ThumbnailPath == thumbnailPath)!;
@@ -210,33 +202,19 @@ namespace VirtualPaper.Grpc.Client {
             });
         }
 
-        public async Task<Grpc_WpMetaData?> UpdateFileDataAsync(IWpMetadata data, CancellationToken token) {
-            Grpc_WpBasicData? basciData = await _client.UpdateBasicDataAsync(
+        public async Task<Grpc_WpBasicData?> UpdateBasicDataAsync(IWpBasicData data, CancellationToken token) {
+            Grpc_WpBasicData? grpc_basicData = await _client.UpdateBasicDataAsync(
                 new Grpc_UpdateBasicDataRequest() {
-                    FilePath = data.BasicData.FilePath,
-                    FolderPath = data.BasicData.FolderPath,
-                    FolderName = data.BasicData.FolderName,
-                    FType = (Grpc_FileType)data.BasicData.FType,
+                    FilePath = data.FilePath,
+                    FolderPath = data.FolderPath,
+                    FolderName = data.FolderName,
+                    FType = (Grpc_FileType)data.FType,
                 },
                 cancellationToken: token);
-            if (basciData == null) return null;
-            basciData.WallpaperUid = data.BasicData.WallpaperUid;
+            if (grpc_basicData == null) return null;
+            grpc_basicData.WallpaperUid = data.WallpaperUid;
 
-            Grpc_WpRuntimeData? runtimeData = await _client.UpdateRuntimeDataAsync(
-                new Grpc_UpdateRuntimeDataRequest() {
-                    FolderPath = data.BasicData.FolderPath,
-                    RType = (Grpc_RuntimeType)data.RuntimeData.RType,
-                },
-                cancellationToken: token);
-            if (runtimeData == null) return null;
-            runtimeData.WpEffectFilePathUsing = data.RuntimeData.WpEffectFilePathUsing;
-
-            Grpc_WpMetaData grpc_data = new() {
-                WpBasicData = basciData,
-                WpRuntimeData = runtimeData
-            };
-
-            return grpc_data;
+            return grpc_basicData;
         }
         #endregion
 

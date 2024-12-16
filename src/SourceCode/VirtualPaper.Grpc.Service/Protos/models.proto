@@ -8,15 +8,12 @@ message Grpc_ScreensaverRequest {
 }
 
 message Grpc_MonitorData {
-	string device_id = 1;
-	string device_name = 2;
-	string monitor_name = 3;
-	int32 h_monitor = 4;
-	string content = 5;
-	bool is_primary = 6;
-	Grpc_Rectangle bounds = 7;
-	Grpc_Rectangle working_area = 8;
-	string thumbnail_path = 9;
+	string device_id = 1;	
+	string content = 2;
+	bool is_primary = 3;
+	Grpc_Rectangle bounds = 4;
+	Grpc_Rectangle working_area = 5;
+	string thumbnail_path = 6;
 }
 
 message Grpc_Rectangle {
@@ -135,9 +132,8 @@ message Grpc_ModifyPreviewRequest {
 }
 
 message Grpc_SetWallpaperRequest {
-	Grpc_WpBasicData wp_basic_data = 1;
-	Grpc_WpRuntimeData wp_runtime_data = 2;
-	string monitor_id = 3;
+	Grpc_WpPlayerData wp_player_data = 1;
+	string monitor_id = 2;
 }
 
 message Grpc_UpdateWpRequest {
@@ -178,9 +174,8 @@ message Grpc_GetWallpaperRequest {
 }
 
 message Grpc_CreateMetadataBasicRequest {
-	string folder_path = 1;
-	string file_path = 2;
-	Grpc_FileType f_type = 3;
+	string file_path = 1;
+	Grpc_FileType f_type = 2;
 }
 
 message Grpc_CreateMetadataRuntimeRequest {
@@ -273,11 +268,6 @@ message Grpc_WpPlayerData {
 	Grpc_RuntimeType r_type = 2;
 	string folder_path = 3;
 	string file_path = 4;
-	string thumbnail_path = 5;
-	string wp_effect_file_path_template = 6;
-    string wp_effect_file_path_temporary = 7;
-    string wp_effect_file_path_using = 8;
-    string depth_file_path = 9;
 }
 
 message Grpc_WpMetaData {

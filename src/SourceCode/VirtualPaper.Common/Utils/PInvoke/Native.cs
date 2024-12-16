@@ -6,19 +6,22 @@ using System.Text;
 namespace VirtualPaper.Common.Utils.PInvoke {
 #pragma warning disable CA1707, CA1401, CA1712
     public static class Native {
-        public static int GWL_STYLE = -16;
-        public static long WS_POPUP = 0x80000000;
-        public static long WS_CHILD = 0x40000000;
+        public const int HWND_TOP = 0;
+        public const int HWND_TOPMOST = -1;
+        public const uint SWP_NOACTIVATE = 0x0010;
+        public const uint SWP_NOMOVE = 0x0002;
+        public const uint SWP_NOSIZE = 0x0001;
 
-        public static int MAX_WINDOW_TEXT_LENGTH = 1024;
-        public static int MAX_CLASS_NAME_LENGTH = 256;
+        public const int GWL_STYLE = -16;
+        public const long WS_POPUP = 0x80000000;
+        public const long WS_CHILD = 0x40000000;
 
         [DllImport("user32.dll")]
         public static extern bool EnumChildWindows(IntPtr hwndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
 
-        public static int GWL_EXSTYLE = -20;
-        public static int WS_EX_TOOLWINDOW = 0x80;
-        public static int WS_EX_NOACTIVATE = 0x08000000;
+        public const int GWL_EXSTYLE = -20;
+        public const int WS_EX_TOOLWINDOW = 0x80;
+        public const int WS_EX_NOACTIVATE = 0x08000000;
 
         [DllImport("Shcore.dll", SetLastError = true)]
         public static extern int GetDpiForMonitor(IntPtr hmonitor, Monitor_DPI_Type dpiType, out uint dpiX, out uint dpiY);

@@ -19,23 +19,23 @@ namespace VirtualPaper.GrpcServers {
             foreach (var wl in _userSetting.WallpaperLayouts) {
                 resp.WallpaperLayouts.Add(new Grpc_WallpaperLayoutData {
                     Monitor = new() {
-                        DeviceId = wl.Monitor.DeviceId,
-                        DeviceName = wl.Monitor.DeviceName,
-                        MonitorName = wl.Monitor.MonitorName,
-                        HMonitor = (int)wl.Monitor.HMonitor,
-                        WorkingArea = new() {
-                            X = wl.Monitor.WorkingArea.X,
-                            Y = wl.Monitor.WorkingArea.Y,
-                            Width = wl.Monitor.WorkingArea.Width,
-                            Height = wl.Monitor.WorkingArea.Height,
-                        },
-                        Bounds = new() {
-                            X = wl.Monitor.Bounds.X,
-                            Y = wl.Monitor.Bounds.Y,
-                            Width = wl.Monitor.Bounds.Width,
-                            Height = wl.Monitor.Bounds.Height,
-                        },
-                        Content = wl.Monitor.Content,
+                        DeviceId = wl.MonitorDeviceId,
+                        //DeviceName = wl.Monitor.DeviceName,
+                        //MonitorName = wl.Monitor.MonitorName,
+                        //HMonitor = (int)wl.Monitor.HMonitor,
+                        //WorkingArea = new() {
+                        //    X = wl.Monitor.WorkingArea.X,
+                        //    Y = wl.Monitor.WorkingArea.Y,
+                        //    Width = wl.Monitor.WorkingArea.Width,
+                        //    Height = wl.Monitor.WorkingArea.Height,
+                        //},
+                        //Bounds = new() {
+                        //    X = wl.Monitor.Bounds.X,
+                        //    Y = wl.Monitor.Bounds.Y,
+                        //    Width = wl.Monitor.Bounds.Width,
+                        //    Height = wl.Monitor.Bounds.Height,
+                        //},
+                        //Content = wl.Monitor.Content,
                     },
                     FolderPath = wl.FolderPath,
                 });
@@ -77,9 +77,9 @@ namespace VirtualPaper.GrpcServers {
             var resp = new Grpc_SettingsData() {
                 SelectedMonitor = new Grpc_MonitorData() {
                     DeviceId = settings.SelectedMonitor.DeviceId ?? string.Empty,
-                    DeviceName = settings.SelectedMonitor.DeviceName ?? string.Empty,
-                    MonitorName = settings.SelectedMonitor.MonitorName ?? string.Empty,
-                    HMonitor = settings.SelectedMonitor.HMonitor.ToInt32(),
+                    //DeviceName = settings.SelectedMonitor.DeviceName ?? string.Empty,
+                    //MonitorName = settings.SelectedMonitor.MonitorName ?? string.Empty,
+                    //HMonitor = settings.SelectedMonitor.HMonitor.ToInt32(),
                     IsPrimary = settings.SelectedMonitor.IsPrimary,
                     WorkingArea = new Grpc_Rectangle() {
                         X = settings.SelectedMonitor.WorkingArea.X,

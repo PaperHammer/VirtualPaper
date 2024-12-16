@@ -3,14 +3,14 @@
 namespace VirtualPaper.Models.Cores {
     public class WpLibData : IWpLibData {
         public int Idx { get; set; }
-        public IWpMetadata Data { get; set; }
+        public IWpBasicData BasicData { get; set; }
 
         public WpLibData() {
-            Data = new WpMetadata();
+            BasicData = new WpBasicData();
         }
 
         public bool IsAvailable() {
-            return Data.IsAvailable();
+            return BasicData.IsAvailable();
         }
     }
 }

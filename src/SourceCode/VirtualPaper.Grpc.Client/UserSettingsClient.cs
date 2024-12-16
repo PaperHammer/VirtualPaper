@@ -119,27 +119,27 @@ namespace VirtualPaper.Grpc.Client {
             var wallpaperLoayouts = new List<IWallpaperLayout>();
             var resp = _client.GetWallpaperLayouts(new Empty());
             foreach (var item in resp.WallpaperLayouts) {
-                var monitor = new Monitor() {
-                    DeviceId = item.Monitor.DeviceId,
-                    DeviceName = item.Monitor.DeviceName,
-                    MonitorName = item.Monitor.MonitorName,
-                    HMonitor = item.Monitor.HMonitor,
-                    IsPrimary = item.Monitor.IsPrimary,
-                    WorkingArea = new() {
-                        X = item.Monitor.WorkingArea.X,
-                        Y = item.Monitor.WorkingArea.Y,
-                        Width = item.Monitor.WorkingArea.Width,
-                        Height = item.Monitor.WorkingArea.Height,
-                    },
-                    Bounds = new() {
-                        X = item.Monitor.Bounds.X,
-                        Y = item.Monitor.Bounds.Y,
-                        Width = item.Monitor.Bounds.Width,
-                        Height = item.Monitor.Bounds.Height,
-                    },
-                    Content = item.Monitor.Content,
-                };
-                wallpaperLoayouts.Add(new WallpaperLayout(monitor, item.FolderPath));
+                //var monitor = new Monitor() {
+                //    DeviceId = item.Monitor.DeviceId,
+                //    //DeviceName = item.Monitor.DeviceName,
+                //    //MonitorName = item.Monitor.MonitorName,
+                //    //HMonitor = item.Monitor.HMonitor,
+                //    IsPrimary = item.Monitor.IsPrimary,
+                //    WorkingArea = new() {
+                //        X = item.Monitor.WorkingArea.X,
+                //        Y = item.Monitor.WorkingArea.Y,
+                //        Width = item.Monitor.WorkingArea.Width,
+                //        Height = item.Monitor.WorkingArea.Height,
+                //    },
+                //    Bounds = new() {
+                //        X = item.Monitor.Bounds.X,
+                //        Y = item.Monitor.Bounds.Y,
+                //        Width = item.Monitor.Bounds.Width,
+                //        Height = item.Monitor.Bounds.Height,
+                //    },
+                //    Content = item.Monitor.Content,
+                //};
+                wallpaperLoayouts.Add(new WallpaperLayout(item.Monitor.DeviceId, item.FolderPath));
             }
             return wallpaperLoayouts;
         }
@@ -148,27 +148,27 @@ namespace VirtualPaper.Grpc.Client {
             var wallpaperLoayouts = new List<IWallpaperLayout>();
             var resp = await _client.GetWallpaperLayoutsAsync(new Empty());
             foreach (var item in resp.WallpaperLayouts) {
-                var monitor = new Monitor() {
-                    DeviceId = item.Monitor.DeviceId,
-                    DeviceName = item.Monitor.DeviceName,
-                    MonitorName = item.Monitor.MonitorName,
-                    HMonitor = item.Monitor.HMonitor,
-                    IsPrimary = item.Monitor.IsPrimary,
-                    WorkingArea = new() {
-                        X = item.Monitor.WorkingArea.X,
-                        Y = item.Monitor.WorkingArea.Y,
-                        Width = item.Monitor.WorkingArea.Width,
-                        Height = item.Monitor.WorkingArea.Height,
-                    },
-                    Bounds = new() {
-                        X = item.Monitor.Bounds.X,
-                        Y = item.Monitor.Bounds.Y,
-                        Width = item.Monitor.Bounds.Width,
-                        Height = item.Monitor.Bounds.Height,
-                    },
-                    Content = item.Monitor.Content,
-                };
-                wallpaperLoayouts.Add(new WallpaperLayout(monitor, item.FolderPath));
+                //var monitor = new Monitor() {
+                //    DeviceId = item.Monitor.DeviceId,
+                //    //DeviceName = item.Monitor.DeviceName,
+                //    //MonitorName = item.Monitor.MonitorName,
+                //    //HMonitor = item.Monitor.HMonitor,
+                //    IsPrimary = item.Monitor.IsPrimary,
+                //    WorkingArea = new() {
+                //        X = item.Monitor.WorkingArea.X,
+                //        Y = item.Monitor.WorkingArea.Y,
+                //        Width = item.Monitor.WorkingArea.Width,
+                //        Height = item.Monitor.WorkingArea.Height,
+                //    },
+                //    Bounds = new() {
+                //        X = item.Monitor.Bounds.X,
+                //        Y = item.Monitor.Bounds.Y,
+                //        Width = item.Monitor.Bounds.Width,
+                //        Height = item.Monitor.Bounds.Height,
+                //    },
+                //    Content = item.Monitor.Content,
+                //};
+                wallpaperLoayouts.Add(new WallpaperLayout(item.Monitor.DeviceId, item.FolderPath));
             }
             return wallpaperLoayouts;
         }
@@ -216,9 +216,9 @@ namespace VirtualPaper.Grpc.Client {
 
                 SelectedMonitor = new Grpc_MonitorData() {
                     DeviceId = settings.SelectedMonitor.DeviceId,
-                    DeviceName = settings.SelectedMonitor.DeviceName,
-                    MonitorName = settings.SelectedMonitor.MonitorName,
-                    HMonitor = settings.SelectedMonitor.HMonitor.ToInt32(),
+                    //DeviceName = settings.SelectedMonitor.DeviceName,
+                    //MonitorName = settings.SelectedMonitor.MonitorName,
+                    //HMonitor = settings.SelectedMonitor.HMonitor.ToInt32(),
                     IsPrimary = settings.SelectedMonitor.IsPrimary,
                     WorkingArea = new Grpc_Rectangle() {
                         X = settings.SelectedMonitor.WorkingArea.X,
@@ -284,9 +284,9 @@ namespace VirtualPaper.Grpc.Client {
 
                 SelectedMonitor = new Monitor() {
                     DeviceId = settings.SelectedMonitor.DeviceId,
-                    DeviceName = settings.SelectedMonitor.DeviceName,
-                    MonitorName = settings.SelectedMonitor.MonitorName,
-                    HMonitor = settings.SelectedMonitor.HMonitor,
+                    //DeviceName = settings.SelectedMonitor.DeviceName,
+                    //MonitorName = settings.SelectedMonitor.MonitorName,
+                    //HMonitor = settings.SelectedMonitor.HMonitor,
                     IsPrimary = settings.SelectedMonitor.IsPrimary,
                     WorkingArea = new System.Drawing.Rectangle() {
                         X = settings.SelectedMonitor.WorkingArea.X,

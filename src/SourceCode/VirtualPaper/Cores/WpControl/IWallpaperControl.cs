@@ -50,9 +50,9 @@ namespace VirtualPaper.Cores.WpControl {
         #endregion
 
         #region data
-        IWpBasicData CreateMetadataBasic(string folderPath, string filePath, FileType ftype, CancellationToken token);
-        IWpRuntimeData CreateMetadataRuntime(string filePath, string folderPath, RuntimeType rtype);
-        string CreateMetadataRuntimeUsing(string folderPath, string wpEffectFilePathTemplate, string monitorContent);
+        IWpBasicData CreateMetadataBasic(string filePath, FileType ftype, CancellationToken token);
+        IWpRuntimeData CreateMetadataRuntime(string filePath, string folderPath, RuntimeType rtype, bool isPreview, string monitorContent = "-1");
+        //string CreateMetadataRuntimeUsing(string folderPath, string wpEffectFilePathTemplate, string monitorContent);
         IWpBasicData UpdateBasicData(string folderPath, string folderName, string filePath, FileType ftype, CancellationToken token);
         IWpRuntimeData UpdateMetadataRuntime(string folderPath, RuntimeType rtype, CancellationToken token);
         #endregion

@@ -5,9 +5,8 @@ namespace VirtualPaper.Models.Cores {
     /// Wallpaper arragement on monitor.
     /// </summary>
     [Serializable]
-    public class WallpaperLayout(Monitor monitor, string folderPath) : IWallpaperLayout {
-        public Monitor Monitor { get; set; } = monitor;
-
+    public class WallpaperLayout( string folderPath, string monitorDeviceId) : IWallpaperLayout {
         public string FolderPath { get; set; } = folderPath;
+        public string MonitorDeviceId { get; set; } = monitorDeviceId;
     }
 }

@@ -15,22 +15,22 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
 
         #region wallpaper actions
         Task CloseAllWallpapersAsync();
-        Task CloseWallpaperAsync(IMonitor monitor); 
+        Task CloseWallpaperAsync(IMonitor monitor);
         Task CloseAllPreviewAsync();
         Task<Grpc_WpMetaData> GetWallpaperAsync(string folderPath);
-        Task<bool> PreviewWallpaperAsync(IWpMetadata data, CancellationToken cancellationToken);
+        Task<bool> PreviewWallpaperAsync(IWpBasicData data, RuntimeType rtype, CancellationToken cancellationToken);
         Task<Grpc_RestartWallpaperResponse> RestartAllWallpapersAsync();
-        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IMonitor monitor, IWpMetadata metaData, CancellationToken cancellationToken);
-        Task UpdateWallpaperAsync(IMonitor monitor, IWpMetadata metaData, CancellationToken token);
+        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IMonitor monitor, IWpBasicData metaData, RuntimeType rtype, CancellationToken cancellationToken);
+        //Task UpdateWallpaperAsync(IMonitor monitor, IWpMetadata metaData, CancellationToken token);
         #endregion
 
         #region data
-        Task<Grpc_WpBasicData?> CreateBasicDataAsync(string folderPath, string sourceFilePath, FileType ftype, CancellationToken token = default);
-        /// <summary>
-        /// 不包括 Using 文件
-        /// </summary>
-        Task<Grpc_WpRuntimeData?> CreateRuntimeDataAsync(string filePath, string folderPath, RuntimeType rtype, CancellationToken token = default);
-        Task<string?> CreateRuntimeDataUsingAsync(string folderPath, string wpEffectFilePathTemplate, string monitorContent, CancellationToken token = default);
+        Task<Grpc_WpBasicData?> CreateBasicDataAsync(string sourceFilePath, FileType ftype, CancellationToken token = default);
+        ///// <summary>
+        ///// 不包括 Using 文件
+        ///// </summary>
+        //Task<Grpc_WpRuntimeData?> CreateRuntimeDataAsync(string filePath, string folderPath, RuntimeType rtype, CancellationToken token = default);
+        //Task<string?> CreateRuntimeDataUsingAsync(string folderPath, string wpEffectFilePathTemplate, string monitorContent, CancellationToken token = default);
         IWpMetadata GetWpMetadataByMonitorThu(string thumbnailPath);
         #endregion
 
@@ -40,7 +40,7 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         Task ModifyPreviewAsync(string controlName, string propertyName, string val);
         Task SendMessageWallpaperAsync(IMonitor monitor, IWpRuntimeData metaData, IpcMessage msg);
         Task TakeScreenshotAsync(string monitorId, string savePath);
-        Task<Grpc_WpMetaData?> UpdateFileDataAsync(IWpMetadata data, CancellationToken token);
+        Task<Grpc_WpBasicData?> UpdateBasicDataAsync(IWpBasicData data, CancellationToken token);
         #endregion
     }
 

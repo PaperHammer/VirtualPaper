@@ -38,7 +38,7 @@ namespace VirtualPaper.Cores.Monitor {
                 hMonitor = Native.MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
             }
             else
-                hMonitor = (IntPtr)PRIMARY_MONITOR;
+                hMonitor = PRIMARY_MONITOR;
 
             return GetMonitorByHMonitor(hMonitor);
         }
@@ -53,7 +53,7 @@ namespace VirtualPaper.Cores.Monitor {
         }
 
         public bool MonitorExists(IMonitor display) {
-            return Monitors.Any(x => display.Equals(x));
+            return Monitors.Any(display.Equals);
         }
 
         public nint OnWndProc(nint hwnd, uint msg, nint wParam, nint lParam) {
@@ -81,6 +81,7 @@ namespace VirtualPaper.Cores.Monitor {
             for (int i = 0; i < hMonitors.Count; i++) {
                 var monitor = GetMonitorByHMonitor(hMonitors[i]);
                 monitor.Content = (i + 1).ToString();
+                Monitors.Add(monitor);
             }
 
             // 移除旧显示器
@@ -110,21 +111,21 @@ namespace VirtualPaper.Cores.Monitor {
             Models.Cores.Monitor? monitor;
 
             if (!_multiMonitorSupport || hMonitor == (IntPtr)PRIMARY_MONITOR) {
-                monitor = GetMonitorByDeviceName(DEAFULT_DISPLAY_DEVICENAME);
+                //monitor = GetMonitorByDeviceName(DEAFULT_DISPLAY_DEVICENAME);
 
-                if (monitor == null) {
-                    monitor = new Models.Cores.Monitor(DEAFULT_DISPLAY_DEVICENAME);
-                    Monitors.Add(monitor);
-                }
+                //if (monitor == null) {
+                //}
+                monitor = new(DEAFULT_DISPLAY_DEVICENAME) {                 
+                    Bounds = GetVirtualScreenBounds(),
+                    DeviceId = GetDefaultMonitorDeviceId(),
+                    //monitor.MonitorName = "Monitor";
+                    //monitor.HMonitor = hMonitor;
+                    IsPrimary = true,
+                    WorkingArea = GetWorkingArea(),
+                    IsStale = false
+                };
 
-                monitor.Bounds = GetVirtualScreenBounds();
-                monitor.DeviceId = GetDefaultMonitorDeviceId();
-                monitor.MonitorName = "Monitor";
-                monitor.HMonitor = hMonitor;
-                monitor.IsPrimary = true;
-                monitor.WorkingArea = GetWorkingArea();
-
-                monitor.IsStale = false;
+                //Monitors.Add(monitor);
             }
             else {
                 var info = new Native.MONITORINFOEX();// MONITORINFOEX();
@@ -132,11 +133,11 @@ namespace VirtualPaper.Cores.Monitor {
 
                 string deviceName = new string(info.szDevice).TrimEnd((char)0);
 
-                monitor = GetMonitorByDeviceName(deviceName);
+                //monitor = GetMonitorByDeviceName(deviceName);
 
-                monitor ??= CreateMonitorByMonitorInfo(deviceName);
+                monitor = CreateMonitorByMonitorInfo(deviceName);
 
-                monitor.HMonitor = hMonitor;
+                //monitor.HMonitor = hMonitor;
 
                 UpdateDisplayMonitor(monitor, info);
             }
@@ -149,16 +150,14 @@ namespace VirtualPaper.Cores.Monitor {
 
             var displayDevice = GetMonitorDevice(deviceName);
             monitor.DeviceId = displayDevice.DeviceID;
-            monitor.MonitorName = displayDevice.DeviceString;
-
-            Monitors.Add(monitor);
+            //monitor.MonitorName = displayDevice.DeviceString;
 
             return monitor;
         }
 
-        private Models.Cores.Monitor GetMonitorByDeviceName(string deviceName) {
-            return Monitors.FirstOrDefault(x => x.DeviceName == deviceName);
-        }
+        //private Models.Cores.Monitor GetMonitorByDeviceName(string deviceName) {
+        //    return Monitors.FirstOrDefault(x => x.DeviceName == deviceName);
+        //}
 
         private void UpdateDisplayMonitor(Models.Cores.Monitor monitor, Native.MONITORINFOEX info) {
             // 确保在 应用程序清单文件 里开启对每一块屏幕的 DPI 感知

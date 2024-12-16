@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Numerics;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Input;
@@ -30,21 +31,17 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
             this.DataContext = _viewModel;
         }
 
-        private async void Page_Loaded(object sender, RoutedEventArgs e) {
-            await _viewModel.InitContentsAsync();
-        }
-
         private void Image_ImageFailed(object sender, ExceptionRoutedEventArgs e) {
             _logger.Error($"RImage loading failed: {e.ErrorMessage}");
         }
 
-        private async void SingleClickAction(IWpMetadata data) {
+        private async void SingleClickAction(IWpBasicData data) {
             await _viewModel.PreviewAsync(data);
         }
 
         private void ItemsViewer_PointerPressed(object sender, PointerRoutedEventArgs e) {
             var dataContext = ((FrameworkElement)e.OriginalSource).DataContext;
-            if (dataContext is not IWpMetadata data) return;
+            if (dataContext is not IWpBasicData data) return;
 
             // ref: https://learn.microsoft.com/zh-cn/uwp/api/windows.ui.xaml.uielement.pointerpressed?view=winrt-26100
             Pointer ptr = e.Pointer;
@@ -58,7 +55,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
 
         private void ItemsView_RightTapped(object sender, RightTappedRoutedEventArgs e) {
             var dataContext = ((FrameworkElement)e.OriginalSource).DataContext;
-            _data = dataContext as IWpMetadata;
+            _data = dataContext as IWpBasicData;
             var itemsView = (ItemsView)sender;
 
             if (_data == null) {
@@ -101,7 +98,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
                         await _viewModel.ApplyToLockBGAsync(_data);
                         break;
                     case "ShowOnDisk":
-                        Process.Start("Explorer", "/select," + _data.BasicData.FilePath);
+                        Process.Start("Explorer", "/select," + _data.FilePath);
                         break;
                     case "Delete":
                         await _viewModel.DeleteAsync(_data);
@@ -153,7 +150,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
 
         private readonly LibraryContentsViewModel _viewModel;
         private readonly Logger _logger;
-        private IWpMetadata _data;
+        private IWpBasicData _data;
         private readonly Compositor _compositor;
         private SpringVector3NaturalMotionAnimation _springAnimation;
     }

@@ -129,7 +129,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         {
             _dialogService = dialogService;
             _userSettingsClient = userSettingsClient;
-            _wallpaperControlClient = wallpaperControlClient;
+            _wpControlClient = wallpaperControlClient;
             _scrCommandsClient = scrCommandsClient;
             _localizer = LanguageUtil.LocalizerInstacne;
 
@@ -186,10 +186,13 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             {
                 ScreenSaverStatu = _localizer.GetLocalizedString("Settings_WpNav_VpScreenSaver_ScreenSaverStatu_On");
 
-                var wl = _userSettingsClient.WallpaperLayouts;
-                if (wl.Count > 0)
+                var wpLayouts = _userSettingsClient.WallpaperLayouts;
+                if (wpLayouts.Count > 0)
                 {
-                    Grpc_WpMetaData grpc_data = await _wallpaperControlClient.GetWallpaperAsync(wl[0].FolderPath);
+                    Grpc_WpMetaData grpc_data = await _wpControlClient.GetWallpaperAsync(
+                        wpLayouts[0].FolderPath,
+                        wpLayouts[0].MonitorContent,
+                        wpLayouts[0].RType);
                     _scrCommandsClient.Start(grpc_data.WpBasicData);
                 }
             }
@@ -235,7 +238,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
 
                 InitUpdateLayout?.Invoke();
 
-                var response = await _wallpaperControlClient.RestartAllWallpapersAsync();
+                var response = await _wpControlClient.RestartAllWallpapersAsync();
                 if (response.IsFinished != true)
                 {
                     await _dialogService.ShowDialogAsync(
@@ -281,7 +284,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         private readonly ILocalizer _localizer;
         private readonly IDialogService _dialogService;
         private readonly IUserSettingsClient _userSettingsClient;
-        private readonly IWallpaperControlClient _wallpaperControlClient;
+        private readonly IWallpaperControlClient _wpControlClient;
         private readonly IScrCommandsClient _scrCommandsClient;
         private string _effectNone = string.Empty;
         private string _effectBubble = string.Empty;

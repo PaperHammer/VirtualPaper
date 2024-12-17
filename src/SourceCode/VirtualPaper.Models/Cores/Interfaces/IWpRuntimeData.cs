@@ -3,6 +3,7 @@
 namespace VirtualPaper.Models.Cores.Interfaces {
     public interface IWpRuntimeData {
         ApplicationInfo AppInfo { get; set; }
+        string MonitorContent { get; set; }
         string FolderPath { get; set; }
         string DepthFilePath { get; set; }
 

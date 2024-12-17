@@ -55,9 +55,12 @@ namespace VirtualPaper.Grpc.Client {
             await _client.CloseAllPreviewAsync(new Empty());
         }
 
-        public async Task<Grpc_WpMetaData> GetWallpaperAsync(string folderPath) {
+        public async Task<Grpc_WpMetaData> GetWallpaperAsync(string folderPath,string monitorContent, string rtype) {
             Grpc_WpMetaData grpc_data = await _client.GetWallpaperAsync(
-                new Grpc_GetWallpaperRequest() { FolderPath = folderPath });
+                new Grpc_GetWallpaperRequest() { 
+                    FolderPath = folderPath, 
+                    MonitorContent = monitorContent, 
+                    RType = rtype });
 
             return grpc_data;
         }

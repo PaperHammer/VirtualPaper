@@ -15,7 +15,7 @@ namespace VirtualPaper.Grpc.Client {
         public List<IApplicationRules> AppRules { get; private set; } = [];
         public List<IWallpaperLayout> WallpaperLayouts { get; private set; } = [];
 
-        public UserSettingsClient() {           
+        public UserSettingsClient() {
             _client = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
 
             Task.Run(async () => {
@@ -116,61 +116,21 @@ namespace VirtualPaper.Grpc.Client {
         }
 
         private List<IWallpaperLayout> GetWallpaperLayouts() {
-            var wallpaperLoayouts = new List<IWallpaperLayout>();
+            var wpLayouts = new List<IWallpaperLayout>();
             var resp = _client.GetWallpaperLayouts(new Empty());
             foreach (var item in resp.WallpaperLayouts) {
-                //var monitor = new Monitor() {
-                //    DeviceId = item.Monitor.DeviceId,
-                //    //DeviceName = item.Monitor.DeviceName,
-                //    //MonitorName = item.Monitor.MonitorName,
-                //    //HMonitor = item.Monitor.HMonitor,
-                //    IsPrimary = item.Monitor.IsPrimary,
-                //    WorkingArea = new() {
-                //        X = item.Monitor.WorkingArea.X,
-                //        Y = item.Monitor.WorkingArea.Y,
-                //        Width = item.Monitor.WorkingArea.Width,
-                //        Height = item.Monitor.WorkingArea.Height,
-                //    },
-                //    Bounds = new() {
-                //        X = item.Monitor.Bounds.X,
-                //        Y = item.Monitor.Bounds.Y,
-                //        Width = item.Monitor.Bounds.Width,
-                //        Height = item.Monitor.Bounds.Height,
-                //    },
-                //    Content = item.Monitor.Content,
-                //};
-                wallpaperLoayouts.Add(new WallpaperLayout(item.Monitor.DeviceId, item.FolderPath));
+                wpLayouts.Add(new WallpaperLayout(item.FolderPath, item.MonitorDeviceId, item.MonitorContent, item.RType));
             }
-            return wallpaperLoayouts;
+            return wpLayouts;
         }
 
         private async Task<List<IWallpaperLayout>> GetWallpaperLayoutsAsync() {
-            var wallpaperLoayouts = new List<IWallpaperLayout>();
+            var wpLayouts = new List<IWallpaperLayout>();
             var resp = await _client.GetWallpaperLayoutsAsync(new Empty());
             foreach (var item in resp.WallpaperLayouts) {
-                //var monitor = new Monitor() {
-                //    DeviceId = item.Monitor.DeviceId,
-                //    //DeviceName = item.Monitor.DeviceName,
-                //    //MonitorName = item.Monitor.MonitorName,
-                //    //HMonitor = item.Monitor.HMonitor,
-                //    IsPrimary = item.Monitor.IsPrimary,
-                //    WorkingArea = new() {
-                //        X = item.Monitor.WorkingArea.X,
-                //        Y = item.Monitor.WorkingArea.Y,
-                //        Width = item.Monitor.WorkingArea.Width,
-                //        Height = item.Monitor.WorkingArea.Height,
-                //    },
-                //    Bounds = new() {
-                //        X = item.Monitor.Bounds.X,
-                //        Y = item.Monitor.Bounds.Y,
-                //        Width = item.Monitor.Bounds.Width,
-                //        Height = item.Monitor.Bounds.Height,
-                //    },
-                //    Content = item.Monitor.Content,
-                //};
-                wallpaperLoayouts.Add(new WallpaperLayout(item.Monitor.DeviceId, item.FolderPath));
+                wpLayouts.Add(new WallpaperLayout( item.FolderPath, item.MonitorDeviceId,item.MonitorContent, item.RType));
             }
-            return wallpaperLoayouts;
+            return wpLayouts;
         }
 
         private void SetAppRulesSettings() {

@@ -20,7 +20,7 @@ namespace VirtualPaper.UI.Views {
 
             _viewModel = App.Services.GetRequiredService<WpSettingsViewModel>();
             //_viewModel.SelectBarChanged += WpSettingsViewModel_SelectBarChanged;
-            _viewModel.UpdateMonitorLayout();
+            //_viewModel.InitMonitors();
             this.DataContext = _viewModel;
         }
 

@@ -25,14 +25,14 @@ using WinEventHook;
 using static VirtualPaper.Common.Errors;
 
 namespace VirtualPaper.Cores.WpControl {
-    internal partial class WallpaperControl : IWallpaperControl {
+    public partial class WallpaperControl : IWallpaperControl {
         public event EventHandler? WallpaperChanged;
         public event EventHandler<Exception>? WallpaperError;
         public event EventHandler? WallpaperReset;
 
         public nint DesktopWorkerW => _workerW;
         public ReadOnlyCollection<IWallpaperPlaying> Wallpapers => _wallpapers.AsReadOnly();
-        public ReadOnlyCollection<IWpBasicData> LibraryWallpapers => _librarywallpapers.AsReadOnly();
+        //public ReadOnlyCollection<IWpBasicData> LibraryWallpapers => _librarywallpapers.AsReadOnly();
 
         public WallpaperControl(
             IUserSettingsService userSettings,
@@ -117,10 +117,16 @@ namespace VirtualPaper.Cores.WpControl {
             }
         }
 
-        public IWpMetadata GetWallpaper(string folderPath) {
-            IWpMetadata metaData = WallpaperUtil.GetWallpaperByFolder(folderPath);
+        public IWpMetadata GetWallpaperByFolderPath(string folderPath, string monitorContent, string rtype) {
+            IWpMetadata data = WallpaperUtil.GetWallpaperByFolder(folderPath, monitorContent, rtype);
 
-            return metaData;
+            return data;
+        }
+
+        public IWpBasicData GetWpBasicDataByForlderPath(string folderPath) {
+            IWpBasicData data = WallpaperUtil.GetWpBasicDataByForlderPath(folderPath);
+
+            return data;
         }
 
         public async Task<bool> PreviewWallpaperAsync(IWpPlayerData data, bool isCurrentWp, CancellationToken token) {
@@ -197,16 +203,18 @@ namespace VirtualPaper.Cores.WpControl {
 
             try {
                 _logger.Info("Restore wallpapers...");
-                var wallpaperLayout = _userSettings.WallpaperLayouts.ToList();
+                var wallpaperLayouts = _userSettings.WallpaperLayouts.ToList();
                 if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand ||
                     _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate) {
-                    if (wallpaperLayout.Count != 0) {
-                        var metaData = WallpaperUtil.GetWallpaperByFolder(wallpaperLayout[0].FolderPath);
+                    if (wallpaperLayouts.Count != 0) {
+                        var layout = wallpaperLayouts[0];
+                        var metaData = WallpaperUtil.GetWallpaperByFolder(
+                            layout.FolderPath, layout.MonitorContent, layout.RType);
                         SetWallpaperAsync(metaData.GetPlayerData(), _monitorManager.PrimaryMonitor);
                     }
                 }
                 else if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Per) {
-                    RestoreWallpaper(wallpaperLayout);
+                    RestoreWallpaper(wallpaperLayouts);
                 }
 
                 response.IsFinished = true;
@@ -229,6 +237,7 @@ namespace VirtualPaper.Cores.WpControl {
 
             try {
                 _logger.Info($"Setting wallpaper: {data.FilePath}");
+
                 #region init
                 if (!_isInitialized) {
                     if (SystemParameters.HighContrast) {
@@ -303,7 +312,6 @@ namespace VirtualPaper.Cores.WpControl {
                                     App.Jobs.AddProcess(instance.Proc.Id);
 
                                 _wallpapers.Add(instance);
-                                monitor.ThumbnailPath = data.ThumbnailPath;
                             }
                         }
                         break;
@@ -324,7 +332,6 @@ namespace VirtualPaper.Cores.WpControl {
                                     App.Jobs.AddProcess(instance.Proc.Id);
 
                                 _wallpapers.Add(instance);
-                                monitor.ThumbnailPath = data.ThumbnailPath;
                             }
                         }
                         break;
@@ -346,7 +353,6 @@ namespace VirtualPaper.Cores.WpControl {
                                         App.Jobs.AddProcess(instance.Proc.Id);
 
                                     _wallpapers.Add(instance);
-                                    monitor.ThumbnailPath = data.ThumbnailPath;
                                 }
                             }
                         }
@@ -369,11 +375,6 @@ namespace VirtualPaper.Cores.WpControl {
                 WallpaperError?.Invoke(this, ex);
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
             }
-            //catch (Exception e) {
-            //    _logger.Error(e.ToString());
-            //    WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(e.Message));
-            //    WallpaperChanged?.Invoke(this, EventArgs.Empty);
-            //}
             finally {
                 _semaphoreSlimWallpaperLoadingLock.Release();
             }
@@ -503,6 +504,7 @@ namespace VirtualPaper.Cores.WpControl {
                     AppVersion = _userSettings.Settings.AppVersion,
                     FileVersion = _userSettings.Settings.FileVersion,
                 };
+                data.MonitorContent = monitorContent;
                 data.FolderPath = storageFilePath;
                 data.RType = rtype;
 
@@ -523,6 +525,7 @@ namespace VirtualPaper.Cores.WpControl {
                        storageFilePath,
                        wpEffectFilePathTemplate,
                        monitorContent,
+                       rtype,
                        _userSettings.Settings.WallpaperArrangement);
                 data.WpEffectFilePathUsing = wpEffectFilePathUsing;
 
@@ -532,7 +535,6 @@ namespace VirtualPaper.Cores.WpControl {
                     data.DepthFilePath = depthFilePath;
                 }
 
-                string runtimeDatafilePath = Path.Combine(storageFilePath, monitorContent, Constants.Field.WpRuntimeDataFileName);
                 data.Save();
             }
             catch (Exception ex) {
@@ -546,29 +548,6 @@ namespace VirtualPaper.Cores.WpControl {
 
             return data;
         }
-
-        //public string CreateMetadataRuntimeUsing(
-        //    string folderPath,
-        //    string wpEffectFilePathTemplate,
-        //    string monitorContent) {
-        //    string wpEffectFilePathUsing = string.Empty;
-
-        //    try {
-        //        wpEffectFilePathUsing =
-        //           WallpaperUtil.CreateWpEffectFileUsing(
-        //               folderPath,
-        //               wpEffectFilePathTemplate,
-        //               monitorContent,
-        //               _userSettings.Settings.WallpaperArrangement);
-        //    }
-        //    catch (Exception ex) {
-        //        _logger.Error(ex);
-
-        //        File.Delete(wpEffectFilePathUsing);
-        //    }
-
-        //    return wpEffectFilePathUsing;
-        //}
 
         public IWpBasicData UpdateBasicData(
             string folderPath,
@@ -591,7 +570,7 @@ namespace VirtualPaper.Cores.WpControl {
                 data.FilePath = filePath;
 
                 #region 创建展示缩略图
-                string coverFilePath = Path.Combine(folderPath, folderName + "_cover.gif");
+                string coverFilePath = Path.Combine(folderPath, folderName + Constants.Field.ThumGifSuff);
                 WallpaperUtil.CreateGif(filePath, coverFilePath, ftype, token);
                 data.ThumbnailPath = coverFilePath;
                 #endregion
@@ -603,8 +582,7 @@ namespace VirtualPaper.Cores.WpControl {
                 data.FileSize = fileProperty.FileSize;
                 data.FileExtension = fileProperty.FileExtension;
 
-                string basicDatafilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
-                JsonStorage<WpBasicData>.StoreData(basicDatafilePath, data);
+                data.Save();
                 #endregion
             }
             catch (Exception ex) {
@@ -781,8 +759,9 @@ namespace VirtualPaper.Cores.WpControl {
         private void RestoreWallpaper(List<IWallpaperLayout> wallpaperLayout) {
             foreach (var layout in wallpaperLayout) {
                 try {
-                    IWpMetadata metaData = WallpaperUtil.GetWallpaperByFolder(layout.FolderPath);
-                    if (metaData == null || !metaData.IsAvailable()) {
+                    IWpMetadata data = WallpaperUtil.GetWallpaperByFolder(
+                        layout.FolderPath, layout.MonitorContent, layout.RType);
+                    if (data == null || !data.IsAvailable()) {
                         _logger.Error($"Skipping restoration of {layout.FolderPath}");
                         continue;
                     }
@@ -792,8 +771,8 @@ namespace VirtualPaper.Cores.WpControl {
                         _logger.Info($"Screen missing, skipping restoration of {layout.FolderPath} | {layout.MonitorDeviceId}");
                     }
                     else {
-                        _logger.Info($"Restoring data: {metaData.BasicData.FolderPath}");
-                        SetWallpaperAsync(metaData.GetPlayerData(), monitor);
+                        _logger.Info($"Restoring data: {data.BasicData.FolderPath}");
+                        SetWallpaperAsync(data.GetPlayerData(), monitor);
                     }
                 }
                 catch (Exception e) {
@@ -813,7 +792,9 @@ namespace VirtualPaper.Cores.WpControl {
                 _wallpapers.ForEach(wallpaper => {
                     _userSettings.WallpaperLayouts.Add(new WallpaperLayout(
                             wallpaper.Data.FolderPath,
-                            wallpaper.Monitor.DeviceId));
+                            wallpaper.Monitor.DeviceId,
+                            wallpaper.Monitor.Content,
+                            wallpaper.Data.RType.ToString()));
                 });
 
                 try {
@@ -1032,7 +1013,7 @@ namespace VirtualPaper.Cores.WpControl {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly WindowEventHook? _workerWHook;
         private static readonly List<IWallpaperPlaying> _wallpapers = [];
-        private static readonly List<IWpBasicData> _librarywallpapers = [];
+        //private static readonly List<IWpBasicData> _librarywallpapers = [];
         private static readonly Dictionary<(string, RuntimeType), IWallpaperPlaying> _previews = [];
         //private readonly nint _progman;
         private static nint _workerW;

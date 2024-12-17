@@ -109,18 +109,28 @@
                         <GridView.ItemTemplate>
                             <DataTemplate>
                                 <Border
-                                    Height="120" 
-                                    Width="192" 
+                                    Height="150" 
+                                    Width="232" 
                                     VerticalAlignment="Center" 
                                     BorderThickness="2"
                                     BorderBrush="{ThemeResource ApplicationForegroundThemeBrush}">
                                     <Grid>
-                                        <Image
-                                            Source="{Binding ThumbnailPath, Converter={StaticResource ThumbnailPathConvert}}"/>
+                                        <Image                                           
+                                            Source="{Binding ThumbnailPath}"/>
+
+                                        <Canvas >
+                                            <Canvas.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="Transparent" Offset="0.0"/>
+                                                    <GradientStop Color="#0067c0" Offset="1.0"/>
+                                                </LinearGradientBrush>
+                                            </Canvas.Background>
+                                        </Canvas>
 
                                         <TextBlock 
                                             Text="{Binding Content}" 
                                             FontSize="40" 
+                                            FontWeight="SemiBold"
                                             HorizontalAlignment="Center" 
                                             VerticalAlignment="Center"/>
                                     </Grid>

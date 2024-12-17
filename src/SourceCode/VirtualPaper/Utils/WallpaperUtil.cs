@@ -13,22 +13,35 @@ using Size = OpenCvSharp.Size;
 
 namespace VirtualPaper.Utils {
     public static class WallpaperUtil {
-        public static IWpMetadata GetWallpaperByFolder(string folderPath) {
-            WpMetadata data = new();
-            if (File.Exists(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName))) {
-                data.BasicData = JsonStorage<WpBasicData>.LoadData(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName))
+        internal static IWpBasicData GetWpBasicDataByForlderPath(string folderPath) {
+            WpBasicData data = new();
+            string basicDataFilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
+            if (File.Exists(basicDataFilePath)) {
+                data = JsonStorage<WpBasicData>.LoadData(basicDataFilePath)
                     ?? throw new Exception("Corrupted wallpaper bacis-data");
             }
 
-            if (File.Exists(Path.Combine(folderPath, Constants.Field.WpRuntimeDataFileName))) {
-                data.RuntimeData = JsonStorage<WpRuntimeData>.LoadData(Path.Combine(folderPath, Constants.Field.WpRuntimeDataFileName))
+            return data;
+        }
+
+        internal static IWpMetadata GetWallpaperByFolder(string folderPath, string monitorContent, string rtype) {
+            WpMetadata data = new();
+            string basicDataFilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
+            if (File.Exists(basicDataFilePath)) {
+                data.BasicData = JsonStorage<WpBasicData>.LoadData(basicDataFilePath)
+                    ?? throw new Exception("Corrupted wallpaper bacis-data");
+            }
+
+            string runtimeDataFilePath = Path.Combine(folderPath, monitorContent, rtype, Constants.Field.WpRuntimeDataFileName);
+            if (File.Exists(runtimeDataFilePath)) {
+                data.RuntimeData = JsonStorage<WpRuntimeData>.LoadData(runtimeDataFilePath)
                     ?? throw new Exception("Corrupted wallpaper runtime-data");
             }
 
             return data;
         }
 
-        public static string CreateWpEffectFileTemplate(
+        internal static string CreateWpEffectFileTemplate(
             string folderPath,
             RuntimeType rtype) {
             string wpEffectFilePathTemplate = Path.Combine(folderPath, Constants.Field.WpEffectFilePathTemplate);
@@ -56,7 +69,7 @@ namespace VirtualPaper.Utils {
             return wpEffectFilePathTemplate;
         }
 
-        public static string CreateWpEffectFileTemporary(
+        internal static string CreateWpEffectFileTemporary(
             string folderPath,
             string wpEffectFilePathTemplate) {
             string wpEffectFilePathTemporary = Path.Combine(folderPath, Constants.Field.WpEffectFilePathTemporary);
@@ -65,10 +78,11 @@ namespace VirtualPaper.Utils {
             return wpEffectFilePathTemporary;
         }
 
-        public static string CreateWpEffectFileUsing(
+        internal static string CreateWpEffectFileUsing(
             string folderPath,
             string wpEffectFilePathTemplate,
             string monitorContent,
+            RuntimeType rtype,
             WallpaperArrangement arrangement) {
             string wpEffectFilePathUsing = string.Empty;
             if (wpEffectFilePathTemplate != null) {
@@ -76,13 +90,13 @@ namespace VirtualPaper.Utils {
                     string wpdataUsingFolder = string.Empty;
                     switch (arrangement) {
                         case WallpaperArrangement.Per:
-                            wpdataUsingFolder = Path.Combine(folderPath, monitorContent);
+                            wpdataUsingFolder = Path.Combine(folderPath, monitorContent, rtype.ToString());
                             break;
                         case WallpaperArrangement.Expand:
-                            wpdataUsingFolder = Path.Combine(folderPath, "Expand");
+                            wpdataUsingFolder = Path.Combine(folderPath, "Expand", rtype.ToString());
                             break;
                         case WallpaperArrangement.Duplicate:
-                            wpdataUsingFolder = Path.Combine(folderPath, "Duplicate");
+                            wpdataUsingFolder = Path.Combine(folderPath, "Duplicate", rtype.ToString());
                             break;
                     }
                     Directory.CreateDirectory(wpdataUsingFolder);
@@ -94,7 +108,7 @@ namespace VirtualPaper.Utils {
             return wpEffectFilePathUsing;
         }
 
-        public static void CreateGif(string filePath, string coverFilePath, FileType ftype, CancellationToken token) {
+        internal static void CreateGif(string filePath, string coverFilePath, FileType ftype, CancellationToken token) {
             GifBitmapEncoder gEnc = new();
             if (ftype == FileType.FPicture) {
                 Bitmap bitmap = new(filePath);
@@ -153,7 +167,7 @@ namespace VirtualPaper.Utils {
             File.WriteAllBytes(coverFilePath, [.. newBytes]);
         }
 
-        public static FileProperty GetWpProperty(string filePath, FileType ftype) {
+        internal static FileProperty GetWpProperty(string filePath, FileType ftype) {
             FileProperty fileProperty = new() {
                 FileExtension = Path.GetExtension(filePath)
             };
@@ -165,34 +179,34 @@ namespace VirtualPaper.Utils {
 
             switch (ftype) {
                 case FileType.FVideo or FileType.FGif: {
-                    using var capture = new VideoCapture(filePath);
-                    if (!capture.IsOpened()) throw new();
+                        using var capture = new VideoCapture(filePath);
+                        if (!capture.IsOpened()) throw new();
 
-                    var fps = capture.Fps;
-                    int width = capture.FrameWidth;
-                    int height = capture.FrameHeight;
-                    double ratio = (double)width / height;
+                        var fps = capture.Fps;
+                        int width = capture.FrameWidth;
+                        int height = capture.FrameHeight;
+                        double ratio = (double)width / height;
 
-                    fileProperty.Resolution = $"{width} * {height} ({fps:0.00} fps)";
-                    fileProperty.AspectRatio = GetRatio(ratio);
+                        fileProperty.Resolution = $"{width} * {height} ({fps:0.00} fps)";
+                        fileProperty.AspectRatio = GetRatio(ratio);
 
-                    capture.Release();
+                        capture.Release();
 
-                    break;
-                }
+                        break;
+                    }
                 case FileType.FPicture: {
-                    using var img = new Mat(filePath);
+                        using var img = new Mat(filePath);
 
-                    Size sz = img.Size();
-                    int width = sz.Width;
-                    int height = sz.Height;
-                    double ratio = (double)width / height;
+                        Size sz = img.Size();
+                        int width = sz.Width;
+                        int height = sz.Height;
+                        double ratio = (double)width / height;
 
-                    fileProperty.Resolution = $"{width} * {height}";
-                    fileProperty.AspectRatio = GetRatio(ratio);
+                        fileProperty.Resolution = $"{width} * {height}";
+                        fileProperty.AspectRatio = GetRatio(ratio);
 
-                    break;
-                }
+                        break;
+                    }
             }
 
             return fileProperty;

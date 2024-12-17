@@ -42,7 +42,7 @@ namespace VirtualPaper.GrpcServers {
 
         public override async Task<Grpc_WpMetaData> GetWallpaper(Grpc_GetWallpaperRequest request, ServerCallContext context) {
             Grpc_WpMetaData resp = new();
-            IWpMetadata data = _wpControl.GetWallpaper(request.FolderPath);
+            IWpMetadata data = _wpControl.GetWallpaperByFolderPath(request.FolderPath, request.MonitorContent, request.RType);
             resp.WpBasicData = DataAssist.BasicDataToGrpcData(data.BasicData);
             resp.WpRuntimeData = DataAssist.RuntimeDataToGrpcData(data.RuntimeData);
 

@@ -50,12 +50,14 @@ message Grpc_UpdateResponse {
 }
 
 message Grpc_WallpaperLayoutsSettings {
-    repeated Grpc_WallpaperLayoutData wallpaper_layouts = 1;    
+    repeated Grpc_WallpaperLayout wallpaper_layouts = 1;    
 }
 
-message Grpc_WallpaperLayoutData {
-    Grpc_MonitorData monitor = 1;
-    string folder_path = 2;
+message Grpc_WallpaperLayout {    
+    string folder_path = 1;
+	string monitor_device_id = 2;
+	string monitor_content = 3;
+	string r_type = 4;
 }
 
 message Grpc_SettingsData {
@@ -170,7 +172,8 @@ message Grpc_WallpaperScreenshotRequest {
 
 message Grpc_GetWallpaperRequest {
 	string folder_path = 1;
-	string file_path = 2;
+	string monitor_content = 2;
+	string r_type = 3;
 }
 
 message Grpc_CreateMetadataBasicRequest {
@@ -249,13 +252,14 @@ message Grpc_WpBasicData {
 }
 
 message Grpc_WpRuntimeData {
-	string folder_path = 1;
-	string depth_file_path = 2;
-	Grpc_ApplicationInfo app_info = 3;
-	string wp_effect_file_path_template = 4;
-    string wp_effect_file_path_temporary = 5;
-    string wp_effect_file_path_using = 6;
-	Grpc_RuntimeType r_type = 7;
+	string monitor_content = 1;
+	string folder_path = 2;
+	string depth_file_path = 3;
+	Grpc_ApplicationInfo app_info = 4;
+	string wp_effect_file_path_template = 5;
+    string wp_effect_file_path_temporary = 6;
+    string wp_effect_file_path_using = 7;
+	Grpc_RuntimeType r_type = 8;
 }
 
 message Grpc_WpDownloadData {

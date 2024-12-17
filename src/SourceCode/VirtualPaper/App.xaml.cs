@@ -152,8 +152,8 @@ namespace VirtualPaper {
                 bool isScrOn = userSettings.Settings.IsScreenSaverOn;
                 var wl = userSettings.WallpaperLayouts;
                 if (isScrOn && wl.Count > 0) {
-                    var metaData = wpControl.GetWallpaper(wl[0].FolderPath);
-                    Services.GetRequiredService<IScrControl>().Start(metaData.BasicData);
+                    var data = wpControl.GetWpBasicDataByForlderPath(wl[0].FolderPath);
+                    Services.GetRequiredService<IScrControl>().Start(data);
                 }
 
                 //first run Setup-Wizard show..

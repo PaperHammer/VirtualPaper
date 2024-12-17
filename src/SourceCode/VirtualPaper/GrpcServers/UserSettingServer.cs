@@ -16,28 +16,12 @@ namespace VirtualPaper.GrpcServers {
         IUIRunnerService uiRunner) : Grpc_UserSettingsService.Grpc_UserSettingsServiceBase {
         public override Task<Grpc_WallpaperLayoutsSettings> GetWallpaperLayouts(Empty request, ServerCallContext context) {
             var resp = new Grpc_WallpaperLayoutsSettings();
-            foreach (var wl in _userSetting.WallpaperLayouts) {
-                resp.WallpaperLayouts.Add(new Grpc_WallpaperLayoutData {
-                    Monitor = new() {
-                        DeviceId = wl.MonitorDeviceId,
-                        //DeviceName = wl.Monitor.DeviceName,
-                        //MonitorName = wl.Monitor.MonitorName,
-                        //HMonitor = (int)wl.Monitor.HMonitor,
-                        //WorkingArea = new() {
-                        //    X = wl.Monitor.WorkingArea.X,
-                        //    Y = wl.Monitor.WorkingArea.Y,
-                        //    Width = wl.Monitor.WorkingArea.Width,
-                        //    Height = wl.Monitor.WorkingArea.Height,
-                        //},
-                        //Bounds = new() {
-                        //    X = wl.Monitor.Bounds.X,
-                        //    Y = wl.Monitor.Bounds.Y,
-                        //    Width = wl.Monitor.Bounds.Width,
-                        //    Height = wl.Monitor.Bounds.Height,
-                        //},
-                        //Content = wl.Monitor.Content,
-                    },
-                    FolderPath = wl.FolderPath,
+            foreach (var layout in _userSetting.WallpaperLayouts) {
+                resp.WallpaperLayouts.Add(new Grpc_WallpaperLayout {                    
+                    FolderPath = layout.FolderPath,
+                    MonitorDeviceId = layout.MonitorDeviceId,
+                    MonitorContent = layout.MonitorContent,
+                    RType = layout.RType,
                 });
             }
 

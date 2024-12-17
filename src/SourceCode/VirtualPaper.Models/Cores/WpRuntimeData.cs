@@ -8,6 +8,7 @@ namespace VirtualPaper.Models.Cores {
     [Serializable]
     public class WpRuntimeData : IWpRuntimeData {
         public ApplicationInfo AppInfo { get; set; } = new();
+        public string MonitorContent { get; set; } = "-1";
         public string FolderPath { get; set; } = string.Empty;
         public string DepthFilePath { get; set; } = string.Empty;
         public string WpEffectFilePathTemplate { get; set; } = string.Empty;
@@ -41,7 +42,7 @@ namespace VirtualPaper.Models.Cores {
         }
 
         public void Save() {
-            JsonStorage<IWpRuntimeData>.StoreData(Path.Combine(this.FolderPath, Constants.Field.WpRuntimeDataFileName), this);
+            JsonStorage<IWpRuntimeData>.StoreData(Path.Combine(this.FolderPath, MonitorContent, RType.ToString(), Constants.Field.WpRuntimeDataFileName), this);
         }
 
         public IWpRuntimeData Clone() {

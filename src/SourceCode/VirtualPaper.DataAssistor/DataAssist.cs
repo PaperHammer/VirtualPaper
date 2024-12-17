@@ -39,6 +39,7 @@ namespace VirtualPaper.DataAssistor {
 
         public static Grpc_WpRuntimeData RuntimeDataToGrpcData(IWpRuntimeData source) {
             Grpc_WpRuntimeData grpc_WpRuntimeData = new() {
+                MonitorContent = source.MonitorContent,
                 FolderPath = source.FolderPath,
                 DepthFilePath = source.DepthFilePath,
                 AppInfo = new() {
@@ -73,6 +74,7 @@ namespace VirtualPaper.DataAssistor {
 
         public static WpRuntimeData GrpcToRuntimeData(Grpc_WpRuntimeData source) {
             WpRuntimeData runtimeData = new() {
+                MonitorContent = source.MonitorContent,
                 FolderPath = source.FolderPath,
                 DepthFilePath = source.DepthFilePath,
                 AppInfo = new() {

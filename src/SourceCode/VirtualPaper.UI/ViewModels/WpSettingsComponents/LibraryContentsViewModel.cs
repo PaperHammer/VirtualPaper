@@ -194,13 +194,6 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 data = DataAssist.GrpcToBasicData(grpc_basicData);
                 UpdateLib(data);
 
-                //bool isUsing = await CheckFileUsingAsync(data, true);
-                //if (isUsing) {
-                //    Grpc_MonitorData grpc_monitor = await _wpControlClient.GetRunMonitorByWallpaperAsync(data.WallpaperUid);
-                //    IMonitor monitor = DataAssist.GrpToMonitorData(grpc_monitor);
-                //    await _wpControlClient.re(monitor, data, default);
-                //}
-
                 BasicUIComponentUtil.ShowMsg(true, Constants.LocalText.InfobarMsg_Success, InfoBarSeverity.Success);
             }
             catch (Exception ex) {
@@ -249,16 +242,19 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                 if (rtype == RuntimeType.RUnknown) return;
 
-                Grpc_SetWallpaperResponse setUesponse = await _wpControlClient.SetWallpaperAsync(
-                    _wpSettingsViewModel.GetSelectedMonitor(),
+                Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
+                    _wpSettingsViewModel.Monitors[_wpSettingsViewModel.MonitorSelectedIdx],
                     data,
                     rtype,
                     _ctsApply.Token);
-                if (!setUesponse.IsFinished) {
+                if (!response.IsFinished) {
                     BasicUIComponentUtil.ShowMsg(
                         true,
                         Constants.LocalText.Dialog_Content_ApplyError,
                         InfoBarSeverity.Error);
+                }
+                else {
+                    _wpSettingsViewModel.Monitors[_wpSettingsViewModel.MonitorSelectedIdx].ThumbnailPath = data.ThumbnailPath;
                 }
             }
             catch (OperationCanceledException) {

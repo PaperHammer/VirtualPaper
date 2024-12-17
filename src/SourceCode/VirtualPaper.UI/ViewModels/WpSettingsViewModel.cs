@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Controls;
@@ -49,6 +50,8 @@ namespace VirtualPaper.UI.ViewModels {
             _localizer = LanguageUtil.LocalizerInstacne;
 
             InitText();
+            InitMonitors();
+            InitMonitorsBg();
         }
 
         #region Init
@@ -63,7 +66,7 @@ namespace VirtualPaper.UI.ViewModels {
             SelBarItem2 = _localizer.GetLocalizedString(Constants.LocalText.WpSettings_SidebarSettings);
         }
 
-        internal void UpdateMonitorLayout() {
+        internal void InitMonitors() {
             Monitors.Clear();
             switch (_userSettingsClient.Settings.WallpaperArrangement) {
                 case WallpaperArrangement.Per: {
@@ -87,6 +90,15 @@ namespace VirtualPaper.UI.ViewModels {
                 _monitorSelectedIdx = 0;
             }
         }
+
+        private void InitMonitorsBg() {
+            foreach (var layout in _userSettingsClient.WallpaperLayouts) {
+                string monitorDeviceId = layout.MonitorDeviceId;
+                int idx = Monitors.FindIndex(x => x.DeviceId == monitorDeviceId);
+                string fileName = Path.GetFileName(layout.FolderPath);
+                Monitors[idx].ThumbnailPath = Path.Combine(layout.FolderPath, fileName + Constants.Field.ThumGifSuff);
+            }
+        }
         #endregion
 
         #region Control Buttons
@@ -95,7 +107,7 @@ namespace VirtualPaper.UI.ViewModels {
         }
 
         internal async Task DetectAsync() {
-            UpdateMonitorLayout();
+            InitMonitors();
 
             await _dialogService.ShowDialogAsync(
                 _localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_GetMonitorsAsync) + Monitors.Count
@@ -110,11 +122,12 @@ namespace VirtualPaper.UI.ViewModels {
         internal async Task PreviewAsync() {
             try {
                 await _previewSemaphoreSlim.WaitAsync();
-                if (!Monitors[MonitorSelectedIdx].HasWallpaper) return;
 
                 _ctsPreview = new CancellationTokenSource();
                 BasicUIComponentUtil.Loading(true, false, [_ctsPreview]);
                 IWpMetadata data = _wpControlClient.GetWpMetadataByMonitorThu(Monitors[MonitorSelectedIdx].ThumbnailPath);
+                if (data == null) return;
+
                 bool isStarted = await _wpControlClient.PreviewWallpaperAsync(data.BasicData, data.RuntimeData.RType, _ctsPreview.Token);
                 if (!isStarted) {
                     throw new Exception("Preview Failed.");
@@ -130,14 +143,6 @@ namespace VirtualPaper.UI.ViewModels {
                 BasicUIComponentUtil.Loaded([_ctsPreview]);
                 _previewSemaphoreSlim.Release();
             }
-        }
-
-        internal string GetSelectedMonitorContent() {
-            return GetSelectedMonitor().Content;
-        }
-
-        internal IMonitor GetSelectedMonitor() {
-            return Monitors[MonitorSelectedIdx];
         }
         #endregion
 

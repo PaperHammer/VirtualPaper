@@ -17,9 +17,6 @@ namespace VirtualPaper.GrpcServers {
             foreach (var monitor in _monitorManager.Monitors) {
                 var item = new Grpc_MonitorData() {
                     DeviceId = monitor.DeviceId,
-                    //DeviceName = monitor.DeviceName,
-                    //MonitorName = monitor.MonitorName,
-                    //HMonitor = monitor.HMonitor.ToInt32(),
                     IsPrimary = monitor.IsPrimary,
                     Bounds = new() {
                         X = monitor.Bounds.X,

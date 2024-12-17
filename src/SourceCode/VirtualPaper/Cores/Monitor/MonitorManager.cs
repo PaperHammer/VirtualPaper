@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 
@@ -111,33 +112,21 @@ namespace VirtualPaper.Cores.Monitor {
             Models.Cores.Monitor? monitor;
 
             if (!_multiMonitorSupport || hMonitor == (IntPtr)PRIMARY_MONITOR) {
-                //monitor = GetMonitorByDeviceName(DEAFULT_DISPLAY_DEVICENAME);
 
-                //if (monitor == null) {
-                //}
                 monitor = new(DEAFULT_DISPLAY_DEVICENAME) {                 
                     Bounds = GetVirtualScreenBounds(),
                     DeviceId = GetDefaultMonitorDeviceId(),
-                    //monitor.MonitorName = "Monitor";
-                    //monitor.HMonitor = hMonitor;
                     IsPrimary = true,
                     WorkingArea = GetWorkingArea(),
                     IsStale = false
                 };
-
-                //Monitors.Add(monitor);
             }
             else {
                 var info = new Native.MONITORINFOEX();// MONITORINFOEX();
                 Native.GetMonitorInfo(new HandleRef(null, hMonitor), info);
 
                 string deviceName = new string(info.szDevice).TrimEnd((char)0);
-
-                //monitor = GetMonitorByDeviceName(deviceName);
-
                 monitor = CreateMonitorByMonitorInfo(deviceName);
-
-                //monitor.HMonitor = hMonitor;
 
                 UpdateDisplayMonitor(monitor, info);
             }

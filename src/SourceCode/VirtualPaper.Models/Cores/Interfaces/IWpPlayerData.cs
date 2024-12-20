@@ -16,6 +16,6 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         string WpEffectFilePathTemporary { get; set; }
         string WpEffectFilePathUsing { get; set; }
 
-        IWpMetadata GetMetadata();
+        IWpMetadata GetMetadata(string monitorContent);
     }
 }

@@ -15,10 +15,10 @@ namespace VirtualPaper.Models.Cores {
         public string WpEffectFilePathTemporary { get; set; } = string.Empty;
         public string WpEffectFilePathUsing { get; set; } = string.Empty;
 
-        public IWpMetadata GetMetadata() {
+        public IWpMetadata GetMetadata(string monitorContent) {
             WpMetadata metadata = new() {
                 BasicData = JsonStorage<WpBasicData>.LoadData(Path.Combine(FolderPath, Constants.Field.WpBasicDataFileName)),
-                RuntimeData = JsonStorage<WpRuntimeData>.LoadData(Path.Combine(FolderPath, Constants.Field.WpRuntimeDataFileName)),
+                RuntimeData = JsonStorage<WpRuntimeData>.LoadData(Path.Combine(FolderPath, monitorContent, RType.ToString(), Constants.Field.WpRuntimeDataFileName)),
             };
 
             return metadata;

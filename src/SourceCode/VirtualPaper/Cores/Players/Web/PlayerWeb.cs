@@ -1,14 +1,11 @@
 ﻿using System.Diagnostics;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Shell;
-using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Cores.Players.Web {
@@ -223,7 +220,8 @@ namespace VirtualPaper.Cores.Players.Web {
                                 throw new Exception("Browser input/window handle NULL.");
                             }
 
-                            ConvertPopupToChildWindow(Handle);}
+                            ConvertPopupToChildWindow(Handle);
+                        }
                         catch (Exception ie) {
                             error = ie;
                         }
@@ -410,7 +408,6 @@ namespace VirtualPaper.Cores.Players.Web {
         private static int _globalCount;
         private readonly int _uniqueId;
         private bool _isInitialized;
-        //private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         //private readonly int _timeout = 50000;
     }
 }

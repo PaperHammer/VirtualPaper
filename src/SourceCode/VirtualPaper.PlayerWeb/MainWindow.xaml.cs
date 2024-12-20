@@ -94,6 +94,7 @@ namespace VirtualPaper.PlayerWeb {
                     WindowUtil.AddDetailsPage();
                 }
                 else {
+                    this.Activated -= WindowEx_Activated;
                     WindowUtil.SetWindowAsBackground();
                 }
 
@@ -315,7 +316,7 @@ namespace VirtualPaper.PlayerWeb {
 
         private async Task InitializeWebViewAsync() {
             var env = await CoreWebView2Environment.CreateWithOptionsAsync(null, Constants.CommonPaths.TempWebView2Dir, _environmentOptions);
-            await Webview2.EnsureCoreWebView2Async(env);           
+            await Webview2.EnsureCoreWebView2Async(env);
 
             Webview2.CoreWebView2.ProcessFailed += (s, e) => {
                 App.WriteToParent(new VirtualPaperMessageConsole() {
@@ -423,11 +424,6 @@ namespace VirtualPaper.PlayerWeb {
             }
             sb_script.Append(");");
 
-#if DEBUG
-            string cmd = sb_script.ToString();
-            Debug.WriteLine(cmd);
-#endif
-
             string script = string.Empty;
             await _dispatcherQueue.EnqueueOrInvoke(async () => {
                 if (Webview2.CoreWebView2 == null) { // ???
@@ -451,14 +447,6 @@ namespace VirtualPaper.PlayerWeb {
                 _ => throw new ArgumentException(nameof(_startArgs.RuntimeType)),
             };
         }
-
-        //private bool GetParallaxMainControl() {
-        //    return _startArgs.RuntimeType switch {
-        //        "RImage" => _isParallaxOnForDefault,
-        //        "RImage3D" => _isParallaxOnFor3D,
-        //        _ => false
-        //    };
-        //}
 
         #region window title bar
         private void SetWindowStyle() {
@@ -559,10 +547,7 @@ namespace VirtualPaper.PlayerWeb {
         }; // workaround: avoid cache
         private readonly StartArgs _startArgs;
         private static bool _isPaused = false;
-        //private static bool _isParallaxOnForDefault = false;
-        //private static bool _isParallaxOnFor3D = true;
         private static bool _isParallaxOn = true;
-        //private static int _isParallaxForDefaultRunning = 0;
         private static int _isParallaxRunning = 0;
         private static bool _isFocusOnDesk = false;
         private Native.RECT _windowRc;

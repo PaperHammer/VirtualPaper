@@ -200,10 +200,6 @@ namespace VirtualPaper {
             _userSettingsService.Save<ISettings>();
 
             var pipeClient = App.Services.GetRequiredService<TrayCommand>();
-            //pipeClient.SendMsgToUI("UPDATE_SCRSETTINGS-" 
-            //    + srcsaver.Tag.ToString() 
-            //    + "-" + lockScr.Tag.ToString() 
-            //    + "-" + (deNone.Tag.ToString() == "On" ? "None" : "Bubble"));
             pipeClient.SendMsgToUI("UPDATE_SCRSETTINGS");
         }
 

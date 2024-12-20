@@ -150,10 +150,8 @@ namespace VirtualPaper {
 
                 // 启动屏保服务（需要在"还原壁纸"后进行）
                 bool isScrOn = userSettings.Settings.IsScreenSaverOn;
-                var wl = userSettings.WallpaperLayouts;
-                if (isScrOn && wl.Count > 0) {
-                    var data = wpControl.GetWpBasicDataByForlderPath(wl[0].FolderPath);
-                    Services.GetRequiredService<IScrControl>().Start(data);
+                if (isScrOn) {
+                    Services.GetRequiredService<IScrControl>().Start();
                 }
 
                 //first run Setup-Wizard show..

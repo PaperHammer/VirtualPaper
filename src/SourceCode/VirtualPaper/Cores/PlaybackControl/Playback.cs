@@ -2,7 +2,6 @@
 using System.Text;
 using System.Windows.Threading;
 using Microsoft.Win32;
-using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Hardware;
 using VirtualPaper.Common.Utils.PInvoke;
@@ -107,35 +106,37 @@ namespace VirtualPaper.Cores.PlaybackControl {
         }
 
         private void ProcessMonitor(object? sender, EventArgs e) {
-            if (_scrControl.IsRunning) {
-                ChangeWpState(AppWpRunRulesEnum.Pause);
-            }
-            else if (WallpaperPlaybackMode == PlaybackMode.Paused || _isLockScreen ||
-                (_isRemoteSession && _userSettings.Settings.RemoteDesktop == AppWpRunRulesEnum.Pause)) {
-                ChangeWpState(AppWpRunRulesEnum.Pause);
-            }
-            else if (WallpaperPlaybackMode == PlaybackMode.Silence || _isLockScreen ||
-                (_isRemoteSession && _userSettings.Settings.RemoteDesktop == AppWpRunRulesEnum.Silence)) {
-                ChangeWpState(AppWpRunRulesEnum.Silence);
-            }
-            else if (PowerUtil.GetACPowerStatus() == PowerUtil.ACLineStatus.Offline &&
-                _userSettings.Settings.BatteryPoweredn == AppWpRunRulesEnum.Pause) {
-                ChangeWpState(AppWpRunRulesEnum.Pause);
-            }
-            else if (PowerUtil.GetACPowerStatus() == PowerUtil.ACLineStatus.Offline &&
-                _userSettings.Settings.BatteryPoweredn == AppWpRunRulesEnum.Silence) {
-                ChangeWpState(AppWpRunRulesEnum.Silence);
-            }
-            else if (PowerUtil.GetBatterySaverStatus() == PowerUtil.SystemStatusFlag.On &&
-                _userSettings.Settings.PowerSaving == AppWpRunRulesEnum.Pause) {
-                ChangeWpState(AppWpRunRulesEnum.Pause);
-            }
-            else if (PowerUtil.GetBatterySaverStatus() == PowerUtil.SystemStatusFlag.On &&
-                _userSettings.Settings.PowerSaving == AppWpRunRulesEnum.Silence) {
-                ChangeWpState(AppWpRunRulesEnum.Silence);
-            }
-            else {
-                AdjustWpBehaviourBaseOnForegroundApp();
+            if (_wpControl.Wallpapers.Count > 0) {
+                if (_scrControl.IsRunning) {
+                    ChangeWpState(AppWpRunRulesEnum.Pause);
+                }
+                else if (WallpaperPlaybackMode == PlaybackMode.Paused || _isLockScreen ||
+                    (_isRemoteSession && _userSettings.Settings.RemoteDesktop == AppWpRunRulesEnum.Pause)) {
+                    ChangeWpState(AppWpRunRulesEnum.Pause);
+                }
+                else if (WallpaperPlaybackMode == PlaybackMode.Silence || _isLockScreen ||
+                    (_isRemoteSession && _userSettings.Settings.RemoteDesktop == AppWpRunRulesEnum.Silence)) {
+                    ChangeWpState(AppWpRunRulesEnum.Silence);
+                }
+                else if (PowerUtil.GetACPowerStatus() == PowerUtil.ACLineStatus.Offline &&
+                    _userSettings.Settings.BatteryPoweredn == AppWpRunRulesEnum.Pause) {
+                    ChangeWpState(AppWpRunRulesEnum.Pause);
+                }
+                else if (PowerUtil.GetACPowerStatus() == PowerUtil.ACLineStatus.Offline &&
+                    _userSettings.Settings.BatteryPoweredn == AppWpRunRulesEnum.Silence) {
+                    ChangeWpState(AppWpRunRulesEnum.Silence);
+                }
+                else if (PowerUtil.GetBatterySaverStatus() == PowerUtil.SystemStatusFlag.On &&
+                    _userSettings.Settings.PowerSaving == AppWpRunRulesEnum.Pause) {
+                    ChangeWpState(AppWpRunRulesEnum.Pause);
+                }
+                else if (PowerUtil.GetBatterySaverStatus() == PowerUtil.SystemStatusFlag.On &&
+                    _userSettings.Settings.PowerSaving == AppWpRunRulesEnum.Silence) {
+                    ChangeWpState(AppWpRunRulesEnum.Silence);
+                }
+                else {
+                    AdjustWpBehaviourBaseOnForegroundApp();
+                }
             }
         }
 

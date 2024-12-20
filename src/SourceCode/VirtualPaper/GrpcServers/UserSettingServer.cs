@@ -61,9 +61,6 @@ namespace VirtualPaper.GrpcServers {
             var resp = new Grpc_SettingsData() {
                 SelectedMonitor = new Grpc_MonitorData() {
                     DeviceId = settings.SelectedMonitor.DeviceId ?? string.Empty,
-                    //DeviceName = settings.SelectedMonitor.DeviceName ?? string.Empty,
-                    //MonitorName = settings.SelectedMonitor.MonitorName ?? string.Empty,
-                    //HMonitor = settings.SelectedMonitor.HMonitor.ToInt32(),
                     IsPrimary = settings.SelectedMonitor.IsPrimary,
                     WorkingArea = new Grpc_Rectangle() {
                         X = settings.SelectedMonitor.WorkingArea.X,

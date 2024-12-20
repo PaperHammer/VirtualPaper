@@ -4,7 +4,7 @@ import "google/protobuf/empty.proto";
 import "Protos/models.proto";
 
 service Grpc_ScrCommandsService {
-	rpc Start (VirtualPaper.Grpc.Service.Models.Grpc_WpBasicData) returns (google.protobuf.Empty);
+	rpc Start (google.protobuf.Empty) returns (google.protobuf.Empty);
 	rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty);
 	rpc ChangeLockStatu(VirtualPaper.Grpc.Service.Models.Grpc_LockData) returns (google.protobuf.Empty);
 	rpc AddToWhiteList(VirtualPaper.Grpc.Service.Models.Grpc_ProcInfoData) returns (google.protobuf.Empty);

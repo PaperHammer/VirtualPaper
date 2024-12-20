@@ -63,7 +63,7 @@ namespace VirtualPaper.Services {
                     _logger.Error(e.ToString());
                     AppRules =
                     [
-                        new ApplicationRules("Discord", AppWpRunRulesEnum.KeepRun)
+                        new ApplicationRules(Constants.CoreField.AppName, AppWpRunRulesEnum.KeepRun)
                     ];
                     Save<List<IApplicationRules>>();
                 }

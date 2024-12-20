@@ -38,6 +38,7 @@ namespace VirtualPaper.Cores.WpControl {
         void CloseAllWallpapers();
         void CloseWallpaper(IMonitor monitor);
         void CloseAllPreview();
+        (string?, RuntimeType?) GetPrimaryWpFilePathRType();
         IWpMetadata GetWallpaperByFolderPath(string folderPath, string monitorContent, string rtype);
         IWpBasicData GetWpBasicDataByForlderPath(string folderPath);
         Task<bool> PreviewWallpaperAsync(IWpPlayerData data, bool isCurrentWp, CancellationToken toke);

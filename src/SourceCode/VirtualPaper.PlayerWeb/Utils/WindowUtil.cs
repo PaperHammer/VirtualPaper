@@ -2,7 +2,6 @@
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Models.EffectValue;
 using VirtualPaper.Common.Utils.PInvoke;

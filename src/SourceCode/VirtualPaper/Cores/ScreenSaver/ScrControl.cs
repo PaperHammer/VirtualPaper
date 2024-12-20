@@ -4,11 +4,10 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Windows.Threading;
-using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
-using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Views.WindowsMsg;
 
@@ -19,11 +18,11 @@ namespace VirtualPaper.Cores.ScreenSaver {
 
         public ScrControl(
             IUserSettingsService userSettingsService,
-            //IWatchdogService watchdogService,
+            IWallpaperControl wpControl,
             RawInputMsgWindow msgWindow) {
             _userSettingsService = userSettingsService;
-            //_watchdog = watchdogService;
             _msgWindow = msgWindow;
+            _wpControl = wpControl;
 
             _msgWindow.MouseMoveRaw += MsgWindow_MouseMoveRaw;
             _msgWindow.MouseDownRaw += MsgWindow_MouseDownRaw;
@@ -45,15 +44,18 @@ namespace VirtualPaper.Cores.ScreenSaver {
             StopTimeTask();
         }
 
-        public void Start(IWpBasicData data) {
-            try {
-                _data = data;
+        public  void Start() {
+            try {     
+                if (_isTiming || IsRunning) {
+                    return;
+                }
+
                 _isRunningLock = _userSettingsService.Settings.IsRunningLock;
 
                 StartTimerTask();
             }
             catch (Exception ex) {
-                _logger.Error("ScreenSaver started error..." + ex.Message);
+                App.Log.Error("ScreenSaver started error..." + ex.Message);
             }
         }
 
@@ -76,17 +78,17 @@ namespace VirtualPaper.Cores.ScreenSaver {
             }
         }
 
-        private void StartTimerTask() {
-            if (_data == null) return;
-
+        private void StartTimerTask() {            
             _dispatcherTimer.Interval = TimeSpan.FromMinutes(_userSettingsService.Settings.WaitingTime);
             _dispatcherTimer.Tick += DispatcherTimer_Tick;
             _dispatcherTimer.Start();
+            _isTiming = true;
         }
 
         private void StopTimeTask() {
             _dispatcherTimer.Tick -= DispatcherTimer_Tick;
             _dispatcherTimer.Stop();
+            _isTiming = false;
         }
 
         private void StopProc() {
@@ -95,19 +97,22 @@ namespace VirtualPaper.Cores.ScreenSaver {
                 _isStopping = true;
 
                 SendMessage(new VirtualPaperCloseCmd());
-                _logger.Info("ScreenSaver was stoppped.");
+                App.Log.Info("ScreenSaver was stoppped.");
                 if (_isRunningLock) {
                     Native.LockWorkStation();
                 }
             }
         }
-    
+
         private void DispatcherTimer_Tick(object? sender, EventArgs e) {
             try {
                 StopTimeTask();
 
-                if (_data == null) {
-                    ResetTimer("");
+                var tup = _wpControl.GetPrimaryWpFilePathRType();
+                string? filePath = tup.Item1;
+                string? rtype = tup.Item2.ToString();
+                if (filePath == null || rtype == null) {
+                    ResetTimer("Primary wallpaper was none.");
                     return;
                 }
 
@@ -117,7 +122,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_BUSY:
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_RUNNING_D3D_FULL_SCREEN:
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_PRESENTATION_MODE:
-                            ResetTimer("");
+                            ResetTimer("The foreground whitelist event is active");
                             return;
                     }
                 }
@@ -127,7 +132,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
                 string procName = Process.GetProcessById(processId).ProcessName;
 
                 if (_scrWhiteListProcState.ContainsKey(procName)) {
-                    ResetTimer("");
+                    ResetTimer("The foreground whitelisting program is active");
                     return;
                 }
 
@@ -135,37 +140,38 @@ namespace VirtualPaper.Cores.ScreenSaver {
                     if (_isStarting || IsRunning) return;
                     _isStarting = true;
 
-                    InitScr();
+                    InitScr(filePath, rtype);
 
                     if (Proc == null) {
-                        _logger.Error("Run ScreenSaver failed...");
+                        App.Log.Error("Run ScreenSaver failed...");
                         return;
                     }
 
                     Proc.Exited += Proc_Exited;
                     Proc.OutputDataReceived += Proc_OutputDataReceived;
                     Proc.Start();
+                    App.Jobs.AddProcess(Proc.Id);
                     Proc.BeginOutputReadLine();
 
-                    //_watchdog.Add(Proc.Id);
-                    _logger.Info("ScreenSaver is started.");
+                    App.Log.Info("ScreenSaver is started.");
                 }
             }
             catch (Exception ex) {
-                _logger.Error("ScreenSaver runtime error..." + ex.Message);
+                App.Log.Error("ScreenSaver runtime error..." + ex.Message);
                 Terminate();
             }
         }
 
-        private void InitScr() {
-            if (_data == null) return;
+        private void InitScr(string filePath, string ftype) {
+            if (filePath == null || ftype == null) return;
 
             string workingDir = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
                 Constants.WorkingDir.ScrSaver);
 
             StringBuilder cmdArgs = new();
-            cmdArgs.Append($" --file-path {_data.FilePath}");
+            cmdArgs.Append($" --file-path {filePath}");
+            cmdArgs.Append($" --wallpaper-type {ftype}");
             cmdArgs.Append($" --effect {_userSettingsService.Settings.ScreenSaverEffect.ToString()}");
 
             ProcessStartInfo start = new() {
@@ -192,10 +198,9 @@ namespace VirtualPaper.Cores.ScreenSaver {
             try {
                 StopTimeTask();
                 if (Proc != null) {
-                    //_watchdog.Remove(Proc.Id);
                     Proc.Kill();
                     Proc.Dispose();
-                    _logger.Info("Proc was Killed");
+                    App.Log.Info("Proc was Killed");
                 }
             }
             catch { }
@@ -214,20 +219,20 @@ namespace VirtualPaper.Cores.ScreenSaver {
                 Proc?.StandardInput.WriteLine(msg);
             }
             catch (Exception e) {
-                _logger.Error($"Stdin write fail: {e.Message}");
+                App.Log.Error($"Stdin write fail: {e.Message}");
             }
         }
 
         private void Proc_OutputDataReceived(object sender, DataReceivedEventArgs e) {
             if (!string.IsNullOrEmpty(e.Data)) {
-                _logger.Info($"ScreenSaver: {e.Data}");
+                App.Log.Info($"ScreenSaver: {e.Data}");
                 if (!IsRunning) {
                     IpcMessage obj;
                     try {
                         obj = JsonSerializer.Deserialize<IpcMessage>(e.Data) ?? throw new("null msg recieved");
                     }
                     catch (Exception ex) {
-                        _logger.Error($"Ipcmessage parse Error: {ex.Message}");
+                        App.Log.Error($"Ipcmessage parse Error: {ex.Message}");
                         return;
                     }
 
@@ -282,18 +287,16 @@ namespace VirtualPaper.Cores.ScreenSaver {
         }
         #endregion
 
-        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private IUserSettingsService _userSettingsService;
-        //private IWatchdogService _watchdog;
-        private RawInputMsgWindow _msgWindow;
-        private IWpBasicData? _data;
-        private DispatcherTimer _dispatcherTimer;
-        private bool _isRunningLock = false;
+        private readonly IUserSettingsService _userSettingsService;
+        private readonly RawInputMsgWindow _msgWindow;
+        private readonly IWallpaperControl _wpControl;
+        private DispatcherTimer _dispatcherTimer;        
         private readonly ConcurrentDictionary<string, bool> _scrWhiteListProcState = [];
-
         private readonly static object _objStop = new();
         private readonly static object _objStart = new();
+        private bool _isRunningLock = false;
         private bool _isStopping = false;
-        private bool _isStarting = false;       
+        private bool _isStarting = false;
+        private bool _isTiming = false;
     }
 }

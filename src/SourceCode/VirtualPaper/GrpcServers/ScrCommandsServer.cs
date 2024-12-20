@@ -1,10 +1,8 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using VirtualPaper.Cores.ScreenSaver;
-using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Grpc.Service.ScrCommands;
-using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.GrpcServers {
     public class ScrCommandsServer(
@@ -15,9 +13,8 @@ namespace VirtualPaper.GrpcServers {
             return Task.FromResult(new Empty());
         }
 
-        public override Task<Empty> Start(Grpc_WpBasicData request, ServerCallContext context) {
-            IWpBasicData data = DataAssist.GrpcToBasicData(request);
-            _scrControl.Start(data);
+        public override Task<Empty> Start(Empty request, ServerCallContext context) {
+            _scrControl.Start();
 
             return Task.FromResult(new Empty());
         }

@@ -1,13 +1,12 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
+using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Grpc.Service.UserSettings;
-using VirtualPaper.Models;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
-using Monitor = VirtualPaper.Models.Cores.Monitor;
 
 namespace VirtualPaper.Grpc.Client {
     public class UserSettingsClient : IUserSettingsClient {
@@ -80,21 +79,21 @@ namespace VirtualPaper.Grpc.Client {
         }
 
         private void SetSettings() {
-            _ = _client.SetSettings(CreateGrpcSettings(Settings));
+            _ = _client.SetSettings(DataAssist.SettingsToGrpc(Settings));
         }
 
         private async Task SetSettingsAsync() {
-            _ = await _client.SetSettingsAsync(CreateGrpcSettings(Settings));
+            _ = await _client.SetSettingsAsync(DataAssist.SettingsToGrpc(Settings));
         }
 
         private Settings GetSettings() {
             var resp = _client.GetSettings(new Empty());
-            return CreateSettingsFromGrpc(resp);
+            return DataAssist.GrpcToSettings(resp);
         }
 
         private async Task<ISettings> GetSettingsAsync() {
             var resp = await _client.GetSettingsAsync(new Empty());
-            return CreateSettingsFromGrpc(resp);
+            return DataAssist.GrpcToSettings(resp);
         }
 
         private List<IApplicationRules> GetAppRulesSettings() {
@@ -154,146 +153,6 @@ namespace VirtualPaper.Grpc.Client {
             }
             _ = await _client.SetAppRulesSettingsAsync(tmp);
         }
-
-        #region helpers
-        private Grpc_SettingsData CreateGrpcSettings(ISettings settings) {
-            var data = new Grpc_SettingsData() {
-                AppFocusPause = (Grpc_AppRulesEnum)settings.AppFocus,
-                AppFullscreenPause = (Grpc_AppRulesEnum)settings.AppFullscreen,
-                ApplicationTheme = (Grpc_AppTheme)settings.ApplicationTheme,
-                BatteryPause = (Grpc_AppRulesEnum)settings.BatteryPoweredn,
-                PowerSaveModePause = (Grpc_AppRulesEnum)settings.PowerSaving,
-                RemoteDesktopPause = (Grpc_AppRulesEnum)settings.RemoteDesktop,
-                SystemBackdrop = (Grpc_AppSystemBackdrop)settings.SystemBackdrop,
-                AppName = settings.AppName,
-                AppVersion = settings.AppVersion,
-                Language = settings.Language,
-                IsUpdated = settings.IsUpdated,
-                IsAutoStart = settings.IsAutoStart,
-                IsFirstRun = settings.IsFirstRun,
-
-                WallpaperDir = settings.WallpaperDir,
-
-                SelectedMonitor = new Grpc_MonitorData() {
-                    DeviceId = settings.SelectedMonitor.DeviceId,
-                    //DeviceName = settings.SelectedMonitor.DeviceName,
-                    //MonitorName = settings.SelectedMonitor.MonitorName,
-                    //HMonitor = settings.SelectedMonitor.HMonitor.ToInt32(),
-                    IsPrimary = settings.SelectedMonitor.IsPrimary,
-                    WorkingArea = new Grpc_Rectangle() {
-                        X = settings.SelectedMonitor.WorkingArea.X,
-                        Y = settings.SelectedMonitor.WorkingArea.Y,
-                        Width = settings.SelectedMonitor.WorkingArea.Width,
-                        Height = settings.SelectedMonitor.WorkingArea.Height
-                    },
-                    Bounds = new Grpc_Rectangle() {
-                        X = settings.SelectedMonitor.Bounds.X,
-                        Y = settings.SelectedMonitor.Bounds.Y,
-                        Width = settings.SelectedMonitor.Bounds.Width,
-                        Height = settings.SelectedMonitor.Bounds.Height
-                    }
-                },
-                IsAudioOnlyOnDesktop = settings.IsAudioOnlyOnDesktop,
-                StatuMechanism = (Grpc_StatuMechanismEnum)settings.StatuMechanism,
-                WallpaperScaling = (Grpc_WallpaperScaler)settings.WallpaperScaling,
-                WallpaperWaitTime = settings.WallpaperWaitTime,
-
-                InputForward = (Grpc_InputForwardMode)settings.InputForward,
-                MouseInputMovAlways = settings.MouseInputMovAlways,
-
-                WallpaperArrangement = (Grpc_WallpaperArrangement)settings.WallpaperArrangement,
-
-                //IsScreensaverLockOnResume = settings.IsScreensaverLockOnResume,
-                //IsScreensaverEmptyScreenShowBlack = settings.IsScreensaverEmptyScreenShowBlack,
-
-                ProcessTimerInterval = settings.ProcessTimerInterval,
-
-                IsScreenSaverOn = settings.IsScreenSaverOn,
-                IsRunningLock = settings.IsRunningLock,
-                WaitingTime = settings.WaitingTime,
-                ScreenSaverEffect = (Grpc_ScrEffectEnum)settings.ScreenSaverEffect,
-            };
-            foreach (var proc in settings.WhiteListScr) {
-                data.WhiteListScr.Add(new Grpc_ProcInfoData() {
-                    ProcName = proc.ProcName,
-                    IconPath = proc.IconPath,
-                    IsRunning = proc.IsRunning,
-                });
-            }
-
-            return data;
-        }
-
-        private Settings CreateSettingsFromGrpc(Grpc_SettingsData settings) {
-            var data = new Settings() {
-                AppFocus = (AppWpRunRulesEnum)settings.AppFocusPause,
-                AppFullscreen = (AppWpRunRulesEnum)settings.AppFullscreenPause,
-                ApplicationTheme = (AppTheme)settings.ApplicationTheme,
-                BatteryPoweredn = (AppWpRunRulesEnum)settings.BatteryPause,
-                PowerSaving = (AppWpRunRulesEnum)settings.PowerSaveModePause,
-                RemoteDesktop = (AppWpRunRulesEnum)settings.RemoteDesktopPause,
-                SystemBackdrop = (AppSystemBackdrop)settings.SystemBackdrop,
-                AppName = settings.AppName,
-                AppVersion = settings.AppVersion,
-                Language = settings.Language,
-                IsUpdated = settings.IsUpdated,
-                IsAutoStart = settings.IsAutoStart,
-                IsFirstRun = settings.IsFirstRun,
-
-                WallpaperDir = settings.WallpaperDir,
-
-                SelectedMonitor = new Monitor() {
-                    DeviceId = settings.SelectedMonitor.DeviceId,
-                    //DeviceName = settings.SelectedMonitor.DeviceName,
-                    //MonitorName = settings.SelectedMonitor.MonitorName,
-                    //HMonitor = settings.SelectedMonitor.HMonitor,
-                    IsPrimary = settings.SelectedMonitor.IsPrimary,
-                    WorkingArea = new System.Drawing.Rectangle() {
-                        X = settings.SelectedMonitor.WorkingArea.X,
-                        Y = settings.SelectedMonitor.WorkingArea.Y,
-                        Width = settings.SelectedMonitor.WorkingArea.Width,
-                        Height = settings.SelectedMonitor.WorkingArea.Height
-                    },
-                    Bounds = new System.Drawing.Rectangle() {
-                        X = settings.SelectedMonitor.Bounds.X,
-                        Y = settings.SelectedMonitor.Bounds.Y,
-                        Width = settings.SelectedMonitor.Bounds.Width,
-                        Height = settings.SelectedMonitor.Bounds.Height
-                    },
-                    Content = settings.SelectedMonitor.Content,
-                },
-
-                IsAudioOnlyOnDesktop = settings.IsAudioOnlyOnDesktop,
-                StatuMechanism = (StatuMechanismEnum)settings.StatuMechanism,
-                WallpaperScaling = (WallpaperScaler)settings.WallpaperScaling,
-                WallpaperWaitTime = settings.WallpaperWaitTime,
-
-                InputForward = (InputForwardMode)settings.InputForward,
-                MouseInputMovAlways = settings.MouseInputMovAlways,
-
-                WallpaperArrangement = (WallpaperArrangement)settings.WallpaperArrangement,
-
-                //IsScreensaverLockOnResume = settings.IsScreensaverLockOnResume,
-                //IsScreensaverEmptyScreenShowBlack = settings.IsScreensaverEmptyScreenShowBlack,
-
-                ProcessTimerInterval = settings.ProcessTimerInterval,
-
-                IsScreenSaverOn = settings.IsScreenSaverOn,
-                IsRunningLock = settings.IsRunningLock,
-                WaitingTime = settings.WaitingTime,
-                ScreenSaverEffect = (ScrEffect)settings.ScreenSaverEffect,
-            };
-            foreach (var proc in settings.WhiteListScr) {
-                data.WhiteListScr.Add(new ProcInfo() {
-                    ProcName = proc.ProcName,
-                    IconPath = proc.IconPath,
-                    IsRunning = proc.IsRunning,
-                });
-            }
-
-            return data;
-        }
-        #endregion
 
         private readonly Grpc_UserSettingsService.Grpc_UserSettingsServiceClient _client;
     }

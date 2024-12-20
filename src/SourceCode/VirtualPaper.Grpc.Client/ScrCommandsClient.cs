@@ -11,8 +11,8 @@ namespace VirtualPaper.Grpc.Client {
             _client = new Grpc_ScrCommandsService.Grpc_ScrCommandsServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
         }
 
-        public async void Start(Grpc_WpBasicData grpc_data) {
-            await _client.StartAsync(grpc_data);
+        public async void Start() {
+            await _client.StartAsync(new Empty());
         }
 
         public async void Stop() {

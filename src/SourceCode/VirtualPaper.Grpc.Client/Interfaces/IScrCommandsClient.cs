@@ -6,7 +6,7 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         void AddToWhiteList(string procName);
         void ChangeLockStatu(bool isLock);
         void RemoveFromWhiteList(string procName);
-        void Start(Grpc_WpBasicData grpc_data);
+        void Start();
         void Stop();
     }
 }

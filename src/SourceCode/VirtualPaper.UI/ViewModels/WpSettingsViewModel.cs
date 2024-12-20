@@ -104,6 +104,7 @@ namespace VirtualPaper.UI.ViewModels {
         #region Control Buttons
         internal async void Close() {
             await _wpControlClient.CloseWallpaperAsync(Monitors[MonitorSelectedIdx]);
+            Monitors[MonitorSelectedIdx].ThumbnailPath = string.Empty;
         }
 
         internal async Task DetectAsync() {

@@ -111,18 +111,16 @@
                                 <Border
                                     Height="150" 
                                     Width="232" 
-                                    VerticalAlignment="Center" 
-                                    BorderThickness="2"
-                                    BorderBrush="{ThemeResource ApplicationForegroundThemeBrush}">
+                                    VerticalAlignment="Center">
                                     <Grid>
                                         <Image                                           
                                             Source="{Binding ThumbnailPath}"/>
 
                                         <Canvas >
                                             <Canvas.Background>
-                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <LinearGradientBrush StartPoint="0,0.4" EndPoint="0,1">
                                                     <GradientStop Color="Transparent" Offset="0.0"/>
-                                                    <GradientStop Color="#0067c0" Offset="1.0"/>
+                                                    <GradientStop Color="#0067c0" Offset="1.2"/>
                                                 </LinearGradientBrush>
                                             </Canvas.Background>
                                         </Canvas>

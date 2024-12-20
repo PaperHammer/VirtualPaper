@@ -8,7 +8,7 @@ namespace VirtualPaper.Cores.ScreenSaver
         void AddToWhiteList(string procName);
         void ChangeLockStatu(bool isLock);
         void RemoveFromWhiteList(string procName);
-        void Start(IWpBasicData data);
+        void Start();
         void Stop();
     }
 }

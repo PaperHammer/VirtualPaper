@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
@@ -137,7 +138,7 @@ namespace VirtualPaper.ScreenSaver {
 
         private async Task LoadSourceAsync() {
             try {
-                await ExecuteScriptFunctionAsync("virtualPaperSourceReload",
+                await ExecuteScriptFunctionAsync("resourceLoad",
                     _startArgs.WallpaperType,
                     _startArgs.FilePath);
                 await ExecuteScriptFunctionAsync("play");
@@ -156,26 +157,35 @@ namespace VirtualPaper.ScreenSaver {
         }
 
         private async Task<string> ExecuteScriptFunctionAsync(string functionName, params object[] parameters) {
-            var script = new StringBuilder();
-            script.Append(functionName);
-            script.Append('(');
+            StringBuilder sb_script = new();
+            sb_script.Append(functionName);
+            sb_script.Append('(');
             for (int i = 0; i < parameters.Length; i++) {
-                script.Append(JsonSerializer.Serialize(parameters[i]));
+                sb_script.Append(JsonSerializer.Serialize(parameters[i]));
                 if (i < parameters.Length - 1) {
-                    script.Append(", ");
+                    sb_script.Append(", ");
                 }
             }
-            script.Append(");");
+            sb_script.Append(");");
 
-            string res = await Webview2.ExecuteScriptAsync(script.ToString());
+            string cmd = sb_script.ToString();
+            string script = string.Empty;
+            await Application.Current.Dispatcher.Invoke(async () => {
+                script = await Webview2.ExecuteScriptAsync(cmd);
+            });
 
-            return res;
+            App.WriteToParent(new VirtualPaperMessageConsole() {
+                MsgType = ConsoleMessageType.Log,
+                Message = $"{cmd} {script}"
+            });
+
+            return script;
         }
 
         private readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
             AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1"
         };
         private StartArgs _startArgs;
-        private TaskManagerListener _taskManagerListener;
+        private readonly TaskManagerListener _taskManagerListener;
     }
 }

@@ -26,127 +26,48 @@
     let speed = 0.0;
     //let muted = false;
 
-    function virtualPaperSourceReload(wallpaperType, filePath) {
+    function resourceLoad(wallpaperType, filePath) {
         if (curVideoElementId) {
-            videoRelease(); // 清空视频缓存            
+            videoRelease();
         }
 
         const element = document.querySelector('.content');
         element.innerHTML = '';
 
-        if (wallpaperType && filePath) {
-            let elementToInsert;
-            switch (wallpaperType) {
-                case 'Gif':
-                case 'Picture':
-                case 'Picture3D':
-                    elementToInsert = `<img draggable="false" class="full-screen" src="${filePath}" alt=""/>`;
-                    break;
-                case 'Video':
-                    curVideoElementId = 'videoEle';
-                    elementToInsert = `
-                        <video draggable="false" id="videoEle" class="full-screen" loop controls>
-                            <source src="${filePath}">
-                        </video>`;
-                    break;
-                default:
-                    return;
-            }
-
-            element.insertAdjacentHTML('beforeend', elementToInsert);
+        let elementToInsert;
+        switch (wallpaperType) {
+            case 'RImage':
+                elementToInsert = `
+                <div id="content" draggable="false">
+                    <img draggable="false" class="source" src="${filePath}" alt=""/>
+                </div>`;
+                break;
+            case 'RVideo':
+                curVideoElementId = 'videoEle';
+                elementToInsert = `
+                <div id="content" draggable="false">
+                    <video draggable="false" id="videoEle" class="source" loop>
+                        <source src="${filePath}" type="video/mp4">
+                    </video>
+                </div>`;
+                break;
+            default:
+                return;
         }
 
-        return "success";
-    }
-
-    function virtualPaperPropertyListener(propertyType, val) {
-        switch (propertyType) {
-            case "Volume":
-                volume = parseFloat(val);
-                break;
-            case "Speed":
-                speed = parseFloat(val);
-                break;
-            case "Saturation":
-                saturate = parseFloat(val);
-                break;
-            case "Hue":
-                hueRotate = parseInt(val)
-                break;
-            case "Brightness":
-                brightness = parseFloat(val);
-                break;
-            case "Contrast":
-                contrast = parseFloat(val)
-                break;
-            case "Scaling":
-                objectFitChanged(val);
-                break;
-        }        
-
-        return "success";
-    }
-
-    function applyFilter() {
-        const element = document.querySelector('.full-screen');
-
-        if (element) {
-            var filter = templateFilter;
-            filter = filter.replace(new RegExp('s#', 'g'), saturate);
-            filter = filter.replace(new RegExp('d#', 'g'), hueRotate);
-            filter = filter.replace(new RegExp('b#', 'g'), brightness);
-            filter = filter.replace(new RegExp('c#', 'g'), contrast);
-
-            element.style.filter = filter.trim();
-            element.style.objectFit = newFit;
+        if (elementToInsert) {
+            element?.insertAdjacentHTML('beforeend', elementToInsert);
         }
 
-        if (curVideoElementId) {
-            element.volume = volume;
-            element.playbackRate = speed;
-            //element.muted = muted;
-        }
-
-        return "success";
+        return "resourceLoad success";
     }
 
     //在某些浏览器（例如 Chrome 70.0）中，如果没有设置 muted 属性，autoplay 将不会生效。
     function play() {
         var videoElement = document.getElementById('videoEle');
-        videoElement.play();
-    }
+        videoElement?.play();
 
-    function videoRelease() {
-        curVideoElementId = null;
-        var videoElement = document.getElementById('videoEle');
-        videoElement.pause();
-        videoElement.removeAttribute('src');
-        videoElement = null;
-    }
-
-    function objectFitChanged(value) {
-        //var element = document.querySelector('.full-screen');
-
-        switch (value) {
-            case 0:
-                newFit = 'fill';
-                break;
-            case 1:
-                newFit = 'contain';
-                break;
-            case 2:
-                newFit = 'cover';
-                break;
-            case 3:
-                newFit = 'none'
-                break;
-            case 4:
-                newFit = 'scale-down';
-                break;
-            default:
-                newFit = 'fill';
-                break;
-        }
+        return "play success";
     }
 </script>
 
@@ -162,10 +83,10 @@
         overflow: hidden;
     }
 
-    .full-screen {
-        position: relative;
+    .source {
         width: 100%;
         height: 100%;
+        position: absolute;
         object-fit: fill;
     }
 </style>

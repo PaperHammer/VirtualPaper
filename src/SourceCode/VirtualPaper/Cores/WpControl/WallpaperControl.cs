@@ -23,6 +23,7 @@ using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 using WinEventHook;
 using static VirtualPaper.Common.Errors;
+// todo: 窗口层级；apply
 
 namespace VirtualPaper.Cores.WpControl {
     public partial class WallpaperControl : IWallpaperControl {
@@ -117,6 +118,12 @@ namespace VirtualPaper.Cores.WpControl {
             }
         }
 
+        public (string?, RuntimeType?) GetPrimaryWpFilePathRType() {
+            var playingData = _wallpapers.FirstOrDefault(x => x.Monitor.IsPrimary);
+
+            return (playingData?.Data.FilePath, playingData?.Data.RType);
+        }
+
         public IWpMetadata GetWallpaperByFolderPath(string folderPath, string monitorContent, string rtype) {
             IWpMetadata data = WallpaperUtil.GetWallpaperByFolder(folderPath, monitorContent, rtype);
 
@@ -130,9 +137,9 @@ namespace VirtualPaper.Cores.WpControl {
         }
 
         public async Task<bool> PreviewWallpaperAsync(IWpPlayerData data, bool isCurrentWp, CancellationToken token) {
-            _previews.TryGetValue((data.WallpaperUid, data.RType), out IWallpaperPlaying? playingData);
-            if (playingData != null) {
-                playingData.SendMessage(new VirtualPaperActiveCmd());
+            _previews.TryGetValue((data.WallpaperUid, data.RType), out IWallpaperPlaying? instance);
+            if (instance != null) {
+                instance.SendMessage(new VirtualPaperActiveCmd());
                 return true;
             }
 
@@ -140,26 +147,26 @@ namespace VirtualPaper.Cores.WpControl {
                 var wpRuntimeData = CreateMetadataRuntime(data.FilePath, data.FolderPath, data.RType, true);
                 DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
 
-                playingData = _wallpaperFactory.CreatePlayer(
+                instance = _wallpaperFactory.CreatePlayer(
                     data,
                     _monitorManager.PrimaryMonitor,
                     _userSettings,
                     true);
 
-                playingData.Closing += IWallpaperPlayingClosing;
+                instance.Closing += IWallpaperPlayingClosing;
                 void IWallpaperPlayingClosing(object? s, EventArgs e) {
-                    playingData.Closing -= IWallpaperPlayingClosing;
+                    instance.Closing -= IWallpaperPlayingClosing;
                     _previews.Remove((data.WallpaperUid, data.RType));
                 }
 
-                _previews[(data.WallpaperUid, data.RType)] = playingData;
-                bool isStarted = await playingData.ShowAsync(token);
+                _previews[(data.WallpaperUid, data.RType)] = instance;
+                bool isStarted = await instance.ShowAsync(token);
 
                 return isStarted;
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested) {
                 _previews.Remove((data.WallpaperUid, data.RType));
-                playingData?.Dispose();
+                instance?.Dispose();
 
                 return false;
             }
@@ -308,9 +315,6 @@ namespace VirtualPaper.Cores.WpControl {
                             }
 
                             if (isStarted) {
-                                if (instance.Proc != null)
-                                    App.Jobs.AddProcess(instance.Proc.Id);
-
                                 _wallpapers.Add(instance);
                             }
                         }
@@ -328,9 +332,7 @@ namespace VirtualPaper.Cores.WpControl {
                             }
 
                             if (isStarted) {
-                                if (instance.Proc != null)
-                                    App.Jobs.AddProcess(instance.Proc.Id);
-
+   
                                 _wallpapers.Add(instance);
                             }
                         }
@@ -349,9 +351,6 @@ namespace VirtualPaper.Cores.WpControl {
                                 }
 
                                 if (isStarted) {
-                                    if (instance.Proc != null)
-                                        App.Jobs.AddProcess(instance.Proc.Id);
-
                                     _wallpapers.Add(instance);
                                 }
                             }
@@ -841,7 +840,7 @@ namespace VirtualPaper.Cores.WpControl {
             }
 
             _ = Native.MapWindowPoints(handle, _workerW, ref prct, 2);
-            var success = TrySetParentWorkerW(wallpaper.Handle) && TrySetParentWorkerW(handle);
+            var success = TrySetParentWorkerW(handle) && TrySetParentWorkerW(wallpaper.Handle);
 
             if (success) {
                 // Move wallpaper.Handle to the top of the Z order
@@ -849,12 +848,12 @@ namespace VirtualPaper.Cores.WpControl {
                                     (int)(Native.SWP_NOACTIVATE | Native.SWP_NOMOVE | Native.SWP_NOSIZE));
 
                 // Alternatively, you can use HWND_TOP instead of HWND_TOPMOST for non-topmost behavior
-                // Native.SetWindowPos(wallpaperHandle, (IntPtr)Native.SWP.HWND_TOP, 0, 0, 0, 0,
-                //                     (uint)(Native.SWP.NOACTIVATE | Native.SWP.NOMOVE | Native.SWP.NOSIZE));
+                //Native.SetWindowPos(handle, Native.HWND_TOP, 0, 0, 0, 0,
+                //                    (int)(Native.SWP_NOACTIVATE | Native.SWP_NOMOVE | Native.SWP_NOSIZE));
             }
 
             //Position the wp window relative to the new parent window(_workerW).
-            if (!Native.SetWindowPos(handle, 1, prct.Left, prct.Top, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, 0x0010)) {
+            if (!Native.SetWindowPos(wallpaper.Handle, 1, prct.Left, prct.Top, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, 0x0010)) {
                 _logger.Error("Failed to set perscreen wallpaper(2)");
             }
             DesktopUtil.RefreshDesktop();

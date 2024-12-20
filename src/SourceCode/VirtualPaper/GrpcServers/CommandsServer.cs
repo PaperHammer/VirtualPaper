@@ -30,12 +30,6 @@ namespace VirtualPaper.GrpcServers {
                 DispatcherPriority.Normal,
                 new ThreadStart(delegate {
                     App.Services.GetRequiredService<DebugLog>().Show();
-                    //if (_debugLogWindow == null)
-                    //{
-                    //    _debugLogWindow = new DebugLog();
-                    //    _debugLogWindow.Closed += (s, e) => _debugLogWindow = null;
-                    //    _debugLogWindow.Show();
-                    //}
                 }));
 
             return Task.FromResult(new Empty());
@@ -55,7 +49,6 @@ namespace VirtualPaper.GrpcServers {
             return Task.FromResult(new Empty());
         }
 
-        //private DebugLog? _debugLogWindow;
         private readonly IUIRunnerService _runner = runner;
     }
 }

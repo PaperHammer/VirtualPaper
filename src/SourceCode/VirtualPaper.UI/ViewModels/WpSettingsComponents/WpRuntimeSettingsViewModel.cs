@@ -17,13 +17,11 @@ using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 using DispatcherQueueController = Microsoft.UI.Dispatching.DispatcherQueueController;
 
 namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
-    public partial class WpRuntimeSettingsViewModel : ObservableObject
-    {
+    public partial class WpRuntimeSettingsViewModel : ObservableObject {
         public Action InitUpdateLayout;
 
         private int _wpArrangSelected;
-        public int WpArrangSelected
-        {
+        public int WpArrangSelected {
             get { return _wpArrangSelected; }
             set { _wpArrangSelected = value; OnPropertyChanged(); }
         }
@@ -50,18 +48,15 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         public string VpScreenSaver_SeekFromList { get; set; } = string.Empty;
 
         private string _screenSaverState = string.Empty;
-        public string ScreenSaverStatu
-        {
+        public string ScreenSaverStatu {
             get => _screenSaverState;
             set { _screenSaverState = value; OnPropertyChanged(); }
         }
 
         private bool _isScreenSaverOn;
-        public bool IsScreenSaverOn
-        {
+        public bool IsScreenSaverOn {
             get => _isScreenSaverOn;
-            set
-            {
+            set {
                 _isScreenSaverOn = value;
                 OnPropertyChanged();
                 ChangeScreenSaverStatu(value);
@@ -73,11 +68,9 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         }
 
         private bool _isRunningLock;
-        public bool IsRunningLock
-        {
+        public bool IsRunningLock {
             get => _isRunningLock;
-            set
-            {
+            set {
                 _isRunningLock = value;
                 OnPropertyChanged();
                 ChangeLockStatu(value);
@@ -89,11 +82,9 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         }
 
         private int _waitingTime = 1;
-        public int WaitingTime
-        {
+        public int WaitingTime {
             get => _waitingTime;
-            set
-            {
+            set {
                 _waitingTime = value;
                 OnPropertyChanged();
                 if (_userSettingsClient.Settings.WaitingTime == value) return;
@@ -104,11 +95,9 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         }
 
         private int _seletedEffectIndx;
-        public int SeletedEffectIndx
-        {
+        public int SeletedEffectIndx {
             get => _seletedEffectIndx;
-            set
-            {
+            set {
                 _seletedEffectIndx = value;
                 OnPropertyChanged();
                 if (_userSettingsClient.Settings.ScreenSaverEffect == (ScrEffect)value) return;
@@ -125,8 +114,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             IDialogService dialogService,
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient,
-            IScrCommandsClient scrCommandsClient)
-        {
+            IScrCommandsClient scrCommandsClient) {
             _dialogService = dialogService;
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
@@ -138,8 +126,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             InitContent();
         }
 
-        private void InitText()
-        {          
+        private void InitText() {
             Text_WpArrange = _localizer.GetLocalizedString("Settings_WpNav_Text_WpArrange");
             WpArrange_Per = _localizer.GetLocalizedString("Settings_WpNav_WpArrange_Per");
             WpArrange_PerExplain = _localizer.GetLocalizedString("Settings_WpNav_WpArrange_PerExplain");
@@ -164,8 +151,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             VpScreenSaver_SeekFromList = _localizer.GetLocalizedString("Settings_WpNav_VpScreenSaver_SeekFromList");
         }
 
-        private void InitContent()
-        {
+        private void InitContent() {
             WpArrangSelected = (int)_userSettingsClient.Settings.WallpaperArrangement;
             SeletedEffectIndx = (int)_userSettingsClient.Settings.ScreenSaverEffect;
             IsScreenSaverOn = _userSettingsClient.Settings.IsScreenSaverOn;
@@ -173,61 +159,42 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             WaitingTime = _userSettingsClient.Settings.WaitingTime;
         }
 
-        private void InitCollections()
-        {
+        private void InitCollections() {
             Effects = [_effectNone, _effectBubble];
             _whiteListScr = [.. _userSettingsClient.Settings.WhiteListScr];
             ProcsFiltered = [.. _userSettingsClient.Settings.WhiteListScr];
         }
 
-        private async void ChangeScreenSaverStatu(bool isScreenSaverOn)
-        {
-            if (isScreenSaverOn)
-            {
+        private void ChangeScreenSaverStatu(bool isScreenSaverOn) {
+            if (isScreenSaverOn) {
                 ScreenSaverStatu = _localizer.GetLocalizedString("Settings_WpNav_VpScreenSaver_ScreenSaverStatu_On");
-
-                var wpLayouts = _userSettingsClient.WallpaperLayouts;
-                if (wpLayouts.Count > 0)
-                {
-                    Grpc_WpMetaData grpc_data = await _wpControlClient.GetWallpaperAsync(
-                        wpLayouts[0].FolderPath,
-                        wpLayouts[0].MonitorContent,
-                        wpLayouts[0].RType);
-                    _scrCommandsClient.Start(grpc_data.WpBasicData);
-                }
+                _scrCommandsClient.Start();
             }
-            else
-            {
+            else {
                 ScreenSaverStatu = _localizer.GetLocalizedString("Settings_WpNav_VpScreenSaver_ScreenSaverStatu_Off");
                 _scrCommandsClient.Stop();
             }
         }
 
-        private void ChangeLockStatu(bool isLock)
-        {
+        private void ChangeLockStatu(bool isLock) {
             _scrCommandsClient.ChangeLockStatu(isLock);
         }
 
-        private async void UpdateSettingsConfigFile()
-        {
+        private async void UpdateSettingsConfigFile() {
             await _userSettingsClient.SaveAsync<ISettings>();
         }
 
-        public async Task UpdateScrSettginsAsync()
-        {
+        public async Task UpdateScrSettginsAsync() {
             await _userSettingsClient.LoadAsync<ISettings>();
-            _ = _dispatcherQueue.TryEnqueue(() =>
-            {
+            _ = _dispatcherQueue.TryEnqueue(() => {
                 IsScreenSaverOn = _userSettingsClient.Settings.IsScreenSaverOn;
                 IsRunningLock = _userSettingsClient.Settings.IsRunningLock;
                 SeletedEffectIndx = (int)_userSettingsClient.Settings.ScreenSaverEffect;
             });
         }
 
-        internal async Task UpdateWpArrangeAsync(string tag)
-        {
-            try
-            {
+        internal async Task UpdateWpArrangeAsync(string tag) {
+            try {
                 BasicUIComponentUtil.Loading(false, false, []);
 
                 var type = (WallpaperArrangement)(tag == "Per" ? 0 : tag == "Expand" ? 1 : 2);
@@ -239,8 +206,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 InitUpdateLayout?.Invoke();
 
                 var response = await _wpControlClient.RestartAllWallpapersAsync();
-                if (response.IsFinished != true)
-                {
+                if (response.IsFinished != true) {
                     await _dialogService.ShowDialogAsync(
                         _localizer.GetLocalizedString("Dialog_Content_ApplyError")
                         , _localizer.GetLocalizedString("Dialog_Title_Error")
@@ -248,18 +214,15 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 }
             }
             catch { }
-            finally
-            {
+            finally {
                 BasicUIComponentUtil.Loaded([]);
             }
         }
 
-        internal async void AddToWhiteListScr(ProcInfo procInfo)
-        {
+        internal async void AddToWhiteListScr(ProcInfo procInfo) {
             ProcsFiltered.Add(procInfo);
 
-            await Task.Run(() =>
-            {
+            await Task.Run(() => {
                 _whiteListScr.Add(procInfo);
                 _scrCommandsClient.AddToWhiteList(procInfo.ProcName);
                 _userSettingsClient.Settings.WhiteListScr.Add(procInfo);
@@ -267,12 +230,10 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             });
         }
 
-        internal async void RemoveFromWhiteScr(ProcInfo procInfo)
-        {
+        internal async void RemoveFromWhiteScr(ProcInfo procInfo) {
             ProcsFiltered.Remove(procInfo);
 
-            await Task.Run(() =>
-            {
+            await Task.Run(() => {
                 _whiteListScr.Remove(procInfo);
                 _scrCommandsClient.RemoveFromWhiteList(procInfo.ProcName);
                 _userSettingsClient.Settings.WhiteListScr.Remove(procInfo);

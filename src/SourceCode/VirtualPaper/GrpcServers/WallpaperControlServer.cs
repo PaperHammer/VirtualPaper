@@ -51,7 +51,7 @@ namespace VirtualPaper.GrpcServers {
 
         public override async Task GetWallpapers(Empty request, IServerStreamWriter<Grpc_WpMetaData> responseStream, ServerCallContext context) {
             foreach (var wallpaper in _wpControl.Wallpapers) {
-                var data = wallpaper.Data.GetMetadata();
+                var data = wallpaper.Data.GetMetadata(wallpaper.Monitor.Content);
 
                 Grpc_WpMetaData resp = new() {
                     WpBasicData = DataAssist.BasicDataToGrpcData(data.BasicData),
@@ -81,10 +81,6 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override async Task<Grpc_SetWallpaperResponse> SetWallpaper(Grpc_SetWallpaperRequest request, ServerCallContext context) {
-            //WpMetadata metaData = new() {
-            //    BasicData = DataAssist.GrpcToBasicData(request.),
-            //    RuntimeData = DataAssist.GrpcToRuntimeData(request.WpRuntimeData),
-            //};
             WpPlayerData wpPlayerData = DataAssist.GrpcToPlayerData(request.WpPlayerData);
             var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
 
@@ -95,17 +91,6 @@ namespace VirtualPaper.GrpcServers {
 
             return await Task.FromResult(response);
         }
-
-        //public override Task<Empty> UpdateWallpaper(Grpc_UpdateWpRequest request, ServerCallContext context) {
-        //    Grpc_WpPlayerData data = request.WpPlayerData;
-
-        //    WpPlayerData playerData = DataAssist.GrpcToPlayerData(data);
-
-        //    _wpControl.UpdateWallpaper(
-        //        request.MonitorId, playerData, context.CancellationToken);
-
-        //    return Task.FromResult(new Empty());
-        //}
         #endregion
 
         #region data
@@ -117,29 +102,6 @@ namespace VirtualPaper.GrpcServers {
 
             return await Task.FromResult(grpc_data);
         }
-
-        //public override async Task<Grpc_WpRuntimeData> CreateMetadataRuntime(Grpc_CreateMetadataRuntimeRequest request, ServerCallContext context) {
-        //    var data = _wpControl.CreateMetadataRuntime(
-        //        request.FilePath,
-        //        request.FolderPath,
-        //        (RuntimeType)request.RType);
-
-        //    Grpc_WpRuntimeData grpc_data = DataAssist.RuntimeDataToGrpcData(data);
-
-        //    return await Task.FromResult(grpc_data);
-        //}
-
-        //public override async Task<Grpc_StringValue> CreateMetadataRuntimeUsing(Grpc_CreateMetadataRuntimeRequest request, ServerCallContext context) {
-        //    Grpc_StringValue grpc_data = new();
-        //    var data = _wpControl.CreateMetadataRuntimeUsing(
-        //        request.FolderPath,
-        //        request.WpEffectFilePathTemplate,
-        //        request.MonitorContent);
-
-        //    grpc_data.Value = data;
-
-        //    return await Task.FromResult(grpc_data);
-        //}
         #endregion
 
         #region utils

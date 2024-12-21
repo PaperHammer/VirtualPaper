@@ -20,7 +20,7 @@ namespace VirtualPaper.UI.ViewModels {
             set { _frameIsEnable = value; OnPropertyChanged(); }
         }
 
-        private bool _loadingIsVisiable = true;
+        private bool _loadingIsVisiable;
         public bool LoadingIsVisiable {
             get { return _loadingIsVisiable; }
             set { _loadingIsVisiable = value; OnPropertyChanged(); }

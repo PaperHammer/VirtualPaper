@@ -11,7 +11,6 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
-using Windows.UI;
 using WinRT.Interop;
 using WinUI3Localizer;
 using WinUIEx;
@@ -27,15 +26,13 @@ namespace VirtualPaper.UIComponent.Container {
         public ToolContainer(
             string windowStyleType,
             AppTheme appTheme,
-            Color? buttonForegroundColor,
-            Brush titleTextBlockForegroundDisabled,
-            Brush titleTextBlockForeground) {
+            SolidColorBrush windowCaptionForeground,
+            SolidColorBrush windowCaptionForegroundDisabled) {
             _selectIdx2Content = [];
             _windowStyleType = windowStyleType;
-            _buttonForegroundColor = buttonForegroundColor;
             _appTheme = appTheme;
-            _titleTextBlockForegroundDisabled = titleTextBlockForegroundDisabled;
-            _titleTextBlockForeground = titleTextBlockForeground;
+            _windowCaptionForeground = windowCaptionForeground;
+            _windowCaptionForegroundDisabled = windowCaptionForegroundDisabled;            
             _localizer = LanguageUtil.LocalizerInstacne;
 
             this.InitializeComponent();
@@ -46,10 +43,10 @@ namespace VirtualPaper.UIComponent.Container {
 
         private void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
             if (args.WindowActivationState == WindowActivationState.Deactivated) {
-                TitleTextBlock.Foreground = _titleTextBlockForegroundDisabled;
+                TitleTextBlock.Foreground = _windowCaptionForegroundDisabled;
             }
             else {
-                TitleTextBlock.Foreground = _titleTextBlockForeground;
+                TitleTextBlock.Foreground = _windowCaptionForeground;
             }
         }
 
@@ -95,7 +92,7 @@ namespace VirtualPaper.UIComponent.Container {
                 titleBar.ExtendsContentIntoTitleBar = true;
                 titleBar.ButtonBackgroundColor = Colors.Transparent;
                 titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-                titleBar.ButtonForegroundColor = _buttonForegroundColor;
+                titleBar.ButtonForegroundColor = _windowCaptionForeground.Color;
 
                 AppTitleBar.Loaded += AppTitleBar_Loaded;
                 AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
@@ -174,10 +171,9 @@ namespace VirtualPaper.UIComponent.Container {
         #endregion
 
         private readonly string _windowStyleType;
-        private readonly Color? _buttonForegroundColor;
         private readonly AppTheme _appTheme;
-        private readonly Brush _titleTextBlockForegroundDisabled;
-        private readonly Brush _titleTextBlockForeground;
+        private readonly SolidColorBrush _windowCaptionForegroundDisabled;
+        private readonly SolidColorBrush _windowCaptionForeground;
         private readonly Dictionary<int, (string, object)> _selectIdx2Content;
         private readonly ILocalizer _localizer;
         private int _previousSelectedIndex = 0;

@@ -132,5 +132,9 @@ namespace VirtualPaper.Models.Cores {
         public bool IsAvailable() {
             return this.WallpaperUid != string.Empty && this.AppInfo.AppVersion != string.Empty;
         }
+
+        public bool Equals(IWpBasicData? other) {
+            return other != null && other.WallpaperUid == this.WallpaperUid && other.FilePath == this.FilePath;
+        }
     }
 }

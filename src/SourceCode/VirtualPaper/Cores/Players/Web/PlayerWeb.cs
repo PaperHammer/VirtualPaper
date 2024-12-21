@@ -6,25 +6,19 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Shell;
+using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Cores.Players.Web {
-    internal partial class PlayerWeb : IWallpaperPlaying {
+    internal partial class PlayerWeb : IWpPlayer {
         public Process Proc { get; private set; }
-
         public nint Handle { get; private set; }
-        
-        //public nint ProcHandle { get; private set; }
-
         public IWpPlayerData Data { get; private set; }
-
         public IMonitor Monitor { get; set; }
-
         public bool IsExited { get; private set; }
-
         public bool IsLoaded { get; private set; } = false;
-
         public EventHandler? Closing { get; set; }
+        public EventHandler? ToBackground { get; set; }
 
         public PlayerWeb(
             IWpPlayerData data,
@@ -75,7 +69,7 @@ namespace VirtualPaper.Cores.Players.Web {
             _uniqueId = _globalCount++;
         }
 
-        private void CheckParams(IWpPlayerData data) {
+        private static void CheckParams(IWpPlayerData data) {
             if (string.IsNullOrEmpty(data.FilePath) ||
                 string.IsNullOrEmpty(data.WpEffectFilePathUsing) ||
                 string.IsNullOrEmpty(data.WpEffectFilePathTemplate) ||
@@ -83,6 +77,22 @@ namespace VirtualPaper.Cores.Players.Web {
                 data.RType == RuntimeType.RImage3D && string.IsNullOrEmpty(data.DepthFilePath)) {
                 throw new Exception("启动 Player 时, 缺少必要参数");
             }
+        }
+
+        public IWpPlayerData GetData() {
+            WpPlayerData playerData = new() {
+                WallpaperUid = Data.WallpaperUid,
+                RType = Data.RType,
+                FilePath = Data.FilePath,
+                DepthFilePath = Data.DepthFilePath,
+                FolderPath = Data.FolderPath,
+                ThumbnailPath = Data.ThumbnailPath,
+                WpEffectFilePathTemplate = Data.WpEffectFilePathTemplate,
+                WpEffectFilePathTemporary = Data.WpEffectFilePathTemporary,
+                WpEffectFilePathUsing = Data.WpEffectFilePathUsing,
+            };
+
+            return playerData;
         }
 
         public void Close() {
@@ -126,7 +136,6 @@ namespace VirtualPaper.Cores.Players.Web {
                 Proc.Exited += Proc_Exited;
                 Proc.OutputDataReceived += Proc_OutputDataReceived;
                 Proc.Start();
-                App.Jobs.AddProcess(Proc.Id);
                 Proc.BeginOutputReadLine();
 
                 using var registration = token.Register(() => {
@@ -221,6 +230,8 @@ namespace VirtualPaper.Cores.Players.Web {
                             }
 
                             ConvertPopupToChildWindow(Handle);
+
+                            IsLoaded = true;
                         }
                         catch (Exception ie) {
                             error = ie;
@@ -230,14 +241,12 @@ namespace VirtualPaper.Cores.Players.Web {
                             _tcsProcessWait.TrySetResult(error);
                         }
                     }
-                    else if (obj.Type == MessageType.msg_wploaded) {
-                        IsLoaded = true;
-                    }
                 }
-                else {
-                    if (obj.Type == MessageType.msg_closed) {
-                        this.Closing?.Invoke(this, EventArgs.Empty);
-                    }
+                else if (obj.Type == MessageType.msg_closed) {
+                    Closing?.Invoke(this, EventArgs.Empty);
+                }
+                else if (obj.Type == MessageType.cmd_apply) {
+                    ToBackground?.Invoke(this, EventArgs.Empty);
                 }
             }
         }

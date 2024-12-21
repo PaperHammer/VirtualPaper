@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using NLog;
 using VirtualPaper.Common;
@@ -13,6 +14,7 @@ using VirtualPaper.UI.ViewModels;
 using VirtualPaper.UI.ViewModels.AppSettings;
 using VirtualPaper.UI.ViewModels.WpSettingsComponents;
 using VirtualPaper.UIComponent.Utils;
+using WinUI3Localizer;
 using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -23,6 +25,10 @@ namespace VirtualPaper.UI {
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
     public partial class App : Application {
+        internal static DispatcherQueue UITaskInvokeQueue => DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
+        internal static Logger Log => LogManager.GetCurrentClassLogger();
+        internal static ILocalizer Localizer => LanguageUtil.LocalizerInstacne;
+
         public static IServiceProvider Services {
             get {
                 IServiceProvider serviceProvider = ((App)Current)._serviceProvider;

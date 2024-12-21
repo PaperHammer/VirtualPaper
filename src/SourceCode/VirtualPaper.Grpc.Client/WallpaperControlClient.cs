@@ -65,8 +65,28 @@ namespace VirtualPaper.Grpc.Client {
             return grpc_data;
         }
 
+        public async Task<bool> AdjustWallpaperAsync(string monitorDeviceId, CancellationToken token) {
+            var response = await _client.AdjustWallpaperAsync(
+                new Grpc_AdjustWallpaperRequest() {
+                    MonitorDeviceId = monitorDeviceId,
+                },
+                cancellationToken: token);
+
+            return response.IsOk;
+        }
+
+        public async Task<bool> PreviewWallpaperAsync(string monitorDeviceId, CancellationToken token) {
+            var response = await _client.PreviewWallpaperAsync(
+                new Grpc_PreviewWallpaperRequest() {
+                    MonitorDeviceId = monitorDeviceId,
+                },
+                cancellationToken: token);
+
+            return response.IsOk;
+        }
+
         public async Task<bool> PreviewWallpaperAsync(IWpBasicData data, RuntimeType rtype, CancellationToken token) {
-            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayerData(data, rtype);
+            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
 
             var response = await _client.PreviewWallpaperAsync(
                 new Grpc_PreviewWallpaperRequest() {
@@ -74,7 +94,7 @@ namespace VirtualPaper.Grpc.Client {
                 },
                 cancellationToken: token);
 
-            return response.IsStarted;
+            return response.IsOk;
         }
 
         public async Task<Grpc_RestartWallpaperResponse> RestartAllWallpapersAsync() {
@@ -85,7 +105,7 @@ namespace VirtualPaper.Grpc.Client {
 
         public async Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(
             IMonitor monitor, IWpBasicData data, RuntimeType rtype, CancellationToken token) {
-            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayerData(data, rtype);
+            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
 
             var request = new Grpc_SetWallpaperRequest {
                 WpPlayerData = wpPlayerdata,
@@ -96,17 +116,6 @@ namespace VirtualPaper.Grpc.Client {
 
             return response;
         }
-
-        //public async Task UpdateWallpaperAsync(
-        //    IMonitor monitor, IWpMetadata data, CancellationToken token) {
-        //    Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayerData(data, rtype);
-
-        //    await _client.UpdateWallpaperAsync(
-        //        new Grpc_UpdateWpRequest() {
-        //            WpPlayerData = wpPlayerdata,
-        //            MonitorId = monitor.DeviceId,
-        //        }, cancellationToken: token);
-        //}
         #endregion
 
         #region data
@@ -123,39 +132,6 @@ namespace VirtualPaper.Grpc.Client {
 
             return grpc_data;
         }
-
-        //public async Task<Grpc_WpRuntimeData?> CreateRuntimeDataAsync(
-        //    string filePath,
-        //    string folderPath,
-        //    RuntimeType rtype,
-        //    CancellationToken token) {
-        //    Grpc_WpRuntimeData grpc_data = await _client.CreateMetadataRuntimeAsync(
-        //        new Grpc_CreateMetadataRuntimeRequest() {
-        //            FilePath = filePath,
-        //            FolderPath = folderPath,
-        //            RType = (Grpc_RuntimeType)rtype,
-        //        },
-        //        cancellationToken: token);
-
-        //    return grpc_data;
-        //}
-
-        //public async Task<string?> CreateRuntimeDataUsingAsync(
-        //    string folderPath,
-        //    string wpEffectFilePathTemplate,
-        //    string monitorContent,
-        //    CancellationToken token = default) {
-        //    Grpc_StringValue res = await _client.CreateMetadataRuntimeUsingAsync(
-        //        new Grpc_CreateMetadataRuntimeRequest() {
-        //            FolderPath = folderPath,
-        //            WpEffectFilePathTemplate = wpEffectFilePathTemplate,
-        //            MonitorContent = monitorContent,
-        //        },
-        //        cancellationToken: token);
-
-        //    return res.Value;
-        //}
-
         public IWpMetadata GetWpMetadataByMonitorThu(string thumbnailPath) {
             return _wallpapers.Find(x => x.BasicData.ThumbnailPath == thumbnailPath)!;
         }

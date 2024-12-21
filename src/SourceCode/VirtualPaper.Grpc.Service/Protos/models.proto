@@ -122,9 +122,13 @@ message Grpc_CloseWallpaperByMonitorRequest {
     string monitor_id = 1;
 }
 
+message Grpc_AdjustWallpaperRequest {
+	string monitor_device_id = 1;
+}
+
 message Grpc_PreviewWallpaperRequest {
-	Grpc_WpPlayerData wp_player_data = 1;
-	bool is_current_wp = 2;
+	string monitor_device_id = 1;
+	Grpc_WpPlayerData wp_player_data = 2;
 }
 
 message Grpc_ModifyPreviewRequest {
@@ -143,12 +147,12 @@ message Grpc_UpdateWpRequest {
 	string monitor_id = 2;
 }
 
-message Grpc_UpdateWpResponse {
-	bool is_finished = 1;
+message Grpc_AdjustWallpaperResponse {
+	bool is_ok = 1;
 }
 
 message Grpc_PreviewWallpaperResponse {
-	bool is_started = 1;
+	bool is_ok = 1;
 }
 
 message Grpc_SetWallpaperResponse {

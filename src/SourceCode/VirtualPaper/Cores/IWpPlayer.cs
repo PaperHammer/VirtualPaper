@@ -7,7 +7,7 @@ namespace VirtualPaper.Cores
     /// <summary>
     /// 播放时的壁纸对象
     /// </summary>
-    public interface IWallpaperPlaying : IDisposable
+    public interface IWpPlayer : IDisposable
     {
         /// <summary>
         /// Get process information.
@@ -20,12 +20,6 @@ namespace VirtualPaper.Cores
         /// </summary>
         /// <returns></returns>
         nint Handle { get; }
-
-        ///// <summary>
-        ///// Get web-window handle.
-        ///// </summary>
-        ///// <returns></returns>
-        //nint ProcHandle { get; }
 
         /// <summary>
         /// 壁纸元数据
@@ -49,21 +43,16 @@ namespace VirtualPaper.Cores
         /// </summary>
         /// <returns></returns>
         bool IsLoaded { get; }
-
-        EventHandler? Closing { get; set; }
+        EventHandler? Closing { get; set; }        
+        EventHandler? ToBackground { get; set; }
 
         Task<bool> ShowAsync(CancellationToken cancellationToken = default);
-
+        IWpPlayerData GetData();
         void Pause();
-
         void Play();
-
         void PauseParallax();
-
         void PlayParallax();
-
         void Stop();
-
         void Close();
 
         /// <summary>
@@ -86,38 +75,18 @@ namespace VirtualPaper.Cores
         void SetPlaybackPos(float pos, PlaybackPosType type);
 
         void Update(IWpPlayerData data);
+
         /// <summary>
         /// 截图保存当前壁纸（.jpg）
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
-        Task ScreenCapture(string filePath);
-
+        Task ScreenCapture(string filePath);        
     }
 
     public enum PlaybackPosType
     {
         absolutePercent,
         relativePercent
-    }
-
-    public class WindowInitializedArgs : EventArgs
-    {
-        /// <summary>
-        /// True if wallpaper window is ready.
-        /// </summary>
-        public bool Success { get; set; }
-
-        /// <summary>
-        /// Errors if any.
-        /// Null if no Error.
-        /// </summary>
-        public Exception? Error { get; set; }
-
-        /// <summary>
-        /// Custom message.
-        /// Null if no message.
-        /// </summary>
-        public string Msg { get; set; } = string.Empty;
     }
 }

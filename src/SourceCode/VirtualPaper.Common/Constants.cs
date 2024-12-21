@@ -284,12 +284,13 @@
             public static string WpSettings_SidebarLibraryContents { get; } = "WpSettings_SidebarLibraryContents";
             public static string WpSettings_SidebarSettings { get; } = "WpSettings_SidebarSettings";
             public static string WpSettings_SidebarWpConfig { get; } = "WpSettings_SidebarWpConfig";
-            public static string Text_Apply { get; } = "Text_Apply";
+            public static string Text_SaveAndApply { get; } = "Text_SaveAndApply";
             public static string Text_Cancel { get; } = "Text_Cancel";
             public static string Text_Close { get; } = "Text_Close";
             public static string Text_Detect { get; } = "Text_Detect";
             public static string Text_Identify { get; } = "Text_Identify";
             public static string Text_Loading { get; } = "Text_Loading";
+            public static string Text_Adjust { get; } = "Text_Adjust";
             public static string Text_Preview { get; } = "Text_Preview";
             public static string Text_Restore { get; } = "Text_Restore";
             public static string WpSettings_Text_Title { get; } = "WpSettings_Text_Title";

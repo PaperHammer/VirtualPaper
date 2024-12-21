@@ -11,7 +11,6 @@ using Microsoft.Win32;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.UIComponent.Utils;
-using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -38,12 +37,7 @@ namespace VirtualPaper.PlayerWeb {
             SessionEnding += App_SessionEnding;
             SetupUnhandledExceptionLogging();
 
-            //string s = "a --file-path C:\\Users\\PaperHammer\\Desktop\\1P.mp4 --effect-file-path-using D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\1\\wpEffectFilePathUsing.json --effect-file-path-temporary D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemporary.json --effect-file-path-template D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemplate.json --runtime-type RVideo --is-preview True --window-style-type Default --app-theme Light --app-language zh-CN";
-            //string s = "a -f D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\of14a2lw.buk.jpg -b D:\\_%TEMP2\\wallpapers\\0ei3uyvo.zpf\\wp_metadata_basic.json -e D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\1\\wpEffectFilePathUsing.json --effect-file-path-temporary D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemporary.json --effect-file-path-template D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemplate.json -r RImage --window-style-type Default -t Light -l zh-CN";
-            //string s = "a  --file-path D:\\ProgramDemos\\VSCodeDemos\\Temp\\WEB\\3d\\Images\\img29.jpg --depth-file-path D:\\ProgramDemos\\VSCodeDemos\\Temp\\WEB\\3d\\Images\\_img29.jpg --effect-file-path-using D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\1\\wpEffectFilePathUsing.json --effect-file-path-temporary D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemporary.json --effect-file-path-template D:\\_%TEMP2\\wallpapers\\of14a2lw.buk\\wpEffectFilePathTemplate.json --runtime-type RImage3D --is-preview True --window-style-type Default --app-theme Light --app-language zh-CN";
-            //string[] startArgs = s.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1..];
             string[] startArgs = Environment.GetCommandLineArgs()[1..];
-
             Parser.Default.ParseArguments<StartArgs>(startArgs)
                 .WithParsed((x) => _startArgs = x)
                 .WithNotParsed(HandleParseError);

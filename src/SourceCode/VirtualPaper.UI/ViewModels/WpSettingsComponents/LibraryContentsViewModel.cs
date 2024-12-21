@@ -4,12 +4,16 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Vanara.PInvoke;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Storage;
@@ -32,6 +36,7 @@ using Windows.System.UserProfile;
 using WinRT.Interop;
 using WinUI3Localizer;
 using WinUIEx;
+using static Vanara.PInvoke.User32.RAWINPUT;
 using static VirtualPaper.UI.Services.Interfaces.IDialogService;
 
 namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
@@ -56,19 +61,17 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             _dialogService = dialogService;
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
-            _localizer = LanguageUtil.LocalizerInstacne;
 
             _wpSettingsViewModel = wpSettingsViewModel;
             generalSettingViewModel.WallpaperInstallDirChanged += WallpaperInstallDirectoryUpdate;
 
             InitText();
             InitColletions();
-            InitContents();
+            //InitContents();
         }
 
         private void InitColletions() {
             LibraryWallpapers = [];
-
             _wallpaperInstallFolders =
             [
                 _userSettingsClient.Settings.WallpaperDir,
@@ -76,30 +79,28 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         }
 
         private void InitText() {
-            MenuFlyout_Text_DetailedInfo = _localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_DetailedInfo);
-            MenuFlyout_Text_Update = _localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_Update);
-            MenuFlyout_Text_EditInfo = _localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_EditInfo);
-            MenuFlyout_Text_Preview = _localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_Preview);
-            MenuFlyout_Text_Apply = _localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_Apply);
-            MenuFlyout_Text_ApplyToLockBG = _localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_ApplyToLockBG);
-            MenuFlyout_Text_ShowOnDisk = _localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_ShowOnDisk);
-            MenuFlyout_Text_Export = _localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_Export);
-            MenuFlyout_Text_Delete = _localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_Delete);
+            MenuFlyout_Text_DetailedInfo = App.Localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_DetailedInfo);
+            MenuFlyout_Text_Update = App.Localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_Update);
+            MenuFlyout_Text_EditInfo = App.Localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_EditInfo);
+            MenuFlyout_Text_Preview = App.Localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_Preview);
+            MenuFlyout_Text_Apply = App.Localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_Apply);
+            MenuFlyout_Text_ApplyToLockBG = App.Localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_ApplyToLockBG);
+            MenuFlyout_Text_ShowOnDisk = App.Localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_ShowOnDisk);
+            MenuFlyout_Text_Export = App.Localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_Export);
+            MenuFlyout_Text_Delete = App.Localizer.GetLocalizedString(Constants.LocalText.MenuFlyout_Text_Delete);
         }
 
-        internal async void InitContents() {
+        internal async Task InitContents() {
             try {
                 BasicUIComponentUtil.Loading(false, false, null);
-                LibraryWallpapers.Clear();
 
-                await foreach (var libData in GetWpBasicDataByInstallFoldersAsync(_wallpaperInstallFolders)) {
-                    _uid2idx[libData.BasicData.WallpaperUid] = libData.Idx;
-                    LibraryWallpapers.Add(libData.BasicData);
+                var loader = new AsyncLoader<IWpBasicData>(maxDegreeOfParallelism: 10, channelCapacity: 100);
+                await foreach (var data in loader.LoadItemsAsync(ProcessFolders, _wallpaperInstallFolders)) {
+                    UpdateLib(data);
                 }
             }
             catch (Exception ex) {
                 BasicUIComponentUtil.ShowExp(ex);
-                LibraryWallpapers.Clear();
             }
             finally {
                 BasicUIComponentUtil.Loaded(null);
@@ -120,7 +121,6 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 toolContainer = new(
                    mainWindow.WindowStyleType,
                    _userSettingsClient.Settings.ApplicationTheme,
-                   mainWindow.AppWindow.TitleBar.ButtonForegroundColor,
                    mainWindow.WindowCaptionForegroundDisabled,
                    mainWindow.WindowCaptionForeground);
 
@@ -154,7 +154,6 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 toolContainer = new(
                    mainWindow.WindowStyleType,
                    _userSettingsClient.Settings.ApplicationTheme,
-                   mainWindow.AppWindow.TitleBar.ButtonForegroundColor,
                    mainWindow.WindowCaptionForegroundDisabled,
                    mainWindow.WindowCaptionForeground);
 
@@ -277,9 +276,9 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
 
                 if (data.FType != FileType.FPicture && data.FType != FileType.FGif) {
                     await _dialogService.ShowDialogAsync(
-                        _localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_OnlyPictureAndGif)
-                        , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
-                        , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
+                        App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_OnlyPictureAndGif)
+                        , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
+                        , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
                     return;
                 }
 
@@ -299,10 +298,10 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         internal async Task DeleteAsync(IWpBasicData data) {
             try {
                 var dialogRes = await _dialogService.ShowDialogAsync(
-                    _localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_LibraryDelete)
-                    , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
-                    , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm)
-                    , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Cancel));
+                    App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_LibraryDelete)
+                    , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
+                    , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm)
+                    , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Cancel));
                 if (dialogRes != DialogResult.Primary) return;
 
                 bool isUsing = await CheckFileUsingAsync(data, false);
@@ -322,14 +321,12 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         private void UpdateLib(IWpBasicData data) {
             try {
                 ArgumentNullException.ThrowIfNull(nameof(data));
-                lock (_lockAddToLib) {
-                    if (_uid2idx.TryGetValue(data.WallpaperUid, out int idx)) {
-                        LibraryWallpapers[idx] = data;
-                    }
-                    else {
-                        _uid2idx[data.WallpaperUid] = LibraryWallpapers.Count;
-                        LibraryWallpapers.Add(data);
-                    }
+                if (_uid2idx.TryGetValue(data.WallpaperUid, out int idx)) {
+                    LibraryWallpapers[idx] = data;
+                }
+                else {
+                    _uid2idx[data.WallpaperUid] = LibraryWallpapers.Count;
+                    LibraryWallpapers.Add(data);
                 }
             }
             catch (Exception ex) {
@@ -357,18 +354,18 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 foreach (var importValue in importValues) {
                     try {
                         if (importValue.FType != FileType.FUnknown) {
-                            IWpBasicData data = await SetBasicDataAsync(importValue, _ctsImport);
-
-                            if (_ctsImport.IsCancellationRequested)
-                                throw new OperationCanceledException();
-
+                            var grpc_data = await _wpControlClient.CreateBasicDataAsync(
+                                importValue.FilePath,
+                                importValue.FType,
+                                _ctsImport.Token);
+                            IWpBasicData data = DataAssist.GrpcToBasicData(grpc_data);
                             UpdateLib(data);
                         }
                         else {
                             await _dialogService.ShowDialogAsync(
-                               $"\"{importValue.FilePath}\"\n" + _localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_Import_Failed_Lib)
-                               , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
-                               , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
+                               $"\"{importValue.FilePath}\"\n" + App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_Import_Failed_Lib)
+                               , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
+                               , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
                         }
 
                         BasicUIComponentUtil.UpdateProgressbarValue(++finishedCnt, importValues.Count);
@@ -386,29 +383,6 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             }
         }
 
-        private async Task<IWpBasicData> SetBasicDataAsync(ImportValue importValue, CancellationTokenSource token) {
-            var wpMetadataBasic = await _wpControlClient.CreateBasicDataAsync(
-                importValue.FilePath,
-                importValue.FType,
-                token.Token);
-
-            return DataAssist.GrpcToBasicData(wpMetadataBasic);
-        }
-
-        //private async Task<bool> SetRuntimeDataAsync(IWpMetadata data, CancellationTokenSource token) {
-        //    var rtype = await GetWallpaperRTypeByFTypeAsync(data.BasicData.FType);
-        //    if (rtype == RuntimeType.RUnknown) return false;
-
-        //    var wpMetadataRuntime = await _wpControlClient.CreateRuntimeDataAsync(
-        //        data.BasicData.FilePath,
-        //        data.BasicData.FolderPath,
-        //        rtype,
-        //        token.Token);
-        //    data.RuntimeData = DataAssist.GrpcToRuntimeData(wpMetadataRuntime);
-
-        //    return true;
-        //}
-
         private async Task<RuntimeType> GetWallpaperRTypeByFTypeAsync(FileType ftype) {
             switch (ftype) {
                 case FileType.FPicture:
@@ -416,8 +390,8 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                     var wpCreateDialogViewModel = new WallpaperCreateDialogViewModel();
                     var dialogRes = await _dialogService.ShowDialogAsync(
                         new WallpaperCreateView(wpCreateDialogViewModel)
-                        , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_CreateType)
-                        , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
+                        , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_CreateType)
+                        , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
                     if (dialogRes != DialogResult.Primary) return RuntimeType.RUnknown;
 
                     return wpCreateDialogViewModel.SelectedItem.CreateType switch {
@@ -437,19 +411,19 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             _wallpaperInstallFolders.Clear();
             _wallpaperInstallFolders.Add(_userSettingsClient.Settings.WallpaperDir);
 
-            await foreach (var libData in GetWpBasicDataByInstallFoldersAsync(_wallpaperInstallFolders)) {
-                var md = libData.BasicData;
-                LibraryWallpapers.Add(md);
+            var loader = new AsyncLoader<IWpBasicData>(maxDegreeOfParallelism: 10, channelCapacity: 100);
+            await foreach (var data in loader.LoadItemsAsync(ProcessFolders, _wallpaperInstallFolders)) {
+                LibraryWallpapers.Add(data);
             }
         }
 
         private async Task CheckFileUpdateAsync(IWpBasicData data) {
             if (data.AppInfo.FileVersion != _userSettingsClient.Settings.FileVersion) {
                 var dialogRes = await _dialogService.ShowDialogAsync(
-                    _localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_Import_NeedUpdate)
-                    , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
-                    , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm)
-                    , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Cancel));
+                    App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_Import_NeedUpdate)
+                    , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
+                    , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm)
+                    , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Cancel));
                 if (dialogRes == DialogResult.Primary)
                     await UpdateAsync(data);
             }
@@ -461,9 +435,9 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 if (wl.FolderPath == data.FolderPath) {
                     if (!isSlient) {
                         await _dialogService.ShowDialogAsync(
-                        _localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_WpIsUsing)
-                        , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
-                        , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
+                        App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_WpIsUsing)
+                        , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
+                        , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
                     }
 
                     return true;
@@ -488,28 +462,28 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             Native.SetWindowLong(toolHwnd, Native.GWL_HWNDPARENT, WindowNative.GetWindowHandle(parentWindow));
         }
 
-        private static async IAsyncEnumerable<WpLibData> GetWpBasicDataByInstallFoldersAsync(List<string> folderPaths) {
-            int idx = 0;
-            foreach (string storeDir in folderPaths) {
+        private static async Task ProcessFolders(IEnumerable<string> folderPaths, ParallelOptions parallelOptions, ChannelWriter<IWpBasicData> writer, CancellationToken cancellationToken = default) {
+            await Parallel.ForEachAsync(folderPaths, parallelOptions, async (storeDir, token) => {
                 DirectoryInfo root = new(storeDir);
                 DirectoryInfo[] folders = root.GetDirectories();
 
                 foreach (DirectoryInfo folder in folders) {
                     string[] files = Directory.GetFiles(folder.FullName);
-                    WpLibData libData = new();
+
                     foreach (string file in files) {
                         if (Path.GetFileName(file) == Constants.Field.WpBasicDataFileName) {
-                            libData.BasicData = await JsonStorage<WpBasicData>.LoadDataAsync(file);
+                            WpBasicData data = await JsonStorage<WpBasicData>.LoadDataAsync(file);
 
-                            if (libData.BasicData.IsAvailable()) {
-                                libData.Idx = idx++;
-                                yield return libData;
+                            if (data.IsAvailable()) {
+                                await writer.WriteAsync(data, token);
                                 break;
                             }
                         }
+                        token.ThrowIfCancellationRequested();
                     }
+                    token.ThrowIfCancellationRequested();
                 }
-            }
+            });
         }
 
         private static async Task<List<ImportValue>> GetImportValueFromLocalAsync(IReadOnlyList<IStorageItem> items) {
@@ -546,7 +520,6 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             internal FileType FType { get; set; } = ftype;
         }
 
-        private readonly ILocalizer _localizer;
         private readonly IDialogService _dialogService;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
@@ -554,7 +527,6 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         private List<string> _wallpaperInstallFolders;
         private CancellationTokenSource _ctsImport, _ctsUpdate, _ctsApply, _ctsApplyLockBG, _ctsPreview;
         private readonly ConcurrentDictionary<string, int> _uid2idx = [];
-        private readonly static object _lockAddToLib = new(), _lockCollection = new();
         private readonly SemaphoreSlim _applySemaphoreSlim = new(1, 1);
         private readonly SemaphoreSlim _previewSemaphoreSlim = new(1, 1);
         private static readonly Dictionary<string, ToolContainer> _wp2TocDetail = [];

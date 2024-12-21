@@ -1,7 +1,7 @@
 ﻿using VirtualPaper.Common;
 
 namespace VirtualPaper.Models.Cores.Interfaces {
-    public interface IWpBasicData {
+    public interface IWpBasicData : IEquatable<IWpBasicData> {
         /// <summary>
         /// 资源唯一标识符
         /// </summary>

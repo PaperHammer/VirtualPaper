@@ -9,6 +9,7 @@ service Grpc_WallpaperControlService {
     rpc CloseAllPreview(google.protobuf.Empty) returns (google.protobuf.Empty);	
 	rpc GetWallpaper(VirtualPaper.Grpc.Service.Models.Grpc_GetWallpaperRequest) returns (VirtualPaper.Grpc.Service.Models.Grpc_WpMetaData);
 	rpc GetWallpapers(google.protobuf.Empty) returns (stream VirtualPaper.Grpc.Service.Models.Grpc_WpMetaData);
+	rpc AdjustWallpaper(VirtualPaper.Grpc.Service.Models.Grpc_AdjustWallpaperRequest) returns (VirtualPaper.Grpc.Service.Models.Grpc_AdjustWallpaperResponse);
 	rpc PreviewWallpaper(VirtualPaper.Grpc.Service.Models.Grpc_PreviewWallpaperRequest) returns (VirtualPaper.Grpc.Service.Models.Grpc_PreviewWallpaperResponse);
 	rpc RestartAllWallpapers(google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.Models.Grpc_RestartWallpaperResponse);
 	rpc SetWallpaper(VirtualPaper.Grpc.Service.Models.Grpc_SetWallpaperRequest) returns (VirtualPaper.Grpc.Service.Models.Grpc_SetWallpaperResponse);

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -30,8 +29,8 @@ namespace VirtualPaper.PlayerWeb {
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainWindow : WindowEx {
-        public SolidColorBrush WindowCaptionForeground { get; private set; }
-        public SolidColorBrush WindowCaptionForegroundDisabled { get; private set; }
+        public SolidColorBrush WindowCaptionForeground => (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
+        public SolidColorBrush WindowCaptionForegroundDisabled => (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
 
         private bool _isFocusOnWindow;
         public bool IsFocusOnWindow {
@@ -51,19 +50,15 @@ namespace VirtualPaper.PlayerWeb {
 
             _viewModel = new MainWindowViewModel();
             this.ContentGrid.DataContext = _viewModel;
+            _filePath = _startArgs.FilePath;
 
             if (_startArgs.IsPreview) {
-                WindowCaptionForeground = (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
-                WindowCaptionForegroundDisabled = (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
-
                 SetWindowStyle();
                 SetWindowTitleBar();
             }
             else {
                 AppTitleBar.Visibility = Visibility.Collapsed;
-            }
-
-            _filePath = _startArgs.FilePath;
+            }            
         }
 
         private void WindowEx_SizeChanged(object sender, WindowSizeChangedEventArgs args) {
@@ -73,12 +68,10 @@ namespace VirtualPaper.PlayerWeb {
         private async void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
             if (args.WindowActivationState == WindowActivationState.Deactivated) {
                 TitleTextBlock.Foreground = WindowCaptionForegroundDisabled;
-
                 IsFocusOnWindow = false;
             }
             else {
                 TitleTextBlock.Foreground = WindowCaptionForeground;
-
                 IsFocusOnWindow = true;
             }
 
@@ -89,7 +82,7 @@ namespace VirtualPaper.PlayerWeb {
                 await InitializeWebViewAsync();
 
                 if (_startArgs.IsPreview) {
-                    WindowUtil.OpenToolWindow(_startArgs);
+                    WindowUtil.ActiveToolWindow(_startArgs);
                     WindowUtil.AddEffectConfigPage();
                     WindowUtil.AddDetailsPage();
                 }
@@ -135,13 +128,12 @@ namespace VirtualPaper.PlayerWeb {
                         var msg = await Console.In.ReadLineAsync();
                         if (string.IsNullOrEmpty(msg)) {
                             //When the redirected stream is closed, a null line is sent to the event handler. 
-#if !DEBUG
-                            _ctsParallax?.Cancel();
                             break;
-#endif
                         }
                         else {
-                            HandleIpcMessage(msg);
+                            _dispatcherQueue.TryEnqueue(() => {
+                                HandleIpcMessage(msg);
+                            });
                         }
                     }
                 });
@@ -170,6 +162,12 @@ namespace VirtualPaper.PlayerWeb {
                         break;
                     case MessageType.cmd_active:
                         this.BringToFront();
+                        WindowUtil.ActiveToolWindow(_startArgs);
+                        bool isNull = WindowUtil.IsToolContentNull();
+                        if (isNull) {
+                            WindowUtil.AddEffectConfigPage();
+                            WindowUtil.AddDetailsPage();
+                        }
                         break;
                     case MessageType.cmd_reload:
                         Webview2?.Reload();
@@ -540,12 +538,18 @@ namespace VirtualPaper.PlayerWeb {
             uint scaleFactorPercent = (uint)(((long)dpiX * 100 + (96 >> 1)) / 96);
             return scaleFactorPercent / 100.0;
         }
+
+        internal void BeforeToBackground() {
+            AppTitleBar.Loaded += AppTitleBar_Loaded;
+            AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
+            AppTitleBar.Visibility = Visibility.Collapsed;
+        }
         #endregion
 
         private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
             AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1"
         }; // workaround: avoid cache
-        private readonly StartArgs _startArgs;
+        internal readonly StartArgs _startArgs;
         private static bool _isPaused = false;
         private static bool _isParallaxOn = true;
         private static int _isParallaxRunning = 0;

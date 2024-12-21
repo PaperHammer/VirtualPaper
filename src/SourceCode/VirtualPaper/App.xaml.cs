@@ -1,33 +1,33 @@
-﻿using GrpcDotNetNamedPipes;
+﻿using System.Diagnostics;
+using System.IO;
+using System.Windows;
+using System.Windows.Threading;
+using GrpcDotNetNamedPipes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Win32;
 using NLog;
-using System.Diagnostics;
-using System.IO;
-using System.Windows;
-using System.Windows.Threading;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Models;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Cores.AppUpdate;
-using VirtualPaper.Cores.TrayControl;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.PlaybackControl;
 using VirtualPaper.Cores.ScreenSaver;
+using VirtualPaper.Cores.TrayControl;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Factories;
 using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Grpc.Service.Commands;
 using VirtualPaper.Grpc.Service.MonitorManager;
+using VirtualPaper.Grpc.Service.ScrCommands;
 using VirtualPaper.Grpc.Service.Update;
 using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.GrpcServers;
 using VirtualPaper.lang;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Grpc.Service.ScrCommands;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
@@ -38,7 +38,6 @@ using Wpf.Ui.Appearance;
 using Application = System.Windows.Application;
 using AppTheme = VirtualPaper.Common.AppTheme;
 using MessageBox = System.Windows.MessageBox;
-using static VirtualPaper.Common.Constants;
 
 namespace VirtualPaper {
     /// <summary>

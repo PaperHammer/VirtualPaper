@@ -691,8 +691,8 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="SidebarWpSettings" xml:space="preserve">
     <value>本地</value>
   </data>
-  <data name="Text_Apply" xml:space="preserve">
-    <value>应用</value>
+  <data name="Text_Adjust" xml:space="preserve">
+    <value>调整</value>
   </data>
   <data name="Text_Cancel" xml:space="preserve">
     <value>取消</value>
@@ -735,6 +735,9 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Text_Restore" xml:space="preserve">
     <value>还原</value>
+  </data>
+  <data name="Text_SaveAndApply" xml:space="preserve">
+    <value>保存并应用</value>
   </data>
   <data name="WpConfigViewMdoel_TextAspectRatio" xml:space="preserve">
     <value>比例：</value>

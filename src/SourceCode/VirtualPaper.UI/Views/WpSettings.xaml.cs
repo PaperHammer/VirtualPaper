@@ -3,7 +3,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Navigation;
+using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels;
 using VirtualPaper.UI.Views.WpSettingsComponents;
 
@@ -19,17 +20,15 @@ namespace VirtualPaper.UI.Views {
             this.InitializeComponent();
 
             _viewModel = App.Services.GetRequiredService<WpSettingsViewModel>();
-            //_viewModel.SelectBarChanged += WpSettingsViewModel_SelectBarChanged;
-            //_viewModel.InitMonitors();
             this.DataContext = _viewModel;
         }
 
-        private void WpSettingsViewModel_SelectBarChanged(object sender, int index) {
-            var items = SelBar.Items;
-            if (index >= 0 && index < items.Count) {
-                SelBar.SelectedItem = items[index];
-            }
-        }
+        //private void WpSettingsViewModel_SelectBarChanged(object sender, int index) {
+        //    var items = SelBar.Items;
+        //    if (index >= 0 && index < items.Count) {
+        //        SelBar.SelectedItem = items[index];
+        //    }
+        //}
 
         #region btn_click
         private async void BtnClose_Click(object sender, RoutedEventArgs e) {
@@ -38,13 +37,6 @@ namespace VirtualPaper.UI.Views {
             await Task.Delay(3000);
             BtnClose.IsEnabled = true;
         }
-
-        //private async void BtnRestore_Click(object sender, RoutedEventArgs e) {
-        //    BtnRestore.IsEnabled = false;
-        //    _viewModel.Restore();
-        //    await Task.Delay(3000);
-        //    BtnRestore.IsEnabled = true;
-        //}
 
         private async void BtnDetect_Click(object sender, RoutedEventArgs e) {
             BtnDetect.IsEnabled = false;
@@ -61,36 +53,39 @@ namespace VirtualPaper.UI.Views {
         }
 
         private async void BtnAdjust_Click(object sender, RoutedEventArgs e) {
-            await _viewModel.PreviewAsync();
+            await _viewModel.AdjustAsync();
         }
 
-        //private async void BtnApply_Click(object sender, RoutedEventArgs e) {
-        //    BtnApply.IsEnabled = false;
-        //    _viewModel.Apply();
-        //    await Task.Delay(3000);
-        //    BtnApply.IsEnabled = true;
-        //}
+        private async void BtnPreview_Click(object sender, RoutedEventArgs e) {
+            await _viewModel.PreviewAsync();
+        }
         #endregion
 
-        #region nav       
-        private void SelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args) {
-            SelectorBarItem selectedItem = sender.SelectedItem;
-            int currentSelectedIndex = sender.Items.IndexOf(selectedItem);
+        #region nav
+        private void NvLocal_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
+            try {
+                FrameNavigationOptions navOptions = new() {
+                    TransitionInfoOverride = args.RecommendedNavigationTransitionInfo,
+                    IsNavigationStackEnabled = false
+                };
 
-            Type pageType = currentSelectedIndex switch {
-                0 => typeof(LibraryContents),
-                1 => typeof(WpRuntimeSettings),
-                _ => null,
-            };
-            var slideNavigationTransitionEffect = currentSelectedIndex - _previousSelectedIndex > 0 ? SlideNavigationTransitionEffect.FromRight : SlideNavigationTransitionEffect.FromLeft;
+                Type pageType = null;
+                if (args.SelectedItemContainer.Name == LibraryContents.Name) {
+                    pageType = typeof(LibraryContents);
+                }
+                else if (args.SelectedItemContainer.Name == WpRuntimeSettings.Name) {
+                    pageType = typeof(WpRuntimeSettings);
+                }
 
-            ContentFrame.Navigate(pageType, null, new SlideNavigationTransitionInfo() { Effect = slideNavigationTransitionEffect });
-
-            _previousSelectedIndex = currentSelectedIndex;
+                ContentFrame.NavigateToType(pageType, null, navOptions);
+            }
+            catch (Exception ex) {
+                BasicUIComponentUtil.ShowExp(ex);
+                App.Log.Error(ex);
+            }
         }
         #endregion
 
         private readonly WpSettingsViewModel _viewModel;
-        private int _previousSelectedIndex = 0;
     }
 }

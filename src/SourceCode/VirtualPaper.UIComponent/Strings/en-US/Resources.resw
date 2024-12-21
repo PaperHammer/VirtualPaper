@@ -691,8 +691,8 @@ Author: PaperHammer</value>
   <data name="SidebarWpSettings" xml:space="preserve">
     <value>Local</value>
   </data>
-  <data name="Text_Apply" xml:space="preserve">
-    <value>Apply</value>
+  <data name="Text_Adjust" xml:space="preserve">
+    <value>Adjust</value>
   </data>
   <data name="Text_Cancel" xml:space="preserve">
     <value>Cancel</value>
@@ -735,6 +735,9 @@ Author: PaperHammer</value>
   </data>
   <data name="Text_Restore" xml:space="preserve">
     <value>Restore</value>
+  </data>
+  <data name="Text_SaveAndApply" xml:space="preserve">
+    <value>Apply and Save</value>
   </data>
   <data name="WpConfigViewMdoel_TextAspectRatio" xml:space="preserve">
     <value>Aspect Ratio：</value>

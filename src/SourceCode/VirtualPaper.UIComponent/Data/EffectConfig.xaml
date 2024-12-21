@@ -34,12 +34,12 @@
 
             <Button
                 Grid.Column="1"
-                x:Name="btnApply"
+                x:Name="btnSaveAndApply"
                 Height="33"
                 MinWidth="66"
                 Margin="10 0 0 0"
-                Click="ApplyBtn_Click"
-                Content="{x:Bind _textApply}"/>
+                Click="SaveAndApplyBtn_Click"
+                Content="{x:Bind _textSaveAndApply}"/>
         </Grid>
 
         <Grid

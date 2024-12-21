@@ -69,22 +69,23 @@ namespace VirtualPaper.Utils {
             return wpEffectFilePathTemplate;
         }
 
-        internal static string CreateWpEffectFileTemporary(
-            string folderPath,
-            string wpEffectFilePathTemplate) {
-            string wpEffectFilePathTemporary = Path.Combine(folderPath, Constants.Field.WpEffectFilePathTemporary);
-            File.Copy(wpEffectFilePathTemplate, wpEffectFilePathTemporary, true);
+        //internal static string CreateWpEffectFileTemporary(
+        //    string folderPath,
+        //    string wpEffectFilePathTemplate) {
+        //    string wpEffectFilePathTemporary = Path.Combine(folderPath, Constants.Field.WpEffectFilePathTemporary);
+        //    File.Copy(wpEffectFilePathTemplate, wpEffectFilePathTemporary, true);
 
-            return wpEffectFilePathTemporary;
-        }
+        //    return wpEffectFilePathTemporary;
+        //}
 
-        internal static string CreateWpEffectFileUsing(
+        internal static string CreateWpEffectFileUsingOrTemporary(
+            int type,
             string folderPath,
             string wpEffectFilePathTemplate,
             string monitorContent,
             RuntimeType rtype,
             WallpaperArrangement arrangement) {
-            string wpEffectFilePathUsing = string.Empty;
+            string filePath = string.Empty;
             if (wpEffectFilePathTemplate != null) {
                 if (monitorContent != null) {
                     string wpdataUsingFolder = string.Empty;
@@ -100,12 +101,12 @@ namespace VirtualPaper.Utils {
                             break;
                     }
                     Directory.CreateDirectory(wpdataUsingFolder);
-                    wpEffectFilePathUsing = Path.Combine(wpdataUsingFolder, Constants.Field.WpEffectFilePathUsing);
-                    File.Copy(wpEffectFilePathTemplate, wpEffectFilePathUsing, true);
+                    filePath = Path.Combine(wpdataUsingFolder, type == 0 ? Constants.Field.WpEffectFilePathUsing : Constants.Field.WpEffectFilePathTemporary);
+                    File.Copy(wpEffectFilePathTemplate, filePath, true);
                 }
             }
 
-            return wpEffectFilePathUsing;
+            return filePath;
         }
 
         internal static void CreateGif(string filePath, string coverFilePath, FileType ftype, CancellationToken token) {

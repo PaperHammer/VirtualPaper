@@ -21,7 +21,7 @@ namespace VirtualPaper.UIComponent.Data {
         public event EventHandler<IntValueChangedEventArgs> IntValueChanged;
         public event EventHandler<BoolValueChangedEventArgs> BoolValueChanged;
         public event EventHandler<StringValueChangedEventArgs> StringValueChanged;
-        public event EventHandler ApplyChange;
+        public event EventHandler SaveAndApply;
 
         #region init
         public EffectConfig(
@@ -46,7 +46,7 @@ namespace VirtualPaper.UIComponent.Data {
 
         private void InitText() {            
             _textRestore = _localizer.GetLocalizedString(Constants.LocalText.Text_Restore);
-            _textApply = _localizer.GetLocalizedString(Constants.LocalText.Text_Apply);
+            _textSaveAndApply = _localizer.GetLocalizedString(Constants.LocalText.Text_SaveAndApply);
         }
 
         private void InitUI() {
@@ -447,9 +447,9 @@ namespace VirtualPaper.UIComponent.Data {
             btnRestore.IsEnabled = true;
         }
 
-        private void ApplyBtn_Click(object sender, RoutedEventArgs e) {
+        private void SaveAndApplyBtn_Click(object sender, RoutedEventArgs e) {
             UpdatePropertyFile(true);
-            ApplyChange?.Invoke(this, EventArgs.Empty);
+            SaveAndApply?.Invoke(this, EventArgs.Empty);
         }
         #endregion
 
@@ -475,8 +475,8 @@ namespace VirtualPaper.UIComponent.Data {
         }
         #endregion
 
-        public void UpdatePropertyFile(bool isApply) {
-            if (isApply) {
+        public void UpdatePropertyFile(bool isSave) {
+            if (isSave) {
                 JsonUtil.Write(_wpEffectFilePathUsing, _wpEffectData);
             }
             JsonUtil.Write(_wpEffectFilePathTemporary, _wpEffectData);
@@ -593,7 +593,7 @@ namespace VirtualPaper.UIComponent.Data {
         private const double _minWidth = 200;
         private readonly ILocalizer _localizer;
         private string _textRestore;
-        private string _textApply;
+        private string _textSaveAndApply;
         private readonly Dictionary<string, UIElement> _controls;
     }
 }

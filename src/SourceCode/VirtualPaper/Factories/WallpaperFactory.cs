@@ -7,7 +7,7 @@ using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Factories {
     public class WallpaperFactory : IWallpaperFactory {
-        public IWallpaperPlaying CreatePlayer(
+        public IWpPlayer CreatePlayer(
             IWpPlayerData data,
             IMonitor monitor,
             IUserSettingsService userSettings,

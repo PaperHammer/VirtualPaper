@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.PInvoke;
@@ -14,6 +12,7 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels;
+using VirtualPaper.UI.Views;
 using VirtualPaper.UIComponent.Utils.Extensions;
 using WinRT.Interop;
 using WinUIEx;
@@ -29,8 +28,8 @@ namespace VirtualPaper.UI {
         //public List<WindowEx> ChildWindows { get; } = [];
 
         public string WindowStyleType { get; private set; }
-        public SolidColorBrush WindowCaptionForeground { get; private set; }
-        public SolidColorBrush WindowCaptionForegroundDisabled { get; private set; }
+        public SolidColorBrush WindowCaptionForeground => (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
+        public SolidColorBrush WindowCaptionForegroundDisabled => (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
 
         public MainWindow(
             MainWindowViewModel mainWindowViewModel,
@@ -44,14 +43,8 @@ namespace VirtualPaper.UI {
             _viewModel = mainWindowViewModel;
             this.NavView.DataContext = _viewModel;
 
-            WindowCaptionForeground = (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
-            WindowCaptionForegroundDisabled = (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
-
             SetWindowStyle();
             SetWindowTitleBar();
-
-            //this.Activate();
-            //using Gdi32.SafeHRGN rgn = InitTransparent();           
         }
 
         private void SetWindowTitleBar() {
@@ -116,61 +109,36 @@ namespace VirtualPaper.UI {
             App.ShutDown();
         }
 
-        //public void Changedtransparent(bool isTransparent)
-        //{
-        //    if (isTransparent) NavView.Opacity = 0.5;
-        //    else NavView.Opacity = 1;
-        //    TransparentHelper.SetTransparent(this, isTransparent);
-        //}
+        private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
+            try {
+                FrameNavigationOptions navOptions = new() {
+                    TransitionInfoOverride = args.RecommendedNavigationTransitionInfo,
+                    IsNavigationStackEnabled = false
+                };
 
-        // ref: https://learn.microsoft.com/zh-cn/windows/apps/design/controls/navigationview#backwards-navigation
-        private void NavView_Loaded(
-            object sender,
-            RoutedEventArgs e) {
-            // Add handler for ContentFrame navigation.
-            ContentFrame.Navigated += On_Navigated;
+                Type pageType = null;
+                if (args.SelectedItemContainer.Name == Gallery.Name) {
+                    pageType = typeof(Gallery);
+                }
+                else if (args.SelectedItemContainer.Name == WpSettings.Name) {
+                    pageType = typeof(WpSettings);
+                }
+                else if (args.SelectedItemContainer.Name == Project.Name) {
+                    pageType = typeof(Project);
+                }
+                else if (args.SelectedItemContainer.Name == Account.Name) {
+                    pageType = typeof(Account);
+                }
+                else if (args.SelectedItemContainer.Name == AppSettings.Name) {
+                    pageType = typeof(AppSettings);
+                }
 
-            // NavView doesn't load any page by default, so load home page.
-            NavView.SelectedItem = NavView.MenuItems[0];
-        }
-
-        private void NavigationView_SelectionChanged(
-            NavigationView sender,
-            NavigationViewSelectionChangedEventArgs args) {
-            if (args.SelectedItemContainer != null) {
-                Type navPageType = Type.GetType(args.SelectedItemContainer.Tag.ToString());
-                NavView_Navigate(navPageType, args.RecommendedNavigationTransitionInfo);
+                ContentFrame.NavigateToType(pageType, null, navOptions);
             }
-        }
-
-        private void NavView_Navigate(
-            Type navPageType,
-            NavigationTransitionInfo transitionInfo) {
-            // Get the page type before navigation so you can prevent duplicate
-            // entries in the backstack.
-            Type preNavPageType = ContentFrame.CurrentSourcePageType;
-
-            // Only navigate if the selected page isn't currently loaded.
-            if (navPageType is not null && !Type.Equals(preNavPageType, navPageType)) {
-                BasicUIComponentUtil.Loading(false, false, []);
-                ContentFrame.Navigate(navPageType, null, transitionInfo);
+            catch (Exception ex) {
+                BasicUIComponentUtil.ShowExp(ex);
+                App.Log.Error(ex);
             }
-        }
-
-        private void On_Navigated(object sender, NavigationEventArgs e) {
-            if (ContentFrame.SourcePageType != null) {
-                // Select the nav view item that corresponds to the page being navigated to.
-                var item =
-                    NavView.MenuItems
-                    .OfType<NavigationViewItem>()
-                    .FirstOrDefault(i => i.Tag.Equals(ContentFrame.SourcePageType.FullName.ToString()), null)
-                    ?? NavView.FooterMenuItems
-                        .OfType<NavigationViewItem>()
-                        .First(i => i.Tag.Equals(ContentFrame.SourcePageType.FullName.ToString()));
-
-                NavView.SelectedItem = item;
-            }
-            BasicUIComponentUtil.Loaded([]);
         }
 
         #region window title bar
@@ -239,39 +207,6 @@ namespace VirtualPaper.UI {
             return scaleFactorPercent / 100.0;
         }
         #endregion
-
-        //private Gdi32.SafeHRGN InitTransparent()
-        //{
-        //    var windowHandle = new IntPtr((long)this.AppWindow.Id.Value);
-        //    var rgn = Gdi32.CreateRectRgn(-2, -2, -1, -1);
-        //    DwmApi.DwmEnableBlurBehindWindow(windowHandle, new DwmApi.DWM_BLURBEHIND()
-        //    {
-        //        dwFlags = DwmApi.DWM_BLURBEHIND_Mask.DWM_BB_ENABLE | DwmApi.DWM_BLURBEHIND_Mask.DWM_BB_BLURREGION,
-        //        fEnable = true,
-        //        hRgnBlur = rgn,
-        //    });
-
-        //    wndProcHandler = new ComCtl32.SUBCLASSPROC(WndProc);
-        //    ComCtl32.SetWindowSubclass(windowHandle, wndProcHandler, 1, IntPtr.Zero);
-        //    return rgn;
-        //}
-
-        //private unsafe IntPtr WndProc(HWND hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, nuint uIdSubclass, IntPtr dwRefData)
-        //{
-        //    if (uMsg == (uint)User32.WindowMessage.WM_PAINT)
-        //    {
-        //        var hdc = User32.BeginPaint(hWnd, out var ps);
-        //        if (hdc.IsNull) return new IntPtr(0);
-
-        //        var brush = Gdi32.GetStockObject(Gdi32.StockObjectType.BLACK_BRUSH);
-        //        User32.FillRect(hdc, ps.rcPaint, brush);
-        //        return new IntPtr(1);
-        //    }
-
-        //    return ComCtl32.DefSubclassProc(hWnd, uMsg, wParam, lParam);
-        //}
-
-        //ComCtl32.SUBCLASSPROC wndProcHandler;
 
         private readonly IUserSettingsClient _userSettings;
         private readonly IWallpaperControlClient _wpControl;

@@ -56,8 +56,7 @@
             x:Name="NavView"
             Grid.Row="1"
             PaneDisplayMode="Left"
-            Loaded="NavView_Loaded"
-            SelectionChanged="NavigationView_SelectionChanged"
+            SelectionChanged="NavView_SelectionChanged"
             IsSettingsVisible="False"
             AlwaysShowHeader="False"
             IsBackEnabled="False"
@@ -66,12 +65,13 @@
             <NavigationView.MenuItems>
                 <NavigationViewItem 
                     Content="{Binding SidebarGallery}"
-                    Tag="VirtualPaper.UI.Views.Gallery"
-                    Icon="Library">
+                    x:Name="Gallery"
+                    Icon="Library"
+                    IsSelected="True">
                 </NavigationViewItem>
                 <NavigationViewItem 
                     Content="{Binding SidebarWpSettings}" 
-                    Tag="VirtualPaper.UI.Views.WpSettings">
+                    x:Name="WpSettings">
                     <NavigationViewItem.Icon>
                         <FontIcon 
                             Glyph="&#xE91B;"/>
@@ -79,7 +79,7 @@
                 </NavigationViewItem>
                 <NavigationViewItem 
                     Content="{Binding SidebarProject}" 
-                    Tag="VirtualPaper.UI.Views.Project" >
+                    x:Name="Project" >
                     <NavigationViewItem.Icon>
                         <FontIcon 
                             Glyph="&#xF156;"/>
@@ -90,11 +90,11 @@
             <NavigationView.FooterMenuItems>
                 <NavigationViewItem 
                     Content="{Binding SidebarAccount}" 
-                    Tag="VirtualPaper.UI.Views.Account" 
+                    x:Name="Account" 
                     Icon="Contact" />
                 <NavigationViewItem 
                     Content="{Binding SidebarAppSettings}" 
-                    Tag="VirtualPaper.UI.Views.AppSettings" 
+                    x:Name="AppSettings" 
                     Icon="Setting" />
             </NavigationView.FooterMenuItems>
 
@@ -102,7 +102,7 @@
                 <Frame 
                     x:Name="ContentFrame"
                     IsEnabled="{Binding FrameIsEnable}"/>
-                
+
                 <!--µ¯´°-->
                 <InfoBar
                     HorizontalAlignment="Center"
@@ -112,9 +112,9 @@
                     Severity="{Binding InfoBarSeverity}"
                     Message="{Binding InfobarMsg}"
                     MaxWidth="900"/>
-                
+
                 <!--¼ÓÔØ½çÃæ-->
-                <feedback:Loading                    
+                <feedback:Loading
                     CancelEnable="{Binding CancelEnable}"
                     ProgressbarEnable="{Binding ProgressbarEnable}"
                     CtsTokens="{Binding CtsTokens}"

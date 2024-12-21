@@ -9,6 +9,7 @@
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d"
     x:Name="Page"
+    Loaded="Page_Loaded"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"   
     NavigationCacheMode="Enabled">
 
@@ -16,131 +17,130 @@
         <cvs:ImageSourceConverter x:Key="ImageSourceConverter" />
     </Page.Resources>
 
-    <Grid>
-        <ItemsView             
-            x:Name="ItemsViewer"            
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            HorizontalContentAlignment="Left"
-            VerticalContentAlignment="Center"
-            ItemsSource="{Binding LibraryWallpapers}"
-            AllowDrop="True"
-            DragOver="ItemsView_DragOver"
-            Drop="ItemsView_Drop"
-            SelectionMode="Single"
-            PointerPressed="ItemsViewer_PointerPressed"
-            RightTapped="ItemsView_RightTapped"
-            PreviewKeyDown="ItemsViewer_PreviewKeyDown">
-            <ItemsView.ItemTemplate>
-                <DataTemplate>
-                    <ItemContainer 
-                        AutomationProperties.Name="{Binding Title}"
-                        PointerEntered="ItemGrid_PointerEntered"
-                        PointerExited="ItemGrid_PointerExited"
-                        FocusVisualPrimaryBrush="{ThemeResource SystemBaseHighColor}">
-                        <Grid
-                            x:Name="ItemGrid"
-                            Height="200"
-                            Width="320">
-                            <Image
-                                Source="{Binding ThumbnailPath}"
-                                Stretch="Uniform" 
-                                HorizontalAlignment="Stretch" 
-                                VerticalAlignment="Stretch"
-                                ImageFailed="Image_ImageFailed"/>
-                            <StackPanel 
-                                Orientation="Vertical" 
-                                Height="60" 
-                                VerticalAlignment="Bottom" 
-                                Padding="5,1"  
-                                Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
-                                <TextBlock 
-                                    Text="{Binding Title}" 
-                                    FontSize="18"
-                                    TextWrapping="Wrap"
-                                    HorizontalTextAlignment="Left"
-                                    Foreground="{ThemeResource SystemControlForegroundAltHighBrush}"/>
-                            </StackPanel>
-                        </Grid>
-                    </ItemContainer>
-                </DataTemplate>
-            </ItemsView.ItemTemplate>
-            <ItemsView.Layout>
-                <UniformGridLayout 
-                    MinRowSpacing="15" 
-                    MinColumnSpacing="15"                     
-                    MaximumRowsOrColumns="-1"/>
-            </ItemsView.Layout>
-            <ItemsView.ContextFlyout>
-                <MenuFlyout
-                    x:Name="ItemsViewMenu">
-                    <MenuFlyoutItem
-                        x:Name="DetailedInfo"
-                        Text="{Binding MenuFlyout_Text_DetailedInfo}"
-                        Click="ContextMenu_Click">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="&#xE946;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutItem
-                        x:Name="Update"
-                        Text="{Binding MenuFlyout_Text_Update}"
-                        Click="ContextMenu_Click">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="&#xE753;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutItem
-                        x:Name="EditInfo"
-                        Text="{Binding MenuFlyout_Text_EditInfo}"
-                        Click="ContextMenu_Click">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="&#xE70F;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutItem 
-                        x:Name="Preview"                         
-                        Text="{Binding MenuFlyout_Text_Preview}"
-                        Click="ContextMenu_Click" >
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="&#xE8A1;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutItem 
-                        x:Name="Apply" 
-                        Text="{Binding MenuFlyout_Text_Apply}"
-                        Click="ContextMenu_Click" >
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="&#xE8FB;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutItem 
-                        x:Name="LockBackground" 
-                        Text="{Binding MenuFlyout_Text_ApplyToLockBG}"
-                        Click="ContextMenu_Click" >
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="&#xEE3F;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutItem
-                         x:Name="ShowOnDisk"
-                         Text="{Binding MenuFlyout_Text_ShowOnDisk}"
-                         Click="ContextMenu_Click">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="&#xED25;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutItem
-                        x:Name="Delete"
-                        Text="{Binding MenuFlyout_Text_Delete}"
-                        Click="ContextMenu_Click">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="&#xE74D;" 
-                              Foreground="Goldenrod"/>
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                </MenuFlyout>
-            </ItemsView.ContextFlyout>
-        </ItemsView>
-    </Grid>
+    <ItemsView
+        x:Name="ItemsViewer"            
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        HorizontalContentAlignment="Left"
+        VerticalContentAlignment="Center"
+        ItemsSource="{Binding LibraryWallpapers}"
+        AllowDrop="True"
+        DragOver="ItemsView_DragOver"
+        Drop="ItemsView_Drop"
+        SelectionMode="Single"
+        PointerPressed="ItemsViewer_PointerPressed"
+        RightTapped="ItemsView_RightTapped"
+        Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}" 
+        PreviewKeyDown="ItemsViewer_PreviewKeyDown">
+        <ItemsView.ItemTemplate>
+            <DataTemplate>
+                <ItemContainer 
+                    AutomationProperties.Name="{Binding Title}"
+                    PointerEntered="ItemGrid_PointerEntered"
+                    PointerExited="ItemGrid_PointerExited">
+                    <Grid
+                        x:Name="ItemGrid"
+                        Height="200"
+                        Width="320">
+                        <Image
+                            Source="{Binding ThumbnailPath}"
+                            Stretch="Uniform" 
+                            HorizontalAlignment="Stretch" 
+                            VerticalAlignment="Stretch"
+                            ImageFailed="Image_ImageFailed"/>
+                        <StackPanel 
+                            Orientation="Vertical" 
+                            Height="60" 
+                            VerticalAlignment="Bottom" 
+                            Padding="5,1"  
+                            Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
+                            <TextBlock 
+                                Text="{Binding Title}" 
+                                FontSize="18"
+                                TextWrapping="Wrap"
+                                HorizontalTextAlignment="Left"
+                                Foreground="{ThemeResource SystemControlForegroundAltHighBrush}"/>
+                        </StackPanel>
+                    </Grid>
+                </ItemContainer>
+            </DataTemplate>
+        </ItemsView.ItemTemplate>
+        <ItemsView.Layout>
+            <UniformGridLayout
+                MinRowSpacing="15" 
+                MinColumnSpacing="15"
+                MaximumRowsOrColumns="-1"/>
+        </ItemsView.Layout>
+        <ItemsView.ContextFlyout>
+            <MenuFlyout
+                x:Name="ItemsViewMenu">
+                <MenuFlyoutItem
+                    x:Name="DetailedInfo"
+                    Text="{Binding MenuFlyout_Text_DetailedInfo}"
+                    Click="ContextMenu_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE946;" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem
+                    x:Name="Update"
+                    Text="{Binding MenuFlyout_Text_Update}"
+                    Click="ContextMenu_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE753;" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem
+                    x:Name="EditInfo"
+                    Text="{Binding MenuFlyout_Text_EditInfo}"
+                    Click="ContextMenu_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE70F;" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem 
+                    x:Name="Preview"                         
+                    Text="{Binding MenuFlyout_Text_Preview}"
+                    Click="ContextMenu_Click" >
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE8A1;" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem 
+                    x:Name="Apply" 
+                    Text="{Binding MenuFlyout_Text_Apply}"
+                    Click="ContextMenu_Click" >
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE8FB;" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem 
+                    x:Name="LockBackground" 
+                    Text="{Binding MenuFlyout_Text_ApplyToLockBG}"
+                    Click="ContextMenu_Click" >
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xEE3F;" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem
+                    x:Name="ShowOnDisk"
+                    Text="{Binding MenuFlyout_Text_ShowOnDisk}"
+                    Click="ContextMenu_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xED25;" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem
+                    x:Name="Delete"
+                    Text="{Binding MenuFlyout_Text_Delete}"
+                    Click="ContextMenu_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon 
+                            Glyph="&#xE74D;" 
+                            Foreground="Goldenrod"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+            </MenuFlyout>
+        </ItemsView.ContextFlyout>
+    </ItemsView>
 </Page>

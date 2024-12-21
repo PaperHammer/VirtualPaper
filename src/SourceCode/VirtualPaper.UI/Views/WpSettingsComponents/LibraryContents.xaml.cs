@@ -31,6 +31,11 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
             this.DataContext = _viewModel;
         }
 
+        private async void Page_Loaded(object sender, RoutedEventArgs e) {
+            await _viewModel.InitContents();
+        }
+
+
         private void Image_ImageFailed(object sender, ExceptionRoutedEventArgs e) {
             _logger.Error($"RImage loading failed: {e.ErrorMessage}");
         }

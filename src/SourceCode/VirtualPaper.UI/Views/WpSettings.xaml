@@ -20,73 +20,20 @@
         x:Name="GridMain">
         <ContentControl
             x:Name="contentControlMain"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            HorizontalContentAlignment="Stretch"
-            VerticalContentAlignment="Stretch">
+            HorizontalContentAlignment="Stretch">
             <Grid>
-                <Grid.RowDefinitions>
+                <!--<Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="auto"/>
+                </Grid.ColumnDefinitions>-->
+                <!--<Grid.RowDefinitions>
                     <RowDefinition Height="74"/>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <!--控制栏-->
-                <Grid
-                    Grid.Row="0"
-                    Margin="20 10"
-                    x:Name="GridControlBtns">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition />
-                        <ColumnDefinition Width="auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock 
-                        Grid.Column="0"
-                        Text="{Binding Text_Title}"
-                        VerticalAlignment="Center"
-                        FontSize="24"/>
-
-                    <StackPanel
-                        Grid.Column="2"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Right"
-                        Orientation="Horizontal">
-                        <Button 
-                            x:Name="BtnClose"
-                            Height="33"
-                            MinWidth="66"
-                            Margin="10 0 0 0"
-                            Content="{Binding Text_Close}"
-                            Background="DarkGoldenrod"
-                            Click="BtnClose_Click"/>
-                        <Button 
-                            x:Name="BtnDetect"
-                            Height="33"
-                            MinWidth="66"
-                            Margin="10 0 0 0"
-                            Content="{Binding Text_Detect}"
-                            Click="BtnDetect_Click"/>
-                        <Button 
-                            x:Name="BtnIdentify"
-                            Height="33"
-                            MinWidth="66"
-                            Margin="10 0 0 0"
-                            Content="{Binding Text_Identify}"
-                            Click="BtnIdentify_Click"/>
-                        <Button 
-                            x:Name="BtnAdjust"
-                            Height="33"
-                            MinWidth="66"
-                            Margin="10 0 0 0"
-                            Content="{Binding Text_Preview}"
-                            Click="BtnAdjust_Click"/>
-                    </StackPanel>
-                </Grid>
+                </Grid.RowDefinitions>-->
 
                 <!--目标显示器-->
-                <Grid
+                <!--<Grid
                     Grid.Row="1"
                     Margin="20 10">
                     <GridView 
@@ -136,30 +83,131 @@
                             </DataTemplate>
                         </GridView.ItemTemplate>
                     </GridView>
-                </Grid>
+                </Grid>-->
 
                 <Grid
-                    Grid.Row="2"
-                    Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                    Grid.Column="0"
+                    Padding="10 0">
+                    <NavigationView 
+                        x:Name="NvLocal" 
+                        PaneDisplayMode="Top"
+                        SelectionFollowsFocus="Enabled" 
+                        IsBackButtonVisible="Collapsed" 
+                        IsSettingsVisible="False"
+                        SelectionChanged="NvLocal_SelectionChanged">
+                        <NavigationView.MenuItems>
+                            <NavigationViewItem 
+                                Content="{Binding SelBarItem1}" 
+                                x:Name="LibraryContents" 
+                                IsSelected="True"/>
+                            <NavigationViewItem 
+                                Content="{Binding SelBarItem2}"
+                                x:Name="WpRuntimeSettings" />
+                        </NavigationView.MenuItems>
 
-                    <SelectorBar
-                        x:Name="SelBar"
-                        Grid.Row="0"
-                        SelectionChanged="SelectorBar_SelectionChanged"
-                        Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                        HorizontalAlignment="Stretch">
-                        <SelectorBarItem x:Name="s1" Text="{Binding SelBarItem1}" Tag="LibraryContents" IsSelected="True"/>
-                        <SelectorBarItem x:Name="s2" Text="{Binding SelBarItem2}" Tag="WpRuntimeSettings"/>
-                    </SelectorBar>
+                        <NavigationView.PaneFooter>
+                            <Button 
+                                Name="ControlCenter" 
+                                CornerRadius="10">
+                                <FontIcon 
+                                    FontFamily="Segoe MDL2 Assets" 
+                                    Glyph="&#xE7F4;"/>
+                                <Button.Flyout>
+                                    <Flyout>
+                                        <StackPanel
+                                            Spacing="8">
+                                            <StackPanel
+                                                Orientation="Horizontal"
+                                                Spacing="8">
+                                                <Button 
+                                                    x:Name="BtnClose"
+                                                    Height="33"
+                                                    MinWidth="66"
+                                                    Margin="10 0 0 0"
+                                                    Content="{Binding Text_Close}"
+                                                    Background="DarkGoldenrod"
+                                                    Click="BtnClose_Click"/>
+                                                <Button 
+                                                    x:Name="BtnDetect"
+                                                    Height="33"
+                                                    MinWidth="66"
+                                                    Margin="10 0 0 0"
+                                                    Content="{Binding Text_Detect}"
+                                                    Click="BtnDetect_Click"/>
+                                                <Button 
+                                                    x:Name="BtnIdentify"
+                                                    Height="33"
+                                                    MinWidth="66"
+                                                    Margin="10 0 0 0"
+                                                    Content="{Binding Text_Identify}"
+                                                    Click="BtnIdentify_Click"/>
+                                                <Button 
+                                                    x:Name="BtnAdjust"
+                                                    Height="33"
+                                                    MinWidth="66"
+                                                    Margin="10 0 0 0"
+                                                    Content="{Binding Text_Adjust}"
+                                                    Click="BtnAdjust_Click"/>
+                                                <Button 
+                                                    x:Name="BtnPreview"
+                                                    Height="33"
+                                                    MinWidth="66"
+                                                    Margin="10 0 0 0"
+                                                    Content="{Binding Text_Preview}"
+                                                    Click="BtnPreview_Click"/>
+                                            </StackPanel>
 
-                    <Frame 
-                        x:Name="ContentFrame" 
-                        Grid.Row="1"
-                        IsNavigationStackEnabled="False"/>
+                                            <GridView 
+                                                x:Name="GridViewMonitors"
+                                                ItemsSource="{Binding Monitors}"
+                                                SelectedIndex="{Binding MonitorSelectedIdx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                                                
+                                                SelectionMode="Single"   
+                                                IsItemClickEnabled="True"
+                                                ScrollViewer.HorizontalScrollMode="Enabled"
+                                                ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                                ScrollViewer.VerticalScrollMode="Disabled"
+                                                ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                                                <GridView.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border
+                                                            Height="150" 
+                                                            Width="232" 
+                                                            VerticalAlignment="Center">
+                                                            <Grid>
+                                                                <Image                                           
+                                                                    Source="{Binding ThumbnailPath}"/>
+
+                                                                <Canvas >
+                                                                    <Canvas.Background>
+                                                                        <LinearGradientBrush StartPoint="0,0.4" EndPoint="0,1">
+                                                                            <GradientStop Color="Transparent" Offset="0.0"/>
+                                                                            <GradientStop Color="#0067c0" Offset="1.2"/>
+                                                                        </LinearGradientBrush>
+                                                                    </Canvas.Background>
+                                                                </Canvas>
+
+                                                                <TextBlock 
+                                                                    Text="{Binding Content}" 
+                                                                    FontSize="40" 
+                                                                    FontWeight="SemiBold"
+                                                                    HorizontalAlignment="Center" 
+                                                                    VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </GridView.ItemTemplate>
+                                            </GridView>
+
+                                        </StackPanel>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </NavigationView.PaneFooter>
+
+                        <Frame 
+                            x:Name="ContentFrame" 
+                            IsNavigationStackEnabled="False"/>
+                    </NavigationView>
                 </Grid>
             </Grid>
         </ContentControl>

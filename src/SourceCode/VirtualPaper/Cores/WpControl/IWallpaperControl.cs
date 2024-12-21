@@ -32,7 +32,7 @@ namespace VirtualPaper.Cores.WpControl {
         /// <summary>
         /// 使用中的壁纸
         /// </summary>
-        ReadOnlyCollection<IWallpaperPlaying> Wallpapers { get; }
+        ReadOnlyCollection<IWpPlayer> Wallpapers { get; }
 
         #region wallpaper actions
         void CloseAllWallpapers();
@@ -41,7 +41,9 @@ namespace VirtualPaper.Cores.WpControl {
         (string?, RuntimeType?) GetPrimaryWpFilePathRType();
         IWpMetadata GetWallpaperByFolderPath(string folderPath, string monitorContent, string rtype);
         IWpBasicData GetWpBasicDataByForlderPath(string folderPath);
-        Task<bool> PreviewWallpaperAsync(IWpPlayerData data, bool isCurrentWp, CancellationToken toke);
+        bool AdjustWallpaper(string monitorDeviceId, CancellationToken toke);
+        Task<bool> PreviewWallpaperAsync(string monitorDeviceId, CancellationToken toke);
+        Task<bool> PreviewWallpaperAsync(IWpPlayerData wpPlayingData, CancellationToken toke);
         Task ResetWallpaperAsync();
         Grpc_RestartWallpaperResponse RestoreWallpaper();
         Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, CancellationToken token);
@@ -54,9 +56,7 @@ namespace VirtualPaper.Cores.WpControl {
         #region data
         IWpBasicData CreateMetadataBasic(string filePath, FileType ftype, CancellationToken token);
         IWpRuntimeData CreateMetadataRuntime(string filePath, string folderPath, RuntimeType rtype, bool isPreview, string monitorContent = "-1");
-        //string CreateMetadataRuntimeUsing(string folderPath, string wpEffectFilePathTemplate, string monitorContent);
         IWpBasicData UpdateBasicData(string folderPath, string folderName, string filePath, FileType ftype, CancellationToken token);
-        IWpRuntimeData UpdateMetadataRuntime(string folderPath, RuntimeType rtype, CancellationToken token);
         #endregion
 
         #region utils

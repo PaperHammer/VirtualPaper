@@ -138,8 +138,8 @@
 		<None Remove="Views\Utils\WallpaperCreateView.xaml" />
 		<None Remove="Views\WpSettings.xaml" />
 		<None Remove="Views\WpSettingsComponents\LibraryContents.xaml" />
+		<None Remove="Views\WpSettingsComponents\ScreenSaver.xaml" />
 		<None Remove="Views\WpSettingsComponents\WpConfig.xaml" />
-		<None Remove="Views\WpSettingsComponents\WpRuntimeSettings.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -183,7 +183,7 @@
 		</Content>
 	</ItemGroup>
 	<ItemGroup>
-		<Page Update="Views\WpSettingsComponents\WpRuntimeSettings.xaml">
+		<Page Update="Views\WpSettingsComponents\ScreenSaver.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Utils\DetailedInfoView.xaml">

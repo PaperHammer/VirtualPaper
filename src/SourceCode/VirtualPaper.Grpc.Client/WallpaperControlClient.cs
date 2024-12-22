@@ -85,12 +85,13 @@ namespace VirtualPaper.Grpc.Client {
             return response.IsOk;
         }
 
-        public async Task<bool> PreviewWallpaperAsync(IWpBasicData data, RuntimeType rtype, CancellationToken token) {
+        public async Task<bool> PreviewWallpaperAsync(string monitorDeviceId, IWpBasicData data, RuntimeType rtype, CancellationToken token) {
             Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
 
             var response = await _client.PreviewWallpaperAsync(
                 new Grpc_PreviewWallpaperRequest() {
                     WpPlayerData = wpPlayerdata,
+                    MonitorDeviceId = monitorDeviceId
                 },
                 cancellationToken: token);
 

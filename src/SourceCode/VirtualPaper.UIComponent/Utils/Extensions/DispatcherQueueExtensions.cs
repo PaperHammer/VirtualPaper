@@ -10,7 +10,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
         /// <param name="queue"></param>
         /// <param name="action"></param>
         /// <returns></returns>
-        public static Task EnqueueOrInvoke(this DispatcherQueue queue, Func<Task> action) {
+        public static Task EnqueueOrInvokeAsync(this DispatcherQueue queue, Func<Task> action) {
             var tcs = new TaskCompletionSource<bool>();
 
             // 尝试立即执行（如果已经在正确的线程上）

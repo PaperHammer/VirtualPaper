@@ -79,22 +79,6 @@ namespace VirtualPaper.Cores.Players.Web {
             }
         }
 
-        public IWpPlayerData GetData() {
-            WpPlayerData playerData = new() {
-                WallpaperUid = Data.WallpaperUid,
-                RType = Data.RType,
-                FilePath = Data.FilePath,
-                DepthFilePath = Data.DepthFilePath,
-                FolderPath = Data.FolderPath,
-                ThumbnailPath = Data.ThumbnailPath,
-                WpEffectFilePathTemplate = Data.WpEffectFilePathTemplate,
-                WpEffectFilePathTemporary = Data.WpEffectFilePathTemporary,
-                WpEffectFilePathUsing = Data.WpEffectFilePathUsing,
-            };
-
-            return playerData;
-        }
-
         public void Close() {
             SendMessage(new VirtualPaperCloseCmd());
         }

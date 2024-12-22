@@ -90,8 +90,8 @@ namespace VirtualPaper.PlayerWeb.ViewModel {
         }
 
         private void InitText() {           
-            TextLoading = _localizer.GetLocalizedString(Constants.LocalText.Text_Loading);
-            TextCancel = _localizer.GetLocalizedString(Constants.LocalText.Text_Cancel);
+            TextLoading = _localizer.GetLocalizedString(Constants.I18n.Text_Loading);
+            TextCancel = _localizer.GetLocalizedString(Constants.I18n.Text_Cancel);
         }
 
         #region loading_ui_logic

@@ -23,6 +23,11 @@ namespace VirtualPaper.UI.Views {
             this.DataContext = _viewModel;
         }
 
+        private void Flyout_Opening(object sender, object e) {
+            _viewModel.InitMonitors();
+            _viewModel.InitWpArrangments();
+        }
+
         #region btn_click
         private async void BtnClose_Click(object sender, RoutedEventArgs e) {
             BtnClose.IsEnabled = false;
@@ -48,10 +53,6 @@ namespace VirtualPaper.UI.Views {
         private async void BtnAdjust_Click(object sender, RoutedEventArgs e) {
             await _viewModel.AdjustAsync();
         }
-
-        private async void BtnPreview_Click(object sender, RoutedEventArgs e) {
-            await _viewModel.PreviewAsync();
-        }
         #endregion
 
         #region nav
@@ -66,8 +67,8 @@ namespace VirtualPaper.UI.Views {
                 if (args.SelectedItemContainer.Name == LibraryContents.Name) {
                     pageType = typeof(LibraryContents);
                 }
-                else if (args.SelectedItemContainer.Name == WpRuntimeSettings.Name) {
-                    pageType = typeof(WpRuntimeSettings);
+                else if (args.SelectedItemContainer.Name == ScreenSaver.Name) {
+                    pageType = typeof(ScreenSaver);
                 }
 
                 ContentFrame.NavigateToType(pageType, null, navOptions);
@@ -80,9 +81,5 @@ namespace VirtualPaper.UI.Views {
         #endregion
 
         private readonly WpSettingsViewModel _viewModel;
-
-        private void WpArrageRadioButtons_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-
-        }
     }
 }

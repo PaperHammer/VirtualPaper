@@ -42,20 +42,19 @@ namespace VirtualPaper.Cores.WpControl {
         IWpMetadata GetWallpaperByFolderPath(string folderPath, string monitorContent, string rtype);
         IWpBasicData GetWpBasicDataByForlderPath(string folderPath);
         bool AdjustWallpaper(string monitorDeviceId, CancellationToken toke);
-        Task<bool> PreviewWallpaperAsync(string monitorDeviceId, CancellationToken toke);
-        Task<bool> PreviewWallpaperAsync(IWpPlayerData wpPlayingData, CancellationToken toke);
+        bool PreviewWallpaper(string monitorDeviceId, CancellationToken toke);
+        Task<bool> PreviewWallpaperAsync(IWpPlayerData wpPlayingData, string monitorDeviceId, CancellationToken toke);
         Task ResetWallpaperAsync();
         Grpc_RestartWallpaperResponse RestoreWallpaper();
-        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, CancellationToken token);
+        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, CancellationToken token, bool fromPreview = false);
         void SeekWallpaper(IWpPlayerData data, float seek, PlaybackPosType type);
         void SeekWallpaper(IMonitor monitor, float seek, PlaybackPosType type);
         void SendMessageWallpaper(IMonitor monitor, string folderPath, string ipcMsg);
-        void UpdateWallpaper(string monitorId, IWpPlayerData data, CancellationToken token);
         #endregion
 
         #region data
-        IWpBasicData CreateMetadataBasic(string filePath, FileType ftype, CancellationToken token);
-        IWpRuntimeData CreateMetadataRuntime(string filePath, string folderPath, RuntimeType rtype, bool isPreview, string monitorContent = "-1");
+        IWpBasicData CreateBasicData(string filePath, FileType ftype, CancellationToken token);
+        IWpRuntimeData CreateRuntimeData(string filePath, string folderPath, RuntimeType rtype, bool isPreview, string monitorContent = "-1");
         IWpBasicData UpdateBasicData(string folderPath, string folderName, string filePath, FileType ftype, CancellationToken token);
         #endregion
 

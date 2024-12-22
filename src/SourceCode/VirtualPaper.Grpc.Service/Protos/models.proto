@@ -276,6 +276,7 @@ message Grpc_WpPlayerData {
 	Grpc_RuntimeType r_type = 2;
 	string folder_path = 3;
 	string file_path = 4;
+	string thumbnail_path = 5;
 }
 
 message Grpc_WpMetaData {

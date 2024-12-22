@@ -18,16 +18,15 @@ namespace VirtualPaper.Models.Cores {
         private string _thumbnailPath = string.Empty;
         public string ThumbnailPath {
             get => _thumbnailPath;
-            set {
-                _thumbnailPath = value;
-                OnPropertyChanged();
-            }
+            set { _thumbnailPath = value; OnPropertyChanged(); }
         }
         #endregion
 
-        public Monitor() { }
+        public Monitor() {
+            Content = "-1";
+        }
 
-        public Monitor(string content = "-1") {
+        public Monitor(string content) {
             Content = content;
         }
 

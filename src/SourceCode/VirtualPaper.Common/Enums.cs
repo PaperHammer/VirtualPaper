@@ -77,15 +77,15 @@ namespace VirtualPaper.Common {
         [Description("Per Display")]
         Per,
         /// <summary>
-        /// 同一壁纸跨越多个显示器
-        /// </summary>
-        [Description("Expand Across All Display(s)")]
-        Expand,
-        /// <summary>
         /// 复制主显示器壁纸
         /// </summary>
         [Description("Same wp for All Display(s)")]
-        Duplicate
+        Duplicate,
+        /// <summary>
+        /// 同一壁纸跨越多个显示器
+        /// </summary>
+        [Description("Expand Across All Display(s)")]
+        Expand,        
     }
     #endregion
 

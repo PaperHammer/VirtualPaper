@@ -24,14 +24,14 @@ namespace VirtualPaper.UI.ViewModels.Utils {
         private void InitCollections() {
             WallpaperCategoriesFiltered = [
                 new WallpaperCreateData() {
-                    Title = _localizer.GetLocalizedString(Constants.LocalText.WpCreateDialog_CommonWp_Title),
-                    Description = _localizer.GetLocalizedString(Constants.LocalText.WpCreateDialog_CommonWp_Explain),
+                    Title = _localizer.GetLocalizedString(Constants.I18n.WpCreateDialog_CommonWp_Title),
+                    Description = _localizer.GetLocalizedString(Constants.I18n.WpCreateDialog_CommonWp_Explain),
                     Icon = "../../Assets/icons8-image-96.png",
                     CreateType = WallpaperCreateType.Img,
                 },
                 new WallpaperCreateData() {
-                    Title = _localizer.GetLocalizedString(Constants.LocalText.WpCreateDialog_AIWp_Title),
-                    Description = _localizer.GetLocalizedString(Constants.LocalText.WpCreateDialog_AIWp_Explain),
+                    Title = _localizer.GetLocalizedString(Constants.I18n.WpCreateDialog_AIWp_Title),
+                    Description = _localizer.GetLocalizedString(Constants.I18n.WpCreateDialog_AIWp_Explain),
                     Icon = "../../Assets/icons8-picture-94.png",
                     CreateType = WallpaperCreateType.DepthImg,
                 }

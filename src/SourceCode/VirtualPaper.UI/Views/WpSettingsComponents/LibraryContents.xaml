@@ -10,7 +10,7 @@
     mc:Ignorable="d"
     x:Name="Page"
     Loaded="Page_Loaded"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"   
+    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"   
     NavigationCacheMode="Enabled">
 
     <Page.Resources>

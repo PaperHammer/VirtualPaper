@@ -33,12 +33,12 @@
                     SelectionChanged="NvLocal_SelectionChanged">
                     <NavigationView.MenuItems>
                         <NavigationViewItem 
-                            Content="{Binding SelBarItem1}" 
+                            Content="{Binding WpSettings_NavItem1}" 
                             x:Name="LibraryContents" 
                             IsSelected="True"/>
                         <NavigationViewItem 
-                            Content="{Binding SelBarItem2}"
-                            x:Name="WpRuntimeSettings" />
+                            Content="{Binding WpSettings_NavItem2}"
+                            x:Name="ScreenSaver" />
                     </NavigationView.MenuItems>
 
                     <NavigationView.PaneFooter>
@@ -51,7 +51,8 @@
                                 FontFamily="Segoe MDL2 Assets" 
                                 Glyph="&#xE7F4;"/>
                             <Button.Flyout>
-                                <Flyout>
+                                <Flyout
+                                    Opening="Flyout_Opening">
                                     <Flyout.FlyoutPresenterStyle>
                                         <Style TargetType="FlyoutPresenter">
                                             <Setter Property="MinWidth" Value="500"></Setter>
@@ -93,13 +94,6 @@
                                                 Margin="10 0 0 0"
                                                 Content="{Binding Text_Adjust}"
                                                 Click="BtnAdjust_Click"/>
-                                            <Button 
-                                                x:Name="BtnPreview"
-                                                Height="33"
-                                                MinWidth="66"
-                                                Margin="10 0 0 0"
-                                                Content="{Binding Text_Preview}"
-                                                Click="BtnPreview_Click"/>
                                         </StackPanel>
 
                                         <GridView
@@ -109,10 +103,9 @@
                                             <GridView.ItemTemplate>
                                                 <DataTemplate>
                                                     <Grid
-                                                        Width="144"
-                                                        Height="80">
-                                                        <Image
-                                                            Opacity="0.5"
+                                                        Width="184"
+                                                        Height="120">
+                                                        <Image                                                            
                                                             Source="{Binding ThumbnailPath}"
                                                             Stretch="UniformToFill" />
                                                         <Canvas >
@@ -148,7 +141,7 @@
 
                                             <TextBlock
                                                 x:Name="WpArrangHeader"
-                                                Text="壁纸布局"
+                                                Text="{Binding Text_WpArrange}"
                                                 FontWeight="Bold"/>
 
                                             <Grid                                                

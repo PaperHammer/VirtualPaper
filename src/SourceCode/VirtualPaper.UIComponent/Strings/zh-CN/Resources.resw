@@ -129,6 +129,21 @@
   <data name="AppSettings_SelBarItem4_Others" xml:space="preserve">
     <value>其他</value>
   </data>
+  <data name="BtnText_Adjust" xml:space="preserve">
+    <value>调整</value>
+  </data>
+  <data name="BtnText_Close" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="BtnText_Detect" xml:space="preserve">
+    <value>检测</value>
+  </data>
+  <data name="BtnText_Identify" xml:space="preserve">
+    <value>识别</value>
+  </data>
+  <data name="BtnText_Preview" xml:space="preserve">
+    <value>预览</value>
+  </data>
   <data name="Customze_Help_Parallax" xml:space="preserve">
     <value>鼠标跟随的视差效果。当鼠标焦点在桌面时，让壁纸在视觉上以鼠标为焦点进行展示。</value>
   </data>
@@ -364,6 +379,51 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   </data>
   <data name="Project_View_DisplayOrHide" xml:space="preserve">
     <value>显示或隐藏功能区</value>
+  </data>
+  <data name="ScreenSaver_Add" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffects" xml:space="preserve">
+    <value>屏幕保护动态效果</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffectsExplain" xml:space="preserve">
+    <value>当使用静态图像作为屏幕保护背景时，建议开启此项</value>
+  </data>
+  <data name="ScreenSaver_RunningLock" xml:space="preserve">
+    <value>在恢复时显示登录界面</value>
+  </data>
+  <data name="ScreenSaver_RunningLockExplain" xml:space="preserve">
+    <value>为了您的设备数据安全，建议开启此选项</value>
+  </data>
+  <data name="ScreenSaver_SeekFromList" xml:space="preserve">
+    <value>名单中搜索</value>
+  </data>
+  <data name="ScreenSaver_Server" xml:space="preserve">
+    <value>是否开启屏幕保护</value>
+  </data>
+  <data name="ScreenSaver_ServerExplain" xml:space="preserve">
+    <value>将主显示器在 Virtual Paper 中正在使用的壁纸作为屏保背景</value>
+  </data>
+  <data name="ScreenSaver_ServerStatu_Off" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="ScreenSaver_ServerStatu_On" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="ScreenSaver_WaitingTime" xml:space="preserve">
+    <value>等待的分钟数：</value>
+  </data>
+  <data name="ScreenSaver_WhiteListExplain" xml:space="preserve">
+    <value>列表中的应用在最前台运行时，将不会触发屏幕保护</value>
+  </data>
+  <data name="ScreenSaver_WhiteListTitle" xml:space="preserve">
+    <value>白名单</value>
+  </data>
+  <data name="ScreenSaver__effectBubble" xml:space="preserve">
+    <value>气泡</value>
+  </data>
+  <data name="ScreenSaver__effectNone" xml:space="preserve">
+    <value>无</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppFileStorage" xml:space="preserve">
     <value>存储路径</value>
@@ -607,75 +667,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Settings_System_Text_Developer" xml:space="preserve">
     <value>开发者</value>
   </data>
-  <data name="Settings_WpNav_Text_VpScreenSaver" xml:space="preserve">
-    <value>屏幕保护</value>
-  </data>
-  <data name="Settings_WpNav_Text_WpArrange" xml:space="preserve">
-    <value>壁纸布局方式</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_Add" xml:space="preserve">
-    <value>添加</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_DynamicEffects" xml:space="preserve">
-    <value>屏幕保护动态效果</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_DynamicEffectsExplain" xml:space="preserve">
-    <value>当使用静态图像作为屏幕保护背景时，建议开启此项</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_RunningLock" xml:space="preserve">
-    <value>在恢复时显示登录界面</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_RunningLockExplain" xml:space="preserve">
-    <value>为了您的设备数据安全，建议开启此选项</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_ScreenSaver" xml:space="preserve">
-    <value>是否开启屏幕保护</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_ScreenSaverExplain" xml:space="preserve">
-    <value>将主显示器在 Virtual Paper 中正在使用的壁纸作为屏保背景</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_ScreenSaverStatu_Off" xml:space="preserve">
-    <value>关闭</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_ScreenSaverStatu_On" xml:space="preserve">
-    <value>打开</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_SeekFromList" xml:space="preserve">
-    <value>名单中搜索</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_WaitingTime" xml:space="preserve">
-    <value>等待的分钟数：</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_WhiteListExplain" xml:space="preserve">
-    <value>列表中的应用在最前台运行时，将不会触发屏幕保护</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_WhiteListTitle" xml:space="preserve">
-    <value>白名单</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver__effectBubble" xml:space="preserve">
-    <value>气泡</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver__effectNone" xml:space="preserve">
-    <value>无</value>
-  </data>
-  <data name="Settings_WpNav_WpArrange_Duplicate" xml:space="preserve">
-    <value>复制</value>
-  </data>
-  <data name="Settings_WpNav_WpArrange_DuplicateExplain" xml:space="preserve">
-    <value>其他显示器与主显示器壁纸保持一致</value>
-  </data>
-  <data name="Settings_WpNav_WpArrange_Expand" xml:space="preserve">
-    <value>跨越</value>
-  </data>
-  <data name="Settings_WpNav_WpArrange_ExpandExplain" xml:space="preserve">
-    <value>以主显示器壁纸为主体，跨越显示到所有显示器上</value>
-  </data>
-  <data name="Settings_WpNav_WpArrange_Per" xml:space="preserve">
-    <value>独立</value>
-  </data>
-  <data name="Settings_WpNav_WpArrange_PerExplain" xml:space="preserve">
-    <value>每个显示器的壁纸独立显示</value>
-  </data>
   <data name="SidebarAccount" xml:space="preserve">
     <value>账户</value>
   </data>
@@ -691,26 +682,14 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="SidebarWpSettings" xml:space="preserve">
     <value>本地</value>
   </data>
-  <data name="Text_Adjust" xml:space="preserve">
-    <value>调整</value>
-  </data>
   <data name="Text_Cancel" xml:space="preserve">
     <value>取消</value>
   </data>
-  <data name="Text_Close" xml:space="preserve">
-    <value>关闭</value>
-  </data>
-  <data name="Text_Detect" xml:space="preserve">
-    <value>检测</value>
-  </data>
-  <data name="Text_Identify" xml:space="preserve">
-    <value>识别</value>
+  <data name="Text_Delete" xml:space="preserve">
+    <value>删除</value>
   </data>
   <data name="Text_Loading" xml:space="preserve">
     <value>数据加载中，请稍后</value>
-  </data>
-  <data name="Text_Preview" xml:space="preserve">
-    <value>预览</value>
   </data>
   <data name="Text_Project_Edit" xml:space="preserve">
     <value>编辑</value>
@@ -738,6 +717,27 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Text_SaveAndApply" xml:space="preserve">
     <value>保存并应用</value>
+  </data>
+  <data name="Text_WpArrange" xml:space="preserve">
+    <value>壁纸布局</value>
+  </data>
+  <data name="WpArrange_Duplicate" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="WpArrange_DuplicateExplain" xml:space="preserve">
+    <value>其他显示器与主显示器壁纸保持一致</value>
+  </data>
+  <data name="WpArrange_Expand" xml:space="preserve">
+    <value>跨越</value>
+  </data>
+  <data name="WpArrange_ExpandExplain" xml:space="preserve">
+    <value>以主显示器壁纸为主体，跨越显示到所有显示器上</value>
+  </data>
+  <data name="WpArrange_Per" xml:space="preserve">
+    <value>独立</value>
+  </data>
+  <data name="WpArrange_PerExplain" xml:space="preserve">
+    <value>每个显示器的壁纸独立显示</value>
   </data>
   <data name="WpConfigViewMdoel_TextAspectRatio" xml:space="preserve">
     <value>比例：</value>
@@ -787,17 +787,11 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="WpCreateDialog_CommonWp_Title" xml:space="preserve">
     <value>普通壁纸</value>
   </data>
-  <data name="WpSettings_SidebarLibraryContents" xml:space="preserve">
+  <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
     <value>库内容</value>
   </data>
-  <data name="WpSettings_SidebarSettings" xml:space="preserve">
-    <value>运行时设置</value>
-  </data>
-  <data name="WpSettings_SidebarWpConfig" xml:space="preserve">
-    <value>当前壁纸</value>
-  </data>
-  <data name="WpSettings_Text_Title" xml:space="preserve">
-    <value>控制中心</value>
+  <data name="WpSettings_NavTitle_ScrSettings" xml:space="preserve">
+    <value>屏幕保护</value>
   </data>
   <data name="Wp_Edits_TextDesc" xml:space="preserve">
     <value>简介：</value>

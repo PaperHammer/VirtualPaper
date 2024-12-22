@@ -39,7 +39,7 @@ namespace VirtualPaper.PlayerWeb.Utils {
             if (_details == null) {
                 _details = new(_startArgs.WpBasicDataFilePath);
 
-                _toolContainer.AddContent(Constants.LocalText.WpConfigViewMdoel_TextDetailedInfo, "Details", _details);
+                _toolContainer.AddContent(Constants.I18n.WpConfigViewMdoel_TextDetailedInfo, "Details", _details);
             }
         }
         #endregion
@@ -59,16 +59,15 @@ namespace VirtualPaper.PlayerWeb.Utils {
                 _effectConfig.SaveAndApply += EffectConfig_SaveAndApply;
                 _toolWindowClose += _effectConfig.Closing;
 
-                _toolContainer.AddContent(Constants.LocalText.WpConfigViewMdoel_TextWpEffectConfig, "EffectConfig", _effectConfig);
+                _toolContainer.AddContent(Constants.I18n.WpConfigViewMdoel_TextWpEffectConfig, "EffectConfig", _effectConfig);
             }
         }
 
         private static void EffectConfig_SaveAndApply(object sender, EventArgs e) {
-            _mainWindow.BeforeToBackground();
-            _toolContainer.Close();
             if (_mainWindow._startArgs.IsPreview) {
                 App.WriteToParent(new VirtualPaperApplyCmd());
             }
+            _mainWindow.Close();
         }
 
         private static void EffectConfig_DoubleValueChanged(object sender, DoubleValueChangedEventArgs e) {

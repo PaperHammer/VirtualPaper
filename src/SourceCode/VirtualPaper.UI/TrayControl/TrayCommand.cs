@@ -8,7 +8,7 @@ using VirtualPaper.UI.ViewModels.WpSettingsComponents;
 namespace VirtualPaper.UI.TrayControl {
     public partial class TrayCommand : IDisposable {
         public TrayCommand(
-             WpRuntimeSettingsViewModel wpNavSettginsViewModel) {
+             ScreenSaverViewModel wpNavSettginsViewModel) {
             _wpNavSettginsViewModel = wpNavSettginsViewModel;
             _cancellationTokenListen = new();
 
@@ -60,6 +60,6 @@ namespace VirtualPaper.UI.TrayControl {
 
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly CancellationTokenSource _cancellationTokenListen;
-        private readonly WpRuntimeSettingsViewModel _wpNavSettginsViewModel;
+        private readonly ScreenSaverViewModel _wpNavSettginsViewModel;
     }
 }

@@ -76,13 +76,13 @@ namespace VirtualPaper.GrpcServers {
         public override async Task<Grpc_PreviewWallpaperResponse> PreviewWallpaper(Grpc_PreviewWallpaperRequest request, ServerCallContext context) {
             string monitorDeviceId = request.MonitorDeviceId;
             var grpc_playerData = request.WpPlayerData;
-            bool isOk = false;
-            if (monitorDeviceId != string.Empty) {
-                isOk = await _wpControl.PreviewWallpaperAsync(monitorDeviceId, context.CancellationToken);
+            bool isOk;
+            if (grpc_playerData == null) {
+                isOk = _wpControl.PreviewWallpaper(monitorDeviceId, context.CancellationToken);
             }
-            else if (grpc_playerData != null) {
+            else {
                 var playingData = DataAssist.GrpcToPlayerData(grpc_playerData);
-                isOk = await _wpControl.PreviewWallpaperAsync(playingData, context.CancellationToken);
+                isOk = await _wpControl.PreviewWallpaperAsync(playingData, monitorDeviceId, context.CancellationToken);
             }
 
             Grpc_PreviewWallpaperResponse response = new() {
@@ -114,7 +114,7 @@ namespace VirtualPaper.GrpcServers {
         #region data
         public override async Task<Grpc_WpBasicData> CreateMetadataBasic(Grpc_CreateMetadataBasicRequest request, ServerCallContext context) {
             var token = context.CancellationToken;
-            var data = _wpControl.CreateMetadataBasic(request.FilePath, (FileType)request.FType, token);
+            var data = _wpControl.CreateBasicData(request.FilePath, (FileType)request.FType, token);
 
             Grpc_WpBasicData grpc_data = DataAssist.BasicDataToGrpcData(data);
 
@@ -136,7 +136,7 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override Task<Empty> SendMessageWallpaper(Grpc_WallpaperMessageRequest request, ServerCallContext context) {
-            var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
+            var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId) ?? _monitorManager.PrimaryMonitor;
             _wpControl.SendMessageWallpaper(monitor, request.FolderPath, request.Msg);
 
             return Task.FromResult(new Empty());

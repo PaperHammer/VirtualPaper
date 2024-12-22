@@ -59,14 +59,15 @@ namespace VirtualPaper.DataAssistor {
         }
 
         public static Grpc_WpPlayerData MetadataToGrpcPlayingData(IWpBasicData data, RuntimeType rtype) {
-            Grpc_WpPlayerData grpc_WpPlayerData = new() {
+            Grpc_WpPlayerData grpc_data = new() {
                 WallpaperUid = data.WallpaperUid,
                 RType = (Grpc_RuntimeType)rtype,
                 FilePath = data.FilePath,
                 FolderPath = data.FolderPath,
+                ThumbnailPath = data.ThumbnailPath,
             };
 
-            return grpc_WpPlayerData;
+            return grpc_data;
         }
 
         public static WpRuntimeData GrpcToRuntimeData(Grpc_WpRuntimeData source) {
@@ -120,12 +121,13 @@ namespace VirtualPaper.DataAssistor {
             return basicData;
         }
 
-        public static WpPlayerData GrpcToPlayerData(Grpc_WpPlayerData source) {
+        public static WpPlayerData GrpcToPlayerData(Grpc_WpPlayerData grpc_data) {
             WpPlayerData playerData = new() {
-                WallpaperUid = source.WallpaperUid,
-                RType = (RuntimeType)source.RType,
-                FilePath = source.FilePath,
-                FolderPath = source.FolderPath,
+                WallpaperUid = grpc_data.WallpaperUid,
+                RType = (RuntimeType)grpc_data.RType,
+                FilePath = grpc_data.FilePath,
+                FolderPath = grpc_data.FolderPath,
+                ThumbnailPath = grpc_data.ThumbnailPath,
             };
 
             return playerData;
@@ -181,7 +183,7 @@ namespace VirtualPaper.DataAssistor {
             data.WpEffectFilePathTemporary = wpRuntimeData.WpEffectFilePathTemporary;
             data.WpEffectFilePathTemplate = wpRuntimeData.WpEffectFilePathTemplate;
             data.WpEffectFilePathUsing = wpRuntimeData.WpEffectFilePathUsing;
-            data.DepthFilePath = wpRuntimeData.DepthFilePath;
+            data.DepthFilePath = wpRuntimeData.DepthFilePath;         
         }
 
         public static Grpc_SettingsData SettingsToGrpc(ISettings settings) {

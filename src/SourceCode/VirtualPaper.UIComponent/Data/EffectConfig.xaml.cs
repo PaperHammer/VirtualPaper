@@ -45,8 +45,8 @@ namespace VirtualPaper.UIComponent.Data {
         }
 
         private void InitText() {            
-            _textRestore = _localizer.GetLocalizedString(Constants.LocalText.Text_Restore);
-            _textSaveAndApply = _localizer.GetLocalizedString(Constants.LocalText.Text_SaveAndApply);
+            _textRestore = _localizer.GetLocalizedString(Constants.I18n.Text_Restore);
+            _textSaveAndApply = _localizer.GetLocalizedString(Constants.I18n.Text_SaveAndApply);
         }
 
         private void InitUI() {
@@ -55,7 +55,7 @@ namespace VirtualPaper.UIComponent.Data {
                 return;
             }
 
-            File.Copy(_wpEffectFilePathTemplate, _wpEffectFilePathTemporary, true);
+            File.Copy(_wpEffectFilePathUsing, _wpEffectFilePathTemporary, true);
             _wpEffectData = JsonUtil.GetWritableJson(_wpEffectFilePathTemporary);
             GenerateUIElements();
         }

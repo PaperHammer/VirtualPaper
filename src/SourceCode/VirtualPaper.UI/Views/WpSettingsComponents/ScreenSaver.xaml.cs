@@ -18,17 +18,12 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class WpRuntimeSettings : Page {
-        public WpRuntimeSettings() {
+    public sealed partial class ScreenSaver : Page {
+        public ScreenSaver() {
             this.InitializeComponent();
 
-            _viewModel = App.Services.GetRequiredService<WpRuntimeSettingsViewModel>();
+            _viewModel = App.Services.GetRequiredService<ScreenSaverViewModel>();
             this.DataContext = _viewModel;
-        }
-
-        private async void RadioButton_Checked(object sender, RoutedEventArgs e) {
-            var tag = ((RadioButton)sender).Tag.ToString();
-            await _viewModel.UpdateWpArrangeAsync(tag);
         }
 
         private void IsRunningLock_Checked(object sender, RoutedEventArgs e) {
@@ -102,6 +97,6 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
             }
         }
 
-        private WpRuntimeSettingsViewModel _viewModel;
+        private ScreenSaverViewModel _viewModel;
     }
 }

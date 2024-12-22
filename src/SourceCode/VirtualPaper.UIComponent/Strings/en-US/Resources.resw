@@ -129,6 +129,18 @@
   <data name="AppSettings_SelBarItem4_Others" xml:space="preserve">
     <value>Others</value>
   </data>
+  <data name="BtnText_Adjust" xml:space="preserve">
+    <value>Adjust</value>
+  </data>
+  <data name="BtnText_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="BtnText_Detect" xml:space="preserve">
+    <value>Detect</value>
+  </data>
+  <data name="BtnText_Identify" xml:space="preserve">
+    <value>Identify</value>
+  </data>
   <data name="Customze_Help_Parallax" xml:space="preserve">
     <value>Parallax effect for mouse follow. When the mouse is focused on the desktop, let the wallpaper visually display with the mouse in focus.</value>
   </data>
@@ -364,6 +376,51 @@ Note: This operation is irreversible！</value>
   </data>
   <data name="Project_View_DisplayOrHide" xml:space="preserve">
     <value>Show or hide the ribbon</value>
+  </data>
+  <data name="ScreenSaver_Add" xml:space="preserve">
+    <value>Add to list</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffects" xml:space="preserve">
+    <value>Screen saver dynamic effects</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffectsExplain" xml:space="preserve">
+    <value>It is recommended to turn this on when using a static image as a screen saver background.</value>
+  </data>
+  <data name="ScreenSaver_RunningLock" xml:space="preserve">
+    <value>The login screen is displayed at the time of recovery</value>
+  </data>
+  <data name="ScreenSaver_RunningLockExplain" xml:space="preserve">
+    <value>For the security of your device data, it is recommended to turn on this option</value>
+  </data>
+  <data name="ScreenSaver_SeekFromList" xml:space="preserve">
+    <value>Search in the list</value>
+  </data>
+  <data name="ScreenSaver_Server" xml:space="preserve">
+    <value>Whether to turn on screen saver</value>
+  </data>
+  <data name="ScreenSaver_ServerExplain" xml:space="preserve">
+    <value>Use the wallpaper that your primary display is using in Virtual Paper as the screensaver background</value>
+  </data>
+  <data name="ScreenSaver_ServerStatu_Off" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="ScreenSaver_ServerStatu_On" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="ScreenSaver_WaitingTime" xml:space="preserve">
+    <value>Minutes waited:</value>
+  </data>
+  <data name="ScreenSaver_WhiteListExplain" xml:space="preserve">
+    <value>Any app in the list won't trigger a screen saver when it's running in the foreground</value>
+  </data>
+  <data name="ScreenSaver_WhiteListTitle" xml:space="preserve">
+    <value>App White List</value>
+  </data>
+  <data name="ScreenSaver__effectBubble" xml:space="preserve">
+    <value>Bubble</value>
+  </data>
+  <data name="ScreenSaver__effectNone" xml:space="preserve">
+    <value>None</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppFileStorage" xml:space="preserve">
     <value>Storage path</value>
@@ -607,75 +664,6 @@ Author: PaperHammer</value>
   <data name="Settings_System_Text_Developer" xml:space="preserve">
     <value>Developers</value>
   </data>
-  <data name="Settings_WpNav_Text_VpScreenSaver" xml:space="preserve">
-    <value>Screen saver</value>
-  </data>
-  <data name="Settings_WpNav_Text_WpArrange" xml:space="preserve">
-    <value>Wallpaper layout way</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_Add" xml:space="preserve">
-    <value>Add to list</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_DynamicEffects" xml:space="preserve">
-    <value>Screen saver dynamic effects</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_DynamicEffectsExplain" xml:space="preserve">
-    <value>It is recommended to turn this on when using a static image as a screen saver background.</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_RunningLock" xml:space="preserve">
-    <value>The login screen is displayed at the time of recovery</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_RunningLockExplain" xml:space="preserve">
-    <value>For the security of your device data, it is recommended to turn on this option</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_ScreenSaver" xml:space="preserve">
-    <value>Whether to turn on screen saver</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_ScreenSaverExplain" xml:space="preserve">
-    <value>Use the wallpaper that your primary display is using in Virtual Paper as the screensaver background</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_ScreenSaverStatu_Off" xml:space="preserve">
-    <value>Off</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_ScreenSaverStatu_On" xml:space="preserve">
-    <value>On</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_SeekFromList" xml:space="preserve">
-    <value>Search in the list</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_WaitingTime" xml:space="preserve">
-    <value>Minutes waited:</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_WhiteListExplain" xml:space="preserve">
-    <value>Any app in the list won't trigger a screen saver when it's running in the foreground</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver_WhiteListTitle" xml:space="preserve">
-    <value>App White List</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver__effectBubble" xml:space="preserve">
-    <value>Bubble</value>
-  </data>
-  <data name="Settings_WpNav_VpScreenSaver__effectNone" xml:space="preserve">
-    <value>None</value>
-  </data>
-  <data name="Settings_WpNav_WpArrange_Duplicate" xml:space="preserve">
-    <value>Duplicate</value>
-  </data>
-  <data name="Settings_WpNav_WpArrange_DuplicateExplain" xml:space="preserve">
-    <value>The other displays are the same as the main display wallpaper</value>
-  </data>
-  <data name="Settings_WpNav_WpArrange_Expand" xml:space="preserve">
-    <value>Expand</value>
-  </data>
-  <data name="Settings_WpNav_WpArrange_ExpandExplain" xml:space="preserve">
-    <value>With the main display wallpaper as the main body, it spans the display to all displays</value>
-  </data>
-  <data name="Settings_WpNav_WpArrange_Per" xml:space="preserve">
-    <value>Per</value>
-  </data>
-  <data name="Settings_WpNav_WpArrange_PerExplain" xml:space="preserve">
-    <value>The wallpapers for each monitor are displayed independently</value>
-  </data>
   <data name="SidebarAccount" xml:space="preserve">
     <value>Account</value>
   </data>
@@ -691,20 +679,11 @@ Author: PaperHammer</value>
   <data name="SidebarWpSettings" xml:space="preserve">
     <value>Local</value>
   </data>
-  <data name="Text_Adjust" xml:space="preserve">
-    <value>Adjust</value>
-  </data>
   <data name="Text_Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
-  <data name="Text_Close" xml:space="preserve">
-    <value>Close</value>
-  </data>
-  <data name="Text_Detect" xml:space="preserve">
-    <value>Detect</value>
-  </data>
-  <data name="Text_Identify" xml:space="preserve">
-    <value>Identify</value>
+  <data name="Text_Delete" xml:space="preserve">
+    <value>Delete</value>
   </data>
   <data name="Text_Loading" xml:space="preserve">
     <value>Data loading, please wait</value>
@@ -738,6 +717,27 @@ Author: PaperHammer</value>
   </data>
   <data name="Text_SaveAndApply" xml:space="preserve">
     <value>Apply and Save</value>
+  </data>
+  <data name="Text_WpArrange" xml:space="preserve">
+    <value>Wallpaper layout way</value>
+  </data>
+  <data name="WpArrange_Duplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="WpArrange_DuplicateExplain" xml:space="preserve">
+    <value>The other displays are the same as the main display wallpaper</value>
+  </data>
+  <data name="WpArrange_Expand" xml:space="preserve">
+    <value>Expand</value>
+  </data>
+  <data name="WpArrange_ExpandExplain" xml:space="preserve">
+    <value>With the main display wallpaper as the main body, it spans the display to all displays</value>
+  </data>
+  <data name="WpArrange_Per" xml:space="preserve">
+    <value>Per</value>
+  </data>
+  <data name="WpArrange_PerExplain" xml:space="preserve">
+    <value>The wallpapers for each monitor are displayed independently</value>
   </data>
   <data name="WpConfigViewMdoel_TextAspectRatio" xml:space="preserve">
     <value>Aspect Ratio：</value>
@@ -787,17 +787,11 @@ Author: PaperHammer</value>
   <data name="WpCreateDialog_CommonWp_Title" xml:space="preserve">
     <value>Common wallpaper</value>
   </data>
-  <data name="WpSettings_SidebarLibraryContents" xml:space="preserve">
+  <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
     <value>Library contents</value>
   </data>
-  <data name="WpSettings_SidebarSettings" xml:space="preserve">
+  <data name="WpSettings_NavTitle_ScrSettings" xml:space="preserve">
     <value>Runtime Settings</value>
-  </data>
-  <data name="WpSettings_SidebarWpConfig" xml:space="preserve">
-    <value>Current wallpaper</value>
-  </data>
-  <data name="WpSettings_Text_Title" xml:space="preserve">
-    <value>Control Center</value>
   </data>
   <data name="Wp_Edits_TextDesc" xml:space="preserve">
     <value>Description：</value>

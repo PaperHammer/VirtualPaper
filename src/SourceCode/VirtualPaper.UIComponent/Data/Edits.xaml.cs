@@ -49,10 +49,10 @@ namespace VirtualPaper.UIComponent.Data {
         }
 
         private void InitText() {
-            Edits_TextTitle = _localizer.GetLocalizedString(Constants.LocalText.Wp_Edits_TextTitle);
-            Edits_TextDesc = _localizer.GetLocalizedString(Constants.LocalText.Wp_Edits_TextDesc);
-            Edits_TextTags = _localizer.GetLocalizedString(Constants.LocalText.Wp_Edits_TextTags);
-            Edits_TextSave = _localizer.GetLocalizedString(Constants.LocalText.Wp_Edits_TextSave);
+            Edits_TextTitle = _localizer.GetLocalizedString(Constants.I18n.Wp_Edits_TextTitle);
+            Edits_TextDesc = _localizer.GetLocalizedString(Constants.I18n.Wp_Edits_TextDesc);
+            Edits_TextTags = _localizer.GetLocalizedString(Constants.I18n.Wp_Edits_TextTags);
+            Edits_TextSave = _localizer.GetLocalizedString(Constants.I18n.Wp_Edits_TextSave);
         }
 
         private void Init() {

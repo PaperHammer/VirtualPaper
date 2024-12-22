@@ -27,7 +27,7 @@ namespace VirtualPaper.UI {
     public partial class App : Application {
         internal static DispatcherQueue UITaskInvokeQueue => DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
         internal static Logger Log => LogManager.GetCurrentClassLogger();
-        internal static ILocalizer Localizer => LanguageUtil.LocalizerInstacne;
+        private static ILocalizer Localizer => LanguageUtil.LocalizerInstacne;
 
         public static IServiceProvider Services {
             get {
@@ -76,7 +76,7 @@ namespace VirtualPaper.UI {
                 .AddSingleton<WpSettingsViewModel>()
                 //.AddSingleton<WpConfigViewModel>()
                 .AddSingleton<LibraryContentsViewModel>()
-                .AddSingleton<WpRuntimeSettingsViewModel>()
+                .AddSingleton<ScreenSaverViewModel>()
                 .AddSingleton<GeneralSettingViewModel>()
                 .AddTransient<PerformanceSettingViewModel>()
                 .AddTransient<SystemSettingViewModel>()
@@ -155,6 +155,10 @@ namespace VirtualPaper.UI {
                 });
             }
             catch (InvalidOperationException) { }
+        }
+
+        public static string GetI18n(string key) {
+            return Localizer.GetLocalizedString(key);
         }
 
         private readonly IServiceProvider _serviceProvider;

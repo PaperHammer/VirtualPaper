@@ -152,27 +152,27 @@ namespace VirtualPaper.UI.ViewModels.Utils {
         }
 
         private void InitText() {
-            DetailedInfo_TextScore = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextScore);
-            DetailedInfo_TextScoreTilte = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextScoreTilte);
-            DetailedInfo_TextScoreSubmit = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextScoreSubmit);
-            DetailedInfo_TextPreview = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextPreview);
-            DetailedInfo_TextDownload = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextDownload);
-            DetailedInfo_TextRating = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_Rating);
+            DetailedInfo_TextScore = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextScore);
+            DetailedInfo_TextScoreTilte = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextScoreTilte);
+            DetailedInfo_TextScoreSubmit = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextScoreSubmit);
+            DetailedInfo_TextPreview = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextPreview);
+            DetailedInfo_TextDownload = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextDownload);
+            DetailedInfo_TextRating = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_Rating);
 
-            DetailedInfo_TextVirtualPaperUid = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextVirtualPaperUid);
-            DetailedInfo_TextRType = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextRType);
-            DetailedInfo_TextAuthors = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextAuthors);
-            DetailedInfo_TextDesc = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextDesc);
-            DetailedInfo_TextPublishDate = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextPublishDate);
-            DetailedInfo_TextTags = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextTags);
-            DetailedInfo_TextResolution = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextResolution);
-            DetailedInfo_TextAspectRadio = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextAspectRadio);
-            DetailedInfo_TextFileExtension = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextFileExtension);
-            DetailedInfo_TextFileSize = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextFileSize);
-            DetailedInfo_TextVersionInfo = _localizer.GetLocalizedString(Constants.LocalText.DetailedInfo_TextVersionInfo);
+            DetailedInfo_TextVirtualPaperUid = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextVirtualPaperUid);
+            DetailedInfo_TextRType = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextRType);
+            DetailedInfo_TextAuthors = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextAuthors);
+            DetailedInfo_TextDesc = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextDesc);
+            DetailedInfo_TextPublishDate = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextPublishDate);
+            DetailedInfo_TextTags = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextTags);
+            DetailedInfo_TextResolution = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextResolution);
+            DetailedInfo_TextAspectRadio = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextAspectRadio);
+            DetailedInfo_TextFileExtension = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextFileExtension);
+            DetailedInfo_TextFileSize = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextFileSize);
+            DetailedInfo_TextVersionInfo = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextVersionInfo);
 
-            TextLoading = _localizer.GetLocalizedString(Constants.LocalText.Text_Loading);
-            TextCancel = _localizer.GetLocalizedString(Constants.LocalText.Text_Cancel);
+            TextLoading = _localizer.GetLocalizedString(Constants.I18n.Text_Loading);
+            TextCancel = _localizer.GetLocalizedString(Constants.I18n.Text_Cancel);
         }
 
         internal async Task PreviewAsync() {
@@ -254,7 +254,6 @@ namespace VirtualPaper.UI.ViewModels.Utils {
         private readonly IWpMetadata _data;
         private readonly IDialogService _dialogService;
         private readonly IWallpaperControlClient _wpControlClient;
-        private CancellationTokenSource _ctsPreview;
         private readonly SemaphoreSlim _loadingSemaphoreSlim = new(1, 1);
     }
 }

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -15,29 +13,28 @@ using Monitor = VirtualPaper.Models.Cores.Monitor;
 namespace VirtualPaper.UI.ViewModels {
     public partial class WpSettingsViewModel : ObservableObject {
         public ObservableList<IMonitor> Monitors { get; set; } = [];
-        public List<NavigationViewItem> NavMenuItems { get; set; } = [];
         public List<WpArrangeDataModel> WpArrangements { get; set; } = [];
-
-        public string SelBarItem1 { get; set; } = string.Empty;
-        public string SelBarItem2 { get; set; } = string.Empty;
-
-        public string Text_Title { get; set; } = string.Empty;
+        public string WpSettings_NavItem1 { get; set; } = string.Empty;
+        public string WpSettings_NavItem2 { get; set; } = string.Empty;
         public string Text_Close { get; set; } = string.Empty;
-        public string Text_Restore { get; set; } = string.Empty;
         public string Text_Detect { get; set; } = string.Empty;
         public string Text_Identify { get; set; } = string.Empty;
         public string Text_Adjust { get; set; } = string.Empty;
         public string Text_Preview { get; set; } = string.Empty;
-        public string Text_Apply { get; set; } = string.Empty;
-        public string SidebarWpConfig { get; set; } = string.Empty;
-        public string SidebarLibraryContents { get; set; } = string.Empty;
+        public string Text_WpArrange { get; set; } = string.Empty;
+        public string WpArrange_Per { get; set; } = string.Empty;
+        public string WpArrange_PerExplain { get; set; } = string.Empty;
+        public string WpArrange_Expand { get; set; } = string.Empty;
+        public string WpArrange_ExpandExplain { get; set; } = string.Empty;
+        public string WpArrange_Duplicate { get; set; } = string.Empty;
+        public string WpArrange_DuplicateExplain { get; set; } = string.Empty;
 
         private int _selectedWpArrangementsIndex;
         public int SelectedWpArrangementsIndex {
             get => _selectedWpArrangementsIndex;
             set { _selectedWpArrangementsIndex = value; OnPropertyChanged(); }
         }
-        
+
         private IMonitor _selectedMonitor;
         public IMonitor SelectedMonitor {
             get => _selectedMonitor;
@@ -56,41 +53,29 @@ namespace VirtualPaper.UI.ViewModels {
 
             InitText();
             InitMonitors();
-            InitMonitorsBg();
-            InitWpArrangments();
-        }
-
-        private void InitWpArrangments() {
-            WpArrangements.Add(new() {
-                Method = "aa",
-                Tooltip = "xxxx",
-            }); WpArrangements.Add(new() {
-                Method = "aa",
-                Tooltip = "xxxx",
-            }); WpArrangements.Add(new() {
-                Method = "aa",
-                Tooltip = "xxxx",
-            }); WpArrangements.Add(new() {
-                Method = "aa",
-                Tooltip = "xxxx",
-            });
         }
 
         #region Init
         private void InitText() {
-            Text_Title = App.Localizer.GetLocalizedString(Constants.LocalText.WpSettings_Text_Title);
-            Text_Close = App.Localizer.GetLocalizedString(Constants.LocalText.Text_Close);
-            Text_Detect = App.Localizer.GetLocalizedString(Constants.LocalText.Text_Detect);
-            Text_Identify = App.Localizer.GetLocalizedString(Constants.LocalText.Text_Identify);
-            Text_Adjust = App.Localizer.GetLocalizedString(Constants.LocalText.Text_Adjust);
-            Text_Preview = App.Localizer.GetLocalizedString(Constants.LocalText.Text_Preview);
+            Text_Close = App.GetI18n(Constants.I18n.BtnText_Close);
+            Text_Detect = App.GetI18n(Constants.I18n.BtnText_Detect);
+            Text_Identify = App.GetI18n(Constants.I18n.BtnText_Identify);
+            Text_Adjust = App.GetI18n(Constants.I18n.BtnText_Adjust);
+            Text_Preview = App.GetI18n(Constants.I18n.BtnText_Preview);
 
-            SelBarItem1 = App.Localizer.GetLocalizedString(Constants.LocalText.WpSettings_SidebarLibraryContents);
-            SelBarItem2 = App.Localizer.GetLocalizedString(Constants.LocalText.WpSettings_SidebarSettings);
+            Text_WpArrange = App.GetI18n(Constants.I18n.Text_WpArrange);
+            WpArrange_Per = App.GetI18n(Constants.I18n.WpArrange_Per);
+            WpArrange_PerExplain = App.GetI18n(Constants.I18n.WpArrange_PerExplain);
+            WpArrange_Expand = App.GetI18n(Constants.I18n.WpArrange_Expand);
+            WpArrange_ExpandExplain = App.GetI18n(Constants.I18n.WpArrange_ExpandExplain);
+            WpArrange_Duplicate = App.GetI18n(Constants.I18n.WpArrange_Duplicate);
+            WpArrange_DuplicateExplain = App.GetI18n(Constants.I18n.WpArrange_DuplicateExplain);
+
+            WpSettings_NavItem1 = App.GetI18n(Constants.I18n.WpSettings_NavTitle_LibraryContents);
+            WpSettings_NavItem2 = App.GetI18n(Constants.I18n.WpSettings_NavTitle_ScrSettings);
         }
 
         internal void InitMonitors() {
-            Monitors.Clear();
             _monitors.Clear();
             switch (_userSettingsClient.Settings.WallpaperArrangement) {
                 case WallpaperArrangement.Per: {
@@ -115,17 +100,50 @@ namespace VirtualPaper.UI.ViewModels {
             }
         }
 
-        private void InitMonitorsBg() {
-            foreach (var layout in _userSettingsClient.WallpaperLayouts) {
-                string monitorDeviceId = layout.MonitorDeviceId;
-                int idx = Monitors.FindIndex(x => x.DeviceId == monitorDeviceId);
-                string fileName = Path.GetFileName(layout.FolderPath);
-                Monitors[idx].ThumbnailPath = Path.Combine(layout.FolderPath, fileName + Constants.Field.ThumGifSuff);
-            }
+        internal void InitWpArrangments() {
+            WpArrangements.Add(new() {
+                Method = WpArrange_Per,
+                Tooltip = WpArrange_PerExplain,
+            });
+            WpArrangements.Add(new() {
+                Method = WpArrange_Duplicate,
+                Tooltip = WpArrange_DuplicateExplain,
+            });
+            WpArrangements.Add(new() {
+                Method = WpArrange_Expand,
+                Tooltip = WpArrange_ExpandExplain,
+            });
+            SelectedWpArrangementsIndex = (int)_userSettingsClient.Settings.WallpaperArrangement;
         }
         #endregion
 
-        #region Control Buttons
+        internal async Task UpdateWpArrangeAsync(string tag) {
+            try {
+                BasicUIComponentUtil.Loading(false, false, []);
+
+                var type = (WallpaperArrangement)(tag == "Per" ? 0 : tag == "Duplicate" ? 1 : 2);
+                if (type == _userSettingsClient.Settings.WallpaperArrangement) return;
+
+                _userSettingsClient.Settings.WallpaperArrangement = type;
+                await _userSettingsClient.SaveAsync<ISettings>();
+
+                var response = await _wpControlClient.RestartAllWallpapersAsync();
+                if (response.IsFinished != true) {
+                    await _dialogService.ShowDialogAsync(
+                        App.GetI18n("Dialog_Content_ApplyError")
+                        , App.GetI18n("Dialog_Title_Error")
+                        , App.GetI18n("Dialog_Btn_Confirm"));
+                }
+            }
+            catch (Exception ex) {
+                App.Log.Error(ex);
+            }
+            finally {
+                BasicUIComponentUtil.Loaded([]);
+            }
+        }
+
+        #region Buttons Command
         internal async void Close() {
             await _wpControlClient.CloseWallpaperAsync(SelectedMonitor);
             SelectedMonitor.ThumbnailPath = string.Empty;
@@ -135,9 +153,9 @@ namespace VirtualPaper.UI.ViewModels {
             InitMonitors();
 
             await _dialogService.ShowDialogAsync(
-                App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_GetMonitorsAsync) + Monitors.Count
-                , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
-                , App.Localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
+                App.GetI18n(Constants.I18n.Dialog_Content_GetMonitorsAsync) + Monitors.Count
+                , App.GetI18n(Constants.I18n.Dialog_Title_Prompt)
+                , App.GetI18n(Constants.I18n.Dialog_Btn_Confirm));
         }
 
         internal async Task IdentifyAsync() {
@@ -171,34 +189,6 @@ namespace VirtualPaper.UI.ViewModels {
                 _adjustSemaphoreSlim.Release();
             }
         }
-
-        internal async Task PreviewAsync() {
-            try {
-                await _previewSemaphoreSlim.WaitAsync();
-
-                _ctsPreview = new CancellationTokenSource();
-                BasicUIComponentUtil.Loading(true, false, [_ctsPreview]);
-
-                if (SelectedMonitor.ThumbnailPath == string.Empty) {
-                    return;
-                }
-
-                bool isOk = await _wpControlClient.PreviewWallpaperAsync(SelectedMonitor.DeviceId, _ctsPreview.Token);
-                if (!isOk) {
-                    throw new Exception("Preview Failed.");
-                }
-            }
-            catch (OperationCanceledException) {
-                BasicUIComponentUtil.ShowCanceled();
-            }
-            catch (Exception ex) {
-                BasicUIComponentUtil.ShowExp(ex);
-            }
-            finally {
-                BasicUIComponentUtil.Loaded([_ctsPreview]);
-                _previewSemaphoreSlim.Release();
-            }
-        }
         #endregion
 
         private readonly IList<IMonitor> _monitors = [];
@@ -206,10 +196,9 @@ namespace VirtualPaper.UI.ViewModels {
         private readonly IMonitorManagerClient _monitorManagerClient;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
-        private readonly SemaphoreSlim _previewSemaphoreSlim = new(1, 1);
         private readonly SemaphoreSlim _adjustSemaphoreSlim = new(1, 1);
-        private CancellationTokenSource _ctsPreview, _ctsAdjust;
-     
+        private CancellationTokenSource  _ctsAdjust;
+
         public class WpArrangeDataModel {
             public string Method { get; set; }
             public string Tooltip { get; set; }

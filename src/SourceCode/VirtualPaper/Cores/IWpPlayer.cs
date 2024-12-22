@@ -47,7 +47,6 @@ namespace VirtualPaper.Cores
         EventHandler? ToBackground { get; set; }
 
         Task<bool> ShowAsync(CancellationToken cancellationToken = default);
-        IWpPlayerData GetData();
         void Pause();
         void Play();
         void PauseParallax();

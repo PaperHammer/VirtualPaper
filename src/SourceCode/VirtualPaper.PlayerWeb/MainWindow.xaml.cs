@@ -42,6 +42,7 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         public MainWindow(StartArgs startArgs) {
+            _ctsConsoleIn = new();
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
             _startArgs = startArgs;
             SetPositionAndSize();
@@ -57,8 +58,9 @@ namespace VirtualPaper.PlayerWeb {
                 SetWindowTitleBar();
             }
             else {
+                this.Hide();
                 AppTitleBar.Visibility = Visibility.Collapsed;
-            }            
+            }
         }
 
         private void WindowEx_SizeChanged(object sender, WindowSizeChangedEventArgs args) {
@@ -124,16 +126,14 @@ namespace VirtualPaper.PlayerWeb {
         private async Task StdInListener() {
             try {
                 await Task.Run(async () => {
-                    while (!_isClose) {
-                        var msg = await Console.In.ReadLineAsync();
+                    while (!_ctsConsoleIn.IsCancellationRequested) {
+                        var msg = await Console.In.ReadLineAsync(_ctsConsoleIn.Token);
                         if (string.IsNullOrEmpty(msg)) {
                             //When the redirected stream is closed, a null line is sent to the event handler. 
                             break;
                         }
                         else {
-                            _dispatcherQueue.TryEnqueue(() => {
-                                HandleIpcMessage(msg);
-                            });
+                            HandleIpcMessage(msg);
                         }
                     }
                 });
@@ -161,16 +161,19 @@ namespace VirtualPaper.PlayerWeb {
                         _ = ExecuteScriptFunctionAsync(Fileds.Play);
                         break;
                     case MessageType.cmd_active:
-                        this.BringToFront();
-                        WindowUtil.ActiveToolWindow(_startArgs);
-                        bool isNull = WindowUtil.IsToolContentNull();
-                        if (isNull) {
-                            WindowUtil.AddEffectConfigPage();
-                            WindowUtil.AddDetailsPage();
-                        }
+                        _dispatcherQueue.TryEnqueue(() => {
+                            WindowUtil.ActiveToolWindow(_startArgs);
+                            bool isNull = WindowUtil.IsToolContentNull();
+                            if (isNull) {
+                                WindowUtil.AddEffectConfigPage();
+                                WindowUtil.AddDetailsPage();
+                            }
+                        });
                         break;
                     case MessageType.cmd_reload:
-                        Webview2?.Reload();
+                        _dispatcherQueue.TryEnqueue(() => {
+                            Webview2?.Reload();
+                        });
                         break;
                     case MessageType.cmd_suspend:
                         await HandlePlaybackCommandAsync(true);
@@ -230,9 +233,9 @@ namespace VirtualPaper.PlayerWeb {
             _ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, propertyName, propertyValue);
         }
 
-        private void HandleCloseCommand() {
-            _isClose = true;
+        private static void HandleCloseCommand() {
             StopParallaxLoop();
+            _ctsConsoleIn.Cancel();
         }
 
         private async Task HandlePlaybackCommandAsync(bool pause) {
@@ -252,7 +255,7 @@ namespace VirtualPaper.PlayerWeb {
         }
         #endregion
 
-        private void StopParallaxLoop() {
+        private static void StopParallaxLoop() {
             _isParallaxOn = false;
         }
 
@@ -423,7 +426,7 @@ namespace VirtualPaper.PlayerWeb {
             sb_script.Append(");");
 
             string script = string.Empty;
-            await _dispatcherQueue.EnqueueOrInvoke(async () => {
+            await _dispatcherQueue.EnqueueOrInvokeAsync(async () => {
                 if (Webview2.CoreWebView2 == null) { // ???
                     await Webview2.EnsureCoreWebView2Async();
                 }
@@ -538,12 +541,6 @@ namespace VirtualPaper.PlayerWeb {
             uint scaleFactorPercent = (uint)(((long)dpiX * 100 + (96 >> 1)) / 96);
             return scaleFactorPercent / 100.0;
         }
-
-        internal void BeforeToBackground() {
-            AppTitleBar.Loaded += AppTitleBar_Loaded;
-            AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
-            AppTitleBar.Visibility = Visibility.Collapsed;
-        }
         #endregion
 
         private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
@@ -559,6 +556,6 @@ namespace VirtualPaper.PlayerWeb {
         private readonly string _filePath = string.Empty;
         private static bool _isFirstRun = true;
         private readonly MainWindowViewModel _viewModel;
-        private static bool _isClose = false;
+        private static CancellationTokenSource _ctsConsoleIn;
     }
 }

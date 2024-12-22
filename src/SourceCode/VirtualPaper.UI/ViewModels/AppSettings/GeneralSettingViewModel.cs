@@ -335,9 +335,9 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
             }
             if (folder.Path == Constants.CommonPaths.AppDataDir) {
                 await _dialogService.ShowDialogAsync(
-                        _localizer.GetLocalizedString(Constants.LocalText.Dialog_Content_WallpaperDirectoryChangePathInvalid)
-                        , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Title_Prompt)
-                        , _localizer.GetLocalizedString(Constants.LocalText.Dialog_Btn_Confirm));
+                        _localizer.GetLocalizedString(Constants.I18n.Dialog_Content_WallpaperDirectoryChangePathInvalid)
+                        , _localizer.GetLocalizedString(Constants.I18n.Dialog_Title_Prompt)
+                        , _localizer.GetLocalizedString(Constants.I18n.Dialog_Btn_Confirm));
                 return;
             }
 
@@ -364,7 +364,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
                 bool isDirChanged = await WallpaperDirectoryUpdateAsync(
                     [_userSettingsClient.Settings.WallpaperDir], destFolderPath);
                 if (!isDirChanged) {
-                    BasicUIComponentUtil.ShowMsg(true, Constants.LocalText.InfobarMsg_Err, InfoBarSeverity.Error);
+                    BasicUIComponentUtil.ShowMsg(true, Constants.I18n.InfobarMsg_Err, InfoBarSeverity.Error);
                     return;
                 }
                 #endregion             
@@ -388,13 +388,13 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
 
             }
             catch (OperationCanceledException) {
-                BasicUIComponentUtil.ShowMsg(true, Constants.LocalText.InfobarMsg_Cancel, InfoBarSeverity.Warning);
+                BasicUIComponentUtil.ShowMsg(true, Constants.I18n.InfobarMsg_Cancel, InfoBarSeverity.Warning);
                 if (destFolderPath != string.Empty) {
                     FileUtil.EmptyDirectory(destFolderPath);
                 }
             }
             catch (Exception ex) {
-                BasicUIComponentUtil.ShowMsg(true, Constants.LocalText.InfobarMsg_Err, InfoBarSeverity.Error);
+                BasicUIComponentUtil.ShowMsg(true, Constants.I18n.InfobarMsg_Err, InfoBarSeverity.Error);
                 _logger.Error(ex);
                 if (destFolderPath != string.Empty) {
                     FileUtil.EmptyDirectory(destFolderPath);

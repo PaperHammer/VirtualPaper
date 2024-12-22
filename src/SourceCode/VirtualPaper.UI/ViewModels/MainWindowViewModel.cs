@@ -96,13 +96,13 @@ namespace VirtualPaper.UI.ViewModels {
         }
 
         private void InitText() {
-            SidebarGallery = _localizer.GetLocalizedString(Constants.LocalText.SidebarGallery);
-            SidebarWpSettings = _localizer.GetLocalizedString(Constants.LocalText.SidebarWpSettings);
-            SidebarProject = _localizer.GetLocalizedString(Constants.LocalText.SidebarProject);
-            SidebarAccount = _localizer.GetLocalizedString(Constants.LocalText.SidebarAccount);
-            SidebarAppSettings = _localizer.GetLocalizedString(Constants.LocalText.SidebarAppSettings);
-            TextLoading = _localizer.GetLocalizedString(Constants.LocalText.Text_Loading);
-            TextCancel = _localizer.GetLocalizedString(Constants.LocalText.Text_Cancel);
+            SidebarGallery = _localizer.GetLocalizedString(Constants.I18n.SidebarGallery);
+            SidebarWpSettings = _localizer.GetLocalizedString(Constants.I18n.SidebarWpSettings);
+            SidebarProject = _localizer.GetLocalizedString(Constants.I18n.SidebarProject);
+            SidebarAccount = _localizer.GetLocalizedString(Constants.I18n.SidebarAccount);
+            SidebarAppSettings = _localizer.GetLocalizedString(Constants.I18n.SidebarAppSettings);
+            TextLoading = _localizer.GetLocalizedString(Constants.I18n.Text_Loading);
+            TextCancel = _localizer.GetLocalizedString(Constants.I18n.Text_Cancel);
         }
 
         #region loading_ui_logic

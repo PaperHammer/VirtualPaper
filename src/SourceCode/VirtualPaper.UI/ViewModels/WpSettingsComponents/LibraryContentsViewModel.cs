@@ -242,7 +242,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 if (rtype == RuntimeType.RUnknown) return;
 
                 Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
-                    _wpSettingsViewModel.Monitors[_wpSettingsViewModel.MonitorSelectedIdx],
+                    _wpSettingsViewModel.SelectedMonitor,
                     data,
                     rtype,
                     _ctsApply.Token);
@@ -253,7 +253,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                         InfoBarSeverity.Error);
                 }
                 else {
-                    _wpSettingsViewModel.Monitors[_wpSettingsViewModel.MonitorSelectedIdx].ThumbnailPath = data.ThumbnailPath;
+                    _wpSettingsViewModel.SelectedMonitor.ThumbnailPath = data.ThumbnailPath;
                 }
             }
             catch (OperationCanceledException) {

@@ -12,7 +12,7 @@ namespace VirtualPaper.Common.Utils.Hardware {
                 using ManagementObjectSearcher myVideoObject = new("select * from Win32_VideoController");
                 var sb = new StringBuilder();
                 foreach (ManagementObject obj in myVideoObject.Get().Cast<ManagementObject>()) {
-                    sb.AppendLine("GPU: " + obj["PropertyName"]);
+                    sb.AppendLine("GPU: " + obj["Name"]);
                 }
                 return sb.ToString().TrimEnd();
             }
@@ -26,7 +26,7 @@ namespace VirtualPaper.Common.Utils.Hardware {
             try {
                 using ManagementObjectSearcher myVideoObject = new("select * from Win32_VideoController");
                 foreach (ManagementObject obj in myVideoObject.Get().Cast<ManagementObject>()) {
-                    result.Add(obj["PropertyName"].ToString() ?? string.Empty);
+                    result.Add(obj["Name"].ToString() ?? string.Empty);
                 }
             }
             catch { }
@@ -38,7 +38,7 @@ namespace VirtualPaper.Common.Utils.Hardware {
                 using ManagementObjectSearcher myProcessorObject = new("select * from Win32_Processor");
                 var sb = new StringBuilder();
                 foreach (ManagementObject obj in myProcessorObject.Get().Cast<ManagementObject>()) {
-                    sb.AppendLine("CPU: " + obj["PropertyName"]);
+                    sb.AppendLine("CPU: " + obj["Name"]);
                 }
                 return sb.ToString().TrimEnd();
             }
@@ -52,7 +52,7 @@ namespace VirtualPaper.Common.Utils.Hardware {
             try {
                 using ManagementObjectSearcher myProcessorObject = new("select * from Win32_Processor");
                 foreach (ManagementObject obj in myProcessorObject.Get().Cast<ManagementObject>()) {
-                    result.Add(obj["PropertyName"].ToString() ?? string.Empty);
+                    result.Add(obj["Name"].ToString() ?? string.Empty);
                 }
             }
             catch { }

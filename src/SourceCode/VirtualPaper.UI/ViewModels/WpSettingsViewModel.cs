@@ -16,6 +16,7 @@ namespace VirtualPaper.UI.ViewModels {
     public partial class WpSettingsViewModel : ObservableObject {
         public ObservableList<IMonitor> Monitors { get; set; } = [];
         public List<NavigationViewItem> NavMenuItems { get; set; } = [];
+        public List<WpArrangeDataModel> WpArrangements { get; set; } = [];
 
         public string SelBarItem1 { get; set; } = string.Empty;
         public string SelBarItem2 { get; set; } = string.Empty;
@@ -31,10 +32,16 @@ namespace VirtualPaper.UI.ViewModels {
         public string SidebarWpConfig { get; set; } = string.Empty;
         public string SidebarLibraryContents { get; set; } = string.Empty;
 
-        private int _monitorSelectedIdx;
-        public int MonitorSelectedIdx {
-            get => _monitorSelectedIdx;
-            set { _monitorSelectedIdx = value; OnPropertyChanged(); }
+        private int _selectedWpArrangementsIndex;
+        public int SelectedWpArrangementsIndex {
+            get => _selectedWpArrangementsIndex;
+            set { _selectedWpArrangementsIndex = value; OnPropertyChanged(); }
+        }
+        
+        private IMonitor _selectedMonitor;
+        public IMonitor SelectedMonitor {
+            get => _selectedMonitor;
+            set { _selectedMonitor = value; OnPropertyChanged(); }
         }
 
         public WpSettingsViewModel(
@@ -50,6 +57,23 @@ namespace VirtualPaper.UI.ViewModels {
             InitText();
             InitMonitors();
             InitMonitorsBg();
+            InitWpArrangments();
+        }
+
+        private void InitWpArrangments() {
+            WpArrangements.Add(new() {
+                Method = "aa",
+                Tooltip = "xxxx",
+            }); WpArrangements.Add(new() {
+                Method = "aa",
+                Tooltip = "xxxx",
+            }); WpArrangements.Add(new() {
+                Method = "aa",
+                Tooltip = "xxxx",
+            }); WpArrangements.Add(new() {
+                Method = "aa",
+                Tooltip = "xxxx",
+            });
         }
 
         #region Init
@@ -72,15 +96,6 @@ namespace VirtualPaper.UI.ViewModels {
                 case WallpaperArrangement.Per: {
                         foreach (var monitor in _monitorManagerClient.Monitors) {
                             _monitors.Add(monitor);
-                            _monitors.Add(monitor);
-                            _monitors.Add(monitor);
-                            _monitors.Add(monitor);
-                            _monitors.Add(monitor);
-                            _monitors.Add(monitor);
-                            _monitors.Add(monitor);
-                            _monitors.Add(monitor);
-                            _monitors.Add(monitor);
-                            _monitors.Add(monitor);
                         }
                     }
                     break;
@@ -95,8 +110,8 @@ namespace VirtualPaper.UI.ViewModels {
             }
 
             Monitors.SetRange(_monitors);
-            if (_monitorSelectedIdx >= _monitors.Count) {
-                _monitorSelectedIdx = 0;
+            if (Monitors.Count > 0) {
+                SelectedMonitor = Monitors[0];
             }
         }
 
@@ -112,8 +127,8 @@ namespace VirtualPaper.UI.ViewModels {
 
         #region Control Buttons
         internal async void Close() {
-            await _wpControlClient.CloseWallpaperAsync(Monitors[MonitorSelectedIdx]);
-            Monitors[MonitorSelectedIdx].ThumbnailPath = string.Empty;
+            await _wpControlClient.CloseWallpaperAsync(SelectedMonitor);
+            SelectedMonitor.ThumbnailPath = string.Empty;
         }
 
         internal async Task DetectAsync() {
@@ -136,11 +151,11 @@ namespace VirtualPaper.UI.ViewModels {
                 _ctsAdjust = new CancellationTokenSource();
                 BasicUIComponentUtil.Loading(true, false, [_ctsAdjust]);
 
-                if (Monitors[MonitorSelectedIdx].ThumbnailPath == string.Empty) {
+                if (SelectedMonitor.ThumbnailPath == string.Empty) {
                     return;
                 }
 
-                bool isOk = await _wpControlClient.AdjustWallpaperAsync(Monitors[MonitorSelectedIdx].DeviceId, _ctsAdjust.Token);
+                bool isOk = await _wpControlClient.AdjustWallpaperAsync(SelectedMonitor.DeviceId, _ctsAdjust.Token);
                 if (!isOk) {
                     throw new Exception("Failed to evoke custom adjustment window.");
                 }
@@ -163,12 +178,12 @@ namespace VirtualPaper.UI.ViewModels {
 
                 _ctsPreview = new CancellationTokenSource();
                 BasicUIComponentUtil.Loading(true, false, [_ctsPreview]);
-                
-                if (Monitors[MonitorSelectedIdx].ThumbnailPath == string.Empty) {
+
+                if (SelectedMonitor.ThumbnailPath == string.Empty) {
                     return;
                 }
 
-                bool isOk = await _wpControlClient.PreviewWallpaperAsync(Monitors[MonitorSelectedIdx].DeviceId, _ctsPreview.Token);
+                bool isOk = await _wpControlClient.PreviewWallpaperAsync(SelectedMonitor.DeviceId, _ctsPreview.Token);
                 if (!isOk) {
                     throw new Exception("Preview Failed.");
                 }
@@ -194,5 +209,10 @@ namespace VirtualPaper.UI.ViewModels {
         private readonly SemaphoreSlim _previewSemaphoreSlim = new(1, 1);
         private readonly SemaphoreSlim _adjustSemaphoreSlim = new(1, 1);
         private CancellationTokenSource _ctsPreview, _ctsAdjust;
+     
+        public class WpArrangeDataModel {
+            public string Method { get; set; }
+            public string Tooltip { get; set; }
+        }
     }
 }

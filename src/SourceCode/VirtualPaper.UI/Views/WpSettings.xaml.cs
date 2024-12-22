@@ -23,13 +23,6 @@ namespace VirtualPaper.UI.Views {
             this.DataContext = _viewModel;
         }
 
-        //private void WpSettingsViewModel_SelectBarChanged(object sender, int index) {
-        //    var items = SelBar.Items;
-        //    if (index >= 0 && index < items.Count) {
-        //        SelBar.SelectedItem = items[index];
-        //    }
-        //}
-
         #region btn_click
         private async void BtnClose_Click(object sender, RoutedEventArgs e) {
             BtnClose.IsEnabled = false;
@@ -87,5 +80,9 @@ namespace VirtualPaper.UI.Views {
         #endregion
 
         private readonly WpSettingsViewModel _viewModel;
+
+        private void WpArrageRadioButtons_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+
+        }
     }
 }

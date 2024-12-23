@@ -1,13 +1,13 @@
 ﻿using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
 using VirtualPaper.Common.Utils.PInvoke;
-using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.Cores.Monitor {
     public partial class MonitorManager : ObservableObject, IMonitorManager {
         public event EventHandler? MonitorUpdated;
+        public event EventHandler? MonitorPropertyUpdated;
 
         public ObservableCollection<Models.Cores.Monitor> Monitors { get; } = [];
         public Models.Cores.Monitor PrimaryMonitor => Monitors.FirstOrDefault(x => x.IsPrimary, null);
@@ -62,6 +62,11 @@ namespace VirtualPaper.Cores.Monitor {
                 RefreshMonitorList();
             }
             return IntPtr.Zero;
+        }
+
+        public void UpdateTargetMonitorThu(int monitorIdx, string thumbnailPath) {
+            Monitors[monitorIdx].ThumbnailPath = thumbnailPath;
+            MonitorPropertyUpdated?.Invoke(this, EventArgs.Empty);
         }
 
         #region private
@@ -139,14 +144,9 @@ namespace VirtualPaper.Cores.Monitor {
 
             var displayDevice = GetMonitorDevice(deviceName);
             monitor.DeviceId = displayDevice.DeviceID;
-            //monitor.MonitorName = displayDevice.DeviceString;
 
             return monitor;
         }
-
-        //private Models.Cores.Monitor GetMonitorByDeviceName(string deviceName) {
-        //    return Monitors.FirstOrDefault(x => x.DeviceName == deviceName);
-        //}
 
         private void UpdateDisplayMonitor(Models.Cores.Monitor monitor, Native.MONITORINFOEX info) {
             // 确保在 应用程序清单文件 里开启对每一块屏幕的 DPI 感知

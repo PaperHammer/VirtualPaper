@@ -11,13 +11,11 @@ using Rectangle = System.Drawing.Rectangle;
 
 namespace VirtualPaper.Grpc.Client {
     public partial class MonitorManagerClient : IMonitorManagerClient {
-
         public event EventHandler? MonitorChanged;
+        public event EventHandler? MonitorPropertyUpdated;
 
         public ReadOnlyCollection<IMonitor> Monitors => _monitors.AsReadOnly();
-
         public IMonitor PrimaryMonitor { get; private set; }
-
         public Rectangle VirtulScreenBounds { get; private set; }
 
         public MonitorManagerClient() {
@@ -30,7 +28,9 @@ namespace VirtualPaper.Grpc.Client {
             }).Wait();
 
             _cancellationTokeneMonitorChanged = new CancellationTokenSource();
+            _cancellationTokeneMonitorPropertyChanged = new CancellationTokenSource();
             _monitorChangedTask = Task.Run(() => SubscribeMonitorChangedStream(_cancellationTokeneMonitorChanged.Token));
+            _monitorPropertyChangedTask = Task.Run(() => SubscribeMonitorPropertyChangedStream(_cancellationTokeneMonitorPropertyChanged.Token));
         }
 
         private async Task<IEnumerable<IMonitor>> GetMonitorsAsync() {
@@ -75,9 +75,33 @@ namespace VirtualPaper.Grpc.Client {
 
         private async Task SubscribeMonitorChangedStream(CancellationToken token) {
             try {
-                using var call = _client.SubscribeMonitorChanged(new Empty());
+                using var call = _client.SubscribeMonitorChanged(new Empty(), cancellationToken: token);
                 while (await call.ResponseStream.MoveNext(token)) {
-                    await _monitorChangedLock.WaitAsync();
+                    await _monitorChangedLock.WaitAsync(token);
+                    try {
+                        var response = call.ResponseStream.Current;
+
+                        _monitors.Clear();
+                        _monitors.AddRange(await GetMonitorsAsync().ConfigureAwait(false));
+                        VirtulScreenBounds = await GetVirtualScreenBounds().ConfigureAwait(false);
+                        PrimaryMonitor = _monitors.FirstOrDefault(x => x.IsPrimary);
+                        MonitorChanged?.Invoke(this, EventArgs.Empty);
+                    }
+                    finally {
+                        _monitorChangedLock.Release();
+                    }
+                }
+            }
+            catch (Exception e) {
+                _logger.Error(e);
+            }
+        }
+
+        private async Task SubscribeMonitorPropertyChangedStream(CancellationToken token) {
+            try {
+                using var call = _client.SubscribeMonitorPropertyChanged(new Empty(), cancellationToken: token);
+                while (await call.ResponseStream.MoveNext(token)) {
+                    await _monitorChangedLock.WaitAsync(token);
                     try {
                         var response = call.ResponseStream.Current;
 
@@ -116,11 +140,12 @@ namespace VirtualPaper.Grpc.Client {
         }
         #endregion
 
-        private Grpc_MonitorManagerService.Grpc_MonitorManagerServiceClient _client;
+        private readonly Grpc_MonitorManagerService.Grpc_MonitorManagerServiceClient _client;
         private readonly List<IMonitor> _monitors = [];
         private readonly SemaphoreSlim _monitorChangedLock = new(1, 1);
         private readonly CancellationTokenSource _cancellationTokeneMonitorChanged;
-        private readonly Task _monitorChangedTask;
+        private readonly CancellationTokenSource _cancellationTokeneMonitorPropertyChanged;
+        private readonly Task _monitorChangedTask, _monitorPropertyChangedTask;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

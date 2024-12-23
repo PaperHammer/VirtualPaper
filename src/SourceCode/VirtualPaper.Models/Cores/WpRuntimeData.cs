@@ -41,6 +41,17 @@ namespace VirtualPaper.Models.Cores {
             Save();
         }
 
+        public void FromTempToInstallPath(string targetFolderPath) {
+            string oldFolderPath = Constants.CommonPaths.TempDir;
+            this.FolderPath = this.FolderPath.Replace(oldFolderPath, targetFolderPath);
+            this.DepthFilePath = this.DepthFilePath.Replace(oldFolderPath, targetFolderPath);
+            this.WpEffectFilePathTemplate = this.WpEffectFilePathTemplate.Replace(oldFolderPath, targetFolderPath);
+            this.WpEffectFilePathUsing = this.WpEffectFilePathUsing.Replace(oldFolderPath, targetFolderPath);
+            this.WpEffectFilePathTemporary = this.WpEffectFilePathTemporary.Replace(oldFolderPath, targetFolderPath);
+
+            Save();
+        }
+
         public void Save() {
             JsonStorage<IWpRuntimeData>.StoreData(Path.Combine(this.FolderPath, MonitorContent, RType.ToString(), Constants.Field.WpRuntimeDataFileName), this);
         }

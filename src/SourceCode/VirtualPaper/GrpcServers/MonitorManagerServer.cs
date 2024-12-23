@@ -1,7 +1,6 @@
 ﻿using System.Windows.Threading;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using NLog;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Grpc.Service.MonitorManager;
@@ -89,11 +88,35 @@ namespace VirtualPaper.GrpcServers {
                 }
             }
             catch (Exception e) {
-                _logger.Error(e);
+                App.Log.Error(e);
             }
         }
 
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        public override async Task SubscribeMonitorPropertyChanged(Empty _, IServerStreamWriter<Empty> responseStream, ServerCallContext context) {
+            try {
+                while (!context.CancellationToken.IsCancellationRequested) {
+                    var tcs = new TaskCompletionSource<bool>();
+                    _monitorManager.MonitorPropertyUpdated += MonitorPropertyChanged;
+                    void MonitorPropertyChanged(object? s, EventArgs e) {
+                        _monitorManager.MonitorPropertyUpdated -= MonitorPropertyChanged;
+                        tcs.TrySetResult(true);
+                    }
+                    using var item = context.CancellationToken.Register(() => { tcs.TrySetResult(false); });
+                    await tcs.Task;
+
+                    if (context.CancellationToken.IsCancellationRequested) {
+                        _monitorManager.MonitorPropertyUpdated -= MonitorPropertyChanged;
+                        break;
+                    }
+
+                    await responseStream.WriteAsync(new Empty());
+                }
+            }
+            catch (Exception e) {
+                App.Log.Error(e);
+            }
+        }
+
         private readonly IMonitorManager _monitorManager = monitorManager;
     }
 }

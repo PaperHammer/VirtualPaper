@@ -8,4 +8,5 @@ service Grpc_MonitorManagerService {
 	rpc GetVirtualScreenBounds (google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.Models.Grpc_Rectangle);
 	rpc IdentifyMonitors (google.protobuf.Empty) returns (google.protobuf.Empty);
 	rpc SubscribeMonitorChanged (google.protobuf.Empty) returns (stream google.protobuf.Empty);
+	rpc SubscribeMonitorPropertyChanged (google.protobuf.Empty) returns (stream google.protobuf.Empty);
 }

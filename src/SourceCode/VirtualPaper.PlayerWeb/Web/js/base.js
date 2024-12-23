@@ -18,16 +18,16 @@ function propertyListener(propertyType, val) {
             saturate = parseFloat(val);
             break;
         case "Hue":
-            hueRotate = parseInt(val)
+            hueRotate = parseInt(val);
             break;
         case "Brightness":
             brightness = parseFloat(val);
             break;
         case "Contrast":
-            contrast = parseFloat(val)
+            contrast = parseFloat(val);
             break;
         case "Scaling":
-            objectFitChanged(val);
+            objectFitChanged(parseInt(val));
             break;
     }
 

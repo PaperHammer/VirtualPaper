@@ -16,17 +16,12 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         RuntimeType RType { get; set; }
 
         void RevertToDefault();
-
         void RevertToApplied();
-
         void Read(string filePath);
-
         void MoveTo(string targetFolder);
-
+        void FromTempToInstallPath(string targetFolderPath);
         void Save();
-
         IWpRuntimeData Clone();
-
         bool IsAvailable();
     }
 }

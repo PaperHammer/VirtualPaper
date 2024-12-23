@@ -58,7 +58,6 @@ namespace VirtualPaper.PlayerWeb {
                 SetWindowTitleBar();
             }
             else {
-                this.Hide();
                 AppTitleBar.Visibility = Visibility.Collapsed;
             }
         }

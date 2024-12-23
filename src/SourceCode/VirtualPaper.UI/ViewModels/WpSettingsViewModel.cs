@@ -32,7 +32,15 @@ namespace VirtualPaper.UI.ViewModels {
         private int _selectedWpArrangementsIndex;
         public int SelectedWpArrangementsIndex {
             get => _selectedWpArrangementsIndex;
-            set { _selectedWpArrangementsIndex = value; OnPropertyChanged(); }
+            set {
+                if (_selectedWpArrangementsIndex != value) {
+
+                    UpdateWpArrange(value);
+
+                    _selectedWpArrangementsIndex = value; 
+                    OnPropertyChanged();                    
+                }
+            }
         }
 
         private IMonitor _selectedMonitor;
@@ -117,11 +125,11 @@ namespace VirtualPaper.UI.ViewModels {
         }
         #endregion
 
-        internal async Task UpdateWpArrangeAsync(string tag) {
+        internal async void UpdateWpArrange(int tag) {
             try {
                 BasicUIComponentUtil.Loading(false, false, []);
 
-                var type = (WallpaperArrangement)(tag == "Per" ? 0 : tag == "Duplicate" ? 1 : 2);
+                var type = (WallpaperArrangement)tag;
                 if (type == _userSettingsClient.Settings.WallpaperArrangement) return;
 
                 _userSettingsClient.Settings.WallpaperArrangement = type;
@@ -197,7 +205,7 @@ namespace VirtualPaper.UI.ViewModels {
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly SemaphoreSlim _adjustSemaphoreSlim = new(1, 1);
-        private CancellationTokenSource  _ctsAdjust;
+        private CancellationTokenSource _ctsAdjust;
 
         public class WpArrangeDataModel {
             public string Method { get; set; }

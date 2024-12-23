@@ -246,9 +246,6 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                         Constants.I18n.Dialog_Content_ApplyError,
                         InfoBarSeverity.Error);
                 }
-                else {
-                    _wpSettingsViewModel.SelectedMonitor.ThumbnailPath = data.ThumbnailPath;
-                }
             }
             catch (OperationCanceledException) {
                 BasicUIComponentUtil.ShowCanceled();

@@ -38,7 +38,6 @@ namespace VirtualPaper.Cores.PlaybackControl {
             wpControl.WallpaperReset += (s, e) => FindNewMonitorAndResetHandles();
         }
 
-
         public void Start() {
             _dispatcherTimer.Start();
         }

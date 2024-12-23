@@ -161,7 +161,6 @@ namespace VirtualPaper.Cores.Players.Web {
         private void Terminate() {
             try {
                 Closing?.Invoke(this, EventArgs.Empty);
-                Closing = null;
                 Proc?.Kill();
                 Proc?.Dispose();
             }

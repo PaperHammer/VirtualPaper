@@ -7,6 +7,7 @@ namespace VirtualPaper.Cores.Monitor {
     /// </summary>
     public interface IMonitorManager {
         event EventHandler MonitorUpdated;
+        event EventHandler MonitorPropertyUpdated;
 
         ObservableCollection<Models.Cores.Monitor> Monitors { get; }
         Models.Cores.Monitor PrimaryMonitor { get; }
@@ -18,5 +19,6 @@ namespace VirtualPaper.Cores.Monitor {
         bool IsMultiScreen();
         bool MonitorExists(IMonitor display);
         IntPtr OnWndProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+        void UpdateTargetMonitorThu(int monitorIdx, string thumbnailPath);
     }
 }

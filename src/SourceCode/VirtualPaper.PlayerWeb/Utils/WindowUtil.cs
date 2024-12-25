@@ -25,7 +25,6 @@ namespace VirtualPaper.PlayerWeb.Utils {
                 Y = 0,
             });
             _appWindow.IsShownInSwitchers = false;
-            _mainWindow.IsResizable = false;
         }
 
         #region detail-page

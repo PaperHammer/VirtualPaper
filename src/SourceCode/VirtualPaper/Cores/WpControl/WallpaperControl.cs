@@ -930,24 +930,15 @@ namespace VirtualPaper.Cores.WpControl {
             IntPtr handle = wallpaper.Proc.MainWindowHandle;
             RemoveTitleBarAndBorder(handle);
 
-            Native.RECT prct = new();
+            _ = Native.GetWindowRect(_workerW, out Native.RECT rect);
             App.Log.Info($"Sending wallpaper(Monitor): {targetMonitor.DeviceId} | {targetMonitor.Bounds}");
             //Position the wp fullscreen to corresponding monitor.
             if (!Native.SetWindowPos(handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, (int)Native.SWP_NOACTIVATE)) {
                 App.Log.Error("Failed to set perscreen wallpaper");
             }
 
-            _ = Native.MapWindowPoints(handle, _workerW, ref prct, 2);
-            //Native.SetWindowRect(handle, prct.Left, prct.Top, prct.Right - prct.Left, prct.Bottom - prct.Top);
-
-            wallpaper.SendMessage(new VirtualPaperMessageRECT() {
-                X = 0,
-                Y = 0,
-                Width = prct.Right - prct.Left,
-                Height = prct.Bottom - prct.Top
-            });
+            _ = Native.MapWindowPoints(handle, _workerW, ref rect, 2);
             var success = TrySetParentProgman(handle) && TrySetParentWorkerW(wallpaper.Handle);
-
             if (success) {
                 // Move wallpaper.Handle to the top of the Z order
                 Native.SetWindowPos(wallpaper.Handle, Native.HWND_TOPMOST, 0, 0, 0, 0,
@@ -976,20 +967,14 @@ namespace VirtualPaper.Cores.WpControl {
             IntPtr handle = wallpaper.Proc.MainWindowHandle;
             RemoveTitleBarAndBorder(handle);
 
-            _ = Native.GetWindowRect(_workerW, out Native.RECT prct);
-            App.Log.Info($"Sending wallpaper(Expand): ({prct.Left}, {prct.Top}, {prct.Right - prct.Left}, {prct.Bottom - prct.Top}).");
+            _ = Native.GetWindowRect(_workerW, out Native.RECT rect);
+            App.Log.Info($"Sending wallpaper(Expand): ({rect.Left}, {rect.Top}, {rect.Right - rect.Left}, {rect.Bottom - rect.Top}).");
             //Position the wp fullscreen to corresponding monitor.
-            if (!Native.SetWindowPos(handle, 1, 0, 0, prct.Right - prct.Left, prct.Bottom - prct.Top, (int)Native.SWP_NOACTIVATE)) {
+            if (!Native.SetWindowPos(handle, 1, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top, (int)Native.SWP_NOACTIVATE)) {
                 App.Log.Error("Failed to set perscreen wallpaper");
             }
 
-            _ = Native.MapWindowPoints(handle, _workerW, ref prct, 2);
-            wallpaper.SendMessage(new VirtualPaperMessageRECT() {
-                X = 0,
-                Y = 0,
-                Width = prct.Right - prct.Left,
-                Height = prct.Bottom - prct.Top
-            });
+            _ = Native.MapWindowPoints(handle, _workerW, ref rect, 2);
             var success = TrySetParentProgman(handle) && TrySetParentWorkerW(wallpaper.Handle);
             if (success) {
                 // Move wallpaper.Handle to the top of the Z order

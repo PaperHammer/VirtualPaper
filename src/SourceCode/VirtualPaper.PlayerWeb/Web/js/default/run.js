@@ -1,23 +1,11 @@
 ﻿const scale = 1.05; // 缩放系数
-let containerWidth = window.innerWidth;
-let containerHeight = window.innerHeight;
-let centerX = containerWidth / 2;
-let centerY = containerHeight / 2;
+let centerX;
+let centerY;
 let parallaxBackground;
-
 let curVideoElementId = null; // 存储当前视频元素的ID
 let volume = 0.8;
 let speed = 1.0;
 let muted = false;
-
-function init(width, height) {
-    containerWidth = width;
-    containerHeight = height;
-    centerX = containerWidth / 2;
-    centerY = containerHeight / 2;
-
-    return 'init success';
-}
 
 function resourceLoad(wallpaperType, filePath) {
     if (curVideoElementId) {
@@ -118,4 +106,9 @@ function mouseMove(x, y) {
 
 function mouseOut() {
     parallaxBackground.style.transform = 'scale(1) rotateX(0deg) rotateY(0deg)';
+}
+
+function updateDimensions(width, height) {
+    centerX = width / 2;
+    centerY = height / 2;
 }

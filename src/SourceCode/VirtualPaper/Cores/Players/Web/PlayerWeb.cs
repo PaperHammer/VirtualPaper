@@ -29,18 +29,25 @@ namespace VirtualPaper.Cores.Players.Web {
 
             StringBuilder cmdArgs = new();
             CheckParams(data);
-            cmdArgs.Append($" -f {data.FilePath}");
+            if (isPreview) {
+                cmdArgs.Append($" --is-preview");
+            }
+            else {
+                cmdArgs.Append($" --left {monitor.WorkingArea.Left}");
+                cmdArgs.Append($" --top {monitor.WorkingArea.Top}");
+                cmdArgs.Append($" --right {monitor.WorkingArea.Right}");
+                cmdArgs.Append($" --bottom {monitor.WorkingArea.Bottom}");
+            }
+
+            cmdArgs.Append($" -f {data.FilePath}");            
+            cmdArgs.Append($" -b {Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName)}");
             if (data.RType == RuntimeType.RImage3D) {
                 cmdArgs.Append($" --depth-file-path {data.DepthFilePath}");
             }
-            cmdArgs.Append($" -b {Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName)}");
             cmdArgs.Append($" -e {data.WpEffectFilePathUsing}");
             cmdArgs.Append($" --effect-file-path-temporary {data.WpEffectFilePathTemporary}");
             cmdArgs.Append($" --effect-file-path-template {data.WpEffectFilePathTemplate}");
             cmdArgs.Append($" -r {data.RType.ToString()}");
-            if (isPreview) {
-                cmdArgs.Append($" --is-preview");
-            }
             cmdArgs.Append($" --window-style-type {App.IUserSettgins.Settings.SystemBackdrop}");
             cmdArgs.Append($" -t {App.IUserSettgins.Settings.ApplicationTheme}");
             cmdArgs.Append($" -l {App.IUserSettgins.Settings.Language}");

@@ -57,13 +57,19 @@ namespace VirtualPaper.PlayerWeb {
                 SetWindowTitleBar();
             }
             else {
+                _windowRc = new() {
+                    Left = _startArgs.Left,
+                    Top = _startArgs.Top,
+                    Right = _startArgs.Right,
+                    Bottom = _startArgs.Bottom,
+                };
                 AppTitleBar.Visibility = Visibility.Collapsed;
             }
         }
 
         private void WindowEx_SizeChanged(object sender, WindowSizeChangedEventArgs args) {
             if (_startArgs.IsPreview) {
-                SetPositionAndSize();
+                SetWindowRect();
             }
         }
 
@@ -128,7 +134,9 @@ namespace VirtualPaper.PlayerWeb {
                         var msg = await Console.In.ReadLineAsync(_ctsConsoleIn.Token);
                         if (string.IsNullOrEmpty(msg)) {
                             //When the redirected stream is closed, a null line is sent to the event handler. 
+#if !DEBUG
                             break;
+#endif
                         }
                         else {
                             HandleIpcMessage(msg);
@@ -194,10 +202,6 @@ namespace VirtualPaper.PlayerWeb {
                         ParallaxControl();
                         break;
 
-                    case MessageType.msg_rect:
-                        HandleMsgRect((VirtualPaperMessageRECT)obj);
-                        break;
-
                     case MessageType.vp_slider:
                         var sl = (VirtualPaperSlider)obj;
                         HandleVpMsg(sl.Name, sl.Value);
@@ -231,15 +235,6 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         #region handel_ipcmessage
-        private void HandleMsgRect(VirtualPaperMessageRECT obj) {
-            _windowRc = new() {
-                Left = obj.X,
-                Top = obj.Y,
-                Right = obj.X + obj.Width,
-                Bottom = obj.Y + obj.Height,
-            };
-        }
-
         private void HandleVpMsg(string propertyName, object propertyValue) {
             _ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, propertyName, propertyValue);
         }
@@ -261,8 +256,12 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         private async Task HandleUpdateCommandAsync(VirtualPaperUpdateCmd update) {
-            await LoadSource(update.FilePath, update.WpType);
-            LoadWpEffect(update.WpEffectFilePathUsing);
+            _startArgs.RuntimeType = update.WpType;
+            _startArgs.FilePath = update.FilePath;
+            _startArgs.WpEffectFilePathUsing = update.WpEffectFilePathUsing;
+
+            await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+            LoadWpEffect(_startArgs.WpEffectFilePathUsing);
         }
         #endregion
 
@@ -351,11 +350,12 @@ namespace VirtualPaper.PlayerWeb {
             switch (_startArgs.RuntimeType) {
                 case "RImage":
                 case "RVideo":
-                    _ = ExecuteScriptFunctionAsync(Fileds.Init, _windowRc.Right - _windowRc.Left, _windowRc.Bottom - _windowRc.Top);
-                    await LoadSource(_startArgs.FilePath, _startArgs.RuntimeType);
+                    UpdateRectToWebview();
+                    await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
                     break;
                 case "RImage3D":
-                    await ExecuteScriptFunctionAsync(Fileds.Init, _startArgs.FilePath, _startArgs.DepthFilePath);
+                    UpdateRectToWebview();
+                    await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
                     break;
                 default:
                     break;
@@ -370,20 +370,6 @@ namespace VirtualPaper.PlayerWeb {
             //Webview2.CoreWebView2.OpenDevToolsWindow();
 
             _viewModel.Loaded([]);
-        }
-
-        private async Task LoadSource(string filePath, string wpType) {
-            try {
-                if (string.IsNullOrEmpty(filePath)) return;
-
-                await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, wpType, filePath);
-            }
-            catch (Exception ex) {
-                App.WriteToParent(new VirtualPaperMessageConsole() {
-                    MsgType = ConsoleMessageType.Error,
-                    Message = $"Process fail: {ex.Message}",
-                });
-            }
         }
 
         private void LoadWpEffect(string wpEffectFilePath) {
@@ -448,8 +434,15 @@ namespace VirtualPaper.PlayerWeb {
             return script;
         }
 
-        private void SetPositionAndSize() {
+        private void SetWindowRect() {
             _windowRc = RawInput.GetWindowRECT(this);
+            UpdateRectToWebview();
+        }
+
+        private async void UpdateRectToWebview() {
+            if (Webview2 == null || Webview2.CoreWebView2 == null) return;
+
+            await ExecuteScriptFunctionAsync(Fileds.UpdateDimensions, _windowRc.Right - _windowRc.Left, _windowRc.Bottom - _windowRc.Top);
         }
 
         private string GetPlayingFile() {

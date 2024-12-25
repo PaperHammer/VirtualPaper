@@ -3,6 +3,30 @@ using VirtualPaper.Common;
 
 namespace VirtualPaper.PlayerWeb {
     public class StartArgs {
+        [Option("left",
+            Required = false,
+            Default = 0,
+            HelpText = "The target monitor workingArea point for left.")]
+        public int Left { get; set; }
+        
+        [Option("top",
+            Required = false,
+            Default = 0,
+            HelpText = "The target monitor workingArea point for top.")]
+        public int Top { get; set; }
+        
+        [Option("right",
+            Required = false,
+            Default = 0,
+            HelpText = "The target monitor workingArea point for right.")]
+        public int Right { get; set; }
+        
+        [Option("bottom",
+            Required = false,
+            Default = 0,
+            HelpText = "The target monitor workingArea point for bottom.")]
+        public int Bottom { get; set; }
+        
         [Option('f', "file-path",
             Required = true,
             HelpText = "The target file to load.")]

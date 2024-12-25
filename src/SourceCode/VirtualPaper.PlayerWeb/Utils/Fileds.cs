@@ -7,7 +7,7 @@
         public static string PropertyListener { get; } = "propertyListener";
         public static string MouseMove { get; } = "mouseMove";
         public static string MouseOut { get; } = "mouseOut";
-        public static string Init { get; } = "init";
         public static string ResourceLoad { get; } = "resourceLoad";
+        public static string UpdateDimensions { get; } = "updateDimensions";
     }
 }

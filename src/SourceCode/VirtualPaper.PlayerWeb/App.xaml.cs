@@ -35,6 +35,7 @@ namespace VirtualPaper.PlayerWeb {
             SetupUnhandledExceptionLogging();
 
             //string s = "a " +
+            //    "--is-preview " +
             //    "-f D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\ijo5xmc2.02r.jpg " +
             //    "-b D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\wp_metadata_basic.json " +
             //    "-e D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\1\\RImage\\wpEffectFilePathUsing.json " +
@@ -125,13 +126,8 @@ namespace VirtualPaper.PlayerWeb {
         public static void WriteToParent(IpcMessage obj) {
             string msg = JsonSerializer.Serialize(obj);
             Console.WriteLine(msg);
-
-#if DEBUG
-            Debug.WriteLine(msg);
-#endif
         }
 
-        //private readonly IServiceProvider _serviceProvider;
         private StartArgs _startArgs;
     }
 }

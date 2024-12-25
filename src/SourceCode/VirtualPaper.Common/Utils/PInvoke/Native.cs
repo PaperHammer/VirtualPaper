@@ -6,6 +6,12 @@ using System.Text;
 namespace VirtualPaper.Common.Utils.PInvoke {
 #pragma warning disable CA1707, CA1401, CA1712
     public static class Native {
+        [DllImport("kernel32.dll")]
+        public static extern void SetLastError(uint dwErrCode);
+
+        [DllImport("kernel32.dll")]
+        public static extern uint GetLastError();
+
         public const int HWND_TOP = 0;
         public const int HWND_TOPMOST = -1;
         public const uint SWP_NOACTIVATE = 0x0010;

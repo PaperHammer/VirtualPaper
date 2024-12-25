@@ -10,7 +10,6 @@ namespace VirtualPaper.Common.Utils.IPC {
     [JsonDerivedType(typeof(VirtualPaperMessageProcId), "msg_procid")]
     [JsonDerivedType(typeof(VirtualPaperMessageScreenshot), "msg_screenshot")]
     [JsonDerivedType(typeof(VirtualPaperMessageWallpaperLoaded), "msg_wploaded")]
-    [JsonDerivedType(typeof(VirtualPaperMessageRECT), "msg_rect")]
     [JsonDerivedType(typeof(VirtualPaperCloseCmd), "cmd_close")]
     [JsonDerivedType(typeof(VirtualPaperReloadCmd), "cmd_reload")]
     [JsonDerivedType(typeof(VirtualPaperScreenshotCmd), "cmd_screenshot")]
@@ -38,7 +37,6 @@ namespace VirtualPaper.Common.Utils.IPC {
         msg_console,
         msg_wploaded,
         msg_screenshot,
-        msg_rect,
         msg_info,
 
         cmd_apply,
@@ -112,15 +110,6 @@ namespace VirtualPaper.Common.Utils.IPC {
     public class VirtualPaperMessageWallpaperLoaded : IpcMessage {
         public bool Success { get; set; }
         public VirtualPaperMessageWallpaperLoaded() : base(MessageType.msg_wploaded) { }
-    }
-
-    [Serializable]
-    public class VirtualPaperMessageRECT : IpcMessage {
-        public int X { get; set; }
-        public int Y { get; set; }
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public VirtualPaperMessageRECT() : base(MessageType.msg_rect) { }
     }
 
     [Serializable]

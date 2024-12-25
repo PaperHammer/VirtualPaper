@@ -1,15 +1,17 @@
 ﻿import * as THREE from './three.module.min.js';
 
+let width;
+let height;
 let mouse;
 
-function init3D(imgFilePath, depthFilePath) {
+function resourceLoad3D(imgFilePath, depthFilePath) {
     /*背景/场景*/
     const scene = new THREE.Scene();
     scene.background = null;
 
     /*相机*/
     const fov = 100 // 视野范围
-    const aspect = window.innerWidth / window.innerHeight; // 相机默认值 = 2, 画布的宽高比
+    const aspect = width / height; // 相机默认值 = 2, 画布的宽高比
     const near = 0.1 // 近平面
     const far = 1000 // 远平面
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
@@ -92,9 +94,8 @@ function init3D(imgFilePath, depthFilePath) {
 
 function mouseMove3D(x, y) {
     if (mouse) {
-        mouse.x = (x / window.innerWidth) * 2 - 1;
-        mouse.y = (y / window.innerHeight) * 2 - 1;
-        console.log(mouse.x, mouse.y);
+        mouse.x = (x / width) * 2 - 1;
+        mouse.y = (y / height) * 2 - 1;
     }
 }
 
@@ -105,7 +106,12 @@ function mouseOut3D() {
     }
 }
 
+function updateDimensions3D(w, h) {
+    width = w;
+    height = h;
+}
 
-window.init = init3D;
+window.resourceLoad = resourceLoad3D;
+window.updateDimensions = updateDimensions3D;
 window.mouseMove = mouseMove3D;
 window.mouseOut = mouseOut3D;

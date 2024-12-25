@@ -14,6 +14,10 @@ namespace VirtualPaper.PlayerWeb.Utils {
         }
 
         internal static Native.RECT GetWindowRECT(WindowEx windowEx) {
+            if (windowEx == null || windowEx.AppWindow == null) {
+                return default;
+            }
+
             AppWindow appWindow = windowEx.AppWindow;
 
             Native.RECT rect = new() {

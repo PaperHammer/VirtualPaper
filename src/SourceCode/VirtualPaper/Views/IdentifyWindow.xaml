@@ -7,7 +7,7 @@
         xmlns:vms="clr-namespace:VirtualPaper.ViewModels"
         mc:Ignorable="d"
         Title="IdentifyWindow" 
-        Height="160" 
+        Height="180" 
         Width="300"
         WindowStyle="None"
         ResizeMode="NoResize"
@@ -16,12 +16,11 @@
         Topmost="True">
     
     <Border
-        Height="160"
-        Width="300"
-        HorizontalAlignment="Center"
-        VerticalAlignment="Center"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
         Background="#4cc2ff"
-        BorderThickness="0">
+        BorderThickness="2"
+        BorderBrush="LightGray">
         <TextBlock
             HorizontalAlignment="Center"
             VerticalAlignment="Center"

@@ -6,7 +6,6 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Shell;
-using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Cores.Players.Web {
@@ -55,6 +54,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 WorkingDirectory = workingDir,
+                WindowStyle = ProcessWindowStyle.Minimized,
                 Arguments = cmdArgs.ToString(),
             };
 
@@ -81,6 +81,7 @@ namespace VirtualPaper.Cores.Players.Web {
 
         public void Close() {
             SendMessage(new VirtualPaperCloseCmd());
+            Closing?.Invoke(this, EventArgs.Empty);
         }
 
         public void Pause() {
@@ -178,6 +179,7 @@ namespace VirtualPaper.Cores.Players.Web {
             }
             catch (Exception e) {
                 App.Log.Error($"Stdin write fail: {e.Message}");
+                Terminate();
             }
         }
 
@@ -224,9 +226,6 @@ namespace VirtualPaper.Cores.Players.Web {
                             _tcsProcessWait.TrySetResult(error);
                         }
                     }
-                }
-                else if (obj.Type == MessageType.msg_closed) {
-                    Closing?.Invoke(this, EventArgs.Empty);
                 }
                 else if (obj.Type == MessageType.cmd_apply) {
                     ToBackground?.Invoke(this, EventArgs.Empty);

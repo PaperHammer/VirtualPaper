@@ -1,5 +1,4 @@
 ﻿using System;
-using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -16,22 +15,17 @@ namespace VirtualPaper.PlayerWeb.Utils {
     internal class WindowUtil {
         static WindowUtil() {
             _mainWindow = App.MainWindowInstance;
+            _appWindow = _mainWindow.AppWindow;
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
         }
 
-        internal static AppWindow GetAppWindowForCurrentWindow() {
-            IntPtr hwnd = GetWindowHwnd(_mainWindow);
-            WindowId windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
-
-            return AppWindow.GetFromWindowId(windowId);
-        }
-
-        internal static void SetWindowAsBackground() {
+        internal static void InitWindowAsBackground() {
+            _appWindow.Move(new Windows.Graphics.PointInt32() {
+                X = -99999,
+                Y = 0,
+            });
+            _appWindow.IsShownInSwitchers = false;
             _mainWindow.IsResizable = false;
-
-            AppWindow appWindow = GetAppWindowForCurrentWindow();
-            appWindow.IsShownInSwitchers = false;
-            appWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
         }
 
         #region detail-page
@@ -126,6 +120,7 @@ namespace VirtualPaper.PlayerWeb.Utils {
             return _effectConfig == null || _details == null;
         }
 
+        private readonly static AppWindow _appWindow;
         private static EffectConfig _effectConfig;
         private static Details _details;
         private static ToolContainer _toolContainer;

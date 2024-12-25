@@ -1,6 +1,4 @@
-﻿using System;
-using System.Drawing;
-using System.Reflection.Metadata;
+﻿using System.Drawing;
 using Microsoft.UI.Windowing;
 using VirtualPaper.Common.Utils.PInvoke;
 using WinUIEx;

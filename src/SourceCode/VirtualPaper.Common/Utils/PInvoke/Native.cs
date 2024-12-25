@@ -11,11 +11,16 @@ namespace VirtualPaper.Common.Utils.PInvoke {
         public const uint SWP_NOACTIVATE = 0x0010;
         public const uint SWP_NOMOVE = 0x0002;
         public const uint SWP_NOSIZE = 0x0001;
+        public const uint SWP_SHOWWINDOW = 0x0040;
+        public const uint SWP_FRAMECHANGED = 0x0020;
 
         public const int GWL_STYLE = -16;
         public const long WS_POPUP = 0x80000000;
         public const long WS_CHILD = 0x40000000;
-
+        public const int WS_OVERLAPPEDWINDOW = 0x00CF0000;
+        public const int WS_VISIBLE = 0x10000000;
+        public const int WS_EX_TOPMOST = 0x00000008;
+      
         [DllImport("user32.dll")]
         public static extern bool EnumChildWindows(IntPtr hwndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
 

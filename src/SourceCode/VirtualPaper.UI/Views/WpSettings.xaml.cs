@@ -24,7 +24,6 @@ namespace VirtualPaper.UI.Views {
         }
 
         private void Flyout_Opening(object sender, object e) {
-            _viewModel.InitMonitors();
             _viewModel.InitWpArrangments();
         }
 

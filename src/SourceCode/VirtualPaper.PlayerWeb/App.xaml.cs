@@ -7,9 +7,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using CommandLine;
 using Microsoft.UI.Xaml;
-using Microsoft.Win32;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
+using VirtualPaper.PlayerWeb.Utils;
 using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -23,8 +23,6 @@ namespace VirtualPaper.PlayerWeb {
         public static App AppInstance { get; private set; }
         public static MainWindow MainWindowInstance { get; private set; }
 
-        private event SessionEndingEventHandler SessionEnding;
-
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -34,8 +32,19 @@ namespace VirtualPaper.PlayerWeb {
 
             this.InitializeComponent();
 
-            SessionEnding += App_SessionEnding;
             SetupUnhandledExceptionLogging();
+
+            //string s = "a " +
+            //    "-f D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\ijo5xmc2.02r.jpg " +
+            //    "-b D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\wp_metadata_basic.json " +
+            //    "-e D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\1\\RImage\\wpEffectFilePathUsing.json " +
+            //    "--effect-file-path-temporary D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\1\\RImage\\wpEffectFilePathTemporary.json " +
+            //    "--effect-file-path-template D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\wpEffectFilePathTemplate.json " +
+            //    "-r RImage " +
+            //    "--window-style-type Default " +
+            //    "-t Light " +
+            //    "-l zh-CN";
+            //string[] startArgs = s.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1..];
 
             string[] startArgs = Environment.GetCommandLineArgs()[1..];
             Parser.Default.ParseArguments<StartArgs>(startArgs)
@@ -63,18 +72,10 @@ namespace VirtualPaper.PlayerWeb {
 
             // 避免文字无法初始化
             MainWindowInstance = new MainWindow(_startArgs);
-            MainWindowInstance.Activate();
-        }
-
-        /// <summary>
-        /// 处理会话结束
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void App_SessionEnding(object sender, SessionEndingEventArgs e) {
-            if (e.Reason == SessionEndReasons.Logoff || e.Reason == SessionEndReasons.SystemShutdown) {
-                e.Cancel = true;
+            if (!_startArgs.IsPreview) {
+                WindowUtil.InitWindowAsBackground();
             }
+            MainWindowInstance.Activate();
         }
 
         private void HandleParseError(IEnumerable<Error> errs) {
@@ -130,7 +131,7 @@ namespace VirtualPaper.PlayerWeb {
 #endif
         }
 
-        private readonly IServiceProvider _serviceProvider;
+        //private readonly IServiceProvider _serviceProvider;
         private StartArgs _startArgs;
     }
 }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.Json;
 using System.Windows;
 using Microsoft.Win32;
+using OpenCvSharp.Internal;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.IPC;
@@ -21,7 +22,7 @@ using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 using WinEventHook;
 using static VirtualPaper.Common.Errors;
-// todo: dpi 感知；壁纸展示方式切换时存在 bug
+// todo: webview dpi 感知；thu 大小;
 
 namespace VirtualPaper.Cores.WpControl {
     public partial class WallpaperControl : IWallpaperControl {
@@ -102,6 +103,7 @@ namespace VirtualPaper.Cores.WpControl {
                 tmp.ForEach(x => {
                     x.Close();
                 });
+
                 _wallpapers.RemoveAll(tmp.Contains);
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
@@ -369,11 +371,11 @@ namespace VirtualPaper.Cores.WpControl {
 
                 switch (_userSettings.Settings.WallpaperArrangement) {
                     case WallpaperArrangement.Per: {
-                            bool isSetted = UpdateWallpaper(monitorIdx, monitor.DeviceId, data);
-                            if (isSetted) {
-                                response.IsFinished = true;
-                                return response;
-                            }
+                            //bool isSetted = UpdateWallpaper(monitorIdx, monitor.DeviceId, data);
+                            //if (isSetted) {
+                            //    response.IsFinished = true;
+                            //    return response;
+                            //}
 
                             IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, monitor, _userSettings);
                             instance.Closing += IWallpaperPlayingClosingForBG;
@@ -485,18 +487,18 @@ namespace VirtualPaper.Cores.WpControl {
             });
         }
 
-        private bool UpdateWallpaper(int monitorIdx, string monitorDeviceId, IWpPlayerData data) {
-            int idx = _wallpapers.FindIndex(x => x.Monitor.DeviceId == monitorDeviceId);
-            if (idx == -1) return false;
-            // RImage3D 暂不支持热替换
-            if (data.RType == RuntimeType.RImage3D || _wallpapers[idx].Data.RType == RuntimeType.RImage3D) return false;
+        //private bool UpdateWallpaper(int monitorIdx, string monitorDeviceId, IWpPlayerData data) {
+        //    int idx = _wallpapers.FindIndex(x => x.Monitor.DeviceId == monitorDeviceId);
+        //    if (idx == -1) return false;
+        //    // RImage3D 暂不支持热替换
+        //    if (data.RType == RuntimeType.RImage3D || _wallpapers[idx].Data.RType == RuntimeType.RImage3D) return false;
 
-            _wallpapers[idx].Update(data);
-            _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
-            WallpaperChanged?.Invoke(this, EventArgs.Empty);
+        //    _wallpapers[idx].Update(data);
+        //    _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
+        //    WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
-            return true;
-        }
+        //    return true;
+        //}
         #endregion
 
         #region data
@@ -862,7 +864,6 @@ namespace VirtualPaper.Cores.WpControl {
 
             instance.Closing -= IWallpaperPlayingClosingForBG;
             instance.Closing = null;
-            CloseWallpaper(instance.Monitor);
         }
 
         private void IWallpaperPlayingClosingForPreiview(object? s, EventArgs e) {
@@ -927,15 +928,24 @@ namespace VirtualPaper.Cores.WpControl {
         /// <param name="targetMonitor">monitorstring of monitor to sent wp to.</param>
         private static bool TrySetWallpaperPerMonitor(IWpPlayer wallpaper, IMonitor targetMonitor) {
             IntPtr handle = wallpaper.Proc.MainWindowHandle;
+            RemoveTitleBarAndBorder(handle);
 
             Native.RECT prct = new();
             App.Log.Info($"Sending wallpaper(Monitor): {targetMonitor.DeviceId} | {targetMonitor.Bounds}");
             //Position the wp fullscreen to corresponding monitor.
-            if (!Native.SetWindowPos(handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, 0x0010)) {
+            if (!Native.SetWindowPos(handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, (int)Native.SWP_NOACTIVATE)) {
                 App.Log.Error("Failed to set perscreen wallpaper");
             }
 
             _ = Native.MapWindowPoints(handle, _workerW, ref prct, 2);
+            //Native.SetWindowRect(handle, prct.Left, prct.Top, prct.Right - prct.Left, prct.Bottom - prct.Top);
+
+            wallpaper.SendMessage(new VirtualPaperMessageRECT() {
+                X = 0,
+                Y = 0,
+                Width = prct.Right - prct.Left,
+                Height = prct.Bottom - prct.Top
+            });
             var success = TrySetParentProgman(handle) && TrySetParentWorkerW(wallpaper.Handle);
 
             if (success) {
@@ -952,28 +962,46 @@ namespace VirtualPaper.Cores.WpControl {
             return success;
         }
 
+        private static void RemoveTitleBarAndBorder(nint handle) {
+            long style = Native.GetWindowLong(handle, Native.GWL_STYLE);
+            style &= ~Native.WS_OVERLAPPEDWINDOW; // 移除边框和标题栏
+            style |= Native.WS_POPUP | Native.WS_VISIBLE; // 添加弹出窗口风格和可见性
+            Native.SetWindowLong(handle, Native.GWL_STYLE, style);
+        }
+
         /// <summary>
         /// Spans wp across All screens.
         /// </summary>
         private static bool TrySetWallpaperSpanMonitor(IWpPlayer wallpaper) {
-            IntPtr handle = wallpaper.Handle;
-            //get spawned _workerW rectangle data.
-            _ = Native.GetWindowRect(_workerW, out Native.RECT prct);
-            var success = TrySetParentWorkerW(handle);
+            IntPtr handle = wallpaper.Proc.MainWindowHandle;
+            RemoveTitleBarAndBorder(handle);
 
-            //fill wp into the whole _workerW area.
+            _ = Native.GetWindowRect(_workerW, out Native.RECT prct);
+            App.Log.Info($"Sending wallpaper(Expand): ({prct.Left}, {prct.Top}, {prct.Right - prct.Left}, {prct.Bottom - prct.Top}).");
+            //Position the wp fullscreen to corresponding monitor.
+            if (!Native.SetWindowPos(handle, 1, 0, 0, prct.Right - prct.Left, prct.Bottom - prct.Top, (int)Native.SWP_NOACTIVATE)) {
+                App.Log.Error("Failed to set perscreen wallpaper");
+            }
+
+            _ = Native.MapWindowPoints(handle, _workerW, ref prct, 2);
             wallpaper.SendMessage(new VirtualPaperMessageRECT() {
                 X = 0,
                 Y = 0,
                 Width = prct.Right - prct.Left,
                 Height = prct.Bottom - prct.Top
             });
+            var success = TrySetParentProgman(handle) && TrySetParentWorkerW(wallpaper.Handle);
+            if (success) {
+                // Move wallpaper.Handle to the top of the Z order
+                Native.SetWindowPos(wallpaper.Handle, Native.HWND_TOPMOST, 0, 0, 0, 0,
+                    (int)(Native.SWP_NOACTIVATE | Native.SWP_NOMOVE | Native.SWP_NOSIZE));
 
-            App.Log.Info($"Sending wallpaper(Expand): ({prct.Left}, {prct.Top}, {prct.Right - prct.Left}, {prct.Bottom - prct.Top}).");
-            if (!Native.SetWindowPos(handle, 1, 0, 0, prct.Right - prct.Left, prct.Bottom - prct.Top, 0x0010)) {
-                //LogUtil.LogWin32Error("Failed to set Expand wallpaper");
+                // Alternatively, you can use HWND_TOP instead of HWND_TOPMOST for non-topmost behavior
+                //Native.SetWindowPos(handle, Native.HWND_TOP, 0, 0, 0, 0,
+                //                  (int)(Native.SWP_NOACTIVATE | Native.SWP_NOMOVE | Native.SWP_NOSIZE));
             }
             DesktopUtil.RefreshDesktop();
+
             return success;
         }
 

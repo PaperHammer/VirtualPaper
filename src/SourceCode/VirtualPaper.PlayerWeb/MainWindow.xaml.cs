@@ -45,7 +45,6 @@ namespace VirtualPaper.PlayerWeb {
             _ctsConsoleIn = new();
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
             _startArgs = startArgs;
-            SetPositionAndSize();
 
             this.InitializeComponent();
 
@@ -63,7 +62,9 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         private void WindowEx_SizeChanged(object sender, WindowSizeChangedEventArgs args) {
-            SetPositionAndSize();
+            if (_startArgs.IsPreview) {
+                SetPositionAndSize();
+            }
         }
 
         private async void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
@@ -89,7 +90,7 @@ namespace VirtualPaper.PlayerWeb {
                 }
                 else {
                     this.Activated -= WindowEx_Activated;
-                    WindowUtil.SetWindowAsBackground();
+                    this.SizeChanged -= WindowEx_SizeChanged;
                 }
 
                 _ = StdInListener();
@@ -118,8 +119,6 @@ namespace VirtualPaper.PlayerWeb {
                 Webview2?.Close();
                 App.AppInstance.Exit();
             });
-
-            App.WriteToParent(new VirtualPaperMessageClosed());
         }
 
         private async Task StdInListener() {
@@ -195,6 +194,10 @@ namespace VirtualPaper.PlayerWeb {
                         ParallaxControl();
                         break;
 
+                    case MessageType.msg_rect:
+                        HandleMsgRect((VirtualPaperMessageRECT)obj);
+                        break;
+
                     case MessageType.vp_slider:
                         var sl = (VirtualPaperSlider)obj;
                         HandleVpMsg(sl.Name, sl.Value);
@@ -228,6 +231,15 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         #region handel_ipcmessage
+        private void HandleMsgRect(VirtualPaperMessageRECT obj) {
+            _windowRc = new() {
+                Left = obj.X,
+                Top = obj.Y,
+                Right = obj.X + obj.Width,
+                Bottom = obj.Y + obj.Height,
+            };
+        }
+
         private void HandleVpMsg(string propertyName, object propertyValue) {
             _ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, propertyName, propertyValue);
         }
@@ -354,6 +366,7 @@ namespace VirtualPaper.PlayerWeb {
             App.WriteToParent(new VirtualPaperMessageProcId() {
                 ProcId = Webview2.CoreWebView2.BrowserProcessId,
             });
+
             //Webview2.CoreWebView2.OpenDevToolsWindow();
 
             _viewModel.Loaded([]);
@@ -550,7 +563,7 @@ namespace VirtualPaper.PlayerWeb {
         private static bool _isParallaxOn = true;
         private static int _isParallaxRunning = 0;
         private static bool _isFocusOnDesk = false;
-        private Native.RECT _windowRc;
+        private static Native.RECT _windowRc;
         private readonly DispatcherQueue _dispatcherQueue;
         private readonly string _filePath = string.Empty;
         private static bool _isFirstRun = true;

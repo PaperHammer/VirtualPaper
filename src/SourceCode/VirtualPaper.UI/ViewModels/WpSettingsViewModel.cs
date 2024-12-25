@@ -29,16 +29,15 @@ namespace VirtualPaper.UI.ViewModels {
         public string WpArrange_Duplicate { get; set; } = string.Empty;
         public string WpArrange_DuplicateExplain { get; set; } = string.Empty;
 
-        private int _selectedWpArrangementsIndex;
+        private int _selectedWpArrangementsIndex = -1;
         public int SelectedWpArrangementsIndex {
             get => _selectedWpArrangementsIndex;
             set {
                 if (_selectedWpArrangementsIndex != value) {
-
+                    _selectedWpArrangementsIndex = value;
+                    OnPropertyChanged();
                     UpdateWpArrange(value);
-
-                    _selectedWpArrangementsIndex = value; 
-                    OnPropertyChanged();                    
+                    InitMonitors();                   
                 }
             }
         }
@@ -93,11 +92,17 @@ namespace VirtualPaper.UI.ViewModels {
                     }
                     break;
                 case WallpaperArrangement.Expand: {
-                        _monitors.Add(new Monitor("Expand"));
+                        Monitor monitor = new("Expand") {
+                            ThumbnailPath = _monitorManagerClient.Monitors[0].ThumbnailPath,
+                        };
+                        _monitors.Add(monitor);
                     }
                     break;
                 case WallpaperArrangement.Duplicate: {
-                        _monitors.Add(new Monitor("Duplicate"));
+                        Monitor monitor = new("Duplicate") {
+                            ThumbnailPath = _monitorManagerClient.Monitors[0].ThumbnailPath,
+                        };
+                        _monitors.Add(monitor);
                     }
                     break;
             }

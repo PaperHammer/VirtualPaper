@@ -23,8 +23,9 @@ namespace VirtualPaper.UI.Views {
             this.DataContext = _viewModel;
         }
 
-        private void Flyout_Opening(object sender, object e) {
+        private void Flyout_Opening(object sender, object e) {            
             _viewModel.InitWpArrangments();
+            _viewModel.InitMonitors(); // 打开该页面不会触发绑定值修改，需要手动调用更新
         }
 
         #region btn_click

@@ -1,7 +1,5 @@
-﻿using System.Collections.ObjectModel;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Google.Protobuf.WellKnownTypes;
-using Grpc.Core;
 using GrpcDotNetNamedPipes;
 using NLog;
 using VirtualPaper.Common;
@@ -10,7 +8,6 @@ using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Grpc.Service.WallpaperControl;
-using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using static VirtualPaper.Common.Errors;
 
@@ -21,13 +18,11 @@ namespace VirtualPaper.Grpc.Client {
 
         public Version AssemblyVersion { get; private set; }
         public string BaseDirectory { get; private set; } = string.Empty;
-        public ReadOnlyCollection<IWpMetadata> Wallpapers => _wallpapers.AsReadOnly();
 
         public WallpaperControlClient() {
             _client = new Grpc_WallpaperControlService.Grpc_WallpaperControlServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
 
             Task.Run(async () => {
-                _wallpapers.AddRange(await GetWallpapersAsync().ConfigureAwait(false));
                 var status = await GetCoreStats().ConfigureAwait(false);
                 BaseDirectory = status.BaseDirectory;
                 AssemblyVersion = new Version(status.AssemblyVersion);
@@ -157,16 +152,6 @@ namespace VirtualPaper.Grpc.Client {
             return monitor_data;
         }
 
-        public async Task ModifyPreviewAsync(string controlName, string propertyName, string val) {
-            Grpc_ModifyPreviewRequest modifyPreviewRequest = new() {
-                ControlName = controlName,
-                PropertyName = propertyName,
-                Value = val
-            };
-
-            await _client.ModifyPreviewAsync(modifyPreviewRequest);
-        }
-
         public async Task SendMessageWallpaperAsync(IMonitor monitor, IWpRuntimeData metaData, IpcMessage msg) {
             await _client.SendMessageWallpaperAsync(new Grpc_WallpaperMessageRequest() {
                 MonitorId = monitor.DeviceId,
@@ -199,21 +184,6 @@ namespace VirtualPaper.Grpc.Client {
         #endregion
 
         #region private utils
-        private async Task<List<IWpMetadata>> GetWallpapersAsync() {
-            var wallpapers = new List<IWpMetadata>();
-            using var call = _client.GetWallpapers(new Empty());
-            while (await call.ResponseStream.MoveNext()) {
-                var response = call.ResponseStream.Current;
-
-                wallpapers.Add(new WpMetadata() {
-                    BasicData = DataAssist.GrpcToBasicData(response.WpBasicData),
-                    RuntimeData = DataAssist.GrpcToRuntimeData(response.WpRuntimeData),
-                });
-            }
-
-            return wallpapers;
-        }
-
         private async Task SubscribeWallpaperChangedStream(CancellationToken token) {
             try {
                 using var call = _client.SubscribeWallpaperChanged(new Empty(), cancellationToken: token);
@@ -223,7 +193,6 @@ namespace VirtualPaper.Grpc.Client {
                         _ = call.ResponseStream.Current;
 
                         _wallpapers.Clear();
-                        _wallpapers.AddRange(await GetWallpapersAsync());
                         WallpaperChanged?.Invoke(this, EventArgs.Empty);
                     }
                     finally {

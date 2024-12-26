@@ -216,13 +216,11 @@ namespace VirtualPaper.Cores.Players.Web {
                             nint procid = new(((VirtualPaperMessageProcId)obj).ProcId);
                             Process process = Process.GetProcessById((int)procid);
                             Handle = process.MainWindowHandle; // chrome_widgetwin_1
+                            App.Log.Info($"PlayerWeb-{_uniqueId}: ProcId: {procid} - WindowHwnd: {Handle}");
 
                             if (Equals(Handle, IntPtr.Zero)) {
                                 throw new Exception("Browser input/window handle NULL.");
                             }
-
-                            ConvertPopupToChildWindow(Handle);
-
                             IsLoaded = true;
                         }
                         catch (Exception ie) {
@@ -238,21 +236,6 @@ namespace VirtualPaper.Cores.Players.Web {
                     ToBackground?.Invoke(this, EventArgs.Empty);
                 }
             }
-        }
-
-        public static void ConvertPopupToChildWindow(IntPtr hwnd) {
-            // Get the current window style
-            long style = Native.GetWindowLong(hwnd, Native.GWL_STYLE);
-
-            // Remove WS_POPUP and add WS_CHILD style
-            style &= ~Native.WS_POPUP;
-            style |= Native.WS_CHILD;
-
-            // Apply the new window style
-            Native.SetWindowLong(hwnd, Native.GWL_STYLE, style);
-
-            // Set the new parent window
-            // Native.SetParent(hwnd, newParentHwnd);
         }
 
         ///// <summary>

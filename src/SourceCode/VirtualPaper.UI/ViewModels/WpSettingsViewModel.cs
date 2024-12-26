@@ -37,7 +37,7 @@ namespace VirtualPaper.UI.ViewModels {
                     _selectedWpArrangementsIndex = value;
                     OnPropertyChanged();
                     UpdateWpArrange(value);
-                    InitMonitors();                   
+                    InitMonitors();
                 }
             }
         }

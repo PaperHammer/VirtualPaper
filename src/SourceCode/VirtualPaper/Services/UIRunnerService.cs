@@ -92,9 +92,6 @@ namespace VirtualPaper.Services {
         public void RestartUI() {
             if (_processUI != null) {
                 try {
-                    //App.Services.GetRequiredService<MainWindow>().Close();
-                    //App.Services.GetRequiredService<MainWindow>().Show();
-
                     _processUI.Exited -= Proc_UI_Exited;
                     _processUI.OutputDataReceived -= Proc_OutputDataReceived;
                     _ = Native.GetWindowRect(_processUI.MainWindowHandle, out prevWindowRect);
@@ -135,37 +132,6 @@ namespace VirtualPaper.Services {
             _ = Native.GetWindowRect(_processUI.MainWindowHandle, out prevWindowRect);
         }
 
-        //public void ShowCustomisWallpaperePanel()
-        //{
-        //    if (_processUI is null)
-        //    {
-        //        try
-        //        {
-        //            var proc = new Process
-        //            {
-        //                StartInfo = new ProcessStartInfo
-        //                {
-        //                    FileName = _procFileName,
-        //                    UseShellExecute = false,
-        //                    Arguments = "--trayWidget true",
-        //                    WorkingDirectory = _workingDir,
-        //                },
-        //            };
-        //            proc.Start();
-        //        }
-        //        catch (Exception e)
-        //        {
-        //            _logger.Error(e);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        _processUI?.StandardInput.WriteLine("LM SHOWCUSTOMISEPANEL");
-        //    }
-        //}
-
-        //public void SetBusyUI(bool isBusy) => _processUI?.StandardInput.WriteLine(isBusy ? "LM SHOWBUSY" : "LM HIDEBUSY");
-        //public IntPtr HwndUI => _processUI?.MainWindowHandle ?? IntPtr.Zero;
         public bool IsVisibleUI => _processUI != null && Native.IsWindowVisible(_processUI.MainWindowHandle);
 
         private void Proc_OutputDataReceived(object sender, DataReceivedEventArgs e) {
@@ -251,8 +217,7 @@ namespace VirtualPaper.Services {
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private Process? _processUI;
-        private IMonitorManager _monitorManager;
-        //private IWatchdogService _watchdogService;
+        private readonly IMonitorManager _monitorManager;
         private bool _isFirstRun = true;
         private Native.RECT prevWindowRect = new() { Left = 50, Top = 50, Right = 925, Bottom = 925 };
         private readonly string _fileName, _workingDir;

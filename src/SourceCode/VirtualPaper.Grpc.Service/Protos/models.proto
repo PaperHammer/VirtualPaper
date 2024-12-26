@@ -215,13 +215,7 @@ message Grpc_GetMonitorRequest {
 }
 
 message Grpc_GetWallpapersResponse {
-	string wallpaper_uid = 1;
-	string folder_path = 2;
-	Grpc_MonitorData monitor = 3;
-	string wp_effect_file_path_using = 4;
-	string thumbnail_path = 5;
-	Grpc_FileType f_type= 6;
-	Grpc_RuntimeType r_type= 7;
+	repeated Grpc_WpMetaData grpc_datas  = 1;
 }
 
 message Grpc_WallpaperErrorResponse {

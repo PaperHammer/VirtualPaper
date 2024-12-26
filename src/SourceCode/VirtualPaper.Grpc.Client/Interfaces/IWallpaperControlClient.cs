@@ -11,7 +11,6 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
 
         Version AssemblyVersion { get; }
         string BaseDirectory { get; }
-        ReadOnlyCollection<IWpMetadata> Wallpapers { get; }
 
         #region wallpaper actions
         Task CloseAllWallpapersAsync();
@@ -33,7 +32,6 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         #region utils
         Task ChangeWallpaperLayoutFolrderPathAsync(string previousDir, string newDir);
         Task<Grpc_MonitorData?> GetRunMonitorByWallpaperAsync(string wpUid);
-        Task ModifyPreviewAsync(string controlName, string propertyName, string val);
         Task SendMessageWallpaperAsync(IMonitor monitor, IWpRuntimeData metaData, IpcMessage msg);
         Task TakeScreenshotAsync(string monitorId, string savePath);
         Task<Grpc_WpBasicData?> UpdateBasicDataAsync(IWpBasicData data, CancellationToken token);

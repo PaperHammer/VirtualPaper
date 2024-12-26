@@ -107,13 +107,13 @@ namespace VirtualPaper.PlayerWeb {
             Closing();
         }
 
-        private void Webview2_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
-            e.Handled = true; // 阻止（鼠标等）指针操作
-        }
+        //private void Webview2_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+        //    e.Handled = true; // 阻止（鼠标等）指针操作
+        //}
 
-        private void Webview2_PreviewKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e) {
-            e.Handled = true;  // 阻止键盘操作
-        }
+        //private void Webview2_PreviewKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e) {
+        //    e.Handled = true;  // 阻止键盘操作
+        //}
 
         private void Closing() {
             this.Hide();

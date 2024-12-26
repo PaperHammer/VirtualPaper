@@ -2,8 +2,6 @@
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.UIComponent.Utils;
-using WinUI3Localizer;
 
 namespace VirtualPaper.UI.ViewModels {
     public partial class MainWindowViewModel : ObservableObject {
@@ -90,19 +88,17 @@ namespace VirtualPaper.UI.ViewModels {
         #endregion
 
         public MainWindowViewModel() {
-            _localizer = LanguageUtil.LocalizerInstacne;
-
             InitText();
         }
 
         private void InitText() {
-            SidebarGallery = _localizer.GetLocalizedString(Constants.I18n.SidebarGallery);
-            SidebarWpSettings = _localizer.GetLocalizedString(Constants.I18n.SidebarWpSettings);
-            SidebarProject = _localizer.GetLocalizedString(Constants.I18n.SidebarProject);
-            SidebarAccount = _localizer.GetLocalizedString(Constants.I18n.SidebarAccount);
-            SidebarAppSettings = _localizer.GetLocalizedString(Constants.I18n.SidebarAppSettings);
-            TextLoading = _localizer.GetLocalizedString(Constants.I18n.Text_Loading);
-            TextCancel = _localizer.GetLocalizedString(Constants.I18n.Text_Cancel);
+            SidebarGallery = App.GetI18n(Constants.I18n.SidebarGallery);
+            SidebarWpSettings = App.GetI18n(Constants.I18n.SidebarWpSettings);
+            SidebarProject = App.GetI18n(Constants.I18n.SidebarProject);
+            SidebarAccount = App.GetI18n(Constants.I18n.SidebarAccount);
+            SidebarAppSettings = App.GetI18n(Constants.I18n.SidebarAppSettings);
+            TextLoading = App.GetI18n(Constants.I18n.Text_Loading);
+            TextCancel = App.GetI18n(Constants.I18n.Text_Cancel);
         }
 
         #region loading_ui_logic
@@ -149,12 +145,11 @@ namespace VirtualPaper.UI.ViewModels {
             string msg,
             InfoBarSeverity infoBarSeverity) {
             InfoBarSeverity = infoBarSeverity;
-            InfobarMsg = isNeedLocallizer ? _localizer.GetLocalizedString(msg) : msg;
+            InfobarMsg = isNeedLocallizer ? App.GetI18n(msg) : msg;
             InfoBarIsOpen = true;
         }
         #endregion
 
-        private readonly ILocalizer _localizer;
         private readonly SemaphoreSlim _loadingSemaphoreSlim = new(1, 1);
     }
 }

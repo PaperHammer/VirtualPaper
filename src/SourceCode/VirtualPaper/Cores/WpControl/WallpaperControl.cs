@@ -4,7 +4,6 @@ using System.IO;
 using System.Text.Json;
 using System.Windows;
 using Microsoft.Win32;
-using OpenCvSharp.Internal;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.IPC;
@@ -22,7 +21,7 @@ using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 using WinEventHook;
 using static VirtualPaper.Common.Errors;
-// todo: webview dpi 感知；thu 大小;
+// todo: thu 文件大小过大; 相对坐标错误；webview 偶现 dpi 错误、无法显示; 
 
 namespace VirtualPaper.Cores.WpControl {
     public partial class WallpaperControl : IWallpaperControl {
@@ -53,12 +52,12 @@ namespace VirtualPaper.Cores.WpControl {
 
                     if (!(DesktopWorkerW == IntPtr.Zero || Native.IsWindow(DesktopWorkerW))) {
                         App.Log.Info("WorkerW invalid after unlock, resetting..");
-                        await ResetWallpaperAsync();
+                        ResetWallpaperAsync();
                     }
                     else {
                         if (Wallpapers.Any(x => x.IsExited)) {
                             App.Log.Info("Wallpaper crashed after unlock, resetting..");
-                            await ResetWallpaperAsync();
+                            ResetWallpaperAsync();
                         }
                     }
                 }
@@ -819,10 +818,10 @@ namespace VirtualPaper.Cores.WpControl {
                         var screenArea = _monitorManager.VirtualScreenBounds;
                         if (!Native.SetWindowPos(Wallpapers[i].Handle,
                             1,
-                            (screen.Bounds.X - screenArea.Location.X),
-                            (screen.Bounds.Y - screenArea.Location.Y),
-                            (screen.Bounds.Width),
-                            (screen.Bounds.Height),
+                            screen.Bounds.X - screenArea.Location.X,
+                            screen.Bounds.Y - screenArea.Location.Y,
+                            screen.Bounds.Width,
+                            screen.Bounds.Height,
                             0x0010)) {
                             //LogUtil.LogWin32Error("Failed to update data rect");
                         }
@@ -934,30 +933,18 @@ namespace VirtualPaper.Cores.WpControl {
             App.Log.Info($"Sending wallpaper(Monitor): {targetMonitor.DeviceId} | {targetMonitor.Bounds}");
             //Position the wp fullscreen to corresponding monitor.
             if (!Native.SetWindowPos(handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, (int)Native.SWP_NOACTIVATE)) {
-                App.Log.Error("Failed to set perscreen wallpaper");
+                App.Log.Error("Failed to set perscreen wallpaper(1)");
             }
 
             _ = Native.MapWindowPoints(handle, _workerW, ref rect, 2);
+            ConvertPopupToChildWindow(wallpaper.Handle);
             var success = TrySetParentProgman(handle) && TrySetParentWorkerW(wallpaper.Handle);
-            if (success) {
-                // Move wallpaper.Handle to the top of the Z order
-                Native.SetWindowPos(wallpaper.Handle, Native.HWND_TOPMOST, 0, 0, 0, 0,
-                    (int)(Native.SWP_NOACTIVATE | Native.SWP_NOMOVE | Native.SWP_NOSIZE));
-
-                // Alternatively, you can use HWND_TOP instead of HWND_TOPMOST for non-topmost behavior
-                //Native.SetWindowPos(handle, Native.HWND_TOP, 0, 0, 0, 0,
-                //                  (int)(Native.SWP_NOACTIVATE | Native.SWP_NOMOVE | Native.SWP_NOSIZE));
+            if (!Native.SetWindowPos(wallpaper.Handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, (int)Native.SWP_NOACTIVATE)) {
+                App.Log.Error("Failed to set perscreen wallpaper(2)");
             }
             DesktopUtil.RefreshDesktop();
 
             return success;
-        }
-
-        private static void RemoveTitleBarAndBorder(nint handle) {
-            long style = Native.GetWindowLong(handle, Native.GWL_STYLE);
-            style &= ~Native.WS_OVERLAPPEDWINDOW; // 移除边框和标题栏
-            style |= Native.WS_POPUP | Native.WS_VISIBLE; // 添加弹出窗口风格和可见性
-            Native.SetWindowLong(handle, Native.GWL_STYLE, style);
         }
 
         /// <summary>
@@ -975,19 +962,36 @@ namespace VirtualPaper.Cores.WpControl {
             }
 
             _ = Native.MapWindowPoints(handle, _workerW, ref rect, 2);
+            ConvertPopupToChildWindow(wallpaper.Handle);
             var success = TrySetParentProgman(handle) && TrySetParentWorkerW(wallpaper.Handle);
-            if (success) {
-                // Move wallpaper.Handle to the top of the Z order
-                Native.SetWindowPos(wallpaper.Handle, Native.HWND_TOPMOST, 0, 0, 0, 0,
-                    (int)(Native.SWP_NOACTIVATE | Native.SWP_NOMOVE | Native.SWP_NOSIZE));
-
-                // Alternatively, you can use HWND_TOP instead of HWND_TOPMOST for non-topmost behavior
-                //Native.SetWindowPos(handle, Native.HWND_TOP, 0, 0, 0, 0,
-                //                  (int)(Native.SWP_NOACTIVATE | Native.SWP_NOMOVE | Native.SWP_NOSIZE));
+            if (!Native.SetWindowPos(wallpaper.Handle, 1, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top, (int)Native.SWP_NOACTIVATE)) {
+                App.Log.Error("Failed to set perscreen wallpaper(2)");
             }
             DesktopUtil.RefreshDesktop();
 
             return success;
+        }
+
+        public static void ConvertPopupToChildWindow(IntPtr hwnd) {
+            // Get the current window style
+            long style = Native.GetWindowLong(hwnd, Native.GWL_STYLE);
+
+            // Remove WS_POPUP and add WS_CHILD style
+            style &= ~Native.WS_POPUP;
+            style |= Native.WS_CHILD;
+
+            // Apply the new window style
+            Native.SetWindowLong(hwnd, Native.GWL_STYLE, style);
+
+            // Set the new parent window
+            // Native.SetParent(hwnd, newParentHwnd);
+        }
+
+        private static void RemoveTitleBarAndBorder(nint handle) {
+            long style = Native.GetWindowLong(handle, Native.GWL_STYLE);
+            style &= ~Native.WS_OVERLAPPEDWINDOW; // 移除边框和标题栏
+            style |= Native.WS_POPUP | Native.WS_VISIBLE; // 添加弹出窗口风格和可见性
+            Native.SetWindowLong(handle, Native.GWL_STYLE, style);
         }
 
         private static nint CreateWorkerW() {

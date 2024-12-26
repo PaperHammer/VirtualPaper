@@ -25,8 +25,6 @@ namespace VirtualPaper.UI {
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainWindow : WindowEx {
-        //public List<WindowEx> ChildWindows { get; } = [];
-
         public string WindowStyleType { get; private set; }
         public SolidColorBrush WindowCaptionForeground => (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
         public SolidColorBrush WindowCaptionForegroundDisabled => (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
@@ -58,7 +56,6 @@ namespace VirtualPaper.UI {
 
                 AppTitleBar.Loaded += AppTitleBar_Loaded;
                 AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
-                //this.Activated += WindowEx_Activated;
             }
             else {
                 AppTitleBar.Visibility = Visibility.Collapsed;
@@ -101,10 +98,6 @@ namespace VirtualPaper.UI {
                 _userSettings.Save<ISettings>();
                 this.Close();
             }
-
-            //foreach (var window in ChildWindows) {
-            //    window?.Close();
-            //}
 
             App.ShutDown();
         }

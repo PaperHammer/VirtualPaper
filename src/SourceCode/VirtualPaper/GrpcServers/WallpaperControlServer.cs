@@ -49,19 +49,6 @@ namespace VirtualPaper.GrpcServers {
             return await Task.FromResult(resp);
         }
 
-        public override async Task GetWallpapers(Empty request, IServerStreamWriter<Grpc_WpMetaData> responseStream, ServerCallContext context) {
-            foreach (var wallpaper in _wpControl.Wallpapers) {
-                var data = wallpaper.Data.GetMetadata(wallpaper.Monitor.Content);
-
-                Grpc_WpMetaData resp = new() {
-                    WpBasicData = DataAssist.BasicDataToGrpcData(data.BasicData),
-                    WpRuntimeData = DataAssist.RuntimeDataToGrpcData(data.RuntimeData)
-                };
-
-                await responseStream.WriteAsync(resp);
-            }
-        }
-
         public override async Task<Grpc_AdjustWallpaperResponse> AdjustWallpaper(Grpc_AdjustWallpaperRequest request, ServerCallContext context) {
             string monitorDeviceId = request.MonitorDeviceId;
             bool isOk = _wpControl.AdjustWallpaper(monitorDeviceId, context.CancellationToken);
@@ -176,19 +163,6 @@ namespace VirtualPaper.GrpcServers {
 
             return await Task.FromResult(grpc_data);
         }
-
-        //public override async Task<Grpc_WpRuntimeData> UpdateRuntimeData(Grpc_UpdateRuntimeDataRequest request, ServerCallContext context) {
-        //    var token = context.CancellationToken;
-
-        //    var data = _wpControl.UpdateMetadataRuntime(
-        //        request.FolderPath,
-        //        (RuntimeType)request.RType,
-        //        token);
-
-        //    Grpc_WpRuntimeData grpc_data = DataAssist.RuntimeDataToGrpcData(data);
-
-        //    return await Task.FromResult(grpc_data);
-        //}
         #endregion
 
         #region private utils

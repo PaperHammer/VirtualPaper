@@ -62,9 +62,7 @@
                     x:Name="Webview2"
                     AllowDrop="False"
                     HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
-                    PreviewKeyDown="Webview2_PreviewKeyDown"
-                    PointerPressed="Webview2_PointerPressed"/>
+                    VerticalAlignment="Stretch"/>
             </Frame>
 
             <!--弹窗-->

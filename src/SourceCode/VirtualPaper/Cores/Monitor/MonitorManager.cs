@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.Utils;
 
 namespace VirtualPaper.Cores.Monitor {
     public partial class MonitorManager : ObservableObject, IMonitorManager {
@@ -69,7 +70,7 @@ namespace VirtualPaper.Cores.Monitor {
             MonitorPropertyUpdated?.Invoke(this, EventArgs.Empty);
         }
 
-        #region private
+        #region utils
         /// <summary>
         /// 更新可用显示器列表
         /// </summary>
@@ -86,8 +87,14 @@ namespace VirtualPaper.Cores.Monitor {
             // 写入新显示器
             for (int i = 0; i < hMonitors.Count; i++) {
                 var monitor = GetMonitorByHMonitor(hMonitors[i]);
-                monitor.Content = (i + 1).ToString();
-                Monitors.Add(monitor);
+                int idx = Monitors.FindIndex(x => x.DeviceId == monitor.DeviceId);
+                if (idx >= 0) {
+                    Monitors[idx].IsStale = false;
+                }
+                else {
+                    monitor.Content = (i + 1).ToString();
+                    Monitors.Add(monitor);
+                }
             }
 
             // 移除旧显示器

@@ -256,7 +256,6 @@
 		<Resource Remove="Views\Project.xaml" />
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\VirtualPaper.DataAssistor\VirtualPaper.DataAssistor.csproj" />
 		<ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
 		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
 	</ItemGroup>

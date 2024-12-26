@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using NLog;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils;
+using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UI.Services;
@@ -27,7 +30,6 @@ namespace VirtualPaper.UI {
     public partial class App : Application {
         internal static DispatcherQueue UITaskInvokeQueue => DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
         internal static Logger Log => LogManager.GetCurrentClassLogger();
-        private static ILocalizer Localizer => LanguageUtil.LocalizerInstacne;
 
         public static IServiceProvider Services {
             get {
@@ -41,15 +43,15 @@ namespace VirtualPaper.UI {
         /// executed, and as such is the logical equivalent of main() or WinMain().
         /// </summary>
         public App() {
-#if DEBUG != true
-            if (!SingleInstanceUtil.IsAppMutexRunning(SingleInstance.UniqueAppUid))
+#if !DEBUG
+            if (!SingleInstanceUtil.IsAppMutexRunning(Constants.CoreField.UniqueAppUid))
             {
                 _ = Native.MessageBox(IntPtr.Zero, "Wallpaper core is not running, run VirtualPaper.exe first before opening UI.", "Virtual Paper", 16);
                 //Sad dev noises.. this.Exit() does not work without Window: https://github.com/microsoft/microsoft-ui-xaml/issues/5931
                 Process.GetCurrentProcess().Kill();
             }
 #endif
-            _logger.Info("Starting...");
+            Log.Info("Starting...");
 
             this.InitializeComponent();
             
@@ -74,7 +76,6 @@ namespace VirtualPaper.UI {
 
                 .AddSingleton<MainWindowViewModel>()
                 .AddSingleton<WpSettingsViewModel>()
-                //.AddSingleton<WpConfigViewModel>()
                 .AddSingleton<LibraryContentsViewModel>()
                 .AddSingleton<ScreenSaverViewModel>()
                 .AddSingleton<GeneralSettingViewModel>()
@@ -130,7 +131,7 @@ namespace VirtualPaper.UI {
             }
         }
 
-        private void LogUnhandledException<T>(T exception) => _logger.Error(exception);
+        private void LogUnhandledException<T>(T exception) => Log.Error(exception);
         //Not working ugh..
         //Issue: https://github.com/microsoft/microsoft-ui-xaml/issues/5221
         private void SetupUnhandledExceptionLogging() {
@@ -151,18 +152,18 @@ namespace VirtualPaper.UI {
             try {
                 Task.Run(() => {
                     ((ServiceProvider)App.Services)?.Dispose();
-                    _logger.Info("UI was closed");
+                    Log.Info("UI was closed");
                 });
             }
             catch (InvalidOperationException) { }
         }
 
         public static string GetI18n(string key) {
-            return Localizer.GetLocalizedString(key);
+            return _i18n.GetLocalizedString(key);
         }
 
         private readonly IServiceProvider _serviceProvider;
         private readonly IUserSettingsClient _userSettings;
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly static ILocalizer _i18n = LanguageUtil.LocalizerInstacne;
     }
 }

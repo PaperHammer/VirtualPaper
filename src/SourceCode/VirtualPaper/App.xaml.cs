@@ -200,7 +200,6 @@ namespace VirtualPaper {
                 .AddSingleton<JobService>()
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
-                //.AddSingleton<IWatchdogService, WatchdogService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
 
@@ -237,8 +236,8 @@ namespace VirtualPaper {
             return server;
         }
 
-        private void LogUnhandledException(Exception exception, string source)
-            => Log.Error(exception);
+        private static void LogUnhandledException(Exception exception, string source)
+            => Log.Error(exception, source);
 
         private void SetupUnhandledExceptionLogging() {
             // 当.NET应用程序域中的任何线程抛出了未捕获的异常时，会触发此事件。

@@ -63,15 +63,16 @@
             IsBackButtonVisible="Collapsed">
 
             <NavigationView.MenuItems>
-                <NavigationViewItem 
+                <!--<NavigationViewItem 
                     Content="{Binding SidebarGallery}"
                     x:Name="Gallery"
                     Icon="Library"
                     IsSelected="True">
-                </NavigationViewItem>
+                </NavigationViewItem>-->
                 <NavigationViewItem 
                     Content="{Binding SidebarWpSettings}" 
-                    x:Name="WpSettings">
+                    x:Name="WpSettings"
+                    IsSelected="True">
                     <NavigationViewItem.Icon>
                         <FontIcon 
                             Glyph="&#xE91B;"/>
@@ -88,10 +89,10 @@
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
-                <NavigationViewItem 
+                <!--<NavigationViewItem 
                     Content="{Binding SidebarAccount}" 
                     x:Name="Account" 
-                    Icon="Contact" />
+                    Icon="Contact" />-->
                 <NavigationViewItem 
                     Content="{Binding SidebarAppSettings}" 
                     x:Name="AppSettings" 

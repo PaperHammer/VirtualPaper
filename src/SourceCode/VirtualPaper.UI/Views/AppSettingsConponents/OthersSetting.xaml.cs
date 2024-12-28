@@ -13,10 +13,11 @@ namespace VirtualPaper.UI.Views.AppSettingsConponents {
     public sealed partial class OthersSetting : Page {
         public OthersSetting() {
             this.InitializeComponent();
+
             _viewModel = App.Services.GetRequiredService<OtherSettingViewModel>();
             this.DataContext = _viewModel;
         }
 
-        private OtherSettingViewModel _viewModel;
+        private readonly OtherSettingViewModel _viewModel;
     }
 }

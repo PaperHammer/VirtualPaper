@@ -8,7 +8,6 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UI.Services.Interfaces;
 using VirtualPaper.UI.Utils;
-using Monitor = VirtualPaper.Models.Cores.Monitor;
 
 namespace VirtualPaper.UI.ViewModels {
     public partial class WpSettingsViewModel : ObservableObject {
@@ -63,10 +62,10 @@ namespace VirtualPaper.UI.ViewModels {
 
         #region Init
         private void InitText() {
-            Text_Close = App.GetI18n(Constants.I18n.BtnText_Close);
-            Text_Detect = App.GetI18n(Constants.I18n.BtnText_Detect);
-            Text_Identify = App.GetI18n(Constants.I18n.BtnText_Identify);
-            Text_Adjust = App.GetI18n(Constants.I18n.BtnText_Adjust);
+            Text_Close = App.GetI18n(Constants.I18n.Text_Close);
+            Text_Detect = App.GetI18n(Constants.I18n.Text_Detect);
+            Text_Identify = App.GetI18n(Constants.I18n.Text_Identify);
+            Text_Adjust = App.GetI18n(Constants.I18n.Text_Adjust);
 
             Text_WpArrange = App.GetI18n(Constants.I18n.Text_WpArrange);
             WpArrange_Per = App.GetI18n(Constants.I18n.WpArrange_Per);

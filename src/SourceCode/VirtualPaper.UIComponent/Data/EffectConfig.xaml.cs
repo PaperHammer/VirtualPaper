@@ -353,7 +353,7 @@ namespace VirtualPaper.UIComponent.Data {
         //    }
         //    catch (Exception ex)
         //    {
-        //        _logger.Error(ex);
+        //        App.Log.Error(ex);
         //    }
         //}
 
@@ -394,7 +394,7 @@ namespace VirtualPaper.UIComponent.Data {
         //    }
         //    catch (Exception ex)
         //    {
-        //        _logger.Error(ex);
+        //        App.Log.Error(ex);
         //    }
         //}
 

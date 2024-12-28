@@ -110,18 +110,19 @@ namespace VirtualPaper.UI {
                 };
 
                 Type pageType = null;
-                if (args.SelectedItemContainer.Name == Gallery.Name) {
-                    pageType = typeof(Gallery);
-                }
-                else if (args.SelectedItemContainer.Name == WpSettings.Name) {
+                //if (args.SelectedItemContainer.Name == Gallery.Name) {
+                //    pageType = typeof(Gallery);
+                //}
+                //else 
+                if (args.SelectedItemContainer.Name == WpSettings.Name) {
                     pageType = typeof(WpSettings);
                 }
                 else if (args.SelectedItemContainer.Name == Project.Name) {
                     pageType = typeof(Project);
                 }
-                else if (args.SelectedItemContainer.Name == Account.Name) {
-                    pageType = typeof(Account);
-                }
+                //else if (args.SelectedItemContainer.Name == Account.Name) {
+                //    pageType = typeof(Account);
+                //}
                 else if (args.SelectedItemContainer.Name == AppSettings.Name) {
                     pageType = typeof(AppSettings);
                 }

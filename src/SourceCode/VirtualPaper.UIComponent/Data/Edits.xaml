@@ -18,7 +18,7 @@
         <Button
             Grid.Row="0"
             HorizontalAlignment="Right"
-            Content="{Binding Edits_TextSave, ElementName=self}"
+            Content="{Binding Text_SaveAndApply, ElementName=self}"
             Click="SaveButton_Click"/>
         
         <ScrollViewer
@@ -36,7 +36,7 @@
                     <TextBlock
                         x:Name="titleText" 
                         Style="{StaticResource BodyTextBlockStyle}"
-                        Text="{Binding Edits_TextTitle, ElementName=self}"/>
+                        Text="{Binding Text_Edit_Title, ElementName=self}"/>
                     <TextBox
                         x:Name="titleValue" 
                         Text="{Binding Title, Mode=TwoWay, ElementName=self}"
@@ -49,7 +49,7 @@
                     <TextBlock
                         x:Name="descText" 
                         Style="{StaticResource BodyTextBlockStyle}"
-                        Text="{Binding Edits_TextDesc, ElementName=self}"/>
+                        Text="{Binding Text_Edit_Desc, ElementName=self}"/>
                     <TextBox
                         x:Name="descValue" 
                         Text="{Binding Desc, Mode=TwoWay, ElementName=self}"
@@ -62,7 +62,7 @@
                     <TextBlock
                          x:Name="tagsText" 
                          Style="{StaticResource BodyTextBlockStyle}"
-                         Text="{Binding Edits_TextTags, ElementName=self}"/>
+                         Text="{Binding Text_Edit_Tags, ElementName=self}"/>
                     <TextBox
                         x:Name="tagInput" 
                         KeyDown="TagInput_KeyDown"
@@ -106,46 +106,6 @@
                                 </DataTemplate>
                             </ItemsRepeater.ItemTemplate>
                         </ItemsRepeater>
-                        <!--<ItemsView 
-                            ItemsSource="{Binding TagList, ElementName=self}"
-                            SelectionMode="None"
-                            LostFocus="ItemsView_LostFocus">
-                            <ItemsView.Layout>
-                                <LinedFlowLayout 
-                                    ItemsStretch="Fill" 
-                                    LineSpacing="5"
-                                    MinItemSpacing="10"/>
-                            </ItemsView.Layout>
-                            <ItemsView.ItemTemplate>
-                                <DataTemplate>
-                                    <ItemContainer>
-                                        <Grid>
-                                            <Border
-                                                Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}"                                                
-                                                Padding="8 5">
-                                                <StackPanel
-                                                    Orientation="Horizontal">
-                                                    <TextBlock 
-                                                        Text="{Binding}"
-                                                        HorizontalTextAlignment="Center"/>
-                                                    <Button
-                                                        Margin="8 0 0 0"
-                                                        Padding="0"
-                                                        Background="Transparent"
-                                                        BorderThickness="0"
-                                                        Click="TagDelButton_Click">
-                                                        <FontIcon 
-                                                            FontFamily="Segoe MDL2 Assets"
-                                                            Glyph="&#xE711;"
-                                                            FontSize="14"/>
-                                                    </Button>
-                                                </StackPanel>
-                                            </Border>
-                                        </Grid>
-                                    </ItemContainer>
-                                </DataTemplate>
-                            </ItemsView.ItemTemplate>
-                        </ItemsView>-->
                     </Grid>
                 </StackPanel>
             </StackPanel>

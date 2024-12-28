@@ -13,6 +13,7 @@ namespace VirtualPaper.UI.Views.AppSettingsConponents {
     public sealed partial class SystemSetting : Page {
         public SystemSetting() {
             this.InitializeComponent();
+
             _viewModel = App.Services.GetRequiredService<SystemSettingViewModel>();
             this.DataContext = _viewModel;
         }
@@ -25,6 +26,6 @@ namespace VirtualPaper.UI.Views.AppSettingsConponents {
             await _viewModel.ExportLogsAsync();
         }
 
-        private SystemSettingViewModel _viewModel;
+        private readonly SystemSettingViewModel _viewModel;
     }
 }

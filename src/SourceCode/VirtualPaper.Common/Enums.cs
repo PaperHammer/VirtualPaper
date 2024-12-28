@@ -287,14 +287,14 @@ namespace VirtualPaper.Common {
         }
 
         public List<string> Items { get; init; } = ["Fill", "Contain", "Cover", "None", "Scale-Down"];
-        public string Help { get; init; } = "Customze_Help_Scaling";
+        public string Help { get; init; } = "Effect_Help_Scaling";
     }
 
     public class Parallax {
         public string Type { get; init; } = "CheckBox";
         public string Text { get; init; } = "Parallax";
         public bool Value { get; set; } = false;
-        public string Help { get; init; } = "Customze_Help_Parallax";
+        public string Help { get; init; } = "Effect_Help_Parallax";
     }
 
     public class Speed {

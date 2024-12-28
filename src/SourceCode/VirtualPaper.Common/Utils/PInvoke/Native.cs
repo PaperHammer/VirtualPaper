@@ -6,6 +6,19 @@ using System.Text;
 namespace VirtualPaper.Common.Utils.PInvoke {
 #pragma warning disable CA1707, CA1401, CA1712
     public static class Native {
+        [StructLayout(LayoutKind.Sequential)]
+        public struct WINDOWPLACEMENT {
+            public int length;
+            public int flags;
+            public int showCmd;
+            public POINT ptMinPosition;
+            public POINT ptMaxPosition;
+            public RECT rcNormalPosition;
+        }
+
+        [DllImport("user32.dll")]
+        public static extern bool GetWindowPlacement(IntPtr hWnd, out WINDOWPLACEMENT lpwndpl);
+
         [DllImport("kernel32.dll")]
         public static extern void SetLastError(uint dwErrCode);
 

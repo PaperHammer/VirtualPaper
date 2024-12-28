@@ -2,14 +2,13 @@
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UI.Services.Interfaces;
 using VirtualPaper.UI.Utils;
-using VirtualPaper.UIComponent.Utils;
 using Windows.Storage.Pickers;
-using WinUI3Localizer;
 
 namespace VirtualPaper.UI.ViewModels.AppSettings {
     public partial class SystemSettingViewModel : ObservableObject {
@@ -27,19 +26,17 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
             _commandClient = commandsClient;
             _dialogService = dialogService;
             
-            _localizer = LanguageUtil.LocalizerInstacne;
-
             InitText();
         }
 
         private void InitText() {           
-            Text_Developer = _localizer.GetLocalizedString("Settings_System_Text_Developer");
-            Developer_Debug = _localizer.GetLocalizedString("Settings_System_Developer_Debug");
-            Developer_DebugExplain = _localizer.GetLocalizedString("Settings_System_Developer_DebugExplain");
-            Debug = _localizer.GetLocalizedString("Settings_System_Text_Debug");
-            Developer_Log = _localizer.GetLocalizedString("Settings_System_Developer_Log");
-            Developer_LogExplain = _localizer.GetLocalizedString("Settings_System_Developer_LogExplain");
-            Log = _localizer.GetLocalizedString("Settings_System_Log");
+            Text_Developer = App.GetI18n(Constants.I18n.Settings_System_Text_Developer);
+            Developer_Debug = App.GetI18n(Constants.I18n.Settings_System_Developer_Debug);
+            Developer_DebugExplain = App.GetI18n(Constants.I18n.Settings_System_Developer_DebugExplain);
+            Debug = App.GetI18n(Constants.I18n.Settings_System_Text_Debug);
+            Developer_Log = App.GetI18n(Constants.I18n.Settings_System_Developer_Log);
+            Developer_LogExplain = App.GetI18n(Constants.I18n.Settings_System_Developer_LogExplain);
+            Log = App.GetI18n(Constants.I18n.Settings_System_Log);
         }
 
         internal void OpenDebugView() {
@@ -59,14 +56,13 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
                 catch (Exception ex) {
                     await _dialogService.ShowDialogAsync(
                         ex.Message
-                        , _localizer.GetLocalizedString("Dialog_Title_Prompt")
-                        , _localizer.GetLocalizedString("Text_Confirm"));
+                        , App.GetI18n(Constants.I18n.Dialog_Title_Prompt)
+                        , App.GetI18n(Constants.I18n.Text_Confirm));
                     return;
                 }
             }
         }
 
-        private readonly ILocalizer _localizer;
         private readonly ICommandsClient _commandClient;
         private readonly IDialogService _dialogService;
     }

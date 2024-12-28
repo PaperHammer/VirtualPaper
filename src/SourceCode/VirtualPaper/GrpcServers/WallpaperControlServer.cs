@@ -185,7 +185,7 @@ namespace VirtualPaper.GrpcServers {
                 }
             }
             catch (Exception e) {
-                _logger.Error(e);
+                App.Log.Error(e);
             }
         }
 
@@ -223,12 +223,11 @@ namespace VirtualPaper.GrpcServers {
                 }
             }
             catch (Exception e) {
-                _logger.Error(e);
+                App.Log.Error(e);
             }
         }
         #endregion
 
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IWallpaperControl _wpControl = desktopWpControl;
         private readonly IMonitorManager _monitorManager = monitorManager;
         private readonly IUserSettingsService _userSetting = userSetting;

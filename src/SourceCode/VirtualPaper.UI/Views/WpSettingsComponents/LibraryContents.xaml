@@ -73,7 +73,7 @@
             <MenuFlyout
                 x:Name="ItemsViewMenu">
                 <MenuFlyoutItem
-                    x:Name="DetailedInfo"
+                    x:Name="Details"
                     Text="{Binding MenuFlyout_Text_DetailedInfo}"
                     Click="ContextMenu_Click">
                     <MenuFlyoutItem.Icon>
@@ -81,7 +81,7 @@
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutItem
-                    x:Name="Update"
+                    x:Name="UpdateConfig"
                     Text="{Binding MenuFlyout_Text_Update}"
                     Click="ContextMenu_Click">
                     <MenuFlyoutItem.Icon>
@@ -89,7 +89,7 @@
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutItem
-                    x:Name="EditInfo"
+                    x:Name="Edit"
                     Text="{Binding MenuFlyout_Text_EditInfo}"
                     Click="ContextMenu_Click">
                     <MenuFlyoutItem.Icon>
@@ -129,7 +129,7 @@
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutItem
-                    x:Name="Delete"
+                    x:Name="DeleteFromDisk"
                     Text="{Binding MenuFlyout_Text_Delete}"
                     Click="ContextMenu_Click">
                     <MenuFlyoutItem.Icon>

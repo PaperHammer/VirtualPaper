@@ -138,13 +138,13 @@ namespace VirtualPaper.Common.Utils.Files {
                     await Task.Run(() => Directory.Delete(folderPath, true));
                 }
                 catch (Exception) {
-                    //_logger.Errors("Folder Delete Failure {0}.\nRetrying..", ex.Message);
+                    //App.Log.Errors("Folder Delete Failure {0}.\nRetrying..", ex.Message);
                     await Task.Delay(retryDelay);
                     try {
                         await Task.Run(() => Directory.Delete(folderPath, true));
                     }
                     catch (Exception) {
-                        //_logger.Errors("(Retry)Folder Delete Failure: {0}", ie.Message);
+                        //App.Log.Errors("(Retry)Folder Delete Failure: {0}", ie.Message);
                         status = false;
                     }
                 }

@@ -1,6 +1,5 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using NLog;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Grpc.Service.UserSettings;
@@ -126,7 +125,7 @@ namespace VirtualPaper.GrpcServers {
                     _ = WindowsAutoStart.SetAutoStart(_userSetting.Settings.IsAutoStart);
                 }
                 catch (Exception e) {
-                    _logger.Error(e);
+                    App.Log.Error(e);
                 }
             }
 
@@ -187,7 +186,6 @@ namespace VirtualPaper.GrpcServers {
             }
         }
 
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IMonitorManager _monitorManager = monitorManager;
         private readonly IUserSettingsService _userSetting = userSetting;
         private readonly IUIRunnerService _uiRunner = uiRunner;

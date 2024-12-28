@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using System.Reflection;
 using System.Windows;
-using NLog;
 using VirtualPaper.Common;
 using Windows.ApplicationModel;
 using MessageBox = System.Windows.MessageBox;
@@ -43,12 +42,12 @@ namespace VirtualPaper.Utils {
             StartupTask startupTask = await StartupTask.GetAsync("AppStartup");
             switch (startupTask.State) {
                 case StartupTaskState.Disabled:
-                    _logger.Info("Startup is disabled");
+                    App.Log.Info("Startup is disabled");
                     // Task is disabled but can be enabled.
                     // ensure that you are on a UI thread when you call RequestEnableAsync()
                     if (setStartup) {
                         StartupTaskState newState = await startupTask.RequestEnableAsync();
-                        _logger.Info("Request to enable startup " + newState);
+                        App.Log.Info("Request to enable startup " + newState);
                     }
                     break;
                 case StartupTaskState.DisabledByUser:
@@ -62,25 +61,23 @@ namespace VirtualPaper.Utils {
                     }
                     break;
                 case StartupTaskState.DisabledByPolicy:
-                    _logger.Error("Startup disabled by group policy, or not supported on this device");
+                    App.Log.Error("Startup disabled by group policy, or not supported on this device");
                     break;
                 case StartupTaskState.Enabled:
-                    _logger.Info("Startup is enabled.");
+                    App.Log.Info("Startup is enabled.");
                     if (!setStartup) {
                         startupTask.Disable();
-                        _logger.Info("Request to disable startup");
+                        App.Log.Info("Request to disable startup");
                     }
                     break;
                 default:
                     if (setStartup) {
-                        _logger.Info("Startup state default, possibly different value.");
+                        App.Log.Info("Startup state default, possibly different value.");
                         StartupTaskState newState = await startupTask.RequestEnableAsync();
-                        _logger.Info("Request to enable startup " + newState);
+                        App.Log.Info("Request to enable startup " + newState);
                     }
                     break;
             }
         }
-
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

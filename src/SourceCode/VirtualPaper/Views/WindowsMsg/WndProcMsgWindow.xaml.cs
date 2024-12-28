@@ -1,5 +1,4 @@
-﻿using NLog;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Interop;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.Monitor;
@@ -45,16 +44,16 @@ namespace VirtualPaper.Views.WindowsMsg {
         /// <returns></returns>
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) {
             if (msg == WM_TASKBARCREATED) {
-                _logger.Info("WM_TASKBARCREATED: New taskbar created.");
+                App.Log.Info("WM_TASKBARCREATED: New taskbar created.");
                 int newExplorerPid = GetTaskbarExplorerPid();
                 if (prevExplorerPid != newExplorerPid) {
                     //Explorer crash detection, dpi change also sends WM_TASKBARCREATED..
-                    _logger.Info($"Explorer crashed, pid mismatch: {prevExplorerPid} != {newExplorerPid}");
+                    App.Log.Info($"Explorer crashed, pid mismatch: {prevExplorerPid} != {newExplorerPid}");
                     if ((DateTime.Now - prevCrashTime).TotalSeconds > 30) {
                         _ = _wpControl.ResetWallpaperAsync();
                     }
                     else {
-                        _logger.Warn("Explorer restarted multiple times in the last 30s.");
+                        App.Log.Warn("Explorer restarted multiple times in the last 30s.");
                         _ = Task.Run(() => MessageBox.Show(LanguageManager.Instance["WndProcMsg_DescExplorerCrash"],
                                 $"{LanguageManager.Instance["WndProcMsg_TitleAppName"]} - {LanguageManager.Instance["WndProcMsg_TextError"]}",
                                 MessageBoxButton.OK, MessageBoxImage.Error));
@@ -100,11 +99,9 @@ namespace VirtualPaper.Views.WindowsMsg {
         }
         #endregion
 
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly int WM_TASKBARCREATED = Native.RegisterWindowMessage("TaskbarCreated");
         private int prevExplorerPid = GetTaskbarExplorerPid();
         private DateTime prevCrashTime = DateTime.MinValue;
-
         private readonly IMonitorManager _monitorManager;
         private readonly IWallpaperControl _wpControl;
     }

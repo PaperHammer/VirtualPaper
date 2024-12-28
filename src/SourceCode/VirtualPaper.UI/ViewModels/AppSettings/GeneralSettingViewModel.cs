@@ -1,12 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using NLog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Models;
 using VirtualPaper.Common.Utils.Files;
@@ -22,9 +21,6 @@ using VirtualPaper.UIComponent.Utils;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.System;
-using WinUI3Localizer;
-using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
-using DispatcherQueueController = Microsoft.UI.Dispatching.DispatcherQueueController;
 
 namespace VirtualPaper.UI.ViewModels.AppSettings {
     public partial class GeneralSettingViewModel : ObservableObject {
@@ -67,8 +63,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
                 if (Constants.ApplicationType.IsTestBuild)
                     ver += "b";
                 else if (Constants.ApplicationType.IsMSIX)
-                    //ver += $" {_i18n.GetString("Settings_General_Version_MsStore")}";
-                    ver += $" {_localizer.GetLocalizedString("Settings_General_Version_MsStore")}";
+                    ver += $" {App.GetI18n("Settings_General_Version_MsStore")}";
                 return ver;
             }
         }
@@ -203,13 +198,9 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient) {
             _dialogService = dialogService;
-            _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
-
             _appUpdater = appUpdater;
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
-
-            _localizer = LanguageUtil.LocalizerInstacne;
 
             InitText();
             InitCollections();
@@ -233,41 +224,41 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
         }
 
         private void InitText() {
-            Text_Version = _localizer.GetLocalizedString("Settings_General_Text_Version");
-            Version_Release_Notes = _localizer.GetLocalizedString("Settings_General_Version_Release_Notes");
-            Version_UpdateCheck = _localizer.GetLocalizedString("Settings_General_Version_UpdateCheck");
-            Version_DownloadCancel = _localizer.GetLocalizedString("Settings_General_Version_DownloadCancel");
-            Version_DownloadStart = _localizer.GetLocalizedString("Settings_General_Version_DownloadStart");
-            Version_FindNew = _localizer.GetLocalizedString("Settings_General_Version_FindNew");
-            Version_Download = _localizer.GetLocalizedString("Settings_General_Version_Download");
-            Version_SeeNews = _localizer.GetLocalizedString("Settings_General_Version_SeeNews");
-            Version_UpdateErr = _localizer.GetLocalizedString("Settings_General_Version_UpdateErr");
-            Version_Install = _localizer.GetLocalizedString("Settings_General_Version_Install");
-            Version_UptoNewest = _localizer.GetLocalizedString("Settings_General_Version_UptoNewest");
-            Version_LastCheckDate = _localizer.GetLocalizedString("Settings_General_Version_LastCheckDate");
+            Text_Version = App.GetI18n(Constants.I18n.Settings_General_Text_Version);
+            Version_Release_Notes = App.GetI18n(Constants.I18n.Settings_General_Version_Release_Notes);
+            Version_UpdateCheck = App.GetI18n(Constants.I18n.Settings_General_Version_UpdateCheck);
+            Version_DownloadCancel = App.GetI18n(Constants.I18n.Settings_General_Version_DownloadCancel);
+            Version_DownloadStart = App.GetI18n(Constants.I18n.Settings_General_Version_DownloadStart);
+            Version_FindNew = App.GetI18n(Constants.I18n.Settings_General_Version_FindNew);
+            Version_Download = App.GetI18n(Constants.I18n.Settings_General_Version_Download);
+            Version_SeeNews = App.GetI18n(Constants.I18n.Settings_General_Version_SeeNews);
+            Version_UpdateErr = App.GetI18n(Constants.I18n.Settings_General_Version_UpdateErr);
+            Version_Install = App.GetI18n(Constants.I18n.Settings_General_Version_Install);
+            Version_UptoNewest = App.GetI18n(Constants.I18n.Settings_General_Version_UptoNewest);
+            Version_LastCheckDate = App.GetI18n(Constants.I18n.Settings_General_Version_LastCheckDate);
 
-            Text_AppearanceAndAction = _localizer.GetLocalizedString("Settings_General_Text_AppearanceAndAction");
-            AppearanceAndAction_AutoStart = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AutoStart");
-            AppearanceAndAction_AutoStatExplain = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AutoStatExplain");
-            AppearanceAndAction_AppTheme = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppTheme");
-            AppearanceAndAction_AppThemeExplain = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppThemeExplain");
-            AppearanceAndAction_AppThemeHyperlink = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppThemeHyperlink");
-            _themeDark = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction__themeDark");
-            _themeLight = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction__themeLight");
-            _themeFollowSystem = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction__themeFollowSystem");
-            AppearanceAndAction_AppSystemBackdrop = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppSystemBackdrop");
-            AppearanceAndAction_AppSystemBackdropExplain = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppSystemBackdropExplain");
-            AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink");
-            AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink");
-            _sysbdDefault = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction__sysbdDefault");
-            _sysbdMica = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction__sysbdMica");
-            _sysbdAcrylic = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction__sysbdAcrylic");
-            AppearanceAndAction_AppLanguage = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppLanguage");
-            AppearanceAndAction_AppLanguageExplain = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppLanguageExplain");
-            AppearanceAndAction_AppFileStorage = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppFileStorage");
-            AppearanceAndAction_AppFileStorageExplain = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppFileStorageExplain");
-            AppearanceAndAction_AppFileStorage_ModifyTooltip = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppFileStorage_ModifyTooltip");
-            AppearanceAndAction_AppFileStorage_OpenTooltip = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AppFileStorage_OpenTooltip");
+            Text_AppearanceAndAction = App.GetI18n(Constants.I18n.Settings_General_Text_AppearanceAndAction);
+            AppearanceAndAction_AutoStart = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AutoStart);
+            AppearanceAndAction_AutoStatExplain = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AutoStatExplain);
+            AppearanceAndAction_AppTheme = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppTheme);
+            AppearanceAndAction_AppThemeExplain = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppThemeExplain);
+            AppearanceAndAction_AppThemeHyperlink = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppThemeHyperlink);
+            _themeDark = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction__themeDark);
+            _themeLight = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction__themeLight);
+            _themeFollowSystem = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction__themeFollowSystem);
+            AppearanceAndAction_AppSystemBackdrop = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppSystemBackdrop);
+            AppearanceAndAction_AppSystemBackdropExplain = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppSystemBackdropExplain);
+            AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink);
+            AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink);
+            _sysbdDefault = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction__sysbdDefault);
+            _sysbdMica = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction__sysbdMica);
+            _sysbdAcrylic = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction__sysbdAcrylic);
+            AppearanceAndAction_AppLanguage = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppLanguage);
+            AppearanceAndAction_AppLanguageExplain = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppLanguageExplain);
+            AppearanceAndAction_AppFileStorage = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppFileStorage);
+            AppearanceAndAction_AppFileStorageExplain = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppFileStorageExplain);
+            AppearanceAndAction_AppFileStorage_ModifyTooltip = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppFileStorage_ModifyTooltip);
+            AppearanceAndAction_AppFileStorage_OpenTooltip = App.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppFileStorage_OpenTooltip);
         }
 
         private void InitCollections() {
@@ -278,10 +269,10 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
 
         private void ChangeAutoShartStatu(bool isAutoStart) {
             if (isAutoStart) {
-                AutoStartStatu = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AutoStartStatu_On");
+                AutoStartStatu = App.GetI18n(Constants.I18n.Text_On);
             }
             else {
-                AutoStartStatu = _localizer.GetLocalizedString("Settings_General_AppearanceAndAction_AutoStartStatu_Off");
+                AutoStartStatu = App.GetI18n(Constants.I18n.Text_Off);
             }
         }
 
@@ -292,7 +283,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
         }
 
         private void AppUpdater_UpdateChecked(object sender, AppUpdaterEventArgs e) {
-            _ = _dispatcherQueue.TryEnqueue(() => {
+            _ = App.UITaskInvokeQueue.TryEnqueue(() => {
                 MenuUpdate(e.UpdateStatus, e.UpdateDate, e.UpdateVersion);
             });
         }
@@ -312,7 +303,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
                 default:
                     break;
             }
-            Version_LastCheckDate = _localizer.GetLocalizedString("Settings_General_Version_LastCheckDate");
+            Version_LastCheckDate = App.GetI18n("Settings_General_Version_LastCheckDate");
             Version_LastCheckDate += status == AppUpdateStatus.notchecked ? "" : $"{date}";
         }
 
@@ -335,9 +326,9 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
             }
             if (folder.Path == Constants.CommonPaths.AppDataDir) {
                 await _dialogService.ShowDialogAsync(
-                        _localizer.GetLocalizedString(Constants.I18n.Dialog_Content_WallpaperDirectoryChangePathInvalid)
-                        , _localizer.GetLocalizedString(Constants.I18n.Dialog_Title_Prompt)
-                        , _localizer.GetLocalizedString(Constants.I18n.Text_Confirm));
+                        App.GetI18n(Constants.I18n.Dialog_Content_WallpaperDirectoryChangePathInvalid)
+                        , App.GetI18n(Constants.I18n.Dialog_Title_Prompt)
+                        , App.GetI18n(Constants.I18n.Text_Confirm));
                 return;
             }
 
@@ -395,7 +386,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
             }
             catch (Exception ex) {
                 BasicUIComponentUtil.ShowMsg(true, Constants.I18n.InfobarMsg_Err, InfoBarSeverity.Error);
-                _logger.Error(ex);
+                App.Log.Error(ex);
                 if (destFolderPath != string.Empty) {
                     FileUtil.EmptyDirectory(destFolderPath);
                 }
@@ -451,8 +442,6 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
             }
         }
 
-        private readonly ILocalizer _localizer;
-        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private string _themeDark = string.Empty;
         private string _themeLight = string.Empty;
         private string _themeFollowSystem = string.Empty;
@@ -463,6 +452,5 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
         private readonly IDialogService _dialogService;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly IWallpaperControlClient _wpControlClient;
-        private readonly DispatcherQueue _dispatcherQueue;
     }
 }

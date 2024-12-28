@@ -21,7 +21,7 @@ using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 using WinEventHook;
 using static VirtualPaper.Common.Errors;
-// todo: player 相对坐标错误；player dpi 错误或无法显示;
+// todo: player 有概率在非主屏无法显示;
 
 namespace VirtualPaper.Cores.WpControl {
     public partial class WallpaperControl : IWallpaperControl {
@@ -47,7 +47,7 @@ namespace VirtualPaper.Cores.WpControl {
             this._monitorManager.MonitorUpdated += MonitorSettingsChanged_Hwnd;
             WallpaperChanged += SetupDesktop_WallpaperChanged;
 
-            SystemEvents.SessionSwitch += async (s, e) => {
+            SystemEvents.SessionSwitch += (s, e) => {
                 if (e.Reason == SessionSwitchReason.SessionUnlock) {
 
                     if (!(DesktopWorkerW == IntPtr.Zero || Native.IsWindow(DesktopWorkerW))) {
@@ -967,9 +967,17 @@ namespace VirtualPaper.Cores.WpControl {
 
             _ = Native.MapWindowPoints(handle, _workerW, ref rect, 2);
             ConvertPopupToChildWindow(wallpaper.Handle);
-            var success = TrySetParentProgman(handle) && TrySetParentWorkerW(wallpaper.Handle);
+            var success = TrySetParentProgman(handle) && TrySetParentWorkerW(wallpaper.Handle); // todo：存在失败的可能
             if (!Native.SetWindowPos(wallpaper.Handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, (int)Native.SWP_NOACTIVATE)) {
-                App.Log.Error("Failed to set perscreen wallpaper(2)");
+                App.Log.Error("Failed to set perscreen wallpaper(2)}");
+            }
+            
+            bool isPositionCorrect = IsWindowPositionCorrect(wallpaper.Handle, targetMonitor.Bounds);
+            if (!isPositionCorrect) {
+                App.Log.Warn("Set perscreen not correct");
+                if (!Native.SetWindowPos(wallpaper.Handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, (int)Native.SWP_NOACTIVATE)) {
+                    App.Log.Error("Failed to set perscreen wallpaper(3)");
+                }
             }
             DesktopUtil.RefreshDesktop();
 
@@ -987,18 +995,40 @@ namespace VirtualPaper.Cores.WpControl {
             App.Log.Info($"Sending wallpaper(Expand): ({rect.Left}, {rect.Top}, {rect.Right - rect.Left}, {rect.Bottom - rect.Top}).");
             //Position the wp fullscreen to corresponding monitor.
             if (!Native.SetWindowPos(handle, 1, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top, (int)Native.SWP_NOACTIVATE)) {
-                App.Log.Error("Failed to set perscreen wallpaper");
+                App.Log.Error("Failed to set multiscreen wallpaper");
             }
 
             _ = Native.MapWindowPoints(handle, _workerW, ref rect, 2);
             ConvertPopupToChildWindow(wallpaper.Handle);
             var success = TrySetParentProgman(handle) && TrySetParentWorkerW(wallpaper.Handle);
             if (!Native.SetWindowPos(wallpaper.Handle, 1, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top, (int)Native.SWP_NOACTIVATE)) {
-                App.Log.Error("Failed to set perscreen wallpaper(2)");
+                App.Log.Error("Failed to set multiscreen wallpaper(2)");
+            }
+
+            bool isPositionCorrect = IsWindowPositionCorrect(wallpaper.Handle, new Rectangle() {
+                X = 0,
+                Y = 0,
+                Width = rect.Right - rect.Left,
+                Height = rect.Bottom - rect.Top,
+            });
+            if (!isPositionCorrect) {
+                App.Log.Warn("Set perscreen not correct");
+                if (!Native.SetWindowPos(wallpaper.Handle, 1, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top, (int)Native.SWP_NOACTIVATE)) {
+                    App.Log.Error("Failed to set multiscreen wallpaper(3)");
+                }
             }
             DesktopUtil.RefreshDesktop();
 
             return success;
+        }
+
+        // 验证窗口位置和尺寸是否与预期匹配
+        private static bool IsWindowPositionCorrect(IntPtr handle, Rectangle expectedBounds) {
+            _ = Native.GetWindowRect(handle, out Native.RECT rect);
+            return rect.Left == expectedBounds.X &&
+                   rect.Top == expectedBounds.Y &&
+                   rect.Right - rect.Left == expectedBounds.Width &&
+                   rect.Bottom - rect.Top == expectedBounds.Height;
         }
 
         public static void ConvertPopupToChildWindow(IntPtr hwnd) {

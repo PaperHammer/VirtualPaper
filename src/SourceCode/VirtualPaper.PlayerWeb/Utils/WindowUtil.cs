@@ -32,7 +32,7 @@ namespace VirtualPaper.PlayerWeb.Utils {
             if (_details == null) {
                 _details = new(_startArgs.WpBasicDataFilePath);
 
-                _toolContainer.AddContent(Constants.I18n.WpConfigViewMdoel_TextDetailedInfo, "Details", _details);
+                _toolContainer.AddContent(Constants.I18n.Text_Details, "Details", _details);
             }
         }
         #endregion
@@ -52,7 +52,7 @@ namespace VirtualPaper.PlayerWeb.Utils {
                 _effectConfig.SaveAndApply += EffectConfig_SaveAndApply;
                 _toolWindowClose += _effectConfig.Closing;
 
-                _toolContainer.AddContent(Constants.I18n.WpConfigViewMdoel_TextWpEffectConfig, "EffectConfig", _effectConfig);
+                _toolContainer.AddContent(Constants.I18n.Text_EffectConfig, "EffectConfig", _effectConfig);
             }
         }
 

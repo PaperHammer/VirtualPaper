@@ -130,11 +130,11 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
 
         private void ChangeScreenSaverStatu(bool isScreenSaverOn) {
             if (isScreenSaverOn) {
-                ScreenSaverStatu = App.GetI18n(Constants.I18n.ScreenSaver_ServerStatu_On);
+                ScreenSaverStatu = App.GetI18n(Constants.I18n.Text_On);
                 _scrCommandsClient.Start();
             }
             else {
-                ScreenSaverStatu = App.GetI18n(Constants.I18n.ScreenSaver_ServerStatu_Off);
+                ScreenSaverStatu = App.GetI18n(Constants.I18n.Text_Off);
                 _scrCommandsClient.Stop();
             }
         }

@@ -68,9 +68,7 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         private void WindowEx_SizeChanged(object sender, WindowSizeChangedEventArgs args) {
-            if (_startArgs.IsPreview) {
-                SetWindowRect();
-            }
+            SetWindowRect();
         }
 
         private async void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
@@ -204,19 +202,19 @@ namespace VirtualPaper.PlayerWeb {
 
                     case MessageType.vp_slider:
                         var sl = (VirtualPaperSlider)obj;
-                        HandleVpMsg(sl.Name, sl.Value);
+                        HandleUIElementMsg(sl.Name, sl.Value);
                         break;
                     case MessageType.vp_textbox:
                         var tb = (VirtualPaperTextBox)obj;
-                        HandleVpMsg(tb.Name, tb.Value);
+                        HandleUIElementMsg(tb.Name, tb.Value);
                         break;
                     case MessageType.vp_dropdown:
                         var dd = (VirtualPaperDropdown)obj;
-                        HandleVpMsg(dd.Name, dd.Value);
+                        HandleUIElementMsg(dd.Name, dd.Value);
                         break;
                     case MessageType.vp_cpicker:
                         var cp = (VirtualPaperColorPicker)obj;
-                        HandleVpMsg(cp.Name, cp.Value);
+                        HandleUIElementMsg(cp.Name, cp.Value);
                         break;
                     case MessageType.vp_chekbox:
                         var cb = (VirtualPaperCheckbox)obj;
@@ -235,7 +233,7 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         #region handel_ipcmessage
-        private void HandleVpMsg(string propertyName, object propertyValue) {
+        private void HandleUIElementMsg(string propertyName, object propertyValue) {
             _ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, propertyName, propertyValue);
         }
 
@@ -255,7 +253,7 @@ namespace VirtualPaper.PlayerWeb {
             await ExecuteScriptFunctionAsync(Fileds.AudioMuteChanged, muted.IsMuted);
         }
 
-        private async Task HandleUpdateCommandAsync(VirtualPaperUpdateCmd update) {            
+        private async Task HandleUpdateCommandAsync(VirtualPaperUpdateCmd update) {
             if (_startArgs.FilePath != update.FilePath) {
                 _startArgs.FilePath = update.FilePath;
                 _startArgs.RuntimeType = update.RType;

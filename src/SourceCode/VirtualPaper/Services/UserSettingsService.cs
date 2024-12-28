@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Cores.Monitor;
@@ -40,7 +39,7 @@ namespace VirtualPaper.Services {
                 _ = WindowsAutoStart.SetAutoStart(Settings.IsAutoStart);
             }
             catch (Exception e) {
-                _logger.Error(e);
+                App.Log.Error(e);
             }
         }
 
@@ -50,7 +49,7 @@ namespace VirtualPaper.Services {
                     Settings = JsonStorage<Settings>.LoadData(_settingsPath);
                 }
                 catch (Exception e) {
-                    _logger.Error(e);
+                    App.Log.Error(e);
                     Settings = new Settings();
                     Save<ISettings>();
                 }
@@ -60,7 +59,7 @@ namespace VirtualPaper.Services {
                     AppRules = new List<IApplicationRules>(JsonStorage<List<ApplicationRules>>.LoadData(_appRulesPath));
                 }
                 catch (Exception e) {
-                    _logger.Error(e.ToString());
+                    App.Log.Error(e.ToString());
                     AppRules =
                     [
                         new ApplicationRules(Constants.CoreField.AppName, AppWpRunRulesEnum.KeepRun)
@@ -73,7 +72,7 @@ namespace VirtualPaper.Services {
                     WallpaperLayouts = new List<IWallpaperLayout>(JsonStorage<List<WallpaperLayout>>.LoadData(_wallpaperLayoutPath));
                 }
                 catch (Exception e) {
-                    _logger.Error(e.ToString());
+                    App.Log.Error(e.ToString());
                     WallpaperLayouts = [];
                     Save<List<IWallpaperLayout>>();
                 }
@@ -98,7 +97,6 @@ namespace VirtualPaper.Services {
             }
         }
 
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly string _settingsPath = Constants.CommonPaths.UserSettingsPath;
         private readonly string _appRulesPath = Constants.CommonPaths.AppRulesPath;
         private readonly string _wallpaperLayoutPath = Constants.CommonPaths.WallpaperLayoutPath;

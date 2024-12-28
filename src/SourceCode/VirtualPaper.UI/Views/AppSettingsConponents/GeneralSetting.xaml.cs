@@ -48,6 +48,6 @@ namespace VirtualPaper.UI.Views.AppSettingsConponents {
             _viewModel.OpenFolder();
         }
 
-        private GeneralSettingViewModel _viewModel;
+        private readonly GeneralSettingViewModel _viewModel;
     }
 }

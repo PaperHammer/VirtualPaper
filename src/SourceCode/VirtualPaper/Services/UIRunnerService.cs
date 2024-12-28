@@ -1,8 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Windows;
-using Microsoft.Extensions.DependencyInjection;
-using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.Monitor;
@@ -12,14 +10,13 @@ using MessageBox = System.Windows.MessageBox;
 using UAC = UACHelper.UACHelper;
 
 namespace VirtualPaper.Services {
-    public class UIRunnerService : IUIRunnerService {
+    public partial class UIRunnerService : IUIRunnerService {
         public UIRunnerService(
             IMonitorManager monitorManager) {
             _monitorManager = monitorManager;
-            //_watchdogService = watchdogService;
 
             if (UAC.IsElevated) {
-                _logger.Warn("Process is running elevated, UI may not function properly.");
+                App.Log.Warn("Process is running elevated, UI may not function properly.");
             }
 
             if (Constants.ApplicationType.IsMSIX) {
@@ -36,11 +33,11 @@ namespace VirtualPaper.Services {
         public void ShowUI() {
             if (_processUI != null) {
                 try {
-                    _logger.Warn("UI is already running");
+                    App.Log.Warn("UI is already running");
                     _processUI.StandardInput.WriteLine("WM SHOW");
                 }
                 catch (Exception e) {
-                    _logger.Error(e);
+                    App.Log.Error(e);
                 }
             }
             else {
@@ -61,14 +58,12 @@ namespace VirtualPaper.Services {
                     _processUI.Start();
                     App.Jobs.AddProcess(_processUI.Id);
 
-                    //if (!_watchdogService.IsRunning) _watchdogService.Start();
-                    //_watchdogService.Add(_processUI.Id);
                     //winui writing debug information into output stream :/
                     //_processUI.BeginOutputReadLine();
                     //_processUI.BeginErrorReadLine();
                 }
                 catch (Exception e) {
-                    _logger.Error(e);
+                    App.Log.Error(e);
                     _processUI = null;
                     _ = MessageBox.Show(
                         $"{LanguageManager.Instance["UIRunnerService_VirtualPaperExceptionGeneral"]}\nEXCEPTION:\n{e.Message}",
@@ -82,7 +77,7 @@ namespace VirtualPaper.Services {
                         SetWindowRect(_processUI, prevWindowRect);
                     }
                     catch (Exception ie) {
-                        _logger.Error($"Failed to restore windowrect: {ie.Message}");
+                        App.Log.Error($"Failed to restore windowrect: {ie.Message}");
                     }
                 }
                 _isFirstRun = false;
@@ -101,7 +96,7 @@ namespace VirtualPaper.Services {
                     _processUI.Dispose();
                 }
                 catch (Exception e) {
-                    _logger.Error(e);
+                    App.Log.Error(e);
                 }
                 finally {
                     _processUI = null;
@@ -121,7 +116,7 @@ namespace VirtualPaper.Services {
                 }
             }
             catch (Exception e) {
-                _logger.Error(e);
+                App.Log.Error(e);
             }
         }
 
@@ -138,7 +133,7 @@ namespace VirtualPaper.Services {
             //When the redirected stream is closed, a null line is sent to the event handler.
             if (!string.IsNullOrEmpty(e.Data)) {
                 //Ref: https://github.com/cyanfish/grpc-dotnet-namedpipes/issues/8
-                _logger.Info($"UI: {e.Data}");
+                App.Log.Info($"UI: {e.Data}");
             }
         }
 
@@ -215,7 +210,6 @@ namespace VirtualPaper.Services {
         }
         #endregion
 
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private Process? _processUI;
         private readonly IMonitorManager _monitorManager;
         private bool _isFirstRun = true;

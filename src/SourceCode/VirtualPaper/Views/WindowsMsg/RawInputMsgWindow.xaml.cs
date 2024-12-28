@@ -226,7 +226,7 @@ namespace VirtualPaper.Views.WindowsMsg {
                 }
             }
             catch (Exception e) {
-                _logger.Error("Keyboard Forwarding Errors:" + e.Message);
+                App.Log.Error("Keyboard Forwarding Errors:" + e.Message);
             }
         }
 
@@ -266,7 +266,7 @@ namespace VirtualPaper.Views.WindowsMsg {
                 }
             }
             catch (Exception e) {
-                _logger.Error("Mouse Forwarding Errors:" + e.Message);
+                App.Log.Error("Mouse Forwarding Errors:" + e.Message);
             }
         }
 
@@ -293,6 +293,7 @@ namespace VirtualPaper.Views.WindowsMsg {
                     y += -1 * monitor.Bounds.Y;
                 }
             }
+
             return new Point(x, y);
         }
 
@@ -317,7 +318,6 @@ namespace VirtualPaper.Views.WindowsMsg {
         #endregion
 
         IntPtr _progman, _workerWOrig;
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IUserSettingsService _userSettings;
         private readonly IWallpaperControl _wpControl;
         private readonly IMonitorManager _monitorManager;

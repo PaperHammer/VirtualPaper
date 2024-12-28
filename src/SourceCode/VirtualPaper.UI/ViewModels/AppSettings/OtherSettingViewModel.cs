@@ -1,6 +1,5 @@
-﻿using VirtualPaper.Models.Mvvm;
-using VirtualPaper.UIComponent.Utils;
-using WinUI3Localizer;
+﻿using VirtualPaper.Common;
+using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.UI.ViewModels.AppSettings {
     public partial class OtherSettingViewModel : ObservableObject {
@@ -19,25 +18,21 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
         public string More_RequestFunc_Link { get; } = "https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Needs-Triage&projects=&template=feature_request.yml";
 
         public OtherSettingViewModel() {
-            _localizer = LanguageUtil.LocalizerInstacne;
-
             InitText();
         }
 
         private void InitText() {
-            Text_About = _localizer.GetLocalizedString("Settings_Others_Text_About");
-            About_Basic = _localizer.GetLocalizedString("Settings_Others_About_Basic");
-            Text_More = _localizer.GetLocalizedString("Settings_Others_Text_More");
-            More_Document = _localizer.GetLocalizedString("Settings_Others_More_Document");
-            More_DocumentExplain = _localizer.GetLocalizedString("Settings_Others_More_DocumentExplain");
-            More_SourceCode = _localizer.GetLocalizedString("Settings_Others_More_SourceCodeExplain");
-            More_SourceCodeExplain = _localizer.GetLocalizedString("Settings_Others_More_SourceCodeExplain");
-            More_RequestFunc = _localizer.GetLocalizedString("Settings_Others_More_RequestFunc");
-            More_RequestFuncExplain = _localizer.GetLocalizedString("Settings_Others_More_RequestFuncExplain");
-            More_ReportBug = _localizer.GetLocalizedString("Settings_Others_More_ReportBug");
-            More_ReportBugExplain = _localizer.GetLocalizedString("Settings_Others_More_ReportBugExplain");
+            Text_About = App.GetI18n(Constants.I18n.Settings_Others_Text_About);
+            About_Basic = App.GetI18n(Constants.I18n.Settings_Others_About_Basic);
+            Text_More = App.GetI18n(Constants.I18n.Settings_Others_Text_More);
+            More_Document = App.GetI18n(Constants.I18n.Settings_Others_More_Document);
+            More_DocumentExplain = App.GetI18n(Constants.I18n.Settings_Others_More_DocumentExplain);
+            More_SourceCode = App.GetI18n(Constants.I18n.Settings_Others_More_SourceCode);
+            More_SourceCodeExplain = App.GetI18n(Constants.I18n.Settings_Others_More_SourceCodeExplain);
+            More_RequestFunc = App.GetI18n(Constants.I18n.Settings_Others_More_RequestFunc);
+            More_RequestFuncExplain = App.GetI18n(Constants.I18n.Settings_Others_More_RequestFuncExplain);
+            More_ReportBug = App.GetI18n(Constants.I18n.Settings_Others_More_ReportBug);
+            More_ReportBugExplain = App.GetI18n(Constants.I18n.Settings_Others_More_ReportBugExplain);
         }
-
-        private readonly ILocalizer _localizer;
     }
 }

@@ -129,25 +129,19 @@
   <data name="AppSettings_SelBarItem4_Others" xml:space="preserve">
     <value>其他</value>
   </data>
-  <data name="BtnText_Adjust" xml:space="preserve">
-    <value>调整</value>
-  </data>
-  <data name="BtnText_Close" xml:space="preserve">
+  <data name="Text_Close" xml:space="preserve">
     <value>关闭</value>
   </data>
-  <data name="BtnText_Detect" xml:space="preserve">
+  <data name="Text_Detect" xml:space="preserve">
     <value>检测</value>
   </data>
-  <data name="BtnText_Identify" xml:space="preserve">
+  <data name="Text_Identify" xml:space="preserve">
     <value>识别</value>
   </data>
-  <data name="BtnText_Preview" xml:space="preserve">
-    <value>预览</value>
-  </data>
-  <data name="Customze_Help_Parallax" xml:space="preserve">
+  <data name="Effect_Help_Parallax" xml:space="preserve">
     <value>鼠标跟随的视差效果。当鼠标焦点在桌面时，让壁纸在视觉上以鼠标为焦点进行展示。</value>
   </data>
-  <data name="Customze_Help_Scaling" xml:space="preserve">
+  <data name="Effect_Help_Scaling" xml:space="preserve">
     <value>Fill：内容将被缩放，以此在占满整个内容框且不一定保持宽高比。宽高比不匹配时，对象将被拉伸以适应内容框。
 
 Contain：内容将被缩放，以此在占满整个内容框并保持其宽高比。宽高比不匹配时，该对象将被添加“黑边”或“白边”。
@@ -158,76 +152,11 @@ None：保持原有尺寸。
 
 Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪种方式得到的图像尺寸更小。</value>
   </data>
-  <data name="DetailedInfo_Rating" xml:space="preserve">
-    <value>分数：</value>
-  </data>
-  <data name="DetailedInfo_TextAspectRadio" xml:space="preserve">
-    <value>比例：</value>
-  </data>
-  <data name="DetailedInfo_TextAuthors" xml:space="preserve">
-    <value>作者：</value>
-  </data>
-  <data name="DetailedInfo_TextDesc" xml:space="preserve">
-    <value>描述：</value>
-  </data>
-  <data name="DetailedInfo_TextDownload" xml:space="preserve">
-    <value>下载</value>
-  </data>
-  <data name="DetailedInfo_TextFileExtension" xml:space="preserve">
-    <value>文件类型：</value>
-  </data>
-  <data name="DetailedInfo_TextFileSize" xml:space="preserve">
-    <value>文件大小：</value>
-  </data>
-  <data name="DetailedInfo_TextPreview" xml:space="preserve">
-    <value>预览</value>
-  </data>
-  <data name="DetailedInfo_TextPublishDate" xml:space="preserve">
-    <value>发布日期：</value>
-  </data>
-  <data name="DetailedInfo_TextResolution" xml:space="preserve">
-    <value>分辨率：</value>
-  </data>
-  <data name="DetailedInfo_TextRType" xml:space="preserve">
-    <value>运行时类型：</value>
-  </data>
-  <data name="DetailedInfo_TextScore" xml:space="preserve">
-    <value>评分</value>
-  </data>
-  <data name="DetailedInfo_TextScoreSubmit" xml:space="preserve">
-    <value>提交</value>
-  </data>
-  <data name="DetailedInfo_TextScoreTilte" xml:space="preserve">
-    <value>灵感共鸣，从您的评价开始</value>
-  </data>
-  <data name="DetailedInfo_TextTags" xml:space="preserve">
-    <value>标签（逗号分隔）：</value>
-  </data>
-  <data name="DetailedInfo_TextTtile" xml:space="preserve">
-    <value>标题</value>
-  </data>
-  <data name="DetailedInfo_TextVersionInfo" xml:space="preserve">
-    <value>版本信息：</value>
-  </data>
-  <data name="DetailedInfo_TextVirtualPaperUid" xml:space="preserve">
-    <value>vp_uid：</value>
-  </data>
   <data name="Dialog_Content_ApplyError" xml:space="preserve">
     <value>应用壁纸失败，请重试</value>
   </data>
-  <data name="Dialog_Content_FileNotExists" xml:space="preserve">
-    <value>该文件可能已被删除或移动</value>
-  </data>
   <data name="Dialog_Content_GetMonitorsAsync" xml:space="preserve">
     <value>可用显示器数量：</value>
-  </data>
-  <data name="Dialog_Content_Import_Failed_Ctrl" xml:space="preserve">
-    <value>该文件无法导入。
-1. 仅支持单个文件的导入;
-2. 仅支持以下文件类型：
-    动图 .gif  .apng
-    静态图片 .jpg  .jpeg  .bmp  .png
-    视频 .mp4  .webm</value>
   </data>
   <data name="Dialog_Content_Import_Failed_Lib" xml:space="preserve">
     <value>该文件无法导入。
@@ -239,47 +168,23 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   <data name="Dialog_Content_Import_NeedUpdate" xml:space="preserve">
     <value>该文件可执行更新以适应新特性,是否更新?</value>
   </data>
-  <data name="Dialog_Content_LibraryContentErr" xml:space="preserve">
-    <value>无法执行操作，该文件可能已损坏</value>
-  </data>
   <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
     <value>是否删除该文件？
 注意：该操作不可逆！</value>
-  </data>
-  <data name="Dialog_Content_MinotorUninstall" xml:space="preserve">
-    <value>选定的显示器不可用或已断开连接</value>
   </data>
   <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
     <value>仅支持以下文件类型：
     动图 .gif
     静态图片 .jpg  .jpeg  .bmp  .png</value>
   </data>
-  <data name="Dialog_Content_PreviewLibraryContentFailed" xml:space="preserve">
-    <value>无法在指定目录下找到有效的文件</value>
-  </data>
-  <data name="Dialog_Content_ReadMetaDataFialed" xml:space="preserve">
-    <value>读取文件时发生异常，请确保目标文件可以被正常访问</value>
-  </data>
-  <data name="Dialog_Content_WallpaperDirectoryChangePathInvalid" xml:space="preserve">
-    <value>无法将存储目录设置为应用程序数据根目录</value>
-  </data>
   <data name="Dialog_Content_WpIsUsing" xml:space="preserve">
     <value>该文件正作为某显示器壁纸，无法删除</value>
-  </data>
-  <data name="Dialog_Title_About" xml:space="preserve">
-    <value>关于</value>
   </data>
   <data name="Dialog_Title_CreateType" xml:space="preserve">
     <value>选择壁纸运行时类型</value>
   </data>
-  <data name="Dialog_Title_Error" xml:space="preserve">
-    <value>错误</value>
-  </data>
   <data name="Dialog_Title_Prompt" xml:space="preserve">
     <value>提示</value>
-  </data>
-  <data name="Dialog_Title_WpExport" xml:space="preserve">
-    <value>导出</value>
   </data>
   <data name="InfobarMsg_Cancel" xml:space="preserve">
     <value>操作已取消</value>
@@ -290,89 +195,20 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   <data name="InfobarMsg_Success" xml:space="preserve">
     <value>已完成</value>
   </data>
-  <data name="MenuFlyout_Text_Apply" xml:space="preserve">
+  <data name="Text_Apply" xml:space="preserve">
     <value>应用</value>
   </data>
-  <data name="MenuFlyout_Text_ApplyToLockBG" xml:space="preserve">
+  <data name="Text_ApplyToLockBG" xml:space="preserve">
     <value>应用到锁屏背景</value>
   </data>
-  <data name="MenuFlyout_Text_Delete" xml:space="preserve">
+  <data name="Text_DeleteFromDisk" xml:space="preserve">
     <value>从磁盘中删除</value>
   </data>
-  <data name="MenuFlyout_Text_DetailedInfo" xml:space="preserve">
-    <value>详细信息</value>
-  </data>
-  <data name="MenuFlyout_Text_EditInfo" xml:space="preserve">
-    <value>编辑</value>
-  </data>
-  <data name="MenuFlyout_Text_Export" xml:space="preserve">
-    <value>导出</value>
-  </data>
-  <data name="MenuFlyout_Text_Import" xml:space="preserve">
-    <value>导入</value>
-  </data>
-  <data name="MenuFlyout_Text_Preview" xml:space="preserve">
-    <value>预览</value>
-  </data>
-  <data name="MenuFlyout_Text_ShowOnDisk" xml:space="preserve">
+  <data name="Text_ShowOnDisk" xml:space="preserve">
     <value>打开文件所在目录</value>
   </data>
-  <data name="MenuFlyout_Text_Update" xml:space="preserve">
-    <value>更新</value>
-  </data>
-  <data name="Msg_Save_Succeded" xml:space="preserve">
-    <value>已保存</value>
-  </data>
-  <data name="Project_Edit_Copy" xml:space="preserve">
-    <value>复制</value>
-  </data>
-  <data name="Project_Edit_CopyToNextLine" xml:space="preserve">
-    <value>向下一行复制</value>
-  </data>
-  <data name="Project_Edit_Cut" xml:space="preserve">
-    <value>剪切</value>
-  </data>
-  <data name="Project_Edit_Find" xml:space="preserve">
-    <value>查找</value>
-  </data>
-  <data name="Project_Edit_Paste" xml:space="preserve">
-    <value>粘贴</value>
-  </data>
-  <data name="Project_Edit_Redo" xml:space="preserve">
-    <value>重做</value>
-  </data>
-  <data name="Project_Edit_Replace" xml:space="preserve">
-    <value>替换</value>
-  </data>
-  <data name="Project_Edit_SelectAll" xml:space="preserve">
-    <value>全选</value>
-  </data>
-  <data name="Project_Edit_Undo" xml:space="preserve">
-    <value>撤销</value>
-  </data>
-  <data name="Project_File_NewFile" xml:space="preserve">
-    <value>新建文件</value>
-  </data>
-  <data name="Project_File_NewTxtFile" xml:space="preserve">
-    <value>新建文本文件</value>
-  </data>
-  <data name="Project_File_OpenFile" xml:space="preserve">
-    <value>打开文件</value>
-  </data>
-  <data name="Project_File_OpenRecentFile" xml:space="preserve">
-    <value>打开最近的文件</value>
-  </data>
-  <data name="Project_File_Save" xml:space="preserve">
-    <value>保存</value>
-  </data>
-  <data name="Project_File_SaveAll" xml:space="preserve">
-    <value>全部保存</value>
-  </data>
-  <data name="Project_File_SaveAs" xml:space="preserve">
-    <value>另存为</value>
-  </data>
-  <data name="Project_View_DisplayOrHide" xml:space="preserve">
-    <value>显示或隐藏功能区</value>
+  <data name="Text_UpdateConfig" xml:space="preserve">
+    <value>更新配置</value>
   </data>
   <data name="ScreenSaver_Add" xml:space="preserve">
     <value>添加</value>
@@ -397,12 +233,6 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   </data>
   <data name="ScreenSaver_ServerExplain" xml:space="preserve">
     <value>将主显示器在 Virtual Paper 中正在使用的壁纸作为屏保背景</value>
-  </data>
-  <data name="ScreenSaver_ServerStatu_Off" xml:space="preserve">
-    <value>关闭</value>
-  </data>
-  <data name="ScreenSaver_ServerStatu_On" xml:space="preserve">
-    <value>打开</value>
   </data>
   <data name="ScreenSaver_WaitingTime" xml:space="preserve">
     <value>等待的分钟数：</value>
@@ -460,12 +290,6 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   </data>
   <data name="Settings_General_AppearanceAndAction_AutoStart" xml:space="preserve">
     <value>开机自启动</value>
-  </data>
-  <data name="Settings_General_AppearanceAndAction_AutoStartStatu_Off" xml:space="preserve">
-    <value>关闭</value>
-  </data>
-  <data name="Settings_General_AppearanceAndAction_AutoStartStatu_On" xml:space="preserve">
-    <value>打开</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AutoStatExplain" xml:space="preserve">
     <value>Virtual Paper 自启动以此在开机时自动还原壁纸设置</value>
@@ -583,12 +407,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Settings_Perforemance_Play_Audio" xml:space="preserve">
     <value>仅在桌面为焦点时播放音频</value>
   </data>
-  <data name="Settings_Perforemance_Play_Audio_OnlyDesktop_Off" xml:space="preserve">
-    <value>关闭</value>
-  </data>
-  <data name="Settings_Perforemance_Play_Audio_OnlyDesktop_On" xml:space="preserve">
-    <value>打开</value>
-  </data>
   <data name="Settings_Perforemance_Play_OthersFocus" xml:space="preserve">
     <value>其他应用程序聚焦时</value>
   </data>
@@ -676,6 +494,9 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="SidebarWpSettings" xml:space="preserve">
     <value>本地</value>
   </data>
+  <data name="Text_Adjust" xml:space="preserve">
+    <value>调整</value>
+  </data>
   <data name="Text_Cancel" xml:space="preserve">
     <value>取消</value>
   </data>
@@ -687,27 +508,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Text_Loading" xml:space="preserve">
     <value>数据加载中，请稍后</value>
-  </data>
-  <data name="Text_Project_Edit" xml:space="preserve">
-    <value>编辑</value>
-  </data>
-  <data name="Text_Project_File" xml:space="preserve">
-    <value>文件</value>
-  </data>
-  <data name="Text_Project_View" xml:space="preserve">
-    <value>视图</value>
-  </data>
-  <data name="Text_Project_View_DebugConsole" xml:space="preserve">
-    <value>调试控制台</value>
-  </data>
-  <data name="Text_Project_View_Output" xml:space="preserve">
-    <value>输出</value>
-  </data>
-  <data name="Text_Project_View_Question" xml:space="preserve">
-    <value>问题</value>
-  </data>
-  <data name="Text_Project_View_Terminate" xml:space="preserve">
-    <value>终端</value>
   </data>
   <data name="Text_Restore" xml:space="preserve">
     <value>还原</value>
@@ -736,50 +536,35 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="WpArrange_PerExplain" xml:space="preserve">
     <value>每个显示器的壁纸独立显示</value>
   </data>
-  <data name="WpConfigViewMdoel_TextAspectRatio" xml:space="preserve">
+  <data name="Text_AspectRatio" xml:space="preserve">
     <value>比例：</value>
   </data>
-  <data name="WpConfigViewMdoel_TextDetailedInfo" xml:space="preserve">
+  <data name="Text_Details" xml:space="preserve">
     <value>详细信息</value>
   </data>
-  <data name="WpConfigViewMdoel_TextFileExtension" xml:space="preserve">
+  <data name="Text_FileExtension" xml:space="preserve">
     <value>文件类型：</value>
   </data>
-  <data name="WpConfigViewMdoel_TextFileSize" xml:space="preserve">
+  <data name="Text_FileSize" xml:space="preserve">
     <value>文件大小：</value>
   </data>
-  <data name="WpConfigViewMdoel_TextResolution" xml:space="preserve">
+  <data name="Text_esolution" xml:space="preserve">
     <value>分辨率：</value>
   </data>
-  <data name="WpConfigViewMdoel_TextType" xml:space="preserve">
+  <data name="Text_Type" xml:space="preserve">
     <value>壁纸类型：</value>
   </data>
-  <data name="WpConfigViewMdoel_TextUpdateWallpaper" xml:space="preserve">
-    <value>点击或拖拽到此处 更换壁纸</value>
-  </data>
-  <data name="WpConfigViewMdoel_TextWpEffectConfig" xml:space="preserve">
+  <data name="Text_EffectConfig" xml:space="preserve">
     <value>可用自定义设置</value>
   </data>
-  <data name="WpControl_Err_File_Not_Found" xml:space="preserve">
-    <value>目标文件不存在</value>
-  </data>
-  <data name="WpControl_Err_Monitor_Not_Found" xml:space="preserve">
-    <value>目标显示器已和主机断开连接</value>
-  </data>
-  <data name="WpControl_Err_Setup_Core_Failed" xml:space="preserve">
-    <value>内核启动发生异常，请重新安装程序或联系开发者</value>
-  </data>
-  <data name="WpControl_Err_Set_Child_WokerW_Failed" xml:space="preserve">
-    <value>在应用更改时发生错误，请重试或重新安装程序。若多次发生请联系开发者</value>
-  </data>
   <data name="WpCreateDialog_AIWp_Explain" xml:space="preserve">
-    <value>可实现不明显但能耗较低的视差效果</value>
+    <value>可实现较为真实但性能消耗高的视差效果</value>
   </data>
   <data name="WpCreateDialog_AIWp_Title" xml:space="preserve">
     <value>根据 AI 模型推理的 3D 壁纸</value>
   </data>
   <data name="WpCreateDialog_CommonWp_Explain" xml:space="preserve">
-    <value>可实现较明显但能耗较高的视差效果</value>
+    <value>可实现伪3D但性能消耗适中的视差效果</value>
   </data>
   <data name="WpCreateDialog_CommonWp_Title" xml:space="preserve">
     <value>普通壁纸</value>
@@ -790,19 +575,31 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="WpSettings_NavTitle_ScrSettings" xml:space="preserve">
     <value>屏幕保护</value>
   </data>
-  <data name="Wp_Edits_TextDesc" xml:space="preserve">
+  <data name="Text_Edit_Desc" xml:space="preserve">
     <value>简介：</value>
   </data>
-  <data name="Wp_Edits_TextSave" xml:space="preserve">
-    <value>保存</value>
-  </data>
-  <data name="Wp_Edits_TextTags" xml:space="preserve">
+  <data name="Text_Edit_Tags" xml:space="preserve">
     <value>标签：</value>
   </data>
-  <data name="Wp_Edits_TextTitle" xml:space="preserve">
+  <data name="Text_Edit_Title" xml:space="preserve">
     <value>标题：</value>
   </data>
-  <data name="Wp_TextEditInfo" xml:space="preserve">
+  <data name="Text_Edit" xml:space="preserve">
     <value>编辑</value>
+  </data>
+  <data name="Text_Preview" xml:space="preserve">
+    <value>预览</value>
+  </data>
+  <data name="Text_Off" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="Text_On" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="Dialog_Content_WallpaperDirectoryChangePathInvalid" xml:space="preserve">
+    <value>无法将存储目录设置为应用程序数据根目录</value>
+  </data>
+  <data name="Text_VersionInfo" xml:space="preserve">
+    <value>版本信息：</value>
   </data>
 </root>

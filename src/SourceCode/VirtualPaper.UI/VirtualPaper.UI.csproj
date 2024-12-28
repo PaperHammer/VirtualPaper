@@ -133,7 +133,6 @@
 		<None Remove="Views\Gallery.xaml" />
 		<None Remove="Views\Project.xaml" />
 		<None Remove="Views\Utils\ColorEyeDropWindow.xaml" />
-		<None Remove="Views\Utils\DetailedInfoView.xaml" />
 		<None Remove="Views\Utils\LoadingUsrctrl.xaml" />
 		<None Remove="Views\Utils\WallpaperCreateView.xaml" />
 		<None Remove="Views\WpSettings.xaml" />
@@ -184,9 +183,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Page Update="Views\WpSettingsComponents\ScreenSaver.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-		<Page Update="Views\Utils\DetailedInfoView.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Utils\LoadingUsrctrl.xaml">

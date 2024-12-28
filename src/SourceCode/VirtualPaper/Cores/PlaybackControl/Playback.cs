@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Windows.Threading;
 using Microsoft.Win32;
@@ -64,14 +65,6 @@ namespace VirtualPaper.Cores.PlaybackControl {
         private void Initialize() {
             InitializeTimer();
             WallpaperPlaybackMode = PlaybackMode.Play;
-
-            try {
-                using Process process = Process.GetCurrentProcess();
-                _virtualPaperPid = process.Id;
-            }
-            catch (Exception e) {
-                App.Log.Error("Failed to retrieve Virtual Paper Pid:" + e.Message);
-            }
 
             _isLockScreen = IsSystemLocked();
             if (_isLockScreen) {
@@ -140,8 +133,8 @@ namespace VirtualPaper.Cores.PlaybackControl {
         }
 
         private void AdjustWpBehaviourBaseOnForegroundApp() {
-            var isDesktop = false;
-            var fHandle = Native.GetForegroundWindow(); // 当前最前台进程
+            bool isDesktop = false;
+            nint fHandle = Native.GetForegroundWindow(); // 当前最前台进程
 
             #region 白名单判断
             if (IsWhitelistedClass(fHandle)) {
@@ -198,11 +191,11 @@ namespace VirtualPaper.Cores.PlaybackControl {
                     {
                         // 检查前台窗口是否为桌面环境的一部分
                         if (IntPtr.Equals(fHandle, _workerWOrig) || IntPtr.Equals(fHandle, _progman)) {
-                            // 用户焦点在桌面
+                            // 焦点在桌面
                             //win10 and win7 desktop foreground while running.
                             isDesktop = true;
-                            ChangeParralaxState(AppParallaxRulesEnum.KeepRun);
                             ChangeWpState(AppWpRunRulesEnum.KeepRun);
+                            ChangeParralaxState(AppParallaxRulesEnum.KeepRun);
                         }
                         // 检查前台窗口是否最大化或几乎覆盖整个屏幕
                         else if (Native.IsZoomed(fHandle) || IsZoomedCustom(fHandle)) {
@@ -215,6 +208,13 @@ namespace VirtualPaper.Cores.PlaybackControl {
                             ChangeWpState(_userSettings.Settings.AppFocus);
                             ChangeParralaxState(AppParallaxRulesEnum.Pause);
                         }
+
+                        if (isDesktop) {
+                            ChangeWpState(AppWpRunRulesEnum.KeepRun);
+                        }
+                        else if (_userSettings.Settings.IsAudioOnlyOnDesktop) {
+                            ChangeWpState(AppWpRunRulesEnum.Silence);
+                        }
                     }
                     #endregion
 
@@ -222,8 +222,9 @@ namespace VirtualPaper.Cores.PlaybackControl {
                     // 多屏
                     else {
                         // 仅聚焦屏幕播放声音
-                        IMonitor? focusedScreen;
-                        if ((focusedScreen = MapWindowToMonitor(fHandle)) != null) {
+                        Models.Cores.Monitor? focusedScreen;
+                        Native.GetCursorPos(out var pos);
+                        if ((focusedScreen = _monitorManger.GetMonitorByPoint(pos)) != null) {
                             //unpausing the rest of _wallpapers.
                             //only one window can be foreground!
                             foreach (var item in _monitorManger.Monitors) {
@@ -234,7 +235,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
                             }
                         }
                         else {
-                            //no monitor connected?
+                            // 未获取到合法显示器
                             return;
                         }
 
@@ -242,7 +243,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
                         if (IntPtr.Equals(fHandle, _workerWOrig) || IntPtr.Equals(fHandle, _progman)) {
                             //win10 and win7 desktop foreground while running.
                             isDesktop = true;
-                            ChangeWpState(AppWpRunRulesEnum.Silence, focusedScreen);
+                            ChangeWpState(AppWpRunRulesEnum.KeepRun, focusedScreen);
                             ChangeParralaxState(AppParallaxRulesEnum.KeepRun, focusedScreen);
                         }
                         // 说明在其他焦点应用程序上
@@ -250,7 +251,6 @@ namespace VirtualPaper.Cores.PlaybackControl {
                             // 跨越多屏                            
                             if (IsZoomedSpan(fHandle)) {
                                 ChangeWpState(AppWpRunRulesEnum.Pause);
-                                //PauseWallpapers();
                             }
                             else //window is not greater >90%
                             {
@@ -268,15 +268,15 @@ namespace VirtualPaper.Cores.PlaybackControl {
                             ChangeWpState(_userSettings.Settings.AppFocus, focusedScreen);
                             ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
                         }
+
+                        if (isDesktop) {
+                            ChangeWpState(AppWpRunRulesEnum.KeepRun, focusedScreen);
+                        }
+                        else if (_userSettings.Settings.IsAudioOnlyOnDesktop) {
+                            ChangeWpState(AppWpRunRulesEnum.Silence, focusedScreen);
+                        }
                     }
                     #endregion
-
-                    if (isDesktop) {
-                        ChangeWpState(AppWpRunRulesEnum.KeepRun);
-                    }
-                    else if (_userSettings.Settings.IsAudioOnlyOnDesktop) {
-                        ChangeWpState(AppWpRunRulesEnum.Silence);
-                    }
                 }
             }
             catch { }
@@ -453,20 +453,6 @@ namespace VirtualPaper.Cores.PlaybackControl {
         }
 
         /// <summary>
-        /// Finds out which displaydevice the given application is residing.
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        private IMonitor? MapWindowToMonitor(IntPtr handle) {
-            try {
-                return _monitorManger.GetMonitorByHWnd(handle);
-            }
-            catch {
-                return null;
-            }
-        }
-
-        /// <summary>
         /// Checks if the hWnd dimension is spanned across All displays.
         /// </summary>
         /// <param name="hWnd"></param>
@@ -541,7 +527,6 @@ namespace VirtualPaper.Cores.PlaybackControl {
         private nint _workerWOrig, _progman;
         private readonly DispatcherTimer _dispatcherTimer = new();
         private bool _isLockScreen, _isRemoteSession;
-        private int _virtualPaperPid = 0;
         private readonly IUserSettingsService _userSettings;
         private readonly IWallpaperControl _wpControl;
         private readonly IMonitorManager _monitorManger;

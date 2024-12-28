@@ -16,7 +16,7 @@ namespace VirtualPaper.UI.TrayControl {
         }
 
         private async void ListenForClients(CancellationToken token) {
-            _logger.Info("[PipeServer] Pipe Server is running...");
+            App.Log.Info("[PipeServer] Pipe Server is running...");
 
             try {
                 while (!token.IsCancellationRequested) {
@@ -24,7 +24,7 @@ namespace VirtualPaper.UI.TrayControl {
                         await server.WaitForConnectionAsync(token);
                         using (var reader = new StreamReader(server)) {
                             string cmd = await reader.ReadLineAsync(token);
-                            _logger.Info($"[PipeServer] Received command: {cmd}");
+                            App.Log.Info($"[PipeServer] Received command: {cmd}");
 
                             if (cmd == "UPDATE_SCRSETTINGS") {
                                 await _wpNavSettginsViewModel.UpdateScrSettginsAsync();
@@ -34,10 +34,10 @@ namespace VirtualPaper.UI.TrayControl {
                 }
             }
             catch (OperationCanceledException) {
-                _logger.Warn("[PipeServer] Listening was canceled.");
+                App.Log.Warn("[PipeServer] Listening was canceled.");
             }
             catch (Exception ex) {
-                _logger.Error(ex, "[PipeServer] An error occurred while waiting for or processing client connections.");
+                App.Log.Error(ex, "[PipeServer] An error occurred while waiting for or processing client connections.");
             }
         }
 
@@ -58,7 +58,6 @@ namespace VirtualPaper.UI.TrayControl {
         }
         #endregion
 
-        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly CancellationTokenSource _cancellationTokenListen;
         private readonly ScreenSaverViewModel _wpNavSettginsViewModel;
     }

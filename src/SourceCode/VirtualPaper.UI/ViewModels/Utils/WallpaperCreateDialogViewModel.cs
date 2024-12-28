@@ -2,8 +2,6 @@
 using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.Models.UI;
-using VirtualPaper.UIComponent.Utils;
-using WinUI3Localizer;
 
 namespace VirtualPaper.UI.ViewModels.Utils {
     public partial class WallpaperCreateDialogViewModel : ObservableObject {
@@ -16,29 +14,25 @@ namespace VirtualPaper.UI.ViewModels.Utils {
         }
 
         public WallpaperCreateDialogViewModel() {
-            _localizer = LanguageUtil.LocalizerInstacne;
-
             InitCollections();
         }
 
         private void InitCollections() {
             WallpaperCategoriesFiltered = [
                 new WallpaperCreateData() {
-                    Title = _localizer.GetLocalizedString(Constants.I18n.WpCreateDialog_CommonWp_Title),
-                    Description = _localizer.GetLocalizedString(Constants.I18n.WpCreateDialog_CommonWp_Explain),
+                    Title = App.GetI18n(Constants.I18n.WpCreateDialog_CommonWp_Title),
+                    Description = App.GetI18n(Constants.I18n.WpCreateDialog_CommonWp_Explain),
                     Icon = "../../Assets/icons8-image-96.png",
                     CreateType = WallpaperCreateType.Img,
                 },
                 new WallpaperCreateData() {
-                    Title = _localizer.GetLocalizedString(Constants.I18n.WpCreateDialog_AIWp_Title),
-                    Description = _localizer.GetLocalizedString(Constants.I18n.WpCreateDialog_AIWp_Explain),
+                    Title = App.GetI18n(Constants.I18n.WpCreateDialog_AIWp_Title),
+                    Description = App.GetI18n(Constants.I18n.WpCreateDialog_AIWp_Explain),
                     Icon = "../../Assets/icons8-picture-94.png",
                     CreateType = WallpaperCreateType.DepthImg,
                 }
             ];
             SelectedItem = WallpaperCategoriesFiltered[0];
         }
-
-        private readonly ILocalizer _localizer;
     }
 }

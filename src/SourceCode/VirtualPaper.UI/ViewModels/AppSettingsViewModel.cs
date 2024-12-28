@@ -1,5 +1,4 @@
-﻿using VirtualPaper.UIComponent.Utils;
-using WinUI3Localizer;
+﻿using VirtualPaper.Common;
 
 namespace VirtualPaper.UI.ViewModels {
     public class AppSettingsViewModel {
@@ -9,18 +8,14 @@ namespace VirtualPaper.UI.ViewModels {
         public string SelBarItem4 { get; set; } = string.Empty;
 
         public AppSettingsViewModel() {
-            _localizer = LanguageUtil.LocalizerInstacne;
-
             InitText();
         }
 
         private void InitText() {        
-            SelBarItem1 = _localizer.GetLocalizedString("AppSettings_SelBarItem1_General");
-            SelBarItem2 = _localizer.GetLocalizedString("AppSettings_SelBarItem2_Performance");
-            SelBarItem3 = _localizer.GetLocalizedString("AppSettings_SelBarItem3_System");
-            SelBarItem4 = _localizer.GetLocalizedString("AppSettings_SelBarItem4_Others");
+            SelBarItem1 = App.GetI18n(Constants.I18n.AppSettings_SelBarItem1_General);
+            SelBarItem2 = App.GetI18n(Constants.I18n.AppSettings_SelBarItem2_Performance);
+            SelBarItem3 = App.GetI18n(Constants.I18n.AppSettings_SelBarItem3_System);
+            SelBarItem4 = App.GetI18n(Constants.I18n.AppSettings_SelBarItem4_Others);
         }
-
-        private readonly ILocalizer _localizer;
     }
 }

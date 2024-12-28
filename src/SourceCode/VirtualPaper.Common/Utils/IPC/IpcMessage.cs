@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using VirtualPaper.Common.Models;
+using VirtualPaper.Common.Utils.PInvoke;
 
 namespace VirtualPaper.Common.Utils.IPC {
     [Serializable]
@@ -81,6 +82,7 @@ namespace VirtualPaper.Common.Utils.IPC {
         public string WpEffectFilePathUsing { get; set; } = string.Empty;
         public VirtualPaperUpdateCmd() : base(MessageType.cmd_update) { }
     }
+
 
     [Serializable]
     public class VirtualPaperMessageConsole : IpcMessage {

@@ -109,11 +109,11 @@ namespace VirtualPaper.UIComponent.ViewModels {
         }
 
         private void InitText() {
-            Details_TextResolution = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextResolution);
-            Details_TextAspectRadio = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextAspectRadio);
-            Details_TextFileExtension = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextFileExtension);
-            Details_TextFileSize = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextFileSize);
-            Details_TextVersionInfo = _localizer.GetLocalizedString(Constants.I18n.DetailedInfo_TextVersionInfo);
+            Details_TextResolution = _localizer.GetLocalizedString(Constants.I18n.Text_Resolution);
+            Details_TextAspectRadio = _localizer.GetLocalizedString(Constants.I18n.Text_AspectRatio);
+            Details_TextFileExtension = _localizer.GetLocalizedString(Constants.I18n.Text_FileExtension);
+            Details_TextFileSize = _localizer.GetLocalizedString(Constants.I18n.Text_FileSize);
+            Details_TextVersionInfo = _localizer.GetLocalizedString(Constants.I18n.Text_VersionInfo);
         }
 
         private void InitData() {

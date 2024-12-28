@@ -17,6 +17,6 @@ namespace VirtualPaper.UI.Views.AppSettingsConponents {
             this.DataContext = _viewModel;
         }
 
-        private PerformanceSettingViewModel _viewModel;
+        private readonly PerformanceSettingViewModel _viewModel;
     }
 }

@@ -1,10 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using NLog;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Shell;
+using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
 using VirtualPaper.lang;
 using VirtualPaper.Services.Interfaces;
@@ -12,8 +11,7 @@ using DownloadProgressEventArgs = VirtualPaper.Services.Interfaces.DownloadProgr
 using IDownloadService = VirtualPaper.Services.Interfaces.IDownloadService;
 using MessageBox = System.Windows.MessageBox;
 
-namespace VirtualPaper.Views
-{
+namespace VirtualPaper.Views {
     /// <summary>
     /// AppUpdater.xaml 的交互逻辑
     /// </summary>
@@ -126,7 +124,7 @@ namespace VirtualPaper.Views
             }
             catch (Exception ex)
             {
-                _logger.Error(ex);
+                App.Log.Error(ex);
                 TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Error;
                 Changelog.Markdown = LanguageManager.Instance["AppUpdater_Update_ExceptionAppUpdateFail"];
                 _forceClose = true;
@@ -148,7 +146,7 @@ namespace VirtualPaper.Views
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex);
+                    App.Log.Error(ex);
                     MessageBox.Show(
                         LanguageManager.Instance["AppUpdater_Update_ExceptionAppUpdateFail"],
                         LanguageManager.Instance["AppUpdater_TextError"]);
@@ -162,7 +160,6 @@ namespace VirtualPaper.Views
             BtnInstall.Visibility = Visibility.Collapsed;
         }
 
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private IDownloadService? _download;
         private readonly Uri _fileUrl;
         private bool _forceClose = false;

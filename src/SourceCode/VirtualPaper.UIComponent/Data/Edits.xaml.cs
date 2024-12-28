@@ -15,10 +15,10 @@ using WinUIEx;
 namespace VirtualPaper.UIComponent.Data {
     public sealed partial class Edits : UserControl {      
         public bool IsSaved { get; private set; }
-        public string Edits_TextTitle { get; set; }
-        public string Edits_TextDesc { get; set; }
-        public string Edits_TextTags { get; set; }
-        public string Edits_TextSave { get; set; }
+        public string Text_Edit_Title { get; set; }
+        public string Text_Edit_Desc { get; set; }
+        public string Text_Edit_Tags { get; set; }
+        public string Text_SaveAndApply { get; set; }
 
         public string Title {
             get { return (string)GetValue(TitleProperty); }
@@ -49,10 +49,10 @@ namespace VirtualPaper.UIComponent.Data {
         }
 
         private void InitText() {
-            Edits_TextTitle = _localizer.GetLocalizedString(Constants.I18n.Wp_Edits_TextTitle);
-            Edits_TextDesc = _localizer.GetLocalizedString(Constants.I18n.Wp_Edits_TextDesc);
-            Edits_TextTags = _localizer.GetLocalizedString(Constants.I18n.Wp_Edits_TextTags);
-            Edits_TextSave = _localizer.GetLocalizedString(Constants.I18n.Wp_Edits_TextSave);
+            Text_Edit_Title = _localizer.GetLocalizedString(Constants.I18n.Text_Edit_Title);
+            Text_Edit_Desc = _localizer.GetLocalizedString(Constants.I18n.Text_Edit_Desc);
+            Text_Edit_Tags = _localizer.GetLocalizedString(Constants.I18n.Text_Edit_Tags);
+            Text_SaveAndApply = _localizer.GetLocalizedString(Constants.I18n.Text_SaveAndApply);
         }
 
         private void Init() {

@@ -1,7 +1,6 @@
 ﻿using System.Windows.Threading;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using NLog;
 using VirtualPaper.Common.Models;
 using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Grpc.Service.Models;
@@ -58,7 +57,7 @@ namespace VirtualPaper.GrpcServers {
                 }
             }
             catch (Exception e) {
-                _logger.Error(e);
+                App.Log.Error(e);
             }
         }
 
@@ -66,7 +65,6 @@ namespace VirtualPaper.GrpcServers {
             _totalSize = e.TotalSize;
         }
 
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IAppUpdaterService _updater = updater;
         private double _totalSize;
     }

@@ -3,9 +3,6 @@ using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.UIComponent.Utils;
-using Windows.ApplicationModel.Resources;
-using WinUI3Localizer;
 
 namespace VirtualPaper.UI.ViewModels.AppSettings {
     public partial class PerformanceSettingViewModel : ObservableObject {
@@ -130,8 +127,6 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
         public PerformanceSettingViewModel(
             IUserSettingsClient userSettingsClient) {
             _userSettingsClient = userSettingsClient;
-            _localizer = LanguageUtil.LocalizerInstacne;
-
             InitText();
             InitCollections();
             InitContent();
@@ -153,36 +148,36 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
         }
 
         private void InitText() {
-            Text_Play = _localizer.GetLocalizedString("Settings_Perforemance_Text_Play");
-            Play_OthersFullScreen = _localizer.GetLocalizedString("Settings_Perforemance_Play_OthersFullScreen");
-            Play_OthersFullScreenExplain = _localizer.GetLocalizedString("Settings_Perforemance_Play_OthersFullScreenExplain");
-            _playStatu_Silence = _localizer.GetLocalizedString("Settings_Perforemance_Play__playStatu_Silence");
-            _playStatu_Pause = _localizer.GetLocalizedString("Settings_Perforemance_Play__playStatu_Pause");
-            _playStatu_KeepRun = _localizer.GetLocalizedString("Settings_Perforemance_Play__playStatu_KeepRun");
-            Play_OthersFocus = _localizer.GetLocalizedString("Settings_Perforemance_Play_OthersFocus");
-            Play_OthersFocusExplain = _localizer.GetLocalizedString("Settings_Perforemance_Play_OthersFocusExplain");
-            Play_Audio = _localizer.GetLocalizedString("Settings_Perforemance_Play_Audio");
-            Text_Laptop = _localizer.GetLocalizedString("Settings_Perforemance_Text_Laptop");
-            Laptop_BatteryPoweredn = _localizer.GetLocalizedString("Settings_Perforemance_Laptop_BatteryPoweredn");
-            Laptop_BatteryPowerednExplain = _localizer.GetLocalizedString("Settings_Perforemance_Laptop_BatteryPowerednExplain");
-            Laptop_PowerSaving = _localizer.GetLocalizedString("Settings_Perforemance_Laptop_PowerSaving");
-            Laptop_PowerSavingExplain = _localizer.GetLocalizedString("Settings_Perforemance_Laptop_PowerSavingExplain");
-            Text_System = _localizer.GetLocalizedString("Settings_Perforemance_Text_System");
-            System_RemoteDesktop = _localizer.GetLocalizedString("Settings_Perforemance_System_RemoteDesktop");
-            System_RemoteDesktopExplain = _localizer.GetLocalizedString("Settings_Perforemance_System_RemoteDesktopExplain");
-            System_StatuMechanism = _localizer.GetLocalizedString("Settings_Perforemance_System_StatuMechanism");
-            System_StatuMechanismExplain_ForPer = _localizer.GetLocalizedString("Settings_Perforemance_System_StatuMechanismExplain_ForPer");
-            System_StatuMechanismExplain_ForAll = _localizer.GetLocalizedString("Settings_Perforemance_System_StatuMechanismExplain_ForAll");
-            _statuMechanism_per = _localizer.GetLocalizedString("Settings_Perforemance_System__statuMechanism_per");
-            _statuMechanism_all = _localizer.GetLocalizedString("Settings_Perforemance_System__statuMechanism_all");
+            Text_Play = App.GetI18n(Constants.I18n.Settings_Perforemance_Text_Play);
+            Play_OthersFullScreen = App.GetI18n(Constants.I18n.Settings_Perforemance_Play_OthersFullScreen);
+            Play_OthersFullScreenExplain = App.GetI18n(Constants.I18n.Settings_Perforemance_Play_OthersFullScreenExplain);
+            _playStatu_Silence = App.GetI18n(Constants.I18n.Settings_Perforemance_Play__playStatu_Silence);
+            _playStatu_Pause = App.GetI18n(Constants.I18n.Settings_Perforemance_Play__playStatu_Pause);
+            _playStatu_KeepRun = App.GetI18n(Constants.I18n.Settings_Perforemance_Play__playStatu_KeepRun);
+            Play_OthersFocus = App.GetI18n(Constants.I18n.Settings_Perforemance_Play_OthersFocus);
+            Play_OthersFocusExplain = App.GetI18n(Constants.I18n.Settings_Perforemance_Play_OthersFocusExplain);
+            Play_Audio = App.GetI18n(Constants.I18n.Settings_Perforemance_Play_Audio);
+            Text_Laptop = App.GetI18n(Constants.I18n.Settings_Perforemance_Text_Laptop);
+            Laptop_BatteryPoweredn = App.GetI18n(Constants.I18n.Settings_Perforemance_Laptop_BatteryPoweredn);
+            Laptop_BatteryPowerednExplain = App.GetI18n(Constants.I18n.Settings_Perforemance_Laptop_BatteryPowerednExplain);
+            Laptop_PowerSaving = App.GetI18n(Constants.I18n.Settings_Perforemance_Laptop_PowerSaving);
+            Laptop_PowerSavingExplain = App.GetI18n(Constants.I18n.Settings_Perforemance_Laptop_PowerSavingExplain);
+            Text_System = App.GetI18n(Constants.I18n.Settings_Perforemance_Text_System);
+            System_RemoteDesktop = App.GetI18n(Constants.I18n.Settings_Perforemance_System_RemoteDesktop);
+            System_RemoteDesktopExplain = App.GetI18n(Constants.I18n.Settings_Perforemance_System_RemoteDesktopExplain);
+            System_StatuMechanism = App.GetI18n(Constants.I18n.Settings_Perforemance_System_StatuMechanism);
+            System_StatuMechanismExplain_ForPer = App.GetI18n(Constants.I18n.Settings_Perforemance_System_StatuMechanismExplain_ForPer);
+            System_StatuMechanismExplain_ForAll = App.GetI18n(Constants.I18n.Settings_Perforemance_System_StatuMechanismExplain_ForAll);
+            _statuMechanism_per = App.GetI18n(Constants.I18n.Settings_Perforemance_System__statuMechanism_per);
+            _statuMechanism_all = App.GetI18n(Constants.I18n.Settings_Perforemance_System__statuMechanism_all);
         }
 
         private void ChangeAudioStatu(bool isAudioOnlyOnDesktop) {
             if (isAudioOnlyOnDesktop) {
-                AudioStatu = _localizer.GetLocalizedString("Settings_Perforemance_Play_Audio_OnlyDesktop_On");
+                AudioStatu = App.GetI18n(Constants.I18n.Text_On);
             }
             else {
-                AudioStatu = _localizer.GetLocalizedString("Settings_Perforemance_Play_Audio_OnlyDesktop_Off");
+                AudioStatu = App.GetI18n(Constants.I18n.Text_Off);
             }
         }
 
@@ -190,12 +185,11 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
             await _userSettingsClient.SaveAsync<ISettings>();
         }
 
-        private readonly ILocalizer _localizer;
         private string _playStatu_Silence = string.Empty;
         private string _playStatu_Pause = string.Empty;
         private string _playStatu_KeepRun = string.Empty;
         private string _statuMechanism_per = string.Empty;
         private string _statuMechanism_all = string.Empty;
-        private IUserSettingsClient _userSettingsClient;
+        private readonly IUserSettingsClient _userSettingsClient;
     }
 }

@@ -44,7 +44,6 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         public string MenuFlyout_Text_Apply { get; set; } = string.Empty;
         public string MenuFlyout_Text_ApplyToLockBG { get; set; } = string.Empty;
         public string MenuFlyout_Text_ShowOnDisk { get; set; } = string.Empty;
-        public string MenuFlyout_Text_Export { get; set; } = string.Empty;
         public string MenuFlyout_Text_Delete { get; set; } = string.Empty;
 
         public LibraryContentsViewModel(
@@ -73,15 +72,14 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         }
 
         private void InitText() {
-            MenuFlyout_Text_DetailedInfo = App.GetI18n(Constants.I18n.MenuFlyout_Text_DetailedInfo);
-            MenuFlyout_Text_Update = App.GetI18n(Constants.I18n.MenuFlyout_Text_Update);
-            MenuFlyout_Text_EditInfo = App.GetI18n(Constants.I18n.MenuFlyout_Text_EditInfo);
-            MenuFlyout_Text_Preview = App.GetI18n(Constants.I18n.MenuFlyout_Text_Preview);
-            MenuFlyout_Text_Apply = App.GetI18n(Constants.I18n.MenuFlyout_Text_Apply);
-            MenuFlyout_Text_ApplyToLockBG = App.GetI18n(Constants.I18n.MenuFlyout_Text_ApplyToLockBG);
-            MenuFlyout_Text_ShowOnDisk = App.GetI18n(Constants.I18n.MenuFlyout_Text_ShowOnDisk);
-            MenuFlyout_Text_Export = App.GetI18n(Constants.I18n.MenuFlyout_Text_Export);
-            MenuFlyout_Text_Delete = App.GetI18n(Constants.I18n.MenuFlyout_Text_Delete);
+            MenuFlyout_Text_DetailedInfo = App.GetI18n(Constants.I18n.Text_Details);
+            MenuFlyout_Text_Update = App.GetI18n(Constants.I18n.Text_UpdateConfig);
+            MenuFlyout_Text_EditInfo = App.GetI18n(Constants.I18n.Text_Edit);
+            MenuFlyout_Text_Preview = App.GetI18n(Constants.I18n.Text_Preview);
+            MenuFlyout_Text_Apply = App.GetI18n(Constants.I18n.Text_Apply);
+            MenuFlyout_Text_ApplyToLockBG = App.GetI18n(Constants.I18n.Text_ApplyToLockBG);
+            MenuFlyout_Text_ShowOnDisk = App.GetI18n(Constants.I18n.Text_ShowOnDisk);
+            MenuFlyout_Text_Delete = App.GetI18n(Constants.I18n.Text_DeleteFromDisk);
         }
 
         internal async Task InitContentAsync() {
@@ -161,7 +159,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                         data.Tags = string.Join(';', edits.TagList);
                         data.Save();
                         UpdateLib(data);
-                        BasicUIComponentUtil.ShowMsg(true, "Msg_Save_Succeded", InfoBarSeverity.Success);
+                        BasicUIComponentUtil.ShowMsg(true, Constants.I18n.InfobarMsg_Success, InfoBarSeverity.Success);
                     }
 
                     _wp2TocEdit.Remove(data.FilePath);
@@ -441,12 +439,12 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
 
         private static void AddDetailsPage(IWpBasicData data, ToolContainer toolContainer) {
             Details details = new(data);
-            toolContainer.AddContent(Constants.I18n.WpConfigViewMdoel_TextDetailedInfo, $"Details_{data.FilePath}", details);
+            toolContainer.AddContent(Constants.I18n.Text_Details, $"Details_{data.FilePath}", details);
         }
 
         private static void AddEditsPage(IWpBasicData data, ToolContainer toolContainer) {
             Edits edits = new(data, toolContainer);
-            toolContainer.AddContent(Constants.I18n.Wp_TextEditInfo, $"Edits_{data.FilePath}", edits);
+            toolContainer.AddContent(Constants.I18n.Text_Edit, $"Edits_{data.FilePath}", edits);
         }
 
         private static void SetToolWindowParent(WindowEx childWindow, WindowEx parentWindow) {

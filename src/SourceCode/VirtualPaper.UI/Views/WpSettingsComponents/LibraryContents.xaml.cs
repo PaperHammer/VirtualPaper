@@ -81,13 +81,13 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
                 string name = selectedMeun.Name;
 
                 switch (name) {
-                    case "DetailedInfo":
+                    case "Details":
                         await _viewModel.DetailedInfoAsync(_data);
                         break;
-                    case "Update":
+                    case "UpdateConfig":
                         await _viewModel.UpdateAsync(_data);
                         break;
-                    case "EditInfo":
+                    case "Edit":
                         await _viewModel.EditInfoAsync(_data);
                         break;
                     case "Preview":
@@ -102,7 +102,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
                     case "ShowOnDisk":
                         Process.Start("Explorer", "/select," + _data.FilePath);
                         break;
-                    case "Delete":
+                    case "DeleteFromDisk":
                         await _viewModel.DeleteAsync(_data);
                         break;
                 }

@@ -129,6 +129,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 Proc.Exited += Proc_Exited;
                 Proc.OutputDataReceived += Proc_OutputDataReceived;
                 Proc.Start();
+                App.Jobs.AddProcess(Proc.Id);
                 Proc.BeginOutputReadLine();
 
                 using var registration = token.Register(() => {

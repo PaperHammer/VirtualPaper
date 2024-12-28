@@ -6,11 +6,12 @@ using WinUIEx;
 namespace VirtualPaper.PlayerWeb.Utils {
     internal class RawInput {
         internal static Point GetMousePos() {
-            if (!Native.GetCursorPos(out Native.POINT P)) {
+            if (!Native.GetCursorPos(out Native.POINT pos)) {
                 return Point.Empty;
             }
 
-            return new Point(P.X, P.Y);
+            // 本地化游标值
+            return new Point(pos.X, pos.Y);
         }
 
         internal static Native.RECT GetWindowRECT(WindowEx windowEx) {
@@ -26,7 +27,7 @@ namespace VirtualPaper.PlayerWeb.Utils {
                 Right = appWindow.Position.X + appWindow.Size.Width,
                 Bottom = appWindow.Position.Y + appWindow.Size.Height,
             };
-            
+
             return rect;
         }
     }

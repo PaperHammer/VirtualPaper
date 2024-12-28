@@ -84,7 +84,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         bool IsSubscribed { get; set; }
 
         void Read(string filePath);
-        void MoveTo(string targetFolderPath);
+        Task MoveToAsync(string targetFolderPath);
         void Save();
         IWpBasicData Clone();
         bool IsAvailable();

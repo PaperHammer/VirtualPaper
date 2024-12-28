@@ -14,12 +14,9 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         string WpEffectFilePathUsing { get; set; } // 还原到当前的应用设置
         string WpEffectFilePathTemporary { get; set; } // 实时调整与预览
         RuntimeType RType { get; set; }
-
-        void RevertToDefault();
-        void RevertToApplied();
         void Read(string filePath);
-        void MoveTo(string targetFolder);
-        void FromTempToInstallPath(string targetFolderPath);
+        Task MoveToAsync(string targetFolder);
+        Task FromTempMoveToInstallPathAsync(string targetFolderPath);
         void Save();
         IWpRuntimeData Clone();
         bool IsAvailable();

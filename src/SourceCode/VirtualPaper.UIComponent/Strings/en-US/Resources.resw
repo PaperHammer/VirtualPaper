@@ -209,12 +209,6 @@ Scale-down: The size is the same as the one in None or Contain, depending on whi
   <data name="DetailedInfo_TextVirtualPaperUid" xml:space="preserve">
     <value>vp_uid：</value>
   </data>
-  <data name="Dialog_Btn_Cancel" xml:space="preserve">
-    <value>Cancel</value>
-  </data>
-  <data name="Dialog_Btn_Confirm" xml:space="preserve">
-    <value>Confirm</value>
-  </data>
   <data name="Dialog_Content_ApplyError" xml:space="preserve">
     <value>Failed to apply wallpaper, please try again</value>
   </data>
@@ -681,6 +675,9 @@ Author: PaperHammer</value>
   </data>
   <data name="Text_Cancel" xml:space="preserve">
     <value>Cancel</value>
+  </data>
+  <data name="Text_Confirm" xml:space="preserve">
+    <value>Confirm</value>
   </data>
   <data name="Text_Delete" xml:space="preserve">
     <value>Delete</value>

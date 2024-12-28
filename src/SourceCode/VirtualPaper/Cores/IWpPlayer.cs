@@ -7,7 +7,7 @@ namespace VirtualPaper.Cores
     /// <summary>
     /// 播放时的壁纸对象
     /// </summary>
-    public interface IWpPlayer : IDisposable
+    public interface IWpPlayer : IDisposable, IEquatable<IWpPlayer>
     {
         /// <summary>
         /// Get process information.
@@ -43,8 +43,10 @@ namespace VirtualPaper.Cores
         /// </summary>
         /// <returns></returns>
         bool IsLoaded { get; }
+        
+        bool IsPreview { get; }
         EventHandler? Closing { get; set; }        
-        EventHandler? ToBackground { get; set; }
+        EventHandler? Apply { get; set; }
 
         Task<bool> ShowAsync(CancellationToken cancellationToken = default);
         void Pause();

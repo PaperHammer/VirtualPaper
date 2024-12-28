@@ -212,12 +212,6 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   <data name="DetailedInfo_TextVirtualPaperUid" xml:space="preserve">
     <value>vp_uid：</value>
   </data>
-  <data name="Dialog_Btn_Cancel" xml:space="preserve">
-    <value>取消</value>
-  </data>
-  <data name="Dialog_Btn_Confirm" xml:space="preserve">
-    <value>确认</value>
-  </data>
   <data name="Dialog_Content_ApplyError" xml:space="preserve">
     <value>应用壁纸失败，请重试</value>
   </data>
@@ -684,6 +678,9 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Text_Cancel" xml:space="preserve">
     <value>取消</value>
+  </data>
+  <data name="Text_Confirm" xml:space="preserve">
+    <value>确认</value>
   </data>
   <data name="Text_Delete" xml:space="preserve">
     <value>删除</value>

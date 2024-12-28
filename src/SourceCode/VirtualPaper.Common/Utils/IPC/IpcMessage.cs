@@ -74,9 +74,11 @@ namespace VirtualPaper.Common.Utils.IPC {
 
     [Serializable]
     public class VirtualPaperUpdateCmd : IpcMessage {
-        public string FilePath { get; set; } = string.Empty;
+        public string FilePath { get; set; } = string.Empty;        
+        public string RType { get; set; } = string.Empty;
+        public string WpEffectFilePathTemplate { get; set; } = string.Empty;
+        public string WpEffectFilePathTemporary { get; set; } = string.Empty;
         public string WpEffectFilePathUsing { get; set; } = string.Empty;
-        public string WpType { get; set; } = string.Empty;
         public VirtualPaperUpdateCmd() : base(MessageType.cmd_update) { }
     }
 

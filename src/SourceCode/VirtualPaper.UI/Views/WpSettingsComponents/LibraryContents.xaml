@@ -8,7 +8,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d"
-    x:Name="Page"
     Loaded="Page_Loaded"
     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"   
     NavigationCacheMode="Enabled">
@@ -18,11 +17,11 @@
     </Page.Resources>
 
     <ItemsView
-        x:Name="ItemsViewer"            
-        HorizontalAlignment="Stretch"
+        x:Name="ItemsViewer"
         VerticalAlignment="Stretch"
+        HorizontalAlignment="Stretch"
+        VerticalContentAlignment="Top"
         HorizontalContentAlignment="Left"
-        VerticalContentAlignment="Center"
         ItemsSource="{Binding LibraryWallpapers}"
         AllowDrop="True"
         DragOver="ItemsView_DragOver"
@@ -34,8 +33,7 @@
         PreviewKeyDown="ItemsViewer_PreviewKeyDown">
         <ItemsView.ItemTemplate>
             <DataTemplate>
-                <ItemContainer 
-                    AutomationProperties.Name="{Binding Title}"
+                <ItemContainer
                     PointerEntered="ItemGrid_PointerEntered"
                     PointerExited="ItemGrid_PointerExited">
                     <Grid
@@ -67,9 +65,9 @@
         </ItemsView.ItemTemplate>
         <ItemsView.Layout>
             <UniformGridLayout
+                Orientation="Horizontal"
                 MinRowSpacing="15" 
-                MinColumnSpacing="15"
-                MaximumRowsOrColumns="-1"/>
+                MinColumnSpacing="9"/>
         </ItemsView.Layout>
         <ItemsView.ContextFlyout>
             <MenuFlyout
@@ -143,4 +141,5 @@
             </MenuFlyout>
         </ItemsView.ContextFlyout>
     </ItemsView>
+
 </Page>

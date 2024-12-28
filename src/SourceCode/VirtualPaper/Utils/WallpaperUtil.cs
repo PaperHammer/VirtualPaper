@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Drawing.Imaging;
+using System.IO;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
@@ -69,104 +70,168 @@ namespace VirtualPaper.Utils {
             return wpEffectFilePathTemplate;
         }
 
-        //internal static string CreateWpEffectFileTemporary(
-        //    string folderPath,
-        //    string wpEffectFilePathTemplate) {
-        //    string wpEffectFilePathTemporary = Path.Combine(folderPath, Constants.Field.WpEffectFilePathTemporary);
-        //    File.Copy(wpEffectFilePathTemplate, wpEffectFilePathTemporary, true);
-
-        //    return wpEffectFilePathTemporary;
-        //}
-
         internal static string CreateWpEffectFileUsingOrTemporary(
             int type,
             string folderPath,
             string wpEffectFilePathTemplate,
             string monitorContent,
-            RuntimeType rtype,
-            WallpaperArrangement arrangement) {
+            RuntimeType rtype) {
             string filePath = string.Empty;
             if (wpEffectFilePathTemplate != null) {
-                if (monitorContent != null) {
-                    string wpdataUsingFolder = string.Empty;
-                    switch (arrangement) {
-                        case WallpaperArrangement.Per:
-                            wpdataUsingFolder = Path.Combine(folderPath, monitorContent, rtype.ToString());
-                            break;
-                        case WallpaperArrangement.Expand:
-                            wpdataUsingFolder = Path.Combine(folderPath, "Expand", rtype.ToString());
-                            break;
-                        case WallpaperArrangement.Duplicate:
-                            wpdataUsingFolder = Path.Combine(folderPath, "Duplicate", rtype.ToString());
-                            break;
-                    }
-                    Directory.CreateDirectory(wpdataUsingFolder);
-                    filePath = Path.Combine(wpdataUsingFolder, type == 0 ? Constants.Field.WpEffectFilePathUsing : Constants.Field.WpEffectFilePathTemporary);
-                    File.Copy(wpEffectFilePathTemplate, filePath, true);
-                }
+                string wpRuntimeDataFolder = Path.Combine(folderPath, monitorContent, rtype.ToString());
+                Directory.CreateDirectory(wpRuntimeDataFolder);
+                filePath = Path.Combine(wpRuntimeDataFolder, type == 0 ? Constants.Field.WpEffectFilePathUsing : Constants.Field.WpEffectFilePathTemporary);
+                File.Copy(wpEffectFilePathTemplate, filePath, true);
             }
 
             return filePath;
         }
 
-        internal static void CreateGif(string filePath, string coverFilePath, FileType ftype, CancellationToken token) {
-            GifBitmapEncoder gEnc = new();
-            if (ftype == FileType.FPicture) {
-                Bitmap bitmap = new(filePath);
-                var src = Imaging.CreateBitmapSourceFromHBitmap(
-                    bitmap.GetHbitmap(),
-                    IntPtr.Zero,
-                    Int32Rect.Empty,
-                    BitmapSizeOptions.FromEmptyOptions());
-                gEnc.Frames.Add(BitmapFrame.Create(src));
-                bitmap.Dispose();
+        internal static void CreateGif(string filePath, string thuFilePath, FileType ftype, CancellationToken token) {
+            Mat ResizeTo1080p(Mat img) {
+                Size newSize = new(Math.Min(img.Cols, 960), Math.Min(img.Rows, 600));
+                Mat resizedImg = new();
+                Cv2.Resize(img, resizedImg, newSize);
+
+                return resizedImg;
             }
-            else if (ftype == FileType.FVideo || ftype == FileType.FGif) {
+
+            if (ftype == FileType.FPicture) {
+                using var bitmap = new Bitmap(filePath);
+                using var mat = BitmapConverter.ToMat(bitmap);
+                using var resizedMat = ResizeTo1080p(mat);
+                using var resizedBitmap = BitmapConverter.ToBitmap(resizedMat);
+                resizedBitmap.Save(thuFilePath);
+                return;
+            }
+            else if (ftype == FileType.FGif) {
+                using var gifStream = File.OpenRead(filePath);
+                var decoder = new GifBitmapDecoder(gifStream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.Default);
+                var frames = decoder.Frames.Select(f => {
+                    var mat = BitmapConverter.ToMat(BitmapSourceToBitmap(f));
+                    return ResizeTo1080p(mat);
+                }).ToList();
+                SaveGifFrames(frames, thuFilePath);
+                return;
+            }
+            else if (ftype == FileType.FVideo) {
                 using var cap = new VideoCapture(filePath);
                 if (!cap.IsOpened()) {
-                    throw new Exception("An Error occoured");
+                    throw new Exception("Failed to open video file.");
                 }
 
-                int frameCnt = cap.FrameCount;
-                int frameLimit = Math.Min(frameCnt, 60);
+                double fps = Math.Min(cap.Get(VideoCaptureProperties.Fps), 24); // 设置最大帧率为24fps
+                int frameLimit = (int)Math.Min(cap.FrameCount, fps * 3); // 最多取3秒的帧数
 
+                List<Mat> frames = [];
                 for (int i = 0; i < frameLimit && !token.IsCancellationRequested; i++) {
+                    token.ThrowIfCancellationRequested();
+
                     cap.Set(VideoCaptureProperties.PosFrames, i);
                     using Mat frame = new();
                     cap.Read(frame);
                     if (frame.Empty()) break;
 
-                    token.ThrowIfCancellationRequested();
-
-                    Bitmap bitmap = BitmapConverter.ToBitmap(frame);
-                    frame.Release();
-
-                    var src = Imaging.CreateBitmapSourceFromHBitmap(
-                    bitmap.GetHbitmap(),
-                    IntPtr.Zero,
-                    Int32Rect.Empty,
-                    BitmapSizeOptions.FromEmptyOptions());
-                    gEnc.Frames.Add(BitmapFrame.Create(src));
-                    bitmap.Dispose();
+                    using var resizedFrame = ResizeTo1080p(frame);
+                    frames.Add(resizedFrame.Clone());
                 }
 
-                if (token.IsCancellationRequested) {
-                    throw new OperationCanceledException("The video frame reading was canceled.");
-                }
+                SaveGifFrames(frames, thuFilePath);
             }
 
-            using var ms = new MemoryStream();
-            gEnc.Save(ms);
-            var fileBytes = ms.ToArray();
-            // This is the NETSCAPE2.0 Application Extension.
-            // 创建循环动画
-            var applicationExtension = new byte[] { 33, 255, 11, 78, 69, 84, 83, 67, 65, 80, 69, 50, 46, 48, 3, 1, 0, 0, 0 };
-            var newBytes = new List<byte>();
-            newBytes.AddRange(fileBytes.Take(13));
-            newBytes.AddRange(applicationExtension);
-            newBytes.AddRange(fileBytes.Skip(13));
-            File.WriteAllBytes(coverFilePath, [.. newBytes]);
+            void SaveGifFrames(List<Mat> frames, string outputPath) {
+                GifBitmapEncoder encoder = new();
+                foreach (var frame in frames) {
+                    token.ThrowIfCancellationRequested();
+
+                    using Bitmap bitmap = BitmapConverter.ToBitmap(frame);
+                    var src = Imaging.CreateBitmapSourceFromHBitmap(
+                        bitmap.GetHbitmap(),
+                        IntPtr.Zero,
+                        Int32Rect.Empty,
+                        BitmapSizeOptions.FromEmptyOptions());
+
+                    encoder.Frames.Add(BitmapFrame.Create(src));
+                }
+
+                using var ms = new MemoryStream();
+                encoder.Save(ms);
+                var fileBytes = ms.ToArray();
+                var newBytes = new List<byte>(fileBytes.Take(13));
+                newBytes.AddRange(_applicationExtension);
+                newBytes.AddRange(fileBytes.Skip(13));
+
+                File.WriteAllBytes(outputPath, [.. newBytes]);
+            }
+
+            Bitmap BitmapSourceToBitmap(BitmapSource s) {
+                using Bitmap bmp = new(s.PixelWidth, s.PixelHeight, PixelFormat.Format32bppPArgb);
+                BitmapData data = bmp.LockBits(new Rectangle(System.Drawing.Point.Empty, bmp.Size), ImageLockMode.WriteOnly, bmp.PixelFormat);
+                s.CopyPixels(Int32Rect.Empty, data.Scan0, data.Height * data.Stride, data.Stride);
+                bmp.UnlockBits(data);
+
+                return bmp;
+            }
         }
+
+        //internal static void CreateGif(string filePath, string thuFilePath, FileType ftype, CancellationToken token) {
+        //    GifBitmapEncoder gEnc = new();
+        //    if (ftype == FileType.FPicture) {
+        //        Bitmap bitmap = new(filePath);
+        //        var src = Imaging.CreateBitmapSourceFromHBitmap(
+        //            bitmap.GetHbitmap(),
+        //            IntPtr.Zero,
+        //            Int32Rect.Empty,
+        //            BitmapSizeOptions.FromEmptyOptions());
+        //        gEnc.Frames.Add(BitmapFrame.Create(src));
+        //        bitmap.Dispose();
+        //    }
+        //    else if (ftype == FileType.FVideo || ftype == FileType.FGif) {
+        //        using var cap = new VideoCapture(filePath);
+        //        if (!cap.IsOpened()) {
+        //            throw new Exception("An Error occoured");
+        //        }
+
+        //        int frameCnt = cap.FrameCount;
+        //        int frameLimit = Math.Min(frameCnt, 60);
+
+        //        for (int i = 0; i < frameLimit && !token.IsCancellationRequested; i++) {
+        //            cap.Set(VideoCaptureProperties.PosFrames, i);
+        //            using Mat frame = new();
+        //            cap.Read(frame);
+        //            if (frame.Empty()) break;
+
+        //            token.ThrowIfCancellationRequested();
+
+        //            Bitmap bitmap = BitmapConverter.ToBitmap(frame);
+        //            frame.Release();
+
+        //            var src = Imaging.CreateBitmapSourceFromHBitmap(
+        //            bitmap.GetHbitmap(),
+        //            IntPtr.Zero,
+        //            Int32Rect.Empty,
+        //            BitmapSizeOptions.FromEmptyOptions());
+        //            gEnc.Frames.Add(BitmapFrame.Create(src));
+        //            bitmap.Dispose();
+        //        }
+
+        //        if (token.IsCancellationRequested) {
+        //            throw new OperationCanceledException("The video frame reading was canceled.");
+        //        }
+        //    }
+
+        //    using var ms = new MemoryStream();
+        //    gEnc.Save(ms);
+        //    var fileBytes = ms.ToArray();
+        //    // This is the NETSCAPE2.0 Application Extension.
+        //    // 创建循环动画
+        //    var _applicationExtension = new byte[] { 33, 255, 11, 78, 69, 84, 83, 67, 65, 80, 69, 50, 46, 48, 3, 1, 0, 0, 0 };
+        //    var newBytes = new List<byte>();
+        //    newBytes.AddRange(fileBytes.Take(13));
+        //    newBytes.AddRange(_applicationExtension);
+        //    newBytes.AddRange(fileBytes.Skip(13));
+        //    File.WriteAllBytes(thuFilePath, [.. newBytes]);
+        //}
 
         internal static FileProperty GetWpProperty(string filePath, FileType ftype) {
             FileProperty fileProperty = new() {
@@ -225,5 +290,8 @@ namespace VirtualPaper.Utils {
             }
             return "FUnknown";
         }
+
+        // Add NETSCAPE2.0 Application Extension for looping.
+        private readonly static byte[] _applicationExtension = [33, 255, 11, 78, 69, 84, 83, 67, 65, 80, 69, 50, 46, 48, 3, 1, 0, 0, 0];
     }
 }

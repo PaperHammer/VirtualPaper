@@ -84,7 +84,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
             MenuFlyout_Text_Delete = App.GetI18n(Constants.I18n.MenuFlyout_Text_Delete);
         }
 
-        internal async Task InitContents() {
+        internal async Task InitContentAsync() {
             try {
                 BasicUIComponentUtil.Loading(false, false, null);
 
@@ -209,7 +209,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                 if (rtype == RuntimeType.RUnknown) return;
 
-                await _wpControlClient.PreviewWallpaperAsync(_wpSettingsViewModel.SelectedMonitor.Content, data, rtype, _ctsPreview.Token);
+                await _wpControlClient.PreviewWallpaperAsync(_wpSettingsViewModel.SelectedMonitor.DeviceId, data, rtype, _ctsPreview.Token);
             }
             catch (OperationCanceledException) {
                 BasicUIComponentUtil.ShowCanceled();
@@ -269,7 +269,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                     await _dialogService.ShowDialogAsync(
                         App.GetI18n(Constants.I18n.Dialog_Content_OnlyPictureAndGif)
                         , App.GetI18n(Constants.I18n.Dialog_Title_Prompt)
-                        , App.GetI18n(Constants.I18n.Dialog_Btn_Confirm));
+                        , App.GetI18n(Constants.I18n.Text_Confirm));
                     return;
                 }
 
@@ -291,8 +291,8 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 var dialogRes = await _dialogService.ShowDialogAsync(
                     App.GetI18n(Constants.I18n.Dialog_Content_LibraryDelete)
                     , App.GetI18n(Constants.I18n.Dialog_Title_Prompt)
-                    , App.GetI18n(Constants.I18n.Dialog_Btn_Confirm)
-                    , App.GetI18n(Constants.I18n.Dialog_Btn_Cancel));
+                    , App.GetI18n(Constants.I18n.Text_Confirm)
+                    , App.GetI18n(Constants.I18n.Text_Cancel));
                 if (dialogRes != DialogResult.Primary) return;
 
                 bool isUsing = await CheckFileUsingAsync(data, false);
@@ -356,7 +356,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                             await _dialogService.ShowDialogAsync(
                                $"\"{importValue.FilePath}\"\n" + App.GetI18n(Constants.I18n.Dialog_Content_Import_Failed_Lib)
                                , App.GetI18n(Constants.I18n.Dialog_Title_Prompt)
-                               , App.GetI18n(Constants.I18n.Dialog_Btn_Confirm));
+                               , App.GetI18n(Constants.I18n.Text_Confirm));
                         }
 
                         BasicUIComponentUtil.UpdateProgressbarValue(++finishedCnt, importValues.Count);
@@ -382,7 +382,8 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                     var dialogRes = await _dialogService.ShowDialogAsync(
                         new WallpaperCreateView(wpCreateDialogViewModel)
                         , App.GetI18n(Constants.I18n.Dialog_Title_CreateType)
-                        , App.GetI18n(Constants.I18n.Dialog_Btn_Confirm));
+                        , App.GetI18n(Constants.I18n.Text_Confirm)
+                        , App.GetI18n(Constants.I18n.Text_Cancel));
                     if (dialogRes != DialogResult.Primary) return RuntimeType.RUnknown;
 
                     return wpCreateDialogViewModel.SelectedItem.CreateType switch {
@@ -413,8 +414,8 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 var dialogRes = await _dialogService.ShowDialogAsync(
                     App.GetI18n(Constants.I18n.Dialog_Content_Import_NeedUpdate)
                     , App.GetI18n(Constants.I18n.Dialog_Title_Prompt)
-                    , App.GetI18n(Constants.I18n.Dialog_Btn_Confirm)
-                    , App.GetI18n(Constants.I18n.Dialog_Btn_Cancel));
+                    , App.GetI18n(Constants.I18n.Text_Confirm)
+                    , App.GetI18n(Constants.I18n.Text_Cancel));
                 if (dialogRes == DialogResult.Primary)
                     await UpdateAsync(data);
             }
@@ -428,7 +429,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                         await _dialogService.ShowDialogAsync(
                         App.GetI18n(Constants.I18n.Dialog_Content_WpIsUsing)
                         , App.GetI18n(Constants.I18n.Dialog_Title_Prompt)
-                        , App.GetI18n(Constants.I18n.Dialog_Btn_Confirm));
+                        , App.GetI18n(Constants.I18n.Text_Confirm));
                     }
 
                     return true;

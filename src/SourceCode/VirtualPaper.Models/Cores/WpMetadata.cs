@@ -24,9 +24,9 @@ namespace VirtualPaper.Models.Cores {
             RuntimeData.Read(Path.Combine(folderPath, Constants.Field.WpRuntimeDataFileName));
         }
 
-        public void MoveTo(string targetFolderPath) {
-            BasicData.MoveTo(targetFolderPath);
-            RuntimeData.MoveTo(targetFolderPath);
+        public async Task MoveToAsync(string targetFolderPath) {
+            await BasicData.MoveToAsync(targetFolderPath);
+            await RuntimeData.MoveToAsync(targetFolderPath);
         }
 
         public void Save() {

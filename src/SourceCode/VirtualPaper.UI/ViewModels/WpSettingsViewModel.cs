@@ -12,7 +12,7 @@ using Monitor = VirtualPaper.Models.Cores.Monitor;
 
 namespace VirtualPaper.UI.ViewModels {
     public partial class WpSettingsViewModel : ObservableObject {
-        public ObservableList<IMonitor> Monitors { get; set; } = [];
+        public ObservableList<IMonitor> MonitorThus { get; set; } = [];
         public List<WpArrangeDataModel> WpArrangements { get; set; } = [];
         public string WpSettings_NavItem1 { get; set; } = string.Empty;
         public string WpSettings_NavItem2 { get; set; } = string.Empty;
@@ -20,7 +20,6 @@ namespace VirtualPaper.UI.ViewModels {
         public string Text_Detect { get; set; } = string.Empty;
         public string Text_Identify { get; set; } = string.Empty;
         public string Text_Adjust { get; set; } = string.Empty;
-        public string Text_Preview { get; set; } = string.Empty;
         public string Text_WpArrange { get; set; } = string.Empty;
         public string WpArrange_Per { get; set; } = string.Empty;
         public string WpArrange_PerExplain { get; set; } = string.Empty;
@@ -68,7 +67,6 @@ namespace VirtualPaper.UI.ViewModels {
             Text_Detect = App.GetI18n(Constants.I18n.BtnText_Detect);
             Text_Identify = App.GetI18n(Constants.I18n.BtnText_Identify);
             Text_Adjust = App.GetI18n(Constants.I18n.BtnText_Adjust);
-            Text_Preview = App.GetI18n(Constants.I18n.BtnText_Preview);
 
             Text_WpArrange = App.GetI18n(Constants.I18n.Text_WpArrange);
             WpArrange_Per = App.GetI18n(Constants.I18n.WpArrange_Per);
@@ -92,24 +90,25 @@ namespace VirtualPaper.UI.ViewModels {
                     }
                     break;
                 case WallpaperArrangement.Expand: {
-                        Monitor monitor = new("Expand") {
-                            ThumbnailPath = _monitorManagerClient.Monitors[0].ThumbnailPath,
-                        };
+                        IMonitor monitor = _monitorManagerClient.PrimaryMonitor;
+                        monitor.Content = "Expand";
+                        monitor.ThumbnailPath = _monitorManagerClient.Monitors[0].ThumbnailPath;
                         _monitors.Add(monitor);
                     }
                     break;
                 case WallpaperArrangement.Duplicate: {
-                        Monitor monitor = new("Duplicate") {
-                            ThumbnailPath = _monitorManagerClient.Monitors[0].ThumbnailPath,
-                        };
+                        IMonitor monitor = _monitorManagerClient.PrimaryMonitor;
+                        monitor.Content = "Duplicate";
+                        monitor.ThumbnailPath = _monitorManagerClient.Monitors[0].ThumbnailPath;
                         _monitors.Add(monitor);
                     }
                     break;
             }
 
-            Monitors.SetRange(_monitors);
-            if (Monitors.Count > 0) {
-                SelectedMonitor = Monitors[0];
+            _monitorCnt = _monitorManagerClient.Monitors.Count;
+            MonitorThus.SetRange(_monitors);
+            if (MonitorThus.Count > 0) {
+                SelectedMonitor = MonitorThus[0];
             }
         }
 
@@ -145,7 +144,7 @@ namespace VirtualPaper.UI.ViewModels {
                     await _dialogService.ShowDialogAsync(
                         App.GetI18n("Dialog_Content_ApplyError")
                         , App.GetI18n("Dialog_Title_Error")
-                        , App.GetI18n("Dialog_Btn_Confirm"));
+                        , App.GetI18n("Text_Confirm"));
                 }
             }
             catch (Exception ex) {
@@ -166,9 +165,9 @@ namespace VirtualPaper.UI.ViewModels {
             InitMonitors();
 
             await _dialogService.ShowDialogAsync(
-                App.GetI18n(Constants.I18n.Dialog_Content_GetMonitorsAsync) + Monitors.Count
+                App.GetI18n(Constants.I18n.Dialog_Content_GetMonitorsAsync) + _monitorCnt
                 , App.GetI18n(Constants.I18n.Dialog_Title_Prompt)
-                , App.GetI18n(Constants.I18n.Dialog_Btn_Confirm));
+                , App.GetI18n(Constants.I18n.Text_Confirm));
         }
 
         internal async Task IdentifyAsync() {
@@ -211,6 +210,7 @@ namespace VirtualPaper.UI.ViewModels {
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly SemaphoreSlim _adjustSemaphoreSlim = new(1, 1);
         private CancellationTokenSource _ctsAdjust;
+        private int _monitorCnt;
 
         public class WpArrangeDataModel {
             public string Method { get; set; }

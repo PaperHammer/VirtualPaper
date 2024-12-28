@@ -337,7 +337,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
                 await _dialogService.ShowDialogAsync(
                         _localizer.GetLocalizedString(Constants.I18n.Dialog_Content_WallpaperDirectoryChangePathInvalid)
                         , _localizer.GetLocalizedString(Constants.I18n.Dialog_Title_Prompt)
-                        , _localizer.GetLocalizedString(Constants.I18n.Dialog_Btn_Confirm));
+                        , _localizer.GetLocalizedString(Constants.I18n.Text_Confirm));
                 return;
             }
 
@@ -416,7 +416,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
             try {
                 await foreach (var libData in GetWpBasicDataByInstallFoldersAsync(wallpaperInstallFolders)) {
                     var data = libData.BasicData;
-                    data.MoveTo(Path.Combine(destFolderPath, data.FolderName));
+                    await data.MoveToAsync(Path.Combine(destFolderPath, data.FolderName));
                 }
             }
             catch (Exception ex) {

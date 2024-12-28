@@ -1,14 +1,12 @@
 using System;
 using System.Diagnostics;
 using System.Numerics;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using NLog;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels.WpSettingsComponents;
@@ -26,18 +24,17 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
             this.InitializeComponent();
 
             _compositor = App.Services.GetRequiredService<MainWindow>().Compositor;
-            _logger = LogManager.GetCurrentClassLogger();
             _viewModel = App.Services.GetRequiredService<LibraryContentsViewModel>();
             this.DataContext = _viewModel;
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
-            await _viewModel.InitContents();
+            await _viewModel.InitContentAsync();
         }
 
 
         private void Image_ImageFailed(object sender, ExceptionRoutedEventArgs e) {
-            _logger.Error($"RImage loading failed: {e.ErrorMessage}");
+            App.Log.Error($"RImage loading failed: {e.ErrorMessage}");
         }
 
         private async void SingleClickAction(IWpBasicData data) {
@@ -112,7 +109,7 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
             }
             catch (Exception ex) {
                 BasicUIComponentUtil.ShowExp(ex);
-                _logger.Error(ex);
+                App.Log.Error(ex);
             }
         }
 
@@ -154,7 +151,6 @@ namespace VirtualPaper.UI.Views.WpSettingsComponents {
         }
 
         private readonly LibraryContentsViewModel _viewModel;
-        private readonly Logger _logger;
         private IWpBasicData _data;
         private readonly Compositor _compositor;
         private SpringVector3NaturalMotionAnimation _springAnimation;

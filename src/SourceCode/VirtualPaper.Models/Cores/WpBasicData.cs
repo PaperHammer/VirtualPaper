@@ -111,7 +111,7 @@ namespace VirtualPaper.Models.Cores {
             JsonStorage<IWpBasicData>.StoreData(Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName), this);
         }
 
-        public void MoveTo(string targetFolderPath) {
+        public async Task MoveToAsync(string targetFolderPath) {
             if (!Directory.Exists(targetFolderPath)) {
                 FileUtil.CopyDirectory(
                     this.FolderPath,
@@ -121,9 +121,9 @@ namespace VirtualPaper.Models.Cores {
             string oldFolderPath = this.FolderPath;
 
             if (oldFolderPath != targetFolderPath) {
-                this.FolderPath = this.FolderPath.Replace(oldFolderPath, targetFolderPath);
-                this.FilePath = this.FilePath.Replace(oldFolderPath, targetFolderPath);
-                this.ThumbnailPath = this.ThumbnailPath.Replace(oldFolderPath, targetFolderPath);
+                this.FolderPath = await FileUtil.UpdateFileFolderPathAsync(this.FolderPath, oldFolderPath, targetFolderPath);
+                this.FilePath = await FileUtil.UpdateFileFolderPathAsync(this.FilePath, oldFolderPath, targetFolderPath);
+                this.ThumbnailPath = await FileUtil.UpdateFileFolderPathAsync(this.ThumbnailPath, oldFolderPath, targetFolderPath);
             }
 
             Save();

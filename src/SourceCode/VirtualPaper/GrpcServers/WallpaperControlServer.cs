@@ -61,17 +61,8 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override async Task<Grpc_PreviewWallpaperResponse> PreviewWallpaper(Grpc_PreviewWallpaperRequest request, ServerCallContext context) {
-            string monitorDeviceId = request.MonitorDeviceId;
-            var grpc_playerData = request.WpPlayerData;
-            bool isOk;
-            if (grpc_playerData == null) {
-                isOk = _wpControl.PreviewWallpaper(monitorDeviceId, context.CancellationToken);
-            }
-            else {
-                var playingData = DataAssist.GrpcToPlayerData(grpc_playerData);
-                isOk = await _wpControl.PreviewWallpaperAsync(playingData, monitorDeviceId, context.CancellationToken);
-            }
-
+            var playingData = DataAssist.GrpcToPlayerData(request.WpPlayerData);
+            bool isOk = await _wpControl.PreviewWallpaperAsync(request.MonitorDeviceId, playingData, context.CancellationToken);
             Grpc_PreviewWallpaperResponse response = new() {
                 IsOk = isOk,
             };

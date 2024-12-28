@@ -110,9 +110,17 @@ namespace VirtualPaper.Common.Utils.Files {
         }
 
         public static async Task CopyFileAsync(string src, string dest) {
+            if (string.IsNullOrEmpty(src) || string.IsNullOrEmpty(dest) || !File.Exists(src)) return;
+
             using FileStream sourceStream = File.Open(src, FileMode.Open);
             using FileStream destinationStream = File.Create(dest);
             await sourceStream.CopyToAsync(destinationStream);
+        }
+
+        public static async Task<string> UpdateFileFolderPathAsync(string sourcefilePath, string sourceFolderPath, string targetFolderPath) {
+            string targetFilePath = sourcefilePath.Replace(sourceFolderPath, targetFolderPath);
+            await CopyFileAsync(sourcefilePath, targetFilePath);
+            return targetFilePath;
         }
 
         /// <summary>

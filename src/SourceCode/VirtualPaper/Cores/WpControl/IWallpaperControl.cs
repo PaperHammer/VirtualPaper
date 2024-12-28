@@ -42,8 +42,7 @@ namespace VirtualPaper.Cores.WpControl {
         IWpMetadata GetWallpaperByFolderPath(string folderPath, string monitorContent, string rtype);
         IWpBasicData GetWpBasicDataByForlderPath(string folderPath);
         bool AdjustWallpaper(string monitorDeviceId, CancellationToken toke);
-        bool PreviewWallpaper(string monitorDeviceId, CancellationToken toke);
-        Task<bool> PreviewWallpaperAsync(IWpPlayerData wpPlayingData, string monitorDeviceId, CancellationToken toke);
+        Task<bool> PreviewWallpaperAsync(string monitorDeviceId, IWpPlayerData wpPlayingData, CancellationToken toke);
         Task ResetWallpaperAsync();
         Grpc_RestartWallpaperResponse RestoreWallpaper();
         Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, CancellationToken token, bool fromPreview = false);
@@ -54,7 +53,7 @@ namespace VirtualPaper.Cores.WpControl {
 
         #region data
         IWpBasicData CreateBasicData(string filePath, FileType ftype, CancellationToken token);
-        IWpRuntimeData CreateRuntimeData(string filePath, string folderPath, RuntimeType rtype, bool isPreview, string monitorContent = "-1");
+        IWpRuntimeData CreateRuntimeData(string filePath, string folderPath, RuntimeType rtype, bool isPreview, string monitorContent);
         IWpBasicData UpdateBasicData(string folderPath, string folderName, string filePath, FileType ftype, CancellationToken token);
         #endregion
 

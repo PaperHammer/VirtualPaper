@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.Json;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
-using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Shell;
 using VirtualPaper.Models.Cores.Interfaces;
 
@@ -15,9 +14,10 @@ namespace VirtualPaper.Cores.Players.Web {
         public IWpPlayerData Data { get; private set; }
         public IMonitor Monitor { get; set; }
         public bool IsExited { get; private set; }
-        public bool IsLoaded { get; private set; } = false;
+        public bool IsLoaded { get; private set; }
+        public bool IsPreview { get; private set; }
         public EventHandler? Closing { get; set; }
-        public EventHandler? ToBackground { get; set; }
+        public EventHandler? Apply { get; set; }
 
         public PlayerWeb(
             IWpPlayerData data,
@@ -29,6 +29,7 @@ namespace VirtualPaper.Cores.Players.Web {
 
             StringBuilder cmdArgs = new();
             CheckParams(data);
+            IsPreview = isPreview;
             if (isPreview) {
                 cmdArgs.Append($" --is-preview");
             }
@@ -39,7 +40,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 cmdArgs.Append($" --bottom {monitor.WorkingArea.Bottom}");
             }
 
-            cmdArgs.Append($" -f {data.FilePath}");            
+            cmdArgs.Append($" -f {data.FilePath}");
             cmdArgs.Append($" -b {Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName)}");
             if (data.RType == RuntimeType.RImage3D) {
                 cmdArgs.Append($" --depth-file-path {data.DepthFilePath}");
@@ -156,7 +157,7 @@ namespace VirtualPaper.Cores.Players.Web {
         public void Update(IWpPlayerData data) {
             this.Data = data;
             SendMessage(new VirtualPaperUpdateCmd() {
-                WpType = data.RType.ToString(),
+                RType = data.RType.ToString(),
                 FilePath = data.FilePath,
                 WpEffectFilePathUsing = data.WpEffectFilePathUsing,
             });
@@ -233,7 +234,7 @@ namespace VirtualPaper.Cores.Players.Web {
                     }
                 }
                 else if (obj.Type == MessageType.cmd_apply) {
-                    ToBackground?.Invoke(this, EventArgs.Empty);
+                    Apply?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
@@ -361,6 +362,10 @@ namespace VirtualPaper.Cores.Players.Web {
         //        return new TimeoutException("An Error occurred");
         //    }
         //}
+
+        public bool Equals(IWpPlayer? other) {
+            return this.Data.WallpaperUid == other?.Data.WallpaperUid && this.Data.RType == other?.Data.RType;
+        }
 
         #region dispose
         private bool _isDisposed;

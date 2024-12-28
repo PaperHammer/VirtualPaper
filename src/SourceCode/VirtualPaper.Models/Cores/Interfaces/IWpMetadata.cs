@@ -4,7 +4,7 @@
         IWpRuntimeData RuntimeData { get; set; }
         IWpPlayerData GetPlayerData();
         void Read(string folderPath);
-        void MoveTo(string targetFolderPath);
+        Task MoveToAsync(string targetFolderPath);
         void Save();
         bool IsAvailable();
     }

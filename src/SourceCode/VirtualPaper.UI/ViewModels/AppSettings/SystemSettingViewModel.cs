@@ -60,7 +60,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
                     await _dialogService.ShowDialogAsync(
                         ex.Message
                         , _localizer.GetLocalizedString("Dialog_Title_Prompt")
-                        , _localizer.GetLocalizedString("Dialog_Btn_Confirm"));
+                        , _localizer.GetLocalizedString("Text_Confirm"));
                     return;
                 }
             }

@@ -99,8 +99,6 @@
             public static string DetailedInfo_TextRType { get; } = "DetailedInfo_TextRType";
             public static string DetailedInfo_TextVirtualPaperUid { get; } = "DetailedInfo_TextVirtualPaperUid";
             public static string DetailedInfo_TextVersionInfo { get; } = "DetailedInfo_TextVersionInfo";
-            public static string Dialog_Btn_Cancel { get; } = "Dialog_Btn_Cancel";
-            public static string Dialog_Btn_Confirm { get; } = "Dialog_Btn_Confirm";
             public static string Dialog_Content_ApplyError { get; } = "Dialog_Content_ApplyError";
             public static string Dialog_Content_FileNotExists { get; } = "Dialog_Content_FileNotExists";
             public static string Dialog_Content_GetMonitorsAsync { get; } = "Dialog_Content_GetMonitorsAsync";
@@ -286,6 +284,7 @@
             public static string WpSettings_SidebarWpConfig { get; } = "WpSettings_SidebarWpConfig";
             public static string Text_SaveAndApply { get; } = "Text_SaveAndApply";
             public static string Text_Cancel { get; } = "Text_Cancel";
+            public static string Text_Confirm { get; } = "Text_Confirm";
             public static string Text_Delete { get; } = "Text_Delete";
             public static string BtnText_Close { get; } = "BtnText_Close";
             public static string BtnText_Detect { get; } = "BtnText_Detect";

@@ -107,13 +107,13 @@ namespace VirtualPaper.PlayerWeb {
             Closing();
         }
 
-        //private void Webview2_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
-        //    e.Handled = true; // ×èÖ¹£¨Êó±êµÈ£©Ö¸Õë²Ù×÷
-        //}
+        private void Webview2_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+            e.Handled = true; // ×èÖ¹£¨Êó±êµÈ£©Ö¸Õë²Ù×÷
+        }
 
-        //private void Webview2_PreviewKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e) {
-        //    e.Handled = true;  // ×èÖ¹¼üÅÌ²Ù×÷
-        //}
+        private void Webview2_PreviewKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e) {
+            e.Handled = true;  // ×èÖ¹¼üÅÌ²Ù×÷
+        }
 
         private void Closing() {
             this.Hide();
@@ -255,12 +255,16 @@ namespace VirtualPaper.PlayerWeb {
             await ExecuteScriptFunctionAsync(Fileds.AudioMuteChanged, muted.IsMuted);
         }
 
-        private async Task HandleUpdateCommandAsync(VirtualPaperUpdateCmd update) {
-            _startArgs.RuntimeType = update.WpType;
-            _startArgs.FilePath = update.FilePath;
-            _startArgs.WpEffectFilePathUsing = update.WpEffectFilePathUsing;
+        private async Task HandleUpdateCommandAsync(VirtualPaperUpdateCmd update) {            
+            if (_startArgs.FilePath != update.FilePath) {
+                _startArgs.FilePath = update.FilePath;
+                _startArgs.RuntimeType = update.RType;
+                _startArgs.WpEffectFilePathTemplate = update.WpEffectFilePathTemplate;
+                _startArgs.WpEffectFilePathTemporary = update.WpEffectFilePathTemporary;
+                _startArgs.WpEffectFilePathUsing = update.WpEffectFilePathUsing;
+                await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+            }
 
-            await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
             LoadWpEffect(_startArgs.WpEffectFilePathUsing);
         }
         #endregion

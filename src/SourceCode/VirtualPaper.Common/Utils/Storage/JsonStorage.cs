@@ -22,6 +22,11 @@ namespace VirtualPaper.Common.Utils.Storage {
         }
 
         public static void StoreData(string filePath, T data) {
+            string? directoryPath = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directoryPath)) {
+                Directory.CreateDirectory(directoryPath);
+            }
+
             using FileStream stream = File.Create(filePath);
             JsonSerializer.Serialize(stream, data, _optionsStore);
         }

@@ -58,9 +58,9 @@ namespace VirtualPaper.PlayerWeb.Utils {
 
         private static void EffectConfig_SaveAndApply(object sender, EventArgs e) {
             if (_mainWindow._startArgs.IsPreview) {
-                App.WriteToParent(new VirtualPaperApplyCmd());
                 _mainWindow?.Close();
             }
+            App.WriteToParent(new VirtualPaperApplyCmd());
             _toolContainer?.Close();
         }
 

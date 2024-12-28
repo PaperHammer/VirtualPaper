@@ -49,20 +49,36 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override async Task<Empty> IdentifyMonitors(Empty request, ServerCallContext context) {
-            int cnt = _monitorManager.Monitors.Count;
-            await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(async delegate {
+            await _indentifySlim.WaitAsync();
+
+            try {
+                int cnt = _monitorManager.Monitors.Count;
+                List<Task> tasks = [];
                 for (int i = 0; i < cnt; ++i) {
-                    var monitor = _monitorManager.Monitors[i];
-                    IdentifyWindow identifyWindow = new(i + 1) {
-                        Owner = App.Current.MainWindow,
-                        Left = monitor.WorkingArea.Left,
-                        Top = monitor.WorkingArea.Top,
-                    };
-                    identifyWindow.Show();
-                    await Task.Delay(2000);
-                    identifyWindow.Close();
+                    int monitorIndex = i; // 避免闭包问题
+                    tasks.Add(Task.Run(async () => {
+                        await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () => {
+                            var monitor = _monitorManager.Monitors[monitorIndex];
+                            IdentifyWindow identifyWindow = new(monitorIndex + 1) {
+                                Owner = App.Current.MainWindow,
+                                Left = monitor.WorkingArea.Left,
+                                Top = monitor.WorkingArea.Top,
+                            };
+                            identifyWindow.Show();
+                            await Task.Delay(2000);
+                            identifyWindow.Close();
+                        }));
+                    }));
                 }
-            }));
+
+                await Task.WhenAll(tasks);
+            }
+            catch (Exception e) {
+                App.Log.Error(e);
+            }
+            finally {
+                _indentifySlim.Release();
+            }
 
             return new Empty();
         }
@@ -118,5 +134,6 @@ namespace VirtualPaper.GrpcServers {
         }
 
         private readonly IMonitorManager _monitorManager = monitorManager;
+        private static readonly SemaphoreSlim _indentifySlim = new(1, 1);
     }
 }

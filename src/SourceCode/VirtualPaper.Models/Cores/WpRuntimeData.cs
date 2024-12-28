@@ -8,7 +8,7 @@ namespace VirtualPaper.Models.Cores {
     [Serializable]
     public class WpRuntimeData : IWpRuntimeData {
         public ApplicationInfo AppInfo { get; set; } = new();
-        public string MonitorContent { get; set; } = "-1";
+        public string MonitorContent { get; set; } = string.Empty;
         public string FolderPath { get; set; } = string.Empty;
         public string DepthFilePath { get; set; } = string.Empty;
         public string WpEffectFilePathTemplate { get; set; } = string.Empty;
@@ -21,7 +21,7 @@ namespace VirtualPaper.Models.Cores {
             InitData(data);
         }
 
-        public void MoveTo(string targetFolderPath) {
+        public async Task MoveToAsync(string targetFolderPath) {
             if (!Directory.Exists(targetFolderPath)) {
                 FileUtil.CopyDirectory(
                     this.FolderPath,
@@ -32,27 +32,30 @@ namespace VirtualPaper.Models.Cores {
 
             if (oldFolderPath != targetFolderPath) {
                 this.FolderPath = this.FolderPath.Replace(oldFolderPath, targetFolderPath);
-                this.DepthFilePath = this.DepthFilePath.Replace(oldFolderPath, targetFolderPath);
-                this.WpEffectFilePathTemplate = this.WpEffectFilePathTemplate.Replace(oldFolderPath, targetFolderPath);
-                this.WpEffectFilePathUsing = this.WpEffectFilePathUsing.Replace(oldFolderPath, targetFolderPath);
-                this.WpEffectFilePathTemporary = this.WpEffectFilePathTemporary.Replace(oldFolderPath, targetFolderPath);
+                this.DepthFilePath = await FileUtil.UpdateFileFolderPathAsync(this.DepthFilePath, oldFolderPath, targetFolderPath);
+                this.WpEffectFilePathTemplate = await FileUtil.UpdateFileFolderPathAsync(this.WpEffectFilePathTemplate, oldFolderPath, targetFolderPath);
+                this.WpEffectFilePathUsing = await FileUtil.UpdateFileFolderPathAsync(this.WpEffectFilePathUsing, oldFolderPath, targetFolderPath);
+                this.WpEffectFilePathTemporary = await FileUtil.UpdateFileFolderPathAsync(this.WpEffectFilePathTemporary, oldFolderPath, targetFolderPath);
             }
 
             Save();
         }
 
-        public void FromTempToInstallPath(string targetFolderPath) {
+        public async Task FromTempMoveToInstallPathAsync(string targetFolderPath) {
             string oldFolderPath = Constants.CommonPaths.TempDir;
             this.FolderPath = this.FolderPath.Replace(oldFolderPath, targetFolderPath);
-            this.DepthFilePath = this.DepthFilePath.Replace(oldFolderPath, targetFolderPath);
-            this.WpEffectFilePathTemplate = this.WpEffectFilePathTemplate.Replace(oldFolderPath, targetFolderPath);
-            this.WpEffectFilePathUsing = this.WpEffectFilePathUsing.Replace(oldFolderPath, targetFolderPath);
-            this.WpEffectFilePathTemporary = this.WpEffectFilePathTemporary.Replace(oldFolderPath, targetFolderPath);
+            this.DepthFilePath = await FileUtil.UpdateFileFolderPathAsync(this.DepthFilePath, oldFolderPath, targetFolderPath);
+            this.WpEffectFilePathTemplate = await FileUtil.UpdateFileFolderPathAsync(this.WpEffectFilePathTemplate, oldFolderPath, targetFolderPath);
+            this.WpEffectFilePathUsing = await FileUtil.UpdateFileFolderPathAsync(this.WpEffectFilePathUsing, oldFolderPath, targetFolderPath);
+            this.WpEffectFilePathTemporary = await FileUtil.UpdateFileFolderPathAsync(this.WpEffectFilePathTemporary, oldFolderPath, targetFolderPath);
 
             Save();
         }
 
         public void Save() {
+            if (MonitorContent == string.Empty) {
+                throw new Exception("Save failed");
+            }
             JsonStorage<IWpRuntimeData>.StoreData(Path.Combine(this.FolderPath, MonitorContent, RType.ToString(), Constants.Field.WpRuntimeDataFileName), this);
         }
 
@@ -68,14 +71,6 @@ namespace VirtualPaper.Models.Cores {
             };
 
             return data;
-        }
-
-        public void RevertToApplied() {
-            File.Copy(this.WpEffectFilePathUsing, this.WpEffectFilePathTemporary, true);
-        }
-
-        public void RevertToDefault() {
-            File.Copy(this.WpEffectFilePathTemplate, this.WpEffectFilePathTemporary, true);
         }
 
         public void InitData(WpRuntimeData source) {

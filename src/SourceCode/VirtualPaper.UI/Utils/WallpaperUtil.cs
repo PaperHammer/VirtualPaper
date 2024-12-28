@@ -19,7 +19,7 @@ namespace VirtualPaper.UI.Utils {
     //        try {
     //            await foreach (var libData in GetWpBasicDataByInstallFoldersAsync(wallpaperInstallFolders)) {
     //                var md = libData.Data;
-    //                md.MoveTo(Path.Combine(destFolderPath, md.BasicData.FolderName));
+    //                md.MoveToAsync(Path.Combine(destFolderPath, md.BasicData.FolderName));
     //            }
     //        }
     //        catch (Exception ex) {

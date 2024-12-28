@@ -20,7 +20,8 @@
         x:Name="GridMain">
         <ContentControl
             x:Name="contentControlMain"
-            HorizontalContentAlignment="Stretch">
+            HorizontalContentAlignment="Stretch"
+            VerticalContentAlignment="Stretch">
             <Grid
                 Grid.Column="0"
                 Padding="10 0">
@@ -98,7 +99,7 @@
 
                                         <GridView
                                             HorizontalAlignment="Center"                                            
-                                            ItemsSource="{Binding Monitors}"
+                                            ItemsSource="{Binding MonitorThus}"
                                             SelectedItem="{Binding SelectedMonitor, Mode=TwoWay}">
                                             <GridView.ItemTemplate>
                                                 <DataTemplate>

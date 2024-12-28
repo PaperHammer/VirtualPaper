@@ -21,7 +21,7 @@ using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 using WinEventHook;
 using static VirtualPaper.Common.Errors;
-// todo: thu 文件大小过大; 相对坐标错误；webview 偶现 dpi 错误、无法显示; 
+// todo: player 相对坐标错误；player dpi 错误或无法显示;
 
 namespace VirtualPaper.Cores.WpControl {
     public partial class WallpaperControl : IWallpaperControl {
@@ -114,6 +114,7 @@ namespace VirtualPaper.Cores.WpControl {
             foreach (var kvp in _previews) {
                 kvp.Value.Close();
             }
+            _previews.Clear();
         }
 
         public (string?, RuntimeType?) GetPrimaryWpFilePathRType() {
@@ -135,6 +136,9 @@ namespace VirtualPaper.Cores.WpControl {
         }
 
         public bool AdjustWallpaper(string monitorDeviceId, CancellationToken token) {
+            if (string.IsNullOrEmpty(monitorDeviceId)) {
+                monitorDeviceId = _monitorManager.PrimaryMonitor.DeviceId;
+            }
             var instance = _wallpapers.FirstOrDefault(x => x.Monitor.DeviceId == monitorDeviceId);
             if (instance != null) {
                 instance.SendMessage(new VirtualPaperActiveCmd());
@@ -144,17 +148,7 @@ namespace VirtualPaper.Cores.WpControl {
             return false;
         }
 
-        public bool PreviewWallpaper(string monitorDeviceId, CancellationToken token) {
-            var instance = _wallpapers.FirstOrDefault(x => x.Monitor.DeviceId == monitorDeviceId);
-            if (instance == null) {
-                return false;
-            }
-            instance.SendMessage(new VirtualPaperActiveCmd());
-
-            return true;
-        }
-
-        public async Task<bool> PreviewWallpaperAsync(IWpPlayerData data, string monitorDeviceId, CancellationToken token) {
+        public async Task<bool> PreviewWallpaperAsync(string monitorDeviceId, IWpPlayerData data, CancellationToken token) {
             _previews.TryGetValue((data.WallpaperUid, data.RType), out IWpPlayer? instance);
             if (instance != null) {
                 instance.SendMessage(new VirtualPaperActiveCmd());
@@ -167,11 +161,12 @@ namespace VirtualPaper.Cores.WpControl {
                 DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
 
                 instance = _wallpaperFactory.CreatePlayer(data, monitor, _userSettings, true);
-                instance.Closing += IWallpaperPlayingClosingForPreiview;
-                instance.ToBackground += FromPreviewToBackgound;
-
-                _previews[(data.WallpaperUid, data.RType)] = instance;
-                bool isStarted = await instance.ShowAsync(token);
+                bool isStarted = await instance.ShowAsync(token) && !instance.Proc.HasExited;
+                if (isStarted) {
+                    instance.Closing += ClosingEvent;
+                    instance.Apply += ApplyEvent;
+                    _previews[(data.WallpaperUid, data.RType)] = instance;
+                }
 
                 return isStarted;
             }
@@ -189,11 +184,18 @@ namespace VirtualPaper.Cores.WpControl {
             }
         }
 
-        private void FromPreviewToBackgound(object? s, EventArgs e) {
+        private void ApplyEvent(object? s, EventArgs e) {
             if (s is not IWpPlayer instance) return;
 
-            instance.Close();
-            SetWallpaperAsync(instance.Data, instance.Monitor, fromPreview: true);
+            if (instance.IsPreview) {
+                instance.Close();
+                SetWallpaperAsync(instance.Data, instance.Monitor, fromPreview: true);
+            }
+            else {
+                if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate) {
+                    UpdateWallpaper(instance);
+                }
+            }
         }
 
         public async Task ResetWallpaperAsync() {
@@ -263,6 +265,10 @@ namespace VirtualPaper.Cores.WpControl {
 
             try {
                 App.Log.Info($"Setting wallpaper: {data.FilePath}");
+
+                if (data.RType == RuntimeType.RUnknown) {
+                    throw new Exception("rtype error");
+                }
 
                 #region init
                 if (!_isInitialized) {
@@ -357,15 +363,13 @@ namespace VirtualPaper.Cores.WpControl {
                 bool isStarted = false;
                 IWpRuntimeData? wpRuntimeData;
                 // restore 时避免覆盖已有的自定义配置
-                if (data.WpEffectFilePathUsing == string.Empty) {
-                    if (fromPreview) {
-                        wpRuntimeData = GetTempRuntimeData(data, monitor.Content);
-                    }
-                    else {
-                        wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, false, monitor.Content);
-                    }
-                    DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
+                if (fromPreview) {
+                    wpRuntimeData = await GetTempRuntimeDataAsync(data, monitor.Content);
                 }
+                else {
+                    wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, false, monitor.Content);
+                }
+                DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
                 int monitorIdx = _monitorManager.Monitors.FindIndex(x => x.DeviceId == monitor.DeviceId);
 
                 switch (_userSettings.Settings.WallpaperArrangement) {
@@ -377,9 +381,8 @@ namespace VirtualPaper.Cores.WpControl {
                             //}
 
                             IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, monitor, _userSettings);
-                            instance.Closing += IWallpaperPlayingClosingForBG;
                             CloseWallpaper(instance.Monitor);
-                            isStarted = await instance.ShowAsync(token);
+                            isStarted = await instance.ShowAsync(token) && !instance.Proc.HasExited;
 
                             if (isStarted && !TrySetWallpaperPerMonitor(instance, instance.Monitor)) {
                                 isStarted = false;
@@ -388,6 +391,8 @@ namespace VirtualPaper.Cores.WpControl {
                                 response.IsFinished = false;
                             }
                             else {
+                                instance.Closing += ClosingEvent;
+                                instance.Apply += ApplyEvent;
                                 App.Jobs.AddProcess(instance.Proc.Id);
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                 _wallpapers.Add(instance);
@@ -396,9 +401,8 @@ namespace VirtualPaper.Cores.WpControl {
                         break;
                     case WallpaperArrangement.Expand: {
                             IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, monitor, _userSettings);
-                            instance.Closing += IWallpaperPlayingClosingForBG;
                             CloseAllWallpapers();
-                            isStarted = await instance.ShowAsync(token);
+                            isStarted = await instance.ShowAsync(token) && !instance.Proc.HasExited;
 
                             if (isStarted && !TrySetWallpaperSpanMonitor(instance)) {
                                 isStarted = false;
@@ -407,6 +411,8 @@ namespace VirtualPaper.Cores.WpControl {
                                 response.IsFinished = false;
                             }
                             else {
+                                instance.Closing += ClosingEvent;
+                                instance.Apply += ApplyEvent;
                                 App.Jobs.AddProcess(instance.Proc.Id);
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                 _wallpapers.Add(instance);
@@ -417,8 +423,7 @@ namespace VirtualPaper.Cores.WpControl {
                             CloseAllWallpapers();
                             foreach (var item in _monitorManager.Monitors) {
                                 IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, item, _userSettings);
-                                instance.Closing += IWallpaperPlayingClosingForBG;
-                                isStarted = await instance.ShowAsync(token);
+                                isStarted = await instance.ShowAsync(token) && !instance.Proc.HasExited;
 
                                 if (isStarted && !TrySetWallpaperPerMonitor(instance, instance.Monitor)) {
                                     isStarted = false;
@@ -427,6 +432,8 @@ namespace VirtualPaper.Cores.WpControl {
                                     response.IsFinished = false;
                                 }
                                 else {
+                                    instance.Closing += ClosingEvent;
+                                    instance.Apply += ApplyEvent;
                                     App.Jobs.AddProcess(instance.Proc.Id);
                                     _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                     _wallpapers.Add(instance);
@@ -459,6 +466,29 @@ namespace VirtualPaper.Cores.WpControl {
             return response;
         }
 
+        private void UpdateWallpaper(IWpPlayer instance) {
+            var monitorDeviceId = instance.Monitor.DeviceId;
+            foreach (var item in _monitorManager.Monitors) {
+                if (item.DeviceId == monitorDeviceId) {
+                    continue;
+                }
+
+                var targetInstance = _wallpapers.FirstOrDefault(x => x.Monitor.DeviceId == item.DeviceId);
+                if (targetInstance == null) {
+                    SetWallpaperAsync(instance.Data, _monitorManager.PrimaryMonitor);
+                }
+                else {
+                    targetInstance?.SendMessage(new VirtualPaperUpdateCmd() {
+                        FilePath = instance.Data.FilePath,
+                        RType = instance.Data.RType.ToString(),
+                        WpEffectFilePathTemplate = instance.Data.WpEffectFilePathTemplate,
+                        WpEffectFilePathTemporary = instance.Data.WpEffectFilePathTemporary,
+                        WpEffectFilePathUsing = instance.Data.WpEffectFilePathUsing,
+                    });
+                }
+            }
+        }
+
         public void SeekWallpaper(IWpPlayerData playerData, float seek, PlaybackPosType type) {
             _wallpapers.ForEach(x => {
                 if (x.Data == playerData) {
@@ -485,19 +515,6 @@ namespace VirtualPaper.Cores.WpControl {
                 }
             });
         }
-
-        //private bool UpdateWallpaper(int monitorIdx, string monitorDeviceId, IWpPlayerData data) {
-        //    int idx = _wallpapers.FindIndex(x => x.Monitor.DeviceId == monitorDeviceId);
-        //    if (idx == -1) return false;
-        //    // RImage3D 暂不支持热替换
-        //    if (data.RType == RuntimeType.RImage3D || _wallpapers[idx].Data.RType == RuntimeType.RImage3D) return false;
-
-        //    _wallpapers[idx].Update(data);
-        //    _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
-        //    WallpaperChanged?.Invoke(this, EventArgs.Empty);
-
-        //    return true;
-        //}
         #endregion
 
         #region data
@@ -564,7 +581,7 @@ namespace VirtualPaper.Cores.WpControl {
             return data;
         }
 
-        public IWpRuntimeData GetTempRuntimeData(IWpPlayerData playerData, string monitorContent) {
+        public async Task<IWpRuntimeData> GetTempRuntimeDataAsync(IWpPlayerData playerData, string monitorContent) {
             WpRuntimeData data = new();
 
             try {
@@ -573,7 +590,13 @@ namespace VirtualPaper.Cores.WpControl {
                     AppVersion = _userSettings.Settings.AppVersion,
                     FileVersion = _userSettings.Settings.FileVersion,
                 };
-                data.MonitorContent = monitorContent;
+                data.MonitorContent =
+                    _userSettings.Settings.WallpaperArrangement switch {
+                        WallpaperArrangement.Per => monitorContent,
+                        WallpaperArrangement.Duplicate => "Duplicate",
+                        WallpaperArrangement.Expand => "Expand",
+                        _ => monitorContent
+                    };
                 data.FolderPath = playerData.FolderPath;
                 data.RType = playerData.RType;
 
@@ -583,7 +606,7 @@ namespace VirtualPaper.Cores.WpControl {
                 File.Copy(data.WpEffectFilePathTemporary, data.WpEffectFilePathUsing, true);
                 data.DepthFilePath = playerData.DepthFilePath;
 
-                data.FromTempToInstallPath(_userSettings.Settings.WallpaperDir);
+                await data.FromTempMoveToInstallPathAsync(_userSettings.Settings.WallpaperDir);
             }
             catch (Exception ex) {
                 App.Log.Error(ex);
@@ -615,7 +638,13 @@ namespace VirtualPaper.Cores.WpControl {
                     AppVersion = _userSettings.Settings.AppVersion,
                     FileVersion = _userSettings.Settings.FileVersion,
                 };
-                data.MonitorContent = monitorContent;
+                data.MonitorContent =
+                    _userSettings.Settings.WallpaperArrangement switch {
+                        WallpaperArrangement.Per => monitorContent,
+                        WallpaperArrangement.Duplicate => "Duplicate",
+                        WallpaperArrangement.Expand => "Expand",
+                        _ => monitorContent
+                    };
                 data.FolderPath = storageFilePath;
                 data.RType = rtype;
 
@@ -630,9 +659,8 @@ namespace VirtualPaper.Cores.WpControl {
                        1,
                        storageFilePath,
                        wpEffectFilePathTemplate,
-                       monitorContent,
-                       rtype,
-                       _userSettings.Settings.WallpaperArrangement);
+                       data.MonitorContent,
+                       rtype);
                 data.WpEffectFilePathTemporary = wpEffectFilePathTemporary;
 
                 wpEffectFilePathUsing =
@@ -640,9 +668,8 @@ namespace VirtualPaper.Cores.WpControl {
                        0,
                        storageFilePath,
                        wpEffectFilePathTemplate,
-                       monitorContent,
-                       rtype,
-                       _userSettings.Settings.WallpaperArrangement);
+                       data.MonitorContent,
+                       rtype);
                 data.WpEffectFilePathUsing = wpEffectFilePathUsing;
 
                 if (rtype == RuntimeType.RImage3D) {
@@ -767,7 +794,7 @@ namespace VirtualPaper.Cores.WpControl {
                                 x.Close();
                             });
 
-                            _wallpapers.RemoveAll(x => orphanWallpapers.Contains(x));
+                            _wallpapers.RemoveAll(orphanWallpapers.Contains);
                         }
                         break;
                     case WallpaperArrangement.Duplicate:
@@ -776,7 +803,7 @@ namespace VirtualPaper.Cores.WpControl {
                                 App.Log.Info($"Disconnected Screen: {x.Monitor.DeviceId} {x.Monitor.Bounds}");
                                 x.Close();
                             });
-                            _wallpapers.RemoveAll(x => orphanWallpapers.Contains(x));
+                            _wallpapers.RemoveAll(orphanWallpapers.Contains);
                         }
                         break;
                     case WallpaperArrangement.Expand:
@@ -858,21 +885,16 @@ namespace VirtualPaper.Cores.WpControl {
             }
         }
 
-        private void IWallpaperPlayingClosingForBG(object? s, EventArgs e) {
+        private void ClosingEvent(object? s, EventArgs e) {
             if (s is not IWpPlayer instance) return;
 
-            instance.Closing -= IWallpaperPlayingClosingForBG;
+            instance.Closing -= ClosingEvent;
+            instance.Apply -= ApplyEvent;
             instance.Closing = null;
-        }
-
-        private void IWallpaperPlayingClosingForPreiview(object? s, EventArgs e) {
-            if (s is not IWpPlayer instance) return;
-
-            instance.Closing -= IWallpaperPlayingClosingForPreiview;
-            instance.ToBackground -= FromPreviewToBackgound;
-            instance.Closing = null;
-            instance.ToBackground = null;
-            _previews.Remove((instance.Data.WallpaperUid, instance.Data.RType));
+            instance.Apply = null;
+            if (instance.IsPreview) {
+                _previews.Remove((instance.Data.WallpaperUid, instance.Data.RType));
+            }
         }
 
         private void SetupDesktop_WallpaperChanged(object? sender, EventArgs e) {
@@ -884,10 +906,17 @@ namespace VirtualPaper.Cores.WpControl {
             lock (_layoutWriteLock) {
                 _userSettings.WallpaperLayouts.Clear();
                 _wallpapers.ForEach(wallpaper => {
+                    string monitorContent =
+                    _userSettings.Settings.WallpaperArrangement switch {
+                        WallpaperArrangement.Per => wallpaper.Monitor.Content,
+                        WallpaperArrangement.Duplicate => "Duplicate",
+                        WallpaperArrangement.Expand => "Expand",
+                        _ => wallpaper.Monitor.Content
+                    };
                     _userSettings.WallpaperLayouts.Add(new WallpaperLayout(
                         wallpaper.Data.FolderPath,
                         wallpaper.Monitor.DeviceId,
-                        wallpaper.Monitor.Content,
+                        monitorContent,
                         wallpaper.Data.RType.ToString()));
                 });
 

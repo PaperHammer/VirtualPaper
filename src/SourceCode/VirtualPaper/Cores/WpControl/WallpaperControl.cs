@@ -9,6 +9,7 @@ using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Shell;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Factories.Interfaces;
@@ -21,7 +22,7 @@ using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 using WinEventHook;
 using static VirtualPaper.Common.Errors;
-// todo: player 有概率在非主屏无法显示;
+// todo: player 有概率在非主屏无法显示; update config 异常
 
 namespace VirtualPaper.Cores.WpControl {
     public partial class WallpaperControl : IWallpaperControl {
@@ -174,7 +175,7 @@ namespace VirtualPaper.Cores.WpControl {
                 _previews.Remove((data.WallpaperUid, data.RType));
                 instance?.Dispose();
 
-                return false;
+                throw;
             }
             catch (Exception ex) {
                 App.Log.Error($"An error occurred while preview wallpaper: {ex.Message}");
@@ -521,13 +522,14 @@ namespace VirtualPaper.Cores.WpControl {
         public IWpBasicData CreateBasicData(
             string filePath,
             FileType ftype,
-            CancellationToken token) {
+            CancellationToken token = default,
+            string? folderName = null,
+            bool isAutoSave = true) {
             WpBasicData data = new();
             string folderPath = string.Empty;
 
             try {
                 data.FType = ftype;
-
                 data.AppInfo = new() {
                     AppName = _userSettings.Settings.AppName,
                     AppVersion = _userSettings.Settings.AppVersion,
@@ -536,16 +538,18 @@ namespace VirtualPaper.Cores.WpControl {
                 data.IsSubscribed = true;
 
                 // 创建随机不重复文件夹，并更新 folderPath
-                string folderName = Path.GetRandomFileName();
+                folderName = folderName ?? Path.GetRandomFileName();
                 data.FolderName = folderName;
                 data.WallpaperUid = "LCL" + folderName;
                 folderPath = Path.Combine(_userSettings.Settings.WallpaperDir, folderName);
                 data.FolderPath = folderPath;
 
-                // 创建壁纸存储路径与自定义配置文件路径,将原壁纸复制到 folder 下
+                // 创建壁纸存储路径与自定义配置文件路径,将原壁纸复制到 folder 下                
                 Directory.CreateDirectory(folderPath);
                 string destFilePath = Path.Combine(folderPath, folderName + Path.GetExtension(filePath));
-                File.Copy(filePath, destFilePath, true);
+                if (filePath != destFilePath) {
+                    File.Copy(filePath, destFilePath, true);
+                }
                 data.FilePath = destFilePath;
 
                 #region 创建展示缩略图
@@ -562,13 +566,17 @@ namespace VirtualPaper.Cores.WpControl {
                 data.FileExtension = fileProperty.FileExtension;
 
                 string basicDatafilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
-                data.Save();
+                if (isAutoSave) {
+                    data.Save();
+                }
                 #endregion
             }
-            catch (OperationCanceledException) {
+            catch (OperationCanceledException) when (token.IsCancellationRequested) {
                 if (Directory.Exists(folderPath)) {
                     Directory.Delete(folderPath, true);
                 }
+
+                throw;
             }
             catch (Exception ex) {
                 App.Log.Error(ex);
@@ -576,6 +584,8 @@ namespace VirtualPaper.Cores.WpControl {
                 if (Directory.Exists(folderPath)) {
                     Directory.Delete(folderPath, true);
                 }
+
+                throw;
             }
 
             return data;
@@ -692,47 +702,24 @@ namespace VirtualPaper.Cores.WpControl {
             return data;
         }
 
-        public IWpBasicData UpdateBasicData(
+        public async Task<IWpBasicData> UpdateBasicDataAsync(
             string folderPath,
             string folderName,
             string filePath,
-            FileType ftype,
-            CancellationToken token) {
-            WpBasicData data = new();
+            FileType ftype) {
+            IWpBasicData newData = CreateBasicData(filePath, ftype, folderName: folderName, isAutoSave: false)
+                ?? throw new Exception("Create basic-data error");
 
             try {
-                data.FType = ftype;
-                data.AppInfo = new() {
-                    AppName = _userSettings.Settings.AppName,
-                    AppVersion = _userSettings.Settings.AppVersion,
-                    FileVersion = _userSettings.Settings.FileVersion,
-                };
-                data.IsSubscribed = true;
-                data.FolderName = folderName;
-                data.FolderPath = folderPath;
-                data.FilePath = filePath;
-
-                #region 创建展示缩略图
-                string coverFilePath = Path.Combine(folderPath, folderName + Constants.Field.ThumGifSuff);
-                WallpaperUtil.CreateGif(filePath, coverFilePath, ftype, token);
-                data.ThumbnailPath = coverFilePath;
-                #endregion
-
-                #region 文件元数据
-                var fileProperty = WallpaperUtil.GetWpProperty(filePath, ftype);
-                data.Resolution = fileProperty.Resolution;
-                data.AspectRatio = fileProperty.AspectRatio;
-                data.FileSize = fileProperty.FileSize;
-                data.FileExtension = fileProperty.FileExtension;
-
-                data.Save();
-                #endregion
+                IWpBasicData oldData = await JsonStorage<WpBasicData>.LoadDataAsync(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName));
+                newData.Merge(oldData);
+                newData.Save();
             }
             catch (Exception ex) {
                 App.Log.Error(ex);
             }
 
-            return data;
+            return newData;
         }
         #endregion
 
@@ -971,7 +958,7 @@ namespace VirtualPaper.Cores.WpControl {
             if (!Native.SetWindowPos(wallpaper.Handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, (int)Native.SWP_NOACTIVATE)) {
                 App.Log.Error("Failed to set perscreen wallpaper(2)}");
             }
-            
+
             bool isPositionCorrect = IsWindowPositionCorrect(wallpaper.Handle, targetMonitor.Bounds);
             if (!isPositionCorrect) {
                 App.Log.Warn("Set perscreen not correct");

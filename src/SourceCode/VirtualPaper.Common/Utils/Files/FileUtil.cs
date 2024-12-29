@@ -151,6 +151,35 @@ namespace VirtualPaper.Common.Utils.Files {
             }
             return status;
         }
+        
+        /// <summary>
+        /// Async folder delete operation after given delay.
+        /// </summary>
+        /// <param name="folderPath"></param>
+        /// <param name="initialDelay"></param>
+        /// <param name="retryDelay"></param>
+        /// <returns>True if deletion completed succesfully.</returns>
+        public static async Task<bool> TryDeleteFileAsync(string filePath, int initialDelay = 1000, int retryDelay = 4000) {
+            bool status = true;
+            if (File.Exists(filePath)) {
+                await Task.Delay(initialDelay);
+                try {
+                    await Task.Run(() => File.Delete(filePath));
+                }
+                catch (Exception) {
+                    //App.Log.Errors("Folder Delete Failure {0}.\nRetrying..", ex.Message);
+                    await Task.Delay(retryDelay);
+                    try {
+                        await Task.Run(() => File.Delete(filePath));
+                    }
+                    catch (Exception) {
+                        //App.Log.Errors("(Retry)Folder Delete Failure: {0}", ie.Message);
+                        status = false;
+                    }
+                }
+            }
+            return status;
+        }
 
         //ref: https://docs.microsoft.com/en-us/dotnet/standard/io/how-to-copy-directories
         /// <summary>

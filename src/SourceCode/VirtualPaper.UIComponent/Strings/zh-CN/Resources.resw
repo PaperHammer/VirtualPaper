@@ -602,4 +602,10 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Text_VersionInfo" xml:space="preserve">
     <value>版本信息：</value>
   </data>
+  <data name="InfobarMsg_ImportErr" xml:space="preserve">
+    <value>该文件无法导入</value>
+  </data>
+  <data name="Text_FileUsing" xml:space="preserve">
+    <value>文件使用中，请关闭使用源</value>
+  </data>
 </root>

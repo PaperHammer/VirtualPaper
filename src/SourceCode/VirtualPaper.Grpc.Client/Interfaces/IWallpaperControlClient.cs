@@ -33,7 +33,7 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         Task<Grpc_MonitorData?> GetRunMonitorByWallpaperAsync(string wpUid);
         Task SendMessageWallpaperAsync(IMonitor monitor, IWpRuntimeData metaData, IpcMessage msg);
         Task TakeScreenshotAsync(string monitorId, string savePath);
-        Task<Grpc_WpBasicData?> UpdateBasicDataAsync(IWpBasicData data, CancellationToken token);
+        Task<Grpc_WpBasicData?> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype);
         #endregion
     }
 }

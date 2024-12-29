@@ -602,4 +602,10 @@ Author: PaperHammer</value>
   <data name="Text_VersionInfo" xml:space="preserve">
     <value>Version info：</value>
   </data>
+  <data name="InfobarMsg_ImportErr" xml:space="preserve">
+    <value>The file import error</value>
+  </data>
+  <data name="Text_FileUsing" xml:space="preserve">
+    <value>The document is in use, please close the source being used</value>
+  </data>
 </root>

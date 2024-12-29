@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -177,11 +178,16 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
 
         internal async Task UpdateAsync(IWpBasicData data) {
             try {
-                _ctsUpdate = new CancellationTokenSource();
-                BasicUIComponentUtil.Loading(true, false, [_ctsUpdate]);
+                BasicUIComponentUtil.Loading(false, false, null);
 
-                Grpc_WpBasicData grpc_basicData = await _wpControlClient.UpdateBasicDataAsync(data, _ctsUpdate.Token)
-                    ?? throw new Exception("File repair failed.");
+                bool isUsing = await CheckFileUsingAsync(data, false);
+                if (isUsing) {
+                    BasicUIComponentUtil.ShowMsg(true, Constants.I18n.Text_FileUsing, InfoBarSeverity.Informational);
+                    return;
+                }
+
+                Grpc_WpBasicData grpc_basicData = await _wpControlClient.UpdateBasicDataAsync(data.FolderPath, data.FolderName, data.FilePath, data.FType)
+                    ?? throw new Exception("File update failed.");
                 data = DataAssist.GrpcToBasicData(grpc_basicData);
                 UpdateLib(data);
 
@@ -191,7 +197,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 BasicUIComponentUtil.ShowExp(ex);
             }
             finally {
-                BasicUIComponentUtil.Loaded([_ctsUpdate]);
+                BasicUIComponentUtil.Loaded(null);
             }
         }
 
@@ -208,6 +214,14 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 if (rtype == RuntimeType.RUnknown) return;
 
                 await _wpControlClient.PreviewWallpaperAsync(_wpSettingsViewModel.SelectedMonitor.DeviceId, data, rtype, _ctsPreview.Token);
+            }
+            catch (RpcException ex) {
+                if (ex.StatusCode == StatusCode.Cancelled) {
+                    BasicUIComponentUtil.ShowCanceled();
+                }
+                else {
+                    BasicUIComponentUtil.ShowExp(ex);
+                }
             }
             catch (OperationCanceledException) {
                 BasicUIComponentUtil.ShowCanceled();
@@ -243,6 +257,14 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                         true,
                         Constants.I18n.Dialog_Content_ApplyError,
                         InfoBarSeverity.Error);
+                }
+            }
+            catch (RpcException ex) {
+                if (ex.StatusCode == StatusCode.Cancelled) {
+                    BasicUIComponentUtil.ShowCanceled();
+                }
+                else {
+                    BasicUIComponentUtil.ShowExp(ex);
                 }
             }
             catch (OperationCanceledException) {
@@ -294,7 +316,10 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                 if (dialogRes != DialogResult.Primary) return;
 
                 bool isUsing = await CheckFileUsingAsync(data, false);
-                if (isUsing) return;
+                if (isUsing) {
+                    BasicUIComponentUtil.ShowMsg(true, Constants.I18n.Text_FileUsing, InfoBarSeverity.Informational);
+                    return;
+                }
 
                 string uid = data.WallpaperUid;
                 _uid2idx.Remove(uid, out _);
@@ -347,8 +372,14 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
                                 importValue.FilePath,
                                 importValue.FType,
                                 _ctsImport.Token);
-                            IWpBasicData data = DataAssist.GrpcToBasicData(grpc_data);
-                            UpdateLib(data);
+                            WpBasicData data = DataAssist.GrpcToBasicData(grpc_data);
+                            if (data.IsAvailable()) {
+                                UpdateLib(data);
+                            }
+                            else {
+                                string msg = $"{App.GetI18n(Constants.I18n.InfobarMsg_ImportErr)}: {importValue.FilePath}";
+                                BasicUIComponentUtil.ShowMsg(false, msg, InfoBarSeverity.Error);
+                            }
                         }
                         else {
                             await _dialogService.ShowDialogAsync(
@@ -515,7 +546,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly WpSettingsViewModel _wpSettingsViewModel;
         private List<string> _wallpaperInstallFolders;
-        private CancellationTokenSource _ctsImport, _ctsUpdate, _ctsApply, _ctsApplyLockBG, _ctsPreview;
+        private CancellationTokenSource _ctsImport, _ctsApply, _ctsApplyLockBG, _ctsPreview;
         private readonly ConcurrentDictionary<string, int> _uid2idx = [];
         private readonly SemaphoreSlim _applySemaphoreSlim = new(1, 1);
         private readonly SemaphoreSlim _previewSemaphoreSlim = new(1, 1);

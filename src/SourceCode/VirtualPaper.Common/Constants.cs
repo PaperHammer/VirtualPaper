@@ -92,6 +92,7 @@
             public static string Effect_Help_Scaling { get; } = "Effect_Help_Scaling";            
             public static string InfobarMsg_Cancel { get; } = "InfobarMsg_Cancel";
             public static string InfobarMsg_Err { get; } = "InfobarMsg_Err";
+            public static string InfobarMsg_ImportErr { get; } = "InfobarMsg_ImportErr";
             public static string InfobarMsg_Success { get; } = "InfobarMsg_Success";
             public static string ScreenSaver__effectBubble { get; } = "ScreenSaver__effectBubble";
             public static string ScreenSaver__effectNone { get; } = "ScreenSaver__effectNone";
@@ -205,6 +206,7 @@
             public static string Text_EffectConfig { get; } = "Text_EffectConfig";
             public static string Text_FileExtension { get; } = "Text_FileExtension";
             public static string Text_FileSize { get; } = "Text_FileSize";
+            public static string Text_FileUsing { get; } = "Text_FileUsing";
             public static string Text_Identify { get; } = "Text_Identify";
             public static string Text_Loading { get; } = "Text_Loading";
             public static string Text_Off { get; } = "Text_Off";

@@ -52,9 +52,9 @@ namespace VirtualPaper.Cores.WpControl {
         #endregion
 
         #region data
-        IWpBasicData CreateBasicData(string filePath, FileType ftype, CancellationToken token);
+        IWpBasicData CreateBasicData(string filePath, FileType ftype, CancellationToken token, string? folderName = null, bool isAutoSave = true);
         IWpRuntimeData CreateRuntimeData(string filePath, string folderPath, RuntimeType rtype, bool isPreview, string monitorContent);
-        IWpBasicData UpdateBasicData(string folderPath, string folderName, string filePath, FileType ftype, CancellationToken token);
+        Task<IWpBasicData> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype);
         #endregion
 
         #region utils

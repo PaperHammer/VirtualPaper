@@ -129,8 +129,22 @@ namespace VirtualPaper.Models.Cores {
             Save();
         }
 
+        public void Merge(IWpBasicData oldData) {
+            if (oldData == null) return;
+
+            this.Title = oldData.Title;
+            this.Desc = oldData.Desc;
+            this.Authors = oldData.Authors;
+            this.PublishDate = oldData.PublishDate;
+            this.Rating = oldData.Rating;
+            this.IsSingleRType = oldData.IsSingleRType;
+            this.Partition = oldData.Partition;
+            this.Tags = oldData.Tags;
+            this.IsSubscribed = oldData.IsSubscribed;
+        }
+
         public bool IsAvailable() {
-            return this.WallpaperUid != string.Empty && this.AppInfo.AppVersion != string.Empty;
+            return this.WallpaperUid != string.Empty && this.AppInfo.AppVersion != string.Empty && this.FileSize != string.Empty && this.ThumbnailPath != string.Empty;
         }
 
         public bool Equals(IWpBasicData? other) {

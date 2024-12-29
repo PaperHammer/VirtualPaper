@@ -157,17 +157,15 @@ namespace VirtualPaper.Grpc.Client {
             });
         }
 
-        public async Task<Grpc_WpBasicData?> UpdateBasicDataAsync(IWpBasicData data, CancellationToken token) {
+        public async Task<Grpc_WpBasicData?> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype) {
             Grpc_WpBasicData? grpc_basicData = await _client.UpdateBasicDataAsync(
                 new Grpc_UpdateBasicDataRequest() {
-                    FilePath = data.FilePath,
-                    FolderPath = data.FolderPath,
-                    FolderName = data.FolderName,
-                    FType = (Grpc_FileType)data.FType,
-                },
-                cancellationToken: token);
+                    FolderPath = folderPath,
+                    FilePath = filePath,
+                    FolderName = folderName,
+                    FType = (Grpc_FileType)ftype,
+                });
             if (grpc_basicData == null) return null;
-            grpc_basicData.WallpaperUid = data.WallpaperUid;
 
             return grpc_basicData;
         }

@@ -142,14 +142,11 @@ namespace VirtualPaper.GrpcServers {
 
         public override async Task<Grpc_WpBasicData> UpdateBasicData(Grpc_UpdateBasicDataRequest request, ServerCallContext context) {
             var token = context.CancellationToken;
-            var data = _wpControl.UpdateBasicData(
+            var data = await _wpControl.UpdateBasicDataAsync(
                 request.FolderPath,
                 request.FolderName,
                 request.FilePath,
-                (FileType)request.FType,
-                token);
-
-            data.WallpaperUid = string.Empty;
+                (FileType)request.FType);
             Grpc_WpBasicData grpc_data = DataAssist.BasicDataToGrpcData(data);
 
             return await Task.FromResult(grpc_data);

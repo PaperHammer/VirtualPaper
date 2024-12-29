@@ -1,4 +1,5 @@
-﻿using VirtualPaper.Common;
+﻿using Octokit;
+using VirtualPaper.Common;
 
 namespace VirtualPaper.Models.Cores.Interfaces {
     public interface IWpBasicData : IEquatable<IWpBasicData> {
@@ -88,5 +89,6 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         void Save();
         IWpBasicData Clone();
         bool IsAvailable();
+        void Merge(IWpBasicData oldData);
     }
 }

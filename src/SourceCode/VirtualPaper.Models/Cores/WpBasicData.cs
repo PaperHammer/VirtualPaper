@@ -1,12 +1,16 @@
 ﻿using System.IO;
+using System.Text.Json.Serialization;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Models.Cores {
-    [Serializable]
-    public class WpBasicData : IWpBasicData {
+    [JsonSerializable(typeof(WpBasicData))]
+    [JsonSerializable(typeof(IWpBasicData))]
+    public partial class WpBasicDataContext : JsonSerializerContext { }
+
+    public class WpBasicData : IWpBasicData {       
         public string WallpaperUid { get; set; } = string.Empty;
         public ApplicationInfo AppInfo { get; set; } = new();
         public string Title { get; set; } = string.Empty;
@@ -103,12 +107,15 @@ namespace VirtualPaper.Models.Cores {
         }
 
         public void Read(string filePath) {
-            var data = JsonStorage<WpBasicData>.LoadData(filePath);
+            var data = JsonStorage<WpBasicData>.LoadData(filePath, WpBasicDataContext.Default);
             InitData(data);
         }
 
         public void Save() {
-            JsonStorage<IWpBasicData>.StoreData(Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName), this);
+            JsonStorage<IWpBasicData>.StoreData(
+                Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName), 
+                this,
+                WpBasicDataContext.Default);
         }
 
         public async Task MoveToAsync(string targetFolderPath) {

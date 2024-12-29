@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -283,7 +284,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
         }
 
         private void AppUpdater_UpdateChecked(object sender, AppUpdaterEventArgs e) {
-            _ = App.UITaskInvokeQueue.TryEnqueue(() => {
+            App.UITaskInvokeQueue.TryEnqueue(() => {
                 MenuUpdate(e.UpdateStatus, e.UpdateDate, e.UpdateVersion);
             });
         }
@@ -429,7 +430,7 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
                     WpLibData libData = new();
                     foreach (string file in files) {
                         if (Path.GetFileName(file) == Constants.Field.WpBasicDataFileName) {
-                            libData.BasicData = await JsonStorage<WpBasicData>.LoadDataAsync(file);
+                            libData.BasicData = await JsonStorage<WpBasicData>.LoadDataAsync(file, WpBasicDataContext.Default);
 
                             if (libData.BasicData.IsAvailable()) {
                                 libData.Idx = idx++;

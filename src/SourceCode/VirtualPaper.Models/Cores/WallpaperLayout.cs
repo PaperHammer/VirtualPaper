@@ -1,10 +1,16 @@
-﻿using VirtualPaper.Models.Cores.Interfaces;
+﻿using System.Text.Json.Serialization;
+using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Models.Cores {
+    [JsonSerializable(typeof(WallpaperLayout))]
+    [JsonSerializable(typeof(IWallpaperLayout))]
+    [JsonSerializable(typeof(List<WallpaperLayout>))]
+    [JsonSerializable(typeof(List<IWallpaperLayout>))]
+    public partial class WallpaperLayoutContext : JsonSerializerContext { }
+
     /// <summary>
     /// Wallpaper arragement on monitor.
     /// </summary>
-    [Serializable]
     public class WallpaperLayout( 
         string folderPath, 
         string monitorDeviceId, 

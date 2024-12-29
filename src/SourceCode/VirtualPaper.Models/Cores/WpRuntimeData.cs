@@ -1,11 +1,15 @@
 ﻿using System.IO;
+using System.Text.Json.Serialization;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Models.Cores {
-    [Serializable]
+    [JsonSerializable(typeof(WpRuntimeData))]
+    [JsonSerializable(typeof(IWpRuntimeData))]
+    public partial class WpRuntimeDataContext : JsonSerializerContext { }
+
     public class WpRuntimeData : IWpRuntimeData {
         public ApplicationInfo AppInfo { get; set; } = new();
         public string MonitorContent { get; set; } = string.Empty;
@@ -17,7 +21,7 @@ namespace VirtualPaper.Models.Cores {
         public RuntimeType RType { get; set; } = RuntimeType.RUnknown;
 
         public void Read(string filePath) {
-            var data = JsonStorage<WpRuntimeData>.LoadData(filePath);
+            var data = JsonStorage<WpRuntimeData>.LoadData(filePath, WpRuntimeDataContext.Default);
             InitData(data);
         }
 
@@ -56,7 +60,10 @@ namespace VirtualPaper.Models.Cores {
             if (MonitorContent == string.Empty) {
                 throw new Exception("Save failed");
             }
-            JsonStorage<IWpRuntimeData>.StoreData(Path.Combine(this.FolderPath, MonitorContent, RType.ToString(), Constants.Field.WpRuntimeDataFileName), this);
+            JsonStorage<IWpRuntimeData>.StoreData(
+                Path.Combine(this.FolderPath, MonitorContent, RType.ToString(), Constants.Field.WpRuntimeDataFileName), 
+                this,
+                WpRuntimeDataContext.Default);
         }
 
         public IWpRuntimeData Clone() {

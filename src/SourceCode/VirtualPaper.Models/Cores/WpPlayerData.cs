@@ -17,8 +17,8 @@ namespace VirtualPaper.Models.Cores {
 
         public IWpMetadata GetMetadata(string monitorContent) {
             WpMetadata metadata = new() {
-                BasicData = JsonStorage<WpBasicData>.LoadData(Path.Combine(FolderPath, Constants.Field.WpBasicDataFileName)),
-                RuntimeData = JsonStorage<WpRuntimeData>.LoadData(Path.Combine(FolderPath, monitorContent, RType.ToString(), Constants.Field.WpRuntimeDataFileName)),
+                BasicData = JsonStorage<WpBasicData>.LoadData(Path.Combine(FolderPath, Constants.Field.WpBasicDataFileName), WpBasicDataContext.Default),
+                RuntimeData = JsonStorage<WpRuntimeData>.LoadData(Path.Combine(FolderPath, monitorContent, RType.ToString(), Constants.Field.WpRuntimeDataFileName), WpRuntimeDataContext.Default),
             };
 
             return metadata;

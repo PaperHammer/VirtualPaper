@@ -21,9 +21,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Update="Models\model-small.onnx">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
+	  <None Update="Models\model-small.onnx">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 	<PropertyGroup>

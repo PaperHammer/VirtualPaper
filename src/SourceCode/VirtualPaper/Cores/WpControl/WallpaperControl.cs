@@ -22,7 +22,7 @@ using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 using WinEventHook;
 using static VirtualPaper.Common.Errors;
-// todo: player 有概率在非主屏无法显示; update config 异常
+// todo: player 有概率在非主屏无法显示;
 
 namespace VirtualPaper.Cores.WpControl {
     public partial class WallpaperControl : IWallpaperControl {
@@ -711,7 +711,7 @@ namespace VirtualPaper.Cores.WpControl {
                 ?? throw new Exception("Create basic-data error");
 
             try {
-                IWpBasicData oldData = await JsonStorage<WpBasicData>.LoadDataAsync(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName));
+                IWpBasicData oldData = await JsonStorage<WpBasicData>.LoadDataAsync(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName), WpBasicDataContext.Default);
                 newData.Merge(oldData);
                 newData.Save();
             }

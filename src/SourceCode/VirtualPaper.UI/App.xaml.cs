@@ -28,7 +28,7 @@ namespace VirtualPaper.UI {
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
     public partial class App : Application {
-        internal static DispatcherQueue UITaskInvokeQueue => DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
+        internal static DispatcherQueue UITaskInvokeQueue => _dispatcherQueue;
         internal static Logger Log => LogManager.GetCurrentClassLogger();
 
         public static IServiceProvider Services {
@@ -54,12 +54,12 @@ namespace VirtualPaper.UI {
             Log.Info("Starting...");
 
             this.InitializeComponent();
-            
+
             SetupUnhandledExceptionLogging();
 
             _serviceProvider = ConfigureServices();
             _userSettings = Services.GetRequiredService<IUserSettingsClient>();
-           
+
             SetAppTheme(_userSettings.Settings.ApplicationTheme);
         }
 
@@ -164,6 +164,7 @@ namespace VirtualPaper.UI {
 
         private readonly IServiceProvider _serviceProvider;
         private readonly IUserSettingsClient _userSettings;
-        private readonly static ILocalizer _i18n = LanguageUtil.LocalizerInstacne;
+        private static readonly ILocalizer _i18n = LanguageUtil.LocalizerInstacne;
+        private static readonly DispatcherQueue _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
     }
 }

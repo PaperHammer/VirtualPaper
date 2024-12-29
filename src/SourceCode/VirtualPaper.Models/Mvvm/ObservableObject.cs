@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace VirtualPaper.Models.Mvvm {
     //ref: https://rachel53461.wordpress.com/2011/05/08/simplemvvmexample/

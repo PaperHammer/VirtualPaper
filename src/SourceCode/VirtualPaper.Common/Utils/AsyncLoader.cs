@@ -12,7 +12,7 @@ namespace VirtualPaper.Common.Utils {
 
         public async IAsyncEnumerable<T> LoadItemsAsync(Func<IEnumerable<string>, ParallelOptions, ChannelWriter<T>, CancellationToken, Task> processItems, IEnumerable<string> items, [EnumeratorCancellation] CancellationToken cancellationToken = default) {
             // Start a producer task that processes items and sends them to the channel.
-            _ = Task.Run(async () => {
+            var producerTask = Task.Run(async () => {
                 try {
                     await processItems(items, new ParallelOptions { MaxDegreeOfParallelism = _maxDegreeOfParallelism, CancellationToken = cancellationToken }, _channel.Writer, cancellationToken);
                 }
@@ -25,6 +25,8 @@ namespace VirtualPaper.Common.Utils {
             await foreach (var item in ConsumeChannel(_channel.Reader, cancellationToken)) {
                 yield return item;
             }
+
+            await producerTask;
         }
 
         private static async IAsyncEnumerable<T> ConsumeChannel(ChannelReader<T> reader, [EnumeratorCancellation] CancellationToken cancellationToken = default) {

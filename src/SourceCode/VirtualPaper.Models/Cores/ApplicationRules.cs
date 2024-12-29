@@ -1,9 +1,15 @@
-﻿using VirtualPaper.Common;
+﻿using System.Text.Json.Serialization;
+using VirtualPaper.Common;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.Models.Cores {
-    [Serializable]
+    [JsonSerializable(typeof(ApplicationRules))]
+    [JsonSerializable(typeof(IApplicationRules))]
+    [JsonSerializable(typeof(List<ApplicationRules>))]
+    [JsonSerializable(typeof(List<IApplicationRules>))]
+    public partial class ApplicationRulesContext : JsonSerializerContext { }
+
     public partial class ApplicationRules : ObservableObject, IApplicationRules {
         public ApplicationRules(string appName, AppWpRunRulesEnum rule) {
             AppName = appName;

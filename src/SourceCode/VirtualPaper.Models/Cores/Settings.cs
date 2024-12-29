@@ -1,10 +1,14 @@
 ﻿using System.Globalization;
 using System.IO;
+using System.Text.Json.Serialization;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Models.Cores {
-    [Serializable]
+    [JsonSerializable(typeof(Settings))]
+    [JsonSerializable(typeof(ISettings))]
+    public partial class SettingsContext : JsonSerializerContext { }
+
     public class Settings : ISettings {
         #region for app
         public AppWpRunRulesEnum AppFocus { get; set; }

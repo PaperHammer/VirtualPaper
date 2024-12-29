@@ -169,6 +169,8 @@ namespace VirtualPaper.Common {
         protected readonly Dictionary<string, dynamic> _properties;
     }
 
+    [JsonSerializable(typeof(PictureAndGifCostumise))]
+    public partial class PictureAndGifCostumiseContext : JsonSerializerContext { }
     public class PictureAndGifCostumise : UniverseCostumise {
 
         [JsonPropertyOrder(5)]
@@ -186,6 +188,8 @@ namespace VirtualPaper.Common {
         }
     }
 
+    [JsonSerializable(typeof(VideoCostumize))]
+    public partial class VideoCostumizeContext : JsonSerializerContext { }
     public class VideoCostumize : UniverseCostumise {
         [JsonPropertyOrder(8)]
         public Speed Speed { get; }
@@ -212,6 +216,8 @@ namespace VirtualPaper.Common {
         }
     }
 
+    [JsonSerializable(typeof(Picture3DCostumize))]
+    public partial class Picture3DCostumizeContext : JsonSerializerContext { }
     public class Picture3DCostumize : UniverseCostumise {
 
     }

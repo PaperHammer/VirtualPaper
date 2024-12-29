@@ -49,9 +49,9 @@ namespace VirtualPaper.Grpc.Client {
 
         private async Task SubscribeUpdateCheckedStream(CancellationToken token) {
             try {
-                using var call = _client.SubscribeUpdateChecked(new Empty());
+                using var call = _client.SubscribeUpdateChecked(new Empty(), cancellationToken: token);
                 while (await call.ResponseStream.MoveNext(token)) {
-                    await _updateCheckedLock.WaitAsync();
+                    await _updateCheckedLock.WaitAsync(token);
                     try {
                         var resp = call.ResponseStream.Current;
                         await UpdateStatusRefresh();

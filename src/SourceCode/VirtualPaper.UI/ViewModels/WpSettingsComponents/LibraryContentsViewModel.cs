@@ -493,7 +493,7 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
 
                     foreach (string file in files) {
                         if (Path.GetFileName(file) == Constants.Field.WpBasicDataFileName) {
-                            WpBasicData data = await JsonStorage<WpBasicData>.LoadDataAsync(file);
+                            WpBasicData data = await JsonStorage<WpBasicData>.LoadDataAsync(file, WpBasicDataContext.Default);
 
                             if (data.IsAvailable()) {
                                 await writer.WriteAsync(data, token);

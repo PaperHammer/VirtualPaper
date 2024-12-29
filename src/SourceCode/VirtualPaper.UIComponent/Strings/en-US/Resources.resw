@@ -352,7 +352,7 @@ Note: This operation is irreversible！</value>
     <value>Check for updates</value>
   </data>
   <data name="Settings_General_Version_UpdateErr" xml:space="preserve">
-    <value>The detection failed, try to check the network</value>
+    <value>Update failed, please check the network status.</value>
   </data>
   <data name="Settings_General_Version_UptoNewest" xml:space="preserve">
     <value>It's the latest version!</value>

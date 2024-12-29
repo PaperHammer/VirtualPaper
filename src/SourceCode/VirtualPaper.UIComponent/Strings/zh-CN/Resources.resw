@@ -352,7 +352,7 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
     <value>检查更新</value>
   </data>
   <data name="Settings_General_Version_UpdateErr" xml:space="preserve">
-    <value>检测失败，尝试检查网络</value>
+    <value>更新失败，请检查网络情况</value>
   </data>
   <data name="Settings_General_Version_UptoNewest" xml:space="preserve">
     <value>已是最新版本！</value>

@@ -4,6 +4,11 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.Models.Cores {
+    [JsonSerializable(typeof(Monitor))]
+    [JsonSerializable(typeof(IMonitor))]
+    public partial class MonitorContext : JsonSerializerContext { }
+
+
     public partial class Monitor : ObservableObject, IMonitor {
         [JsonIgnore]
         public bool IsStale { get; set; }

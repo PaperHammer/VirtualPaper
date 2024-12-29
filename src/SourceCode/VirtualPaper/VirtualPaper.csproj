@@ -15,7 +15,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Folder Include="Apis\External\" />
 		<Folder Include="Plugins\" />
 	</ItemGroup>
 

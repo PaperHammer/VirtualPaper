@@ -1,6 +1,6 @@
-﻿//using Newtonsoft.Json;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace VirtualPaper.Common.Utils.Storage {
     public static class JsonStorage<T> {
@@ -10,41 +10,52 @@ namespace VirtualPaper.Common.Utils.Storage {
         }
 
         #region system.text.json
-        public static T LoadData(string filePath) {
-            using FileStream stream = File.OpenRead(filePath);
-
+        public static T LoadData(string filePath, JsonSerializerContext context) {
             try {
-                return JsonSerializer.Deserialize<T>(stream, _optionsLoad);
+                var combinedLoadOptions = new JsonSerializerOptions(_optionsLoad) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
+                using FileStream stream = File.OpenRead(filePath);
+                return JsonSerializer.Deserialize<T>(stream, combinedLoadOptions);
             }
             catch (JsonException ex) {
                 throw new ArgumentException("json null/corrupt", ex);
             }
         }
 
-        public static void StoreData(string filePath, T data) {
-            string? directoryPath = Path.GetDirectoryName(filePath);
-            if (!string.IsNullOrEmpty(directoryPath)) {
-                Directory.CreateDirectory(directoryPath);
-            }
-
-            using FileStream stream = File.Create(filePath);
-            JsonSerializer.Serialize(stream, data, _optionsStore);
-        }
-
-        public static async Task<T> LoadDataAsync(string filePath) {
-            using FileStream stream = File.OpenRead(filePath);
-
+        public static void StoreData(string filePath, T data, JsonSerializerContext context) {
             try {
-                return await JsonSerializer.DeserializeAsync<T>(stream, _optionsLoad);
+                string? directoryPath = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(directoryPath)) {
+                    Directory.CreateDirectory(directoryPath);
+                }
+
+                var combinedStoreOptions = new JsonSerializerOptions(_optionsStore) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
+                using FileStream stream = File.Create(filePath);
+                JsonSerializer.Serialize(stream, data, combinedStoreOptions);
             }
             catch (JsonException ex) {
-                throw new ArgumentException("json null/corrupt", ex);
+                throw new ArgumentException("json store null/corrupt", ex);
             }
         }
 
-        public static async Task StoreDataAsync(string filePath, T data) {
-            using FileStream stream = File.Create(filePath);
-            await JsonSerializer.SerializeAsync(stream, data, _optionsStore);
+        public static async Task<T> LoadDataAsync(string filePath, JsonSerializerContext context) {
+            try {
+                var combinedLoadOptions = new JsonSerializerOptions(_optionsLoad) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
+                using FileStream stream = File.OpenRead(filePath);
+                return await JsonSerializer.DeserializeAsync<T>(stream, combinedLoadOptions);
+            }
+            catch (JsonException ex) {
+                throw new ArgumentException("json load null/corrupt", ex);
+            }
+        }
+
+        public static async Task StoreDataAsync(string filePath, T data, JsonSerializerContext context) {
+            try {
+                var combinedStoreOptions = new JsonSerializerOptions(_optionsStore) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) }; using FileStream stream = File.Create(filePath);
+                await JsonSerializer.SerializeAsync(stream, data, combinedStoreOptions);
+            }
+            catch (JsonException ex) {
+                throw new ArgumentException("json store null/corrupt", ex);
+            }
         }
 
         private static readonly JsonSerializerOptions _optionsLoad = new() {
@@ -60,35 +71,5 @@ namespace VirtualPaper.Common.Utils.Storage {
             DefaultIgnoreCondition = JsonIgnoreCondition.Never,
         };
         #endregion
-
-        //public static T LoadData(string filePath)
-        //{
-        //    using StreamReader file = File.OpenText(filePath);
-        //    var serializer = new JsonSerializer()
-        //    {
-        //        TypeNameHandling = TypeNameHandling.All,
-        //    };
-        //    var tmp = (T)serializer.Deserialize(file, typeof(T));
-
-        //    return tmp == null ? throw new ArgumentNullException($"json null/corrupt: {filePath}") : tmp;
-        //}
-
-        //public static void StoreData(string filePath, T data)
-        //{
-        //    if (!File.Exists(filePath))
-        //    {
-        //        File.Create(filePath).Close();
-        //    }
-
-        //    JsonSerializer serializer = new()
-        //    {
-        //        Formatting = Formatting.Indented,
-        //        NullValueHandling = NullValueHandling.Include,
-        //    };
-
-        //    using StreamWriter sw = new(filePath);
-        //    using JsonWriter writer = new JsonTextWriter(sw);
-        //    serializer.Serialize(writer, data, typeof(T));
-        //}
     }
 }

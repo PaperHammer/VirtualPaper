@@ -365,7 +365,7 @@ namespace VirtualPaper.Cores.WpControl {
                 IWpRuntimeData? wpRuntimeData;
                 // restore 时避免覆盖已有的自定义配置
                 if (fromPreview) {
-                    wpRuntimeData = await GetTempRuntimeDataAsync(data, monitor.Content);
+                    wpRuntimeData = GetTempRuntimeData(data, monitor.Content);
                 }
                 else {
                     wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, false, monitor.Content);
@@ -591,7 +591,7 @@ namespace VirtualPaper.Cores.WpControl {
             return data;
         }
 
-        public async Task<IWpRuntimeData> GetTempRuntimeDataAsync(IWpPlayerData playerData, string monitorContent) {
+        private IWpRuntimeData GetTempRuntimeData(IWpPlayerData playerData, string monitorContent) {
             WpRuntimeData data = new();
 
             try {
@@ -616,7 +616,7 @@ namespace VirtualPaper.Cores.WpControl {
                 File.Copy(data.WpEffectFilePathTemporary, data.WpEffectFilePathUsing, true);
                 data.DepthFilePath = playerData.DepthFilePath;
 
-                await data.FromTempMoveToInstallPathAsync(_userSettings.Settings.WallpaperDir);
+                data.FromTempMoveToInstallPath(_userSettings.Settings.WallpaperDir);
             }
             catch (Exception ex) {
                 App.Log.Error(ex);

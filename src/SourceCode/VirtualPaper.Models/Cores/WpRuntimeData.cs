@@ -41,7 +41,7 @@ namespace VirtualPaper.Models.Cores {
             Save();
         }
 
-        public async Task FromTempMoveToInstallPathAsync(string targetFolderPath) {
+        public async void FromTempMoveToInstallPath(string targetFolderPath) {
             string oldFolderPath = Constants.CommonPaths.TempDir;
             this.FolderPath = this.FolderPath.Replace(oldFolderPath, targetFolderPath);
             this.DepthFilePath = await FileUtil.UpdateFileFolderPathAsync(this.DepthFilePath, oldFolderPath, targetFolderPath);

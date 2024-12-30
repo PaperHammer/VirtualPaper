@@ -135,12 +135,13 @@ namespace VirtualPaper.Common.Utils.IPC {
     }
 
     [Serializable]
-    public class VirtualPaperApplyCmd : IpcMessage {
+    public class VirtualPaperApplyCmd : IpcMessage {        
         public VirtualPaperApplyCmd() : base(MessageType.cmd_apply) { }
     }
 
     [Serializable]
     public class VirtualPaperActiveCmd : IpcMessage {
+        public int UIHwnd { get; set; }
         public VirtualPaperActiveCmd() : base(MessageType.cmd_active) { }
     }
 

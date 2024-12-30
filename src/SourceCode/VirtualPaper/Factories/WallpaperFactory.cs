@@ -3,14 +3,12 @@ using VirtualPaper.Cores;
 using VirtualPaper.Cores.Players.Web;
 using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Factories {
     public class WallpaperFactory : IWallpaperFactory {
         public IWpPlayer CreatePlayer(
             IWpPlayerData data,
             IMonitor monitor,
-            IUserSettingsService userSettings,
             bool isPreview = false) {
             switch (data.RType) {
                 case RuntimeType.RImage:

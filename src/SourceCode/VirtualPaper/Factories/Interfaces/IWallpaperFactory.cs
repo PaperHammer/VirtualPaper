@@ -7,7 +7,6 @@ namespace VirtualPaper.Factories.Interfaces {
         IWpPlayer CreatePlayer(
             IWpPlayerData data,
             IMonitor monitor,
-            IUserSettingsService userSettings,
             bool isPreview = false);
     }
 }

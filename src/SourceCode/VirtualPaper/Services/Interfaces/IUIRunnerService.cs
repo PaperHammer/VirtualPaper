@@ -9,5 +9,6 @@
         void CloseUI();
         void RestartUI();
         void SaveRectUI();
+        nint GetUIHwnd();
     }
 }

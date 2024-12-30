@@ -24,11 +24,11 @@ namespace VirtualPaper.Services {
             if (Constants.ApplicationType.IsMSIX) {
                 _workingDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\"));
                 _fileName = Path.Combine(_workingDir, Constants.ModuleName.UI);
-                
+
             }
             else {
                 _workingDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.WorkingDir.UI);
-                _fileName = Path.Combine(_workingDir, Constants.ModuleName.UI);                
+                _fileName = Path.Combine(_workingDir, Constants.ModuleName.UI);
             }
         }
 
@@ -127,6 +127,14 @@ namespace VirtualPaper.Services {
                 return;
 
             _ = Native.GetWindowRect(_processUI.MainWindowHandle, out prevWindowRect);
+        }
+
+        public nint GetUIHwnd() {
+            if (_processUI == null) {
+                return default;
+            }
+
+            return _processUI.MainWindowHandle;
         }
 
         public bool IsVisibleUI => _processUI != null && Native.IsWindowVisible(_processUI.MainWindowHandle);

@@ -77,7 +77,7 @@ namespace VirtualPaper.PlayerWeb.Utils {
         }
         #endregion
 
-        internal static void ActiveToolWindow(StartArgs startArgs) {
+        internal static void ActiveToolWindow(StartArgs startArgs, nint uiHwnd = 0) {
             if (_toolContainer == null) {
                 _startArgs = startArgs;
                 _toolContainer = new(
@@ -95,16 +95,16 @@ namespace VirtualPaper.PlayerWeb.Utils {
                     _toolContainer = null;
                     _toolWindowClose = null;
                 }
-                SetToolWindowParent();
+                SetToolWindowParent(uiHwnd == 0 ? GetWindowHwnd(_mainWindow) : uiHwnd);
+                _toolContainer?.Show();
             }
 
-            _toolContainer?.Show();
             _toolContainer?.BringToFront();
         }
 
-        private static void SetToolWindowParent() {
+        private static void SetToolWindowParent(nint mainHwnd) {
             IntPtr toolHwnd = GetWindowHwnd(_toolContainer);
-            Native.SetWindowLong(toolHwnd, Native.GWL_HWNDPARENT, GetWindowHwnd(_mainWindow));
+            Native.SetWindowLong(toolHwnd, Native.GWL_HWNDPARENT, mainHwnd);
         }
 
         private static nint GetWindowHwnd(WindowEx windowEx) {

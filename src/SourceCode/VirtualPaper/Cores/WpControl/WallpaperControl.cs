@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files.Models;
@@ -141,8 +142,10 @@ namespace VirtualPaper.Cores.WpControl {
                 monitorDeviceId = _monitorManager.PrimaryMonitor.DeviceId;
             }
             var instance = _wallpapers.FirstOrDefault(x => x.Monitor.DeviceId == monitorDeviceId);
-            if (instance != null) {
-                instance.SendMessage(new VirtualPaperActiveCmd());
+            if (instance != null) {                
+                instance.SendMessage(new VirtualPaperActiveCmd() {
+                    UIHwnd = (int)App.Services.GetRequiredService<IUIRunnerService>().GetUIHwnd()
+                });
                 return true;
             }
 
@@ -161,7 +164,7 @@ namespace VirtualPaper.Cores.WpControl {
                 var wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, true, monitor.Content);
                 DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
 
-                instance = _wallpaperFactory.CreatePlayer(data, monitor, _userSettings, true);
+                instance = _wallpaperFactory.CreatePlayer(data, monitor, true);
                 bool isStarted = await instance.ShowAsync(token) && !instance.Proc.HasExited;
                 if (isStarted) {
                     instance.Closing += ClosingEvent;
@@ -383,7 +386,7 @@ namespace VirtualPaper.Cores.WpControl {
                             //    return response;
                             //}
 
-                            IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, monitor, _userSettings);
+                            IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, monitor);
                             CloseWallpaper(instance.Monitor);
                             isStarted = await instance.ShowAsync(token) && !instance.Proc.HasExited;
 
@@ -403,7 +406,7 @@ namespace VirtualPaper.Cores.WpControl {
                         }
                         break;
                     case WallpaperArrangement.Expand: {
-                            IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, monitor, _userSettings);
+                            IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, monitor);
                             CloseAllWallpapers();
                             isStarted = await instance.ShowAsync(token) && !instance.Proc.HasExited;
 
@@ -425,7 +428,7 @@ namespace VirtualPaper.Cores.WpControl {
                     case WallpaperArrangement.Duplicate: {
                             CloseAllWallpapers();
                             foreach (var item in _monitorManager.Monitors) {
-                                IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, item, _userSettings);
+                                IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, item);
                                 isStarted = await instance.ShowAsync(token) && !instance.Proc.HasExited;
 
                                 if (isStarted && !TrySetWallpaperPerMonitor(instance, instance.Monitor)) {

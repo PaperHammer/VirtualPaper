@@ -2,10 +2,13 @@
 using System.IO;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.Shell;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Services;
+using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Cores.Players.Web {
     internal partial class PlayerWeb : IWpPlayer {
@@ -39,7 +42,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 cmdArgs.Append($" --right {monitor.WorkingArea.Right}");
                 cmdArgs.Append($" --bottom {monitor.WorkingArea.Bottom}");
             }
-
+            
             cmdArgs.Append($" -f {data.FilePath}");
             cmdArgs.Append($" -b {Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName)}");
             if (data.RType == RuntimeType.RImage3D) {
@@ -184,6 +187,7 @@ namespace VirtualPaper.Cores.Players.Web {
 
         private void SendMessage(string msg) {
             try {
+                Debug.WriteLine(msg);
                 Proc?.StandardInput.WriteLine(msg);
             }
             catch (Exception e) {

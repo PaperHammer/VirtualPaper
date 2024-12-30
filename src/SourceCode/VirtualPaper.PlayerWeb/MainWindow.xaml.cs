@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI;
@@ -168,14 +166,7 @@ namespace VirtualPaper.PlayerWeb {
                         _ = ExecuteScriptFunctionAsync(Fileds.Play);
                         break;
                     case MessageType.cmd_active:
-                        _dispatcherQueue.TryEnqueue(() => {
-                            WindowUtil.ActiveToolWindow(_startArgs);
-                            bool isNull = WindowUtil.IsToolContentNull();
-                            if (isNull) {
-                                WindowUtil.AddEffectConfigPage();
-                                WindowUtil.AddDetailsPage();
-                            }
-                        });
+                        HandleActiveCommand((VirtualPaperActiveCmd)obj);
                         break;
                     case MessageType.cmd_reload:
                         _dispatcherQueue.TryEnqueue(() => {
@@ -243,6 +234,17 @@ namespace VirtualPaper.PlayerWeb {
         private static void HandleCloseCommand() {
             StopParallaxLoop();
             _ctsConsoleIn.Cancel();
+        }
+
+        private void HandleActiveCommand(VirtualPaperActiveCmd active) {
+            _dispatcherQueue.TryEnqueue(() => {
+                WindowUtil.ActiveToolWindow(_startArgs, active.UIHwnd);
+                bool isNull = WindowUtil.IsToolContentNull();
+                if (isNull) {
+                    WindowUtil.AddEffectConfigPage();
+                    WindowUtil.AddDetailsPage();
+                }
+            });
         }
 
         private async Task HandlePlaybackCommandAsync(bool pause) {

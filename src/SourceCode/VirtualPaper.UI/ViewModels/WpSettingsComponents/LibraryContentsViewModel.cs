@@ -390,6 +390,14 @@ namespace VirtualPaper.UI.ViewModels.WpSettingsComponents {
 
                         BasicUIComponentUtil.UpdateProgressbarValue(++finishedCnt, importValues.Count);
                     }
+                    catch (RpcException ex) {
+                        if (ex.StatusCode == StatusCode.Cancelled) {
+                            BasicUIComponentUtil.ShowCanceled();
+                        }
+                        else {
+                            BasicUIComponentUtil.ShowExp(ex);
+                        }
+                    }
                     catch (Exception ex) {
                         BasicUIComponentUtil.ShowExp(ex);
                     }

@@ -12,6 +12,7 @@
 		<UseWinUI>true</UseWinUI>
 		<EnableMsixTooling>true</EnableMsixTooling>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
 	</PropertyGroup>
 
 	<!--NETSDK1152-->
@@ -53,10 +54,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Web\js\3d_depth\jsm\**" />
-	  <EmbeddedResource Remove="Web\js\3d_depth\jsm\**" />
-	  <None Remove="Web\js\3d_depth\jsm\**" />
-	  <Page Remove="Web\js\3d_depth\jsm\**" />
+		<Compile Remove="Web\js\3d_depth\jsm\**" />
+		<EmbeddedResource Remove="Web\js\3d_depth\jsm\**" />
+		<None Remove="Web\js\3d_depth\jsm\**" />
+		<Page Remove="Web\js\3d_depth\jsm\**" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -97,7 +98,7 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Web\js\3d_depth\three.module.min.js">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Web\js\base.js">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -106,7 +107,7 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Web\js\default\run.js">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
 
@@ -128,7 +129,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PRIResource Remove="Web\js\3d_depth\jsm\**" />
+		<PRIResource Remove="Web\js\3d_depth\jsm\**" />
 	</ItemGroup>
 
 	<!--<ItemGroup>

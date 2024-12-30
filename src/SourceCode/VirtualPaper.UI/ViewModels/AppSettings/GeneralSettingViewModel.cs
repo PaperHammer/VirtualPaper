@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Threading;
+using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -378,6 +379,14 @@ namespace VirtualPaper.UI.ViewModels.AppSettings {
                 _ = await FileUtil.TryDeleteDirectoryAsync(previousDirFolderPath, 1000, 3000);
                 #endregion
 
+            }
+            catch (RpcException ex) {
+                if (ex.StatusCode == StatusCode.Cancelled) {
+                    BasicUIComponentUtil.ShowCanceled();
+                }
+                else {
+                    BasicUIComponentUtil.ShowExp(ex);
+                }
             }
             catch (OperationCanceledException) {
                 BasicUIComponentUtil.ShowMsg(true, Constants.I18n.InfobarMsg_Cancel, InfoBarSeverity.Warning);

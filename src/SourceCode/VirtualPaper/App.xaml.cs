@@ -44,7 +44,7 @@ namespace VirtualPaper {
     /// Interaction logic for App.xaml
     /// </summary>
     public partial class App : Application {
-        internal static Logger Log => LogManager.GetCurrentClassLogger();
+        internal static Logger Log => _log;
         internal static JobService Jobs => Services.GetRequiredService<JobService>();
         internal static IUserSettingsService IUserSettgins => Services.GetRequiredService<IUserSettingsService>();
 
@@ -96,9 +96,6 @@ namespace VirtualPaper {
                 ShutDown();
                 return;
             }
-
-            //string scrFilePath = Path.Combine(Constants.CommonPaths.ScrSaverDir, "scr.html");
-            //File.WriteAllText(scrFilePath, Constants.Field.ScrSaverHtml);
             #endregion
 
             #region 初始化核心组件
@@ -127,7 +124,7 @@ namespace VirtualPaper {
                 // 启动针对从外部设备发出的到该窗口的消息监听服务
                 Services.GetRequiredService<RawInputMsgWindow>().Show();
                 // 启动壁纸行为/状态监听服务
-                Services.GetRequiredService<IPlayback>().Start();
+                Services.GetRequiredService<IPlayback>().Start(_ctsPlayback);
                 // 启动托盘（后台）服务
                 Services.GetRequiredService<MainWindow>().Show();
             }
@@ -292,6 +289,7 @@ namespace VirtualPaper {
 
         private static int updateNotifyAmt = 1;
         private static bool updateNotify = false;
+
         private void AppUpdateChecked(object sender, AppUpdaterEventArgs e) {
             _ = Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new ThreadStart(delegate {
                 if (e.UpdateStatus == AppUpdateStatus.available) {
@@ -314,6 +312,7 @@ namespace VirtualPaper {
 
         public static void ShutDown() {
             try {
+                _ctsPlayback.Cancel();
                 ((ServiceProvider)Services)?.Dispose();
                 ((App)Current)._grpcServer?.Dispose();
                 ToastNotificationManagerCompat.Uninstall();
@@ -326,5 +325,7 @@ namespace VirtualPaper {
         private readonly IServiceProvider _serviceProvider;
         private readonly Mutex _mutex = new(false, Constants.CoreField.UniqueAppUid);
         private readonly NamedPipeServer _grpcServer;
+        private static readonly CancellationTokenSource _ctsPlayback = new();
+        private static readonly Logger _log = LogManager.GetCurrentClassLogger();
     }
 }

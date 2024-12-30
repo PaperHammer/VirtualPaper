@@ -117,8 +117,7 @@ namespace VirtualPaper.FuuntionTest
                     IpcMessage obj;
                     try
                     {
-                        obj = JsonSerializer.Deserialize<IpcMessage>(e.Data) ?? throw new("null msg recieved");
-                        //obj = JsonConvert.DeserializeObject<IpcMessage>(e.Data, new JsonSerializerSettings() { Converters = { new IpcMessageConverter() } }) ?? throw new("null msg recieved");
+                        obj = JsonSerializer.Deserialize(e.Data, IpcMessageContext.Default.IpcMessage) ?? throw new("null msg recieved");
                     }
                     catch (Exception)
                     {

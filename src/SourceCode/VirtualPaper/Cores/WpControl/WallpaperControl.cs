@@ -364,13 +364,15 @@ namespace VirtualPaper.Cores.WpControl {
                 bool isStarted = false;
                 IWpRuntimeData? wpRuntimeData;
                 // restore 时避免覆盖已有的自定义配置
-                if (fromPreview) {
-                    wpRuntimeData = GetTempRuntimeData(data, monitor.Content);
+                if (data.WpEffectFilePathUsing == string.Empty) {
+                    if (fromPreview) {
+                        wpRuntimeData = GetTempRuntimeData(data, monitor.Content);
+                    }
+                    else {
+                        wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, false, monitor.Content);
+                    }
+                    DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
                 }
-                else {
-                    wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, false, monitor.Content);
-                }
-                DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
                 int monitorIdx = _monitorManager.Monitors.FindIndex(x => x.DeviceId == monitor.DeviceId);
 
                 switch (_userSettings.Settings.WallpaperArrangement) {
@@ -507,8 +509,7 @@ namespace VirtualPaper.Cores.WpControl {
         }
 
         public void SendMessageWallpaper(IMonitor monitor, string folderPath, string ipcMsg) {
-            IpcMessage msg = JsonSerializer.Deserialize<IpcMessage>(
-                ipcMsg)!;
+            IpcMessage msg = JsonSerializer.Deserialize(ipcMsg, IpcMessageContext.Default.IpcMessage)!;
 
             _wallpapers.ForEach(x => {
                 if (x.Data.FolderPath == folderPath && x.Monitor == monitor) {

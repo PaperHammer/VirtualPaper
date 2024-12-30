@@ -1,8 +1,7 @@
-﻿using Linearstar.Windows.RawInput;
-using Linearstar.Windows.RawInput.Native;
-using NLog;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Interop;
+using Linearstar.Windows.RawInput;
+using Linearstar.Windows.RawInput.Native;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.Monitor;

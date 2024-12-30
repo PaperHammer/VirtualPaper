@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Reflection.Metadata;
 using System.Text;
 using System.Windows.Threading;
 using Microsoft.Win32;
@@ -36,15 +35,37 @@ namespace VirtualPaper.Cores.PlaybackControl {
             _monitorManger = monitoeManger;
 
             Initialize();
+            _timer = new(TimeSpan.FromMilliseconds(Math.Max(_userSettings.Settings.ProcessTimerInterval, 500)));
             wpControl.WallpaperReset += (s, e) => FindNewMonitorAndResetHandles();
         }
 
-        public void Start() {
-            _dispatcherTimer.Start();
+        public async void Start(CancellationTokenSource cancellationTokenSource) {
+            try {
+                _ctsPlayback = cancellationTokenSource;
+                while (await _timer.WaitForNextTickAsync(cancellationTokenSource.Token)) {
+                    RunPlayback();
+                }
+            }
+            catch (OperationCanceledException) {
+                App.Log.Info("Playback stoppped");
+            }
+            catch (Exception ex) {
+                App.Log.Error("Playback runtime error: ", ex);
+            }
         }
 
         public void Stop() {
-            _dispatcherTimer.Stop();
+            _ctsPlayback?.Cancel();
+        }
+
+        private void Initialize() {
+            WallpaperPlaybackMode = PlaybackMode.Play;
+
+            _isLockScreen = IsSystemLocked();
+            if (_isLockScreen) {
+                App.Log.Info("Lockscreen Session already started!");
+            }
+            SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
         }
 
         #region private
@@ -60,22 +81,6 @@ namespace VirtualPaper.Cores.PlaybackControl {
                     folderView = Native.FindWindowEx(_workerWOrig, IntPtr.Zero, "SHELLDLL_DefView", null);
                 } while (folderView == IntPtr.Zero && _workerWOrig != IntPtr.Zero);
             }
-        }
-
-        private void Initialize() {
-            InitializeTimer();
-            WallpaperPlaybackMode = PlaybackMode.Play;
-
-            _isLockScreen = IsSystemLocked();
-            if (_isLockScreen) {
-                App.Log.Info("Lockscreen Session already started!");
-            }
-            SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
-        }
-
-        private void InitializeTimer() {
-            _dispatcherTimer.Tick += new EventHandler(ProcessMonitor);
-            _dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, _userSettings.Settings.ProcessTimerInterval);
         }
 
         private void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e) {
@@ -97,7 +102,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
             }
         }
 
-        private void ProcessMonitor(object? sender, EventArgs e) {
+        private void RunPlayback() {
             if (_wpControl.Wallpapers.Count > 0) {
                 if (_scrControl.IsRunning) {
                     ChangeWpState(AppWpRunRulesEnum.Pause);
@@ -171,7 +176,8 @@ namespace VirtualPaper.Cores.PlaybackControl {
                     }
                 }
             }
-            catch {
+            catch (Exception ex) {
+                App.Log.Error("Playback Changes for AppRules error: ", ex);
                 //failed to get process info.. maybe remote process; resume playback.
                 ChangeWpState(AppWpRunRulesEnum.KeepRun);
                 return;
@@ -279,7 +285,9 @@ namespace VirtualPaper.Cores.PlaybackControl {
                     #endregion
                 }
             }
-            catch { }
+            catch (Exception ex) {
+                App.Log.Error("Playback Changes for Focus error: ", ex);
+            }
             #endregion
         }
 
@@ -394,7 +402,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
             }
         }
 
-        public void ChangeWpState(AppWpRunRulesEnum nextState, IMonitor? targetMonitor = null) {
+        private void ChangeWpState(AppWpRunRulesEnum nextState, IMonitor? targetMonitor = null) {
             switch (nextState) {
                 case AppWpRunRulesEnum.KeepRun:
                     if (targetMonitor == null) {
@@ -491,7 +499,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
         protected virtual void Dispose(bool disposing) {
             if (!_isDisposed) {
                 if (disposing) {
-                    _dispatcherTimer.Stop();
+                    Stop();
                     SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
                 }
                 _isDisposed = true;
@@ -525,8 +533,9 @@ namespace VirtualPaper.Cores.PlaybackControl {
             "_cls_desk_"
         ];
         private nint _workerWOrig, _progman;
-        private readonly DispatcherTimer _dispatcherTimer = new();
+        private readonly PeriodicTimer _timer;
         private bool _isLockScreen, _isRemoteSession;
+        private CancellationTokenSource _ctsPlayback;
         private readonly IUserSettingsService _userSettings;
         private readonly IWallpaperControl _wpControl;
         private readonly IMonitorManager _monitorManger;

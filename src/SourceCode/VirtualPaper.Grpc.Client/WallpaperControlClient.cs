@@ -146,7 +146,7 @@ namespace VirtualPaper.Grpc.Client {
             await _client.SendMessageWallpaperAsync(new Grpc_WallpaperMessageRequest() {
                 MonitorId = monitor.DeviceId,
                 FolderPath = metaData.FolderPath,
-                Msg = JsonSerializer.Serialize(msg),
+                Msg = JsonSerializer.Serialize(msg, IpcMessageContext.Default.IpcMessage),
             });
         }
 

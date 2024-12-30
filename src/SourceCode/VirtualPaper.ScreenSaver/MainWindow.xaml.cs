@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -60,7 +61,7 @@ namespace VirtualPaper.ScreenSaver {
                         else {
                             try {
                                 var close = false;
-                                var obj = JsonSerializer.Deserialize<IpcMessage>(msg);
+                                var obj = JsonSerializer.Deserialize(msg, IpcMessageContext.Default.IpcMessage);
 
                                 this.Dispatcher.Invoke(() => {
                                     switch (obj.Type) {

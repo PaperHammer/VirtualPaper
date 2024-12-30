@@ -39,7 +39,7 @@ namespace VirtualPaper.ScreenSaver {
         }
 
         public static void WriteToParent(IpcMessage obj) {
-            Console.WriteLine(JsonSerializer.Serialize(obj));
+            Console.WriteLine(JsonSerializer.Serialize(obj, IpcMessageContext.Default.IpcMessage));
         }
 
         public static void ShutDown() {

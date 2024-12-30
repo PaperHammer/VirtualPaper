@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Grpc.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -187,6 +188,14 @@ namespace VirtualPaper.UI.ViewModels {
                 bool isOk = await _wpControlClient.AdjustWallpaperAsync(SelectedMonitor.DeviceId, _ctsAdjust.Token);
                 if (!isOk) {
                     throw new Exception("Failed to evoke custom adjustment window.");
+                }
+            }
+            catch (RpcException ex) {
+                if (ex.StatusCode == StatusCode.Cancelled) {
+                    BasicUIComponentUtil.ShowCanceled();
+                }
+                else {
+                    BasicUIComponentUtil.ShowExp(ex);
                 }
             }
             catch (OperationCanceledException) {

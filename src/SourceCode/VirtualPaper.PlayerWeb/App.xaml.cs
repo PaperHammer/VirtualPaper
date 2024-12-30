@@ -36,11 +36,11 @@ namespace VirtualPaper.PlayerWeb {
 
             //string s = "a " +
             //    "--is-preview " +
-            //    "-f D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\ijo5xmc2.02r.jpg " +
-            //    "-b D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\wp_metadata_basic.json " +
-            //    "-e D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\1\\RImage\\wpEffectFilePathUsing.json " +
-            //    "--effect-file-path-temporary D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\1\\RImage\\wpEffectFilePathTemporary.json " +
-            //    "--effect-file-path-template D:\\_%TEMP2\\wallpapers\\ijo5xmc2.02r\\wpEffectFilePathTemplate.json " +
+            //    "-f D:\\_%TEMP2\\wallpapers\\0w1mfled.ecr\\0w1mfled.ecr.jpg " +
+            //    "-b D:\\_%TEMP2\\wallpapers\\0w1mfled.ecr\\wp_metadata_basic.json " +
+            //    "-e D:\\_%TEMP2\\wallpapers\\0w1mfled.ecr\\1\\RImage\\wpEffectFilePathUsing.json " +
+            //    "--effect-file-path-temporary D:\\_%TEMP2\\wallpapers\\0w1mfled.ecr\\1\\RImage\\wpEffectFilePathTemporary.json " +
+            //    "--effect-file-path-template D:\\_%TEMP2\\wallpapers\\0w1mfled.ecr\\wpEffectFilePathTemplate.json " +
             //    "-r RImage " +
             //    "--window-style-type Default " +
             //    "-t Light " +
@@ -124,7 +124,7 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         public static void WriteToParent(IpcMessage obj) {
-            string msg = JsonSerializer.Serialize(obj);
+            string msg = JsonSerializer.Serialize(obj, IpcMessageContext.Default.IpcMessage);
             Console.WriteLine(msg);
         }
 

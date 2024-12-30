@@ -33,7 +33,7 @@ namespace VirtualPaper.UI.TrayControl {
                     }
                 }
             }
-            catch (OperationCanceledException) {
+            catch (OperationCanceledException) when (token.IsCancellationRequested) {
                 App.Log.Warn("[PipeServer] Listening was canceled.");
             }
             catch (Exception ex) {

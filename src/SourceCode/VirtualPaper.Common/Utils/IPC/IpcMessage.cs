@@ -1,9 +1,10 @@
 ﻿using System.Text.Json.Serialization;
 using VirtualPaper.Common.Models;
-using VirtualPaper.Common.Utils.PInvoke;
 
 namespace VirtualPaper.Common.Utils.IPC {
-    [Serializable]
+    [JsonSerializable(typeof(IpcMessage))]
+    public partial class IpcMessageContext : JsonSerializerContext { }
+
     // ref: https://learn.microsoft.com/zh-cn/dotnet/standard/serialization/system-text-json/polymorphism?pivots=dotnet-8-0
     [JsonDerivedType(typeof(VirtualPaperUpdateCmd), "cmd_update")]
     [JsonDerivedType(typeof(VirtualPaperMessageConsole), "msg_console")]
@@ -75,14 +76,13 @@ namespace VirtualPaper.Common.Utils.IPC {
 
     [Serializable]
     public class VirtualPaperUpdateCmd : IpcMessage {
-        public string FilePath { get; set; } = string.Empty;        
+        public string FilePath { get; set; } = string.Empty;
         public string RType { get; set; } = string.Empty;
         public string WpEffectFilePathTemplate { get; set; } = string.Empty;
         public string WpEffectFilePathTemporary { get; set; } = string.Empty;
         public string WpEffectFilePathUsing { get; set; } = string.Empty;
         public VirtualPaperUpdateCmd() : base(MessageType.cmd_update) { }
     }
-
 
     [Serializable]
     public class VirtualPaperMessageConsole : IpcMessage {
@@ -138,7 +138,7 @@ namespace VirtualPaper.Common.Utils.IPC {
     public class VirtualPaperApplyCmd : IpcMessage {
         public VirtualPaperApplyCmd() : base(MessageType.cmd_apply) { }
     }
-    
+
     [Serializable]
     public class VirtualPaperActiveCmd : IpcMessage {
         public VirtualPaperActiveCmd() : base(MessageType.cmd_active) { }

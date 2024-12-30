@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI;
@@ -116,6 +118,7 @@ namespace VirtualPaper.PlayerWeb {
         private void Closing() {
             this.Hide();
 
+            _ctsConsoleIn?.Cancel();
             WindowUtil.CloseToolWindow();
             StopParallaxLoop();
 
@@ -155,7 +158,7 @@ namespace VirtualPaper.PlayerWeb {
 
         private async void HandleIpcMessage(string message) {
             try {
-                var obj = JsonSerializer.Deserialize<IpcMessage>(message);
+                var obj = JsonSerializer.Deserialize(message, IpcMessageContext.Default.IpcMessage);
                 switch (obj.Type) {
                     case MessageType.cmd_close:
                         HandleCloseCommand();
@@ -412,7 +415,6 @@ namespace VirtualPaper.PlayerWeb {
             }
         }
 
-        //credit: https://stackoverflow.com/questions/62835549/equivalent-of-webbrowser-invokescriptstring-object-in-webview2
         internal async Task<string> ExecuteScriptFunctionAsync(string functionName, params object[] parameters) {
             StringBuilder sb_script = new();
             sb_script.Append(functionName);

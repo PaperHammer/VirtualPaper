@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Windows.Storage.Pickers;
 using WinRT;
@@ -44,8 +45,11 @@ namespace VirtualPaper.UI.Utils {
         }
 
         private static void SetOwnerWindow(IInitializeWithWindow picker, Window window) {
-            // See https://github.com/microsoft/microsoft-ui-xaml/issues/4100#issuecomment-774346918
-            picker.Initialize(window.As<IWindowNative>().WindowHandle);
+            // ref: https://learn.microsoft.com/zh-cn/answers/questions/1518337/winui3-folderpicker
+            // Get the current window's HWND by passing in the Window object  
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+            // Associate the HWND with the file picker  
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
         }
     }
 }

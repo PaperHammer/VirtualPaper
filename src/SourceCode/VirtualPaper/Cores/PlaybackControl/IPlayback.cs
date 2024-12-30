@@ -4,7 +4,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
     public interface IPlayback : IDisposable {
         event EventHandler<PlaybackMode>? PlaybackModeChanged;
         PlaybackMode WallpaperPlaybackMode { get; set; }
-        void Start();
+        void Start(CancellationTokenSource cancellationTokenSource);
         void Stop();
     }
 }

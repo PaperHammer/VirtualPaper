@@ -141,7 +141,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 if (_tcsProcessWait.Task.Result is not null)
                     throw _tcsProcessWait.Task.Result;
             }
-            catch (OperationCanceledException ex) {
+            catch (OperationCanceledException ex) when (token.IsCancellationRequested) {
                 App.Log.Warn(ex);
                 Terminate();
                 throw;
@@ -179,7 +179,7 @@ namespace VirtualPaper.Cores.Players.Web {
         }
 
         public void SendMessage(IpcMessage obj) {
-            SendMessage(JsonSerializer.Serialize(obj));
+            SendMessage(JsonSerializer.Serialize(obj, IpcMessageContext.Default.IpcMessage));
         }
 
         private void SendMessage(string msg) {
@@ -195,8 +195,7 @@ namespace VirtualPaper.Cores.Players.Web {
         private void Proc_OutputDataReceived(object sender, DataReceivedEventArgs e) {
             //When the redirected stream is closed, a null line is sent to the event handler.
             if (!string.IsNullOrEmpty(e.Data)) {
-                VirtualPaperMessageConsole messageConsole = JsonSerializer.Deserialize<VirtualPaperMessageConsole>(e.Data);
-                if (messageConsole.MsgType == ConsoleMessageType.Error) {
+                if (JsonSerializer.Deserialize(e.Data, IpcMessageContext.Default.IpcMessage) is VirtualPaperMessageConsole messageConsole && messageConsole.MsgType == ConsoleMessageType.Error) {
                     App.Log.Error($"PlayerWeb-{_uniqueId}: {messageConsole.Message}");
                 }
                 else {
@@ -205,7 +204,7 @@ namespace VirtualPaper.Cores.Players.Web {
 
                 IpcMessage obj;
                 try {
-                    obj = JsonSerializer.Deserialize<IpcMessage>(e.Data) ?? throw new("null msg recieved");
+                    obj = JsonSerializer.Deserialize(e.Data, IpcMessageContext.Default.IpcMessage) ?? throw new("null msg recieved");
                 }
                 catch (Exception ex) {
                     App.Log.Error($"Ipcmessage parse Error: {ex.Message}");

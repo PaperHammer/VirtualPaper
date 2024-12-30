@@ -44,8 +44,8 @@ namespace VirtualPaper.Cores.ScreenSaver {
             StopTimeTask();
         }
 
-        public  void Start() {
-            try {     
+        public void Start() {
+            try {
                 if (_isTiming || IsRunning) {
                     return;
                 }
@@ -78,7 +78,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
             }
         }
 
-        private void StartTimerTask() {            
+        private void StartTimerTask() {
             _dispatcherTimer.Interval = TimeSpan.FromMinutes(_userSettingsService.Settings.WaitingTime);
             _dispatcherTimer.Tick += DispatcherTimer_Tick;
             _dispatcherTimer.Start();
@@ -211,7 +211,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
         }
 
         private void SendMessage(IpcMessage obj) {
-            SendMessage(JsonSerializer.Serialize(obj));
+            SendMessage(JsonSerializer.Serialize(obj, IpcMessageContext.Default.IpcMessage));
         }
 
         private void SendMessage(string msg) {
@@ -229,7 +229,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
                 if (!IsRunning) {
                     IpcMessage obj;
                     try {
-                        obj = JsonSerializer.Deserialize<IpcMessage>(e.Data) ?? throw new("null msg recieved");
+                        obj = JsonSerializer.Deserialize(e.Data, IpcMessageContext.Default.IpcMessage) ?? throw new("null msg recieved");
                     }
                     catch (Exception ex) {
                         App.Log.Error($"Ipcmessage parse Error: {ex.Message}");
@@ -290,7 +290,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
         private readonly IUserSettingsService _userSettingsService;
         private readonly RawInputMsgWindow _msgWindow;
         private readonly IWallpaperControl _wpControl;
-        private DispatcherTimer _dispatcherTimer;        
+        private readonly DispatcherTimer _dispatcherTimer;
         private readonly ConcurrentDictionary<string, bool> _scrWhiteListProcState = [];
         private readonly static object _objStop = new();
         private readonly static object _objStart = new();

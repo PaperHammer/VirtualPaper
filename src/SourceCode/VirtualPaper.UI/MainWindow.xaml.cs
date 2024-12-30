@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -7,6 +10,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -40,6 +44,7 @@ namespace VirtualPaper.UI {
 
             _viewModel = mainWindowViewModel;
             this.NavView.DataContext = _viewModel;
+            _ctsConsoleIn = new();
 
             SetWindowStyle();
             SetWindowTitleBar();
@@ -80,6 +85,8 @@ namespace VirtualPaper.UI {
             else {
                 TitleTextBlock.Foreground = WindowCaptionForeground;
             }
+
+            _ = StdInListener();
         }
 
         private async void WindowEx_Closed(object sender, WindowEventArgs args) {
@@ -100,6 +107,54 @@ namespace VirtualPaper.UI {
             }
 
             App.ShutDown();
+        }
+
+        private async Task StdInListener() {
+            try {
+                await Task.Run(async () => {
+                    while (!_ctsConsoleIn.IsCancellationRequested) {
+                        var msg = await Console.In.ReadLineAsync(_ctsConsoleIn.Token);
+                        if (string.IsNullOrEmpty(msg)) {
+                            //When the redirected stream is closed, a null line is sent to the event handler. 
+#if !DEBUG
+                            break;
+#endif
+                        }
+                        else {
+                            HandleIpcMessage(msg);
+                        }
+                    }
+                });
+            }
+            catch (Exception ex) {
+                App.Log.Error(ex);
+            }
+            finally {
+                Closing();
+            }
+        }
+
+        private void HandleIpcMessage(string message) {
+            try {
+                var obj = JsonSerializer.Deserialize(message, IpcMessageContext.Default.IpcMessage);
+                switch (obj.Type) {
+                    case MessageType.cmd_active:
+                        App.UITaskInvokeQueue.TryEnqueue(() => {
+                            this.BringToFront();
+                        });
+                        break;                  
+                    default:
+                        throw new InvalidOperationException($"Unsupported message type: {obj.Type}");
+                }
+            }
+            catch (Exception ex) {
+                App.Log.Error(ex);
+            }
+        }
+
+        private void Closing() {
+            this.Hide();
+            _ctsConsoleIn?.Cancel();
         }
 
         private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
@@ -205,5 +260,6 @@ namespace VirtualPaper.UI {
         private readonly IUserSettingsClient _userSettings;
         private readonly IWallpaperControlClient _wpControl;
         private readonly MainWindowViewModel _viewModel;
+        private static CancellationTokenSource _ctsConsoleIn;
     }
 }

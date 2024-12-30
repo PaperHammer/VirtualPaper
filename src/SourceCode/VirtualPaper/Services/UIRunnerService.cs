@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
 using System.Windows;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.lang;
@@ -34,7 +36,7 @@ namespace VirtualPaper.Services {
             if (_processUI != null) {
                 try {
                     App.Log.Warn("UI is already running");
-                    _processUI.StandardInput.WriteLine("WM SHOW");
+                    _processUI.StandardInput.WriteLine(JsonSerializer.Serialize(new VirtualPaperActiveCmd(), IpcMessageContext.Default.IpcMessage));
                 }
                 catch (Exception e) {
                     App.Log.Error(e);

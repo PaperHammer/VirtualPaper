@@ -5,33 +5,26 @@ using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
-namespace VirtualPaper.ScreenSaver.Effects
-{
-    public class Bubble
-    {
-        public Bubble(Window window,  Canvas canvas)
-        {
+namespace VirtualPaper.ScreenSaver.Effects {
+    public class Bubble {
+        public Bubble(Window window, Canvas canvas) {
             _window = window;
             _canvas = canvas;
 
-            _dispatcherTimer = new()
-            {
+            _dispatcherTimer = new() {
                 Interval = TimeSpan.FromSeconds(3),
             };
-            _dispatcherTimer.Tick += DispatcherTimer_Tick;            
+            _dispatcherTimer.Tick += DispatcherTimer_Tick;
 
             _random = new();
         }
 
-        public void Start()
-        {
+        public void Start() {
             _dispatcherTimer.Start();
         }
 
-        private void DispatcherTimer_Tick(object? sender, EventArgs e)
-        {
-            if (_cnt++ == 20)
-            {
+        private void DispatcherTimer_Tick(object? sender, EventArgs e) {
+            if (_cnt++ == 20) {
                 _dispatcherTimer.Stop();
                 _dispatcherTimer.Tick -= DispatcherTimer_Tick;
                 return;
@@ -39,10 +32,8 @@ namespace VirtualPaper.ScreenSaver.Effects
             GenerateBubbles();
         }
 
-        private void GenerateBubbles()
-        {
-            LinearGradientBrush brush = new()
-            {
+        private void GenerateBubbles() {
+            LinearGradientBrush brush = new() {
                 StartPoint = new System.Windows.Point(0, 0), // 左上
                 EndPoint = new System.Windows.Point(1, 1), // 右下
             };
@@ -52,16 +43,14 @@ namespace VirtualPaper.ScreenSaver.Effects
                 (byte)_random.Next(1, 255),
                 (byte)_random.Next(1, 255));
 
-            Ellipse bubble = new()
-            {
+            Ellipse bubble = new() {
                 Width = 130,
                 Height = 130,
                 Fill = brush,
                 Stroke = new SolidColorBrush(color),
             };
 
-            Ellipse highlight1 = new()
-            {
+            Ellipse highlight1 = new() {
                 Width = 18,
                 Height = 18,
                 Fill = System.Windows.Media.Brushes.White,
@@ -69,8 +58,7 @@ namespace VirtualPaper.ScreenSaver.Effects
                 Opacity = 0.7,
             };
 
-            Ellipse highlight2 = new()
-            {
+            Ellipse highlight2 = new() {
                 Width = 12,
                 Height = 12,
                 Fill = System.Windows.Media.Brushes.White,
@@ -103,15 +91,13 @@ namespace VirtualPaper.ScreenSaver.Effects
             double startY = _canvas.ActualHeight - bubble.Height;
 
             // 不要使用 AutoReverse 与 RepeatBehavior = RepeatBehavior.Forever
-            DoubleAnimation animX = new()
-            {
+            DoubleAnimation animX = new() {
                 From = startX,
                 To = _canvas.ActualWidth - bubble.Height,
                 Duration = TimeSpan.FromSeconds(_random.Next(5, 10)),
             };
 
-            DoubleAnimation animY = new()
-            {
+            DoubleAnimation animY = new() {
                 From = startY,
                 To = 0,
                 Duration = TimeSpan.FromSeconds(_random.Next(5, 10)),
@@ -125,12 +111,10 @@ namespace VirtualPaper.ScreenSaver.Effects
 
             Storyboard sx = new(), sy = new();
 
-            animX.Completed += (object? sender, EventArgs e) =>
-            {
+            animX.Completed += (object? sender, EventArgs e) => {
                 double currentLeft = Canvas.GetLeft(container);
 
-                if (currentLeft <= 0 || currentLeft >= _canvas.ActualWidth - bubble.Width)
-                {
+                if (currentLeft <= 0 || currentLeft >= _canvas.ActualWidth - bubble.Width) {
                     animX.To = currentLeft <= 0 ? _canvas.ActualWidth - bubble.Width : 0;
                     animX.From = currentLeft;
                 }
@@ -140,12 +124,10 @@ namespace VirtualPaper.ScreenSaver.Effects
                 sx.Begin(_window);
             };
 
-            animY.Completed += (object? sender, EventArgs e) =>
-            {
+            animY.Completed += (object? sender, EventArgs e) => {
                 double currentTop = Canvas.GetTop(container);
 
-                if (currentTop <= 0 || currentTop >= _canvas.ActualHeight - bubble.Width)
-                {
+                if (currentTop <= 0 || currentTop >= _canvas.ActualHeight - bubble.Width) {
                     animY.To = currentTop <= 0 ? _canvas.ActualHeight - bubble.Width : 0;
                     animY.From = currentTop;
                 }
@@ -164,10 +146,10 @@ namespace VirtualPaper.ScreenSaver.Effects
             sy.Begin(_window);
         }
 
-        private DispatcherTimer _dispatcherTimer;
         private int _cnt;
-        private Random _random;
-        private Window _window;
-        private Canvas _canvas;
+        private readonly DispatcherTimer _dispatcherTimer;        
+        private readonly Random _random;
+        private readonly Window _window;
+        private readonly Canvas _canvas;
     }
 }

@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>True</UseWPF>
+    <UseWindowsForms>True</UseWindowsForms>
   </PropertyGroup>
 
 	<!--<PropertyGroup>
@@ -19,6 +21,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
+	  <ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj" />
 	</ItemGroup>
 
 </Project>

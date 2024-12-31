@@ -1,4 +1,4 @@
-﻿using VirtualPaper.Models.WallpaperMetaData;
+﻿using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Cores.ScreenSaver
 {
@@ -8,7 +8,7 @@ namespace VirtualPaper.Cores.ScreenSaver
         void AddToWhiteList(string procName);
         void ChangeLockStatu(bool isLock);
         void RemoveFromWhiteList(string procName);
-        void Start(IMetaData metaData);
+        void Start();
         void Stop();
     }
 }

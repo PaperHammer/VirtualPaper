@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
-namespace VirtualPaper.Models.Mvvm
-{
+namespace VirtualPaper.Models.Mvvm {
     //ref: https://rachel53461.wordpress.com/2011/05/08/simplemvvmexample/
-    public abstract class ObservableObject : INotifyPropertyChanged
-    {
+    public abstract class ObservableObject : INotifyPropertyChanged {
         #region INotifyPropertyChanged Members
 
         /// <summary>
@@ -18,13 +17,14 @@ namespace VirtualPaper.Models.Mvvm
         /// Raises this object's PropertyChanged event.
         /// </summary>
         /// <param name="propertyName">The property that has a new value.</param>
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            this.VerifyPropertyName(propertyName);
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = "") {
+            if (propertyName != "Item[]") {
+                this.VerifyPropertyName(propertyName);
+            }
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        #endregion // INotifyPropertyChanged Members
+        #endregion
 
         #region Debugging Aides
 
@@ -35,12 +35,10 @@ namespace VirtualPaper.Models.Mvvm
         /// </summary>
         [Conditional("DEBUG")]
         [DebuggerStepThrough]
-        public virtual void VerifyPropertyName(string propertyName)
-        {
+        public virtual void VerifyPropertyName(string propertyName) {
             // Verify that the property name matches a real,
             // public, instance property on this object.
-            if (TypeDescriptor.GetProperties(this)[propertyName] == null)
-            {
+            if (TypeDescriptor.GetProperties(this)[propertyName] == null) {
                 string msg = "Invalid property name: " + propertyName;
 
                 if (this.ThrowOnInvalidPropertyName)

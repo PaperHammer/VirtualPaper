@@ -1,9 +1,7 @@
 ﻿using VirtualPaper.Common.Models;
 
-namespace VirtualPaper.Grpc.Client.Interfaces
-{
-    public interface IAppUpdaterClient : IDisposable
-    {
+namespace VirtualPaper.Grpc.Client.Interfaces {
+    public interface IAppUpdaterClient : IDisposable {
         string LastCheckChangelog { get; }
         DateTime LastCheckTime { get; }
         Uri LastCheckUri { get; }

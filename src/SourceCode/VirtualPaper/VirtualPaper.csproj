@@ -8,9 +8,10 @@
 		<UseWindowsForms>True</UseWindowsForms>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<AssemblyVersion>0.2.1.0</AssemblyVersion>
+		<AssemblyVersion>0.3.0.0</AssemblyVersion>
 		<ApplicationIcon>virtualpaper.ico</ApplicationIcon>
-		<PackageIcon>Resources\appicon_128.png</PackageIcon>
+		<PackageIcon>appicon_128.png</PackageIcon>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -22,21 +23,6 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
-
-	<!--<ItemGroup>
-		--><!--<None Remove="Cores\Tray\q3vopw4l.egi~" />--><!--
-		<None Remove="Resources\appicon_180.png" />
-		<None Remove="Resources\appicon_128.png" />
-		<None Remove="Resources\appicon_96.png" />
-		<None Remove="Resources\splash.png" />
-		<None Remove="Resources\Update\bg.png" />
-		<None Remove="Resources\Update\splashCol.png" />
-		<None Remove="virtualpaper.ico" />
-	</ItemGroup>-->
-
-	<!--<ItemGroup>
-	  <Page Remove="lang\en-US.xaml" />
-	</ItemGroup>-->
 
 	<ItemGroup>
 		<Content Include="Nlog.config">
@@ -50,26 +36,25 @@
 		<PackageReference Include="MdXaml" Version="1.27.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.3" />
-		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2535.41" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 		<PackageReference Include="NLog" Version="5.3.2" />
 		<PackageReference Include="Octokit" Version="11.0.1" />
-		<PackageReference Include="OpenCvSharp4" Version="4.9.0.20240103" />
-		<PackageReference Include="OpenCvSharp4.Extensions" Version="4.9.0.20240103" />
-		<PackageReference Include="OpenCvSharp4.runtime.win" Version="4.9.0.20240103" />
-		<PackageReference Include="OpenCvSharp4.Windows" Version="4.9.0.20240103" />
+		<PackageReference Include="OpenCvSharp4" Version="4.10.0.20241108" />
+		<PackageReference Include="OpenCvSharp4.Extensions" Version="4.10.0.20241108" />
+		<PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20241108" />
+		<PackageReference Include="OpenCvSharp4.Windows" Version="4.10.0.20241108" />
 		<PackageReference Include="RawInput.Sharp" Version="0.1.3" />
 		<PackageReference Include="Sentinel.NLogViewer" Version="2.0.1" />
 		<PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+		<PackageReference Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="2.21.0" />
 		<PackageReference Include="UACHelper" Version="1.3.0.5" />
 		<PackageReference Include="WinEventHook" Version="0.3.6" />
-		<PackageReference Include="WPF-UI" Version="3.0.4" />
-		<PackageReference Include="WPF-UI.Tray" Version="3.0.4" />
+		<PackageReference Include="WPF-UI" Version="3.0.5" />
+		<PackageReference Include="WPF-UI.Tray" Version="3.0.5" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\VirtualPaper.Grpc.Service\VirtualPaper.Grpc.Service.csproj" />
-		<ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
+		<ProjectReference Include="..\VirtualPaper.DataAssistor\VirtualPaper.DataAssistor.csproj" />
+		<ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -85,18 +70,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="Properties\lang.Designer.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>lang.resx</DependentUpon>
-	  </Compile>
+		<Compile Update="Properties\lang.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>lang.resx</DependentUpon>
+		</Compile>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <EmbeddedResource Update="Properties\lang.resx">
-	    <Generator>PublicResXFileCodeGenerator</Generator>
-	    <LastGenOutput>lang.Designer.cs</LastGenOutput>
-	  </EmbeddedResource>
+		<EmbeddedResource Update="Properties\lang.resx">
+			<Generator>PublicResXFileCodeGenerator</Generator>
+			<LastGenOutput>lang.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
 	</ItemGroup>
 
 	<ItemGroup>

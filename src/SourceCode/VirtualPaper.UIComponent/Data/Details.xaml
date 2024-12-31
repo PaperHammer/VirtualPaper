@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="VirtualPaper.UIComponent.Data.Details"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.UIComponent.Data"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <ScrollViewer
+            Padding="10 0"
+            HorizontalAlignment="Stretch"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel 
+                Orientation="Vertical"
+                Spacing="10">
+                <TextBlock 
+                    x:Name="titleText" 
+                    Visibility="{Binding IsTitleVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="{Binding Title}"/>
+
+                <TextBlock 
+                    x:Name="descriptionText" 
+                    Visibility="{Binding IsDescVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Style="{StaticResource BodyTextBlockStyle}" 
+                    Text="{Binding Desc}" />
+
+                <Grid 
+                    Visibility="{Binding IsTagListVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ItemsRepeater 
+                        ItemsSource="{Binding TagList}">
+                        <ItemsRepeater.Layout>
+                            <LinedFlowLayout 
+                                ItemsStretch="Fill" 
+                                LineSpacing="5"
+                                MinItemSpacing="10"/>
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate>
+                                <ItemContainer>
+                                    <StackPanel
+                                        CornerRadius="5"
+                                        Background="{StaticResource SystemControlBackgroundAccentBrush}"                                               
+                                        Padding="8 5"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Stretch">
+                                        <TextBlock                                             
+                                            Text="{Binding}"
+                                            Foreground="{StaticResource SystemControlForegroundAltHighBrush}"
+                                            HorizontalTextAlignment="Center"/>
+                                    </StackPanel>
+                                </ItemContainer>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </Grid>
+
+                <Grid 
+                    Visibility="{Binding IsAuthorListVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    HorizontalAlignment="Right">
+                    <ItemsView 
+                        ItemsSource="{Binding AuthorList}"
+                        SelectionMode="None">
+                        <ItemsView.Layout>
+                            <LinedFlowLayout 
+                                ItemsStretch="Fill" 
+                                LineSpacing="3"
+                                MinItemSpacing="10"/>
+                        </ItemsView.Layout>
+                        <ItemsView.ItemTemplate>
+                            <DataTemplate>
+                                <ItemContainer>
+                                    <Grid>
+                                        <TextBlock 
+                                            Text="{Binding}"
+                                            Style="{StaticResource BodyTextBlockStyle}"
+                                            HorizontalTextAlignment="Center"/>
+                                    </Grid>
+                                </ItemContainer>
+                            </DataTemplate>
+                        </ItemsView.ItemTemplate>
+                    </ItemsView>
+                </Grid>
+
+                <TextBlock 
+                    x:Name="publishDateText" 
+                    Visibility="{Binding IsPublishDateVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    HorizontalAlignment="Right"
+                    Style="{StaticResource BodyTextBlockStyle}" 
+                    Text="{Binding PublishDate}"/>
+
+                <StackPanel 
+                    Orientation="Vertical"
+                    VerticalAlignment="Center">
+                    <Grid Margin="0 20 0 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="0.2*" />
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="0.8*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Line 
+                            Grid.Column="0"
+                            X1="0" Y1="0" X2="1" Y2="0" 
+                            Stretch="Fill"
+                            Stroke="{ThemeResource ControlStrokeColorOnAccentSecondaryBrush}" 
+                            StrokeThickness="1" 
+                            VerticalAlignment="Center"/>
+
+                        <TextBlock 
+                            Grid.Column="1" 
+                            Margin="5 0"
+                            Text="文件属性"
+                            Style="{StaticResource CaptionTextBlockStyle}" 
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+
+                        <Line 
+                            Grid.Column="2"
+                            X1="0" Y1="0" X2="1" Y2="0" 
+                            Stretch="Fill" 
+                            Stroke="{ThemeResource ControlStrokeColorOnAccentSecondaryBrush}" 
+                            StrokeThickness="1" 
+                            VerticalAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel
+                    Orientation="Vertical"
+                    Spacing="10">
+                    <StackPanel
+                        Orientation="Horizontal">
+                        <TextBlock 
+                            Text="{Binding Details_TextResolution}"
+                            Style="{StaticResource BodyTextBlockStyle}"/>
+                        <TextBlock
+                            Text="{Binding Resolution}"
+                            Style="{StaticResource BodyTextBlockStyle}" />
+                    </StackPanel>
+
+                    <StackPanel
+                        Orientation="Horizontal">
+                        <TextBlock 
+                            Text="{Binding Details_TextAspectRadio}"
+                            Style="{StaticResource BodyTextBlockStyle}"/>
+                        <TextBlock
+                            Text="{Binding AspectRatio}"
+                            Style="{StaticResource BodyTextBlockStyle}" />
+                    </StackPanel>
+
+                    <StackPanel
+                        Orientation="Horizontal">
+                        <TextBlock 
+                            Text="{Binding Details_TextFileExtension}"
+                            Style="{StaticResource BodyTextBlockStyle}"/>
+                        <TextBlock
+                            Text="{Binding FileExtension}"
+                            Style="{StaticResource BodyTextBlockStyle}" />
+                    </StackPanel>
+
+                    <StackPanel
+                        Orientation="Horizontal">
+                        <TextBlock 
+                            Text="{Binding Details_TextFileSize}"
+                            Style="{StaticResource BodyTextBlockStyle}"/>
+                        <TextBlock
+                            Text="{Binding FileSize}"
+                            Style="{StaticResource BodyTextBlockStyle}" />
+                    </StackPanel>
+
+                    <StackPanel
+                        Orientation="Horizontal">
+                        <TextBlock 
+                          Text="{Binding Details_TextVersionInfo}"
+                          Style="{StaticResource BodyTextBlockStyle}"/>
+                        <TextBlock
+                          Text="{Binding VersionInfo}"
+                          Style="{StaticResource BodyTextBlockStyle}" />
+                        </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

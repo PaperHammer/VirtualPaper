@@ -6,12 +6,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:winex="using:WinUIEx"
+    xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
     mc:Ignorable="d"
     Width="1400"
     Height="850"
     MinWidth="1400"    
     MinHeight="850"    
     Closed="WindowEx_Closed"
+    Activated="WindowEx_Activated"
     TaskBarIcon="virtualpaper.ico"      
     Title="Virtual Paper">
 
@@ -53,42 +55,76 @@
         <NavigationView
             x:Name="NavView"
             Grid.Row="1"
-            PaneDisplayMode="Left"        
-            Loaded="NavView_Loaded"     
-            SelectionChanged="NavigationView_SelectionChanged"
-            IsSettingsVisible="False"        
+            PaneDisplayMode="Left"
+            SelectionChanged="NavView_SelectionChanged"
+            IsSettingsVisible="False"
             AlwaysShowHeader="False"
             IsBackEnabled="False"
             IsBackButtonVisible="Collapsed">
 
             <NavigationView.MenuItems>
-                <NavigationViewItem 
+                <!--<NavigationViewItem 
                     Content="{Binding SidebarGallery}"
-                    Tag="VirtualPaper.UI.Views.Gallery">
+                    x:Name="Gallery"
+                    Icon="Library"
+                    IsSelected="True">
+                </NavigationViewItem>-->
+                <NavigationViewItem 
+                    Content="{Binding SidebarWpSettings}" 
+                    x:Name="WpSettings"
+                    IsSelected="True">
                     <NavigationViewItem.Icon>
                         <FontIcon 
                             Glyph="&#xE91B;"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem 
-                    Content="{Binding SidebarWpSettings}" 
-                    Tag="VirtualPaper.UI.Views.WpSettings" 
-                    Icon="Library"/>
+                    Content="{Binding SidebarProject}" 
+                    x:Name="Project" >
+                    <NavigationViewItem.Icon>
+                        <FontIcon 
+                            Glyph="&#xF156;"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
-                <NavigationViewItem 
+                <!--<NavigationViewItem 
                     Content="{Binding SidebarAccount}" 
-                    Tag="VirtualPaper.UI.Views.Account" 
-                    Icon="Contact" />
+                    x:Name="Account" 
+                    Icon="Contact" />-->
                 <NavigationViewItem 
                     Content="{Binding SidebarAppSettings}" 
-                    Tag="VirtualPaper.UI.Views.AppSettings" 
+                    x:Name="AppSettings" 
                     Icon="Setting" />
             </NavigationView.FooterMenuItems>
 
-            <Frame 
-                x:Name="ContentFrame"/>
+            <Grid>
+                <Frame 
+                    x:Name="ContentFrame"
+                    IsEnabled="{Binding FrameIsEnable}"/>
+
+                <!--µ¯´°-->
+                <InfoBar
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    IsIconVisible="True"
+                    IsOpen="{Binding InfoBarIsOpen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Severity="{Binding InfoBarSeverity}"
+                    Message="{Binding InfobarMsg}"
+                    MaxWidth="900"/>
+
+                <!--¼ÓÔØ½çÃæ-->
+                <feedback:Loading
+                    CancelEnable="{Binding CancelEnable}"
+                    ProgressbarEnable="{Binding ProgressbarEnable}"
+                    CtsTokens="{Binding CtsTokens}"
+                    TotalValue="{Binding TotalValue}"
+                    CurValue="{Binding CurValue}"
+                    TextLoading="{Binding TextLoading}"
+                    TextCancel="{Binding TextCancel}"
+                    Visibility="{Binding LoadingIsVisiable}"/>
+            </Grid>
         </NavigationView>
     </Grid>
 </winex:WindowEx>

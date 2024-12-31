@@ -1,7 +1,5 @@
-﻿namespace VirtualPaper.Services.Interfaces
-{
-    public interface IDownloadService
-    {
+﻿namespace VirtualPaper.Services.Interfaces {
+    public interface IDownloadService {
         event EventHandler<DownloadCompletedEventArgs> DownloadFileCompleted;
         event EventHandler<DownloadProgressEventArgs> DownloadProgressChanged;
         event EventHandler<DownloadEventArgs> DownloadStarted;
@@ -10,8 +8,7 @@
         void Cancel();
     }
 
-    public class DownloadProgressEventArgs : EventArgs
-    {
+    public class DownloadProgressEventArgs : EventArgs {
         /// <summary>
         /// Total size of file in megabytes.
         /// </summary>
@@ -26,8 +23,7 @@
         public double Percentage { get; set; }
     }
 
-    public class DownloadEventArgs : EventArgs
-    {
+    public class DownloadEventArgs : EventArgs {
         /// <summary>
         /// Total size of file in megabytes.
         /// </summary>
@@ -35,11 +31,10 @@
         /// <summary>
         /// Name of the file.
         /// </summary>
-        public string FileName { get; set; } =  string.Empty;
+        public string FileName { get; set; } = string.Empty;
     }
 
-    public class DownloadCompletedEventArgs : EventArgs
-    {
+    public class DownloadCompletedEventArgs : EventArgs {
         public bool IsCompleted { get; set; }
         public bool IsNormal { get; set; }
         public string Msg { get; set; } = string.Empty;

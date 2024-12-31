@@ -1,16 +1,15 @@
 ﻿using VirtualPaper.Common.Models;
 
-namespace VirtualPaper.Cores.AppUpdate
-{
-    public interface IAppUpdaterService
-    {
+namespace VirtualPaper.Cores.AppUpdate {
+    public interface IAppUpdaterService {
+        event EventHandler<AppUpdaterEventArgs> UpdateChecked;
+
         string LastCheckChangelog { get; }
         DateTime LastCheckTime { get; }
         Uri LastCheckUri { get; }
         Version LastCheckVersion { get; }
         AppUpdateStatus Status { get; }
 
-        event EventHandler<AppUpdaterEventArgs> UpdateChecked;
 
         Task<AppUpdateStatus> CheckUpdate(int fetchDelay = 45000);
         Task<(Uri, Version, string)> GetLatestRelease(bool isBeta);

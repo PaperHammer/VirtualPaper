@@ -3,6 +3,7 @@
 	<PropertyGroup>
 		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Nullable>enable</Nullable>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 	</PropertyGroup>
@@ -19,8 +20,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\VirtualPaper.Grpc.Service\VirtualPaper.Grpc.Service.csproj" />
-		<ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
+	  <ProjectReference Include="..\VirtualPaper.DataAssistor\VirtualPaper.DataAssistor.csproj" />
 	</ItemGroup>
 
 </Project>

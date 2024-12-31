@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PalyerDefault</title>
+</head>
+
+<body>
+    <div class="content" draggable="false" >
+    </div>
+</body>
+</html>
+
+<script>
+    let templateFilter = "saturate(s#) hue-rotate(d#deg) brightness(b#) contrast(c#)";
+    let curVideoElementId = null; // 存储当前视频元素的ID
+
+    let saturate = 0.0;
+    let hueRotate = 0;
+    let brightness = 0.0;
+    let contrast = 0.0
+    let newFit = "";
+
+    let volume = 0;
+    let speed = 0.0;
+    //let muted = false;
+
+    function resourceLoad(wallpaperType, filePath) {
+        if (curVideoElementId) {
+            videoRelease();
+        }
+
+        const element = document.querySelector('.content');
+        element.innerHTML = '';
+
+        let elementToInsert;
+        switch (wallpaperType) {
+            case 'RImage':
+                elementToInsert = `
+                <div id="content" draggable="false">
+                    <img draggable="false" class="source" src="${filePath}" alt=""/>
+                </div>`;
+                break;
+            case 'RVideo':
+                curVideoElementId = 'videoEle';
+                elementToInsert = `
+                <div id="content" draggable="false">
+                    <video draggable="false" id="videoEle" class="source" loop>
+                        <source src="${filePath}" type="video/mp4">
+                    </video>
+                </div>`;
+                break;
+            default:
+                return;
+        }
+
+        if (elementToInsert) {
+            element?.insertAdjacentHTML('beforeend', elementToInsert);
+        }
+
+        return "resourceLoad success";
+    }
+
+    //在某些浏览器（例如 Chrome 70.0）中，如果没有设置 muted 属性，autoplay 将不会生效。
+    function play() {
+        var videoElement = document.getElementById('videoEle');
+        videoElement?.play();
+
+        return "play success";
+    }
+</script>
+
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
+
+    .content {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .source {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        object-fit: fill;
+    }
+</style>

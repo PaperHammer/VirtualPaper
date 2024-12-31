@@ -1,11 +1,9 @@
-﻿using Octokit;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
+using Octokit;
 using ProductHeaderValue = Octokit.ProductHeaderValue;
 
-namespace VirtualPaper.Common.Utils
-{
-    public static class GithubUtil
-    {
+namespace VirtualPaper.Common.Utils {
+    public static class GithubUtil {
         /// <summary>
         /// After given delay retrieve github release asset download url.
         /// Returns first asset matching substring (make sure asset name is unique to get correct file.), case is ignored.
@@ -15,8 +13,7 @@ namespace VirtualPaper.Common.Utils
         /// <param name="userName"></param>
         /// <param name="startDelay"></param>
         /// <returns></returns>
-        public static async Task<string> GetLatestAssetUrl(string assetNameSubstring, string repositoryName, string userName, int startDelay = 1000)
-        {
+        public static async Task<string> GetLatestAssetUrl(string assetNameSubstring, string repositoryName, string userName, int startDelay = 1000) {
             Release release = await GetLatestRelease(repositoryName, userName, startDelay);
             var url = await GetAssetUrl(assetNameSubstring, release, repositoryName, userName);
             return url;
@@ -29,8 +26,7 @@ namespace VirtualPaper.Common.Utils
         /// <param name="userName"></param>
         /// <param name="startDelay"></param>
         /// <returns></returns>
-        public static async Task<Release> GetLatestRelease(string repositoryName, string userName, int startDelay = 45000)
-        {
+        public static async Task<Release> GetLatestRelease(string repositoryName, string userName, int startDelay = 45000) {
             //wait for computer startup.. so that user and network is ready.
             await Task.Delay(startDelay);
             GitHubClient client = new(new ProductHeaderValue(repositoryName));
@@ -49,8 +45,7 @@ namespace VirtualPaper.Common.Utils
         /// <param name="repositoryName"></param>
         /// <param name="userName"></param>
         /// <returns></returns>
-        public static async Task<string> GetAssetUrl(string assetNameSubstring, Release release, string repositoryName, string userName)
-        {
+        public static async Task<string> GetAssetUrl(string assetNameSubstring, Release release, string repositoryName, string userName) {
             GitHubClient client = new(new ProductHeaderValue(repositoryName));
             var allAssets = await client.Repository.Release.GetAllAssets(userName, repositoryName, release.Id);
             //var requiredAssets = allAssets.Single(x => x.Name.Equals(assetName, StringComparison.OrdinalIgnoreCase));
@@ -58,8 +53,7 @@ namespace VirtualPaper.Common.Utils
             return requiredAsset.BrowserDownloadUrl;
         }
 
-        public static Version GetVersion(Release release)
-        {
+        public static Version GetVersion(Release release) {
             return new Version(Regex.Replace(release.TagName, "[A-Za-z ]", ""));
         }
 
@@ -68,8 +62,7 @@ namespace VirtualPaper.Common.Utils
         /// </summary>
         /// <param name="release"></param>
         /// <returns> =0 same, >0 git greater, <0 pgm greater</returns>
-        public static int CompareAssemblyVersion(Release release)
-        {
+        public static int CompareAssemblyVersion(Release release) {
             string tmp = Regex.Replace(release.TagName, "[A-Za-z ]", "");
             var gitVersion = new Version(tmp);
             var appVersion = new Version(System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString());
@@ -78,8 +71,7 @@ namespace VirtualPaper.Common.Utils
             return result;
         }
 
-        public static int CompareAssemblyVersion(Version version)
-        {
+        public static int CompareAssemblyVersion(Version version) {
             var appVersion = new Version(System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString());
             return version.CompareTo(appVersion);
         }
@@ -91,8 +83,7 @@ namespace VirtualPaper.Common.Utils
         /// <param name="substring"></param>
         /// <param name="comp"></param>
         /// <returns></returns>
-        private static bool Contains(string str, string substring, StringComparison comp)
-        {
+        private static bool Contains(string str, string substring, StringComparison comp) {
             if (substring == null)
                 throw new ArgumentNullException(nameof(substring), "substring cannot be null.");
             else if (!Enum.IsDefined(typeof(StringComparison), comp))

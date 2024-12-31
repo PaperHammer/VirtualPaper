@@ -1,0 +1,611 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppSettings_SelBarItem1_General" xml:space="preserve">
+    <value>通用</value>
+  </data>
+  <data name="AppSettings_SelBarItem2_Performance" xml:space="preserve">
+    <value>性能</value>
+  </data>
+  <data name="AppSettings_SelBarItem3_System" xml:space="preserve">
+    <value>系统</value>
+  </data>
+  <data name="AppSettings_SelBarItem4_Others" xml:space="preserve">
+    <value>其他</value>
+  </data>
+  <data name="Text_Close" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="Text_Detect" xml:space="preserve">
+    <value>检测</value>
+  </data>
+  <data name="Text_Identify" xml:space="preserve">
+    <value>识别</value>
+  </data>
+  <data name="Effect_Help_Parallax" xml:space="preserve">
+    <value>鼠标跟随的视差效果。当鼠标焦点在桌面时，让壁纸在视觉上以鼠标为焦点进行展示。</value>
+  </data>
+  <data name="Effect_Help_Scaling" xml:space="preserve">
+    <value>Fill：内容将被缩放，以此在占满整个内容框且不一定保持宽高比。宽高比不匹配时，对象将被拉伸以适应内容框。
+
+Contain：内容将被缩放，以此在占满整个内容框并保持其宽高比。宽高比不匹配时，该对象将被添加“黑边”或“白边”。
+
+Cover：内容将被缩放，以此在占满整个内容框并保持其宽高比。宽高比不匹配时，该对象将被裁剪。
+
+None：保持原有尺寸。
+
+Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪种方式得到的图像尺寸更小。</value>
+  </data>
+  <data name="Dialog_Content_ApplyError" xml:space="preserve">
+    <value>应用壁纸失败，请重试</value>
+  </data>
+  <data name="Dialog_Content_GetMonitorsAsync" xml:space="preserve">
+    <value>可用显示器数量：</value>
+  </data>
+  <data name="Dialog_Content_Import_Failed_Lib" xml:space="preserve">
+    <value>该文件无法导入。
+仅支持以下文件类型：
+    动图 .gif  .apng
+    静态图片 .jpg  .jpeg  .bmp  .png
+    视频 .mp4  .webm</value>
+  </data>
+  <data name="Dialog_Content_Import_NeedUpdate" xml:space="preserve">
+    <value>该文件可执行更新以适应新特性,是否更新?</value>
+  </data>
+  <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
+    <value>是否删除该文件？
+注意：该操作不可逆！</value>
+  </data>
+  <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
+    <value>仅支持以下文件类型：
+    动图 .gif
+    静态图片 .jpg  .jpeg  .bmp  .png</value>
+  </data>
+  <data name="Dialog_Content_WpIsUsing" xml:space="preserve">
+    <value>该文件正作为某显示器壁纸，无法删除</value>
+  </data>
+  <data name="Dialog_Title_CreateType" xml:space="preserve">
+    <value>选择壁纸运行时类型</value>
+  </data>
+  <data name="Dialog_Title_Prompt" xml:space="preserve">
+    <value>提示</value>
+  </data>
+  <data name="InfobarMsg_Cancel" xml:space="preserve">
+    <value>操作已取消</value>
+  </data>
+  <data name="InfobarMsg_Err" xml:space="preserve">
+    <value>发生错误</value>
+  </data>
+  <data name="InfobarMsg_Success" xml:space="preserve">
+    <value>已完成</value>
+  </data>
+  <data name="Text_Apply" xml:space="preserve">
+    <value>应用</value>
+  </data>
+  <data name="Text_ApplyToLockBG" xml:space="preserve">
+    <value>应用到锁屏背景</value>
+  </data>
+  <data name="Text_DeleteFromDisk" xml:space="preserve">
+    <value>从磁盘中删除</value>
+  </data>
+  <data name="Text_ShowOnDisk" xml:space="preserve">
+    <value>打开文件所在目录</value>
+  </data>
+  <data name="Text_UpdateConfig" xml:space="preserve">
+    <value>更新配置</value>
+  </data>
+  <data name="ScreenSaver_Add" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffects" xml:space="preserve">
+    <value>屏幕保护动态效果</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffectsExplain" xml:space="preserve">
+    <value>当使用静态图像作为屏幕保护背景时，建议开启此项</value>
+  </data>
+  <data name="ScreenSaver_RunningLock" xml:space="preserve">
+    <value>在恢复时显示登录界面</value>
+  </data>
+  <data name="ScreenSaver_RunningLockExplain" xml:space="preserve">
+    <value>为了您的设备数据安全，建议开启此选项</value>
+  </data>
+  <data name="ScreenSaver_SeekFromList" xml:space="preserve">
+    <value>名单中搜索</value>
+  </data>
+  <data name="ScreenSaver_Server" xml:space="preserve">
+    <value>是否开启屏幕保护</value>
+  </data>
+  <data name="ScreenSaver_ServerExplain" xml:space="preserve">
+    <value>将主显示器在 Virtual Paper 中正在使用的壁纸作为屏保背景</value>
+  </data>
+  <data name="ScreenSaver_WaitingTime" xml:space="preserve">
+    <value>等待的分钟数：</value>
+  </data>
+  <data name="ScreenSaver_WhiteListExplain" xml:space="preserve">
+    <value>列表中的应用在最前台运行时，将不会触发屏幕保护</value>
+  </data>
+  <data name="ScreenSaver_WhiteListTitle" xml:space="preserve">
+    <value>白名单</value>
+  </data>
+  <data name="ScreenSaver__effectBubble" xml:space="preserve">
+    <value>气泡</value>
+  </data>
+  <data name="ScreenSaver__effectNone" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage" xml:space="preserve">
+    <value>存储路径</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorageExplain" xml:space="preserve">
+    <value>修改目录后将会拷贝所有内容至新目录下</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage_ModifyTooltip" xml:space="preserve">
+    <value>修改目录</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage_OpenTooltip" xml:space="preserve">
+    <value>打开目录</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppLanguage" xml:space="preserve">
+    <value>语言设置</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppLanguageExplain" xml:space="preserve">
+    <value>修改语言需要重启 UI 界面</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop" xml:space="preserve">
+    <value>UI 背景纹理</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdropExplain" xml:space="preserve">
+    <value>修改背景纹理需要重启 UI 界面</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink" xml:space="preserve">
+    <value>亚克力</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink" xml:space="preserve">
+    <value>云母</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppTheme" xml:space="preserve">
+    <value>应用主题</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppThemeExplain" xml:space="preserve">
+    <value>修改主题需要重启 UI 界面</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppThemeHyperlink" xml:space="preserve">
+    <value>Windows 主题设置</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AutoStart" xml:space="preserve">
+    <value>开机自启动</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AutoStatExplain" xml:space="preserve">
+    <value>Virtual Paper 自启动以此在开机时自动还原壁纸设置</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdAcrylic" xml:space="preserve">
+    <value>亚克力</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdDefault" xml:space="preserve">
+    <value>默认</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdMica" xml:space="preserve">
+    <value>云母</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeDark" xml:space="preserve">
+    <value>深色</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeFollowSystem" xml:space="preserve">
+    <value>跟随系统</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeLight" xml:space="preserve">
+    <value>浅色</value>
+  </data>
+  <data name="Settings_General_Text_AppearanceAndAction" xml:space="preserve">
+    <value>外观 &amp; 行为</value>
+  </data>
+  <data name="Settings_General_Text_Version" xml:space="preserve">
+    <value>版本</value>
+  </data>
+  <data name="Settings_General_Version_Download" xml:space="preserve">
+    <value>立即下载</value>
+  </data>
+  <data name="Settings_General_Version_DownloadCancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Settings_General_Version_DownloadStart" xml:space="preserve">
+    <value>下载</value>
+  </data>
+  <data name="Settings_General_Version_FindNew" xml:space="preserve">
+    <value>发现新版本</value>
+  </data>
+  <data name="Settings_General_Version_Install" xml:space="preserve">
+    <value>立即安装</value>
+  </data>
+  <data name="Settings_General_Version_LastCheckDate" xml:space="preserve">
+    <value>上次检测时间：</value>
+  </data>
+  <data name="Settings_General_Version_MsStore" xml:space="preserve">
+    <value>微软商店版</value>
+  </data>
+  <data name="Settings_General_Version_NewVersionDownLoaded" xml:space="preserve">
+    <value>新版本已下载完成</value>
+  </data>
+  <data name="Settings_General_Version_Release_Notes" xml:space="preserve">
+    <value>发行说明</value>
+  </data>
+  <data name="Settings_General_Version_SeeNews" xml:space="preserve">
+    <value>查看更新内容</value>
+  </data>
+  <data name="Settings_General_Version_UpdateCheck" xml:space="preserve">
+    <value>检查更新</value>
+  </data>
+  <data name="Settings_General_Version_UpdateErr" xml:space="preserve">
+    <value>更新失败，请检查网络情况</value>
+  </data>
+  <data name="Settings_General_Version_UptoNewest" xml:space="preserve">
+    <value>已是最新版本！</value>
+  </data>
+  <data name="Settings_Others_About_Basic" xml:space="preserve">
+    <value>感谢您下载本程序！
+Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，供所有 Windows 10 及以上的系统提供壁纸管理及其他个性化功能，如发现问题，欢迎联系！
+作者：PaperHammer</value>
+  </data>
+  <data name="Settings_Others_More_Document" xml:space="preserve">
+    <value>文档</value>
+  </data>
+  <data name="Settings_Others_More_DocumentExplain" xml:space="preserve">
+    <value>操作手册与帮助</value>
+  </data>
+  <data name="Settings_Others_More_ReportBug" xml:space="preserve">
+    <value>报告漏洞缺陷</value>
+  </data>
+  <data name="Settings_Others_More_ReportBugExplain" xml:space="preserve">
+    <value>报告软件问题，共同维护应用程序</value>
+  </data>
+  <data name="Settings_Others_More_RequestFunc" xml:space="preserve">
+    <value>申请新功能</value>
+  </data>
+  <data name="Settings_Others_More_RequestFuncExplain" xml:space="preserve">
+    <value>发表你的想法，共同完善应用程序</value>
+  </data>
+  <data name="Settings_Others_More_SourceCode" xml:space="preserve">
+    <value>Github 仓库</value>
+  </data>
+  <data name="Settings_Others_More_SourceCodeExplain" xml:space="preserve">
+    <value>点击星星表达赞赏</value>
+  </data>
+  <data name="Settings_Others_Text_About" xml:space="preserve">
+    <value>关于</value>
+  </data>
+  <data name="Settings_Others_Text_More" xml:space="preserve">
+    <value>更多</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_BatteryPoweredn" xml:space="preserve">
+    <value>电池供电</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_BatteryPowerednExplain" xml:space="preserve">
+    <value>当电源断开时壁纸的状态</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_PowerSaving" xml:space="preserve">
+    <value>省电模式</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_PowerSavingExplain" xml:space="preserve">
+    <value>当 Windows 启用节能模式时壁纸的状态</value>
+  </data>
+  <data name="Settings_Perforemance_Play_Audio" xml:space="preserve">
+    <value>仅在桌面为焦点时播放音频</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFocus" xml:space="preserve">
+    <value>其他应用程序聚焦时</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFocusExplain" xml:space="preserve">
+    <value>当其他应用程序获得焦点时壁纸的状态</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFullScreen" xml:space="preserve">
+    <value>焦点应用程序全屏时</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFullScreenExplain" xml:space="preserve">
+    <value>当焦点应用程序设置为全屏时壁纸的状态</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_KeepRun" xml:space="preserve">
+    <value>保持运行</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_Pause" xml:space="preserve">
+    <value>暂停</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_Silence" xml:space="preserve">
+    <value>静音</value>
+  </data>
+  <data name="Settings_Perforemance_System_RemoteDesktop" xml:space="preserve">
+    <value>远程桌面</value>
+  </data>
+  <data name="Settings_Perforemance_System_RemoteDesktopExplain" xml:space="preserve">
+    <value>当启动远程桌面时壁纸的状态</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanism" xml:space="preserve">
+    <value>状态生效机制</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanismExplain_ForAll" xml:space="preserve">
+    <value>所有：当某个屏幕上的应用触发规则后，所有屏幕的壁纸均修改运行状态</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanismExplain_ForPer" xml:space="preserve">
+    <value>每个：只在应用触发规则的屏幕上修改壁纸运行状态</value>
+  </data>
+  <data name="Settings_Perforemance_System__statuMechanism_all" xml:space="preserve">
+    <value>所有</value>
+  </data>
+  <data name="Settings_Perforemance_System__statuMechanism_per" xml:space="preserve">
+    <value>每个</value>
+  </data>
+  <data name="Settings_Perforemance_Text_Laptop" xml:space="preserve">
+    <value>笔记本电脑</value>
+  </data>
+  <data name="Settings_Perforemance_Text_Play" xml:space="preserve">
+    <value>播放</value>
+  </data>
+  <data name="Settings_Perforemance_Text_System" xml:space="preserve">
+    <value>系统</value>
+  </data>
+  <data name="Settings_System_Developer_Debug" xml:space="preserve">
+    <value>调试器</value>
+  </data>
+  <data name="Settings_System_Developer_DebugExplain" xml:space="preserve">
+    <value>显示程序执行时的具体操作信息</value>
+  </data>
+  <data name="Settings_System_Developer_Log" xml:space="preserve">
+    <value>日志</value>
+  </data>
+  <data name="Settings_System_Developer_LogExplain" xml:space="preserve">
+    <value>创建日志保报告</value>
+  </data>
+  <data name="Settings_System_Log" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="Settings_System_Text_Debug" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="Settings_System_Text_Developer" xml:space="preserve">
+    <value>开发者</value>
+  </data>
+  <data name="SidebarAccount" xml:space="preserve">
+    <value>账户</value>
+  </data>
+  <data name="SidebarAppSettings" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="SidebarGallery" xml:space="preserve">
+    <value>画廊</value>
+  </data>
+  <data name="SidebarProject" xml:space="preserve">
+    <value>项目</value>
+  </data>
+  <data name="SidebarWpSettings" xml:space="preserve">
+    <value>本地</value>
+  </data>
+  <data name="Text_Adjust" xml:space="preserve">
+    <value>调整</value>
+  </data>
+  <data name="Text_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Text_Confirm" xml:space="preserve">
+    <value>确认</value>
+  </data>
+  <data name="Text_Delete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="Text_Loading" xml:space="preserve">
+    <value>数据加载中，请稍后</value>
+  </data>
+  <data name="Text_Restore" xml:space="preserve">
+    <value>还原</value>
+  </data>
+  <data name="Text_SaveAndApply" xml:space="preserve">
+    <value>保存并应用</value>
+  </data>
+  <data name="Text_WpArrange" xml:space="preserve">
+    <value>壁纸布局</value>
+  </data>
+  <data name="WpArrange_Duplicate" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="WpArrange_DuplicateExplain" xml:space="preserve">
+    <value>其他显示器与主显示器壁纸保持一致</value>
+  </data>
+  <data name="WpArrange_Expand" xml:space="preserve">
+    <value>跨越</value>
+  </data>
+  <data name="WpArrange_ExpandExplain" xml:space="preserve">
+    <value>以主显示器壁纸为主体，跨越显示到所有显示器上</value>
+  </data>
+  <data name="WpArrange_Per" xml:space="preserve">
+    <value>独立</value>
+  </data>
+  <data name="WpArrange_PerExplain" xml:space="preserve">
+    <value>每个显示器的壁纸独立显示</value>
+  </data>
+  <data name="Text_AspectRatio" xml:space="preserve">
+    <value>比例：</value>
+  </data>
+  <data name="Text_Details" xml:space="preserve">
+    <value>详细信息</value>
+  </data>
+  <data name="Text_FileExtension" xml:space="preserve">
+    <value>文件类型：</value>
+  </data>
+  <data name="Text_FileSize" xml:space="preserve">
+    <value>文件大小：</value>
+  </data>
+  <data name="Text_esolution" xml:space="preserve">
+    <value>分辨率：</value>
+  </data>
+  <data name="Text_Type" xml:space="preserve">
+    <value>壁纸类型：</value>
+  </data>
+  <data name="Text_EffectConfig" xml:space="preserve">
+    <value>可用自定义设置</value>
+  </data>
+  <data name="WpCreateDialog_AIWp_Explain" xml:space="preserve">
+    <value>可实现较为真实但性能消耗高的视差效果</value>
+  </data>
+  <data name="WpCreateDialog_AIWp_Title" xml:space="preserve">
+    <value>根据 AI 模型推理的 3D 壁纸</value>
+  </data>
+  <data name="WpCreateDialog_CommonWp_Explain" xml:space="preserve">
+    <value>可实现伪3D但性能消耗适中的视差效果</value>
+  </data>
+  <data name="WpCreateDialog_CommonWp_Title" xml:space="preserve">
+    <value>普通壁纸</value>
+  </data>
+  <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
+    <value>库内容</value>
+  </data>
+  <data name="WpSettings_NavTitle_ScrSettings" xml:space="preserve">
+    <value>屏幕保护</value>
+  </data>
+  <data name="Text_Edit_Desc" xml:space="preserve">
+    <value>简介：</value>
+  </data>
+  <data name="Text_Edit_Tags" xml:space="preserve">
+    <value>标签：</value>
+  </data>
+  <data name="Text_Edit_Title" xml:space="preserve">
+    <value>标题：</value>
+  </data>
+  <data name="Text_Edit" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="Text_Preview" xml:space="preserve">
+    <value>预览</value>
+  </data>
+  <data name="Text_Off" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="Text_On" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="Dialog_Content_WallpaperDirectoryChangePathInvalid" xml:space="preserve">
+    <value>无法将存储目录设置为应用程序数据根目录</value>
+  </data>
+  <data name="Text_VersionInfo" xml:space="preserve">
+    <value>版本信息：</value>
+  </data>
+  <data name="InfobarMsg_ImportErr" xml:space="preserve">
+    <value>该文件无法导入</value>
+  </data>
+  <data name="Text_FileUsing" xml:space="preserve">
+    <value>文件使用中，请关闭使用源</value>
+  </data>
+</root>

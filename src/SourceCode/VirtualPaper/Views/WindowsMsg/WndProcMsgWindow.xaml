@@ -8,8 +8,8 @@
         Height="450"
         Left="-99999"
         ShowInTaskbar="False"
-        Visibility="Hidden"
         WindowStartupLocation="Manual"
+        Visibility="Hidden"
         mc:Ignorable="d">
 
     <Grid />

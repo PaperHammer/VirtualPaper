@@ -1,11 +1,8 @@
 ﻿using System.IO.Pipes;
 
-namespace VirtualPaper.Common.Utils.IPC
-{
-    public class PipeClient
-    {
-        public static void SendMessage(string channelName, string msg)
-        {
+namespace VirtualPaper.Common.Utils.IPC {
+    public class PipeClient {
+        public static void SendMessage(string channelName, string msg) {
             using var pipeClient = new NamedPipeClientStream(".", channelName, PipeDirection.Out);
             pipeClient.Connect(0);
             var writer = new StreamWriter(pipeClient) { AutoFlush = true };

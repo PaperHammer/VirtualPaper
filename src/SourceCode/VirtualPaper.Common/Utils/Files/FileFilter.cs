@@ -1,41 +1,60 @@
-﻿using VirtualPaper.Common.Utils.Files.Models;
+﻿using System.Text;
 
-namespace VirtualPaper.Common.Utils.Files
-{
+namespace VirtualPaper.Common.Utils.Files {
     /// <summary>
     /// OpenFileDialog helper.
     /// </summary>
-    public class FileFilter
-    {
-        public static readonly FileData[] SupportedFormats = [
-            new FileData(WallpaperType.video, [".mp4", ".webm"]),
-            new FileData(WallpaperType.picture, [".jpg", ".jpeg", ".bmp", ".png", ".svg", ".webp"]),
-            new FileData(WallpaperType.gif, [".gif" ,".apng"]),
-            //new FileData(WallpaperType.heic, new string[] {".heic" }),//, ".heics", ".heif", ".heifs" }),
-            //new FileData(WallpaperType.web, [".html"]),
-            //new FileData(WallpaperType.webaudio, [".html"]),
-            //new FileData(WallpaperType.app, [".exe"]),
-            //new FileFilter(WallpaperType.unity,"*.exe"),
-            //new FileFilter(WallpaperType.unityaudio,"Unity Audio Visualiser |*.exe"),
-            //new FileData(WallpaperType.godot, [".exe"]),
-            //note:  .zip is not a wallpapertype, its a filetype.
-            //new FileData((WallpaperType)(100),  [".zip"])
-        ];
+    public class FileFilter {
+        public static FileType GetFileType(string filePath) {
+            if (!File.Exists(filePath)) {
+                return FileType.FUnknown;
+            }
 
-        /// <summary>
-        /// Identify  wallpaper type from file information.
-        /// <br>If more than one wallpapertype has same extension, first result is selected.</br>
-        /// </summary>
-        /// <param name="filePath">Path to file.</param>
-        /// <returns>-1 if not supported, 100 if  .zip</returns>
-        public static WallpaperType GetFileType(string filePath)
-        {
-            //todo: Use file header(?) to verify filetype instead of extension.
-            string s = Path.GetExtension(filePath);
-            var item = SupportedFormats.FirstOrDefault(
-                x => x.Extentions.Any(y => y.Equals(Path.GetExtension(filePath), StringComparison.OrdinalIgnoreCase)));
+            string extension = Path.GetExtension(filePath);
+            using FileStream fs = new(filePath, FileMode.Open, FileAccess.Read);
+            byte[] headerBytes = new byte[48];
+            fs.Read(headerBytes, 0, 48);
 
-            return item != null ? item.Type : (WallpaperType)(-1);
+            string headerHex = BitConverter.ToString(headerBytes).Replace("-", "").ToUpper();
+
+            foreach (var entry in _fileHeaderMap) {
+                if (headerHex.Contains(entry.Key, StringComparison.OrdinalIgnoreCase)
+                    && _fileExtensions[entry.Value].Contains(extension)) {
+                    return entry.Value;
+                }
+            }
+
+            if (extension == ".apng"
+                && headerHex.StartsWith("89504E470D0A1A0A", StringComparison.OrdinalIgnoreCase)) {
+                string headerText = Encoding.ASCII.GetString(headerBytes);
+                if (headerText.Contains("acTL")) {
+                    return FileType.FGif; // .apng
+                }
+            }
+
+            return FileType.FUnknown;
         }
+
+        private static readonly Dictionary<FileType, HashSet<string>> _fileExtensions = new() {
+            [FileType.FPicture] = [".jpg", ".jpeg", ".bmp", ".png", ".svg", ".webp"],           
+            [FileType.FGif] = [".gif", ".apng"],
+            [FileType.FVideo] = [".mp4", ".webm"],
+        };
+
+        private static readonly Dictionary<string, FileType> _fileHeaderMap = new()
+        {
+            {"FFD8FF", FileType.FPicture}, // .jpg .jpeg
+            {"424D", FileType.FPicture}, // .bmp
+            {"89504E470D0A1A0A", FileType.FPicture}, // .png
+            {"3C737667", FileType.FPicture}, // .svg
+            {"3C3F786D", FileType.FPicture}, // .svg
+            {"52494646", FileType.FPicture}, // .webp
+
+            {"474946383961", FileType.FGif}, // .gif
+            {"acTL", FileType.FGif}, // .anpg
+
+            {"66747970", FileType.FVideo}, // .mp4         
+            {"1A45DFA3", FileType.FVideo}, // .webm
+        };
     }
 }

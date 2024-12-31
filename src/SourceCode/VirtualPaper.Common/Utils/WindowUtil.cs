@@ -1,15 +1,11 @@
 ﻿using System.Runtime.InteropServices;
 using VirtualPaper.Common.Utils.PInvoke;
 
-namespace VirtualPaper.Common.Utils
-{
-    public static class WindowUtil
-    {
-        public static void SetParentSafe(IntPtr child, IntPtr parent)
-        {
+namespace VirtualPaper.Common.Utils {
+    public static class WindowUtil {
+        public static void SetParentSafe(IntPtr child, IntPtr parent) {
             IntPtr ret = Native.SetParent(child, parent);
-            if (ret.Equals(IntPtr.Zero))
-            {
+            if (ret.Equals(IntPtr.Zero)) {
                 //LogUtil.LogWin32Error("Failed to set window parent");
             }
         }
@@ -18,8 +14,7 @@ namespace VirtualPaper.Common.Utils
         /// Makes window toolwindow and force remove from taskbar.
         /// </summary>
         /// <param name="handle">window handle</param>
-        public static void RemoveWindowFromTaskbar(IntPtr handle)
-        {
+        public static void RemoveWindowFromTaskbar(IntPtr handle) {
             var styleCurrentWindowExtended = Native.GetWindowLongPtr(handle, (int)Native.GWL.GWL_EXSTYLE);
 
             var styleNewWindowExtended = styleCurrentWindowExtended.ToInt64() |
@@ -30,8 +25,7 @@ namespace VirtualPaper.Common.Utils
             //https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowlongptra
             //Certain window data is cached, so changes you make using SetWindowLongPtr will not take effect until you call the SetWindowPos function?
             Native.ShowWindow(handle, (int)Native.SHOWWINDOW.SW_HIDE);
-            if (Native.SetWindowLongPtr(new HandleRef(null, handle), (int)Native.GWL.GWL_EXSTYLE, (IntPtr)styleNewWindowExtended) == IntPtr.Zero)
-            {
+            if (Native.SetWindowLongPtr(new HandleRef(null, handle), (int)Native.GWL.GWL_EXSTYLE, (IntPtr)styleNewWindowExtended) == IntPtr.Zero) {
                 //LogUtil.LogWin32Error("Failed to modify window style");
             }
             Native.ShowWindow(handle, (int)Native.SHOWWINDOW.SW_SHOW);
@@ -43,8 +37,7 @@ namespace VirtualPaper.Common.Utils
         /// </para>
         /// </summary>
         /// <param name="handle">Window handle</param>
-        public static void BorderlessWinStyle(IntPtr handle)
-        {
+        public static void BorderlessWinStyle(IntPtr handle) {
             // Get window styles
             var styleCurrentWindowStandard = Native.GetWindowLongPtr(handle, (int)Native.GWL.GWL_STYLE);
             var styleCurrentWindowExtended = Native.GetWindowLongPtr(handle, (int)Native.GWL.GWL_EXSTYLE);
@@ -75,24 +68,20 @@ namespace VirtualPaper.Common.Utils
                 );
 
             // update window styles
-            if (Native.SetWindowLongPtr(new HandleRef(null, handle), (int)Native.GWL.GWL_STYLE, (IntPtr)styleNewWindowStandard) == IntPtr.Zero)
-            {
+            if (Native.SetWindowLongPtr(new HandleRef(null, handle), (int)Native.GWL.GWL_STYLE, (IntPtr)styleNewWindowStandard) == IntPtr.Zero) {
                 //LogUtil.LogWin32Error("Failed to modify window style(1)");
             }
 
-            if (Native.SetWindowLongPtr(new HandleRef(null, handle), (int)Native.GWL.GWL_EXSTYLE, (IntPtr)styleNewWindowExtended) == IntPtr.Zero)
-            {
+            if (Native.SetWindowLongPtr(new HandleRef(null, handle), (int)Native.GWL.GWL_EXSTYLE, (IntPtr)styleNewWindowExtended) == IntPtr.Zero) {
                 //LogUtil.LogWin32Error("Failed to modify window style(2)");
             }
 
             // remove the menu and menuitems and force a redraw
             var menuHandle = Native.GetMenu(handle);
-            if (menuHandle != IntPtr.Zero)
-            {
+            if (menuHandle != IntPtr.Zero) {
                 var menuItemCount = Native.GetMenuItemCount(menuHandle);
 
-                for (var i = 0; i < menuItemCount; i++)
-                {
+                for (var i = 0; i < menuItemCount; i++) {
                     Native.RemoveMenu(menuHandle, 0, Native.MF_BYPOSITION | Native.MF_REMOVE);
                 }
                 Native.DrawMenuBar(handle);
@@ -106,8 +95,7 @@ namespace VirtualPaper.Common.Utils
         /// Set window alpha.
         /// </summary>
         /// <param name="Handle"></param>
-        public static void SetWindowTransparency(IntPtr Handle)
-        {
+        public static void SetWindowTransparency(IntPtr Handle) {
             var styleCurrentWindowExtended = Native.GetWindowLongPtr(Handle, (-20));
             var styleNewWindowExtended =
                 styleCurrentWindowExtended.ToInt64() ^

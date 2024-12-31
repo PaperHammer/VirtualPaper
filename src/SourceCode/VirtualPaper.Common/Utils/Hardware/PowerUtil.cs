@@ -1,26 +1,21 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace VirtualPaper.Common.Utils.Hardware
-{
+namespace VirtualPaper.Common.Utils.Hardware {
     //ref:
     //https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getsystempowerstatus
     //https://docs.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-system_power_status
-    public static class PowerUtil
-    {
+    public static class PowerUtil {
         private static readonly SystemPowerStatus sps = new SystemPowerStatus();
 
-        public static bool GetSystemPowerStatus(ref SystemPowerStatus sps)
-        {
+        public static bool GetSystemPowerStatus(ref SystemPowerStatus sps) {
             return GetSystemPowerStatus(sps);
         }
 
-        public static SystemStatusFlag GetBatterySaverStatus()
-        {
+        public static SystemStatusFlag GetBatterySaverStatus() {
             return GetSystemPowerStatus(sps) ? sps._SystemStatusFlag : SystemStatusFlag.Off;
         }
 
-        public static ACLineStatus GetACPowerStatus()
-        {
+        public static ACLineStatus GetACPowerStatus() {
             return GetSystemPowerStatus(sps) ? sps._ACLineStatus : ACLineStatus.Online;
         }
 
@@ -31,15 +26,13 @@ namespace VirtualPaper.Common.Utils.Hardware
         [DllImport("Kernel32")]
         private static extern Boolean GetSystemPowerStatus(SystemPowerStatus sps);
 
-        public enum ACLineStatus : byte
-        {
+        public enum ACLineStatus : byte {
             Offline = 0,
             Online = 1,
             Unknown = 255
         }
 
-        public enum BatteryFlag : byte
-        {
+        public enum BatteryFlag : byte {
             High = 1,
             Low = 2,
             Critical = 4,
@@ -48,16 +41,14 @@ namespace VirtualPaper.Common.Utils.Hardware
             Unknown = 255
         }
 
-        public enum SystemStatusFlag : byte
-        {
+        public enum SystemStatusFlag : byte {
             Off = 0, // Battery saver is off.
             On = 1 // Battery saver on. Save energy where possible.
         }
 
         // Fields must mirror their unmanaged counterparts, in order
         [StructLayout(LayoutKind.Sequential)]
-        public class SystemPowerStatus
-        {
+        public class SystemPowerStatus {
             public ACLineStatus _ACLineStatus;
             public BatteryFlag _BatteryFlag;
             public Byte _BatteryLifePercent;

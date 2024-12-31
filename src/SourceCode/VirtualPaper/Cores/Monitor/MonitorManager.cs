@@ -3,105 +3,104 @@ using System.Runtime.InteropServices;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.Utils;
 
-namespace VirtualPaper.Cores.Monitor
-{
-    public class MonitorManager : ObservableObject, IMonitorManager
-    {
+namespace VirtualPaper.Cores.Monitor {
+    public partial class MonitorManager : ObservableObject, IMonitorManager {
         public event EventHandler? MonitorUpdated;
+        public event EventHandler? MonitorPropertyUpdated;
 
         public ObservableCollection<Models.Cores.Monitor> Monitors { get; } = [];
         public Models.Cores.Monitor PrimaryMonitor => Monitors.FirstOrDefault(x => x.IsPrimary, null);
 
         private Rectangle _virtualScreenBounds = Rectangle.Empty;
-        public Rectangle VirtualScreenBounds
-        {
+        public Rectangle VirtualScreenBounds {
             get => _virtualScreenBounds;
             private set { _virtualScreenBounds = value; OnPropertyChanged(); }
         }
 
-        public MonitorManager()
-        {
+        public MonitorManager() {
             RefreshMonitorList();
         }
 
-        public Models.Cores.Monitor GetMonitorByHWnd(nint hWnd)
-        {
-            IntPtr hMonitor = multiMonitorSupport
+        public Models.Cores.Monitor GetMonitorByHWnd(nint hWnd) {
+            IntPtr hMonitor = _multiMonitorSupport
                 ? Native.MonitorFromWindow(new HandleRef(null, hWnd), MONITOR_DEFAULTTONEAREST)
                 : (IntPtr)PRIMARY_MONITOR;
 
             return GetMonitorByHMonitor(hMonitor);
         }
 
-        public Models.Cores.Monitor GetMonitorByPoint(Point point)
-        {
+        public Models.Cores.Monitor GetMonitorByPoint(Point point) {
             IntPtr hMonitor;
-            if (multiMonitorSupport)
-            {
+            if (_multiMonitorSupport) {
                 var pt = new Native.POINT(  //POINTSTRUCT
                     (int)Math.Round((double)point.X),
                     (int)Math.Round((double)point.Y));
                 hMonitor = Native.MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
             }
             else
-                hMonitor = (IntPtr)PRIMARY_MONITOR;
+                hMonitor = PRIMARY_MONITOR;
 
             return GetMonitorByHMonitor(hMonitor);
         }
 
-        public bool IsMultiScreen()
-        {
-            return Monitors.Count > 1;
-        }
-
-        public uint OnHwndCreated(nint hWnd, out bool register)
-        {
+        public uint OnHwndCreated(nint hWnd, out bool register) {
             register = false;
             return 0;
         }
 
-        public nint OnWndProc(nint hwnd, uint msg, nint wParam, nint lParam)
-        {
-            if (msg == (uint)Native.WM.DISPLAYCHANGE)
-            {
+        public bool IsMultiScreen() {
+            return Monitors.Count > 1;
+        }
+
+        public bool MonitorExists(IMonitor display) {
+            return Monitors.Any(display.Equals);
+        }
+
+        public nint OnWndProc(nint hwnd, uint msg, nint wParam, nint lParam) {
+            if (msg == (uint)Native.WM.DISPLAYCHANGE) {
                 RefreshMonitorList();
             }
             return IntPtr.Zero;
         }
 
-        public bool MonitorExists(IMonitor display)
-        {
-            return Monitors.Any(x => display.Equals(x));
+        public void UpdateTargetMonitorThu(int monitorIdx, string thumbnailPath) {
+            Monitors[monitorIdx].ThumbnailPath = thumbnailPath;
+            MonitorPropertyUpdated?.Invoke(this, EventArgs.Empty);
         }
 
+        #region utils
         /// <summary>
         /// 更新可用显示器列表
         /// </summary>
-        private void RefreshMonitorList()
-        {
-            multiMonitorSupport = Native.GetSystemMetrics((int)Native.SystemMetric.SM_CMONITORS) != 0;
+        private void RefreshMonitorList() {
+            _multiMonitorSupport = Native.GetSystemMetrics((int)Native.SystemMetric.SM_CMONITORS) != 0;
 
             var hMonitors = GetHMonitors();
 
             // 标记旧显示器
-            foreach (var monitor in Monitors)
-            {
+            foreach (var monitor in Monitors) {
                 monitor.IsStale = true;
             }
 
             // 写入新显示器
-            for (int i = 0; i < hMonitors.Count; i++)
-            {
+            for (int i = 0; i < hMonitors.Count; i++) {
                 var monitor = GetMonitorByHMonitor(hMonitors[i]);
-                monitor.Content = (i + 1).ToString();
+                int idx = Monitors.FindIndex(x => x.DeviceId == monitor.DeviceId);
+                if (idx >= 0) {
+                    Monitors[idx].IsStale = false;
+                }
+                else {
+                    monitor.Content = (i + 1).ToString();
+                    Monitors.Add(monitor);
+                }
             }
 
             // 移除旧显示器
             var staleDisplayMonitors = Monitors
                 .Where(x => x.IsStale).ToList();
-            foreach (var monitor in staleDisplayMonitors)
-            {
+            foreach (var monitor in staleDisplayMonitors) {
                 Monitors.Remove(monitor);
             }
             staleDisplayMonitors.Clear();
@@ -121,41 +120,25 @@ namespace VirtualPaper.Cores.Monitor
             MonitorUpdated?.Invoke(this, EventArgs.Empty);
         }
 
-        private Models.Cores.Monitor GetMonitorByHMonitor(IntPtr hMonitor)
-        {
+        private Models.Cores.Monitor GetMonitorByHMonitor(IntPtr hMonitor) {
             Models.Cores.Monitor? monitor;
 
-            if (!multiMonitorSupport || hMonitor == (IntPtr)PRIMARY_MONITOR)
-            {
-                monitor = GetMonitorByDeviceName(defaultDisplayDeviceName);
+            if (!_multiMonitorSupport || hMonitor == (IntPtr)PRIMARY_MONITOR) {
 
-                if (monitor == null)
-                {
-                    monitor = new Models.Cores.Monitor(defaultDisplayDeviceName);
-                    Monitors.Add(monitor);
-                }
-
-                monitor.Bounds = GetVirtualScreenBounds();
-                monitor.DeviceId = GetDefaultMonitorDeviceId();
-                monitor.MonitorName = "Monitor";
-                monitor.HMonitor = hMonitor;
-                monitor.IsPrimary = true;
-                monitor.WorkingArea = GetWorkingArea();
-
-                monitor.IsStale = false;
+                monitor = new(DEAFULT_DISPLAY_DEVICENAME) {                 
+                    Bounds = GetVirtualScreenBounds(),
+                    DeviceId = GetDefaultMonitorDeviceId(),
+                    IsPrimary = true,
+                    WorkingArea = GetWorkingArea(),
+                    IsStale = false
+                };
             }
-            else
-            {
+            else {
                 var info = new Native.MONITORINFOEX();// MONITORINFOEX();
                 Native.GetMonitorInfo(new HandleRef(null, hMonitor), info);
 
                 string deviceName = new string(info.szDevice).TrimEnd((char)0);
-
-                monitor = GetMonitorByDeviceName(deviceName);
-
-                monitor ??= CreateMonitorByMonitorInfo(deviceName);
-
-                monitor.HMonitor = hMonitor;
+                monitor = CreateMonitorByMonitorInfo(deviceName);
 
                 UpdateDisplayMonitor(monitor, info);
             }
@@ -163,26 +146,16 @@ namespace VirtualPaper.Cores.Monitor
             return monitor;
         }
 
-        private Models.Cores.Monitor CreateMonitorByMonitorInfo(string deviceName)
-        {
+        private Models.Cores.Monitor CreateMonitorByMonitorInfo(string deviceName) {
             var monitor = new Models.Cores.Monitor(deviceName);
 
             var displayDevice = GetMonitorDevice(deviceName);
             monitor.DeviceId = displayDevice.DeviceID;
-            monitor.MonitorName = displayDevice.DeviceString;
-
-            Monitors.Add(monitor);
 
             return monitor;
         }
 
-        private Models.Cores.Monitor GetMonitorByDeviceName(string deviceName)
-        {
-            return Monitors.FirstOrDefault(x => x.DeviceName == deviceName);
-        }
-
-        private void UpdateDisplayMonitor(Models.Cores.Monitor monitor, Native.MONITORINFOEX info)
-        {
+        private void UpdateDisplayMonitor(Models.Cores.Monitor monitor, Native.MONITORINFOEX info) {
             // 确保在 应用程序清单文件 里开启对每一块屏幕的 DPI 感知
             monitor.Bounds = new Rectangle(
                 info.rcMonitor.Left, info.rcMonitor.Top,
@@ -203,14 +176,11 @@ namespace VirtualPaper.Cores.Monitor
         /// 获取 HMonitor 类型的显示器句柄
         /// </summary>
         /// <returns></returns>
-        private IList<IntPtr> GetHMonitors()
-        {
-            if (multiMonitorSupport)
-            {
+        private IList<IntPtr> GetHMonitors() {
+            if (_multiMonitorSupport) {
                 var hMonitors = new List<IntPtr>();
 
-                bool callback(IntPtr monitor, IntPtr hdc, IntPtr lprcMonitor, IntPtr lParam)
-                {
+                bool callback(IntPtr monitor, IntPtr hdc, IntPtr lprcMonitor, IntPtr lParam) {
                     hMonitors.Add(monitor);
                     return true;
                 }
@@ -223,19 +193,15 @@ namespace VirtualPaper.Cores.Monitor
             return [(IntPtr)PRIMARY_MONITOR];
         }
 
-        private static Native.DISPLAY_DEVICE GetMonitorDevice(string deviceName)
-        {
+        private static Native.DISPLAY_DEVICE GetMonitorDevice(string deviceName) {
             var result = new Native.DISPLAY_DEVICE();
 
             var displayDevice = new Native.DISPLAY_DEVICE();
             displayDevice.cb = Marshal.SizeOf(displayDevice);
-            try
-            {
-                for (uint id = 0; Native.EnumDisplayDevices(deviceName, id, ref displayDevice, Native.EDD_GET_DEVICE_INTERFACE_NAME); id++)
-                {
+            try {
+                for (uint id = 0; Native.EnumDisplayDevices(deviceName, id, ref displayDevice, Native.EDD_GET_DEVICE_INTERFACE_NAME); id++) {
                     if (displayDevice.StateFlags.HasFlag(Native.DisplayDeviceStateFlags.AttachedToDesktop)
-                        && !displayDevice.StateFlags.HasFlag(Native.DisplayDeviceStateFlags.MirroringDriver))
-                    {
+                        && !displayDevice.StateFlags.HasFlag(Native.DisplayDeviceStateFlags.MirroringDriver)) {
                         result = displayDevice;
                         break;
                     }
@@ -246,8 +212,7 @@ namespace VirtualPaper.Cores.Monitor
             catch { }
 
             if (string.IsNullOrEmpty(result.DeviceID)
-                || string.IsNullOrWhiteSpace(result.DeviceID))
-            {
+                || string.IsNullOrWhiteSpace(result.DeviceID)) {
                 result.DeviceID = GetDefaultMonitorDeviceId();
             }
 
@@ -260,8 +225,7 @@ namespace VirtualPaper.Cores.Monitor
         /// 获取 Windows 定义的显示器虚拟边界
         /// </summary>
         /// <returns></returns>
-        private static Rectangle GetVirtualScreenBounds()
-        {
+        private static Rectangle GetVirtualScreenBounds() {
             var location = new Point(Native.GetSystemMetrics(
                 (int)Native.SystemMetric.SM_XVIRTUALSCREEN), Native.GetSystemMetrics((int)Native.SystemMetric.SM_YVIRTUALSCREEN));
             var size = new Size(Native.GetSystemMetrics(
@@ -269,20 +233,18 @@ namespace VirtualPaper.Cores.Monitor
             return new Rectangle(location, size);
         }
 
-        private static Rectangle GetWorkingArea()
-        {
+        private static Rectangle GetWorkingArea() {
             var rc = new Native.RECT();
             Native.SystemParametersInfo((int)Native.SPI.SPI_GETWORKAREA, 0, ref rc, 0);
             return new Rectangle(rc.Left, rc.Top,
                 rc.Right - rc.Left, rc.Bottom - rc.Top);
         }
+        #endregion
 
         private const int PRIMARY_MONITOR = unchecked((int)0xBAADF00D);
-
         private const int MONITORINFOF_PRIMARY = 0x00000001;
         private const int MONITOR_DEFAULTTONEAREST = 0x00000002;
-
-        private static bool multiMonitorSupport;
-        private const string defaultDisplayDeviceName = "DISPLAY";
+        private const string DEAFULT_DISPLAY_DEVICENAME = "DISPLAY";
+        private static bool _multiMonitorSupport;
     }
 }

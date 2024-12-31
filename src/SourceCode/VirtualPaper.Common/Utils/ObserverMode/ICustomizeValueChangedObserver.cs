@@ -1,12 +1,10 @@
-﻿using VirtualPaper.Common.Models;
+﻿using VirtualPaper.Common.Models.EffectValue;
 
-namespace VirtualPaper.Common.Utils.ObserverMode
-{
-    public interface ICustomizeValueChangedObserver
-    {
-        void OnCustomizeValueChanged(object sender, IntValueChangedEventArgs args);
-        void OnCustomizeValueChanged(object sender, DoubleValueChangedEventArgs args);
-        void OnCustomizeValueChanged(object sender, BoolValueChangedEventArgs args);
-        void OnCustomizeValueChanged(object sender, StringValueChangedEventArgs args);
+namespace VirtualPaper.Common.Utils.ObserverMode {
+    public interface ICustomizeValueChangedObserver {
+        void OnEffectValueChanged(object sender, IntValueChangedEventArgs args);
+        void OnEffectValueChanged(object sender, DoubleValueChangedEventArgs args);
+        void OnEffectValueChanged(object sender, BoolValueChangedEventArgs args);
+        void OnEffectValueChanged(object sender, StringValueChangedEventArgs args);
     }
 }

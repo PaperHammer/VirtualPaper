@@ -1,7 +1,5 @@
-﻿namespace VirtualPaper.Grpc.Client.Interfaces
-{
-    public interface ICommandsClient
-    {
+﻿namespace VirtualPaper.Grpc.Client.Interfaces {
+    public interface ICommandsClient {
         Task ShowUI();
         Task CloseUI();
         Task RestartUI();

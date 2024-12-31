@@ -1,33 +1,33 @@
-﻿using GrpcDotNetNamedPipes;
+﻿using System.Diagnostics;
+using System.IO;
+using System.Windows;
+using System.Windows.Threading;
+using GrpcDotNetNamedPipes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Win32;
 using NLog;
-using System.Diagnostics;
-using System.IO;
-using System.Windows;
-using System.Windows.Threading;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Models;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Cores.AppUpdate;
-using VirtualPaper.Cores.CommClients;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.PlaybackControl;
 using VirtualPaper.Cores.ScreenSaver;
+using VirtualPaper.Cores.TrayControl;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Factories;
 using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Grpc.Service.Commands;
 using VirtualPaper.Grpc.Service.MonitorManager;
+using VirtualPaper.Grpc.Service.ScrCommands;
 using VirtualPaper.Grpc.Service.Update;
-using VirtualPaper.Grpc.Service.UserSetting;
+using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.GrpcServers;
 using VirtualPaper.lang;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.ScreenSaver.Grpc.Service.ScrCommands;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
@@ -39,73 +39,63 @@ using Application = System.Windows.Application;
 using AppTheme = VirtualPaper.Common.AppTheme;
 using MessageBox = System.Windows.MessageBox;
 
-namespace VirtualPaper
-{
+namespace VirtualPaper {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
-    public partial class App : Application
-    {
-        public static IServiceProvider Services
-        {
-            get
-            {
+    public partial class App : Application {
+        internal static Logger Log => _log;
+        internal static JobService Jobs => Services.GetRequiredService<JobService>();
+        internal static IUserSettingsService IUserSettgins => Services.GetRequiredService<IUserSettingsService>();
+
+        public static IServiceProvider Services {
+            get {
                 IServiceProvider serviceProvider = ((App)Current)._serviceProvider;
                 return serviceProvider ?? throw new InvalidOperationException("The service provider is not initialized");
             }
         }
 
-        public App()
-        {
+        public App() {
             #region 唯一实例检查
-            try
-            {
+            try {
                 // 保证全局只有一个实例
-                if (!_mutex.WaitOne(TimeSpan.FromSeconds(1), false))
-                {
+                if (!_mutex.WaitOne(TimeSpan.FromSeconds(1), false)) {
                     MessageBox.Show("已存在正在运行的程序，请检查托盘或任务管理器\nThere are already running programs, check the tray or Task Manager", "Virtual Paper", MessageBoxButton.OK, MessageBoxImage.Information);
                     ShutDown();
                     return;
                 }
             }
-            catch (AbandonedMutexException e)
-            {
+            catch (AbandonedMutexException e) {
                 //unexpected app termination.
                 Debug.WriteLine(e.Message);
             }
             #endregion
 
             SetupUnhandledExceptionLogging(); // 初始化异常处理机制
-            _logger.Info(LogUtil.GetHardwareInfo()); // 记录硬件信息
+            Log.Info(LogUtil.GetHardwareInfo()); // 记录硬件信息
 
             #region 必要路径处理
-            try
-            {
+            try {
                 // 清空缓存
                 FileUtil.EmptyDirectory(Constants.CommonPaths.TempDir);
             }
             catch { }
 
-            try
-            {
+            try {
                 // 创建必要目录, eg: C:\Users\<User>\AppData\Local
-                Directory.CreateDirectory(Constants.CommonPaths.WpStoreDir);
-                Directory.CreateDirectory(Constants.CommonPaths.ScrSaverDir);
+                Directory.CreateDirectory(Constants.CommonPaths.LibraryDir);
+                //Directory.CreateDirectory(Constants.CommonPaths.ScrSaverDir);
                 Directory.CreateDirectory(Constants.CommonPaths.AppDataDir);
                 Directory.CreateDirectory(Constants.CommonPaths.LogDir);
                 Directory.CreateDirectory(Constants.CommonPaths.TempDir);
                 Directory.CreateDirectory(Constants.CommonPaths.ExeIconDir);
-                Directory.CreateDirectory(Path.Combine(Constants.CommonPaths.TempDir, Constants.CommonPartialPaths.WallpaperInstallDir));
+                //Directory.CreateDirectory(Path.Combine(Constants.CommonPaths.TempDir, Constants.FolderName.WpStoreFolderName));
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 MessageBox.Show(ex.Message, "AppData directory creation failed, exiting..", MessageBoxButton.OK, MessageBoxImage.Error);
                 ShutDown();
                 return;
             }
-
-            string scrFilePath = Path.Combine(Constants.CommonPaths.ScrSaverDir, "scr.html");
-            File.WriteAllText(scrFilePath, Constants.ScrSaverHtml);
             #endregion
 
             #region 初始化核心组件
@@ -117,88 +107,76 @@ namespace VirtualPaper
 
             // 用户配置
             var userSettings = Services.GetRequiredService<IUserSettingsService>();
-            userSettings.Settings.WallpaperDir = Constants.CommonPaths.WpStoreDir;
-            CreateWallpaperDir(userSettings.Settings.WallpaperDir);
+            if (userSettings.Settings.WallpaperDir == string.Empty
+                || !Directory.Exists(userSettings.Settings.WallpaperDir)) {
+                userSettings.Settings.WallpaperDir = Path.Combine(Constants.CommonPaths.LibraryDir, Constants.FolderName.WpStoreFolderName);
+                Directory.CreateDirectory(userSettings.Settings.WallpaperDir);
+            }
             // 初始化语言包
             ChangeLanguage(userSettings.Settings.Language);
 
             userSettings.Save<ISettings>();
 
             #region 启动相关后台服务
-            try
-            {
+            try {
                 // 启动针对从 Windows 发出的到该窗口的消息监听服务
                 Services.GetRequiredService<WndProcMsgWindow>().Show();
                 // 启动针对从外部设备发出的到该窗口的消息监听服务
                 Services.GetRequiredService<RawInputMsgWindow>().Show();
                 // 启动壁纸行为/状态监听服务
-                Services.GetRequiredService<IPlayback>().Start();
+                Services.GetRequiredService<IPlayback>().Start(_ctsPlayback);
                 // 启动托盘（后台）服务
                 Services.GetRequiredService<MainWindow>().Show();
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 MessageBox.Show("Core runtime error, please restart or reinstall.\n" + ex.Message);
                 return;
             }
             #endregion
 
-            if (userSettings.Settings.IsUpdated || userSettings.Settings.IsFirstRun)
-            {
+            if (userSettings.Settings.IsUpdated || userSettings.Settings.IsFirstRun) {
                 SplashWindow? spl = userSettings.Settings.IsFirstRun ? new(0, 500) : null; spl?.Show();
                 spl?.Close();
             }
 
-            try
-            {
+            try {
                 //restore wallpaper(s) from previous run.
                 var wpControl = Services.GetRequiredService<IWallpaperControl>();
                 wpControl.RestoreWallpaper();
 
                 // 启动屏保服务（需要在"还原壁纸"后进行）
                 bool isScrOn = userSettings.Settings.IsScreenSaverOn;
-                var wl = userSettings.WallpaperLayouts;
-                if (isScrOn && wl.Count > 0)
-                {
-                    var metaData = wpControl.GetWallpaper(wl[0].FolderPath);
-                    Services.GetRequiredService<IScrControl>().Start(metaData);
+                if (isScrOn) {
+                    Services.GetRequiredService<IScrControl>().Start();
                 }
 
                 //first run Setup-Wizard show..
-                if (userSettings.Settings.IsFirstRun)
-                {
+                if (userSettings.Settings.IsFirstRun) {
                     Services.GetRequiredService<IUIRunnerService>().ShowUI();
                 }
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 MessageBox.Show("Core runtime error, please restart or reinstall.\n" + ex.Message);
                 return;
             }
 
             #region 事件绑定
             //need to load theme later stage of startu to update..
-            this.Startup += (s, e) =>
-            {
+            this.Startup += (s, e) => {
                 ChangeTheme(userSettings.Settings.ApplicationTheme);
             };
 
             //Ref: https://github.com/Kinnara/ModernWpf/blob/master/ModernWpf/Helpers/ColorsHelper.cs
-            SystemEvents.UserPreferenceChanged += (s, e) =>
-            {
-                if (e.Category == UserPreferenceCategory.General)
-                {
-                    if (userSettings.Settings.ApplicationTheme == AppTheme.Auto)
-                    {
+            SystemEvents.UserPreferenceChanged += (s, e) => {
+                if (e.Category == UserPreferenceCategory.General) {
+                    if (userSettings.Settings.ApplicationTheme == AppTheme.Auto) {
                         ChangeTheme(AppTheme.Auto);
                     }
                 }
             };
 
-            this.SessionEnding += (s, e) =>
-            {
-                if (e.ReasonSessionEnding == ReasonSessionEnding.Shutdown || e.ReasonSessionEnding == ReasonSessionEnding.Logoff)
-                {
+            this.SessionEnding += (s, e) => {
+                if (e.ReasonSessionEnding == ReasonSessionEnding.Shutdown || e.ReasonSessionEnding == ReasonSessionEnding.Logoff) {
                     e.Cancel = true;
                     ShutDown();
                 }
@@ -206,8 +184,7 @@ namespace VirtualPaper
             #endregion
         }
 
-        private ServiceProvider ConfigureServices()
-        {
+        private ServiceProvider ConfigureServices() {
             var provider = new ServiceCollection()
                 .AddSingleton<IWallpaperControl, WallpaperControl>()
                 .AddSingleton<IMonitorManager, MonitorManager>()
@@ -217,9 +194,9 @@ namespace VirtualPaper
                 .AddSingleton<IWallpaperFactory, WallpaperFactory>()
                 .AddSingleton<IWallpaperConfigFolderFactory, WallpaperConfigFolderFactory>()
 
+                .AddSingleton<JobService>()
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
-                .AddSingleton<IWatchdogService, WatchdogService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
 
@@ -242,29 +219,24 @@ namespace VirtualPaper
             return provider;
         }
 
-        private NamedPipeServer ConfigureGrpcServer()
-        {
-            var server = new NamedPipeServer(Constants.SingleInstance.GrpcPipeServerName);
+        private NamedPipeServer ConfigureGrpcServer() {
+            var server = new NamedPipeServer(Constants.CoreField.GrpcPipeServerName);
 
-            WallpaperControlService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<WallpaperControlServer>());
-            MonitorManagerService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<MonitorManagerServer>());
-            UserSettingService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<UserSettingServer>());
-            UpdateService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<AppUpdateServer>());
-            CommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<CommandsServer>());
-            ScrCommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<ScrCommandsServer>());
+            Grpc_WallpaperControlService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<WallpaperControlServer>());
+            Grpc_MonitorManagerService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<MonitorManagerServer>());
+            Grpc_UserSettingsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<UserSettingServer>());
+            Grpc_UpdateService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<AppUpdateServer>());
+            Grpc_CommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<CommandsServer>());
+            Grpc_ScrCommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<ScrCommandsServer>());
             server.Start();
 
             return server;
         }
 
-        private void CreateWallpaperDir(string baseDir)
-        {
-            Directory.CreateDirectory(Path.Combine(baseDir, Constants.CommonPartialPaths.WallpaperInstallDir));
-        }
+        private static void LogUnhandledException(Exception exception, string source)
+            => Log.Error(exception, source);
 
-        private void LogUnhandledException(Exception exception, string source) => _logger.Error(exception);
-        private void SetupUnhandledExceptionLogging()
-        {
+        private void SetupUnhandledExceptionLogging() {
             // 当.NET应用程序域中的任何线程抛出了未捕获的异常时，会触发此事件。
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
                 LogUnhandledException((Exception)e.ExceptionObject, "AppDomain.CurrentDomain.UnhandledException");
@@ -279,72 +251,35 @@ namespace VirtualPaper
                 LogUnhandledException(e.Exception, "TaskScheduler.UnobservedTaskException");
         }
 
-        public static void ChangeTheme(AppTheme theme)
-        {
-            try
-            {
+        public static void ChangeTheme(AppTheme theme) {
+            try {
                 theme = theme == AppTheme.Auto ? ThemeUtil.GetWindowsTheme() : theme;
                 ApplicationTheme applicationTheme = theme == AppTheme.Light
                     ? ApplicationTheme.Light : ApplicationTheme.Dark;
 
-                Application.Current.Dispatcher.Invoke(() =>
-                {
+                Application.Current.Dispatcher.Invoke(() => {
                     ApplicationThemeManager.Apply(applicationTheme, updateAccent: false);
                 });
             }
-            catch (Exception e)
-            {
-                _logger.Error(e);
+            catch (Exception e) {
+                Log.Error(e);
             }
-            _logger.Info($"Theme changed: {theme}");
+            Log.Info($"Theme changed: {theme}");
         }
-        //private static AppTheme _currentTheme = AppTheme.Dark;
-        //public static void ChangeTheme(AppTheme theme)
-        //{
-        //    theme = theme == AppTheme.Auto ? ThemeUtil.GetWindowsTheme() : theme;
-        //    if (_currentTheme == theme)
-        //        return;
 
-        //    _currentTheme = theme;
-        //    Uri uri = theme switch
-        //    {
-        //        AppTheme.Light => new Uri("Themes/Light.xaml", UriKind.Relative),
-        //        AppTheme.Dark => new Uri("Themes/Dark.xaml", UriKind.Relative),
-        //        _ => new Uri("Themes/Dark.xaml", UriKind.Relative)
-        //    };
+        public static void ChangeLanguage(string lang) {
+            if (lang == string.Empty) return;
 
-        //    try
-        //    {
-        //        ResourceDictionary resourceDict = Application.LoadComponent(uri) as ResourceDictionary;
-        //        Application.Current.Resources.MergedDictionaries.Clear();
-        //        Application.Current.Resources.MergedDictionaries.Add(resourceDict);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        _logger.Error(e);
-        //    }
-        //    _logger.Info($"Theme changed: {theme}");
-        //}
-
-        private static string _lang = string.Empty;
-        public static void ChangeLanguage(string lang)
-        {
-            if (lang == string.Empty || _lang == lang) return;
-
-            Application.Current.Dispatcher.Invoke(() =>
-            {
+            Application.Current.Dispatcher.Invoke(() => {
                 LanguageManager.Instance.ChangeLanguage(new(lang));
             });
         }
 
         private static AppUpdater? updateWindow;
-        public static void AppUpdateDialog(Uri uri, string changelog)
-        {
+        public static void AppUpdateDialog(Uri uri, string changelog) {
             updateNotify = false;
-            if (updateWindow == null)
-            {
-                updateWindow = new AppUpdater(uri, changelog)
-                {
+            if (updateWindow == null) {
+                updateWindow = new AppUpdater(uri, changelog) {
                     WindowStartupLocation = WindowStartupLocation.CenterScreen
                 };
                 updateWindow.Closed += (s, e) => { updateWindow = null; };
@@ -354,14 +289,11 @@ namespace VirtualPaper
 
         private static int updateNotifyAmt = 1;
         private static bool updateNotify = false;
-        private void AppUpdateChecked(object sender, AppUpdaterEventArgs e)
-        {
-            _ = Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new ThreadStart(delegate
-            {
-                if (e.UpdateStatus == AppUpdateStatus.available)
-                {
-                    if (updateNotifyAmt > 0)
-                    {
+
+        private void AppUpdateChecked(object sender, AppUpdaterEventArgs e) {
+            _ = Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new ThreadStart(delegate {
+                if (e.UpdateStatus == AppUpdateStatus.available) {
+                    if (updateNotifyAmt > 0) {
                         updateNotifyAmt--;
                         updateNotify = true;
                         new ToastContentBuilder()
@@ -370,19 +302,17 @@ namespace VirtualPaper
                     }
 
                     //If UI program already running then notification is displayed withing the it.
-                    if (!Services.GetRequiredService<IUIRunnerService>().IsVisibleUI && updateNotify)
-                    {
+                    if (!Services.GetRequiredService<IUIRunnerService>().IsVisibleUI && updateNotify) {
                         AppUpdateDialog(e.UpdateUri, e.ChangeLog);
                     }
                 }
-                _logger.Info($"AppUpdate status: {e.UpdateStatus}");
+                Log.Info($"AppUpdate status: {e.UpdateStatus}");
             }));
         }
 
-        public static void ShutDown()
-        {
-            try
-            {
+        public static void ShutDown() {
+            try {
+                _ctsPlayback.Cancel();
                 ((ServiceProvider)Services)?.Dispose();
                 ((App)Current)._grpcServer?.Dispose();
                 ToastNotificationManagerCompat.Uninstall();
@@ -393,8 +323,9 @@ namespace VirtualPaper
         }
 
         private readonly IServiceProvider _serviceProvider;
-        private readonly Mutex _mutex = new(false, Constants.SingleInstance.UniqueAppUid);
+        private readonly Mutex _mutex = new(false, Constants.CoreField.UniqueAppUid);
         private readonly NamedPipeServer _grpcServer;
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly CancellationTokenSource _ctsPlayback = new();
+        private static readonly Logger _log = LogManager.GetCurrentClassLogger();
     }
 }

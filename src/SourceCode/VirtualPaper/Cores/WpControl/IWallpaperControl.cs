@@ -1,18 +1,29 @@
 ﻿using System.Collections.ObjectModel;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files.Models;
-using VirtualPaper.Common.Utils.IPC;
-using VirtualPaper.Grpc.Service.WallpaperControl;
+using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.WallpaperMetaData;
-using WallpaperType = VirtualPaper.Common.WallpaperType;
 
-namespace VirtualPaper.Cores.WpControl
-{
+namespace VirtualPaper.Cores.WpControl {
     /// <summary>
     /// 桌面壁纸控制
     /// </summary>
-    public interface IWallpaperControl : IDisposable
-    {
+    public interface IWallpaperControl : IDisposable {
+        /// <summary>
+        /// Wallpaper set/update/closed.
+        /// </summary>
+        public event EventHandler? WallpaperChanged;
+
+        /// <summary>
+        /// Errors occured in wallpaper core.
+        /// </summary>
+        public event EventHandler<Exception>? WallpaperError;
+
+        /// <summary>
+        /// Wallpaper core services restarted.
+        /// </summary>
+        public event EventHandler? WallpaperReset;
+
         /// <summary>
         /// 桌面窗口句柄
         /// </summary>
@@ -21,59 +32,36 @@ namespace VirtualPaper.Cores.WpControl
         /// <summary>
         /// 使用中的壁纸
         /// </summary>
-        ReadOnlyCollection<IWallpaper> Wallpapers { get; }
+        ReadOnlyCollection<IWpPlayer> Wallpapers { get; }
 
-        /// <summary>
-        /// 关闭所有壁纸
-        /// </summary>
+        #region wallpaper actions
         void CloseAllWallpapers();
-
-        /// <summary>
-        /// 关闭指定显示器的壁纸
-        /// </summary>
-        /// <param name="monitor"></param>
         void CloseWallpaper(IMonitor monitor);
-
-        /// <summary>
-        /// 重置壁纸
-        /// </summary>
+        void CloseAllPreview();
+        (string?, RuntimeType?) GetPrimaryWpFilePathRType();
+        IWpMetadata GetWallpaperByFolderPath(string folderPath, string monitorContent, string rtype);
+        IWpBasicData GetWpBasicDataByForlderPath(string folderPath);
+        bool AdjustWallpaper(string monitorDeviceId, CancellationToken toke);
+        Task<bool> PreviewWallpaperAsync(string monitorDeviceId, IWpPlayerData wpPlayingData, CancellationToken toke);
         Task ResetWallpaperAsync();
-
-        /// <summary>
-        /// 还原壁纸
-        /// </summary>
-        RestartWallpaperResponse RestoreWallpaper();
-
-        void PreviewWallpaper(IMetaData metaData, bool isLibraryPreview);
-        void ModifyPreview(string controlName, string propertyName, string value);
-
-        void SeekWallpaper(IMetaData metaData, float seek, PlaybackPosType type);
+        Grpc_RestartWallpaperResponse RestoreWallpaper();
+        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, CancellationToken token, bool fromPreview = false);
+        void SeekWallpaper(IWpPlayerData data, float seek, PlaybackPosType type);
         void SeekWallpaper(IMonitor monitor, float seek, PlaybackPosType type);
+        void SendMessageWallpaper(IMonitor monitor, string folderPath, string ipcMsg);
+        #endregion
 
-        //void SendMessageWallpaper(string folderPath, IpcMessage msg);
-        void SendMessageWallpaper(IMonitor monitor, string folderPath, IpcMessage msg);
+        #region data
+        IWpBasicData CreateBasicData(string filePath, FileType ftype, CancellationToken token, string? folderName = null, bool isAutoSave = true);
+        IWpRuntimeData CreateRuntimeData(string filePath, string folderPath, RuntimeType rtype, bool isPreview, string monitorContent);
+        Task<IWpBasicData> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype);
+        #endregion
 
-        IMetaData GetWallpaper(string folderPath);
-        Task<SetWallpaperResponse> SetWallpaperAsync(IMetaData metaData, IMonitor monitor, CancellationToken token);
-        UpdateWpResponse UpdateWp(string monitorId, IMetaData metaData, CancellationToken token);
-        IMetaData CreateWallpaper(string folderPath, string filePath, WallpaperType type, CancellationToken token);
-        FileProperty TryGetProeprtyInfo(string filePath, WallpaperType type);
+        #region utils
         void ChangeWallpaperLayoutFolrderPath(string previousDir, string newDir);
-        void ResetWpCustomize(string wpCustomizePath, WallpaperType type);
-
-        /// <summary>
-        /// Wallpaper set/update/removed.
-        /// </summary>
-        public event EventHandler? WallpaperChanged;
-
-        /// <summary>
-        /// Errors occured in wallpaper core.
-        /// </summary>
-        public event EventHandler<Exception>? WallpaperError;
-        
-        /// <summary>
-        /// Wallpaper core services restarted.
-        /// </summary>
-        public event EventHandler? WallpaperReset;
+        FileProperty GetWpProperty(string filePath, FileType ftype);
+        Grpc_MonitorData GetRunMonitorByWallpaper(string wpUid);
+        //void ModifyPreview(string controlName, string propertyName, string value);
+        #endregion
     }
 }

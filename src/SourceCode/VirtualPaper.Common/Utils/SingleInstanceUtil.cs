@@ -1,18 +1,13 @@
 ﻿using System.Diagnostics;
 
-namespace VirtualPaper.Common.Utils
-{
-    public static class SingleInstanceUtil
-    {
-        public static bool IsAppMutexRunning(string mutexName)
-        {
+namespace VirtualPaper.Common.Utils {
+    public static class SingleInstanceUtil {
+        public static bool IsAppMutexRunning(string mutexName) {
             Mutex? mutex = null;
-            try
-            {
+            try {
                 return Mutex.TryOpenExisting(mutexName, out mutex);
             }
-            finally
-            {
+            finally {
                 mutex?.Dispose();
             }
         }

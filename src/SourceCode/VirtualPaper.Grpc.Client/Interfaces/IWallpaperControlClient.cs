@@ -1,50 +1,39 @@
 ﻿using System.Collections.ObjectModel;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
-using VirtualPaper.Grpc.Service.WallpaperControl;
+using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.WallpaperMetaData;
 
-namespace VirtualPaper.Grpc.Client.Interfaces
-{
-    public interface IWallpaperControlClient : IDisposable
-    {
-        ReadOnlyCollection<WallpaperBasicData> Wallpapers { get; }
-        string BaseDirectory { get; }
-        Version AssemblyVersion { get; }
-
-        Task<WpMetaData> GetWallpaperAsync(string folderPath);
-        Task<UpdateWpResponse> UpdateWpAsync(IMonitor monitor, IMetaData metaData, CancellationToken token);
-        Task<SetWallpaperResponse> SetWallpaperAsync(IMonitor monitor, IMetaData metaData, CancellationToken cancellationToken);
-
-        Task CloseAllWallpapersAsync();
-        Task CloseWallpaperAsync(IMonitor monitor);
-        
-        Task<RestartWallpaperResponse> RestartAllWallpaperAsync();
-
-        Task<WpMetaData?> CreateWallpaperAsync(string folderPath, string filePath, Common.WallpaperType type, CancellationToken token = default);
-
-        //Task SendMessageWallpaperAsync(IMetaData metaData, IpcMessage msg);
-        Task SendMessageWallpaperAsync(IMonitor monitor, IMetaData metaData, IpcMessage msg);
-
-        Task PreviewWallpaperAsync(IMetaData metaData, bool isLibraryPreview);
-        Task TakeScreenshotAsync(string monitorId, string savePath);
-        Task ModifyPreviewAsync(string controlName, string propertyName, string val);
-
-        Task ChangeWallpaperLayoutFolrderPathAsync(string previousDir, string newDir);
-        
-        Task ResetWpCustomizeAsync(string wpCustomizePathTmp, WallpaperType type);        
-
+namespace VirtualPaper.Grpc.Client.Interfaces {
+    public interface IWallpaperControlClient : IDisposable {
         event EventHandler? WallpaperChanged;
         event EventHandler<Exception>? WallpaperError;
-    }
 
-    public class WallpaperBasicData
-    {
-        public string VirtualPaperUid { get; set; } = string.Empty;
-        public string FolderPath { get; set; } = string.Empty;
-        public string WpCustomizePathUsing { get; set; } = string.Empty;
-        public string ThumbnailPath { get; set; } = string.Empty;
-        public IMonitor? Monitor { get; set; }
-        public Common.WallpaperType Tyep { get; set; }
+        Version AssemblyVersion { get; }
+        string BaseDirectory { get; }
+
+        #region wallpaper actions
+        Task CloseAllWallpapersAsync();
+        Task CloseWallpaperAsync(IMonitor monitor);
+        Task CloseAllPreviewAsync();
+        Task<Grpc_WpMetaData> GetWallpaperAsync(string folderPath, string monitorContent, string rtype);
+        Task<bool> AdjustWallpaperAsync(string monitorDeviceId, CancellationToken cancellationToken);
+        Task<bool> PreviewWallpaperAsync(string monitorDeviceId, IWpBasicData data, RuntimeType rtype, CancellationToken cancellationToken);
+        Task<Grpc_RestartWallpaperResponse> RestartAllWallpapersAsync();
+        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IMonitor monitor, IWpBasicData metaData, RuntimeType rtype, CancellationToken cancellationToken);
+        #endregion
+
+        #region data
+        Task<Grpc_WpBasicData?> CreateBasicDataAsync(string sourceFilePath, FileType ftype, CancellationToken token = default);
+        IWpMetadata GetWpMetadataByMonitorThu(string thumbnailPath);
+        #endregion
+
+        #region utils
+        Task ChangeWallpaperLayoutFolrderPathAsync(string previousDir, string newDir);
+        Task<Grpc_MonitorData?> GetRunMonitorByWallpaperAsync(string wpUid);
+        Task SendMessageWallpaperAsync(IMonitor monitor, IWpRuntimeData metaData, IpcMessage msg);
+        Task TakeScreenshotAsync(string monitorId, string savePath);
+        Task<Grpc_WpBasicData?> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype);
+        #endregion
     }
 }

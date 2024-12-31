@@ -3,11 +3,60 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace VirtualPaper.Common.Utils.PInvoke
-{
+namespace VirtualPaper.Common.Utils.PInvoke {
 #pragma warning disable CA1707, CA1401, CA1712
-    public static class Native
-    {
+    public static class Native {
+        [StructLayout(LayoutKind.Sequential)]
+        public struct WINDOWPLACEMENT {
+            public int length;
+            public int flags;
+            public int showCmd;
+            public POINT ptMinPosition;
+            public POINT ptMaxPosition;
+            public RECT rcNormalPosition;
+        }
+
+        [DllImport("user32.dll")]
+        public static extern bool GetWindowPlacement(IntPtr hWnd, out WINDOWPLACEMENT lpwndpl);
+
+        [DllImport("kernel32.dll")]
+        public static extern void SetLastError(uint dwErrCode);
+
+        [DllImport("kernel32.dll")]
+        public static extern uint GetLastError();
+
+        public const int HWND_TOP = 0;
+        public const int HWND_TOPMOST = -1;
+        public const uint SWP_NOACTIVATE = 0x0010;
+        public const uint SWP_NOMOVE = 0x0002;
+        public const uint SWP_NOSIZE = 0x0001;
+        public const uint SWP_SHOWWINDOW = 0x0040;
+        public const uint SWP_FRAMECHANGED = 0x0020;
+
+        public const int GWL_STYLE = -16;
+        public const long WS_POPUP = 0x80000000;
+        public const long WS_CHILD = 0x40000000;
+        public const int WS_OVERLAPPEDWINDOW = 0x00CF0000;
+        public const int WS_VISIBLE = 0x10000000;
+        public const int WS_EX_TOPMOST = 0x00000008;
+      
+        [DllImport("user32.dll")]
+        public static extern bool EnumChildWindows(IntPtr hwndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        public const int GWL_EXSTYLE = -20;
+        public const int WS_EX_TOOLWINDOW = 0x80;
+        public const int WS_EX_NOACTIVATE = 0x08000000;
+
+        [DllImport("Shcore.dll", SetLastError = true)]
+        public static extern int GetDpiForMonitor(IntPtr hmonitor, Monitor_DPI_Type dpiType, out uint dpiX, out uint dpiY);
+
+        public enum Monitor_DPI_Type : int {
+            MDT_Effective_DPI = 0,
+            MDT_Angular_DPI = 1,
+            MDT_Raw_DPI = 2,
+            MDT_Default = MDT_Effective_DPI
+        }
+
         [DllImport("user32.dll")]
         public static extern uint GetDoubleClickTime();
 
@@ -19,8 +68,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
                                                  DWMWINDOWATTRIBUTE attribute,
                                                  ref DWM_WINDOW_CORNER_PREFERENCE pvAttribute,
                                                  uint cbAttribute);
-        public enum DWMWINDOWATTRIBUTE
-        {
+        public enum DWMWINDOWATTRIBUTE {
             NCRenderingEnabled = 1,
             NCRenderingPolicy,
             TransitionsForceDisabled,
@@ -47,8 +95,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
             Last
         }
 
-        public enum DWM_WINDOW_CORNER_PREFERENCE
-        {
+        public enum DWM_WINDOW_CORNER_PREFERENCE {
             DWMWCP_DEFAULT = 0,
             DWMWCP_DONOTROUND = 1,
             DWMWCP_ROUND = 2,
@@ -84,8 +131,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool GetCursorPos(out POINT lpPoint);
 
-        public enum QUERY_USER_NOTIFICATION_STATE
-        {
+        public enum QUERY_USER_NOTIFICATION_STATE {
             QUNS_NOT_PRESENT = 1,
             QUNS_BUSY = 2,
             QUNS_RUNNING_D3D_FULL_SCREEN = 3,
@@ -118,8 +164,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         ///     source rectangle is to be combined with the color data for the destination
         ///     rectangle to achieve the final color.
         /// </summary>
-        public enum TernaryRasterOperations : uint
-        {
+        public enum TernaryRasterOperations : uint {
             /// <summary>dest = source</summary>
             SRCCOPY = 0x00CC0020,
             /// <summary>dest = source OR dest</summary>
@@ -253,8 +298,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         public static extern int RegisterApplicationRestart([MarshalAs(UnmanagedType.LPWStr)] string commandLineArgs, int Flags);
 
         [Flags]
-        public enum RestartFlags
-        {
+        public enum RestartFlags {
             /// <summary>
             /// No restart restrictions
             /// </summary>
@@ -294,8 +338,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         public static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct LASTINPUTINFO
-        {
+        public struct LASTINPUTINFO {
             public static readonly int SizeOf = Marshal.SizeOf(typeof(LASTINPUTINFO));
 
             [MarshalAs(UnmanagedType.U4)]
@@ -316,8 +359,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
 
         #region windows message
 
-        public enum SHOWWINDOW : uint
-        {
+        public enum SHOWWINDOW : uint {
             SW_HIDE = 0,
             SW_SHOWNORMAL = 1,
             SW_NORMAL = 1,
@@ -351,8 +393,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         /// Defined in winuser.h from Windows SDK v6.1
         /// Documentation pulled from MSDN.
         /// </summary>
-        public enum WM : uint
-        {
+        public enum WM : uint {
             /// <summary>
             /// The WM_NULL message performs no operation. An application sends the WM_NULL message if it wants to post a message that the recipient window will KeepRun.
             /// </summary>
@@ -1346,11 +1387,28 @@ namespace VirtualPaper.Common.Utils.PInvoke
         public static uint MF_BYPOSITION = 0x400;
         public static uint MF_REMOVE = 0x1000;
 
+        [DllImport("User32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool EnableWindow(IntPtr hWnd, bool bEnable);
+
+        public const int GWL_HWNDPARENT = (-8);
+
+        public static IntPtr SetWindowLong(IntPtr hWnd, int nIndex, long dwNewLong) {
+            if (IntPtr.Size == 4) {
+                return SetWindowLongPtr32(hWnd, nIndex, dwNewLong);
+            }
+            return SetWindowLongPtr64(hWnd, nIndex, dwNewLong);
+        }
+
+        [DllImport("User32.dll", CharSet = CharSet.Auto, EntryPoint = "SetWindowLong")]
+        public static extern IntPtr SetWindowLongPtr32(IntPtr hWnd, int nIndex, long dwNewLong);
+
+        [DllImport("User32.dll", CharSet = CharSet.Auto, EntryPoint = "SetWindowLongPtr")]
+        public static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, long dwNewLong);
+
         // This helper static method is required because the 32-bit version of user32.dll does not contain this API
         // (on any versions of Windows), so linking the method will fail at run-time. The bridge dispatches the request
         // to the correct function (GetWindowLong in 32-bit mode and GetWindowLongPtr in 64-bit mode)
-        public static IntPtr SetWindowLongPtr(HandleRef hWnd, int nIndex, IntPtr dwNewLong)
-        {
+        public static IntPtr SetWindowLongPtr(HandleRef hWnd, int nIndex, IntPtr dwNewLong) {
             if (IntPtr.Size == 8)
                 return SetWindowLongPtr64(hWnd, nIndex, dwNewLong);
             else
@@ -1372,16 +1430,14 @@ namespace VirtualPaper.Common.Utils.PInvoke
         #region WinDesktopCore
 
         [Flags]
-        public enum SendMessageTimeoutFlags : uint
-        {
+        public enum SendMessageTimeoutFlags : uint {
             SMTO_NORMAL = 0x0,
             SMTO_BLOCK = 0x1,
             SMTO_ABORTIFHUNG = 0x2,
             SMTO_NOTIMEOUTIFNOTHUNG = 0x8,
             SMTO_ERRORONEXIT = 0x20
         }
-        public enum AnimateWindowFlags : uint
-        {
+        public enum AnimateWindowFlags : uint {
             AW_HOR_POSITIVE = 0x00000001,
             AW_HOR_NEGATIVE = 0x00000002,
             AW_VER_POSITIVE = 0x00000004,
@@ -1454,16 +1510,14 @@ namespace VirtualPaper.Common.Utils.PInvoke
 
         // This static method is required because Win32 does not support
         // GetWindowLongPtr directly
-        public static IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex)
-        {
+        public static IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex) {
             if (IntPtr.Size == 8)
                 return GetWindowLongPtr64(hWnd, nIndex);
             else
                 return GetWindowLongPtr32(hWnd, nIndex);
         }
 
-        public enum GWL
-        {
+        public enum GWL {
             GWL_WNDPROC = (-4),
             GWL_HINSTANCE = (-6),
             GWL_HWNDPARENT = (-8),
@@ -1473,8 +1527,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
             GWL_ID = (-12)
         }
 
-        public abstract class WindowStyles
-        {
+        public abstract class WindowStyles {
             public const uint WS_OVERLAPPED = 0x00000000;
             public const uint WS_POPUP = 0x80000000;
             public const uint WS_CHILD = 0x40000000;
@@ -1555,7 +1608,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
 
             //#if(WINVER >= 0x0500)
             public const uint WS_EX_NOINHERITLAYOUT = 0x00100000; // Disable inheritence of mirroring by children
-            public const uint WS_EX_LAYOUTRTL = 0x00400000; // Right to left mirroring
+            public const uint WS_EX_LAYOUTRTL = 0x00400000; // Width to left mirroring
                                                             //#endif /* WINVER >= 0x0500 */
 
             //#if(_WIN32_WINNT >= 0x0500)
@@ -1568,7 +1621,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetWindowPos(IntPtr hwnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
 
-        [DllImport("user32.dll")]        
+        [DllImport("user32.dll")]
         public static extern IntPtr GetDesktopWindow();
 
         [DllImport("Shell32.dll")]
@@ -1615,8 +1668,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
 
         //..Pause.c
         [Flags]
-        public enum ThreadAccess : int
-        {
+        public enum ThreadAccess : int {
             TERMINATE = (0x0001),
             SUSPEND_RESUME = (0x0002),
             GET_CONTEXT = (0x0008),
@@ -1637,8 +1689,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
 
         //..Pause logic
         [StructLayout(LayoutKind.Sequential)]
-        public struct RECT
-        {
+        public struct RECT {
             public int Left;
             public int Top;
             public int Right;
@@ -1647,7 +1698,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         }
 
         [DllImport("user32.dll", SetLastError = true)]
-        public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+        public static extern long GetWindowLong(IntPtr hWnd, int nIndex);
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetForegroundWindow();
@@ -1678,8 +1729,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         #region ScreenResolution
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct WINDOWPOS
-        {
+        public struct WINDOWPOS {
             public IntPtr hwnd;
             public IntPtr hwndInsertAfter;
             public int x;
@@ -1697,24 +1747,20 @@ namespace VirtualPaper.Common.Utils.PInvoke
         public static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct POINT
-        {
+        public struct POINT {
             public int X;
             public int Y;
 
-            public POINT(int x, int y)
-            {
+            public POINT(int x, int y) {
                 this.X = x;
                 this.Y = y;
             }
 
-            public static implicit operator System.Drawing.Point(POINT p)
-            {
+            public static implicit operator System.Drawing.Point(POINT p) {
                 return new System.Drawing.Point(p.X, p.Y);
             }
 
-            public static implicit operator POINT(System.Drawing.Point p)
-            {
+            public static implicit operator POINT(System.Drawing.Point p) {
                 return new POINT(p.X, p.Y);
             }
         }
@@ -1748,8 +1794,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         public static extern bool IsZoomed(IntPtr hWnd);
 
         [Flags]
-        public enum SetWindowPosFlags : int
-        {
+        public enum SetWindowPosFlags : int {
             // ReSharper disable InconsistentNaming
 
             /// <summary>
@@ -1843,8 +1888,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         /// for the display monitor.
         /// </summary>
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-        public struct MonitorInfoEx
-        {
+        public struct MonitorInfoEx {
             /// <summary>
             /// The size, in bytes, of the structure. Set this member to sizeof(MONITORINFOEX) (72) before calling the GetMonitorInfo function.
             /// Doing so lets the function determine the type of structure you are passing to it.
@@ -1880,8 +1924,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = CCHDEVICENAME)]
             public string DeviceName;
 
-            public void Init()
-            {
+            public void Init() {
                 this.Size = 40 + 2 * CCHDEVICENAME;
                 this.DeviceName = string.Empty;
             }
@@ -1897,8 +1940,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         /// the right column and bottom row of pixels. This structure is identical to the RECTL structure.
         /// </remarks>
         [StructLayout(LayoutKind.Sequential)]
-        public struct RectStruct
-        {
+        public struct RectStruct {
             /// <summary>
             /// The x-coordinate of the upper-left corner of the rectangle.
             /// </summary>
@@ -1926,8 +1968,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         /// A utility class to determine a process parent.
         /// </summary>
         [StructLayout(LayoutKind.Sequential)]
-        public struct ParentProcessUtilities
-        {
+        public struct ParentProcessUtilities {
             // These members must match PROCESS_BASIC_INFORMATION
             internal IntPtr Reserved1;
             internal IntPtr PebBaseAddress;
@@ -1943,8 +1984,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
             /// Gets the parent process of the current process.
             /// </summary>
             /// <returns>An instance of the Process class.</returns>
-            public static Process GetParentProcess()
-            {
+            public static Process GetParentProcess() {
                 return GetParentProcess(Process.GetCurrentProcess().Handle);
             }
 
@@ -1953,8 +1993,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
             /// </summary>
             /// <param name="id">The process id.</param>
             /// <returns>An instance of the Process class.</returns>
-            public static Process GetParentProcess(int id)
-            {
+            public static Process GetParentProcess(int id) {
                 Process process = Process.GetProcessById(id);
                 return GetParentProcess(process.Handle);
             }
@@ -1964,20 +2003,17 @@ namespace VirtualPaper.Common.Utils.PInvoke
             /// </summary>
             /// <param name="handle">The process handle.</param>
             /// <returns>An instance of the Process class.</returns>
-            public static Process GetParentProcess(IntPtr handle)
-            {
+            public static Process GetParentProcess(IntPtr handle) {
                 ParentProcessUtilities pbi = new ParentProcessUtilities();
                 int returnLength;
                 int status = NtQueryInformationProcess(handle, 0, ref pbi, Marshal.SizeOf(pbi), out returnLength);
                 if (status != 0)
                     throw new Win32Exception(status);
 
-                try
-                {
+                try {
                     return Process.GetProcessById(pbi.InheritedFromUniqueProcessId.ToInt32());
                 }
-                catch (ArgumentException)
-                {
+                catch (ArgumentException) {
                     // not found
                     return null;
                 }
@@ -1992,8 +2028,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         [DllImport("user32.dll", SetLastError = true)]
         public static extern IntPtr GetWindow(IntPtr hWnd, GetWindowType uCmd);
 
-        public enum GetWindowType : uint
-        {
+        public enum GetWindowType : uint {
             /// <summary>
             /// The retrieved handle identifies the window of the same type that is highest in the Z order.
             /// <para/>
@@ -2050,8 +2085,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         public static extern void SHGetSetSettings(ref SHELLSTATE lpss, SSF dwMask, bool bSet);
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct SHELLSTATE
-        {
+        public struct SHELLSTATE {
             public uint flags_1;
             public uint dwWin95Unused;
             public uint uWin95Unused;
@@ -2061,131 +2095,106 @@ namespace VirtualPaper.Common.Utils.PInvoke
             public uint uNotUsed;
             public uint flags_2;
 
-            public bool fShowAllObjects
-            {
+            public bool fShowAllObjects {
                 get { return (flags_1 & 0x00000001u) == 0x00000001u; }
                 set { if (value) { flags_1 |= 0x00000001u; } else { flags_1 &= ~0x00000001u; } }
             }
-            public bool fShowExtensions
-            {
+            public bool fShowExtensions {
                 get { return (flags_1 & 0x00000002u) == 0x00000002u; }
                 set { if (value) { flags_1 |= 0x00000002u; } else { flags_1 &= ~0x00000002u; } }
             }
-            public bool fNoConfirmRecycle
-            {
+            public bool fNoConfirmRecycle {
                 get { return (flags_1 & 0x00000004u) == 0x00000004u; }
                 set { if (value) { flags_1 |= 0x00000004u; } else { flags_1 &= ~0x00000004u; } }
             }
-            public bool fShowSysFiles
-            {
+            public bool fShowSysFiles {
                 get { return (flags_1 & 0x00000008u) == 0x00000008u; }
                 set { if (value) { flags_1 |= 0x00000008u; } else { flags_1 &= ~0x00000008u; } }
             }
-            public bool fShowCompColor
-            {
+            public bool fShowCompColor {
                 get { return (flags_1 & 0x00000010u) == 0x00000010u; }
                 set { if (value) { flags_1 |= 0x00000010u; } else { flags_1 &= ~0x00000010u; } }
             }
-            public bool fDoubleClickInWebView
-            {
+            public bool fDoubleClickInWebView {
                 get { return (flags_1 & 0x00000020u) == 0x00000020u; }
                 set { if (value) { flags_1 |= 0x00000020u; } else { flags_1 &= ~0x00000020u; } }
             }
-            public bool fDesktopHTML
-            {
+            public bool fDesktopHTML {
                 get { return (flags_1 & 0x00000040u) == 0x00000040u; }
                 set { if (value) { flags_1 |= 0x00000040u; } else { flags_1 &= ~0x00000040u; } }
             }
-            public bool fWin95Classic
-            {
+            public bool fWin95Classic {
                 get { return (flags_1 & 0x00000080u) == 0x00000080u; }
                 set { if (value) { flags_1 |= 0x00000080u; } else { flags_1 &= ~0x00000080u; } }
             }
-            public bool fDontPrettyPath
-            {
+            public bool fDontPrettyPath {
                 get { return (flags_1 & 0x00000100u) == 0x00000100u; }
                 set { if (value) { flags_1 |= 0x00000100u; } else { flags_1 &= ~0x00000100u; } }
             }
-            public bool fShowAttribCol
-            {
+            public bool fShowAttribCol {
                 get { return (flags_1 & 0x00000200u) == 0x00000200u; }
                 set { if (value) { flags_1 |= 0x00000200u; } else { flags_1 &= ~0x00000200u; } }
             }
-            public bool fMapNetDrvBtn
-            {
+            public bool fMapNetDrvBtn {
                 get { return (flags_1 & 0x00000400u) == 0x00000400u; }
                 set { if (value) { flags_1 |= 0x00000400u; } else { flags_1 &= ~0x00000400u; } }
             }
-            public bool fShowInfoTip
-            {
+            public bool fShowInfoTip {
                 get { return (flags_1 & 0x00000800u) == 0x00000800u; }
                 set { if (value) { flags_1 |= 0x00000800u; } else { flags_1 &= ~0x00000800u; } }
             }
-            public bool fHideIcons
-            {
+            public bool fHideIcons {
                 get { return (flags_1 & 0x00001000u) == 0x00001000u; }
                 set { if (value) { flags_1 |= 0x00001000u; } else { flags_1 &= ~0x00001000u; } }
             }
-            public bool fWebView
-            {
+            public bool fWebView {
                 get { return (flags_1 & 0x00002000u) == 0x00002000u; }
                 set { if (value) { flags_1 |= 0x00002000u; } else { flags_1 &= ~0x00002000u; } }
             }
-            public bool fFilter
-            {
+            public bool fFilter {
                 get { return (flags_1 & 0x00004000u) == 0x00004000u; }
                 set { if (value) { flags_1 |= 0x00004000u; } else { flags_1 &= ~0x00004000u; } }
             }
-            public bool fShowSuperHidden
-            {
+            public bool fShowSuperHidden {
                 get { return (flags_1 & 0x00008000u) == 0x00008000u; }
                 set { if (value) { flags_1 |= 0x00008000u; } else { flags_1 &= ~0x00008000u; } }
             }
-            public bool fNoNetCrawling
-            {
+            public bool fNoNetCrawling {
                 get { return (flags_1 & 0x00010000u) == 0x00010000u; }
                 set { if (value) { flags_1 |= 0x00010000u; } else { flags_1 &= ~0x00010000u; } }
             }
 
-            public bool fSepProcess
-            {
+            public bool fSepProcess {
                 get { return (flags_2 & 0x00000001u) == 0x00000001u; }
                 set { if (value) { flags_2 |= 0x00000001u; } else { flags_2 &= ~0x00000001u; } }
             }
-            public bool fStartPanelOn
-            {
+            public bool fStartPanelOn {
                 get { return (flags_2 & 0x00000002u) == 0x00000002u; }
                 set { if (value) { flags_2 |= 0x00000002u; } else { flags_2 &= ~0x00000002u; } }
             }
-            public bool fShowStartPage
-            {
+            public bool fShowStartPage {
                 get { return (flags_2 & 0x00000004u) == 0x00000004u; }
                 set { if (value) { flags_2 |= 0x00000004u; } else { flags_2 &= ~0x00000004u; } }
             }
-            public bool fAutoCheckSelect
-            {
+            public bool fAutoCheckSelect {
                 get { return (flags_2 & 0x00000008u) == 0x00000008u; }
                 set { if (value) { flags_2 |= 0x00000008u; } else { flags_2 &= ~0x00000008u; } }
             }
-            public bool fIconsOnly
-            {
+            public bool fIconsOnly {
                 get { return (flags_2 & 0x00000010u) == 0x00000010u; }
                 set { if (value) { flags_2 |= 0x00000010u; } else { flags_2 &= ~0x00000010u; } }
             }
-            public bool fShowTypeOverlay
-            {
+            public bool fShowTypeOverlay {
                 get { return (flags_2 & 0x00000020u) == 0x00000020u; }
                 set { if (value) { flags_2 |= 0x00000020u; } else { flags_2 &= ~0x00000020u; } }
             }
-            public bool fShowStatusBar
-            {
+            public bool fShowStatusBar {
                 get { return (flags_2 & 0x00000040u) == 0x00000040u; }
                 set { if (value) { flags_2 |= 0x00000040u; } else { flags_2 &= ~0x00000040u; } }
             }
         }
         [Flags]
-        public enum SSF : uint
-        {
+        public enum SSF : uint {
             SSF_SHOWALLOBJECTS = 0x00000001,
             SSF_SHOWEXTENSIONS = 0x00000002,
             SSF_HIDDENFILEEXTS = 0x00000004,
@@ -2224,8 +2233,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         /// SPI_ System-wide parameter - Used in SystemParametersInfo function
         /// </summary>
         [Description("SPI_(System-wide parameter - Used in SystemParametersInfo function )")]
-        public enum SPI : uint
-        {
+        public enum SPI : uint {
             /// <summary>
             /// Determines whether the warning beeper is on.
             /// The pvParam parameter must point to a BOOL variable that receives TRUE if the beeper is on, or FALSE if it is off.
@@ -3436,8 +3444,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         /// ai_productions@verizon.net or osirisgothra@hotmail.com
         /// Obtained on pinvoke.net, please contribute your code to support the wiki!
         /// </summary>
-        public enum SystemMetric : int
-        {
+        public enum SystemMetric : int {
             /// <summary>
             /// The flags that specify how the system arranged minimized windows. For more information, see the Remarks section in this topic.
             /// </summary>
@@ -3976,8 +3983,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto, Pack = 4)]
-        public class MONITORINFOEX
-        {
+        public class MONITORINFOEX {
             public int cbSize = Marshal.SizeOf(typeof(MONITORINFOEX));
             public RECT rcMonitor = new RECT();
             public RECT rcWork = new RECT();
@@ -3988,27 +3994,23 @@ namespace VirtualPaper.Common.Utils.PInvoke
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public class COMRECT
-        {
+        public class COMRECT {
             public int left;
             public int top;
             public int right;
             public int bottom;
 
-            public COMRECT()
-            {
+            public COMRECT() {
             }
 
-            public COMRECT(System.Drawing.Rectangle r)
-            {
+            public COMRECT(System.Drawing.Rectangle r) {
                 left = (int)r.X;
                 top = (int)r.Y;
                 right = (int)r.Right;
                 bottom = (int)r.Bottom;
             }
 
-            public COMRECT(int left, int top, int right, int bottom)
-            {
+            public COMRECT(int left, int top, int right, int bottom) {
                 this.left = left;
                 this.top = top;
                 this.right = right;
@@ -4017,8 +4019,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         }
 
         [Flags]
-        public enum DisplayDeviceStateFlags : int
-        {
+        public enum DisplayDeviceStateFlags : int {
             /// <summary>The device is part of the desktop.</summary>
             AttachedToDesktop = 0x1,
 
@@ -4050,8 +4051,7 @@ namespace VirtualPaper.Common.Utils.PInvoke
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        public struct DISPLAY_DEVICE
-        {
+        public struct DISPLAY_DEVICE {
             [MarshalAs(UnmanagedType.U4)]
             public int cb;
 

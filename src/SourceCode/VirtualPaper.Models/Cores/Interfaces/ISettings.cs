@@ -1,10 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 using VirtualPaper.Common;
 
-namespace VirtualPaper.Models.Cores.Interfaces
-{
-    public interface ISettings
-    {
+namespace VirtualPaper.Models.Cores.Interfaces {
+    public interface ISettings {
         #region for app
         AppWpRunRulesEnum AppFullscreen { get; set; }
         AppWpRunRulesEnum AppFocus { get; set; }
@@ -13,7 +11,9 @@ namespace VirtualPaper.Models.Cores.Interfaces
         AppWpRunRulesEnum PowerSaving { get; set; }
         AppWpRunRulesEnum RemoteDesktop { get; set; }
         AppSystemBackdrop SystemBackdrop { get; set; }
+        string AppName { get; set; }
         string AppVersion { get; set; }
+        string FileVersion { get; set; }
         string Language { get; set; }
         bool IsUpdated { get; set; }
         bool IsAutoStart { get; set; }

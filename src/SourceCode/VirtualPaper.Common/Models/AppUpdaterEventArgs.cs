@@ -1,11 +1,8 @@
 ﻿using System.ComponentModel;
 
-namespace VirtualPaper.Common.Models
-{
-    public class AppUpdaterEventArgs : EventArgs
-    {
-        public AppUpdaterEventArgs(AppUpdateStatus updateStatus, Version updateVersion, DateTime updateDate, Uri updateUri, string changeLog)
-        {
+namespace VirtualPaper.Common.Models {
+    public class AppUpdaterEventArgs : EventArgs {
+        public AppUpdaterEventArgs(AppUpdateStatus updateStatus, Version updateVersion, DateTime updateDate, Uri updateUri, string changeLog) {
             UpdateStatus = updateStatus;
             UpdateVersion = updateVersion;
             UpdateUri = updateUri;
@@ -20,8 +17,7 @@ namespace VirtualPaper.Common.Models
         public string ChangeLog { get; }
     }
 
-    public enum AppUpdateStatus
-    {
+    public enum AppUpdateStatus {
         [Description("Software is up-to-date.")]
         uptodate,
         [Description("Update available.")]

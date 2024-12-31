@@ -1,37 +1,15 @@
-﻿using Newtonsoft.Json;
-using System.IO;
+﻿using System.Text.Json;
 using System.Windows;
 using VirtualPaper.Common.Utils.IPC;
 
-namespace VirtualPaper.ScreenSaver
-{
+namespace VirtualPaper.ScreenSaver {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
-    public partial class App : Application
-    {
-        public App()
-        {
-            try
-            {
-                string _tempWebView2Dir = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VirtualPaper"), "ScrWebView2");
-                if (!Directory.Exists(_tempWebView2Dir))
-                {
-                    Directory.CreateDirectory(_tempWebView2Dir);
-                }
-            }
-            catch (Exception)
-            {
-                Environment.Exit(0);
-            }
-        }
-
-        private void Application_Startup(object sender, StartupEventArgs e)
-        {
-            this.SessionEnding += (s, a) =>
-            {
-                if (a.ReasonSessionEnding == ReasonSessionEnding.Shutdown || a.ReasonSessionEnding == ReasonSessionEnding.Logoff)
-                {
+    public partial class App : Application {
+        private void Application_Startup(object sender, StartupEventArgs e) {
+            this.SessionEnding += (s, a) => {
+                if (a.ReasonSessionEnding == ReasonSessionEnding.Shutdown || a.ReasonSessionEnding == ReasonSessionEnding.Logoff) {
                     a.Cancel = true;
                 }
             };
@@ -42,8 +20,7 @@ namespace VirtualPaper.ScreenSaver
             wnd.Show();
         }
 
-        private void SetupUnhandledExceptionLogging()
-        {
+        private void SetupUnhandledExceptionLogging() {
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
                 LogUnhandledException((Exception)e.ExceptionObject, "AppDomain.CurrentDomain.UnhandledException");
 
@@ -54,18 +31,19 @@ namespace VirtualPaper.ScreenSaver
                 LogUnhandledException(e.Exception, "TaskScheduler.UnobservedTaskException");
         }
 
-        private void LogUnhandledException(Exception exception, string source)
-        {
-            WriteToParent(new VirtualPaperMessageConsole()
-            {
+        private void LogUnhandledException(Exception exception, string source) {
+            WriteToParent(new VirtualPaperMessageConsole() {
                 MsgType = ConsoleMessageType.Error,
                 Message = $"Unhandled Error: {exception.Message}",
             });
         }
 
-        public static void WriteToParent(IpcMessage obj)
-        {
-            Console.WriteLine(JsonConvert.SerializeObject(obj));
+        public static void WriteToParent(IpcMessage obj) {
+            Console.WriteLine(JsonSerializer.Serialize(obj, IpcMessageContext.Default.IpcMessage));
+        }
+
+        public static void ShutDown() {
+            Application.Current.Dispatcher.Invoke(Application.Current.Shutdown);
         }
     }
 }

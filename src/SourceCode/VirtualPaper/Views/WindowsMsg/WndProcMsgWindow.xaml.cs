@@ -1,5 +1,4 @@
-﻿using NLog;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Interop;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.Monitor;
@@ -7,28 +6,31 @@ using VirtualPaper.Cores.WpControl;
 using VirtualPaper.lang;
 using MessageBox = System.Windows.MessageBox;
 
-namespace VirtualPaper.Views.WindowsMsg
-{
+namespace VirtualPaper.Views.WindowsMsg {
     /// <summary>
     /// WndProcMsgWindow 实现对系统事件或行为的自定义响应
     /// </summary>
-    public partial class WndProcMsgWindow : Window
-    {
+    public partial class WndProcMsgWindow : Window {
         public WndProcMsgWindow(
-            IMonitorManager monitorManager, 
-            IWallpaperControl desktopWpControl)
-        {
+            IMonitorManager monitorManager,
+            IWallpaperControl wpControl) {
             _monitorManager = monitorManager;
-            _wpControl = desktopWpControl;
+            _wpControl = wpControl;
 
             InitializeComponent();
         }
 
-        protected override void OnSourceInitialized(EventArgs e)
-        {
+        protected override void OnSourceInitialized(EventArgs e) {
             base.OnSourceInitialized(e);
             var source = PresentationSource.FromVisual(this) as HwndSource;
             source?.AddHook(WndProc);
+            var helper = new WindowInteropHelper(this);
+            HiddenWindowForWPF(helper);
+        }
+
+        private static void HiddenWindowForWPF(WindowInteropHelper helper) {
+            var exStyle = Native.GetWindowLong(helper.Handle, Native.GWL_EXSTYLE);
+            Native.SetWindowLong(helper.Handle, Native.GWL_EXSTYLE, exStyle | Native.WS_EX_TOOLWINDOW | Native.WS_EX_NOACTIVATE);
         }
 
         /// <summary>
@@ -40,23 +42,18 @@ namespace VirtualPaper.Views.WindowsMsg
         /// <param name="lParam"></param>
         /// <param name="handled"></param>
         /// <returns></returns>
-        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-        {
-            if (msg == WM_TASKBARCREATED)
-            {
-                _logger.Info("WM_TASKBARCREATED: New taskbar created.");
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) {
+            if (msg == WM_TASKBARCREATED) {
+                App.Log.Info("WM_TASKBARCREATED: New taskbar created.");
                 int newExplorerPid = GetTaskbarExplorerPid();
-                if (prevExplorerPid != newExplorerPid)
-                {
+                if (prevExplorerPid != newExplorerPid) {
                     //Explorer crash detection, dpi change also sends WM_TASKBARCREATED..
-                    _logger.Info($"Explorer crashed, pid mismatch: {prevExplorerPid} != {newExplorerPid}");
-                    if ((DateTime.Now - prevCrashTime).TotalSeconds > 30)
-                    {
+                    App.Log.Info($"Explorer crashed, pid mismatch: {prevExplorerPid} != {newExplorerPid}");
+                    if ((DateTime.Now - prevCrashTime).TotalSeconds > 30) {
                         _ = _wpControl.ResetWallpaperAsync();
                     }
-                    else
-                    {
-                        _logger.Warn("Explorer restarted multiple times in the last 30s.");
+                    else {
+                        App.Log.Warn("Explorer restarted multiple times in the last 30s.");
                         _ = Task.Run(() => MessageBox.Show(LanguageManager.Instance["WndProcMsg_DescExplorerCrash"],
                                 $"{LanguageManager.Instance["WndProcMsg_TitleAppName"]} - {LanguageManager.Instance["WndProcMsg_TextError"]}",
                                 MessageBoxButton.OK, MessageBoxImage.Error));
@@ -67,8 +64,7 @@ namespace VirtualPaper.Views.WindowsMsg
                     prevExplorerPid = newExplorerPid;
                 }
             }
-            else if (msg == (uint)Native.WM.QUERYENDSESSION)
-            {
+            else if (msg == (uint)Native.WM.QUERYENDSESSION) {
                 if (lParam != IntPtr.Zero && lParam == (IntPtr)0x00000001) // ENDSESSION_CLOSEAPP
                 {
                     //The app is being queried if it can close for an update.
@@ -81,8 +77,7 @@ namespace VirtualPaper.Views.WindowsMsg
                     return (IntPtr)1;
                 }
             }
-            else if (msg == (uint)Native.WM.ENDSESSION)
-            {
+            else if (msg == (uint)Native.WM.ENDSESSION) {
                 //Gracefully close app.
                 App.ShutDown();
             }
@@ -98,18 +93,15 @@ namespace VirtualPaper.Views.WindowsMsg
         /// 获取 Windows 操作系统任务栏（Shell Tray）所关联的 explorer.exe 进程的进程标识符（PID）
         /// </summary>
         /// <returns></returns>
-        private static int GetTaskbarExplorerPid()
-        {
+        private static int GetTaskbarExplorerPid() {
             _ = Native.GetWindowThreadProcessId(Native.FindWindow("Shell_TrayWnd", null), out int pid);
             return pid;
         }
         #endregion
 
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly int WM_TASKBARCREATED = Native.RegisterWindowMessage("TaskbarCreated");
         private int prevExplorerPid = GetTaskbarExplorerPid();
         private DateTime prevCrashTime = DateTime.MinValue;
-
         private readonly IMonitorManager _monitorManager;
         private readonly IWallpaperControl _wpControl;
     }

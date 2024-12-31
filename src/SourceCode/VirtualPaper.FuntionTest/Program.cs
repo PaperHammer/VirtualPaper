@@ -1,13 +1,15 @@
-﻿using Newtonsoft.Json;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Reflection.Metadata;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Xml;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.FuntionTest.MLTest;
+using VirtualPaper.FuntionTest.ScrSaverTest;
 
 namespace VirtualPaper.FuuntionTest
 {
@@ -21,6 +23,8 @@ namespace VirtualPaper.FuuntionTest
 
         static async Task Main(string[] args)
         {
+            //_optionsIpcMsg.Converters.Add(new IpcMessageConverter());
+
             //string loadActionJson = "{\"action\":\"--load\",\"source\":\"C:\\\\Users\\\\PaperHammer\\\\Desktop\\\\img28.jpg\",\"type\":\"picture\"}";
             ////string loadActionJsox = "{\"action\":\"_load\",\"source\":\"C:\\\\Users\\\\PaperHammer\\\\Desktop\\\\img28.jpg\",\"type\":\"picture\"}";
             //string modifyActionJson = "{\"action\":\"--modify\",\"imgVal\":{\"Saturation\":{\"Type\":\"Slider\",\"Text\":\"Saturation\",\"Value\":1.0,\"Max\":10.0,\"Min\":0.0,\"Step\":0.1},\"Hue\":{\"Type\":\"Slider\",\"Text\":\"Hue\",\"Value\":0,\"Max\":359,\"Min\":0,\"Step\":1},\"Brightness\":{\"Type\":\"Slider\",\"Text\":\"Brightness\",\"Value\":1.0,\"Max\":2.0,\"Min\":0.0,\"Step\":0.1},\"Contrast\":{\"Type\":\"Slider\",\"Text\":\"Contrast\",\"Value\":1.0,\"Max\":10.0,\"Min\":0.0,\"Step\":0.1}}}";
@@ -37,43 +41,47 @@ namespace VirtualPaper.FuuntionTest
             //string modifyActionFilePath = Path.Combine(tempFolderPath, "modify.json");
             //File.WriteAllText(modifyActionFilePath, modifyActionJson);          
 
-            string filePath = "C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\n1j43ben.crv\\02inb0tr.oue.jpg";
-            string customizePath = "C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\n1j43ben.crv\\WpCustomize.json";
+            //MLTest_DepthImage mLTest_DepthImage = new();
+            //mLTest_DepthImage.GetDepthImage();
 
-            DirectoryInfo path = new(AppDomain.CurrentDomain.BaseDirectory);
-            string workingDir = path.Parent.Parent.FullName;
-            workingDir = Path.Combine(workingDir, "Plugins", "Webviewer");
+            //string filePath = "C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\3tezpyj1.few\\3tezpyj1.few.jpg";
+            //string customizePath = "C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\3tezpyj1.few\\1\\wpEffectFilePathUsing.json";
 
-            StringBuilder cmdArgs = new();
-            cmdArgs.Append(" --working-dir " + "\"" + workingDir + "\"");
-            cmdArgs.Append(" --file-path " + "\"" + filePath + "\"");
-            cmdArgs.Append(" --wallpaper-type " + "picture");
-            cmdArgs.Append(" --customize-file-path " + "\"" + customizePath + "\"");
+            //DirectoryInfo path = new(AppDomain.CurrentDomain.BaseDirectory);
+            //string workingDir = path.Parent.Parent.Parent.Parent.FullName;
+            //workingDir = Path.Combine(workingDir,"VirtualPaper", "Plugins", "ScrSaver");
 
-            ProcessStartInfo start = new()
-            {
-                FileName = Path.Combine(workingDir, "VirtualPaper.PlayerWebView2.exe"),
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = false,
-                UseShellExecute = false,
-                WorkingDirectory = workingDir,
-                Arguments = cmdArgs.ToString(),
-            };
+            //StringBuilder cmdArgs = new();
+            //cmdArgs.Append(" --working-dir " + "\"" + workingDir + "\"");
+            //cmdArgs.Append(" --file-path " + "\"" + filePath + "\"");
+            //cmdArgs.Append(" --wallpaper-type " + "picture");
+            //cmdArgs.Append(" --effect-file-path " + "\"" + customizePath + "\"");
 
-            Process _process = new()
-            {
-                EnableRaisingEvents = true,
-                StartInfo = start,
-            };
+            //ProcessStartInfo start = new() {
+            //    FileName = Path.Combine(workingDir, "VirtualPaper.PlayerWeb.exe"),
+            //    RedirectStandardInput = true,
+            //    RedirectStandardOutput = true,
+            //    RedirectStandardError = false,
+            //    UseShellExecute = false,
+            //    WorkingDirectory = workingDir,
+            //    Arguments = cmdArgs.ToString(),
+            //};
 
-            await Console.Out.WriteLineAsync(start.Arguments);
+            //Process _process = new() {
+            //    EnableRaisingEvents = true,
+            //    StartInfo = start,
+            //};
 
-            Proc = _process;
+            //await Console.Out.WriteLineAsync(start.Arguments);
+
+            Proc = MainTest_ScrSaver.InitScr(
+                "C:\\Users\\PaperHammer\\Desktop\\img29.jpg",
+                "FPicture",
+                "Bubble");
 
             await ShowAsync();
 
-            //Application.Run();
+            Application.Run();
         }
 
         static async Task<bool> ShowAsync()
@@ -109,7 +117,7 @@ namespace VirtualPaper.FuuntionTest
                     IpcMessage obj;
                     try
                     {
-                        obj = JsonConvert.DeserializeObject<IpcMessage>(e.Data, new JsonSerializerSettings() { Converters = { new IpcMessageConverter() } }) ?? throw new("null msg recieved");
+                        obj = JsonSerializer.Deserialize(e.Data, IpcMessageContext.Default.IpcMessage) ?? throw new("null msg recieved");
                     }
                     catch (Exception)
                     {
@@ -169,5 +177,6 @@ namespace VirtualPaper.FuuntionTest
 
         private static readonly TaskCompletionSource<Exception> _tcsProcessWait = new();
         private static bool _isInitialized;
+        //private static readonly JsonSerializerOptions _optionsIpcMsg = new();
     }
 }

@@ -1,40 +1,37 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-	<PropertyGroup>
-		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
-	</PropertyGroup>
-
-	<!--NETSDK1152-->
-	<!--ref: https://learn.microsoft.com/zh-cn/dotnet/core/compatibility/sdk/6.0/duplicate-files-in-output-->
-	<!--<PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+  <!--NETSDK1152-->
+  <!--ref: https://learn.microsoft.com/zh-cn/dotnet/core/compatibility/sdk/6.0/duplicate-files-in-output-->
+  <!--<PropertyGroup>
 		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
 	</PropertyGroup>-->
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.26.1" />
+    <PackageReference Include="Grpc.Core" Version="2.46.6" />
+    <PackageReference Include="Grpc.Core.Api" Version="2.62.0" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.62.0" />
+    <PackageReference Include="Grpc.Net.ClientFactory" Version="2.32.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.62.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="System.Buffers" Version="4.5.1" />
+    <PackageReference Include="System.Memory" Version="4.5.5" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Google.Protobuf" Version="3.26.1" />
-		<PackageReference Include="Grpc.Core" Version="2.46.6" />
-		<PackageReference Include="Grpc.Core.Api" Version="2.62.0" />
-		<PackageReference Include="Grpc.Net.Client" Version="2.62.0" />
-		<PackageReference Include="Grpc.Tools" Version="2.62.0">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="System.Buffers" Version="4.5.1" />
-		<PackageReference Include="System.Memory" Version="4.5.5" />
-		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
-	</ItemGroup>
-
-	<!--保证可以识别并编译-->
-	<ItemGroup>
-		<Protobuf Include="Protos\monitorManager.proto" />
-		<Protobuf Include="Protos\userSetting.proto" />
-		<Protobuf Include="Protos\wallpaperControl.proto" />
-		<Protobuf Include="Protos\update.proto" />
-		<Protobuf Include="Protos\commands.proto" />
-		<Protobuf Include="Protos\scrCommands.proto" />
-	</ItemGroup>
-
+  <ItemGroup>
+    <Protobuf Include="Protos\monitorManager.proto" />
+    <Protobuf Include="Protos\userSettings.proto" />
+    <Protobuf Include="Protos\wallpaperControl.proto" />
+    <Protobuf Include="Protos\update.proto" />
+    <Protobuf Include="Protos\commands.proto" />
+    <Protobuf Include="Protos\scrCommands.proto" />
+    <Protobuf Include="Protos\models.proto" />
+  </ItemGroup>
 </Project>

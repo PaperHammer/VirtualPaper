@@ -6,7 +6,7 @@
     xmlns:local="using:VirtualPaper.UI.Views.AppSettingsConponents"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:cvs="using:VirtualPaper.UI.Utils.Converters"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d"
     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
 
@@ -457,6 +457,8 @@
                                     </Button>
 
                                     <ProgressRing
+                                        Width="20"
+                                        Height="20"
                                         Grid.Column="2"
                                         IsActive="{Binding WallpaperDirectoryChangeOngoing}"/>
                                 </Grid>

@@ -1,337 +1,252 @@
-﻿using Google.Protobuf.WellKnownTypes;
-using Grpc.Core;
+﻿using System.Text.Json;
+using Google.Protobuf.WellKnownTypes;
 using GrpcDotNetNamedPipes;
 using NLog;
-using System.Collections.ObjectModel;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
-using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.WallpaperMetaData;
 using static VirtualPaper.Common.Errors;
-using Monitor = VirtualPaper.Models.Cores.Monitor;
 
-namespace VirtualPaper.Grpc.Client
-{
-    public class WallpaperControlClient : IWallpaperControlClient
-    {
-        public ReadOnlyCollection<WallpaperBasicData> Wallpapers => _wallpapers.AsReadOnly();
-
-        public string BaseDirectory { get; private set; } = string.Empty;
-
-        public Version AssemblyVersion { get; private set; }
-
+namespace VirtualPaper.Grpc.Client {
+    public partial class WallpaperControlClient : IWallpaperControlClient {
         public event EventHandler? WallpaperChanged;
         public event EventHandler<Exception>? WallpaperError;
 
-        public WallpaperControlClient()
-        {
-            _client = new WallpaperControlService.WallpaperControlServiceClient(new NamedPipeChannel(".", Constants.SingleInstance.GrpcPipeServerName));
-            
-            //TODO: Wait timeout
-            Task.Run(async () =>
-            {
-                _wallpapers.AddRange(await GetWallpapers().ConfigureAwait(false));
-                var status = (await GetCoreStats().ConfigureAwait(false));
+        public Version AssemblyVersion { get; private set; }
+        public string BaseDirectory { get; private set; } = string.Empty;
+
+        public WallpaperControlClient() {
+            _client = new Grpc_WallpaperControlService.Grpc_WallpaperControlServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
+
+            Task.Run(async () => {
+                var status = await GetCoreStats().ConfigureAwait(false);
                 BaseDirectory = status.BaseDirectory;
                 AssemblyVersion = new Version(status.AssemblyVersion);
             }).Wait();
 
-            _cancellationTokenWallpaperChanged = new CancellationTokenSource();
-            _wallpaperChangedTask = Task.Run(() => SubscribeWallpaperChangedStream(_cancellationTokenWallpaperChanged.Token));
+            _ctsWallpaperChanged = new CancellationTokenSource();
+            _wallpaperChangedTask = Task.Run(() => SubscribeWallpaperChangedStream(_ctsWallpaperChanged.Token));
 
-            _cancellationTokenWallpaperError = new CancellationTokenSource();
-            _wallpaperErrorTask = Task.Run(() => SubscribeWallpaperErrorStream(_cancellationTokenWallpaperError.Token));
+            _ctsWallpaperError = new CancellationTokenSource();
+            _wallpaperErrorTask = Task.Run(() => SubscribeWallpaperErrorStream(_ctsWallpaperError.Token));
         }
 
-        private async Task<GetCoreStatsResponse> GetCoreStats() => await _client.GetCoreStatsAsync(new Empty());
-
-        public async Task CloseAllWallpapersAsync()
-        {
-            await _client.CloseAllWallpapersAsync(new());
+        #region wallpaper actions
+        public async Task CloseAllWallpapersAsync() {
+            await _client.CloseAllWallpapersAsync(new Empty());
         }
 
-        public async Task CloseWallpaperAsync(IMonitor monitor)
-        {
-            await _client.CloseWallpaperMonitorAsync(new CloseWallpaperMonitorRequest()
-            {
+        public async Task CloseWallpaperAsync(IMonitor monitor) {
+            await _client.CloseWallpaperByMonitorAsync(new Grpc_CloseWallpaperByMonitorRequest() {
                 MonitorId = monitor.DeviceId,
             });
         }
 
-        public async Task PreviewWallpaperAsync(IMetaData metaData, bool isLibraryPreview)
-        {
-            WpMetaData wpData = new()
-            {
-                Type = (Service.WallpaperControl.WallpaperType)metaData.Type,
-                FolderPath = metaData.FolderPath,
-                FilePath = metaData.FilePath,
-                WpCustomizePath = metaData.WpCustomizePath, // library
-                WpCustomizePathTmp = metaData.WpCustomizePathTmp, // control
-                WpCustomizePathUsing = metaData.WpCustomizePathUsing,
-            };
-
-            await _client.PreviewWallpaperAsync(
-                new PreviewWallpaperRequest()
-                {
-                    WpMetaData = wpData,
-                    IsLibraryPreview = isLibraryPreview
-                });
+        public async Task CloseAllPreviewAsync() {
+            await _client.CloseAllPreviewAsync(new Empty());
         }
 
-        public async Task ModifyPreviewAsync(string controlName, string propertyName, string val)
-        {
-            ModifyPreviewRequest modifyPreviewRequest = new()
-            {
-                ControlName = controlName,
-                PropertyName = propertyName,
-                Value = val
-            };
+        public async Task<Grpc_WpMetaData> GetWallpaperAsync(string folderPath,string monitorContent, string rtype) {
+            Grpc_WpMetaData grpc_data = await _client.GetWallpaperAsync(
+                new Grpc_GetWallpaperRequest() { 
+                    FolderPath = folderPath, 
+                    MonitorContent = monitorContent, 
+                    RType = rtype });
 
-            await _client.ModifyPreviewAsync(modifyPreviewRequest);
+            return grpc_data;
         }
 
-        public async Task<UpdateWpResponse> UpdateWpAsync(
-            IMonitor monitor, IMetaData metaData, CancellationToken token)
-        {
-            WpMetaData wpData = new()
-            {
-                Type = (Service.WallpaperControl.WallpaperType)metaData.Type,
-                FolderPath = metaData.FolderPath,
-                FilePath = metaData.FilePath,
-                WpCustomizePathUsing = metaData.WpCustomizePathUsing,
-            };
+        public async Task<bool> AdjustWallpaperAsync(string monitorDeviceId, CancellationToken token) {
+            var response = await _client.AdjustWallpaperAsync(
+                new Grpc_AdjustWallpaperRequest() {
+                    MonitorDeviceId = monitorDeviceId,
+                },
+                cancellationToken: token);
 
-            return await _client.UpdateWpAsync(
-                new UpdateWpRequest()
-                {
-                    WpMetaData = wpData,
-                    MonitorId = monitor.DeviceId,
-                }, cancellationToken: token);
+            return response.IsOk;
         }
 
-        public async Task<WpMetaData> GetWallpaperAsync(string folderPath)
-        {
-            return await _client.GetWallpaperAsync(
-                new GetWallpaperRequest() { FolderPath = folderPath });
+        public async Task<bool> PreviewWallpaperAsync(string monitorDeviceId, IWpBasicData data, RuntimeType rtype, CancellationToken token) {
+            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
+
+            var response = await _client.PreviewWallpaperAsync(
+                new Grpc_PreviewWallpaperRequest() {
+                    WpPlayerData = wpPlayerdata,
+                    MonitorDeviceId = monitorDeviceId
+                },
+                cancellationToken: token);
+
+            return response.IsOk;
         }
 
-        public async Task<SetWallpaperResponse> SetWallpaperAsync(
-            IMonitor monitor, IMetaData metaData, CancellationToken token)
-        {
-            var request = new SetWallpaperRequest
-            {
-                FolderPath = metaData.FolderPath,
+        public async Task<Grpc_RestartWallpaperResponse> RestartAllWallpapersAsync() {
+            Grpc_RestartWallpaperResponse response = await _client.RestartAllWallpapersAsync(new Empty());
+
+            return response;
+        }
+
+        public async Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(
+            IMonitor monitor, IWpBasicData data, RuntimeType rtype, CancellationToken token) {
+            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
+
+            var request = new Grpc_SetWallpaperRequest {
+                WpPlayerData = wpPlayerdata,
                 MonitorId = monitor.DeviceId,
-                RunningState = (RunningState)(int)metaData.State,
             };
-            return await _client.SetWallpaperAsync(request, cancellationToken: token);
+
+            Grpc_SetWallpaperResponse response = await _client.SetWallpaperAsync(request, cancellationToken: token);
+
+            return response;
         }
+        #endregion
 
-        public async Task<RestartWallpaperResponse> RestartAllWallpaperAsync()
-        {
-            return await _client.RestartAllWallpaperAsync(new Empty());
+        #region data
+        public async Task<Grpc_WpBasicData?> CreateBasicDataAsync(
+            string filePath,
+            FileType ftype,
+            CancellationToken token) {
+            Grpc_WpBasicData grpc_data = await _client.CreateMetadataBasicAsync(
+                new Grpc_CreateMetadataBasicRequest() {
+                    FilePath = filePath,
+                    FType = (Grpc_FileType)ftype
+                },
+                cancellationToken: token);
+
+            return grpc_data;
         }
-
-        public async Task<WpMetaData?> CreateWallpaperAsync(string folderPath, string filePath, Common.WallpaperType type, CancellationToken token)
-        {
-            try
-            {
-                return await _client.CreateWallpaperAsync(
-                    new CreateWallpaperRequest() { FolderPath = folderPath, FilePath = filePath, Type = (Service.WallpaperControl.WallpaperType)type },
-                    null,
-                    null,
-                    token);
-            }
-            catch (RpcException ex)
-            {
-                if (ex.StatusCode == StatusCode.Cancelled)
-                    throw new OperationCanceledException();
-            }
-
-            return null;
+        public IWpMetadata GetWpMetadataByMonitorThu(string thumbnailPath) {
+            return _wallpapers.Find(x => x.BasicData.ThumbnailPath == thumbnailPath)!;
         }
+        #endregion
 
-        public async Task ResetWpCustomizeAsync(string wpCustomizePathTmp, Service.WallpaperControl.WallpaperType type)
-        {
-            await _client.ResetWpCustomizeAsync(new()
-            {
-                WpCustomizePath = wpCustomizePathTmp,
-                Type = type
-            });
-        }
-
-        public async Task ChangeWallpaperLayoutFolrderPathAsync(string previousDir, string newDir)
-        {
-            var request = new ChangePathRequest()
-            {
+        #region utils
+        public async Task ChangeWallpaperLayoutFolrderPathAsync(string previousDir, string newDir) {
+            Grpc_ChangePathRequest request = new() {
                 PreviousDir = previousDir,
                 NewDir = newDir,
             };
+
             await _client.ChangeWallpaperLayoutFolrderPathAsync(request);
         }
 
-        //public async Task SendMessageWallpaperAsync(IMetaData metaData, IpcMessage msg)
-        //{
-        //    await _client.SendMessageWallpaperAsync(new WallpaperMessageRequest()
-        //    {
-        //        MonitorId = string.Empty,
-        //        FolderPath = metaData.FolderPath,
-        //        Msg = JsonUtil.Serialize(msg),
-        //    });
-        //}
+        public async Task<Grpc_MonitorData?> GetRunMonitorByWallpaperAsync(string wpUid) {
+            Grpc_GetMonitorRequest request = new() {
+                WpUid = wpUid,
+            };
+            Grpc_MonitorData? monitor_data = await _client.GetRunMonitorByWallpaperAsync(request);
 
-        public async Task SendMessageWallpaperAsync(IMonitor monitor, IMetaData metaData, IpcMessage msg)
-        {
-            await _client.SendMessageWallpaperAsync(new WallpaperMessageRequest()
-            {
+            return monitor_data;
+        }
+
+        public async Task SendMessageWallpaperAsync(IMonitor monitor, IWpRuntimeData metaData, IpcMessage msg) {
+            await _client.SendMessageWallpaperAsync(new Grpc_WallpaperMessageRequest() {
                 MonitorId = monitor.DeviceId,
                 FolderPath = metaData.FolderPath,
-                Msg = JsonUtil.Serialize(msg),
+                Msg = JsonSerializer.Serialize(msg, IpcMessageContext.Default.IpcMessage),
             });
         }
 
-        public async Task TakeScreenshotAsync(string monitorId, string savePath)
-        {
-            await _client.TakeScreenshotAsync(new WallpaperScreenshotRequest()
-            {
+        public async Task TakeScreenshotAsync(string monitorId, string savePath) {
+            await _client.TakeScreenshotAsync(new Grpc_WallpaperScreenshotRequest() {
                 MonitorId = monitorId,
                 SavePath = savePath,
             });
         }
 
-        private async Task<List<WallpaperBasicData>> GetWallpapers()
-        {
-            var resp = new List<GetWallpapersResponse>();
-            using var call = _client.GetWallpapers(new Empty());
-            while (await call.ResponseStream.MoveNext())
-            {
-                var response = call.ResponseStream.Current;
-                resp.Add(response);
-            }
-
-            var wallpapers = new List<WallpaperBasicData>();
-            foreach (var item in resp)
-            {
-                wallpapers.Add(new WallpaperBasicData()
-                {
-                    VirtualPaperUid = item.VirtualPaperUid,
-                    FolderPath = item.FolderPath,
-                    ThumbnailPath = item.ThumbnailPath,
-                    WpCustomizePathUsing = item.WpCustomizePathUsing,
-                    Tyep = (Common.WallpaperType)(int)item.Type,
-                    Monitor = new Monitor()
-                    {
-                        DeviceId = item.Monitor.DeviceId,
-                        MonitorName = item.Monitor.DisplayName,
-                        DeviceName = item.Monitor.DeviceName,
-                        HMonitor = new IntPtr(item.Monitor.HMonitor),
-                        IsPrimary = item.Monitor.IsPrimary,
-                        Content = item.Monitor.Content,
-                        Bounds = new System.Drawing.Rectangle(
-                        item.Monitor.Bounds.X,
-                        item.Monitor.Bounds.Y,
-                        item.Monitor.Bounds.Width,
-                        item.Monitor.Bounds.Height),
-                        WorkingArea = new System.Drawing.Rectangle(
-                        item.Monitor.WorkingArea.X,
-                        item.Monitor.WorkingArea.Y,
-                        item.Monitor.WorkingArea.Width,
-                        item.Monitor.WorkingArea.Height),
-
-                    },
+        public async Task<Grpc_WpBasicData?> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype) {
+            Grpc_WpBasicData? grpc_basicData = await _client.UpdateBasicDataAsync(
+                new Grpc_UpdateBasicDataRequest() {
+                    FolderPath = folderPath,
+                    FilePath = filePath,
+                    FolderName = folderName,
+                    FType = (Grpc_FileType)ftype,
                 });
-            }
+            if (grpc_basicData == null) return null;
 
-            return wallpapers;
+            return grpc_basicData;
         }
+        #endregion
 
-        private async Task SubscribeWallpaperChangedStream(CancellationToken token)
-        {
-            try
-            {
-                using var call = _client.SubscribeWallpaperChanged(new Empty());
-                while (await call.ResponseStream.MoveNext(token))
-                {
+        #region private utils
+        private async Task SubscribeWallpaperChangedStream(CancellationToken token) {
+            try {
+                using var call = _client.SubscribeWallpaperChanged(new Empty(), cancellationToken: token);
+                while (await call.ResponseStream.MoveNext(token)) {
                     await _wallpaperChangedLock.WaitAsync(token);
-                    try
-                    {
-                        var response = call.ResponseStream.Current;
+                    try {
+                        _ = call.ResponseStream.Current;
 
                         _wallpapers.Clear();
-                        _wallpapers.AddRange(await GetWallpapers());
                         WallpaperChanged?.Invoke(this, EventArgs.Empty);
                     }
-                    finally
-                    {
+                    finally {
                         _wallpaperChangedLock.Release();
                     }
                 }
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 _logger.Error(e);
             }
         }
 
-        private async Task SubscribeWallpaperErrorStream(CancellationToken token)
-        {
-            try
-            {
-                using var call = _client.SubscribeWallpaperError(new Empty());
-                while (await call.ResponseStream.MoveNext(token))
-                {
+        private async Task SubscribeWallpaperErrorStream(CancellationToken token) {
+            try {
+                using var call = _client.SubscribeWallpaperError(new Empty(), cancellationToken: token);
+                while (await call.ResponseStream.MoveNext(token)) {
                     var response = call.ResponseStream.Current;
 
-                    var exp = response.Error switch
-                    {
-                        ErrorType.Workerw => new WorkerWException(response.ErrorMsg),
-                        ErrorType.WallpaperNotFound => new WallpaperNotFoundException(response.ErrorMsg),
-                        ErrorType.WallpaperNotAllowed => new WallpaperNotAllowedException(response.ErrorMsg),
-                        ErrorType.WallpaperPluginNotFound => new WallpaperPluginNotFoundException(response.ErrorMsg),
-                        ErrorType.WallpaperPluginFail => new WallpaperPluginException(response.ErrorMsg),
-                        ErrorType.WallpaperPluginMediaCodecMissing => new WallpaperPluginMediaCodecException(response.ErrorMsg),
-                        ErrorType.ScreenNotFound => new ScreenNotFoundException(response.ErrorMsg),
+                    var exp = response.Error switch {
+                        Grpc_ErrorType.Workerw => new WorkerWException(response.ErrorMsg),
+                        Grpc_ErrorType.WallpaperNotFound => new WallpaperNotFoundException(response.ErrorMsg),
+                        Grpc_ErrorType.WallpaperNotAllowed => new WallpaperNotAllowedException(response.ErrorMsg),
+                        Grpc_ErrorType.WallpaperPluginNotFound => new WallpaperPluginNotFoundException(response.ErrorMsg),
+                        Grpc_ErrorType.WallpaperPluginFail => new WallpaperPluginException(response.ErrorMsg),
+                        Grpc_ErrorType.WallpaperPluginMediaCodecMissing => new WallpaperPluginMediaCodecException(response.ErrorMsg),
+                        Grpc_ErrorType.ScreenNotFound => new ScreenNotFoundException(response.ErrorMsg),
                         _ => new Exception("Unhandled Error"),
                     };
                     WallpaperError?.Invoke(this, exp);
                 }
             }
-            catch (Exception e)
-            {
-                _logger.Error(e);
-            }        
+            catch (Exception ex) {
+                _logger.Error(ex);
+            }
         }
+
+        private async Task<Grpc_GetCoreStatsResponse> GetCoreStats() {
+            Grpc_GetCoreStatsResponse response = await _client.GetCoreStatsAsync(new Empty());
+
+            return response;
+        }
+        #endregion
 
         #region dispose
         private bool _disposed;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    _cancellationTokenWallpaperChanged?.Cancel();
-                    _cancellationTokenWallpaperError?.Cancel();
+        protected virtual void Dispose(bool disposing) {
+            if (!_disposed) {
+                if (disposing) {
+                    _ctsWallpaperChanged?.Cancel();
+                    _ctsWallpaperError?.Cancel();
                     Task.WaitAll(_wallpaperChangedTask, _wallpaperErrorTask);
                 }
                 _disposed = true;
             }
         }
 
-        public void Dispose()
-        {
+        public void Dispose() {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
         #endregion
 
-        private readonly List<WallpaperBasicData> _wallpapers = [];
-        private readonly WallpaperControlService.WallpaperControlServiceClient _client;
+        private readonly List<IWpMetadata> _wallpapers = [];
+        private readonly Grpc_WallpaperControlService.Grpc_WallpaperControlServiceClient _client;
         private readonly SemaphoreSlim _wallpaperChangedLock = new(1, 1);
-        private readonly CancellationTokenSource _cancellationTokenWallpaperChanged, _cancellationTokenWallpaperError;
+        private readonly CancellationTokenSource _ctsWallpaperChanged, _ctsWallpaperError;
         private readonly Task _wallpaperChangedTask, _wallpaperErrorTask;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }

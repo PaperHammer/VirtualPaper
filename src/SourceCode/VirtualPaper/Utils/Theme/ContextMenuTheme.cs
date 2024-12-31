@@ -1,23 +1,18 @@
 ﻿using System.Drawing.Drawing2D;
 
-namespace VirtualPaper.Utils.Theme
-{
+namespace VirtualPaper.Utils.Theme {
     //System-tray menu custom style, ref:
     //https://docs.microsoft.com/en-us/dotnet/api/system.windows.forms.toolstripprofessionalrenderer?view=netcore-3.1
     //https://docs.microsoft.com/en-us/dotnet/api/system.windows.forms.professionalcolortable?view=netcore-3.1
-    class ContextMenuTheme
-    {
-        public class StripSeparatorCustom
-        {
+    class ContextMenuTheme {
+        public class StripSeparatorCustom {
             public ToolStripSeparator stripSeparator;
-            public StripSeparatorCustom()
-            {
+            public StripSeparatorCustom() {
                 stripSeparator = new ToolStripSeparator();
                 stripSeparator.Paint += StripSeparator_Paint;
             }
 
-            private void StripSeparator_Paint(object? sender, PaintEventArgs e)
-            {
+            private void StripSeparator_Paint(object? sender, PaintEventArgs e) {
                 ToolStripSeparator stripSeparator = sender as ToolStripSeparator;
                 ContextMenuStrip menuStrip = stripSeparator.Owner as ContextMenuStrip;
                 e.Graphics.FillRectangle(new SolidBrush(Color.Transparent), new Rectangle(0, 0, stripSeparator.Width, stripSeparator.Height));
@@ -26,15 +21,12 @@ namespace VirtualPaper.Utils.Theme
             }
         }
 
-        public class RendererDark : ToolStripProfessionalRenderer
-        {
+        public class RendererDark : ToolStripProfessionalRenderer {
             public RendererDark()
-                : base(new DarkColorTable())
-            {
+                : base(new DarkColorTable()) {
             }
 
-            protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
-            {
+            protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e) {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 var r = new Rectangle(e.ArrowRectangle.Location, e.ArrowRectangle.Size);
                 r.Inflate(-2, -6);
@@ -44,8 +36,7 @@ namespace VirtualPaper.Utils.Theme
                     new Point(r.Left, r.Top+ r.Height)});
             }
 
-            protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
-            {
+            protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e) {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 var r = new Rectangle(e.ImageRectangle.Location, e.ImageRectangle.Size);
                 r.Inflate(-4, -6);
@@ -55,11 +46,9 @@ namespace VirtualPaper.Utils.Theme
                     new Point(r.Right, r.Top)});
             }
 
-            protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
-            {
+            protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e) {
                 if (!e.Item.Selected) base.OnRenderMenuItemBackground(e);
-                else
-                {
+                else {
                     var fillColor = new System.Drawing.SolidBrush(Color.FromArgb(53, 53, 53));
                     var borderColor = new System.Drawing.Pen(Color.FromArgb(53, 53, 53));
                     Rectangle rc = new Rectangle(Point.Empty, new Size() { Width = 200, Height = 35 });
@@ -71,16 +60,14 @@ namespace VirtualPaper.Utils.Theme
             }
         }
 
-        private class DarkColorTable : ProfessionalColorTable
-        {
+        private class DarkColorTable : ProfessionalColorTable {
             Color foregroundGray = Color.FromArgb(44, 44, 44);
             Color backgroundGray = Color.FromArgb(53, 53, 53);
 
             /// <summary>
             /// 设置ToolStrip控件边框的颜色,定义控件边缘的线条颜色
             /// </summary>
-            public override Color ToolStripBorder
-            {
+            public override Color ToolStripBorder {
                 get { return foregroundGray; }
             }
 
@@ -88,23 +75,19 @@ namespace VirtualPaper.Utils.Theme
             /// <summary>
             /// 共同定义了下拉菜单或工具条的背景颜色及其渐变效果,整个背景呈现单一深灰色
             /// </summary>
-            public override Color ToolStripDropDownBackground
-            {
+            public override Color ToolStripDropDownBackground {
                 get { return foregroundGray; }
             }
 
-            public override Color ToolStripGradientBegin
-            {
+            public override Color ToolStripGradientBegin {
                 get { return foregroundGray; }
             }
 
-            public override Color ToolStripGradientEnd
-            {
+            public override Color ToolStripGradientEnd {
                 get { return foregroundGray; }
             }
 
-            public override Color ToolStripGradientMiddle
-            {
+            public override Color ToolStripGradientMiddle {
                 get { return foregroundGray; }
             }
             #endregion
@@ -113,18 +96,15 @@ namespace VirtualPaper.Utils.Theme
             /// <summary>
             /// 控制图像边距区域,显示图标旁边的小空间
             /// </summary>
-            public override Color ImageMarginGradientBegin
-            {
+            public override Color ImageMarginGradientBegin {
                 get { return backgroundGray; }
             }
 
-            public override Color ImageMarginGradientEnd
-            {
+            public override Color ImageMarginGradientEnd {
                 get { return backgroundGray; }
             }
 
-            public override Color ImageMarginGradientMiddle
-            {
+            public override Color ImageMarginGradientMiddle {
                 get { return backgroundGray; }
             }
             #endregion
@@ -133,18 +113,15 @@ namespace VirtualPaper.Utils.Theme
             /// <summary>
             /// 当鼠标悬停或点击揭示更多选项时，图像边距区域的颜色渐变
             /// </summary>
-            public override Color ImageMarginRevealedGradientBegin
-            {
+            public override Color ImageMarginRevealedGradientBegin {
                 get { return foregroundGray; }
             }
 
-            public override Color ImageMarginRevealedGradientEnd
-            {
+            public override Color ImageMarginRevealedGradientEnd {
                 get { return foregroundGray; }
             }
 
-            public override Color ImageMarginRevealedGradientMiddle
-            {
+            public override Color ImageMarginRevealedGradientMiddle {
                 get { return foregroundGray; }
             }
             #endregion
@@ -153,18 +130,15 @@ namespace VirtualPaper.Utils.Theme
             /// <summary>
             ///  被选中菜单项的颜色及其渐变
             /// </summary>
-            public override Color MenuItemSelected
-            {
+            public override Color MenuItemSelected {
                 get { return foregroundGray; }
             }
 
-            public override Color MenuItemSelectedGradientBegin
-            {
+            public override Color MenuItemSelectedGradientBegin {
                 get { return foregroundGray; }
             }
 
-            public override Color MenuItemSelectedGradientEnd
-            {
+            public override Color MenuItemSelectedGradientEnd {
                 get { return foregroundGray; }
             }
             #endregion
@@ -172,24 +146,21 @@ namespace VirtualPaper.Utils.Theme
             /// <summary>
             /// 菜单项的边框颜色
             /// </summary>
-            public override Color MenuItemBorder
-            {
+            public override Color MenuItemBorder {
                 get { return foregroundGray; }
             }
 
             /// <summary>
             /// 上下文菜单的边框颜色
             /// </summary>
-            public override Color MenuBorder
-            {
+            public override Color MenuBorder {
                 get { return backgroundGray; }
             }
 
             /// <summary>
             /// 按钮的渐变起始颜色
             /// </summary>
-            public override Color ButtonCheckedGradientBegin
-            {
+            public override Color ButtonCheckedGradientBegin {
                 get { return foregroundGray; }
             }
         }

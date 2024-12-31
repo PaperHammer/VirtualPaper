@@ -21,8 +21,8 @@ An open-source, free, lightweight wallpaper management software that runs on Win
 
 Wallpaper software based on the [Lively](https://github.com/rocksdanister/lively)
 
+<img src="/resources/control_panel_light.png" width="600" height="338"/>
 <img src="/resources/control_panel_dark.png" width="600" height="338"/>
-<img src="/resources/control_panel_light_en.png" width="600" height="338"/>
 
 ## Features
 
@@ -33,6 +33,12 @@ The following files are supported:
 | Motion Picture | .gif .apng                      |
 | Still image    | .jpg .jpeg .bmp .png .svg .webp |
 | Video          | .mp4 .webm                      |
+
+---
+
+The 3D parallax effect that follows the mouse.
+
+<img src="/resources/parallax.png" width="400" height="260"/>
 
 ---
 

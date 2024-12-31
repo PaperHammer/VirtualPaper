@@ -591,10 +591,10 @@ Author: PaperHammer</value>
     <value>The parallax effect that can be achieved is relatively realistic but has high performance consumption</value>
   </data>
   <data name="Text_Off" xml:space="preserve">
-    <value>On</value>
+    <value>Off</value>
   </data>
   <data name="Text_On" xml:space="preserve">
-    <value>Off</value>
+    <value>On</value>
   </data>
   <data name="Dialog_Content_WallpaperDirectoryChangePathInvalid" xml:space="preserve">
     <value>Can not set the storage directory to the root of your application data</value>

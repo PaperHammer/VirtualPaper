@@ -2,7 +2,8 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Virtual_Paper"
-#define MyAppVersion "0.2.1.0"
+#define MyAppVersion "0.3.0.0"
+#define MyAppVersionText "0300"
 #define MyAppPublisher "PaperHammer"
 #define MyAppURL "https://github.com/PaperHammer/VirtualPaper"
 #define MyAppExeName "VirtualPaper.exe"
@@ -26,7 +27,7 @@ AppCopyright=Virtual@PaperHammer
 DefaultDirName={autopf}\{#MyAppName}
 ChangesAssociations=yes
 DisableProgramGroupPage=yes
-OutputBaseFilename=virtualpaper_installer
+OutputBaseFilename=virtualpaper_setup_x64_full_v{#MyAppVersionText}
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 Compression=lzma
@@ -49,7 +50,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "D:\Virtuals\VirtualPaper\src\SourceCode\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Virtuals\VirtualPaper\src\SourceCode\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "D:\Virtuals\VirtualPaper\src\SourceCode\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml,*.vshost.*,*.config"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
@@ -74,13 +75,13 @@ begin
   if CurUninstallStep = usPostUninstall then
   begin
     // query user to confirm deletion; if user chose "Yes", then...
-    if SuppressibleMsgBox(ExpandConstant('{cm:DeleteEverythigMsgBox}')+ ' ' + ExpandConstant('{localappdata}\Virtual_Paper') + ' ?',
+    if SuppressibleMsgBox(ExpandConstant('{cm:DeleteEverythigMsgBox}')+ ' ' + ExpandConstant('{localappdata}\{#MyAppName}') + ' ?',
       mbConfirmation, MB_YESNO, IDNO) = IDYES
     then
       // deletion confirmed by user.
       begin
         // Delete the directory "C:\Users\<UserName>\AppData\Local\Virtual_Paper" and everything inside it
-        DelTree(ExpandConstant('{localappdata}\Virtual_Paper'), True, True, True);
+        DelTree(ExpandConstant('{localappdata}\{#MyAppName}'), True, True, True);
       end;
   end;
 end;

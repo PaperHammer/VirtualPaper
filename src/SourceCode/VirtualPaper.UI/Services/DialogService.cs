@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.UI.Services.Interfaces;
+using WinUIEx.Messaging;
 using static VirtualPaper.UI.Services.Interfaces.IDialogService;
 
 namespace VirtualPaper.UI.Services {
@@ -13,8 +14,8 @@ namespace VirtualPaper.UI.Services {
             string title,
             string primaryBtnText) {
             var dialog = new ContentDialog() {
-                Title = title,
-                Content = new TextBlock() { Text = message },
+                Title = new TextBlock() { Text = title, TextWrapping = TextWrapping.Wrap },
+                Content = new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap },
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = ContentDialogButton.Primary,
                 XamlRoot = App.Services.GetRequiredService<MainWindow>().Content.XamlRoot,
@@ -23,14 +24,15 @@ namespace VirtualPaper.UI.Services {
             await dialog.ShowAsync();
         }
 
-        public async Task<DialogResult> ShowDialogAsync(object content,
+        public async Task<DialogResult> ShowDialogAsync(
+            object content,
             string title,
             string primaryBtnText,
             string secondaryBtnText,
             bool isDefaultPrimary = true) {
             var dialog = new ContentDialog() {
-                Title = title,
-                Content = content,
+                Title = new TextBlock() { Text = title, TextWrapping = TextWrapping.Wrap },
+                Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
                 SecondaryButtonText = secondaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
@@ -47,13 +49,14 @@ namespace VirtualPaper.UI.Services {
             };
         }
 
-        public async Task<DialogResult> ShowDialogAsync(object content,
+        public async Task<DialogResult> ShowDialogAsync(
+            object content,
             string title,
             string primaryBtnText,
             bool isDefaultPrimary = true) {
             var dialog = new ContentDialog() {
-                Title = title,
-                Content = content,
+                Title = new TextBlock() { Text = title, TextWrapping = TextWrapping.Wrap },
+                Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = App.Services.GetRequiredService<MainWindow>().Content.XamlRoot,
@@ -74,7 +77,7 @@ namespace VirtualPaper.UI.Services {
             string primaryBtnText,
             bool isDefaultPrimary = true) {
             var dialog = new ContentDialog() {
-                Content = content,
+                Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = App.Services.GetRequiredService<MainWindow>().Content.XamlRoot,

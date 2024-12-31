@@ -8,17 +8,6 @@
     
     <Application.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <controls:XamlControlsResources>
-                    <controls:XamlControlsResources.MergedDictionaries>
-                        <ResourceDictionary>
-                            <x:Double x:Key="ContentDialogMaxWidth">1000</x:Double>
-                        </ResourceDictionary>
-                    </controls:XamlControlsResources.MergedDictionaries>
-                </controls:XamlControlsResources>
-                <!--Other merged dictionaries here-->
-            </ResourceDictionary.MergedDictionaries>
-
             <!--  Other app resources here  -->
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Default">

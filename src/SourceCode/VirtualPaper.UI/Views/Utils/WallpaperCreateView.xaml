@@ -34,14 +34,16 @@
                                 Width="40"/>
                         </Border>
 
-                        <StackPanel Grid.Column="1" Margin="10">
+                        <StackPanel 
+                            Grid.Column="1" 
+                            Margin="10">
                             <TextBlock
-                                MaxLines="1"
-                                Text="{Binding Title}" />
+                                Text="{Binding Title}"
+                                TextWrapping="Wrap"/>
                             <TextBlock
                                 Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
-                                MaxLines="1"
-                                Text="{Binding Description}" />
+                                Text="{Binding Description}" 
+                                TextWrapping="Wrap"/>
                         </StackPanel>
                     </Grid>
                 </DataTemplate>

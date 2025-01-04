@@ -14,8 +14,7 @@
     Closed="WindowEx_Closed"    
     SizeChanged="WindowEx_SizeChanged"    
     Width="1400"
-    Height="850"
-    Title="{x:Bind _filePath}">
+    Height="850">
 
     <Grid>
         <Grid.RowDefinitions>

@@ -13,9 +13,7 @@
     MinWidth="1400"    
     MinHeight="850"    
     Closed="WindowEx_Closed"
-    Activated="WindowEx_Activated"
-    TaskBarIcon="virtualpaper.ico"      
-    Title="Virtual Paper">
+    Activated="WindowEx_Activated">
 
     <Grid>
         <Grid.RowDefinitions>

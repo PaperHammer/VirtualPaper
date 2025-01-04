@@ -12,7 +12,6 @@
 		<UseWinUI>true</UseWinUI>
 		<EnableMsixTooling>true</EnableMsixTooling>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<ApplicationIcon>virtualpaper.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<!--NETSDK1152-->
@@ -192,9 +191,6 @@
 		<Page Update="Views\Utils\WallpaperCreateView.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
-		<None Update="virtualpaper.ico">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
 		<Page Update="Views\AppSettingsConponents\OthersSetting.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>

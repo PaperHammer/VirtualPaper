@@ -6,345 +6,341 @@
     xmlns:local="using:VirtualPaper.UI.Views.AppSettingsConponents"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d"
-    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+    mc:Ignorable="d">
 
-    <Grid
-        Margin="15 0 15 15">
-        <ScrollView>
+    <ScrollView>
+        <StackPanel
+            Margin="15 0 15 15"
+            Orientation="Vertical">
             <StackPanel
+                x:Name="Play"
                 Orientation="Vertical">
-                <StackPanel
-                    x:Name="Play"
-                    Margin="0 20 0 0"
-                    Orientation="Vertical">
 
-                    <TextBlock
-                         x:Name="PlayHeader"
-                         Margin="0 10"
-                         Text="{Binding Text_Play}"   
-                         FontWeight="Bold"/>
-
-                    <Grid
-                        x:Name="OthersFullScreen"
-                        Height="90"
-                        Margin="0 5"
-                        Padding="20 0"
-                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <FontIcon
-                            Grid.Column="0" 
-                            Margin="0 0 20 0"
-                            Glyph="&#xE7B5;"/>
-
-                        <Grid
-                            Grid.Column="1"
-                            VerticalAlignment="Center">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock 
-                                Grid.Row="0" 
-                                Text="{Binding Play_OthersFullScreen}"/>
-                            <TextBlock 
-                                Grid.Row="1" 
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="{Binding Play_OthersFullScreenExplain}"/>
-                        </Grid>
-
-                        <ComboBox 
-                            x:Name="OthersFullScreenPlayStatusCombo"
-                            Grid.Column="2"
-                            VerticalAlignment="Center"
-                            ItemsSource="{Binding PlayStatus}"
-                            SelectedIndex="{Binding SelectedFullScreenPlayStatuIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            Width="200" />
-                    </Grid>
-
-                    <Grid
-                        x:Name="OthersFocus"
-                        Height="90"
-                        Margin="0 5"
-                        Padding="20 0"
-                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <FontIcon
-                            Grid.Column="0" 
-                            Margin="0 0 20 0"
-                            Glyph="&#xED35;"/>
-
-                        <Grid
-                            Grid.Column="1"
-                            VerticalAlignment="Center">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock 
-                                Grid.Row="0" 
-                                Text="{Binding Play_OthersFocus}"/>
-                            <TextBlock 
-                                Grid.Row="1" 
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="{Binding Play_OthersFocusExplain}"/>
-                        </Grid>
-
-                        <ComboBox 
-                            x:Name="OthersFocusPlayStatusCombo"
-                            Grid.Column="2"
-                            VerticalAlignment="Center"
-                            ItemsSource="{Binding PlayStatus}"
-                            SelectedIndex="{Binding SelectedFocusPlayStatuIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            Width="200" />
-                    </Grid>
-
-                    <Grid
-                        x:Name="Audio"
-                        Height="90"
-                        Margin="0 5"
-                        Padding="20 0"
-                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <FontIcon
-                            Grid.Column="0" 
-                            Margin="0 0 20 0"
-                            Glyph="&#xED1F;"/>
-
-                        <Grid
-                            Grid.Column="1"
-                            VerticalAlignment="Center">
-
-                            <TextBlock 
-                                Text="{Binding Play_Audio}"/>
-                        </Grid>
-
-                        <ToggleButton
-                            Grid.Column="2"
-                            Width="100"
-                            Content="{Binding AudioStatu}" 
-                            IsChecked="{Binding IsAudioOnlyOnDesktop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    </Grid>
-                </StackPanel>
-
-                <StackPanel
-                    x:Name="Laptop"
-                    Margin="0 20 0 0"
-                    Orientation="Vertical">
-
-                    <TextBlock
-                        x:Name="LaptopHeader"
+                <TextBlock
+                        x:Name="PlayHeader"
                         Margin="0 10"
-                        Text="{Binding Text_Laptop}"
+                        Text="{Binding Text_Play}"   
                         FontWeight="Bold"/>
 
-                    <Grid
-                        x:Name="BatteryPoweredn"
-                        Height="90"
-                        Margin="0 5"
-                        Padding="20 0"
-                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
+                <Grid
+                    x:Name="OthersFullScreen"
+                    Height="90"
+                    Margin="0 5"
+                    Padding="20 0"
+                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
 
-                        <FontIcon
-                            Grid.Column="0" 
-                            Margin="0 0 20 0"
-                            Glyph="&#xEBA7;"/>
-
-                        <Grid
-                            Grid.Column="1"
-                            VerticalAlignment="Center">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock 
-                                Grid.Row="0" 
-                                Text="{Binding Laptop_BatteryPoweredn}"/>
-                            <TextBlock 
-                                Grid.Row="1" 
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="{Binding Laptop_BatteryPowerednExplain}"/>
-                        </Grid>
-
-                        <ComboBox 
-                            x:Name="BatteryPowerednPlayStatusCombo"
-                            Grid.Column="2"
-                            VerticalAlignment="Center"
-                            ItemsSource="{Binding PlayStatus}"
-                            SelectedIndex="{Binding SelectedBatteryPowerednPlayStatuIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            Width="200" />
-                    </Grid>
+                    <FontIcon
+                        Grid.Column="0" 
+                        Margin="0 0 20 0"
+                        Glyph="&#xE7B5;"/>
 
                     <Grid
-                        x:Name="PowerSaving"
-                        Height="90"
-                        Margin="0 5"
-                        Padding="20 0"
-                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
+                        Grid.Column="1"
+                        VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
 
-                        <FontIcon
-                            Grid.Column="0" 
-                            Margin="0 0 20 0"
-                            Glyph="&#xEBB9;"/>
-
-                        <Grid
-                            Grid.Column="1"
-                            VerticalAlignment="Center">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock 
-                                Grid.Row="0" 
-                                Text="{Binding Laptop_PowerSaving}"/>
-                            <TextBlock 
-                                Grid.Row="1" 
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="{Binding Laptop_PowerSavingExplain}"/>
-                        </Grid>
-
-                        <ComboBox 
-                            x:Name="PowerSavingPlayStatusCombo"
-                            Grid.Column="2"
-                            VerticalAlignment="Center"
-                            ItemsSource="{Binding PlayStatus}"
-                            SelectedIndex="{Binding SelectedPowerSavingPlayStatuIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            Width="200" />
+                        <TextBlock 
+                            Grid.Row="0" 
+                            Text="{Binding Play_OthersFullScreen}"/>
+                        <TextBlock 
+                            Grid.Row="1" 
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="{Binding Play_OthersFullScreenExplain}"/>
                     </Grid>
-                </StackPanel>
 
-                <StackPanel
-                    x:Name="System"
-                    Margin="0 20 0 0"
-                    Orientation="Vertical">
+                    <ComboBox 
+                        x:Name="OthersFullScreenPlayStatusCombo"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        ItemsSource="{Binding PlayStatus}"
+                        SelectedIndex="{Binding SelectedFullScreenPlayStatuIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Width="200" />
+                </Grid>
 
-                    <TextBlock
-                        x:Name="SystemHeader"
-                        Margin="0 10"
-                        Text="{Binding Text_System}"
-                        FontWeight="Bold"/>
+                <Grid
+                    x:Name="OthersFocus"
+                    Height="90"
+                    Margin="0 5"
+                    Padding="20 0"
+                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <FontIcon
+                        Grid.Column="0" 
+                        Margin="0 0 20 0"
+                        Glyph="&#xED35;"/>
 
                     <Grid
-                        x:Name="RemoteDesktop"
-                        Height="90"
-                        Margin="0 5"
-                        Padding="20 0"
-                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
+                        Grid.Column="1"
+                        VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
 
-                        <FontIcon
-                            Grid.Column="0" 
-                            Margin="0 0 20 0"
-                            Glyph="&#xE703;"/>
-
-                        <Grid
-                            Grid.Column="1"
-                            VerticalAlignment="Center">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock 
-                                Grid.Row="0" 
-                                Text="{Binding System_RemoteDesktop}"/>
-                            <TextBlock 
-                                Grid.Row="1" 
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="{Binding System_RemoteDesktopExplain}"/>
-                        </Grid>
-
-                        <ComboBox 
-                            x:Name="RemoteDesktopPlayStatusCombo"
-                            Grid.Column="2"
-                            VerticalAlignment="Center"
-                            ItemsSource="{Binding PlayStatus}"
-                            SelectedIndex="{Binding SelectedRemoteDesktopPlayStatuIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            Width="200" />
+                        <TextBlock 
+                            Grid.Row="0" 
+                            Text="{Binding Play_OthersFocus}"/>
+                        <TextBlock 
+                            Grid.Row="1" 
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="{Binding Play_OthersFocusExplain}"/>
                     </Grid>
+
+                    <ComboBox 
+                        x:Name="OthersFocusPlayStatusCombo"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        ItemsSource="{Binding PlayStatus}"
+                        SelectedIndex="{Binding SelectedFocusPlayStatuIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Width="200" />
+                </Grid>
+
+                <Grid
+                    x:Name="Audio"
+                    Height="90"
+                    Margin="0 5"
+                    Padding="20 0"
+                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <FontIcon
+                        Grid.Column="0" 
+                        Margin="0 0 20 0"
+                        Glyph="&#xED1F;"/>
 
                     <Grid
-                        x:Name="StatuMechanism"
-                        Height="90"
-                        Margin="0 5"
-                        Padding="20 0"
-                        Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
+                        Grid.Column="1"
+                        VerticalAlignment="Center">
 
-                        <FontIcon
-                            Grid.Column="0" 
-                            Margin="0 0 20 0"
-                            Glyph="&#xE7F4;"/>
-
-                        <Grid
-                            Grid.Column="1"
-                            VerticalAlignment="Center">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock 
-                                Grid.Row="0" 
-                                Text="{Binding System_StatuMechanism}"/>
-                            <TextBlock 
-                                Grid.Row="1" 
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="{Binding System_StatuMechanismExplain_ForPer}"/>
-                            <TextBlock 
-                                Grid.Row="2" 
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="{Binding System_StatuMechanismExplain_ForAll}"/>
-                        </Grid>
-
-                        <ComboBox 
-                            x:Name="StatuMechanismPlayStatusCombo"
-                            Grid.Column="2"
-                            VerticalAlignment="Center"
-                            ItemsSource="{Binding StatuMechanisms}"
-                            SelectedIndex="{Binding SelectedStatuMechanismPlayStatuIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            Width="200"/>
+                        <TextBlock 
+                            Text="{Binding Play_Audio}"/>
                     </Grid>
-                </StackPanel>
+
+                    <ToggleButton
+                        Grid.Column="2"
+                        Width="100"
+                        Content="{Binding AudioStatu}" 
+                        IsChecked="{Binding IsAudioOnlyOnDesktop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </Grid>
             </StackPanel>
-        </ScrollView>
-    </Grid>
+
+            <StackPanel
+                x:Name="Laptop"
+                Margin="0 20 0 0"
+                Orientation="Vertical">
+
+                <TextBlock
+                    x:Name="LaptopHeader"
+                    Margin="0 10"
+                    Text="{Binding Text_Laptop}"
+                    FontWeight="Bold"/>
+
+                <Grid
+                    x:Name="BatteryPoweredn"
+                    Height="90"
+                    Margin="0 5"
+                    Padding="20 0"
+                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <FontIcon
+                        Grid.Column="0" 
+                        Margin="0 0 20 0"
+                        Glyph="&#xEBA7;"/>
+
+                    <Grid
+                        Grid.Column="1"
+                        VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock 
+                            Grid.Row="0" 
+                            Text="{Binding Laptop_BatteryPoweredn}"/>
+                        <TextBlock 
+                            Grid.Row="1" 
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="{Binding Laptop_BatteryPowerednExplain}"/>
+                    </Grid>
+
+                    <ComboBox 
+                        x:Name="BatteryPowerednPlayStatusCombo"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        ItemsSource="{Binding PlayStatus}"
+                        SelectedIndex="{Binding SelectedBatteryPowerednPlayStatuIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Width="200" />
+                </Grid>
+
+                <Grid
+                    x:Name="PowerSaving"
+                    Height="90"
+                    Margin="0 5"
+                    Padding="20 0"
+                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <FontIcon
+                        Grid.Column="0" 
+                        Margin="0 0 20 0"
+                        Glyph="&#xEBB9;"/>
+
+                    <Grid
+                        Grid.Column="1"
+                        VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock 
+                            Grid.Row="0" 
+                            Text="{Binding Laptop_PowerSaving}"/>
+                        <TextBlock 
+                            Grid.Row="1" 
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="{Binding Laptop_PowerSavingExplain}"/>
+                    </Grid>
+
+                    <ComboBox 
+                        x:Name="PowerSavingPlayStatusCombo"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        ItemsSource="{Binding PlayStatus}"
+                        SelectedIndex="{Binding SelectedPowerSavingPlayStatuIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Width="200" />
+                </Grid>
+            </StackPanel>
+
+            <StackPanel
+                x:Name="System"
+                Margin="0 20 0 0"
+                Orientation="Vertical">
+
+                <TextBlock
+                    x:Name="SystemHeader"
+                    Margin="0 10"
+                    Text="{Binding Text_System}"
+                    FontWeight="Bold"/>
+
+                <Grid
+                    x:Name="RemoteDesktop"
+                    Height="90"
+                    Margin="0 5"
+                    Padding="20 0"
+                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <FontIcon
+                        Grid.Column="0" 
+                        Margin="0 0 20 0"
+                        Glyph="&#xE703;"/>
+
+                    <Grid
+                        Grid.Column="1"
+                        VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock 
+                            Grid.Row="0" 
+                            Text="{Binding System_RemoteDesktop}"/>
+                        <TextBlock 
+                            Grid.Row="1" 
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="{Binding System_RemoteDesktopExplain}"/>
+                    </Grid>
+
+                    <ComboBox 
+                        x:Name="RemoteDesktopPlayStatusCombo"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        ItemsSource="{Binding PlayStatus}"
+                        SelectedIndex="{Binding SelectedRemoteDesktopPlayStatuIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Width="200" />
+                </Grid>
+
+                <Grid
+                    x:Name="StatuMechanism"
+                    Height="90"
+                    Margin="0 5"
+                    Padding="20 0"
+                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <FontIcon
+                        Grid.Column="0" 
+                        Margin="0 0 20 0"
+                        Glyph="&#xE7F4;"/>
+
+                    <Grid
+                        Grid.Column="1"
+                        VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock 
+                            Grid.Row="0" 
+                            Text="{Binding System_StatuMechanism}"/>
+                        <TextBlock 
+                            Grid.Row="1" 
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="{Binding System_StatuMechanismExplain_ForPer}"/>
+                        <TextBlock 
+                            Grid.Row="2" 
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="{Binding System_StatuMechanismExplain_ForAll}"/>
+                    </Grid>
+
+                    <ComboBox 
+                        x:Name="StatuMechanismPlayStatusCombo"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        ItemsSource="{Binding StatuMechanisms}"
+                        SelectedIndex="{Binding SelectedStatuMechanismPlayStatuIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Width="200"/>
+                </Grid>
+            </StackPanel>
+        </StackPanel>
+    </ScrollView>
 </Page>

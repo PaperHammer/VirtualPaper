@@ -573,7 +573,7 @@ Author: PaperHammer</value>
     <value>Library contents</value>
   </data>
   <data name="WpSettings_NavTitle_ScrSettings" xml:space="preserve">
-    <value>Runtime Settings</value>
+    <value>Screen saver</value>
   </data>
   <data name="Text_Edit_Desc" xml:space="preserve">
     <value>Description：</value>

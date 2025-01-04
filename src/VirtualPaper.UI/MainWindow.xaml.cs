@@ -261,5 +261,9 @@ namespace VirtualPaper.UI {
         private readonly IWallpaperControlClient _wpControl;
         private readonly MainWindowViewModel _viewModel;
         private static CancellationTokenSource _ctsConsoleIn;
+
+        private void Flyout_BackgreoundTask_Opening(object sender, object e) {
+
+        }
     }
 }

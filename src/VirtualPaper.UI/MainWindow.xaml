@@ -19,6 +19,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Grid 
@@ -100,6 +101,7 @@
             <Grid>
                 <Frame 
                     x:Name="ContentFrame"
+                    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                     IsEnabled="{Binding FrameIsEnable}"/>
 
                 <!--弹窗-->
@@ -124,5 +126,78 @@
                     Visibility="{Binding LoadingIsVisiable}"/>
             </Grid>
         </NavigationView>
+
+        <Grid
+            Grid.Row="2"
+            Height="26"
+            Background="{ThemeResource ControlStrongStrokeColorDisabledBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel
+                Grid.Column="0"
+                Orientation="Horizontal"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Spacing="6"
+                Padding="6 0">
+                <Button
+                    Background="Transparent"
+                    Padding="0"
+                    BorderThickness="0">
+                    <FontIcon 
+                        Glyph="&#xE7C1;" />
+                    <Button.Flyout>
+                        <Flyout
+                            Opening="Flyout_BackgreoundTask_Opening">
+                            <Flyout.FlyoutPresenterStyle>
+                                <Style TargetType="FlyoutPresenter">
+                                    <Setter Property="MaxWidth" Value="300"></Setter>
+                                </Style>
+                            </Flyout.FlyoutPresenterStyle>
+                            <StackPanel
+                                Spacing="8"
+                                VerticalAlignment="Stretch">
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+
+                <TextBlock
+                    FontSize="11"
+                    VerticalAlignment="Center"
+                    Text="暂无任务在后台运行"/>
+            </StackPanel>
+
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Horizontal"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Spacing="6"
+                Padding="6 0">
+                <Button
+                    Background="Transparent"
+                    Padding="0"                
+                    BorderThickness="0"
+                    HorizontalAlignment="Right">
+                    <Grid 
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch">
+                        <FontIcon
+                            Glyph="&#xEDAC;"/>
+                        <InfoBadge 
+                            Background="#C42B1C"
+                            Style="{StaticResource AttentionValueInfoBadgeStyle}"
+                            Width="10"
+                            Height="10"
+                            HorizontalAlignment="Right" 
+                            VerticalAlignment="Bottom"/>
+                    </Grid>
+                </Button>
+            </StackPanel>
+        </Grid>
     </Grid>
 </winex:WindowEx>

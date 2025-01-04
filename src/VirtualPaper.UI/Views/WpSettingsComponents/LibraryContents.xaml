@@ -9,7 +9,6 @@
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
-    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"   
     NavigationCacheMode="Enabled">
 
     <Page.Resources>
@@ -18,6 +17,7 @@
 
     <ItemsView
         x:Name="ItemsViewer"
+        Margin="5 0 5 10"
         VerticalAlignment="Stretch"
         HorizontalAlignment="Stretch"
         VerticalContentAlignment="Top"
@@ -36,30 +36,30 @@
                 <ItemContainer
                     PointerEntered="ItemGrid_PointerEntered"
                     PointerExited="ItemGrid_PointerExited">
-                    <Grid
-                        x:Name="ItemGrid"
-                        Height="200"
-                        Width="320">
+                    <StackPanel
+                        Orientation="Vertical"
+                        Width="320"
+                        MaxWidth="320"
+                        Height="230">
+
                         <Image
                             Source="{Binding ThumbnailPath}"
+                            Height="200"
+                            Width="320"
                             Stretch="Uniform" 
                             HorizontalAlignment="Stretch" 
                             VerticalAlignment="Stretch"
                             ImageFailed="Image_ImageFailed"/>
-                        <StackPanel 
-                            Orientation="Vertical" 
-                            Height="60" 
-                            VerticalAlignment="Bottom" 
-                            Padding="5,1"  
-                            Background="{ThemeResource SystemControlBackgroundBaseMediumBrush}">
-                            <TextBlock 
-                                Text="{Binding Title}" 
-                                FontSize="18"
-                                TextWrapping="Wrap"
-                                HorizontalTextAlignment="Left"
-                                Foreground="{ThemeResource SystemControlForegroundAltHighBrush}"/>
-                        </StackPanel>
-                    </Grid>
+
+                        <TextBlock 
+                            Height="25"
+                            Text="{Binding Title}"
+                            MaxLines="2"
+                            FontSize="16"
+                            TextWrapping="Wrap"
+                            HorizontalTextAlignment="Left"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                    </StackPanel>
                 </ItemContainer>
             </DataTemplate>
         </ItemsView.ItemTemplate>
@@ -67,7 +67,7 @@
             <UniformGridLayout
                 Orientation="Horizontal"
                 MinRowSpacing="15" 
-                MinColumnSpacing="9"/>
+                MinColumnSpacing="15"/>
         </ItemsView.Layout>
         <ItemsView.ContextFlyout>
             <MenuFlyout

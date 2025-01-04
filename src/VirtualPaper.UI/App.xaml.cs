@@ -54,6 +54,8 @@ namespace VirtualPaper.UI {
             Log.Info("Starting...");
 
             this.InitializeComponent();
+            // ref: https://github.com/microsoft/microsoft-ui-xaml/issues/1146 
+            //this.FocusVisualKind = FocusVisualKind.HighVisibility;
 
             SetupUnhandledExceptionLogging();
 

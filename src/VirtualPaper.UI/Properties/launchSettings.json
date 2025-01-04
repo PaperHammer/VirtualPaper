@@ -1,9 +1,9 @@
 {
   "profiles": {
-    "VirtualPaper.PlayerWeb (Package)": {
+    "VirtualPaper.UI (Package)": {
       "commandName": "MsixPackage"
     },
-    "VirtualPaper.PlayerWeb (Unpackaged)": {
+    "VirtualPaper.UI (Unpackaged)": {
       "commandName": "Project"
     }
   }

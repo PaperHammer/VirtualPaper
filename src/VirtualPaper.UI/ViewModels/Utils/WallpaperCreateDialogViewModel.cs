@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using VirtualPaper.Common;
+using VirtualPaper.Models;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.Models.UI;
 
-namespace VirtualPaper.UI.ViewModels.Utils {
+namespace VirtualPaper.UI.ViewModels.Utils
+{
     public partial class WallpaperCreateDialogViewModel : ObservableObject {
         public List<WallpaperCreateData> WallpaperCategoriesFiltered { get; set; }
 

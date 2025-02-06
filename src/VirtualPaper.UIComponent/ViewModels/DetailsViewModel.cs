@@ -5,7 +5,6 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent.Utils;
-using WinUI3Localizer;
 
 namespace VirtualPaper.UIComponent.ViewModels {
     class DetailsViewModel {
@@ -94,7 +93,6 @@ namespace VirtualPaper.UIComponent.ViewModels {
         #endregion
 
         public DetailsViewModel() {
-            _localizer = LanguageUtil.LocalizerInstacne;
             InitText();
         }
 
@@ -109,11 +107,11 @@ namespace VirtualPaper.UIComponent.ViewModels {
         }
 
         private void InitText() {
-            Details_TextResolution = _localizer.GetLocalizedString(Constants.I18n.Text_Resolution);
-            Details_TextAspectRadio = _localizer.GetLocalizedString(Constants.I18n.Text_AspectRatio);
-            Details_TextFileExtension = _localizer.GetLocalizedString(Constants.I18n.Text_FileExtension);
-            Details_TextFileSize = _localizer.GetLocalizedString(Constants.I18n.Text_FileSize);
-            Details_TextVersionInfo = _localizer.GetLocalizedString(Constants.I18n.Text_VersionInfo);
+            Details_TextResolution = LanguageUtil.GetI18n(Constants.I18n.Text_Resolution);
+            Details_TextAspectRadio = LanguageUtil.GetI18n(Constants.I18n.Text_AspectRatio);
+            Details_TextFileExtension = LanguageUtil.GetI18n(Constants.I18n.Text_FileExtension);
+            Details_TextFileSize = LanguageUtil.GetI18n(Constants.I18n.Text_FileSize);
+            Details_TextVersionInfo = LanguageUtil.GetI18n(Constants.I18n.Text_VersionInfo);
         }
 
         private void InitData() {
@@ -131,6 +129,5 @@ namespace VirtualPaper.UIComponent.ViewModels {
         }
 
         private readonly IWpBasicData _wpBasicData;
-        private readonly ILocalizer _localizer;
     }
 }

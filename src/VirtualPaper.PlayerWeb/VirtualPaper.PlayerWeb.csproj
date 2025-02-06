@@ -67,6 +67,9 @@
 		<Content Include="Assets\Square44x44Logo.scale-200.png" />
 		<Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
 		<Content Include="Assets\Wide310x150Logo.scale-200.png" />
+		<Content Include="virtualpaper.ico">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -125,6 +128,7 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<DefaultLanguage>zh-CN</DefaultLanguage>
+		<ApplicationIcon>virtualpaper.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<ItemGroup>

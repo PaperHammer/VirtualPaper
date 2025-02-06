@@ -259,7 +259,7 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
     <value>修改目录</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppFileStorage_OpenTooltip" xml:space="preserve">
-    <value>打开目录</value>
+    <value>浏览目录</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppLanguage" xml:space="preserve">
     <value>语言设置</value>
@@ -607,5 +607,71 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Text_FileUsing" xml:space="preserve">
     <value>文件使用中，请关闭使用源</value>
+  </data>
+  <data name="Project_RecentUsed" xml:space="preserve">
+    <value>打开最近使用的项目(R)</value>
+  </data>
+  <data name="Project_SearchRecentUsed" xml:space="preserve">
+    <value>搜索最近使用的项目(S)</value>
+  </data>
+  <data name="Project_StartUp" xml:space="preserve">
+    <value>开始使用</value>
+  </data>
+  <data name="Project_StartUp_OpenFile" xml:space="preserve">
+    <value>打开文件(F)</value>
+  </data>
+  <data name="Project_StartUp_OpenFile_Desc" xml:space="preserve">
+    <value>打开受支持的文件</value>
+  </data>
+  <data name="Project_StartUp_OpenFolder" xml:space="preserve">
+    <value>打开文件夹(D)</value>
+  </data>
+  <data name="Project_StartUp_OpenFolder_Desc" xml:space="preserve">
+    <value>浏览或编辑文件夹中受支持的文件</value>
+  </data>
+  <data name="Project_StartUp_OpenVsd" xml:space="preserve">
+    <value>打开设计稿(V)</value>
+  </data>
+  <data name="Project_StartUp_OpenVsd_Desc" xml:space="preserve">
+    <value>打开本地 .vpd 文件</value>
+  </data>
+  <data name="Project_StartUp_NewVpd" xml:space="preserve">
+    <value>新建设计稿(N)</value>
+  </data>
+  <data name="Project_StartUp_NewVpd_Desc" xml:space="preserve">
+    <value>选择项目模板以开始</value>
+  </data>
+  <data name="Project_ContinueWithoutFile" xml:space="preserve">
+    <value>继续但无需文件</value>
+  </data>
+  <data name="Project_DeployNewDraft" xml:space="preserve">
+    <value>配置新的设计稿</value>
+  </data>
+  <data name="Project_DeployNewDraft_Create" xml:space="preserve">
+    <value>创建(C)</value>
+  </data>
+  <data name="Project_DeployNewDraft_PreviousStep" xml:space="preserve">
+    <value>上一步(B)</value>
+  </data>
+  <data name="Project_NewDraftName" xml:space="preserve">
+    <value>设计稿名称(J)</value>
+  </data>
+  <data name="Project_NewDraftName_Placeholder" xml:space="preserve">
+    <value>输入设计稿名称</value>
+  </data>
+  <data name="Project_NewDraftPosition" xml:space="preserve">
+    <value>位置(L)</value>
+  </data>
+  <data name="Project_NewDraftPosition_BrowserFolder_Tooltip" xml:space="preserve">
+    <value>浏览目录</value>
+  </data>
+  <data name="Project_DeployNewDraft_Desc" xml:space="preserve">
+    <value>设计稿将存储于目录:</value>
+  </data>
+  <data name="Project_NewDraftName_InvalidTip" xml:space="preserve">
+    <value>名称为空或无效（最多 30 个字符）</value>
+  </data>
+  <data name="Project_NewDraftPosition_InvalidTip" xml:space="preserve">
+    <value>位置为空或无效（最多 260 个字符）</value>
   </data>
 </root>

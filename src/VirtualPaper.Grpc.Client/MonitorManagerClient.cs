@@ -27,10 +27,10 @@ namespace VirtualPaper.Grpc.Client {
                 PrimaryMonitor = _monitors.FirstOrDefault(x => x.IsPrimary);
             }).Wait();
 
-            _cancellationTokeneMonitorChanged = new CancellationTokenSource();
-            _cancellationTokeneMonitorPropertyChanged = new CancellationTokenSource();
-            _monitorChangedTask = Task.Run(() => SubscribeMonitorChangedStream(_cancellationTokeneMonitorChanged.Token));
-            _monitorPropertyChangedTask = Task.Run(() => SubscribeMonitorPropertyChangedStream(_cancellationTokeneMonitorPropertyChanged.Token));
+            _ctsMonitorChanged = new CancellationTokenSource();
+            _ctsMonitorPropertyChanged = new CancellationTokenSource();
+            _monitorChangedTask = Task.Run(() => SubscribeMonitorChangedStream(_ctsMonitorChanged.Token));
+            _monitorPropertyChangedTask = Task.Run(() => SubscribeMonitorPropertyChangedStream(_ctsMonitorPropertyChanged.Token));
         }
 
         private async Task<IEnumerable<IMonitor>> GetMonitorsAsync() {
@@ -126,8 +126,10 @@ namespace VirtualPaper.Grpc.Client {
         protected virtual void Dispose(bool disposing) {
             if (!_isDisposed) {
                 if (disposing) {
-                    _cancellationTokeneMonitorChanged?.Cancel();
+                    _ctsMonitorChanged?.Cancel();
+                    _ctsMonitorPropertyChanged?.Cancel();
                     _monitorChangedTask?.Wait();
+                    _monitorPropertyChangedTask?.Wait();
                 }
 
                 _isDisposed = true;
@@ -143,8 +145,8 @@ namespace VirtualPaper.Grpc.Client {
         private readonly Grpc_MonitorManagerService.Grpc_MonitorManagerServiceClient _client;
         private readonly List<IMonitor> _monitors = [];
         private readonly SemaphoreSlim _monitorChangedLock = new(1, 1);
-        private readonly CancellationTokenSource _cancellationTokeneMonitorChanged;
-        private readonly CancellationTokenSource _cancellationTokeneMonitorPropertyChanged;
+        private readonly CancellationTokenSource _ctsMonitorChanged;
+        private readonly CancellationTokenSource _ctsMonitorPropertyChanged;
         private readonly Task _monitorChangedTask, _monitorPropertyChangedTask;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }

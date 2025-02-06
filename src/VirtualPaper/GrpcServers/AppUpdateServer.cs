@@ -17,7 +17,7 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override Task<Empty> StartDownload(Empty _, ServerCallContext context) {
-            if (_updater.Status == AppUpdateStatus.available) {
+            if (_updater.Status == AppUpdateStatus.Available) {
                 System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(delegate {
                     App.AppUpdateDialog(_updater.LastCheckUri, _updater.LastCheckChangelog);
                 }));

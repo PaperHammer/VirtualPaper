@@ -19,14 +19,14 @@ namespace VirtualPaper.Common.Models {
 
     public enum AppUpdateStatus {
         [Description("Software is up-to-date.")]
-        uptodate,
+        Uptodate,
         [Description("Update available.")]
-        available,
+        Available,
         [Description("Installed software version higher than whats available online.")]
-        invalid,
+        Invalid,
         [Description("Update not checked yet.")]
-        notchecked,
+        Notchecked,
         [Description("Update check failed.")]
-        error,
+        Error,
     }
 }

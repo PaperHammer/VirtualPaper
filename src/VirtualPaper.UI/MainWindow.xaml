@@ -7,15 +7,19 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:winex="using:WinUIEx"
     xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d"
     Width="1400"
     Height="850"
     MinWidth="1400"    
     MinHeight="850"    
     Closed="WindowEx_Closed"
-    Activated="WindowEx_Activated">
+    Activated="WindowEx_Activated"
+    TaskBarIcon="virtualpaper.ico"
+    Title="Virtual Paper">
 
-    <Grid>
+    <Grid
+        x:Name="MainGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -48,7 +52,7 @@
                 Margin="8,0,0,0"
                 VerticalAlignment="Center"
                 Style="{StaticResource CaptionTextBlockStyle}"
-                Text="Virtual Wallpaper" />
+                Text="Virtual Paper" />
         </Grid>
 
         <NavigationView
@@ -70,8 +74,7 @@
                 </NavigationViewItem>-->
                 <NavigationViewItem 
                     Content="{Binding SidebarWpSettings}" 
-                    x:Name="WpSettings"
-                    IsSelected="True">
+                    x:Name="Nav_WpSettings">
                     <NavigationViewItem.Icon>
                         <FontIcon 
                             Glyph="&#xE91B;"/>
@@ -79,7 +82,8 @@
                 </NavigationViewItem>
                 <NavigationViewItem 
                     Content="{Binding SidebarProject}" 
-                    x:Name="Project" >
+                    x:Name="Nav_Draft"
+                    IsSelected="True" >
                     <NavigationViewItem.Icon>
                         <FontIcon 
                             Glyph="&#xF156;"/>
@@ -94,7 +98,7 @@
                     Icon="Contact" />-->
                 <NavigationViewItem 
                     Content="{Binding SidebarAppSettings}" 
-                    x:Name="AppSettings" 
+                    x:Name="Nav_AppSettings" 
                     Icon="Setting" />
             </NavigationView.FooterMenuItems>
 
@@ -127,10 +131,15 @@
             </Grid>
         </NavigationView>
 
-        <Grid
+        <!--<Grid
             Grid.Row="2"
             Height="26"
             Background="{ThemeResource ControlStrongStrokeColorDisabledBrush}">
+
+            <Grid.Resources>
+                <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            </Grid.Resources>
+            
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition Width="auto"/>
@@ -150,17 +159,71 @@
                     <FontIcon 
                         Glyph="&#xE7C1;" />
                     <Button.Flyout>
-                        <Flyout
-                            Opening="Flyout_BackgreoundTask_Opening">
+                        <Flyout                            
+                            ScrollViewer.VerticalScrollMode="Enabled"
+                            Opening="Flyout_BackgreoundTask_Opening"
+                            Closing="Flyout_Closing">
                             <Flyout.FlyoutPresenterStyle>
                                 <Style TargetType="FlyoutPresenter">
-                                    <Setter Property="MaxWidth" Value="300"></Setter>
+                                    <Setter Property="MinWidth" Value="400"></Setter>
+                                    <Setter Property="MaxWidth" Value="400"></Setter>
+                                    <Setter Property="MaxHeight" Value="200"></Setter>
+                                    <Setter Property="Padding" Value="0"></Setter>
                                 </Style>
                             </Flyout.FlyoutPresenterStyle>
-                            <StackPanel
-                                Spacing="8"
-                                VerticalAlignment="Stretch">
-                            </StackPanel>
+                            <ItemsView
+                                SelectionMode="None"
+                                ItemsSource="{Binding BackgroundTasks}">
+                                <ItemsView.ItemTemplate>
+                                    <DataTemplate>
+                                        <ItemContainer>
+                                            <StackPanel
+                                                Orientation="Vertical"
+                                                Padding="5"
+                                                Spacing="5"
+                                                BorderBrush="{ThemeResource ControlStrokeColorOnAccentSecondaryBrush}"
+                                                BorderThickness="0 0 0 0.5">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition/>
+                                                        <ColumnDefinition Width="auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock
+                                                        Padding="5"
+                                                        Grid.Column="0"
+                                                        Text="{Binding TaskInfo}"/>
+
+                                                    <Button
+                                                        Grid.Column="1"
+                                                        Background="Transparent"
+                                                        BorderThickness="0"
+                                                        Visibility="{Binding Cancelable, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                        Click="CancelBgTaskBtn_Click">
+                                                        <FontIcon 
+                                                            Glyph="&#xEDAE;"
+                                                            FontSize="14"/>
+                                                    </Button>
+                                                </Grid>
+
+                                                <ProgressBar
+                                                    Padding="3 0 0 5"
+                                                    HorizontalAlignment="Left"
+                                                    HorizontalContentAlignment="Left"
+                                                    Width="360" 
+                                                    IsIndeterminate="True" 
+                                                    ShowPaused="False" 
+                                                    ShowError="False" />
+                                            </StackPanel>
+                                        </ItemContainer>
+                                    </DataTemplate>
+                                </ItemsView.ItemTemplate>
+                                <ItemsView.Layout>
+                                    <StackLayout
+                                        Orientation="Vertical"
+                                        Spacing="8"/>
+                                </ItemsView.Layout>
+                            </ItemsView>
                         </Flyout>
                     </Button.Flyout>
                 </Button>
@@ -198,6 +261,6 @@
                     </Grid>
                 </Button>
             </StackPanel>
-        </Grid>
+        </Grid>-->
     </Grid>
 </winex:WindowEx>

@@ -53,7 +53,7 @@ namespace VirtualPaper.Cores.WpControl {
                 if (e.Reason == SessionSwitchReason.SessionUnlock) {
 
                     if (!(DesktopWorkerW == IntPtr.Zero || Native.IsWindow(DesktopWorkerW))) {
-                        App.Log.Info("WorkerW invalid after unlock, resetting..");
+                        App.Log.Info("WorkerW Invalid after unlock, resetting..");
                         ResetWallpaperAsync();
                     }
                     else {
@@ -181,7 +181,7 @@ namespace VirtualPaper.Cores.WpControl {
                 throw;
             }
             catch (Exception ex) {
-                App.Log.Error($"An error occurred while preview wallpaper: {ex.Message}");
+                App.Log.Error($"An Error occurred while preview wallpaper: {ex.Message}");
                 _previews.Remove((data.WallpaperUid, data.RType));
 
                 throw;
@@ -271,7 +271,7 @@ namespace VirtualPaper.Cores.WpControl {
                 App.Log.Info($"Setting wallpaper: {data.FilePath}");
 
                 if (data.RType == RuntimeType.RUnknown) {
-                    throw new Exception("rtype error");
+                    throw new Exception("rtype Error");
                 }
 
                 #region init
@@ -712,7 +712,7 @@ namespace VirtualPaper.Cores.WpControl {
             string filePath,
             FileType ftype) {
             IWpBasicData newData = CreateBasicData(filePath, ftype, folderName: folderName, isAutoSave: false)
-                ?? throw new Exception("Create basic-data error");
+                ?? throw new Exception("Create basic-data Error");
 
             try {
                 IWpBasicData oldData = await JsonStorage<WpBasicData>.LoadDataAsync(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName), WpBasicDataContext.Default);
@@ -871,7 +871,7 @@ namespace VirtualPaper.Cores.WpControl {
                     }
                 }
                 catch (Exception e) {
-                    App.Log.Error($"An error occurred on restoration of {layout.FolderPath} | {e.Message}");
+                    App.Log.Error($"An Error occurred on restoration of {layout.FolderPath} | {e.Message}");
                 }
             }
         }

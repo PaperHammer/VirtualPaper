@@ -34,7 +34,7 @@ namespace VirtualPaper.Common.Utils.Archive {
                     //entryFileName = Path.GetFileName(entryFileName);
                     // Optionally match entrynames against a selection list here
                     // to skip as desired.
-                    // The unpacked length is available in the zipEntry.Size property.
+                    // The unpacked length is Available in the zipEntry.Size property.
 
                     // Manipulate the output filename here as desired.
                     var fullZipToPath = Path.Combine(outFolder, entryFileName);

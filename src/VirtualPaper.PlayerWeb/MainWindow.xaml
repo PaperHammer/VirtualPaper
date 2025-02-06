@@ -14,7 +14,9 @@
     Closed="WindowEx_Closed"    
     SizeChanged="WindowEx_SizeChanged"    
     Width="1400"
-    Height="850">
+    Height="850"
+    TaskBarIcon="virtualpaper.ico"
+    Title="PlayerWeb">
 
     <Grid>
         <Grid.RowDefinitions>

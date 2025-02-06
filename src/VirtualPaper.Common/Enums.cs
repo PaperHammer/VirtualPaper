@@ -92,9 +92,10 @@ namespace VirtualPaper.Common {
     #region type    
     public enum FileType {
         FUnknown,
-        FPicture,
+        FImage,
         FGif,
         FVideo,
+        FDesign,
     }
     
     public enum RuntimeType {
@@ -116,6 +117,52 @@ namespace VirtualPaper.Common {
         Cover,
         None,
         ScaleDown
+    }
+
+    public enum ProjectType {
+        PImage,
+    }
+
+    public enum InfoBarType {
+        Informational,
+        Warning,
+        Error,
+        Success,
+    }
+
+    public enum LogType {
+        Info,
+        Warn,
+        Error,
+        Trace,
+    }
+
+    public enum ObjectLifetime {
+        Singleton,
+        Scoped,
+        Transient,
+    }
+
+    public enum DialogResult {
+        None,
+        Primary,
+        Seconday
+    }
+    #endregion
+
+    #region draft-panel
+    public enum DraftPanelStartupType {
+        OpenVpd,
+        OpenFile,
+        OpenFolder,
+        NewVpd,
+        TypeConfig,
+    }
+    
+    public enum DraftPanelState {
+        Startup,
+        DraftConfig,
+        WorkSpace,
     }
     #endregion
 

@@ -1,38 +1,38 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI.Xaml.Controls;
-using System;
+﻿using System;
 using System.Threading;
+using Microsoft.UI.Xaml.Controls;
+using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.UI.ViewModels;
 
-namespace VirtualPaper.UI.Utils {
-    internal class BasicUIComponentUtil {
-        static BasicUIComponentUtil() {
-            _mainWindowViewModel = App.Services.GetRequiredService<MainWindowViewModel>();
+namespace VirtualPaper.UI.Utils
+{
+    internal class BasicUIComponentUtil : INoifyBridge {
+        public BasicUIComponentUtil(MainWindowViewModel mainWindowViewModel) {
+            _mainWindowViewModel = mainWindowViewModel;
         }
 
-        public static void ShowExp(Exception ex) {
-            ShowMessge(false, ex.Message, InfoBarSeverity.Error);
+        public void ShowExp(Exception ex) {
+            ShowMsg(false, ex.Message, InfoBarType.Error);
         }
 
-        public static void ShowCanceled() {
-            ShowMsg(true, "InfobarMsg_Cancel", InfoBarSeverity.Informational);
+        public void ShowCanceled() {
+            ShowMsg(true, Constants.I18n.InfobarMsg_Cancel, InfoBarType.Informational);
         }
 
-        public static void ShowMsg(bool isNeedLocalizer, string msg, InfoBarSeverity infoBarSeverity) {
-            ShowMessge(isNeedLocalizer, msg, infoBarSeverity);
+        public void ShowMsg(bool isNeedLocalizer, string msg, InfoBarType infoBarType) {
+            InfoBarSeverity severity =
+                infoBarType switch {
+                    InfoBarType.Informational => InfoBarSeverity.Informational,
+                    InfoBarType.Warning => InfoBarSeverity.Warning,
+                    InfoBarType.Error => InfoBarSeverity.Error,
+                    InfoBarType.Success => InfoBarSeverity.Success,
+                    _ => InfoBarSeverity.Informational
+                };
+            _mainWindowViewModel.ShowMessge(isNeedLocalizer, msg, severity);
         }
 
-        private static void ShowMessge(
-            bool isNeedLocalizer,
-            string msg,
-            InfoBarSeverity infoBarSeverity) {
-            _mainWindowViewModel.ShowMessge(
-                isNeedLocalizer,
-                msg,
-                infoBarSeverity);
-        }
-
-        public static void Loading(
+        public void Loading(
             bool cancelEnable,
             bool progressbarEnable,
             CancellationTokenSource[] cts) {
@@ -42,14 +42,14 @@ namespace VirtualPaper.UI.Utils {
                 cts);
         }
 
-        public static void Loaded(CancellationTokenSource[] cts) {
+        public void Loaded(CancellationTokenSource[] cts) {
             _mainWindowViewModel.Loaded(cts);
         }
 
-        public static void UpdateProgressbarValue(int curValue, int toltalValue) {
+        public void UpdateProgressbarValue(int curValue, int toltalValue) {
             _mainWindowViewModel.UpdateProgressbarValue(curValue, toltalValue);
         }
 
-        private readonly static MainWindowViewModel _mainWindowViewModel;
+        private readonly MainWindowViewModel _mainWindowViewModel;
     }
 }

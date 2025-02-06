@@ -39,7 +39,7 @@ namespace VirtualPaper.Common.Utils.Files {
 
         //ref: https://stackoverflow.com/questions/1078003/c-how-would-you-make-a-unique-filename-by-adding-a-number
         public static string NextAvailableFilename(string path) {
-            // Short-cut if already available
+            // Short-cut if already Available
             if (!File.Exists(path))
                 return path;
 

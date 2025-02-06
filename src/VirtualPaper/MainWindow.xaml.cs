@@ -13,6 +13,8 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 using Wpf.Ui.Controls;
 using MenuItem = System.Windows.Controls.MenuItem;
+using VirtualPaper.Common.Utils.PInvoke;
+using System.Windows.Interop;
 
 namespace VirtualPaper {
     /// <summary>
@@ -32,6 +34,11 @@ namespace VirtualPaper {
             _userSettingsService = userSettingsService;
 
             _playbackMonitor.PlaybackModeChanged += Playback_PlaybackStateChanged;
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e) {
+            WindowInteropHelper wndHelper = new(this);
+            Constants.Runtime.MainWindowHwnd = wndHelper.Handle;
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {

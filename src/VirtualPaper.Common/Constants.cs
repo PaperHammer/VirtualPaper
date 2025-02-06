@@ -1,5 +1,8 @@
 ﻿namespace VirtualPaper.Common {
     public static class Constants {
+        public static class Runtime {
+            public static nint MainWindowHwnd { get; set; }
+        }
         public static class CommonPaths {
             /// <summary>
             /// 数据存储根目录
@@ -89,7 +92,7 @@
             public static string Dialog_Title_CreateType { get; } = "Dialog_Title_CreateType";
             public static string Dialog_Title_Prompt { get; } = "Dialog_Title_Prompt";
             public static string Effect_Help_Parallax { get; } = "Effect_Help_Parallax";
-            public static string Effect_Help_Scaling { get; } = "Effect_Help_Scaling";            
+            public static string Effect_Help_Scaling { get; } = "Effect_Help_Scaling";
             public static string InfobarMsg_Cancel { get; } = "InfobarMsg_Cancel";
             public static string InfobarMsg_Err { get; } = "InfobarMsg_Err";
             public static string InfobarMsg_ImportErr { get; } = "InfobarMsg_ImportErr";
@@ -232,6 +235,28 @@
             public static string WpCreateDialog_CommonWp_Title { get; } = "WpCreateDialog_CommonWp_Title";
             public static string WpSettings_NavTitle_LibraryContents { get; } = "WpSettings_NavTitle_LibraryContents";
             public static string WpSettings_NavTitle_ScrSettings { get; } = "WpSettings_NavTitle_ScrSettings";
+            public static string Project_RecentUsed { get; } = "Project_RecentUsed";
+            public static string Project_StartUp { get; } = "Project_StartUp";
+            public static string Project_SearchRecentUsed { get; } = "Project_SearchRecentUsed";
+            public static string Project_StartUp_OpenVsd { get; } = "Project_StartUp_OpenVsd";
+            public static string Project_StartUp_OpenVsd_Desc { get; } = "Project_StartUp_OpenVsd_Desc";
+            public static string Project_StartUp_OpenFile { get; } = "Project_StartUp_OpenFile";
+            public static string Project_StartUp_OpenFile_Desc { get; } = "Project_StartUp_OpenFile_Desc";
+            public static string Project_StartUp_OpenFolder { get; } = "Project_StartUp_OpenFolder";
+            public static string Project_StartUp_OpenFolder_Desc { get; } = "Project_StartUp_OpenFolder_Desc";
+            public static string Project_StartUp_NewVpd { get; } = "Project_StartUp_NewVpd";
+            public static string Project_StartUp_NewVpd_Desc { get; } = "Project_StartUp_NewVpd_Desc";
+            public static string Project_ContinueWithoutFile { get; } = "Project_ContinueWithoutFile";
+            public static string Project_DeployNewDraft { get; } = "Project_DeployNewDraft";
+            public static string Project_NewDraftName { get; } = "Project_NewDraftName";
+            public static string Project_NewDraftName_Placeholder { get; } = "Project_NewDraftName_Placeholder";
+            public static string Project_NewDraftPosition { get; } = "Project_NewDraftPosition";
+            public static string Project_NewDraftPosition_BrowserFolder_Tooltip { get; } = "Project_NewDraftPosition_BrowserFolder_Tooltip";
+            public static string Project_DeployNewDraft_PreviousStep { get; } = "Project_DeployNewDraft_PreviousStep";
+            public static string Project_DeployNewDraft_Create { get; } = "Project_DeployNewDraft_Create";
+            public static string Project_DeployNewDraft_Desc { get; } = "Project_DeployNewDraft_Desc";
+            public static string Project_NewDraftName_InvalidTip { get; } = "Project_NewDraftName_InvalidTip";
+            public static string Project_NewDraftPosition_InvalidTip { get; } = "Project_NewDraftPosition_InvalidTip";
         }
 
         public static class Field {
@@ -242,6 +267,11 @@
             public static string WpEffectFilePathTemporary { get; } = "wpEffectFilePathTemporary.json";
             public static string WpEffectFilePathUsing { get; } = "wpEffectFilePathUsing.json";
             public static string WpRuntimeDataFileName { get; } = "wp_metadata_runtime.json";
+        }
+
+        public static class ColorKey {
+            public static string WindowCaptionForeground { get; } = "WindowCaptionForeground";
+            public static string WindowCaptionForegroundDisabled { get; } = "WindowCaptionForegroundDisabled";
         }
     }
 }

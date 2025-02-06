@@ -10,9 +10,6 @@ namespace VirtualPaper.Services.Download {
         public event EventHandler<DownloadProgressEventArgs>? DownloadProgressChanged;
         public event EventHandler<DownloadEventArgs>? DownloadStarted;
 
-        private double _previousDownloadedSize = -1;
-        private readonly DownloadService _downloader;
-
         public MultiDownloadService() {
             //CPU can get toasty.. should rate limit to 100MB/s ?
             var downloadOpt = new DownloadConfiguration() {
@@ -95,5 +92,8 @@ namespace VirtualPaper.Services.Download {
             _downloader?.CancelAsync();
             _downloader?.Dispose();
         }
+
+        private double _previousDownloadedSize = -1;
+        private readonly DownloadService _downloader;
     }
 }

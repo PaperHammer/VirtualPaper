@@ -19,6 +19,10 @@ namespace VirtualPaper.UIComponent.Utils {
             SetInstance();
         }
 
+        public static string GetI18n(string key) {
+            return LocalizerInstacne.GetLocalizedString(key);
+        }
+
         // ref: https://github.com/AndrewKeepCoding/WinUI3Localizer
         public static async Task InitializeLocalizerForUnpackaged(string lang) {
             // Initialize a "Strings" folder in the executables folder.

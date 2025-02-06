@@ -308,7 +308,7 @@ namespace VirtualPaper.PlayerWeb {
                         catch (Exception e) {
                             App.WriteToParent(new VirtualPaperMessageConsole {
                                 MsgType = ConsoleMessageType.Error,
-                                Message = $"[ParallaxControl] error: {e.Message}"
+                                Message = $"[ParallaxControl] Error: {e.Message}"
                             });
                         }
                     });
@@ -327,7 +327,7 @@ namespace VirtualPaper.PlayerWeb {
             catch (Exception e) {
                 App.WriteToParent(new VirtualPaperMessageConsole() {
                     MsgType = ConsoleMessageType.Error,
-                    Message = $"Function ['ParallaxControl'] an error occured: {e.Message}",
+                    Message = $"Function ['ParallaxControl'] an Error occured: {e.Message}",
                 });
             }
         }

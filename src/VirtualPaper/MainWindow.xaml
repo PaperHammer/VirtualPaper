@@ -7,6 +7,7 @@
         xmlns:tray="http://schemas.lepo.co/wpfui/2022/xaml/tray"
         xmlns:local="clr-namespace:VirtualPaper"
         xmlns:lang="clr-namespace:VirtualPaper.lang"        
+        Loaded="Window_Loaded"
         Closing="Window_Closing"
         SourceInitialized="Window_SourceInitialized"
         ShowInTaskbar="False"

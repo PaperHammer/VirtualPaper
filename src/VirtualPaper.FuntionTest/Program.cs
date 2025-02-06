@@ -76,7 +76,7 @@ namespace VirtualPaper.FuuntionTest
 
             Proc = MainTest_ScrSaver.InitScr(
                 "C:\\Users\\PaperHammer\\Desktop\\img29.jpg",
-                "FPicture",
+                "FImage",
                 "Bubble");
 
             await ShowAsync();

@@ -11,6 +11,6 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         event EventHandler<AppUpdaterEventArgs> UpdateChecked;
 
         Task CheckUpdate();
-        Task StartUpdate();
+        Task StartDownload();
     }
 }

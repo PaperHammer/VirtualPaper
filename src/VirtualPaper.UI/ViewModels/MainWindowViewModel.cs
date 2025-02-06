@@ -1,10 +1,12 @@
 ﻿using System.Threading;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
+using VirtualPaper.Models;
 using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.UI.ViewModels {
     public partial class MainWindowViewModel : ObservableObject {
+        public ObservableList<BackgroundTask> BackgroundTasks { get; set; } = [];
         public string SidebarGallery { get; private set; }
         public string SidebarWpSettings { get; private set; }
         public string SidebarProject { get; private set; }
@@ -12,7 +14,7 @@ namespace VirtualPaper.UI.ViewModels {
         public string SidebarAppSettings { get; private set; }
 
         #region loading
-        private bool _frameIsEnable;
+        private bool _frameIsEnable = true;
         public bool FrameIsEnable {
             get { return _frameIsEnable; }
             set { _frameIsEnable = value; OnPropertyChanged(); }

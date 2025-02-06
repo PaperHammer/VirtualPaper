@@ -21,7 +21,7 @@ namespace VirtualPaper.Common.Utils {
                 }
             }, cancellationToken);
 
-            // Consume items from the channel as they become available.
+            // Consume items from the channel as they become Available.
             await foreach (var item in ConsumeChannel(_channel.Reader, cancellationToken)) {
                 yield return item;
             }

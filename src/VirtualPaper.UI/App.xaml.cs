@@ -1,21 +1,17 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
-using VirtualPaper.UI.Services;
-using VirtualPaper.UI.Services.Interfaces;
-using VirtualPaper.UI.TrayControl;
+using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels;
-using VirtualPaper.UI.ViewModels.AppSettings;
-using VirtualPaper.UI.ViewModels.WpSettingsComponents;
 using VirtualPaper.UIComponent.Utils;
 using WinUI3Localizer;
 using WinUIEx;
@@ -31,12 +27,12 @@ namespace VirtualPaper.UI {
         internal static DispatcherQueue UITaskInvokeQueue => _dispatcherQueue;
         internal static Logger Log => LogManager.GetCurrentClassLogger();
 
-        public static IServiceProvider Services {
-            get {
-                IServiceProvider serviceProvider = ((App)Current)._serviceProvider;
-                return serviceProvider ?? throw new InvalidOperationException("The service provider is not initialized");
-            }
-        }
+        //public static IServiceProvider Services {
+        //    get {
+        //        IServiceProvider serviceProvider = ((App)Current)._serviceProvider;
+        //        return serviceProvider ?? throw new InvalidOperationException("The service provider is not initialized");
+        //    }
+        //}
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -59,50 +55,63 @@ namespace VirtualPaper.UI {
 
             SetupUnhandledExceptionLogging();
 
-            _serviceProvider = ConfigureServices();
-            _userSettings = Services.GetRequiredService<IUserSettingsClient>();
+            ConfigureServices();
+            //_serviceProvider = ConfigureServices();
+            _userSettings = ObjectProvider.GetRequiredService<IUserSettingsClient>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            //_userSettingsClient = Services.GetRequiredService<IUserSettingsClient>();
 
             SetAppTheme(_userSettings.Settings.ApplicationTheme);
         }
 
-        private ServiceProvider ConfigureServices() {
-            var provider = new ServiceCollection()
-                .AddSingleton<MainWindow>()
-
-                .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
-                .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()
-                .AddSingleton<IUserSettingsClient, UserSettingsClient>()
-                .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
-                .AddSingleton<ICommandsClient, CommandsClient>()
-                .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
-
-                .AddSingleton<MainWindowViewModel>()
-                .AddSingleton<WpSettingsViewModel>()
-                .AddSingleton<LibraryContentsViewModel>()
-                .AddSingleton<ScreenSaverViewModel>()
-                .AddSingleton<GeneralSettingViewModel>()
-                .AddTransient<PerformanceSettingViewModel>()
-                .AddTransient<SystemSettingViewModel>()
-                .AddTransient<OtherSettingViewModel>()
-
-                .AddSingleton<TrayCommand>()
-
-                .AddSingleton<IDialogService, DialogService>()
-
-                .AddHttpClient()
-
-                .BuildServiceProvider();
-
-            return provider;
+        private static void ConfigureServices() {
+            ObjectProvider.RegisterRelation<IWallpaperControlClient, WallpaperControlClient>();
+            ObjectProvider.RegisterRelation<IMonitorManagerClient, MonitorManagerClient>();
+            ObjectProvider.RegisterRelation<IUserSettingsClient, UserSettingsClient>();
+            ObjectProvider.RegisterRelation<IAppUpdaterClient, AppUpdaterClient>();
+            ObjectProvider.RegisterRelation<ICommandsClient, CommandsClient>();
+            ObjectProvider.RegisterRelation<IScrCommandsClient, ScrCommandsClient>();
         }
+
+        //private static ServiceProvider ConfigureServices() {
+        //    var provider = new ServiceCollection()
+        //        .AddSingleton<MainWindow>()
+
+        //        .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
+        //        .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()
+        //        .AddSingleton<IUserSettingsClient, UserSettingsClient>()
+        //        .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
+        //        .AddSingleton<ICommandsClient, CommandsClient>()
+        //        .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
+
+        //        .AddSingleton<MainWindowViewModel>()
+        //        .AddSingleton<WpSettingsViewModel>()
+        //        .AddSingleton<LibraryContentsViewModel>()
+        //        .AddSingleton<ScreenSaverViewModel>()
+        //        .AddTransient<GeneralSettingViewModel>()
+        //        .AddTransient<PerformanceSettingViewModel>()
+        //        .AddTransient<SystemSettingViewModel>()
+        //        .AddTransient<OtherSettingViewModel>()
+
+        //        .AddSingleton<TrayCommand>()
+
+        //        .AddSingleton<IDialogService, DialogUtil>()
+
+        //        .AddHttpClient()
+
+        //        .BuildServiceProvider();
+
+        //    return provider;
+        //}
 
         /// <summary>
         /// Invoked when the application is launched.
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
         protected override async void OnLaunched(LaunchActivatedEventArgs args) {
+            CrossThreadInvoker.Initialize(new UiSynchronizationContext());
+
             // ref: https://github.com/microsoft/WindowsAppSDK/issues/1687
-            //ApplicationLanguages.PrimaryLanguageOverride = _userSettings.Settings.Language;
+            //ApplicationLanguages.PrimaryLanguageOverride = _userSettingsClient.Settings.Language;
 
             // ref: https://github.com/AndrewKeepCoding/WinUI3Localizer
             if (Constants.ApplicationType.IsMSIX) {
@@ -112,9 +121,11 @@ namespace VirtualPaper.UI {
                 await LanguageUtil.InitializeLocalizerForUnpackaged(_userSettings.Settings.Language);
             }
 
-            Services.GetRequiredService<MainWindow>().Show();
+            ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton, ObjectLifetime.Singleton).Show();
+            //Services.GetRequiredService<MainWindow>().Show();
             // 避免文字无法初始化
-            Services.GetRequiredService<TrayCommand>();
+            //ObjectProvider.GetRequiredService<TrayCommand>();
+            //Services.GetRequiredService<TrayCommand>();
         }
 
         //Cannot change runtime.
@@ -134,6 +145,7 @@ namespace VirtualPaper.UI {
         }
 
         private void LogUnhandledException<T>(T exception) => Log.Error(exception);
+
         //Not working ugh..
         //Issue: https://github.com/microsoft/microsoft-ui-xaml/issues/5221
         private void SetupUnhandledExceptionLogging() {
@@ -153,7 +165,8 @@ namespace VirtualPaper.UI {
         public static void ShutDown() {
             try {
                 Task.Run(() => {
-                    ((ServiceProvider)App.Services)?.Dispose();
+                    //((ServiceProvider)App.Services)?.Dispose();
+                    ObjectProvider.Clean();
                     Log.Info("UI was closed");
                 });
             }
@@ -164,7 +177,7 @@ namespace VirtualPaper.UI {
             return _i18n.GetLocalizedString(key);
         }
 
-        private readonly IServiceProvider _serviceProvider;
+        //private readonly IServiceProvider _serviceProvider;
         private readonly IUserSettingsClient _userSettings;
         private static readonly ILocalizer _i18n = LanguageUtil.LocalizerInstacne;
         private static readonly DispatcherQueue _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;

@@ -259,7 +259,7 @@ Note: This operation is irreversible！</value>
     <value>Modify the directory</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppFileStorage_OpenTooltip" xml:space="preserve">
-    <value>Open the directory</value>
+    <value>Browser the directory</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppLanguage" xml:space="preserve">
     <value>Language settings</value>
@@ -607,5 +607,71 @@ Author: PaperHammer</value>
   </data>
   <data name="Text_FileUsing" xml:space="preserve">
     <value>The document is in use, please close the source being used</value>
+  </data>
+  <data name="Project_RecentUsed" xml:space="preserve">
+    <value>Open a recently used project(R)</value>
+  </data>
+  <data name="Project_SearchRecentUsed" xml:space="preserve">
+    <value>Search for recently used items(S)</value>
+  </data>
+  <data name="Project_StartUp" xml:space="preserve">
+    <value>Get started</value>
+  </data>
+  <data name="Project_StartUp_OpenFile" xml:space="preserve">
+    <value>Open files(F)</value>
+  </data>
+  <data name="Project_StartUp_OpenFile_Desc" xml:space="preserve">
+    <value>Open supported files</value>
+  </data>
+  <data name="Project_StartUp_OpenFolder" xml:space="preserve">
+    <value>Open a folder(D)</value>
+  </data>
+  <data name="Project_StartUp_OpenFolder_Desc" xml:space="preserve">
+    <value>Browse or edit supported files in the folder</value>
+  </data>
+  <data name="Project_StartUp_OpenVsd" xml:space="preserve">
+    <value>Open the design draft(V)</value>
+  </data>
+  <data name="Project_StartUp_OpenVsd_Desc" xml:space="preserve">
+    <value>Open the local .vpd file</value>
+  </data>
+  <data name="Project_StartUp_NewVpd" xml:space="preserve">
+    <value>Create a new design draft(N)</value>
+  </data>
+  <data name="Project_StartUp_NewVpd_Desc" xml:space="preserve">
+    <value>Select a project template to get started</value>
+  </data>
+  <data name="Project_ContinueWithoutFile" xml:space="preserve">
+    <value>Continue but no files required</value>
+  </data>
+  <data name="Project_DeployNewDraft" xml:space="preserve">
+    <value>Deploy new design drafts</value>
+  </data>
+  <data name="Project_DeployNewDraft_Create" xml:space="preserve">
+    <value>Create (C)</value>
+  </data>
+  <data name="Project_DeployNewDraft_PreviousStep" xml:space="preserve">
+    <value>Previous (B)</value>
+  </data>
+  <data name="Project_NewDraftName" xml:space="preserve">
+    <value>Design Draft Name (J)</value>
+  </data>
+  <data name="Project_NewDraftName_Placeholder" xml:space="preserve">
+    <value>Enter a name for the design</value>
+  </data>
+  <data name="Project_NewDraftPosition" xml:space="preserve">
+    <value>Position (L)</value>
+  </data>
+  <data name="Project_NewDraftPosition_BrowserFolder_Tooltip" xml:space="preserve">
+    <value>Browse the folder</value>
+  </data>
+  <data name="Project_DeployNewDraft_Desc" xml:space="preserve">
+    <value>The design draft will be created in the directory:</value>
+  </data>
+  <data name="Project_NewDraftName_InvalidTip" xml:space="preserve">
+    <value>The name is empty or invalid (up to 30 characters).</value>
+  </data>
+  <data name="Project_NewDraftPosition_InvalidTip" xml:space="preserve">
+    <value>The location is empty or invalid (up to 260 characters).</value>
   </data>
 </root>

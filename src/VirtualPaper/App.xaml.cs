@@ -129,7 +129,7 @@ namespace VirtualPaper {
                 Services.GetRequiredService<MainWindow>().Show();
             }
             catch (Exception ex) {
-                MessageBox.Show("Core runtime error, please restart or reinstall.\n" + ex.Message);
+                MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
                 return;
             }
             #endregion
@@ -156,7 +156,7 @@ namespace VirtualPaper {
                 }
             }
             catch (Exception ex) {
-                MessageBox.Show("Core runtime error, please restart or reinstall.\n" + ex.Message);
+                MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
                 return;
             }
 
@@ -292,7 +292,7 @@ namespace VirtualPaper {
 
         private void AppUpdateChecked(object sender, AppUpdaterEventArgs e) {
             _ = Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new ThreadStart(delegate {
-                if (e.UpdateStatus == AppUpdateStatus.available) {
+                if (e.UpdateStatus == AppUpdateStatus.Available) {
                     if (updateNotifyAmt > 0) {
                         updateNotifyAmt--;
                         updateNotify = true;

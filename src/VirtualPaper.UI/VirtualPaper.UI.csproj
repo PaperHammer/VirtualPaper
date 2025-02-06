@@ -60,15 +60,15 @@
 		<DefaultLanguage>zh-cn</DefaultLanguage>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<RootNamespace>VirtualPaper.UI</RootNamespace>
+		<ApplicationIcon>virtualpaper.ico</ApplicationIcon>
 	</PropertyGroup>
-
-	<ItemGroup>
-	  <Compile Remove="Views\WpSettingsComponents\WpConfig.xaml.cs" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<Content Include="Nlog.config">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="virtualpaper.ico">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
 
@@ -76,8 +76,6 @@
 		<None Remove="Assets\BadgeLogo.scale-100.png" />
 		<None Remove="Assets\BadgeLogo.scale-125.png" />
 		<None Remove="Assets\icon-vp-48.png" />
-		<None Remove="Assets\icons8-image-96.png" />
-		<None Remove="Assets\icons8-picture-94.png" />
 		<None Remove="Assets\LockScreenLogo.scale-200.png" />
 		<None Remove="Assets\splashCol.png" />
 		<None Remove="Assets\SplashScreen.scale-100.png" />
@@ -125,20 +123,10 @@
 		<None Remove="Assets\Wide310x150Logo.scale-200.png" />
 		<None Remove="Assets\Wide310x150Logo.scale-400.png" />
 		<None Remove="Views\Account.xaml" />
-		<None Remove="Views\AppSettings.xaml" />
-		<None Remove="Views\AppSettingsConponents\GeneralSetting.xaml" />
-		<None Remove="Views\AppSettingsConponents\OthersSetting.xaml" />
-		<None Remove="Views\AppSettingsConponents\PerformanceSetting.xaml" />
-		<None Remove="Views\AppSettingsConponents\SystemSetting.xaml" />
 		<None Remove="Views\Gallery.xaml" />
-		<None Remove="Views\Project.xaml" />
 		<None Remove="Views\Utils\ColorEyeDropWindow.xaml" />
 		<None Remove="Views\Utils\LoadingUsrctrl.xaml" />
 		<None Remove="Views\Utils\WallpaperCreateView.xaml" />
-		<None Remove="Views\WpSettings.xaml" />
-		<None Remove="Views\WpSettingsComponents\LibraryContents.xaml" />
-		<None Remove="Views\WpSettingsComponents\ScreenSaver.xaml" />
-		<None Remove="Views\WpSettingsComponents\WpConfig.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -151,8 +139,6 @@
 		<PackageReference Include="Vanara.PInvoke.ComCtl32" Version="4.0.3" />
 		<PackageReference Include="Vanara.PInvoke.DwmApi" Version="4.0.3" />
 		<PackageReference Include="Vanara.PInvoke.User32" Version="4.0.3" />
-		<PackageReference Include="WinUI3Localizer" Version="2.2.0" />
-		<PackageReference Include="WinUIEx" Version="2.4.2" />
 		<Manifest Include="$(ApplicationManifest)" />
 	</ItemGroup>
 
@@ -168,12 +154,6 @@
 		<Content Update="Assets\icon-vp-48.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Update="Assets\icons8-image-96.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		<Content Update="Assets\icons8-picture-94.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
 		<Content Update="Assets\splashCol.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -182,53 +162,26 @@
 		</Content>
 	</ItemGroup>
 	<ItemGroup>
-		<Page Update="Views\WpSettingsComponents\ScreenSaver.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
 		<Page Update="Views\Utils\LoadingUsrctrl.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Utils\WallpaperCreateView.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
-		<Page Update="Views\AppSettingsConponents\OthersSetting.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-		<Page Update="Views\AppSettingsConponents\SystemSetting.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-		<Page Update="Views\AppSettingsConponents\PerformanceSetting.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-		<Page Update="Views\AppSettingsConponents\GeneralSetting.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
 		<None Update="Players\Web\default.html">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
-		<Page Update="Views\WpSettingsComponents\LibraryContents.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
 		<Page Update="Views\Utils\ColorEyeDropWindow.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 	</ItemGroup>
 	<ItemGroup>
-		<Page Update="Views\AppSettings.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
 		<Page Update="Views\Account.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Gallery.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
-		<Page Update="Views\WpSettings.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-	</ItemGroup>
-	<ItemGroup>
-		<Folder Include="ViewModels\ProjectsComponents\" />
 	</ItemGroup>
 
 	<!-- 
@@ -240,16 +193,10 @@
 		<HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
 	</PropertyGroup>
 	<ItemGroup>
-		<CustomAdditionalCompileInputs Remove="Views\Project.xaml" />
-	</ItemGroup>
-	<ItemGroup>
-	  <Page Remove="Views\WpSettingsComponents\WpConfig.xaml" />
-	</ItemGroup>
-	<ItemGroup>
-		<Resource Remove="Views\Project.xaml" />
-	</ItemGroup>
-	<ItemGroup>
+		<ProjectReference Include="..\VirtualPaper.AppSettingsPanel\VirtualPaper.AppSettingsPanel.csproj" />
+		<ProjectReference Include="..\VirtualPaper.DraftPanel\VirtualPaper.DraftPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
 		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
+		<ProjectReference Include="..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj" />
 	</ItemGroup>
 </Project>

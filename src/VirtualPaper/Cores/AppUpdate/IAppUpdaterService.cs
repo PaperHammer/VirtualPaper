@@ -10,7 +10,6 @@ namespace VirtualPaper.Cores.AppUpdate {
         Version LastCheckVersion { get; }
         AppUpdateStatus Status { get; }
 
-
         Task<AppUpdateStatus> CheckUpdate(int fetchDelay = 45000);
         Task<(Uri, Version, string)> GetLatestRelease(bool isBeta);
         void Start();

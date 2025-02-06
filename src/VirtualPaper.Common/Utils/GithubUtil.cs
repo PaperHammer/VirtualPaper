@@ -53,6 +53,16 @@ namespace VirtualPaper.Common.Utils {
             return requiredAsset.BrowserDownloadUrl;
         }
 
+        public static async Task<IEnumerable<string>> GetAllAssetUrl(string assetNameSubstring, Release release, string repositoryName, string userName) {
+            GitHubClient client = new(new ProductHeaderValue(repositoryName));
+            var allAssets = await client.Repository.Release.GetAllAssets(userName, repositoryName, release.Id);
+            //var requiredAssets = allAssets.Single(x => x.Name.Equals(assetName, StringComparison.OrdinalIgnoreCase));
+            var downloadUrls = allAssets
+                .Where(x => Contains(x.Name, assetNameSubstring, StringComparison.OrdinalIgnoreCase))
+                .Select(x => x.BrowserDownloadUrl);
+            return downloadUrls;
+        }
+
         public static Version GetVersion(Release release) {
             return new Version(Regex.Replace(release.TagName, "[A-Za-z ]", ""));
         }

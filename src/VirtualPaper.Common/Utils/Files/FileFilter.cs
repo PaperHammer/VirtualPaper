@@ -19,7 +19,7 @@ namespace VirtualPaper.Common.Utils.Files {
 
             foreach (var entry in _fileHeaderMap) {
                 if (headerHex.Contains(entry.Key, StringComparison.OrdinalIgnoreCase)
-                    && _fileExtensions[entry.Value].Contains(extension)) {
+                    && FileExtensions[entry.Value].Contains(extension)) {
                     return entry.Value;
                 }
             }
@@ -35,20 +35,21 @@ namespace VirtualPaper.Common.Utils.Files {
             return FileType.FUnknown;
         }
 
-        private static readonly Dictionary<FileType, HashSet<string>> _fileExtensions = new() {
-            [FileType.FPicture] = [".jpg", ".jpeg", ".bmp", ".png", ".svg", ".webp"],           
+        public static Dictionary<FileType, string[]> FileExtensions { get; } = new() {
+            [FileType.FImage] = [".jpg", ".jpeg", ".bmp", ".png", ".svg", ".webp"],
             [FileType.FGif] = [".gif", ".apng"],
             [FileType.FVideo] = [".mp4", ".webm"],
+            [FileType.FDesign] = [".vpd"],
         };
 
         private static readonly Dictionary<string, FileType> _fileHeaderMap = new()
         {
-            {"FFD8FF", FileType.FPicture}, // .jpg .jpeg
-            {"424D", FileType.FPicture}, // .bmp
-            {"89504E470D0A1A0A", FileType.FPicture}, // .png
-            {"3C737667", FileType.FPicture}, // .svg
-            {"3C3F786D", FileType.FPicture}, // .svg
-            {"52494646", FileType.FPicture}, // .webp
+            {"FFD8FF", FileType.FImage}, // .jpg .jpeg
+            {"424D", FileType.FImage}, // .bmp
+            {"89504E470D0A1A0A", FileType.FImage}, // .png
+            {"3C737667", FileType.FImage}, // .svg
+            {"3C3F786D", FileType.FImage}, // .svg
+            {"52494646", FileType.FImage}, // .webp
 
             {"474946383961", FileType.FGif}, // .gif
             {"acTL", FileType.FGif}, // .anpg

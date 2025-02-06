@@ -1,23 +1,24 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using VirtualPaper.AppSettingsPanel;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.DraftPanel;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels;
-using VirtualPaper.UI.Views;
 using VirtualPaper.UIComponent.Utils.Extensions;
+using VirtualPaper.WpSettingsPanel;
+using Windows.UI;
 using WinRT.Interop;
 using WinUIEx;
 
@@ -28,28 +29,92 @@ namespace VirtualPaper.UI {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainWindow : WindowEx {
-        public string WindowStyleType { get; private set; }
-        public SolidColorBrush WindowCaptionForeground => (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
-        public SolidColorBrush WindowCaptionForegroundDisabled => (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
+    public sealed partial class MainWindow : WindowEx, IWindowBridge {
+        //public string WindowStyleType { get; private set; }
+        //public SolidColorBrush WindowCaptionForeground => (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
+        //public SolidColorBrush WindowCaptionForegroundDisabled => (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
 
         public MainWindow(
             MainWindowViewModel mainWindowViewModel,
+            ICommandsClient commandsClient,
             IWallpaperControlClient wallpaperControlClient,
             IUserSettingsClient userSettingsClient) {
+            _commandsClient = commandsClient;
             _wpControl = wallpaperControlClient;
-            _userSettings = userSettingsClient;
+            _userSettingsClient = userSettingsClient;
 
             this.InitializeComponent();
 
+            _basicUIComponent = new(mainWindowViewModel);
+            _dialog = new();
+
             _viewModel = mainWindowViewModel;
-            this.NavView.DataContext = _viewModel;
-            _ctsConsoleIn = new();
+            this.MainGrid.DataContext = _viewModel;
+
+            _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
+            //_ctsConsoleIn = new();
 
             SetWindowStyle();
             SetWindowTitleBar();
         }
 
+        private void CommandsClient_UIRecieveCmd(object sender, int e) {
+            HandleIpcMessage(e);
+        }
+
+        #region bridge
+        public nint GetWindowHandle() {
+            return WindowNative.GetWindowHandle(this);
+        }
+
+        public INoifyBridge GetNotify() {
+            return _basicUIComponent;
+        }
+
+        public T GetRequiredService<T>(
+            ObjectLifetime lifetime = ObjectLifetime.Transient,
+            ObjectLifetime lifetimeForParams = ObjectLifetime.Transient,
+            object scope = null) {
+            return ObjectProvider.GetRequiredService<T>(lifetime, lifetimeForParams, scope);
+        }
+
+        public void Log(LogType type, object message) {
+            switch (type) {
+                case LogType.Info:
+                    App.Log.Info(message);
+                    break;
+                case LogType.Warn:
+                    App.Log.Warn(message);
+                    break;
+                case LogType.Error:
+                    App.Log.Error(message);
+                    break;
+                case LogType.Trace:
+                    App.Log.Trace(message);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public object GetCompositor() {
+            return this.Compositor;
+        }
+
+        public object GetMainWindow() {
+            return this;
+        }
+
+        public IDialogService GetDialog() {
+            return _dialog;
+        }
+
+        public Color GetColorByKey(string key) {
+            return _colors.GetValueOrDefault(key);
+        }
+        #endregion
+
+        #region window property
         private void SetWindowTitleBar() {
             //ref: https://learn.microsoft.com/en-us/windows/apps/develop/title-bar?tabs=wasdk
             if (AppWindowTitleBar.IsCustomizationSupported()) {
@@ -57,94 +122,95 @@ namespace VirtualPaper.UI {
                 titleBar.ExtendsContentIntoTitleBar = true;
                 titleBar.ButtonBackgroundColor = Colors.Transparent;
                 titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-                titleBar.ButtonForegroundColor = WindowCaptionForeground.Color;
+                titleBar.ButtonForegroundColor = _colors[Constants.ColorKey.WindowCaptionForeground];
 
                 AppTitleBar.Loaded += AppTitleBar_Loaded;
                 AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
             }
             else {
                 AppTitleBar.Visibility = Visibility.Collapsed;
-                this.UseImmersiveDarkModeEx(_userSettings.Settings.ApplicationTheme == AppTheme.Dark);
+                this.UseImmersiveDarkModeEx(_userSettingsClient.Settings.ApplicationTheme == AppTheme.Dark);
             }
         }
 
         private void SetWindowStyle() {
-            string type = _userSettings.Settings.SystemBackdrop.ToString();
-            WindowStyleType = type;
-            this.SystemBackdrop = type switch {
-                "Mica" => new MicaBackdrop(),
-                "Acrylic" => new DesktopAcrylicBackdrop(),
+            //string type = _userSettingsClient.Settings.SystemBackdrop;
+            //WindowStyleType = type;
+            this.SystemBackdrop = _userSettingsClient.Settings.SystemBackdrop switch {
+                AppSystemBackdrop.Mica => new MicaBackdrop(),
+                AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
                 _ => default,
             };
         }
 
         private void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
             if (args.WindowActivationState == WindowActivationState.Deactivated) {
-                TitleTextBlock.Foreground = WindowCaptionForegroundDisabled;
+                TitleTextBlock.Foreground = new SolidColorBrush(_colors[Constants.ColorKey.WindowCaptionForegroundDisabled]);
             }
             else {
-                TitleTextBlock.Foreground = WindowCaptionForeground;
+                TitleTextBlock.Foreground = new SolidColorBrush(_colors[Constants.ColorKey.WindowCaptionForeground]);
             }
 
-            _ = StdInListener();
+            //_ = StdInListener();
         }
 
         private async void WindowEx_Closed(object sender, WindowEventArgs args) {
             await _wpControl.CloseAllPreviewAsync();
 
-            if (_userSettings.Settings.IsFirstRun) {
+            if (_userSettingsClient.Settings.IsFirstRun) {
                 args.Handled = true;
-                _userSettings.Settings.IsFirstRun = false;
-                _userSettings.Save<ISettings>();
+                _userSettingsClient.Settings.IsFirstRun = false;
+                _userSettingsClient.Save<ISettings>();
                 this.Close();
             }
 
-            if (_userSettings.Settings.IsUpdated) {
+            if (_userSettingsClient.Settings.IsUpdated) {
                 args.Handled = true;
-                _userSettings.Settings.IsUpdated = false;
-                _userSettings.Save<ISettings>();
+                _userSettingsClient.Settings.IsUpdated = false;
+                _userSettingsClient.Save<ISettings>();
                 this.Close();
             }
 
             App.ShutDown();
         }
+        #endregion
 
-        private async Task StdInListener() {
-            try {
-                await Task.Run(async () => {
-                    while (!_ctsConsoleIn.IsCancellationRequested) {
-                        var msg = await Console.In.ReadLineAsync(_ctsConsoleIn.Token);
-                        if (string.IsNullOrEmpty(msg)) {
-                            //When the redirected stream is closed, a null line is sent to the event handler. 
-#if !DEBUG
-                            break;
-#endif
-                        }
-                        else {
-                            HandleIpcMessage(msg);
-                        }
-                    }
-                });
-            }
-            catch (Exception ex) {
-                App.Log.Error(ex);
-            }
-            finally {
-                Closing();
-            }
-        }
+//        private async Task StdInListener() {
+//            try {
+//                await Task.Run(async () => {
+//                    while (!_ctsConsoleIn.IsCancellationRequested) {
+//                        var msg = await Console.In.ReadLineAsync(_ctsConsoleIn.Token);
+//                        if (string.IsNullOrEmpty(msg)) {
+//                            //When the redirected stream is closed, a null line is sent to the event handler. 
+//#if !DEBUG
+//                            break;
+//#endif
+//                        }
+//                        else {
+//                            HandleIpcMessage(msg);
+//                        }
+//                    }
+//                });
+//            }
+//            catch (Exception ex) {
+//                App.Log.Error(ex);
+//            }
+//            finally {
+//                Closing();
+//            }
+//        }
 
-        private void HandleIpcMessage(string message) {
+        private void HandleIpcMessage(int type) {
             try {
-                var obj = JsonSerializer.Deserialize(message, IpcMessageContext.Default.IpcMessage);
-                switch (obj.Type) {
+                MessageType messageType = (MessageType)type;
+                switch (messageType) {
                     case MessageType.cmd_active:
                         App.UITaskInvokeQueue.TryEnqueue(() => {
                             this.BringToFront();
                         });
-                        break;                  
+                        break;
                     default:
-                        throw new InvalidOperationException($"Unsupported message type: {obj.Type}");
+                        throw new InvalidOperationException($"Unsupported message type: {messageType}");
                 }
             }
             catch (Exception ex) {
@@ -154,7 +220,8 @@ namespace VirtualPaper.UI {
 
         private void Closing() {
             this.Hide();
-            _ctsConsoleIn?.Cancel();
+            //_ctsConsoleIn?.Cancel();
+            _commandsClient.UIRecieveCmd -= CommandsClient_UIRecieveCmd;
         }
 
         private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
@@ -169,23 +236,23 @@ namespace VirtualPaper.UI {
                 //    pageType = typeof(Gallery);
                 //}
                 //else 
-                if (args.SelectedItemContainer.Name == WpSettings.Name) {
+                if (args.SelectedItemContainer.Name == Nav_WpSettings.Name) {
                     pageType = typeof(WpSettings);
                 }
-                else if (args.SelectedItemContainer.Name == Project.Name) {
-                    pageType = typeof(Project);
+                else if (args.SelectedItemContainer.Name == Nav_Draft.Name) {
+                    pageType = typeof(Draft);
                 }
                 //else if (args.SelectedItemContainer.Name == Account.Name) {
                 //    pageType = typeof(Account);
                 //}
-                else if (args.SelectedItemContainer.Name == AppSettings.Name) {
+                else if (args.SelectedItemContainer.Name == Nav_AppSettings.Name) {
                     pageType = typeof(AppSettings);
                 }
 
-                ContentFrame.NavigateToType(pageType, null, navOptions);
+                ContentFrame.NavigateToType(pageType, this, navOptions);
             }
             catch (Exception ex) {
-                BasicUIComponentUtil.ShowExp(ex);
+                _basicUIComponent.ShowExp(ex);
                 App.Log.Error(ex);
             }
         }
@@ -234,7 +301,7 @@ namespace VirtualPaper.UI {
                 dragRectR.Width = (int)(RightDragColumn.ActualWidth * scaleAdjustment);
                 dragRectsList.Add(dragRectR);
 
-                Windows.Graphics.RectInt32[] dragRects = dragRectsList.ToArray();
+                Windows.Graphics.RectInt32[] dragRects = [.. dragRectsList];
 
                 appWindow.TitleBar.SetDragRectangles(dragRects);
             }
@@ -257,13 +324,29 @@ namespace VirtualPaper.UI {
         }
         #endregion
 
-        private readonly IUserSettingsClient _userSettings;
+        private readonly ICommandsClient _commandsClient;
+        private readonly IUserSettingsClient _userSettingsClient;
         private readonly IWallpaperControlClient _wpControl;
         private readonly MainWindowViewModel _viewModel;
-        private static CancellationTokenSource _ctsConsoleIn;
+        //private static CancellationTokenSource _ctsConsoleIn;
+        private readonly BasicUIComponentUtil _basicUIComponent;
+        private readonly DialogUtil _dialog;
+        private readonly Dictionary<string, Color> _colors = new() {
+            [Constants.ColorKey.WindowCaptionForeground] = ((SolidColorBrush)App.Current.Resources[Constants.ColorKey.WindowCaptionForeground]).Color,
+            [Constants.ColorKey.WindowCaptionForegroundDisabled] = ((SolidColorBrush)App.Current.Resources[Constants.ColorKey.WindowCaptionForegroundDisabled]).Color,
+        };
 
-        private void Flyout_BackgreoundTask_Opening(object sender, object e) {
+        //private void Flyout_BackgreoundTask_Opening(object sender, object e) {
 
-        }
+        //}
+
+        //private void Flyout_Closing(Microsoft.UI.Xaml.Controls.Primitives.FlyoutBase sender, Microsoft.UI.Xaml.Controls.Primitives.FlyoutBaseClosingEventArgs args) {
+        //    args.Cancel = true;
+        //}
+
+        //private void CancelBgTaskBtn_Click(object sender, RoutedEventArgs e) {
+        //    BackgroundTask task = sender as BackgroundTask;
+        //    task?.Cancel?.Invoke();
+        //}
     }
 }

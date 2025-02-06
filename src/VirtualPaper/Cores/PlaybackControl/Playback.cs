@@ -50,7 +50,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
                 App.Log.Info("Playback stoppped");
             }
             catch (Exception ex) {
-                App.Log.Error("Playback runtime error: ", ex);
+                App.Log.Error("Playback runtime Error: ", ex);
             }
         }
 
@@ -177,7 +177,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
                 }
             }
             catch (Exception ex) {
-                App.Log.Error("Playback Changes for AppRules error: ", ex);
+                App.Log.Error("Playback Changes for AppRules Error: ", ex);
                 //failed to get process info.. maybe remote process; resume playback.
                 ChangeWpState(AppWpRunRulesEnum.KeepRun);
                 return;
@@ -286,7 +286,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
                 }
             }
             catch (Exception ex) {
-                App.Log.Error("Playback Changes for Focus error: ", ex);
+                App.Log.Error("Playback Changes for Focus Error: ", ex);
             }
             #endregion
         }

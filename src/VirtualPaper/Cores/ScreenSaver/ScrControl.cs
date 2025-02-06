@@ -55,7 +55,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
                 StartTimerTask();
             }
             catch (Exception ex) {
-                App.Log.Error("ScreenSaver started error..." + ex.Message);
+                App.Log.Error("ScreenSaver started Error..." + ex.Message);
             }
         }
 
@@ -157,7 +157,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
                 }
             }
             catch (Exception ex) {
-                App.Log.Error("ScreenSaver runtime error..." + ex.Message);
+                App.Log.Error("ScreenSaver runtime Error..." + ex.Message);
                 Terminate();
             }
         }

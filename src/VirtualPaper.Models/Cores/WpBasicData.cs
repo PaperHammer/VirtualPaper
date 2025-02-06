@@ -26,7 +26,7 @@ namespace VirtualPaper.Models.Cores {
                 _fType = value;
                 this.IsSingleRType =
                      value switch {
-                         FileType.FPicture or FileType.FGif => false,
+                         FileType.FImage or FileType.FGif => false,
                          FileType.FVideo => true,
                          _ => false,
                      };

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VirtualPaper.DraftPanel.Draft"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.DraftPanel"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:data="using:VirtualPaper.UIComponent.Data"
+    xmlns:views="using:VirtualPaper.DraftPanel.Views"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    mc:Ignorable="d"
+    NavigationCacheMode="Enabled">
+
+    <Page.Resources>
+        <cvs:DraftPanelStateToVisibilityConverter x:Key="DraftPanelStateToVisibility"/>
+    </Page.Resources>
+
+    <Grid>
+        <views:WorkSpace 
+            x:Name="PanelWorkSpace"
+            Visibility="{x:Bind CurrentState, Mode=OneWay, Converter={StaticResource DraftPanelStateToVisibility}}"/>
+
+        <data:Card 
+            x:Name="PanelCard"
+            Visibility="{x:Bind CurrentState, Mode=OneWay, Converter={StaticResource DraftPanelStateToVisibility}, ConverterParameter=Reverse}">
+            <Frame 
+                x:Name="FrameCardComp"
+                Loaded="FrameCardComp_Loaded"/>
+        </data:Card>
+    </Grid>
+</Page>

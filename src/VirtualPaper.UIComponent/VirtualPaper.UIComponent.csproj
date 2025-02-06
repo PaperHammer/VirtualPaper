@@ -9,11 +9,14 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Container\Card.xaml" />
     <None Remove="Container\PageContainer.xaml" />
     <None Remove="Data\Details.xaml" />
     <None Remove="Data\Edits.xaml" />
     <None Remove="Data\EffectConfig.xaml" />
     <None Remove="Feedback\Loading.xaml" />
+    <None Remove="Others\ColorEyeDropWindow.xaml" />
+    <None Remove="Others\WallpaperCreateView.xaml" />
   </ItemGroup>
   <ItemGroup>
     <PRIResource Remove="Strings\en-US\Resources.resw" />
@@ -29,7 +32,8 @@
   </ItemGroup>
 
   <ItemGroup>
-      <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.240923002" />
+	  <PackageReference Include="H.Hooks" Version="1.6.0" />
+	  <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.240923002" />
       <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
       <PackageReference Include="WinUI3Localizer" Version="2.2.0" />
       <PackageReference Include="WinUIEx" Version="2.4.2" />
@@ -69,5 +73,28 @@
     <Page Update="Container\PageContainer.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Container\Card.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Others\ColorEyeDropWindow.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Others\WallpaperCreateView.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Assets\icons8-image-96.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\icons8-picture-94.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>

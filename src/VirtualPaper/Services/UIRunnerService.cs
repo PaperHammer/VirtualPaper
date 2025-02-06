@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.IO;
-using System.Text.Json;
 using System.Windows;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
@@ -13,6 +12,8 @@ using UAC = UACHelper.UACHelper;
 
 namespace VirtualPaper.Services {
     public partial class UIRunnerService : IUIRunnerService {
+        public event EventHandler<MessageType>? UISendCmd;
+
         public UIRunnerService(
             IMonitorManager monitorManager) {
             _monitorManager = monitorManager;
@@ -36,7 +37,8 @@ namespace VirtualPaper.Services {
             if (_processUI != null) {
                 try {
                     App.Log.Warn("UI is already running");
-                    _processUI.StandardInput.WriteLine(JsonSerializer.Serialize(new VirtualPaperActiveCmd(), IpcMessageContext.Default.IpcMessage));
+                    UISendCmd?.Invoke(this, MessageType.cmd_active);
+                    //_processUI.StandardInput.WriteLine(JsonSerializer.Serialize(new VirtualPaperActiveCmd(), IpcMessageContext.Default.IpcMessage));
                 }
                 catch (Exception e) {
                     App.Log.Error(e);

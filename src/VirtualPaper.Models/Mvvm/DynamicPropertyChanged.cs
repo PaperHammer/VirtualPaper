@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 
 namespace VirtualPaper.Models.Mvvm {
-    public class DynamicPropertyChanged : INotifyPropertyChanged {
+    public partial class DynamicPropertyChanged : INotifyPropertyChanged {
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected T Get<T>(Expression<Func<T>> propertyExpression) {
@@ -20,7 +20,7 @@ namespace VirtualPaper.Models.Mvvm {
             }
         }
 
-        private string GetPropertyName<T>(Expression<Func<T>> propertyExpression) {
+        private static string GetPropertyName<T>(Expression<Func<T>> propertyExpression) {
             if (propertyExpression.Body is not MemberExpression memberExpression) {
                 throw new ArgumentException("The expression is not a member access expression.");
             }

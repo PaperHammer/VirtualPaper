@@ -96,7 +96,7 @@ namespace VirtualPaper.Utils {
                 return resizedImg;
             }
 
-            if (ftype == FileType.FPicture) {
+            if (ftype == FileType.FImage) {
                 using var bitmap = new Bitmap(filePath);
                 using var mat = BitmapConverter.ToMat(bitmap);
                 using var resizedMat = ResizeTo1080p(mat);
@@ -176,7 +176,7 @@ namespace VirtualPaper.Utils {
 
         //internal static void CreateGif(string filePath, string thuFilePath, FileType ftype, CancellationToken token) {
         //    GifBitmapEncoder gEnc = new();
-        //    if (ftype == FileType.FPicture) {
+        //    if (ftype == FileType.FImage) {
         //        Bitmap bitmap = new(filePath);
         //        var src = Imaging.CreateBitmapSourceFromHBitmap(
         //            bitmap.GetHbitmap(),
@@ -260,7 +260,7 @@ namespace VirtualPaper.Utils {
 
                         break;
                     }
-                case FileType.FPicture: {
+                case FileType.FImage: {
                         using var img = new Mat(filePath);
 
                         Size sz = img.Size();

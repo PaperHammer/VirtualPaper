@@ -2,7 +2,9 @@
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
+using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Grpc.Service.Commands;
+using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Views;
 using Application = System.Windows.Application;
@@ -47,6 +49,35 @@ namespace VirtualPaper.GrpcServers {
         public override Task<Empty> SaveRectUI(Empty _, ServerCallContext context) {
             _runner.SaveRectUI();
             return Task.FromResult(new Empty());
+        }
+
+        public override async Task SubscribeUIRecievedCmd(Empty request, IServerStreamWriter<Grpc_UIRecievedCmd> responseStream, ServerCallContext context) {
+            try {
+                while (!context.CancellationToken.IsCancellationRequested) {
+                    var tcs = new TaskCompletionSource<bool>();
+                    MessageType message = default;
+                    _runner.UISendCmd += UIRecievedCmd;
+                    void UIRecievedCmd(object? s, MessageType e) {
+                        _runner.UISendCmd -= UIRecievedCmd;
+                        message = e;
+                        tcs.TrySetResult(true);                        
+                    }
+                    using var item = context.CancellationToken.Register(() => { tcs.TrySetResult(false); });
+                    await tcs.Task;
+
+                    if (context.CancellationToken.IsCancellationRequested) {
+                        _runner.UISendCmd -= UIRecievedCmd;
+                        break;
+                    }
+
+                    await responseStream.WriteAsync(new() {
+                        IpcMsg = (int)message,
+                    });
+                }
+            }
+            catch (Exception e) {
+                App.Log.Error(e);
+            }
         }
 
         private readonly IUIRunnerService _runner = runner;

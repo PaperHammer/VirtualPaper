@@ -1185,7 +1185,7 @@ namespace VirtualPaper.Common.Utils.PInvoke {
             /// </summary>
             RENDERFORMAT = 0x0305,
             /// <summary>
-            /// The WM_RENDERALLFORMATS message is sent to the clipboard owner before it is destroyed, if the clipboard owner has delayed rendering one or more clipboard formats. For the content of the clipboard to remain available to other applications, the clipboard owner must render data in All the formats it is capable of generating, and place the data on the clipboard by calling the SetClipboardData function.
+            /// The WM_RENDERALLFORMATS message is sent to the clipboard owner before it is destroyed, if the clipboard owner has delayed rendering one or more clipboard formats. For the content of the clipboard to remain Available to other applications, the clipboard owner must render data in All the formats it is capable of generating, and place the data on the clipboard by calling the SetClipboardData function.
             /// </summary>
             RENDERALLFORMATS = 0x0306,
             /// <summary>

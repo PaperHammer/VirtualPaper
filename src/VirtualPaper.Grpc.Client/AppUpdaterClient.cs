@@ -10,7 +10,7 @@ namespace VirtualPaper.Grpc.Client {
     public partial class AppUpdaterClient : IAppUpdaterClient {
         public event EventHandler<AppUpdaterEventArgs>? UpdateChecked;
 
-        public AppUpdateStatus Status { get; private set; } = AppUpdateStatus.notchecked;
+        public AppUpdateStatus Status { get; private set; } = AppUpdateStatus.Notchecked;
         public DateTime LastCheckTime { get; private set; } = DateTime.MinValue;
         public Version LastCheckVersion { get; private set; } = new Version(0, 0, 0, 0);
         public string LastCheckChangelog { get; private set; } = string.Empty;
@@ -31,7 +31,7 @@ namespace VirtualPaper.Grpc.Client {
             await _client.CheckUpdateAsync(new Empty());
         }
 
-        public async Task StartUpdate() {
+        public async Task StartDownload() {
             await _client.StartDownloadAsync(new Empty());
         }
 

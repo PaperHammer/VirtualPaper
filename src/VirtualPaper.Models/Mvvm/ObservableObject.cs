@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text.Json.Serialization;
 
 namespace VirtualPaper.Models.Mvvm {
     //ref: https://rachel53461.wordpress.com/2011/05/08/simplemvvmexample/
@@ -50,7 +49,7 @@ namespace VirtualPaper.Models.Mvvm {
 
         /// <summary>
         /// Returns whether an exception is thrown, or if a Debug.Fail() is used
-        /// when an invalid property name is passed to the VerifyPropertyName method.
+        /// when an Invalid property name is passed to the VerifyPropertyName method.
         /// The default value is false, but subclasses used by unit tests might
         /// override this property's getter to return true.
         /// </summary>

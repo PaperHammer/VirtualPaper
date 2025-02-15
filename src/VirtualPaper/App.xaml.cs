@@ -8,7 +8,7 @@ using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Win32;
 using NLog;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Models;
+using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Cores.AppUpdate;

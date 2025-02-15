@@ -642,10 +642,10 @@ Author: PaperHammer</value>
     <value>Select a project template to get started</value>
   </data>
   <data name="Project_ContinueWithoutFile" xml:space="preserve">
-    <value>Continue but no files required</value>
+    <value>Continue but no files required (W)</value>
   </data>
   <data name="Project_DeployNewDraft" xml:space="preserve">
-    <value>Deploy new design drafts</value>
+    <value>Configure new design draft</value>
   </data>
   <data name="Project_DeployNewDraft_Create" xml:space="preserve">
     <value>Create (C)</value>
@@ -673,5 +673,14 @@ Author: PaperHammer</value>
   </data>
   <data name="Project_NewDraftPosition_InvalidTip" xml:space="preserve">
     <value>The location is empty or invalid (up to 260 characters).</value>
+  </data>
+  <data name="Project_DeployNewDraft_NextStep" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="Project_SearchTemplate" xml:space="preserve">
+    <value>Search for a project template</value>
+  </data>
+  <data name="Project_TemplateConfig" xml:space="preserve">
+    <value>Create a new project</value>
   </data>
 </root>

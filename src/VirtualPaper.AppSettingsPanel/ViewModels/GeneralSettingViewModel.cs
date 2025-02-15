@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Models;
+using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Localization;

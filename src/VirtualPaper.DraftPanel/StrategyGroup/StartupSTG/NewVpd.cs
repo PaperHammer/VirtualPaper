@@ -14,7 +14,7 @@ namespace VirtualPaper.DraftPanel.StrategyGroup.StartupSTG {
 
         public async Task HandleAsync(IDraftPanelBridge projectBridge) {
             await Task.Run(() => {
-                projectBridge.ChangeProjectPanelState(DraftPanelState.DraftConfig);
+                projectBridge.ChangeProjectPanelState(DraftPanelState.ProjectConfig);
             });
         }
     }

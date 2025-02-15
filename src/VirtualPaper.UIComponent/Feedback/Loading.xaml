@@ -59,7 +59,7 @@
             <ProgressBar 
                 Grid.Column="0"
                 Margin="0 0 20 0"
-                Width="340" 
+                Width="340"
                 Value="{Binding CurValue, ElementName=self}"
                 Maximum="{Binding TotalValue, ElementName=self}"/>
 

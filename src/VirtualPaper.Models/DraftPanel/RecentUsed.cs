@@ -1,6 +1,6 @@
 ﻿using VirtualPaper.Common;
 
-namespace VirtualPaper.Models.ProjectPanel {
+namespace VirtualPaper.Models.DraftPanel {
     public class RecentUsed {
         public ProjectType Type { get; }
         public string Glyph { get; } = string.Empty;

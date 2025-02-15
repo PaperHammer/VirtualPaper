@@ -257,6 +257,9 @@
             public static string Project_DeployNewDraft_Desc { get; } = "Project_DeployNewDraft_Desc";
             public static string Project_NewDraftName_InvalidTip { get; } = "Project_NewDraftName_InvalidTip";
             public static string Project_NewDraftPosition_InvalidTip { get; } = "Project_NewDraftPosition_InvalidTip";
+            public static string Project_TemplateConfig { get; } = "Project_TemplateConfig";
+            public static string Project_SearchTemplate { get; } = "Project_SearchTemplate";
+            public static string Project_DeployNewDraft_NextStep { get; } = "Project_DeployNewDraft_NextStep";
         }
 
         public static class Field {

@@ -1,4 +1,4 @@
-﻿using VirtualPaper.Common.Models;
+﻿using VirtualPaper.Common.Events;
 
 namespace VirtualPaper.Grpc.Client.Interfaces {
     public interface IAppUpdaterClient : IDisposable {

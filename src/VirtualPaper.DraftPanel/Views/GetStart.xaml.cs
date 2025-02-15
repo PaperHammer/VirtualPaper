@@ -5,10 +5,12 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
-using VirtualPaper.Models.ProjectPanel;
-using VirtualPaper.DraftPanel.StrategyGroup.StartupSTG;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Common.Utils.Bridge;
+using VirtualPaper.Models.DraftPanel;
+using Microsoft.UI.Xaml.Input;
+using System.Threading.Tasks;
+using Windows.System;
 
 // To learn more about WinUI, the WinUI draft structure,
 // and more about our draft templates, see: http://aka.ms/winui-draft-info.
@@ -20,9 +22,6 @@ namespace VirtualPaper.DraftPanel.Views {
     public sealed partial class GetStart : Page {
         public GetStart() {
             this.InitializeComponent();
-
-            _viewModel = new();
-            this.DataContext = _viewModel;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
@@ -30,6 +29,9 @@ namespace VirtualPaper.DraftPanel.Views {
 
             if (this._draftPanel == null) {
                 this._draftPanel = e.Parameter as IDraftPanelBridge;
+
+                _viewModel = this._draftPanel.GetRequiredService<GetStartViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+                this.DataContext = _viewModel;
             }
         }
 
@@ -40,7 +42,7 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         private bool Filter(RecentUsed recentUsed) {
-            return recentUsed.ProjectName.Contains(TargetName.Text, StringComparison.InvariantCultureIgnoreCase);
+            return recentUsed.ProjectName.Contains(tbSearchName.Text, StringComparison.InvariantCultureIgnoreCase);
         }
 
         private void Remove_NonMatching(IEnumerable<RecentUsed> recentuseds) {
@@ -69,8 +71,11 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         private async void StartupItemsView_ItemInvoked(ItemsView sender, ItemsViewItemInvokedEventArgs args) {
-            var startUp = args.InvokedItem as Startup;
-            foreach (var stg in _strategies) {
+            await HandleStartupAsync(args.InvokedItem as Startup);
+        }
+
+        private async Task HandleStartupAsync(Startup startUp) {
+            foreach (var stg in _viewModel._strategies) {
                 if (stg.CanHandle(startUp.Type)) {
                     await stg.HandleAsync(_draftPanel);
                 }
@@ -81,13 +86,31 @@ namespace VirtualPaper.DraftPanel.Views {
             _draftPanel.ChangeProjectPanelState(DraftPanelState.WorkSpace, proj);
         }
 
-        private readonly GetStartViewModel _viewModel;
+        private void KeyboardAccelerator_Invoked_RecentUseds(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
+            FocusOnFirstItem();
+            args.Handled = true;
+        }
+
+        private void FocusOnFirstItem() {
+            if (lvRecentUsed.Items.Count > 0) {
+                var firstItemContainer = lvRecentUsed.ContainerFromIndex(0) as ListViewItem;
+                firstItemContainer?.Focus(FocusState.Programmatic);
+            }
+        }
+
+        private void KeyboardAccelerator_Invoked_SearchRecentUsed(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
+            tbSearchName.Focus(FocusState.Programmatic);
+        }
+
+        private async void KeyboardAccelerator_Invoked_Startups(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
+            var startup = (ivStartups.ItemsSource as List<Startup>).Find(x => x.ShortCut == args.KeyboardAccelerator.Key);
+            if (startup != null) {
+                await HandleStartupAsync(startup);
+            }
+            args.Handled = true;
+        }
+
+        private GetStartViewModel _viewModel;
         private IDraftPanelBridge _draftPanel;
-        private readonly IStrategy[] _strategies = [
-            new OpenVpd(),
-            new OpenFile(),
-            new OpenFolder(),
-            new NewVpd(),
-        ];
     }
 }

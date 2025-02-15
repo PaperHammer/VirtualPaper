@@ -10,8 +10,10 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Draft.xaml" />
+    <None Remove="Panels\StaticImagePanel.xaml" />
     <None Remove="Views\DraftConfig.xaml" />
     <None Remove="Views\GetStart.xaml" />
+    <None Remove="Views\ProjectConfig.xaml" />
     <None Remove="Views\WorkSpace.xaml" />
   </ItemGroup>
 
@@ -48,5 +50,17 @@
 
   <ItemGroup>
     <Resource Remove="Views\DraftConfig.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Panels\StaticImagePanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Views\ProjectConfig.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 </Project>

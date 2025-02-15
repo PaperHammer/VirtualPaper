@@ -1,4 +1,4 @@
-﻿using VirtualPaper.Common.Models.EffectValue;
+﻿using VirtualPaper.Common.Events.EffectValue;
 
 namespace VirtualPaper.Common.Utils.ObserverMode {
     public interface ICustomizeValueChangedObserver {

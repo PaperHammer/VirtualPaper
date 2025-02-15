@@ -161,8 +161,19 @@ namespace VirtualPaper.Common {
     
     public enum DraftPanelState {
         Startup,
+        ProjectConfig,
         DraftConfig,
         WorkSpace,
+    }
+    #endregion
+
+    #region common
+    public enum VisualStates {
+        Normal,
+        Selected,
+        UnSelected,
+        PointerOver,
+        DragOver,
     }
     #endregion
 

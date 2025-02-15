@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using VirtualPaper.Common;
-using VirtualPaper.Models.ProjectPanel;
+using VirtualPaper.DraftPanel.StrategyGroup.StartupSTG;
+using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.UIComponent.Utils;
+using Windows.System;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public class GetStartViewModel {
         public List<Startup> Startups { get; private set; } = [];
-        public ObservableCollection<RecentUsed> RecentUseds { get; set; } = [];
+        public ObservableCollection<RecentUsed> RecentUseds { get; private set; } = [];
 
         public string Project_RecentUsed { get; set; }
         public string Project_SearchRecentUsed { get; set; }
@@ -24,20 +26,24 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             Startups = [
                 new(DraftPanelStartupType.OpenVpd,
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenVsd),
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenVsd_Desc)),
+                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenVsd_Desc),
+                    VirtualKey.V),
                 new(DraftPanelStartupType.OpenFile,
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile),
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile_Desc)),
+                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile_Desc),
+                    VirtualKey.F),
                 new(DraftPanelStartupType.OpenFolder,
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFolder),
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFolder_Desc)),
+                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFolder_Desc),
+                    VirtualKey.D),
                 new(DraftPanelStartupType.NewVpd,
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd),
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd_Desc)),
+                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd_Desc),
+                    VirtualKey.N),
             ];
             RecentUseds = [
-                new(ProjectType.PImage, "aaa", "ccc", DateTime.Now.ToString()),
-                new(ProjectType.PImage, "aaa", "ccc", DateTime.Now.ToString()),
+                new(ProjectType.PImage, "aaa某个项目", "ccc路径", DateTime.Now.ToString()),
+                new(ProjectType.PImage, "aaa", "ccc路径", DateTime.Now.ToString()),
                 new(ProjectType.PImage, "aaa", "ccc", DateTime.Now.ToString()),
                 new(ProjectType.PImage, "aaa", "ccc", DateTime.Now.ToString()),
                 new(ProjectType.PImage, "aaa", "ccc", DateTime.Now.ToString()),
@@ -72,5 +78,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         internal List<RecentUsed> _recentUsed = [];
+        internal readonly IStrategy[] _strategies = [
+            new OpenVpd(),
+            new OpenFile(),
+            new OpenFolder(),
+            new NewVpd(),
+        ];
     }
 }

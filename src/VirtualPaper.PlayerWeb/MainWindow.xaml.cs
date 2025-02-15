@@ -462,10 +462,9 @@ namespace VirtualPaper.PlayerWeb {
 
         #region window title bar
         private void SetWindowStyle() {
-            string type = _startArgs.WindowStyleType;
-            this.SystemBackdrop = type switch {
-                "Mica" => new MicaBackdrop(),
-                "Acrylic" => new DesktopAcrylicBackdrop(),
+            this.SystemBackdrop = _startArgs.SystemBackdrop switch {
+                AppSystemBackdrop.Mica => new MicaBackdrop(),
+                AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
                 _ => default,
             };
         }

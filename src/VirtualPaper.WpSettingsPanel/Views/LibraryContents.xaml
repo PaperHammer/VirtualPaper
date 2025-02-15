@@ -6,14 +6,9 @@
     xmlns:local="using:VirtualPaper.WpSettingsPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
     NavigationCacheMode="Enabled">
-
-    <Page.Resources>
-        <cvs:ImageSourceConverter x:Key="ImageSourceConverter" />
-    </Page.Resources>
 
     <ItemsView
         x:Name="ItemsViewer"

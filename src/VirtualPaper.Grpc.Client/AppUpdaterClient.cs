@@ -2,7 +2,7 @@
 using GrpcDotNetNamedPipes;
 using NLog;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Models;
+using VirtualPaper.Common.Events;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Update;
 

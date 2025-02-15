@@ -3,7 +3,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Models.EffectValue;
+using VirtualPaper.Common.Events.EffectValue;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.UIComponent.Container;
@@ -81,10 +81,10 @@ namespace VirtualPaper.PlayerWeb.Utils {
             if (_toolContainer == null) {
                 _startArgs = startArgs;
                 _toolContainer = new(
-                   startArgs.WindowStyleType,
+                   startArgs.SystemBackdrop,
                    startArgs.ApplicationTheme,
-                   _mainWindow.WindowCaptionForeground,
-                   _mainWindow.WindowCaptionForegroundDisabled);
+                   _mainWindow.WindowCaptionForeground.Color,
+                   _mainWindow.WindowCaptionForegroundDisabled.Color);
 
                 _toolContainer.Closed += ToolContainer_Closed;
                 static void ToolContainer_Closed(object _, WindowEventArgs __) {

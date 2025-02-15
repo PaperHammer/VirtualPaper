@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Mvvm;
@@ -14,7 +16,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             set {
                 _draftName = value;
                 OnPropertyChanged();
-                IsNameOk = !string.IsNullOrEmpty(value) && value.Length <= 260 && NameRegex().IsMatch(value);
+                IsNameOk = !string.IsNullOrEmpty(value) && value.Length <= MaxLength && NameRegex().IsMatch(value);
                 IsNextEnable = IsNameOk && IsFolderPathOk;
             }
         }
@@ -101,6 +103,16 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             StorageFolderPath = storageFolder.Path;
         }
 
+        internal async Task CreateNewVpdAsync() {
+            try {
+
+            }
+            catch (Exception) {
+
+                throw;
+            }
+        }
+
         public static bool IsValidFolderPath(string path) {
             if (string.IsNullOrEmpty(path)) {
                 return false;
@@ -127,8 +139,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         // 定义允许的字符集合
-        private static readonly char[] ValidChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .!@#$%^&()[]{}+=-_\\/:"
-                                                     .Concat(Enumerable.Range(0x4e00, 0x9fa5 - 0x4e00 + 1).Select(c => (char)c)).ToArray();
+        private static readonly char[] ValidChars =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .!@#$%^&()[]{}+=-_\\/:"
+            .Concat(Enumerable.Range(0x4e00, 0x9fa5 - 0x4e00 + 1).Select(c => (char)c)).ToArray();
 
         // 定义路径长度限制
         private const int MinLength = 3; // 最小长度，例如 "C:\"
@@ -136,5 +149,17 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         [GeneratedRegex(@"^[a-zA-Z0-9\-_]+$", RegexOptions.Compiled)]
         private static partial Regex NameRegex();
+
+        internal bool CreateNewDir() {
+            string storagePath = Path.Combine(this.StorageFolderPath, this.DraftName);
+            try {
+                Directory.CreateDirectory(storagePath);
+            }
+            catch (Exception) {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

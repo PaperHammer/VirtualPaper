@@ -10,6 +10,7 @@
     xmlns:views="using:VirtualPaper.DraftPanel.Views"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d"
+    x:Name="self"
     NavigationCacheMode="Enabled">
 
     <Page.Resources>
@@ -19,11 +20,11 @@
     <Grid>
         <views:WorkSpace 
             x:Name="PanelWorkSpace"
-            Visibility="{x:Bind CurrentState, Mode=OneWay, Converter={StaticResource DraftPanelStateToVisibility}}"/>
+            Visibility="{Binding CurrentState, ElementName=self, Converter={StaticResource DraftPanelStateToVisibility}}"/>
 
         <data:Card 
             x:Name="PanelCard"
-            Visibility="{x:Bind CurrentState, Mode=OneWay, Converter={StaticResource DraftPanelStateToVisibility}, ConverterParameter=Reverse}">
+            Visibility="{Binding CurrentState, ElementName=self, Converter={StaticResource DraftPanelStateToVisibility}, ConverterParameter=Reverse}">
             <Frame 
                 x:Name="FrameCardComp"
                 Loaded="FrameCardComp_Loaded"/>

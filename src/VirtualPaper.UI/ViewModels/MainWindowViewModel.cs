@@ -19,6 +19,12 @@ namespace VirtualPaper.UI.ViewModels {
             get { return _frameIsEnable; }
             set { _frameIsEnable = value; OnPropertyChanged(); }
         }
+        
+        private double _frameOpacity = 1;
+        public double FrameOpacity {
+            get { return _frameOpacity; }
+            set { _frameOpacity = value; OnPropertyChanged(); }
+        }
 
         private bool _loadingIsVisiable;
         public bool LoadingIsVisiable {
@@ -114,6 +120,7 @@ namespace VirtualPaper.UI.ViewModels {
             await _loadingSemaphoreSlim.WaitAsync();
 
             FrameIsEnable = false;
+            FrameOpacity = 0.4;
             LoadingIsVisiable = true;
             CtsTokens = cts;
             CancelEnable = cancelEnable;
@@ -129,6 +136,7 @@ namespace VirtualPaper.UI.ViewModels {
 
             LoadingIsVisiable = false;
             FrameIsEnable = true;
+            FrameOpacity = 1;
 
             if (_loadingSemaphoreSlim.CurrentCount < 1) {
                 _loadingSemaphoreSlim.Release();

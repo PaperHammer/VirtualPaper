@@ -6,11 +6,262 @@
     xmlns:local="using:VirtualPaper.DraftPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:data="using:VirtualPaper.UIComponent.Data"
+    xmlns:container="using:VirtualPaper.UIComponent.Container"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     NavigationCacheMode="Enabled">
 
-    <Grid>
+    <Page.Resources>
+        <Style x:Key="TabItems" TargetType="container:CustomContainer">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="container:CustomContainer">
+                        <Grid
+                            Margin="2" 
+                            Height="30" 
+                            Background="White">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="ForegroundBorder.Opacity" Value="0"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Selected">
+                                        <VisualState.Setters>
+                                            <Setter Target="ForegroundBorder.Opacity" Value="0"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
 
+                            <Border 
+                                x:Name="ForegroundBorder"
+                                Background="LightGray"
+                                Opacity="0.5"/>
+
+                            <Grid 
+                                Padding="4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition MinWidth="20"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock 
+                                    VerticalAlignment="Center" 
+                                    Text="{Binding Header}"/>
+
+                                <Button 
+                                    Grid.Column="2" 
+                                    Padding="0" 
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Click="Button_Click">
+                                    <FontIcon
+                                        FontSize="12" 
+                                        FontFamily="Segoe MDL2 Assets" 
+                                        Glyph="&#xE711;"/>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TabContainer" TargetType="container:SelectableItemsControl">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="container:SelectableItemsControl">
+                        <Grid x:Name="RootGrid">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="DragOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootGrid.Background" Value="LightBlue"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+
+                            <ItemsPresenter />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="24"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <MenuBar>
+            <MenuBarItem 
+                Title="文件(F)"
+                KeyboardAcceleratorPlacementMode="Hidden">
+                <MenuBarItem.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="F"/>
+                </MenuBarItem.KeyboardAccelerators>
+
+                <MenuFlyoutItem Text="新建">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="N"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="添加">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="D"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="打开">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="O"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="保存">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="S"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="退出">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="F4"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+            </MenuBarItem>
+
+            <MenuBarItem 
+                Title="编辑(E)"
+                KeyboardAcceleratorPlacementMode="Hidden">
+                <MenuBarItem.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="E"/>
+                </MenuBarItem.KeyboardAccelerators>
+
+                <MenuFlyoutItem Text="撤销">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="Z"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="还原">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control, Shift" Key="Z"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+
+                <MenuFlyoutSeparator />
+
+                <MenuFlyoutItem Text="剪切">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="X"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="复制">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="C"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="粘贴">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="V"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+            </MenuBarItem>
+
+            <MenuBarItem 
+                Title="图像(I)"
+                KeyboardAcceleratorPlacementMode="Hidden">
+                <MenuBarItem.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="I"/>
+                </MenuBarItem.KeyboardAccelerators>
+
+
+            </MenuBarItem>
+
+            <MenuBarItem 
+                Title="图层(L)"
+                KeyboardAcceleratorPlacementMode="Hidden">
+                <MenuBarItem.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="L"/>
+                </MenuBarItem.KeyboardAccelerators>
+
+
+            </MenuBarItem>
+
+            <MenuBarItem 
+                Title="帮助(H)"
+                KeyboardAcceleratorPlacementMode="Hidden">
+                <MenuBarItem.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="H"/>
+                </MenuBarItem.KeyboardAccelerators>
+
+                <MenuFlyoutItem Text="关于">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="None" Key="A"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+            </MenuBarItem>
+        </MenuBar>
+
+        <Grid
+            x:Name="toolConfigGrid"
+            Grid.Row="1">
+
+        </Grid>
+
+        <Grid
+            x:Name="contentGrid"
+            Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="40"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid
+                x:Name="toolsGrid">
+
+            </Grid>
+
+            <Grid
+                x:Name="mainGrid"
+                Grid.Column="1">
+                <Grid>
+                    <!-- 选项卡标题行 -->
+                    <container:SelectableItemsControl 
+                        x:Name="SelectableItems"
+                        VerticalAlignment="Top"
+                        Style="{StaticResource TabContainer}"
+                        ItemContainerStyle="{StaticResource TabItems}">
+                        <container:SelectableItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <data:AutoSizeWrap />
+                            </ItemsPanelTemplate>
+                        </container:SelectableItemsControl.ItemsPanel>
+                        <container:SelectableItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <ContentPresenter />
+                            </DataTemplate>
+                        </container:SelectableItemsControl.ItemTemplate>
+                    </container:SelectableItemsControl>
+
+                    <!-- 内容显示区域 -->
+                    <Frame x:Name="ContentFrame" Margin="0,40,0,0"/>
+                </Grid>
+            </Grid>
+
+            <Grid
+                x:Name="detailsGrid"
+                Grid.Column="2">
+
+            </Grid>
+        </Grid>
     </Grid>
 </Page>

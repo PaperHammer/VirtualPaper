@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace VirtualPaper.Common.Models {
+namespace VirtualPaper.Common.Events {
     public class AppUpdaterEventArgs : EventArgs {
         public AppUpdaterEventArgs(AppUpdateStatus updateStatus, Version updateVersion, DateTime updateDate, Uri updateUri, string changeLog) {
             UpdateStatus = updateStatus;

@@ -1,7 +1,7 @@
 ﻿using System.Windows.Threading;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using VirtualPaper.Common.Models;
+using VirtualPaper.Common.Events;
 using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Grpc.Service.Update;

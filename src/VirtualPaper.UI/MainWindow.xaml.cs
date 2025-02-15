@@ -37,10 +37,8 @@ namespace VirtualPaper.UI {
         public MainWindow(
             MainWindowViewModel mainWindowViewModel,
             ICommandsClient commandsClient,
-            IWallpaperControlClient wallpaperControlClient,
             IUserSettingsClient userSettingsClient) {
             _commandsClient = commandsClient;
-            _wpControl = wallpaperControlClient;
             _userSettingsClient = userSettingsClient;
 
             this.InitializeComponent();
@@ -154,51 +152,58 @@ namespace VirtualPaper.UI {
             //_ = StdInListener();
         }
 
-        private async void WindowEx_Closed(object sender, WindowEventArgs args) {
-            await _wpControl.CloseAllPreviewAsync();
+        private void WindowEx_Closed(object sender, WindowEventArgs args) {
+            try {
+                //this.Hide();
+                //_ctsConsoleIn?.Cancel();
+                _commandsClient.UIRecieveCmd -= CommandsClient_UIRecieveCmd;
 
-            if (_userSettingsClient.Settings.IsFirstRun) {
-                args.Handled = true;
-                _userSettingsClient.Settings.IsFirstRun = false;
-                _userSettingsClient.Save<ISettings>();
-                this.Close();
+                if (_userSettingsClient.Settings.IsFirstRun) {
+                    args.Handled = true;
+                    _userSettingsClient.Settings.IsFirstRun = false;
+                    _userSettingsClient.Save<ISettings>();
+                    this.Close();
+                }
+
+                if (_userSettingsClient.Settings.IsUpdated) {
+                    args.Handled = true;
+                    _userSettingsClient.Settings.IsUpdated = false;
+                    _userSettingsClient.Save<ISettings>();
+                    this.Close();
+                }
+
+                App.ShutDown();
             }
-
-            if (_userSettingsClient.Settings.IsUpdated) {
-                args.Handled = true;
-                _userSettingsClient.Settings.IsUpdated = false;
-                _userSettingsClient.Save<ISettings>();
-                this.Close();
+            catch (InvalidOperationException ex) {
+                App.Log.Error("An error ocurred at UI closing: ", ex);
             }
-
-            App.ShutDown();
         }
         #endregion
 
-//        private async Task StdInListener() {
-//            try {
-//                await Task.Run(async () => {
-//                    while (!_ctsConsoleIn.IsCancellationRequested) {
-//                        var msg = await Console.In.ReadLineAsync(_ctsConsoleIn.Token);
-//                        if (string.IsNullOrEmpty(msg)) {
-//                            //When the redirected stream is closed, a null line is sent to the event handler. 
-//#if !DEBUG
-//                            break;
-//#endif
-//                        }
-//                        else {
-//                            HandleIpcMessage(msg);
-//                        }
-//                    }
-//                });
-//            }
-//            catch (Exception ex) {
-//                App.Log.Error(ex);
-//            }
-//            finally {
-//                Closing();
-//            }
-//        }
+        //        private async Task StdInListener() {
+        //            try {
+        //                await Task.Run(async () => {
+        //                    while (!_ctsConsoleIn.IsCancellationRequested) {
+        //                        var msg = await Console.In.ReadLineAsync(_ctsConsoleIn.Token);
+        //                        if (string.IsNullOrEmpty(msg)) {
+        //                            //When the redirected stream is closed, a null line is sent to the event handler. 
+        //#if !DEBUG
+        //                            break;
+        //#endif
+        //                        }
+        //                        else {
+        //                            HandleIpcMessage(msg);
+        //                        }
+        //                    }
+        //                });
+        //            }
+        //            catch (Exception ex) {
+        //                App.Log.Error(ex);
+        //            }
+        //            finally {
+        //                Closing();
+        //            }
+        //        }
 
         private void HandleIpcMessage(int type) {
             try {
@@ -218,11 +223,11 @@ namespace VirtualPaper.UI {
             }
         }
 
-        private void Closing() {
-            this.Hide();
-            //_ctsConsoleIn?.Cancel();
-            _commandsClient.UIRecieveCmd -= CommandsClient_UIRecieveCmd;
-        }
+        //private void Closing() {
+        //    this.Hide();
+        //    //_ctsConsoleIn?.Cancel();
+        //    _commandsClient.UIRecieveCmd -= CommandsClient_UIRecieveCmd;
+        //}
 
         private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
             try {
@@ -326,7 +331,6 @@ namespace VirtualPaper.UI {
 
         private readonly ICommandsClient _commandsClient;
         private readonly IUserSettingsClient _userSettingsClient;
-        private readonly IWallpaperControlClient _wpControl;
         private readonly MainWindowViewModel _viewModel;
         //private static CancellationTokenSource _ctsConsoleIn;
         private readonly BasicUIComponentUtil _basicUIComponent;

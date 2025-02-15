@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Models.EffectValue;
+using VirtualPaper.Common.Events.EffectValue;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.UIComponent.Utils;
 using WinUI3Localizer;

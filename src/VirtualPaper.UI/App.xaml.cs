@@ -163,14 +163,13 @@ namespace VirtualPaper.UI {
         }
 
         public static void ShutDown() {
-            try {
-                Task.Run(() => {
-                    //((ServiceProvider)App.Services)?.Dispose();
-                    ObjectProvider.Clean();
-                    Log.Info("UI was closed");
-                });
-            }
-            catch (InvalidOperationException) { }
+            Task.Run(async () => {
+                //((ServiceProvider)App.Services)?.Dispose();
+                await ObjectProvider.GetRequiredService<IWallpaperControlClient>(ObjectLifetime.Singleton, ObjectLifetime.Singleton).CloseAllPreviewAsync();
+
+                ObjectProvider.Clean();
+                Log.Info("UI was closed");
+            });
         }
 
         public static string GetI18n(string key) {

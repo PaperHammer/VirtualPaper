@@ -9,7 +9,7 @@ using VirtualPaper.lang;
 using VirtualPaper.Services.Interfaces;
 using MessageBox = System.Windows.MessageBox;
 using UAC = UACHelper.UACHelper;
-
+                                                                                                                            
 namespace VirtualPaper.Services {
     public partial class UIRunnerService : IUIRunnerService {
         public event EventHandler<MessageType>? UISendCmd;

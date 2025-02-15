@@ -7,7 +7,6 @@ using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.Models.ProjectPanel;
 using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.UI.Utils;
 using Windows.Storage;

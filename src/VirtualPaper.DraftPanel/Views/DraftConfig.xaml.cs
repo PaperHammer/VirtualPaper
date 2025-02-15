@@ -29,10 +29,16 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         private void PreviousStepButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
-            _draftPanel.ChangeProjectPanelState(DraftPanelState.Startup);
+            _draftPanel.ChangeProjectPanelState(DraftPanelState.ProjectConfig);
         }
 
-        private void CreateVpdButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+        private async void CreateVpdButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+            bool storagePathIsAvailable = _viewModel.CreateNewDir();
+            if (!storagePathIsAvailable) {
+
+                return;
+            }
+
 
         }
 

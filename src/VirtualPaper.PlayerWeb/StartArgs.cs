@@ -68,10 +68,10 @@ namespace VirtualPaper.PlayerWeb {
             HelpText = "Is started for preview.")]
         public bool IsPreview { get; set; }
 
-        [Option("window-style-type",
+        [Option("system-backdrop",
             Required = true,
-            HelpText = "window-style-type.")]
-        public string WindowStyleType { get; set; }
+            HelpText = "system-backdrop.")]
+        public AppSystemBackdrop SystemBackdrop { get; set; }
 
         [Option('t', "app-theme",
             Required = true,

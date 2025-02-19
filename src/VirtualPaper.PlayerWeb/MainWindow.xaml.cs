@@ -12,9 +12,11 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.PlayerWeb.Utils;
 using VirtualPaper.PlayerWeb.ViewModel;
 using VirtualPaper.UIComponent.Utils.Extensions;
@@ -88,7 +90,7 @@ namespace VirtualPaper.PlayerWeb {
                 await InitializeWebViewAsync();
 
                 if (_startArgs.IsPreview) {
-                    WindowUtil.ActiveToolWindow(_startArgs);
+                    WindowUtil.ActiveToolWindow();
                     WindowUtil.AddEffectConfigPage();
                     WindowUtil.AddDetailsPage();
                 }
@@ -238,7 +240,7 @@ namespace VirtualPaper.PlayerWeb {
 
         private void HandleActiveCommand(VirtualPaperActiveCmd active) {
             _dispatcherQueue.TryEnqueue(() => {
-                WindowUtil.ActiveToolWindow(_startArgs, active.UIHwnd);
+                WindowUtil.ActiveToolWindow(active.UIHwnd);
                 bool isNull = WindowUtil.IsToolContentNull();
                 if (isNull) {
                     WindowUtil.AddEffectConfigPage();
@@ -462,7 +464,7 @@ namespace VirtualPaper.PlayerWeb {
 
         #region window title bar
         private void SetWindowStyle() {
-            this.SystemBackdrop = _startArgs.SystemBackdrop switch {
+            this.SystemBackdrop = ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.SystemBackdrop switch {
                 AppSystemBackdrop.Mica => new MicaBackdrop(),
                 AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
                 _ => default,
@@ -483,7 +485,7 @@ namespace VirtualPaper.PlayerWeb {
             }
             else {
                 AppTitleBar.Visibility = Visibility.Collapsed;
-                this.UseImmersiveDarkModeEx(_startArgs.ApplicationTheme == AppTheme.Dark);
+                this.UseImmersiveDarkModeEx(ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.ApplicationTheme == AppTheme.Dark);
             }
         }
 

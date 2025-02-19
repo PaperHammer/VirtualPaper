@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Container\Card.xaml" />
+    <None Remove="Container\FlyoutWindow.xaml" />
     <None Remove="Container\PageContainer.xaml" />
     <None Remove="Data\Details.xaml" />
     <None Remove="Data\Edits.xaml" />
@@ -17,6 +18,7 @@
     <None Remove="Feedback\Loading.xaml" />
     <None Remove="Others\ColorEyeDropWindow.xaml" />
     <None Remove="Others\WallpaperCreateView.xaml" />
+    <None Remove="Utils\ResourceDictionary.xaml" />
   </ItemGroup>
   <ItemGroup>
     <PRIResource Remove="Strings\en-US\Resources.resw" />
@@ -27,6 +29,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Strings\zh-CN\Resources.resw">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="virtualpaper.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -40,6 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
     <ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
   </ItemGroup>
 
@@ -87,9 +93,15 @@
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>
     </Page>
+    <Page Update="Utils\ResourceDictionary.xaml">
+      <CopyToOutputDirectory></CopyToOutputDirectory>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="Assets\icon-vp-48.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Update="Assets\icons8-image-96.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -102,5 +114,11 @@
     <Content Update="Assets\project-create-static-img.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Container\FlyoutWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 </Project>

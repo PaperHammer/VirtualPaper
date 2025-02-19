@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client;

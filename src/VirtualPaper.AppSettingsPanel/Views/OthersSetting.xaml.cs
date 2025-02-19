@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
+using VirtualPaper.Common.Utils.DI;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -23,7 +24,7 @@ namespace VirtualPaper.AppSettingsPanel.Views {
             if (this._appSettingsPanel == null) {
                 this._appSettingsPanel = e.Parameter as IAppSettingsPanel;
 
-                _viewModel = _appSettingsPanel.GetRequiredService<OtherSettingViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+                _viewModel = ObjectProvider.GetRequiredService<OtherSettingViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
                 this.DataContext = _viewModel;
             }
         }

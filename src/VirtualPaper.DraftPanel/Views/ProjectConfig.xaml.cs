@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Models.DraftPanel;
 
@@ -27,7 +28,7 @@ namespace VirtualPaper.DraftPanel.Views {
             if (this._draftPanel == null) {
                 this._draftPanel = e.Parameter as IDraftPanelBridge;
 
-                _viewModel = this._draftPanel.GetRequiredService<ProjectConfigViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+                _viewModel = ObjectProvider.GetRequiredService<ProjectConfigViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
                 this.DataContext = _viewModel;
             }
         }

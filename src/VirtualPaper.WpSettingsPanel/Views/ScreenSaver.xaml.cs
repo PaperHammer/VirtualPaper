@@ -9,6 +9,7 @@ using Microsoft.Win32;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Bridge;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 
@@ -30,7 +31,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             if (this._wpSettingsPanel == null) {
                 this._wpSettingsPanel = e.Parameter as IWpSettingsPanel;
 
-                _viewModel = this._wpSettingsPanel.GetRequiredService<ScreenSaverViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+                _viewModel = ObjectProvider.GetRequiredService<ScreenSaverViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
                 _viewModel._wpSettingsPanel = this._wpSettingsPanel;
                 this.DataContext = _viewModel;
             }

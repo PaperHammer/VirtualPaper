@@ -16,11 +16,7 @@ namespace VirtualPaper.UIComponent.Container {
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            if (e.Parameter is object content) {
-                if (FrameComp != null) {
-                    FrameComp.Content = content;
-                }
-            }
+            ContentComp.Content = e.Parameter;
         }
     }
 }

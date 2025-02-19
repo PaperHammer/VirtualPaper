@@ -2,7 +2,7 @@
 
 namespace VirtualPaper.Common.Utils.Bridge
 {
-    public interface IAppSettingsPanel : IPanelBridge, IOjectProvider, ILogBridge {
+    public interface IAppSettingsPanel : IPanelBridge, ILogBridge {
         INoifyBridge GetNotify();
     }
 }

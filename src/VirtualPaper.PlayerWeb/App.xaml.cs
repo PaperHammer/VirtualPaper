@@ -8,7 +8,9 @@ using System.Threading.Tasks;
 using CommandLine;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.IPC;
+using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.PlayerWeb.Utils;
 using VirtualPaper.UIComponent.Utils;
 
@@ -55,7 +57,7 @@ namespace VirtualPaper.PlayerWeb {
                 throw new NoNullAllowedException(nameof(StartArgs));
             }
 
-            SetAppTheme(_startArgs.ApplicationTheme);
+            SetAppTheme(ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.ApplicationTheme);
         }
 
         /// <summary>
@@ -65,10 +67,10 @@ namespace VirtualPaper.PlayerWeb {
         protected override async void OnLaunched(LaunchActivatedEventArgs args) {
             // ref: https://github.com/AndrewKeepCoding/WinUI3Localizer
             if (Constants.ApplicationType.IsMSIX) {
-                await LanguageUtil.InitializeLocalizerForPackaged(_startArgs.Language);
+                await LanguageUtil.InitializeLocalizerForPackaged(ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.Language);
             }
             else {
-                await LanguageUtil.InitializeLocalizerForUnpackaged(_startArgs.Language);
+                await LanguageUtil.InitializeLocalizerForUnpackaged(ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.Language);
             }
 
             // 避免文字无法初始化

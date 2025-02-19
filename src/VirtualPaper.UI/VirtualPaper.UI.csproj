@@ -195,7 +195,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper.AppSettingsPanel\VirtualPaper.AppSettingsPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.DraftPanel\VirtualPaper.DraftPanel.csproj" />
-		<ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
 		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
 		<ProjectReference Include="..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj" />
 	</ItemGroup>

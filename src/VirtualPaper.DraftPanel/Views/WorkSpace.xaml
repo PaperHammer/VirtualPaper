@@ -6,95 +6,10 @@
     xmlns:local="using:VirtualPaper.DraftPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:data="using:VirtualPaper.UIComponent.Data"
     xmlns:container="using:VirtualPaper.UIComponent.Container"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     NavigationCacheMode="Enabled">
-
-    <Page.Resources>
-        <Style x:Key="TabItems" TargetType="container:CustomContainer">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="container:CustomContainer">
-                        <Grid
-                            Margin="2" 
-                            Height="30" 
-                            Background="White">
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualState x:Name="Normal"/>
-                                    <VisualState x:Name="PointerOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="ForegroundBorder.Opacity" Value="0"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Selected">
-                                        <VisualState.Setters>
-                                            <Setter Target="ForegroundBorder.Opacity" Value="0"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-
-                            <Border 
-                                x:Name="ForegroundBorder"
-                                Background="LightGray"
-                                Opacity="0.5"/>
-
-                            <Grid 
-                                Padding="4">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition MinWidth="20"/>
-                                    <ColumnDefinition Width="auto"/>
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock 
-                                    VerticalAlignment="Center" 
-                                    Text="{Binding Header}"/>
-
-                                <Button 
-                                    Grid.Column="2" 
-                                    Padding="0" 
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Click="Button_Click">
-                                    <FontIcon
-                                        FontSize="12" 
-                                        FontFamily="Segoe MDL2 Assets" 
-                                        Glyph="&#xE711;"/>
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="TabContainer" TargetType="container:SelectableItemsControl">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="container:SelectableItemsControl">
-                        <Grid x:Name="RootGrid">
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualState x:Name="Normal"/>
-                                    <VisualState x:Name="DragOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootGrid.Background" Value="LightBlue"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-
-                            <ItemsPresenter />
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -233,28 +148,33 @@
             <Grid
                 x:Name="mainGrid"
                 Grid.Column="1">
-                <Grid>
-                    <!-- 选项卡标题行 -->
-                    <container:SelectableItemsControl 
-                        x:Name="SelectableItems"
-                        VerticalAlignment="Top"
-                        Style="{StaticResource TabContainer}"
-                        ItemContainerStyle="{StaticResource TabItems}">
-                        <container:SelectableItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <data:AutoSizeWrap />
-                            </ItemsPanelTemplate>
-                        </container:SelectableItemsControl.ItemsPanel>
-                        <container:SelectableItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <ContentPresenter />
-                            </DataTemplate>
-                        </container:SelectableItemsControl.ItemTemplate>
-                    </container:SelectableItemsControl>
+                <!--<container:SelectableItemsControl 
+                    x:Name="SelectableItems"/>-->
+                <TabView
+                    TabWidthMode="SizeToContent"
+                    CloseButtonOverlayMode="OnPointerOver">
+                    <TabView.TabItems>
+                        <TabViewItem Header="Document 0">
+                            <TabViewItem.IconSource>
+                                <SymbolIconSource Symbol="Placeholder" />
+                            </TabViewItem.IconSource>
+                            <Page/>
+                        </TabViewItem>
+                        <TabViewItem Header="Document 1">
+                            <TabViewItem.IconSource>
+                                <SymbolIconSource Symbol="Placeholder" />
+                            </TabViewItem.IconSource>
+                            <Page/>
+                        </TabViewItem>
+                        <TabViewItem Header="Document 2">
+                            <TabViewItem.IconSource>
+                                <SymbolIconSource Symbol="Placeholder" />
+                            </TabViewItem.IconSource>
+                            <Page/>
+                        </TabViewItem>
+                    </TabView.TabItems>
 
-                    <!-- 内容显示区域 -->
-                    <Frame x:Name="ContentFrame" Margin="0,40,0,0"/>
-                </Grid>
+                </TabView>
             </Grid>
 
             <Grid

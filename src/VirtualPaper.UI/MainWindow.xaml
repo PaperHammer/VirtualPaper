@@ -11,7 +11,7 @@
     mc:Ignorable="d"
     Width="1400"
     Height="850"
-    MinWidth="300"    
+    MinWidth="300"
     MinHeight="80"    
     Closed="WindowEx_Closed"
     Activated="WindowEx_Activated"

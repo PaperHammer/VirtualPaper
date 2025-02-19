@@ -48,12 +48,12 @@ namespace VirtualPaper.AppSettingsPanel
             return _windowBridge.GetNotify();
         }
 
-        public T GetRequiredService<T>(
-                    ObjectLifetime lifetime = ObjectLifetime.Transient,
-                    ObjectLifetime lifetimeForParams = ObjectLifetime.Transient,
-                    object scope = null) {
-            return _windowBridge.GetRequiredService<T>(lifetime, lifetimeForParams, scope);
-        }
+        //public T GetRequiredService<T>(
+        //            ObjectLifetime lifetime = ObjectLifetime.Transient,
+        //            ObjectLifetime lifetimeForParams = ObjectLifetime.Transient,
+        //            object scope = null) {
+        //    return _windowBridge.GetRequiredService<T>(lifetime, lifetimeForParams, scope);
+        //}
 
         public void Log(LogType type, object message) {
             _windowBridge.Log(type, message);

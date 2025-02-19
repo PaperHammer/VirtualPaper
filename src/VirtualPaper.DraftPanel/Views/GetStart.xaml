@@ -6,6 +6,7 @@
     xmlns:local="using:VirtualPaper.DraftPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:data="using:VirtualPaper.UIComponent.Data"
     mc:Ignorable="d"
     xmlns:draft="using:VirtualPaper.Models.DraftPanel"
     NavigationCacheMode="Enabled">
@@ -82,101 +83,103 @@
         </DataTemplate>
     </Page.Resources>
 
-    <Grid x:Name="GetStartGrid">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="0.60*"/>
-            <ColumnDefinition Width="0.04*"/>
-            <ColumnDefinition Width="0.36*"/>
-        </Grid.ColumnDefinitions>
+    <data:Card x:Name="DraftPanelCard">
+        <Grid x:Name="GetStartGrid">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="0.60*"/>
+                <ColumnDefinition Width="0.04*"/>
+                <ColumnDefinition Width="0.36*"/>
+            </Grid.ColumnDefinitions>
 
-        <Grid x:Name="RecentlyUsedGrid">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="auto"/>
-                <RowDefinition Height="auto"/>
-                <RowDefinition/>
-            </Grid.RowDefinitions>
+            <Grid x:Name="RecentlyUsedGrid">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
 
-            <TextBlock
-                Text="{Binding Project_RecentUsed}"
-                FontSize="20"/>
+                <TextBlock
+                    Text="{Binding Project_RecentUsed}"
+                    FontSize="20"/>
 
-            <TextBox 
-                Grid.Row="1"
-                x:Name="tbSearchName"
-                Margin="0 20 0 0"
-                Height="30"
-                Width="340"
-                PlaceholderText="{Binding Project_SearchRecentUsed}"
-                FontSize="12"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                TextChanged="OnFilterChanged"
-                KeyboardAcceleratorPlacementMode="Hidden">
-                <TextBox.KeyboardAccelerators>
-                    <KeyboardAccelerator Modifiers="Menu" Key="S" Invoked="KeyboardAccelerator_Invoked_SearchRecentUsed"/>
-                </TextBox.KeyboardAccelerators>
-            </TextBox>
+                <TextBox 
+                    Grid.Row="1"
+                    x:Name="tbSearchName"
+                    Margin="0 20 0 0"
+                    Height="30"
+                    Width="340"
+                    PlaceholderText="{Binding Project_SearchRecentUsed}"
+                    FontSize="12"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    TextChanged="OnFilterChanged"
+                    KeyboardAcceleratorPlacementMode="Hidden">
+                    <TextBox.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="S" Invoked="KeyboardAccelerator_Invoked_SearchRecentUsed"/>
+                    </TextBox.KeyboardAccelerators>
+                </TextBox>
 
-            <ListView
-                x:Name="lvRecentUsed"
-                Grid.Row="2"
-                Margin="0 20 0 0"
-                ItemsSource="{Binding RecentUseds}"
-                ItemTemplate="{StaticResource RecentUsedItemTemplate}"
-                SelectionMode="None"
-                IsItemClickEnabled="True"
-                ItemClick="RecentUsedsListView_ItemClick"
-                KeyboardAcceleratorPlacementMode="Hidden">
-                <ListView.KeyboardAccelerators>
-                    <KeyboardAccelerator Modifiers="Menu" Key="R" Invoked="KeyboardAccelerator_Invoked_RecentUseds"/>
-                </ListView.KeyboardAccelerators>
-            </ListView>
+                <ListView
+                    x:Name="lvRecentUsed"
+                    Grid.Row="2"
+                    Margin="0 20 0 0"
+                    ItemsSource="{Binding RecentUseds}"
+                    ItemTemplate="{StaticResource RecentUsedItemTemplate}"
+                    SelectionMode="None"
+                    IsItemClickEnabled="True"
+                    ItemClick="RecentUsedsListView_ItemClick"
+                    KeyboardAcceleratorPlacementMode="Hidden">
+                    <ListView.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="R" Invoked="KeyboardAccelerator_Invoked_RecentUseds"/>
+                    </ListView.KeyboardAccelerators>
+                </ListView>
+            </Grid>
+
+            <Grid
+                x:Name="StartUseGrid"
+                Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock
+                    Text="{Binding Project_StartUp}"
+                    FontSize="20"/>
+
+                <ItemsView
+                    x:Name="ivStartups"                
+                    Grid.Row="1"
+                    Margin="0 20 0 0"
+                    ItemsSource="{Binding Startups}"
+                    ItemTemplate="{StaticResource StartupItemTemplate}"
+                    SelectionMode="None"
+                    IsItemInvokedEnabled="True"
+                    ItemInvoked="StartupItemsView_ItemInvoked"
+                    KeyboardAcceleratorPlacementMode="Hidden">
+                    <ItemsView.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="V" Invoked="KeyboardAccelerator_Invoked_Startups"/>
+                        <KeyboardAccelerator Modifiers="Menu" Key="F" Invoked="KeyboardAccelerator_Invoked_Startups"/>
+                        <KeyboardAccelerator Modifiers="Menu" Key="D" Invoked="KeyboardAccelerator_Invoked_Startups"/>
+                        <KeyboardAccelerator Modifiers="Menu" Key="N" Invoked="KeyboardAccelerator_Invoked_Startups"/>
+                    </ItemsView.KeyboardAccelerators>
+                </ItemsView>
+
+                <HyperlinkButton
+                    Grid.Row="2"
+                    Margin="0 4 0 0"
+                    HorizontalAlignment="Center"
+                    FontSize="12"
+                    Click="ContinueWithoutAny_HyperlinkButton_Click"
+                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                    Content="{Binding Project_ContinueWithoutFile}"
+                    KeyboardAcceleratorPlacementMode="Hidden">
+                    <HyperlinkButton.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="W"/>
+                    </HyperlinkButton.KeyboardAccelerators>
+                </HyperlinkButton>
+            </Grid>
         </Grid>
-
-        <Grid
-            x:Name="StartUseGrid"
-            Grid.Column="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="auto"/>
-                <RowDefinition Height="auto"/>
-                <RowDefinition Height="auto"/>
-            </Grid.RowDefinitions>
-
-            <TextBlock
-                Text="{Binding Project_StartUp}"
-                FontSize="20"/>
-
-            <ItemsView
-                x:Name="ivStartups"                
-                Grid.Row="1"
-                Margin="0 20 0 0"
-                ItemsSource="{Binding Startups}"
-                ItemTemplate="{StaticResource StartupItemTemplate}"
-                SelectionMode="None"
-                IsItemInvokedEnabled="True"
-                ItemInvoked="StartupItemsView_ItemInvoked"
-                KeyboardAcceleratorPlacementMode="Hidden">
-                <ItemsView.KeyboardAccelerators>
-                    <KeyboardAccelerator Modifiers="Menu" Key="V" Invoked="KeyboardAccelerator_Invoked_Startups"/>
-                    <KeyboardAccelerator Modifiers="Menu" Key="F" Invoked="KeyboardAccelerator_Invoked_Startups"/>
-                    <KeyboardAccelerator Modifiers="Menu" Key="D" Invoked="KeyboardAccelerator_Invoked_Startups"/>
-                    <KeyboardAccelerator Modifiers="Menu" Key="N" Invoked="KeyboardAccelerator_Invoked_Startups"/>
-                </ItemsView.KeyboardAccelerators>
-            </ItemsView>
-
-            <HyperlinkButton
-                Grid.Row="2"
-                Margin="0 4 0 0"
-                HorizontalAlignment="Center"
-                FontSize="12"
-                Click="ContinueWithoutAny_HyperlinkButton_Click"
-                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                Content="{Binding Project_ContinueWithoutFile}"
-                KeyboardAcceleratorPlacementMode="Hidden">
-                <HyperlinkButton.KeyboardAccelerators>
-                    <KeyboardAccelerator Modifiers="Menu" Key="W"/>
-                </HyperlinkButton.KeyboardAccelerators>
-            </HyperlinkButton>
-        </Grid>
-    </Grid>
+    </data:Card>
 </Page>

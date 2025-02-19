@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.AppSettingsPanel;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge.Base;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.DraftPanel;
@@ -16,9 +17,10 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels;
+using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
 using VirtualPaper.WpSettingsPanel;
-using Windows.UI;
+using Windows.Graphics;
 using WinRT.Interop;
 using WinUIEx;
 
@@ -30,10 +32,6 @@ namespace VirtualPaper.UI {
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainWindow : WindowEx, IWindowBridge {
-        //public string WindowStyleType { get; private set; }
-        //public SolidColorBrush WindowCaptionForeground => (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
-        //public SolidColorBrush WindowCaptionForegroundDisabled => (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
-
         public MainWindow(
             MainWindowViewModel mainWindowViewModel,
             ICommandsClient commandsClient,
@@ -43,17 +41,16 @@ namespace VirtualPaper.UI {
 
             this.InitializeComponent();
 
-            _basicUIComponent = new(mainWindowViewModel);
-            _dialog = new();
-
             _viewModel = mainWindowViewModel;
             this.MainGrid.DataContext = _viewModel;
 
+            _basicUIComponent = new(_viewModel);
+            _dialog = new();
             _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
-            //_ctsConsoleIn = new();
-
+            
+            SetWindowStartupPosition();
             SetWindowStyle();
-            SetWindowTitleBar();
+            SetWindowTitleBar();        
         }
 
         private void CommandsClient_UIRecieveCmd(object sender, int e) {
@@ -69,12 +66,12 @@ namespace VirtualPaper.UI {
             return _basicUIComponent;
         }
 
-        public T GetRequiredService<T>(
-            ObjectLifetime lifetime = ObjectLifetime.Transient,
-            ObjectLifetime lifetimeForParams = ObjectLifetime.Transient,
-            object scope = null) {
-            return ObjectProvider.GetRequiredService<T>(lifetime, lifetimeForParams, scope);
-        }
+        //public T GetRequiredService<T>(
+        //    ObjectLifetime lifetime = ObjectLifetime.Transient,
+        //    ObjectLifetime lifetimeForParams = ObjectLifetime.Transient,
+        //    object scope = null) {
+        //    return ObjectProvider.GetRequiredService<T>(lifetime, lifetimeForParams, scope);
+        //}
 
         public void Log(LogType type, object message) {
             switch (type) {
@@ -106,13 +103,20 @@ namespace VirtualPaper.UI {
         public IDialogService GetDialog() {
             return _dialog;
         }
-
-        public Color GetColorByKey(string key) {
-            return _colors.GetValueOrDefault(key);
-        }
         #endregion
 
         #region window property
+        private void SetWindowStartupPosition() {
+            DisplayArea displayArea = DisplayArea.GetFromWindowId(
+                Win32Interop.GetWindowIdFromWindow(WindowNative.GetWindowHandle(this)), DisplayAreaFallback.Nearest);
+            if (displayArea is not null) {
+                var centeredPosition = this.AppWindow.Position;
+                centeredPosition.X = (displayArea.WorkArea.Width - this.AppWindow.Size.Width) / 2;
+                centeredPosition.Y = (displayArea.WorkArea.Height - this.AppWindow.Size.Height) / 2;
+                this.AppWindow.Move(centeredPosition);
+            }
+        }
+
         private void SetWindowTitleBar() {
             //ref: https://learn.microsoft.com/en-us/windows/apps/develop/title-bar?tabs=wasdk
             if (AppWindowTitleBar.IsCustomizationSupported()) {
@@ -120,7 +124,7 @@ namespace VirtualPaper.UI {
                 titleBar.ExtendsContentIntoTitleBar = true;
                 titleBar.ButtonBackgroundColor = Colors.Transparent;
                 titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-                titleBar.ButtonForegroundColor = _colors[Constants.ColorKey.WindowCaptionForeground];
+                titleBar.ButtonForegroundColor = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForeground).Color;
 
                 AppTitleBar.Loaded += AppTitleBar_Loaded;
                 AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
@@ -132,8 +136,6 @@ namespace VirtualPaper.UI {
         }
 
         private void SetWindowStyle() {
-            //string type = _userSettingsClient.Settings.SystemBackdrop;
-            //WindowStyleType = type;
             this.SystemBackdrop = _userSettingsClient.Settings.SystemBackdrop switch {
                 AppSystemBackdrop.Mica => new MicaBackdrop(),
                 AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
@@ -143,19 +145,15 @@ namespace VirtualPaper.UI {
 
         private void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
             if (args.WindowActivationState == WindowActivationState.Deactivated) {
-                TitleTextBlock.Foreground = new SolidColorBrush(_colors[Constants.ColorKey.WindowCaptionForegroundDisabled]);
+                TitleTextBlock.Foreground = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForegroundDisabled);
             }
             else {
-                TitleTextBlock.Foreground = new SolidColorBrush(_colors[Constants.ColorKey.WindowCaptionForeground]);
+                TitleTextBlock.Foreground = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForeground);
             }
-
-            //_ = StdInListener();
         }
 
         private void WindowEx_Closed(object sender, WindowEventArgs args) {
             try {
-                //this.Hide();
-                //_ctsConsoleIn?.Cancel();
                 _commandsClient.UIRecieveCmd -= CommandsClient_UIRecieveCmd;
 
                 if (_userSettingsClient.Settings.IsFirstRun) {
@@ -180,31 +178,6 @@ namespace VirtualPaper.UI {
         }
         #endregion
 
-        //        private async Task StdInListener() {
-        //            try {
-        //                await Task.Run(async () => {
-        //                    while (!_ctsConsoleIn.IsCancellationRequested) {
-        //                        var msg = await Console.In.ReadLineAsync(_ctsConsoleIn.Token);
-        //                        if (string.IsNullOrEmpty(msg)) {
-        //                            //When the redirected stream is closed, a null line is sent to the event handler. 
-        //#if !DEBUG
-        //                            break;
-        //#endif
-        //                        }
-        //                        else {
-        //                            HandleIpcMessage(msg);
-        //                        }
-        //                    }
-        //                });
-        //            }
-        //            catch (Exception ex) {
-        //                App.Log.Error(ex);
-        //            }
-        //            finally {
-        //                Closing();
-        //            }
-        //        }
-
         private void HandleIpcMessage(int type) {
             try {
                 MessageType messageType = (MessageType)type;
@@ -222,12 +195,6 @@ namespace VirtualPaper.UI {
                 App.Log.Error(ex);
             }
         }
-
-        //private void Closing() {
-        //    this.Hide();
-        //    //_ctsConsoleIn?.Cancel();
-        //    _commandsClient.UIRecieveCmd -= CommandsClient_UIRecieveCmd;
-        //}
 
         private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
             try {
@@ -285,9 +252,9 @@ namespace VirtualPaper.UI {
                 RightPaddingColumn.Width = new GridLength(appWindow.TitleBar.RightInset / scaleAdjustment);
                 LeftPaddingColumn.Width = new GridLength(appWindow.TitleBar.LeftInset / scaleAdjustment);
 
-                List<Windows.Graphics.RectInt32> dragRectsList = [];
+                List<RectInt32> dragRectsList = [];
 
-                Windows.Graphics.RectInt32 dragRectL;
+                RectInt32 dragRectL;
                 dragRectL.X = (int)((LeftPaddingColumn.ActualWidth) * scaleAdjustment);
                 dragRectL.Y = 0;
                 dragRectL.Height = (int)(AppTitleBar.ActualHeight * scaleAdjustment);
@@ -296,7 +263,7 @@ namespace VirtualPaper.UI {
                                         + LeftDragColumn.ActualWidth) * scaleAdjustment);
                 dragRectsList.Add(dragRectL);
 
-                Windows.Graphics.RectInt32 dragRectR;
+                RectInt32 dragRectR;
                 dragRectR.X = (int)((LeftPaddingColumn.ActualWidth
                                     + IconColumn.ActualWidth
                                     + TitleTextBlock.ActualWidth
@@ -306,20 +273,19 @@ namespace VirtualPaper.UI {
                 dragRectR.Width = (int)(RightDragColumn.ActualWidth * scaleAdjustment);
                 dragRectsList.Add(dragRectR);
 
-                Windows.Graphics.RectInt32[] dragRects = [.. dragRectsList];
+                RectInt32[] dragRects = [.. dragRectsList];
 
                 appWindow.TitleBar.SetDragRectangles(dragRects);
             }
         }
 
         private double GetScaleAdjustment() {
-            IntPtr hWnd = WindowNative.GetWindowHandle(this);
-            WindowId wndId = Win32Interop.GetWindowIdFromWindow(hWnd);
-            DisplayArea displayArea = DisplayArea.GetFromWindowId(wndId, DisplayAreaFallback.Primary);
-            IntPtr hMonitor = Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId);
+            DisplayArea displayArea = DisplayArea.GetFromWindowId(
+                Win32Interop.GetWindowIdFromWindow(WindowNative.GetWindowHandle(this)), DisplayAreaFallback.Primary);
 
             // Get DPI.
-            int result = Native.GetDpiForMonitor(hMonitor, Native.Monitor_DPI_Type.MDT_Default, out uint dpiX, out uint _);
+            int result = Native.GetDpiForMonitor(
+                Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId), Native.Monitor_DPI_Type.MDT_Default, out uint dpiX, out uint _);
             if (result != 0) {
                 throw new Exception("Could not get DPI for monitor.");
             }
@@ -332,13 +298,12 @@ namespace VirtualPaper.UI {
         private readonly ICommandsClient _commandsClient;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly MainWindowViewModel _viewModel;
-        //private static CancellationTokenSource _ctsConsoleIn;
         private readonly BasicUIComponentUtil _basicUIComponent;
         private readonly DialogUtil _dialog;
-        private readonly Dictionary<string, Color> _colors = new() {
-            [Constants.ColorKey.WindowCaptionForeground] = ((SolidColorBrush)App.Current.Resources[Constants.ColorKey.WindowCaptionForeground]).Color,
-            [Constants.ColorKey.WindowCaptionForegroundDisabled] = ((SolidColorBrush)App.Current.Resources[Constants.ColorKey.WindowCaptionForegroundDisabled]).Color,
-        };
+        //private readonly Dictionary<string, Color> _colors = new() {
+        //    [Constants.ColorKey.WindowCaptionForeground] = ((SolidColorBrush)App.Current.Resources[Constants.ColorKey.WindowCaptionForeground]).Color,
+        //    [Constants.ColorKey.WindowCaptionForegroundDisabled] = ((SolidColorBrush)App.Current.Resources[Constants.ColorKey.WindowCaptionForegroundDisabled]).Color,
+        //};
 
         //private void Flyout_BackgreoundTask_Opening(object sender, object e) {
 

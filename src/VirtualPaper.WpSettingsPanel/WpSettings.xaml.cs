@@ -6,9 +6,9 @@ using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.Bridge.Base;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using VirtualPaper.WpSettingsPanel.Views;
-using Windows.UI;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -35,12 +35,12 @@ namespace VirtualPaper.WpSettingsPanel {
             return _windowBridge.GetNotify();
         }
 
-        public T GetRequiredService<T>(
-                ObjectLifetime lifetime = ObjectLifetime.Transient,
-                ObjectLifetime lifetimeForParams = ObjectLifetime.Transient,
-                object scope = null) {
-            return _windowBridge.GetRequiredService<T>(lifetime, lifetimeForParams, scope);
-        }
+        //public T GetRequiredService<T>(
+        //        ObjectLifetime lifetime = ObjectLifetime.Transient,
+        //        ObjectLifetime lifetimeForParams = ObjectLifetime.Transient,
+        //        object scope = null) {
+        //    return _windowBridge.GetRequiredService<T>(lifetime, lifetimeForParams, scope);
+        //}
 
         public void Log(LogType type, object message) {
             _windowBridge.Log(type, message);
@@ -57,10 +57,6 @@ namespace VirtualPaper.WpSettingsPanel {
         public IDialogService GetDialog() {
             return _windowBridge.GetDialog();
         }
-
-        public Color GetColorByKey(string key) {
-            return _windowBridge.GetColorByKey(key);
-        }
         #endregion
 
         #region nav
@@ -70,7 +66,7 @@ namespace VirtualPaper.WpSettingsPanel {
             if (this._windowBridge == null) {
                 ContentFrame.CacheSize = 2;
                 this._windowBridge = e.Parameter as IWindowBridge;
-                _viewModel = _windowBridge.GetRequiredService<WpSettingsViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+                _viewModel = ObjectProvider.GetRequiredService<WpSettingsViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
                 _viewModel._wpSettingsPanel = this;
                 this.DataContext = _viewModel;
             }

@@ -4,10 +4,12 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Common.Utils.Bridge;
-using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.Common.Utils.Bridge.Base;
+using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.DraftPanel.Views;
+using Windows.Graphics;
+using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -17,24 +19,22 @@ namespace VirtualPaper.DraftPanel {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class Draft : Page, IDraftPanelBridge {
-        public DraftPanelState CurrentState {
-            get { return (DraftPanelState)GetValue(CurrentStatProperty); }
-            set { SetValue(CurrentStatProperty, value); }
-        }
-        private static readonly DependencyProperty CurrentStatProperty =
-            DependencyProperty.Register(nameof(CurrentState), typeof(DraftPanelState), typeof(Draft), new PropertyMetadata(0));
+        //public DraftPanelState CurrentState {
+        //    get { return _currentState; }
+        //    set { _currentState = value; }
+        //}
 
         public Draft() {
             this.InitializeComponent();
         }
 
         #region bridge
-        public T GetRequiredService<T>(
-                ObjectLifetime lifetime = ObjectLifetime.Transient,
-                ObjectLifetime lifetimeForParams = ObjectLifetime.Transient,
-                object scope = null) {
-            return _windowBridge.GetRequiredService<T>(lifetime, lifetimeForParams, scope);
-        }
+        //public T GetRequiredService<T>(
+        //        ObjectLifetime lifetime = ObjectLifetime.Transient,
+        //        ObjectLifetime lifetimeForParams = ObjectLifetime.Transient,
+        //        object scope = null) {
+        //    return _windowBridge.GetRequiredService<T>(lifetime, lifetimeForParams, scope);
+        //}
 
         public nint GetWindowHandle() {
             return _windowBridge.GetWindowHandle();
@@ -47,6 +47,10 @@ namespace VirtualPaper.DraftPanel {
         public void ChangeProjectPanelState(DraftPanelState nextState, object param = null) {
             _param = param;
             NavigetBasedState(nextState);
+        }
+
+        public PointInt32 GetWindowLocation() {
+            return (_windowBridge.GetMainWindow() as WindowEx).AppWindow.Position;
         }
         #endregion
 
@@ -61,18 +65,24 @@ namespace VirtualPaper.DraftPanel {
         }
 
         private void FrameCardComp_Loaded(object sender, RoutedEventArgs e) {
-            NavigetBasedState(CurrentState);
+            NavigetBasedState(_currentState);
+        }
+
+        private void FrameCardComp_Unloaded(object sender, RoutedEventArgs e) {
+            var frame = sender as Frame;
+            frame.Content = null;
+            frame.ForwardStack.Clear();
+            frame.BackStack.Clear();
         }
 
         internal void NavigetBasedState(DraftPanelState nextState) {
             CrossThreadInvoker.InvokeOnUiThread(() => {
-                CurrentState = nextState;
+                _currentState = nextState;
 
                 Type targetPageType;
                 switch (nextState) {
                     case DraftPanelState.Startup:
                         targetPageType = typeof(GetStart);
-                        //FrameCardComp.Content = _windowBridge.GetRequiredService<GetStart>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
                         break;
                     case DraftPanelState.ProjectConfig:
                         targetPageType = typeof(ProjectConfig);
@@ -81,10 +91,14 @@ namespace VirtualPaper.DraftPanel {
                         targetPageType = typeof(DraftConfig);
                         break;
                     case DraftPanelState.WorkSpace:
-                        FrameCardComp.Content = null;
+                        targetPageType = typeof(WorkSpace);
                         FrameCardComp.ForwardStack.Clear();
                         FrameCardComp.BackStack.Clear();
-                        return;
+                        break;
+                    //FrameCardComp.Content = null;
+                    //FrameCardComp.ForwardStack.Clear();
+                    //FrameCardComp.BackStack.Clear();
+                    //return;
                     default:
                         return;
                 }
@@ -122,5 +136,6 @@ namespace VirtualPaper.DraftPanel {
 
         private IWindowBridge _windowBridge;
         private object _param;
+        private DraftPanelState _currentState;
     }
 }

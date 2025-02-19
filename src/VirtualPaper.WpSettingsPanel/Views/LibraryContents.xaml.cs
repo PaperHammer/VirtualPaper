@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.DataTransfer;
@@ -32,7 +33,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                 this._wpSettingsPanel = e.Parameter as IWpSettingsPanel;
 
                 _compositor = this._wpSettingsPanel.GetCompositor() as Compositor;
-                _viewModel = this._wpSettingsPanel.GetRequiredService<LibraryContentsViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
+                _viewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
                 this.DataContext = _viewModel;
             }
         }

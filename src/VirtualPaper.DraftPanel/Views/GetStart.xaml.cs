@@ -11,6 +11,7 @@ using VirtualPaper.Models.DraftPanel;
 using Microsoft.UI.Xaml.Input;
 using System.Threading.Tasks;
 using Windows.System;
+using VirtualPaper.Common.Utils.DI;
 
 // To learn more about WinUI, the WinUI draft structure,
 // and more about our draft templates, see: http://aka.ms/winui-draft-info.
@@ -30,7 +31,7 @@ namespace VirtualPaper.DraftPanel.Views {
             if (this._draftPanel == null) {
                 this._draftPanel = e.Parameter as IDraftPanelBridge;
 
-                _viewModel = this._draftPanel.GetRequiredService<GetStartViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+                _viewModel = ObjectProvider.GetRequiredService<GetStartViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
                 this.DataContext = _viewModel;
             }
         }

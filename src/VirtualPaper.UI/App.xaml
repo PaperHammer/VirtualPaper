@@ -16,10 +16,12 @@
                         </ResourceDictionary>
                     </controls:XamlControlsResources.MergedDictionaries>
                 </controls:XamlControlsResources>
+
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Utils/ResourceDictionary.xaml" />
                 <!--Other merged dictionaries here-->
             </ResourceDictionary.MergedDictionaries>
 
-            <!--  Other app resources here  -->
+            <!--  Other app resources here  --><!--
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Default">
                     <AcrylicBrush
@@ -53,7 +55,7 @@
                         TintLuminosityOpacity="0.5"
                         TintOpacity="0.2" />
                 </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries>
+            </ResourceDictionary.ThemeDictionaries>-->
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
+using VirtualPaper.Common.Utils.DI;
 using Windows.System;
 using WinRT;
 
@@ -26,7 +27,7 @@ namespace VirtualPaper.AppSettingsPanel.Views {
             if (this._appSettingsPanel == null) {
                 this._appSettingsPanel = e.Parameter as IAppSettingsPanel;
 
-                _viewModel = _appSettingsPanel.GetRequiredService<GeneralSettingViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+                _viewModel = ObjectProvider.GetRequiredService<GeneralSettingViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
                 _viewModel._appSettingsPanel = this._appSettingsPanel;
                 this.DataContext = _viewModel;
             }

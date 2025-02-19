@@ -46,7 +46,6 @@ namespace VirtualPaper {
     public partial class App : Application {
         internal static Logger Log => _log;
         internal static JobService Jobs => Services.GetRequiredService<JobService>();
-        internal static IUserSettingsService IUserSettgins => Services.GetRequiredService<IUserSettingsService>();
 
         public static IServiceProvider Services {
             get {

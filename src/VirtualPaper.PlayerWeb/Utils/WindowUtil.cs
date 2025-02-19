@@ -1,5 +1,4 @@
 ﻿using System;
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
@@ -16,7 +15,6 @@ namespace VirtualPaper.PlayerWeb.Utils {
         static WindowUtil() {
             _mainWindow = App.MainWindowInstance;
             _appWindow = _mainWindow.AppWindow;
-            _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
         }
 
         internal static void InitWindowAsBackground() {
@@ -32,7 +30,7 @@ namespace VirtualPaper.PlayerWeb.Utils {
             if (_details == null) {
                 _details = new(_startArgs.WpBasicDataFilePath);
 
-                _toolContainer.AddContent(Constants.I18n.Text_Details, "Details", _details);
+                _toolWindow.AddContent(Constants.I18n.Text_Details, "Details", _details);
             }
         }
         #endregion
@@ -52,7 +50,7 @@ namespace VirtualPaper.PlayerWeb.Utils {
                 _effectConfig.SaveAndApply += EffectConfig_SaveAndApply;
                 _toolWindowClose += _effectConfig.Closing;
 
-                _toolContainer.AddContent(Constants.I18n.Text_EffectConfig, "EffectConfig", _effectConfig);
+                _toolWindow.AddContent(Constants.I18n.Text_EffectConfig, "EffectConfig", _effectConfig);
             }
         }
 
@@ -61,7 +59,7 @@ namespace VirtualPaper.PlayerWeb.Utils {
                 _mainWindow?.Close();
             }
             App.WriteToParent(new VirtualPaperApplyCmd());
-            _toolContainer?.Close();
+            _toolWindow?.Close();
         }
 
         private static void EffectConfig_DoubleValueChanged(object sender, DoubleValueChangedEventArgs e) {
@@ -77,33 +75,28 @@ namespace VirtualPaper.PlayerWeb.Utils {
         }
         #endregion
 
-        internal static void ActiveToolWindow(StartArgs startArgs, nint uiHwnd = 0) {
-            if (_toolContainer == null) {
-                _startArgs = startArgs;
-                _toolContainer = new(
-                   startArgs.SystemBackdrop,
-                   startArgs.ApplicationTheme,
-                   _mainWindow.WindowCaptionForeground.Color,
-                   _mainWindow.WindowCaptionForegroundDisabled.Color);
+        internal static void ActiveToolWindow(nint uiHwnd = 0) {
+            if (_toolWindow == null) {
+                _toolWindow = new();
 
-                _toolContainer.Closed += ToolContainer_Closed;
+                _toolWindow.Closed += ToolContainer_Closed;
                 static void ToolContainer_Closed(object _, WindowEventArgs __) {
-                    _toolContainer.Closed -= ToolContainer_Closed;
-                    _toolWindowClose?.Invoke(_toolContainer, EventArgs.Empty);
+                    _toolWindow.Closed -= ToolContainer_Closed;
+                    _toolWindowClose?.Invoke(_toolWindow, EventArgs.Empty);
 
                     _effectConfig = null;
-                    _toolContainer = null;
+                    _toolWindow = null;
                     _toolWindowClose = null;
                 }
                 SetToolWindowParent(uiHwnd == 0 ? GetWindowHwnd(_mainWindow) : uiHwnd);
-                _toolContainer?.Show();
+                _toolWindow?.Show();
             }
 
-            _toolContainer?.BringToFront();
+            _toolWindow?.BringToFront();
         }
 
         private static void SetToolWindowParent(nint mainHwnd) {
-            IntPtr toolHwnd = GetWindowHwnd(_toolContainer);
+            IntPtr toolHwnd = GetWindowHwnd(_toolWindow);
             Native.SetWindowLong(toolHwnd, Native.GWL_HWNDPARENT, mainHwnd);
         }
 
@@ -112,7 +105,7 @@ namespace VirtualPaper.PlayerWeb.Utils {
         }
 
         internal static void CloseToolWindow() {
-            _toolContainer?.Close();
+            _toolWindow?.Close();
         }
 
         internal static bool IsToolContentNull() {
@@ -122,10 +115,9 @@ namespace VirtualPaper.PlayerWeb.Utils {
         private readonly static AppWindow _appWindow;
         private static EffectConfig _effectConfig;
         private static Details _details;
-        private static ToolContainer _toolContainer;
+        private static ToolWindow _toolWindow;
         private readonly static MainWindow _mainWindow;
         private static StartArgs _startArgs;
-        private readonly static DispatcherQueue _dispatcherQueue;
         private static EventHandler _toolWindowClose;
     }
 }

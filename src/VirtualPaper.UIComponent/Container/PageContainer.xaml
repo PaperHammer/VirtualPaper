@@ -10,7 +10,7 @@
     Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
     NavigationCacheMode="Enabled">
 
-    <Frame
-        x:Name="FrameComp"
+    <ContentControl
+        x:Name="ContentComp"
         Padding="5"/>
 </Page>

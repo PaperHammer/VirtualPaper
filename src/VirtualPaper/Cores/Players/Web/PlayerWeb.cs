@@ -52,9 +52,6 @@ namespace VirtualPaper.Cores.Players.Web {
             cmdArgs.Append($" --effect-file-path-temporary {data.WpEffectFilePathTemporary}");
             cmdArgs.Append($" --effect-file-path-template {data.WpEffectFilePathTemplate}");
             cmdArgs.Append($" -r {data.RType.ToString()}");
-            cmdArgs.Append($" --system-backdrop {App.IUserSettgins.Settings.SystemBackdrop}");
-            cmdArgs.Append($" -t {App.IUserSettgins.Settings.ApplicationTheme}");
-            cmdArgs.Append($" -l {App.IUserSettgins.Settings.Language}");
 
             ProcessStartInfo start = new() {
                 FileName = Path.Combine(

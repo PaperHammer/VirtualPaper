@@ -8,12 +8,12 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
-using Windows.UI;
 using WinRT.Interop;
-using WinUI3Localizer;
 using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -23,19 +23,8 @@ namespace VirtualPaper.UIComponent.Container {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class ToolContainer : WindowEx {
-        public ToolContainer(
-            AppSystemBackdrop appSystemBackdrop,
-            AppTheme appTheme,
-            Color windowCaptionForegroundColor,
-            Color windowCaptionForegroundDisabledColor) {
-            _selectIdx2Content = [];
-            _appSystemBackdrop = appSystemBackdrop;
-            _appTheme = appTheme;
-            _windowCaptionForeground = new(windowCaptionForegroundColor);
-            _windowCaptionForegroundDisabled = new(windowCaptionForegroundDisabledColor);
-            _localizer = LanguageUtil.LocalizerInstacne;
-
+    public sealed partial class ToolWindow : WindowEx {
+        public ToolWindow() {
             this.InitializeComponent();
 
             SetWindowStyle();
@@ -44,18 +33,18 @@ namespace VirtualPaper.UIComponent.Container {
 
         private void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
             if (args.WindowActivationState == WindowActivationState.Deactivated) {
-                TitleTextBlock.Foreground = _windowCaptionForegroundDisabled;
+                TitleTextBlock.Foreground = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForegroundDisabled);
             }
             else {
-                TitleTextBlock.Foreground = _windowCaptionForeground;
+                TitleTextBlock.Foreground = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForeground);
             }
         }
 
-        public void AddContent(string text, string tag, object content) {
+        public void AddContent(string textKey, string tag, object content) {
             _selectIdx2Content[SelBar.Items.Count] = (tag, content);
             SelBar.Items.Add(new SelectorBarItem() {
                 Name = $"s{SelBar.Items.Count}",
-                Text = _localizer.GetLocalizedString(text),
+                Text = LanguageUtil.GetI18n(textKey),
                 Tag = tag,
                 IsSelected = SelBar.Items.Count == 0,
             });
@@ -79,7 +68,7 @@ namespace VirtualPaper.UIComponent.Container {
 
         #region window title bar
         private void SetWindowStyle() {
-            this.SystemBackdrop = _appSystemBackdrop switch {
+            this.SystemBackdrop = ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.SystemBackdrop switch {
                 AppSystemBackdrop.Mica => new MicaBackdrop(),
                 AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
                 _ => default,
@@ -93,7 +82,7 @@ namespace VirtualPaper.UIComponent.Container {
                 titleBar.ExtendsContentIntoTitleBar = true;
                 titleBar.ButtonBackgroundColor = Colors.Transparent;
                 titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-                //titleBar.ButtonForegroundColor = _windowCaptionForeground.Color;
+                titleBar.ButtonForegroundColor = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForeground).Color;
 
                 AppTitleBar.Loaded += AppTitleBar_Loaded;
                 AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
@@ -101,7 +90,7 @@ namespace VirtualPaper.UIComponent.Container {
             }
             else {
                 AppTitleBar.Visibility = Visibility.Collapsed;
-                this.UseImmersiveDarkModeEx(_appTheme == AppTheme.Dark);
+                this.UseImmersiveDarkModeEx(ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.ApplicationTheme == AppTheme.Dark);
             }
         }
 
@@ -171,12 +160,11 @@ namespace VirtualPaper.UIComponent.Container {
         }
         #endregion
 
-        private readonly AppSystemBackdrop _appSystemBackdrop;
-        private readonly AppTheme _appTheme;
-        private readonly SolidColorBrush _windowCaptionForegroundDisabled;
-        private readonly SolidColorBrush _windowCaptionForeground;
-        private readonly Dictionary<int, (string, object)> _selectIdx2Content;
-        private readonly ILocalizer _localizer;
+        //private readonly AppSystemBackdrop _appSystemBackdrop;
+        //private readonly AppTheme _appTheme;
+        //private readonly SolidColorBrush _windowCaptionForegroundDisabled;
+        //private readonly SolidColorBrush _windowCaptionForeground;
+        private readonly Dictionary<int, (string, object)> _selectIdx2Content = [];
         private int _previousSelectedIndex = 0;
     }
 }

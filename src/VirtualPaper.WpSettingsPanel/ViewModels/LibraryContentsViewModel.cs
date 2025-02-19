@@ -99,28 +99,24 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 if (!data.IsAvailable()) return;
                 await CheckFileUpdateAsync(data);
 
-                if (_wp2TocDetail.TryGetValue(data.FilePath, out ToolContainer toolContainer)) {
-                    toolContainer.BringToFront();
+                if (_wp2TocDetail.TryGetValue(data.FilePath, out ToolWindow toolWindow)) {
+                    toolWindow.BringToFront();
                     return;
                 }
 
                 var mainWindow = (WindowEx)_wpSettingsViewModel._wpSettingsPanel.GetMainWindow();
-                toolContainer = new(
-                   _userSettingsClient.Settings.SystemBackdrop,
-                   _userSettingsClient.Settings.ApplicationTheme,
-                   _wpSettingsViewModel._wpSettingsPanel.GetColorByKey(Constants.ColorKey.WindowCaptionForeground),
-                   _wpSettingsViewModel._wpSettingsPanel.GetColorByKey(Constants.ColorKey.WindowCaptionForegroundDisabled));
+                toolWindow = new();
 
-                toolContainer.Closed += ToolContainer_Closed;
+                toolWindow.Closed += ToolContainer_Closed;
                 void ToolContainer_Closed(object _, WindowEventArgs __) {
-                    toolContainer.Closed -= ToolContainer_Closed;
+                    toolWindow.Closed -= ToolContainer_Closed;
                     _wp2TocDetail.Remove(data.FilePath);
                 }
 
-                SetToolWindowParent(toolContainer, mainWindow);
-                AddDetailsPage(data, toolContainer);
-                _wp2TocDetail[data.FilePath] = toolContainer;
-                toolContainer.Show();
+                SetToolWindowParent(toolWindow, mainWindow);
+                AddDetailsPage(data, toolWindow);
+                _wp2TocDetail[data.FilePath] = toolWindow;
+                toolWindow.Show();
             }
             catch (Exception ex) {
                 _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
@@ -132,22 +128,18 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 if (!data.IsAvailable()) return;
                 await CheckFileUpdateAsync(data);
 
-                if (_wp2TocEdit.TryGetValue(data.FilePath, out ToolContainer toolContainer)) {
-                    toolContainer.BringToFront();
+                if (_wp2TocEdit.TryGetValue(data.FilePath, out ToolWindow toolWindow)) {
+                    toolWindow.BringToFront();
                     return;
                 }
 
                 var mainWindow = (WindowEx)_wpSettingsViewModel._wpSettingsPanel.GetMainWindow();
-                toolContainer = new(
-                   _userSettingsClient.Settings.SystemBackdrop,
-                   _userSettingsClient.Settings.ApplicationTheme,
-                   _wpSettingsViewModel._wpSettingsPanel.GetColorByKey(Constants.ColorKey.WindowCaptionForeground),
-                   _wpSettingsViewModel._wpSettingsPanel.GetColorByKey(Constants.ColorKey.WindowCaptionForegroundDisabled));
+                toolWindow = new();
 
-                toolContainer.Closed += ToolContainer_Closed;
+                toolWindow.Closed += ToolContainer_Closed;
                 void ToolContainer_Closed(object _, WindowEventArgs __) {
-                    toolContainer.Closed -= ToolContainer_Closed;
-                    Edits edits = toolContainer.GetContentByTag($"Edits_{data.FilePath}") as Edits;
+                    toolWindow.Closed -= ToolContainer_Closed;
+                    Edits edits = toolWindow.GetContentByTag($"Edits_{data.FilePath}") as Edits;
                     if (edits.IsSaved) {
                         data.Title = edits.Title;
                         data.Desc = edits.Desc;
@@ -163,10 +155,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     _wp2TocEdit.Remove(data.FilePath);
                 }
 
-                SetToolWindowParent(toolContainer, mainWindow);
-                AddEditsPage(data, toolContainer);
-                _wp2TocEdit[data.FilePath] = toolContainer;
-                toolContainer.Show();
+                SetToolWindowParent(toolWindow, mainWindow);
+                AddEditsPage(data, toolWindow);
+                _wp2TocEdit[data.FilePath] = toolWindow;
+                toolWindow.Show();
             }
             catch (Exception ex) {
                 _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
@@ -485,12 +477,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             return false;
         }
 
-        private static void AddDetailsPage(IWpBasicData data, ToolContainer toolContainer) {
+        private static void AddDetailsPage(IWpBasicData data, ToolWindow toolContainer) {
             Details details = new(data);
             toolContainer.AddContent(Constants.I18n.Text_Details, $"Details_{data.FilePath}", details);
         }
 
-        private static void AddEditsPage(IWpBasicData data, ToolContainer toolContainer) {
+        private static void AddEditsPage(IWpBasicData data, ToolWindow toolContainer) {
             Edits edits = new(data, toolContainer);
             toolContainer.AddContent(Constants.I18n.Text_Edit, $"Edits_{data.FilePath}", edits);
         }
@@ -566,7 +558,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly ConcurrentDictionary<string, int> _uid2idx = [];
         private readonly SemaphoreSlim _applySemaphoreSlim = new(1, 1);
         private readonly SemaphoreSlim _previewSemaphoreSlim = new(1, 1);
-        private static readonly Dictionary<string, ToolContainer> _wp2TocDetail = [];
-        private static readonly Dictionary<string, ToolContainer> _wp2TocEdit = [];
+        private static readonly Dictionary<string, ToolWindow> _wp2TocDetail = [];
+        private static readonly Dictionary<string, ToolWindow> _wp2TocEdit = [];
     }
 }

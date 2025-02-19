@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge.Base;
+using VirtualPaper.Common.Utils.DI;
 
 namespace VirtualPaper.UI.Utils
 {

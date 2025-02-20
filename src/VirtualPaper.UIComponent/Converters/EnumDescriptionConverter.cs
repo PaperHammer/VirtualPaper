@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using Microsoft.UI.Xaml.Data;
 
-namespace VirtualPaper.UI.Utils.Converters {
+namespace VirtualPaper.UIComponent.Converters {
     public partial class EnumDescriptionConverter : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, string language) {
             FieldInfo fieldInfo = value.GetType().GetField(value.ToString());

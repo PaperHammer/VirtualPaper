@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using NLog;
 using VirtualPaper.Common;
@@ -11,10 +10,8 @@ using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
-using VirtualPaper.UI.Utils;
-using VirtualPaper.UI.ViewModels;
 using VirtualPaper.UIComponent.Utils;
-using WinUI3Localizer;
+using Windows.ApplicationModel.Core;
 using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -25,15 +22,7 @@ namespace VirtualPaper.UI {
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
     public partial class App : Application {
-        internal static DispatcherQueue UITaskInvokeQueue => _dispatcherQueue;
         internal static Logger Log => LogManager.GetCurrentClassLogger();
-
-        //public static IServiceProvider Services {
-        //    get {
-        //        IServiceProvider serviceProvider = ((App)Current)._serviceProvider;
-        //        return serviceProvider ?? throw new InvalidOperationException("The service provider is not initialized");
-        //    }
-        //}
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -57,9 +46,7 @@ namespace VirtualPaper.UI {
             SetupUnhandledExceptionLogging();
 
             ConfigureServices();
-            //_serviceProvider = ConfigureServices();
             _userSettings = ObjectProvider.GetRequiredService<IUserSettingsClient>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-            //_userSettingsClient = Services.GetRequiredService<IUserSettingsClient>();
 
             SetAppTheme(_userSettings.Settings.ApplicationTheme);
         }
@@ -72,37 +59,6 @@ namespace VirtualPaper.UI {
             ObjectProvider.RegisterRelation<ICommandsClient, CommandsClient>();
             ObjectProvider.RegisterRelation<IScrCommandsClient, ScrCommandsClient>();
         }
-
-        //private static ServiceProvider ConfigureServices() {
-        //    var provider = new ServiceCollection()
-        //        .AddSingleton<MainWindow>()
-
-        //        .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
-        //        .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()
-        //        .AddSingleton<IUserSettingsClient, UserSettingsClient>()
-        //        .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
-        //        .AddSingleton<ICommandsClient, CommandsClient>()
-        //        .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
-
-        //        .AddSingleton<MainWindowViewModel>()
-        //        .AddSingleton<WpSettingsViewModel>()
-        //        .AddSingleton<LibraryContentsViewModel>()
-        //        .AddSingleton<ScreenSaverViewModel>()
-        //        .AddTransient<GeneralSettingViewModel>()
-        //        .AddTransient<PerformanceSettingViewModel>()
-        //        .AddTransient<SystemSettingViewModel>()
-        //        .AddTransient<OtherSettingViewModel>()
-
-        //        .AddSingleton<TrayCommand>()
-
-        //        .AddSingleton<IDialogService, DialogUtil>()
-
-        //        .AddHttpClient()
-
-        //        .BuildServiceProvider();
-
-        //    return provider;
-        //}
 
         /// <summary>
         /// Invoked when the application is launched.
@@ -123,7 +79,6 @@ namespace VirtualPaper.UI {
             }
 
             ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton, ObjectLifetime.Singleton).Show();
-            //Services.GetRequiredService<MainWindow>().Show();
             // 避免文字无法初始化
             //ObjectProvider.GetRequiredService<TrayCommand>();
             //Services.GetRequiredService<TrayCommand>();
@@ -145,7 +100,7 @@ namespace VirtualPaper.UI {
             }
         }
 
-        private void LogUnhandledException<T>(T exception) => Log.Error(exception);
+        private static void LogUnhandledException<T>(T exception) => Log.Error(exception);
 
         //Not working ugh..
         //Issue: https://github.com/microsoft/microsoft-ui-xaml/issues/5221
@@ -159,13 +114,12 @@ namespace VirtualPaper.UI {
             this.UnhandledException += (s, e) =>
                 LogUnhandledException(e.Exception);
 
-            Windows.ApplicationModel.Core.CoreApplication.UnhandledErrorDetected += (s, e) =>
+            CoreApplication.UnhandledErrorDetected += (s, e) =>
                 LogUnhandledException(e.UnhandledError);
         }
 
         public static void ShutDown() {
             Task.Run(async () => {
-                //((ServiceProvider)App.Services)?.Dispose();
                 await ObjectProvider.GetRequiredService<IWallpaperControlClient>(ObjectLifetime.Singleton, ObjectLifetime.Singleton).CloseAllPreviewAsync();
 
                 ObjectProvider.Clean();
@@ -173,13 +127,6 @@ namespace VirtualPaper.UI {
             });
         }
 
-        public static string GetI18n(string key) {
-            return _i18n.GetLocalizedString(key);
-        }
-
-        //private readonly IServiceProvider _serviceProvider;
         private readonly IUserSettingsClient _userSettings;
-        private static readonly ILocalizer _i18n = LanguageUtil.LocalizerInstacne;
-        private static readonly DispatcherQueue _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
     }
 }

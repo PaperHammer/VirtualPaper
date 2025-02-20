@@ -2,7 +2,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 
-namespace VirtualPaper.UI.Utils.Converters {
+namespace VirtualPaper.UIComponent.Converters {
     public partial class DecimalPlaceConverter : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, string language) {
             if (value is double num) {

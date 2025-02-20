@@ -172,8 +172,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 bool isUsing = await CheckFileUsingAsync(data, false);
                 if (isUsing) {
                     _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowMsg(
-                        true, 
-                        Constants.I18n.Text_FileUsing, 
+                        true,
+                        Constants.I18n.Text_FileUsing,
                         InfoBarType.Informational);
                     return;
                 }
@@ -185,7 +185,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                 _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowMsg(
                     true,
-                    Constants.I18n.InfobarMsg_Success, 
+                    Constants.I18n.InfobarMsg_Success,
                     InfoBarType.Success);
             }
             catch (Exception ex) {
@@ -202,11 +202,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 if (!data.IsAvailable()) return;
                 await CheckFileUpdateAsync(data);
 
-                _ctsPreview = new CancellationTokenSource();
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loading(true, false, [_ctsPreview]);
-
                 var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                 if (rtype == RuntimeType.RUnknown) return;
+                
+                _ctsPreview = new CancellationTokenSource();
+                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loading(true, false, [_ctsPreview]);
 
                 await _wpControlClient.PreviewWallpaperAsync(_wpSettingsViewModel.SelectedMonitor.DeviceId, data, rtype, _ctsPreview.Token);
             }
@@ -293,7 +293,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                 _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowMsg(
                     true,
-                    Constants.I18n.InfobarMsg_Success, 
+                    Constants.I18n.InfobarMsg_Success,
                     InfoBarType.Success);
             }
             catch (Exception ex) {

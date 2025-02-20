@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Models;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.UI.ViewModels {
     public partial class MainWindowViewModel : ObservableObject {
@@ -100,13 +101,13 @@ namespace VirtualPaper.UI.ViewModels {
         }
 
         private void InitText() {
-            SidebarGallery = App.GetI18n(Constants.I18n.SidebarGallery);
-            SidebarWpSettings = App.GetI18n(Constants.I18n.SidebarWpSettings);
-            SidebarProject = App.GetI18n(Constants.I18n.SidebarProject);
-            SidebarAccount = App.GetI18n(Constants.I18n.SidebarAccount);
-            SidebarAppSettings = App.GetI18n(Constants.I18n.SidebarAppSettings);
-            TextLoading = App.GetI18n(Constants.I18n.Text_Loading);
-            TextCancel = App.GetI18n(Constants.I18n.Text_Cancel);
+            SidebarGallery = LanguageUtil.GetI18n(Constants.I18n.SidebarGallery);
+            SidebarWpSettings = LanguageUtil.GetI18n(Constants.I18n.SidebarWpSettings);
+            SidebarProject = LanguageUtil.GetI18n(Constants.I18n.SidebarProject);
+            SidebarAccount = LanguageUtil.GetI18n(Constants.I18n.SidebarAccount);
+            SidebarAppSettings = LanguageUtil.GetI18n(Constants.I18n.SidebarAppSettings);
+            TextLoading = LanguageUtil.GetI18n(Constants.I18n.Text_Loading);
+            TextCancel = LanguageUtil.GetI18n(Constants.I18n.Text_Cancel);
         }
 
         #region loading_ui_logic
@@ -155,7 +156,7 @@ namespace VirtualPaper.UI.ViewModels {
             string msg,
             InfoBarSeverity infoBarSeverity) {
             InfoBarSeverity = infoBarSeverity;
-            InfobarMsg = isNeedLocallizer ? App.GetI18n(msg) : msg;
+            InfobarMsg = isNeedLocallizer ? LanguageUtil.GetI18n(msg) : msg;
             InfoBarIsOpen = true;
         }
         #endregion

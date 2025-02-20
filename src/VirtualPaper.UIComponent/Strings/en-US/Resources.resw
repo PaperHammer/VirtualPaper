@@ -675,7 +675,7 @@ Author: PaperHammer</value>
     <value>The location is empty or invalid (up to 260 characters).</value>
   </data>
   <data name="Project_DeployNewDraft_NextStep" xml:space="preserve">
-    <value>Next</value>
+    <value>Next (N)</value>
   </data>
   <data name="Project_SearchTemplate" xml:space="preserve">
     <value>Search for a project template</value>

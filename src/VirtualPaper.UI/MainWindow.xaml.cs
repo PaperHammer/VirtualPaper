@@ -12,6 +12,7 @@ using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -47,10 +48,10 @@ namespace VirtualPaper.UI {
             _basicUIComponent = new(_viewModel);
             _dialog = new();
             _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
-            
+
             SetWindowStartupPosition();
             SetWindowStyle();
-            SetWindowTitleBar();        
+            SetWindowTitleBar();
         }
 
         private void CommandsClient_UIRecieveCmd(object sender, int e) {
@@ -183,7 +184,7 @@ namespace VirtualPaper.UI {
                 MessageType messageType = (MessageType)type;
                 switch (messageType) {
                     case MessageType.cmd_active:
-                        App.UITaskInvokeQueue.TryEnqueue(() => {
+                        CrossThreadInvoker.InvokeOnUiThread(() => {
                             this.BringToFront();
                         });
                         break;
@@ -198,11 +199,6 @@ namespace VirtualPaper.UI {
 
         private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
             try {
-                FrameNavigationOptions navOptions = new() {
-                    TransitionInfoOverride = args.RecommendedNavigationTransitionInfo,
-                    IsNavigationStackEnabled = false
-                };
-
                 Type pageType = null;
                 //if (args.SelectedItemContainer.Name == Gallery.Name) {
                 //    pageType = typeof(Gallery);
@@ -221,7 +217,9 @@ namespace VirtualPaper.UI {
                     pageType = typeof(AppSettings);
                 }
 
-                ContentFrame.NavigateToType(pageType, this, navOptions);
+                if (pageType != null) {
+                    ContentFrame.Navigate(pageType, this);
+                }
             }
             catch (Exception ex) {
                 _basicUIComponent.ShowExp(ex);
@@ -300,10 +298,6 @@ namespace VirtualPaper.UI {
         private readonly MainWindowViewModel _viewModel;
         private readonly BasicUIComponentUtil _basicUIComponent;
         private readonly DialogUtil _dialog;
-        //private readonly Dictionary<string, Color> _colors = new() {
-        //    [Constants.ColorKey.WindowCaptionForeground] = ((SolidColorBrush)App.Current.Resources[Constants.ColorKey.WindowCaptionForeground]).Color,
-        //    [Constants.ColorKey.WindowCaptionForegroundDisabled] = ((SolidColorBrush)App.Current.Resources[Constants.ColorKey.WindowCaptionForegroundDisabled]).Color,
-        //};
 
         //private void Flyout_BackgreoundTask_Opening(object sender, object e) {
 

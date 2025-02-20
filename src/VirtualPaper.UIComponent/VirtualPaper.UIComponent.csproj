@@ -46,7 +46,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
-    <ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
   </ItemGroup>
 
   <ItemGroup>

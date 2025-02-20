@@ -15,7 +15,7 @@ namespace VirtualPaper.DraftPanel.StrategyGroup.StartupSTG {
         public async Task HandleAsync(IDraftPanelBridge projectBridge) {
             var storageFolder = await WindowsStoragePickers.PickFolderAsync(projectBridge.GetWindowHandle());
             if (storageFolder == null) return;
-            projectBridge.ChangeProjectPanelState(DraftPanelState.WorkSpace, storageFolder.Path);
+            projectBridge.ChangePanelState(DraftPanelState.WorkSpace, storageFolder.Path);
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 
@@ -15,7 +16,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             get { return _draftName; }
             set {
                 _draftName = value;
-                OnPropertyChanged();
                 IsNameOk = !string.IsNullOrEmpty(value) && value.Length <= MaxLength && NameRegex().IsMatch(value);
                 IsNextEnable = IsNameOk && IsFolderPathOk;
             }
@@ -32,7 +32,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             get { return _storageFolderPath; }
             set {
                 _storageFolderPath = value;
-                OnPropertyChanged();
                 if (IsValidFolderPath(value)) {
                     DeployNewDraft_Desc = LanguageUtil.GetI18n(Constants.I18n.Project_DeployNewDraft_Desc) + " " + value;
                     IsFolderPathOk = true;
@@ -54,7 +53,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private bool _isNextEnable;
         public bool IsNextEnable {
             get { return _isNextEnable; }
-            set { _isNextEnable = value; OnPropertyChanged(); }
+            set { _isNextEnable = value; _configSpace.SetNextStepBtnEnable(value); }
         }
 
         public string Project_DeployNewDraft { get; set; }
@@ -75,10 +74,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         public DraftConfigViewModel() {
             InitText();
-            InitContent();
         }
 
-        private void InitContent() {
+        internal void InitContent() {
             DraftName = "New_Draft";
             StorageFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             IsNextEnable = true;
@@ -161,5 +159,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
             return true;
         }
+
+        internal IConfigSpace _configSpace;
     }
 }

@@ -1,22 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
-using VirtualPaper.DraftPanel.ViewModels;
-using VirtualPaper.Common.Utils.Bridge;
-using VirtualPaper.Models.DraftPanel;
-using Microsoft.UI.Xaml.Input;
-using System.Threading.Tasks;
-using Windows.System;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.DraftPanel.Model.Interfaces;
+using VirtualPaper.DraftPanel.ViewModels;
+using VirtualPaper.Models.DraftPanel;
 
 // To learn more about WinUI, the WinUI draft structure,
 // and more about our draft templates, see: http://aka.ms/winui-draft-info.
 
-namespace VirtualPaper.DraftPanel.Views {
+namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
@@ -28,12 +27,11 @@ namespace VirtualPaper.DraftPanel.Views {
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            if (this._draftPanel == null) {
-                this._draftPanel = e.Parameter as IDraftPanelBridge;
+            this._configSpace ??= e.Parameter as IConfigSpace;            
+            _viewModel = ObjectProvider.GetRequiredService<GetStartViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            this.DataContext = _viewModel;
 
-                _viewModel = ObjectProvider.GetRequiredService<GetStartViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-                this.DataContext = _viewModel;
-            }
+            this._configSpace.SetBtnVisible(false);
         }
 
         private void OnFilterChanged(object sender, TextChangedEventArgs e) {
@@ -78,13 +76,13 @@ namespace VirtualPaper.DraftPanel.Views {
         private async Task HandleStartupAsync(Startup startUp) {
             foreach (var stg in _viewModel._strategies) {
                 if (stg.CanHandle(startUp.Type)) {
-                    await stg.HandleAsync(_draftPanel);
+                    await stg.HandleAsync(_configSpace);
                 }
             }
         }
 
         private void ToWorkSpace(object proj = null) {
-            _draftPanel.ChangeProjectPanelState(DraftPanelState.WorkSpace, proj);
+            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, proj);
         }
 
         private void KeyboardAccelerator_Invoked_RecentUseds(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
@@ -112,6 +110,6 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         private GetStartViewModel _viewModel;
-        private IDraftPanelBridge _draftPanel;
+        private IConfigSpace _configSpace;
     }
 }

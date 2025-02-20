@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 namespace VirtualPaper.UIComponent.Converters {
     public partial class ImgKeyConverters : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, string language) {
-            if (value is string imageKey) {
+            if (value is string imageKey && imageKey.Length > 0) {
                 string imagePath = $"ms-appx:///assets/{imageKey}";
 
                 try {

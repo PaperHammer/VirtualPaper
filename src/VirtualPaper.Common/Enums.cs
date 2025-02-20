@@ -160,10 +160,11 @@ namespace VirtualPaper.Common {
     }
     
     public enum DraftPanelState {
-        Startup,
+        GetStart,
         ProjectConfig,
         DraftConfig,
         WorkSpace,
+        ConfigSpace,
     }
     #endregion
 

@@ -1,18 +1,18 @@
 ﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using VirtualPaper.Common;
+using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     internal partial class ProjectConfigViewModel : ObservableObject {
-        public ObservableCollection<ProjectTemplate> AvailableTemplates { get; set; } = [];
+        public List<ProjectTemplate> AvailableTemplates { get; set; } = [];
 
         private bool _isNextEnable;
         public bool IsNextEnable {
             get { return _isNextEnable; }
-            set { _isNextEnable = value; OnPropertyChanged(); }
+            set { _isNextEnable = value; _configSpace.SetNextStepBtnEnable(value); }
         }
 
         private ProjectTemplate _selectedTemplate;
@@ -40,6 +40,13 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     Desc = "静态图像",
                     Type = ProjectType.PImage,
                 },
+                new() {
+                    ItemImageKey = "project-create-static-img.png",
+                    DescImageKey = "project-create-static-image-desc.png",
+                    Name = "静态图像2",
+                    Desc = "静态图像2",
+                    Type = ProjectType.PImage,
+                },
             ];
 
             _availableTemplates = [.. AvailableTemplates];
@@ -53,5 +60,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         internal IEnumerable<ProjectTemplate> _availableTemplates;
+        internal IConfigSpace _configSpace;
     }
 }

@@ -151,9 +151,13 @@
                 <!--<container:SelectableItemsControl 
                     x:Name="SelectableItems"/>-->
                 <TabView
+                    x:Name="TabViewControl"                    
                     TabWidthMode="SizeToContent"
-                    CloseButtonOverlayMode="OnPointerOver">
-                    <TabView.TabItems>
+                    CloseButtonOverlayMode="OnPointerOver"
+                    TabItemsSource="{Binding TabViewItems}"
+                    AddTabButtonClick="TabViewControl_AddTabButtonClick"
+                    TabCloseRequested="TabViewControl_TabCloseRequested">
+                    <!--<TabView.TabItems>
                         <TabViewItem Header="Document 0">
                             <TabViewItem.IconSource>
                                 <SymbolIconSource Symbol="Placeholder" />
@@ -172,7 +176,7 @@
                             </TabViewItem.IconSource>
                             <Page/>
                         </TabViewItem>
-                    </TabView.TabItems>
+                    </TabView.TabItems>-->
 
                 </TabView>
             </Grid>

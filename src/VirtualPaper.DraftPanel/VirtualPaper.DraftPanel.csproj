@@ -11,6 +11,7 @@
   <ItemGroup>
     <None Remove="Draft.xaml" />
     <None Remove="Panels\StaticImagePanel.xaml" />
+    <None Remove="Views\ConfigSpace.xaml" />
     <None Remove="Views\DraftConfig.xaml" />
     <None Remove="Views\GetStart.xaml" />
     <None Remove="Views\ProjectConfig.xaml" />
@@ -60,6 +61,16 @@
 
   <ItemGroup>
     <Page Update="Views\ProjectConfig.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Views\ConfigSpaceComponents\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Views\ConfigSpace.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

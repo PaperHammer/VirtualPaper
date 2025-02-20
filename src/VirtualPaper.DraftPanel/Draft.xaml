@@ -6,33 +6,13 @@
     xmlns:local="using:VirtualPaper.DraftPanel"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:data="using:VirtualPaper.UIComponent.Data"
-    xmlns:views="using:VirtualPaper.DraftPanel.Views"
-    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d"
     x:Name="self"
     NavigationCacheMode="Enabled">
 
-    <!--<Page.Resources>
-        <cvs:DraftPanelStateToBoolConverter x:Key="DraftPanelStateToBool"/>
-    </Page.Resources>-->
-
     <Grid>
         <Frame 
             x:Name="FrameCardComp"
-            Loaded="FrameCardComp_Loaded"
-            Unloaded="FrameCardComp_Unloaded"/>
-        <!--<views:WorkSpace 
-            x:Name="PanelWorkSpace"
-            x:Load="{x:Bind CurrentState, Converter={StaticResource DraftPanelStateToBool}}"/>
-
-        <data:Card 
-            x:Name="PanelCard"
-            x:Load="{x:Bind CurrentState, Converter={StaticResource DraftPanelStateToBool}, ConverterParameter=Reverse}">
-            <Frame 
-                x:Name="FrameCardComp"
-                Loaded="FrameCardComp_Loaded"
-                Unloaded="FrameCardComp_Unloaded"/>
-        </data:Card>-->
+            Loaded="FrameCardComp_Loaded"/>
     </Grid>
 </Page>

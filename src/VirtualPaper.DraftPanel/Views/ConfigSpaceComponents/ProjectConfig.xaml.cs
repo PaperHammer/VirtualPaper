@@ -7,13 +7,14 @@ using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Models.DraftPanel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace VirtualPaper.DraftPanel.Views {
+namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
@@ -25,12 +26,15 @@ namespace VirtualPaper.DraftPanel.Views {
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            if (this._draftPanel == null) {
-                this._draftPanel = e.Parameter as IDraftPanelBridge;
+            _viewModel = ObjectProvider.GetRequiredService<ProjectConfigViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            _viewModel._configSpace = e.Parameter as IConfigSpace;
+            this.DataContext = _viewModel;
 
-                _viewModel = ObjectProvider.GetRequiredService<ProjectConfigViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-                this.DataContext = _viewModel;
-            }
+            _viewModel._configSpace.SetPreviousStepBtnText(_viewModel.Project_DeployNewDraft_PreviousStep);
+            _viewModel._configSpace.SetNextStepBtnText(_viewModel.Project_DeployNewDraft_NextStep);
+            _viewModel._configSpace.SetBtnVisible(true);
+            _viewModel._configSpace.BindingPreviousBtnAction(PreviousStepBtnAction);
+            _viewModel._configSpace.BindingNextBtnAction(NextStepBtnAction);
         }
 
         private void OnFilterChanged(object sender, TextChangedEventArgs e) {
@@ -60,15 +64,14 @@ namespace VirtualPaper.DraftPanel.Views {
             }
         }
 
-        private void PreviousStepButton_Click(object sender, RoutedEventArgs e) {
-            _draftPanel.ChangeProjectPanelState(DraftPanelState.Startup);
+        private void PreviousStepBtnAction(object sender, RoutedEventArgs e) {
+            _viewModel._configSpace.ChangePanelState(DraftPanelState.GetStart);
         }
 
-        private void NextStepButton_Click(object sender, RoutedEventArgs e) {
-            _draftPanel.ChangeProjectPanelState(DraftPanelState.DraftConfig);
+        private void NextStepBtnAction(object sender, RoutedEventArgs e) {
+            _viewModel._configSpace.ChangePanelState(DraftPanelState.DraftConfig);
         }
 
         private ProjectConfigViewModel _viewModel;
-        private IDraftPanelBridge _draftPanel;
     }
 }

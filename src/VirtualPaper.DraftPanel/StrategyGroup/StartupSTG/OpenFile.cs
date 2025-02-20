@@ -22,7 +22,7 @@ namespace VirtualPaper.DraftPanel.StrategyGroup.StartupSTG {
             foreach (var sg in storage) {
                 filePaths.Add(sg.Path);
             }
-            projectBridge.ChangeProjectPanelState(DraftPanelState.WorkSpace, filePaths);
+            projectBridge.ChangePanelState(DraftPanelState.WorkSpace, filePaths);
         }
     }
 }

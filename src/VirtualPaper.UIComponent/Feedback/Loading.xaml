@@ -11,7 +11,7 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <cvs:BooleanToVisibilityConverter x:Key="BoolToVisiblity"/>
     </UserControl.Resources>
 
     <StackPanel
@@ -50,7 +50,7 @@
         <Grid
             Margin="20"
             HorizontalAlignment="Center"
-            Visibility="{Binding ProgressbarEnable, Converter={StaticResource BooleanToVisibilityConverter}, ElementName=self}">
+            Visibility="{Binding ProgressbarEnable, Converter={StaticResource BoolToVisiblity}, ElementName=self}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
@@ -76,7 +76,7 @@
             HorizontalAlignment="Center"
             Width="100" 
             Height="40"
-            Visibility="{Binding CancelEnable, Converter={StaticResource BooleanToVisibilityConverter}, ElementName=self}"
+            Visibility="{Binding CancelEnable, Converter={StaticResource BoolToVisiblity}, ElementName=self}"
             Content="{Binding TextCancel, ElementName=self}"
             Click="BtnCancel_Click"/>
     </StackPanel>

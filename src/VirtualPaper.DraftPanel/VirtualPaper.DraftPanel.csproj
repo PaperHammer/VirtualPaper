@@ -16,6 +16,7 @@
     <None Remove="Views\GetStart.xaml" />
     <None Remove="Views\ProjectConfig.xaml" />
     <None Remove="Views\WorkSpace.xaml" />
+    <None Remove="Views\WorkSpaceComponents\ProjectRun.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -67,6 +68,12 @@
 
   <ItemGroup>
     <Folder Include="Views\ConfigSpaceComponents\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Views\WorkSpaceComponents\ProjectRun.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

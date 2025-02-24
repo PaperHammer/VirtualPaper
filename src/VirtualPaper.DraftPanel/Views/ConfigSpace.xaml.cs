@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
+using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Model.Interfaces;
@@ -125,6 +126,14 @@ namespace VirtualPaper.DraftPanel.Views {
 
         public nint GetWindowHandle() {
             return _draftPanel.GetWindowHandle();
+        }
+
+        public void Log(LogType type, object message) {
+            _draftPanel.Log(type, message);
+        }
+
+        public INoifyBridge GetNotify() {
+            return _draftPanel.GetNotify();
         }
         #endregion
 

@@ -154,7 +154,6 @@ namespace VirtualPaper.Common {
     public enum DraftPanelStartupType {
         OpenVpd,
         OpenFile,
-        OpenFolder,
         NewVpd,
         TypeConfig,
     }

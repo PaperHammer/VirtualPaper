@@ -9,13 +9,13 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
-        <!--<Canvas 
-        x:Name="drawingCanvas" 
-        Background="White" 
-        Width="400"
-        Height="400"
-        PointerPressed="OnPointerPressed" 
-        PointerMoved="OnPointerMoved" 
-        PointerReleased="OnPointerReleased"/>-->
+        <Canvas 
+            x:Name="drawingCanvas" 
+            Background="White" 
+            Width="400"
+            Height="400"
+            PointerPressed="OnPointerPressed" 
+            PointerMoved="OnPointerMoved" 
+            PointerReleased="OnPointerReleased"/>
     </Grid>
 </Page>

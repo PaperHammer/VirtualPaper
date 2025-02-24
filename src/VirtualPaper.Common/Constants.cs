@@ -235,9 +235,9 @@
             public static string WpCreateDialog_CommonWp_Title { get; } = "WpCreateDialog_CommonWp_Title";
             public static string WpSettings_NavTitle_LibraryContents { get; } = "WpSettings_NavTitle_LibraryContents";
             public static string WpSettings_NavTitle_ScrSettings { get; } = "WpSettings_NavTitle_ScrSettings";
-            public static string Project_RecentUsed { get; } = "Project_RecentUsed";
-            public static string Project_StartUp { get; } = "Project_StartUp";
-            public static string Project_SearchRecentUsed { get; } = "Project_SearchRecentUsed";
+            public static string? Project_RecentUsed { get; }
+            public static string? Project_StartUp { get; }
+            public static string? Project_SearchRecentUsed { get; }
             public static string Project_StartUp_OpenVsd { get; } = "Project_StartUp_OpenVsd";
             public static string Project_StartUp_OpenVsd_Desc { get; } = "Project_StartUp_OpenVsd_Desc";
             public static string Project_StartUp_OpenFile { get; } = "Project_StartUp_OpenFile";
@@ -246,20 +246,23 @@
             public static string Project_StartUp_OpenFolder_Desc { get; } = "Project_StartUp_OpenFolder_Desc";
             public static string Project_StartUp_NewVpd { get; } = "Project_StartUp_NewVpd";
             public static string Project_StartUp_NewVpd_Desc { get; } = "Project_StartUp_NewVpd_Desc";
-            public static string Project_ContinueWithoutFile { get; } = "Project_ContinueWithoutFile";
-            public static string Project_DeployNewDraft { get; } = "Project_DeployNewDraft";
-            public static string Project_NewDraftName { get; } = "Project_NewDraftName";
-            public static string Project_NewDraftName_Placeholder { get; } = "Project_NewDraftName_Placeholder";
-            public static string Project_NewDraftPosition { get; } = "Project_NewDraftPosition";
-            public static string Project_NewDraftPosition_BrowserFolder_Tooltip { get; } = "Project_NewDraftPosition_BrowserFolder_Tooltip";
-            public static string Project_DeployNewDraft_PreviousStep { get; } = "Project_DeployNewDraft_PreviousStep";
-            public static string Project_DeployNewDraft_Create { get; } = "Project_DeployNewDraft_Create";
-            public static string Project_DeployNewDraft_Desc { get; } = "Project_DeployNewDraft_Desc";
-            public static string Project_NewDraftName_InvalidTip { get; } = "Project_NewDraftName_InvalidTip";
-            public static string Project_NewDraftPosition_InvalidTip { get; } = "Project_NewDraftPosition_InvalidTip";
-            public static string Project_TemplateConfig { get; } = "Project_TemplateConfig";
-            public static string Project_SearchTemplate { get; } = "Project_SearchTemplate";
-            public static string Project_DeployNewDraft_NextStep { get; } = "Project_DeployNewDraft_NextStep";
+            public static string? Project_ContinueWithoutFile { get; }
+            public static string? Project_DeployNewDraft { get; }
+            public static string? Project_NewDraftName { get; }
+            public static string? Project_NewDraftName_Placeholder { get; }
+            public static string? Project_NewDraftPosition { get; }
+            public static string? Project_NewDraftPosition_BrowserFolder_Tooltip { get; }
+            public static string? Project_DeployNewDraft_PreviousStep { get; }
+            public static string? Project_DeployNewDraft_Create { get; }
+            public static string? Project_DeployNewDraft_Desc { get; }
+            public static string? Project_TemplateConfig { get; }
+            public static string? Project_SearchTemplate { get; }
+            public static string? Project_DeployNewDraft_NextStep { get; }
+            public static string? Project_NewProjectName { get; }
+            public static string? Project_NewProjectName_Placeholder { get; }
+            public static string? Project_NewName_InvalidTip { get; }
+            public static string? Project_NewPosition_InvalidTip { get; }
+            public static string? DirExsits { get; }
         }
 
         public static class Field {

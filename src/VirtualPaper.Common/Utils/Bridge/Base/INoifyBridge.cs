@@ -3,8 +3,8 @@
         void ShowExp(Exception ex);
         void ShowCanceled();
         void ShowMsg(bool isNeedLocalizer, string msg, InfoBarType infoBarType);
-        void Loading(bool cancelEnable, bool progressbarEnable, CancellationTokenSource[] cts);
-        void Loaded(CancellationTokenSource[] cts);
+        void Loading(bool cancelEnable, bool progressbarEnable, CancellationTokenSource[]? cts = null);
+        void Loaded(CancellationTokenSource[]? cts = null);
         void UpdateProgressbarValue(int curValue, int toltalValue);
     }
 }

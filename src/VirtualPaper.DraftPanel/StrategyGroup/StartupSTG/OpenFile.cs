@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
-using VirtualPaper.Common.Utils.Bridge;
+using VirtualPaper.DraftPanel.Model.Interfaces;
 
 namespace VirtualPaper.DraftPanel.StrategyGroup.StartupSTG {
     internal class OpenFile : IStrategy {

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using VirtualPaper.Common;
-using VirtualPaper.DraftPanel.StrategyGroup.StartupSTG;
 using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.UIComponent.Utils;
 using Windows.System;
@@ -32,10 +31,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile),
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile_Desc),
                     VirtualKey.F),
-                new(DraftPanelStartupType.OpenFolder,
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFolder),
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFolder_Desc),
-                    VirtualKey.D),
                 new(DraftPanelStartupType.NewVpd,
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd),
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd_Desc),
@@ -71,18 +66,12 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private void InitText() {
-            Project_RecentUsed = LanguageUtil.GetI18n(Constants.I18n.Project_RecentUsed);
-            Project_SearchRecentUsed = LanguageUtil.GetI18n(Constants.I18n.Project_SearchRecentUsed);
-            Project_StartUp = LanguageUtil.GetI18n(Constants.I18n.Project_StartUp);
-            Project_ContinueWithoutFile = LanguageUtil.GetI18n(Constants.I18n.Project_ContinueWithoutFile);
+            Project_RecentUsed = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_RecentUsed));
+            Project_SearchRecentUsed = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SearchRecentUsed));
+            Project_StartUp = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StartUp));
+            Project_ContinueWithoutFile = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_ContinueWithoutFile));
         }
 
         internal List<RecentUsed> _recentUsed = [];
-        internal readonly IStrategy[] _strategies = [
-            new OpenVpd(),
-            new OpenFile(),
-            new OpenFolder(),
-            new NewVpd(),
-        ];
     }
 }

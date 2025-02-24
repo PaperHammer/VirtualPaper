@@ -14,6 +14,7 @@
 
     <Page.Resources>
         <cvs:ImgKeyConverters x:Key="ImgKeyConverters"/>
+        <cvs:BooleanToVisibilityConverter x:Key="BoolToVisiblity"/>
 
         <DataTemplate  x:Key="AvailableItemTemplate" x:DataType="draft:ProjectTemplate">
             <ListViewItem>
@@ -66,7 +67,7 @@
                 </Grid.RowDefinitions>
 
                 <TextBox 
-                    x:Name="TargetName"
+                    x:Name="tbSearchName"
                     Margin="0 20 0 0"
                     Height="30"
                     Width="340"
@@ -74,16 +75,26 @@
                     FontSize="12"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Center"
-                    TextChanged="OnFilterChanged"/>
+                    TextChanged="OnFilterChanged"
+                    KeyboardAcceleratorPlacementMode="Hidden">
+                    <TextBox.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="S" Invoked="KeyboardAccelerator_Invoked_SearchTemplate"/>
+                    </TextBox.KeyboardAccelerators>
+                </TextBox>
 
                 <ListView
-                    x:Name="TemplateListView"
+                    x:Name="templateListView"
                     Grid.Row="1"
                     Margin="0 20 0 0"                    
                     ItemsSource="{x:Bind _viewModel.AvailableTemplates}"
                     ItemTemplate="{StaticResource AvailableItemTemplate}"
                     SelectionMode="Single"
-                    SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}"/>
+                    SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}"
+                    KeyboardAcceleratorPlacementMode="Hidden">
+                    <ListView.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="R" Invoked="KeyboardAccelerator_Invoked_Template"/>
+                    </ListView.KeyboardAccelerators>
+                </ListView>
             </Grid>
 
             <Grid
@@ -92,6 +103,7 @@
                 Grid.Column="2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="200"/>
+                    <RowDefinition />
                     <RowDefinition />
                 </Grid.RowDefinitions>
 
@@ -105,7 +117,48 @@
                 <TextBlock
                     Grid.Row="1"
                     Margin="0 10"
+                    TextWrapping="WrapWholeWords"
                     Text="{x:Bind _viewModel.SelectedTemplate.Desc, Mode=OneWay, FallbackValue={x:Null}}"/>
+
+                <StackPanel
+                        Grid.Row="2"
+                        Orientation="Vertical"
+                        HorizontalAlignment="Left"
+                        Spacing="6">
+                    <TextBlock
+                        Text="{x:Bind _viewModel.Project_NewProjectName}"
+                        FontSize="12"/>
+
+                    <TextBox
+                        x:Name="tbProjName"
+                        IsSpellCheckEnabled="False"
+                        Text="{x:Bind _viewModel.ProjectName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        PlaceholderText="{x:Bind _viewModel.Project_NewProjectName_Placeholder}"
+                        FontSize="12"
+                        Width="500"
+                        KeyboardAcceleratorPlacementMode="Hidden">
+                        <TextBox.KeyboardAccelerators>
+                            <KeyboardAccelerator Modifiers="Menu" Key="J" Invoked="KeyboardAccelerator_Invoked_InputProjName"/>
+                        </TextBox.KeyboardAccelerators>
+                    </TextBox>
+
+                    <StackPanel
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        Margin="2 0 0 0"
+                        Visibility="{x:Bind _viewModel.IsNameOk, Mode=OneWay, Converter={StaticResource BoolToVisiblity}, ConverterParameter=Reverse}">
+                        <FontIcon 
+                            FontSize="14"
+                            VerticalAlignment="Bottom"
+                            Foreground="Red"
+                            Glyph="&#xE783;" />
+
+                        <TextBlock
+                            Text="{x:Bind _viewModel.Project_NewName_InvalidTip}"
+                            FontSize="12"
+                            Foreground="Red"/>
+                    </StackPanel>
+                </StackPanel>
             </Grid>
         </Grid>
     </Grid>

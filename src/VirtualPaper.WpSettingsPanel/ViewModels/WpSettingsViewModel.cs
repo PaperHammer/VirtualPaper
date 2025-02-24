@@ -129,7 +129,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         internal async void UpdateWpArrange(int tag) {
             try {
-                _wpSettingsPanel.GetNotify().Loading(false, false, []);
+                _wpSettingsPanel.GetNotify().Loading(false, false, null);
 
                 var type = (WallpaperArrangement)tag;
                 if (type == _userSettingsClient.Settings.WallpaperArrangement) return;
@@ -149,7 +149,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 _wpSettingsPanel.Log(LogType.Error, ex);
             }
             finally {
-                _wpSettingsPanel.GetNotify().Loaded([]);
+                _wpSettingsPanel.GetNotify().Loaded(null);
             }
         }
 

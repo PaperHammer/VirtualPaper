@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model.Interfaces;
+using VirtualPaper.DraftPanel.StrategyGroup.StartupSTG;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Models.DraftPanel;
 
@@ -27,7 +28,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            this._configSpace ??= e.Parameter as IConfigSpace;            
+            this._configSpace ??= e.Parameter as IConfigSpace;
             _viewModel = ObjectProvider.GetRequiredService<GetStartViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
 
@@ -66,7 +67,9 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         }
 
         private void RecentUsedsListView_ItemClick(object sender, ItemClickEventArgs e) {
-            ToWorkSpace(e.ClickedItem);
+            if (e.ClickedItem is RecentUsed ru) {
+                ToWorkSpace(new List<string> { ru.FilePath });
+            }
         }
 
         private async void StartupItemsView_ItemInvoked(ItemsView sender, ItemsViewItemInvokedEventArgs args) {
@@ -74,15 +77,16 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         }
 
         private async Task HandleStartupAsync(Startup startUp) {
-            foreach (var stg in _viewModel._strategies) {
+            foreach (var stg in _strategies) {
                 if (stg.CanHandle(startUp.Type)) {
                     await stg.HandleAsync(_configSpace);
+                    break;
                 }
             }
         }
 
-        private void ToWorkSpace(object proj = null) {
-            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, proj);
+        private void ToWorkSpace(object param = null) {
+            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, param);
         }
 
         private void KeyboardAccelerator_Invoked_RecentUseds(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
@@ -99,6 +103,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
 
         private void KeyboardAccelerator_Invoked_SearchRecentUsed(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
             tbSearchName.Focus(FocusState.Programmatic);
+            args.Handled = true;
         }
 
         private async void KeyboardAccelerator_Invoked_Startups(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
@@ -111,5 +116,10 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
 
         private GetStartViewModel _viewModel;
         private IConfigSpace _configSpace;
+        internal readonly IStrategy[] _strategies = [
+            new OpenVpd(),
+            new OpenFile(),
+            new NewVpd(),
+        ];
     }
 }

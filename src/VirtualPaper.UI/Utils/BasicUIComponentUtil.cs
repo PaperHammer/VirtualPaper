@@ -35,14 +35,14 @@ namespace VirtualPaper.UI.Utils
         public void Loading(
             bool cancelEnable,
             bool progressbarEnable,
-            CancellationTokenSource[] cts) {
+            CancellationTokenSource[] cts = null) {
             _mainWindowViewModel.Loading(
                 cancelEnable,
                 progressbarEnable,
                 cts);
         }
 
-        public void Loaded(CancellationTokenSource[] cts) {
+        public void Loaded(CancellationTokenSource[] cts = null) {
             _mainWindowViewModel.Loaded(cts);
         }
 

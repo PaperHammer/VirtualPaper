@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
+using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
@@ -16,7 +20,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             get { return _draftName; }
             set {
                 _draftName = value;
-                IsNameOk = !string.IsNullOrEmpty(value) && value.Length <= MaxLength && NameRegex().IsMatch(value);
+                IsNameOk = ComplianceUtil.IsValidName(value);
                 IsNextEnable = IsNameOk && IsFolderPathOk;
             }
         }
@@ -32,14 +36,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             get { return _storageFolderPath; }
             set {
                 _storageFolderPath = value;
-                if (IsValidFolderPath(value)) {
-                    DeployNewDraft_Desc = LanguageUtil.GetI18n(Constants.I18n.Project_DeployNewDraft_Desc) + " " + value;
-                    IsFolderPathOk = true;
-                }
-                else {
-                    DeployNewDraft_Desc = string.Empty;
-                    IsFolderPathOk = false;
-                }
+                OnPropertyChanged();
+                IsFolderPathOk = ComplianceUtil.IsValidFolderPath(value);
                 IsNextEnable = IsNameOk && IsFolderPathOk;
             }
         }
@@ -53,16 +51,16 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private bool _isNextEnable;
         public bool IsNextEnable {
             get { return _isNextEnable; }
-            set { _isNextEnable = value; _configSpace.SetNextStepBtnEnable(value); }
+            set { _isNextEnable = value; UpdateDeployNewDraftDesc(value); _configSpace.SetNextStepBtnEnable(value); }
         }
 
         public string Project_DeployNewDraft { get; set; }
         public string Project_NewDraftName { get; set; }
         public string Project_NewDraftName_Placeholder { get; set; }
-        public string Project_NewDraftName_InvalidTip { get; set; }
+        public string Project_NewName_InvalidTip { get; set; }
         public string Project_NewDraftPosition { get; set; }
         public string Project_NewDraftPosition_BrowserFolder_Tooltip { get; set; }
-        public string Project_NewDraftPosition_InvalidTip { get; set; }
+        public string Project_NewPosition_InvalidTip { get; set; }
         public string Project_DeployNewDraft_PreviousStep { get; set; }
         public string Project_DeployNewDraft_Create { get; set; }
 
@@ -78,86 +76,81 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         internal void InitContent() {
             DraftName = "New_Draft";
-            StorageFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            IsNextEnable = true;
+            this.StorageFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);            
         }
 
         private void InitText() {
-            Project_DeployNewDraft = LanguageUtil.GetI18n(Constants.I18n.Project_DeployNewDraft);
-            Project_NewDraftName = LanguageUtil.GetI18n(Constants.I18n.Project_NewDraftName);
-            Project_NewDraftName_Placeholder = LanguageUtil.GetI18n(Constants.I18n.Project_NewDraftName_Placeholder);
-            Project_NewDraftName_InvalidTip = LanguageUtil.GetI18n(Constants.I18n.Project_NewDraftName_InvalidTip);
-            Project_NewDraftPosition = LanguageUtil.GetI18n(Constants.I18n.Project_NewDraftPosition);
-            Project_NewDraftPosition_BrowserFolder_Tooltip = LanguageUtil.GetI18n(Constants.I18n.Project_NewDraftPosition_BrowserFolder_Tooltip);
-            Project_NewDraftPosition_InvalidTip = LanguageUtil.GetI18n(Constants.I18n.Project_NewDraftPosition_InvalidTip);
-            Project_DeployNewDraft_PreviousStep = LanguageUtil.GetI18n(Constants.I18n.Project_DeployNewDraft_PreviousStep);
-            Project_DeployNewDraft_Create = LanguageUtil.GetI18n(Constants.I18n.Project_DeployNewDraft_Create);
+            Project_DeployNewDraft = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft));
+            Project_NewDraftName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewDraftName));
+            Project_NewDraftName_Placeholder = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewDraftName_Placeholder));
+            Project_NewName_InvalidTip = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewName_InvalidTip));
+            Project_NewDraftPosition = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewDraftPosition));
+            Project_NewDraftPosition_BrowserFolder_Tooltip = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewDraftPosition_BrowserFolder_Tooltip));
+            Project_NewPosition_InvalidTip = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewPosition_InvalidTip));
+            Project_DeployNewDraft_PreviousStep = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep));
+            Project_DeployNewDraft_Create = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_Create));
         }
 
-        internal async void ChangeFolder(nint hwnd) {
-            var storageFolder = await WindowsStoragePickers.PickFolderAsync(hwnd);
+        internal void InitConfigSpace() {
+            _configSpace.SetPreviousStepBtnText(Project_DeployNewDraft_PreviousStep);
+            _configSpace.SetNextStepBtnText(Project_DeployNewDraft_Create);
+            _configSpace.SetBtnVisible(true);
+            _configSpace.BindingPreviousBtnAction(PreviousStepBtnAction);
+            _configSpace.BindingNextBtnAction(CreateVpdBtnAction);
+        }
+
+        private void PreviousStepBtnAction(object sender, RoutedEventArgs e) {
+            _configSpace.ChangePanelState(DraftPanelState.ProjectConfig);
+        }
+
+        private async void CreateVpdBtnAction(object sender, RoutedEventArgs e) {
+            string storageFolder = await CreateNewVpdAsync();
+            if (storageFolder == string.Empty) return;
+            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, storageFolder);
+        }
+
+        private void UpdateDeployNewDraftDesc(bool value) {
+            if (value) {
+                DeployNewDraft_Desc = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_Desc)) + " " + Path.Combine(StorageFolderPath, DraftName);
+            }
+            else {
+                DeployNewDraft_Desc = string.Empty;
+            }
+        }
+
+        internal async void ChangeFolder() {
+            var storageFolder = await WindowsStoragePickers.PickFolderAsync(_configSpace.GetWindowHandle());
             if (storageFolder == null) return;
 
-            StorageFolderPath = storageFolder.Path;
+            this.StorageFolderPath = storageFolder.Path;
         }
-
-        internal async Task CreateNewVpdAsync() {
+       
+        internal async Task<string> CreateNewVpdAsync() {
+            CancellationTokenSource ctsCreate = new();
+            string storageFolder = Path.Combine(this.StorageFolderPath, DraftName);
             try {
+                _configSpace.GetNotify().Loading(true, false, [ctsCreate]);
 
-            }
-            catch (Exception) {
-
-                throw;
-            }
-        }
-
-        public static bool IsValidFolderPath(string path) {
-            if (string.IsNullOrEmpty(path)) {
-                return false;
-            }
-
-            // 检查路径长度
-            if (path.Length < MinLength || path.Length > MaxLength) {
-                return false;
-            }
-
-            // 快速检查路径的基本格式
-            if (!path.StartsWith(@"\\") && (path.Length < 3 || path[1] != ':' || path[2] != '\\')) {
-                return false;
-            }
-
-            // 检查每个字符是否都在允许的字符集中
-            foreach (char c in path) {
-                if (!ValidChars.Contains(c)) {
-                    return false;
+                if (Directory.Exists(storageFolder)) {
+                    _configSpace.GetNotify().ShowMsg(true, nameof(Constants.I18n.DirExsits), InfoBarType.Error);
+                    return string.Empty;
                 }
+
+                Directory.CreateDirectory(storageFolder);
+                DraftMetadata dm = new(DraftName, Assembly.GetEntryAssembly().GetName().Version, _configSpace.GetParam() as List<ProjectMetadata> ?? []);
+                await dm.WriteDataAsync(storageFolder);
+            }
+            catch (Exception ex) {
+                Directory.Delete(storageFolder, true);
+                _configSpace.GetNotify().ShowExp(ex);
+                _configSpace.Log(LogType.Error, ex);
+                return string.Empty;
+            }
+            finally {
+                _configSpace.GetNotify().Loaded([ctsCreate]);
             }
 
-            return true;
-        }
-
-        // 定义允许的字符集合
-        private static readonly char[] ValidChars =
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .!@#$%^&()[]{}+=-_\\/:"
-            .Concat(Enumerable.Range(0x4e00, 0x9fa5 - 0x4e00 + 1).Select(c => (char)c)).ToArray();
-
-        // 定义路径长度限制
-        private const int MinLength = 3; // 最小长度，例如 "C:\"
-        private const int MaxLength = 260; // Windows传统路径的最大长度限制
-
-        [GeneratedRegex(@"^[a-zA-Z0-9\-_]+$", RegexOptions.Compiled)]
-        private static partial Regex NameRegex();
-
-        internal bool CreateNewDir() {
-            string storagePath = Path.Combine(this.StorageFolderPath, this.DraftName);
-            try {
-                Directory.CreateDirectory(storagePath);
-            }
-            catch (Exception) {
-                return false;
-            }
-
-            return true;
+            return storageFolder;
         }
 
         internal IConfigSpace _configSpace;

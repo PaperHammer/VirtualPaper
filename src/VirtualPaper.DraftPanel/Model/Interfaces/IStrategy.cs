@@ -2,7 +2,7 @@
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
 
-namespace VirtualPaper.DraftPanel.StrategyGroup.StartupSTG {
+namespace VirtualPaper.DraftPanel.Model.Interfaces {
     interface IStrategy {
         bool CanHandle(DraftPanelStartupType startupType);
         void Handle(IDraftPanelBridge projectBridge);

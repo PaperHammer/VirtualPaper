@@ -17,41 +17,6 @@ namespace VirtualPaper.DraftPanel.Views {
         
         public WorkSpace() {
             this.InitializeComponent();
-
-            //items.Add(new TabViewItem { Header = "1111文件", Content = new Canvas { Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White) } });
-            //items.Add(new TabViewItem { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "1312323123xxx1x2x11221x", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "22ww23122文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem  { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-            //items.Add(new TabViewItem { Header = "2222文件", Content = new TextBlock { Text = "This is Tab 2 content.", Margin = new Thickness(20) } });
-
-            ////SelectableItems.ItemsSource = items;
-            //TabViewControl.TabItemsSource = items;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
@@ -62,6 +27,7 @@ namespace VirtualPaper.DraftPanel.Views {
 
                 _viewModel = ObjectProvider.GetRequiredService<WorkSpaceViewModel>(ObjectLifetime.Transient, ObjectLifetime.Singleton);
                 _viewModel._draftPanel = this._draftPanel;
+                _viewModel.InitContent();
                 this.DataContext = _viewModel;
             }
         }

@@ -1,4 +1,7 @@
+using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -10,36 +13,36 @@ namespace VirtualPaper.DraftPanel.Panels {
             this.InitializeComponent();
         }
 
-        //private void OnPointerPressed(object sender, PointerRoutedEventArgs e) {
-        //    // 开始新的线条
-        //    var pointerPoint = e.GetCurrentPoint(drawingCanvas);
-        //    currentLine = new Polyline() {
-        //        Stroke = new SolidColorBrush(Colors.Black),
-        //        StrokeThickness = 2,
-        //        StrokeLineJoin = PenLineJoin.Round,
-        //        StrokeStartLineCap = PenLineCap.Round,
-        //        StrokeEndLineCap = PenLineCap.Round
-        //    };
-        //    currentLine.Points.Add(pointerPoint.Position);
-        //    drawingCanvas.Children.Add(currentLine);
+        private void OnPointerPressed(object sender, PointerRoutedEventArgs e) {
+            // 开始新的线条
+            var pointerPoint = e.GetCurrentPoint(drawingCanvas);
+            currentLine = new Polyline() {
+                Stroke = new SolidColorBrush(Colors.Black),
+                StrokeThickness = 2,
+                StrokeLineJoin = PenLineJoin.Round,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round
+            };
+            currentLine.Points.Add(pointerPoint.Position);
+            drawingCanvas.Children.Add(currentLine);
 
-        //    isDrawing = true;
-        //}
+            isDrawing = true;
+        }
 
-        //private void OnPointerMoved(object sender, PointerRoutedEventArgs e) {
-        //    if (!isDrawing) return;
+        private void OnPointerMoved(object sender, PointerRoutedEventArgs e) {
+            if (!isDrawing) return;
 
-        //    // 继续当前线条
-        //    var pointerPoint = e.GetCurrentPoint(drawingCanvas);
-        //    currentLine.Points.Add(pointerPoint.Position);
-        //}
+            // 继续当前线条
+            var pointerPoint = e.GetCurrentPoint(drawingCanvas);
+            currentLine.Points.Add(pointerPoint.Position);
+        }
 
-        //private void OnPointerReleased(object sender, PointerRoutedEventArgs e) {
-        //    if (isDrawing) {
-        //        // 结束当前线条
-        //        isDrawing = false;
-        //    }
-        //}
+        private void OnPointerReleased(object sender, PointerRoutedEventArgs e) {
+            if (isDrawing) {
+                // 结束当前线条
+                isDrawing = false;
+            }
+        }
 
         private bool isDrawing = false;
         private Polyline currentLine;

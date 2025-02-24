@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.ViewModels;
@@ -28,13 +27,9 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
 
             _viewModel = ObjectProvider.GetRequiredService<ProjectConfigViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
             _viewModel._configSpace = e.Parameter as IConfigSpace;
+            _viewModel.InitContent();
+            _viewModel.InitConfigSpace();
             this.DataContext = _viewModel;
-
-            _viewModel._configSpace.SetPreviousStepBtnText(_viewModel.Project_DeployNewDraft_PreviousStep);
-            _viewModel._configSpace.SetNextStepBtnText(_viewModel.Project_DeployNewDraft_NextStep);
-            _viewModel._configSpace.SetBtnVisible(true);
-            _viewModel._configSpace.BindingPreviousBtnAction(PreviousStepBtnAction);
-            _viewModel._configSpace.BindingNextBtnAction(NextStepBtnAction);
         }
 
         private void OnFilterChanged(object sender, TextChangedEventArgs e) {
@@ -44,7 +39,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         }
 
         private bool Filter(ProjectTemplate template) {
-            return template.Name.Contains(TargetName.Text, StringComparison.InvariantCultureIgnoreCase);
+            return template.Name.Contains(tbSearchName.Text, StringComparison.InvariantCultureIgnoreCase);
         }
 
         private void Remove_NonMatching(IEnumerable<ProjectTemplate> templates) {
@@ -64,12 +59,26 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             }
         }
 
-        private void PreviousStepBtnAction(object sender, RoutedEventArgs e) {
-            _viewModel._configSpace.ChangePanelState(DraftPanelState.GetStart);
+        private void KeyboardAccelerator_Invoked_SearchTemplate(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
+            tbSearchName.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
+            args.Handled = true;
         }
 
-        private void NextStepBtnAction(object sender, RoutedEventArgs e) {
-            _viewModel._configSpace.ChangePanelState(DraftPanelState.DraftConfig);
+        private void KeyboardAccelerator_Invoked_InputProjName(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
+            tbProjName.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
+            args.Handled = true;
+        }
+
+        private void KeyboardAccelerator_Invoked_Template(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
+            FocusOnFirstItem();
+            args.Handled = true;
+        }
+
+        private void FocusOnFirstItem() {
+            if (templateListView.Items.Count > 0) {
+                var firstItemContainer = templateListView.ContainerFromIndex(0) as ListViewItem;
+                firstItemContainer?.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
+            }
         }
 
         private ProjectConfigViewModel _viewModel;

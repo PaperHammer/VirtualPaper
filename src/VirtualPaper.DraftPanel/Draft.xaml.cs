@@ -36,6 +36,14 @@ namespace VirtualPaper.DraftPanel {
             _param = param;
             NavigetBasedState(nextState);
         }
+
+        public void Log(LogType type, object message) {
+            _windowBridge.Log(type, message);
+        }
+
+        public INoifyBridge GetNotify() {
+            return _windowBridge.GetNotify();
+        }
         #endregion
 
         #region navigate
@@ -49,7 +57,7 @@ namespace VirtualPaper.DraftPanel {
             NavigetBasedState(_currentState);
         }
 
-        internal void NavigetBasedState(DraftPanelState nextState) {
+        private void NavigetBasedState(DraftPanelState nextState) {
             CrossThreadInvoker.InvokeOnUiThread(() => {
                 _currentState = nextState;
 

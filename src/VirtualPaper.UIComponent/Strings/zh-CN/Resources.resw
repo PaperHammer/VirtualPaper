@@ -623,9 +623,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_StartUp_OpenFile_Desc" xml:space="preserve">
     <value>打开受支持的文件</value>
   </data>
-  <data name="Project_StartUp_OpenFolder" xml:space="preserve">
-    <value>打开文件夹(D)</value>
-  </data>
   <data name="Project_StartUp_OpenFolder_Desc" xml:space="preserve">
     <value>浏览或编辑文件夹中受支持的文件</value>
   </data>
@@ -648,7 +645,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>配置新的设计稿</value>
   </data>
   <data name="Project_DeployNewDraft_Create" xml:space="preserve">
-    <value>创建(C)</value>
+    <value>创建(N)</value>
   </data>
   <data name="Project_DeployNewDraft_PreviousStep" xml:space="preserve">
     <value>上一步(B)</value>
@@ -668,19 +665,28 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_DeployNewDraft_Desc" xml:space="preserve">
     <value>设计稿将存储于目录:</value>
   </data>
-  <data name="Project_NewDraftName_InvalidTip" xml:space="preserve">
+  <data name="Project_NewName_InvalidTip" xml:space="preserve">
     <value>名称为空或无效（最多 30 个字符）</value>
   </data>
-  <data name="Project_NewDraftPosition_InvalidTip" xml:space="preserve">
+  <data name="Project_NewPosition_InvalidTip" xml:space="preserve">
     <value>位置为空或无效（最多 260 个字符）</value>
   </data>
   <data name="Project_DeployNewDraft_NextStep" xml:space="preserve">
     <value>下一步(N)</value>
   </data>
   <data name="Project_SearchTemplate" xml:space="preserve">
-    <value>搜索项目模板</value>
+    <value>搜索项目模板(S)</value>
   </data>
   <data name="Project_TemplateConfig" xml:space="preserve">
-    <value>创建新项目</value>
+    <value>创建新项目(R)</value>
+  </data>
+  <data name="Project_NewProjectName" xml:space="preserve">
+    <value>项目名称(J)</value>
+  </data>
+  <data name="Project_NewProjectName_Placeholder" xml:space="preserve">
+    <value>输入项目名称</value>
+  </data>
+  <data name="DirExsits" xml:space="preserve">
+    <value>已存在相同路径</value>
   </data>
 </root>

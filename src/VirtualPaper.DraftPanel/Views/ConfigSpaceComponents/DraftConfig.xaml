@@ -57,7 +57,7 @@
                         Glyph="&#xE783;" />
 
                     <TextBlock
-                        Text="{x:Bind _viewModel.Project_NewDraftName_InvalidTip}"
+                        Text="{x:Bind _viewModel.Project_NewName_InvalidTip}"
                         FontSize="12"
                         Foreground="Red"/>
                 </StackPanel>
@@ -107,7 +107,7 @@
                         Glyph="&#xE783;" />
 
                     <TextBlock
-                        Text="{x:Bind _viewModel.Project_NewDraftPosition_InvalidTip}"
+                        Text="{x:Bind _viewModel.Project_NewPosition_InvalidTip}"
                         FontSize="12"
                         Foreground="Red"/>
                 </StackPanel>

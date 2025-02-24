@@ -11,30 +11,11 @@ namespace VirtualPaper.Common.Utils.Storage {
 
         #region system.text.json
         public static T LoadData(string filePath, JsonSerializerContext context) {
-            try {
-                var combinedLoadOptions = new JsonSerializerOptions(_optionsLoad) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
-                using FileStream stream = File.OpenRead(filePath);
-                return JsonSerializer.Deserialize<T>(stream, combinedLoadOptions);
-            }
-            catch (JsonException ex) {
-                throw new ArgumentException("json null/corrupt", ex);
-            }
+            return LoadDataAsync(filePath, context).Result;
         }
 
         public static void StoreData(string filePath, T data, JsonSerializerContext context) {
-            try {
-                string? directoryPath = Path.GetDirectoryName(filePath);
-                if (!string.IsNullOrEmpty(directoryPath)) {
-                    Directory.CreateDirectory(directoryPath);
-                }
-
-                var combinedStoreOptions = new JsonSerializerOptions(_optionsStore) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
-                using FileStream stream = File.Create(filePath);
-                JsonSerializer.Serialize(stream, data, combinedStoreOptions);
-            }
-            catch (JsonException ex) {
-                throw new ArgumentException("json store null/corrupt", ex);
-            }
+            StoreDataAsync(filePath, data, context).Wait();
         }
 
         public static async Task<T> LoadDataAsync(string filePath, JsonSerializerContext context) {
@@ -50,7 +31,13 @@ namespace VirtualPaper.Common.Utils.Storage {
 
         public static async Task StoreDataAsync(string filePath, T data, JsonSerializerContext context) {
             try {
-                var combinedStoreOptions = new JsonSerializerOptions(_optionsStore) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) }; using FileStream stream = File.Create(filePath);
+                string? directoryPath = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(directoryPath)) {
+                    Directory.CreateDirectory(directoryPath);
+                }
+
+                var combinedStoreOptions = new JsonSerializerOptions(_optionsStore) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
+                using FileStream stream = File.Create(filePath);
                 await JsonSerializer.SerializeAsync(stream, data, combinedStoreOptions);
             }
             catch (JsonException ex) {

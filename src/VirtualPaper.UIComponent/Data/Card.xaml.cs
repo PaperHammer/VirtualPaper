@@ -6,13 +6,12 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace VirtualPaper.UIComponent.Data {
     public sealed partial class Card : UserControl {
-        public new static readonly DependencyProperty ContentProperty =
-           DependencyProperty.Register(nameof(Content), typeof(object), typeof(Card), new PropertyMetadata(null));
-
         public new object Content {
             get { return (object)GetValue(ContentProperty); }
             set { SetValue(ContentProperty, value); }
         }
+        public new static readonly DependencyProperty ContentProperty =
+           DependencyProperty.Register(nameof(Content), typeof(object), typeof(Card), new PropertyMetadata(null));
 
         public Card() {
             this.InitializeComponent();

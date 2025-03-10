@@ -19,6 +19,7 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.PlayerWeb.Utils;
 using VirtualPaper.PlayerWeb.ViewModel;
+using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
 using WinRT.Interop;
 using WinUIEx;
@@ -385,7 +386,7 @@ namespace VirtualPaper.PlayerWeb {
             try {
                 if (wpEffectFilePath == null) return;
 
-                foreach (var item in JsonUtil.GetReadonlyJson(wpEffectFilePath).EnumerateObject()) {
+                foreach (var item in JsonNodeUtil.GetReadonlyJson(wpEffectFilePath).EnumerateObject()) {
                     string uiElementType = item.Value.GetProperty("Type").ToString();
                     if (!uiElementType.Equals("Button", StringComparison.OrdinalIgnoreCase) && !uiElementType.Equals("Label", StringComparison.OrdinalIgnoreCase)) {
                         if (uiElementType.Equals("Slider", StringComparison.OrdinalIgnoreCase) ||
@@ -506,7 +507,7 @@ namespace VirtualPaper.PlayerWeb {
         private void SetDragRegionForCustomTitleBar(AppWindow appWindow) {
             if (AppWindowTitleBar.IsCustomizationSupported()
                 && appWindow.TitleBar.ExtendsContentIntoTitleBar) {
-                double scaleAdjustment = GetScaleAdjustment();
+                double scaleAdjustment = SystemUtil.GetScaleAdjustment(this);
 
                 RightPaddingColumn.Width = new GridLength(appWindow.TitleBar.RightInset / scaleAdjustment);
                 LeftPaddingColumn.Width = new GridLength(appWindow.TitleBar.LeftInset / scaleAdjustment);
@@ -536,22 +537,6 @@ namespace VirtualPaper.PlayerWeb {
 
                 appWindow.TitleBar.SetDragRectangles(dragRects);
             }
-        }
-
-        private double GetScaleAdjustment() {
-            IntPtr hWnd = WindowNative.GetWindowHandle(this);
-            WindowId wndId = Win32Interop.GetWindowIdFromWindow(hWnd);
-            DisplayArea displayArea = DisplayArea.GetFromWindowId(wndId, DisplayAreaFallback.Primary);
-            IntPtr hMonitor = Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId);
-
-            // Get DPI.
-            int result = Native.GetDpiForMonitor(hMonitor, Native.Monitor_DPI_Type.MDT_Default, out uint dpiX, out uint _);
-            if (result != 0) {
-                throw new Exception("Could not get DPI for monitor.");
-            }
-
-            uint scaleFactorPercent = (uint)(((long)dpiX * 100 + (96 >> 1)) / 96);
-            return scaleFactorPercent / 100.0;
         }
         #endregion
 

@@ -111,7 +111,7 @@ namespace VirtualPaper.UIComponent.Container {
         private void SetDragRegionForCustomTitleBar(AppWindow appWindow) {
             if (AppWindowTitleBar.IsCustomizationSupported()
                 && appWindow.TitleBar.ExtendsContentIntoTitleBar) {
-                double scaleAdjustment = GetScaleAdjustment();
+                double scaleAdjustment = SystemUtil.GetScaleAdjustment(this);
 
                 RightPaddingColumn.Width = new GridLength(appWindow.TitleBar.RightInset / scaleAdjustment);
                 LeftPaddingColumn.Width = new GridLength(appWindow.TitleBar.LeftInset / scaleAdjustment);
@@ -141,22 +141,6 @@ namespace VirtualPaper.UIComponent.Container {
 
                 appWindow.TitleBar.SetDragRectangles(dragRects);
             }
-        }
-
-        private double GetScaleAdjustment() {
-            IntPtr hWnd = WindowNative.GetWindowHandle(this);
-            WindowId wndId = Win32Interop.GetWindowIdFromWindow(hWnd);
-            DisplayArea displayArea = DisplayArea.GetFromWindowId(wndId, DisplayAreaFallback.Primary);
-            IntPtr hMonitor = Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId);
-
-            // Get DPI.
-            int result = Native.GetDpiForMonitor(hMonitor, Native.Monitor_DPI_Type.MDT_Default, out uint dpiX, out uint _);
-            if (result != 0) {
-                throw new Exception("Could not get DPI for monitor.");
-            }
-
-            uint scaleFactorPercent = (uint)(((long)dpiX * 100 + (96 >> 1)) / 96);
-            return scaleFactorPercent / 100.0;
         }
         #endregion
 

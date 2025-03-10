@@ -17,10 +17,13 @@ namespace VirtualPaper.DraftPanel {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class Draft : Page, IDraftPanelBridge {
+        internal static IDraftPanelBridge DraftPanelBridge { get; private set; }
+
         public Draft() {
             this.InitializeComponent();
 
             this._currentState = DraftPanelState.ConfigSpace;
+            DraftPanelBridge = this;
         }
 
         #region bridge
@@ -43,6 +46,10 @@ namespace VirtualPaper.DraftPanel {
 
         public INoifyBridge GetNotify() {
             return _windowBridge.GetNotify();
+        }
+
+        public double GetScale() {
+            return _windowBridge.GetScale();
         }
         #endregion
 
@@ -81,7 +88,7 @@ namespace VirtualPaper.DraftPanel {
                         FrameCardComp.GoBack();
                     }
                     else {
-                        FrameCardComp.Navigate(targetPageType, this);
+                        FrameCardComp.Navigate(targetPageType);
                     }
                 }
             });

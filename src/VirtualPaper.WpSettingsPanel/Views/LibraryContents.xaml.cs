@@ -32,7 +32,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             if (this._wpSettingsPanel == null) {
                 this._wpSettingsPanel = e.Parameter as IWpSettingsPanel;
 
-                _compositor = this._wpSettingsPanel.GetCompositor() as Compositor;
+                _compositor = (this._wpSettingsPanel.GetMainWindow() as Window).Compositor;
                 _viewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
                 this.DataContext = _viewModel;
             }

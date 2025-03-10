@@ -7,18 +7,12 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:container="using:VirtualPaper.UIComponent.Container"
+    xmlns:cmd="using:VirtualPaper.UIComponent.Command"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     NavigationCacheMode="Enabled">
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="40"/>
-            <RowDefinition Height="24"/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
-
-        <MenuBar>
+    <Page.Resources>
+        <cmd:KeepToLeft x:Key="LeftMenuItems">
             <MenuBarItem 
                 Title="文件(F)"
                 KeyboardAcceleratorPlacementMode="Hidden">
@@ -41,12 +35,17 @@
                         <KeyboardAccelerator Modifiers="Control" Key="O"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="保存">
+                <MenuFlyoutItem Text="保存" Click="MFI_Save_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="退出">
+                <MenuFlyoutItem Text="全部保存" Click="MFI_SaveAll_Clicked">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control,Shift" Key="S"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="退出" Click="MFI_Exit_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="F4"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -89,30 +88,12 @@
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
             </MenuBarItem>
+        </cmd:KeepToLeft>
 
+        <cmd:KeepToRight x:Key="RightMenuItems">
             <MenuBarItem 
-                Title="图像(I)"
-                KeyboardAcceleratorPlacementMode="Hidden">
-                <MenuBarItem.KeyboardAccelerators>
-                    <KeyboardAccelerator Modifiers="Menu" Key="I"/>
-                </MenuBarItem.KeyboardAccelerators>
-
-
-            </MenuBarItem>
-
-            <MenuBarItem 
-                Title="图层(L)"
-                KeyboardAcceleratorPlacementMode="Hidden">
-                <MenuBarItem.KeyboardAccelerators>
-                    <KeyboardAccelerator Modifiers="Menu" Key="L"/>
-                </MenuBarItem.KeyboardAccelerators>
-
-
-            </MenuBarItem>
-
-            <MenuBarItem 
-                Title="帮助(H)"
-                KeyboardAcceleratorPlacementMode="Hidden">
+              Title="帮助(H)"
+              KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="H"/>
                 </MenuBarItem.KeyboardAccelerators>
@@ -123,69 +104,63 @@
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
             </MenuBarItem>
-        </MenuBar>
+        </cmd:KeepToRight>
+    </Page.Resources>
 
-        <Grid
-            x:Name="toolConfigGrid"
-            Grid.Row="1">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
 
-        </Grid>
+        <ContentControl
+            x:Name="menuContent">
+            <cmd:ObservableMenuBar
+                KeepToLeft="{StaticResource LeftMenuItems}"
+                KeepToRight="{StaticResource RightMenuItems}"
+                MiddleItems="{x:Bind _viewModel._middleMenuItems}"/>
+            <!--<MenuBar>
+                
+
+                <MenuBarItem 
+                Title="图像(I)"
+                KeyboardAcceleratorPlacementMode="Hidden">
+                    <MenuBarItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="I"/>
+                    </MenuBarItem.KeyboardAccelerators>
+
+
+                </MenuBarItem>
+
+                <MenuBarItem 
+                Title="图层(L)"
+                KeyboardAcceleratorPlacementMode="Hidden">
+                    <MenuBarItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="L"/>
+                    </MenuBarItem.KeyboardAccelerators>
+
+
+                </MenuBarItem>
+
+               
+            </MenuBar>-->
+        </ContentControl>
 
         <Grid
             x:Name="contentGrid"
-            Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="20"/>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="40"/>
-            </Grid.ColumnDefinitions>
-
-            <Grid
-                x:Name="toolsGrid">
-
-            </Grid>
-
-            <Grid
-                x:Name="mainGrid"
-                Grid.Column="1">
-                <!--<container:SelectableItemsControl 
-                    x:Name="SelectableItems"/>-->
-                <TabView
-                    x:Name="TabViewControl"                    
-                    TabWidthMode="SizeToContent"
-                    CloseButtonOverlayMode="OnPointerOver"
-                    TabItemsSource="{Binding TabViewItems}"
-                    AddTabButtonClick="TabViewControl_AddTabButtonClick"
-                    TabCloseRequested="TabViewControl_TabCloseRequested">
-                    <!--<TabView.TabItems>
-                        <TabViewItem Header="Document 0">
-                            <TabViewItem.IconSource>
-                                <SymbolIconSource Symbol="Placeholder" />
-                            </TabViewItem.IconSource>
-                            <Page/>
-                        </TabViewItem>
-                        <TabViewItem Header="Document 1">
-                            <TabViewItem.IconSource>
-                                <SymbolIconSource Symbol="Placeholder" />
-                            </TabViewItem.IconSource>
-                            <Page/>
-                        </TabViewItem>
-                        <TabViewItem Header="Document 2">
-                            <TabViewItem.IconSource>
-                                <SymbolIconSource Symbol="Placeholder" />
-                            </TabViewItem.IconSource>
-                            <Page/>
-                        </TabViewItem>
-                    </TabView.TabItems>-->
-
-                </TabView>
-            </Grid>
-
-            <Grid
-                x:Name="detailsGrid"
-                Grid.Column="2">
-
-            </Grid>
+            Grid.Row="1">
+            <TabView
+                x:Name="TabViewControl"
+                VerticalAlignment="Stretch"
+                HorizontalAlignment="Stretch"
+                Loaded="TabViewControl_Loaded"
+                TabWidthMode="SizeToContent"
+                CloseButtonOverlayMode="OnPointerOver"
+                TabItemsSource="{x:Bind _viewModel.TabViewItems, Mode=OneWay}"
+               
+                AddTabButtonClick="TabViewControl_AddTabButtonClick"
+                TabCloseRequested="TabViewControl_TabCloseRequested">
+            </TabView>
         </Grid>
     </Grid>
 </Page>

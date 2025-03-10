@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.UIComponent.Utils;
 using Windows.System;

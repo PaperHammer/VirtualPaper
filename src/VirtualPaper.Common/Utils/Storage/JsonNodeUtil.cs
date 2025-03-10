@@ -2,7 +2,7 @@
 using System.Text.Json.Nodes;
 
 namespace VirtualPaper.Common.Utils.Storage {
-    public class JsonUtil {
+    public class JsonNodeUtil {
         #region system.text.json
         public static void Write(string filePath, JsonNode jsonNode) {
             using FileStream fs = new(filePath, FileMode.Create, FileAccess.Write);

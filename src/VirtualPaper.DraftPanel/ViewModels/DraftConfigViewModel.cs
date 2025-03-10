@@ -76,7 +76,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         internal void InitContent() {
             DraftName = "New_Draft";
-            this.StorageFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);            
+            this.StorageFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         }
 
         private void InitText() {
@@ -106,7 +106,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private async void CreateVpdBtnAction(object sender, RoutedEventArgs e) {
             string storageFolder = await CreateNewVpdAsync();
             if (storageFolder == string.Empty) return;
-            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, storageFolder);
+            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, new string[] { storageFolder });
         }
 
         private void UpdateDeployNewDraftDesc(bool value) {
@@ -124,7 +124,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
             this.StorageFolderPath = storageFolder.Path;
         }
-       
+
         internal async Task<string> CreateNewVpdAsync() {
             CancellationTokenSource ctsCreate = new();
             string storageFolder = Path.Combine(this.StorageFolderPath, DraftName);

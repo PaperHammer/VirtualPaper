@@ -46,7 +46,7 @@ namespace VirtualPaper.Services {
         public void Load<T>() {
             if (typeof(T) == typeof(ISettings)) {
                 try {
-                    Settings = JsonStorage<Settings>.LoadData(_settingsPath, SettingsContext.Default);
+                    Settings = JsonStorage.Load<Settings>(_settingsPath, SettingsContext.Default);
                 }
                 catch (Exception e) {
                     App.Log.Error(e);
@@ -56,7 +56,7 @@ namespace VirtualPaper.Services {
             }
             else if (typeof(T) == typeof(List<IApplicationRules>)) {
                 try {
-                    AppRules = new List<IApplicationRules>(JsonStorage<List<ApplicationRules>>.LoadData(_appRulesPath, ApplicationRulesContext.Default));
+                    AppRules = new List<IApplicationRules>(JsonStorage.Load<List<ApplicationRules>>(_appRulesPath, ApplicationRulesContext.Default));
                 }
                 catch (Exception e) {
                     App.Log.Error(e.ToString());
@@ -69,7 +69,7 @@ namespace VirtualPaper.Services {
             }
             else if (typeof(T) == typeof(List<IWallpaperLayout>)) {
                 try {
-                    WallpaperLayouts = new List<IWallpaperLayout>(JsonStorage<List<WallpaperLayout>>.LoadData(_wallpaperLayoutPath, WallpaperLayoutContext.Default));
+                    WallpaperLayouts = new List<IWallpaperLayout>(JsonStorage.Load<List<WallpaperLayout>>(_wallpaperLayoutPath, WallpaperLayoutContext.Default));
                 }
                 catch (Exception e) {
                     App.Log.Error(e.ToString());
@@ -84,13 +84,13 @@ namespace VirtualPaper.Services {
 
         public void Save<T>() {
             if (typeof(T) == typeof(ISettings)) {
-                JsonStorage<ISettings>.StoreData(_settingsPath, Settings, SettingsContext.Default);
+                JsonStorage.Store(_settingsPath, Settings, SettingsContext.Default);
             }
             else if (typeof(T) == typeof(List<IApplicationRules>)) {
-                JsonStorage<List<IApplicationRules>>.StoreData(_appRulesPath, AppRules, ApplicationRulesContext.Default);
+                JsonStorage.Store(_appRulesPath, AppRules, ApplicationRulesContext.Default);
             }
             else if (typeof(T) == typeof(List<IWallpaperLayout>)) {
-                JsonStorage<List<IWallpaperLayout>>.StoreData(_wallpaperLayoutPath, WallpaperLayouts, WallpaperLayoutContext.Default);
+                JsonStorage.Store(_wallpaperLayoutPath, WallpaperLayouts, WallpaperLayoutContext.Default);
             }
             else {
                 throw new InvalidCastException($"ValueType not found: {typeof(T)}");

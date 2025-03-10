@@ -97,7 +97,7 @@ namespace VirtualPaper.UIComponent.ViewModels {
         }
 
         public DetailsViewModel(string wpBasicDataFilePath) : this() {
-            _wpBasicData = JsonStorage<WpBasicData>.LoadData(wpBasicDataFilePath, WpBasicDataContext.Default);
+            _wpBasicData = JsonStorage.Load<WpBasicData>(wpBasicDataFilePath, WpBasicDataContext.Default);
             InitData();
         }
 

@@ -35,11 +35,21 @@ namespace VirtualPaper.Common.Utils.Files {
             return FileType.FUnknown;
         }
 
+        public static FileType DetermineFileType(string extension) {
+            foreach (var kvp in FileExtensions) {
+                if (kvp.Value.Contains(extension)) {
+                    return kvp.Key;
+                }
+            }
+            throw new ArgumentException("未找到匹配的文件类型", nameof(extension));
+        }
+
         public static Dictionary<FileType, string[]> FileExtensions { get; } = new() {
             [FileType.FImage] = [".jpg", ".jpeg", ".bmp", ".png", ".svg", ".webp"],
             [FileType.FGif] = [".gif", ".apng"],
             [FileType.FVideo] = [".mp4", ".webm"],
             [FileType.FDesign] = [".vpd"],
+            [FileType.FProject] = [".vproj"],
         };
 
         private static readonly Dictionary<string, FileType> _fileHeaderMap = new()
@@ -54,7 +64,7 @@ namespace VirtualPaper.Common.Utils.Files {
             {"474946383961", FileType.FGif}, // .gif
             {"acTL", FileType.FGif}, // .anpg
 
-            {"66747970", FileType.FVideo}, // .mp4         
+            {"66747970", FileType.FVideo}, // .mp4
             {"1A45DFA3", FileType.FVideo}, // .webm
         };
     }

@@ -9,8 +9,8 @@ namespace VirtualPaper.DraftPanel.Model {
     public partial class ProjectMetadataContext : JsonSerializerContext { }
 
     public class ProjectMetadata {
-        public string Name { get; }
-        public ProjectType Type { get; }
+        public string Name { get; init; }
+        public ProjectType Type { get; init; }
 
         public ProjectMetadata() { }
 
@@ -22,7 +22,7 @@ namespace VirtualPaper.DraftPanel.Model {
         internal async Task WriteDataAsync(string storageFolderPath) {
             string storageFolder = Path.Combine(storageFolderPath, Name);
             Directory.CreateDirectory(storageFolder);
-            await JsonStorage<ProjectMetadata>.StoreDataAsync(
+            await JsonStorage.StoreAsync(
                 Path.Combine(storageFolder, Name + ".vproj"),
                 this,
                 ProjectMetadataContext.Default);

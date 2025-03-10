@@ -105,34 +105,30 @@
             <Grid>
                 <Frame
                     x:Name="ContentFrame"
-                    Opacity="{Binding FrameOpacity}"
+                    Opacity="{x:Bind _viewModel._loadingViewModel.FrameOpacity, Mode=OneWay}"
                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                    IsEnabled="{Binding FrameIsEnable}"/>
+                    IsEnabled="{x:Bind _viewModel._loadingViewModel.FrameIsEnable, Mode=OneWay}"/>
 
                 <InfoBar
                     HorizontalAlignment="Center"
                     VerticalAlignment="Top"
                     IsIconVisible="True"
-                    IsOpen="{Binding InfoBarIsOpen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    Severity="{Binding InfoBarSeverity}"
-                    Message="{Binding InfobarMsg}"
+                    IsOpen="{x:Bind _viewModel._globalMsgViewModel.InfoBarIsOpen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Severity="{x:Bind _viewModel._globalMsgViewModel.InfoBarSeverity, Mode=OneWay}"
+                    Message="{x:Bind _viewModel._globalMsgViewModel.InfobarMsg, Mode=OneWay}"
                     MaxWidth="900"/>
 
                 <feedback:Loading
-                    CancelEnable="{Binding CancelEnable}"
-                    ProgressbarEnable="{Binding ProgressbarEnable}"
-                    CtsTokens="{Binding CtsTokens}"
-                    TotalValue="{Binding TotalValue}"
-                    CurValue="{Binding CurValue}"
-                    TextLoading="{Binding TextLoading}"
-                    TextCancel="{Binding TextCancel}"
-                    Visibility="{Binding LoadingIsVisiable}"/>
+                    CancelEnable="{x:Bind _viewModel._loadingViewModel.CancelEnable, Mode=OneWay}"
+                    ProgressbarEnable="{x:Bind _viewModel._loadingViewModel.ProgressbarEnable, Mode=OneWay}"
+                    CtsTokens="{x:Bind _viewModel._loadingViewModel.CtsTokens, Mode=OneWay}"
+                    TotalValue="{x:Bind _viewModel._loadingViewModel.TotalValue, Mode=OneWay}"
+                    CurValue="{x:Bind _viewModel._loadingViewModel.CurValue, Mode=OneWay}"
+                    TextLoading="{x:Bind _viewModel._loadingViewModel.TextLoading, Mode=OneWay}"
+                    TextCancel="{x:Bind _viewModel._loadingViewModel.TextCancel, Mode=OneWay}"
+                    Visibility="{x:Bind _viewModel._loadingViewModel.IsVisiable, Mode=OneWay}"/>
             </Grid>
         </NavigationView>
-
-        <Grid>
-            
-        </Grid>
 
         <!--<Grid
             Grid.Row="2"

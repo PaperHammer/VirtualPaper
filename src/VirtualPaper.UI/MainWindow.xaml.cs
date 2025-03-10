@@ -5,18 +5,14 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.AppSettingsPanel;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge.Base;
-using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.IPC;
-using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
@@ -37,17 +33,13 @@ namespace VirtualPaper.UI {
             MainWindowViewModel mainWindowViewModel,
             ICommandsClient commandsClient,
             IUserSettingsClient userSettingsClient) {
-            _commandsClient = commandsClient;
-            _userSettingsClient = userSettingsClient;
-
             this.InitializeComponent();
-
+            
+            _commandsClient = commandsClient;
+            _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
+            _userSettingsClient = userSettingsClient;
             _viewModel = mainWindowViewModel;
             this.MainGrid.DataContext = _viewModel;
-
-            _basicUIComponent = new(_viewModel);
-            _dialog = new();
-            _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
 
             SetWindowStartupPosition();
             SetWindowStyle();
@@ -63,16 +55,13 @@ namespace VirtualPaper.UI {
             return WindowNative.GetWindowHandle(this);
         }
 
-        public INoifyBridge GetNotify() {
-            return _basicUIComponent;
+        public double GetScale() {
+            return SystemUtil.GetScaleAdjustment(this);
         }
 
-        //public T GetRequiredService<T>(
-        //    ObjectLifetime lifetime = ObjectLifetime.Transient,
-        //    ObjectLifetime lifetimeForParams = ObjectLifetime.Transient,
-        //    object scope = null) {
-        //    return ObjectProvider.GetRequiredService<T>(lifetime, lifetimeForParams, scope);
-        //}
+        public INoifyBridge GetNotify() {
+            return _viewModel._basicComponentUtil;
+        }
 
         public void Log(LogType type, object message) {
             switch (type) {
@@ -93,23 +82,18 @@ namespace VirtualPaper.UI {
             }
         }
 
-        public object GetCompositor() {
-            return this.Compositor;
-        }
-
         public object GetMainWindow() {
             return this;
         }
 
         public IDialogService GetDialog() {
-            return _dialog;
+            return _viewModel._dialog;
         }
         #endregion
 
         #region window property
         private void SetWindowStartupPosition() {
-            DisplayArea displayArea = DisplayArea.GetFromWindowId(
-                Win32Interop.GetWindowIdFromWindow(WindowNative.GetWindowHandle(this)), DisplayAreaFallback.Nearest);
+            DisplayArea displayArea = SystemUtil.GetDisplayArea(this, DisplayAreaFallback.Nearest);
             if (displayArea is not null) {
                 var centeredPosition = this.AppWindow.Position;
                 centeredPosition.X = (displayArea.WorkArea.Width - this.AppWindow.Size.Width) / 2;
@@ -222,7 +206,7 @@ namespace VirtualPaper.UI {
                 }
             }
             catch (Exception ex) {
-                _basicUIComponent.ShowExp(ex);
+                _viewModel._basicComponentUtil.ShowExp(ex);
                 App.Log.Error(ex);
             }
         }
@@ -245,7 +229,7 @@ namespace VirtualPaper.UI {
         private void SetDragRegionForCustomTitleBar(AppWindow appWindow) {
             if (AppWindowTitleBar.IsCustomizationSupported()
                 && appWindow.TitleBar.ExtendsContentIntoTitleBar) {
-                double scaleAdjustment = GetScaleAdjustment();
+                double scaleAdjustment = SystemUtil.GetScaleAdjustment(this);
 
                 RightPaddingColumn.Width = new GridLength(appWindow.TitleBar.RightInset / scaleAdjustment);
                 LeftPaddingColumn.Width = new GridLength(appWindow.TitleBar.LeftInset / scaleAdjustment);
@@ -276,28 +260,11 @@ namespace VirtualPaper.UI {
                 appWindow.TitleBar.SetDragRectangles(dragRects);
             }
         }
-
-        private double GetScaleAdjustment() {
-            DisplayArea displayArea = DisplayArea.GetFromWindowId(
-                Win32Interop.GetWindowIdFromWindow(WindowNative.GetWindowHandle(this)), DisplayAreaFallback.Primary);
-
-            // Get DPI.
-            int result = Native.GetDpiForMonitor(
-                Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId), Native.Monitor_DPI_Type.MDT_Default, out uint dpiX, out uint _);
-            if (result != 0) {
-                throw new Exception("Could not get DPI for monitor.");
-            }
-
-            uint scaleFactorPercent = (uint)(((long)dpiX * 100 + (96 >> 1)) / 96);
-            return scaleFactorPercent / 100.0;
-        }
         #endregion
 
         private readonly ICommandsClient _commandsClient;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly MainWindowViewModel _viewModel;
-        private readonly BasicUIComponentUtil _basicUIComponent;
-        private readonly DialogUtil _dialog;
 
         //private void Flyout_BackgreoundTask_Opening(object sender, object e) {
 

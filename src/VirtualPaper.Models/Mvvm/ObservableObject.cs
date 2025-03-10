@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using MessagePack;
 
 namespace VirtualPaper.Models.Mvvm {
     //ref: https://rachel53461.wordpress.com/2011/05/08/simplemvvmexample/
@@ -47,6 +48,7 @@ namespace VirtualPaper.Models.Mvvm {
             }
         }
 
+        [IgnoreMember]
         /// <summary>
         /// Returns whether an exception is thrown, or if a Debug.Fail() is used
         /// when an Invalid property name is passed to the VerifyPropertyName method.

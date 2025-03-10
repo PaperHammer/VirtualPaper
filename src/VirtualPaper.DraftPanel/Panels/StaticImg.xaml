@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VirtualPaper.DraftPanel.Panels.StaticImg"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.DraftPanel.Panels"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"    
+    xmlns:lclUtils="using:VirtualPaper.DraftPanel.Utils"
+    mc:Ignorable="d"    
+    Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
+
+    <ScrollViewer
+        x:Name="canvasSVer"
+        HorizontalScrollBarVisibility="Auto" 
+        VerticalScrollBarVisibility="Auto"
+        ZoomMode="Enabled"
+        MaxZoomFactor="4"
+        MinZoomFactor="0.2">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Canvas 
+                x:Name="drawingCanvas" 
+                Grid.Row="1"
+                Grid.Column="1"
+                Margin="80"
+                Background="{x:Bind lclUtils:TypeConvertUtil.Hex2Brush(_staticImgMd.CanvasConfig.Background), Mode=OneWay}" 
+                Width="{x:Bind _staticImgMd.CanvasConfig.Width, Mode=OneWay}"
+                Height="{x:Bind _staticImgMd.CanvasConfig.Height, Mode=OneWay}"
+                PointerPressed="OnPointerPressed" 
+                PointerMoved="OnPointerMoved" 
+                PointerReleased="OnPointerReleased"/>
+        </Grid>
+    </ScrollViewer>
+</Page>

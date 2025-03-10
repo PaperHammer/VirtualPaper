@@ -715,7 +715,7 @@ namespace VirtualPaper.Cores.WpControl {
                 ?? throw new Exception("Create basic-data Error");
 
             try {
-                IWpBasicData oldData = await JsonStorage<WpBasicData>.LoadDataAsync(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName), WpBasicDataContext.Default);
+                IWpBasicData oldData = await JsonStorage.LoadAsync<WpBasicData>(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName), WpBasicDataContext.Default);
                 newData.Merge(oldData);
                 newData.Save();
             }

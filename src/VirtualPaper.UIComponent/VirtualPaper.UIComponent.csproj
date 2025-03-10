@@ -9,7 +9,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="Container\Card.xaml" />
     <None Remove="Container\FlyoutWindow.xaml" />
     <None Remove="Container\PageContainer.xaml" />
     <None Remove="Data\Details.xaml" />

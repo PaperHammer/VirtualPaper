@@ -28,26 +28,15 @@ namespace VirtualPaper.WpSettingsPanel {
         }
 
         public object GetParam() {
-            return null;
+            return _param;
         }
 
         public INoifyBridge GetNotify() {
             return _windowBridge.GetNotify();
         }
 
-        //public T GetRequiredService<T>(
-        //        ObjectLifetime lifetime = ObjectLifetime.Transient,
-        //        ObjectLifetime lifetimeForParams = ObjectLifetime.Transient,
-        //        object scope = null) {
-        //    return _windowBridge.GetRequiredService<T>(lifetime, lifetimeForParams, scope);
-        //}
-
         public void Log(LogType type, object message) {
             _windowBridge.Log(type, message);
-        }
-
-        public object GetCompositor() {
-            return _windowBridge.GetCompositor();
         }
 
         public object GetMainWindow() {
@@ -130,5 +119,6 @@ namespace VirtualPaper.WpSettingsPanel {
 
         private IWindowBridge _windowBridge;
         private WpSettingsViewModel _viewModel;
+        private object _param;
     }
 }

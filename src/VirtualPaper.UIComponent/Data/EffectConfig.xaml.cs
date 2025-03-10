@@ -56,7 +56,7 @@ namespace VirtualPaper.UIComponent.Data {
             }
 
             File.Copy(_wpEffectFilePathUsing, _wpEffectFilePathTemporary, true);
-            _wpEffectData = JsonUtil.GetWritableJson(_wpEffectFilePathTemporary);
+            _wpEffectData = JsonNodeUtil.GetWritableJson(_wpEffectFilePathTemporary);
             GenerateUIElements();
         }
 
@@ -477,9 +477,9 @@ namespace VirtualPaper.UIComponent.Data {
 
         public void UpdatePropertyFile(bool isSave) {
             if (isSave) {
-                JsonUtil.Write(_wpEffectFilePathUsing, _wpEffectData);
+                JsonNodeUtil.Write(_wpEffectFilePathUsing, _wpEffectData);
             }
-            JsonUtil.Write(_wpEffectFilePathTemporary, _wpEffectData);
+            JsonNodeUtil.Write(_wpEffectFilePathTemporary, _wpEffectData);
         }
 
         private bool AnyFileIPathsEmpty() {

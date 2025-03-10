@@ -6,9 +6,26 @@
     xmlns:local="using:VirtualPaper.DraftPanel.Views.WorkSpaceComponents"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
+    Loaded="Page_Loaded"
     mc:Ignorable="d">
 
     <Grid>
+        <Frame
+            x:Name="contentFrame"
+            Content="{x:Bind _viewModel.FrameContent, Mode=OneWay}"
+            IsEnabled="{x:Bind _viewModel._loadingViewModel.FrameIsEnable, Mode=OneWay}"
+            Opacity="{x:Bind _viewModel._loadingViewModel.FrameOpacity, Mode=OneWay}"/>
 
+        <feedback:Loading
+            x:Name="loader"
+            CancelEnable="{x:Bind _viewModel._loadingViewModel.CancelEnable, Mode=OneWay}"
+            ProgressbarEnable="{x:Bind _viewModel._loadingViewModel.ProgressbarEnable, Mode=OneWay}"
+            CtsTokens="{x:Bind _viewModel._loadingViewModel.CtsTokens, Mode=OneWay}"
+            TotalValue="{x:Bind _viewModel._loadingViewModel.TotalValue, Mode=OneWay}"
+            CurValue="{x:Bind _viewModel._loadingViewModel.CurValue, Mode=OneWay}"
+            TextLoading="{x:Bind _viewModel._loadingViewModel.TextLoading, Mode=OneWay}"
+            TextCancel="{x:Bind _viewModel._loadingViewModel.TextCancel, Mode=OneWay}"
+            Visibility="{x:Bind _viewModel._loadingViewModel.IsVisiable, Mode=OneWay}"/>
     </Grid>
 </Page>

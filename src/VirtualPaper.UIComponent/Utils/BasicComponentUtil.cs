@@ -3,13 +3,13 @@ using System.Threading;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge.Base;
-using VirtualPaper.UI.ViewModels;
+using VirtualPaper.UIComponent.ViewModels;
 
-namespace VirtualPaper.UI.Utils
-{
-    internal class BasicUIComponentUtil : INoifyBridge {
-        public BasicUIComponentUtil(MainWindowViewModel mainWindowViewModel) {
-            _mainWindowViewModel = mainWindowViewModel;
+namespace VirtualPaper.UI.Utils {
+    public class BasicComponentUtil : INoifyBridge {
+        public BasicComponentUtil(LoadingViewModel loadingViewModel, GlobalMsgViewModel globalMsgViewModel) {
+            _loadingViewModel = loadingViewModel;
+            _globalMsgViewModel = globalMsgViewModel;
         }
 
         public void ShowExp(Exception ex) {
@@ -29,27 +29,28 @@ namespace VirtualPaper.UI.Utils
                     InfoBarType.Success => InfoBarSeverity.Success,
                     _ => InfoBarSeverity.Informational
                 };
-            _mainWindowViewModel.ShowMessge(isNeedLocalizer, msg, severity);
+            _globalMsgViewModel.ShowMessge(isNeedLocalizer, msg, severity);
         }
 
         public void Loading(
             bool cancelEnable,
             bool progressbarEnable,
             CancellationTokenSource[] cts = null) {
-            _mainWindowViewModel.Loading(
+            _loadingViewModel.Loading(
                 cancelEnable,
                 progressbarEnable,
                 cts);
         }
 
         public void Loaded(CancellationTokenSource[] cts = null) {
-            _mainWindowViewModel.Loaded(cts);
+            _loadingViewModel.Loaded(cts);
         }
 
         public void UpdateProgressbarValue(int curValue, int toltalValue) {
-            _mainWindowViewModel.UpdateProgressbarValue(curValue, toltalValue);
+            _loadingViewModel.UpdateProgressbarValue(curValue, toltalValue);
         }
 
-        private readonly MainWindowViewModel _mainWindowViewModel;
+        private readonly LoadingViewModel _loadingViewModel;
+        private readonly GlobalMsgViewModel _globalMsgViewModel;
     }
 }

@@ -4,7 +4,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.ThreadContext;
@@ -30,7 +29,6 @@ namespace VirtualPaper.DraftPanel.Views {
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            this._draftPanel ??= e.Parameter as IDraftPanelBridge;
             _viewModel = ObjectProvider.GetRequiredService<ConfigSpaceViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
         }
@@ -55,7 +53,7 @@ namespace VirtualPaper.DraftPanel.Views {
                         targetPageType = typeof(DraftConfig);
                         break;
                     default:
-                        _draftPanel.ChangePanelState(nextState, _param);
+                        Draft.DraftPanelBridge.ChangePanelState(nextState, _param);
                         return;
                 }
 
@@ -119,27 +117,30 @@ namespace VirtualPaper.DraftPanel.Views {
             return _param;
         }
 
+        public double GetScale() {
+            return Draft.DraftPanelBridge.GetScale();
+        }
+
         public void ChangePanelState(DraftPanelState nextState, object param = null) {
             _param = param;
             NavigetBasedState(nextState);
         }
 
         public nint GetWindowHandle() {
-            return _draftPanel.GetWindowHandle();
+            return Draft.DraftPanelBridge.GetWindowHandle();
         }
 
         public void Log(LogType type, object message) {
-            _draftPanel.Log(type, message);
+            Draft.DraftPanelBridge.Log(type, message);
         }
 
         public INoifyBridge GetNotify() {
-            return _draftPanel.GetNotify();
+            return Draft.DraftPanelBridge.GetNotify();
         }
         #endregion
 
         private object _param;
         private ConfigSpaceViewModel _viewModel;
-        private IDraftPanelBridge _draftPanel;
         private DraftPanelState _currentConfigState;        
     }
 }

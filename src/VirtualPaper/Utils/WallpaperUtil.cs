@@ -18,7 +18,7 @@ namespace VirtualPaper.Utils {
             WpBasicData data = new();
             string basicDataFilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
             if (File.Exists(basicDataFilePath)) {
-                data = JsonStorage<WpBasicData>.LoadData(basicDataFilePath, WpBasicDataContext.Default)
+                data = JsonStorage.Load<WpBasicData>(basicDataFilePath, WpBasicDataContext.Default)
                     ?? throw new Exception("Corrupted wallpaper bacis-data");
             }
 
@@ -29,13 +29,13 @@ namespace VirtualPaper.Utils {
             WpMetadata data = new();
             string basicDataFilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
             if (File.Exists(basicDataFilePath)) {
-                data.BasicData = JsonStorage<WpBasicData>.LoadData(basicDataFilePath, WpBasicDataContext.Default)
+                data.BasicData = JsonStorage.Load<WpBasicData>(basicDataFilePath, WpBasicDataContext.Default)
                     ?? throw new Exception("Corrupted wallpaper bacis-data");
             }
 
             string runtimeDataFilePath = Path.Combine(folderPath, monitorContent, rtype, Constants.Field.WpRuntimeDataFileName);
             if (File.Exists(runtimeDataFilePath)) {
-                data.RuntimeData = JsonStorage<WpRuntimeData>.LoadData(runtimeDataFilePath, WpRuntimeDataContext.Default)
+                data.RuntimeData = JsonStorage.Load<WpRuntimeData>(runtimeDataFilePath, WpRuntimeDataContext.Default)
                     ?? throw new Exception("Corrupted wallpaper runtime-data");
             }
 
@@ -53,15 +53,15 @@ namespace VirtualPaper.Utils {
             switch (rtype) {
                 case RuntimeType.RImage:
                     PictureAndGifCostumise pictureAndGifCostumize = new();
-                    JsonStorage<PictureAndGifCostumise>.StoreData(wpEffectFilePathTemplate, pictureAndGifCostumize, PictureAndGifCostumiseContext.Default);
+                    JsonStorage.Store(wpEffectFilePathTemplate, pictureAndGifCostumize, PictureAndGifCostumiseContext.Default);
                     break;
                 case RuntimeType.RImage3D:
                     Picture3DCostumize picture3DCostumize = new();
-                    JsonStorage<Picture3DCostumize>.StoreData(wpEffectFilePathTemplate, picture3DCostumize, Picture3DCostumizeContext.Default);
+                    JsonStorage.Store(wpEffectFilePathTemplate, picture3DCostumize, Picture3DCostumizeContext.Default);
                     break;
                 case RuntimeType.RVideo:
                     VideoCostumize videoCostumize = new();
-                    JsonStorage<VideoCostumize>.StoreData(wpEffectFilePathTemplate, videoCostumize, VideoCostumizeContext.Default);
+                    JsonStorage.Store(wpEffectFilePathTemplate, videoCostumize, VideoCostumizeContext.Default);
                     break;
                 default:
                     break;

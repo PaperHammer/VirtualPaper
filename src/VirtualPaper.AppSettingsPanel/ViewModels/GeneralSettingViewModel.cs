@@ -427,7 +427,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                     WpLibData libData = new();
                     foreach (string file in files) {
                         if (Path.GetFileName(file) == Constants.Field.WpBasicDataFileName) {
-                            libData.BasicData = await JsonStorage<WpBasicData>.LoadDataAsync(file, WpBasicDataContext.Default);
+                            libData.BasicData = await JsonStorage.LoadAsync<WpBasicData>(file, WpBasicDataContext.Default);
 
                             if (libData.BasicData.IsAvailable()) {
                                 libData.Idx = idx++;

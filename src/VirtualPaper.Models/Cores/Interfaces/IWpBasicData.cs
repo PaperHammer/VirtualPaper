@@ -1,5 +1,4 @@
-﻿using Octokit;
-using VirtualPaper.Common;
+﻿using VirtualPaper.Common;
 
 namespace VirtualPaper.Models.Cores.Interfaces {
     public interface IWpBasicData : IEquatable<IWpBasicData> {

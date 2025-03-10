@@ -19,7 +19,7 @@ namespace VirtualPaper.DraftPanel.StrategyGroup.StartupSTG {
             var storage = await WindowsStoragePickers.PickFilesAsync(projectBridge.GetWindowHandle(), FileFilter.FileExtensions[FileType.FDesign]);
             if (storage.Length < 1) return;
             var filePath = storage[0].Path;
-            projectBridge.ChangePanelState(DraftPanelState.WorkSpace, new List<string>() { filePath });
+            projectBridge.ChangePanelState(DraftPanelState.WorkSpace, new string[] { filePath });
         }
     }
 }

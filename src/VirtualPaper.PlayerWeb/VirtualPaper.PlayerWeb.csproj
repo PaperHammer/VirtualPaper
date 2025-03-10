@@ -89,7 +89,6 @@
 		<ProjectCapability Include="Msix" />
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
 		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
 	</ItemGroup>
 	<ItemGroup>

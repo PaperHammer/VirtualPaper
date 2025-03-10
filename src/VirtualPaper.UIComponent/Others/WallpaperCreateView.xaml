@@ -9,45 +9,43 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid>
-        <ListView
-            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-            CornerRadius="5"
-            ItemsSource="{Binding WallpaperCategoriesFiltered}"
-            SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+    <ListView
+        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+        CornerRadius="5"
+        ItemsSource="{Binding WallpaperCategoriesFiltered}"
+        SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+        <ListView.ItemTemplate>
+            <DataTemplate>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                        <Border
-                            Grid.Column="0"
-                            Margin="0"
-                            Padding="0"
-                            CornerRadius="10">
-                            <Image 
-                                Source="{Binding Icon}" 
-                                Height="40"
-                                Width="40"/>
-                        </Border>
+                    <Border
+                        Grid.Column="0"
+                        Margin="0"
+                        Padding="0"
+                        CornerRadius="10">
+                        <Image 
+                            Source="{Binding Icon}" 
+                            Height="40"
+                            Width="40"/>
+                    </Border>
 
-                        <StackPanel 
-                            Grid.Column="1" 
-                            Margin="10">
-                            <TextBlock
-                                Text="{Binding Title}"
-                                TextWrapping="Wrap"/>
-                            <TextBlock
-                                Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
-                                Text="{Binding Description}" 
-                                TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
-    </Grid>
+                    <StackPanel 
+                        Grid.Column="1" 
+                        Margin="10">
+                        <TextBlock
+                            Text="{Binding Title}"
+                            TextWrapping="Wrap"/>
+                        <TextBlock
+                            Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
+                            Text="{Binding Description}" 
+                            TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Grid>
+            </DataTemplate>
+        </ListView.ItemTemplate>
+    </ListView>
 </Page>

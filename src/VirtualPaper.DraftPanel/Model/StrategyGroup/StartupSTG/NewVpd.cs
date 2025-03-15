@@ -3,7 +3,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.DraftPanel.Model.Interfaces;
 
-namespace VirtualPaper.DraftPanel.StrategyGroup.StartupSTG {
+namespace VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG {
     internal class NewVpd : IStrategy {
         public bool CanHandle(DraftPanelStartupType type) {
             return type == DraftPanelStartupType.NewVpd;

@@ -117,8 +117,8 @@ namespace VirtualPaper.DraftPanel.Views {
             return _param;
         }
 
-        public double GetScale() {
-            return Draft.DraftPanelBridge.GetScale();
+        public uint GetDpi() {
+            return Draft.DraftPanelBridge.GetDpi();
         }
 
         public void ChangePanelState(DraftPanelState nextState, object param = null) {

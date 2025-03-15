@@ -55,8 +55,8 @@ namespace VirtualPaper.UI {
             return WindowNative.GetWindowHandle(this);
         }
 
-        public double GetScale() {
-            return SystemUtil.GetScaleAdjustment(this);
+        public uint GetDpi() {
+            return SystemUtil.GetDpi(SystemUtil.GetDisplayArea(this, DisplayAreaFallback.Primary));
         }
 
         public INoifyBridge GetNotify() {

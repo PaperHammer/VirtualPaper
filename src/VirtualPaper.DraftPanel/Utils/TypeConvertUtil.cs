@@ -1,5 +1,4 @@
 ﻿using Microsoft.UI.Xaml.Media;
-using Windows.Foundation;
 using Windows.UI;
 
 namespace VirtualPaper.DraftPanel.Utils {
@@ -21,14 +20,6 @@ namespace VirtualPaper.DraftPanel.Utils {
             uint b = color.B;
             
             return (a << 24) | (r << 16) | (g << 8) | b;
-        }
-
-        internal static Point Array2Point(double[] pos) {
-            return new(pos[0], pos[1]);
-        }
-
-        internal static double[] Point2Array(Point pos) {
-            return [pos.X, pos.Y];
         }
     }
 }

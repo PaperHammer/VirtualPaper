@@ -1,84 +1,84 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
-    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
-    <RootNamespace>VirtualPaper.DraftPanel</RootNamespace>
-    <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">win-x86;win-x64;win-arm64</RuntimeIdentifiers>
-    <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
-    <UseWinUI>true</UseWinUI>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <ItemGroup>
-    <None Remove="Draft.xaml" />
-    <None Remove="Panels\StaticImg.xaml" />
-    <None Remove="Views\ConfigSpace.xaml" />
-    <None Remove="Views\DraftConfig.xaml" />
-    <None Remove="Views\GetStart.xaml" />
-    <None Remove="Views\ProjectConfig.xaml" />
-    <None Remove="Views\WorkSpace.xaml" />
-    <None Remove="Views\WorkSpaceComponents\ProjectRun.xaml" />
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+		<RootNamespace>VirtualPaper.DraftPanel</RootNamespace>
+		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
+		<UseWinUI>true</UseWinUI>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Remove="Draft.xaml" />
+		<None Remove="Panels\StaticImg.xaml" />
+		<None Remove="Views\ConfigSpace.xaml" />
+		<None Remove="Views\DraftConfig.xaml" />
+		<None Remove="Views\GetStart.xaml" />
+		<None Remove="Views\ProjectConfig.xaml" />
+		<None Remove="Views\WorkSpace.xaml" />
+		<None Remove="Views\WorkSpaceComponents\ProjectRun.xaml" />
+	</ItemGroup>
 
-  <ItemGroup>
-	  <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.240923002" />
-	  <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.240923002" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Views\WorkSpace.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Views\WorkSpace.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Views\GetStart.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Views\GetStart.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Draft.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Draft.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <CustomAdditionalCompileInputs Remove="Views\DraftConfig.xaml" />
-  </ItemGroup>
+	<ItemGroup>
+		<CustomAdditionalCompileInputs Remove="Views\DraftConfig.xaml" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Resource Remove="Views\DraftConfig.xaml" />
-  </ItemGroup>
+	<ItemGroup>
+		<Resource Remove="Views\DraftConfig.xaml" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Views\ProjectConfig.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Views\ProjectConfig.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Views\ConfigSpaceComponents\" />
-  </ItemGroup>
+	<ItemGroup>
+		<Folder Include="Views\ConfigSpaceComponents\" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Panels\StaticImg.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Panels\StaticImg.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Views\WorkSpaceComponents\ProjectRun.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Views\WorkSpaceComponents\ProjectRun.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Views\ConfigSpace.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Views\ConfigSpace.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 </Project>

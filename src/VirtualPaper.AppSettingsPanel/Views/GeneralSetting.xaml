@@ -10,10 +10,6 @@
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
-    <Page.Resources>
-        <cvs:BooleanToVisibilityConverter x:Key="BoolToVisiblity" />
-    </Page.Resources>
-
     <ScrollView>
         <StackPanel
             Margin="15 0 15 15"
@@ -91,7 +87,7 @@
                             Content="{Binding Version_UpdateCheck}"
                             IsEnabled="{Binding IsStoped}"
                             Click="CheckUpdateButton_Click"
-                            Visibility="{Binding IsWinStore, Converter={StaticResource BoolToVisiblity}, Mode=OneWay, ConverterParameter=Reverse}"/>
+                            Visibility="{Binding IsWinStore, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay, ConverterParameter=Reverse}"/>
                     </Grid>
                 </Grid>
 

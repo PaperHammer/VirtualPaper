@@ -11,10 +11,6 @@
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     NavigationCacheMode="Enabled">
 
-    <Page.Resources>
-        <cvs:BooleanToVisibilityConverter x:Key="BoolToVisiblity"/>
-    </Page.Resources>
-
     <Grid x:Name="DraftConfigGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
@@ -49,7 +45,7 @@
                     Orientation="Horizontal"
                     Spacing="4"
                     Margin="2 0 0 0"
-                    Visibility="{x:Bind _viewModel.IsNameOk, Mode=OneWay, Converter={StaticResource BoolToVisiblity}, ConverterParameter=Reverse}">
+                    Visibility="{x:Bind _viewModel.IsNameOk, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Reverse}">
                     <FontIcon 
                         FontSize="14"
                         VerticalAlignment="Bottom"
@@ -99,7 +95,7 @@
                     Orientation="Horizontal"
                     Spacing="4"
                     Margin="2 0 0 0"
-                    Visibility="{x:Bind _viewModel.IsFolderPathOk, Mode=OneWay, Converter={StaticResource BoolToVisiblity}, ConverterParameter=Reverse}">
+                    Visibility="{x:Bind _viewModel.IsFolderPathOk, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Reverse}">
                     <FontIcon 
                         FontSize="14"
                         VerticalAlignment="Bottom"

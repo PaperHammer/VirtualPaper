@@ -6,7 +6,7 @@ namespace VirtualPaper.UIComponent.Converters {
     public partial class ImgKeyConverters : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, string language) {
             if (value is string imageKey && imageKey.Length > 0) {
-                string imagePath = $"ms-appx:///assets/{imageKey}";
+                string imagePath = $"ms-appx:///Assets/{imageKey}";
 
                 try {
                     var image = new BitmapImage(new Uri(imagePath, UriKind.Absolute));

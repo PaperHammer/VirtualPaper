@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model.Interfaces;
-using VirtualPaper.DraftPanel.StrategyGroup.StartupSTG;
+using VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Models.DraftPanel;
 

@@ -56,15 +56,15 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             ProjectName = "New_Project";
             AvailableTemplates = [
                 new() {
-                    ItemImageKey = "project-create-static-img.png",
-                    DescImageKey = "project-create-static-image-desc.png",
+                    ItemImageKey = "ui_components/project-create-static-img.png",
+                    DescImageKey = "ui_components/project-create-static-image-desc.png",
                     Name = "静态图像",
                     Desc = "静态图像",
                     Type = ProjectType.PImage,
                 },
                 new() {
-                    ItemImageKey = "project-create-static-img.png",
-                    DescImageKey = "project-create-static-image-desc.png",
+                    ItemImageKey = "ui_components/project-create-static-img.png",
+                    DescImageKey = "ui_components/project-create-static-image-desc.png",
                     Name = "静态图像2",
                     Desc = "静态图像2",
                     Type = ProjectType.PImage,

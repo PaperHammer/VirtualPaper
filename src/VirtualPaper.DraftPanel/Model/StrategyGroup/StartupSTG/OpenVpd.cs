@@ -6,23 +6,20 @@ using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model.Interfaces;
 
-namespace VirtualPaper.DraftPanel.StrategyGroup.StartupSTG {
-    internal class OpenFile : IStrategy {
+namespace VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG {
+    internal class OpenVpd : IStrategy {
         public bool CanHandle(DraftPanelStartupType type) {
-            return type == DraftPanelStartupType.OpenFile;
+            return type == DraftPanelStartupType.OpenVpd;
         }
         public void Handle(IDraftPanelBridge projectBridge) {
             HandleAsync(projectBridge).GetAwaiter().GetResult();
         }
 
         public async Task HandleAsync(IDraftPanelBridge projectBridge) {
-            var storage = await WindowsStoragePickers.PickFilesAsync(projectBridge.GetWindowHandle(), FileFilter.FileExtensions[FileType.FImage], true);
+            var storage = await WindowsStoragePickers.PickFilesAsync(projectBridge.GetWindowHandle(), FileFilter.FileExtensions[FileType.FDesign]);
             if (storage.Length < 1) return;
-            List<string> filePaths = [];
-            foreach (var sg in storage) {
-                filePaths.Add(sg.Path);
-            }
-            projectBridge.ChangePanelState(DraftPanelState.WorkSpace, filePaths);
+            var filePath = storage[0].Path;
+            projectBridge.ChangePanelState(DraftPanelState.WorkSpace, new string[] { filePath });
         }
     }
 }

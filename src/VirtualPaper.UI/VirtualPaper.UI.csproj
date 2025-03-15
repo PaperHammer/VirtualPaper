@@ -110,13 +110,23 @@
 		<None Remove="Assets\Square71x71Logo.scale-100.png" />
 		<None Remove="Assets\Square71x71Logo.scale-125.png" />
 		<None Remove="Assets\Square71x71Logo.scale-400.png" />
+		<None Remove="Assets\staticImg\ic_fluent_border_24_filled.png" />
+		<None Remove="Assets\staticImg\ic_fluent_resize_small_24_filled.png" />
+		<None Remove="Assets\staticImg\ic_fluent_select_object_24_filled.png" />
+		<None Remove="Assets\staticImg\Light\ic_fluent_border_24_filled.png" />
+		<None Remove="Assets\staticImg\Light\ic_fluent_cursor_24_regular.png" />
+		<None Remove="Assets\staticImg\Light\ic_fluent_resize_small_24_filled.png" />
+		<None Remove="Assets\staticImg\Light\ic_fluent_select_object_24_filled.png" />
 		<None Remove="Assets\StoreLogo.backup.png" />
 		<None Remove="Assets\StoreLogo.scale-100.png" />
 		<None Remove="Assets\StoreLogo.scale-125.png" />
 		<None Remove="Assets\StoreLogo.scale-150.png" />
 		<None Remove="Assets\StoreLogo.scale-200.png" />
 		<None Remove="Assets\StoreLogo.scale-400.png" />
-		<None Remove="Assets\virtualpaperICON.png" />
+		<None Remove="Assets\ui_components\icons8-image-96.png" />
+		<None Remove="Assets\ui_components\icons8-picture-94.png" />
+		<None Remove="Assets\ui_components\project-create-static-image-desc.png" />
+		<None Remove="Assets\ui_components\project-create-static-img.png" />
 		<None Remove="Assets\Wide310x150Logo.scale-100.png" />
 		<None Remove="Assets\Wide310x150Logo.scale-125.png" />
 		<None Remove="Assets\Wide310x150Logo.scale-150.png" />
@@ -151,8 +161,41 @@
 		<Content Update="Assets\splashCol.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Update="Assets\virtualpaperICON.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		<Content Update="Assets\staticImg\Dark\ic_fluent_border_24_filled.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\staticImg\Dark\ic_fluent_cursor_24_regular.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\staticImg\Dark\ic_fluent_resize_small_24_filled.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\staticImg\Dark\ic_fluent_select_object_24_filled.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\staticImg\Light\ic_fluent_border_24_filled.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\staticImg\Light\ic_fluent_cursor_24_regular.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\staticImg\Light\ic_fluent_resize_small_24_filled.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\staticImg\Light\ic_fluent_select_object_24_filled.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\ui_components\icons8-image-96.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\ui_components\icons8-picture-94.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\ui_components\project-create-static-image-desc.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\ui_components\project-create-static-img.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
 	<ItemGroup>

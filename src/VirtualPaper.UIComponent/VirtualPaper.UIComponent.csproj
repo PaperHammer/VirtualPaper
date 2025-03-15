@@ -9,7 +9,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="Container\FlyoutWindow.xaml" />
     <None Remove="Container\PageContainer.xaml" />
     <None Remove="Data\Details.xaml" />
     <None Remove="Data\Edits.xaml" />
@@ -17,7 +16,6 @@
     <None Remove="Feedback\Loading.xaml" />
     <None Remove="Others\ColorEyeDropWindow.xaml" />
     <None Remove="Others\WallpaperCreateView.xaml" />
-    <None Remove="Utils\ResourceDictionary.xaml" />
   </ItemGroup>
   <ItemGroup>
     <PRIResource Remove="Strings\en-US\Resources.resw" />
@@ -91,32 +89,12 @@
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>
     </Page>
-    <Page Update="Utils\ResourceDictionary.xaml">
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="ResouresXaml\ResourceDictionary.xaml">
       <CopyToOutputDirectory></CopyToOutputDirectory>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Update="Assets\icon-vp-48.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\icons8-image-96.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\icons8-picture-94.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\project-create-static-image-desc.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\project-create-static-img.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="Container\FlyoutWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
 </Project>

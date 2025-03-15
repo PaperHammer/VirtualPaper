@@ -48,8 +48,8 @@ namespace VirtualPaper.DraftPanel {
             return _windowBridge.GetNotify();
         }
 
-        public double GetScale() {
-            return _windowBridge.GetScale();
+        public uint GetDpi() {
+            return _windowBridge.GetDpi();
         }
         #endregion
 

@@ -7,39 +7,167 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"    
     xmlns:lclUtils="using:VirtualPaper.DraftPanel.Utils"
-    mc:Ignorable="d"    
+    xmlns:rt="using:VirtualPaper.DraftPanel.Model.Runtime"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    mc:Ignorable="d"
     Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
 
-    <ScrollViewer
-        x:Name="canvasSVer"
-        HorizontalScrollBarVisibility="Auto" 
-        VerticalScrollBarVisibility="Auto"
-        ZoomMode="Enabled"
-        MaxZoomFactor="4"
-        MinZoomFactor="0.2">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
 
-            <Canvas 
+        <ScrollViewer
+            x:Name="canvasSVer"
+            HorizontalScrollBarVisibility="Auto" 
+            VerticalScrollBarVisibility="Auto"
+            ZoomMode="Enabled"            
+            MinZoomFactor="{x:Bind rt:StaticImgMetadata.MinZoomFactor}"
+            MaxZoomFactor="{x:Bind rt:StaticImgMetadata.MaxZoomFactor}"
+            ViewChanging="CanvasSVer_ViewChanging">
+            <lclUtils:LayerCanvas
                 x:Name="drawingCanvas" 
-                Grid.Row="1"
-                Grid.Column="1"
-                Margin="80"
-                Background="{x:Bind lclUtils:TypeConvertUtil.Hex2Brush(_staticImgMd.CanvasConfig.Background), Mode=OneWay}" 
-                Width="{x:Bind _staticImgMd.CanvasConfig.Width, Mode=OneWay}"
-                Height="{x:Bind _staticImgMd.CanvasConfig.Height, Mode=OneWay}"
+                Loaded="DrawingCanvas_Loaded"
+                Margin="80"                    
+                Background="Transparent"                
+                Width="{x:Bind _viewModel.CanvasSize.Width, Mode=OneWay}"
+                Height="{x:Bind _viewModel.CanvasSize.Height, Mode=OneWay}"
                 PointerPressed="OnPointerPressed" 
                 PointerMoved="OnPointerMoved" 
-                PointerReleased="OnPointerReleased"/>
+                PointerReleased="OnPointerReleased"
+                PointerExited="OnPointerExited"
+                PointerEntered="OnPointerEntered" />
+        </ScrollViewer>
+
+        <Grid
+            Grid.Row="1"
+            Height="32"
+            Padding="6 0"
+            Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
+            <StackPanel
+                Orientation="Horizontal"
+                Spacing="8">
+                <StackPanel
+                    MinWidth="140"
+                    Orientation="Horizontal"
+                    Spacing="6"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center">
+                    <ImageIcon
+                        Margin="0 2 0 0"
+                        Height="16"
+                        Width="16"
+                        Source="{StaticResource DraftPanel_StatusBar_CursorIcon}"/>
+                    <TextBlock
+                        FontSize="12"
+                        Text="{x:Bind _viewModel.PointerPosText, Mode=OneWay}"/>
+                </StackPanel>
+
+                <Line
+                    VerticalAlignment="Center"
+                    X1="0" Y1="0" X2="0" Y2="20"
+                    Stroke="{ThemeResource ControlStrongStrokeColorDefaultBrush}"/>
+
+                <StackPanel
+                    MinWidth="140"
+                    Orientation="Horizontal"
+                    Spacing="4"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center">
+                    <ImageIcon
+                        Margin="0 2 0 0"
+                        Height="16"
+                        Width="16"
+                        Source="{StaticResource DraftPanel_StatusBar_BorderIcon}"/>
+                    <TextBlock
+                        FontSize="12"
+                        Text=""/>
+                </StackPanel>
+
+                <Line
+                    VerticalAlignment="Center"
+                    X1="0" Y1="0" X2="0" Y2="20"
+                    Stroke="{ThemeResource ControlStrongStrokeColorDefaultBrush}"/>
+
+                <StackPanel
+                    MinWidth="140"
+                    Orientation="Horizontal"
+                    Spacing="4"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center">
+                    <ImageIcon
+                        Margin="0 2 0 0"
+                        Height="16"
+                        Width="16"
+                        Source="{StaticResource DraftPanel_StatusBar_SizeIcon}"/>
+                    <TextBlock
+                        FontSize="12"
+                        Text="{x:Bind _viewModel.CanvasSizeText, Mode=OneWay}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel
+                Orientation="Horizontal"
+                Spacing="4"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Right">
+                <Button
+                    Padding="10 4"
+                    BorderThickness="0"
+                    Background="Transparent"
+                    Click="FitView_ButtonClick"
+                    ToolTipService.Placement="Top"
+                    ToolTipService.ToolTip="适应窗口大小">
+                    <ImageIcon
+                        Margin="0 2 0 0"
+                        Height="16"
+                        Width="16"
+                        Source="{StaticResource DraftPanel_StatusBar_FitViewIcon}"/>
+                </Button>
+
+                <ComboBox
+                    x:Name="zoomComboBox"
+                    Height="30"
+                    Width="92"
+                    IsEditable="True"
+                    FontSize="12"
+                    ItemsSource="{x:Bind _viewModel._comboZoomFactors}"
+                    SelectionChanged="ZoomComboBox_SelectionChanged"
+                    TextSubmitted="ZoomComboBox_TextSubmitted"/> 
+
+                <Button
+                    Padding="10 4"
+                    BorderThickness="0"
+                    Background="Transparent"
+                    ToolTipService.Placement="Top"
+                    ToolTipService.ToolTip="缩小"
+                    Click="ZoomOut_ButtonClick">
+                    <FontIcon 
+                        Glyph="&#xE71F;" 
+                        FontSize="16"/>
+                </Button>
+
+                <Slider
+                    x:Name="zoomSlider"
+                    Width="130"
+                    Minimum="{x:Bind rt:StaticImgMetadata.DecimalToPercent(rt:StaticImgMetadata.MinZoomFactor)}"
+                    Maximum="{x:Bind rt:StaticImgMetadata.DecimalToPercent(rt:StaticImgMetadata.MaxZoomFactor)}"
+                    ValueChanged="ZoomSlider_ValueChanged"
+                    StepFrequency="1"/>
+
+                <Button
+                    Padding="10 4"
+                    BorderThickness="0"
+                    Background="Transparent"
+                    ToolTipService.Placement="Top"
+                    ToolTipService.ToolTip="放大"
+                    Click="ZoomIn_ButtonClick">
+                    <FontIcon 
+                        Glyph="&#xE8A3;" 
+                        FontSize="16"/>
+                </Button>
+            </StackPanel>
         </Grid>
-    </ScrollViewer>
+    </Grid>
 </Page>

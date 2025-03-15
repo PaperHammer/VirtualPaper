@@ -23,13 +23,13 @@ namespace VirtualPaper.UIComponent.ViewModels {
                 new WallpaperCreateData() {
                     Title = LanguageUtil.GetI18n(Constants.I18n.WpCreateDialog_CommonWp_Title),
                     Description = LanguageUtil.GetI18n(Constants.I18n.WpCreateDialog_CommonWp_Explain),
-                    Icon = "../../Assets/icons8-image-96.png",
+                    Icon = "ms-appx:///Assets/icons8-image-96.png",
                     CreateType = WallpaperCreateType.Img,
                 },
                 new WallpaperCreateData() {
                     Title = LanguageUtil.GetI18n(Constants.I18n.WpCreateDialog_AIWp_Title),
                     Description = LanguageUtil.GetI18n(Constants.I18n.WpCreateDialog_AIWp_Explain),
-                    Icon = "../../Assets/icons8-picture-94.png",
+                    Icon = "ms-appx:///Assets/icons8-picture-94.png",
                     CreateType = WallpaperCreateType.DepthImg,
                 }
             ];

@@ -25,15 +25,15 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         private void InitCollection() {
             Startups = [
-                new(DraftPanelStartupType.OpenVpd,
+                new(ConfigSpacePanelType.OpenVpd,
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenVsd),
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenVsd_Desc),
                     VirtualKey.V),
-                new(DraftPanelStartupType.OpenFile,
+                new(ConfigSpacePanelType.OpenFile,
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile),
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile_Desc),
                     VirtualKey.F),
-                new(DraftPanelStartupType.NewVpd,
+                new(ConfigSpacePanelType.NewVpd,
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd),
                     LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd_Desc),
                     VirtualKey.N),

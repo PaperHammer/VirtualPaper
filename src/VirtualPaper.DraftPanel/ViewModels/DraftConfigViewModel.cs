@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -10,6 +9,7 @@ using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Model.Interfaces;
+using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 
@@ -100,22 +100,19 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private void PreviousStepBtnAction(object sender, RoutedEventArgs e) {
-            _configSpace.ChangePanelState(DraftPanelState.ProjectConfig);
+            _configSpace.ChangePanelState(DraftPanelState.ProjectConfig, null);
         }
 
         private async void CreateVpdBtnAction(object sender, RoutedEventArgs e) {
-            string storageFolder = await CreateNewVpdAsync();
-            if (storageFolder == string.Empty) return;
-            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, new string[] { storageFolder });
+            string filePath = await CreateNewAsync(); // .vpd filePath
+            if (filePath == string.Empty) return;
+            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, new ToWorkSpace([filePath]));
         }
 
         private void UpdateDeployNewDraftDesc(bool value) {
-            if (value) {
-                DeployNewDraft_Desc = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_Desc)) + " " + Path.Combine(StorageFolderPath, DraftName);
-            }
-            else {
-                DeployNewDraft_Desc = string.Empty;
-            }
+            DeployNewDraft_Desc = value ?
+                LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_Desc)) + " " + Path.Combine(StorageFolderPath, DraftName)
+                : string.Empty;
         }
 
         internal async void ChangeFolder() {
@@ -125,32 +122,62 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             this.StorageFolderPath = storageFolder.Path;
         }
 
-        internal async Task<string> CreateNewVpdAsync() {
-            CancellationTokenSource ctsCreate = new();
-            string storageFolder = Path.Combine(this.StorageFolderPath, DraftName);
+        /// <summary>
+        /// 创建项目
+        /// </summary>
+        /// <returns>创建的根数据文件路径</returns>
+        /// <remarks>
+        /// 执行完成后，生成的目录结构如下：
+        ///
+        /// <code>
+        /// 
+        /// {draftFolder}
+        /// - {draftName}.vpd   根数据文件 (.vpd)
+        /// - {SharedData.ProjName}  默认项目的目录
+        ///   - {SharedData.ProjName}.vproj  默认项目的元数据文件 (.vproj)
+        ///         
+        /// </code>
+        /// 
+        /// </remarks>
+        internal async Task<string> CreateNewAsync() {
+            Draft.Instance.GetNotify().Loading(false, false);
+            string draftFolder = Path.Combine(StorageFolderPath, DraftName);
             try {
-                _configSpace.GetNotify().Loading(true, false, [ctsCreate]);
-
-                if (Directory.Exists(storageFolder)) {
-                    _configSpace.GetNotify().ShowMsg(true, nameof(Constants.I18n.DirExsits), InfoBarType.Error);
+                #region 创建 vpd 目录
+                if (Directory.Exists(draftFolder)) {
+                    Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.DirExsits), InfoBarType.Error);
                     return string.Empty;
                 }
+                Directory.CreateDirectory(draftFolder);
+                #endregion
 
-                Directory.CreateDirectory(storageFolder);
-                DraftMetadata dm = new(DraftName, Assembly.GetEntryAssembly().GetName().Version, _configSpace.GetParam() as List<ProjectMetadata> ?? []);
-                await dm.WriteDataAsync(storageFolder);
+                #region 创建 .vpd 文件
+                var inputData = _configSpace.GetSharedData() as ToDraftConfig;
+                DraftMetadata draftdata = new(DraftName, inputData);
+                await draftdata.SaveAsync(draftFolder);
+                #endregion
+
+                #region 创建 vproj 目录
+                string projFolder = Path.Combine(draftFolder, inputData.ProjName);
+                Directory.CreateDirectory(projFolder);
+                #endregion
+
+                #region 创建 .vproj 文件
+                ProjectMetadata projdata = new(inputData.ProjName, inputData.ProjType);
+                await projdata.SaveAsync(projFolder);
+                #endregion
             }
             catch (Exception ex) {
-                Directory.Delete(storageFolder, true);
-                _configSpace.GetNotify().ShowExp(ex);
-                _configSpace.Log(LogType.Error, ex);
+                Directory.Delete(draftFolder, true);
+                Draft.Instance.GetNotify().ShowExp(ex);
+                Draft.Instance.Log(LogType.Error, ex);
                 return string.Empty;
             }
             finally {
-                _configSpace.GetNotify().Loaded([ctsCreate]);
+                Draft.Instance.GetNotify().Loaded();
             }
 
-            return storageFolder;
+            return Path.Combine(draftFolder, DraftName + FileExtension.FE_Design); // .vpd filePath
         }
 
         internal IConfigSpace _configSpace;

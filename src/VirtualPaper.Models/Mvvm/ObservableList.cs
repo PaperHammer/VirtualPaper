@@ -3,14 +3,14 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace VirtualPaper.Models.Mvvm {
+    [Serializable]
     public class ObservableList<T> : List<T>, INotifyPropertyChanged, INotifyCollectionChanged {
         public ObservableList() { }
 
-        public ObservableList(IEnumerable<T> items) => this.AddRange(items);
+        public ObservableList(IEnumerable<T> items) => AddRange(items);
 
         public new void Add(T item) {
             base.Add(item);
-
             OnCollectionChanged(new(NotifyCollectionChangedAction.Add, item, Count - 1));
         }
 
@@ -18,16 +18,19 @@ namespace VirtualPaper.Models.Mvvm {
             ArgumentNullException.ThrowIfNull(items);
 
             foreach (var item in items) {
-                base.Add(item);
+                Add(item);
             }
+            //OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, items));
+        }
 
+        public new void Clear() {
+            base.Clear();
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
 
         public new void RemoveAt(int idx) {
             T removedItem = this[idx];
             base.RemoveAt(idx);
-
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, removedItem, idx));
         }
 
@@ -35,13 +38,13 @@ namespace VirtualPaper.Models.Mvvm {
             ArgumentNullException.ThrowIfNull(items);
 
             Clear();
-            this.AddRange(items);
+            AddRange(items);
         }
 
-        public void SetValue(T item, int idx) {
+        public void SetValue(T newItem, int idx) {
             T oldItem = this[idx];
-            this[idx] = item;
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, oldItem, idx));
+            this[idx] = newItem;
+            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, newItem, oldItem, idx));
         }
 
         public event NotifyCollectionChangedEventHandler? CollectionChanged;

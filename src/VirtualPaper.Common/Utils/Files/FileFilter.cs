@@ -35,21 +35,21 @@ namespace VirtualPaper.Common.Utils.Files {
             return FileType.FUnknown;
         }
 
-        public static FileType DetermineFileType(string extension) {
+        public static FileType GetRuntimeFileType(string extension) {
             foreach (var kvp in FileExtensions) {
                 if (kvp.Value.Contains(extension)) {
                     return kvp.Key;
                 }
             }
-            throw new ArgumentException("未找到匹配的文件类型", nameof(extension));
+            throw new ArgumentException("No matching file type found.", nameof(extension));
         }
 
         public static Dictionary<FileType, string[]> FileExtensions { get; } = new() {
             [FileType.FImage] = [".jpg", ".jpeg", ".bmp", ".png", ".svg", ".webp"],
             [FileType.FGif] = [".gif", ".apng"],
             [FileType.FVideo] = [".mp4", ".webm"],
-            [FileType.FDesign] = [".vpd"],
-            [FileType.FProject] = [".vproj"],
+            [FileType.FDesign] = [FileExtension.FE_Design],
+            [FileType.FProject] = [FileExtension.FE_Project],
         };
 
         private static readonly Dictionary<string, FileType> _fileHeaderMap = new()

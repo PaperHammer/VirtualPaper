@@ -263,6 +263,9 @@
             public static string? Project_NewName_InvalidTip { get; }
             public static string? Project_NewPosition_InvalidTip { get; }
             public static string? DirExsits { get; }
+            public static string? Draft_SI_LayerLocked { get; }
+            public static string? Draft_Canvas_DefaultName { get; }
+            public static string? Draft_SI_LayerNotAvailable { get; }
         }
 
         public static class Field {

@@ -1,34 +1,40 @@
-﻿using Microsoft.UI.Xaml.Controls;
+﻿using System.Collections.ObjectModel;
+using System.Linq;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Models;
 
 namespace VirtualPaper.UIComponent.ViewModels {
-    public class GlobalMsgViewModel : ObservableObject {
-        private bool _infoBarIsOpen = false;
-        public bool InfoBarIsOpen {
-            get => _infoBarIsOpen;
-            set { _infoBarIsOpen = value; OnPropertyChanged(); }
+    public partial class GlobalMsgViewModel : ObservableObject {
+        public ObservableCollection<GlobalMsgInfo> InfobarMessages { get; set; } = [];
+
+        public void AddMsg(GlobalMsgInfo globalMsgInfo, bool isAllowDuplication = false) {
+            if (!isAllowDuplication && GetGlobalMsg(globalMsgInfo.Key) != null) return;            
+
+            globalMsgInfo.PropertyChanged += (sender, args) => {
+                if (args.PropertyName == nameof(GlobalMsgInfo.IsOpen)) {
+                    if (sender is GlobalMsgInfo msg && !msg.IsOpen) {
+                        // 当 IsOpen 变为 false 时，从集合中移除
+                        RemoveMsg(msg);
+                    }
+                }
+            };
+
+            InfobarMessages.Add(globalMsgInfo);
         }
 
-        private string _infobarMsg;
-        public string InfobarMsg {
-            get { return _infobarMsg; }
-            set { _infobarMsg = value; OnPropertyChanged(); }
+        public void CloseAndRemoveMsg(string key) {
+            var msg = GetGlobalMsg(key);
+            if (msg != null) {
+                msg.IsOpen = false;
+            }
         }
 
-        private InfoBarSeverity _infoBarSeverity;
-        public InfoBarSeverity InfoBarSeverity {
-            get { return _infoBarSeverity; }
-            set { _infoBarSeverity = value; OnPropertyChanged(); }
+        private void RemoveMsg(GlobalMsgInfo msg) {
+            InfobarMessages.Remove(msg);
         }
 
-        public void ShowMessge(
-            bool isNeedLocallizer,
-            string msg,
-            InfoBarSeverity infoBarSeverity) {
-            InfoBarSeverity = infoBarSeverity;
-            InfobarMsg = isNeedLocallizer ? LanguageUtil.GetI18n(msg) : msg;
-            InfoBarIsOpen = true;
+        private GlobalMsgInfo GetGlobalMsg(string key) {
+            return InfobarMessages.FirstOrDefault(m => m.Key == key);
         }
     }
 }

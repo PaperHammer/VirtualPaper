@@ -156,11 +156,9 @@
                 Loaded="TabViewControl_Loaded"
                 TabWidthMode="SizeToContent"
                 CloseButtonOverlayMode="OnPointerOver"
-                TabItemsSource="{x:Bind _viewModel.TabViewItems, Mode=OneWay}"
-               
+                TabItemsSource="{x:Bind _viewModel.TabViewItems}"               
                 AddTabButtonClick="TabViewControl_AddTabButtonClick"
-                TabCloseRequested="TabViewControl_TabCloseRequested">
-            </TabView>
+                TabCloseRequested="TabViewControl_TabCloseRequested"/>
         </Grid>
     </Grid>
 </Page>

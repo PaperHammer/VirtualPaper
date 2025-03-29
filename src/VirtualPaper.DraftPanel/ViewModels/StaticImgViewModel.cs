@@ -1,33 +1,20 @@
 ﻿using System;
-using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
+using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model.Runtime;
-using VirtualPaper.DraftPanel.Utils;
 using VirtualPaper.Models.Mvvm;
-using Windows.Foundation;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     partial class StaticImgViewModel : ObservableObject {
         internal event EventHandler<double> OnCanvasZoomChanged;
 
-        private string _canvasSizeText;
-        public string CanvasSizeText {
-            get { return _canvasSizeText; }
-            private set { _canvasSizeText = value; OnPropertyChanged(); }
-        }
-
-        private string _pointerPosText;
-        public string PointerPosText {
-            get { return _pointerPosText; }
-            private set { _pointerPosText = value; OnPropertyChanged(); }
-        }
-
         private double _canvasZoom; // 0.2 -- 7.0
         public double CanvasZoom {
             get { return _canvasZoom; }
             set {
-                //var newValue = Math.Round(value, 1);
-                Debug.WriteLine(value);
                 if (!StaticImgMetadata.IsZoomValid(value) || _canvasZoom == value) return;
 
                 _canvasZoom = value;
@@ -36,47 +23,59 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             }
         }
 
-        private SizeF _canvasSize;
-        public SizeF CanvasSize {
-            get { return _canvasSize; }
-            set {
-                if (_canvasSize == value) return;
+        public LayerManagerData ManagerData { get; } // .vproj (entryFile)
 
-                _canvasSize = value;
-                CanvasSizeText = $"{value.Width}, {value.Height} {"像素"} ({value.Dpi} Dpi)";
-                OnPropertyChanged();
-            }
-        }
-
-        private Point? _ponterPos;
-        public Point? PointerPos {
-            get { return _ponterPos; }
-            set {
-                _ponterPos = value;
-                PointF? formatPos = value == null ? null : CanvasUtil.FormatPoint(value, 0);
-                PointerPosText = value == null ? string.Empty : $"{formatPos.Value.X}, {formatPos.Value.Y} {"像素"}";
-            }
-        }
-
-        public StaticImgViewModel(string folderPath) {
-            this._folderPath = folderPath;
+        public StaticImgViewModel(string entryFilePath, FileType rtFileType) {
+            _entryFilePath = entryFilePath;
+            _rtFileType = rtFileType;
+            _basicComponentUtil = new();
+            ManagerData = new();
         }
 
         public async Task SaveAsync() {
-            await StaticImgMetadata.SaveAsync(_folderPath, _vpCanvas);
+            try {
+                await JsonSaver.SaveAsync(_entryFilePath, ManagerData, LayerManagerDataContext.Default);
+                foreach (var item in ManagerData.LayersData) {
+                    await item.SaveAsync(_entryFilePath);
+                }
+            }
+            catch (Exception ex) {
+                Draft.Instance.GetNotify().ShowExp(ex);
+            }
         }
 
         public async Task LoadAsync() {
-            _vpCanvas = await StaticImgMetadata.LoadAsync(_folderPath);
-            InitValue();
+            _basicComponentUtil.Loading(false, false);
+
+            try {
+                switch (_rtFileType) {
+                    case FileType.FImage:
+                        break;
+                    case FileType.FProject:
+                        await LoadFProjectAsync();
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (Exception ex) {
+                Draft.Instance.GetNotify().ShowExp(ex);
+            }
+            finally {
+                _basicComponentUtil.Loaded();
+            }
         }
 
-        private void InitValue() {
-            CanvasSize = _vpCanvas.Size;
+        private async Task LoadFProjectAsync() {
+            if (!File.Exists(_entryFilePath)) {
+                await ManagerData.SaveAsync(_entryFilePath);
+            }
+            await ManagerData.LoadAsync(_entryFilePath);
         }
 
-        internal VpCanvas _vpCanvas;
+        private readonly FileType _rtFileType;
+        private readonly string _entryFilePath = string.Empty;
+        internal readonly BasicComponentUtil _basicComponentUtil;
         internal readonly string[] _comboZoomFactors = ["700%", "600%", "500%", "400%", "300%", "200%", "100%", "75%", "50%", "25%"];
-        private readonly string _folderPath;
     }
 }

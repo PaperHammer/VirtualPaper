@@ -5,24 +5,27 @@ using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model.Interfaces;
+using VirtualPaper.DraftPanel.Model.NavParam;
 
 namespace VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG {
     internal class OpenFile : IStrategy {
-        public bool CanHandle(DraftPanelStartupType type) {
-            return type == DraftPanelStartupType.OpenFile;
+        public bool CanHandle(ConfigSpacePanelType type) {
+            return type == ConfigSpacePanelType.OpenFile;
         }
-        public void Handle(IDraftPanelBridge projectBridge) {
-            HandleAsync(projectBridge).GetAwaiter().GetResult();
+        public void Handle(IConfigSpace configBridge) {
+            HandleAsync(configBridge).GetAwaiter().GetResult();
         }
 
-        public async Task HandleAsync(IDraftPanelBridge projectBridge) {
-            var storage = await WindowsStoragePickers.PickFilesAsync(projectBridge.GetWindowHandle(), FileFilter.FileExtensions[FileType.FImage], true);
+        public async Task HandleAsync(IConfigSpace configBridge) {
+            var storage = await WindowsStoragePickers.PickFilesAsync(configBridge.GetWindowHandle(), FileFilter.FileExtensions[FileType.FImage], true);
             if (storage.Length < 1) return;
-            List<string> filePaths = [];
-            foreach (var sg in storage) {
-                filePaths.Add(sg.Path);
+
+            int n = storage.Length;
+            string[] filePaths = new string[n];
+            for (int i = 0; i < storage.Length; i++) {
+                filePaths[i] = storage[i].Path;
             }
-            projectBridge.ChangePanelState(DraftPanelState.WorkSpace, filePaths);
+            configBridge.ChangePanelState(DraftPanelState.WorkSpace, new ToWorkSpace([.. filePaths]));
         }
     }
 }

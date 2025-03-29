@@ -13,9 +13,7 @@ namespace VirtualPaper.UI.ViewModels {
         public string SidebarAppSettings { get; private set; }
 
         public MainWindowViewModel() {
-            _loadingViewModel = new();
-            _globalMsgViewModel = new();
-            _basicComponentUtil = new(_loadingViewModel, _globalMsgViewModel);
+            _basicComponentUtil = new();
             _dialog = new();
 
             InitText();           
@@ -29,8 +27,6 @@ namespace VirtualPaper.UI.ViewModels {
             SidebarAppSettings = LanguageUtil.GetI18n(Constants.I18n.SidebarAppSettings);
         }
 
-        internal readonly LoadingViewModel _loadingViewModel;
-        internal readonly GlobalMsgViewModel _globalMsgViewModel;
         internal readonly BasicComponentUtil _basicComponentUtil;
         internal readonly DialogUtil _dialog;
     }

@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model.Interfaces;
+using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Models.DraftPanel;
@@ -63,12 +64,12 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         }
 
         private void ContinueWithoutAny_HyperlinkButton_Click(object sender, RoutedEventArgs e) {
-            ToWorkSpace();
+            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, null);
         }
 
         private void RecentUsedsListView_ItemClick(object sender, ItemClickEventArgs e) {
             if (e.ClickedItem is RecentUsed ru) {
-                ToWorkSpace(new List<string> { ru.FilePath });
+                _configSpace.ChangePanelState(DraftPanelState.WorkSpace, new ToWorkSpace([ru.FilePath]));
             }
         }
 
@@ -83,10 +84,6 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
                     break;
                 }
             }
-        }
-
-        private void ToWorkSpace(object param = null) {
-            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, param);
         }
 
         private void KeyboardAccelerator_Invoked_RecentUseds(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
@@ -116,7 +113,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
 
         private GetStartViewModel _viewModel;
         private IConfigSpace _configSpace;
-        internal readonly IStrategy[] _strategies = [
+        private readonly IStrategy[] _strategies = [
             new OpenVpd(),
             new OpenFile(),
             new NewVpd(),

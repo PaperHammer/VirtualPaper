@@ -128,7 +128,6 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
 
                 <TextBlock
@@ -153,7 +152,7 @@
                     </ItemsView.KeyboardAccelerators>
                 </ItemsView>
 
-                <HyperlinkButton
+                <!--<HyperlinkButton
                     Grid.Row="2"
                     Margin="0 4 0 0"
                     HorizontalAlignment="Center"
@@ -165,7 +164,7 @@
                     <HyperlinkButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu" Key="W"/>
                     </HyperlinkButton.KeyboardAccelerators>
-                </HyperlinkButton>
+                </HyperlinkButton>-->
             </Grid>
         </Grid>
     </data:Card>

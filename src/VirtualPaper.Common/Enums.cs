@@ -98,7 +98,7 @@ namespace VirtualPaper.Common {
         FDesign,
         FProject,
     }
-    
+
     public enum RuntimeType {
         RUnknown,
         RImage,
@@ -149,14 +149,19 @@ namespace VirtualPaper.Common {
         Primary,
         Seconday
     }
+
+    public static class FileExtension {
+        public const string FE_Design = ".vpd";
+        public const string FE_Project = ".vproj";
+        public const string FE_STATIC_IMG_PROJ = ".vsig";
+    }
     #endregion
 
     #region draft-panel
-    public enum DraftPanelStartupType {
+    public enum ConfigSpacePanelType {
         OpenVpd,
         OpenFile,
         NewVpd,
-        TypeConfig,
     }
     
     public enum DraftPanelState {

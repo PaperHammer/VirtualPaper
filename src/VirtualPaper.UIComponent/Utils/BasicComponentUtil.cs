@@ -3,33 +3,44 @@ using System.Threading;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge.Base;
+using VirtualPaper.UIComponent.Models;
 using VirtualPaper.UIComponent.ViewModels;
 
-namespace VirtualPaper.UI.Utils {
-    public class BasicComponentUtil : INoifyBridge {
-        public BasicComponentUtil(LoadingViewModel loadingViewModel, GlobalMsgViewModel globalMsgViewModel) {
-            _loadingViewModel = loadingViewModel;
-            _globalMsgViewModel = globalMsgViewModel;
-        }
-
+namespace VirtualPaper.UIComponent.Utils {
+    public class BasicComponentUtil(
+        LoadingViewModel loadingViewModel = null, GlobalMsgViewModel globalMsgViewModel = null) : INoifyBridge {
         public void ShowExp(Exception ex) {
             ShowMsg(false, ex.Message, InfoBarType.Error);
+        }
+
+        public void ShowWarn(string msg) {
+            ShowMsg(true, msg, InfoBarType.Warning);
         }
 
         public void ShowCanceled() {
             ShowMsg(true, Constants.I18n.InfobarMsg_Cancel, InfoBarType.Informational);
         }
 
-        public void ShowMsg(bool isNeedLocalizer, string msg, InfoBarType infoBarType) {
-            InfoBarSeverity severity =
-                infoBarType switch {
-                    InfoBarType.Informational => InfoBarSeverity.Informational,
-                    InfoBarType.Warning => InfoBarSeverity.Warning,
-                    InfoBarType.Error => InfoBarSeverity.Error,
-                    InfoBarType.Success => InfoBarSeverity.Success,
-                    _ => InfoBarSeverity.Informational
-                };
-            _globalMsgViewModel.ShowMessge(isNeedLocalizer, msg, severity);
+        public void ShowMsg(
+           bool isNeedLocalizer,
+           string msg,
+           InfoBarType infoBarType,
+           string key = "",
+           bool isAllowDuplication = true) {
+            InfoBarSeverity severity = infoBarType switch {
+                InfoBarType.Informational => InfoBarSeverity.Informational,
+                InfoBarType.Warning => InfoBarSeverity.Warning,
+                InfoBarType.Error => InfoBarSeverity.Error,
+                InfoBarType.Success => InfoBarSeverity.Success,
+                _ => InfoBarSeverity.Informational
+            };
+
+            var globalMsgInfo = new GlobalMsgInfo(key, isNeedLocalizer, msg, severity);
+            _globalMsgViewModel.AddMsg(globalMsgInfo, isAllowDuplication);
+        }
+
+        public void CloseAndRemoveMsg(string key) {
+            _globalMsgViewModel.CloseAndRemoveMsg(key);
         }
 
         public void Loading(
@@ -50,7 +61,7 @@ namespace VirtualPaper.UI.Utils {
             _loadingViewModel.UpdateProgressbarValue(curValue, toltalValue);
         }
 
-        private readonly LoadingViewModel _loadingViewModel;
-        private readonly GlobalMsgViewModel _globalMsgViewModel;
+        public readonly LoadingViewModel _loadingViewModel = loadingViewModel ?? new();
+        public readonly GlobalMsgViewModel _globalMsgViewModel = globalMsgViewModel ?? new();
     }
 }

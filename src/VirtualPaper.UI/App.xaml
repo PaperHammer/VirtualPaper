@@ -18,6 +18,10 @@
                 </controls:XamlControlsResources>
 
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/ResouresXaml/ResourceDictionary.xaml" />
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ColorPicker/ArcColorPicker.xaml" />
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ColorPicker/ArcColorSpectrum.xaml" />
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/CheckBox/ArcCheckBox.xaml" />
+                
                 <!--Other merged dictionaries here-->
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

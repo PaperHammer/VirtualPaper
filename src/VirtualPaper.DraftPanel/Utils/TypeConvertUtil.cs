@@ -1,25 +1,42 @@
-﻿using Microsoft.UI.Xaml.Media;
+﻿using System.Collections.Generic;
+using System;
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
+using Windows.Storage.Streams;
 using Windows.UI;
+using Microsoft.UI.Xaml.Media.Imaging;
+using VirtualPaper.DraftPanel.Model.Runtime;
+using Windows.Foundation;
 
 namespace VirtualPaper.DraftPanel.Utils {
     internal static class TypeConvertUtil {
-        internal static Brush Hex2Brush(uint color) {
-            var a = (byte)(color >> 24);
-            var r = (byte)(color >> 16);
-            var g = (byte)(color >> 8);
-            var b = (byte)color;
+        // 辅助方法：将byte[]转换为ImageSource
+        internal static BitmapImage ByteArrayToImageSource(byte[] imageData) {
+            using InMemoryRandomAccessStream stream = new();
+            using (DataWriter writer = new(stream.GetOutputStreamAt(0))) {
+                writer.WriteBytes(imageData);
+                writer.StoreAsync().GetResults();
+            }
+            BitmapImage image = new();
+            image.SetSource(stream);
 
-            Color clr = Color.FromArgb(a, r, g, b);
-            return new SolidColorBrush(clr);
+            return image;
         }
 
-        internal static uint Color2Hex(Color color) {
-            uint a = color.A;
-            uint r = color.R;
-            uint g = color.G;
-            uint b = color.B;
-            
-            return (a << 24) | (r << 16) | (g << 8) | b;
+        // 辅助方法：根据点数组创建PathGeometry
+        internal static PathGeometry CreatePathGeometry(List<PointF> points) {
+            PathFigure figure = new() { StartPoint = new Point(points[0].X, points[0].Y) };
+            for (int i = 1; i < points.Count; i++) {
+                figure.Segments.Add(new LineSegment { Point = new Point(points[i].X, points[i].Y) });
+            }
+            PathGeometry geometry = new();
+            geometry.Figures.Add(figure);
+
+            return geometry;
+        }
+
+        internal static PointF? FormatPoint(Point? point, int digit) {
+            return point == null ? null : new PointF((float)Math.Round(point.Value.X, digit), (float)Math.Round(point.Value.Y, digit));
         }
     }
 }

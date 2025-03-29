@@ -17,28 +17,26 @@ namespace VirtualPaper.DraftPanel {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class Draft : Page, IDraftPanelBridge {
-        internal static IDraftPanelBridge DraftPanelBridge { get; private set; }
+        internal static IDraftPanelBridge Instance { get; private set; }
 
         public Draft() {
             this.InitializeComponent();
 
-            this._currentState = DraftPanelState.ConfigSpace;
-            DraftPanelBridge = this;
+            this._currentPanel = DraftPanelState.ConfigSpace;
+            Instance = this;
         }
 
         #region bridge
         public nint GetWindowHandle() {
             return _windowBridge.GetWindowHandle();
         }
-
-        public object GetParam() {
-            return _param;
+       
+        public void ChangePanelState(DraftPanelState nextPanel, object data) {
+            _sharedData = data;
+            NavigetBasedState(nextPanel);
         }
 
-        public void ChangePanelState(DraftPanelState nextState, object param = null) {
-            _param = param;
-            NavigetBasedState(nextState);
-        }
+        public object GetSharedData() => _sharedData;
 
         public void Log(LogType type, object message) {
             _windowBridge.Log(type, message);
@@ -61,15 +59,15 @@ namespace VirtualPaper.DraftPanel {
         }
 
         private void FrameCardComp_Loaded(object sender, RoutedEventArgs e) {
-            NavigetBasedState(_currentState);
+            NavigetBasedState(_currentPanel);
         }
 
-        private void NavigetBasedState(DraftPanelState nextState) {
+        private void NavigetBasedState(DraftPanelState nextPanel) {
             CrossThreadInvoker.InvokeOnUiThread(() => {
-                _currentState = nextState;
+                _currentPanel = nextPanel;
 
                 Type targetPageType;
-                switch (nextState) {
+                switch (_currentPanel) {
                     case DraftPanelState.ConfigSpace:
                         targetPageType = typeof(ConfigSpace);
                         break;
@@ -88,7 +86,7 @@ namespace VirtualPaper.DraftPanel {
                         FrameCardComp.GoBack();
                     }
                     else {
-                        FrameCardComp.Navigate(targetPageType);
+                        FrameCardComp.Navigate(targetPageType, this);
                     }
                 }
             });
@@ -111,8 +109,8 @@ namespace VirtualPaper.DraftPanel {
         }
         #endregion
 
-        private object _param;
         private IWindowBridge _windowBridge;
-        private DraftPanelState _currentState;
+        private DraftPanelState _currentPanel;
+        private object _sharedData;
     }
 }

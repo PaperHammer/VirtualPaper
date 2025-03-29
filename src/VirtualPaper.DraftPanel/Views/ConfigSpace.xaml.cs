@@ -22,7 +22,7 @@ namespace VirtualPaper.DraftPanel.Views {
         public ConfigSpace() {
             this.InitializeComponent();
 
-            this._currentConfigState = DraftPanelState.GetStart;
+            _currentPanel = DraftPanelState.GetStart;
         }
 
         #region nav
@@ -34,15 +34,15 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         private void FrameComp_Loaded(object sender, RoutedEventArgs e) {
-            NavigetBasedState(_currentConfigState);
+            NavigetBasedState(_currentPanel);
         }
 
         internal void NavigetBasedState(DraftPanelState nextState) {
             CrossThreadInvoker.InvokeOnUiThread(() => {
-                _currentConfigState = nextState;
+                _currentPanel = nextState;
 
                 Type targetPageType;
-                switch (nextState) {
+                switch (_currentPanel) {
                     case DraftPanelState.GetStart:
                         targetPageType = typeof(GetStart);
                         break;
@@ -53,7 +53,7 @@ namespace VirtualPaper.DraftPanel.Views {
                         targetPageType = typeof(DraftConfig);
                         break;
                     default:
-                        Draft.DraftPanelBridge.ChangePanelState(nextState, _param);
+                        Draft.Instance.ChangePanelState(nextState, _sharedData);
                         return;
                 }
 
@@ -113,34 +113,32 @@ namespace VirtualPaper.DraftPanel.Views {
             _viewModel.NextStep = action;
         }
 
-        public object GetParam() {
-            return _param;
-        }
-
         public uint GetDpi() {
-            return Draft.DraftPanelBridge.GetDpi();
+            return Draft.Instance.GetDpi();
+        }
+    
+        public void ChangePanelState(DraftPanelState nextPanel, object data) {
+            _sharedData = data;
+            NavigetBasedState(nextPanel);
         }
 
-        public void ChangePanelState(DraftPanelState nextState, object param = null) {
-            _param = param;
-            NavigetBasedState(nextState);
-        }
+        public object GetSharedData() => _sharedData;
 
         public nint GetWindowHandle() {
-            return Draft.DraftPanelBridge.GetWindowHandle();
+            return Draft.Instance.GetWindowHandle();
         }
 
         public void Log(LogType type, object message) {
-            Draft.DraftPanelBridge.Log(type, message);
+            Draft.Instance.Log(type, message);
         }
 
         public INoifyBridge GetNotify() {
-            return Draft.DraftPanelBridge.GetNotify();
+            return Draft.Instance.GetNotify();
         }
         #endregion
 
-        private object _param;
         private ConfigSpaceViewModel _viewModel;
-        private DraftPanelState _currentConfigState;        
+        private DraftPanelState _currentPanel;
+        private object _sharedData;
     }
 }

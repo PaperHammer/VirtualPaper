@@ -6,11 +6,26 @@
     xmlns:local="using:VirtualPaper.DraftPanel.Panels"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"    
-    xmlns:lclUtils="using:VirtualPaper.DraftPanel.Utils"
+    xmlns:components="using:VirtualPaper.DraftPanel.Panels.Components"
     xmlns:rt="using:VirtualPaper.DraftPanel.Model.Runtime"
-    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    xmlns:data="using:VirtualPaper.UIComponent.Data"
+    xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
+    xmlns:models="using:VirtualPaper.UIComponent.Models"
+    Loaded="Page_Loaded"
     mc:Ignorable="d"
     Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
+
+    <Page.Resources>
+        <DataTemplate  x:Key="LayerItemTemplate" x:DataType="rt:CanvasLayerData">
+            <ListViewItem
+                Height="60">
+                <data:CheckBoxItem
+                    LayerName="{x:Bind Name, Mode=OneWay}"
+                    IsEnable="{x:Bind IsEnable, Mode=TwoWay}"/>
+            </ListViewItem>
+        </DataTemplate>
+    </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -18,33 +33,147 @@
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
-        <ScrollViewer
-            x:Name="canvasSVer"
-            HorizontalScrollBarVisibility="Auto" 
-            VerticalScrollBarVisibility="Auto"
-            ZoomMode="Enabled"            
-            MinZoomFactor="{x:Bind rt:StaticImgMetadata.MinZoomFactor}"
-            MaxZoomFactor="{x:Bind rt:StaticImgMetadata.MaxZoomFactor}"
-            ViewChanging="CanvasSVer_ViewChanging">
-            <lclUtils:LayerCanvas
-                x:Name="drawingCanvas" 
-                Loaded="DrawingCanvas_Loaded"
-                Margin="80"                    
-                Background="Transparent"                
-                Width="{x:Bind _viewModel.CanvasSize.Width, Mode=OneWay}"
-                Height="{x:Bind _viewModel.CanvasSize.Height, Mode=OneWay}"
-                PointerPressed="OnPointerPressed" 
-                PointerMoved="OnPointerMoved" 
-                PointerReleased="OnPointerReleased"
-                PointerExited="OnPointerExited"
-                PointerEntered="OnPointerEntered" />
-        </ScrollViewer>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer
+                x:Name="canvasSVer"
+                HorizontalScrollBarVisibility="Auto" 
+                VerticalScrollBarVisibility="Auto"
+                ZoomMode="Enabled"            
+                MinZoomFactor="{x:Bind rt:StaticImgMetadata.MinZoomFactor}"
+                MaxZoomFactor="{x:Bind rt:StaticImgMetadata.MaxZoomFactor}"
+                ViewChanging="CanvasSVer_ViewChanging">
+                <components:LayerManager
+                    x:Name="layerManager" 
+                    Loaded="LayerManager_Loaded"
+                    ManagerData="{x:Bind _viewModel.ManagerData}"/>
+            </ScrollViewer>
+
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Horizontal"
+                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+                <ScrollViewer
+                    Width="350"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Hidden"
+                    HorizontalScrollMode="Disabled"
+                    VerticalScrollMode="Auto">
+                    <!--<ContentControl
+                        Content="{x:Bind _viewModel._funcPanel, Mode=OneWay}"/>-->
+                    <Grid>
+                        <StackPanel>
+                            <Expander
+                                x:Name="ColorPalette"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                IsExpanded="True">
+                                <Expander.Header>
+                                    <TextBlock Text="调色板"/>
+                                </Expander.Header>
+                                <Expander.Content>
+                                    <input:ArcColorPicker
+                                        ColorSpectrumShape="Box"
+                                        IsMoreButtonVisible="False"
+                                        IsColorSliderVisible="True"
+                                        IsColorChannelTextInputVisible="True"
+                                        IsHexInputVisible="True"
+                                        IsAlphaEnabled="True"
+                                        IsAlphaSliderVisible="True"
+                                        IsAlphaTextInputVisible="True" />
+                                </Expander.Content>
+                            </Expander>
+                            <Expander
+                                x:Name="LayerManage"
+                                Padding="0 16"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                IsExpanded="True">
+                                <Expander.Header>
+                                    <TextBlock Text="图层集"/>
+                                </Expander.Header>
+                                <Expander.Content>
+                                    <ListView
+                                        MaxHeight="600"
+                                        SelectionMode="Single"
+                                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                        SelectionChanged="ListView_SelectionChanged"
+                                        SelectedItem="{x:Bind _viewModel.ManagerData.SelectedLayerData, Mode=OneWay}"
+                                        ItemsSource="{x:Bind _viewModel.ManagerData.LayersData}"
+                                        ItemTemplate="{StaticResource LayerItemTemplate}"/>
+                                </Expander.Content>
+                            </Expander>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+
+                <Line X1="0" Y1="0" X2="0" Y2="1" 
+                      Stretch="Fill" 
+                      Stroke="{ThemeResource ControlStrokeColorOnAccentDisabledBrush}"/>
+
+                <ListView
+                    Width="40"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                    ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                    ScrollViewer.HorizontalScrollMode="Disabled"
+                    ScrollViewer.VerticalScrollMode="Auto">
+                    <ListView.ItemContainerStyle>
+                        <Style BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
+                            <Setter Property="MinWidth" Value="0" />
+                            <Setter Property="Padding" Value="0" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+
+                    <ListViewItem>
+                        <FontIcon 
+                            Glyph="&#xE7C2;"
+                            Width="20"/>
+                    </ListViewItem>
+                    <ListViewItem>
+                        <FontIcon 
+                            Glyph="&#xE8B0;"
+                            Width="20"/>
+                    </ListViewItem>
+                    <ListViewItem>
+                        <FontIcon 
+                            Glyph="&#xEE56;"
+                            Width="20"/>
+                    </ListViewItem>
+                    <ListViewItem>
+                        <ImageIcon 
+                            Source="{StaticResource DraftPanel_FuncBar_ColorFill}"
+                            Width="22"
+                            Height="22"/>
+                    </ListViewItem>
+                    <ListViewItem>
+                        <FontIcon 
+                            Glyph="&#xE75C;"
+                            Width="20"/>
+                    </ListViewItem>
+                    <ListViewItem>
+                        <FontIcon 
+                            Glyph="&#xE7A8;"
+                            Width="20"/>
+                    </ListViewItem>
+                    <ListViewItem>
+                        <FontIcon 
+                            Glyph="&#xE71D;"
+                            Width="20"/>
+                    </ListViewItem>
+
+                </ListView>
+            </StackPanel>
+        </Grid>
 
         <Grid
             Grid.Row="1"
             Height="32"
-            Padding="6 0"
-            Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
+            Padding="6 0">
             <StackPanel
                 Orientation="Horizontal"
                 Spacing="8">
@@ -61,7 +190,7 @@
                         Source="{StaticResource DraftPanel_StatusBar_CursorIcon}"/>
                     <TextBlock
                         FontSize="12"
-                        Text="{x:Bind _viewModel.PointerPosText, Mode=OneWay}"/>
+                        Text="{x:Bind _viewModel.ManagerData.PointerPosText, Mode=OneWay}"/>
                 </StackPanel>
 
                 <Line
@@ -103,7 +232,7 @@
                         Source="{StaticResource DraftPanel_StatusBar_SizeIcon}"/>
                     <TextBlock
                         FontSize="12"
-                        Text="{x:Bind _viewModel.CanvasSizeText, Mode=OneWay}"/>
+                        Text="{x:Bind _viewModel.ManagerData.CanvasSizeText, Mode=OneWay}"/>
                 </StackPanel>
             </StackPanel>
 
@@ -134,7 +263,7 @@
                     FontSize="12"
                     ItemsSource="{x:Bind _viewModel._comboZoomFactors}"
                     SelectionChanged="ZoomComboBox_SelectionChanged"
-                    TextSubmitted="ZoomComboBox_TextSubmitted"/> 
+                    TextSubmitted="ZoomComboBox_TextSubmitted"/>
 
                 <Button
                     Padding="10 4"
@@ -168,6 +297,37 @@
                         FontSize="16"/>
                 </Button>
             </StackPanel>
+        </Grid>
+
+        <Grid
+            Grid.RowSpan="2">
+            <!--<ItemsControl 
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                ItemsSource="{x:Bind _viewModel._basicComponentUtil._globalMsgViewModel.InfobarMessages, Mode=OneWay}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:GlobalMsgInfo">
+                        <InfoBar
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Top"
+                            IsIconVisible="True"
+                            IsOpen="{x:Bind IsOpen, Mode=TwoWay}"
+                            Severity="{x:Bind Severity}"
+                            Message="{x:Bind Message}"
+                            MaxWidth="900"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>-->
+
+            <feedback:Loading
+                CancelEnable="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CancelEnable}"
+                ProgressbarEnable="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ProgressbarEnable}"
+                CtsTokens="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CtsTokens}"
+                TotalValue="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TotalValue}"
+                CurValue="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CurValue, Mode=OneWay}"
+                TextLoading="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TextLoading, Mode=OneWay}"
+                TextCancel="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TextCancel}"
+                Visibility="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.IsVisiable, Mode=OneWay}"/>
         </Grid>
     </Grid>
 </Page>

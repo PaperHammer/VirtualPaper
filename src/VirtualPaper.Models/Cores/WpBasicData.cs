@@ -107,12 +107,12 @@ namespace VirtualPaper.Models.Cores {
         }
 
         public void Read(string filePath) {
-            var data = JsonStorage.Load<WpBasicData>(filePath, WpBasicDataContext.Default);
+            var data = JsonSaver.Load<WpBasicData>(filePath, WpBasicDataContext.Default);
             InitData(data);
         }
 
         public void Save() {
-            JsonStorage.Store<IWpBasicData>(
+            JsonSaver.Store<IWpBasicData>(
                 Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName), 
                 this,
                 WpBasicDataContext.Default);

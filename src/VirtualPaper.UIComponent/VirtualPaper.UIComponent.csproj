@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Container\PageContainer.xaml" />
+    <None Remove="Data\CheckBoxItem.xaml" />
     <None Remove="Data\Details.xaml" />
     <None Remove="Data\Edits.xaml" />
     <None Remove="Data\EffectConfig.xaml" />
@@ -95,6 +96,16 @@
     <Page Update="ResouresXaml\ResourceDictionary.xaml">
       <CopyToOutputDirectory></CopyToOutputDirectory>
       <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Input\ColorPicker\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Data\CheckBoxItem.xaml">
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
 </Project>

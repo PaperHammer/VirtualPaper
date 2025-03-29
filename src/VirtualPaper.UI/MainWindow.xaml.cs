@@ -18,8 +18,14 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
 using VirtualPaper.WpSettingsPanel;
 using Windows.Graphics;
+using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
+using Windows.Storage;
 using WinRT.Interop;
 using WinUIEx;
+using Microsoft.UI.Xaml.Shapes;
+using Microsoft.UI.Xaml.Media.Imaging;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -44,7 +50,7 @@ namespace VirtualPaper.UI {
             SetWindowStartupPosition();
             SetWindowStyle();
             SetWindowTitleBar();
-        }
+        }        
 
         private void CommandsClient_UIRecieveCmd(object sender, int e) {
             HandleIpcMessage(e);

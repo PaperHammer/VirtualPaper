@@ -6,26 +6,34 @@
     xmlns:local="using:VirtualPaper.DraftPanel.Views.WorkSpaceComponents"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
-    Loaded="Page_Loaded"
+    xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"   
     mc:Ignorable="d">
 
     <Grid>
-        <Frame
+        <!--<Frame
             x:Name="contentFrame"
             Content="{x:Bind _viewModel.FrameContent, Mode=OneWay}"
-            IsEnabled="{x:Bind _viewModel._loadingViewModel.FrameIsEnable, Mode=OneWay}"
-            Opacity="{x:Bind _viewModel._loadingViewModel.FrameOpacity, Mode=OneWay}"/>
+            IsEnabled="{x:Bind local:ProjectRun.BasicComp._loadingViewModel.FrameIsEnable, Mode=OneWay}"
+            Opacity="{x:Bind local:ProjectRun.BasicComp._loadingViewModel.FrameOpacity, Mode=OneWay}"/>
 
+        <InfoBar
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            IsIconVisible="True"
+            IsOpen="{x:Bind local:ProjectRun.BasicComp._globalMsgViewModel.InfoBarIsOpen, Mode=TwoWay}"
+            Severity="{x:Bind local:ProjectRun.BasicComp._globalMsgViewModel.InfoBarSeverity, Mode=OneWay}"
+            Message="{x:Bind local:ProjectRun.BasicComp._globalMsgViewModel.InfobarMsg, Mode=OneWay}"
+            MaxWidth="900"/>
+        
         <feedback:Loading
             x:Name="loader"
-            CancelEnable="{x:Bind _viewModel._loadingViewModel.CancelEnable, Mode=OneWay}"
-            ProgressbarEnable="{x:Bind _viewModel._loadingViewModel.ProgressbarEnable, Mode=OneWay}"
-            CtsTokens="{x:Bind _viewModel._loadingViewModel.CtsTokens, Mode=OneWay}"
-            TotalValue="{x:Bind _viewModel._loadingViewModel.TotalValue, Mode=OneWay}"
-            CurValue="{x:Bind _viewModel._loadingViewModel.CurValue, Mode=OneWay}"
-            TextLoading="{x:Bind _viewModel._loadingViewModel.TextLoading, Mode=OneWay}"
-            TextCancel="{x:Bind _viewModel._loadingViewModel.TextCancel, Mode=OneWay}"
-            Visibility="{x:Bind _viewModel._loadingViewModel.IsVisiable, Mode=OneWay}"/>
+            CancelEnable="{x:Bind local:ProjectRun.BasicComp._loadingViewModel.CancelEnable, Mode=OneWay}"
+            ProgressbarEnable="{x:Bind local:ProjectRun.BasicComp._loadingViewModel.ProgressbarEnable, Mode=OneWay}"
+            CtsTokens="{x:Bind local:ProjectRun.BasicComp._loadingViewModel.CtsTokens, Mode=OneWay}"
+            TotalValue="{x:Bind local:ProjectRun.BasicComp._loadingViewModel.TotalValue, Mode=OneWay}"
+            CurValue="{x:Bind local:ProjectRun.BasicComp._loadingViewModel.CurValue, Mode=OneWay}"
+            TextLoading="{x:Bind local:ProjectRun.BasicComp._loadingViewModel.TextLoading, Mode=OneWay}"
+            TextCancel="{x:Bind local:ProjectRun.BasicComp._loadingViewModel.TextCancel, Mode=OneWay}"
+            Visibility="{x:Bind local:ProjectRun.BasicComp._loadingViewModel.IsVisiable, Mode=OneWay}"/>-->
     </Grid>
 </Page>

@@ -689,4 +689,13 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="DirExsits" xml:space="preserve">
     <value>已存在相同路径</value>
   </data>
+  <data name="Draft_SI_LayerLocked" xml:space="preserve">
+    <value>当前选择的图层处于锁定状态，将无法编辑</value>
+  </data>
+  <data name="Draft_Canvas_DefaultName" xml:space="preserve">
+    <value>图层</value>
+  </data>
+  <data name="Draft_SI_LayerNotAvailable" xml:space="preserve">
+    <value>当前图层不可用，请尝试重新加载项目</value>
+  </data>
 </root>

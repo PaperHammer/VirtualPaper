@@ -35,8 +35,9 @@
                     Spacing="6">
                     <Button
                         Content="{x:Bind _viewModel.PreviousStepBtnText, Mode=OneWay}"
-                        Click="{x:Bind _viewModel.PreviousStep}"
-                        FontSize="12">
+                        Click="{x:Bind _viewModel.PreviousStep}"                        
+                        FontSize="12"
+                        KeyboardAcceleratorPlacementMode="Hidden">
                         <Button.KeyboardAccelerators>
                             <KeyboardAccelerator Modifiers="Menu" Key="B"/>
                         </Button.KeyboardAccelerators>
@@ -48,7 +49,8 @@
                         Width="100"
                         Click="{x:Bind _viewModel.NextStep}"
                         FontSize="12"
-                        Background="{ThemeResource AccentAcrylicBackgroundFillColorDefaultBrush}">
+                        Background="{ThemeResource AccentAcrylicBackgroundFillColorDefaultBrush}"
+                        KeyboardAcceleratorPlacementMode="Hidden">
                         <Button.KeyboardAccelerators>
                             <KeyboardAccelerator Modifiers="Menu" Key="N"/>
                         </Button.KeyboardAccelerators>

@@ -164,6 +164,9 @@
 		<Content Update="Assets\staticImg\Dark\ic_fluent_border_24_filled.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<Content Update="Assets\staticImg\Dark\ic_fluent_color_fill_24_regular.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 		<Content Update="Assets\staticImg\Dark\ic_fluent_cursor_24_regular.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -176,6 +179,9 @@
 		<Content Update="Assets\staticImg\Light\ic_fluent_border_24_filled.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<Content Update="Assets\staticImg\Light\ic_fluent_color_fill_24_regular.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 		<Content Update="Assets\staticImg\Light\ic_fluent_cursor_24_regular.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -183,6 +189,9 @@
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Assets\staticImg\Light\ic_fluent_select_object_24_filled.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\ui_components\grid_image.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Assets\ui_components\icons8-image-96.png">

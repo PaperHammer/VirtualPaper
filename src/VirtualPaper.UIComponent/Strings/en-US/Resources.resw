@@ -509,9 +509,6 @@ Author: PaperHammer</value>
   <data name="Text_Loading" xml:space="preserve">
     <value>Data loading, please wait</value>
   </data>
-  <data name="Text_Preview" xml:space="preserve">
-    <value>Preview</value>
-  </data>
   <data name="Text_Restore" xml:space="preserve">
     <value>Restore</value>
   </data>
@@ -560,6 +557,9 @@ Author: PaperHammer</value>
   <data name="Text_EffectConfig" xml:space="preserve">
     <value>Available custom settings</value>
   </data>
+  <data name="WpCreateDialog_AIWp_Explain" xml:space="preserve">
+    <value>The parallax effect that can be achieved is relatively realistic but has high performance consumption</value>
+  </data>
   <data name="WpCreateDialog_AIWp_Title" xml:space="preserve">
     <value>3D wallpaper for inference based on AI models</value>
   </data>
@@ -587,8 +587,8 @@ Author: PaperHammer</value>
   <data name="Text_Edit" xml:space="preserve">
     <value>Edits</value>
   </data>
-  <data name="WpCreateDialog_AIWp_Explain" xml:space="preserve">
-    <value>The parallax effect that can be achieved is relatively realistic but has high performance consumption</value>
+  <data name="Text_Preview" xml:space="preserve">
+    <value>Preview</value>
   </data>
   <data name="Text_Off" xml:space="preserve">
     <value>Off</value>
@@ -688,5 +688,14 @@ Author: PaperHammer</value>
   </data>
   <data name="DirExsits" xml:space="preserve">
     <value>There already exists a similar path.</value>
+  </data>
+  <data name="Draft_SI_LayerLocked" xml:space="preserve">
+    <value>The currently selected layer is locked and cannot be edited</value>
+  </data>
+  <data name="Draft_Canvas_DefaultName" xml:space="preserve">
+    <value>Canvas</value>
+  </data>
+  <data name="Draft_SI_LayerNotAvailable" xml:space="preserve">
+    <value>The current layer is not available, try reloading the project</value>
   </data>
 </root>

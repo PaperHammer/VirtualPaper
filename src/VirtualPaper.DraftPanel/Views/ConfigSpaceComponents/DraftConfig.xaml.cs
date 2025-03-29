@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model.Interfaces;
+using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.DraftPanel.ViewModels;
 
 // To learn more about WinUI, the WinUI draft structure,
@@ -19,11 +20,10 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             base.OnNavigatedTo(e);
 
             _viewModel = ObjectProvider.GetRequiredService<DraftConfigViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-            _viewModel._configSpace = e.Parameter as IConfigSpace;
-            this.DataContext = _viewModel;
-
+            _viewModel._configSpace = e.Parameter as IConfigSpace;           
             _viewModel.InitContent();
             _viewModel.InitConfigSpace();
+            this.DataContext = _viewModel;
         }
 
         private void ChangeFolderButton_Click(object sender, RoutedEventArgs e) {

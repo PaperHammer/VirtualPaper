@@ -502,7 +502,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                     foreach (string file in files) {
                         if (Path.GetFileName(file) == Constants.Field.WpBasicDataFileName) {
-                            WpBasicData data = await JsonStorage.LoadAsync<WpBasicData>(file, WpBasicDataContext.Default);
+                            WpBasicData data = await JsonSaver.LoadAsync<WpBasicData>(file, WpBasicDataContext.Default);
 
                             if (data.IsAvailable()) {
                                 await writer.WriteAsync(data, token);

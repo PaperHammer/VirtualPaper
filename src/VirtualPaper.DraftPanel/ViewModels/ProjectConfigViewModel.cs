@@ -2,8 +2,8 @@
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
-using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Model.Interfaces;
+using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
@@ -93,13 +93,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private void PreviousStepBtnAction(object sender, RoutedEventArgs e) {
-            _configSpace.ChangePanelState(DraftPanelState.GetStart);
+            _configSpace.ChangePanelState(DraftPanelState.GetStart, null);
         }
 
         private void NextStepBtnAction(object sender, RoutedEventArgs e) {
-            _configSpace.ChangePanelState(
-                DraftPanelState.DraftConfig,
-                new List<ProjectMetadata> { new(ProjectName, SelectedTemplate.Type) });
+            _configSpace.ChangePanelState(DraftPanelState.DraftConfig, new ToDraftConfig(ProjectName, SelectedTemplate.Type));
         }
 
         internal IEnumerable<ProjectTemplate> _availableTemplates;

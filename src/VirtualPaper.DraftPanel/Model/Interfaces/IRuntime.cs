@@ -2,7 +2,6 @@
 
 namespace VirtualPaper.DraftPanel.Model.Interfaces {
     interface IRuntime {
-        Task LoadAsync();
         Task SaveAsync();
     }
 }

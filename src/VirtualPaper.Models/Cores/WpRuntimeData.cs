@@ -21,7 +21,7 @@ namespace VirtualPaper.Models.Cores {
         public RuntimeType RType { get; set; } = RuntimeType.RUnknown;
 
         public void Read(string filePath) {
-            var data = JsonStorage.Load<WpRuntimeData>(filePath, WpRuntimeDataContext.Default);
+            var data = JsonSaver.Load<WpRuntimeData>(filePath, WpRuntimeDataContext.Default);
             InitData(data);
         }
 
@@ -60,7 +60,7 @@ namespace VirtualPaper.Models.Cores {
             if (MonitorContent == string.Empty) {
                 throw new Exception("Save failed");
             }
-            JsonStorage.Store<IWpRuntimeData>(
+            JsonSaver.Store<IWpRuntimeData>(
                 Path.Combine(this.FolderPath, MonitorContent, RType.ToString(), Constants.Field.WpRuntimeDataFileName), 
                 this,
                 WpRuntimeDataContext.Default);

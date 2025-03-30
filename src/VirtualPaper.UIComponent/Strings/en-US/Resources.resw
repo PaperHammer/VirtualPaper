@@ -698,4 +698,16 @@ Author: PaperHammer</value>
   <data name="Draft_SI_LayerNotAvailable" xml:space="preserve">
     <value>The current layer is not available, try reloading the project</value>
   </data>
+  <data name="SIG_Text_AddLayer" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="SIG_Text_DeleteLayer" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="SIG_Text_RenameLayer" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="SIG_Text_CopyLayer" xml:space="preserve">
+    <value>Copy</value>
+  </data>
 </root>

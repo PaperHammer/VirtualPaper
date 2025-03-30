@@ -20,22 +20,26 @@
             Width="20"
             Margin="0 0 10 0"
             IsChecked="{x:Bind IsEnable, Mode=TwoWay}"/>
-        
+
         <StackPanel
             Grid.Column="1"
             Orientation="Horizontal"
-            Spacing="4">
+            Spacing="10">
 
-            <!--<Image
-                Width="55"
-                Source="{x:Bind LayerThum, Mode=OneWay}"/>-->
-            <ContentControl x:Name="layerThum" Width="62" Height="40"/>
+            <Border
+                BorderBrush="Gray"
+                BorderThickness="0.5">
+                <Image  
+                    Width="60" 
+                    Height="38" 
+                    Source="{x:Bind LayerThum, Mode=OneWay}"/>
+            </Border>
 
             <TextBlock
                 Grid.Column="1"
                 Margin="0 -2 0 0"
                 VerticalAlignment="Center" 
-                Text="{x:Bind LayerName, Mode=TwoWay}"/>
+                Text="{x:Bind LayerName, Mode=OneWay}"/>
         </StackPanel>
     </Grid>
 </UserControl>

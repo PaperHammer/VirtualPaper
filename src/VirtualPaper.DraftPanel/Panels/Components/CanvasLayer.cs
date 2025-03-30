@@ -6,15 +6,20 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Shapes;
 using VirtualPaper.DraftPanel.Model.EventArg;
 using VirtualPaper.DraftPanel.Model.Runtime;
 using VirtualPaper.DraftPanel.Utils;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
+using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
 
 namespace VirtualPaper.DraftPanel.Panels.Components {
     internal partial class CanvasLayer : Canvas, IDisposable { // ui
@@ -50,13 +55,10 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             if (e.NewValue is CanvasLayerData newDatas) {
                 //newDatas.OnImagesCollectionChanged += canvasLayer.STAData_CollectionChanged;
                 //newDatas.OnDrawssCollectionChanged += canvasLayer.STAData_CollectionChanged;
+                newDatas.OnDrawsChanging += canvasLayer.Layer_OnDrawsChanging;
                 newDatas.OnDrawsChanged += canvasLayer.Layer_OnDrawsChanged;
                 newDatas.OnDataLoaded += canvasLayer.NewDatas_OnDataLoaded;
             }
-        }
-
-        private void NewDatas_OnDataLoaded(object sender, EventArgs e) {
-            InitRender();
         }
 
         //private static void OnDrawsPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
@@ -96,7 +98,6 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
 
             InitDataContext();
-            //InitRender();
             _isInitialized = true;
         }
 
@@ -120,7 +121,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
         //      遍历排序后的元素列表。
         //      根据 Type 判断是图片还是线条，并分别创建对应的控件（STAImage 或 Points）。
         //      设置控件的位置、大小、ZIndex 等属性，并添加到 Layer.Children 中。
-        private void InitRender() {
+        private async Task InitRenderAsync() {
             // 创建一个包含所有元素的列表
             IEnumerable<StaticImgElement> allElements = LayerData.Images.Cast<StaticImgElement>().Concat(LayerData.Draws);
 
@@ -138,13 +139,15 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             foreach (var element in sortedElements) {
                 RenderElement(element);
             }
+
+            LayerData.LayerThum = await GenerateThumbnailAsync(this, StaticImgConstants.LayerThumWidth, StaticImgConstants.LayerThumHeight);
         }
 
         //private void STAData_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
         //    //UpdateRender(e);
         //}
 
-        private void Layer_OnDrawsChanged(object sender, PolylineEventArgs e) {
+        private void Layer_OnDrawsChanging(object sender, PolylineEventArgs e) {
             switch (e.Operation) {
                 case OperationType.Add:
                     this.Children.Add(e.Polyline);
@@ -155,6 +158,14 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
                 default:
                     break;
             }
+        }
+
+        private async void Layer_OnDrawsChanged(object sender, EventArgs e) {
+            LayerData.LayerThum = await GenerateThumbnailAsync(this, StaticImgConstants.LayerThumWidth, StaticImgConstants.LayerThumHeight);
+        }
+
+        private async void NewDatas_OnDataLoaded(object sender, EventArgs e) {
+            await InitRenderAsync();
         }
 
         //private void UpdateRender(NotifyCollectionChangedEventArgs e) {
@@ -191,22 +202,92 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
         }
 
-        //private void RemoveElement(StaticImgElement element) {
-        //    if (element.Type == StaticImgElementType.Image) {
-        //        var img = element as STAImage;
-        //        var imageControl = this.Children.OfType<Image>().FirstOrDefault(i => Canvas.GetZIndex(i) == img.ZIndex);
-        //        if (imageControl != null) {
-        //            this.Children.Remove(imageControl);
-        //        }
-        //    }
-        //    else if (element.Type == StaticImgElementType.Draw) {
-        //        var draw = element as STADraw;
-        //        var path = this.Children.OfType<Path>().FirstOrDefault(p => Canvas.GetZIndex(p) == draw.ZIndex);
-        //        if (path != null) {
-        //            this.Children.Remove(path);
-        //        }
-        //    }
-        //}
+        private async Task<ImageSource> GenerateThumbnailAsync(UIElement element, double thumbnailWidth, double thumbnailHeight) {
+            //// 创建一个临时容器来渲染元素
+            //var renderContainer = new Canvas {
+            //    Width = element.RenderSize.Width,
+            //    Height = element.RenderSize.Height
+            //};
+            //renderContainer.Children.Add(element);
+
+            //// 使用 RenderTargetBitmap 捕获元素内容
+            //var renderTargetBitmap = new RenderTargetBitmap();
+            //await renderTargetBitmap.RenderAsync(renderContainer);
+
+            //// 调整大小为缩略图尺寸
+            //var softwareBitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(
+            //    renderTargetBitmap,
+            //    BitmapAlphaMode.Premultiplied);
+
+            //var resizedBitmap = new SoftwareBitmap(softwareBitmap.BitmapPixelFormat, (int)thumbnailWidth, (int)thumbnailHeight, softwareBitmap.BitmapAlphaMode);
+            //using (var bitmapBuffer = softwareBitmap.LockBuffer(BitmapBufferAccessMode.Read))
+            //using (var resizedBuffer = resizedBitmap.LockBuffer(BitmapBufferAccessMode.Write)) {
+            //    BitmapTransform transform = new BitmapTransform {
+            //        ScaledWidth = (uint)thumbnailWidth,
+            //        ScaledHeight = (uint)thumbnailHeight
+            //    };
+            //    softwareBitmap.CopyTo(resizedBitmap, transform);
+            //}
+
+            //// 将 SoftwareBitmap 转换为 ImageSource
+            //var imageSource = new SoftwareBitmapSource();
+            //await imageSource.SetBitmapAsync(resizedBitmap);
+
+            //return imageSource;
+
+            // 使用 RenderTargetBitmap 捕获整个画布的内容
+            var renderTargetBitmap = new RenderTargetBitmap();
+            await renderTargetBitmap.RenderAsync(element);
+
+            // 获取捕获的像素数据
+            var pixelBuffer = await renderTargetBitmap.GetPixelsAsync();
+            var width = renderTargetBitmap.PixelWidth;
+            var height = renderTargetBitmap.PixelHeight;
+
+            // 创建 SoftwareBitmap 并加载原始像素数据
+            var softwareBitmap = new SoftwareBitmap(
+                BitmapPixelFormat.Bgra8,
+                width,
+                height,
+                BitmapAlphaMode.Premultiplied);
+
+            softwareBitmap.CopyFromBuffer(pixelBuffer);
+
+            // 使用 BitmapEncoder 进行高质量缩放
+            var resizedStream = new InMemoryRandomAccessStream();
+            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, resizedStream);
+
+            encoder.SetSoftwareBitmap(softwareBitmap);
+            encoder.BitmapTransform.ScaledWidth = (uint)thumbnailWidth;
+            encoder.BitmapTransform.ScaledHeight = (uint)thumbnailHeight;
+            encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Fant; // 高质量插值
+
+            await encoder.FlushAsync();
+
+            // 将缩放后的图像转换为 ImageSource
+            var bitmapImage = new BitmapImage();
+            resizedStream.Seek(0);
+            await bitmapImage.SetSourceAsync(resizedStream);
+
+            return bitmapImage;
+        }
+
+        private void RemoveElement(StaticImgElement element) {
+            if (element.Type == StaticImgElementType.Image) {
+                var img = element as STAImage;
+                var imageControl = this.Children.OfType<Image>().FirstOrDefault(i => Canvas.GetZIndex(i) == img.ZIndex);
+                if (imageControl != null) {
+                    this.Children.Remove(imageControl);
+                }
+            }
+            else if (element.Type == StaticImgElementType.Draw) {
+                var draw = element as STADraw;
+                var path = this.Children.OfType<Path>().FirstOrDefault(p => Canvas.GetZIndex(p) == draw.ZIndex);
+                if (path != null) {
+                    this.Children.Remove(path);
+                }
+            }
+        }
 
         public CanvasLayer Copy() {
             CanvasLayer newLayer = new() {
@@ -231,7 +312,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
                 this.Unloaded -= CanvasLayer_Unloaded;
 
                 if (LayerData != null) {
-                    LayerData.OnDrawsChanged -= this.Layer_OnDrawsChanged;
+                    LayerData.OnDrawsChanging -= this.Layer_OnDrawsChanging;
                 }
 
                 this.Children.Clear();

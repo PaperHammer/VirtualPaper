@@ -18,13 +18,21 @@
 
     <Page.Resources>
         <DataTemplate  x:Key="LayerItemTemplate" x:DataType="rt:CanvasLayerData">
-            <ListViewItem
-                Height="60">
+            <ListViewItem Height="60">
                 <data:CheckBoxItem
                     LayerName="{x:Bind Name, Mode=OneWay}"
-                    IsEnable="{x:Bind IsEnable, Mode=TwoWay}"/>
+                    IsEnable="{x:Bind IsEnable, Mode=TwoWay}"
+                    LayerThum="{x:Bind LayerThum, Mode=OneWay}"/>
             </ListViewItem>
         </DataTemplate>
+
+        <MenuFlyout x:Key="Layers_MenuFlyout">
+            <MenuFlyoutItem Text="{x:Bind _viewModel.SIG_Text_AddLayer}" Click="AddLayer_Click"/>
+            <MenuFlyoutItem Text="{x:Bind _viewModel.SIG_Text_CopyLayer}" Click="CopyLayer_Click"/>
+            <MenuFlyoutItem Text="{x:Bind _viewModel.SIG_Text_RenameLayer}" Click="RenameLayer_Click"/>
+            <MenuFlyoutSeparator/>
+            <MenuFlyoutItem Text="{x:Bind _viewModel.SIG_Text_DeleteLayer}" Click="DeleteLayer_Click"/>
+        </MenuFlyout>
     </Page.Resources>
 
     <Grid>
@@ -44,12 +52,12 @@
                 HorizontalScrollBarVisibility="Auto" 
                 VerticalScrollBarVisibility="Auto"
                 ZoomMode="Enabled"            
-                MinZoomFactor="{x:Bind rt:StaticImgMetadata.MinZoomFactor}"
-                MaxZoomFactor="{x:Bind rt:StaticImgMetadata.MaxZoomFactor}"
+                MinZoomFactor="{x:Bind rt:StaticImgConstants.MinZoomFactor}"
+                MaxZoomFactor="{x:Bind rt:StaticImgConstants.MaxZoomFactor}"
                 ViewChanging="CanvasSVer_ViewChanging">
                 <components:LayerManager
                     x:Name="layerManager" 
-                    Loaded="LayerManager_Loaded"
+                    Loaded="LayerManager_Loaded"                    
                     ManagerData="{x:Bind _viewModel.ManagerData}"/>
             </ScrollViewer>
 
@@ -105,7 +113,13 @@
                                         SelectionChanged="ListView_SelectionChanged"
                                         SelectedItem="{x:Bind _viewModel.ManagerData.SelectedLayerData, Mode=OneWay}"
                                         ItemsSource="{x:Bind _viewModel.ManagerData.LayersData}"
-                                        ItemTemplate="{StaticResource LayerItemTemplate}"/>
+                                        ItemTemplate="{StaticResource LayerItemTemplate}">
+                                        <ListView.ItemContainerStyle>
+                                            <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                                                <Setter Property="ContextFlyout" Value="{StaticResource Layers_MenuFlyout}" />
+                                            </Style>
+                                        </ListView.ItemContainerStyle>
+                                    </ListView>
                                 </Expander.Content>
                             </Expander>
                         </StackPanel>
@@ -280,8 +294,8 @@
                 <Slider
                     x:Name="zoomSlider"
                     Width="130"
-                    Minimum="{x:Bind rt:StaticImgMetadata.DecimalToPercent(rt:StaticImgMetadata.MinZoomFactor)}"
-                    Maximum="{x:Bind rt:StaticImgMetadata.DecimalToPercent(rt:StaticImgMetadata.MaxZoomFactor)}"
+                    Minimum="{x:Bind rt:StaticImgConstants.DecimalToPercent(rt:StaticImgConstants.MinZoomFactor)}"
+                    Maximum="{x:Bind rt:StaticImgConstants.DecimalToPercent(rt:StaticImgConstants.MaxZoomFactor)}"
                     ValueChanged="ZoomSlider_ValueChanged"
                     StepFrequency="1"/>
 

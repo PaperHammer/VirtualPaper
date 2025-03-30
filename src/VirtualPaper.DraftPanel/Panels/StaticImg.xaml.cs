@@ -37,8 +37,8 @@ namespace VirtualPaper.DraftPanel.Panels {
         }
 
         private void ZoomOut_ButtonClick(object sender, RoutedEventArgs e) {
-            _viewModel.CanvasZoom = Math.Max(StaticImgMetadata.MinZoomFactor,
-                StaticImgMetadata.RoundToNearestFive(_viewModel.CanvasZoom) - StaticImgMetadata.GetSubStepSize(_viewModel.CanvasZoom));
+            _viewModel.CanvasZoom = Math.Max(StaticImgConstants.MinZoomFactor,
+                StaticImgConstants.RoundToNearestFive(_viewModel.CanvasZoom) - StaticImgConstants.GetSubStepSize(_viewModel.CanvasZoom));
 
             UpdateScrollViewerZoom((float)_viewModel.CanvasZoom);
             UpdateComboBoxText((float)_viewModel.CanvasZoom);
@@ -46,8 +46,8 @@ namespace VirtualPaper.DraftPanel.Panels {
         }
 
         private void ZoomIn_ButtonClick(object sender, RoutedEventArgs e) {
-            _viewModel.CanvasZoom = Math.Min(StaticImgMetadata.MaxZoomFactor,
-                StaticImgMetadata.RoundToNearestFive(_viewModel.CanvasZoom) + StaticImgMetadata.GetAddStepSize(_viewModel.CanvasZoom));
+            _viewModel.CanvasZoom = Math.Min(StaticImgConstants.MaxZoomFactor,
+                StaticImgConstants.RoundToNearestFive(_viewModel.CanvasZoom) + StaticImgConstants.GetAddStepSize(_viewModel.CanvasZoom));
 
             UpdateScrollViewerZoom((float)_viewModel.CanvasZoom);
             UpdateComboBoxText((float)_viewModel.CanvasZoom);
@@ -57,7 +57,7 @@ namespace VirtualPaper.DraftPanel.Panels {
         private void ZoomSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e) {
             if (zoomSlider.FocusState == FocusState.Unfocused) return;
 
-            _viewModel.CanvasZoom = StaticImgMetadata.PercentToDeciaml((float)e.NewValue);
+            _viewModel.CanvasZoom = StaticImgConstants.PercentToDeciaml((float)e.NewValue);
 
             UpdateScrollViewerZoom((float)_viewModel.CanvasZoom);
             UpdateComboBoxText((float)_viewModel.CanvasZoom);
@@ -65,7 +65,7 @@ namespace VirtualPaper.DraftPanel.Panels {
         }
 
         private void ZoomComboBox_TextSubmitted(ComboBox sender, ComboBoxTextSubmittedEventArgs args) {
-            if (args.Text is string s && double.TryParse(s.TrimEnd('%'), out var res) && StaticImgMetadata.IsZoomValid(res / 100)) {
+            if (args.Text is string s && double.TryParse(s.TrimEnd('%'), out var res) && StaticImgConstants.IsZoomValid(res / 100)) {
                 _viewModel.CanvasZoom = res / 100;
 
                 UpdateScrollViewerZoom((float)_viewModel.CanvasZoom);
@@ -74,7 +74,7 @@ namespace VirtualPaper.DraftPanel.Panels {
             }
             else {
                 // 还原
-                zoomComboBox.Text = $"{StaticImgMetadata.DecimalToPercent((float)_viewModel.CanvasZoom)}%";
+                zoomComboBox.Text = $"{StaticImgConstants.DecimalToPercent((float)_viewModel.CanvasZoom)}%";
             }
         }
 
@@ -88,12 +88,12 @@ namespace VirtualPaper.DraftPanel.Panels {
             }
             else {
                 // 还原
-                zoomComboBox.Text = $"{StaticImgMetadata.DecimalToPercent((float)_viewModel.CanvasZoom)}%";
+                zoomComboBox.Text = $"{StaticImgConstants.DecimalToPercent((float)_viewModel.CanvasZoom)}%";
             }
         }
 
-        private async void LayerManager_Loaded(object sender, RoutedEventArgs e) {
-            await Task.Delay(300);
+        private void LayerManager_Loaded(object sender, RoutedEventArgs e) {
+            //await Task.Delay(300);  DataLoaded="LayerManager_DataLoaded"
             FitView();
         }
 
@@ -128,7 +128,7 @@ namespace VirtualPaper.DraftPanel.Panels {
                 (viewportWidth - (layerManager.Margin.Left + layerManager.Margin.Right)) / contentWidth,
                 (viewportHeight - (layerManager.Margin.Top + layerManager.Margin.Bottom)) / contentHeight);
             // 确保缩放因子在允许范围内
-            zoomFactor = Math.Max(StaticImgMetadata.MinZoomFactor, Math.Min(zoomFactor, StaticImgMetadata.MaxZoomFactor));
+            zoomFactor = Math.Max(StaticImgConstants.MinZoomFactor, Math.Min(zoomFactor, StaticImgConstants.MaxZoomFactor));
             _viewModel.CanvasZoom = zoomFactor;
 
             UpdateScrollViewerZoom((float)zoomFactor);
@@ -141,12 +141,12 @@ namespace VirtualPaper.DraftPanel.Panels {
         }
 
         private void UpdateComboBoxText(float value) {
-            double percent = StaticImgMetadata.DecimalToPercent(value);
+            double percent = StaticImgConstants.DecimalToPercent(value);
             zoomComboBox.Text = $"{percent}%";
         }
 
         private void UpdateSliderValue(float value) {
-            double percent = StaticImgMetadata.DecimalToPercent(value);
+            double percent = StaticImgConstants.DecimalToPercent(value);
             zoomSlider.Value = percent;
         }
 
@@ -158,5 +158,21 @@ namespace VirtualPaper.DraftPanel.Panels {
         #endregion
 
         internal readonly StaticImgViewModel _viewModel;
+
+        private void AddLayer_Click(object sender, RoutedEventArgs e) {
+
+        }
+
+        private void CopyLayer_Click(object sender, RoutedEventArgs e) {
+
+        }
+
+        private void RenameLayer_Click(object sender, RoutedEventArgs e) {
+
+        }
+
+        private void DeleteLayer_Click(object sender, RoutedEventArgs e) {
+
+        }
     }
 }

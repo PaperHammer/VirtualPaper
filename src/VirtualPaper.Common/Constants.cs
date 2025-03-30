@@ -266,6 +266,10 @@
             public static string? Draft_SI_LayerLocked { get; }
             public static string? Draft_Canvas_DefaultName { get; }
             public static string? Draft_SI_LayerNotAvailable { get; }
+            public static string? SIG_Text_AddLayer { get; }
+            public static string? SIG_Text_CopyLayer { get; }
+            public static string? SIG_Text_RenameLayer { get; }
+            public static string? SIG_Text_DeleteLayer { get; }
         }
 
         public static class Field {

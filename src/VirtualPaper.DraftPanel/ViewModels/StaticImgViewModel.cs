@@ -11,11 +11,16 @@ namespace VirtualPaper.DraftPanel.ViewModels {
     partial class StaticImgViewModel : ObservableObject {
         internal event EventHandler<double> OnCanvasZoomChanged;
 
+        public string SIG_Text_AddLayer { get; set; }
+        public string SIG_Text_CopyLayer { get; set; }
+        public string SIG_Text_RenameLayer { get; set; }
+        public string SIG_Text_DeleteLayer { get; set; }
+
         private double _canvasZoom; // 0.2 -- 7.0
         public double CanvasZoom {
             get { return _canvasZoom; }
             set {
-                if (!StaticImgMetadata.IsZoomValid(value) || _canvasZoom == value) return;
+                if (!StaticImgConstants.IsZoomValid(value) || _canvasZoom == value) return;
 
                 _canvasZoom = value;
                 OnPropertyChanged();
@@ -30,6 +35,15 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             _rtFileType = rtFileType;
             _basicComponentUtil = new();
             ManagerData = new();
+
+            InitText();
+        }
+
+        private void InitText() {
+            SIG_Text_AddLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_AddLayer));
+            SIG_Text_CopyLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_CopyLayer));
+            SIG_Text_RenameLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_RenameLayer));
+            SIG_Text_DeleteLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_DeleteLayer));
         }
 
         public async Task SaveAsync() {

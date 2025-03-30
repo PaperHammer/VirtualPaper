@@ -5,9 +5,11 @@ using MessagePack;
 using Windows.Foundation;
 
 namespace VirtualPaper.DraftPanel.Model.Runtime {
-    class StaticImgMetadata {
+    class StaticImgConstants {
         public static float MinZoomFactor => 0.2f;
         public static float MaxZoomFactor => 7f;
+        public static int LayerThumWidth => 60;
+        public static int LayerThumHeight => 38;
 
         public static double DecimalToPercent(float value) {
             return Math.Round(value * 100, 1);
@@ -22,19 +24,19 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
         }
 
         internal static double GetAddStepSize(double curValue) {
-            return curValue >= 2.0 - Epsilon ? 0.25 : 0.1;
+            return curValue >= 2.0 - _epsilon ? 0.25 : 0.1;
         }
 
         internal static double GetSubStepSize(double curValue) {
-            return curValue > 2.0 - Epsilon ? 0.25 : 0.1;
+            return curValue > 2.0 - _epsilon ? 0.25 : 0.1;
         }
 
         public static bool IsZoomValid(double zoom) {
             float zoomFloat = (float)zoom;
-            return zoomFloat >= MinZoomFactor - Epsilon && zoomFloat <= MaxZoomFactor + Epsilon;
+            return zoomFloat >= MinZoomFactor - _epsilon && zoomFloat <= MaxZoomFactor + _epsilon;
         }
 
-        private static readonly float Epsilon = 1e-6f;
+        private static readonly float _epsilon = 1e-6f;
     }
 
     abstract record StaticImgElement {

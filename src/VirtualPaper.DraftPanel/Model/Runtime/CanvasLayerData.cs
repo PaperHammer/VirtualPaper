@@ -5,6 +5,8 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using MessagePack;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
@@ -18,7 +20,8 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
 
     internal partial class CanvasLayerData : ObservableObject {
         public event EventHandler OnDataLoaded;
-        public event EventHandler<PolylineEventArgs> OnDrawsChanged;
+        public event EventHandler<PolylineEventArgs> OnDrawsChanging;
+        public event EventHandler OnDrawsChanged;
         //public event EventHandler<NotifyCollectionChangedEventArgs> OnImagesCollectionChanged;
 
         private string _name = string.Empty;
@@ -52,6 +55,13 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
                     Draft.Instance.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
                 OnPropertyChanged();
             }
+        }
+
+        ImageSource _layerThum;
+        [JsonIgnore]
+        public ImageSource LayerThum {
+            get { return _layerThum; }
+            set { _layerThum = value; OnPropertyChanged(); }
         }
 
         [Key(1)]
@@ -114,12 +124,16 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
 
         internal void AddDraw(Polyline currentLine, STADraw currentDraw) {
             Draws.Add(currentDraw);
-            OnDrawsChanged?.Invoke(this, new(currentLine, OperationType.Add));
+            OnDrawsChanging?.Invoke(this, new(currentLine, OperationType.Add));
         }
         
         internal void RemoveDraw(Polyline currentLine, STADraw currentDraw) {
             Draws.Remove(currentDraw);
-            OnDrawsChanged?.Invoke(this, new(currentLine, OperationType.Remove));
+            OnDrawsChanging?.Invoke(this, new(currentLine, OperationType.Remove));
+        }
+
+        internal void DrawsChanged() {
+            OnDrawsChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private int _nextAvailable = 1;

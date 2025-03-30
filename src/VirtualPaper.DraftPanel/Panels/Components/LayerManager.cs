@@ -93,7 +93,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
 
             InitDataContext();
             InitBackground();
-            //InitRender();
+            //InitRenderAsync();
             _isInitialized = true;
         }
 
@@ -221,7 +221,8 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
                 _isDrawing = false;
                 _currentLine = null; // 清除当前线条引用
                 _currentDraw = null;
-                //_viewModel._vpCanvas.SelectedLayerData.LayerThum = CanvasUtil.RenderGridToBitmap(_viewModel._vpCanvas.SelectedLayerData.LayerGrid);
+
+                ManagerData.SelectedLayerData.DrawsChanged();
             }
         }
 

@@ -5,16 +5,16 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.UIComponent.ViewModels {
     public partial class LoadingViewModel : ObservableObject {
-        private bool _frameIsEnable = true;
-        public bool FrameIsEnable {
-            get { return _frameIsEnable; }
-            set { _frameIsEnable = value; OnPropertyChanged(); }
+        private bool _controlIsEnable = true;
+        public bool ControlIsEnable {
+            get { return _controlIsEnable; }
+            set { _controlIsEnable = value; OnPropertyChanged(); }
         }
 
-        private double _frameOpacity = 1;
-        public double FrameOpacity {
-            get { return _frameOpacity; }
-            set { _frameOpacity = value; OnPropertyChanged(); }
+        private double _controlOpacity = 1;
+        public double ControlOpacity {
+            get { return _controlOpacity; }
+            set { _controlOpacity = value; OnPropertyChanged(); }
         }
 
         private bool _loadingIsVisiable;
@@ -74,8 +74,8 @@ namespace VirtualPaper.UIComponent.ViewModels {
 
             await _loadingSemaphoreSlim.WaitAsync();
 
-            FrameIsEnable = false;
-            FrameOpacity = 0.4;
+            ControlIsEnable = false;
+            ControlOpacity = 0.4;
             IsVisiable = true;
             CtsTokens = cts;
             CancelEnable = cancelEnable;
@@ -90,8 +90,8 @@ namespace VirtualPaper.UIComponent.ViewModels {
             }
 
             IsVisiable = false;
-            FrameIsEnable = true;
-            FrameOpacity = 1;
+            ControlIsEnable = true;
+            ControlOpacity = 1;
 
             if (_loadingSemaphoreSlim.CurrentCount < 1) {
                 _loadingSemaphoreSlim.Release();

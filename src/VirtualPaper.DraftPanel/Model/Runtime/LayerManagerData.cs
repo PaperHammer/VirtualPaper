@@ -42,15 +42,6 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
                 OnPropertyChanged();
             }
         }
-        //private int _selectedIndex = 0;
-        //public int SelectedIndex {
-        //    get => _selectedIndex;
-        //    set {
-        //        if (_selectedIndex == value || value < 0) return;
-        //        _selectedIndex = value;
-        //        OnPropertyChanged();
-        //    }
-        //}
 
         string _canvasSizeText;
         [JsonIgnore]
@@ -84,9 +75,8 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             this.LayersData.CollectionChanged += LayersData_CollectionChanged;
             this.LayersData.SetRange(managerData.LayersData);
 
-            foreach (var layer in LayersData) {
-                await layer.LoadAsync(filePath);
-            }
+            var loadTasks = LayersData.Select(layer => layer.LoadAsync(filePath));
+            await Task.WhenAll(loadTasks); // 等待所有层加载完成
         }
     }
 }

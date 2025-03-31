@@ -31,7 +31,7 @@ namespace VirtualPaper.DraftPanel.Panels {
             await _viewModel.SaveAsync();
         }
 
-        #region ui event
+        #region ui events
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             await _viewModel.LoadAsync();
         }
@@ -93,7 +93,6 @@ namespace VirtualPaper.DraftPanel.Panels {
         }
 
         private void LayerManager_Loaded(object sender, RoutedEventArgs e) {
-            //await Task.Delay(300);  DataLoaded="LayerManager_DataLoaded"
             FitView();
         }
 
@@ -150,15 +149,14 @@ namespace VirtualPaper.DraftPanel.Panels {
             zoomSlider.Value = percent;
         }
 
-        private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e) {            
+        private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (e.AddedItems.Count == 0) {
                 (sender as ListView).SelectedItem = _viewModel.ManagerData.SelectedLayerData;
             }
         }
         #endregion
 
-        internal readonly StaticImgViewModel _viewModel;
-
+        #region menu items
         private void AddLayer_Click(object sender, RoutedEventArgs e) {
 
         }
@@ -174,5 +172,8 @@ namespace VirtualPaper.DraftPanel.Panels {
         private void DeleteLayer_Click(object sender, RoutedEventArgs e) {
 
         }
+        #endregion
+
+        internal readonly StaticImgViewModel _viewModel;
     }
 }

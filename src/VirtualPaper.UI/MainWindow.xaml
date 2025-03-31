@@ -105,18 +105,10 @@
             <Grid>
                 <Frame
                     x:Name="ContentFrame"
-                    Opacity="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.FrameOpacity, Mode=OneWay}"
+                    Opacity="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ControlOpacity, Mode=OneWay}"
                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                    IsEnabled="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.FrameIsEnable, Mode=OneWay}"/>
+                    IsEnabled="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ControlIsEnable, Mode=OneWay}"/>
 
-                <!--<InfoBar
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Top"
-                    IsIconVisible="True"
-                    IsOpen="{x:Bind _viewModel._basicComponentUtil._globalMsgViewModel.InfoBarIsOpen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    Severity="{x:Bind _viewModel._basicComponentUtil._globalMsgViewModel.InfoBarSeverity, Mode=OneWay}"
-                    Message="{x:Bind _viewModel._basicComponentUtil._globalMsgViewModel.InfobarMsg, Mode=OneWay}"
-                    MaxWidth="900"/>-->
                 <ItemsControl 
                     HorizontalAlignment="Center"
                     VerticalAlignment="Top"

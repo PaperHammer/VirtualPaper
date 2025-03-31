@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using MessagePack;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using VirtualPaper.Common;
@@ -22,7 +20,8 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
         public event EventHandler OnDataLoaded;
         public event EventHandler<PolylineEventArgs> OnDrawsChanging;
         public event EventHandler OnDrawsChanged;
-        //public event EventHandler<NotifyCollectionChangedEventArgs> OnImagesCollectionChanged;
+
+        public TaskCompletionSource<bool> RenderCompleted => _renderCompleted;
 
         private string _name = string.Empty;
         public string Name {
@@ -110,23 +109,20 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             try {
                 this.Draws = await MessagePackSaver.LoadAsync<ObservableCollection<STADraw>>(entryFilePath + ".draws") ?? [];
                 this.Images = await MessagePackSaver.LoadAsync<ObservableCollection<STAImage>>(entryFilePath + ".images") ?? [];
-                //this.Images.CollectionChanged += Images_CollectionChanged;
                 OnDataLoaded?.Invoke(this, EventArgs.Empty);
+
+                await RenderCompleted.Task;
             }
             catch (Exception ex) {
                 Draft.Instance.GetNotify().ShowExp(ex);
             }
         }
 
-        //private void Images_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
-        //    OnImagesCollectionChanged?.Invoke(sender, e);
-        //}
-
         internal void AddDraw(Polyline currentLine, STADraw currentDraw) {
             Draws.Add(currentDraw);
             OnDrawsChanging?.Invoke(this, new(currentLine, OperationType.Add));
         }
-        
+
         internal void RemoveDraw(Polyline currentLine, STADraw currentDraw) {
             Draws.Remove(currentDraw);
             OnDrawsChanging?.Invoke(this, new(currentLine, OperationType.Remove));
@@ -139,7 +135,8 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
         private int _nextAvailable = 1;
         private int _nextCopyAvailable = 1;
         private readonly SemaphoreSlim _saveQueueLock = new(1, 1);
-        private readonly BufferSaver<ObservableCollection<STAImage>> _imageSaver = new();
-        private readonly BufferSaver<ObservableCollection<STADraw>> _drawSaver = new();
+        private readonly TaskCompletionSource<bool> _renderCompleted = new();
+        //private readonly BufferSaver<ObservableCollection<STAImage>> _imageSaver = new();
+        //private readonly BufferSaver<ObservableCollection<STADraw>> _drawSaver = new();
     }
 }

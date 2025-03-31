@@ -23,20 +23,6 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
         public static readonly DependencyProperty ManagerDataProperty =
             DependencyProperty.Register("ManagerData", typeof(LayerManagerData), typeof(LayerManager), new PropertyMetadata(null, OnManagerDataChanged));
 
-        //public ObservableCollection<CanvasLayerData> LayersData {
-        //    get { return (ObservableCollection<CanvasLayerData>)GetValue(LayersDataProperty); }
-        //    set { SetValue(LayersDataProperty, value); }
-        //}
-        //public static readonly DependencyProperty LayersDataProperty =
-        //    DependencyProperty.Register("LayersData", typeof(ObservableCollection<CanvasLayerData>), typeof(LayerManager), new PropertyMetadata(null, OnLayersDataChanged));
-
-        //public CanvasLayerData SelectedItem {
-        //    get { return (CanvasLayerData)GetValue(SelectedItemProperty); }
-        //    set { SetValue(SelectedItemProperty, value); }
-        //}
-        //public static readonly DependencyProperty SelectedItemProperty =
-        //    DependencyProperty.Register("SelectedItem", typeof(CanvasLayerData), typeof(LayerManager), new PropertyMetadata(null));
-
         private Point? _ponterPos;
         public Point? PointerPos {
             get { return _ponterPos; }
@@ -49,19 +35,6 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
         }
 
-        //private static void OnLayersDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-        //    var control = d as LayerManager;
-
-        //    if (e.OldValue != null && e.NewValue != null) {
-        //        throw new InvalidOperationException("LayersData can only be set once.");
-        //    }
-
-        //    if (e.NewValue is ObservableCollection<CanvasLayerData> newLayers) {
-        //        newLayers.CollectionChanged += control.LayersData_CollectionChanged;
-        //        control.RenderLayers(newLayers);
-        //    }
-        //}
-
         private static void OnManagerDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var control = d as LayerManager;
 
@@ -71,13 +44,12 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
 
             if (e.NewValue is LayerManagerData managerData) {
                 managerData.LayersData.CollectionChanged += control.LayersData_CollectionChanged;
-                //control.RenderLayers(managerData.LayersData);
             }
         }
 
         public LayerManager() {
             InitProperty();
-
+           
             this.Loading += LayerManager_Loading;
             this.PointerEntered += LayerManager_PointerEntered;
             this.PointerPressed += LayerManager_PointerPressed;
@@ -92,7 +64,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
 
             InitDataContext();
-            InitBackground();
+            RenderBackground();
             //InitRenderAsync();
             _isInitialized = true;
         }
@@ -111,15 +83,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
         }
 
-        //private void RenderLayers(ObservableList<CanvasLayerData> newLayers) {
-        //    //InitBackground();
-
-        //    foreach (var layerData in newLayers) {
-        //        AddDraw(layerData);
-        //    }
-        //}
-
-        private void InitBackground() {
+        private void RenderBackground() {
             _background.Width = this.Width;
             _background.Height = this.Height;
             Canvas.SetZIndex(_background, -1);
@@ -290,16 +254,11 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
                 this.PointerMoved -= LayerManager_PointerMoved;
                 this.PointerReleased -= LayerManager_PointerReleased;
                 this.PointerExited -= LayerManager_PointerExited;
+                if (ManagerData.LayersData != null) {
+                    ManagerData.LayersData.CollectionChanged -= LayersData_CollectionChanged;
+                }
 
-                //// 解绑事件
-                //if (LayersData != null) {
-                //    LayersData.CollectionChanged -= LayersData_CollectionChanged;
-                //}
-
-                // 清理子控件
                 this.Children.Clear();
-
-                // 其他托管资源清理
             }
 
             // 非托管资源清理
@@ -311,16 +270,13 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
         private bool _isDisposed;
         private bool _isInitialized;
         private readonly Canvas _background = new();
-        private Dictionary<CanvasLayerData, CanvasLayer> _layerMap = [];
+        private readonly Dictionary<CanvasLayerData, CanvasLayer> _layerMap = [];
         private bool _isDrawable = false, _isDrawing = false;
         private Polyline _currentLine; // 当前正在绘制的线条
         private STADraw _currentDraw;  // 当前线条的数据模型
-        //private double _currentScale = 1.0; // 当前缩放比例
         private static readonly BindingInfo[] _cachedBindingInfos = [
             new BindingInfo(WidthProperty, "Size.Width", BindingMode.OneWay),
             new BindingInfo(HeightProperty, "Size.Height", BindingMode.OneWay),
-            //new BindingInfo(LayersDataProperty, "LayersData", BindingMode.OneWay),
-            //new BindingInfo(SelectedItemProperty, "SelectedLayerData", BindingMode.OneWay),
         ];
     }
 }

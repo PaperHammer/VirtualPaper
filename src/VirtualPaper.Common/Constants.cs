@@ -1,5 +1,17 @@
-﻿namespace VirtualPaper.Common {
+﻿using System.Runtime.InteropServices;
+
+namespace VirtualPaper.Common {
     public static class Constants {
+
+        //public static string GetMemory(object o) // 获取引用类型的内存地址方法    
+        //{
+        //    GCHandle h = GCHandle.Alloc(o, GCHandleType.WeakTrackResurrection);
+
+        //    IntPtr addr = GCHandle.ToIntPtr(h);
+
+        //    return "0x" + addr.ToString("X");
+        //}
+
         public static class Runtime {
             public static nint MainWindowHwnd { get; set; }
         }

@@ -312,36 +312,5 @@
                 </Button>
             </StackPanel>
         </Grid>
-
-        <Grid
-            Grid.RowSpan="2">
-            <!--<ItemsControl 
-                HorizontalAlignment="Center"
-                VerticalAlignment="Top"
-                ItemsSource="{x:Bind _viewModel._basicComponentUtil._globalMsgViewModel.InfobarMessages, Mode=OneWay}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="models:GlobalMsgInfo">
-                        <InfoBar
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Top"
-                            IsIconVisible="True"
-                            IsOpen="{x:Bind IsOpen, Mode=TwoWay}"
-                            Severity="{x:Bind Severity}"
-                            Message="{x:Bind Message}"
-                            MaxWidth="900"/>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>-->
-
-            <feedback:Loading
-                CancelEnable="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CancelEnable}"
-                ProgressbarEnable="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ProgressbarEnable}"
-                CtsTokens="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CtsTokens}"
-                TotalValue="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TotalValue}"
-                CurValue="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CurValue, Mode=OneWay}"
-                TextLoading="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TextLoading, Mode=OneWay}"
-                TextCancel="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TextCancel}"
-                Visibility="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.IsVisiable, Mode=OneWay}"/>
-        </Grid>
     </Grid>
 </Page>

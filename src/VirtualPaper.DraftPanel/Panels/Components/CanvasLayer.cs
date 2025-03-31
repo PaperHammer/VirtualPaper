@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -30,20 +25,6 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
         public static readonly DependencyProperty LayerDataProperty =
             DependencyProperty.Register("LayerData", typeof(CanvasLayerData), typeof(CanvasLayer), new PropertyMetadata(null, OnLayerDataChanged));
 
-        //public ObservableCollection<STAImage> Images {
-        //    get { return (ObservableCollection<STAImage>)GetValue(ImagesProperty); }
-        //    set { SetValue(ImagesProperty, value); }
-        //}
-        //public static readonly DependencyProperty ImagesProperty =
-        //    DependencyProperty.Register("Images", typeof(ObservableCollection<STAImage>), typeof(CanvasLayer), new PropertyMetadata(null, OnIamgesPropertyChanged));
-
-        //public ObservableCollection<STADraw> Draws {
-        //    get { return (ObservableCollection<STADraw>)GetValue(DrawsProperty); }
-        //    set { SetValue(DrawsProperty, value); }
-        //}
-        //public static readonly DependencyProperty DrawsProperty =
-        //    DependencyProperty.Register("Draws", typeof(ObservableCollection<STADraw>), typeof(CanvasLayer), new PropertyMetadata(null, OnDrawsPropertyChanged));
-
         private static void OnLayerDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var canvasLayer = d as CanvasLayer;
             if (canvasLayer == null) return;
@@ -53,35 +34,11 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
 
             if (e.NewValue is CanvasLayerData newDatas) {
-                //newDatas.OnImagesCollectionChanged += canvasLayer.STAData_CollectionChanged;
-                //newDatas.OnDrawssCollectionChanged += canvasLayer.STAData_CollectionChanged;
                 newDatas.OnDrawsChanging += canvasLayer.Layer_OnDrawsChanging;
                 newDatas.OnDrawsChanged += canvasLayer.Layer_OnDrawsChanged;
                 newDatas.OnDataLoaded += canvasLayer.NewDatas_OnDataLoaded;
             }
         }
-
-        //private static void OnDrawsPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-        //    var control = d as CanvasLayer;
-        //    if (e.OldValue is ObservableCollection<STADraw> oldDraws) {
-        //        oldDraws.CollectionChanged -= control.STAData_CollectionChanged;
-        //    }
-
-        //    if (e.NewValue is ObservableCollection<STADraw> newDraws) {
-        //        newDraws.CollectionChanged += control.STAData_CollectionChanged;
-        //    }
-        //}
-
-        //private static void OnIamgesPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-        //    var control = d as CanvasLayer;
-        //    if (e.OldValue is ObservableCollection<STAImage> oldIamges) {
-        //        oldIamges.CollectionChanged -= control.STAData_CollectionChanged;
-        //    }
-
-        //    if (e.NewValue is ObservableCollection<STAImage> newIamges) {
-        //        newIamges.CollectionChanged += control.STAData_CollectionChanged;
-        //    }
-        //}
 
         public CanvasLayer() {
             this.Loading += CanvasLayer_Loading;
@@ -96,8 +53,9 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             if (_isInitialized) {
                 return;
             }
-
+            
             InitDataContext();
+
             _isInitialized = true;
         }
 
@@ -140,12 +98,9 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
                 RenderElement(element);
             }
 
-            LayerData.LayerThum = await GenerateThumbnailAsync(this, StaticImgConstants.LayerThumWidth, StaticImgConstants.LayerThumHeight);
+            LayerData.LayerThum = await GenerateThumbnailAsync(this, StaticImgConstants.LayerThumWidth, StaticImgConstants.LayerThumHeight);            
+            LayerData.RenderCompleted.TrySetResult(true);
         }
-
-        //private void STAData_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
-        //    //UpdateRender(e);
-        //}
 
         private void Layer_OnDrawsChanging(object sender, PolylineEventArgs e) {
             switch (e.Operation) {
@@ -167,13 +122,6 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
         private async void NewDatas_OnDataLoaded(object sender, EventArgs e) {
             await InitRenderAsync();
         }
-
-        //private void UpdateRender(NotifyCollectionChangedEventArgs e) {
-        //    if (e.OldItems != null && e.OldItems.Count > 0)
-        //        RemoveElement(e.OldItems[0] as StaticImgElement);
-        //    if (e.NewItems != null && e.NewItems.Count > 0)
-        //        RenderElement(e.NewItems[0] as StaticImgElement);
-        //}
 
         private void RenderElement(StaticImgElement element) {
             if (element.Type == StaticImgElementType.Image) {
@@ -202,39 +150,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
         }
 
-        private async Task<ImageSource> GenerateThumbnailAsync(UIElement element, double thumbnailWidth, double thumbnailHeight) {
-            //// 创建一个临时容器来渲染元素
-            //var renderContainer = new Canvas {
-            //    Width = element.RenderSize.Width,
-            //    Height = element.RenderSize.Height
-            //};
-            //renderContainer.Children.Add(element);
-
-            //// 使用 RenderTargetBitmap 捕获元素内容
-            //var renderTargetBitmap = new RenderTargetBitmap();
-            //await renderTargetBitmap.RenderAsync(renderContainer);
-
-            //// 调整大小为缩略图尺寸
-            //var softwareBitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(
-            //    renderTargetBitmap,
-            //    BitmapAlphaMode.Premultiplied);
-
-            //var resizedBitmap = new SoftwareBitmap(softwareBitmap.BitmapPixelFormat, (int)thumbnailWidth, (int)thumbnailHeight, softwareBitmap.BitmapAlphaMode);
-            //using (var bitmapBuffer = softwareBitmap.LockBuffer(BitmapBufferAccessMode.Read))
-            //using (var resizedBuffer = resizedBitmap.LockBuffer(BitmapBufferAccessMode.Write)) {
-            //    BitmapTransform transform = new BitmapTransform {
-            //        ScaledWidth = (uint)thumbnailWidth,
-            //        ScaledHeight = (uint)thumbnailHeight
-            //    };
-            //    softwareBitmap.CopyTo(resizedBitmap, transform);
-            //}
-
-            //// 将 SoftwareBitmap 转换为 ImageSource
-            //var imageSource = new SoftwareBitmapSource();
-            //await imageSource.SetBitmapAsync(resizedBitmap);
-
-            //return imageSource;
-
+        private async Task<ImageSource> GenerateThumbnailAsync(UIElement element, double thumbnailWidth, double thumbnailHeight) {           
             // 使用 RenderTargetBitmap 捕获整个画布的内容
             var renderTargetBitmap = new RenderTargetBitmap();
             await renderTargetBitmap.RenderAsync(element);
@@ -310,7 +226,6 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             if (disposing) {
                 this.Loading -= CanvasLayer_Loading;
                 this.Unloaded -= CanvasLayer_Unloaded;
-
                 if (LayerData != null) {
                     LayerData.OnDrawsChanging -= this.Layer_OnDrawsChanging;
                 }

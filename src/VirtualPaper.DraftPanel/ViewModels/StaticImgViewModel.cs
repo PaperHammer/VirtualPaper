@@ -33,7 +33,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         public StaticImgViewModel(string entryFilePath, FileType rtFileType) {
             _entryFilePath = entryFilePath;
             _rtFileType = rtFileType;
-            _basicComponentUtil = new();
             ManagerData = new();
 
             InitText();
@@ -59,7 +58,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         public async Task LoadAsync() {
-            _basicComponentUtil.Loading(false, false);
+            Draft.Instance.GetNotify().Loading(false, false);
 
             try {
                 switch (_rtFileType) {
@@ -76,7 +75,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 Draft.Instance.GetNotify().ShowExp(ex);
             }
             finally {
-                _basicComponentUtil.Loaded();
+                Draft.Instance.GetNotify().Loaded();
             }
         }
 
@@ -89,7 +88,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         private readonly FileType _rtFileType;
         private readonly string _entryFilePath = string.Empty;
-        internal readonly BasicComponentUtil _basicComponentUtil;
         internal readonly string[] _comboZoomFactors = ["700%", "600%", "500%", "400%", "300%", "200%", "100%", "75%", "50%", "25%"];
     }
 }

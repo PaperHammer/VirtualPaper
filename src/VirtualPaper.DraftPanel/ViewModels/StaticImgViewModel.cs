@@ -1,15 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using Google.Protobuf.WellKnownTypes;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model.Runtime;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.UIComponent.ViewModels;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     partial class StaticImgViewModel : ObservableObject {

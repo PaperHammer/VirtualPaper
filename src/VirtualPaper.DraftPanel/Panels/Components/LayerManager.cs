@@ -11,6 +11,7 @@ using Microsoft.UI.Xaml.Shapes;
 using VirtualPaper.Common;
 using VirtualPaper.DraftPanel.Model.Runtime;
 using VirtualPaper.DraftPanel.Utils;
+using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 
@@ -148,7 +149,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             // 开始新的线条
             var pointerPoint = e.GetCurrentPoint(this);
             _currentLine = new Polyline {
-                Stroke = new SolidColorBrush(Colors.Black),
+                Stroke = new SolidColorBrush(ManagerData.SelectedColor),
                 StrokeThickness = 2,
                 StrokeLineJoin = PenLineJoin.Round,
                 StrokeStartLineCap = PenLineCap.Round,
@@ -160,7 +161,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
 
             // 创建线条数据模型
             _currentDraw = new STADraw {
-                StrokeColor = 0xFF000000,
+                StrokeColor = UintToSolidBrushConverter.ColorToHex(ManagerData.SelectedColor),
                 StrokeThickness = 2,
                 Points = [new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y), new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y)],
                 ZTime = DateTime.Now.Ticks

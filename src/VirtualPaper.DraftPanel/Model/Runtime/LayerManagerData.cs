@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.UI;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
@@ -11,6 +12,7 @@ using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
+using Windows.UI;
 
 namespace VirtualPaper.DraftPanel.Model.Runtime {
     [JsonSerializable(typeof(LayerManagerData))]
@@ -57,6 +59,12 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
         public string CanvasSizeText {
             get { return _canvasSizeText; }
             private set { _canvasSizeText = value; OnPropertyChanged(); }
+        }
+
+        private Color _selectedColor = Colors.White;
+        public Color SelectedColor {
+            get { return _selectedColor; }
+            set { _selectedColor = value; OnPropertyChanged(); }
         }
 
         [JsonConstructor]

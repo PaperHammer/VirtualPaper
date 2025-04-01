@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using MessagePack;
 using Windows.Foundation;
+using Windows.UI;
 
 namespace VirtualPaper.DraftPanel.Model.Runtime {
     class StaticImgConstants {

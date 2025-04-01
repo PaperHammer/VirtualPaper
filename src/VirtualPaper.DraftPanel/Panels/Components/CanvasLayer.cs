@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -42,7 +43,12 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
 
         public CanvasLayer() {
             this.Loading += CanvasLayer_Loading;
+            this.Loaded += CanvasLayer_Loaded;
             this.Unloaded += CanvasLayer_Unloaded;
+        }
+
+        private void CanvasLayer_Loaded(object sender, RoutedEventArgs e) {
+            _loadedTcs.TrySetResult(true);
         }
 
         private void CanvasLayer_Unloaded(object sender, RoutedEventArgs e) {
@@ -80,6 +86,8 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
         //      根据 Type 判断是图片还是线条，并分别创建对应的控件（STAImage 或 Points）。
         //      设置控件的位置、大小、ZIndex 等属性，并添加到 Layer.Children 中。
         private async Task InitRenderAsync() {
+            await _loadedTcs.Task;
+
             // 创建一个包含所有元素的列表
             IEnumerable<StaticImgElement> allElements = LayerData.Images.Cast<StaticImgElement>().Concat(LayerData.Draws);
 
@@ -98,7 +106,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
                 RenderElement(element);
             }
 
-            LayerData.LayerThum = await GenerateThumbnailAsync(this, StaticImgConstants.LayerThumWidth, StaticImgConstants.LayerThumHeight);            
+            LayerData.LayerThum = await GenerateThumbnailAsync(this, StaticImgConstants.LayerThumWidth, StaticImgConstants.LayerThumHeight);
             LayerData.RenderCompleted.TrySetResult(true);
         }
 
@@ -205,15 +213,6 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
         }
 
-        //public CanvasLayer Copy() {
-        //    var newLayerData = LayerData.Copy();
-        //    newLayerData.Name = 
-        //    CanvasLayer newLayer = new() {
-        //        LayerData = this.LayerData.Copy()
-        //    };
-        //    return newLayer;
-        //}
-
         #region diapose
         public void Dispose() {
             Dispose(true);
@@ -244,6 +243,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
         private const int ParallelThreshold = 1000; // 并行化的阈值
         private bool _isDisposed;
         private bool _isInitialized;
+        private readonly TaskCompletionSource<bool> _loadedTcs = new();
         private static readonly BindingInfo[] _cachedBindingInfos = [
             new BindingInfo(BackgroundProperty, "Background", BindingMode.OneWay, new UintToSolidBrushConverter()),
             new BindingInfo(OpacityProperty, "Opacity", BindingMode.OneWay),

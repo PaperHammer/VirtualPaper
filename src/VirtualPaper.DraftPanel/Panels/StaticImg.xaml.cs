@@ -183,6 +183,10 @@ namespace VirtualPaper.DraftPanel.Panels {
             _rightTappedItem = container.Content as LayerItem;
         }
 
+        private void ArcColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args) {
+            _viewModel.ManagerData.SelectedColor = args.NewColor;
+        }
+
         internal readonly StaticImgViewModel _viewModel;
         private LayerItem _rightTappedItem;
     }

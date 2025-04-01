@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model.EventArg;
 using VirtualPaper.Models.Mvvm;
@@ -21,18 +22,19 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
         public event EventHandler<PolylineEventArgs> OnDrawsChanging;
         public event EventHandler OnDrawsChanged;
 
+        [JsonIgnore]
         public TaskCompletionSource<bool> RenderCompleted => _renderCompleted;
 
         private string _name = string.Empty;
         public string Name {
-            get => _name == string.Empty ? _name = $"图层 {_nextAvailable++}" : _name;
+            get => _name;
             set { if (_name == value) return; _name = value; OnPropertyChanged(); }
         }
 
-        [JsonIgnore]
-        public long Tag => IdentifyUtil.GenerateIdShort();
+        public long Tag { get; }
+        public bool IsRootBackground { get; }
 
-        uint _background = 4294967295;
+        uint _background = Consts.UintColor.Transparent;
         public uint Background {
             get => _background;
             set { if (_background == value) return; _background = value; OnPropertyChanged(); }
@@ -56,6 +58,12 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             }
         }
 
+        private int _zIndex;
+        public int ZIndex {
+            get { return _zIndex; }
+            set { _zIndex = value; OnPropertyChanged(); }
+        }
+
         ImageSource _layerThum;
         [JsonIgnore]
         public ImageSource LayerThum {
@@ -70,9 +78,21 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
         [JsonIgnore]
         public ObservableCollection<STADraw> Draws { get; private set; } = []; // 包含的所有绘制线条
 
+        [JsonConstructor]
+        [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
+        public CanvasLayerData(long tag, bool isRootBackground) {
+            Tag = tag;
+            IsRootBackground = isRootBackground;
+        }
+
+        public CanvasLayerData(string filePath, bool isBackground = false) {
+            IsRootBackground = isBackground;
+            Tag = IdentifyUtil.GenerateIdShort();
+            SetFilePath(filePath);
+        }
+
         public CanvasLayerData Copy() {
-            CanvasLayerData newLayerData = new() {
-                Name = this.Name + $"-副本{_nextCopyAvailable++}",
+            CanvasLayerData newLayerData = new(_filePath) {
                 Background = this.Background,
                 Opacity = this.Opacity,
                 IsEnable = this.IsEnable,
@@ -83,38 +103,37 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             return newLayerData;
         }
 
-        public async Task SaveAsync(string entryFilePath) {
+        public async Task SaveAsync() {
             await _saveQueueLock.WaitAsync();
             try {
-                string filePathForDarws = entryFilePath + ".draws";
-                string filePathForImages = entryFilePath + ".images";
-
                 //await _drawSaver.SaveToBufferAsync(Draws, filePathForDarws);
                 //await _drawSaver.SaveManuallyAsync();
                 //await _imageSaver.SaveToBufferAsync(Images, filePathForImages);
                 //await _imageSaver.SaveManuallyAsync();
 
-                await MessagePackSaver.SaveAsync(filePathForDarws, Draws);
-                await MessagePackSaver.SaveAsync(filePathForImages, Images);
+                await MessagePackSaver.SaveAsync(_filePathForDarws, Draws);
+                await MessagePackSaver.SaveAsync(_filePathForImages, Images);
             }
             catch (Exception ex) {
-                Draft.Instance.GetNotify().ShowExp(ex);
+                Draft.Instance.Log(LogType.Error, ex);
+                Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.Project_STI_LayerSaveFailed), InfoBarType.Error, Name, Tag.ToString(), false);
             }
             finally {
                 _saveQueueLock.Release();
             }
         }
 
-        public async Task LoadAsync(string entryFilePath) {
+        public async Task LoadAsync() {
             try {
-                this.Draws = await MessagePackSaver.LoadAsync<ObservableCollection<STADraw>>(entryFilePath + ".draws") ?? [];
-                this.Images = await MessagePackSaver.LoadAsync<ObservableCollection<STAImage>>(entryFilePath + ".images") ?? [];
+                this.Draws = await MessagePackSaver.LoadAsync<ObservableCollection<STADraw>>(_filePathForDarws) ?? [];
+                this.Images = await MessagePackSaver.LoadAsync<ObservableCollection<STAImage>>(_filePathForImages) ?? [];
                 OnDataLoaded?.Invoke(this, EventArgs.Empty);
 
                 await RenderCompleted.Task;
             }
             catch (Exception ex) {
-                Draft.Instance.GetNotify().ShowExp(ex);
+                Draft.Instance.Log(LogType.Error, ex);
+                Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.Project_STI_LayerLoadFailed), InfoBarType.Error, Name, Tag.ToString(), false);                
             }
         }
 
@@ -132,8 +151,19 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             OnDrawsChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        private int _nextAvailable = 1;
-        private int _nextCopyAvailable = 1;
+        public void SetFilePath(string filePath) {
+            _filePath = filePath;
+            string newFolderPath = System.IO.Path.GetDirectoryName(filePath);
+            _filePathForDarws = System.IO.Path.Combine(newFolderPath, Tag + ".draws");
+            _filePathForImages = System.IO.Path.Combine(newFolderPath, Tag + ".images");
+        }
+
+        internal async Task DeletAsync() {
+            await FileUtil.TryDeleteFileAsync(_filePathForDarws, 0, 0);
+            await FileUtil.TryDeleteFileAsync(_filePathForImages, 0, 0);
+        }
+
+        private string _filePath, _filePathForDarws, _filePathForImages;
         private readonly SemaphoreSlim _saveQueueLock = new(1, 1);
         private readonly TaskCompletionSource<bool> _renderCompleted = new();
         //private readonly BufferSaver<ObservableCollection<STAImage>> _imageSaver = new();

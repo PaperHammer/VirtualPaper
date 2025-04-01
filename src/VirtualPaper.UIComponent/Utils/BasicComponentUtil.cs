@@ -25,6 +25,7 @@ namespace VirtualPaper.UIComponent.Utils {
            bool isNeedLocalizer,
            string msg,
            InfoBarType infoBarType,
+           string extraMsg = "",
            string key = "",
            bool isAllowDuplication = true) {
             InfoBarSeverity severity = infoBarType switch {
@@ -35,7 +36,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 _ => InfoBarSeverity.Informational
             };
 
-            var globalMsgInfo = new GlobalMsgInfo(key, isNeedLocalizer, msg, severity);
+            var globalMsgInfo = new GlobalMsgInfo(key, isNeedLocalizer, msg, extraMsg, severity);
             _globalMsgViewModel.AddMsg(globalMsgInfo, isAllowDuplication);
         }
 

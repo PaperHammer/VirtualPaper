@@ -12,8 +12,8 @@ namespace VirtualPaper.Common.Utils.Storage {
                 byte[] bytes = MessagePackSerializer.Serialize(obj);
                 await File.WriteAllBytesAsync(filePath, bytes);
             }
-            catch (Exception) {
-                throw new FileAccessException(filePath, "写入");
+            catch (Exception ex) {
+                throw new FileAccessException(filePath, "写入", ex);
             }
         }
 
@@ -22,8 +22,8 @@ namespace VirtualPaper.Common.Utils.Storage {
                 byte[] bytes = await File.ReadAllBytesAsync(filePath);
                 return MessagePackSerializer.Deserialize<T>(bytes);
             }
-            catch (Exception) {
-                throw new FileAccessException(filePath, "读取");
+            catch (Exception ex) {
+                throw new FileAccessException(filePath, "读取", ex);
             }
         }
 
@@ -64,8 +64,8 @@ namespace VirtualPaper.Common.Utils.Storage {
                     MarkAsSaved(change);
                 }
             }
-            catch (Exception) {
-                throw new FileAccessException(filePath, "写入");
+            catch (Exception ex) {
+                throw new FileAccessException(filePath, "写入", ex);
             }
         }
 

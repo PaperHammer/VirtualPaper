@@ -205,12 +205,14 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
         }
 
-        public CanvasLayer Copy() {
-            CanvasLayer newLayer = new() {
-                LayerData = this.LayerData.Copy()
-            };
-            return newLayer;
-        }
+        //public CanvasLayer Copy() {
+        //    var newLayerData = LayerData.Copy();
+        //    newLayerData.Name = 
+        //    CanvasLayer newLayer = new() {
+        //        LayerData = this.LayerData.Copy()
+        //    };
+        //    return newLayer;
+        //}
 
         #region diapose
         public void Dispose() {

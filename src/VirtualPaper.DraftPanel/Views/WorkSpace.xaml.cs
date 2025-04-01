@@ -20,26 +20,26 @@ namespace VirtualPaper.DraftPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class WorkSpace : Page {
-        internal static DraftMetadata DraftMetadataRuntime { get; set; }
-        internal static ObservableCollection<ProjectMetadata> ProjectMetadatasRuntime { get; private set; } = [];
+        //internal static DraftMetadata DraftMetadataRuntime { get; set; }
+        //internal static ObservableCollection<ProjectMetadata> ProjectMetadatasRuntime { get; private set; } = [];
 
         public WorkSpace() {
             this.InitializeComponent();
 
-            ProjectMetadatasRuntime.CollectionChanged += ProjectMetadatasRuntime_CollectionChanged;
+            //ProjectMetadatasRuntime.CollectionChanged += ProjectMetadatasRuntime_CollectionChanged;
         }
 
-        private void ProjectMetadatasRuntime_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
-            if (e.OldItems != null && e.OldItems.Count > 0) {
-                string projName = (e.OldItems[0] as ProjectMetadata).Name;
-                int hash = IdentifyUtil.ComputeHash(projName);
-                DraftMetadataRuntime.ProjectTags.RemoveAll(x => x.Hash == hash);
-            }
-            if (e.NewItems != null && e.NewItems.Count > 0) {
-                string projName = (e.NewItems[0] as ProjectMetadata).Name;
-                DraftMetadataRuntime.ProjectTags.Add(new ProjectTag(projName));
-            }
-        }
+        //private void ProjectMetadatasRuntime_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
+        //    if (e.OldItems != null && e.OldItems.Count > 0) {
+        //        string projName = (e.OldItems[0] as ProjectMetadata).Name;
+        //        int hash = IdentifyUtil.ComputeHash(projName);
+        //        DraftMetadataRuntime.ProjectTags.RemoveAll(x => x.Hash == hash);
+        //    }
+        //    if (e.NewItems != null && e.NewItems.Count > 0) {
+        //        string projName = (e.NewItems[0] as ProjectMetadata).Name;
+        //        DraftMetadataRuntime.ProjectTags.Add(new ProjectTag(projName));
+        //    }
+        //}
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);

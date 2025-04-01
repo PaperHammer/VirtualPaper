@@ -2,7 +2,7 @@
     public interface INoifyBridge {
         void ShowExp(Exception ex);
         void ShowCanceled();
-        void ShowMsg(bool isNeedLocalizer, string msg, InfoBarType infoBarType, string key = "", bool isAllowDuplication = true);
+        void ShowMsg(bool isNeedLocalizer, string msg, InfoBarType infoBarType, string extraMsg = "", string key = "", bool isAllowDuplication = true);
         void CloseAndRemoveMsg(string key);
         void Loading(bool cancelEnable, bool progressbarEnable, CancellationTokenSource[]? cts = null);
         void Loaded(CancellationTokenSource[]? cts = null);

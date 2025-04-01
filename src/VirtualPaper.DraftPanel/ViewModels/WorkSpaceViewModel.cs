@@ -96,9 +96,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 case FileType.FDesign:
                     await ReadDraftFileAsync(filePath); // [folder]/xxx.vpd
                     break;
-                case FileType.FProject:
-                    await ReadProjectFileAsync(filePath); // [folder]/xxx.vproj
-                    break;
+                //case FileType.FProject:
+                //     ReadProjectFile(filePath); // [folder]/xxx.vproj
+                //    break;
                 default:
                     break;
             }
@@ -108,28 +108,17 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             try {
                 var draftMd = await DraftMetadata.LoadAsync(filePath);
                 foreach (var projTag in draftMd.ProjectTags) {
-                    string projFilePath = Path.Combine(Path.GetDirectoryName(filePath), projTag.RelativePath);
-                    await ReadProjectFileAsync(projFilePath);
-                }
-            }
-            catch (Exception ex) {
-                Draft.Instance.GetNotify().ShowExp(ex);
-            }
-        }
+                    string entryFilePath = Path.Combine(Path.GetDirectoryName(filePath), projTag.EntryRelativeFilePath);
 
-        private async Task ReadProjectFileAsync(string projFilePath) {
-            try {
-                var projData = await ProjectMetadata.LoadAsync(projFilePath);
-                string entryFilePath = Path.Combine(Path.GetDirectoryName(projFilePath), projData.EntryRelativePath);
-
-                IRuntime runtime;
-                switch (projData.Type) {
-                    case ProjectType.PImage:
-                        runtime = new StaticImg(entryFilePath, FileType.FProject); // xxx.simd
-                        AddToWorkSpace(entryFilePath, runtime);
-                        break;
-                    default:
-                        break;
+                    IRuntime runtime;
+                    switch (projTag.Type) {
+                        case ProjectType.PImage:
+                            runtime = new StaticImg(entryFilePath, FileType.FProject); // xxx.vproj
+                            AddToWorkSpace(entryFilePath, runtime);
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
             catch (Exception ex) {

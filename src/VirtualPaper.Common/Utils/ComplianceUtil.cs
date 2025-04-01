@@ -1,14 +1,14 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.IO;
+using System.Text.RegularExpressions;
 
 namespace VirtualPaper.Common.Utils {
     public static partial class ComplianceUtil {
-        public static bool IsValidFolderPath(string path) {
+        public static bool IsValidFolderPath(string path, int minLen = 3, int maxLen = 260) {
             if (string.IsNullOrEmpty(path)) {
                 return false;
             }
 
-            // 检查路径长度
-            if (path.Length < MinLength_Folder || path.Length > MaxLength_Folder) {
+            if (path.Length < minLen || path.Length > maxLen) {
                 return false;
             }
 
@@ -27,36 +27,40 @@ namespace VirtualPaper.Common.Utils {
             return true;
         }
 
-        public static bool IsValidName(string value) {
+        public static bool IsValidName(string value, int minLen = 1, int maxLen = 30) {
             if (string.IsNullOrEmpty(value)) {
                 return false;
             }
 
-            // 检查路径长度
-            if (value.Length < MinLength_Name || value.Length > MaxLength_Name) {
+            if (value.Length < minLen || value.Length > maxLen) {
                 return false;
             }
 
-            if (!NameRegex().IsMatch(value)) {
-                return false;
-            }        
+            foreach (char c in value) {
+                if (!ValidChars.Contains(c)) {
+                    return false;
+                }
+            }
 
             return true;
         }
 
+        public static bool IsValidValueOnlyLength(string value, int minLen = 1, int maxLen = 30) {
+            if (string.IsNullOrEmpty(value)) {
+                return false;
+            }
 
-    [GeneratedRegex(@"^[a-zA-Z0-9\-_]+$", RegexOptions.Compiled)]
-    private static partial Regex NameRegex();
+            if (value.Length < minLen || value.Length > maxLen) {
+                return false;
+            }
 
-    // 定义允许的字符集合
-    private static readonly char[] ValidChars =
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .!@#$%^&()[]{}+=-_\\/:"
-        .Concat(Enumerable.Range(0x4e00, 0x9fa5 - 0x4e00 + 1).Select(c => (char)c)).ToArray();
+            return true;
+        }
 
-    // 定义路径长度限制
-    private const int MinLength_Folder = 3; // 最小长度，例如 "C:\"
-    private const int MaxLength_Folder = 260; // Windows传统路径的最大长度限制
-    private const int MinLength_Name = 1;
-    private const int MaxLength_Name = 30;
-}
+        // 不允许空格字符
+        private static readonly char[] ValidChars =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.!@#$%^&()[]{}+=-_\\/:"
+                .Concat(Enumerable.Range(0x4e00, 0x9fa5 - 0x4e00 + 1).Select(c => (char)c)) // 中文
+                .ToArray();
+    }
 }

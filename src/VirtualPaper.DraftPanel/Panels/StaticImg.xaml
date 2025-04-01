@@ -9,7 +9,7 @@
     xmlns:components="using:VirtualPaper.DraftPanel.Panels.Components"
     xmlns:rt="using:VirtualPaper.DraftPanel.Model.Runtime"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
-    xmlns:data="using:VirtualPaper.UIComponent.Data"
+    xmlns:ui="using:VirtualPaper.DraftPanel.UIComponents"
     xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
     xmlns:models="using:VirtualPaper.UIComponent.Models"
     Loaded="Page_Loaded"
@@ -19,10 +19,11 @@
     <Page.Resources>
         <DataTemplate  x:Key="LayerItemTemplate" x:DataType="rt:CanvasLayerData">
             <ListViewItem Height="60">
-                <data:CheckBoxItem
-                    LayerName="{x:Bind Name, Mode=OneWay}"
+                <ui:LayerItem
+                    LayerName="{x:Bind Name, Mode=TwoWay}"
                     IsEnable="{x:Bind IsEnable, Mode=TwoWay}"
-                    LayerThum="{x:Bind LayerThum, Mode=OneWay}"/>
+                    LayerThum="{x:Bind LayerThum, Mode=OneWay}"
+                    ItemTag="{x:Bind Tag}"/>
             </ListViewItem>
         </DataTemplate>
 
@@ -106,11 +107,13 @@
                                 </Expander.Header>
                                 <Expander.Content>
                                     <ListView
+                                        x:Name="layersListView"
                                         MaxHeight="600"
                                         SelectionMode="Single"
                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
                                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                                        SelectionChanged="ListView_SelectionChanged"
+                                        SelectionChanged="ListView_SelectionChanged" 
+                                        RightTapped="Listview_RightTapped"
                                         SelectedItem="{x:Bind _viewModel.ManagerData.SelectedLayerData, Mode=OneWay}"
                                         ItemsSource="{x:Bind _viewModel.ManagerData.LayersData}"
                                         ItemTemplate="{StaticResource LayerItemTemplate}">

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
@@ -134,7 +132,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         /// {draftFolder}
         /// - {draftName}.vpd   根数据文件 (.vpd)
         /// - {SharedData.ProjName}  默认项目的目录
-        ///   - {SharedData.ProjName}.vproj  默认项目的元数据文件 (.vproj)
         ///         
         /// </code>
         /// 
@@ -162,10 +159,10 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 Directory.CreateDirectory(projFolder);
                 #endregion
 
-                #region 创建 .vproj 文件
-                ProjectMetadata projdata = new(inputData.ProjName, inputData.ProjType);
-                await projdata.SaveAsync(projFolder);
-                #endregion
+                //#region 创建 .vproj 文件
+                //ProjectMetadata projdata = new(inputData.ProjName, inputData.ProjType);
+                //await projdata.SaveAsync(projFolder);
+                //#endregion
             }
             catch (Exception ex) {
                 Directory.Delete(draftFolder, true);

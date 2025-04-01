@@ -135,6 +135,10 @@ namespace VirtualPaper.DraftPanel.Views {
         public INoifyBridge GetNotify() {
             return Draft.Instance.GetNotify();
         }
+
+        public IDialogService GetDialog() {
+            return Draft.Instance.GetDialog();
+        }
         #endregion
 
         private ConfigSpaceViewModel _viewModel;

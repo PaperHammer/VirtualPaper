@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <UserControl
-    x:Class="VirtualPaper.UIComponent.Data.CheckBoxItem"
+    x:Class="VirtualPaper.DraftPanel.UIComponents.LayerItem"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:VirtualPaper.UIComponent.Data"
+    xmlns:local="using:VirtualPaper.DraftPanel.UIComponents"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
@@ -36,6 +36,7 @@
             </Border>
 
             <TextBlock
+                x:Name="layerNameTextBlock"
                 Grid.Column="1"
                 Margin="0 -2 0 0"
                 VerticalAlignment="Center" 

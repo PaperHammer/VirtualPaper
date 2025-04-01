@@ -669,7 +669,7 @@ Author: PaperHammer</value>
     <value>The name is empty or invalid (up to 30 characters).</value>
   </data>
   <data name="Project_NewPosition_InvalidTip" xml:space="preserve">
-    <value>The location is empty or invalid (up to 260 characters).</value>
+    <value>The location is empty or invalid (up to 200 characters).</value>
   </data>
   <data name="Project_DeployNewDraft_NextStep" xml:space="preserve">
     <value>Next (N)</value>
@@ -699,15 +699,33 @@ Author: PaperHammer</value>
     <value>The current layer is not available, try reloading the project</value>
   </data>
   <data name="SIG_Text_AddLayer" xml:space="preserve">
-    <value>Add</value>
+    <value>Create new layer</value>
   </data>
   <data name="SIG_Text_DeleteLayer" xml:space="preserve">
-    <value>Delete</value>
+    <value>Delete layer</value>
   </data>
   <data name="SIG_Text_RenameLayer" xml:space="preserve">
-    <value>Rename</value>
+    <value>Rename layer</value>
   </data>
   <data name="SIG_Text_CopyLayer" xml:space="preserve">
-    <value>Copy</value>
+    <value>Copy layer</value>
+  </data>
+  <data name="RenameDialog_Text_AfterChange" xml:space="preserve">
+    <value>After change:</value>
+  </data>
+  <data name="RenameDialog_Text_BeforeChange" xml:space="preserve">
+    <value>Before change:</value>
+  </data>
+  <data name="Dialog_Title_Rename" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="Project_CannotDelete_RootBackground" xml:space="preserve">
+    <value>The root background layer cannot be deleted</value>
+  </data>
+  <data name="Project_STI_LayerSaveFailed" xml:space="preserve">
+    <value>Layer save failed: </value>
+  </data>
+  <data name="Project_STI_LayerLoadFailed" xml:space="preserve">
+    <value>Layer load failed: </value>
   </data>
 </root>

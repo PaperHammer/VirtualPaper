@@ -49,6 +49,10 @@ namespace VirtualPaper.DraftPanel {
         public uint GetDpi() {
             return _windowBridge.GetDpi();
         }
+
+        public IDialogService GetDialog() {
+            return _windowBridge.GetDialog();
+        }
         #endregion
 
         #region navigate

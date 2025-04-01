@@ -1,5 +1,4 @@
 ﻿using Microsoft.UI.Xaml.Controls;
-using VirtualPaper.Common.Utils;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 
@@ -15,10 +14,10 @@ namespace VirtualPaper.UIComponent.Models {
         public string Message { get; set; }
         public InfoBarSeverity Severity { get; set; }
 
-        public GlobalMsgInfo(string key, bool isNeedLocallizer, string msgOrKey, InfoBarSeverity infoBarSeverity) {
+        public GlobalMsgInfo(string key, bool isNeedLocallizer, string msgOri18nKey, string extraMsg, InfoBarSeverity infoBarSeverity) {
             Key = key;
             Severity = infoBarSeverity;
-            Message = isNeedLocallizer ? LanguageUtil.GetI18n(msgOrKey) : msgOrKey;
+            Message = (isNeedLocallizer ? LanguageUtil.GetI18n(msgOri18nKey) : msgOri18nKey) + extraMsg;
             IsOpen = true;
         }
     }

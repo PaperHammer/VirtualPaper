@@ -49,7 +49,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
 
         public LayerManager() {
             InitProperty();
-           
+
             this.Loading += LayerManager_Loading;
             this.PointerEntered += LayerManager_PointerEntered;
             this.PointerPressed += LayerManager_PointerPressed;
@@ -64,8 +64,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
 
             InitDataContext();
-            RenderBackground();
-            //InitRenderAsync();
+            RenderWorkerground();
             _isInitialized = true;
         }
 
@@ -83,12 +82,12 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
         }
 
-        private void RenderBackground() {
-            _background.Width = this.Width;
-            _background.Height = this.Height;
-            Canvas.SetZIndex(_background, -1);
-            this.Children.Add(_background);
-            DrawGridBackground();
+        private void RenderWorkerground() {
+            _workerground.Width = this.Width;
+            _workerground.Height = this.Height;
+            Canvas.SetZIndex(_workerground, -1);
+            this.Children.Add(_workerground);
+            DrawGridWorkerground();
         }
 
         private void LayersData_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
@@ -111,6 +110,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
                 Height = this.Height,
             };
             _layerMap.Add(layerData, layer);
+            Canvas.SetZIndex(layer, layerData.ZIndex);
             this.Children.Add(layer);
         }
 
@@ -171,11 +171,11 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
 
         private void LayerManager_PointerEntered(object sender, PointerRoutedEventArgs e) {
             if (ManagerData.SelectedLayerData == null) {
-                Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), InfoBarType.Error, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), false);
+                Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), InfoBarType.Error, key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable), isAllowDuplication: false);
                 return;
             }
             if (!ManagerData.SelectedLayerData.IsEnable) {
-                Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerLocked), InfoBarType.Warning, nameof(Constants.I18n.Draft_SI_LayerLocked), false);
+                Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerLocked), InfoBarType.Warning, key: nameof(Constants.I18n.Draft_SI_LayerLocked), isAllowDuplication: false);
                 return;
             }
         }
@@ -190,10 +190,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
         }
 
-        private void DrawGridBackground() {
-            // 清除旧的背景
-            _background.Children.Clear();
-
+        private void DrawGridWorkerground() {
             // 定义网格间距
             int gridSize = 10;
             // 定义两种颜色
@@ -232,8 +229,8 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
                 Data = darkGeometryGroup,
             };
 
-            _background.Children.Add(lightPath);
-            _background.Children.Add(darkPath);
+            _workerground.Children.Add(lightPath);
+            _workerground.Children.Add(darkPath);
         }
 
         #region diapose
@@ -269,7 +266,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
 
         private bool _isDisposed;
         private bool _isInitialized;
-        private readonly Canvas _background = new();
+        private readonly Grid _workerground = new();
         private readonly Dictionary<CanvasLayerData, CanvasLayer> _layerMap = [];
         private bool _isDrawable = false, _isDrawing = false;
         private Polyline _currentLine; // 当前正在绘制的线条

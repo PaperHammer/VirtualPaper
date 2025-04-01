@@ -19,7 +19,7 @@ namespace VirtualPaper.Common.Utils.Files {
 
             foreach (var entry in _fileHeaderMap) {
                 if (headerHex.Contains(entry.Key, StringComparison.OrdinalIgnoreCase)
-                    && FileExtensions[entry.Value].Contains(extension)) {
+                    && FileTypeToExtension[entry.Value].Contains(extension)) {
                     return entry.Value;
                 }
             }
@@ -36,7 +36,7 @@ namespace VirtualPaper.Common.Utils.Files {
         }
 
         public static FileType GetRuntimeFileType(string extension) {
-            foreach (var kvp in FileExtensions) {
+            foreach (var kvp in FileTypeToExtension) {
                 if (kvp.Value.Contains(extension)) {
                     return kvp.Key;
                 }
@@ -44,7 +44,7 @@ namespace VirtualPaper.Common.Utils.Files {
             throw new ArgumentException("No matching file type found.", nameof(extension));
         }
 
-        public static Dictionary<FileType, string[]> FileExtensions { get; } = new() {
+        public static Dictionary<FileType, string[]> FileTypeToExtension { get; } = new() {
             [FileType.FImage] = [".jpg", ".jpeg", ".bmp", ".png", ".svg", ".webp"],
             [FileType.FGif] = [".gif", ".apng"],
             [FileType.FVideo] = [".mp4", ".webm"],

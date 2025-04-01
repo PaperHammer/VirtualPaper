@@ -1,11 +1,15 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Google.Protobuf.WellKnownTypes;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model.Runtime;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.ViewModels;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     partial class StaticImgViewModel : ObservableObject {
@@ -28,12 +32,12 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             }
         }
 
-        public LayerManagerData ManagerData { get; } // .vproj (entryFile)
+        public LayerManagerData ManagerData { get; } // (entryFile)
 
         public StaticImgViewModel(string entryFilePath, FileType rtFileType) {
             _entryFilePath = entryFilePath;
             _rtFileType = rtFileType;
-            ManagerData = new();
+            ManagerData = new(entryFilePath);
 
             InitText();
         }
@@ -49,27 +53,63 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             try {
                 await JsonSaver.SaveAsync(_entryFilePath, ManagerData, LayerManagerDataContext.Default);
                 foreach (var item in ManagerData.LayersData) {
-                    await item.SaveAsync(_entryFilePath);
+                    await item.SaveAsync();
                 }
             }
             catch (Exception ex) {
+                Draft.Instance.Log(LogType.Error, ex);
                 Draft.Instance.GetNotify().ShowExp(ex);
             }
         }
 
         public async Task LoadAsync() {
-            Draft.Instance.GetNotify().Loading(false, false);
-
             try {
+                Draft.Instance.GetNotify().Loading(false, false);
+
                 switch (_rtFileType) {
                     case FileType.FImage:
                         break;
                     case FileType.FProject:
-                        await LoadFProjectAsync();
+                        await LoadProjectAsync();
                         break;
                     default:
                         break;
                 }
+            }
+            catch (Exception ex) {
+                Draft.Instance.Log(LogType.Error, ex);
+                Draft.Instance.GetNotify().ShowExp(ex);
+            }
+            finally {
+                Draft.Instance.GetNotify().Loaded();
+            }
+        }
+
+        private async Task LoadProjectAsync() {
+            if (!File.Exists(_entryFilePath)) {
+                await ManagerData.InitDataAsync();
+            }
+            await ManagerData.LoadAsync();
+        }
+
+        internal async Task AddLayerAsync() {
+            try {
+                Draft.Instance.GetNotify().Loading(false, false);
+                await ManagerData.AddLayerAsync();
+            }
+            catch (Exception ex) {
+                Draft.Instance.Log(LogType.Error, ex);
+                Draft.Instance.GetNotify().ShowExp(ex);
+            }
+            finally {
+                Draft.Instance.GetNotify().Loaded();
+            }
+        }
+
+        internal async Task CopyLayerAsync(long itemTag) {
+            try {
+                Draft.Instance.GetNotify().Loading(false, false);
+                await ManagerData.CopyLayerAsync(itemTag);
             }
             catch (Exception ex) {
                 Draft.Instance.GetNotify().ShowExp(ex);
@@ -79,11 +119,30 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             }
         }
 
-        private async Task LoadFProjectAsync() {
-            if (!File.Exists(_entryFilePath)) {
-                await ManagerData.SaveAsync(_entryFilePath);
+        internal async Task RenameAsync(long itemTag) {
+            try {
+                Draft.Instance.GetNotify().Loading(false, false);
+                await ManagerData.RenameAsync(itemTag);
             }
-            await ManagerData.LoadAsync(_entryFilePath);
+            catch (Exception ex) {
+                Draft.Instance.GetNotify().ShowExp(ex);
+            }
+            finally {
+                Draft.Instance.GetNotify().Loaded();
+            }
+        }
+
+        internal async Task DeleteAsync(long itemTag) {
+            try {
+                Draft.Instance.GetNotify().Loading(false, false);
+                await ManagerData.DeleteAsync(itemTag);
+            }
+            catch (Exception ex) {
+                Draft.Instance.GetNotify().ShowExp(ex);
+            }
+            finally {
+                Draft.Instance.GetNotify().Loaded();
+            }
         }
 
         private readonly FileType _rtFileType;

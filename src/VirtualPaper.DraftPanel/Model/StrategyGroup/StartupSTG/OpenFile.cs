@@ -17,7 +17,7 @@ namespace VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG {
         }
 
         public async Task HandleAsync(IConfigSpace configBridge) {
-            var storage = await WindowsStoragePickers.PickFilesAsync(configBridge.GetWindowHandle(), FileFilter.FileExtensions[FileType.FImage], true);
+            var storage = await WindowsStoragePickers.PickFilesAsync(configBridge.GetWindowHandle(), FileFilter.FileTypeToExtension[FileType.FImage], true);
             if (storage.Length < 1) return;
 
             int n = storage.Length;

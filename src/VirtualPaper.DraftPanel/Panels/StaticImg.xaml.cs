@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using VirtualPaper.Common;
 using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.Model.Runtime;
+using VirtualPaper.DraftPanel.UIComponents;
 using VirtualPaper.DraftPanel.ViewModels;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -153,27 +154,36 @@ namespace VirtualPaper.DraftPanel.Panels {
             if (e.AddedItems.Count == 0) {
                 (sender as ListView).SelectedItem = _viewModel.ManagerData.SelectedLayerData;
             }
+            else {
+                _viewModel.ManagerData.SelectedLayerData = (sender as ListView).SelectedItem as CanvasLayerData;
+            }
         }
         #endregion
 
         #region menu items
-        private void AddLayer_Click(object sender, RoutedEventArgs e) {
-
+        private async void AddLayer_Click(object sender, RoutedEventArgs e) {
+            await _viewModel.AddLayerAsync();
         }
 
-        private void CopyLayer_Click(object sender, RoutedEventArgs e) {
-
+        private async void CopyLayer_Click(object sender, RoutedEventArgs e) {
+            await _viewModel.CopyLayerAsync(_rightTappedItem.ItemTag);
         }
 
-        private void RenameLayer_Click(object sender, RoutedEventArgs e) {
-
+        private async void RenameLayer_Click(object sender, RoutedEventArgs e) {
+            await _viewModel.RenameAsync(_rightTappedItem.ItemTag);
         }
 
-        private void DeleteLayer_Click(object sender, RoutedEventArgs e) {
-
+        private async void DeleteLayer_Click(object sender, RoutedEventArgs e) {
+            await _viewModel.DeleteAsync(_rightTappedItem.ItemTag);
         }
         #endregion
 
+        private void Listview_RightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e) {
+            var container = layersListView.ContainerFromItem((e.OriginalSource as FrameworkElement).DataContext) as ListViewItem;
+            _rightTappedItem = container.Content as LayerItem;
+        }
+
         internal readonly StaticImgViewModel _viewModel;
+        private LayerItem _rightTappedItem;
     }
 }

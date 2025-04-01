@@ -6,11 +6,14 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model.NavParam;
 
 namespace VirtualPaper.DraftPanel.Model {
     [JsonSerializable(typeof(DraftMetadata))]
+    [JsonSerializable(typeof(ProjectTag))]
+    [JsonSerializable(typeof(List<ProjectTag>))]
     internal partial class DraftMetadataContext : JsonSerializerContext { }
 
     internal class DraftMetadata {
@@ -26,11 +29,11 @@ namespace VirtualPaper.DraftPanel.Model {
             ProjectTags = projectTags;
         }
 
-        public DraftMetadata(string draftName, ToDraftConfig inputData) {
+        public DraftMetadata(string draftName, ToDraftConfig data) {
             Name = draftName;
             DraftVersion = Assembly.GetEntryAssembly().GetName().Version;
             ProjectTags = [
-                new(inputData.ProjName)
+                new(data.ProjName, data.ProjType),
             ];
         }
 
@@ -48,13 +51,15 @@ namespace VirtualPaper.DraftPanel.Model {
 
     public record ProjectTag {
         public string Name { get; set; }
-        public string RelativePath { get; set; }
-        public int Hash { get; set; }
+        public ProjectType Type { get; set; }
+        public string EntryRelativeFilePath { get; set; }
+        public int NameHash { get; set; }        
 
-        public ProjectTag(string name) {
+        public ProjectTag(string name, ProjectType type) {
             Name = name;
-            RelativePath = $"{name}/{name}{FileExtension.FE_Project}";
-            Hash = IdentifyUtil.ComputeHash(name);
+            Type = type;
+            EntryRelativeFilePath = $"{name}/{name}{FileExtension.FE_Project}";
+            NameHash = IdentifyUtil.ComputeHash(name);            
         }
     }
 }

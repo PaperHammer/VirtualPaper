@@ -1,4 +1,6 @@
-﻿namespace VirtualPaper.Common {
+﻿using VirtualPaper.Common.Utils;
+
+namespace VirtualPaper.Common {
     public class Errors {
         public class WorkerWException : Exception {
             public WorkerWException() {
@@ -114,7 +116,24 @@
             }
 
             private static string GenerateMessage(string filePath, string operation) {
-                return $"对文件 \"{filePath}\" 的 {operation} 操作发生错误，请检查文件完整性或应用权限。";
+                return $"对文件 \"{filePath}\" 的 {operation} 操作发生错误，请检查文件完整性或相关权限。";
+            }
+        }
+
+        public class FileCreateException : Exception {
+            public string FilePath { get; } = string.Empty;
+
+            public FileCreateException() {
+            }
+
+            public FileCreateException(string msg, string filePath)
+                : base(msg) {
+                FilePath = filePath;
+            }
+            
+            public FileCreateException(string msg, string filePath, Exception inner)
+                : base(msg, inner) {
+                FilePath = filePath;
             }
         }
     }

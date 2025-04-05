@@ -288,6 +288,7 @@ namespace VirtualPaper.Common {
             public static string? Project_CannotDelete_RootBackground { get; }
             public static string? Project_STI_LayerSaveFailed { get; }
             public static string? Project_STI_LayerLoadFailed { get; }
+            public static string? ArcColorPicker_AddToCustom { get; }
         }
 
         public static class Field {

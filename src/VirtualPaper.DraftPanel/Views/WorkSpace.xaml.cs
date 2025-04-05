@@ -1,14 +1,9 @@
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
-using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.DraftPanel.ViewModels;
 
@@ -20,26 +15,9 @@ namespace VirtualPaper.DraftPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class WorkSpace : Page {
-        //internal static DraftMetadata DraftMetadataRuntime { get; set; }
-        //internal static ObservableCollection<ProjectMetadata> ProjectMetadatasRuntime { get; private set; } = [];
-
         public WorkSpace() {
             this.InitializeComponent();
-
-            //ProjectMetadatasRuntime.CollectionChanged += ProjectMetadatasRuntime_CollectionChanged;
         }
-
-        //private void ProjectMetadatasRuntime_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
-        //    if (e.OldItems != null && e.OldItems.Count > 0) {
-        //        string projName = (e.OldItems[0] as ProjectMetadata).Name;
-        //        int hash = IdentifyUtil.ComputeHash(projName);
-        //        DraftMetadataRuntime.ProjectTags.RemoveAll(x => x.Hash == hash);
-        //    }
-        //    if (e.NewItems != null && e.NewItems.Count > 0) {
-        //        string projName = (e.NewItems[0] as ProjectMetadata).Name;
-        //        DraftMetadataRuntime.ProjectTags.Add(new ProjectTag(projName));
-        //    }
-        //}
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);

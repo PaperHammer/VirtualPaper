@@ -20,14 +20,14 @@ namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject {
         internal ObservableCollection<TabViewItem> TabViewItems { get; set; } = [];
 
-        private int _selectedTabItemIndex = -1;
-        public int SelectedTabItemIndex {
-            get { return _selectedTabItemIndex; }
-            set { _selectedTabItemIndex = value; OnPropertyChanged(); }
+        int _selectedTabIndex;
+        public int SelectedTabIndex {
+            get { return _selectedTabIndex; }
+            set { if (_selectedTabIndex == value) return; _selectedTabIndex = value; OnPropertyChanged(); }
         }
 
         public WorkSpaceViewModel() {
-            TabViewItems.CollectionChanged += TabViewItems_CollectionChanged;
+            //TabViewItems.CollectionChanged += TabViewItems_CollectionChanged;
         }
 
         public MenuBarItem NewMenuBarItem(string title, VirtualKeyModifiers modifiers = VirtualKeyModifiers.None, VirtualKey key = VirtualKey.None) {
@@ -44,7 +44,40 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private void TabViewItems_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
-            SelectedTabItemIndex = e.NewItems.Count - 1;
+            // 如果集合为空，则取消选择
+            if (TabViewItems.Count == 0) {
+                SelectedTabIndex = -1;
+                return;
+            }
+
+            switch (e.Action) {
+                case NotifyCollectionChangedAction.Add:
+                    // 如果当前没有选中的tab，则选中新添加的第一个tab
+                    if (SelectedTabIndex == -1 && e.NewItems?.Count > 0) {
+                        SelectedTabIndex = 0;
+                    }
+                    break;
+                case NotifyCollectionChangedAction.Remove:
+                    // 若被移除的项包含当前选中项，则需要更新选中项
+                    if (e.OldItems?.Contains(TabViewItems[SelectedTabIndex]) == true) {
+                        // 使用被移除项的起始索引来决定下一个选中项
+                        int newIndex = e.OldStartingIndex;
+                        if (newIndex >= TabViewItems.Count) {
+                            newIndex = TabViewItems.Count - 1;
+                        }
+                        SelectedTabIndex = newIndex;
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Reset:
+                    // 重置时设置第一个tab为当前选中项
+                    SelectedTabIndex = TabViewItems.Count > 0 ? 0 : -1;
+                    break;
+                case NotifyCollectionChangedAction.Replace:
+                case NotifyCollectionChangedAction.Move:
+                    // 其它动作不更新选中逻辑
+                    break;
+            }
         }
 
         internal async void AddDraftItem() {
@@ -57,8 +90,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         internal async Task SaveAsync() {
-            if (SelectedTabItemIndex < 0) return;
-            await (TabViewItems[SelectedTabItemIndex].Content as IRuntime)?.SaveAsync();
+            if (SelectedTabIndex == -1) return;
+            await (TabViewItems[SelectedTabIndex].Content as IRuntime)?.SaveAsync();
         }
 
         internal async Task SaveAllAsync() {

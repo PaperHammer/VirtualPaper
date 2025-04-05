@@ -14,6 +14,7 @@
     <None Remove="Data\Edits.xaml" />
     <None Remove="Data\EffectConfig.xaml" />
     <None Remove="Feedback\Loading.xaml" />
+    <None Remove="Input\ArcPalette.xaml" />
     <None Remove="Others\ColorEyeDropWindow.xaml" />
     <None Remove="Others\RenameView.xaml" />
     <None Remove="Others\WallpaperCreateView.xaml" />
@@ -44,6 +45,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
+    <ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -101,6 +103,13 @@
 
   <ItemGroup>
     <Folder Include="Input\ColorPicker\" />
+    <Folder Include="Input\Palette\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Input\ArcPalette.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

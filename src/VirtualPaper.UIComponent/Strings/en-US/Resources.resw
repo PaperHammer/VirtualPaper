@@ -728,4 +728,7 @@ Author: PaperHammer</value>
   <data name="Project_STI_LayerLoadFailed" xml:space="preserve">
     <value>Layer load failed: </value>
   </data>
+  <data name="ArcColorPicker_AddToCustom" xml:space="preserve">
+    <value>Add to custom colors</value>
+  </data>
 </root>

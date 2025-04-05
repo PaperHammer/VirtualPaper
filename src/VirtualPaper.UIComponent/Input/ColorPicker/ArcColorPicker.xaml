@@ -358,6 +358,17 @@
                                     x:Name="TextEntryGrid" 
                                     Orientation="Vertical"
                                     Spacing="4">
+                                    <Grid 
+                                        x:Name="AddBtnGrid"
+                                        Visibility="{TemplateBinding AddBtnIsVisible}">
+                                        <Button
+                                            HorizontalAlignment="Right"
+                                            Command="{TemplateBinding AddToCustomCommand}">
+                                            <TextBlock
+                                                FontSize="13"
+                                                Text="{TemplateBinding Text_AddToCustom}"/>
+                                        </Button>
+                                    </Grid>
 
                                     <Grid x:Name="RGBTextEntryGrid">
                                         <Grid.ColumnDefinitions>
@@ -501,24 +512,37 @@
                                         </Grid>
                                     </Grid>-->
 
-                                    <Grid>
+                                    <Grid x:Name="AlphaTextEntryGrid">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
+                                            <ColumnDefinition Width="50"/>
                                             <ColumnDefinition/>
                                         </Grid.ColumnDefinitions>
 
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock
-                                                x:Name="ArcAlphaLabel"
-                                                Text="Alpha"
-                                                Padding="0 5 0 0"
-                                                Margin="0 0 10 0"
-                                                VerticalAlignment="Center"
-                                                Height="30" />
-                                            <TextBox x:Name="AlphaTextBox" Width="120" MaxLength="4" Text="100%" />
-                                        </StackPanel>
+                                        <TextBlock
+                                            x:Name="ArcAlphaLabel"
+                                            Text="Alpha"
+                                            Padding="0 5 0 0"
+                                            Margin="0 0 10 0"
+                                            VerticalAlignment="Center"
+                                            Height="30" />
 
-                                        <TextBox x:Name="HexTextBox" Grid.Column="1" MaxLength="7" Text="#FFFFFF" Width="132" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                        <Grid Grid.Column="1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBox 
+                                                x:Name="AlphaTextBox" 
+                                                MaxLength="4" 
+                                                Text="100%" />
+
+                                            <TextBox 
+                                                x:Name="HexTextBox" 
+                                                Grid.Column="1" 
+                                                MaxLength="9" 
+                                                Text="#FFFFFFFF" />
+                                        </Grid>
                                     </Grid>
                                 </StackPanel>
                             </StackPanel>

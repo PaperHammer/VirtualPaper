@@ -12,11 +12,31 @@
     xmlns:ui="using:VirtualPaper.DraftPanel.UIComponents"
     xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
     xmlns:models="using:VirtualPaper.UIComponent.Models"
+    xmlns:lcl_models="using:VirtualPaper.DraftPanel.Model"
     Loaded="Page_Loaded"
     mc:Ignorable="d"
     Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
 
     <Page.Resources>
+        <Style x:Key="ToolItemStyle" BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        
+        <DataTemplate x:Key="ToolItemTemplate" x:DataType="lcl_models:StaticImgToolItem">
+            <Grid>
+                <FontIcon 
+                    Visibility="{x:Bind Glyph, Converter={StaticResource NullToVisibilityConverter}}" 
+                    Glyph="{x:Bind Glyph}" 
+                    Width="20"/>
+                <ImageIcon 
+                    Visibility="{x:Bind ImageSourceKey, Converter={StaticResource NullToVisibilityConverter}}" 
+                    Source="{x:Bind ImageSourceKey, Converter={StaticResource ThemeResourceConverter}}" 
+                    Width="22" 
+                    Height="22"/>
+            </Grid>
+        </DataTemplate>
+        
         <DataTemplate  x:Key="LayerItemTemplate" x:DataType="rt:CanvasLayerData">
             <ListViewItem Height="60">
                 <ui:LayerItem
@@ -85,7 +105,8 @@
                                     <TextBlock Text="调色板"/>
                                 </Expander.Header>
                                 <Expander.Content>
-                                    <input:ArcColorPicker
+                                    <!--<input:ArcColorPicker
+                                        Visibility="Collapsed"
                                         Color="{x:Bind _viewModel.ManagerData.SelectedColor, Mode=OneWay}"
                                         ColorChanged="ArcColorPicker_ColorChanged"
                                         ColorSpectrumShape="Box"
@@ -95,12 +116,15 @@
                                         IsHexInputVisible="True"
                                         IsAlphaEnabled="True"
                                         IsAlphaSliderVisible="True"
-                                        IsAlphaTextInputVisible="True" />
+                                        IsAlphaTextInputVisible="True" />-->
+                                    <input:ArcPalette/>
                                 </Expander.Content>
                             </Expander>
                             <Expander
                                 x:Name="LayerManage"
                                 Padding="0 16"
+                                VerticalAlignment="Stretch"
+                                VerticalContentAlignment="Stretch"
                                 HorizontalAlignment="Stretch"
                                 HorizontalContentAlignment="Stretch"
                                 IsExpanded="True">
@@ -110,7 +134,6 @@
                                 <Expander.Content>
                                     <ListView
                                         x:Name="layersListView"
-                                        MaxHeight="600"
                                         SelectionMode="Single"
                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
                                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
@@ -137,55 +160,14 @@
 
                 <ListView
                     Width="40"
+                    SelectedIndex="2"
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                     ScrollViewer.VerticalScrollBarVisibility="Hidden"
                     ScrollViewer.HorizontalScrollMode="Disabled"
-                    ScrollViewer.VerticalScrollMode="Auto">
-                    <ListView.ItemContainerStyle>
-                        <Style BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
-                            <Setter Property="MinWidth" Value="0" />
-                            <Setter Property="Padding" Value="0" />
-                        </Style>
-                    </ListView.ItemContainerStyle>
-
-                    <ListViewItem>
-                        <FontIcon 
-                            Glyph="&#xE7C2;"
-                            Width="20"/>
-                    </ListViewItem>
-                    <ListViewItem>
-                        <FontIcon 
-                            Glyph="&#xE8B0;"
-                            Width="20"/>
-                    </ListViewItem>
-                    <ListViewItem>
-                        <FontIcon 
-                            Glyph="&#xEE56;"
-                            Width="20"/>
-                    </ListViewItem>
-                    <ListViewItem>
-                        <ImageIcon 
-                            Source="{StaticResource DraftPanel_FuncBar_ColorFill}"
-                            Width="22"
-                            Height="22"/>
-                    </ListViewItem>
-                    <ListViewItem>
-                        <FontIcon 
-                            Glyph="&#xE75C;"
-                            Width="20"/>
-                    </ListViewItem>
-                    <ListViewItem>
-                        <FontIcon 
-                            Glyph="&#xE7A8;"
-                            Width="20"/>
-                    </ListViewItem>
-                    <ListViewItem>
-                        <FontIcon 
-                            Glyph="&#xE71D;"
-                            Width="20"/>
-                    </ListViewItem>
-
-                </ListView>
+                    ScrollViewer.VerticalScrollMode="Auto"
+                    ItemsSource="{x:Bind _viewModel.ToolItems}"
+                    ItemTemplate="{StaticResource ToolItemTemplate}"
+                    ItemContainerStyle="{StaticResource ToolItemStyle}"/>
             </StackPanel>
         </Grid>
 

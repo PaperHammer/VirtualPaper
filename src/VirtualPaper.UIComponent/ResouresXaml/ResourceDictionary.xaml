@@ -4,7 +4,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters">
 
+    <cvs:ThemeResourceConverter x:Key="ThemeResourceConverter"/>
     <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    <cvs:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
     <cvs:ImgKeyConverters x:Key="ImgKeyConverters"/>
 
     <BitmapImage x:Key="UIC_Create_Common" UriSource="ms-appx:///Assets/ui_components/icons8-image-96.png"/>

@@ -17,7 +17,6 @@
 		<None Remove="Views\GetStart.xaml" />
 		<None Remove="Views\ProjectConfig.xaml" />
 		<None Remove="Views\WorkSpace.xaml" />
-		<None Remove="Views\WorkSpaceComponents\ProjectRun.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -73,12 +72,6 @@
 
 	<ItemGroup>
 		<Page Update="Panels\StaticImg.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Page Update="Views\WorkSpaceComponents\ProjectRun.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 	</ItemGroup>

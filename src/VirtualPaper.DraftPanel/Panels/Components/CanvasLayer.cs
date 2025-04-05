@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -188,7 +189,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
 
             await encoder.FlushAsync();
 
-            // 将缩放后的图像转换为 ImageSource
+            // 将缩放后的图像转换为 ImageSourceKey
             var bitmapImage = new BitmapImage();
             resizedStream.Seek(0);
             await bitmapImage.SetSourceAsync(resizedStream);

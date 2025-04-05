@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Model.Runtime;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
@@ -28,14 +30,57 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             }
         }
 
+        public List<StaticImgToolItem> ToolItems { get; private set; }
+
         public LayerManagerData ManagerData { get; } // (entryFile)
 
         public StaticImgViewModel(string entryFilePath, FileType rtFileType) {
             _entryFilePath = entryFilePath;
             _rtFileType = rtFileType;
             ManagerData = new(entryFilePath);
+            ToolItems = [];
 
             InitText();
+            InitToolItems();
+        }
+
+        private void InitToolItems() {
+            ToolItems = [
+                new() {
+                    ToolName = "移动",
+                    Glyph = "\uE7C2",
+
+                },
+                new() {
+                    ToolName = "选择",
+                    Glyph = "\uE8B0",
+
+                },
+                new() {
+                    ToolName = "画笔",
+                    Glyph = "\uEE56",
+
+                },
+                new() {
+                    ToolName = "填充",
+                    ImageSourceKey = "DraftPanel_FuncBar_ColorFill",
+                },
+                new() {
+                    ToolName = "擦除",
+                    Glyph = "\uE75C",
+
+                },
+                new() {
+                    ToolName = "裁剪",
+                    Glyph = "\uE7A8",
+
+                },
+                new() {
+                    ToolName = "画布",
+                    Glyph = "\uE9E9",
+
+                },
+            ];
         }
 
         private void InitText() {

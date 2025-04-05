@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using Microsoft.UI;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
@@ -123,6 +124,10 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             _isDrawable = false;
             PointerPos = null;
             EndDrawing();
+
+            if (OriginalInputCursor != null) {
+                this.ProtectedCursor = OriginalInputCursor;
+            }
         }
 
         private void LayerManager_PointerReleased(object sender, PointerRoutedEventArgs e) {
@@ -171,6 +176,9 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
         }
 
         private void LayerManager_PointerEntered(object sender, PointerRoutedEventArgs e) {
+            OriginalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
+            this.ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.Cross);
+
             if (ManagerData.SelectedLayerData == null) {
                 Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), InfoBarType.Error, key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable), isAllowDuplication: false);
                 return;
@@ -265,6 +273,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
         }
         #endregion
 
+        private InputCursor OriginalInputCursor { get; set; }
         private bool _isDisposed;
         private bool _isInitialized;
         private readonly Grid _workerground = new();

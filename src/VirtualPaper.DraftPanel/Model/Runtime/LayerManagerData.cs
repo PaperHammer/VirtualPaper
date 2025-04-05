@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -39,6 +40,12 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             }
         }
 
+        Color _selectedColor = Colors.White;
+        public Color SelectedColor {
+            get { return _selectedColor; }
+            set { _selectedColor = value; OnPropertyChanged(); }
+        }
+
         public ObservableList<CanvasLayerData> LayersData { get; set; } = [];
 
         CanvasLayerData _selectedLayerData;
@@ -59,12 +66,6 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
         public string CanvasSizeText {
             get { return _canvasSizeText; }
             private set { _canvasSizeText = value; OnPropertyChanged(); }
-        }
-
-        private Color _selectedColor = Colors.White;
-        public Color SelectedColor {
-            get { return _selectedColor; }
-            set { _selectedColor = value; OnPropertyChanged(); }
         }
 
         [JsonConstructor]
@@ -99,12 +100,30 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
         public async Task LoadAsync() {
             var managerData = await JsonSaver.LoadAsync<LayerManagerData>(_filePath, LayerManagerDataContext.Default);
             this.Size = managerData.Size;
+            this.SelectedColor = managerData.SelectedColor;
             this.LayersData.CollectionChanged += LayersData_CollectionChanged;
             this.LayersData.SetRange(managerData.LayersData);
 
             DiscretizeZIndexesOnLoad(managerData.LayersData);
-            var loadTasks = LayersData.Select(layer => layer.LoadAsync());
-            await Task.WhenAll(loadTasks); // 等待所有层加载完成
+            // 保存原始可见性状态
+            var originalVisibility = LayersData.ToDictionary(layer => layer, layer => layer.IsEnable);
+
+            try {
+                // 临时将所有图层设置为可见(生成缩略图需要保证控件可见)
+                foreach (var layer in LayersData) {
+                    layer.IsEnable = true;
+                }
+
+                // 异步加载所有图层
+                var loadTasks = LayersData.Select(layer => layer.LoadAsync());
+                await Task.WhenAll(loadTasks); // 等待所有图层加载完成
+            }
+            finally {
+                // 恢复原始可见性状态
+                foreach (var kvp in originalVisibility) {
+                    kvp.Key.IsEnable = kvp.Value;
+                }
+            }
         }
         #endregion
 

@@ -728,4 +728,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_STI_LayerLoadFailed" xml:space="preserve">
     <value>图层加载失败: </value>
   </data>
+  <data name="ArcColorPicker_AddToCustom" xml:space="preserve">
+    <value>添加到自定义颜色</value>
+  </data>
 </root>

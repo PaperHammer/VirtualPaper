@@ -156,6 +156,7 @@
                 Loaded="TabViewControl_Loaded"
                 TabWidthMode="SizeToContent"
                 CloseButtonOverlayMode="OnPointerOver"
+                SelectedIndex="{x:Bind _viewModel.SelectedTabIndex, Mode=TwoWay}"
                 TabItemsSource="{x:Bind _viewModel.TabViewItems}"               
                 AddTabButtonClick="TabViewControl_AddTabButtonClick"
                 TabCloseRequested="TabViewControl_TabCloseRequested"/>

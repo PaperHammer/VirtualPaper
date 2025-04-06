@@ -20,7 +20,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
     internal partial class CanvasLayerData : ObservableObject, IEquatable<CanvasLayerData> {
         public event EventHandler OnDataLoaded;
-        public event EventHandler<PolylineEventArgs> OnDrawsChanging;
+        public event EventHandler<PathEventArgs> OnDrawsChanging;
         public event EventHandler OnDrawsChanged;
 
         [JsonIgnore]
@@ -138,14 +138,14 @@ namespace Workloads.Creation.StaticImg.Models {
             }
         }
 
-        internal void AddDraw(Polyline currentLine, STADraw currentDraw) {
+        internal void AddDraw(Path currentPath, STADraw currentDraw) {
             Draws.Add(currentDraw);
-            OnDrawsChanging?.Invoke(this, new(currentLine, OperationType.Add));
+            OnDrawsChanging?.Invoke(this, new(currentPath, OperationType.Add));
         }
 
-        internal void RemoveDraw(Polyline currentLine, STADraw currentDraw) {
+        internal void RemoveDraw(Path currentPath, STADraw currentDraw) {
             Draws.Remove(currentDraw);
-            OnDrawsChanging?.Invoke(this, new(currentLine, OperationType.Remove));
+            OnDrawsChanging?.Invoke(this, new(currentPath, OperationType.Remove));
         }
 
         internal void DrawsChanged() {

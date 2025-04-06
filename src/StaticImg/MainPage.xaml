@@ -18,6 +18,21 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
+        <DataTemplate x:Key="Paintbrush_ToolExpander">
+            <Expander
+                x:Name="Paintbrush"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left"
+                IsExpanded="True">
+                <Expander.Header>
+                    <TextBlock Text="画笔箱"/>
+                </Expander.Header>
+                <Expander.Content>
+                    
+                </Expander.Content>
+            </Expander>
+        </DataTemplate>
+        
         <Style x:Key="ToolItemStyle" BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="Padding" Value="0" />
@@ -92,58 +107,54 @@
                     VerticalScrollBarVisibility="Hidden"
                     HorizontalScrollMode="Disabled"
                     VerticalScrollMode="Auto">
-                    <!--<ContentControl
-                    Content="{x:Bind _viewModel._funcPanel, Mode=OneWay}"/>-->
-                    <Grid>
-                        <StackPanel>
-                            <Expander
-                                x:Name="ColorPalette"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Left"
-                                IsExpanded="True">
-                                <Expander.Header>
-                                    <TextBlock Text="调色板"/>
-                                </Expander.Header>
-                                <Expander.Content>
-                                    <input:ArcPalette
-                                        ForegroundColor="{x:Bind _viewModel.ManagerData.ForegroundColor, Mode=TwoWay}"
-                                        BackgroundColor="{x:Bind _viewModel.ManagerData.BackgroundColor, Mode=TwoWay}"
-                                        InitCustomColors="{x:Bind _viewModel.ManagerData.CustomColors, Mode=OneWay}"
-                                        OnCustomeColorChangedEvent="ArcPalette_OnCustomeColorChangedEvent"/>
-                                </Expander.Content>
-                            </Expander>
-                            <Expander
-                                x:Name="LayerManage"
-                                Padding="0 16"
-                                VerticalAlignment="Stretch"
-                                VerticalContentAlignment="Stretch"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Stretch"
-                                IsExpanded="True">
-                                <Expander.Header>
-                                    <TextBlock Text="图层集"/>
-                                </Expander.Header>
-                                <Expander.Content>
-                                    <collection:ArcListView
-                                        x:Name="layersListView"
-                                        SelectionMode="Single"
-                                        CancelSelectionEnable="False"
-                                        ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                                        RightTapped="Listview_RightTapped"
-                                        SelectedItem="{x:Bind _viewModel.ManagerData.SelectedLayerData, Mode=TwoWay}"
-                                        ItemsSource="{x:Bind _viewModel.ManagerData.LayersData}"
-                                        ItemTemplate="{StaticResource LayerItemTemplate}">
-                                        <collection:ArcListView.ItemContainerStyle>
-                                            <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
-                                                <Setter Property="ContextFlyout" Value="{StaticResource Layers_MenuFlyout}" />
-                                            </Style>
-                                        </collection:ArcListView.ItemContainerStyle>
-                                    </collection:ArcListView>
-                                </Expander.Content>
-                            </Expander>
-                        </StackPanel>
-                    </Grid>
+                    <StackPanel>
+                        <Expander
+                            x:Name="ColorPalette"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            IsExpanded="True">
+                            <Expander.Header>
+                                <TextBlock Text="调色板"/>
+                            </Expander.Header>
+                            <Expander.Content>
+                                <input:ArcPalette
+                                    ForegroundColor="{x:Bind _viewModel.ManagerData.ForegroundColor, Mode=TwoWay}"
+                                    BackgroundColor="{x:Bind _viewModel.ManagerData.BackgroundColor, Mode=TwoWay}"
+                                    InitCustomColors="{x:Bind _viewModel.ManagerData.CustomColors, Mode=OneWay}"
+                                    OnCustomeColorChangedEvent="ArcPalette_OnCustomeColorChangedEvent"/>
+                            </Expander.Content>
+                        </Expander>
+                        <Expander
+                            x:Name="LayerManage"
+                            Padding="0 16"
+                            VerticalAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            IsExpanded="True">
+                            <Expander.Header>
+                                <TextBlock Text="图层集"/>
+                            </Expander.Header>
+                            <Expander.Content>
+                                <collection:ArcListView
+                                    x:Name="layersListView"
+                                    SelectionMode="Single"
+                                    CancelSelectionEnable="False"
+                                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                    RightTapped="Listview_RightTapped"
+                                    SelectedItem="{x:Bind _viewModel.ManagerData.SelectedLayerData, Mode=TwoWay}"
+                                    ItemsSource="{x:Bind _viewModel.ManagerData.LayersData}"
+                                    ItemTemplate="{StaticResource LayerItemTemplate}">
+                                    <collection:ArcListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                                            <Setter Property="ContextFlyout" Value="{StaticResource Layers_MenuFlyout}" />
+                                        </Style>
+                                    </collection:ArcListView.ItemContainerStyle>
+                                </collection:ArcListView>
+                            </Expander.Content>
+                        </Expander>
+                    </StackPanel>
                 </ScrollViewer>
 
                 <Line X1="0" Y1="0" X2="0" Y2="1" 
@@ -158,6 +169,7 @@
                     ScrollViewer.VerticalScrollBarVisibility="Hidden"
                     ScrollViewer.HorizontalScrollMode="Disabled"
                     ScrollViewer.VerticalScrollMode="Auto"
+                    SelectionChanged="ToolItemsArcListView_SelectionChanged"
                     ItemsSource="{x:Bind _viewModel.ToolItems}"
                     ItemTemplate="{StaticResource ToolItemTemplate}"
                     ItemContainerStyle="{StaticResource ToolItemStyle}"/>

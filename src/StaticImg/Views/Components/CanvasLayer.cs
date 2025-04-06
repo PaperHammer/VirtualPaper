@@ -109,13 +109,13 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             LayerData.RenderCompleted.TrySetResult(true);
         }
 
-        private void Layer_OnDrawsChanging(object sender, PolylineEventArgs e) {
+        private void Layer_OnDrawsChanging(object sender, PathEventArgs e) {
             switch (e.Operation) {
                 case OperationType.Add:
-                    this.Children.Add(e.Polyline);
+                    this.Children.Add(e.PaintPath);
                     break;
                 case OperationType.Remove:
-                    this.Children.Remove(e.Polyline);
+                    this.Children.Remove(e.PaintPath);
                     break;
                 default:
                     break;

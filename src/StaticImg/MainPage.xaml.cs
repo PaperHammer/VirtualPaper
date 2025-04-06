@@ -185,6 +185,10 @@ namespace Workloads.Creation.StaticImg {
             await _viewModel.UpdateCustomColorsAsync(e);
         }
 
+        private void ToolItemsArcListView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+
+        }
+
         internal readonly MainPageViewModel _viewModel;
         private LayerItem _rightTappedItem;
     }

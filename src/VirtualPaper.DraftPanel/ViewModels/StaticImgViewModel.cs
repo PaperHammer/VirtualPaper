@@ -8,6 +8,7 @@ using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Model.Runtime;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.ArcEventArgs;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     partial class StaticImgViewModel : ObservableObject {
@@ -44,6 +45,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             InitToolItems();
         }
 
+        #region init
         private void InitToolItems() {
             ToolItems = [
                 new() {
@@ -89,6 +91,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             SIG_Text_RenameLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_RenameLayer));
             SIG_Text_DeleteLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_DeleteLayer));
         }
+        #endregion
 
         public async Task SaveAsync() {
             try {
@@ -184,6 +187,10 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             finally {
                 Draft.Instance.GetNotify().Loaded();
             }
+        }
+
+        internal async Task UpdateCustomColorsAsync(ColorChnageEventArgs e) {
+            await ManagerData.UpdateCustomColorsAsync(e);
         }
 
         private readonly FileType _rtFileType;

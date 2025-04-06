@@ -696,7 +696,7 @@ Author: PaperHammer</value>
     <value>Canvas</value>
   </data>
   <data name="Draft_SI_LayerNotAvailable" xml:space="preserve">
-    <value>The current layer is not available, try reloading the project</value>
+    <value>There is an exception in the current project, please try reloading</value>
   </data>
   <data name="SIG_Text_AddLayer" xml:space="preserve">
     <value>Create new layer</value>

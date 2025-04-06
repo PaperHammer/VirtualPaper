@@ -105,19 +105,11 @@
                                     <TextBlock Text="调色板"/>
                                 </Expander.Header>
                                 <Expander.Content>
-                                    <!--<input:ArcColorPicker
-                                        Visibility="Collapsed"
-                                        Color="{x:Bind _viewModel.ManagerData.SelectedColor, Mode=OneWay}"
-                                        ColorChanged="ArcColorPicker_ColorChanged"
-                                        ColorSpectrumShape="Box"
-                                        IsMoreButtonVisible="False"
-                                        IsColorSliderVisible="True"
-                                        IsColorChannelTextInputVisible="True"
-                                        IsHexInputVisible="True"
-                                        IsAlphaEnabled="True"
-                                        IsAlphaSliderVisible="True"
-                                        IsAlphaTextInputVisible="True" />-->
-                                    <input:ArcPalette/>
+                                    <input:ArcPalette
+                                        ForegroundColor="{x:Bind _viewModel.ManagerData.ForegroundColor, Mode=TwoWay}"
+                                        BackgroundColor="{x:Bind _viewModel.ManagerData.BackgroundColor, Mode=TwoWay}"
+                                        InitCustomColors="{x:Bind _viewModel.ManagerData.CustomColors, Mode=OneWay}"
+                                        OnCustomeColorChangedEvent="ArcPalette_OnCustomeColorChangedEvent"/>
                                 </Expander.Content>
                             </Expander>
                             <Expander

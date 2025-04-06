@@ -37,6 +37,14 @@ namespace VirtualPaper.Models.Mvvm {
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
 
+        public new void Remove(T item) {
+            int idx = IndexOf(item);
+            if (idx < 0 || idx >= this.Count) {
+                return;
+            }
+            RemoveAt(idx);
+        }
+
         public new void RemoveAt(int idx) {
             T removedItem = this[idx];
             base.RemoveAt(idx);

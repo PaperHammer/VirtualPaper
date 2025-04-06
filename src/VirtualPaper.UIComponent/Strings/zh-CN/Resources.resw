@@ -696,7 +696,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>图层</value>
   </data>
   <data name="Draft_SI_LayerNotAvailable" xml:space="preserve">
-    <value>当前图层不可用，请尝试重新加载项目</value>
+    <value>当前项目存在异常，请尝试重新加载</value>
   </data>
   <data name="SIG_Text_AddLayer" xml:space="preserve">
     <value>新增图层</value>

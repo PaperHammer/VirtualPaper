@@ -19,9 +19,16 @@ namespace VirtualPaper.Common.Utils.Storage {
             SaveAsync(filePath, data, context).Wait();
         }
 
-        public static async Task<T> LoadAsync<T>(string filePath, JsonSerializerContext context) {
+        public static async Task<T> LoadAsync<T>(string filePath, JsonSerializerContext context, params JsonConverter[]? converters) {
             try {
                 JsonSerializerOptions combinedLoadOptions = new(_optionsLoad) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
+
+                if (converters != null) {
+                    foreach (var converter in converters) {
+                        combinedLoadOptions.Converters.Add(converter);
+                    }
+                }
+
                 using FileStream stream = File.OpenRead(filePath);
                 return await JsonSerializer.DeserializeAsync<T>(stream, combinedLoadOptions);
             }
@@ -30,7 +37,7 @@ namespace VirtualPaper.Common.Utils.Storage {
             }
         }
 
-        public static async Task SaveAsync<T>(string filePath, T data, JsonSerializerContext context) {
+        public static async Task SaveAsync<T>(string filePath, T data, JsonSerializerContext context, params JsonConverter[]? converters) {
             try {
                 string? directoryPath = Path.GetDirectoryName(filePath);
                 if (!string.IsNullOrEmpty(directoryPath)) {
@@ -38,6 +45,13 @@ namespace VirtualPaper.Common.Utils.Storage {
                 }
 
                 JsonSerializerOptions combinedStoreOptions = new(_optionsStore) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
+
+                if (converters != null) {
+                    foreach (var converter in converters) {
+                        combinedStoreOptions.Converters.Add(converter);
+                    }
+                }
+
                 using FileStream stream = File.Create(filePath);
                 await JsonSerializer.SerializeAsync(stream, data, combinedStoreOptions);
             }

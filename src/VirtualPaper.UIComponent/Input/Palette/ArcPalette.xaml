@@ -124,7 +124,7 @@
                 ItemsPanel="{StaticResource HorizontalPanelTemplate}"/>
             
             <ItemsControl 
-                ItemsSource="{x:Bind CustomColors}"
+                ItemsSource="{x:Bind CustomBrushes}"
                 ItemTemplate="{StaticResource ColorItemTemplate}"
                 ItemsPanel="{StaticResource HorizontalPanelTemplate}"/>
         </StackPanel>
@@ -201,7 +201,6 @@
 
         <local:ArcColorPicker
             x:Name="arcColorPicker"
-            Visibility="Collapsed"
             AddBtnIsVisible="True"
             AddToCustomCommand="{x:Bind AddToCustomCommand}"
             ColorSpectrumShape="Box"

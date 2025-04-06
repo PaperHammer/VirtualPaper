@@ -153,8 +153,10 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
 
             // 开始新的线条
             var pointerPoint = e.GetCurrentPoint(this);
+            var color = pointerPoint.Properties.IsRightButtonPressed ? 
+                ManagerData.BackgroundColor : ManagerData.ForegroundColor;
             _currentLine = new Polyline {
-                Stroke = new SolidColorBrush(ManagerData.SelectedColor),
+                Stroke = new SolidColorBrush(color),
                 StrokeThickness = 2,
                 StrokeLineJoin = PenLineJoin.Round,
                 StrokeStartLineCap = PenLineCap.Round,
@@ -166,7 +168,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
 
             // 创建线条数据模型
             _currentDraw = new STADraw {
-                StrokeColor = UintToSolidBrushConverter.ColorToHex(ManagerData.SelectedColor),
+                StrokeColor = UintToSolidBrushConverter.ColorToHex(color),
                 StrokeThickness = 2,
                 Points = [new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y), new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y)],
                 ZTime = DateTime.Now.Ticks

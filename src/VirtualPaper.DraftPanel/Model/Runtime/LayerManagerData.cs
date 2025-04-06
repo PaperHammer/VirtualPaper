@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -12,6 +11,7 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.ArcEventArgs;
 using VirtualPaper.UIComponent.ViewModels;
 using Windows.UI;
 
@@ -19,6 +19,7 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
     [JsonSerializable(typeof(LayerManagerData))]
     [JsonSerializable(typeof(CanvasLayerData))]
     [JsonSerializable(typeof(ObservableList<CanvasLayerData>))]
+    [JsonSerializable(typeof(ObservableList<Color>))]
     internal partial class LayerManagerDataContext : JsonSerializerContext { }
 
     internal partial class LayerManagerData : ObservableObject {
@@ -40,12 +41,12 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             }
         }
 
-        Color _selectedColor = Colors.White;
-        public Color SelectedColor {
-            get { return _selectedColor; }
-            set { _selectedColor = value; OnPropertyChanged(); }
-        }
-
+        // 恢复用户数据
+        public Color ForegroundColor { get; set; } = Colors.Black;
+        // 恢复用户数据
+        public Color BackgroundColor { get; set; } = Colors.White;
+        // 恢复用户数据
+        public ObservableList<Color> CustomColors { get; set; } = [];
         public ObservableList<CanvasLayerData> LayersData { get; set; } = [];
 
         CanvasLayerData _selectedLayerData;
@@ -100,9 +101,11 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
         public async Task LoadAsync() {
             var managerData = await JsonSaver.LoadAsync<LayerManagerData>(_filePath, LayerManagerDataContext.Default);
             this.Size = managerData.Size;
-            this.SelectedColor = managerData.SelectedColor;
+            this.ForegroundColor = managerData.ForegroundColor;
+            this.BackgroundColor = managerData.BackgroundColor;
             this.LayersData.CollectionChanged += LayersData_CollectionChanged;
             this.LayersData.SetRange(managerData.LayersData);
+            this.CustomColors.SetRange(managerData.CustomColors);
 
             DiscretizeZIndexesOnLoad(managerData.LayersData);
             // 保存原始可见性状态
@@ -138,6 +141,14 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             }
         }
 
+        internal async Task UpdateCustomColorsAsync(ColorChnageEventArgs e) {
+            if (e.RemoveItem != null)
+                CustomColors.Remove((Color)e.RemoveItem);
+            if (e.AddItem != null)
+                CustomColors.Add((Color)e.AddItem);
+            await SaveLayerMangerDataAsync();
+        }
+
         #region layer operation       
         public async Task InitDataAsync() {
             await AddLayerAsync("背景", Consts.UintColor.White, true);
@@ -169,7 +180,7 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
 
         internal async Task CopyLayerAsync(long itemTag) {
             var idx = LayersData.FindIndex(x => x.Tag == itemTag);
-            if (idx < 0) return;            
+            if (idx < 0) return;
 
             CanvasLayerData copyedData = LayersData[idx].Copy();
             copyedData.Name = LayersData[idx].Name + $"-副本{_nextCopyedLayerNumberTag++}";

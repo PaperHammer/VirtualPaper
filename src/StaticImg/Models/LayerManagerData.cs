@@ -15,7 +15,7 @@ using VirtualPaper.UIComponent.Utils.ArcEventArgs;
 using VirtualPaper.UIComponent.ViewModels;
 using Windows.UI;
 
-namespace VirtualPaper.DraftPanel.Model.Runtime {
+namespace Workloads.Creation.StaticImg.Models {
     [JsonSerializable(typeof(LayerManagerData))]
     [JsonSerializable(typeof(CanvasLayerData))]
     [JsonSerializable(typeof(ObservableList<CanvasLayerData>))]
@@ -41,11 +41,18 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             }
         }
 
-        // 恢复用户数据
-        public Color ForegroundColor { get; set; } = Colors.Black;
-        // 恢复用户数据
-        public Color BackgroundColor { get; set; } = Colors.White;
-        // 恢复用户数据
+        Color _foregroundColor = Colors.Black;
+        public Color ForegroundColor {
+            get => _foregroundColor;
+            set { if (_foregroundColor == value) return; _foregroundColor = value; OnPropertyChanged(); }
+        }
+
+        Color _backgroundColor = Colors.White;
+        public Color BackgroundColor {
+            get => _backgroundColor;
+            set { if (_backgroundColor == value) return; _backgroundColor = value; OnPropertyChanged(); }
+        }
+
         public ObservableList<Color> CustomColors { get; set; } = [];
         public ObservableList<CanvasLayerData> LayersData { get; set; } = [];
 
@@ -57,7 +64,7 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
                 if (value == null || value == _selectedLayerData) return;
                 _selectedLayerData = value;
                 if (value.IsEnable)
-                    Draft.Instance.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
+                    MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
                 OnPropertyChanged();
             }
         }
@@ -111,21 +118,17 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             // 保存原始可见性状态
             var originalVisibility = LayersData.ToDictionary(layer => layer, layer => layer.IsEnable);
 
-            try {
-                // 临时将所有图层设置为可见(生成缩略图需要保证控件可见)
-                foreach (var layer in LayersData) {
-                    layer.IsEnable = true;
-                }
-
-                // 异步加载所有图层
-                var loadTasks = LayersData.Select(layer => layer.LoadAsync());
-                await Task.WhenAll(loadTasks); // 等待所有图层加载完成
+            // 临时将所有图层设置为可见(生成缩略图需要保证控件可见)
+            foreach (var layer in LayersData) {
+                layer.IsEnable = true;
             }
-            finally {
-                // 恢复原始可见性状态
-                foreach (var kvp in originalVisibility) {
-                    kvp.Key.IsEnable = kvp.Value;
-                }
+
+            var loadTasks = LayersData.Select(layer => layer.LoadAsync());
+            await Task.WhenAll(loadTasks); // 等待所有图层加载完成
+
+            // 恢复原始可见性状态
+            foreach (var kvp in originalVisibility) {
+                kvp.Key.IsEnable = kvp.Value;
             }
         }
         #endregion
@@ -141,17 +144,31 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             }
         }
 
+        #region ui to data
         internal async Task UpdateCustomColorsAsync(ColorChnageEventArgs e) {
-            if (e.RemoveItem != null)
-                CustomColors.Remove((Color)e.RemoveItem);
-            if (e.AddItem != null)
-                CustomColors.Add((Color)e.AddItem);
+            if (e.OldItem != null)
+                CustomColors.Remove((Color)e.OldItem);
+            if (e.NewItem != null)
+                CustomColors.Add((Color)e.NewItem);
             await SaveLayerMangerDataAsync();
         }
 
+        internal async Task UpdateForegroundColorsAsync(ColorChnageEventArgs e) {
+            if (e.NewItem != null)
+                ForegroundColor = (Color)e.NewItem;
+            await SaveLayerMangerDataAsync();
+        }
+
+        internal async Task UpdateBackgroundColorsAsync(ColorChnageEventArgs e) {
+            if (e.NewItem != null)
+                BackgroundColor = (Color)e.NewItem;
+            await SaveLayerMangerDataAsync();
+        }
+        #endregion
+
         #region layer operation       
         public async Task InitDataAsync() {
-            await AddLayerAsync("背景", Consts.UintColor.White, true);
+            await AddLayerAsync("背景", UintColor.White, true);
             await AddLayerAsync();
         }
 
@@ -195,7 +212,7 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
 
             string oldName = LayersData[idx].Name;
             var viewModel = new RenameViewModel(oldName);
-            var dialogRes = await Draft.Instance.GetDialog().ShowDialogAsync(
+            var dialogRes = await MainPage.Instance.Bridge.GetDialog().ShowDialogAsync(
                 new RenameView(viewModel),
                 LanguageUtil.GetI18n(nameof(Constants.I18n.Dialog_Title_Rename)),
                 LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
@@ -211,7 +228,7 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             if (idx < 0) return;
 
             if (LayersData[idx].IsRootBackground) {
-                Draft.Instance.GetNotify().ShowWarn(nameof(Constants.I18n.Project_CannotDelete_RootBackground));
+                MainPage.Instance.Bridge.GetNotify().ShowWarn(nameof(Constants.I18n.Project_CannotDelete_RootBackground));
                 return;
             }
 

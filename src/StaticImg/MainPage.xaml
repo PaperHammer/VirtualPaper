@@ -1,29 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="VirtualPaper.DraftPanel.Panels.StaticImg"
+    x:Class="Workloads.Creation.StaticImg.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:VirtualPaper.DraftPanel.Panels"
+    xmlns:local="using:Workloads.Creation.StaticImg"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"    
-    xmlns:components="using:VirtualPaper.DraftPanel.Panels.Components"
-    xmlns:rt="using:VirtualPaper.DraftPanel.Model.Runtime"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
-    xmlns:ui="using:VirtualPaper.DraftPanel.UIComponents"
     xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
     xmlns:models="using:VirtualPaper.UIComponent.Models"
-    xmlns:lcl_models="using:VirtualPaper.DraftPanel.Model"
-    Loaded="Page_Loaded"
+    xmlns:root="using:Workloads.Creation.StaticImg"
+    xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
+    xmlns:lcl_components="using:Workloads.Creation.StaticImg.Views.Components"
     mc:Ignorable="d"
-    Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
+    Loaded="Page_Loaded"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
         <Style x:Key="ToolItemStyle" BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="Padding" Value="0" />
         </Style>
-        
-        <DataTemplate x:Key="ToolItemTemplate" x:DataType="lcl_models:StaticImgToolItem">
+
+        <DataTemplate x:Key="ToolItemTemplate" x:DataType="lcl_models:ToolItem">
             <Grid>
                 <FontIcon 
                     Visibility="{x:Bind Glyph, Converter={StaticResource NullToVisibilityConverter}}" 
@@ -36,10 +35,10 @@
                     Height="22"/>
             </Grid>
         </DataTemplate>
-        
-        <DataTemplate  x:Key="LayerItemTemplate" x:DataType="rt:CanvasLayerData">
+
+        <DataTemplate  x:Key="LayerItemTemplate" x:DataType="lcl_models:CanvasLayerData">
             <ListViewItem Height="60">
-                <ui:LayerItem
+                <lcl_components:LayerItem
                     LayerName="{x:Bind Name, Mode=TwoWay}"
                     IsEnable="{x:Bind IsEnable, Mode=TwoWay}"
                     LayerThum="{x:Bind LayerThum, Mode=OneWay}"
@@ -73,12 +72,12 @@
                 HorizontalScrollBarVisibility="Auto" 
                 VerticalScrollBarVisibility="Auto"
                 ZoomMode="Enabled"            
-                MinZoomFactor="{x:Bind rt:StaticImgConstants.MinZoomFactor}"
-                MaxZoomFactor="{x:Bind rt:StaticImgConstants.MaxZoomFactor}"
+                MinZoomFactor="{x:Bind root:Consts.MinZoomFactor}"
+                MaxZoomFactor="{x:Bind root:Consts.MaxZoomFactor}"
                 ViewChanging="CanvasSVer_ViewChanging">
-                <components:LayerManager
+                <lcl_components:LayerManager
                     x:Name="layerManager" 
-                    Loaded="LayerManager_Loaded"                    
+                    Loaded="LayerManager_Loaded"
                     ManagerData="{x:Bind _viewModel.ManagerData}"/>
             </ScrollViewer>
 
@@ -93,7 +92,7 @@
                     HorizontalScrollMode="Disabled"
                     VerticalScrollMode="Auto">
                     <!--<ContentControl
-                        Content="{x:Bind _viewModel._funcPanel, Mode=OneWay}"/>-->
+                    Content="{x:Bind _viewModel._funcPanel, Mode=OneWay}"/>-->
                     <Grid>
                         <StackPanel>
                             <Expander
@@ -147,8 +146,8 @@
                 </ScrollViewer>
 
                 <Line X1="0" Y1="0" X2="0" Y2="1" 
-                      Stretch="Fill" 
-                      Stroke="{ThemeResource ControlStrokeColorOnAccentDisabledBrush}"/>
+                    Stretch="Fill" 
+                    Stroke="{ThemeResource ControlStrokeColorOnAccentDisabledBrush}"/>
 
                 <ListView
                     Width="40"
@@ -273,8 +272,8 @@
                 <Slider
                     x:Name="zoomSlider"
                     Width="130"
-                    Minimum="{x:Bind rt:StaticImgConstants.DecimalToPercent(rt:StaticImgConstants.MinZoomFactor)}"
-                    Maximum="{x:Bind rt:StaticImgConstants.DecimalToPercent(rt:StaticImgConstants.MaxZoomFactor)}"
+                    Minimum="{x:Bind root:Consts.DecimalToPercent(root:Consts.MinZoomFactor)}"
+                    Maximum="{x:Bind root:Consts.DecimalToPercent(root:Consts.MaxZoomFactor)}"
                     ValueChanged="ZoomSlider_ValueChanged"
                     StepFrequency="1"/>
 

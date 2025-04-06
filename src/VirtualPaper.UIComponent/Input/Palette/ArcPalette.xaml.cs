@@ -21,47 +21,47 @@ namespace VirtualPaper.UIComponent.Input {
 
         public Color ForegroundColor {
             get => (Color)GetValue(ForegroundColorProperty);
-            set => SetValue(ForegroundColorProperty, value);
+            set { if (ForegroundColor == value) return; SetValue(ForegroundColorProperty, value); }
         }
         public static readonly DependencyProperty ForegroundColorProperty =
             DependencyProperty.Register(
                 nameof(ForegroundColor),
                 typeof(Color),
                 typeof(ArcPalette),
-                new PropertyMetadata(Colors.Black));
+                new PropertyMetadata(Colors.Black, OnOuterColorChanged));
 
         public Color BackgroundColor {
             get => (Color)GetValue(BackgroundColorProperty);
-            set => SetValue(BackgroundColorProperty, value);
+            set { if (BackgroundColor == value) return; SetValue(BackgroundColorProperty, value); }
         }
         public static readonly DependencyProperty BackgroundColorProperty =
             DependencyProperty.Register(
                 nameof(BackgroundColor),
                 typeof(Color),
                 typeof(ArcPalette),
-                new PropertyMetadata(Colors.White));
+                new PropertyMetadata(Colors.White, OnOuterColorChanged));
 
         internal SolidColorBrush AColor {
             get => (SolidColorBrush)GetValue(AColorProperty);
-            private set => SetValue(AColorProperty, value);
+            private set { if (AColor == value) return; SetValue(AColorProperty, value); }
         }
-        public static readonly DependencyProperty AColorProperty =
+        internal static readonly DependencyProperty AColorProperty =
             DependencyProperty.Register(
                 nameof(AColor),
                 typeof(SolidColorBrush),
                 typeof(ArcPalette),
-                new PropertyMetadata(new SolidColorBrush(Colors.Black), OnColorChanged));
+                new PropertyMetadata(new SolidColorBrush(Colors.Black), OnInnerColorChanged));
 
         internal SolidColorBrush BColor {
             get => (SolidColorBrush)GetValue(BColorProperty);
-            private set => SetValue(BColorProperty, value);
+            private set { if (BColor == value) return; SetValue(BColorProperty, value); }
         }
-        public static readonly DependencyProperty BColorProperty =
+        internal static readonly DependencyProperty BColorProperty =
             DependencyProperty.Register(
                 nameof(BColor),
                 typeof(SolidColorBrush),
                 typeof(ArcPalette),
-                new PropertyMetadata(new SolidColorBrush(Colors.White), OnColorChanged));
+                new PropertyMetadata(new SolidColorBrush(Colors.White), OnInnerColorChanged));
 
         public ObservableList<Color> InitCustomColors {
             get { return (ObservableList<Color>)GetValue(InitCustomColorsProperty); }
@@ -79,7 +79,7 @@ namespace VirtualPaper.UIComponent.Input {
         private Selection _curSelection = Selection.A;
         private Selection CurrentSelection {
             get => _curSelection;
-            set { _curSelection = value; OnSelectionChanged(); }
+            set { if (_curSelection == value) return; _curSelection = value; OnSelectionChanged(); }
         }
 
         public ArcPalette() {
@@ -87,13 +87,18 @@ namespace VirtualPaper.UIComponent.Input {
             AddToCustomCommand = new RelayCommand(OnAddToCustom);
 
             InitializeArcColorPicker();
-            UpdateColors();
-
+            UpdateOuterColors();
         }
 
         private void InitializeArcColorPicker() {
             // 确保控件已经加载到视觉树中, 避免卡顿
             arcColorPicker.Visibility = Visibility.Collapsed;
+        }
+
+        private static void OnOuterColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            if (d is ArcPalette instance) {
+                instance.UpdateInnerColors();
+            }
         }
 
         private void InitCustomColors_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
@@ -119,10 +124,10 @@ namespace VirtualPaper.UIComponent.Input {
         private void OnAddToCustom() {
             var newColor = arcColorPicker.Color;
             if (newColor == Colors.Transparent) return;
-           
+
             var eventArgs = new ColorChnageEventArgs {
-                RemoveItem = CustomBrushes.FindBrushByColor(new SolidColorBrush(newColor))?.Color,
-                AddItem = newColor
+                OldItem = CustomBrushes.FindBrushByColor(new SolidColorBrush(newColor))?.Color,
+                NewItem = newColor
             };
             OnCustomeColorChangedEvent?.Invoke(this, eventArgs);
         }
@@ -142,20 +147,25 @@ namespace VirtualPaper.UIComponent.Input {
         }
 
         private void OnSelectionChanged() {
-            UpdateColors();
+            UpdateOuterColors();
         }
 
-        private static void OnColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+        private static void OnInnerColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is ArcPalette palette) {
                 palette.CurrentSelection = palette.ForegroundColor == palette.AColor.Color ? Selection.A : Selection.B;
             }
         }
 
-        private void UpdateColors() {
+        private void UpdateOuterColors() {
             ForegroundColor = CurrentSelection == Selection.A ? AColor.Color : BColor.Color;
             BackgroundColor = CurrentSelection == Selection.A ? BColor.Color : AColor.Color;
 
             UpdateVisual();
+        }
+
+        internal void UpdateInnerColors() {
+            AColor = CurrentSelection == Selection.A ? new SolidColorBrush(ForegroundColor) : new SolidColorBrush(BackgroundColor);
+            BColor = CurrentSelection == Selection.A ? new SolidColorBrush(BackgroundColor) : new SolidColorBrush(ForegroundColor);
         }
 
         private void UpdateVisual() {

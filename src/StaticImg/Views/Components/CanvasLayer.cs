@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -10,15 +8,15 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Shapes;
-using VirtualPaper.DraftPanel.Model.EventArg;
-using VirtualPaper.DraftPanel.Model.Runtime;
-using VirtualPaper.DraftPanel.Utils;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
+using Workloads.Creation.StaticImg.Models;
+using Workloads.Creation.StaticImg.Models.EventArg;
+using Workloads.Creation.StaticImg.Utils;
 
-namespace VirtualPaper.DraftPanel.Panels.Components {
+namespace Workloads.Creation.StaticImg.Views.Components {
     internal partial class CanvasLayer : Canvas, IDisposable { // ui
         public CanvasLayerData LayerData {
             get { return (CanvasLayerData)GetValue(LayerDataProperty); }
@@ -60,7 +58,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             if (_isInitialized) {
                 return;
             }
-            
+
             InitDataContext();
 
             _isInitialized = true;
@@ -90,7 +88,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             await _loadedTcs.Task;
 
             // 创建一个包含所有元素的列表
-            IEnumerable<StaticImgElement> allElements = LayerData.Images.Cast<StaticImgElement>().Concat(LayerData.Draws);
+            IEnumerable<BaseElement> allElements = LayerData.Images.Cast<BaseElement>().Concat(LayerData.Draws);
 
             // 按照 ZIndex 升序，ZTime 升序排序
             var sortedElements = allElements.Count() > ParallelThreshold
@@ -107,7 +105,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
                 RenderElement(element);
             }
 
-            LayerData.LayerThum = await GenerateThumbnailAsync(this, StaticImgConstants.LayerThumWidth, StaticImgConstants.LayerThumHeight);
+            LayerData.LayerThum = await GenerateThumbnailAsync(this, Consts.LayerThumWidth, Consts.LayerThumHeight);
             LayerData.RenderCompleted.TrySetResult(true);
         }
 
@@ -125,15 +123,15 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
         }
 
         private async void Layer_OnDrawsChanged(object sender, EventArgs e) {
-            LayerData.LayerThum = await GenerateThumbnailAsync(this, StaticImgConstants.LayerThumWidth, StaticImgConstants.LayerThumHeight);
+            LayerData.LayerThum = await GenerateThumbnailAsync(this, Consts.LayerThumWidth, Consts.LayerThumHeight);
         }
 
         private async void NewDatas_OnDataLoaded(object sender, EventArgs e) {
             await InitRenderAsync();
         }
 
-        private void RenderElement(StaticImgElement element) {
-            if (element.Type == StaticImgElementType.Image) {
+        private void RenderElement(BaseElement element) {
+            if (element.Type == BaseElementType.Image) {
                 var img = element as STAImage;
                 Image imageControl = new() {
                     Source = TypeConvertUtil.ByteArrayToImageSource(img.Data),
@@ -145,7 +143,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
                 Canvas.SetZIndex(imageControl, img.ZIndex);
                 this.Children.Add(imageControl);
             }
-            else if (element.Type == StaticImgElementType.Draw) {
+            else if (element.Type == BaseElementType.Draw) {
                 var draw = element as STADraw;
                 Path path = new() {
                     Stroke = UintToSolidBrushConverter.HexToSolidBrush(draw.StrokeColor),
@@ -159,7 +157,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             }
         }
 
-        private async Task<ImageSource> GenerateThumbnailAsync(UIElement element, double thumbnailWidth, double thumbnailHeight) {           
+        private async Task<ImageSource> GenerateThumbnailAsync(UIElement element, double thumbnailWidth, double thumbnailHeight) {
             // 使用 RenderTargetBitmap 捕获整个画布的内容
             var renderTargetBitmap = new RenderTargetBitmap();
             await renderTargetBitmap.RenderAsync(element);
@@ -197,15 +195,15 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             return bitmapImage;
         }
 
-        private void RemoveElement(StaticImgElement element) {
-            if (element.Type == StaticImgElementType.Image) {
+        private void RemoveElement(BaseElement element) {
+            if (element.Type == BaseElementType.Image) {
                 var img = element as STAImage;
                 var imageControl = this.Children.OfType<Image>().FirstOrDefault(i => Canvas.GetZIndex(i) == img.ZIndex);
                 if (imageControl != null) {
                     this.Children.Remove(imageControl);
                 }
             }
-            else if (element.Type == StaticImgElementType.Draw) {
+            else if (element.Type == BaseElementType.Draw) {
                 var draw = element as STADraw;
                 var path = this.Children.OfType<Path>().FirstOrDefault(p => Canvas.GetZIndex(p) == draw.ZIndex);
                 if (path != null) {

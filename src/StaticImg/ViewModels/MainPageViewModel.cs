@@ -4,14 +4,13 @@ using System.IO;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
-using VirtualPaper.DraftPanel.Model;
-using VirtualPaper.DraftPanel.Model.Runtime;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.ArcEventArgs;
+using Workloads.Creation.StaticImg.Models;
 
-namespace VirtualPaper.DraftPanel.ViewModels {
-    partial class StaticImgViewModel : ObservableObject {
+namespace Workloads.Creation.StaticImg.ViewModels {
+    internal partial class MainPageViewModel : ObservableObject {
         internal event EventHandler<double> OnCanvasZoomChanged;
 
         public string SIG_Text_AddLayer { get; set; }
@@ -23,7 +22,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         public double CanvasZoom {
             get { return _canvasZoom; }
             set {
-                if (!StaticImgConstants.IsZoomValid(value) || _canvasZoom == value) return;
+                if (!Consts.IsZoomValid(value) || _canvasZoom == value) return;
 
                 _canvasZoom = value;
                 OnPropertyChanged();
@@ -31,11 +30,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             }
         }
 
-        public List<StaticImgToolItem> ToolItems { get; private set; }
+        public List<ToolItem> ToolItems { get; private set; }
 
         public LayerManagerData ManagerData { get; } // (entryFile)
 
-        public StaticImgViewModel(string entryFilePath, FileType rtFileType) {
+        public MainPageViewModel(string entryFilePath, FileType rtFileType) {
             _entryFilePath = entryFilePath;
             _rtFileType = rtFileType;
             ManagerData = new(entryFilePath);
@@ -101,14 +100,14 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                Draft.Instance.Log(LogType.Error, ex);
-                Draft.Instance.GetNotify().ShowExp(ex);
+                MainPage.Instance.Bridge.Log(LogType.Error, ex);
+                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
             }
         }
 
         public async Task LoadAsync() {
             try {
-                Draft.Instance.GetNotify().Loading(false, false);
+                MainPage.Instance.Bridge.GetNotify().Loading(false, false);
 
                 switch (_rtFileType) {
                     case FileType.FImage:
@@ -121,11 +120,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                Draft.Instance.Log(LogType.Error, ex);
-                Draft.Instance.GetNotify().ShowExp(ex);
+                MainPage.Instance.Bridge.Log(LogType.Error, ex);
+                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
             }
             finally {
-                Draft.Instance.GetNotify().Loaded();
+                MainPage.Instance.Bridge.GetNotify().Loaded();
             }
         }
 
@@ -138,59 +137,67 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         internal async Task AddLayerAsync() {
             try {
-                Draft.Instance.GetNotify().Loading(false, false);
+                MainPage.Instance.Bridge.GetNotify().Loading(false, false);
                 await ManagerData.AddLayerAsync();
             }
             catch (Exception ex) {
-                Draft.Instance.Log(LogType.Error, ex);
-                Draft.Instance.GetNotify().ShowExp(ex);
+                MainPage.Instance.Bridge.Log(LogType.Error, ex);
+                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
             }
             finally {
-                Draft.Instance.GetNotify().Loaded();
+                MainPage.Instance.Bridge.GetNotify().Loaded();
             }
         }
 
         internal async Task CopyLayerAsync(long itemTag) {
             try {
-                Draft.Instance.GetNotify().Loading(false, false);
+                MainPage.Instance.Bridge.GetNotify().Loading(false, false);
                 await ManagerData.CopyLayerAsync(itemTag);
             }
             catch (Exception ex) {
-                Draft.Instance.GetNotify().ShowExp(ex);
+                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
             }
             finally {
-                Draft.Instance.GetNotify().Loaded();
+                MainPage.Instance.Bridge.GetNotify().Loaded();
             }
         }
 
         internal async Task RenameAsync(long itemTag) {
             try {
-                Draft.Instance.GetNotify().Loading(false, false);
+                MainPage.Instance.Bridge.GetNotify().Loading(false, false);
                 await ManagerData.RenameAsync(itemTag);
             }
             catch (Exception ex) {
-                Draft.Instance.GetNotify().ShowExp(ex);
+                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
             }
             finally {
-                Draft.Instance.GetNotify().Loaded();
+                MainPage.Instance.Bridge.GetNotify().Loaded();
             }
         }
 
         internal async Task DeleteAsync(long itemTag) {
             try {
-                Draft.Instance.GetNotify().Loading(false, false);
+                MainPage.Instance.Bridge.GetNotify().Loading(false, false);
                 await ManagerData.DeleteAsync(itemTag);
             }
             catch (Exception ex) {
-                Draft.Instance.GetNotify().ShowExp(ex);
+                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
             }
             finally {
-                Draft.Instance.GetNotify().Loaded();
+                MainPage.Instance.Bridge.GetNotify().Loaded();
             }
         }
 
         internal async Task UpdateCustomColorsAsync(ColorChnageEventArgs e) {
             await ManagerData.UpdateCustomColorsAsync(e);
+        }
+
+        internal async Task UpdateForegroundColorsAsync(ColorChnageEventArgs e) {
+            await ManagerData.UpdateForegroundColorsAsync(e);
+        }
+
+        internal async Task UpdateBackgroundColorsAsync(ColorChnageEventArgs e) {
+            await ManagerData.UpdateBackgroundColorsAsync(e);
         }
 
         private readonly FileType _rtFileType;

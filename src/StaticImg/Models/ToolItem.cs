@@ -1,7 +1,7 @@
 ﻿using System;
 
-namespace VirtualPaper.DraftPanel.Model {
-    public class StaticImgToolItem {
+namespace Workloads.Creation.StaticImg.Models {
+    class ToolItem {
         public string Glyph { get; set; } // 图标字符（FontIcon 的 Glyph）
         public string ImageSourceKey { get; set; } // 图片路径（ImageIcon 的 Source）
         public string ToolName { get; set; } // 功能名称或标识符

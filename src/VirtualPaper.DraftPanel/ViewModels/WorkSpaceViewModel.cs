@@ -8,11 +8,10 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.DraftPanel.Model;
-using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.Model.NavParam;
-using VirtualPaper.DraftPanel.Panels;
 using VirtualPaper.Models.Mvvm;
 using Windows.System;
 
@@ -119,7 +118,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 case FileType.FUnknown:
                     break;
                 case FileType.FImage:
-                    runtime = new StaticImg(filePath, rtFileType); // xxx.jpg[etc.]
+                    runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, filePath, rtFileType); // xxx.jpg[etc.]
                     AddToWorkSpace(filePath, runtime);
                     break;
                 case FileType.FGif:
@@ -146,7 +145,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     IRuntime runtime;
                     switch (projTag.Type) {
                         case ProjectType.PImage:
-                            runtime = new StaticImg(entryFilePath, FileType.FProject); // xxx.vproj
+                            runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, entryFilePath, FileType.FProject); // xxx.vproj
                             AddToWorkSpace(entryFilePath, runtime);
                             break;
                         default:

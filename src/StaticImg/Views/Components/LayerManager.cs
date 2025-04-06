@@ -10,13 +10,13 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using VirtualPaper.Common;
-using VirtualPaper.DraftPanel.Model.Runtime;
-using VirtualPaper.DraftPanel.Utils;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
+using Workloads.Creation.StaticImg.Models;
+using Workloads.Creation.StaticImg.Utils;
 
-namespace VirtualPaper.DraftPanel.Panels.Components {
+namespace Workloads.Creation.StaticImg.Views.Components {
     internal partial class LayerManager : Grid, IDisposable { // ui
         public LayerManagerData ManagerData {
             get { return (LayerManagerData)GetValue(ManagerDataProperty); }
@@ -153,7 +153,7 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
 
             // 开始新的线条
             var pointerPoint = e.GetCurrentPoint(this);
-            var color = pointerPoint.Properties.IsRightButtonPressed ? 
+            var color = pointerPoint.Properties.IsRightButtonPressed ?
                 ManagerData.BackgroundColor : ManagerData.ForegroundColor;
             _currentLine = new Polyline {
                 Stroke = new SolidColorBrush(color),
@@ -182,11 +182,11 @@ namespace VirtualPaper.DraftPanel.Panels.Components {
             this.ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.Cross);
 
             if (ManagerData.SelectedLayerData == null) {
-                Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), InfoBarType.Error, key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable), isAllowDuplication: false);
+                MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), InfoBarType.Error, key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable), isAllowDuplication: false);
                 return;
             }
             if (!ManagerData.SelectedLayerData.IsEnable) {
-                Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerLocked), InfoBarType.Warning, key: nameof(Constants.I18n.Draft_SI_LayerLocked), isAllowDuplication: false);
+                MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerLocked), InfoBarType.Warning, key: nameof(Constants.I18n.Draft_SI_LayerLocked), isAllowDuplication: false);
                 return;
             }
         }

@@ -7,7 +7,7 @@ using VirtualPaper.UIComponent.Utils;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace VirtualPaper.DraftPanel.UIComponents {
+namespace Workloads.Creation.StaticImg.Views.Components {
     public sealed partial class LayerItem : UserControl {
         public string Project_NewName_InvalidTip { get; set; }
 

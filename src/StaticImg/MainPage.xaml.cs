@@ -4,28 +4,35 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using VirtualPaper.Common;
-using VirtualPaper.DraftPanel.Model.Interfaces;
-using VirtualPaper.DraftPanel.Model.Runtime;
-using VirtualPaper.DraftPanel.UIComponents;
-using VirtualPaper.DraftPanel.ViewModels;
+using VirtualPaper.Common.Runtime.Draft;
+using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.UIComponent.Utils.ArcEventArgs;
+using Workloads.Creation.StaticImg.Models;
+using Workloads.Creation.StaticImg.ViewModels;
+using Workloads.Creation.StaticImg.Views.Components;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace VirtualPaper.DraftPanel.Panels {
+namespace Workloads.Creation.StaticImg {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    internal sealed partial class StaticImg : Page, IRuntime {
+    public sealed partial class MainPage : Page, IRuntime {
+        internal static MainPage Instance { get; private set; }
+        internal IDraftPanelBridge Bridge { get; }
+
         /// <summary>
         /// 静态图像编辑页面
         /// </summary>
         /// <param name="entryFilePath">接收后缀为 FImage or FE_STATIC_IMG_PROJ 的文件路径</param>
-        public StaticImg(string entryFilePath, FileType rtFileType) {
+        public MainPage(IDraftPanelBridge bridge, string entryFilePath, FileType rtFileType) {
+            Instance = this;
+
             this.InitializeComponent();
 
-            _viewModel = new StaticImgViewModel(entryFilePath, rtFileType);
+            Bridge = bridge;
+            _viewModel = new MainPageViewModel(entryFilePath, rtFileType);
             this.DataContext = _viewModel;
         }
 
@@ -39,8 +46,8 @@ namespace VirtualPaper.DraftPanel.Panels {
         }
 
         private void ZoomOut_ButtonClick(object sender, RoutedEventArgs e) {
-            _viewModel.CanvasZoom = Math.Max(StaticImgConstants.MinZoomFactor,
-                StaticImgConstants.RoundToNearestFive(_viewModel.CanvasZoom) - StaticImgConstants.GetSubStepSize(_viewModel.CanvasZoom));
+            _viewModel.CanvasZoom = Math.Max(Consts.MinZoomFactor,
+                Consts.RoundToNearestFive(_viewModel.CanvasZoom) - Consts.GetSubStepSize(_viewModel.CanvasZoom));
 
             UpdateScrollViewerZoom((float)_viewModel.CanvasZoom);
             UpdateComboBoxText((float)_viewModel.CanvasZoom);
@@ -48,8 +55,8 @@ namespace VirtualPaper.DraftPanel.Panels {
         }
 
         private void ZoomIn_ButtonClick(object sender, RoutedEventArgs e) {
-            _viewModel.CanvasZoom = Math.Min(StaticImgConstants.MaxZoomFactor,
-                StaticImgConstants.RoundToNearestFive(_viewModel.CanvasZoom) + StaticImgConstants.GetAddStepSize(_viewModel.CanvasZoom));
+            _viewModel.CanvasZoom = Math.Min(Consts.MaxZoomFactor,
+                Consts.RoundToNearestFive(_viewModel.CanvasZoom) + Consts.GetAddStepSize(_viewModel.CanvasZoom));
 
             UpdateScrollViewerZoom((float)_viewModel.CanvasZoom);
             UpdateComboBoxText((float)_viewModel.CanvasZoom);
@@ -59,7 +66,7 @@ namespace VirtualPaper.DraftPanel.Panels {
         private void ZoomSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e) {
             if (zoomSlider.FocusState == FocusState.Unfocused) return;
 
-            _viewModel.CanvasZoom = StaticImgConstants.PercentToDeciaml((float)e.NewValue);
+            _viewModel.CanvasZoom = Consts.PercentToDeciaml((float)e.NewValue);
 
             UpdateScrollViewerZoom((float)_viewModel.CanvasZoom);
             UpdateComboBoxText((float)_viewModel.CanvasZoom);
@@ -67,7 +74,7 @@ namespace VirtualPaper.DraftPanel.Panels {
         }
 
         private void ZoomComboBox_TextSubmitted(ComboBox sender, ComboBoxTextSubmittedEventArgs args) {
-            if (args.Text is string s && double.TryParse(s.TrimEnd('%'), out var res) && StaticImgConstants.IsZoomValid(res / 100)) {
+            if (args.Text is string s && double.TryParse(s.TrimEnd('%'), out var res) && Consts.IsZoomValid(res / 100)) {
                 _viewModel.CanvasZoom = res / 100;
 
                 UpdateScrollViewerZoom((float)_viewModel.CanvasZoom);
@@ -76,7 +83,7 @@ namespace VirtualPaper.DraftPanel.Panels {
             }
             else {
                 // 还原
-                zoomComboBox.Text = $"{StaticImgConstants.DecimalToPercent((float)_viewModel.CanvasZoom)}%";
+                zoomComboBox.Text = $"{Consts.DecimalToPercent((float)_viewModel.CanvasZoom)}%";
             }
         }
 
@@ -90,7 +97,7 @@ namespace VirtualPaper.DraftPanel.Panels {
             }
             else {
                 // 还原
-                zoomComboBox.Text = $"{StaticImgConstants.DecimalToPercent((float)_viewModel.CanvasZoom)}%";
+                zoomComboBox.Text = $"{Consts.DecimalToPercent((float)_viewModel.CanvasZoom)}%";
             }
         }
 
@@ -129,7 +136,7 @@ namespace VirtualPaper.DraftPanel.Panels {
                 (viewportWidth - (layerManager.Margin.Left + layerManager.Margin.Right)) / contentWidth,
                 (viewportHeight - (layerManager.Margin.Top + layerManager.Margin.Bottom)) / contentHeight);
             // 确保缩放因子在允许范围内
-            zoomFactor = Math.Max(StaticImgConstants.MinZoomFactor, Math.Min(zoomFactor, StaticImgConstants.MaxZoomFactor));
+            zoomFactor = Math.Max(Consts.MinZoomFactor, Math.Min(zoomFactor, Consts.MaxZoomFactor));
             _viewModel.CanvasZoom = zoomFactor;
 
             UpdateScrollViewerZoom((float)zoomFactor);
@@ -142,12 +149,12 @@ namespace VirtualPaper.DraftPanel.Panels {
         }
 
         private void UpdateComboBoxText(float value) {
-            double percent = StaticImgConstants.DecimalToPercent(value);
+            double percent = Consts.DecimalToPercent(value);
             zoomComboBox.Text = $"{percent}%";
         }
 
         private void UpdateSliderValue(float value) {
-            double percent = StaticImgConstants.DecimalToPercent(value);
+            double percent = Consts.DecimalToPercent(value);
             zoomSlider.Value = percent;
         }
 
@@ -188,7 +195,15 @@ namespace VirtualPaper.DraftPanel.Panels {
             await _viewModel.UpdateCustomColorsAsync(e);
         }
 
-        internal readonly StaticImgViewModel _viewModel;
+        private async void ArcPalette_OnForegroundColorChangedEvent(object sender, ColorChnageEventArgs e) {
+            await _viewModel.UpdateForegroundColorsAsync(e);
+        }
+
+        private async void ArcPalette_OnBackgroundColorChangedEvent(object sender, ColorChnageEventArgs e) {
+            await _viewModel.UpdateBackgroundColorsAsync(e);
+        }
+
+        internal readonly MainPageViewModel _viewModel;
         private LayerItem _rightTappedItem;
     }
 }

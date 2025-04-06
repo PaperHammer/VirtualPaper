@@ -10,8 +10,6 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<None Remove="Draft.xaml" />
-		<None Remove="Panels\StaticImg.xaml" />
-		<None Remove="UIComponents\LayerItem.xaml" />
 		<None Remove="Views\ConfigSpace.xaml" />
 		<None Remove="Views\DraftConfig.xaml" />
 		<None Remove="Views\GetStart.xaml" />
@@ -20,12 +18,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.240923002" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -65,15 +59,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Page Update="UIComponents\LayerItem.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Page>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Page Update="Panels\StaticImg.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
+	  <ProjectReference Include="..\StaticImg\StaticImg.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

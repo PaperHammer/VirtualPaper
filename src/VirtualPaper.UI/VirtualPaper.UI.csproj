@@ -139,7 +139,7 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.2.0" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.240923002" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
 		<PackageReference Include="Vanara.PInvoke.ComCtl32" Version="4.0.3" />
 		<PackageReference Include="Vanara.PInvoke.DwmApi" Version="4.0.3" />
 		<PackageReference Include="Vanara.PInvoke.User32" Version="4.0.3" />
@@ -232,7 +232,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper.AppSettingsPanel\VirtualPaper.AppSettingsPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.DraftPanel\VirtualPaper.DraftPanel.csproj" />
-		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
 		<ProjectReference Include="..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj" />
 	</ItemGroup>
 </Project>

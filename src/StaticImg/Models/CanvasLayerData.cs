@@ -10,10 +10,11 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
-using VirtualPaper.DraftPanel.Model.EventArg;
 using VirtualPaper.Models.Mvvm;
+using Workloads.Creation.StaticImg.Models.EventArg;
+using Workloads.Creation.StaticImg.Views;
 
-namespace VirtualPaper.DraftPanel.Model.Runtime {
+namespace Workloads.Creation.StaticImg.Models {
     [JsonSerializable(typeof(CanvasLayerData))]
     internal partial class CanvasLayerDataContext : JsonSerializerContext { }
 
@@ -34,7 +35,7 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
         public long Tag { get; }
         public bool IsRootBackground { get; }
 
-        uint _background = Consts.UintColor.Transparent;
+        uint _background = UintColor.Transparent;
         public uint Background {
             get => _background;
             set { if (_background == value) return; _background = value; OnPropertyChanged(); }
@@ -53,7 +54,7 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
                 if (_isEnable == value) return;
                 _isEnable = value;
                 if (value)
-                    Draft.Instance.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
+                    MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
                 OnPropertyChanged();
             }
         }
@@ -115,8 +116,8 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
                 await MessagePackSaver.SaveAsync(_filePathForImages, Images);
             }
             catch (Exception ex) {
-                Draft.Instance.Log(LogType.Error, ex);
-                Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.Project_STI_LayerSaveFailed), InfoBarType.Error, Name, Tag.ToString(), false);
+                MainPage.Instance.Bridge.Log(LogType.Error, ex);
+                MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Project_STI_LayerSaveFailed), InfoBarType.Error, Name, Tag.ToString(), false);
             }
             finally {
                 _saveQueueLock.Release();
@@ -132,8 +133,8 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
                 await RenderCompleted.Task;
             }
             catch (Exception ex) {
-                Draft.Instance.Log(LogType.Error, ex);
-                Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.Project_STI_LayerLoadFailed), InfoBarType.Error, Name, Tag.ToString(), false);                
+                MainPage.Instance.Bridge.Log(LogType.Error, ex);
+                MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Project_STI_LayerLoadFailed), InfoBarType.Error, Name, Tag.ToString(), false);
             }
         }
 

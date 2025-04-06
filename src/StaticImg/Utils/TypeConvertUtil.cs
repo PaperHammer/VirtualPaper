@@ -1,14 +1,11 @@
-﻿using System.Collections.Generic;
-using System;
-using Microsoft.UI;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.UI.Xaml.Media;
-using Windows.Storage.Streams;
-using Windows.UI;
 using Microsoft.UI.Xaml.Media.Imaging;
-using VirtualPaper.DraftPanel.Model.Runtime;
 using Windows.Foundation;
+using Windows.Storage.Streams;
 
-namespace VirtualPaper.DraftPanel.Utils {
+namespace Workloads.Creation.StaticImg.Utils {
     internal static class TypeConvertUtil {
         // 辅助方法：将byte[]转换为ImageSource
         internal static BitmapImage ByteArrayToImageSource(byte[] imageData) {

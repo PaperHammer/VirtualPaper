@@ -1,12 +1,12 @@
 ﻿using System;
+using MessagePack;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using MessagePack;
 using Windows.Foundation;
-using Windows.UI;
+using Workloads.Creation.StaticImg.Views;
 
-namespace VirtualPaper.DraftPanel.Model.Runtime {
-    class StaticImgConstants {
+namespace Workloads.Creation.StaticImg {
+    class Consts {
         public static float MinZoomFactor => 0.2f;
         public static float MaxZoomFactor => 7f;
         public static int LayerThumWidth => 60;
@@ -40,21 +40,26 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
         private static readonly float _epsilon = 1e-6f;
     }
 
-    abstract record StaticImgElement {
+    static class UintColor {
+        public static uint Transparent => 16777215;
+        public static uint White => 4294967295;
+    }
+
+    abstract record BaseElement {
         [Key(0)]
         public int ZIndex { get; set; } // 层级
         [Key(1)]
         public long ZTime { get; set; } // 写入的时间
         [IgnoreMember]
-        public virtual StaticImgElementType Type { get; set; }
+        public virtual BaseElementType Type { get; set; }
         [IgnoreMember]
         public bool IsSaved { get; set; }
     }
 
     [MessagePackObject(AllowPrivate = true)]
-    record STAImage : StaticImgElement {
+    record STAImage : BaseElement {
         [Key(2)]
-        public override StaticImgElementType Type => StaticImgElementType.Image;
+        public override BaseElementType Type => BaseElementType.Image;
         [Key(3)]
         public byte[] Data { get; set; } // 图像数据
         [Key(4)]
@@ -66,9 +71,9 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
     }
 
     [MessagePackObject(AllowPrivate = true)]
-    record STADraw : StaticImgElement {
+    record STADraw : BaseElement {
         [Key(2)]
-        public override StaticImgElementType Type => StaticImgElementType.Draw;
+        public override BaseElementType Type => BaseElementType.Draw;
         [Key(3)]
         public List<PointF> Points { get; set; } = []; // 绘制的路径点
         [Key(4)]
@@ -120,7 +125,7 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
         public float Width { get; private set; }
         public float Height { get; private set; }
         public uint Dpi { get; private set; }
-        public readonly uint HardwareDpi => Draft.Instance.GetDpi();
+        public readonly uint HardwareDpi => MainPage.Instance.Bridge.GetDpi();
 
         // readonly 关键字在此处意味着这个方法不会修改任何实例的状态（即它不会改变对象的任何字段）。
         // 这有助于编译器优化，并明确地传达了该方法是纯粹基于现有数据进行计算而不改变对象状态的事实。
@@ -141,7 +146,7 @@ namespace VirtualPaper.DraftPanel.Model.Runtime {
             => !left.Equals(right);
     }
 
-    enum StaticImgElementType {
+    enum BaseElementType {
         Image,
         Draw
     }

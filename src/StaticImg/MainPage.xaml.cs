@@ -7,7 +7,6 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.UIComponent.Utils.ArcEventArgs;
-using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.ViewModels;
 using Workloads.Creation.StaticImg.Views.Components;
 
@@ -157,15 +156,6 @@ namespace Workloads.Creation.StaticImg {
             double percent = Consts.DecimalToPercent(value);
             zoomSlider.Value = percent;
         }
-
-        private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            if (e.AddedItems.Count == 0) {
-                (sender as ListView).SelectedItem = _viewModel.ManagerData.SelectedLayerData;
-            }
-            else {
-                _viewModel.ManagerData.SelectedLayerData = (sender as ListView).SelectedItem as CanvasLayerData;
-            }
-        }
         #endregion
 
         #region menu items
@@ -193,14 +183,6 @@ namespace Workloads.Creation.StaticImg {
 
         private async void ArcPalette_OnCustomeColorChangedEvent(object sender, ColorChnageEventArgs e) {
             await _viewModel.UpdateCustomColorsAsync(e);
-        }
-
-        private async void ArcPalette_OnForegroundColorChangedEvent(object sender, ColorChnageEventArgs e) {
-            await _viewModel.UpdateForegroundColorsAsync(e);
-        }
-
-        private async void ArcPalette_OnBackgroundColorChangedEvent(object sender, ColorChnageEventArgs e) {
-            await _viewModel.UpdateBackgroundColorsAsync(e);
         }
 
         internal readonly MainPageViewModel _viewModel;

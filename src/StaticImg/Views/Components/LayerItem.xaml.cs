@@ -16,28 +16,28 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             set { SetValue(LayerNameProperty, value); }
         }
         public static readonly DependencyProperty LayerNameProperty =
-            DependencyProperty.Register("LayerName", typeof(string), typeof(LayerItem), new PropertyMetadata(string.Empty));
+            DependencyProperty.Register(nameof(LayerName), typeof(string), typeof(LayerItem), new PropertyMetadata(string.Empty));
 
         public bool IsEnable {
             get { return (bool)GetValue(IsEnableProperty); }
             set { SetValue(IsEnableProperty, value); }
         }
         public static readonly DependencyProperty IsEnableProperty =
-            DependencyProperty.Register("IsEnable", typeof(bool), typeof(LayerItem), new PropertyMetadata(true));
+            DependencyProperty.Register(nameof(IsEnable), typeof(bool), typeof(LayerItem), new PropertyMetadata(true));
 
         public ImageSource LayerThum {
             get { return (ImageSource)GetValue(LayerThumProperty); }
             set { SetValue(LayerThumProperty, value); }
         }
         public static readonly DependencyProperty LayerThumProperty =
-            DependencyProperty.Register("LayerThum", typeof(ImageSource), typeof(LayerItem), new PropertyMetadata(null));
+            DependencyProperty.Register(nameof(LayerThum), typeof(ImageSource), typeof(LayerItem), new PropertyMetadata(null));
 
         public long ItemTag {
             get { return (long)GetValue(ItemTagProperty); }
             set { SetValue(ItemTagProperty, value); }
         }
         public static readonly DependencyProperty ItemTagProperty =
-            DependencyProperty.Register("ItemTag", typeof(long), typeof(LayerItem), new PropertyMetadata(0));
+            DependencyProperty.Register(nameof(ItemTag), typeof(long), typeof(LayerItem), new PropertyMetadata(0));
 
         public LayerItem() {
             this.InitializeComponent();

@@ -61,7 +61,8 @@ namespace Workloads.Creation.StaticImg.Models {
         public CanvasLayerData SelectedLayerData {
             get => _selectedLayerData;
             set {
-                if (value == null || value == _selectedLayerData) return;
+                if (value == null || _selectedLayerData == value) return;
+
                 _selectedLayerData = value;
                 if (value.IsEnable)
                     MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));

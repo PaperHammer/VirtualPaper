@@ -13,7 +13,7 @@ namespace VirtualPaper.UIComponent.Feedback {
             set { SetValue(CancelEnableProperty, value); }
         }
         public static readonly DependencyProperty CancelEnableProperty =
-            DependencyProperty.Register("CancelEnable", typeof(bool), typeof(Loading), new PropertyMetadata(false));
+            DependencyProperty.Register("CancelSelectionEnable", typeof(bool), typeof(Loading), new PropertyMetadata(false));
 
         public bool ProgressbarEnable {
             get { return (bool)GetValue(ProgressbarEnableProperty); }

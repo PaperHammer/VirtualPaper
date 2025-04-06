@@ -18,7 +18,7 @@ namespace Workloads.Creation.StaticImg.Models {
     [JsonSerializable(typeof(CanvasLayerData))]
     internal partial class CanvasLayerDataContext : JsonSerializerContext { }
 
-    internal partial class CanvasLayerData : ObservableObject {
+    internal partial class CanvasLayerData : ObservableObject, IEquatable<CanvasLayerData> {
         public event EventHandler OnDataLoaded;
         public event EventHandler<PolylineEventArgs> OnDrawsChanging;
         public event EventHandler OnDrawsChanged;
@@ -162,6 +162,10 @@ namespace Workloads.Creation.StaticImg.Models {
         internal async Task DeletAsync() {
             await FileUtil.TryDeleteFileAsync(_filePathForDarws, 0, 0);
             await FileUtil.TryDeleteFileAsync(_filePathForImages, 0, 0);
+        }
+
+        public bool Equals(CanvasLayerData other) {
+            return this.Tag == other.Tag;
         }
 
         private string _filePath, _filePathForDarws, _filePathForImages;

@@ -10,6 +10,7 @@
     xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
     xmlns:models="using:VirtualPaper.UIComponent.Models"
     xmlns:root="using:Workloads.Creation.StaticImg"
+    xmlns:collection="using:VirtualPaper.UIComponent.Collection"
     xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
     xmlns:lcl_components="using:Workloads.Creation.StaticImg.Views.Components"
     mc:Ignorable="d"
@@ -123,22 +124,22 @@
                                     <TextBlock Text="图层集"/>
                                 </Expander.Header>
                                 <Expander.Content>
-                                    <ListView
+                                    <collection:ArcListView
                                         x:Name="layersListView"
                                         SelectionMode="Single"
+                                        CancelSelectionEnable="False"
                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
                                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                                        SelectionChanged="ListView_SelectionChanged" 
                                         RightTapped="Listview_RightTapped"
-                                        SelectedItem="{x:Bind _viewModel.ManagerData.SelectedLayerData, Mode=OneWay}"
+                                        SelectedItem="{x:Bind _viewModel.ManagerData.SelectedLayerData, Mode=TwoWay}"
                                         ItemsSource="{x:Bind _viewModel.ManagerData.LayersData}"
                                         ItemTemplate="{StaticResource LayerItemTemplate}">
-                                        <ListView.ItemContainerStyle>
+                                        <collection:ArcListView.ItemContainerStyle>
                                             <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
                                                 <Setter Property="ContextFlyout" Value="{StaticResource Layers_MenuFlyout}" />
                                             </Style>
-                                        </ListView.ItemContainerStyle>
-                                    </ListView>
+                                        </collection:ArcListView.ItemContainerStyle>
+                                    </collection:ArcListView>
                                 </Expander.Content>
                             </Expander>
                         </StackPanel>
@@ -149,9 +150,10 @@
                     Stretch="Fill" 
                     Stroke="{ThemeResource ControlStrokeColorOnAccentDisabledBrush}"/>
 
-                <ListView
+                <collection:ArcListView
                     Width="40"
                     SelectedIndex="2"
+                    CancelSelectionEnable="False"
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                     ScrollViewer.VerticalScrollBarVisibility="Hidden"
                     ScrollViewer.HorizontalScrollMode="Disabled"

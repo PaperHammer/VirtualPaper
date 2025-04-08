@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.UI.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Mvvm;
@@ -42,7 +43,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         ToolItem _selectedToolItem;
         public ToolItem SelectedToolItem {
             get { return _selectedToolItem; }
-            set { if (_selectedToolItem == value) return; _selectedToolItem = value; OnPropertyChanged(); }
+            set { if (_selectedToolItem == value) return; _selectedToolItem = value; ManagerData.Cursor = value.Cursor; ManagerData.SelectedToolType = value.Type; OnPropertyChanged(); }
         }
 
         double _brushThickness = 5;
@@ -76,10 +77,10 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 new() {
                     ToolName = "选择",
                     Glyph = "\uE8B0",
-
                 },
                 new() {
                     Type = ToolType.PaintBrush,
+                    Cursor = InputSystemCursor.Create(InputSystemCursorShape.Cross),
                     ToolName = "画笔",
                     Glyph = "\uEE56",
                 },
@@ -95,12 +96,10 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 new() {
                     ToolName = "裁剪",
                     Glyph = "\uE7A8",
-
                 },
                 new() {
                     ToolName = "画布",
                     Glyph = "\uE9E9",
-
                 },
             ];
         }

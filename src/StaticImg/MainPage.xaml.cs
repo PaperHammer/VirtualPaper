@@ -246,6 +246,10 @@ namespace Workloads.Creation.StaticImg {
             }
         }
 
+        private void ArcListViewToolItem_Loaded(object sender, RoutedEventArgs e) {
+            _viewModel.SelectedToolItem = toolItemListView.Items[2] as ToolItem;
+        }
+
         internal readonly MainPageViewModel _viewModel;
         private LayerItem _rightTappedItem;
     }

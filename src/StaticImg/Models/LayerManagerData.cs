@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.UI;
+using Microsoft.UI.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
@@ -81,6 +82,10 @@ namespace Workloads.Creation.StaticImg.Models {
         public double BrushThickness { get; internal set; } = 5;
         [JsonIgnore]
         public double BrushOpacity { get; internal set; } = 100;
+        [JsonIgnore]
+        public InputSystemCursor Cursor { get; internal set; } = InputSystemCursor.Create(InputSystemCursorShape.Arrow);
+        [JsonIgnore]
+        public ToolType SelectedToolType { get; set; }
 
         [JsonConstructor]
         [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]

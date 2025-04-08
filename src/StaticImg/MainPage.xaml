@@ -297,8 +297,9 @@
                     Stroke="{ThemeResource ControlStrokeColorOnAccentDisabledBrush}"/>
 
                 <collection:ArcListView
+                    x:Name="toolItemListView"
                     Width="40"
-                    SelectedIndex="2"
+                    Loaded="ArcListViewToolItem_Loaded"
                     CancelSelectionEnable="False"
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                     ScrollViewer.VerticalScrollBarVisibility="Hidden"

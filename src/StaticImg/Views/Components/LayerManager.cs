@@ -149,7 +149,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void LayerManager_PointerPressed(object sender, PointerRoutedEventArgs e) {
-            _isDrawable = ManagerData.SelectedLayerData.IsEnable;
             if (!_isDrawable) return;
             _isDrawing = true;
 
@@ -188,16 +187,21 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void LayerManager_PointerEntered(object sender, PointerRoutedEventArgs e) {
             OriginalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
-            this.ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.Cross);
-
+            this.ProtectedCursor = ManagerData.Cursor;
+            
+            if (ManagerData.SelectedToolType != ToolType.PaintBrush) return;
+            
             if (ManagerData.SelectedLayerData == null) {
                 MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), InfoBarType.Error, key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable), isAllowDuplication: false);
                 return;
             }
+            
             if (!ManagerData.SelectedLayerData.IsEnable) {
                 MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerLocked), InfoBarType.Warning, key: nameof(Constants.I18n.Draft_SI_LayerLocked), isAllowDuplication: false);
                 return;
             }
+
+            _isDrawable = ManagerData.SelectedLayerData.IsEnable;
         }
 
         private void EndDrawing() {
@@ -267,12 +271,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
 
             if (disposing) {
-                this.Loading -= LayerManager_Loading;
-                this.PointerEntered -= LayerManager_PointerEntered;
-                this.PointerPressed -= LayerManager_PointerPressed;
-                this.PointerMoved -= LayerManager_PointerMoved;
-                this.PointerReleased -= LayerManager_PointerReleased;
-                this.PointerExited -= LayerManager_PointerExited;
                 if (ManagerData.LayersData != null) {
                     ManagerData.LayersData.CollectionChanged -= LayersData_CollectionChanged;
                 }

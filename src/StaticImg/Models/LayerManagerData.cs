@@ -35,7 +35,7 @@ namespace Workloads.Creation.StaticImg.Models {
             get => _size;
             set {
                 CanvasSizeText = $"{value.Width}, {value.Height} {"像素"} ({value.Dpi} / {value.HardwareDpi} DPI)";
-                if (_size == value) return;
+                if (_size.Equals(value)) return;
                 _size = value;
                 OnPropertyChanged();
             }
@@ -76,6 +76,11 @@ namespace Workloads.Creation.StaticImg.Models {
             get { return _canvasSizeText; }
             private set { _canvasSizeText = value; OnPropertyChanged(); }
         }
+
+        [JsonIgnore]
+        public double BrushThickness { get; internal set; } = 5;
+        [JsonIgnore]
+        public double BrushOpacity { get; internal set; } = 100;
 
         [JsonConstructor]
         [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]

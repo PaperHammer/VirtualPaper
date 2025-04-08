@@ -140,11 +140,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             if (!_isDrawable || !_isDrawing) return;
 
-            //// 继续当前线条
-            //_currentLine.Points.Add(pointerPoint.Position);
-            //// 更新数据模型
-            //_currentDraw.Points.Add(new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y));
-
             // 更新 PathGeometry
             var lineSegment = new LineSegment { Point = pointerPoint.Position };
             _pathGeometry.Figures[0].Segments.Add(lineSegment);
@@ -163,22 +158,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             var color = pointerPoint.Properties.IsRightButtonPressed ?
                 ManagerData.BackgroundColor : ManagerData.ForegroundColor;
 
-            //_currentLine = new Polyline {
-            //    Stroke = new SolidColorBrush(color),
-            //    StrokeThickness = 2,
-            //    StrokeLineJoin = PenLineJoin.Round,
-            //    StrokeStartLineCap = PenLineCap.Round,
-            //    StrokeEndLineCap = PenLineCap.Round
-            //};
-            //_currentLine.Points.Add(pointerPoint.Position);
-            //_currentLine.Points.Add(pointerPoint.Position);
-            //// PolyLine 至少需要两个点才能显示内容。确保近单击时能显示绘制内容
-
+            var pathColor = new SolidColorBrush(UintColor.MixAlpha(color, ManagerData.BrushOpacity / 100.0));
             // 创建 Path 和 PathGeometry
             _pathGeometry = new PathGeometry();
             _currentPath = new Path {
-                Stroke = new SolidColorBrush(color),
-                StrokeThickness = 2,
+                Stroke = pathColor,
+                StrokeThickness = ManagerData.BrushThickness,
                 StrokeLineJoin = PenLineJoin.Round,
                 StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round,
@@ -192,13 +177,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             // 创建线条数据模型
             _currentDraw = new STADraw {
-                StrokeColor = UintToSolidBrushConverter.ColorToHex(color),
-                StrokeThickness = 2,
+                StrokeColor = UintToSolidBrushConverter.ColorToHex(pathColor.Color),
+                StrokeThickness = ManagerData.BrushThickness,
                 Points = [new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y), new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y)],
                 ZTime = DateTime.Now.Ticks
             };
 
-            //ManagerData.SelectedLayerData.AddDraw(_currentLine, _currentDraw);
             ManagerData.SelectedLayerData.AddDraw(_currentPath, _currentDraw);
         }
 
@@ -308,7 +292,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private readonly Grid _workerground = new();
         private readonly Dictionary<CanvasLayerData, CanvasLayer> _layerMap = [];
         private bool _isDrawable = false, _isDrawing = false;
-        //private Polyline _currentLine; // 当前正在绘制的线条
         private Path _currentPath; // 当前正在绘制的路径
         private PathGeometry _pathGeometry; // 当前正在绘制的路径
         private STADraw _currentDraw;  // 当前线条的数据模型

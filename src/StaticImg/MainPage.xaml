@@ -9,30 +9,63 @@
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
     xmlns:models="using:VirtualPaper.UIComponent.Models"
-    xmlns:root="using:Workloads.Creation.StaticImg"
     xmlns:collection="using:VirtualPaper.UIComponent.Collection"
     xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
     xmlns:lcl_components="using:Workloads.Creation.StaticImg.Views.Components"
+    xmlns:extension="using:VirtualPaper.UIComponent.Extensions"
+    xmlns:lcl_viewModels="using:Workloads.Creation.StaticImg.ViewModels"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
-        <DataTemplate x:Key="Paintbrush_ToolExpander">
-            <Expander
-                x:Name="Paintbrush"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                IsExpanded="True">
-                <Expander.Header>
-                    <TextBlock Text="画笔箱"/>
-                </Expander.Header>
-                <Expander.Content>
-                    
-                </Expander.Content>
-            </Expander>
+        <Style x:Key="RightExpanderStyle" TargetType="Expander">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+            <Setter Property="IsExpanded" Value="True"/>
+        </Style>
+
+        <DataTemplate x:Key="PaintBrushItemteplate" x:DataType="lcl_models:PaintBrushItem">
+            <Grid Width="220">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock                    
+                    Text="{x:Bind Name, Mode=OneWay}" 
+                    VerticalAlignment="Center" />
+
+                <ContentPresenter 
+                    Grid.Column="1"
+                    Height="25"
+                    HorizontalAlignment="Right"
+                    Content="{x:Bind Example}" />
+            </Grid>
         </DataTemplate>
-        
+
+        <extension:XList x:Key="PaintBrushItems">
+            <lcl_models:PaintBrushItem Name="画笔" Type="CommonBrush" ConfigKey="common_brush_config">
+                <lcl_models:PaintBrushItem.Example>
+                    <Path 
+                        x:Name="CommonBrushPath"
+                        Stroke="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                        StrokeThickness="8"
+                        StrokeStartLineCap="Round"
+                        StrokeEndLineCap="Round"
+                        Data="M 0,14 C 25,-4 75,30 100,14" />
+                </lcl_models:PaintBrushItem.Example>
+            </lcl_models:PaintBrushItem>
+        </extension:XList>
+
+        <Style x:Key="PaintBrush_FlyoutStyle" TargetType="FlyoutPresenter" BasedOn="{StaticResource DefaultFlyoutPresenterStyle}">
+            <Setter Property="Width" Value="260"/>
+            <Setter Property="MaxWidth" Value="300"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
         <Style x:Key="ToolItemStyle" BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="Padding" Value="0" />
@@ -76,7 +109,7 @@
             <RowDefinition/>
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
-
+        
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
@@ -88,9 +121,10 @@
                 HorizontalScrollBarVisibility="Auto" 
                 VerticalScrollBarVisibility="Auto"
                 ZoomMode="Enabled"            
-                MinZoomFactor="{x:Bind root:Consts.MinZoomFactor}"
-                MaxZoomFactor="{x:Bind root:Consts.MaxZoomFactor}"
-                ViewChanging="CanvasSVer_ViewChanging">
+                MinZoomFactor="{x:Bind local:Consts.MinZoomFactor}"
+                MaxZoomFactor="{x:Bind local:Consts.MaxZoomFactor}"
+                ViewChanging="CanvasSVer_ViewChanging"
+                Background="{ThemeResource ControlStrokeColorSecondaryBrush}">
                 <lcl_components:LayerManager
                     x:Name="layerManager" 
                     Loaded="LayerManager_Loaded"
@@ -108,11 +142,116 @@
                     HorizontalScrollMode="Disabled"
                     VerticalScrollMode="Auto">
                     <StackPanel>
+                        <Grid x:Name="DynamicExpander">
+                            <Expander                            
+                                x:Name="PaintBrush"
+                                Loaded="PaintBrushExpander_Loaded"
+                                Visibility="{x:Bind _viewModel.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=PaintBrush}"
+                                Style="{StaticResource RightExpanderStyle}">
+                                <Expander.Header>
+                                    <TextBlock Text="画笔箱"/>
+                                </Expander.Header>
+                                <Expander.Content>
+                                    <StackPanel
+                                        Spacing="10"
+                                        Orientation="Vertical">
+                                        <DropDownButton
+                                            Width="200"
+                                            Content="{x:Bind _viewModel.SelectedBrush.Name, Mode=OneWay}">
+                                            <DropDownButton.Flyout>
+                                                <Flyout  
+                                                    x:Name="PaintBrushFlyout"
+                                                    FlyoutPresenterStyle="{StaticResource PaintBrush_FlyoutStyle}"
+                                                    Placement="Bottom">
+                                                    <ListView
+                                                        x:Name="PaintBrushListView"
+                                                        Width="260"
+                                                        IsItemClickEnabled="True"
+                                                        ItemClick="PaintBrushListView_ItemClick"
+                                                        SelectedItem="{x:Bind _viewModel.SelectedBrush, Mode=TwoWay}"
+                                                        ItemTemplate="{StaticResource PaintBrushItemteplate}"
+                                                        ItemsSource="{StaticResource PaintBrushItems}"/>
+                                                </Flyout>
+                                            </DropDownButton.Flyout>
+                                        </DropDownButton>
+
+                                        <StackPanel
+                                            Spacing="4"
+                                            Orientation="Vertical">
+                                            <StackPanel
+                                                Spacing="4"
+                                                Orientation="Vertical">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition/>
+                                                        <ColumnDefinition/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock 
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        Text="粗细(像素)"/>
+
+                                                    <TextBox
+                                                        x:Name="thicknessTextBox"
+                                                        Grid.Column="1"
+                                                        HorizontalAlignment="Right"
+                                                        TextChanging="ThicknessTextBox_Changing"
+                                                        LostFocus="ThicknessTextBox_LostFocus"
+                                                        Text="{x:Bind _viewModel.BrushThickness, Mode=OneWay}"/>
+                                                </Grid>
+                                            </StackPanel>
+
+                                            <Slider
+                                                x:Name="thicknessSlider"
+                                                Value="{x:Bind _viewModel.BrushThickness, Mode=TwoWay}"
+                                                Minimum="1"
+                                                Maximum="100"
+                                                IsThumbToolTipEnabled="False"/>
+                                        </StackPanel>
+
+                                        <StackPanel
+                                            Spacing="4"
+                                            Orientation="Vertical">
+                                            <StackPanel
+                                                Spacing="4"
+                                                Orientation="Vertical">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition/>
+                                                        <ColumnDefinition/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock 
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        Text="不透明度(百分比)"/>
+
+                                                    <TextBox
+                                                        x:Name="opacityTextBox"
+                                                        Grid.Column="1"
+                                                        HorizontalAlignment="Right"
+                                                        TextChanging="OpacityTextBox_Changing"
+                                                        LostFocus="OpacityTextBox_LostFocus"
+                                                        Text="{x:Bind _viewModel.BrushOpacity, Mode=OneWay}"/>
+                                                </Grid>
+                                            </StackPanel>
+
+                                            <Slider
+                                                x:Name="opacitySlider"
+                                                Value="{x:Bind _viewModel.BrushOpacity, Mode=TwoWay}"
+                                                Minimum="1"
+                                                Maximum="100"
+                                                IsThumbToolTipEnabled="False"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Expander.Content>
+                            </Expander>
+                        </Grid>
+
                         <Expander
                             x:Name="ColorPalette"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            IsExpanded="True">
+                            Style="{StaticResource RightExpanderStyle}">
                             <Expander.Header>
                                 <TextBlock Text="调色板"/>
                             </Expander.Header>
@@ -127,11 +266,7 @@
                         <Expander
                             x:Name="LayerManage"
                             Padding="0 16"
-                            VerticalAlignment="Stretch"
-                            VerticalContentAlignment="Stretch"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Stretch"
-                            IsExpanded="True">
+                            Style="{StaticResource RightExpanderStyle}">
                             <Expander.Header>
                                 <TextBlock Text="图层集"/>
                             </Expander.Header>
@@ -169,7 +304,7 @@
                     ScrollViewer.VerticalScrollBarVisibility="Hidden"
                     ScrollViewer.HorizontalScrollMode="Disabled"
                     ScrollViewer.VerticalScrollMode="Auto"
-                    SelectionChanged="ToolItemsArcListView_SelectionChanged"
+                    SelectedItem="{x:Bind _viewModel.SelectedToolItem, Mode=TwoWay}"
                     ItemsSource="{x:Bind _viewModel.ToolItems}"
                     ItemTemplate="{StaticResource ToolItemTemplate}"
                     ItemContainerStyle="{StaticResource ToolItemStyle}"/>
@@ -286,8 +421,8 @@
                 <Slider
                     x:Name="zoomSlider"
                     Width="130"
-                    Minimum="{x:Bind root:Consts.DecimalToPercent(root:Consts.MinZoomFactor)}"
-                    Maximum="{x:Bind root:Consts.DecimalToPercent(root:Consts.MaxZoomFactor)}"
+                    Minimum="{x:Bind local:Consts.DecimalToPercent(local:Consts.MinZoomFactor)}"
+                    Maximum="{x:Bind local:Consts.DecimalToPercent(local:Consts.MaxZoomFactor)}"
                     ValueChanged="ZoomSlider_ValueChanged"
                     StepFrequency="1"/>
 

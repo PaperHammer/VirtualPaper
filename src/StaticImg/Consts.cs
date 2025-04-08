@@ -1,9 +1,9 @@
 ﻿using System;
-using MessagePack;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using MessagePack;
 using Windows.Foundation;
-using Workloads.Creation.StaticImg.Views;
+using Windows.UI;
 
 namespace Workloads.Creation.StaticImg {
     class Consts {
@@ -43,6 +43,40 @@ namespace Workloads.Creation.StaticImg {
     static class UintColor {
         public static uint Transparent => 16777215;
         public static uint White => 4294967295;
+
+        /// <summary>
+        /// 计算带有透明度的颜色和外部传入的透明度百分比混合后的颜色。
+        /// </summary>
+        /// <param name="color">原始颜色（32 位 ARGB 值）。</param>
+        /// <param name="transparencyPercentage">透明度百分比（范围 0 到 1）。</param>
+        /// <returns>混合后的颜色（32 位 ARGB 值）。</returns>
+        public static uint MixAlpha(uint color, double transparencyPercentage) {
+            // 提取原始颜色的 Alpha 通道
+            byte originalAlpha = (byte)((color >> 24) & 0xFF);
+
+            // 计算新的 Alpha 值
+            byte finalAlpha = (byte)(originalAlpha * transparencyPercentage);
+
+            // 保留原始颜色的 RGB 部分
+            uint rgbPart = color & 0x00FFFFFF;
+
+            // 组合新的颜色（AARRGGBB 格式）
+            uint finalColor = ((uint)finalAlpha << 24) | rgbPart;
+
+            return finalColor;
+        }
+
+        /// <summary>
+        /// 根据传入的透明度百分比调整颜色的透明度。
+        /// </summary>
+        /// <param name="color">原始颜色。</param>
+        /// <param name="transparencyPercentage">透明度百分比（范围 0 到 1）。</param>
+        /// <returns>混合后的颜色。</returns>
+        public static Color MixAlpha(Color color, double transparencyPercentage) {
+            byte finalAlpha = (byte)(color.A * transparencyPercentage);
+
+            return Color.FromArgb(finalAlpha, color.R, color.G, color.B);
+        }
     }
 
     abstract record BaseElement {
@@ -138,16 +172,35 @@ namespace Workloads.Creation.StaticImg {
 
         public override readonly int GetHashCode()
             => HashCode.Combine(Width, Height, Dpi);
-
-        public static bool operator ==(SizeF left, SizeF right)
-            => left.Equals(right);
-
-        public static bool operator !=(SizeF left, SizeF right)
-            => !left.Equals(right);
     }
 
     enum BaseElementType {
         Image,
         Draw
+    }
+
+    enum PaintBrushType {
+        CommonBrush, // 画笔
+        //WritingBrush, // 毛笔
+        //Pen, // 书写笔(钢笔 ???)
+        //Airbrush, // 喷枪
+        //OilBrush, // 油画笔
+        //Crayon, // 蜡笔
+        //MarkerPen, // 记号笔
+        //OrdinaryPencil, // 普通铅笔
+        //WatercolorBrush, // 水彩画笔
+    }
+
+    enum ToolType {
+        None,
+        Eraser, // 橡皮擦
+        PaintBrush, // 画笔
+        Text, // 文本
+        Image, // 图片
+        Shape, // 图形
+        ColorPicker, // 取色器
+        Fill, // 填充
+        //Lasso, // 套索工具
+        Crop, // 裁剪
     }
 }

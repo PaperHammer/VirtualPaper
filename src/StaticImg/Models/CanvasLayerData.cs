@@ -168,6 +168,14 @@ namespace Workloads.Creation.StaticImg.Models {
             return this.Tag == other.Tag;
         }
 
+        public override bool Equals(object obj) {
+            return Equals(obj as CanvasLayerData);
+        }
+
+        public override int GetHashCode() {
+            return Tag.GetHashCode();
+        }
+
         private string _filePath, _filePathForDarws, _filePathForImages;
         private readonly SemaphoreSlim _saveQueueLock = new(1, 1);
         private readonly TaskCompletionSource<bool> _renderCompleted = new();

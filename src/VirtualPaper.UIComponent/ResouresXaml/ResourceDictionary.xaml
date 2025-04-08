@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters">
 
+    <cvs:DynamicVisibilityConverter x:Key="DynamicVisibilityConverter"/>
     <cvs:ThemeResourceConverter x:Key="ThemeResourceConverter"/>
     <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     <cvs:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>

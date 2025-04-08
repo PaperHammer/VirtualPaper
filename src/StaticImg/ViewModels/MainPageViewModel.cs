@@ -31,14 +31,36 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         }
 
         public List<ToolItem> ToolItems { get; private set; }
-
         public LayerManagerData ManagerData { get; } // (entryFile)
+
+        PaintBrushItem _seletcedBrush;
+        public PaintBrushItem SelectedBrush {
+            get { return _seletcedBrush; }
+            set { if (_seletcedBrush == value) return; _seletcedBrush = value; OnPropertyChanged(); }
+        }
+
+        ToolItem _selectedToolItem;
+        public ToolItem SelectedToolItem {
+            get { return _selectedToolItem; }
+            set { if (_selectedToolItem == value) return; _selectedToolItem = value; OnPropertyChanged(); }
+        }
+
+        double _brushThickness = 5;
+        public double BrushThickness {
+            get { return _brushThickness; }
+            set { if (_brushThickness == value) return; _brushThickness = value; ManagerData.BrushThickness = value; OnPropertyChanged(); }
+        }
+        
+        double _brushOpacity = 100;
+        public double BrushOpacity {
+            get { return _brushOpacity; }
+            set { if (_brushOpacity == value) return; _brushOpacity = value; ManagerData.BrushOpacity = value; OnPropertyChanged(); }
+        }
 
         public MainPageViewModel(string entryFilePath, FileType rtFileType) {
             _entryFilePath = entryFilePath;
             _rtFileType = rtFileType;
             ManagerData = new(entryFilePath);
-            ToolItems = [];
 
             InitText();
             InitToolItems();
@@ -50,7 +72,6 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 new() {
                     ToolName = "移动",
                     Glyph = "\uE7C2",
-
                 },
                 new() {
                     ToolName = "选择",
@@ -58,9 +79,9 @@ namespace Workloads.Creation.StaticImg.ViewModels {
 
                 },
                 new() {
+                    Type = ToolType.PaintBrush,
                     ToolName = "画笔",
                     Glyph = "\uEE56",
-
                 },
                 new() {
                     ToolName = "填充",

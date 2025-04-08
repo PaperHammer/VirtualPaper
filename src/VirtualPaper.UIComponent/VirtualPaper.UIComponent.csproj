@@ -15,6 +15,7 @@
     <None Remove="Data\EffectConfig.xaml" />
     <None Remove="Feedback\Loading.xaml" />
     <None Remove="Input\ArcPalette.xaml" />
+    <None Remove="Input\ComboBox\ArcComboBox.xaml" />
     <None Remove="Others\ColorEyeDropWindow.xaml" />
     <None Remove="Others\RenameView.xaml" />
     <None Remove="Others\WallpaperCreateView.xaml" />
@@ -104,6 +105,12 @@
   <ItemGroup>
     <Folder Include="Input\ColorPicker\" />
     <Folder Include="Input\Palette\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Input\ComboBox\ArcComboBox.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

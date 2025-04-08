@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -6,7 +7,9 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Bridge;
+using VirtualPaper.UIComponent.Input;
 using VirtualPaper.UIComponent.Utils.ArcEventArgs;
+using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.ViewModels;
 using Workloads.Creation.StaticImg.Views.Components;
 
@@ -185,8 +188,62 @@ namespace Workloads.Creation.StaticImg {
             await _viewModel.UpdateCustomColorsAsync(e);
         }
 
-        private void ToolItemsArcListView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+        private void PaintBrushListView_ItemClick(object sender, ItemClickEventArgs e) {
+            _viewModel.SelectedBrush = e.ClickedItem as PaintBrushItem;
+            PaintBrushFlyout?.Hide();
+        }
 
+        private void PaintBrushExpander_Loaded(object sender, RoutedEventArgs e) {
+            if (PaintBrushListView.ItemsSource is IList<object> items && items.Count > 0) {
+                PaintBrushListView.SelectedItem = items[0];
+                _viewModel.SelectedBrush = items[0] as PaintBrushItem;
+            }
+        }
+
+        private void ThicknessTextBox_Changing(TextBox sender, TextBoxTextChangingEventArgs args) {
+            string input = sender.Text;
+
+            if (string.IsNullOrWhiteSpace(input)) {
+                return;
+            }
+
+            if (!int.TryParse(input, out int parsedValue) ||
+                parsedValue < 1 || parsedValue > 100) {
+                sender.Text = _viewModel.BrushThickness.ToString();
+                sender.SelectionStart = sender.Text.Length;
+                return;
+            }
+
+            _viewModel.BrushThickness = parsedValue;
+        }
+
+        private void ThicknessTextBox_LostFocus(object sender, RoutedEventArgs e) {
+            if (thicknessTextBox.Text.Trim().Length == 0) {
+                thicknessTextBox.Text = _viewModel.BrushThickness.ToString();
+            }
+        }
+
+        private void OpacityTextBox_Changing(TextBox sender, TextBoxTextChangingEventArgs args) {
+            string input = sender.Text;
+
+            if (string.IsNullOrWhiteSpace(input)) {
+                return;
+            }
+
+            if (!int.TryParse(input, out int parsedValue) ||
+                parsedValue < 1 || parsedValue > 100) {
+                sender.Text = _viewModel.BrushThickness.ToString();
+                sender.SelectionStart = sender.Text.Length;
+                return;
+            }
+
+            _viewModel.BrushOpacity = parsedValue;
+        }
+
+        private void OpacityTextBox_LostFocus(object sender, RoutedEventArgs e) {
+            if (opacityTextBox.Text.Trim().Length == 0) {
+                opacityTextBox.Text = _viewModel.BrushOpacity.ToString();
+            }
         }
 
         internal readonly MainPageViewModel _viewModel;

@@ -1,8 +1,9 @@
-﻿using ICSharpCode.SharpZipLib.Core;
+﻿using System.IO.Compression;
+using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 
 namespace VirtualPaper.Common.Utils.Archive {
-    public static class ZipCreate {
+    public static class ZipUtil {
         public class FileData {
             public List<string> Files { get; set; } = [];
             public string ParentDirectory { get; set; } = string.Empty;
@@ -131,6 +132,30 @@ namespace VirtualPaper.Common.Utils.Archive {
                         zipStream.CloseEntry();
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// 压缩字节数组
+        /// </summary>
+        public static async Task<byte[]> CompressAsync(byte[] data) {
+            using (var outputStream = new MemoryStream()) {
+                using (var gzipStream = new GZipStream(outputStream, CompressionLevel.Optimal)) {
+                    await gzipStream.WriteAsync(data);
+                }
+                return outputStream.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// 解压缩字节数组
+        /// </summary>
+        public static async Task<byte[]> DecompressAsync(byte[] compressedData) {
+            using (var inputStream = new MemoryStream(compressedData))
+            using (var gzipStream = new GZipStream(inputStream, CompressionMode.Decompress))
+            using (var outputStream = new MemoryStream()) {
+                await gzipStream.CopyToAsync(outputStream);
+                return outputStream.ToArray();
             }
         }
     }

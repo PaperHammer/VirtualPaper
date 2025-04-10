@@ -184,7 +184,7 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         public async Task AddLayerAsync() {
-            CanvasLayerData layerData = new(_filePath) {
+            CanvasLayerData layerData = new(_filePath, Size.Width, Size.Height) {
                 Name = $"图层_{_nextLayerNumberTag++}",
                 ZIndex = LayersData.Count,
             };
@@ -192,9 +192,9 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         public async Task AddLayerAsync(string name, uint background, bool isBackground = false) {
-            CanvasLayerData layerData = new(_filePath, isBackground) {
+            CanvasLayerData layerData = new(_filePath, Size.Width, Size.Height, isBackground) {
                 Name = name,
-                Background = background,
+                //Background = background,
                 ZIndex = LayersData.Count,
             };
             await AddAsync(layerData);
@@ -210,7 +210,7 @@ namespace Workloads.Creation.StaticImg.Models {
             var idx = LayersData.FindIndex(x => x.Tag == itemTag);
             if (idx < 0) return;
 
-            CanvasLayerData copyedData = LayersData[idx].Copy();
+            CanvasLayerData copyedData = await LayersData[idx].CopyAsync();
             copyedData.Name = LayersData[idx].Name + $"-副本{_nextCopyedLayerNumberTag++}";
             copyedData.ZIndex = LayersData.Count;
             await AddAsync(copyedData);

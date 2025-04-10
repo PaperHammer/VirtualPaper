@@ -14,6 +14,7 @@ using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Workloads.Creation.StaticImg.Models;
+using Workloads.Creation.StaticImg.Models.ToolItemUtil;
 using Workloads.Creation.StaticImg.Utils;
 
 namespace Workloads.Creation.StaticImg.Views.Components {
@@ -46,6 +47,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             if (e.NewValue is LayerManagerData managerData) {
                 managerData.LayersData.CollectionChanged += control.LayersData_CollectionChanged;
+                control._tool = new ToolManager();
+                control._tool.RegisterTool(ToolType.PaintBrush, new PaintBrushTool(managerData));
+                control._tool.RegisterTool(ToolType.Fill, new FillTool(managerData));
             }
         }
 
@@ -111,7 +115,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 Width = this.Width,
                 Height = this.Height,
             };
-            _layerMap.Add(layerData, layer);
+            _layerMap.TryAdd(layerData, layer);
             Canvas.SetZIndex(layer, layerData.ZIndex);
             this.Children.Add(layer);
         }
@@ -121,9 +125,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void LayerManager_PointerExited(object sender, PointerRoutedEventArgs e) {
-            _isDrawable = false;
+            //_isDrawable = false;
             PointerPos = null;
-            EndDrawing();
+            //EndDrawing();
+            HandleToolEvent(tool => tool.OnPointerExited(new(e, e.GetCurrentPoint(this))));
 
             if (OriginalInputCursor != null) {
                 this.ProtectedCursor = OriginalInputCursor;
@@ -131,88 +136,99 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void LayerManager_PointerReleased(object sender, PointerRoutedEventArgs e) {
-            EndDrawing();
+            //EndDrawing();
+            HandleToolEvent(tool => tool.OnPointerReleased(new(e, e.GetCurrentPoint(this))));
         }
 
         private void LayerManager_PointerMoved(object sender, PointerRoutedEventArgs e) {
             var pointerPoint = e.GetCurrentPoint(this);
             PointerPos = pointerPoint.Position;
 
-            if (!_isDrawable || !_isDrawing) return;
+            HandleToolEvent(tool => tool.OnPointerMoved(new(e, e.GetCurrentPoint(this))));
+            //if (!_isDrawable || !_isDrawing) return;
 
-            // 更新 PathGeometry
-            var lineSegment = new LineSegment { Point = pointerPoint.Position };
-            _pathGeometry.Figures[0].Segments.Add(lineSegment);
+            //// 更新 PathGeometry
+            //var lineSegment = new LineSegment { Point = pointerPoint.Position };
+            //_pathGeometry.Figures[0].Segments.Add(lineSegment);
 
-            // 更新数据模型
-            _currentDraw.Points.Add(new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y));
+            //// 更新数据模型
+            //_currentDraw.Points.Add(new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y));
         }
 
         private void LayerManager_PointerPressed(object sender, PointerRoutedEventArgs e) {
-            if (!_isDrawable) return;
-            _isDrawing = true;
+            HandleToolEvent(tool => tool.OnPointerPressed(new(e, e.GetCurrentPoint(this))));
+            //if (!_isDrawable) return;
+            //_isDrawing = true;
 
-            // 开始新的线条
-            var pointerPoint = e.GetCurrentPoint(this);
-            var color = pointerPoint.Properties.IsRightButtonPressed ?
-                ManagerData.BackgroundColor : ManagerData.ForegroundColor;
+            //// 开始新的线条
+            //var pointerPoint = e.GetCurrentPoint(this);
+            //var color = pointerPoint.Properties.IsRightButtonPressed ?
+            //    ManagerData.BackgroundColor : ManagerData.ForegroundColor;
 
-            var pathColor = new SolidColorBrush(UintColor.MixAlpha(color, ManagerData.BrushOpacity / 100.0));
-            // 创建 Path 和 PathGeometry
-            _pathGeometry = new PathGeometry();
-            _currentPath = new Path {
-                Stroke = pathColor,
-                StrokeThickness = ManagerData.BrushThickness,
-                StrokeLineJoin = PenLineJoin.Round,
-                StrokeStartLineCap = PenLineCap.Round,
-                StrokeEndLineCap = PenLineCap.Round,
-                Data = _pathGeometry
-            };
+            //var pathColor = new SolidColorBrush(UintColor.MixAlpha(color, ManagerData.BrushOpacity / 100.0));
+            //// 创建 Path 和 PathGeometry
+            //_pathGeometry = new PathGeometry();
+            //_currentPath = new Path {
+            //    Stroke = pathColor,
+            //    StrokeThickness = ManagerData.BrushThickness,
+            //    StrokeLineJoin = PenLineJoin.Round,
+            //    StrokeStartLineCap = PenLineCap.Round,
+            //    StrokeEndLineCap = PenLineCap.Round,
+            //    Data = _pathGeometry
+            //};
 
-            // 创建初始点
-            var startPoint = pointerPoint.Position;
-            var figure = new PathFigure { StartPoint = startPoint };
-            _pathGeometry.Figures.Add(figure);
+            //// 创建初始点
+            //var startPoint = pointerPoint.Position;
+            //var figure = new PathFigure { StartPoint = startPoint };
+            //_pathGeometry.Figures.Add(figure);
 
-            // 创建线条数据模型
-            _currentDraw = new STADraw {
-                StrokeColor = UintToSolidBrushConverter.ColorToHex(pathColor.Color),
-                StrokeThickness = ManagerData.BrushThickness,
-                Points = [new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y), new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y)],
-                ZTime = DateTime.Now.Ticks
-            };
+            //// 创建线条数据模型
+            //_currentDraw = new STADraw {
+            //    StrokeColor = UintToSolidBrushConverter.ColorToHex(pathColor.Color),
+            //    StrokeThickness = ManagerData.BrushThickness,
+            //    Points = [new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y), new PointF((float)pointerPoint.Position.X, (float)pointerPoint.Position.Y)],
+            //    ZTime = DateTime.Now.Ticks
+            //};
 
-            ManagerData.SelectedLayerData.AddDraw(_currentPath, _currentDraw);
+            //ManagerData.SelectedLayerData.AddDraw(_currentPath, _currentDraw);
         }
 
         private void LayerManager_PointerEntered(object sender, PointerRoutedEventArgs e) {
             OriginalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
             this.ProtectedCursor = ManagerData.Cursor;
-            
+
             if (ManagerData.SelectedToolType != ToolType.PaintBrush) return;
-            
+
             if (ManagerData.SelectedLayerData == null) {
                 MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), InfoBarType.Error, key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable), isAllowDuplication: false);
                 return;
             }
-            
+
             if (!ManagerData.SelectedLayerData.IsEnable) {
                 MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerLocked), InfoBarType.Warning, key: nameof(Constants.I18n.Draft_SI_LayerLocked), isAllowDuplication: false);
                 return;
             }
 
-            _isDrawable = ManagerData.SelectedLayerData.IsEnable;
+            HandleToolEvent(tool => tool.OnPointerEntered(new(e, e.GetCurrentPoint(this))));
+            //_isDrawable = ManagerData.SelectedLayerData.IsEnable;
         }
 
-        private void EndDrawing() {
-            if (_isDrawing) {
-                _isDrawing = false;
-                //_currentLine = null; // 清除当前线条引用
-                _currentPath = null;
-                _pathGeometry = null;
-                _currentDraw = null;
+        //private void EndDrawing() {
+        //    if (_isDrawing) {
+        //        _isDrawing = false;
+        //        //_currentLine = null; // 清除当前线条引用
+        //        _currentPath = null;
+        //        _pathGeometry = null;
+        //        _currentDraw = null;
 
-                ManagerData.SelectedLayerData.DrawsChanged();
+        //        ManagerData.SelectedLayerData.DrawsChanged();
+        //    }
+        //}
+
+        private void HandleToolEvent(Action<ITool> action) {
+            var selectedTool = _tool.GetTool(ManagerData.SelectedToolType);
+            if (selectedTool != null) {
+                action(selectedTool);
             }
         }
 
@@ -289,10 +305,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private bool _isInitialized;
         private readonly Grid _workerground = new();
         private readonly Dictionary<CanvasLayerData, CanvasLayer> _layerMap = [];
-        private bool _isDrawable = false, _isDrawing = false;
-        private Path _currentPath; // 当前正在绘制的路径
-        private PathGeometry _pathGeometry; // 当前正在绘制的路径
-        private STADraw _currentDraw;  // 当前线条的数据模型
+        private ToolManager _tool;
+        //private bool _isDrawable = false, _isDrawing = false;
+        //private Path _currentPath; // 当前正在绘制的路径
+        //private PathGeometry _pathGeometry; // 当前正在绘制的路径
+        //private STADraw _currentDraw;  // 当前线条的数据模型
         private static readonly BindingInfo[] _cachedBindingInfos = [
             new BindingInfo(WidthProperty, "Size.Width", BindingMode.OneWay),
             new BindingInfo(HeightProperty, "Size.Height", BindingMode.OneWay),

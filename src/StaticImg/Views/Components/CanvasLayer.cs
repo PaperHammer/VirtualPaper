@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Shapes;
+using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Graphics.Imaging;
@@ -34,14 +37,17 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
 
             if (e.NewValue is CanvasLayerData newDatas) {
-                newDatas.OnDrawsChanging += canvasLayer.Layer_OnDrawsChanging;
-                newDatas.OnDrawsChanged += canvasLayer.Layer_OnDrawsChanged;
+                //newDatas.OnDrawsChanging += canvasLayer.Layer_OnDrawsChanging;
+                //newDatas.OnDrawsChanged += canvasLayer.Layer_OnDrawsChanged;
+
                 newDatas.OnDataLoaded += canvasLayer.NewDatas_OnDataLoaded;
             }
         }
 
+
+
         public CanvasLayer() {
-            this.Loading += CanvasLayer_Loading;
+            //this.Loading += CanvasLayer_Loading;
             this.Loaded += CanvasLayer_Loaded;
             this.Unloaded += CanvasLayer_Unloaded;
         }
@@ -54,15 +60,15 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             Dispose();
         }
 
-        private void CanvasLayer_Loading(FrameworkElement sender, object args) {
-            if (_isInitialized) {
-                return;
-            }
+        //private void CanvasLayer_Loading(FrameworkElement sender, object args) {
+        //    if (_isInitialized) {
+        //        return;
+        //    }
 
-            InitDataContext();
+        //    //InitDataContext();
 
-            _isInitialized = true;
-        }
+        //    _isInitialized = true;
+        //}
 
         private void InitDataContext() {
             this.DataContext = LayerData;
@@ -84,50 +90,64 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         //      遍历排序后的元素列表。
         //      根据 Type 判断是图片还是线条，并分别创建对应的控件（STAImage 或 Points）。
         //      设置控件的位置、大小、ZIndex 等属性，并添加到 Layer.Children 中。
-        private async Task InitRenderAsync() {
-            await _loadedTcs.Task;
+        private void InitRender() {
+            //await _loadedTcs.Task;
 
-            // 创建一个包含所有元素的列表
-            IEnumerable<BaseElement> allElements = LayerData.Images.Cast<BaseElement>().Concat(LayerData.Draws);
+            //CanvasControl
+            var image = new Image {
+                DataContext = LayerData,
+                Source = LayerData.BitmapData,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
+            this.Children.Add(image);
 
-            // 按照 ZIndex 升序，ZTime 升序排序
-            var sortedElements = allElements.Count() > ParallelThreshold
-                ? allElements.AsParallel()
-                    .OrderBy(e => e.ZIndex) // 先按 ZIndex 排序
-                    .ThenBy(e => e.ZTime)  // 再按 ZTime 排序
-                    .ToList()
-                : [.. allElements
-                    .OrderBy(e => e.ZIndex)
-                    .ThenBy(e => e.ZTime)];
+            //// 创建一个包含所有元素的列表
+            //IEnumerable<BaseElement> allElements = LayerData.Images.Cast<BaseElement>().Concat(LayerData.Draws);
 
-            // 根据排序结果渲染
-            foreach (var element in sortedElements) {
-                RenderElement(element);
-            }
+            //// 按照 ZIndex 升序，ZTime 升序排序
+            //var sortedElements = allElements.Count() > ParallelThreshold
+            //    ? allElements.AsParallel()
+            //        .OrderBy(e => e.ZIndex) // 先按 ZIndex 排序
+            //        .ThenBy(e => e.ZTime)  // 再按 ZTime 排序
+            //        .ToList()
+            //    : [.. allElements
+            //        .OrderBy(e => e.ZIndex)
+            //        .ThenBy(e => e.ZTime)];
 
-            LayerData.LayerThum = await GenerateThumbnailAsync(this, Consts.LayerThumWidth, Consts.LayerThumHeight);
+            //// 根据排序结果渲染
+            //foreach (var element in sortedElements) {
+            //    RenderElement(element);
+            //}
+
+            //LayerData.LayerThum = await GenerateThumbnailAsync(this, Consts.LayerThumWidth, Consts.LayerThumHeight);
+            //LayerData.RenderCompleted.TrySetResult(true);
+        }
+
+        //private void Layer_OnDrawsChanging(object sender, PathEventArgs e) {
+        //    switch (e.Operation) {
+        //        case OperationType.Add:
+        //            this.Children.Add(e.PaintPath);
+        //            break;
+        //        case OperationType.Remove:
+        //            this.Children.Remove(e.PaintPath);
+        //            break;
+        //        default:
+        //            break;
+        //    }
+        //}
+
+        //private async void Layer_OnDrawsChanged(object sender, EventArgs e) {
+        //    LayerData.LayerThum = await GenerateThumbnailAsync(this, Consts.LayerThumWidth, Consts.LayerThumHeight);
+        //}
+
+        private void NewDatas_OnDataLoaded(object sender, EventArgs e) {
+            CrossThreadInvoker.InvokeOnUiThread(() => {
+                InitDataContext();
+                InitRender();
+            });
+
             LayerData.RenderCompleted.TrySetResult(true);
-        }
-
-        private void Layer_OnDrawsChanging(object sender, PathEventArgs e) {
-            switch (e.Operation) {
-                case OperationType.Add:
-                    this.Children.Add(e.PaintPath);
-                    break;
-                case OperationType.Remove:
-                    this.Children.Remove(e.PaintPath);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private async void Layer_OnDrawsChanged(object sender, EventArgs e) {
-            LayerData.LayerThum = await GenerateThumbnailAsync(this, Consts.LayerThumWidth, Consts.LayerThumHeight);
-        }
-
-        private async void NewDatas_OnDataLoaded(object sender, EventArgs e) {
-            await InitRenderAsync();
         }
 
         private void RenderElement(BaseElement element) {
@@ -224,10 +244,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
 
             if (disposing) {
-                this.Loading -= CanvasLayer_Loading;
-                this.Unloaded -= CanvasLayer_Unloaded;
                 if (LayerData != null) {
-                    LayerData.OnDrawsChanging -= this.Layer_OnDrawsChanging;
+                    //LayerData.OnDrawsChanging -= this.Layer_OnDrawsChanging;
                 }
 
                 this.Children.Clear();
@@ -239,12 +257,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
         #endregion
 
-        private const int ParallelThreshold = 1000; // 并行化的阈值
+        //private const int ParallelThreshold = 1000; // 并行化的阈值
         private bool _isDisposed;
         private bool _isInitialized;
         private readonly TaskCompletionSource<bool> _loadedTcs = new();
         private static readonly BindingInfo[] _cachedBindingInfos = [
-            new BindingInfo(BackgroundProperty, "Background", BindingMode.OneWay, new UintToSolidBrushConverter()),
+            //new BindingInfo(BackgroundProperty, "Background", BindingMode.OneWay, new UintToSolidBrushConverter()),
             new BindingInfo(OpacityProperty, "Opacity", BindingMode.OneWay),
             new BindingInfo(VisibilityProperty, "IsEnable", BindingMode.OneWay, new BooleanToVisibilityConverter())
         ];

@@ -124,7 +124,7 @@
                 MinZoomFactor="{x:Bind local:Consts.MinZoomFactor}"
                 MaxZoomFactor="{x:Bind local:Consts.MaxZoomFactor}"
                 ViewChanging="CanvasSVer_ViewChanging"
-                Background="{ThemeResource ControlStrokeColorSecondaryBrush}">
+                Background="{ThemeResource ControlStrokeColorDefaultBrush}">
                 <lcl_components:LayerManager
                     x:Name="layerManager" 
                     Loaded="LayerManager_Loaded"

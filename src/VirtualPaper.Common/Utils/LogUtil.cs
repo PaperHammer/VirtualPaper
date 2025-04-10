@@ -68,8 +68,8 @@ namespace VirtualPaper.Common.Utils {
             }
 
             if (files.Count != 0) {
-                ZipCreate.CreateZip(savePath,
-                    new List<ZipCreate.FileData>() {
+                ZipUtil.CreateZip(savePath,
+                    new List<ZipUtil.FileData>() {
                                 new() { ParentDirectory = Constants.CommonPaths.AppDataDir, Files = files } });
             }
         }

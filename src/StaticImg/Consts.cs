@@ -150,14 +150,14 @@ namespace Workloads.Creation.StaticImg {
 
     public struct SizeF : IEquatable<SizeF> {
         [JsonConstructor]
-        public SizeF(float width, float height, uint dpi) {
-            this.Width = (float)Math.Round(width, 1);
-            this.Height = (float)Math.Round(height, 1);
+        public SizeF(int width, int height, uint dpi) {
+            this.Width = width;
+            this.Height = height;
             this.Dpi = dpi;
         }
 
-        public float Width { get; private set; }
-        public float Height { get; private set; }
+        public int Width { get; private set; }
+        public int Height { get; private set; }
         public uint Dpi { get; private set; }
         public readonly uint HardwareDpi => MainPage.Instance.Bridge.GetDpi();
 

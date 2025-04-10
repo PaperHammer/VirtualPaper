@@ -189,12 +189,11 @@ namespace VirtualPaper.UIComponent.Input {
             _ = CurrentSelection == Selection.A ? AColor = targetBrush : BColor = targetBrush;
         }
 
-        // TODO: 选定 BColor, 当 AColor 被切换为 BColor 时，会发生不和预期的交换选择项。但不影响使用
         private void RightSelectionBtn_Click(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e) {
             var targetBrush = (sender as FrameworkElement).Tag as SolidColorBrush;
             if (targetBrush == null || targetBrush.Color == Colors.Transparent) return;
 
-            Background = targetBrush; // 避免更新选择项
+            BackgroundColor = targetBrush.Color; // 避免更新选择项
             _ = CurrentSelection == Selection.A ? BColor = targetBrush : AColor = targetBrush;
         }
 

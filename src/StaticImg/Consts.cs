@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using MessagePack;
 using Windows.Foundation;
@@ -44,6 +43,17 @@ namespace Workloads.Creation.StaticImg {
         public static uint Transparent => 16777215;
         public static uint White => 4294967295;
 
+        public static uint ToUInt32(this Color color)
+            => (uint)((color.A << 24) | (color.R << 16) | (color.G << 8) | color.B);
+
+        public static Color ToColor(this uint argb)
+            => Color.FromArgb(
+                (byte)((argb >> 24) & 0xFF), // A
+                (byte)((argb >> 16) & 0xFF), // R
+                (byte)((argb >> 8) & 0xFF),  // G
+                (byte)(argb & 0xFF)          // B
+            );
+
         /// <summary>
         /// 计算带有透明度的颜色和外部传入的透明度百分比混合后的颜色。
         /// </summary>
@@ -79,57 +89,13 @@ namespace Workloads.Creation.StaticImg {
         }
     }
 
-    abstract record BaseElement {
-        [Key(0)]
-        public int ZIndex { get; set; } // 层级
-        [Key(1)]
-        public long ZTime { get; set; } // 写入的时间
-        [IgnoreMember]
-        public virtual BaseElementType Type { get; set; }
-        [IgnoreMember]
-        public bool IsSaved { get; set; }
-    }
-
-    [MessagePackObject(AllowPrivate = true)]
-    record STAImage : BaseElement {
-        [Key(2)]
-        public override BaseElementType Type => BaseElementType.Image;
-        [Key(3)]
-        public byte[] Data { get; set; } // 图像数据
-        [Key(4)]
-        public PointF Position { get; set; } // 在Canvas中的位置
-        [Key(5)]
-        public double Width { get; set; } // 显示时的宽度
-        [Key(6)]
-        public double Height { get; set; } // 显示时的高度               
-    }
-
-    [MessagePackObject(AllowPrivate = true)]
-    record STADraw : BaseElement {
-        [Key(2)]
-        public override BaseElementType Type => BaseElementType.Draw;
-        [Key(3)]
-        public List<PointF> Points { get; set; } = []; // 绘制的路径点
-        [Key(4)]
-        public uint StrokeColor { get; set; } // 线条颜色
-        [Key(5)]
-        public double StrokeThickness { get; set; } // 线条宽度
-    }
-
-    public struct RectengleF {
-        public float X { get; set; }
-        public float Y { get; set; }
-        public float Width { get; set; }
-        public float Height { get; set; }
-    }
-
-    [MessagePackObject(AllowPrivate = true)]
-    public struct PointF {
-        public PointF(float x, float y) : this() {
+    [MessagePackObject]
+    public struct ArcPoint {
+        public ArcPoint(float x, float y) : this() {
             SetPos(x, y);
         }
 
-        public PointF(Point point) : this() {
+        public ArcPoint(Point point) : this() {
             SetPos(point);
         }
 
@@ -146,11 +112,23 @@ namespace Workloads.Creation.StaticImg {
         public void SetPos(Point point) {
             SetPos((float)point.X, (float)point.Y);
         }
+
+        public static ArcPoint FormatPoint(Point point, int digit) {
+            return new ArcPoint((float)Math.Round(point.X, digit), (float)Math.Round(point.Y, digit));
+        }
+
+        public static ArcPoint ToArcPoint(Point point) {
+            return new ArcPoint((float)point.X, (float)point.Y);
+        }
+
+        public static Point ToPoint(ArcPoint arcPoint) {
+            return new Point(arcPoint.X, arcPoint.Y);
+        }
     }
 
-    public struct SizeF : IEquatable<SizeF> {
+    public struct ArcSize : IEquatable<ArcSize> {
         [JsonConstructor]
-        public SizeF(int width, int height, uint dpi) {
+        public ArcSize(int width, int height, uint dpi) {
             this.Width = width;
             this.Height = height;
             this.Dpi = dpi;
@@ -163,15 +141,22 @@ namespace Workloads.Creation.StaticImg {
 
         // readonly 关键字在此处意味着这个方法不会修改任何实例的状态（即它不会改变对象的任何字段）。
         // 这有助于编译器优化，并明确地传达了该方法是纯粹基于现有数据进行计算而不改变对象状态的事实。
-        public readonly bool Equals(SizeF other) {
+        public readonly bool Equals(ArcSize other) {
             return Width == other.Width && Height == other.Height && Dpi == other.Dpi;
         }
 
         public override readonly bool Equals(object obj)
-            => obj is SizeF objS && Equals(objS);
+            => obj is ArcSize objS && Equals(objS);
 
         public override readonly int GetHashCode()
             => HashCode.Combine(Width, Height, Dpi);
+        public static bool operator ==(ArcSize left, ArcSize right) {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(ArcSize left, ArcSize right) {
+            return !(left == right);
+        }
     }
 
     enum BaseElementType {

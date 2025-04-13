@@ -43,7 +43,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         ToolItem _selectedToolItem;
         public ToolItem SelectedToolItem {
             get { return _selectedToolItem; }
-            set { if (_selectedToolItem == value) return; _selectedToolItem = value; ManagerData.Cursor = value.Cursor; ManagerData.SelectedToolType = value.Type; OnPropertyChanged(); }
+            set { if (_selectedToolItem == value) return; _selectedToolItem = value; ManagerData.SelectedToolItem = value; OnPropertyChanged(); }
         }
 
         double _brushThickness = 5;
@@ -70,10 +70,10 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         #region init
         private void InitToolItems() {
             ToolItems = [
-                new() {
-                    ToolName = "移动",
-                    Glyph = "\uE7C2",
-                },
+                //new() {
+                //    ToolName = "移动",
+                //    Glyph = "\uE7C2",
+                //},
                 new() {
                     ToolName = "选择",
                     Glyph = "\uE8B0",
@@ -85,13 +85,15 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                     Glyph = "\uEE56",
                 },
                 new() {
+                    Type = ToolType.Fill,
                     ToolName = "填充",
                     ImageSourceKey = "DraftPanel_FuncBar_ColorFill",
                 },
                 new() {
+                    Type = ToolType.Eraser,
+                    Cursor = InputSystemCursor.Create(InputSystemCursorShape.Cross),
                     ToolName = "擦除",
                     Glyph = "\uE75C",
-
                 },
                 new() {
                     ToolName = "裁剪",

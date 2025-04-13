@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.UI;
-using Microsoft.UI.Input;
+using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
@@ -15,6 +15,7 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.ArcEventArgs;
 using VirtualPaper.UIComponent.ViewModels;
 using Windows.UI;
+using Workloads.Creation.StaticImg.Models.VectorShapes;
 
 namespace Workloads.Creation.StaticImg.Models {
     [JsonSerializable(typeof(LayerManagerData))]
@@ -24,15 +25,8 @@ namespace Workloads.Creation.StaticImg.Models {
     internal partial class LayerManagerDataContext : JsonSerializerContext { }
 
     internal partial class LayerManagerData : ObservableObject {
-        string _pointerPosText;
-        [JsonIgnore]
-        public string PointerPosText {
-            get { return _pointerPosText; }
-            set { _pointerPosText = value; OnPropertyChanged(); }
-        }
-
-        SizeF _size = new(1920, 1080, 96); // 像素
-        public SizeF Size {
+        ArcSize _size = new(1920, 1080, 96); // 像素
+        public ArcSize Size {
             get => _size;
             set {
                 CanvasSizeText = $"{value.Width}, {value.Height} {"像素"} ({value.Dpi} / {value.HardwareDpi} DPI)";
@@ -42,20 +36,36 @@ namespace Workloads.Creation.StaticImg.Models {
             }
         }
 
+        public ObservableList<Color> CustomColors { get; set; } = [];
+        public ObservableList<CanvasLayerData> LayersData { get; set; } = [];
+
+        string _pointerPosText;
+        [JsonIgnore]
+        public string PointerPosText {
+            get { return _pointerPosText; }
+            set { _pointerPosText = value; OnPropertyChanged(); }
+        }
+
         Color _foregroundColor = Colors.Black;
+        [JsonIgnore]
         public Color ForegroundColor {
             get => _foregroundColor;
             set { if (_foregroundColor == value) return; _foregroundColor = value; OnPropertyChanged(); }
         }
 
         Color _backgroundColor = Colors.White;
+        [JsonIgnore]
         public Color BackgroundColor {
             get => _backgroundColor;
             set { if (_backgroundColor == value) return; _backgroundColor = value; OnPropertyChanged(); }
         }
 
-        public ObservableList<Color> CustomColors { get; set; } = [];
-        public ObservableList<CanvasLayerData> LayersData { get; set; } = [];
+        double _tolerance = 100;
+        [JsonIgnore]
+        public double Tolerance {
+            get => _tolerance;
+            set { if (_tolerance == value) return; _tolerance = value; OnPropertyChanged(); }
+        }
 
         CanvasLayerData _selectedLayerData;
         [JsonIgnore]
@@ -83,9 +93,19 @@ namespace Workloads.Creation.StaticImg.Models {
         [JsonIgnore]
         public double BrushOpacity { get; internal set; } = 100;
         [JsonIgnore]
-        public InputSystemCursor Cursor { get; internal set; } = InputSystemCursor.Create(InputSystemCursorShape.Arrow);
+        public ToolItem SelectedToolItem { get; set; }
         [JsonIgnore]
-        public ToolType SelectedToolType { get; set; }
+        public double EraserSize { get; internal set; } = 5;
+        // 控制擦除边缘羽化效果
+        // 为擦除区域添加平滑过渡的边缘效果
+        /*
+         * 值范围	效果	视觉表现
+            = 0	硬边缘擦除	擦除边界锐利清晰
+            0 < value < 5	轻微羽化	边缘半透明过渡
+            >= 5	强羽化	边缘模糊渐变
+         */
+        [JsonIgnore]
+        public int EraserFeather { get; internal set; } = 0;
 
         [JsonConstructor]
         [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
@@ -194,9 +214,25 @@ namespace Workloads.Creation.StaticImg.Models {
         public async Task AddLayerAsync(string name, uint background, bool isBackground = false) {
             CanvasLayerData layerData = new(_filePath, Size.Width, Size.Height, isBackground) {
                 Name = name,
-                //Background = background,
                 ZIndex = LayersData.Count,
             };
+
+            // 根据是否为背景层设置填充
+            if (isBackground) {
+                // 背景层：添加白色背景矩形
+                var bgRect = new VectorRectangle(Size.Width, Size.Height) {
+                    Fill = new SolidColorBrush(background.ToColor()),
+                };
+                layerData.AddShape(bgRect);
+            }
+            else {
+                // 普通层：添加透明占位矩形
+                var transparentRect = new VectorRectangle(Size.Width, Size.Height) {
+                    Fill = new SolidColorBrush(Colors.Transparent),
+                };
+                layerData.InsertShape(0, transparentRect); // 确保在最底层
+            }
+
             await AddAsync(layerData);
         }
 

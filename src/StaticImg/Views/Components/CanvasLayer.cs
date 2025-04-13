@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+using System.Collections.Specialized;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Xaml;
@@ -9,18 +7,14 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Xaml.Shapes;
-using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 using Workloads.Creation.StaticImg.Models;
-using Workloads.Creation.StaticImg.Models.EventArg;
-using Workloads.Creation.StaticImg.Utils;
 
 namespace Workloads.Creation.StaticImg.Views.Components {
-    internal partial class CanvasLayer : Canvas, IDisposable { // ui
+    internal partial class CanvasLayer : Grid, IDisposable { // ui
         public CanvasLayerData LayerData {
             get { return (CanvasLayerData)GetValue(LayerDataProperty); }
             set { SetValue(LayerDataProperty, value); }
@@ -37,38 +31,34 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
 
             if (e.NewValue is CanvasLayerData newDatas) {
-                //newDatas.OnDrawsChanging += canvasLayer.Layer_OnDrawsChanging;
-                //newDatas.OnDrawsChanged += canvasLayer.Layer_OnDrawsChanged;
-
-                newDatas.OnDataLoaded += canvasLayer.NewDatas_OnDataLoaded;
+                newDatas.OnRender += canvasLayer.NewDatas_OnRender;
+                newDatas.OnDataLoaded += canvasLayer.Layer_OnDataLoaded;
             }
         }
 
+        private void NewDatas_OnRender(object sender, EventArgs e) {
 
-
-        public CanvasLayer() {
-            //this.Loading += CanvasLayer_Loading;
-            this.Loaded += CanvasLayer_Loaded;
-            this.Unloaded += CanvasLayer_Unloaded;
+            _canvasControl.Invalidate();
         }
 
-        private void CanvasLayer_Loaded(object sender, RoutedEventArgs e) {
-            _loadedTcs.TrySetResult(true);
+        public CanvasLayer() {
+            _canvasControl = new() {
+                VerticalAlignment = VerticalAlignment.Stretch,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            };
+            this.Children.Add(_canvasControl);
+
+            this.Unloaded += CanvasLayer_Unloaded;
         }
 
         private void CanvasLayer_Unloaded(object sender, RoutedEventArgs e) {
             Dispose();
         }
 
-        //private void CanvasLayer_Loading(FrameworkElement sender, object args) {
-        //    if (_isInitialized) {
-        //        return;
-        //    }
-
-        //    //InitDataContext();
-
-        //    _isInitialized = true;
-        //}
+        private void Layer_OnDataLoaded(object sender, EventArgs e) {
+            InitDataContext();
+            LayerData.RenderCompleted.TrySetResult(true);
+        }
 
         private void InitDataContext() {
             this.DataContext = LayerData;
@@ -76,106 +66,64 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 BindingsUtil.ApplyBindings(this, bindingInfo);
             }
         }
+        
+        //private void Shapes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
+        //    //switch (e.Action) {
+        //    //    case NotifyCollectionChangedAction.Add:
+        //    //        foreach (var newItem in e.NewItems.Cast<VectorShapeBase>()) {
+        //    //            AddShapeToVisualTree(newItem);
+        //    //            //LayerData.ShapesStorage.Deltas.Add(new AddShapeDelta(newItem.Clone(), DateTime.Now));
+        //    //        }
+        //    //        break;
 
-        //  合并图片和线条：
-        //      将 Images 和 Draws 中的元素合并到一个动态列表 allElements 中。
-        //      每个元素包含 ZIndex、ZTime、实际数据对象（Element），以及类型标识（Type）。
-        //  排序规则：
-        //      使用 OrderBy 对 ZIndex 进行升序排序。
-        //      使用 ThenBy 对 ZTime 进行升序排序。
-        //      这样可以确保：
-        //          不同 ZIndex 的元素按照层级从低到高渲染。
-        //          相同 ZIndex 的元素按照写入时间的先后顺序渲染。
-        //  渲染逻辑：
-        //      遍历排序后的元素列表。
-        //      根据 Type 判断是图片还是线条，并分别创建对应的控件（STAImage 或 Points）。
-        //      设置控件的位置、大小、ZIndex 等属性，并添加到 Layer.Children 中。
-        private void InitRender() {
-            //await _loadedTcs.Task;
+        //    //    case NotifyCollectionChangedAction.Remove:
+        //    //        foreach (var oldItem in e.OldItems.Cast<VectorShapeBase>()) {
+        //    //            RemoveShapeFromVisualTree(oldItem);
+        //    //            //LayerData.ShapesStorage.Deltas.Add(new RemoveShapeDelta(oldItem.Id, DateTime.Now));
+        //    //        }
+        //    //        break;
+        //    //}
+        //}
 
-            //CanvasControl
-            var image = new Image {
-                DataContext = LayerData,
-                Source = LayerData.BitmapData,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch,
-            };
-            this.Children.Add(image);
+        //private void AddShapeToVisualTree(VectorShapeBase shape) {
+        //    var uiElement = shape.ToXamlShape();
+        //    _shapeMap[shape] = uiElement;
+        //    Children.Add(uiElement);
+        //}
 
-            //// 创建一个包含所有元素的列表
-            //IEnumerable<BaseElement> allElements = LayerData.Images.Cast<BaseElement>().Concat(LayerData.Draws);
-
-            //// 按照 ZIndex 升序，ZTime 升序排序
-            //var sortedElements = allElements.Count() > ParallelThreshold
-            //    ? allElements.AsParallel()
-            //        .OrderBy(e => e.ZIndex) // 先按 ZIndex 排序
-            //        .ThenBy(e => e.ZTime)  // 再按 ZTime 排序
-            //        .ToList()
-            //    : [.. allElements
-            //        .OrderBy(e => e.ZIndex)
-            //        .ThenBy(e => e.ZTime)];
-
-            //// 根据排序结果渲染
-            //foreach (var element in sortedElements) {
-            //    RenderElement(element);
-            //}
-
-            //LayerData.LayerThum = await GenerateThumbnailAsync(this, Consts.LayerThumWidth, Consts.LayerThumHeight);
-            //LayerData.RenderCompleted.TrySetResult(true);
-        }
-
-        //private void Layer_OnDrawsChanging(object sender, PathEventArgs e) {
-        //    switch (e.Operation) {
-        //        case OperationType.Add:
-        //            this.Children.Add(e.PaintPath);
-        //            break;
-        //        case OperationType.Remove:
-        //            this.Children.Remove(e.PaintPath);
-        //            break;
-        //        default:
-        //            break;
+        //private void RemoveShapeFromVisualTree(VectorShapeBase shape) {
+        //    if (_shapeMap.TryGetValue(shape, out var uiElement)) {
+        //        Children.Remove(uiElement);
+        //        _shapeMap.Remove(shape);
         //    }
         //}
 
-        //private async void Layer_OnDrawsChanged(object sender, EventArgs e) {
-        //    LayerData.LayerThum = await GenerateThumbnailAsync(this, Consts.LayerThumWidth, Consts.LayerThumHeight);
+        //private void RenderElement(BaseElement element) {
+        //    if (element.Type == BaseElementType.Image) {
+        //        var img = element as STAImage;
+        //        Image imageControl = new() {
+        //            Source = TypeConvertUtil.ByteArrayToImageSource(img.Data),
+        //            Width = img.Width,
+        //            Height = img.Height,
+        //        };
+        //        Canvas.SetLeft(imageControl, img.Position.X);
+        //        Canvas.SetTop(imageControl, img.Position.Y);
+        //        Canvas.SetZIndex(imageControl, img.ZIndex);
+        //        this.Children.Add(imageControl);
+        //    }
+        //    else if (element.Type == BaseElementType.Draw) {
+        //        var draw = element as STADraw;
+        //        Path path = new() {
+        //            Stroke = UintToSolidBrushConverter.HexToSolidBrush(draw.StrokeColor),
+        //            StrokeThickness = draw.StrokeThickness,
+        //            Data = TypeConvertUtil.CreatePathGeometry(draw.Points)
+        //        };
+        //        Canvas.SetLeft(path, 0);
+        //        Canvas.SetTop(path, 0);
+        //        Canvas.SetZIndex(path, draw.ZIndex);
+        //        this.Children.Add(path);
+        //    }
         //}
-
-        private void NewDatas_OnDataLoaded(object sender, EventArgs e) {
-            CrossThreadInvoker.InvokeOnUiThread(() => {
-                InitDataContext();
-                InitRender();
-            });
-
-            LayerData.RenderCompleted.TrySetResult(true);
-        }
-
-        private void RenderElement(BaseElement element) {
-            if (element.Type == BaseElementType.Image) {
-                var img = element as STAImage;
-                Image imageControl = new() {
-                    Source = TypeConvertUtil.ByteArrayToImageSource(img.Data),
-                    Width = img.Width,
-                    Height = img.Height,
-                };
-                Canvas.SetLeft(imageControl, img.Position.X);
-                Canvas.SetTop(imageControl, img.Position.Y);
-                Canvas.SetZIndex(imageControl, img.ZIndex);
-                this.Children.Add(imageControl);
-            }
-            else if (element.Type == BaseElementType.Draw) {
-                var draw = element as STADraw;
-                Path path = new() {
-                    Stroke = UintToSolidBrushConverter.HexToSolidBrush(draw.StrokeColor),
-                    StrokeThickness = draw.StrokeThickness,
-                    Data = TypeConvertUtil.CreatePathGeometry(draw.Points)
-                };
-                Canvas.SetLeft(path, 0);
-                Canvas.SetTop(path, 0);
-                Canvas.SetZIndex(path, draw.ZIndex);
-                this.Children.Add(path);
-            }
-        }
 
         private async Task<ImageSource> GenerateThumbnailAsync(UIElement element, double thumbnailWidth, double thumbnailHeight) {
             // 使用 RenderTargetBitmap 捕获整个画布的内容
@@ -215,27 +163,28 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             return bitmapImage;
         }
 
-        private void RemoveElement(BaseElement element) {
-            if (element.Type == BaseElementType.Image) {
-                var img = element as STAImage;
-                var imageControl = this.Children.OfType<Image>().FirstOrDefault(i => Canvas.GetZIndex(i) == img.ZIndex);
-                if (imageControl != null) {
-                    this.Children.Remove(imageControl);
-                }
-            }
-            else if (element.Type == BaseElementType.Draw) {
-                var draw = element as STADraw;
-                var path = this.Children.OfType<Path>().FirstOrDefault(p => Canvas.GetZIndex(p) == draw.ZIndex);
-                if (path != null) {
-                    this.Children.Remove(path);
-                }
-            }
-        }
+        //private void RemoveElement(BaseElement element) {
+        //    if (element.Type == BaseElementType.Image) {
+        //        var img = element as STAImage;
+        //        var imageControl = this.Children.OfType<Image>().FirstOrDefault(i => Canvas.GetZIndex(i) == img.ZIndex);
+        //        if (imageControl != null) {
+        //            this.Children.Remove(imageControl);
+        //        }
+        //    }
+        //    else if (element.Type == BaseElementType.Draw) {
+        //        var draw = element as STADraw;
+        //        var path = this.Children.OfType<Path>().FirstOrDefault(p => Canvas.GetZIndex(p) == draw.ZIndex);
+        //        if (path != null) {
+        //            this.Children.Remove(path);
+        //        }
+        //    }
+        //}
 
         #region diapose
+        private bool _isDisposed;
         public void Dispose() {
             Dispose(true);
-            GC.SuppressFinalize(this); // 避免重复调用 Finalizer
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing) {
@@ -245,22 +194,22 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             if (disposing) {
                 if (LayerData != null) {
-                    //LayerData.OnDrawsChanging -= this.Layer_OnDrawsChanging;
+                    LayerData.OnRender += NewDatas_OnRender;
+                    LayerData.OnDataLoaded += Layer_OnDataLoaded;
                 }
-
                 this.Children.Clear();
             }
-
-            // 非托管资源清理
-
             _isDisposed = true;
         }
         #endregion
 
-        //private const int ParallelThreshold = 1000; // 并行化的阈值
-        private bool _isDisposed;
-        private bool _isInitialized;
-        private readonly TaskCompletionSource<bool> _loadedTcs = new();
+        private readonly CanvasControl _canvasControl;
+        //private const int ParallelThreshold = 1000; // 并行化的阈值        
+        //private Image _image; // 像素管理
+        //private Canvas _canvas; // 矢量管理
+        // 在 CanvasLayer 类中定义
+        //private readonly Dictionary<VectorShapeBase, UIElement> _shapeMap = [];
+        //private readonly TaskCompletionSource<bool> _loadedTcs = new();
         private static readonly BindingInfo[] _cachedBindingInfos = [
             //new BindingInfo(BackgroundProperty, "Background", BindingMode.OneWay, new UintToSolidBrushConverter()),
             new BindingInfo(OpacityProperty, "Opacity", BindingMode.OneWay),

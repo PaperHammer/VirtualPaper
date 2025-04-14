@@ -166,7 +166,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     TextTrimming = TextTrimming.CharacterEllipsis, // 文本超出时显示省略号
                     MaxWidth = 200
                 },
-                Content = runtime
+                Content = runtime,
             });
         }
 

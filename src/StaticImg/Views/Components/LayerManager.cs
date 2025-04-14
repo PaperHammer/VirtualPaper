@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
@@ -273,7 +274,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void LayerManager_PointerEntered(object sender, PointerRoutedEventArgs e) {
             OriginalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
-            this.ProtectedCursor = ManagerData.SelectedToolItem.Cursor;
+            this.ProtectedCursor = ManagerData.SelectedToolItem?.Cursor;
 
             if (ManagerData.SelectedLayerData == null) {
                 MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), InfoBarType.Error, key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable), isAllowDuplication: false);
@@ -292,8 +293,19 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             HandleToolEvent(tool => tool.OnDraw(sender, args));
         }
 
-        private void HandleToolEvent(Action<Tool> action) {
+        private async void HandleToolEvent(Action<Tool> action) {
             var selectedTool = _tool.GetTool(ManagerData.SelectedToolItem.Type);
+            if (selectedTool == null) {
+                return;
+            }
+
+            var resources = GetResources(ManagerData.SelectedLayerData);
+            if (resources == null) return;
+
+            if (resources.Control != null && !resources.Control.IsLoaded) {
+                await resources.IsCompleted.Task.ConfigureAwait(false);
+            }
+
             if (selectedTool != null) {
                 action(selectedTool);
             }

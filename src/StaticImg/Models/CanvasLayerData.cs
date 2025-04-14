@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,9 +7,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Models.Mvvm;
-using Windows.Foundation;
 using Workloads.Creation.StaticImg.Models.EventArg;
-using Workloads.Creation.StaticImg.Models.VectorShapes;
 
 namespace Workloads.Creation.StaticImg.Models {
     [JsonSerializable(typeof(CanvasLayerData))]
@@ -172,20 +168,20 @@ namespace Workloads.Creation.StaticImg.Models {
             }
         }
 
-        public void AddShape(VectorShapeBase shape) {
-            //Shapes.Add(shape);
-            //SpatialsIndex.Insert(GetShapeBounds(shape), shape);
-        }
+        //public void AddShape(VectorShapeBase shape) {
+        //    //Shapes.Add(shape);
+        //    //SpatialsIndex.Insert(GetShapeBounds(shape), shape);
+        //}
         
-        public void RemoveShape(VectorShapeBase shape) {
-            //Shapes.Remove(shape);
-            //SpatialsIndex.(GetShapeBounds(shape), shape);
-        }
+        //public void RemoveShape(VectorShapeBase shape) {
+        //    //Shapes.Remove(shape);
+        //    //SpatialsIndex.(GetShapeBounds(shape), shape);
+        //}
         
-        public void InsertShape(int pos, VectorShapeBase shape) {
-            //Shapes.Insert(pos, shape);
-            //SpatialsIndex.Insert(GetShapeBounds(shape), shape);
-        }
+        //public void InsertShape(int pos, VectorShapeBase shape) {
+        //    //Shapes.Insert(pos, shape);
+        //    //SpatialsIndex.Insert(GetShapeBounds(shape), shape);
+        //}
 
         //private static Rect GetShapeBounds(VectorShapeBase shape) {
         //    // 获取原始几何边界

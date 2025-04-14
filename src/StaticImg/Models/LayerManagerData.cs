@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.UI;
-using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
@@ -15,7 +14,6 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.ArcEventArgs;
 using VirtualPaper.UIComponent.ViewModels;
 using Windows.UI;
-using Workloads.Creation.StaticImg.Models.VectorShapes;
 
 namespace Workloads.Creation.StaticImg.Models {
     [JsonSerializable(typeof(LayerManagerData))]
@@ -95,7 +93,7 @@ namespace Workloads.Creation.StaticImg.Models {
         [JsonIgnore]
         public ToolItem SelectedToolItem { get; set; }
         [JsonIgnore]
-        public double EraserSize { get; internal set; } = 5;
+        public double EraserSize { get; internal set; } = 10;
         // 控制擦除边缘羽化效果
         // 为擦除区域添加平滑过渡的边缘效果
         /*
@@ -220,17 +218,11 @@ namespace Workloads.Creation.StaticImg.Models {
             // 根据是否为背景层设置填充
             if (isBackground) {
                 // 背景层：添加白色背景矩形
-                var bgRect = new VectorRectangle(Size.Width, Size.Height) {
-                    Fill = new SolidColorBrush(background.ToColor()),
-                };
-                layerData.AddShape(bgRect);
+
             }
             else {
                 // 普通层：添加透明占位矩形
-                var transparentRect = new VectorRectangle(Size.Width, Size.Height) {
-                    Fill = new SolidColorBrush(Colors.Transparent),
-                };
-                layerData.InsertShape(0, transparentRect); // 确保在最底层
+
             }
 
             await AddAsync(layerData);

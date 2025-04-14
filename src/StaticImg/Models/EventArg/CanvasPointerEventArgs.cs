@@ -1,5 +1,4 @@
 ﻿using System;
-using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 
 namespace Workloads.Creation.StaticImg.Models.EventArg {

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
@@ -42,21 +42,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         public override void OnPointerMoved(CanvasPointerEventArgs e) {
             if (!_isDrawable || !_isDrawing) return;
 
-            var newPos = e.OriginalArgs.GetCurrentPoint(_canvasControl).Position;
-
-            // 添加最小移动距离检查（0.5像素）
-            if (Math.Abs(newPos.X - _lastProcessedPoint.X) < 0.5 &&
-                Math.Abs(newPos.Y - _lastProcessedPoint.Y) < 0.5) {
-                return;
-            }
-
-            _pointerQueue.Enqueue(newPos);
-
-            long now = Stopwatch.GetTimestamp();
-            double elapsedMs = (now - _lastRenderTime) * 1000.0 / Stopwatch.Frequency;
-
-            if (elapsedMs < _renderThrottleMs) return;
-
+            _pointerQueue.Enqueue(e.OriginalArgs.GetCurrentPoint(_canvasControl).Position);
             ProcessPointerQueue();
         }
 
@@ -80,19 +66,35 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
         // 核心绘制逻辑
         private void RenderToTarget() {
-            if (RenderTarget == null) {
-                RenderTarget = new CanvasRenderTarget(
-                    CanvasDevice.GetSharedDevice(),
-                    (float)_canvasControl.ActualWidth,
-                    (float)_canvasControl.ActualHeight,
-                    _managerData.Size.Dpi);
-            }
+            try {
+                if (RenderTarget == null) {
+                    RenderTarget = new CanvasRenderTarget(
+                        CanvasDevice.GetSharedDevice(),
+                        (float)_canvasControl.ActualWidth,
+                        (float)_canvasControl.ActualHeight,
+                        _managerData.Size.Dpi);
+                }
 
-            using (var ds = RenderTarget.CreateDrawingSession()) {
-                DrawStroke(ds);
+                using (var ds = RenderTarget.CreateDrawingSession()) {
+                    DrawStroke(ds);
+                }
+                _canvasControl.Invalidate();
             }
+            catch (Exception ex) when (IsDeviceLost(ex)) {
+                HandleDeviceLost();
+            }
+        }
 
-            _canvasControl.Invalidate();
+        private static bool IsDeviceLost(Exception ex) {
+            return ex.HResult == unchecked((int)0x8899000C); // DXGI_ERROR_DEVICE_REMOVED
+        }
+
+        private void HandleDeviceLost() {
+            _brushCache.Clear();
+            RenderTarget?.Dispose();
+            RenderTarget = null;
+            _backBuffer?.Dispose();
+            _backBuffer = null;
         }
 
         // 绘制笔迹
@@ -127,14 +129,13 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                 var p3 = i < _currentStroke.Count - 1 ? _currentStroke[i + 1] : p2;
 
                 // 优化的控制点计算
-                //double tension = 0.3; // 降低张力值减少曲线波动
                 var cp1 = new Point(
-                    p1.X + (p2.X - p0.X) * _baseTension,
-                    p1.Y + (p2.Y - p0.Y) * _baseTension);
+                    p1.X + (p2.X - p0.X) * GetDynamicTension(p0, p1, p2),
+                    p1.Y + (p2.Y - p0.Y) * GetDynamicTension(p0, p1, p2));
 
                 var cp2 = new Point(
-                    p2.X - (p3.X - p1.X) * _baseTension,
-                    p2.Y - (p3.Y - p1.Y) * _baseTension);
+                    p2.X - (p3.X - p1.X) * GetDynamicTension(p1, p2, p3),
+                    p2.Y - (p3.Y - p1.Y) * GetDynamicTension(p1, p2, p3));
 
                 // 更精细的曲线分段
                 // 从0.1改为0.05增加细分
@@ -154,43 +155,70 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             }
         }
 
+        private double GetDynamicTension(Point p0, Point p1, Point p2) {
+            // 计算前后两点之间的距离
+            double distancePrev = Math.Sqrt(Math.Pow(p1.X - p0.X, 2) + Math.Pow(p1.Y - p0.Y, 2));
+            double distanceNext = Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
+
+            // 综合考虑前后两个距离，取平均值作为参考
+            double averageDistance = (distancePrev + distanceNext) / 2;
+
+            // 根据平均距离动态调整张力值
+            return Math.Min(0.5, _baseTension * (averageDistance / 10));
+        }
+
         private void ProcessPointerQueue() {
-            while (_pointerQueue.Count > 0) {
-                var newPoint = _pointerQueue.Dequeue();
+            while (_pointerQueue.TryDequeue(out var newPoint)) {
+                // 动态计算插值步数（基于移动速度）
+                double distance = Distance(newPoint, _lastProcessedPoint);
+                int steps = Math.Clamp((int)(distance / 2), 1, _maxInterpolationSteps);
 
-                // 添加到历史点
-                _historyPoints.Enqueue(newPoint);
-                if (_historyPoints.Count > _historySize)
-                    _historyPoints.Dequeue();
+                // 线性插值确保点密度
+                for (int i = 1; i <= steps; i++) {
+                    double t = (double)i / steps;
+                    Point interpolated = new Point(
+                        _lastProcessedPoint.X + t * (newPoint.X - _lastProcessedPoint.X),
+                        _lastProcessedPoint.Y + t * (newPoint.Y - _lastProcessedPoint.Y));
 
-                // 计算加权平均点
-                Point smoothedPoint = CalculateWeightedAverage();
-                _currentStroke.Add(smoothedPoint);
-                _lastProcessedPoint = smoothedPoint;
+                    _historyPoints.Enqueue(interpolated);
+                    if (_historyPoints.Count > _historySize)
+                        _historyPoints.Dequeue();
+
+                    // 使用更高效的平滑算法
+                    Point smoothed = CalculateCatmullRomSmooth();
+                    _currentStroke.Add(smoothed);
+                    _lastProcessedPoint = smoothed;
+                }
             }
 
-            _lastRenderTime = Stopwatch.GetTimestamp();
             RenderToTarget();
         }
 
-        private Point CalculateWeightedAverage() {
-            if (_historyPoints.Count == 0) return _lastProcessedPoint;
+        private static double Distance(Point newPoint, Point lastProcessedPoint) {
+            return Math.Sqrt(Math.Pow(newPoint.X - lastProcessedPoint.X, 2) +
+                             Math.Pow(newPoint.Y - lastProcessedPoint.Y, 2));
+        }
 
-            double totalWeight = 0;
-            double sumX = 0;
-            double sumY = 0;
-            int count = _historyPoints.Count;
+        // Catmull-Rom样条曲线平滑算法
+        private Point CalculateCatmullRomSmooth() {
+            if (_historyPoints.Count < 4)
+                return _historyPoints.LastOrDefault();
 
-            // 使用指数衰减权重（最近的点权重更大）
-            foreach (var point in _historyPoints) {
-                double weight = Math.Pow(0.7, count--); // 0.7是衰减因子
-                sumX += point.X * weight;
-                sumY += point.Y * weight;
-                totalWeight += weight;
-            }
+            var points = _historyPoints.ToArray();
+            double tension = 0.5; // 可调节张力参数
 
-            return new Point(sumX / totalWeight, sumY / totalWeight);
-        }        
+            return new Point(
+                CalculateCatmullRom(points[0].X, points[1].X, points[2].X, points[3].X, tension),
+                CalculateCatmullRom(points[0].Y, points[1].Y, points[2].Y, points[3].Y, tension)
+            );
+        }
+
+        private static double CalculateCatmullRom(double p0, double p1, double p2, double p3, double t) {
+            return 0.5 * ((2 * p1) +
+                         (-p0 + p2) * t +
+                         (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t +
+                         (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t);
+        }
 
         //作用​​：控制渲染频率，避免UI线程过载
         //​​推荐值​​：
@@ -202,7 +230,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         //        ​​推荐值​​：
         //手写笔记：8-12
         //绘画涂鸦：12-20
-        private int _maxInterpolationSteps = 12; // 最大插值步数
+        private int _maxInterpolationSteps = 25; // 最大插值步数
 
         //        控制曲线平滑度（值越小越尖锐，越大越平滑）
         //            ​​推荐值​​：
@@ -216,10 +244,10 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         private readonly Queue<Point> _pointerQueue = new();
         private readonly Queue<Point> _historyPoints = new(5);
         private const int _historySize = 5;
-        private long _lastRenderTime;
         private Point _lastProcessedPoint;
         private CanvasDevice _device;
         private CanvasControl _canvasControl;
+        private CanvasRenderTarget _backBuffer;
         private readonly LayerManagerData _managerData;
         private readonly Dictionary<(int, Color), CanvasBitmap> _brushCache = [];
     }

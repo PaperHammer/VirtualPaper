@@ -332,7 +332,7 @@ Global
 		{1E39451E-5B60-4D2E-A1E1-9E22D61F579A} = {46DB997B-6F32-40E9-A639-28DE474DB5C1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {C0DA4809-0B7F-4C80-8462-DE0981798196}
 		RESX_NeutralResourcesLanguage = zh-CN
+		SolutionGuid = {C0DA4809-0B7F-4C80-8462-DE0981798196}
 	EndGlobalSection
 EndGlobal

@@ -31,6 +31,12 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             }
         }
 
+        private bool _isEnable;
+        public bool IsEanble {
+            get { return _isEnable; }
+            set { _isEnable = value; OnPropertyChanged(); }
+        }
+
         public List<ToolItem> ToolItems { get; private set; }
         public LayerManagerData ManagerData { get; } // (entryFile)
 
@@ -51,7 +57,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             get { return _brushThickness; }
             set { if (_brushThickness == value) return; _brushThickness = value; ManagerData.BrushThickness = value; OnPropertyChanged(); }
         }
-        
+
         double _brushOpacity = 100;
         public double BrushOpacity {
             get { return _brushOpacity; }
@@ -129,6 +135,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
 
         public async Task LoadAsync() {
             try {
+                IsEanble = false;
                 MainPage.Instance.Bridge.GetNotify().Loading(false, false);
 
                 switch (_rtFileType) {
@@ -147,6 +154,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             }
             finally {
                 MainPage.Instance.Bridge.GetNotify().Loaded();
+                IsEanble = true;
             }
         }
 
@@ -159,6 +167,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
 
         internal async Task AddLayerAsync() {
             try {
+                IsEanble = false;
                 MainPage.Instance.Bridge.GetNotify().Loading(false, false);
                 await ManagerData.AddLayerAsync();
             }
@@ -168,6 +177,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             }
             finally {
                 MainPage.Instance.Bridge.GetNotify().Loaded();
+                IsEanble = true;
             }
         }
 

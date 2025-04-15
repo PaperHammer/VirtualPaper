@@ -62,7 +62,7 @@ namespace VirtualPaper.Common.Utils.Storage {
 
         private static readonly JsonSerializerOptions _optionsLoad = new() {
             AllowTrailingCommas = true,
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,            
         };
 
         // ref: https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonignorecondition?view=net-8.0

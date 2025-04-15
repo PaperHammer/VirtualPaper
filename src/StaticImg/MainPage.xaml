@@ -7,13 +7,11 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
-    xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
     xmlns:models="using:VirtualPaper.UIComponent.Models"
     xmlns:collection="using:VirtualPaper.UIComponent.Collection"
     xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
     xmlns:lcl_components="using:Workloads.Creation.StaticImg.Views.Components"
     xmlns:extension="using:VirtualPaper.UIComponent.Extensions"
-    xmlns:lcl_viewModels="using:Workloads.Creation.StaticImg.ViewModels"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -85,7 +83,7 @@
             </Grid>
         </DataTemplate>
 
-        <DataTemplate  x:Key="LayerItemTemplate" x:DataType="lcl_models:CanvasLayerData">
+        <DataTemplate  x:Key="LayerItemTemplate" x:DataType="lcl_models:InkCanvasData">
             <ListViewItem Height="60">
                 <lcl_components:LayerItem
                     LayerName="{x:Bind Name, Mode=TwoWay}"
@@ -127,10 +125,10 @@
                     MaxZoomFactor="{x:Bind local:Consts.MaxZoomFactor}"
                     ViewChanging="CanvasSVer_ViewChanging"
                     Background="{ThemeResource ControlStrokeColorDefaultBrush}">
-                    <lcl_components:LayerManager
-                        x:Name="layerManager" 
-                        Loaded="LayerManager_Loaded"
-                        ManagerData="{x:Bind _viewModel.ManagerData}"/>
+                    <lcl_components:InkCanvas
+                        x:Name="inkCanvas"
+                        Margin="80"
+                        Loaded="InkCanvas_Loaded" />
                 </ScrollViewer>
 
                 <StackPanel
@@ -148,7 +146,7 @@
                                 <Expander                            
                                     x:Name="PaintBrush"
                                     Loaded="PaintBrushExpander_Loaded"
-                                    Visibility="{x:Bind _viewModel.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=PaintBrush}"
+                                    Visibility="{x:Bind inkCanvas._viewModel.BasicData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=PaintBrush}"
                                     Style="{StaticResource RightExpanderStyle}">
                                     <Expander.Header>
                                         <TextBlock Text="画笔箱"/>
@@ -159,18 +157,18 @@
                                             Orientation="Vertical">
                                             <DropDownButton
                                                 Width="200"
-                                                Content="{x:Bind _viewModel.SelectedBrush.Name, Mode=OneWay}">
+                                                Content="{x:Bind inkCanvas._viewModel.BasicData.SelectedBrush.Name, Mode=OneWay}">
                                                 <DropDownButton.Flyout>
                                                     <Flyout  
-                                                        x:Name="PaintBrushFlyout"
+                                                        x:Name="paintBrushFlyout"
                                                         FlyoutPresenterStyle="{StaticResource PaintBrush_FlyoutStyle}"
                                                         Placement="Bottom">
                                                         <ListView
-                                                            x:Name="PaintBrushListView"
+                                                            x:Name="paintBrushListView"
                                                             Width="260"
                                                             IsItemClickEnabled="True"
                                                             ItemClick="PaintBrushListView_ItemClick"
-                                                            SelectedItem="{x:Bind _viewModel.SelectedBrush, Mode=TwoWay}"
+                                                            SelectedItem="{x:Bind inkCanvas._viewModel.BasicData.SelectedBrush, Mode=TwoWay}"
                                                             ItemTemplate="{StaticResource PaintBrushItemteplate}"
                                                             ItemsSource="{StaticResource PaintBrushItems}"/>
                                                     </Flyout>
@@ -180,38 +178,79 @@
                                             <StackPanel
                                                 Spacing="4"
                                                 Orientation="Vertical">
-                                                <StackPanel
-                                                    Spacing="4"
-                                                    Orientation="Vertical">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition/>
-                                                            <ColumnDefinition/>
-                                                        </Grid.ColumnDefinitions>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition/>
+                                                        <ColumnDefinition/>
+                                                    </Grid.ColumnDefinitions>
 
-                                                        <TextBlock 
-                                                            VerticalAlignment="Center"
-                                                            FontSize="12"
-                                                            Text="粗细(像素)"/>
+                                                    <TextBlock 
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        Text="粗细(像素)"/>
 
-                                                        <TextBox
-                                                            x:Name="thicknessTextBox"
-                                                            Grid.Column="1"
-                                                            HorizontalAlignment="Right"
-                                                            TextChanging="ThicknessTextBox_Changing"
-                                                            LostFocus="ThicknessTextBox_LostFocus"
-                                                            Text="{x:Bind _viewModel.BrushThickness, Mode=OneWay}"/>
-                                                    </Grid>
-                                                </StackPanel>
+                                                    <TextBox
+                                                        x:Name="paintBrushThicknessTextBox"
+                                                        Grid.Column="1"
+                                                        HorizontalAlignment="Right"
+                                                        TextChanging="PaintBrushThicknessTextBox_Changing"
+                                                        LostFocus="PaintBrushThicknessTextBox_LostFocus"
+                                                        Text="{x:Bind inkCanvas._viewModel.BasicData.BrushThickness, Mode=OneWay}"/>
+                                                </Grid>
 
                                                 <Slider
-                                                    x:Name="thicknessSlider"
-                                                    Value="{x:Bind _viewModel.BrushThickness, Mode=TwoWay}"
+                                                    x:Name="paintBrushThicknessSlider"
+                                                    Value="{x:Bind inkCanvas._viewModel.BasicData.BrushThickness, Mode=TwoWay}"
                                                     Minimum="1"
                                                     Maximum="100"
                                                     IsThumbToolTipEnabled="False"/>
                                             </StackPanel>
 
+                                            <StackPanel
+                                                Spacing="4"
+                                                Orientation="Vertical">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition/>
+                                                        <ColumnDefinition/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock 
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        Text="不透明度(百分比)"/>
+
+                                                    <TextBox
+                                                        x:Name="paintBrushOpacityTextBox"
+                                                        Grid.Column="1"
+                                                        HorizontalAlignment="Right"
+                                                        TextChanging="PaintBrushOpacityTextBox_Changing"
+                                                        LostFocus="PaintBrushOpacityTextBox_LostFocus"
+                                                        Text="{x:Bind inkCanvas._viewModel.BasicData.BrushOpacity, Mode=OneWay}"/>
+                                                </Grid>
+
+                                                <Slider
+                                                    x:Name="paintBrushOpacitySlider"
+                                                    Value="{x:Bind inkCanvas._viewModel.BasicData.BrushOpacity, Mode=TwoWay}"
+                                                    Minimum="1"
+                                                    Maximum="100"
+                                                    IsThumbToolTipEnabled="False"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Expander.Content>
+                                </Expander>
+                                
+                                <Expander
+                                    x:Name="Eraser"
+                                    Visibility="{x:Bind inkCanvas._viewModel.BasicData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter= Eraser}"
+                                    Style="{StaticResource RightExpanderStyle}">
+                                    <Expander.Header>
+                                        <TextBlock Text="橡皮擦"/>
+                                    </Expander.Header>
+                                    <Expander.Content>
+                                        <StackPanel
+                                            Spacing="10"
+                                            Orientation="Vertical">
                                             <StackPanel
                                                 Spacing="4"
                                                 Orientation="Vertical">
@@ -227,21 +266,52 @@
                                                         <TextBlock 
                                                             VerticalAlignment="Center"
                                                             FontSize="12"
-                                                            Text="不透明度(百分比)"/>
+                                                            Text="宽度(像素)"/>
 
                                                         <TextBox
-                                                            x:Name="opacityTextBox"
+                                                            x:Name="eraserSizeTextBox"
                                                             Grid.Column="1"
                                                             HorizontalAlignment="Right"
-                                                            TextChanging="OpacityTextBox_Changing"
-                                                            LostFocus="OpacityTextBox_LostFocus"
-                                                            Text="{x:Bind _viewModel.BrushOpacity, Mode=OneWay}"/>
+                                                            TextChanging="EraserSizeTextBox_Changing"
+                                                            LostFocus="EraserSizeTextBox_LostFocus"
+                                                            Text="{x:Bind inkCanvas._viewModel.BasicData.EraserSize, Mode=OneWay}"/>
                                                     </Grid>
                                                 </StackPanel>
 
                                                 <Slider
-                                                    x:Name="opacitySlider"
-                                                    Value="{x:Bind _viewModel.BrushOpacity, Mode=TwoWay}"
+                                                    x:Name="eraserSizeSlider"
+                                                    Value="{x:Bind inkCanvas._viewModel.BasicData.EraserSize, Mode=TwoWay}"
+                                                    Minimum="1"
+                                                    Maximum="100"
+                                                    IsThumbToolTipEnabled="False"/>
+                                            </StackPanel>
+
+                                            <StackPanel
+                                                Spacing="4"
+                                                Orientation="Vertical">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition/>
+                                                        <ColumnDefinition/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock 
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        Text="不透明度(百分比)"/>
+
+                                                    <TextBox
+                                                        x:Name="eraserOpacityTextBox"
+                                                        Grid.Column="1"
+                                                        HorizontalAlignment="Right"
+                                                        TextChanging="EraserOpacityTextBox_Changing"
+                                                        LostFocus="EraserOpacityTextBox_LostFocus"
+                                                        Text="{x:Bind inkCanvas._viewModel.BasicData.EraserOpacity, Mode=OneWay}"/>
+                                                </Grid>
+
+                                                <Slider
+                                                    x:Name="eraserOpacitySlider"
+                                                    Value="{x:Bind inkCanvas._viewModel.BasicData.EraserOpacity, Mode=TwoWay}"
                                                     Minimum="1"
                                                     Maximum="100"
                                                     IsThumbToolTipEnabled="False"/>
@@ -259,9 +329,9 @@
                                 </Expander.Header>
                                 <Expander.Content>
                                     <input:ArcPalette
-                                        ForegroundColor="{x:Bind _viewModel.ManagerData.ForegroundColor, Mode=TwoWay}"
-                                        BackgroundColor="{x:Bind _viewModel.ManagerData.BackgroundColor, Mode=TwoWay}"
-                                        InitCustomColors="{x:Bind _viewModel.ManagerData.CustomColors, Mode=OneWay}"
+                                        ForegroundColor="{x:Bind inkCanvas._viewModel.BasicData.ForegroundColor, Mode=TwoWay}"
+                                        BackgroundColor="{x:Bind inkCanvas._viewModel.BasicData.BackgroundColor, Mode=TwoWay}"
+                                        InitCustomColors="{x:Bind inkCanvas._viewModel.BasicData.CustomColors, Mode=OneWay}"
                                         OnCustomeColorChangedEvent="ArcPalette_OnCustomeColorChangedEvent"/>
                                 </Expander.Content>
                             </Expander>
@@ -278,10 +348,10 @@
                                         SelectionMode="Single"
                                         CancelSelectionEnable="False"
                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                         RightTapped="Listview_RightTapped"
-                                        SelectedItem="{x:Bind _viewModel.ManagerData.SelectedLayerData, Mode=TwoWay}"
-                                        ItemsSource="{x:Bind _viewModel.ManagerData.LayersData}"
+                                        SelectedItem="{x:Bind inkCanvas._viewModel.BasicData.SelectedInkCanvas, Mode=TwoWay}"
+                                        ItemsSource="{x:Bind inkCanvas._viewModel.BasicData.InkDatas}"
                                         ItemTemplate="{StaticResource LayerItemTemplate}">
                                         <collection:ArcListView.ItemContainerStyle>
                                             <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
@@ -307,7 +377,7 @@
                         ScrollViewer.VerticalScrollBarVisibility="Hidden"
                         ScrollViewer.HorizontalScrollMode="Disabled"
                         ScrollViewer.VerticalScrollMode="Auto"
-                        SelectedItem="{x:Bind _viewModel.SelectedToolItem, Mode=TwoWay}"
+                        SelectedItem="{x:Bind inkCanvas._viewModel.BasicData.SelectedToolItem, Mode=TwoWay}"
                         ItemsSource="{x:Bind _viewModel.ToolItems}"
                         ItemTemplate="{StaticResource ToolItemTemplate}"
                         ItemContainerStyle="{StaticResource ToolItemStyle}"/>
@@ -334,7 +404,7 @@
                             Source="{StaticResource DraftPanel_StatusBar_CursorIcon}"/>
                         <TextBlock
                             FontSize="12"
-                            Text="{x:Bind _viewModel.ManagerData.PointerPosText, Mode=OneWay}"/>
+                            Text="{x:Bind inkCanvas._viewModel.BasicData.PointerPosText, Mode=OneWay}"/>
                     </StackPanel>
 
                     <Line
@@ -376,7 +446,7 @@
                             Source="{StaticResource DraftPanel_StatusBar_SizeIcon}"/>
                         <TextBlock
                             FontSize="12"
-                            Text="{x:Bind _viewModel.ManagerData.CanvasSizeText, Mode=OneWay}"/>
+                            Text="{x:Bind inkCanvas._viewModel.BasicData.CanvasSizeText, Mode=OneWay}"/>
                     </StackPanel>
                 </StackPanel>
 

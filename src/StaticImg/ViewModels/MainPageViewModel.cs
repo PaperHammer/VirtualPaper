@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
 using Microsoft.UI.Input;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.UIComponent.Utils.ArcEventArgs;
 using Workloads.Creation.StaticImg.Models;
 
 namespace Workloads.Creation.StaticImg.ViewModels {
@@ -38,37 +34,32 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         }
 
         public List<ToolItem> ToolItems { get; private set; }
-        public LayerManagerData ManagerData { get; } // (entryFile)
 
-        PaintBrushItem _seletcedBrush;
-        public PaintBrushItem SelectedBrush {
-            get { return _seletcedBrush; }
-            set { if (_seletcedBrush == value) return; _seletcedBrush = value; OnPropertyChanged(); }
-        }
+        //PaintBrushItem _seletcedBrush;
+        //public PaintBrushItem SelectedBrush {
+        //    get { return _seletcedBrush; }
+        //    set { if (_seletcedBrush == value) return; _seletcedBrush = value; OnPropertyChanged(); }
+        //}
 
-        ToolItem _selectedToolItem;
-        public ToolItem SelectedToolItem {
-            get { return _selectedToolItem; }
-            set { if (_selectedToolItem == value) return; _selectedToolItem = value; ManagerData.SelectedToolItem = value; OnPropertyChanged(); }
-        }
+        //ToolItem _selectedToolItem;
+        //public ToolItem SelectedToolItem {
+        //    get { return _selectedToolItem; }
+        //    set { if (_selectedToolItem == value) return; _selectedToolItem = value; OnPropertyChanged(); }
+        //}
 
-        double _brushThickness = 5;
-        public double BrushThickness {
-            get { return _brushThickness; }
-            set { if (_brushThickness == value) return; _brushThickness = value; ManagerData.BrushThickness = value; OnPropertyChanged(); }
-        }
+        //double _brushThickness = 5;
+        //public double BrushThickness {
+        //    get { return _brushThickness; }
+        //    set { if (_brushThickness == value) return; _brushThickness = value; OnPropertyChanged(); }
+        //}
 
-        double _brushOpacity = 100;
-        public double BrushOpacity {
-            get { return _brushOpacity; }
-            set { if (_brushOpacity == value) return; _brushOpacity = value; ManagerData.BrushOpacity = value; OnPropertyChanged(); }
-        }
+        //double _brushOpacity = 100;
+        //public double BrushOpacity {
+        //    get { return _brushOpacity; }
+        //    set { if (_brushOpacity == value) return; _brushOpacity = value; OnPropertyChanged(); }
+        //}
 
-        public MainPageViewModel(string entryFilePath, FileType rtFileType) {
-            _entryFilePath = entryFilePath;
-            _rtFileType = rtFileType;
-            ManagerData = new(entryFilePath);
-
+        public MainPageViewModel() {
             InitText();
             InitToolItems();
         }
@@ -120,120 +111,120 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         }
         #endregion
 
-        public async Task SaveAsync() {
-            try {
-                await JsonSaver.SaveAsync(_entryFilePath, ManagerData, LayerManagerDataContext.Default);
-                foreach (var item in ManagerData.LayersData) {
-                    await item.SaveAsync();
-                }
-            }
-            catch (Exception ex) {
-                MainPage.Instance.Bridge.Log(LogType.Error, ex);
-                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
-            }
-        }
+        //public async Task SaveAsync() {
+        //    try {
+        //        await BasicData.SaveBasicAsync();
+        //    }
+        //    catch (Exception ex) {
+        //        MainPage.Instance.Bridge.Log(LogType.Error, ex);
+        //        MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
+        //    }
+        //}
 
-        public async Task LoadAsync() {
-            try {
-                IsEanble = false;
-                MainPage.Instance.Bridge.GetNotify().Loading(false, false);
+        //public async Task LoadBasicOrInit() {
+        //    try {
+        //        IsEanble = false;
+        //        MainPage.Instance.Bridge.GetNotify().Loading(false, false);
 
-                switch (_rtFileType) {
-                    case FileType.FImage:
-                        break;
-                    case FileType.FProject:
-                        await LoadProjectAsync();
-                        break;
-                    default:
-                        break;
-                }
-            }
-            catch (Exception ex) {
-                MainPage.Instance.Bridge.Log(LogType.Error, ex);
-                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
-            }
-            finally {
-                MainPage.Instance.Bridge.GetNotify().Loaded();
-                IsEanble = true;
-            }
-        }
+        //        switch (_rtFileType) {
+        //            case FileType.FImage:
+        //                break;
+        //            case FileType.FProject:
+        //                await LoadProjectAsync();
+        //                break;
+        //            default:
+        //                break;
+        //        }
+        //    }
+        //    catch (Exception ex) {
+        //        MainPage.Instance.Bridge.Log(LogType.Error, ex);
+        //        MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
+        //    }
+        //    finally {
+        //        MainPage.Instance.Bridge.GetNotify().Loaded();
+        //        IsEanble = true;
+        //    }
+        //}
 
-        private async Task LoadProjectAsync() {
-            if (!File.Exists(_entryFilePath)) {
-                await ManagerData.InitDataAsync();
-            }
-            await ManagerData.LoadAsync();
-        }
+        //private async Task LoadProjectAsync() {
+        //    if (!File.Exists(_entryFilePath)) {
+        //        await BasicData.InitDataAsync();
+        //        await BasicData.SaveRenderDataAsync();
+        //    }
+        //    //else {
+        //    await BasicData.LoadBasicOrInit();
+        //    //}
+        //}
 
-        internal async Task AddLayerAsync() {
-            try {
-                IsEanble = false;
-                MainPage.Instance.Bridge.GetNotify().Loading(false, false);
-                await ManagerData.AddLayerAsync();
-            }
-            catch (Exception ex) {
-                MainPage.Instance.Bridge.Log(LogType.Error, ex);
-                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
-            }
-            finally {
-                MainPage.Instance.Bridge.GetNotify().Loaded();
-                IsEanble = true;
-            }
-        }
+        //internal async Task AddLayerAsync() {
+        //    try {
+        //        IsEanble = false;
+        //        MainPage.Instance.Bridge.GetNotify().Loading(false, false);
+        //        await BasicData.AddLayerAsync();
+        //    }
+        //    catch (Exception ex) {
+        //        MainPage.Instance.Bridge.Log(LogType.Error, ex);
+        //        MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
+        //    }
+        //    finally {
+        //        MainPage.Instance.Bridge.GetNotify().Loaded();
+        //        IsEanble = true;
+        //    }
+        //}
 
-        internal async Task CopyLayerAsync(long itemTag) {
-            try {
-                MainPage.Instance.Bridge.GetNotify().Loading(false, false);
-                await ManagerData.CopyLayerAsync(itemTag);
-            }
-            catch (Exception ex) {
-                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
-            }
-            finally {
-                MainPage.Instance.Bridge.GetNotify().Loaded();
-            }
-        }
+        //internal async Task CopyLayerAsync(long itemTag) {
+        //    try {
+        //        MainPage.Instance.Bridge.GetNotify().Loading(false, false);
+        //        await BasicData.CopyLayerAsync(itemTag);
+        //    }
+        //    catch (Exception ex) {
+        //        MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
+        //    }
+        //    finally {
+        //        MainPage.Instance.Bridge.GetNotify().Loaded();
+        //    }
+        //}
 
-        internal async Task RenameAsync(long itemTag) {
-            try {
-                MainPage.Instance.Bridge.GetNotify().Loading(false, false);
-                await ManagerData.RenameAsync(itemTag);
-            }
-            catch (Exception ex) {
-                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
-            }
-            finally {
-                MainPage.Instance.Bridge.GetNotify().Loaded();
-            }
-        }
+        //internal async Task RenameAsync(long itemTag) {
+        //    try {
+        //        MainPage.Instance.Bridge.GetNotify().Loading(false, false);
+        //        await BasicData.RenameAsync(itemTag);
+        //    }
+        //    catch (Exception ex) {
+        //        MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
+        //    }
+        //    finally {
+        //        MainPage.Instance.Bridge.GetNotify().Loaded();
+        //    }
+        //}
 
-        internal async Task DeleteAsync(long itemTag) {
-            try {
-                MainPage.Instance.Bridge.GetNotify().Loading(false, false);
-                await ManagerData.DeleteAsync(itemTag);
-            }
-            catch (Exception ex) {
-                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
-            }
-            finally {
-                MainPage.Instance.Bridge.GetNotify().Loaded();
-            }
-        }
+        //internal async Task DeleteAsync(long itemTag) {
+        //    try {
+        //        MainPage.Instance.Bridge.GetNotify().Loading(false, false);
+        //        await BasicData.DeleteAsync(itemTag);
+        //    }
+        //    catch (Exception ex) {
+        //        MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
+        //    }
+        //    finally {
+        //        MainPage.Instance.Bridge.GetNotify().Loaded();
+        //    }
+        //}
 
-        internal async Task UpdateCustomColorsAsync(ColorChnageEventArgs e) {
-            await ManagerData.UpdateCustomColorsAsync(e);
-        }
+        //internal async Task UpdateCustomColorsAsync(ColorChnageEventArgs e) {
+        //    await BasicData.UpdateCustomColorsAsync(e);
+        //}
 
-        internal async Task UpdateForegroundColorsAsync(ColorChnageEventArgs e) {
-            await ManagerData.UpdateForegroundColorsAsync(e);
-        }
+        //internal async Task UpdateForegroundColorsAsync(ColorChnageEventArgs e) {
+        //    await BasicData.UpdateForegroundColorsAsync(e);
+        //}
 
-        internal async Task UpdateBackgroundColorsAsync(ColorChnageEventArgs e) {
-            await ManagerData.UpdateBackgroundColorsAsync(e);
-        }
+        //internal async Task UpdateBackgroundColorsAsync(ColorChnageEventArgs e) {
+        //    await BasicData.UpdateBackgroundColorsAsync(e);
+        //}
 
-        private readonly FileType _rtFileType;
-        private readonly string _entryFilePath = string.Empty;
+        //private readonly FileType _rtFileType;
+        //internal readonly string _entryFilePath = string.Empty;
         internal readonly string[] _comboZoomFactors = ["700%", "600%", "500%", "400%", "300%", "200%", "100%", "75%", "50%", "25%"];
     }
 }

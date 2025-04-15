@@ -20,7 +20,6 @@ namespace VirtualPaper.Models.Mvvm {
             foreach (var item in items) {
                 Add(item);
             }
-            //OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, items));
         }
 
         public void AddRangeReverse(IList<T> items) {
@@ -29,7 +28,6 @@ namespace VirtualPaper.Models.Mvvm {
             for (int i = items.Count - 1; i >= 0; i--) {
                 Add(items[i]);
             }
-            //OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, items));
         }
 
         public new void Clear() {

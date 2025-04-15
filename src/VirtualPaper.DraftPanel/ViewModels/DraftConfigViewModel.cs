@@ -161,7 +161,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
                 //#region 创建 .vproj 文件
                 //ProjectMetadata projdata = new(inputData.ProjName, inputData.ProjType);
-                //await projdata.SaveAsync(projFolder);
+                //await projdata.SaveBasicAsync(projFolder);
                 //#endregion
             }
             catch (Exception ex) {

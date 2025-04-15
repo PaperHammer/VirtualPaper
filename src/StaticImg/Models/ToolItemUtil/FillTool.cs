@@ -8,31 +8,27 @@ using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
-    class FillTool : Tool {
-        public FillTool(LayerManagerData managerData) {
-            _managerData = managerData;
-        }
-
+    class FillTool(LayerBasicData data) : Tool {
         public override void OnPointerEntered(CanvasPointerEventArgs e) {
-            RenderTarget = e.CanvasResources.RenderTarget;
-            _device = e.CanvasResources.Device;
-            _canvasControl = e.CanvasResources.Control;
+            RenderTarget = e.RenderData.RenderTarget;
+            //_device = e.CanvasResources.Device;
+            //_canvasControl = e.CanvasResources.Control;
 
             if (RenderTarget == null) {
                 RenderTarget = new CanvasRenderTarget(
-                    CanvasDevice.GetSharedDevice(),
+                    MainPage.Instance.SharedDevice,
                     (float)_canvasControl.ActualWidth,
                     (float)_canvasControl.ActualHeight,
-                    _managerData.Size.Dpi);
+                    data.Size.Dpi);
             }
         }
 
         public override void OnPointerMoved(CanvasPointerEventArgs e) { }
 
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
-            PointerPoint pointerPoint = e.OriginalArgs.GetCurrentPoint(_canvasControl);
-            _blendedColor = pointerPoint.Properties.IsRightButtonPressed ? _managerData.BackgroundColor : _managerData.ForegroundColor;
-            _lastClickPoint = e.OriginalArgs.GetCurrentPoint(_canvasControl).Position;
+            PointerPoint pointerPoint = e.Pointer;
+            _blendedColor = pointerPoint.Properties.IsRightButtonPressed ? data.BackgroundColor : data.ForegroundColor;
+            _lastClickPoint = pointerPoint.Position;
             RenderToTarget();
         }
 
@@ -42,19 +38,27 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
         // 核心绘制逻辑
         private void RenderToTarget() {
-            if (RenderTarget == null) {
-                RenderTarget = new CanvasRenderTarget(
-                    CanvasDevice.GetSharedDevice(),
-                    (float)_canvasControl.ActualWidth,
-                    (float)_canvasControl.ActualHeight,
-                    _managerData.Size.Dpi);
-            }
+            try {
+                if (RenderTarget == null) {
+                    return;
+                }
 
-            using (var ds = RenderTarget.CreateDrawingSession()) {
-                FloodFill(_lastClickPoint, _blendedColor, ds);
+                using (var ds = RenderTarget.CreateDrawingSession()) {
+                    FloodFill(_lastClickPoint, _blendedColor, ds);
+                }
             }
+            catch (Exception ex) when (IsDeviceLost(ex)) {
+                HandleDeviceLost();
+            }
+        }
 
-            _canvasControl.Invalidate();
+        private static bool IsDeviceLost(Exception ex) {
+            return ex.HResult == unchecked((int)0x8899000C); // DXGI_ERROR_DEVICE_REMOVED
+        }
+
+        private void HandleDeviceLost() {
+            RenderTarget?.Dispose();
+            RenderTarget = null;
         }
 
         public void FloodFill(Point startPoint, Color fillColor, CanvasDrawingSession ds) {
@@ -146,8 +150,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
         private Color _blendedColor;
         private Point _lastClickPoint;
-        private CanvasDevice _device;
+        //private CanvasDevice _device;
         private CanvasControl _canvasControl;
-        private readonly LayerManagerData _managerData;
     }
 }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Windows.Foundation;
@@ -10,26 +9,19 @@ using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
-    class EraserTool : Tool {
-        public EraserTool(LayerManagerData managerData) {
-            _managerData = managerData;
-        }
-
+    class EraserTool(LayerBasicData data) : Tool {
         public override void OnPointerEntered(CanvasPointerEventArgs e) {
-            _isDrawable = _managerData.SelectedLayerData.IsEnable;
-            RenderTarget = e.CanvasResources.RenderTarget;
-            _device = e.CanvasResources.Device;
-            _canvasControl = e.CanvasResources.Control;
+            RenderTarget = e.RenderData.RenderTarget;
         }
 
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
-            PointerPoint pointerPoint = e.OriginalArgs.GetCurrentPoint(_canvasControl);
-            if (!_isDrawable || pointerPoint.Properties.IsMiddleButtonPressed)
+            PointerPoint pointerPoint = e.Pointer;
+            if (pointerPoint.Properties.IsMiddleButtonPressed)
                 return;
 
             _isDrawing = true;
             _blendedColor = BlendColor(pointerPoint.Properties.IsRightButtonPressed ?
-                _managerData.BackgroundColor : Colors.Transparent, _managerData.BrushOpacity / 100);
+                data.BackgroundColor : Colors.Transparent, data.EraserOpacity / 100);
             _lastClickPoint = pointerPoint.Position;
             _currentStroke.Clear();
             _pointerQueue.Clear();
@@ -40,9 +32,9 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         }
 
         public override void OnPointerMoved(CanvasPointerEventArgs e) {
-            if (!_isDrawable || !_isDrawing) return;
+            if (!_isDrawing) return;
 
-            _pointerQueue.Enqueue(e.OriginalArgs.GetCurrentPoint(_canvasControl).Position);
+            _pointerQueue.Enqueue(e.Pointer.Position);
             ProcessPointerQueue();
         }
 
@@ -68,17 +60,12 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         private void RenderToTarget() {
             try {
                 if (RenderTarget == null) {
-                    RenderTarget = new CanvasRenderTarget(
-                        CanvasDevice.GetSharedDevice(),
-                        (float)_canvasControl.ActualWidth,
-                        (float)_canvasControl.ActualHeight,
-                        _managerData.Size.Dpi);
+                    return;
                 }
 
                 using (var ds = RenderTarget.CreateDrawingSession()) {
                     DrawStroke(ds);
                 }
-                _canvasControl.Invalidate();
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();
@@ -102,14 +89,14 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             if (_currentStroke.Count == 0) return;
 
             ds.Blend = CanvasBlend.Copy;
-            int size = (int)_managerData.EraserSize;
+            int size = (int)data.EraserSize;
             if (!_brushCache.TryGetValue((size, _blendedColor), out var brush)) {
                 // 创建方形笔刷纹理
-                var renderTarget = new CanvasRenderTarget(_device, size, size, _managerData.Size.Dpi);
-                using (var _ds = renderTarget.CreateDrawingSession()) {
-                    _ds.Blend = CanvasBlend.Copy;
-                    _ds.Clear(Colors.Transparent);
-                    _ds.FillRectangle(0, 0, size, size, _blendedColor); // 修改为矩形填充
+                var renderTarget = new CanvasRenderTarget(MainPage.Instance.SharedDevice, size, size, data.Size.Dpi);
+                using (var _tmpDs = renderTarget.CreateDrawingSession()) {
+                    _tmpDs.Blend = CanvasBlend.Copy;
+                    _tmpDs.Clear(Colors.Transparent);
+                    _tmpDs.FillRectangle(0, 0, size, size, _blendedColor); // 修改为矩形填充
                 }
                 _brushCache[(size, _blendedColor)] = renderTarget;
                 brush = _brushCache[(size, _blendedColor)];
@@ -239,17 +226,17 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         //毛笔效果：0.25-0.35 
         private double _baseTension = 0.2;       // 基础曲线张力
         private Color _blendedColor;
-        private bool _isDrawable = false, _isDrawing = false;
+        //private bool _isDrawable = false;
+        private bool _isDrawing = false;
         private Point _lastClickPoint;
         private readonly List<Point> _currentStroke = [];
         private readonly Queue<Point> _pointerQueue = new();
         private readonly Queue<Point> _historyPoints = new(5);
         private const int _historySize = 5;
         private Point _lastProcessedPoint;
-        private CanvasDevice _device;
-        private CanvasControl _canvasControl;
+        //private CanvasDevice _device;
+        //private CanvasControl _canvasControl;
         private CanvasRenderTarget _backBuffer;
-        private readonly LayerManagerData _managerData;
         private readonly Dictionary<(int, Color), CanvasBitmap> _brushCache = [];
     }
 }

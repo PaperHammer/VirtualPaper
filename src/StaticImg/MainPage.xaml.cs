@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Bridge;
-using VirtualPaper.UIComponent.Input;
 using VirtualPaper.UIComponent.Utils.ArcEventArgs;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.ViewModels;
@@ -23,6 +23,9 @@ namespace Workloads.Creation.StaticImg {
     public sealed partial class MainPage : Page, IRuntime {
         internal static MainPage Instance { get; private set; }
         internal IDraftPanelBridge Bridge { get; }
+        internal string EntryFilePath { get; }
+        internal FileType RtFileType { get; }
+        internal CanvasDevice SharedDevice { get; }
 
         /// <summary>
         /// 静态图像编辑页面
@@ -30,21 +33,36 @@ namespace Workloads.Creation.StaticImg {
         /// <param name="entryFilePath">接收后缀为 FImage or FE_STATIC_IMG_PROJ 的文件路径</param>
         public MainPage(IDraftPanelBridge bridge, string entryFilePath, FileType rtFileType) {
             Instance = this;
+            Bridge = bridge;
+            EntryFilePath = entryFilePath;
+            RtFileType = rtFileType;
+            SharedDevice = CanvasDevice.GetSharedDevice();
+
+            _viewModel = new MainPageViewModel();
+            this.DataContext = _viewModel;
 
             this.InitializeComponent();
-
-            Bridge = bridge;
-            _viewModel = new MainPageViewModel(entryFilePath, rtFileType);
-            this.DataContext = _viewModel;
         }
 
         public async Task SaveAsync() {
-            await _viewModel.SaveAsync();
+            try {
+                await inkCanvas.SaveAsync();
+            }
+            catch (Exception ex) {
+                Bridge.Log(LogType.Error, ex);
+                Bridge.GetNotify().ShowExp(ex);
+            }
         }
 
         #region ui events
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
-            await _viewModel.LoadAsync();
+            _viewModel.IsEanble = false;
+            Bridge.GetNotify().Loading(false, false);
+
+            await inkCanvas.IsReady.Task;
+
+            Bridge.GetNotify().Loaded();
+            _viewModel.IsEanble = true;
         }
 
         private void ZoomOut_ButtonClick(object sender, RoutedEventArgs e) {
@@ -103,7 +121,7 @@ namespace Workloads.Creation.StaticImg {
             }
         }
 
-        private void LayerManager_Loaded(object sender, RoutedEventArgs e) {
+        private void InkCanvas_Loaded(object sender, RoutedEventArgs e) {
             FitView();
         }
 
@@ -130,13 +148,13 @@ namespace Workloads.Creation.StaticImg {
             double viewportWidth = canvasSVer.ViewportWidth;
             double viewportHeight = canvasSVer.ViewportHeight;
 
-            double contentWidth = _viewModel.ManagerData.Size.Width;
-            double contentHeight = _viewModel.ManagerData.Size.Height;
+            double contentWidth = inkCanvas._viewModel.BasicData.Size.Width;
+            double contentHeight = inkCanvas._viewModel.BasicData.Size.Height;
 
             // 计算缩放因子（取宽度和高度两者较小的比例）
             double zoomFactor = Math.Min(
-                (viewportWidth - (layerManager.Margin.Left + layerManager.Margin.Right)) / contentWidth,
-                (viewportHeight - (layerManager.Margin.Top + layerManager.Margin.Bottom)) / contentHeight);
+                (viewportWidth - (inkCanvas.Margin.Left + inkCanvas.Margin.Right)) / contentWidth,
+                (viewportHeight - (inkCanvas.Margin.Top + inkCanvas.Margin.Bottom)) / contentHeight);
             // 确保缩放因子在允许范围内
             zoomFactor = Math.Max(Consts.MinZoomFactor, Math.Min(zoomFactor, Consts.MaxZoomFactor));
             _viewModel.CanvasZoom = zoomFactor;
@@ -163,19 +181,19 @@ namespace Workloads.Creation.StaticImg {
 
         #region menu items
         private async void AddLayer_Click(object sender, RoutedEventArgs e) {
-            await _viewModel.AddLayerAsync();
+            await inkCanvas.AddLayerAsync();
         }
 
         private async void CopyLayer_Click(object sender, RoutedEventArgs e) {
-            await _viewModel.CopyLayerAsync(_rightTappedItem.ItemTag);
+            await inkCanvas.CopyLayerAsync(_rightTappedItem.ItemTag);
         }
 
         private async void RenameLayer_Click(object sender, RoutedEventArgs e) {
-            await _viewModel.RenameAsync(_rightTappedItem.ItemTag);
+            await inkCanvas.RenameAsync(_rightTappedItem.ItemTag);
         }
 
         private async void DeleteLayer_Click(object sender, RoutedEventArgs e) {
-            await _viewModel.DeleteAsync(_rightTappedItem.ItemTag);
+            await inkCanvas.DeleteAsync(_rightTappedItem.ItemTag);
         }
         #endregion
 
@@ -185,22 +203,22 @@ namespace Workloads.Creation.StaticImg {
         }
 
         private async void ArcPalette_OnCustomeColorChangedEvent(object sender, ColorChnageEventArgs e) {
-            await _viewModel.UpdateCustomColorsAsync(e);
+            await inkCanvas.UpdateCustomColorsAsync(e);
         }
 
         private void PaintBrushListView_ItemClick(object sender, ItemClickEventArgs e) {
-            _viewModel.SelectedBrush = e.ClickedItem as PaintBrushItem;
-            PaintBrushFlyout?.Hide();
+            inkCanvas._viewModel.BasicData.SelectedBrush = e.ClickedItem as PaintBrushItem;
+            paintBrushFlyout?.Hide();
         }
 
         private void PaintBrushExpander_Loaded(object sender, RoutedEventArgs e) {
-            if (PaintBrushListView.ItemsSource is IList<object> items && items.Count > 0) {
-                PaintBrushListView.SelectedItem = items[0];
-                _viewModel.SelectedBrush = items[0] as PaintBrushItem;
+            if (paintBrushListView.ItemsSource is IList<object> items && items.Count > 0) {
+                paintBrushListView.SelectedItem = items[0];
+                inkCanvas._viewModel.BasicData.SelectedBrush = items[0] as PaintBrushItem;
             }
         }
 
-        private void ThicknessTextBox_Changing(TextBox sender, TextBoxTextChangingEventArgs args) {
+        private void PaintBrushThicknessTextBox_Changing(TextBox sender, TextBoxTextChangingEventArgs args) {
             string input = sender.Text;
 
             if (string.IsNullOrWhiteSpace(input)) {
@@ -209,21 +227,21 @@ namespace Workloads.Creation.StaticImg {
 
             if (!int.TryParse(input, out int parsedValue) ||
                 parsedValue < 1 || parsedValue > 100) {
-                sender.Text = _viewModel.BrushThickness.ToString();
+                sender.Text = inkCanvas._viewModel.BasicData.BrushThickness.ToString();
                 sender.SelectionStart = sender.Text.Length;
                 return;
             }
 
-            _viewModel.BrushThickness = parsedValue;
+            inkCanvas._viewModel.BasicData.BrushThickness = parsedValue;
         }
 
-        private void ThicknessTextBox_LostFocus(object sender, RoutedEventArgs e) {
-            if (thicknessTextBox.Text.Trim().Length == 0) {
-                thicknessTextBox.Text = _viewModel.BrushThickness.ToString();
+        private void PaintBrushThicknessTextBox_LostFocus(object sender, RoutedEventArgs e) {
+            if (paintBrushThicknessTextBox.Text.Trim().Length == 0) {
+                paintBrushThicknessTextBox.Text = inkCanvas._viewModel.BasicData.BrushThickness.ToString();
             }
         }
 
-        private void OpacityTextBox_Changing(TextBox sender, TextBoxTextChangingEventArgs args) {
+        private void PaintBrushOpacityTextBox_Changing(TextBox sender, TextBoxTextChangingEventArgs args) {
             string input = sender.Text;
 
             if (string.IsNullOrWhiteSpace(input)) {
@@ -232,25 +250,71 @@ namespace Workloads.Creation.StaticImg {
 
             if (!int.TryParse(input, out int parsedValue) ||
                 parsedValue < 1 || parsedValue > 100) {
-                sender.Text = _viewModel.BrushThickness.ToString();
+                sender.Text = inkCanvas._viewModel.BasicData.BrushThickness.ToString();
                 sender.SelectionStart = sender.Text.Length;
                 return;
             }
 
-            _viewModel.BrushOpacity = parsedValue;
+            inkCanvas._viewModel.BasicData.BrushOpacity = parsedValue;
         }
 
-        private void OpacityTextBox_LostFocus(object sender, RoutedEventArgs e) {
-            if (opacityTextBox.Text.Trim().Length == 0) {
-                opacityTextBox.Text = _viewModel.BrushOpacity.ToString();
+        private void PaintBrushOpacityTextBox_LostFocus(object sender, RoutedEventArgs e) {
+            if (paintBrushOpacityTextBox.Text.Trim().Length == 0) {
+                paintBrushOpacityTextBox.Text = inkCanvas._viewModel.BasicData.BrushOpacity.ToString();
             }
         }
 
         private void ArcListViewToolItem_Loaded(object sender, RoutedEventArgs e) {
-            _viewModel.SelectedToolItem = toolItemListView.Items[0] as ToolItem;
+            inkCanvas._viewModel.BasicData.SelectedToolItem = toolItemListView.Items[0] as ToolItem;
         }
 
-        internal readonly MainPageViewModel _viewModel;
+        private void EraserSizeTextBox_Changing(TextBox sender, TextBoxTextChangingEventArgs args) {
+            string input = sender.Text;
+
+            if (string.IsNullOrWhiteSpace(input)) {
+                return;
+            }
+
+            if (!int.TryParse(input, out int parsedValue) ||
+                parsedValue < 1 || parsedValue > 100) {
+                sender.Text = inkCanvas._viewModel.BasicData.EraserSize.ToString();
+                sender.SelectionStart = sender.Text.Length;
+                return;
+            }
+
+            inkCanvas._viewModel.BasicData.EraserSize = parsedValue;
+        }
+
+        private void EraserSizeTextBox_LostFocus(object sender, RoutedEventArgs e) {
+            if (eraserSizeTextBox.Text.Trim().Length == 0) {
+                eraserSizeTextBox.Text = inkCanvas._viewModel.BasicData.EraserSize.ToString();
+            }
+        }
+
+        private void EraserOpacityTextBox_Changing(TextBox sender, TextBoxTextChangingEventArgs args) {
+            string input = sender.Text;
+
+            if (string.IsNullOrWhiteSpace(input)) {
+                return;
+            }
+
+            if (!int.TryParse(input, out int parsedValue) ||
+                parsedValue < 1 || parsedValue > 100) {
+                sender.Text = inkCanvas._viewModel.BasicData.EraserOpacity.ToString();
+                sender.SelectionStart = sender.Text.Length;
+                return;
+            }
+
+            inkCanvas._viewModel.BasicData.EraserOpacity = parsedValue;
+        }
+
+        private void EraserOpacityTextBox_LostFocus(object sender, RoutedEventArgs e) {
+            if (eraserOpacityTextBox.Text.Trim().Length == 0) {
+                eraserOpacityTextBox.Text = inkCanvas._viewModel.BasicData.EraserOpacity.ToString();
+            }
+        }
+
         private LayerItem _rightTappedItem;
+        internal readonly MainPageViewModel _viewModel;
     }
 }

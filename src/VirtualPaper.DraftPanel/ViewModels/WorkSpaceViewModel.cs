@@ -113,13 +113,13 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             string extension = Path.GetExtension(filePath);
             FileType rtFileType = FileFilter.GetRuntimeFileType(extension);
 
-            IRuntime runtime;
+            //IRuntime runtime;
             switch (rtFileType) {
                 case FileType.FUnknown:
                     break;
                 case FileType.FImage:
-                    runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, filePath, rtFileType); // xxx.jpg[etc.]
-                    AddToWorkSpace(filePath, runtime);
+                    //runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, filePath, rtFileType); // xxx.jpg[etc.]
+                    //AddToWorkSpace(filePath, runtime);
                     break;
                 case FileType.FGif:
                     break;

@@ -1,14 +1,9 @@
 ﻿using System;
-using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Input;
 
 namespace Workloads.Creation.StaticImg.Models.EventArg {
-    internal class CanvasPointerEventArgs  : EventArgs {
-        public PointerRoutedEventArgs OriginalArgs { get; }
-        public CanvasLayerResources CanvasResources { get; }
-
-        public CanvasPointerEventArgs (PointerRoutedEventArgs args, CanvasLayerResources resources) {
-            OriginalArgs = args;
-            CanvasResources = resources;
-        }
+    internal class CanvasPointerEventArgs(PointerPoint pointer, InkRenderData renderData) : EventArgs {
+        public PointerPoint Pointer { get; set; } = pointer;
+        public InkRenderData RenderData { get; } = renderData;
     }
 }

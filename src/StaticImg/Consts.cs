@@ -187,5 +187,6 @@ namespace Workloads.Creation.StaticImg {
         Fill, // 填充
         //Lasso, // 套索工具
         Crop, // 裁剪
+        Selection,
     }
 }

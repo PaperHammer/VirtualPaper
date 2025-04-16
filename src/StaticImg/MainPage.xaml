@@ -328,7 +328,7 @@
                                     <TextBlock Text="调色板"/>
                                 </Expander.Header>
                                 <Expander.Content>
-                                    <input:ArcPalette
+                                    <input:ArcPalette                                        
                                         ForegroundColor="{x:Bind inkCanvas._viewModel.BasicData.ForegroundColor, Mode=TwoWay}"
                                         BackgroundColor="{x:Bind inkCanvas._viewModel.BasicData.BackgroundColor, Mode=TwoWay}"
                                         InitCustomColors="{x:Bind inkCanvas._viewModel.BasicData.CustomColors, Mode=OneWay}"

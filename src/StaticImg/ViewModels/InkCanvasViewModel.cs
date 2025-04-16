@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Specialized;
 using System.IO;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
@@ -36,6 +35,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             _tool.RegisterTool(ToolType.PaintBrush, new PaintBrushTool(BasicData));
             _tool.RegisterTool(ToolType.Fill, new FillTool(BasicData));
             _tool.RegisterTool(ToolType.Eraser, new EraserTool(BasicData));
+            _tool.RegisterTool(ToolType.Selection, new SelectionTool(BasicData));
         }
 
         internal Tool GetTool(ToolType type) {

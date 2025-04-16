@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Input;
 using Windows.Foundation;
 using Windows.UI;
@@ -11,16 +10,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
     class FillTool(LayerBasicData data) : Tool {
         public override void OnPointerEntered(CanvasPointerEventArgs e) {
             RenderTarget = e.RenderData.RenderTarget;
-            //_device = e.CanvasResources.Device;
-            //_canvasControl = e.CanvasResources.Control;
-
-            if (RenderTarget == null) {
-                RenderTarget = new CanvasRenderTarget(
-                    MainPage.Instance.SharedDevice,
-                    (float)_canvasControl.ActualWidth,
-                    (float)_canvasControl.ActualHeight,
-                    data.Size.Dpi);
-            }
         }
 
         public override void OnPointerMoved(CanvasPointerEventArgs e) { }
@@ -150,7 +139,5 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
         private Color _blendedColor;
         private Point _lastClickPoint;
-        //private CanvasDevice _device;
-        private CanvasControl _canvasControl;
     }
 }

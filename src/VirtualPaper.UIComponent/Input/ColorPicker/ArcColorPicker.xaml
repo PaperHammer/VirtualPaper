@@ -248,7 +248,7 @@
                                 </Rectangle>
                                 <primitives:ColorPickerSlider x:Name="ThirdDimensionSlider" Minimum="0" Maximum="100" ColorChannel="Value" Orientation="Horizontal" Style="{StaticResource ColorPickerSliderStyle}" IsThumbToolTipEnabled="False" TabIndex="1" />
                             </Grid>
-                            <Grid Margin="0,0,0,16" x:Name="AlphaSliderGrid" Grid.Row="2">
+                            <Grid Margin="0,0,0,16" x:Name="AlphaSliderGrid" Grid.Row="2" Visibility="Collapsed">
                                 <Rectangle x:Name="AlphaSliderCheckeredBackgroundRectangle" RenderTransformOrigin="0.5, 0.5" Height="12" VerticalAlignment="Center" RadiusX="{Binding CornerRadius, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource TopLeftCornerRadiusDoubleValueConverter}}" RadiusY="{Binding CornerRadius, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BottomRightCornerRadiusDoubleValueConverter}}">
                                     <Rectangle.Fill>
                                         <ImageBrush x:Name="AlphaSliderCheckeredBackgroundImageBrush" />
@@ -512,7 +512,7 @@
                                         </Grid>
                                     </Grid>-->
 
-                                    <Grid x:Name="AlphaTextEntryGrid">
+                                    <Grid x:Name="AlphaTextEntryGrid" Visibility="Collapsed">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="50"/>
                                             <ColumnDefinition/>

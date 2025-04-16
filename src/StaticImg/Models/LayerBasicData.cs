@@ -25,6 +25,8 @@ namespace Workloads.Creation.StaticImg.Models {
 
     internal partial class LayerBasicData : ObservableObject {
         public event EventHandler InkDataEnabledChanged;
+        public event EventHandler SeletcedToolChanged;
+        public event EventHandler SeletcedLayerChanged;
 
         public ObservableList<InkCanvasData> InkDatas { get; set; } = [];
         public ObservableList<Color> CustomColors { get; set; } = [];
@@ -86,6 +88,7 @@ namespace Workloads.Creation.StaticImg.Models {
             set {
                 if (value == null || _selectedInkCanvas == value) return;
                 _selectedInkCanvas = value;
+                SeletcedLayerChanged?.Invoke(this, EventArgs.Empty);
                 if (value.IsEnable)
                     MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
                 OnPropertyChanged();
@@ -103,7 +106,12 @@ namespace Workloads.Creation.StaticImg.Models {
         [JsonIgnore]
         public ToolItem SelectedToolItem {
             get { return _selectedToolItem; }
-            set { if (_selectedToolItem == value) return; _selectedToolItem = value; OnPropertyChanged(); }
+            set {
+                if (_selectedToolItem == value) return; 
+                _selectedToolItem = value;
+                SeletcedToolChanged?.Invoke(this, EventArgs.Empty);
+                OnPropertyChanged();
+            }
         }
 
         double _brushThickness = 5;

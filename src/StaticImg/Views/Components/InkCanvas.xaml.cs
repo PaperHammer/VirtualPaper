@@ -41,6 +41,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 RebuildCompositeTarget();
                 IsReady.TrySetResult(true);
             };
+            _viewModel.TryCommitSelectionArea += (s, e) => {
+                if (_selectedTool is SelectionTool st) {
+                    st?.TryCommitSelection();
+                }
+            };
         }
 
         private void RebuildCompositeTarget() {
@@ -157,13 +162,13 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 return;
             }
 
-            var selectedTool = _viewModel.GetTool(_viewModel.BasicData.SelectedToolItem.Type);
-            if (selectedTool == null) {
+            _selectedTool = _viewModel.GetTool(_viewModel.BasicData.SelectedToolItem.Type);
+            if (_selectedTool == null) {
                 return;
             }
 
-            if (selectedTool != null) {
-                action(selectedTool);
+            if (_selectedTool != null) {
+                action(_selectedTool);
                 inkCanvas.Invalidate();
             }
         }
@@ -194,6 +199,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         internal InkCanvasViewModel _viewModel;
         private InputCursor _originalInputCursor;
+        private Tool _selectedTool;
         private readonly CanvasRenderTarget _compositeTarget;
         private readonly TaskCompletionSource<bool> _isReady = new();
     }

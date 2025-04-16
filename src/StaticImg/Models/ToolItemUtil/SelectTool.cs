@@ -9,9 +9,14 @@ using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
     partial class SelectionTool(LayerBasicData basicData) : Tool {
+        public void TryCommitSelection() {
+            CommitSelection();
+            RenderToTarget();
+        }
+
         public override void OnPointerEntered(CanvasPointerEventArgs e) { }
         public override void OnPointerExited(CanvasPointerEventArgs e) { }
-      
+
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
             if (e.Pointer.Properties.IsMiddleButtonPressed) return;
 

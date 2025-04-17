@@ -8,22 +8,14 @@ using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
     class FillTool(LayerBasicData data) : Tool {
-        public override void OnPointerEntered(CanvasPointerEventArgs e) {
-            RenderTarget = e.RenderData.RenderTarget;
-        }
-
-        public override void OnPointerMoved(CanvasPointerEventArgs e) { }
-
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
+            if (!IsPointerOverTaregt(e)) return;
+
             PointerPoint pointerPoint = e.Pointer;
             _blendedColor = pointerPoint.Properties.IsRightButtonPressed ? data.BackgroundColor : data.ForegroundColor;
             _lastClickPoint = pointerPoint.Position;
             RenderToTarget();
         }
-
-        public override void OnPointerReleased(CanvasPointerEventArgs e) { }
-
-        public override void OnPointerExited(CanvasPointerEventArgs e) { }
 
         // 核心绘制逻辑
         private void RenderToTarget() {

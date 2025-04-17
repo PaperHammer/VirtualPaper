@@ -5,6 +5,7 @@ using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Bridge;
@@ -129,7 +130,7 @@ namespace Workloads.Creation.StaticImg {
             FitView();
         }
 
-        private void CanvasSVer_ViewChanging(object sender, ScrollViewerViewChangingEventArgs e) {
+        private void CanvasContainer_ViewChanging(object sender, ScrollViewerViewChangingEventArgs e) {
             // 检查是否为用户触发的滚动/缩放
             //if (e.IsInertial) {
             //    // 使用鼠标滚轮
@@ -145,8 +146,8 @@ namespace Workloads.Creation.StaticImg {
 
         private void FitView() {
             // 获取当前的视口尺寸和LayerCanvas的实际尺寸
-            double viewportWidth = canvasSVer.ViewportWidth;
-            double viewportHeight = canvasSVer.ViewportHeight;
+            double viewportWidth = canvasContainer.ViewportWidth;
+            double viewportHeight = canvasContainer.ViewportHeight;
 
             double contentWidth = inkCanvas._viewModel.BasicData.Size.Width;
             double contentHeight = inkCanvas._viewModel.BasicData.Size.Height;
@@ -165,7 +166,7 @@ namespace Workloads.Creation.StaticImg {
         }
 
         private void UpdateScrollViewerZoom(float value) {
-            canvasSVer.ChangeView(null, null, value);
+            canvasContainer.ChangeView(null, null, value);
         }
 
         private void UpdateComboBoxText(float value) {
@@ -312,6 +313,26 @@ namespace Workloads.Creation.StaticImg {
             if (eraserOpacityTextBox.Text.Trim().Length == 0) {
                 eraserOpacityTextBox.Text = inkCanvas._viewModel.BasicData.EraserOpacity.ToString();
             }
+        }
+
+        private void CanvasContainer_PointerEntered(object sender, PointerRoutedEventArgs e) {
+            inkCanvas.OnPointerEntered(e);
+        }
+
+        private void CanvasContainer_PointerMoved(object sender, PointerRoutedEventArgs e) {
+            inkCanvas.OnPointerMoved(e);
+        }
+
+        private void CanvasContainer_PointerPressed(object sender, PointerRoutedEventArgs e) {
+            inkCanvas.OnPointerPressed(e);
+        }
+
+        private void CanvasContainer_PointerReleased(object sender, PointerRoutedEventArgs e) {
+            inkCanvas.OnPointerReleased(e);
+        }
+
+        private void CanvasContainer_PointerExited(object sender, PointerRoutedEventArgs e) {
+            inkCanvas.OnPointerExited(e);
         }
 
         private LayerItem _rightTappedItem;

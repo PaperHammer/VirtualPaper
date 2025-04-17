@@ -21,12 +21,7 @@
         <win2d:CanvasControl
             x:Name="inkCanvas"
             Loaded="InkingCanvas_Loaded"
-            Draw="InkCanvas_Draw"
-            PointerEntered="InkingCanvas_PointerEntered"
-            PointerMoved="InkingCanvas_PointerMoved"
-            PointerPressed="InkingCanvas_PointerPressed"
-            PointerReleased="InkingCanvas_PointerReleased"
-            PointerExited="InkingCanvas_PointerExited"/>
+            Draw="InkCanvas_Draw"/>
         <Grid
             x:Name="workground"
             Canvas.ZIndex="-1"/>

@@ -118,7 +118,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
         }
 
-        private void InkingCanvas_PointerEntered(object sender, PointerRoutedEventArgs e) {
+        internal new void OnPointerEntered(PointerRoutedEventArgs e) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
             this.ProtectedCursor = _viewModel.BasicData.SelectedToolItem?.Cursor;
@@ -126,26 +126,25 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             HandleToolEvent(tool => tool.OnPointerEntered(new(pointerPoint, _viewModel.BasicData.SelectedInkCanvas.Render)));
         }
 
-        private void InkingCanvas_PointerMoved(object sender, PointerRoutedEventArgs e) {
+        internal new void OnPointerMoved(PointerRoutedEventArgs e) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             _viewModel.BasicData.UpdatePointerPos(pointerPoint.Position);
-
             HandleToolEvent(tool => tool.OnPointerMoved(new(pointerPoint, _viewModel.BasicData.SelectedInkCanvas.Render)));
         }
 
-        private void InkingCanvas_PointerPressed(object sender, PointerRoutedEventArgs e) {
+        internal new void OnPointerPressed(PointerRoutedEventArgs e) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             HandleToolEvent(tool => tool.OnPointerPressed(new(pointerPoint, _viewModel.BasicData.SelectedInkCanvas.Render)));
         }
 
-        private void InkingCanvas_PointerReleased(object sender, PointerRoutedEventArgs e) {
-            HandleToolEvent(tool => tool.OnPointerReleased(new(null, _viewModel.BasicData.SelectedInkCanvas.Render)));
+        internal new void OnPointerReleased(PointerRoutedEventArgs e) {
+            var pointerPoint = e.GetCurrentPoint(inkCanvas);
+            HandleToolEvent(tool => tool.OnPointerReleased(new(pointerPoint, _viewModel.BasicData.SelectedInkCanvas.Render)));
         }
 
-        private void InkingCanvas_PointerExited(object sender, PointerRoutedEventArgs e) {
-            _viewModel.BasicData.UpdatePointerPos();
-            HandleToolEvent(tool => tool.OnPointerExited(new(null, _viewModel.BasicData.SelectedInkCanvas.Render)));
-
+        internal new void OnPointerExited(PointerRoutedEventArgs e) {
+            var pointerPoint = e.GetCurrentPoint(inkCanvas);
+            HandleToolEvent(tool => tool.OnPointerExited(new(pointerPoint, _viewModel.BasicData.SelectedInkCanvas.Render)));
             if (_originalInputCursor != null) {
                 this.ProtectedCursor = _originalInputCursor;
             }
@@ -167,10 +166,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 return;
             }
 
-            if (_selectedTool != null) {
-                action(_selectedTool);
-                inkCanvas.Invalidate();
-            }
+            action(_selectedTool);
+            inkCanvas.Invalidate();
         }
 
         internal async Task AddLayerAsync() {

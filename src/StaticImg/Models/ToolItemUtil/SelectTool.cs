@@ -9,22 +9,20 @@ using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
     partial class SelectionTool(LayerBasicData basicData) : Tool {
+        public Rect SelectionRect => _selectionRect;
+
         public void TryCommitSelection() {
-            CommitSelection();
-            RenderToTarget();
+            var op = CommitSelection();
+            if (op) RenderToTarget();
         }
 
-        public override void OnPointerEntered(CanvasPointerEventArgs e) { }
-        public override void OnPointerExited(CanvasPointerEventArgs e) { }
-
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
-            if (e.Pointer.Properties.IsMiddleButtonPressed) return;
-
             if (e.Pointer.Properties.IsRightButtonPressed && _currentState == SelectionState.Selected) {
                 RestoreOriginalContent();
                 return;
             }
-
+            if (!IsPointerOverTaregt(e) || e.Pointer.Properties.IsMiddleButtonPressed) return;
+           
             RenderTarget = e.RenderData.RenderTarget;
             if (_baseContent == null) SaveBaseContent();
 
@@ -51,26 +49,28 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         public override void OnPointerMoved(CanvasPointerEventArgs e) {
             if (!e.Pointer.Properties.IsLeftButtonPressed) return;
 
-            var currentPos = e.Pointer.Position;
+            var currentPos = new Point(
+                Math.Min(RenderTarget.SizeInPixels.Width, Math.Max(0, e.Pointer.Position.X)),
+                Math.Min(RenderTarget.SizeInPixels.Height, Math.Max(0, e.Pointer.Position.Y)));
 
             if (_currentState == SelectionState.Selecting) {
                 if (_isDragging) {
                     // 拖动现有选区
                     double offsetX = currentPos.X - _moveStartPoint.X;
                     double offsetY = currentPos.Y - _moveStartPoint.Y;
-                    _selectionRect = new Rect(
+                    UpdateSelectionRect(new Rect(
                         _originalSelectionRect.X + offsetX,
                         _originalSelectionRect.Y + offsetY,
                         _originalSelectionRect.Width,
-                        _originalSelectionRect.Height);
+                        _originalSelectionRect.Height));
                 }
                 else {
                     // 创建新选区
-                    _selectionRect = new Rect(
+                    UpdateSelectionRect(new Rect(
                         Math.Min(_startPoint.X, currentPos.X),
                         Math.Min(_startPoint.Y, currentPos.Y),
                         Math.Abs(currentPos.X - _startPoint.X),
-                        Math.Abs(currentPos.Y - _startPoint.Y));
+                        Math.Abs(currentPos.Y - _startPoint.Y)));
                 }
             }
 
@@ -92,7 +92,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                 else {
                     // 无效选区
                     _currentState = SelectionState.None;
-                    _selectionRect = Rect.Empty;
+                    UpdateSelectionRect(Rect.Empty);
                 }
             }
 
@@ -122,13 +122,13 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             _selectionContent?.Dispose();
             _selectionContent = null;
             _currentState = SelectionState.None;
-            _selectionRect = Rect.Empty;
+            UpdateSelectionRect(Rect.Empty);
         }
 
         private void StartNewSelection(Point position) {
             _currentState = SelectionState.Selecting;
             _startPoint = position;
-            _selectionRect = new Rect(position, new Size(0, 0));
+            UpdateSelectionRect(new Rect(position, new Size(0, 0)));
             _isDragging = false;
             _originalSelectionRect = Rect.Empty;
         }
@@ -184,15 +184,16 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             }
         }
 
-        private void CommitSelection() {
-            if (_currentState != SelectionState.Selected || _selectionContent == null) return;
+        private bool CommitSelection() {
+            if (_currentState != SelectionState.Selected || _selectionContent == null) return false;
 
             // 将选区内容合并到基础层
             using (var ds = _baseContent.CreateDrawingSession()) {
                 ds.DrawImage(_selectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
             }
-
             StopSelection();
+
+            return true;
         }
 
         private void RenderToTarget() {
@@ -216,7 +217,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                     if (_currentState != SelectionState.None) {
                         using (var borderBrush = new CanvasSolidColorBrush(RenderTarget, _selectionBorderColor)) {
                             var strokeStyle = new CanvasStrokeStyle() {
-                                DashStyle = CanvasDashStyle.Dot,
+                                DashStyle = CanvasDashStyle.Dash,
                             };
                             ds.DrawRectangle(_selectionRect, borderBrush, _selectionBorderWidth, strokeStyle);
                         }
@@ -242,7 +243,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             _selectionContent?.Dispose();
             _selectionContent = null;
             _currentState = SelectionState.None;
-            _selectionRect = Rect.Empty;
+            UpdateSelectionRect(Rect.Empty);
             _isDragging = false;
 
             RenderToTarget();
@@ -259,6 +260,11 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             _selectionContent = null;
             RenderTarget?.Dispose();
             RenderTarget = null;
+        }
+
+        private void UpdateSelectionRect(Rect rect) {
+            _selectionRect = rect;
+            basicData.SelectionRect = rect;
         }
 
         private enum SelectionState {
@@ -280,6 +286,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
         // 绘制样式
         private readonly Color _selectionBorderColor = Colors.Black;
-        private readonly float _selectionBorderWidth = 2.5f;
+        private readonly float _selectionBorderWidth = 3.0f;
     }
 }

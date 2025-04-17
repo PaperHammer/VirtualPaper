@@ -39,7 +39,7 @@ namespace Workloads.Creation.StaticImg.Models {
         public ArcSize Size {
             get => _size;
             set {
-                CanvasSizeText = $"{value.Width}, {value.Height} {"像素"} ({value.Dpi} / {value.HardwareDpi} DPI)";
+                CanvasSizeText = $"{value.Width:F0}, {value.Height:F0} px ({value.Dpi} / {value.HardwareDpi} DPI)";
                 if (_size.Equals(value)) return;
                 _size = value;
                 OnPropertyChanged();
@@ -81,6 +81,27 @@ namespace Workloads.Creation.StaticImg.Models {
             private set { _canvasSizeText = value; OnPropertyChanged(); }
         }
 
+        private Rect _selectionRect;
+        [JsonIgnore]
+        public Rect SelectionRect {
+            get => _selectionRect;
+            set {
+                if (_selectionRect != value) {
+                    _selectionRect = value;
+                    OnPropertyChanged();
+                    UpdateSelectionSizeText();
+                }
+            }
+        }
+
+
+        string _selectionSizeText;
+        [JsonIgnore]
+        public string SelectionSizeText {
+            get { return _selectionSizeText; }
+            private set { _selectionSizeText = value; OnPropertyChanged(); }
+        }
+
         private InkCanvasData _selectedInkCanvas;
         [JsonIgnore]
         public InkCanvasData SelectedInkCanvas {
@@ -107,7 +128,7 @@ namespace Workloads.Creation.StaticImg.Models {
         public ToolItem SelectedToolItem {
             get { return _selectedToolItem; }
             set {
-                if (_selectedToolItem == value) return; 
+                if (_selectedToolItem == value) return;
                 _selectedToolItem = value;
                 SeletcedToolChanged?.Invoke(this, EventArgs.Empty);
                 OnPropertyChanged();
@@ -247,16 +268,6 @@ namespace Workloads.Creation.StaticImg.Models {
             }
         }
 
-        internal void UpdatePointerPos(Point? position = null) {
-            if (position == null) {
-                PointerPosText = string.Empty;
-                return;
-            }
-
-            ArcPoint formatPos = ArcPoint.FormatPoint(position.Value, 0);
-            PointerPosText = $"{formatPos.X}, {formatPos.Y} {"像素"}";
-        }
-
         public async Task<InkCanvasData> AddLayerAsync(string name = null, bool isBackground = false) {
             InkCanvasData layerData = new(_entryFilePath, isBackground) {
                 Name = name ?? $"图层_{_nextLayerNumberTag++}",
@@ -335,6 +346,23 @@ namespace Workloads.Creation.StaticImg.Models {
             if (e.NewItem != null)
                 BackgroundColor = (Color)e.NewItem;
             await SaveBasicAsync();
+        }
+
+        internal void UpdatePointerPos(Point? position = null) {
+            PointerPosText = position == null || !IsPointerOverTaregt(position) ?
+                string.Empty :
+                $"{position.Value.X:F0}, {position.Value.Y:F0} px";
+        }
+
+        private bool IsPointerOverTaregt(Point? position) {
+            return position.Value.X >= 0 && position.Value.X < Size.Width &&
+                   position.Value.Y >= 0 && position.Value.Y < Size.Height;
+        }
+
+        private void UpdateSelectionSizeText() {
+            SelectionSizeText = _selectionRect.IsEmpty ?
+                string.Empty :
+                $"W: {_selectionRect.Width:F0} px, H: {_selectionRect.Height:F0} px";
         }
 
         private int _nextLayerNumberTag = 1;

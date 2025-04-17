@@ -10,11 +10,9 @@ using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
     class EraserTool(LayerBasicData data) : Tool {
-        public override void OnPointerEntered(CanvasPointerEventArgs e) {
-            RenderTarget = e.RenderData.RenderTarget;
-        }
-
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
+            if (!IsPointerOverTaregt(e)) return;
+
             PointerPoint pointerPoint = e.Pointer;
             if (pointerPoint.Properties.IsMiddleButtonPressed)
                 return;
@@ -33,16 +31,22 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
         public override void OnPointerMoved(CanvasPointerEventArgs e) {
             if (!_isDrawing) return;
+            if (!IsPointerOverTaregt(e)) {
+                EndDrawing();
+                return;
+            }
 
             _pointerQueue.Enqueue(e.Pointer.Position);
             ProcessPointerQueue();
         }
 
         public override void OnPointerReleased(CanvasPointerEventArgs e) {
+            if (!_isDrawing) return;
             EndDrawing();
         }
 
         public override void OnPointerExited(CanvasPointerEventArgs e) {
+            if (!_isDrawing) return;
             EndDrawing();
         }
 

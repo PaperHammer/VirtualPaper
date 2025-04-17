@@ -43,10 +43,6 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         #region init
         private void InitToolItems() {
             ToolItems = [
-                //new() {
-                //    ToolName = "移动",
-                //    Glyph = "\uE7C2",
-                //},
                 new() {
                     Type = ToolType.Selection,
                     ToolName = "选择",

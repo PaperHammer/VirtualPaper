@@ -117,14 +117,19 @@
                 </Grid.ColumnDefinitions>
 
                 <ScrollViewer
-                    x:Name="canvasSVer"
+                    x:Name="canvasContainer"
                     HorizontalScrollBarVisibility="Auto" 
                     VerticalScrollBarVisibility="Auto"
                     ZoomMode="Enabled"            
                     MinZoomFactor="{x:Bind local:Consts.MinZoomFactor}"
                     MaxZoomFactor="{x:Bind local:Consts.MaxZoomFactor}"
-                    ViewChanging="CanvasSVer_ViewChanging"
-                    Background="{ThemeResource ControlStrokeColorDefaultBrush}">
+                    Background="{ThemeResource ControlStrokeColorDefaultBrush}"
+                    ViewChanging="CanvasContainer_ViewChanging"
+                    PointerEntered="CanvasContainer_PointerEntered"
+                    PointerMoved="CanvasContainer_PointerMoved"
+                    PointerPressed="CanvasContainer_PointerPressed"
+                    PointerReleased="CanvasContainer_PointerReleased"
+                    PointerExited="CanvasContainer_PointerExited">
                     <lcl_components:InkCanvas
                         x:Name="inkCanvas"
                         Margin="80"
@@ -413,7 +418,7 @@
                         Stroke="{ThemeResource ControlStrongStrokeColorDefaultBrush}"/>
 
                     <StackPanel
-                        MinWidth="140"
+                        MinWidth="160"
                         Orientation="Horizontal"
                         Spacing="4"
                         HorizontalAlignment="Left"
@@ -425,7 +430,7 @@
                             Source="{StaticResource DraftPanel_StatusBar_BorderIcon}"/>
                         <TextBlock
                             FontSize="12"
-                            Text=""/>
+                            Text="{x:Bind inkCanvas._viewModel.BasicData.SelectionSizeText, Mode=OneWay}"/>
                     </StackPanel>
 
                     <Line

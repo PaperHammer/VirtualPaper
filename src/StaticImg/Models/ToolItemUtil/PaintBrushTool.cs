@@ -4,12 +4,20 @@ using System.Linq;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
 using Microsoft.UI.Input;
+using VirtualPaper.UIComponent.Services;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
-    class PaintBrushTool(LayerBasicData data) : Tool {
+    class PaintBrushTool(LayerBasicData data) : Tool, IDisposable {
+        public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
+
+        public override void OnPointerEntered(CanvasPointerEventArgs e) {
+            base.OnPointerEntered(e);
+            SystemCursorChangeRequested?.Invoke(this, new(InputSystemCursor.Create(InputSystemCursorShape.Cross)));
+        }
+
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
             if (!IsPointerOverTaregt(e)) return;
 
@@ -46,6 +54,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         }
 
         public override void OnPointerExited(CanvasPointerEventArgs e) {
+            base.OnPointerExited(e);
             if (!_isDrawing) return;
             EndDrawing();
         }
@@ -58,6 +67,19 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             }
             _pointerQueue.Clear();
             _historyPoints.Clear();
+
+            // 定期清理不常用的笔刷 超过20个笔刷时清理
+            if (_brushCache.Count > 20) {
+                var toRemove = _brushCache
+                    .OrderByDescending(x => x.Key.Item1) // 按笔刷大小排序
+                    .Skip(10) // 保留最常用的10个
+                    .ToList();
+
+                foreach (var item in toRemove) {
+                    item.Value?.Dispose();
+                    _brushCache.Remove(item.Key);
+                }
+            }
         }
 
         // 核心绘制逻辑
@@ -213,6 +235,39 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                          (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t +
                          (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t);
         }
+
+        #region dispose
+        private bool _disposed = false;
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing) {
+            if (_disposed) return;
+
+            if (disposing) {
+                // 释放托管资源
+                ReleaseAllResources();
+            }
+
+            _disposed = true;
+        }
+
+        private void ReleaseAllResources() {
+            // 释放笔刷缓存
+            foreach (var brush in _brushCache.Values) {
+                brush?.Dispose();
+            }
+            _brushCache.Clear();
+
+            // 释放后备缓冲区
+            _backBuffer?.Dispose();
+            _backBuffer = null;
+
+            // RenderTarget由外部管理，此处不释放
+        }
+        #endregion
 
         //作用​​：控制渲染频率，避免UI线程过载
         //​​推荐值​​：

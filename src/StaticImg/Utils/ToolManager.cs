@@ -1,16 +1,22 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using VirtualPaper.UIComponent.Services;
 using Workloads.Creation.StaticImg.Models.ToolItemUtil;
 
 namespace Workloads.Creation.StaticImg.Utils {
     class ToolManager {
-        public void RegisterTool(ToolType toolType, Tool tool) {
+        internal void RegisterTool(ToolType toolType, Tool tool) {
             _tools[toolType] = tool;
         }
 
-        public Tool GetTool(ToolType toolType) {
+        internal Tool GetTool(ToolType toolType) {
             return _tools.TryGetValue(toolType, out var tool) ? tool : null;
         }
 
-        private readonly Dictionary<ToolType, Tool> _tools = new();
+        internal IEnumerable<Tool> GetAllTools() {
+            return _tools.Values;
+        }
+
+        private readonly Dictionary<ToolType, Tool> _tools = [];
     }
 }

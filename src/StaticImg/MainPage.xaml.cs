@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Bridge;
-using VirtualPaper.UIComponent.Utils.ArcEventArgs;
+using VirtualPaper.UIComponent.Input;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.ViewModels;
 using Workloads.Creation.StaticImg.Views.Components;
@@ -203,7 +203,7 @@ namespace Workloads.Creation.StaticImg {
             _rightTappedItem = container.Content as LayerItem;
         }
 
-        private async void ArcPalette_OnCustomeColorChangedEvent(object sender, ColorChnageEventArgs e) {
+        private async void ArcPalette_OnCustomeColorChangedEvent(object sender, ColorChangeEventArgs e) {
             await inkCanvas.UpdateCustomColorsAsync(e);
         }
 

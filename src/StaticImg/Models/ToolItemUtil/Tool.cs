@@ -1,9 +1,14 @@
-﻿using Microsoft.Graphics.Canvas;
+﻿using System;
+using Microsoft.Graphics.Canvas;
+using Microsoft.UI.Input;
+using VirtualPaper.UIComponent.Services;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
-    abstract class Tool {
+    abstract class Tool : ICursorService {
+        public virtual event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
+
         protected virtual CanvasRenderTarget RenderTarget { get; set; }
 
         public virtual void OnPointerEntered(CanvasPointerEventArgs e) {
@@ -12,7 +17,9 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         public virtual void OnPointerPressed(CanvasPointerEventArgs e) { }
         public virtual void OnPointerMoved(CanvasPointerEventArgs e) { }
         public virtual void OnPointerReleased(CanvasPointerEventArgs e) { }
-        public virtual void OnPointerExited(CanvasPointerEventArgs e) { }
+        public virtual void OnPointerExited(CanvasPointerEventArgs e) {
+            SystemCursorChangeRequested?.Invoke(this, new CursorChangedEventArgs(null));
+        }
         public virtual bool IsPointerOverTaregt(CanvasPointerEventArgs e) {
             return e.Pointer.Position.X >= 0 && e.Pointer.Position.X < RenderTarget.SizeInPixels.Width &&
                    e.Pointer.Position.Y >= 0 && e.Pointer.Position.Y < RenderTarget.SizeInPixels.Height;
@@ -28,5 +35,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                 color.B
             );
         }
+
+        public virtual void RequestCursorChange(InputCursor cursor) { }
     }
 }

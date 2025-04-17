@@ -7,7 +7,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.UIComponent.Utils.ArcEventArgs;
 using VirtualPaper.UIComponent.Utils.Extensions;
 using Windows.UI;
 
@@ -16,7 +15,7 @@ using Windows.UI;
 
 namespace VirtualPaper.UIComponent.Input {
     public sealed partial class ArcPalette : UserControl {
-        public event EventHandler<ColorChnageEventArgs> OnCustomeColorChangedEvent;
+        public event EventHandler<ColorChangeEventArgs> OnCustomeColorChangedEvent;
         public ICommand AddToCustomCommand { get; }
 
         public Color ForegroundColor {
@@ -125,7 +124,7 @@ namespace VirtualPaper.UIComponent.Input {
             var newColor = arcColorPicker.Color;
             if (newColor == Colors.Transparent) return;
 
-            var eventArgs = new ColorChnageEventArgs {
+            var eventArgs = new ColorChangeEventArgs {
                 OldItem = CustomBrushes.FindBrushByColor(new SolidColorBrush(newColor))?.Color,
                 NewItem = newColor
             };
@@ -203,6 +202,11 @@ namespace VirtualPaper.UIComponent.Input {
         }
 
         private bool _arcColorPickerVisible;
+    }
+
+    public class ColorChangeEventArgs : EventArgs {
+        public Color? OldItem { get; set; }
+        public Color? NewItem { get; set; }
     }
 
     enum Selection {

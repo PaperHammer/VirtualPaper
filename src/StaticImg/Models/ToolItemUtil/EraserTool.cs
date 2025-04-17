@@ -4,12 +4,20 @@ using System.Linq;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
 using Microsoft.UI.Input;
+using VirtualPaper.UIComponent.Services;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
     class EraserTool(LayerBasicData data) : Tool {
+        public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
+
+        public override void OnPointerEntered(CanvasPointerEventArgs e) {
+            base.OnPointerEntered(e);
+            SystemCursorChangeRequested?.Invoke(this, new(InputSystemCursor.Create(InputSystemCursorShape.Cross)));
+        }
+
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
             if (!IsPointerOverTaregt(e)) return;
 
@@ -46,6 +54,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         }
 
         public override void OnPointerExited(CanvasPointerEventArgs e) {
+            base.OnPointerExited(e);
             if (!_isDrawing) return;
             EndDrawing();
         }

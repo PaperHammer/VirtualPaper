@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
 using Microsoft.UI.Input;
@@ -9,9 +10,11 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
-using VirtualPaper.UIComponent.Utils.ArcEventArgs;
+using VirtualPaper.UIComponent.Input;
 using Windows.Foundation;
+using Windows.UI;
 using Workloads.Creation.StaticImg.Models.ToolItemUtil;
+using Workloads.Creation.StaticImg.Utils;
 using Workloads.Creation.StaticImg.ViewModels;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -22,7 +25,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         public TaskCompletionSource<bool> IsReady => _isReady;
 
         public InkCanvas() {
+            _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
+            _tool = new();
             _viewModel = new(MainPage.Instance.EntryFilePath, MainPage.Instance.RtFileType);
+            RegisterTools();
             SetupHandlers();
 
             _compositeTarget = new CanvasRenderTarget(
@@ -36,17 +42,38 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             this.InitializeComponent();
         }
 
+        private void RegisterTools() {
+            _tool.RegisterTool(ToolType.PaintBrush, new PaintBrushTool(_viewModel.BasicData));
+            _tool.RegisterTool(ToolType.Fill, new FillTool(_viewModel.BasicData));
+            _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.BasicData));
+            _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.BasicData));
+            _tool.RegisterTool(ToolType.Crop, new CropTool(_viewModel.BasicData));
+
+            foreach (var tool in _tool.GetAllTools()) {
+                tool.SystemCursorChangeRequested += (s, e) => {
+                    this.ProtectedCursor = e.Cursor ?? _originalInputCursor;
+                };
+            }
+        }
+
         private void SetupHandlers() {
             _viewModel.RequestFullRender += (s, e) => {
                 RebuildCompositeTarget();
                 IsReady.TrySetResult(true);
             };
-            _viewModel.TryCommitSelectionArea += (s, e) => {
-                if (_selectedTool is SelectionTool st) {
-                    st?.TryCommitSelection();
-                }
+            _viewModel.SeletcedToolChanging += (s, e) => {
+                //before
+                HandleSelectionTool();
+                _selectedTool = _tool.GetTool(_viewModel.BasicData.SelectedToolItem.Type);
+                //after
             };
         }
+
+        private void HandleSelectionTool() {
+            if (_selectedTool is SelectionTool st) {
+                st.TryCommitSelection();
+            }
+        }        
 
         private void RebuildCompositeTarget() {
             using (var ds = _compositeTarget.CreateDrawingSession()) {
@@ -113,16 +140,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void InkCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
             if (_compositeTarget != null) {
-                RebuildCompositeTarget();
                 args.DrawingSession.DrawImage(_compositeTarget);
             }
         }
 
         internal new void OnPointerEntered(PointerRoutedEventArgs e) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
-            _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
-            this.ProtectedCursor = _viewModel.BasicData.SelectedToolItem?.Cursor;
-
             HandleToolEvent(tool => tool.OnPointerEntered(new(pointerPoint, _viewModel.BasicData.SelectedInkCanvas.Render)));
         }
 
@@ -145,9 +168,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         internal new void OnPointerExited(PointerRoutedEventArgs e) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             HandleToolEvent(tool => tool.OnPointerExited(new(pointerPoint, _viewModel.BasicData.SelectedInkCanvas.Render)));
-            if (_originalInputCursor != null) {
-                this.ProtectedCursor = _originalInputCursor;
-            }
         }
 
         private void HandleToolEvent(Action<Tool> action) {
@@ -161,13 +181,15 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 return;
             }
 
-            _selectedTool = _viewModel.GetTool(_viewModel.BasicData.SelectedToolItem.Type);
+            _selectedTool = _tool.GetTool(_viewModel.BasicData.SelectedToolItem.Type);
             if (_selectedTool == null) {
+                // 还原光标
+                this.ProtectedCursor = _originalInputCursor;
                 return;
             }
 
             action(_selectedTool);
-            inkCanvas.Invalidate();
+            RebuildCompositeTarget();
         }
 
         internal async Task AddLayerAsync() {
@@ -190,13 +212,14 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             await _viewModel.BasicData.DeleteAsync(itemTag);
         }
 
-        internal async Task UpdateCustomColorsAsync(ColorChnageEventArgs e) {
+        internal async Task UpdateCustomColorsAsync(ColorChangeEventArgs e) {
             await _viewModel.BasicData.UpdateCustomColorsAsync(e);
         }
 
         internal InkCanvasViewModel _viewModel;
-        private InputCursor _originalInputCursor;
         private Tool _selectedTool;
+        private readonly InputCursor _originalInputCursor;
+        private readonly ToolManager _tool;
         private readonly CanvasRenderTarget _compositeTarget;
         private readonly TaskCompletionSource<bool> _isReady = new();
     }

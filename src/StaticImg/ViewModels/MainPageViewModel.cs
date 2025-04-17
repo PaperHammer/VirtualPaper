@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.UI.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
@@ -50,7 +49,6 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 },
                 new() {
                     Type = ToolType.PaintBrush,
-                    Cursor = InputSystemCursor.Create(InputSystemCursorShape.Cross),
                     ToolName = "画笔",
                     Glyph = "\uEE56",
                 },
@@ -61,13 +59,12 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 },
                 new() {
                     Type = ToolType.Eraser,
-                    Cursor = InputSystemCursor.Create(InputSystemCursorShape.Cross),
                     ToolName = "擦除",
                     Glyph = "\uE75C",
                 },
                 new() {
+                    Type = ToolType.Crop,
                     ToolName = "裁剪",
-                    Cursor = InputSystemCursor.Create(InputSystemCursorShape.Cross),
                     Glyph = "\uE7A8",
                 },
                 new() {

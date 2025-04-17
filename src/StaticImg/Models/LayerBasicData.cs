@@ -10,9 +10,9 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Input;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.UIComponent.Utils.ArcEventArgs;
 using VirtualPaper.UIComponent.ViewModels;
 using Windows.Foundation;
 using Windows.UI;
@@ -328,7 +328,7 @@ namespace Workloads.Creation.StaticImg.Models {
             await SaveBasicAsync();
         }
 
-        internal async Task UpdateCustomColorsAsync(ColorChnageEventArgs e) {
+        internal async Task UpdateCustomColorsAsync(ColorChangeEventArgs e) {
             if (e.OldItem != null)
                 CustomColors.Remove((Color)e.OldItem);
             if (e.NewItem != null)
@@ -336,13 +336,13 @@ namespace Workloads.Creation.StaticImg.Models {
             await SaveBasicAsync();
         }
 
-        internal async Task UpdateForegroundColorsAsync(ColorChnageEventArgs e) {
+        internal async Task UpdateForegroundColorsAsync(ColorChangeEventArgs e) {
             if (e.NewItem != null)
                 ForegroundColor = (Color)e.NewItem;
             await SaveBasicAsync();
         }
 
-        internal async Task UpdateBackgroundColorsAsync(ColorChnageEventArgs e) {
+        internal async Task UpdateBackgroundColorsAsync(ColorChangeEventArgs e) {
             if (e.NewItem != null)
                 BackgroundColor = (Color)e.NewItem;
             await SaveBasicAsync();

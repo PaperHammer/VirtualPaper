@@ -3,17 +3,25 @@ using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI;
+using Microsoft.UI.Input;
+using VirtualPaper.UIComponent.Services;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
     partial class SelectionTool(LayerBasicData basicData) : Tool {
+        public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
         public Rect SelectionRect => _selectionRect;
 
         public void TryCommitSelection() {
             var op = CommitSelection();
             if (op) RenderToTarget();
+        }
+
+        public override void OnPointerEntered(CanvasPointerEventArgs e) {
+            base.OnPointerEntered(e);
+            SystemCursorChangeRequested?.Invoke(this, new(InputSystemCursor.Create(InputSystemCursorShape.Cross)));
         }
 
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
@@ -22,7 +30,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                 return;
             }
             if (!IsPointerOverTaregt(e) || e.Pointer.Properties.IsMiddleButtonPressed) return;
-           
+
             RenderTarget = e.RenderData.RenderTarget;
             if (_baseContent == null) SaveBaseContent();
 
@@ -55,17 +63,23 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
             if (_currentState == SelectionState.Selecting) {
                 if (_isDragging) {
-                    // 拖动现有选区
                     double offsetX = currentPos.X - _moveStartPoint.X;
                     double offsetY = currentPos.Y - _moveStartPoint.Y;
-                    UpdateSelectionRect(new Rect(
-                        _originalSelectionRect.X + offsetX,
-                        _originalSelectionRect.Y + offsetY,
-                        _originalSelectionRect.Width,
-                        _originalSelectionRect.Height));
+
+                    Rect newRect = new(
+                        _currentDragStartRect.X + offsetX,
+                        _currentDragStartRect.Y + offsetY,
+                        _currentDragStartRect.Width,
+                        _currentDragStartRect.Height);
+
+                    // 允许部分超出边界，但确保至少有一部分可见
+                    if (newRect.Right > 0 && newRect.Bottom > 0 &&
+                        newRect.Left < RenderTarget.SizeInPixels.Width &&
+                        newRect.Top < RenderTarget.SizeInPixels.Height) {
+                        UpdateSelectionRect(newRect);
+                    }
                 }
                 else {
-                    // 创建新选区
                     UpdateSelectionRect(new Rect(
                         Math.Min(_startPoint.X, currentPos.X),
                         Math.Min(_startPoint.Y, currentPos.Y),
@@ -137,6 +151,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             _currentState = SelectionState.Selecting;
             _moveStartPoint = position;
             _isDragging = true;
+            _currentDragStartRect = _selectionRect; // 记录当前拖动开始时的位置
         }
 
         private void SaveBaseContent() {
@@ -203,23 +218,31 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                 using (var ds = RenderTarget.CreateDrawingSession()) {
                     ds.Clear(Colors.Transparent);
 
-                    // 1. 绘制基准内容
+                    // 绘制基准内容
                     if (_baseContent != null) {
                         ds.DrawImage(_baseContent);
                     }
 
-                    // 2. 绘制选区内容
+                    // 绘制选区内容
                     if (_selectionContent != null && _currentState != SelectionState.None) {
                         ds.DrawImage(_selectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
                     }
 
-                    // 3. 绘制选择框
+                    // 绘制选择框
                     if (_currentState != SelectionState.None) {
                         using (var borderBrush = new CanvasSolidColorBrush(RenderTarget, _selectionBorderColor)) {
-                            var strokeStyle = new CanvasStrokeStyle() {
-                                DashStyle = CanvasDashStyle.Dash,
-                            };
-                            ds.DrawRectangle(_selectionRect, borderBrush, _selectionBorderWidth, strokeStyle);
+                            var strokeStyle = new CanvasStrokeStyle() { DashStyle = CanvasDashStyle.Dash };
+
+                            // 计算实际可见的矩形部分
+                            var visibleRect = new Rect(
+                                Math.Max(0, _selectionRect.Left),
+                                Math.Max(0, _selectionRect.Top),
+                                Math.Min(RenderTarget.SizeInPixels.Width, _selectionRect.Right) - Math.Max(0, _selectionRect.Left),
+                                Math.Min(RenderTarget.SizeInPixels.Height, _selectionRect.Bottom) - Math.Max(0, _selectionRect.Top));
+
+                            if (visibleRect.Width > 0 && visibleRect.Height > 0) {
+                                ds.DrawRectangle(visibleRect, borderBrush, _selectionBorderWidth, strokeStyle);
+                            }
                         }
                     }
                 }
@@ -277,7 +300,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         private Point _startPoint;
         private Rect _selectionRect;
         private Point _moveStartPoint;
-        private Rect _originalSelectionRect;
+        private Rect _originalSelectionRect; // 基准层的选区位置（用于还原）
+        private Rect _currentDragStartRect; // 当前拖动开始时的选区位置
         private bool _isDragging; // 标记当前是否在拖动
 
         // 图层缓存

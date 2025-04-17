@@ -2,12 +2,20 @@
 using System.Collections.Generic;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
+using VirtualPaper.UIComponent.Services;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
     class FillTool(LayerBasicData data) : Tool {
+        public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
+
+        public override void OnPointerEntered(CanvasPointerEventArgs e) {
+            base.OnPointerEntered(e);
+            SystemCursorChangeRequested?.Invoke(this, new(InputSystemCursor.Create(InputSystemCursorShape.Cross)));
+        }
+
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
             if (!IsPointerOverTaregt(e)) return;
 

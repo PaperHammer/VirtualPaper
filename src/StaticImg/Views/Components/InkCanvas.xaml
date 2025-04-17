@@ -9,7 +9,7 @@
     Loaded="UserControl_Loaded"
     xmlns:win2d="using:Microsoft.Graphics.Canvas.UI.Xaml"
     mc:Ignorable="d">
-
+    
     <Grid
         x:Name="container"
         Background="Transparent"
@@ -18,12 +18,12 @@
         DataContext="{x:Bind _viewModel.BasicData, Mode=OneWay}"
         Width="{x:Bind _viewModel.BasicData.Size.Width, Mode=OneWay}"
         Height="{x:Bind _viewModel.BasicData.Size.Height, Mode=OneWay}">
+        <Grid
+            x:Name="workground"
+            Canvas.ZIndex="-1"/>
         <win2d:CanvasControl
             x:Name="inkCanvas"
             Loaded="InkingCanvas_Loaded"
             Draw="InkCanvas_Draw"/>
-        <Grid
-            x:Name="workground"
-            Canvas.ZIndex="-1"/>
     </Grid>
 </UserControl>

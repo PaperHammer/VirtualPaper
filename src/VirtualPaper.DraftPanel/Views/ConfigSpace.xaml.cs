@@ -113,8 +113,8 @@ namespace VirtualPaper.DraftPanel.Views {
             _viewModel.NextStep = action;
         }
 
-        public uint GetDpi() {
-            return Draft.Instance.GetDpi();
+        public uint GetHardwareDpi() {
+            return Draft.Instance.GetHardwareDpi();
         }
     
         public void ChangePanelState(DraftPanelState nextPanel, object data) {

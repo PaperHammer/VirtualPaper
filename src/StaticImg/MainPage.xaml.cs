@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MessagePack;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -355,7 +356,107 @@ namespace Workloads.Creation.StaticImg {
             inkCanvas.CommitSelect();
         }
 
+        private static void CloseSizeIllegalMsg() {
+            MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal));
+        }
+
+        private static void ShowSizeIllegalMsg() {
+            MainPage.Instance.Bridge.GetNotify().ShowMsg(
+                true,
+                nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
+                InfoBarType.Error,
+                MAX_CANVAS_SIZE_WITH_DPI.ToString(),
+                nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
+                false);
+        }
+
+        private void LockAspectRatio_Checked(object sender, RoutedEventArgs e) {
+            _isLockAspectRatio = true;
+        }
+
+        private void LockAspectRatio_Unchecked(object sender, RoutedEventArgs e) {
+            _isLockAspectRatio = false;
+        }
+
+        private void OnSizeBoxLostFocus(object sender, RoutedEventArgs e) {
+            if (_isKeyboardExecuted) {
+                _isKeyboardExecuted = false;
+                return;
+            }
+            var box = (TextBox)sender;
+            ProcessSizeInput(box);
+        }
+
+        private void OnSizeBoxKeyDown(object sender, KeyRoutedEventArgs e) {
+            if (e.Key == Windows.System.VirtualKey.Enter) {
+                _isKeyboardExecuted = true;
+                ProcessSizeInput((TextBox)sender);
+                e.Handled = true;
+            }
+            else if (e.Key == Windows.System.VirtualKey.Escape) {
+                ResetToOriginalValues();
+                e.Handled = true;
+            }
+        }
+
+        private void ProcessSizeInput(TextBox modifiedBox) {
+            bool isWidthModified = modifiedBox == WidthTextBox;
+            bool op1 = ValidateSizeInput(WidthTextBox.Text, out int width);
+            bool op2 = ValidateSizeInput(HeightTextBox.Text, out int height);
+            bool isValid = op1 && op2;
+
+            if (!isValid) {
+                ShowSizeIllegalMsg();
+                ResetToOriginalValues();
+                return;
+            }
+
+            if (_isLockAspectRatio) {
+                if (isWidthModified) {
+                    isValid = ValidateSizeInput(
+                        (width / inkCanvas._viewModel.BasicData.Size.Ratio).ToString("F0"),
+                        out height);
+                }
+                else {
+                    isValid = ValidateSizeInput(
+                        (height * inkCanvas._viewModel.BasicData.Size.Ratio).ToString("F0"),
+                        out width);
+                }
+
+                if (!isValid) {
+                    ResetToOriginalValues();
+                    ShowSizeIllegalMsg();
+                    return;
+                }
+            }
+
+            inkCanvas._viewModel.BasicData.Size = new(width, height, inkCanvas._viewModel.BasicData.Size.Dpi);
+            CloseSizeIllegalMsg();
+        }
+
+        private static bool ValidateSizeInput(string text, out int res) {
+            if (string.IsNullOrEmpty(text)) {
+                res = 0;
+                return false;
+            }
+
+            var op = int.TryParse(text, out res) &&
+                res >= 1 &&
+                res <= MAX_CANVAS_SIZE_WITH_DPI;
+
+            return op;
+        }
+
+        private void ResetToOriginalValues() {
+            WidthTextBox.Text = inkCanvas._viewModel.BasicData.Size.Width.ToString("F0");
+            HeightTextBox.Text = inkCanvas._viewModel.BasicData.Size.Height.ToString("F0");
+        }
+
         private LayerItem _rightTappedItem;
-        internal readonly MainPageViewModel _viewModel;
+        internal readonly MainPageViewModel _viewModel;        
+        private bool _isLockAspectRatio;
+        private bool _isKeyboardExecuted;
+        private static int MAX_CANVAS_EDGE => MainPage.Instance.SharedDevice.MaximumBitmapSizeInPixels;
+        private static int MAX_CANVAS_SIZE_WITH_DPI => (int)(1.0F * MAX_CANVAS_EDGE / MainPage.Instance.Bridge.GetHardwareDpi() * 96);
     }
 }

@@ -46,7 +46,7 @@ namespace VirtualPaper.DraftPanel {
             return _windowBridge.GetNotify();
         }
 
-        public uint GetDpi() {
+        public uint GetHardwareDpi() {
             return _windowBridge.GetDpi();
         }
 

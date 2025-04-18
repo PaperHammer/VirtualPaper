@@ -54,6 +54,18 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
         }
 
+        private void Container_SizeChanged(object sender, SizeChangedEventArgs e) {
+            _viewModel.BasicData.SizeChanged();
+            _compositeTarget = new CanvasRenderTarget(
+                MainPage.Instance.SharedDevice,
+                (float)_viewModel.BasicData.Size.Width,
+                (float)_viewModel.BasicData.Size.Height,
+                _viewModel.BasicData.Size.Dpi,
+                Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                CanvasAlphaMode.Premultiplied);
+            RebuildCompositeTarget();
+        }
+
         #region tool event
         private void SetupHandlers() {
             _viewModel.RequestFullRender += (s, e) => {
@@ -274,7 +286,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private readonly ToolManager _tool;
         internal InkCanvasViewModel _viewModel;
         private readonly InputCursor _originalInputCursor;
-        private readonly CanvasRenderTarget _compositeTarget;
+        private CanvasRenderTarget _compositeTarget;
         private readonly TaskCompletionSource<bool> _isReady = new();
     }
 }

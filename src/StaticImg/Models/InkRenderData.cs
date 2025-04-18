@@ -26,7 +26,7 @@ namespace Workloads.Creation.StaticImg.Models {
         private void InitializeRenderTarget() {
             RenderTarget?.Dispose();
             RenderTarget = new CanvasRenderTarget(
-                MainPage.Instance.SharedDevice, 
+                MainPage.Instance.SharedDevice,
                 (float)_arcSize.Width,
                 (float)_arcSize.Height,
                 _arcSize.Dpi,
@@ -34,9 +34,86 @@ namespace Workloads.Creation.StaticImg.Models {
                 CanvasAlphaMode.Premultiplied);
         }
 
-        public void ResizeRenderTarget() {
-            if (_arcSize.Width > 0 && _arcSize.Height > 0)
-                InitializeRenderTarget();
+        private void ResizeRenderTargetWithScale() {
+            // 保留旧内容
+            if (RenderTarget != null) {
+                _cachedContent = CanvasBitmap.CreateFromBytes(
+                    MainPage.Instance.SharedDevice,
+                    RenderTarget.GetPixelBytes(),
+                    (int)RenderTarget.SizeInPixels.Width,
+                    (int)RenderTarget.SizeInPixels.Height,
+                    RenderTarget.Format);
+            }
+
+            // 创建新目标
+            RenderTarget?.Dispose();
+            RenderTarget = new CanvasRenderTarget(
+                MainPage.Instance.SharedDevice,
+                (float)_arcSize.Width,
+                (float)_arcSize.Height,
+                _arcSize.Dpi,
+                DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                CanvasAlphaMode.Premultiplied);
+
+            // 恢复内容
+            if (_cachedContent != null) {
+                using (var ds = RenderTarget.CreateDrawingSession()) {
+                    var destRect = new Rect(0, 0, _arcSize.Width, _arcSize.Height);
+                    ds.DrawImage(_cachedContent, destRect);
+                }
+                _cachedContent.Dispose();
+            }
+        }
+
+        private void ResizeRenderTargetWithExpand() {
+            // 保留原始内容
+            Size originalSize = default;
+            if (RenderTarget != null) {
+                _cachedContent = CanvasBitmap.CreateFromBytes(
+                   MainPage.Instance.SharedDevice,
+                   RenderTarget.GetPixelBytes(),
+                   (int)RenderTarget.SizeInPixels.Width,
+                   (int)RenderTarget.SizeInPixels.Height,
+                   RenderTarget.Format);
+
+                originalSize = new Size(
+                    _cachedContent.SizeInPixels.Width / _cachedContent.Dpi * 96,
+                    _cachedContent.SizeInPixels.Height / _cachedContent.Dpi * 96);
+            }
+
+            // 创建新目标（扩展尺寸）
+            RenderTarget?.Dispose();
+            RenderTarget = new CanvasRenderTarget(
+                MainPage.Instance.SharedDevice,
+                (float)_arcSize.Width,
+                (float)_arcSize.Height,
+                _arcSize.Dpi,
+                DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                CanvasAlphaMode.Premultiplied);
+
+            // 绘制到新目标
+            using (var ds = RenderTarget.CreateDrawingSession()) {
+                if (IsRootBackground) {
+                    ds.Clear(Colors.White);
+                }
+                // 在左上角绘制原始内容（1:1不缩放）
+                if (_cachedContent != null) {
+                    var contentRect = new Rect(
+                        0, 0,
+                        originalSize.Width,
+                        originalSize.Height);
+
+                    ds.DrawImage(_cachedContent, contentRect);
+                }
+            }
+
+            _cachedContent?.Dispose();
+        }
+
+        public void ResizeRenderTarget(ArcSize arcSize, bool isScaleContent) {
+            _arcSize = arcSize;
+            if (isScaleContent) ResizeRenderTargetWithScale();
+            else ResizeRenderTargetWithExpand();
         }
 
         public async Task SaveWithProgressAsync(
@@ -202,7 +279,8 @@ namespace Workloads.Creation.StaticImg.Models {
             return newRender;
         }
 
-        private readonly ArcSize _arcSize;
+        private ArcSize _arcSize;
+        private CanvasBitmap _cachedContent;
         private readonly TaskCompletionSource<bool> _isCompleted = new();
     }
 }

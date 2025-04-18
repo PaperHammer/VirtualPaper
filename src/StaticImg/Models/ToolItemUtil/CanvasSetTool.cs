@@ -2,7 +2,7 @@
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
-    class SettingTool : Tool {       
+    class CanvasSetTool : Tool {       
         public override void OnPointerEntered(CanvasPointerEventArgs e) {
             throw new NotImplementedException();
         }

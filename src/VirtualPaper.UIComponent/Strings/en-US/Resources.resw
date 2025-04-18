@@ -731,4 +731,7 @@ Author: PaperHammer</value>
   <data name="ArcColorPicker_AddToCustom" xml:space="preserve">
     <value>Add to custom colors</value>
   </data>
+  <data name="StaticImg_CanvasSizeInput_Illegal" xml:space="preserve">
+    <value>The maximum width and height of the canvas should be 1 - </value>
+  </data>
 </root>

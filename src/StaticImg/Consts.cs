@@ -126,24 +126,20 @@ namespace Workloads.Creation.StaticImg {
         }
     }
 
-    public struct ArcSize : IEquatable<ArcSize> {
+    public readonly struct ArcSize : IEquatable<ArcSize> {
         [JsonConstructor]
-        [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
-        internal ArcSize(double width, double height, uint dpi) {
-            this.Width = width;
-            this.Height = height;
+        internal ArcSize(double width, double height, uint dpi) {            
             this.Dpi = dpi;
-        }
-
-        public ArcSize(double width, double height) {
             this.Width = width;
             this.Height = height;
+            this.Ratio = (float)(1.0f * width / height); // 宽高比
         }
 
-        public double Width { get; private set; }
-        public double Height { get; private set; }
-        public uint Dpi { get; private set; }
-        public readonly uint HardwareDpi => MainPage.Instance.Bridge.GetDpi();
+        public double Width { get; }
+        public double Height { get; }
+        public uint Dpi { get; }
+        public float Ratio { get; }
+        public readonly uint HardwareDpi => MainPage.Instance.Bridge.GetHardwareDpi();
 
         // readonly 关键字在此处意味着这个方法不会修改任何实例的状态（即它不会改变对象的任何字段）。
         // 这有助于编译器优化，并明确地传达了该方法是纯粹基于现有数据进行计算而不改变对象状态的事实。
@@ -188,14 +184,13 @@ namespace Workloads.Creation.StaticImg {
         None,
         Eraser, // 橡皮擦
         PaintBrush, // 画笔
-        Text, // 文本
-        Image, // 图片
-        Shape, // 图形
-        ColorPicker, // 取色器
+        //Text, // 文本
+        //Image, // 图片
+        //Shape, // 图形
         Fill, // 填充
         //Lasso, // 套索工具
         Crop, // 裁剪
         Selection,
-        Setting,
+        CanvasSet,
     }
 }

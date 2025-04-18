@@ -31,10 +31,6 @@ namespace Workloads.Creation.StaticImg.Models {
 
         public ObservableList<InkCanvasData> InkDatas { get; set; } = [];
         public ObservableList<Color> CustomColors { get; set; } = [];
-        [JsonIgnore]
-        public TaskCompletionSource<bool> IsCompleted => _isCompleted;
-        [JsonIgnore]
-        public TaskCompletionSource<bool> InkCanvasLoaded => _inkCanvasLaoded;
 
         ArcSize _size = new(1920, 1080, 96); // 像素
         public ArcSize Size {
@@ -47,6 +43,13 @@ namespace Workloads.Creation.StaticImg.Models {
             }
         }
 
+        bool _isScaleContent;
+        [JsonIgnore]
+        public bool IsScaleContent {
+            get { return _isScaleContent; }
+            set { if (_isScaleContent == value) return; _isScaleContent = value; OnPropertyChanged(); }
+        }
+        
         string _pointerPosText;
         [JsonIgnore]
         public string PointerPosText {
@@ -361,11 +364,15 @@ namespace Workloads.Creation.StaticImg.Models {
                 $"W: {_selectionRect.Width:F0} px, H: {_selectionRect.Height:F0} px";
         }
 
+        internal void SizeChanged() {
+            foreach (var ink in InkDatas) {
+                ink.Render.ResizeRenderTarget(Size, IsScaleContent);
+            }
+        }
+
         private int _nextLayerNumberTag = 1;
         private int _nextCopyedLayerNumberTag = 1;
         private readonly string _entryFilePath;
-        private readonly TaskCompletionSource<bool> _isCompleted = new();
-        private readonly TaskCompletionSource<bool> _inkCanvasLaoded = new();
         private readonly TaskCompletionSource<bool> _isInkDataLoadCompleted = new();
     }
 }

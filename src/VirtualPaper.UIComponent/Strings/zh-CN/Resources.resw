@@ -731,4 +731,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="ArcColorPicker_AddToCustom" xml:space="preserve">
     <value>添加到自定义颜色</value>
   </data>
+  <data name="StaticImg_CanvasSizeInput_Illegal" xml:space="preserve">
+    <value>画布最大宽度与高度应在 1 - </value>
+  </data>
 </root>

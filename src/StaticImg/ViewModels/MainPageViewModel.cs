@@ -61,7 +61,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 new() { Type = ToolType.Fill, ToolName = "填充", ImageSourceKey = "DraftPanel_FuncBar_ColorFill", },
                 new() { Type = ToolType.Eraser, ToolName = "擦除", Glyph = "\uE75C", },
                 new() { Type = ToolType.Crop, ToolName = "裁剪", Glyph = "\uE7A8", },
-                new() { Type = ToolType.Setting, ToolName = "画布", Glyph = "\uE9E9", },
+                new() { Type = ToolType.CanvasSet, ToolName = "画布", Glyph = "\uE9E9", },
             ];
         }
 

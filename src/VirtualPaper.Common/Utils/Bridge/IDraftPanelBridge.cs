@@ -64,7 +64,7 @@ namespace VirtualPaper.Common.Utils.Bridge {
         /// </list>
         /// </remarks>
         void ChangePanelState(DraftPanelState nextPanel, object data);
-        uint GetDpi();
+        uint GetHardwareDpi();
         IDialogService GetDialog();
     }
 }

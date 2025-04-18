@@ -335,6 +335,26 @@ namespace Workloads.Creation.StaticImg {
             inkCanvas.OnPointerExited(e);
         }
 
+        private void AspectRatio_ItemClick(object sender, ItemClickEventArgs e) {
+            inkCanvas._viewModel.BasicData.SeletcedAspectitem = e.ClickedItem as AspectRatioItem;
+        }
+
+        private void CropCancelBtn_Click(object sender, RoutedEventArgs e) {
+            inkCanvas.CancelCrop();
+        }
+
+        private void CropCommitBtn_Click(object sender, RoutedEventArgs e) {
+            inkCanvas.CommitCrop();
+        }
+
+        private void SelectCancelBtn_Click(object sender, RoutedEventArgs e) {
+            inkCanvas.CancelSelect();
+        }
+
+        private void SelectCommitBtn_Click(object sender, RoutedEventArgs e) {
+            inkCanvas.CommitSelect();
+        }
+
         private LayerItem _rightTappedItem;
         internal readonly MainPageViewModel _viewModel;
     }

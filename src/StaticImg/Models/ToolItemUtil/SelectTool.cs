@@ -10,14 +10,9 @@ using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
-    partial class SelectionTool(LayerBasicData basicData) : Tool {
+    partial class SelectionTool(LayerBasicData basicData) : Tool, IDisposable {
         public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
         public Rect SelectionRect => _selectionRect;
-
-        public void TryCommitSelection() {
-            var op = CommitSelection();
-            if (op) RenderToTarget();
-        }
 
         public override void OnPointerEntered(CanvasPointerEventArgs e) {
             base.OnPointerEntered(e);
@@ -26,12 +21,11 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
             if (e.Pointer.Properties.IsRightButtonPressed && _currentState == SelectionState.Selected) {
-                RestoreOriginalContent();
+                TryRestoreOriginalContent();
                 return;
             }
             if (!IsPointerOverTaregt(e) || e.Pointer.Properties.IsMiddleButtonPressed) return;
 
-            RenderTarget = e.RenderData.RenderTarget;
             if (_baseContent == null) SaveBaseContent();
 
             var position = e.Pointer.Position;
@@ -39,19 +33,19 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             switch (_currentState) {
                 case SelectionState.None:
                     StartNewSelection(position);
+                    RenderToTarget();
                     break;
 
                 case SelectionState.Selected:
                     if (_selectionRect.Contains(position)) {
                         StartDragSelection(position);
+                        RenderToTarget();
                     }
                     else {
                         CommitSelection();
                     }
                     break;
-            }
-
-            RenderToTarget();
+            }            
         }
 
         public override void OnPointerMoved(CanvasPointerEventArgs e) {
@@ -113,8 +107,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             RenderToTarget();
         }
 
-        private void RestoreOriginalContent() {
-            if (_selectionContent == null) return;
+        public bool TryRestoreOriginalContent() {
+            if (_selectionContent == null) return false;
 
             // 恢复原位置内容
             using (var ds = _baseContent.CreateDrawingSession()) {
@@ -130,6 +124,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             // 重置状态
             StopSelection();
             RenderToTarget();
+
+            return true;
         }
 
         private void StopSelection() {
@@ -198,8 +194,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                 ds.FillRectangle(_selectionRect, Colors.Transparent);
             }
         }
-
-        private bool CommitSelection() {
+       
+        public bool CommitSelection() {
             if (_currentState != SelectionState.Selected || _selectionContent == null) return false;
 
             // 将选区内容合并到基础层
@@ -207,6 +203,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                 ds.DrawImage(_selectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
             }
             StopSelection();
+            RenderToTarget();
 
             return true;
         }
@@ -289,6 +286,39 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             _selectionRect = rect;
             basicData.SelectionRect = rect;
         }
+
+        #region dispsoe
+        private bool _disposed = false;
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing) {
+            if (_disposed) return;
+
+            if (disposing) {
+                // 释放托管资源
+                ReleaseAllResources();
+            }
+
+            _disposed = true;
+        }
+
+        private void ReleaseAllResources() {
+            SafeDispose(ref _baseContent);
+            SafeDispose(ref _selectionContent);
+            // RenderTarget由外部管理，此处不释放
+        }
+
+        private static void SafeDispose<T>(ref T resource) where T : IDisposable {
+            try {
+                resource?.Dispose();
+                resource = default;
+            }
+            catch { }
+        }
+        #endregion
 
         private enum SelectionState {
             None,       // 无选择

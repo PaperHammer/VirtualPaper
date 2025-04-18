@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
 using Microsoft.UI.Input;
@@ -12,7 +11,6 @@ using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.UIComponent.Input;
 using Windows.Foundation;
-using Windows.UI;
 using Workloads.Creation.StaticImg.Models.ToolItemUtil;
 using Workloads.Creation.StaticImg.Utils;
 using Workloads.Creation.StaticImg.ViewModels;
@@ -33,8 +31,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             _compositeTarget = new CanvasRenderTarget(
                 MainPage.Instance.SharedDevice,
-                _viewModel.BasicData.Size.Width,
-                _viewModel.BasicData.Size.Height,
+                (float)_viewModel.BasicData.Size.Width,
+                (float)_viewModel.BasicData.Size.Height,
                 _viewModel.BasicData.Size.Dpi,
                 Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
                 CanvasAlphaMode.Premultiplied);
@@ -56,6 +54,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
         }
 
+        #region tool event
         private void SetupHandlers() {
             _viewModel.RequestFullRender += (s, e) => {
                 RebuildCompositeTarget();
@@ -63,17 +62,44 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             };
             _viewModel.SeletcedToolChanging += (s, e) => {
                 //before
-                HandleSelectionTool();
+                HandleSelectionTool_Before();
                 _selectedTool = _tool.GetTool(_viewModel.BasicData.SelectedToolItem.Type);
-                //after
+                //after             
+            };
+            _viewModel.SeletcedLayerChanged += (s, e) => {
+                HandleLayerChanged();
+            };
+            _viewModel.SeletcedCropAspectCliked += (s, e) => {
+                HandleCropAspectClicked(e);
             };
         }
 
-        private void HandleSelectionTool() {
-            if (_selectedTool is SelectionTool st) {
-                st.TryCommitSelection();
+        private void HandleCropAspectClicked(double e) {
+            if (_selectedTool is CropTool ct) {
+                ct.ApplyAspectRatio(e);
+                RebuildCompositeTarget();
             }
-        }        
+        }
+
+        private void HandleLayerChanged() {
+            TryRestore();
+        }
+
+        private void HandleSelectionTool_Before() {
+            TryRestore();
+        }
+
+        private void TryRestore() {
+            if (_selectedTool is SelectionTool st) {
+                var op = st.TryRestoreOriginalContent();
+                if (op) RebuildCompositeTarget();
+            }
+            else if (_selectedTool is CropTool ct) {
+                var op = ct.TryRestoreOriginalContent();
+                if (op) RebuildCompositeTarget();
+            }
+        }
+        #endregion
 
         private void RebuildCompositeTarget() {
             using (var ds = _compositeTarget.CreateDrawingSession()) {
@@ -216,10 +242,38 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             await _viewModel.BasicData.UpdateCustomColorsAsync(e);
         }
 
-        internal InkCanvasViewModel _viewModel;
+        internal void CancelCrop() {
+            if (_selectedTool is CropTool ct) {
+                var op = ct.TryRestoreOriginalContent();
+                if (op) RebuildCompositeTarget();
+            }
+        }
+
+        internal void CommitCrop() {
+            if (_selectedTool is CropTool ct) {
+                var op = ct.CommitSelection();
+                if (op) RebuildCompositeTarget();
+            }
+        }
+
+        internal void CancelSelect() {
+            if (_selectedTool is SelectionTool st) {
+                var op = st.TryRestoreOriginalContent();
+                if (op) RebuildCompositeTarget();
+            }
+        }
+
+        internal void CommitSelect() {
+            if (_selectedTool is SelectionTool st) {
+                var op = st.CommitSelection();
+                if (op) RebuildCompositeTarget();
+            }
+        }
+
         private Tool _selectedTool;
-        private readonly InputCursor _originalInputCursor;
         private readonly ToolManager _tool;
+        internal InkCanvasViewModel _viewModel;
+        private readonly InputCursor _originalInputCursor;
         private readonly CanvasRenderTarget _compositeTarget;
         private readonly TaskCompletionSource<bool> _isReady = new();
     }

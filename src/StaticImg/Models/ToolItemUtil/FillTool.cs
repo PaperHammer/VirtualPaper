@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 using VirtualPaper.UIComponent.Services;
@@ -8,7 +10,7 @@ using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
-    class FillTool(LayerBasicData data) : Tool {
+    class FillTool(LayerBasicData data) : Tool, IDisposable {
         public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
 
         public override void OnPointerEntered(CanvasPointerEventArgs e) {
@@ -53,10 +55,11 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         public void FloodFill(Point startPoint, Color fillColor, CanvasDrawingSession ds) {
             if (RenderTarget == null || ds == null) return;
 
-            // 获取画布尺寸和像素数据
+
+            // 获取像素数据（可能抛出异常）
+            byte[] pixels = RenderTarget.GetPixelBytes();
             int width = (int)RenderTarget.SizeInPixels.Width;
             int height = (int)RenderTarget.SizeInPixels.Height;
-            byte[] pixels = RenderTarget.GetPixelBytes();
 
             // 边界检查（带坐标钳位）
             int startX = (int)Math.Clamp(startPoint.X, 0, width - 1);
@@ -73,7 +76,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             // 快速跳过相同颜色
             if (fillColor.Equals(targetColor)) return;
 
-            // 创建访问标记数组（比ConcurrentQueue更高效）
+            // 创建访问标记数组
             bool[] visited = new bool[width * height];
             var stack = new Stack<(int left, int right, int y)>();
 
@@ -81,24 +84,21 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             var firstSpan = FindHorizontalSpan(startX, startY, width, pixels, targetColor, visited);
             stack.Push(firstSpan);
 
-            // 设置混合模式（确保覆盖原有像素）
+            // 设置混合模式
             ds.Blend = CanvasBlend.Copy;
 
             // 处理扫描线
             while (stack.Count > 0) {
                 var (left, right, y) = stack.Pop();
-
-                // 直接绘制当前扫描线
                 ds.FillRectangle(left, y, right - left + 1, 1, fillColor);
 
-                // 检查上下行
-                ScanAdjacentRow(y - 1, left, right, width, height, pixels, targetColor, visited, stack); // 上一行
-                ScanAdjacentRow(y + 1, left, right, width, height, pixels, targetColor, visited, stack); // 下一行
+                ScanAdjacentRow(y - 1, left, right, width, height, pixels, targetColor, visited, stack);
+                ScanAdjacentRow(y + 1, left, right, width, height, pixels, targetColor, visited, stack);
             }
         }
 
         // 辅助方法：查找水平连续区域
-        private (int left, int right, int y) FindHorizontalSpan(int x, int y, int width, byte[] pixels, Color targetColor, bool[] visited) {
+        private static (int left, int right, int y) FindHorizontalSpan(int x, int y, int width, byte[] pixels, Color targetColor, bool[] visited) {
             int left = x;
             while (left > 0 && !visited[y * width + left - 1] && IsPixelMatch(left - 1, y, width, pixels, targetColor))
                 left--;
@@ -115,7 +115,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         }
 
         // 辅助方法：扫描相邻行
-        private void ScanAdjacentRow(int y, int left, int right, int width, int height, byte[] pixels, Color targetColor, bool[] visited, Stack<(int left, int right, int y)> stack) {
+        private static void ScanAdjacentRow(int y, int left, int right, int width, int height, byte[] pixels, Color targetColor, bool[] visited, Stack<(int left, int right, int y)> stack) {
             if (y < 0 || y >= height) return;
 
             for (int x = left; x <= right; x++) {
@@ -136,6 +136,36 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                    Math.Abs(pixels[index + 1] - targetColor.G) < 5 &&
                    Math.Abs(pixels[index] - targetColor.B) < 5;
         }
+
+        #region dispose
+        private bool _disposed = false;
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing) {
+            if (_disposed) return;
+
+            if (disposing) {
+                // 释放托管资源
+                ReleaseAllResources();
+            }
+
+            _disposed = true;
+        }
+
+        private void ReleaseAllResources() {
+        }
+
+        private void SafeDispose<T>(ref T resource) where T : IDisposable {
+            try {
+                resource?.Dispose();
+                resource = default;
+            }
+            catch { }
+        }
+        #endregion
 
         private Color _blendedColor;
         private Point _lastClickPoint;

@@ -27,8 +27,8 @@ namespace Workloads.Creation.StaticImg.Models {
             RenderTarget?.Dispose();
             RenderTarget = new CanvasRenderTarget(
                 MainPage.Instance.SharedDevice, 
-                _arcSize.Width,
-                _arcSize.Height,
+                (float)_arcSize.Width,
+                (float)_arcSize.Height,
                 _arcSize.Dpi,
                 DirectXPixelFormat.B8G8R8A8UIntNormalized,
                 CanvasAlphaMode.Premultiplied);

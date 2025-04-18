@@ -93,6 +93,34 @@
             </ListViewItem>
         </DataTemplate>
 
+        <DataTemplate x:Key="AspectRatioTemplate" x:DataType="lcl_models:AspectRatioItem">
+            <GridViewItem 
+                Width="90" 
+                Height="100" 
+                Margin="6">
+                <StackPanel 
+                    Orientation="Vertical"
+                    Spacing="10">
+                    <Border 
+                        Width="{x:Bind BorderWidth}" 
+                        Height="{x:Bind BorderHeight}"
+                        BorderBrush="{ThemeResource SystemAccentColor}"
+                        BorderThickness="1">
+                    </Border>
+                    <TextBlock 
+                        Text="{x:Bind DisplayText}" 
+                        HorizontalAlignment="Center" 
+                        VerticalAlignment="Center"/>
+                </StackPanel>
+            </GridViewItem>
+        </DataTemplate>
+
+        <ItemsPanelTemplate x:Key="AspectRatioPanel">
+            <ItemsWrapGrid 
+                Orientation="Horizontal"
+                MaximumRowsOrColumns="3"/>
+        </ItemsPanelTemplate>
+
         <MenuFlyout x:Key="Layers_MenuFlyout">
             <MenuFlyoutItem Text="{x:Bind _viewModel.SIG_Text_AddLayer}" Click="AddLayer_Click"/>
             <MenuFlyoutItem Text="{x:Bind _viewModel.SIG_Text_CopyLayer}" Click="CopyLayer_Click"/>
@@ -148,8 +176,38 @@
                         VerticalScrollMode="Auto">
                         <StackPanel>
                             <Grid x:Name="DynamicExpander">
-                                <Expander                            
-                                    x:Name="PaintBrush"
+                                <Expander x:Name="Selection"
+                                    Visibility="{x:Bind inkCanvas._viewModel.BasicData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=Selection}"
+                                    Style="{StaticResource RightExpanderStyle}">
+                                    <Expander.Header>
+                                        <TextBlock Text="选择"/>
+                                    </Expander.Header>
+                                    <Expander.Content>
+                                        <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Button
+                                            Content="取消"
+                                            Height="40"
+                                            HorizontalAlignment="Stretch"
+                                            Click="SelectCancelBtn_Click"/>
+
+                                        <Button 
+                                            Grid.Column="2"
+                                            Content="完成"
+                                            Height="40"
+                                            HorizontalAlignment="Stretch"
+                                            Click="SelectCommitBtn_Click"/>
+                                    </Grid>
+                                    </Expander.Content>
+
+                                </Expander>
+
+                                <Expander x:Name="PaintBrush"
                                     Loaded="PaintBrushExpander_Loaded"
                                     Visibility="{x:Bind inkCanvas._viewModel.BasicData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=PaintBrush}"
                                     Style="{StaticResource RightExpanderStyle}">
@@ -244,9 +302,8 @@
                                         </StackPanel>
                                     </Expander.Content>
                                 </Expander>
-                                
-                                <Expander
-                                    x:Name="Eraser"
+
+                                <Expander x:Name="Eraser"
                                     Visibility="{x:Bind inkCanvas._viewModel.BasicData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter= Eraser}"
                                     Style="{StaticResource RightExpanderStyle}">
                                     <Expander.Header>
@@ -324,10 +381,88 @@
                                         </StackPanel>
                                     </Expander.Content>
                                 </Expander>
+
+                                <Expander x:Name="Crop"
+                                    Visibility="{x:Bind inkCanvas._viewModel.BasicData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=Crop}"
+                                    Style="{StaticResource RightExpanderStyle}">
+                                    <Expander.Header>
+                                        <TextBlock Text="裁剪"/>
+                                    </Expander.Header>
+                                    <Expander.Content>
+                                        <StackPanel 
+                                            Orientation="Vertical"
+                                            Spacing="6">
+
+                                            <GridView 
+                                                SelectionMode="Single"
+                                                HorizontalAlignment="Stretch"
+                                                IsItemClickEnabled="True"
+                                                ItemClick="AspectRatio_ItemClick"
+                                                SelectedItem="{x:Bind inkCanvas._viewModel.BasicData.SeletcedAspectitem, Mode=OneWay}"
+                                                ItemsSource="{x:Bind _viewModel.AspectRatios}"
+                                                ItemTemplate="{StaticResource AspectRatioTemplate}"
+                                                ItemsPanel="{StaticResource AspectRatioPanel}"/>
+
+                                            <!--TODO-->
+                                            <!--<Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition Width="10"/>
+                                                    <ColumnDefinition />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel
+                                                    Orientation="Vertical"
+                                                    Spacing="4">
+                                                    <TextBlock 
+                                                        Text="宽度(像素)" 
+                                                        VerticalAlignment="Center"/>
+                                                    <TextBox
+                                                        Text="1135"
+                                                        FontSize="12"/>
+                                                </StackPanel>
+
+                                                <StackPanel
+                                                    Grid.Column="2"
+                                                    Orientation="Vertical"
+                                                    Spacing="4">
+                                                    <TextBlock 
+                                                        Text="高度(像素)" 
+                                                        VerticalAlignment="Center"/>
+                                                    <TextBox
+                                                        Text="638"
+                                                        FontSize="12"/>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <CheckBox Content="锁定纵横比"/>-->
+
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition Width="10"/>
+                                                    <ColumnDefinition />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Button
+                                                    Content="取消"
+                                                    Height="40"
+                                                    HorizontalAlignment="Stretch"
+                                                    Click="CropCancelBtn_Click"/>
+
+                                                <Button 
+                                                    Grid.Column="2"
+                                                    Content="完成"
+                                                    Height="40"
+                                                    HorizontalAlignment="Stretch"
+                                                    Click="CropCommitBtn_Click"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Expander.Content>
+                                </Expander>
                             </Grid>
 
-                            <Expander
-                                x:Name="ColorPalette"
+                            <Expander x:Name="ColorPalette"
                                 Style="{StaticResource RightExpanderStyle}">
                                 <Expander.Header>
                                     <TextBlock Text="调色板"/>
@@ -340,8 +475,8 @@
                                         OnCustomeColorChangedEvent="ArcPalette_OnCustomeColorChangedEvent"/>
                                 </Expander.Content>
                             </Expander>
-                            <Expander
-                                x:Name="LayerManage"
+
+                            <Expander x:Name="LayerManage"
                                 Padding="0 16"
                                 Style="{StaticResource RightExpanderStyle}">
                                 <Expander.Header>

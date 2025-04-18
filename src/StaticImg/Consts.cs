@@ -128,14 +128,20 @@ namespace Workloads.Creation.StaticImg {
 
     public struct ArcSize : IEquatable<ArcSize> {
         [JsonConstructor]
-        public ArcSize(int width, int height, uint dpi) {
+        [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
+        internal ArcSize(double width, double height, uint dpi) {
             this.Width = width;
             this.Height = height;
             this.Dpi = dpi;
         }
 
-        public int Width { get; private set; }
-        public int Height { get; private set; }
+        public ArcSize(double width, double height) {
+            this.Width = width;
+            this.Height = height;
+        }
+
+        public double Width { get; private set; }
+        public double Height { get; private set; }
         public uint Dpi { get; private set; }
         public readonly uint HardwareDpi => MainPage.Instance.Bridge.GetDpi();
 
@@ -157,6 +163,8 @@ namespace Workloads.Creation.StaticImg {
         public static bool operator !=(ArcSize left, ArcSize right) {
             return !(left == right);
         }
+
+        public static double Area(Size size) => size.Width * size.Height;
     }
 
     enum BaseElementType {
@@ -188,5 +196,6 @@ namespace Workloads.Creation.StaticImg {
         //Lasso, // 套索工具
         Crop, // 裁剪
         Selection,
+        Setting,
     }
 }

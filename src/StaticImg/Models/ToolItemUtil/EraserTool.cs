@@ -10,7 +10,7 @@ using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
-    class EraserTool(LayerBasicData data) : Tool {
+    class EraserTool(LayerBasicData data) : Tool, IDisposable {
         public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
 
         public override void OnPointerEntered(CanvasPointerEventArgs e) {
@@ -67,6 +67,20 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             }
             _pointerQueue.Clear();
             _historyPoints.Clear();
+
+            // 定期清理不常用的笔刷
+            if (_brushCache.Count > 20) // 超过20个笔刷时清理
+            {
+                var toRemove = _brushCache
+                    .OrderByDescending(x => x.Key.Item1) // 按笔刷大小排序
+                    .Skip(10) // 保留最常用的10个
+                    .ToList();
+
+                foreach (var item in toRemove) {
+                    SafeDispose(item.Value);
+                    _brushCache.Remove(item.Key);
+                }
+            }
         }
 
         // 核心绘制逻辑
@@ -220,6 +234,44 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                          (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t +
                          (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t);
         }
+
+        #region dispose
+        private bool _disposed = false;
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing) {
+            if (_disposed) return;
+
+            if (disposing) {
+                // 释放托管资源
+                ReleaseAllResources();
+            }
+
+            _disposed = true;
+        }
+
+        private void ReleaseAllResources() {
+            // 释放笔刷缓存
+            foreach (var brush in _brushCache.Values) {
+                SafeDispose(brush);
+            }
+            _brushCache.Clear();
+
+            // 释放后备缓冲区
+            SafeDispose(_backBuffer);
+        }
+
+        // 安全释放方法
+        private static void SafeDispose(IDisposable resource) {
+            try {
+                resource?.Dispose();
+            }
+            catch { }
+        }
+        #endregion
 
         //作用​​：控制渲染频率，避免UI线程过载
         //​​推荐值​​：

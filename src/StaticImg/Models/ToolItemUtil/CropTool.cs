@@ -11,13 +11,13 @@ using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
-    partial class CropTool(LayerBasicData basicData) : Tool, IDisposable {
+    partial class CropTool : Tool, IDisposable {
         public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
         public Rect SelectionRect => _selectionRect;
 
-        public void TryCommitSelection() {
-            var op = CommitSelection();
-            if (op) RenderToTarget();
+        public CropTool(LayerBasicData basicData) {
+            this._ratioController = new AspectRatioController(this);
+            this._basicData = basicData;
         }
 
         public override void OnPointerEntered(CanvasPointerEventArgs e) {
@@ -27,32 +27,29 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
             if (e.Pointer.Properties.IsRightButtonPressed && _currentState == SelectionState.Selected) {
-                RestoreOriginalContent();
+                TryRestoreOriginalContent();
                 return;
             }
             if (!IsPointerOverTaregt(e) || e.Pointer.Properties.IsMiddleButtonPressed) return;
 
-            RenderTarget = e.RenderData.RenderTarget;
             if (_baseContent == null) SaveBaseContent();
-
             var position = e.Pointer.Position;
-
             switch (_currentState) {
                 case SelectionState.None:
                     StartNewSelection(position);
+                    RenderToTarget();
                     break;
 
                 case SelectionState.Selected:
                     if (_selectionRect.Contains(position)) {
                         StartDragSelection(position);
+                        RenderToTarget();
                     }
                     else {
                         CommitSelection();
                     }
                     break;
-            }
-
-            RenderToTarget();
+            }            
         }
 
         public override void OnPointerMoved(CanvasPointerEventArgs e) {
@@ -114,8 +111,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             RenderToTarget();
         }
 
-        private void RestoreOriginalContent() {
-            if (_selectionContent == null) return;
+        public bool TryRestoreOriginalContent() {
+            if (_baseContent == null || _selectionContent == null) return false;
 
             // 恢复原位置内容
             using (var ds = _baseContent.CreateDrawingSession()) {
@@ -127,10 +124,10 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                     (float)_originalSelectionRect.X,
                     (float)_originalSelectionRect.Y);
             }
-
-            // 重置状态
             StopSelection();
             RenderToTarget();
+
+            return true;
         }
 
         private void StopSelection() {
@@ -200,11 +197,11 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             }
         }
 
-        private bool CommitSelection() {
+        public bool CommitSelection() {
             if (_currentState != SelectionState.Selected || _selectionContent == null)
                 return false;
 
-            // 1. 创建临时绘图目标
+            // 创建临时绘图目标
             CanvasRenderTarget newBaseContent = null;
             try {
                 newBaseContent = new CanvasRenderTarget(
@@ -214,25 +211,24 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                     RenderTarget.Dpi);
 
                 using (var ds = newBaseContent.CreateDrawingSession()) {
-                    // 2. 清空整个画布
+                    // 清空整个画布
                     ds.Clear(Colors.Transparent);
 
-                    // 3. 将选区内容绘制到原始位置
+                    // 将选区内容绘制到原始位置
                     ds.DrawImage(_selectionContent,
                         new Rect(_selectionRect.X, _selectionRect.Y,
                                 _selectionRect.Width, _selectionRect.Height));
                 }
 
-                // 4. 安全替换基础内容
+                // 安全替换基础内容
                 var oldContent = _baseContent;
                 _baseContent = newBaseContent;
                 oldContent?.Dispose();
 
-                // 5. 重置选区状态
+                // 重置选区状态
                 _currentState = SelectionState.None;
-                //_selectionContent?.Dispose();
-                //_selectionContent = null;
                 SafeDispose(ref _selectionContent);
+                RenderToTarget();
 
                 return true;
             }
@@ -318,7 +314,14 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
         private void UpdateSelectionRect(Rect rect) {
             _selectionRect = rect;
-            basicData.SelectionRect = rect;
+            _basicData.SelectionRect = rect;
+        }
+
+        public void ApplyAspectRatio(double ratio) {
+            RenderTarget ??= _basicData.SelectedInkCanvas.Render.RenderTarget;
+            if (_baseContent == null) SaveBaseContent();
+            TryRestoreOriginalContent();
+            _ratioController.ApplyRatio(ratio);
         }
 
         #region dispose
@@ -345,7 +348,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             // RenderTarget由外部管理，此处不释放
         }
 
-        // 安全释放方法
         private static void SafeDispose(ref CanvasRenderTarget resource) {
             try {
                 resource?.Dispose();
@@ -376,5 +378,72 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         // 绘制样式
         private readonly Color _selectionBorderColor = Colors.Black;
         private readonly float _selectionBorderWidth = 3.0f;
+
+        private readonly AspectRatioController _ratioController;
+        private readonly LayerBasicData _basicData;
+
+        internal class AspectRatioController {
+            private readonly CropTool _parent;
+            private double _currentRatio;
+
+            public AspectRatioController(CropTool parent) {
+                _parent = parent;
+            }
+
+            public void ApplyRatio(double ratio) {
+                if (_parent.RenderTarget == null) return;
+
+                _currentRatio = ratio;
+                CreateCenteredCrop();
+                _parent.RenderToTarget();
+            }
+
+            private void CreateCenteredCrop() {
+                var size = CalculateInitialSize();
+                _parent._selectionRect = new Rect(
+                    (_parent.RenderTarget.SizeInPixels.Width - size.Width) / 2,
+                    (_parent.RenderTarget.SizeInPixels.Height - size.Height) / 2,
+                    size.Width,
+                    size.Height);
+                _parent.UpdateSelectionRect(_parent._selectionRect);
+                _parent._currentState = SelectionState.Selected;
+                _parent.CaptureSelectionContent();
+            }
+
+            private Size CalculateInitialSize() {
+                const double maxScale = 0.8;
+                var canvas = _parent.RenderTarget.SizeInPixels;
+
+                // 自由比例模式（使用图片中的默认值）
+                if (_currentRatio == 0)
+                    return new Size(canvas.Width * maxScale, canvas.Height * maxScale);                    
+
+                // 预设比例模式
+                double ratio = _currentRatio;
+                double maxW = canvas.Width * maxScale;
+                double maxH = canvas.Height * maxScale;
+
+                // 高度优先
+                Size optionA = new(maxH * ratio, maxH);
+                bool isOptionAValid = optionA.Width <= maxW;
+
+                // 宽度优先
+                Size optionB = new(maxW, maxW / ratio);
+                bool isOptionBValid = optionB.Height <= maxH;
+
+                return (isOptionAValid, isOptionBValid) switch {
+                    (true, true) => ArcSize.Area(optionA) > ArcSize.Area(optionB) ? optionA : optionB, // 两者有效选面积大的
+                    (true, false) => optionA, // 只有A有效
+                    (false, true) => optionB, // 只有B有效
+                    _ => GetFallbackSize(ratio, maxW, maxH) // 双重越界时的降级方案
+                };
+            }
+
+            private static Size GetFallbackSize(double ratio, double maxW, double maxH) {
+                // 比例缩放
+                double scale = Math.Min(maxW / ratio, maxH) / maxH;
+                return new Size(maxH * ratio * scale, maxH * scale);
+            }
+        }
     }
 }

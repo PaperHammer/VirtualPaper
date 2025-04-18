@@ -4,13 +4,13 @@ using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.StaticImg.Models;
-using Workloads.Creation.StaticImg.Models.ToolItemUtil;
-using Workloads.Creation.StaticImg.Utils;
 
 namespace Workloads.Creation.StaticImg.ViewModels {
     internal partial class InkCanvasViewModel : ObservableObject {
         internal event EventHandler RequestFullRender;
         internal event EventHandler SeletcedToolChanging;
+        internal event EventHandler SeletcedLayerChanged;
+        internal event EventHandler<double> SeletcedCropAspectCliked;
 
         private LayerBasicData _basicData;       
         public LayerBasicData BasicData {
@@ -25,10 +25,15 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             BasicData.InkDataEnabledChanged += OnInkDataEnabledChanged;
             BasicData.SeletcedToolChanged += OnSeletcedToolChanged;
             BasicData.SeletcedLayerChanged += OnSeletcedLayerChanged;
+            BasicData.SeletcedCropAspectClicked += OnSeletcedCropAspectClicked;
+        }
+
+        private void OnSeletcedCropAspectClicked(object sender, double e) {
+            SeletcedCropAspectCliked?.Invoke(this, e);
         }
 
         private void OnSeletcedLayerChanged(object sender, EventArgs e) {
-            SeletcedToolChanging?.Invoke(this, EventArgs.Empty);
+            SeletcedLayerChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private void OnSeletcedToolChanged(object sender, EventArgs e) {

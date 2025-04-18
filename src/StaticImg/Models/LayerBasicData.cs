@@ -27,6 +27,7 @@ namespace Workloads.Creation.StaticImg.Models {
         public event EventHandler InkDataEnabledChanged;
         public event EventHandler SeletcedToolChanged;
         public event EventHandler SeletcedLayerChanged;
+        public event EventHandler<double> SeletcedCropAspectClicked;
 
         public ObservableList<InkCanvasData> InkDatas { get; set; } = [];
         public ObservableList<Color> CustomColors { get; set; } = [];
@@ -94,7 +95,6 @@ namespace Workloads.Creation.StaticImg.Models {
             }
         }
 
-
         string _selectionSizeText;
         [JsonIgnore]
         public string SelectionSizeText {
@@ -121,6 +121,17 @@ namespace Workloads.Creation.StaticImg.Models {
         public PaintBrushItem SelectedBrush {
             get { return _seletcedBrush; }
             set { if (_seletcedBrush == value) return; _seletcedBrush = value; OnPropertyChanged(); }
+        }
+
+        AspectRatioItem _seletcedAspectitem;
+        [JsonIgnore]
+        public AspectRatioItem SeletcedAspectitem {
+            get { return _seletcedAspectitem; }
+            set {
+                _seletcedAspectitem = value;
+                SeletcedCropAspectClicked?.Invoke(this, value.Ratio);
+                OnPropertyChanged();
+            }
         }
 
         ToolItem _selectedToolItem;
@@ -240,21 +251,6 @@ namespace Workloads.Creation.StaticImg.Models {
             this.CustomColors.SetRange(tmp.CustomColors);
 
             DiscretizeZIndexesOnLoad(tmp.InkDatas);
-            //// 保存原始可见性状态
-            //var originalVisibility = LayersData.ToDictionary(layer => layer, layer => layer.IsEnable);
-
-            //// 临时将所有图层设置为可见(生成缩略图需要保证控件可见)
-            //foreach (var layer in LayersData) {
-            //    layer.IsEnable = true;
-            //}
-
-            //var loadTasks = LayersData.Select(layer => layer.LoadRenderDataAsync());
-            //await Task.WhenAll(loadTasks); // 等待所有图层加载完成
-
-            //// 恢复原始可见性状态
-            //foreach (var kvp in originalVisibility) {
-            //    kvp.Key.IsEnable = kvp.Value;
-            //}
         }
 
         private void DiscretizeZIndexesOnLoad(IEnumerable<InkCanvasData> data) {

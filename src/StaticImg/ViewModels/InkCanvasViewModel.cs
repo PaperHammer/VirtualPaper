@@ -11,8 +11,10 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         internal event EventHandler SeletcedToolChanging;
         internal event EventHandler SeletcedLayerChanged;
         internal event EventHandler<double> SeletcedCropAspectCliked;
+        internal event EventHandler Rebuild;
+        internal TaskCompletionSource<bool> BasicDataLoaded => _basicDataLoaded;
 
-        private LayerBasicData _basicData;       
+        private LayerBasicData _basicData;
         public LayerBasicData BasicData {
             get { return _basicData; }
             set { _basicData = value; }
@@ -26,6 +28,11 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             BasicData.SeletcedToolChanged += OnSeletcedToolChanged;
             BasicData.SeletcedLayerChanged += OnSeletcedLayerChanged;
             BasicData.SeletcedCropAspectClicked += OnSeletcedCropAspectClicked;
+            BasicData.Rebuild += OnRebuild;
+        }
+
+        private void OnRebuild(object sender, EventArgs e) {
+            Rebuild?.Invoke(this, EventArgs.Empty);
         }
 
         private void OnSeletcedCropAspectClicked(object sender, double e) {
@@ -41,7 +48,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         }
 
         private void OnInkDataEnabledChanged(object sender, EventArgs e) {
-            RequestFullRender?.Invoke(this, EventArgs.Empty);
+            Rebuild?.Invoke(this, EventArgs.Empty);
         }
 
         internal async Task SaveAsync() {
@@ -73,6 +80,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 await BasicData.SaveRenderDataAsync();
             }
             await BasicData.LoadBasicDataAsync();
+            BasicDataLoaded.TrySetResult(true);
         }
 
         internal async Task LoadRenderDataAsync() {
@@ -82,5 +90,6 @@ namespace Workloads.Creation.StaticImg.ViewModels {
 
         private readonly string _entryFilePath;
         private readonly FileType _fileType;
+        private readonly TaskCompletionSource<bool> _basicDataLoaded = new();
     }
 }

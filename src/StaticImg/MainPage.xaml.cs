@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MessagePack;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -123,7 +122,8 @@ namespace Workloads.Creation.StaticImg {
             }
         }
 
-        private void InkCanvas_Loaded(object sender, RoutedEventArgs e) {
+        private async void InkCanvas_Loaded(object sender, RoutedEventArgs e) {
+            await inkCanvas._viewModel.BasicDataLoaded.Task; // 确保缩放因子在基础数据加载完成后设置
             FitView();
         }
 
@@ -378,6 +378,14 @@ namespace Workloads.Creation.StaticImg {
             _isLockAspectRatio = false;
         }
 
+        private void SacleContent_Checked(object sender, RoutedEventArgs e) {
+            _isScaleContent = true;
+        }
+
+        private void SacleContent_Unchecked(object sender, RoutedEventArgs e) {
+            _isScaleContent = false;
+        }
+
         private void OnSizeBoxLostFocus(object sender, RoutedEventArgs e) {
             if (_isKeyboardExecuted) {
                 _isKeyboardExecuted = false;
@@ -400,9 +408,9 @@ namespace Workloads.Creation.StaticImg {
         }
 
         private void ProcessSizeInput(TextBox modifiedBox) {
-            bool isWidthModified = modifiedBox == WidthTextBox;
-            bool op1 = ValidateSizeInput(WidthTextBox.Text, out int width);
-            bool op2 = ValidateSizeInput(HeightTextBox.Text, out int height);
+            bool isWidthModified = modifiedBox == widthTextBox;
+            bool op1 = ValidateSizeInput(widthTextBox.Text, out int width);
+            bool op2 = ValidateSizeInput(heightTextBox.Text, out int height);
             bool isValid = op1 && op2;
 
             if (!isValid) {
@@ -430,7 +438,8 @@ namespace Workloads.Creation.StaticImg {
                 }
             }
 
-            inkCanvas._viewModel.BasicData.Size = new(width, height, inkCanvas._viewModel.BasicData.Size.Dpi);
+            var rebuild = _isScaleContent ? RebuildMode.ResizeScale : RebuildMode.ResizeExpand;
+            inkCanvas._viewModel.BasicData.Size = new(width, height, inkCanvas._viewModel.BasicData.Size.Dpi, rebuild);
             CloseSizeIllegalMsg();
         }
 
@@ -448,14 +457,47 @@ namespace Workloads.Creation.StaticImg {
         }
 
         private void ResetToOriginalValues() {
-            WidthTextBox.Text = inkCanvas._viewModel.BasicData.Size.Width.ToString("F0");
-            HeightTextBox.Text = inkCanvas._viewModel.BasicData.Size.Height.ToString("F0");
+            widthTextBox.Text = inkCanvas._viewModel.BasicData.Size.Width.ToString("F0");
+            heightTextBox.Text = inkCanvas._viewModel.BasicData.Size.Height.ToString("F0");
         }
 
-        private LayerItem _rightTappedItem;
-        internal readonly MainPageViewModel _viewModel;        
+        private void RotateLeftBtn_Clcik(object sender, RoutedEventArgs e) {
+            inkCanvas._viewModel.BasicData.Size = new(
+                inkCanvas._viewModel.BasicData.Size.Width,
+                inkCanvas._viewModel.BasicData.Size.Height,
+                inkCanvas._viewModel.BasicData.Size.Dpi,
+                RebuildMode.RotateLeft);
+        }
+
+        private void RotateRightBtn_Click(object sender, RoutedEventArgs e) {
+            inkCanvas._viewModel.BasicData.Size = new(
+                inkCanvas._viewModel.BasicData.Size.Width,
+                inkCanvas._viewModel.BasicData.Size.Height,
+                inkCanvas._viewModel.BasicData.Size.Dpi,
+                RebuildMode.RotateRight);
+        }
+
+        private void FlipHorizontallyBtn_Click(object sender, RoutedEventArgs e) {
+            inkCanvas._viewModel.BasicData.Size = new(
+                inkCanvas._viewModel.BasicData.Size.Width,
+                inkCanvas._viewModel.BasicData.Size.Height,
+                inkCanvas._viewModel.BasicData.Size.Dpi,
+                RebuildMode.FlipHorizontal);
+        }
+
+        private void FlipVerticallyBtn_Click(object sender, RoutedEventArgs e) {
+            inkCanvas._viewModel.BasicData.Size = new(
+                inkCanvas._viewModel.BasicData.Size.Width,
+                inkCanvas._viewModel.BasicData.Size.Height,
+                inkCanvas._viewModel.BasicData.Size.Dpi,
+                RebuildMode.FlipVertical);
+        }
+
+        private bool _isScaleContent;
         private bool _isLockAspectRatio;
         private bool _isKeyboardExecuted;
+        private LayerItem _rightTappedItem;
+        internal readonly MainPageViewModel _viewModel;
         private static int MAX_CANVAS_EDGE => MainPage.Instance.SharedDevice.MaximumBitmapSizeInPixels;
         private static int MAX_CANVAS_SIZE_WITH_DPI => (int)(1.0F * MAX_CANVAS_EDGE / MainPage.Instance.Bridge.GetHardwareDpi() * 96);
     }

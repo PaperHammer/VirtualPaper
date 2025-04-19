@@ -126,20 +126,39 @@ namespace Workloads.Creation.StaticImg {
         }
     }
 
-    public readonly struct ArcSize : IEquatable<ArcSize> {
+    readonly struct ArcSize : IEquatable<ArcSize> {
         [JsonConstructor]
-        internal ArcSize(double width, double height, uint dpi) {            
+        [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
+        internal ArcSize(double width, double height, uint dpi) {
             this.Dpi = dpi;
             this.Width = width;
             this.Height = height;
-            this.Ratio = (float)(1.0f * width / height); // 宽高比
+            this.Ratio = (float)(1.0f * width / height);
+        }
+
+        public ArcSize(
+            double width,
+            double height,
+            uint dpi,
+            RebuildMode rebuild) {
+            this.Dpi = dpi;
+            (this.Width, this.Height) = rebuild switch {
+                RebuildMode.RotateLeft or RebuildMode.RotateRight => (height, width),
+                _ => (width, height)
+            };
+            this.Rebuild = rebuild;
+            this.Ratio = (float)(1.0f * width / height);
         }
 
         public double Width { get; }
         public double Height { get; }
         public uint Dpi { get; }
-        public float Ratio { get; }
-        public readonly uint HardwareDpi => MainPage.Instance.Bridge.GetHardwareDpi();
+        [JsonIgnore]
+        public float Ratio { get; } // 宽高比
+        [JsonIgnore]
+        public RebuildMode Rebuild { get; }
+        [JsonIgnore]
+        public static uint HardwareDpi => MainPage.Instance.Bridge.GetHardwareDpi();
 
         // readonly 关键字在此处意味着这个方法不会修改任何实例的状态（即它不会改变对象的任何字段）。
         // 这有助于编译器优化，并明确地传达了该方法是纯粹基于现有数据进行计算而不改变对象状态的事实。
@@ -161,13 +180,13 @@ namespace Workloads.Creation.StaticImg {
         }
 
         public static double Area(Size size) => size.Width * size.Height;
+
+        internal Size GetSize() {
+            return new Size(Width, Height);
+        }
     }
 
-    enum BaseElementType {
-        Image,
-        Draw
-    }
-
+    // TODO
     enum PaintBrushType {
         CommonBrush, // 画笔
         //WritingBrush, // 毛笔
@@ -180,6 +199,7 @@ namespace Workloads.Creation.StaticImg {
         //WatercolorBrush, // 水彩画笔
     }
 
+    // TODO
     enum ToolType {
         None,
         Eraser, // 橡皮擦
@@ -192,5 +212,10 @@ namespace Workloads.Creation.StaticImg {
         Crop, // 裁剪
         Selection,
         CanvasSet,
+    }
+
+    // rotate per 90 degree
+    enum RebuildMode {
+        None, ResizeExpand, ResizeScale, RotateLeft, RotateRight, FlipHorizontal, FlipVertical,
     }
 }

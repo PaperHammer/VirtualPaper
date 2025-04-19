@@ -28,28 +28,22 @@ namespace Workloads.Creation.StaticImg.Models {
         public event EventHandler SeletcedToolChanged;
         public event EventHandler SeletcedLayerChanged;
         public event EventHandler<double> SeletcedCropAspectClicked;
+        public event EventHandler Rebuild;
 
         public ObservableList<InkCanvasData> InkDatas { get; set; } = [];
         public ObservableList<Color> CustomColors { get; set; } = [];
 
-        ArcSize _size = new(1920, 1080, 96); // 像素
+        ArcSize _size = new(1920, 1080, 96, RebuildMode.None); // 像素
         public ArcSize Size {
             get => _size;
             set {
-                CanvasSizeText = $"{value.Width:F0}, {value.Height:F0} px ({value.Dpi} / {value.HardwareDpi} DPI)";
-                if (_size.Equals(value)) return;
-                _size = value;
+                CanvasSizeText = $"{value.Width:F0} * {value.Height:F0} px ({value.Dpi} / {ArcSize.HardwareDpi} DPI)";
+                _size = value;                
+                ArcSizeChanged();
                 OnPropertyChanged();
             }
         }
 
-        bool _isScaleContent;
-        [JsonIgnore]
-        public bool IsScaleContent {
-            get { return _isScaleContent; }
-            set { if (_isScaleContent == value) return; _isScaleContent = value; OnPropertyChanged(); }
-        }
-        
         string _pointerPosText;
         [JsonIgnore]
         public string PointerPosText {
@@ -220,7 +214,7 @@ namespace Workloads.Creation.StaticImg.Models {
         private void OnInkDataChanged(object sender, PropertyChangedEventArgs e) {
             if (e.PropertyName == nameof(InkCanvasData.IsEnable)) {
                 InkDataEnabledChanged?.Invoke(this, EventArgs.Empty);
-            }
+            }            
         }
 
         internal async Task InitDataAsync() {
@@ -364,10 +358,14 @@ namespace Workloads.Creation.StaticImg.Models {
                 $"W: {_selectionRect.Width:F0} px, H: {_selectionRect.Height:F0} px";
         }
 
-        internal void SizeChanged() {
-            foreach (var ink in InkDatas) {
-                ink.Render.ResizeRenderTarget(Size, IsScaleContent);
-            }
+        internal async void ArcSizeChanged() {
+            var tasks = InkDatas
+                .Where(ink => ink.Render != null)
+                .Select(ink => ink.Render.ResizeRenderTargetAsync(Size))
+                .ToList();
+
+            await Task.WhenAll(tasks);
+            Rebuild?.Invoke(this, EventArgs.Empty);
         }
 
         private int _nextLayerNumberTag = 1;

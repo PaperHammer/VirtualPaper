@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
@@ -40,34 +41,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             this.InitializeComponent();
         }
 
-        private void RegisterTools() {
-            _tool.RegisterTool(ToolType.PaintBrush, new PaintBrushTool(_viewModel.BasicData));
-            _tool.RegisterTool(ToolType.Fill, new FillTool(_viewModel.BasicData));
-            _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.BasicData));
-            _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.BasicData));
-            _tool.RegisterTool(ToolType.Crop, new CropTool(_viewModel.BasicData));
-
-            foreach (var tool in _tool.GetAllTools()) {
-                tool.SystemCursorChangeRequested += (s, e) => {
-                    this.ProtectedCursor = e.Cursor ?? _originalInputCursor;
-                };
-            }
-        }
-
-        private void Container_SizeChanged(object sender, SizeChangedEventArgs e) {
-            _viewModel.BasicData.SizeChanged();
-            _compositeTarget = new CanvasRenderTarget(
-                MainPage.Instance.SharedDevice,
-                (float)_viewModel.BasicData.Size.Width,
-                (float)_viewModel.BasicData.Size.Height,
-                _viewModel.BasicData.Size.Dpi,
-                Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                CanvasAlphaMode.Premultiplied);
-            RebuildCompositeTarget();
-        }
-
-        #region tool event
+        #region children event
         private void SetupHandlers() {
+            _viewModel.Rebuild += (s, e) => {
+                RebuildComposite();
+                RebuildCompositeTarget();
+            };
             _viewModel.RequestFullRender += (s, e) => {
                 RebuildCompositeTarget();
                 IsReady.TrySetResult(true);
@@ -113,6 +92,16 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
         #endregion
 
+        private void RebuildComposite() {
+            _compositeTarget = new CanvasRenderTarget(
+                MainPage.Instance.SharedDevice,
+                (float)_viewModel.BasicData.Size.Width,
+                (float)_viewModel.BasicData.Size.Height,
+                _viewModel.BasicData.Size.Dpi,
+                Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                CanvasAlphaMode.Premultiplied);
+        }
+
         private void RebuildCompositeTarget() {
             using (var ds = _compositeTarget.CreateDrawingSession()) {
                 ds.Clear(Colors.Transparent);
@@ -132,8 +121,18 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         #region init
-        private void UserControl_Loaded(object sender, RoutedEventArgs e) {
-            RenderWorkerground();
+        private void RegisterTools() {
+            _tool.RegisterTool(ToolType.PaintBrush, new PaintBrushTool(_viewModel.BasicData));
+            _tool.RegisterTool(ToolType.Fill, new FillTool(_viewModel.BasicData));
+            _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.BasicData));
+            _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.BasicData));
+            _tool.RegisterTool(ToolType.Crop, new CropTool(_viewModel.BasicData));
+
+            foreach (var tool in _tool.GetAllTools()) {
+                tool.SystemCursorChangeRequested += (s, e) => {
+                    this.ProtectedCursor = e.Cursor ?? _originalInputCursor;
+                };
+            }
         }
 
         private void RenderWorkerground() {
@@ -169,13 +168,14 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             workground.Children.Add(lightPath);
             workground.Children.Add(darkPath);
         }
-        #endregion
 
         private async void InkingCanvas_Loaded(object sender, RoutedEventArgs e) {
             await _viewModel.LoadBasicOrInit();
             await _viewModel.LoadRenderDataAsync();
         }
+        #endregion
 
+        #region ui events
         private void InkCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
             if (_compositeTarget != null) {
                 args.DrawingSession.DrawImage(_compositeTarget);
@@ -229,7 +229,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             action(_selectedTool);
             RebuildCompositeTarget();
         }
+        #endregion
 
+        #region layer op
         internal async Task AddLayerAsync() {
             var layer = await _viewModel.BasicData.AddLayerAsync();
             await layer.Render.IsCompleted.Task;
@@ -253,7 +255,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         internal async Task UpdateCustomColorsAsync(ColorChangeEventArgs e) {
             await _viewModel.BasicData.UpdateCustomColorsAsync(e);
         }
+        #endregion
 
+        #region tool op
         internal void CancelCrop() {
             if (_selectedTool is CropTool ct) {
                 var op = ct.TryRestoreOriginalContent();
@@ -281,6 +285,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 if (op) RebuildCompositeTarget();
             }
         }
+        #endregion
 
         private Tool _selectedTool;
         private readonly ToolManager _tool;

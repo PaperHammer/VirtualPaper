@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using VirtualPaper.UIComponent.Services;
+﻿using System.Collections.Generic;
 using Workloads.Creation.StaticImg.Models.ToolItemUtil;
 
 namespace Workloads.Creation.StaticImg.Utils {

@@ -1,20 +1,19 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Toolkit.Uwp.Notifications;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Toolkit.Uwp.Notifications;
 using VirtualPaper.Common;
-using VirtualPaper.Cores.TrayControl;
 using VirtualPaper.Cores.PlaybackControl;
+using VirtualPaper.Cores.TrayControl;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.lang;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 using Wpf.Ui.Controls;
 using MenuItem = System.Windows.Controls.MenuItem;
-using VirtualPaper.Common.Utils.PInvoke;
-using System.Windows.Interop;
 
 namespace VirtualPaper {
     /// <summary>

@@ -32,7 +32,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             if (this._wpSettingsPanel == null) {
                 this._wpSettingsPanel = e.Parameter as IWpSettingsPanel;
 
-                _compositor = (this._wpSettingsPanel.GetMainWindow() as Window).Compositor;
                 _viewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
                 this.DataContext = _viewModel;
             }
@@ -46,40 +45,31 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             this._wpSettingsPanel.Log(LogType.Error, $"RImage loading failed: {e.ErrorMessage}");
         }
 
-        private async void SingleClickAction(IWpBasicData data) {
-            await _viewModel.PreviewAsync(data);
+        private void GridView_ItemClick(object sender, ItemClickEventArgs e) {
+            _data = e.ClickedItem as IWpBasicData;
+            LeftClick();
         }
 
-        private void ItemsViewer_PointerPressed(object sender, PointerRoutedEventArgs e) {
-            var dataContext = ((FrameworkElement)e.OriginalSource).DataContext;
-            if (dataContext is not IWpBasicData data) return;
-
-            // ref: https://learn.microsoft.com/zh-cn/uwp/api/windows.ui.xaml.uielement.pointerpressed?view=winrt-26100
-            Pointer ptr = e.Pointer;
-            if (ptr.PointerDeviceType == PointerDeviceType.Mouse) {
-                PointerPoint ptrPt = e.GetCurrentPoint(ItemsViewer);
-                if (!ptrPt.Properties.IsLeftButtonPressed) return;
-
-                SingleClickAction(data);
-            }
-        }
-
-        private void ItemsView_RightTapped(object sender, RightTappedRoutedEventArgs e) {
+        private void GridView_RightTapped(object sender, RightTappedRoutedEventArgs e) {
             var dataContext = ((FrameworkElement)e.OriginalSource).DataContext;
             _data = dataContext as IWpBasicData;
-            var itemsView = (ItemsView)sender;
+            RightClick(sender, e);
+        }
 
+        private async void LeftClick() {
+            if (_data == null) return;
+            await _viewModel.PreviewAsync(_data);
+        }
+
+        private void RightClick(object sender, RightTappedRoutedEventArgs e) {
             if (_data == null) {
-                //Hide()方法可能无效是因为MenuFlyout是由ContextFlyout属性触发
-                //ItemsViewMenu.Hide();
-                //var itemsView = (ItemsView)sender;
-                itemsView.ContextFlyout = null;
+                // Hide() 方法可能无效是因为 MenuFlyout 是由 ContextFlyout 属性触发
+                // ItemsViewMenu.Hide();
+                wallpapersLibView.ContextFlyout = null;
             }
             else {
-                itemsView.ContextFlyout = ItemsViewMenu;
+                wallpapersLibView.ContextFlyout = ItemsViewMenu;
             }
-
-            e.Handled = true;
         }
 
         private async void ContextMenu_Click(object sender, RoutedEventArgs e) {
@@ -134,27 +124,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             e.Handled = true;
         }
 
-        private void ItemGrid_PointerEntered(object sender, PointerRoutedEventArgs e) {
-            CreateOrUpdateSpringAnimation(1.04f);
-            (sender as UIElement).StartAnimation(_springAnimation);
-        }
-
-        private void ItemGrid_PointerExited(object sender, PointerRoutedEventArgs e) {
-            CreateOrUpdateSpringAnimation(1.0f);
-            (sender as UIElement).StartAnimation(_springAnimation);
-        }
-
-        private void CreateOrUpdateSpringAnimation(float finalValue) {
-            if (_springAnimation == null) {
-                _springAnimation = _compositor.CreateSpringVector3Animation();
-                _springAnimation.Target = "Scale";
-                _springAnimation.DampingRatio = 0.4f;
-                _springAnimation.Period = TimeSpan.FromMilliseconds(50);
-            }
-
-            _springAnimation.FinalValue = new Vector3(finalValue);
-        }
-
         private void ItemsViewer_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
             e.Handled = true;
         }
@@ -162,7 +131,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         private IWpSettingsPanel _wpSettingsPanel;
         private LibraryContentsViewModel _viewModel;
         private IWpBasicData _data;
-        private Compositor _compositor;
         private SpringVector3NaturalMotionAnimation _springAnimation;
     }
 }

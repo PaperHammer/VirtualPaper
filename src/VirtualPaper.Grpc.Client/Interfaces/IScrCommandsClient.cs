@@ -1,7 +1,4 @@
-﻿using VirtualPaper.Grpc.Service.Models;
-using VirtualPaper.Models.Cores.Interfaces;
-
-namespace VirtualPaper.Grpc.Client.Interfaces {
+﻿namespace VirtualPaper.Grpc.Client.Interfaces {
     public interface IScrCommandsClient {
         void AddToWhiteList(string procName);
         void ChangeLockStatu(bool isLock);

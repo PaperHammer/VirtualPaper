@@ -314,7 +314,8 @@ namespace Workloads.Creation.StaticImg.Models {
 
                 // 平移 -> 旋转
                 ds.Transform = Matrix3x2.CreateTranslation((float)translateX, (float)translateY) *
-                    (isLeft ? Matrix3x2.CreateRotation(-(float)(Math.PI / 2), newCenter) : Matrix3x2.CreateRotation((float)(Math.PI / 2), newCenter));
+                    (isLeft ? Matrix3x2.CreateRotation(-(float)(Math.PI / 2), newCenter) : 
+                    Matrix3x2.CreateRotation((float)(Math.PI / 2), newCenter));
                 this.Transform = ds.Transform;
                 ds.DrawImage(original);
             }
@@ -326,7 +327,8 @@ namespace Workloads.Creation.StaticImg.Models {
             var newTarget = CreateNewRenderTarget(_arcSize.GetSize());
             using (var ds = newTarget.CreateDrawingSession()) {
                 var center = new Vector2((float)(original.Size.Width / 2f), (float)(original.Size.Height / 2f));
-                ds.Transform = isHorizontal ? Matrix3x2.CreateScale(-1, 1, center) : Matrix3x2.CreateScale(1, -1, center);
+                ds.Transform = isHorizontal ? Matrix3x2.CreateScale(-1, 1, center) : 
+                    Matrix3x2.CreateScale(1, -1, center);
                 ds.DrawImage(original);
             }
             UpdateRenderTarget(newTarget);

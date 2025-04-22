@@ -10,18 +10,25 @@ namespace VirtualPaper.Common.Utils {
             });
         }
 
-        public async IAsyncEnumerable<T> LoadItemsAsync(Func<IEnumerable<string>, ParallelOptions, ChannelWriter<T>, CancellationToken, Task> processItems, IEnumerable<string> items, [EnumeratorCancellation] CancellationToken cancellationToken = default) {
-            // Start a producer task that processes items and sends them to the channel.
+        public async IAsyncEnumerable<T> LoadItemsAsync(
+            Func<IEnumerable<string>, ParallelOptions, ChannelWriter<T>, CancellationToken, Task> processItems, 
+            IEnumerable<string> items, 
+            [EnumeratorCancellation] CancellationToken cancellationToken = default) {
+            // 启动一个生产者任务，该任务处理项目并将其发送到通道
             var producerTask = Task.Run(async () => {
                 try {
-                    await processItems(items, new ParallelOptions { MaxDegreeOfParallelism = _maxDegreeOfParallelism, CancellationToken = cancellationToken }, _channel.Writer, cancellationToken);
+                    await processItems(items, new ParallelOptions { 
+                        MaxDegreeOfParallelism = _maxDegreeOfParallelism, 
+                        CancellationToken = cancellationToken }, 
+                        _channel.Writer, 
+                        cancellationToken);
                 }
                 finally {
                     _channel.Writer.Complete();
                 }
             }, cancellationToken);
 
-            // Consume items from the channel as they become Available.
+            // 消费可用项目
             await foreach (var item in ConsumeChannel(_channel.Reader, cancellationToken)) {
                 yield return item;
             }

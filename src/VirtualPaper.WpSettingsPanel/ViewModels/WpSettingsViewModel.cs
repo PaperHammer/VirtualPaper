@@ -164,8 +164,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
             _wpSettingsPanel.GetNotify().ShowMsg(
                 true,
-                LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_GetMonitorsAsync) + _monitorCnt,
-                InfoBarType.Informational);
+                Constants.I18n.Dialog_Content_GetMonitorsAsync,
+                InfoBarType.Informational,
+                _monitorCnt.ToString());
         }
 
         internal async Task IdentifyAsync() {

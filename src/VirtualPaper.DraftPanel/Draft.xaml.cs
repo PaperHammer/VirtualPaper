@@ -20,10 +20,9 @@ namespace VirtualPaper.DraftPanel {
         internal static IDraftPanelBridge Instance { get; private set; }
 
         public Draft() {
-            this.InitializeComponent();
-
-            this._currentPanel = DraftPanelState.ConfigSpace;
             Instance = this;
+            this._currentPanel = DraftPanelState.ConfigSpace;
+            this.InitializeComponent();                        
         }
 
         #region bridge

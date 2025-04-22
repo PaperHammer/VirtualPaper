@@ -55,7 +55,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         public void FloodFill(Point startPoint, Color fillColor, CanvasDrawingSession ds) {
             if (RenderTarget == null || ds == null) return;
 
-
             // 获取像素数据（可能抛出异常）
             byte[] pixels = RenderTarget.GetPixelBytes();
             int width = (int)RenderTarget.SizeInPixels.Width;

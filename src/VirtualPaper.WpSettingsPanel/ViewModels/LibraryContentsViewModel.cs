@@ -48,9 +48,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             WpSettingsViewModel wpSettingsViewModel) {
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
-
             _wpSettingsViewModel = wpSettingsViewModel;
-            //generalSettingViewModel.WallpaperInstallDirChanged += WallpaperInstallDirectoryUpdate;
 
             InitText();
             InitColletions();
@@ -58,8 +56,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         private void InitColletions() {
             LibraryWallpapers = [];
-            _wallpaperInstallFolders =
-            [
+            _wallpaperInstallFolders = [
                 _userSettingsClient.Settings.WallpaperDir,
             ];
         }
@@ -79,7 +76,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             try {
                 LibraryWallpapers.Clear();
                 _uid2idx.Clear();
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loading(false, false, null);
+                WpSettings.Instance.GetNotify().Loading(false, false, null);
 
                 var loader = new AsyncLoader<IWpBasicData>(maxDegreeOfParallelism: 10, channelCapacity: 100);
                 await foreach (var data in loader.LoadItemsAsync(ProcessFolders, _wallpaperInstallFolders)) {
@@ -87,10 +84,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                WpSettings.Instance.GetNotify().ShowExp(ex);
             }
             finally {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loaded(null);
+                WpSettings.Instance.GetNotify().Loaded(null);
             }
         }
 
@@ -104,9 +101,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     return;
                 }
 
-                var mainWindow = (WindowEx)_wpSettingsViewModel._wpSettingsPanel.GetMainWindow();
+                var mainWindow = (WindowEx)WpSettings.Instance.GetMainWindow();
                 toolWindow = new();
-
                 toolWindow.Closed += ToolContainer_Closed;
                 void ToolContainer_Closed(object _, WindowEventArgs __) {
                     toolWindow.Closed -= ToolContainer_Closed;
@@ -119,7 +115,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 toolWindow.Show();
             }
             catch (Exception ex) {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                WpSettings.Instance.GetNotify().ShowExp(ex);
             }
         }
 
@@ -133,9 +129,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     return;
                 }
 
-                var mainWindow = (WindowEx)_wpSettingsViewModel._wpSettingsPanel.GetMainWindow();
+                var mainWindow = (WindowEx)WpSettings.Instance.GetMainWindow();
                 toolWindow = new();
-
                 toolWindow.Closed += ToolContainer_Closed;
                 void ToolContainer_Closed(object _, WindowEventArgs __) {
                     toolWindow.Closed -= ToolContainer_Closed;
@@ -146,7 +141,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         data.Tags = string.Join(';', edits.TagList);
                         data.Save();
                         UpdateLib(data);
-                        _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowMsg(
+                        WpSettings.Instance.GetNotify().ShowMsg(
                             true,
                             Constants.I18n.InfobarMsg_Success,
                             InfoBarType.Success);
@@ -161,17 +156,17 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 toolWindow.Show();
             }
             catch (Exception ex) {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                WpSettings.Instance.GetNotify().ShowExp(ex);
             }
         }
 
         internal async Task UpdateAsync(IWpBasicData data) {
             try {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loading(false, false, null);
+                WpSettings.Instance.GetNotify().Loading(false, false, null);
 
                 bool isUsing = await CheckFileUsingAsync(data, false);
                 if (isUsing) {
-                    _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowMsg(
+                    WpSettings.Instance.GetNotify().ShowMsg(
                         true,
                         Constants.I18n.Text_FileUsing,
                         InfoBarType.Informational);
@@ -183,16 +178,16 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 data = DataAssist.GrpcToBasicData(grpc_basicData);
                 UpdateLib(data);
 
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowMsg(
+                WpSettings.Instance.GetNotify().ShowMsg(
                     true,
                     Constants.I18n.InfobarMsg_Success,
                     InfoBarType.Success);
             }
             catch (Exception ex) {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                WpSettings.Instance.GetNotify().ShowExp(ex);
             }
             finally {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loaded(null);
+                WpSettings.Instance.GetNotify().Loaded(null);
             }
         }
 
@@ -206,26 +201,26 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 if (rtype == RuntimeType.RUnknown) return;
                 
                 _ctsPreview = new CancellationTokenSource();
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loading(true, false, [_ctsPreview]);
+                WpSettings.Instance.GetNotify().Loading(true, false, [_ctsPreview]);
 
                 await _wpControlClient.PreviewWallpaperAsync(_wpSettingsViewModel.SelectedMonitor.DeviceId, data, rtype, _ctsPreview.Token);
             }
             catch (RpcException ex) {
                 if (ex.StatusCode == StatusCode.Cancelled) {
-                    _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowCanceled();
+                    WpSettings.Instance.GetNotify().ShowCanceled();
                 }
                 else {
-                    _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                    WpSettings.Instance.GetNotify().ShowExp(ex);
                 }
             }
             catch (OperationCanceledException) {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowCanceled();
+                WpSettings.Instance.GetNotify().ShowCanceled();
             }
             catch (Exception ex) {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                WpSettings.Instance.GetNotify().ShowExp(ex);
             }
             finally {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loaded([_ctsPreview]);
+                WpSettings.Instance.GetNotify().Loaded([_ctsPreview]);
                 _previewSemaphoreSlim.Release();
             }
         }
@@ -237,7 +232,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 await CheckFileUpdateAsync(data);
 
                 _ctsApply = new CancellationTokenSource();
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loading(true, false, [_ctsApply]);
+                WpSettings.Instance.GetNotify().Loading(true, false, [_ctsApply]);
 
                 var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                 if (rtype == RuntimeType.RUnknown) return;
@@ -248,7 +243,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     rtype,
                     _ctsApply.Token);
                 if (!response.IsFinished) {
-                    _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowMsg(
+                    WpSettings.Instance.GetNotify().ShowMsg(
                         true,
                         Constants.I18n.Dialog_Content_ApplyError,
                         InfoBarType.Error);
@@ -256,20 +251,20 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
             catch (RpcException ex) {
                 if (ex.StatusCode == StatusCode.Cancelled) {
-                    _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowCanceled();
+                    WpSettings.Instance.GetNotify().ShowCanceled();
                 }
                 else {
-                    _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                    WpSettings.Instance.GetNotify().ShowExp(ex);
                 }
             }
             catch (OperationCanceledException) {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowCanceled();
+                WpSettings.Instance.GetNotify().ShowCanceled();
             }
             catch (Exception ex) {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                WpSettings.Instance.GetNotify().ShowExp(ex);
             }
             finally {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loaded([_ctsApply]);
+                WpSettings.Instance.GetNotify().Loaded([_ctsApply]);
                 _applySemaphoreSlim.Release();
             }
         }
@@ -277,11 +272,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         internal async Task ApplyToLockBGAsync(IWpBasicData data) {
             try {
                 _ctsApplyLockBG = new CancellationTokenSource();
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loading(true, false, [_ctsApplyLockBG]);
+                WpSettings.Instance.GetNotify().Loading(true, false, [_ctsApplyLockBG]);
                 if (!data.IsAvailable()) return;
 
                 if (data.FType != FileType.FImage && data.FType != FileType.FGif) {
-                    _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowMsg(
+                    WpSettings.Instance.GetNotify().ShowMsg(
                         true,
                         Constants.I18n.Dialog_Content_OnlyPictureAndGif,
                         InfoBarType.Error);
@@ -291,22 +286,22 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 StorageFile storageFile = await StorageFile.GetFileFromPathAsync(data.FilePath);
                 await LockScreen.SetImageFileAsync(storageFile);
 
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowMsg(
+                WpSettings.Instance.GetNotify().ShowMsg(
                     true,
                     Constants.I18n.InfobarMsg_Success,
                     InfoBarType.Success);
             }
             catch (Exception ex) {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                WpSettings.Instance.GetNotify().ShowExp(ex);
             }
             finally {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loaded([_ctsApplyLockBG]);
+                WpSettings.Instance.GetNotify().Loaded([_ctsApplyLockBG]);
             }
         }
 
         internal async Task DeleteAsync(IWpBasicData data) {
             try {
-                var dialogRes = await _wpSettingsViewModel._wpSettingsPanel.GetDialog().ShowDialogAsync(
+                var dialogRes = await WpSettings.Instance.GetDialog().ShowDialogAsync(
                     LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDelete)
                     , LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Prompt)
                     , LanguageUtil.GetI18n(Constants.I18n.Text_Confirm)
@@ -314,13 +309,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 if (dialogRes != DialogResult.Primary) return;
 
                 bool isUsing = await CheckFileUsingAsync(data, false);
-                if (isUsing) {
-                    _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowMsg(
-                        true,
-                        Constants.I18n.Text_FileUsing,
-                        InfoBarType.Informational);
-                    return;
-                }
+                if (isUsing) return;
 
                 string uid = data.WallpaperUid;
                 _uid2idx.Remove(uid, out _);
@@ -329,7 +318,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 di.Delete(true);
             }
             catch (Exception ex) {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                WpSettings.Instance.GetNotify().ShowExp(ex);
             }
         }
 
@@ -345,26 +334,26 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                WpSettings.Instance.GetNotify().ShowExp(ex);
             }
         }
 
         internal async Task DropFilesAsync(IReadOnlyList<IStorageItem> items) {
             try {
                 _ctsImport = new CancellationTokenSource();
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loading(true, true, [_ctsImport]);
+                WpSettings.Instance.GetNotify().Loading(true, true, [_ctsImport]);
                 List<ImportValue> importValues = await GetImportValueFromLocalAsync(items);
                 await ImportFromValuesAsync(importValues);
             }
             finally {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().Loaded([_ctsImport]);
+                WpSettings.Instance.GetNotify().Loaded([_ctsImport]);
             }
         }
 
         private async Task ImportFromValuesAsync(List<ImportValue> importValues) {
             try {
                 int finishedCnt = 0;
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().UpdateProgressbarValue(0, importValues.Count);
+                WpSettings.Instance.GetNotify().UpdateProgressbarValue(0, importValues.Count);
 
                 foreach (var importValue in importValues) {
                     try {
@@ -378,29 +367,35 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                                 UpdateLib(data);
                             }
                             else {
-                                string msg = $"{LanguageUtil.GetI18n(Constants.I18n.InfobarMsg_ImportErr)}: {importValue.FilePath}";
-                                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowMsg(false, msg, InfoBarType.Error);
+                                //string msg = $"{LanguageUtil.GetI18n(Constants.I18n.InfobarMsg_ImportErr)}: {importValue.FilePath}";
+                                WpSettings.Instance.GetNotify().ShowMsg(
+                                    false,
+                                    Constants.I18n.InfobarMsg_ImportErr,
+                                    InfoBarType.Error,
+                                    importValue.FilePath);
                             }
                         }
                         else {
-                            _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowMsg(
+                            WpSettings.Instance.GetNotify().ShowMsg(
                                 true,
-                               $"\"{importValue.FilePath}\"\n" + LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_Import_Failed_Lib),
-                               InfoBarType.Error);
+                                Constants.I18n.Dialog_Content_Import_Failed_Lib,
+                               //$"\"{importValue.FilePath}\"\n" + LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_Import_Failed_Lib),
+                               InfoBarType.Error,
+                               importValue.FilePath);
                         }
 
-                        _wpSettingsViewModel._wpSettingsPanel.GetNotify().UpdateProgressbarValue(++finishedCnt, importValues.Count);
+                        WpSettings.Instance.GetNotify().UpdateProgressbarValue(++finishedCnt, importValues.Count);
                     }
                     catch (RpcException ex) {
                         if (ex.StatusCode == StatusCode.Cancelled) {
-                            _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowCanceled();
+                            WpSettings.Instance.GetNotify().ShowCanceled();
                         }
                         else {
-                            _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                            WpSettings.Instance.GetNotify().ShowExp(ex);
                         }
                     }
                     catch (Exception ex) {
-                        _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowExp(ex);
+                        WpSettings.Instance.GetNotify().ShowExp(ex);
                     }
 
                     if (_ctsImport.IsCancellationRequested)
@@ -408,7 +403,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
             catch (OperationCanceledException) {
-                _wpSettingsViewModel._wpSettingsPanel.GetNotify().ShowCanceled();
+                WpSettings.Instance.GetNotify().ShowCanceled();
             }
         }
 
@@ -417,7 +412,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 case FileType.FImage:
                 case FileType.FGif:
                     var wpCreateDialogViewModel = new WallpaperCreateViewModel();
-                    var dialogRes = await _wpSettingsViewModel._wpSettingsPanel.GetDialog().ShowDialogAsync(
+                    var dialogRes = await WpSettings.Instance.GetDialog().ShowDialogAsync(
                         new WallpaperCreateView(wpCreateDialogViewModel),
                         LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_CreateType),
                         LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
@@ -449,7 +444,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         private async Task CheckFileUpdateAsync(IWpBasicData data) {
             if (data.AppInfo.FileVersion != _userSettingsClient.Settings.FileVersion) {
-                var dialogRes = await _wpSettingsViewModel._wpSettingsPanel.GetDialog().ShowDialogAsync(
+                var dialogRes = await WpSettings.Instance.GetDialog().ShowDialogAsync(
                     LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_Import_NeedUpdate),
                     LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Prompt),
                     LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
@@ -464,7 +459,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             foreach (var wl in _userSettingsClient.WallpaperLayouts) {
                 if (wl.FolderPath == data.FolderPath) {
                     if (!isSlient) {
-                        await _wpSettingsViewModel._wpSettingsPanel.GetDialog().ShowDialogAsync(
+                        await WpSettings.Instance.GetDialog().ShowDialogAsync(
                         LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_WpIsUsing),
                         LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Prompt),
                         LanguageUtil.GetI18n(Constants.I18n.Text_Confirm));

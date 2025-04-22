@@ -18,17 +18,16 @@ namespace VirtualPaper.WpSettingsPanel {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class WpSettings : Page, IWpSettingsPanel {
+        internal static IWpSettingsPanel Instance { get; private set; }
+
         public WpSettings() {
+            Instance = this;
             this.InitializeComponent();
         }
 
         #region bridge
         public nint GetWindowHandle() {
             return _windowBridge.GetWindowHandle();
-        }
-
-        public object GetParam() {
-            return _param;
         }
 
         public INoifyBridge GetNotify() {
@@ -119,6 +118,5 @@ namespace VirtualPaper.WpSettingsPanel {
 
         private IWindowBridge _windowBridge;
         private WpSettingsViewModel _viewModel;
-        private object _param;
     }
 }

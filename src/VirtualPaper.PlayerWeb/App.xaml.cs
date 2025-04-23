@@ -8,9 +8,7 @@ using System.Threading.Tasks;
 using CommandLine;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.IPC;
-using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.PlayerWeb.Utils;
 using VirtualPaper.UIComponent.Utils;
 
@@ -24,6 +22,7 @@ namespace VirtualPaper.PlayerWeb {
     public partial class App : Application {
         public static App AppInstance { get; private set; }
         public static MainWindow MainWindowInstance { get; private set; }
+        public StartArgs Args { get => _startArgs; private set { _startArgs = value; } }
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -31,20 +30,18 @@ namespace VirtualPaper.PlayerWeb {
         /// </summary>
         public App() {
             AppInstance = this;
-
             this.InitializeComponent();
-
             SetupUnhandledExceptionLogging();
 
             //string s = "a " +
             //    "--is-preview " +
-            //    "-f D:\\_%TEMP2\\wallpapers\\0w1mfled.ecr\\0w1mfled.ecr.jpg " +
-            //    "-b D:\\_%TEMP2\\wallpapers\\0w1mfled.ecr\\wp_metadata_basic.json " +
-            //    "-e D:\\_%TEMP2\\wallpapers\\0w1mfled.ecr\\1\\RImage\\wpEffectFilePathUsing.json " +
-            //    "--effect-file-path-temporary D:\\_%TEMP2\\wallpapers\\0w1mfled.ecr\\1\\RImage\\wpEffectFilePathTemporary.json " +
-            //    "--effect-file-path-template D:\\_%TEMP2\\wallpapers\\0w1mfled.ecr\\wpEffectFilePathTemplate.json " +
+            //    "-f C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\q3zqwwix.t2l.jpg " +
+            //    "-b C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\wp_metadata_basic.json " +
+            //    "-e C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\1\\RImage\\wpEffectFilePathUsing.json " +
+            //    "--effect-file-path-temporary C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\1\\RImage\\wpEffectFilePathTemporary.json " +
+            //    "--effect-file-path-template C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\wpEffectFilePathTemplate.json " +
             //    "-r RImage " +
-            //    "--window-style-type Default " +
+            //    "--system-backdrop Default " +
             //    "-t Light " +
             //    "-l zh-CN";
             //string[] startArgs = s.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1..];
@@ -57,7 +54,7 @@ namespace VirtualPaper.PlayerWeb {
                 throw new NoNullAllowedException(nameof(StartArgs));
             }
 
-            SetAppTheme(ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.ApplicationTheme);
+            SetAppTheme(_startArgs.ApplicationTheme);
         }
 
         /// <summary>
@@ -67,10 +64,10 @@ namespace VirtualPaper.PlayerWeb {
         protected override async void OnLaunched(LaunchActivatedEventArgs args) {
             // ref: https://github.com/AndrewKeepCoding/WinUI3Localizer
             if (Constants.ApplicationType.IsMSIX) {
-                await LanguageUtil.InitializeLocalizerForPackaged(ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.Language);
+                await LanguageUtil.InitializeLocalizerForPackaged(_startArgs.Language);
             }
             else {
-                await LanguageUtil.InitializeLocalizerForUnpackaged(ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.Language);
+                await LanguageUtil.InitializeLocalizerForUnpackaged(_startArgs.Language);
             }
 
             // 避免文字无法初始化

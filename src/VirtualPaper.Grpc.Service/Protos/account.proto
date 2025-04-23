@@ -1,0 +1,75 @@
+syntax = "proto3";
+package VirtualPaper.Grpc.Service.Account;
+import "google/protobuf/empty.proto";
+
+service Grpc_AccountService {
+    rpc ChangePassword (ChangePasswordRequest) returns (ChangePasswordResponse);
+    rpc IsLogin (google.protobuf.Empty) returns (IsLoginResponse);
+    rpc Login (LoginRequest) returns (LoginResponse);
+    rpc Logout (google.protobuf.Empty) returns (LogoutResponse);
+    rpc Register (RegisterRequest) returns (RegisterResponse);
+    rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse);
+    rpc SendEmailCode (SendEmailCodeRequest) returns (SendEmailCodeResponse);
+}
+
+message ChangePasswordRequest {
+    string old_password = 1;
+    string new_password = 2;
+}
+
+message ChangePasswordResponse {
+    bool success = 1;
+    string message = 2; // 错误信息或成功提示
+}
+
+message IsLoginResponse {
+    bool is_login = 1;
+}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    bool success = 1;
+    string message = 2; // 错误信息或成功提示
+}
+
+message LogoutResponse {
+    bool success = 1;
+    string message = 2; // 错误信息或成功提示
+}
+
+message RegisterRequest {
+    string email = 1;
+    string username = 2;
+    string security_code = 3;
+    string password = 4;
+    string confirm_password = 5;
+}
+
+message RegisterResponse {
+    bool success = 1;
+    string message = 2; // 错误信息或成功提示
+}
+
+message ResetPasswordRequest {
+    string email = 1;
+    string code = 2;
+    string new_password = 3;
+}
+
+message ResetPasswordResponse {
+    bool success = 1;
+    string message = 2; // 错误信息或成功提示
+}
+
+message SendEmailCodeRequest {
+    string email = 1;
+}
+
+message SendEmailCodeResponse {
+    bool success = 1;
+    string message = 2; // 错误信息或成功提示
+}

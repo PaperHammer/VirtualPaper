@@ -290,6 +290,38 @@ namespace VirtualPaper.Common {
             public static string? Project_STI_LayerLoadFailed { get; }
             public static string? ArcColorPicker_AddToCustom { get; }
             public static string? StaticImg_CanvasSizeInput_Illegal { get; }
+            public static string? Account_Email_InvalidTip { get; }
+            public static string? Account_Pwd_InvalidTip { get; }
+            public static string? Account_LoginWithAccount { get; }
+            public static string? Account_EmailText { get; }
+            public static string? Account_EmailTextWithColon { get; }
+            public static string? Account_PwdText { get; }
+            public static string? Account_PwdTextWithColon { get; }
+            public static string? Account_RegisterWithEmail { get; }
+            public static string? Account_ConfirmPwdText { get; }
+            public static string? Account_ConfirmPwdTextWithColon { get; }
+            public static string? Account_CodeText { get; }
+            public static string? Account_CodeTextWithColon { get; }
+            public static string? Account_UsernameText { get; }
+            public static string? Account_UsernameTextWithColon { get; }
+            public static string? Account_LoginText { get; }
+            public static string? Account_RegisterText { get; }
+            public static string? Account_BackText { get; }
+            public static string? Account_RequestCodeText { get; }
+            public static string? Server_Success { get; }
+            public static string? Server_InnerError { get; }
+            public static string? Server_EmailFormatIllegal { get; }
+            public static string? Server_EmailOccupied { get; }
+            public static string? Server_UsernameFormatIllegal { get; }
+            public static string? Server_UsernameOccupied { get; }
+            public static string? Server_PasswordFormatIllegal { get; }
+            public static string? Server_ConfirmPasswordIllegal { get; }
+            public static string? Server_UsernNotFindOrPasswordError { get; }
+            public static string? Server_SecurityCodeError { get; }
+            public static string? Server_SecurityCodeExpired { get; }
+            public static string? Server_PotentialRisks { get; }
+            public static string? Server_Inaccessible { get; }
+            public static string? Account_Username_InvalidTip { get; }
         }
 
         public static class Field {

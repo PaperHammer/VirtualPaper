@@ -11,6 +11,10 @@
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     NavigationCacheMode="Enabled">
 
+    <Page.Resources>
+        <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Page.Resources>
+
     <Grid x:Name="DraftConfigGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>

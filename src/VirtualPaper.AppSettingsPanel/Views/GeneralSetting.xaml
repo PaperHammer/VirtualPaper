@@ -10,6 +10,10 @@
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
+    <Page.Resources>
+        <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Page.Resources>
+
     <ScrollView>
         <StackPanel
             Margin="15 0 15 15"

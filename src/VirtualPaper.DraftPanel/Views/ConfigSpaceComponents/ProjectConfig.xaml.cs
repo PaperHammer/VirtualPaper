@@ -26,7 +26,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             base.OnNavigatedTo(e);
 
             _viewModel = ObjectProvider.GetRequiredService<ProjectConfigViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-            _viewModel._configSpace = e.Parameter as IConfigSpace;
+            _viewModel._configSpace = e.Parameter as ConfigSpace;
             _viewModel.InitContent();
             _viewModel.InitConfigSpace();
             this.DataContext = _viewModel;

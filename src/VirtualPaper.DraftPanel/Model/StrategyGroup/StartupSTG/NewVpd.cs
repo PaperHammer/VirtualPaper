@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.DraftPanel.Model.Interfaces;
 
 namespace VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG {
@@ -8,11 +9,11 @@ namespace VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG {
             return type == ConfigSpacePanelType.NewVpd;
         }
 
-        public void Handle(IConfigSpace configBridge) {
+        public void Handle(IDraftPanelBridge configBridge) {
             HandleAsync(configBridge).GetAwaiter().GetResult();
         }
 
-        public async Task HandleAsync(IConfigSpace configBridge) {
+        public async Task HandleAsync(IDraftPanelBridge configBridge) {
             await Task.Run(() => {
                 configBridge.ChangePanelState(DraftPanelState.ProjectConfig, null);
             });

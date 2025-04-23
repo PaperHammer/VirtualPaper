@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model.Interfaces;
@@ -11,11 +12,11 @@ namespace VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG {
             return type == ConfigSpacePanelType.OpenVpd;
         }
 
-        public void Handle(IConfigSpace configBridge) {
+        public void Handle(IDraftPanelBridge configBridge) {
             HandleAsync(configBridge).GetAwaiter().GetResult();
         }
 
-        public async Task HandleAsync(IConfigSpace configBridge) {
+        public async Task HandleAsync(IDraftPanelBridge configBridge) {
             var storage = await WindowsStoragePickers.PickFilesAsync(configBridge.GetWindowHandle(), FileFilter.FileTypeToExtension[FileType.FDesign]);
             if (storage.Length < 1) return;
 

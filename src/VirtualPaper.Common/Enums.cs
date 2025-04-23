@@ -170,6 +170,13 @@ namespace VirtualPaper.Common {
         WorkSpace,
         ConfigSpace,
     }
+
+    public enum AccountPanelState {
+        Login,
+        Register,
+        Passport,
+        UserCenter,
+    }
     #endregion
 
     #region common

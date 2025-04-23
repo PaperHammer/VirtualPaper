@@ -8,6 +8,7 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.Model.NavParam;
+using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 
@@ -177,6 +178,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             return Path.Combine(draftFolder, DraftName + FileExtension.FE_Design); // .vpd filePath
         }
 
-        internal IConfigSpace _configSpace;
+        internal ConfigSpace _configSpace;
     }
 }

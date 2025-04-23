@@ -68,19 +68,19 @@ namespace VirtualPaper.PlayerWeb {
             HelpText = "Is started for preview.")]
         public bool IsPreview { get; set; }
 
-        //[Option("system-backdrop",
-        //    Required = true,
-        //    HelpText = "system-backdrop.")]
-        //public AppSystemBackdrop SystemBackdrop { get; set; }
+        [Option("system-backdrop",
+            Required = true,
+            HelpText = "system-backdrop.")]
+        public AppSystemBackdrop SystemBackdrop { get; set; }
 
-        //[Option('t', "app-theme",
-        //    Required = true,
-        //    HelpText = "application-theme.")]
-        //public AppTheme ApplicationTheme { get; set; }
+        [Option('t', "app-theme",
+            Required = true,
+            HelpText = "application-theme.")]
+        public AppTheme ApplicationTheme { get; set; }
 
-        //[Option('l', "app-language",
-        //    Required = true,
-        //    HelpText = "app-language")]
-        //public string Language { get; set; }
+        [Option('l', "app-language",
+            Required = true,
+            HelpText = "app-language")]
+        public string Language { get; set; }
     }
 }

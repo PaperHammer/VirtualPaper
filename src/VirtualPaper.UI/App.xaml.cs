@@ -47,11 +47,11 @@ namespace VirtualPaper.UI {
 
             ConfigureServices();
             _userSettings = ObjectProvider.GetRequiredService<IUserSettingsClient>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-
             SetAppTheme(_userSettings.Settings.ApplicationTheme);
         }
 
         private static void ConfigureServices() {
+            ObjectProvider.RegisterRelation<IAccountClient, AccountClient>();
             ObjectProvider.RegisterRelation<IWallpaperControlClient, WallpaperControlClient>();
             ObjectProvider.RegisterRelation<IMonitorManagerClient, MonitorManagerClient>();
             ObjectProvider.RegisterRelation<IUserSettingsClient, UserSettingsClient>();

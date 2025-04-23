@@ -21,7 +21,6 @@
             Content="{x:Bind Text_SaveAndApply}"
             Click="SaveButton_Click"/>
 
-
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="0.2*" />

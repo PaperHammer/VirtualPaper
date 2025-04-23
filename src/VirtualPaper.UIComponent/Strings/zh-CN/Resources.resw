@@ -734,4 +734,118 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="StaticImg_CanvasSizeInput_Illegal" xml:space="preserve">
     <value>画布最大宽度与高度应在 1 - </value>
   </data>
+  <data name="Account_Email_InvalidTip" xml:space="preserve">
+    <value>邮箱格式不合法</value>
+  </data>
+  <data name="Account_Pwd_InvalidTip" xml:space="preserve">
+    <value>密码长度在 8 到 32 个字符之间；至少包含一个大写字母；
+至少包含一个小写字母；
+至少包含一个数字；
+至少包含一个特殊字符</value>
+  </data>
+  <data name="Account_LoginWithAccount" xml:space="preserve">
+    <value>登录到你的账户</value>
+  </data>
+  <data name="Account_EmailText" xml:space="preserve">
+    <value>邮箱</value>
+  </data>
+  <data name="Account_EmailTextWithColon" xml:space="preserve">
+    <value>邮箱：</value>
+  </data>
+  <data name="Account_PwdText" xml:space="preserve">
+    <value>密码</value>
+  </data>
+  <data name="Account_PwdTextWithColon" xml:space="preserve">
+    <value>密码：</value>
+  </data>
+  <data name="Account_RegisterWithEmail" xml:space="preserve">
+    <value>注册新账户</value>
+  </data>
+  <data name="Account_ConfirmPwdText" xml:space="preserve">
+    <value>确认密码</value>
+  </data>
+  <data name="Account_ConfirmPwdTextWithColon" xml:space="preserve">
+    <value>确认密码：</value>
+  </data>
+  <data name="Account_CodeText" xml:space="preserve">
+    <value>验证码</value>
+  </data>
+  <data name="Account_CodeTextWithColon" xml:space="preserve">
+    <value>验证码：</value>
+  </data>
+  <data name="Account_UsernameText" xml:space="preserve">
+    <value>用户名</value>
+  </data>
+  <data name="Account_UsernameTextWithColon" xml:space="preserve">
+    <value>用户名：</value>
+  </data>
+  <data name="Account_LoginText" xml:space="preserve">
+    <value>登录</value>
+  </data>
+  <data name="Account_RegisterText" xml:space="preserve">
+    <value>注册</value>
+  </data>
+  <data name="Account_BackText" xml:space="preserve">
+    <value>返回</value>
+  </data>
+  <data name="Account_RequestCodeText" xml:space="preserve">
+    <value>获取</value>
+  </data>
+  <data name="Server_Success" xml:space="preserve">
+    <value>操作成功</value>
+  </data>
+  <data name="Server_InnerError" xml:space="preserve">
+    <value>服务器内部错误，请稍后重试</value>
+  </data>
+  <data name="Server_EmailFormatIllegal" xml:space="preserve">
+    <value>邮箱 格式不正确</value>
+  </data>
+  <data name="Server_EmailOccupied" xml:space="preserve">
+    <value>邮箱 已被占用</value>
+  </data>
+  <data name="Server_UsernameFormatIllegal" xml:space="preserve">
+    <value>用户名 格式不正确</value>
+  </data>
+  <data name="Server_UsernameOccupied" xml:space="preserve">
+    <value>用户名 已被占用</value>
+  </data>
+  <data name="Server_PasswordFormatIllegal" xml:space="preserve">
+    <value>密码 格式不正确</value>
+  </data>
+  <data name="Server_ConfirmPasswordIllegal" xml:space="preserve">
+    <value>两次输入的 密码 不同</value>
+  </data>
+  <data name="Server_UsernameNotFindOrPasswordError" xml:space="preserve">
+    <value>用户不存在 或 密码错误</value>
+  </data>
+  <data name="Server_SecurityCodeError" xml:space="preserve">
+    <value>验证码 错误</value>
+  </data>
+  <data name="Server_SecurityCodeExpired" xml:space="preserve">
+    <value>验证码 已失效，请重新获取</value>
+  </data>
+  <data name="Server_PotentialRisks" xml:space="preserve">
+    <value>当前操作存在潜在风险，已终止</value>
+  </data>
+  <data name="Server_Inaccessible" xml:space="preserve">
+    <value>无法访问该内容</value>
+  </data>
+  <data name="Account_Username_InvalidTip" xml:space="preserve">
+    <value>用户名长度在 3 到 20 个在字符之间；
+只能使用以下类型的字符：
+  - 英文字母（大小写均可）
+  - 数字（0-9）
+  - 下划线 _
+  - 点 .
+  - 连字符 -
+用户名不能以点 . 或连字符 - 开头或结尾；
+以下词语不可作为用户名：
+  - admin
+  - root
+  - test
+  - guest
+  - user
+  - system
+</value>
+  </data>
 </root>

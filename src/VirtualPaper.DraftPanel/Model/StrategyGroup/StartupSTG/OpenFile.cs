@@ -12,11 +12,11 @@ namespace VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG {
         public bool CanHandle(ConfigSpacePanelType type) {
             return type == ConfigSpacePanelType.OpenFile;
         }
-        public void Handle(IConfigSpace configBridge) {
+        public void Handle(IDraftPanelBridge configBridge) {
             HandleAsync(configBridge).GetAwaiter().GetResult();
         }
 
-        public async Task HandleAsync(IConfigSpace configBridge) {
+        public async Task HandleAsync(IDraftPanelBridge configBridge) {
             var storage = await WindowsStoragePickers.PickFilesAsync(configBridge.GetWindowHandle(), FileFilter.FileTypeToExtension[FileType.FImage], true);
             if (storage.Length < 1) return;
 

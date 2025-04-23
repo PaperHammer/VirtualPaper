@@ -58,7 +58,7 @@
             Grid.Row="1">
             <Frame 
                 x:Name="ContentFrame"
-                IsEnabled="{Binding FrameIsEnable}">
+                IsEnabled="{x:Bind _viewModel.FrameIsEnable, Mode=OneWay}">
                 <WebView2
                     x:Name="Webview2"
                     AllowDrop="False"
@@ -68,25 +68,16 @@
                     PointerPressed="Webview2_PointerPressed"/>
             </Frame>
 
-            <!--弹窗-->
-            <InfoBar
-                HorizontalAlignment="Center"
-                VerticalAlignment="Top"
-                IsOpen="{Binding InfoBarIsOpen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                Severity="{Binding InfoBarSeverity}"
-                Message="{Binding InfobarMsg}"
-                MaxWidth="900"/>
-
             <!--加载界面-->
             <loading:Loading
-                CancelEnable="{Binding CancelEnable}"
-                ProgressbarEnable="{Binding ProgressbarEnable}"
-                CtsTokens="{Binding CtsTokens}"
-                TotalValue="{Binding TotalValue}"
-                CurValue="{Binding CurValue}"
-                TextLoading="{Binding TextLoading}"
-                TextCancel="{Binding TextCancel}"
-                Visibility="{Binding LoadingIsVisiable}"/>
+                CancelEnable="{x:Bind _viewModel.CancelEnable, Mode=OneWay}"
+                ProgressbarEnable="{x:Bind _viewModel.ProgressbarEnable, Mode=OneWay}"
+                CtsTokens="{x:Bind _viewModel.CtsTokens, Mode=OneWay}"
+                TotalValue="{x:Bind _viewModel.TotalValue, Mode=OneWay}"
+                CurValue="{x:Bind _viewModel.CurValue, Mode=OneWay}"
+                TextLoading="{x:Bind _viewModel.TextLoading, Mode=OneWay}"
+                TextCancel="{x:Bind _viewModel.TextCancel, Mode=OneWay}"
+                Visibility="{x:Bind _viewModel.LoadingIsVisiable, Mode=OneWay}"/>
         </Grid>
     </Grid>
 </winex:WindowEx>

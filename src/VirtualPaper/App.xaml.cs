@@ -19,6 +19,7 @@ using VirtualPaper.Cores.TrayControl;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Factories;
 using VirtualPaper.Factories.Interfaces;
+using VirtualPaper.Grpc.Service.Account;
 using VirtualPaper.Grpc.Service.Commands;
 using VirtualPaper.Grpc.Service.MonitorManager;
 using VirtualPaper.Grpc.Service.ScrCommands;
@@ -31,6 +32,8 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
+using VirtualPaper.Utils.Net;
+using VirtualPaper.Utils.Net.Interfaces;
 using VirtualPaper.Utils.Theme;
 using VirtualPaper.Views;
 using VirtualPaper.Views.WindowsMsg;
@@ -46,6 +49,8 @@ namespace VirtualPaper {
     public partial class App : Application {
         internal static Logger Log => _log;
         internal static JobService Jobs => Services.GetRequiredService<JobService>();
+        internal static IHttpConnect HttpConnect => new HttpConnect();
+        internal static IUserSettingsService UserSettings => Services.GetRequiredService<IUserSettingsService>();
 
         public static IServiceProvider Services {
             get {
@@ -105,16 +110,15 @@ namespace VirtualPaper {
             #endregion
 
             // 用户配置
-            var userSettings = Services.GetRequiredService<IUserSettingsService>();
-            if (userSettings.Settings.WallpaperDir == string.Empty
-                || !Directory.Exists(userSettings.Settings.WallpaperDir)) {
-                userSettings.Settings.WallpaperDir = Path.Combine(Constants.CommonPaths.LibraryDir, Constants.FolderName.WpStoreFolderName);
-                Directory.CreateDirectory(userSettings.Settings.WallpaperDir);
+            if (UserSettings.Settings.WallpaperDir == string.Empty
+                || !Directory.Exists(UserSettings.Settings.WallpaperDir)) {
+                UserSettings.Settings.WallpaperDir = Path.Combine(Constants.CommonPaths.LibraryDir, Constants.FolderName.WpStoreFolderName);
+                Directory.CreateDirectory(UserSettings.Settings.WallpaperDir);
             }
             // 初始化语言包
-            ChangeLanguage(userSettings.Settings.Language);
+            ChangeLanguage(UserSettings.Settings.Language);
 
-            userSettings.Save<ISettings>();
+            UserSettings.Save<ISettings>();
 
             #region 启动相关后台服务
             try {
@@ -133,8 +137,8 @@ namespace VirtualPaper {
             }
             #endregion
 
-            if (userSettings.Settings.IsUpdated || userSettings.Settings.IsFirstRun) {
-                SplashWindow? spl = userSettings.Settings.IsFirstRun ? new(0, 500) : null; spl?.Show();
+            if (UserSettings.Settings.IsUpdated || UserSettings.Settings.IsFirstRun) {
+                SplashWindow? spl = UserSettings.Settings.IsFirstRun ? new(0, 500) : null; spl?.Show();
                 spl?.Close();
             }
 
@@ -144,13 +148,13 @@ namespace VirtualPaper {
                 wpControl.RestoreWallpaper();
 
                 // 启动屏保服务（需要在"还原壁纸"后进行）
-                bool isScrOn = userSettings.Settings.IsScreenSaverOn;
+                bool isScrOn = UserSettings.Settings.IsScreenSaverOn;
                 if (isScrOn) {
                     Services.GetRequiredService<IScrControl>().Start();
                 }
 
                 //first run Setup-Wizard show..
-                if (userSettings.Settings.IsFirstRun) {
+                if (UserSettings.Settings.IsFirstRun) {
                     Services.GetRequiredService<IUIRunnerService>().ShowUI();
                 }
             }
@@ -162,13 +166,13 @@ namespace VirtualPaper {
             #region 事件绑定
             //need to load theme later stage of startu to update..
             this.Startup += (s, e) => {
-                ChangeTheme(userSettings.Settings.ApplicationTheme);
+                ChangeTheme(UserSettings.Settings.ApplicationTheme);
             };
 
             //Ref: https://github.com/Kinnara/ModernWpf/blob/master/ModernWpf/Helpers/ColorsHelper.cs
             SystemEvents.UserPreferenceChanged += (s, e) => {
                 if (e.Category == UserPreferenceCategory.General) {
-                    if (userSettings.Settings.ApplicationTheme == AppTheme.Auto) {
+                    if (UserSettings.Settings.ApplicationTheme == AppTheme.Auto) {
                         ChangeTheme(AppTheme.Auto);
                     }
                 }
@@ -194,11 +198,13 @@ namespace VirtualPaper {
                 .AddSingleton<IWallpaperConfigFolderFactory, WallpaperConfigFolderFactory>()
 
                 .AddSingleton<JobService>()
+                .AddSingleton<IAccountService, AccountService>()
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
 
+                .AddSingleton<AccountServer>()
                 .AddSingleton<WallpaperControlServer>()
                 .AddSingleton<MonitorManagerServer>()
                 .AddSingleton<UserSettingServer>()
@@ -227,6 +233,7 @@ namespace VirtualPaper {
             Grpc_UpdateService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<AppUpdateServer>());
             Grpc_CommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<CommandsServer>());
             Grpc_ScrCommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<ScrCommandsServer>());
+            Grpc_AccountService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<AccountServer>());
             server.Start();
 
             return server;

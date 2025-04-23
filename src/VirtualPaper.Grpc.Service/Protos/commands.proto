@@ -11,5 +11,4 @@ service Grpc_CommandsService {
 	rpc ShutDown (google.protobuf.Empty) returns (google.protobuf.Empty);
 	rpc SaveRectUI (google.protobuf.Empty) returns (google.protobuf.Empty);
 	rpc SubscribeUIRecievedCmd (google.protobuf.Empty) returns (stream VirtualPaper.Grpc.Service.Models.Grpc_UIRecievedCmd);
-
 }

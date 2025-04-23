@@ -15,6 +15,7 @@ using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DataAssistor;
+using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Models.Cores;
@@ -102,7 +103,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
 
                 var mainWindow = (WindowEx)WpSettings.Instance.GetMainWindow();
-                toolWindow = new();
+                toolWindow = new ToolWindow(new(
+                    _userSettingsClient.Settings.SystemBackdrop,
+                    _userSettingsClient.Settings.ApplicationTheme,
+                    _userSettingsClient.Settings.Language));
                 toolWindow.Closed += ToolContainer_Closed;
                 void ToolContainer_Closed(object _, WindowEventArgs __) {
                     toolWindow.Closed -= ToolContainer_Closed;
@@ -130,7 +134,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
 
                 var mainWindow = (WindowEx)WpSettings.Instance.GetMainWindow();
-                toolWindow = new();
+                toolWindow = new ToolWindow(new(
+                    _userSettingsClient.Settings.SystemBackdrop,
+                    _userSettingsClient.Settings.ApplicationTheme,
+                    _userSettingsClient.Settings.Language));
                 toolWindow.Closed += ToolContainer_Closed;
                 void ToolContainer_Closed(object _, WindowEventArgs __) {
                     toolWindow.Closed -= ToolContainer_Closed;

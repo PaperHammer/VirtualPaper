@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.UI;
@@ -8,12 +7,9 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.DI;
-using VirtualPaper.Common.Utils.PInvoke;
-using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Models;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
-using WinRT.Interop;
 using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -24,7 +20,8 @@ namespace VirtualPaper.UIComponent.Container {
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class ToolWindow : WindowEx {
-        public ToolWindow() {
+        public ToolWindow(AppConfigOptions appConfigOptions) {
+            _appConfigOptions = appConfigOptions;
             this.InitializeComponent();
 
             SetWindowStyle();
@@ -68,7 +65,7 @@ namespace VirtualPaper.UIComponent.Container {
 
         #region window title bar
         private void SetWindowStyle() {
-            this.SystemBackdrop = ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.SystemBackdrop switch {
+            this.SystemBackdrop = _appConfigOptions.SystemBackdrop switch {
                 AppSystemBackdrop.Mica => new MicaBackdrop(),
                 AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
                 _ => default,
@@ -90,7 +87,7 @@ namespace VirtualPaper.UIComponent.Container {
             }
             else {
                 AppTitleBar.Visibility = Visibility.Collapsed;
-                this.UseImmersiveDarkModeEx(ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.ApplicationTheme == AppTheme.Dark);
+                this.UseImmersiveDarkModeEx(_appConfigOptions.ApplicationTheme == AppTheme.Dark);
             }
         }
 
@@ -149,6 +146,7 @@ namespace VirtualPaper.UIComponent.Container {
         //private readonly SolidColorBrush _windowCaptionForegroundDisabled;
         //private readonly SolidColorBrush _windowCaptionForeground;
         private readonly Dictionary<int, (string, object)> _selectIdx2Content = [];
+        private readonly AppConfigOptions _appConfigOptions;
         private int _previousSelectedIndex = 0;
     }
 }

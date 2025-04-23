@@ -92,10 +92,10 @@
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
-                <!--<NavigationViewItem 
+                <NavigationViewItem 
                     Content="{Binding SidebarAccount}" 
-                    x:Name="Account" 
-                    Icon="Contact" />-->
+                    x:Name="Nav_Account" 
+                    Icon="Contact" />
                 <NavigationViewItem 
                     Content="{Binding SidebarAppSettings}" 
                     x:Name="Nav_AppSettings" 

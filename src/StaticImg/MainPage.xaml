@@ -12,11 +12,16 @@
     xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
     xmlns:lcl_components="using:Workloads.Creation.StaticImg.Views.Components"
     xmlns:extension="using:VirtualPaper.UIComponent.Extensions"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
+        <cvs:ThemeResourceConverter x:Key="ThemeResourceConverter"/>
+        <cvs:DynamicVisibilityConverter x:Key="DynamicVisibilityConverter"/>
+        <cvs:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        
         <Style x:Key="RightExpanderStyle" TargetType="Expander">
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>

@@ -734,4 +734,118 @@ Author: PaperHammer</value>
   <data name="StaticImg_CanvasSizeInput_Illegal" xml:space="preserve">
     <value>The maximum width and height of the canvas should be 1 - </value>
   </data>
+  <data name="Account_Email_InvalidTip" xml:space="preserve">
+    <value>The email address format is not legal</value>
+  </data>
+  <data name="Account_Pwd_InvalidTip" xml:space="preserve">
+    <value>Passwords are between 8 and 32 characters;
+contains at least one uppercase letter;
+contains at least one lowercase letter;
+contains at least one number;
+contains at least one special character</value>
+  </data>
+  <data name="Account_LoginWithAccount" xml:space="preserve">
+    <value>Log in to your account</value>
+  </data>
+  <data name="Account_EmailText" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Account_EmailTextWithColon" xml:space="preserve">
+    <value>Email:</value>
+  </data>
+  <data name="Account_PwdText" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Account_PwdTextWithColon" xml:space="preserve">
+    <value>Password:</value>
+  </data>
+  <data name="Account_RegisterWithEmail" xml:space="preserve">
+    <value>Sign up for a new account</value>
+  </data>
+  <data name="Account_ConfirmPwdText" xml:space="preserve">
+    <value>Confirm Password</value>
+  </data>
+  <data name="Account_ConfirmPwdTextWithColon" xml:space="preserve">
+    <value>Confirm Password:</value>
+  </data>
+  <data name="Account_CodeText" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="Account_CodeTextWithColon" xml:space="preserve">
+    <value>Code:</value>
+  </data>
+  <data name="Account_UsernameText" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="Account_UsernameTextWithColon" xml:space="preserve">
+    <value>Username:</value>
+  </data>
+  <data name="Account_LoginText" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="Account_RegisterText" xml:space="preserve">
+    <value>Register</value>
+  </data>
+  <data name="Account_BackText" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Account_RequestCodeText" xml:space="preserve">
+    <value>Request</value>
+  </data>
+  <data name="Server_Success" xml:space="preserve">
+    <value>Operation successful</value>
+  </data>
+  <data name="Server_InnerError" xml:space="preserve">
+    <value>Internal server error, please try again later</value>
+  </data>
+  <data name="Server_EmailFormatIllegal" xml:space="preserve">
+    <value>The email format is incorrect</value>
+  </data>
+  <data name="Server_EmailOccupied" xml:space="preserve">
+    <value>The email address has been occupied</value>
+  </data>
+  <data name="Server_UsernameFormatIllegal" xml:space="preserve">
+    <value>The username format is incorrect</value>
+  </data>
+  <data name="Server_UsernameOccupied" xml:space="preserve">
+    <value>The username has been occupied</value>
+  </data>
+  <data name="Server_PasswordFormatIllegal" xml:space="preserve">
+    <value>The password format is incorrect</value>
+  </data>
+  <data name="Server_ConfirmPasswordIllegal" xml:space="preserve">
+    <value>The passwords entered on both occasions are different</value>
+  </data>
+  <data name="Server_UsernameNotFindOrPasswordError" xml:space="preserve">
+    <value>The user does not exist or the password is incorrect</value>
+  </data>
+  <data name="Server_SecurityCodeError" xml:space="preserve">
+    <value>The verification code is incorrect</value>
+  </data>
+  <data name="Server_SecurityCodeExpired" xml:space="preserve">
+    <value>The verification code has expired, please retrieve it again</value>
+  </data>
+  <data name="Server_PotentialRisks" xml:space="preserve">
+    <value>The current operation poses potential risks and has been terminated</value>
+  </data>
+  <data name="Server_Inaccessible" xml:space="preserve">
+    <value>Unable to access this content</value>
+  </data>
+  <data name="Account_Username_InvalidTip" xml:space="preserve">
+    <value>Username length between 3 and 20 characters;
+Only the following types of characters can be used:
+  - English letters (both upper and lowercase)
+  - Numbers (0-9)
+  - Underline_
+  - Dot.
+  - hyphen-
+Usernames cannot be named with a dot . or hyphen - the beginning or end;
+The following words cannot be used as usernames:
+  -admin
+  -root
+  -test
+  -guest
+  -user
+  -system</value>
+  </data>
 </root>

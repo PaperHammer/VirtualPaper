@@ -2,8 +2,8 @@
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
-using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.Model.NavParam;
+using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
@@ -101,6 +101,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         internal IEnumerable<ProjectTemplate> _availableTemplates;
-        internal IConfigSpace _configSpace;
+        internal ConfigSpace _configSpace;
     }
 }

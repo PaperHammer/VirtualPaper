@@ -10,7 +10,6 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Events.EffectValue;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.UIComponent.Utils;
-using WinUI3Localizer;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -32,7 +31,6 @@ namespace VirtualPaper.UIComponent.Data {
             _wpEffectFilePathTemporary = wpEffectFilePathTemporary;
             _wpEffectFilePathTemplate = wpEffectFilePathTemplate;
              _controls = [];
-            _localizer = LanguageUtil.LocalizerInstacne;
 
             this.InitializeComponent();           
 
@@ -45,8 +43,8 @@ namespace VirtualPaper.UIComponent.Data {
         }
 
         private void InitText() {            
-            _textRestore = _localizer.GetLocalizedString(Constants.I18n.Text_Restore);
-            _textSaveAndApply = _localizer.GetLocalizedString(Constants.I18n.Text_SaveAndApply);
+            _textRestore = LanguageUtil.GetI18n(Constants.I18n.Text_Restore);
+            _textSaveAndApply = LanguageUtil.GetI18n(Constants.I18n.Text_SaveAndApply);
         }
 
         private void InitUI() {
@@ -89,7 +87,7 @@ namespace VirtualPaper.UIComponent.Data {
                         if (helpJsonNode != null) {
                             ToolTipService.SetToolTip(
                                 slider,
-                                new ToolTip() { Content = _localizer.GetLocalizedString(helpJsonNode.ToString()) });
+                                new ToolTip() { Content = LanguageUtil.GetI18n(helpJsonNode.ToString()) });
                         }
                         slider.ValueChanged += Slider_ValueChanged;
                     }
@@ -116,7 +114,7 @@ namespace VirtualPaper.UIComponent.Data {
                         if (helpJsonNode != null) {
                             ToolTipService.SetToolTip(
                                 tb,
-                                new ToolTip() { Content = _localizer.GetLocalizedString(helpJsonNode.ToString()) });
+                                new ToolTip() { Content = LanguageUtil.GetI18n(helpJsonNode.ToString()) });
                         }
                         tb.TextChanged += Textbox_TextChanged;
                     }
@@ -143,7 +141,7 @@ namespace VirtualPaper.UIComponent.Data {
                         if (helpJsonNode != null) {
                             ToolTipService.SetToolTip(
                                 chk,
-                                new ToolTip() { Content = _localizer.GetLocalizedString(helpJsonNode.ToString()) });
+                                new ToolTip() { Content = LanguageUtil.GetI18n(helpJsonNode.ToString()) });
                         }
                         chk.Checked += Checkbox_CheckedChanged;
                         chk.Unchecked += Checkbox_CheckedChanged;
@@ -173,7 +171,7 @@ namespace VirtualPaper.UIComponent.Data {
                         if (helpJsonNode != null) {
                             ToolTipService.SetToolTip(
                                 cmbBox,
-                                new ToolTip() { Content = _localizer.GetLocalizedString(helpJsonNode.ToString()) });
+                                new ToolTip() { Content = LanguageUtil.GetI18n(helpJsonNode.ToString()) });
                         }
                         cmbBox.SelectionChanged += ComboBox_SelectionChanged;
                     }
@@ -218,7 +216,7 @@ namespace VirtualPaper.UIComponent.Data {
                     if (helpJsonNode != null) {
                         ToolTipService.SetToolTip(
                             tb,
-                            new ToolTip() { Content = _localizer.GetLocalizedString(helpJsonNode.ToString()) });
+                            new ToolTip() { Content = LanguageUtil.GetI18n(helpJsonNode.ToString()) });
                     }
                 }
 
@@ -591,7 +589,6 @@ namespace VirtualPaper.UIComponent.Data {
         private JsonNode _wpEffectData;
         private readonly Thickness _margin = new(0, 0, 20, 10);
         private const double _minWidth = 200;
-        private readonly ILocalizer _localizer;
         private string _textRestore;
         private string _textSaveAndApply;
         private readonly Dictionary<string, UIElement> _controls;

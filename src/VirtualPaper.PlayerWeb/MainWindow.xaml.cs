@@ -12,16 +12,13 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Storage;
-using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.PlayerWeb.Utils;
 using VirtualPaper.PlayerWeb.ViewModel;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
-using WinRT.Interop;
 using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -48,23 +45,22 @@ namespace VirtualPaper.PlayerWeb {
             _ctsConsoleIn = new();
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread() ?? DispatcherQueueController.CreateOnCurrentThread().DispatcherQueue;
             _startArgs = startArgs;
-
             this.InitializeComponent();
 
             _viewModel = new MainWindowViewModel();
             this.ContentGrid.DataContext = _viewModel;
-            _filePath = _startArgs.FilePath;
+            _filePath = App.AppInstance.Args.FilePath;
 
-            if (_startArgs.IsPreview) {
+            if (App.AppInstance.Args.IsPreview) {
                 SetWindowStyle();
                 SetWindowTitleBar();
             }
             else {
                 _windowRc = new() {
-                    Left = _startArgs.Left,
-                    Top = _startArgs.Top,
-                    Right = _startArgs.Right,
-                    Bottom = _startArgs.Bottom,
+                    Left = App.AppInstance.Args.Left,
+                    Top = App.AppInstance.Args.Top,
+                    Right = App.AppInstance.Args.Right,
+                    Bottom = App.AppInstance.Args.Bottom,
                 };
                 AppTitleBar.Visibility = Visibility.Collapsed;
             }
@@ -90,8 +86,8 @@ namespace VirtualPaper.PlayerWeb {
 
                 await InitializeWebViewAsync();
 
-                if (_startArgs.IsPreview) {
-                    WindowUtil.ActiveToolWindow();
+                if (App.AppInstance.Args.IsPreview) {
+                    WindowUtil.ActiveToolWindow(_startArgs);
                     WindowUtil.AddEffectConfigPage();
                     WindowUtil.AddDetailsPage();
                 }
@@ -241,7 +237,7 @@ namespace VirtualPaper.PlayerWeb {
 
         private void HandleActiveCommand(VirtualPaperActiveCmd active) {
             _dispatcherQueue.TryEnqueue(() => {
-                WindowUtil.ActiveToolWindow(active.UIHwnd);
+                WindowUtil.ActiveToolWindow(_startArgs, active.UIHwnd);
                 bool isNull = WindowUtil.IsToolContentNull();
                 if (isNull) {
                     WindowUtil.AddEffectConfigPage();
@@ -262,16 +258,16 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         private async Task HandleUpdateCommandAsync(VirtualPaperUpdateCmd update) {
-            if (_startArgs.FilePath != update.FilePath) {
-                _startArgs.FilePath = update.FilePath;
-                _startArgs.RuntimeType = update.RType;
-                _startArgs.WpEffectFilePathTemplate = update.WpEffectFilePathTemplate;
-                _startArgs.WpEffectFilePathTemporary = update.WpEffectFilePathTemporary;
-                _startArgs.WpEffectFilePathUsing = update.WpEffectFilePathUsing;
-                await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+            if (App.AppInstance.Args.FilePath != update.FilePath) {
+                App.AppInstance.Args.FilePath = update.FilePath;
+                App.AppInstance.Args.RuntimeType = update.RType;
+                App.AppInstance.Args.WpEffectFilePathTemplate = update.WpEffectFilePathTemplate;
+                App.AppInstance.Args.WpEffectFilePathTemporary = update.WpEffectFilePathTemporary;
+                App.AppInstance.Args.WpEffectFilePathUsing = update.WpEffectFilePathUsing;
+                await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, App.AppInstance.Args.RuntimeType, App.AppInstance.Args.FilePath);
             }
 
-            LoadWpEffect(_startArgs.WpEffectFilePathUsing);
+            LoadWpEffect(App.AppInstance.Args.WpEffectFilePathUsing);
         }
         #endregion
 
@@ -282,7 +278,7 @@ namespace VirtualPaper.PlayerWeb {
         private void ParallaxControl() {
             try {
                 if (_isParallaxOn &&
-                    (_isFocusOnDesk || _startArgs.IsPreview && IsFocusOnWindow)) {
+                    (_isFocusOnDesk || App.AppInstance.Args.IsPreview && IsFocusOnWindow)) {
                     if (Interlocked.CompareExchange(ref _isParallaxRunning, 1, 0) == 1) return;
 
                     App.WriteToParent(new VirtualPaperMessageConsole() {
@@ -350,27 +346,25 @@ namespace VirtualPaper.PlayerWeb {
             Webview2.NavigationCompleted += Webview2_NavigationCompleted;
 
             string playingFile = GetPlayingFile();
-            Webview2.CoreWebView2.Navigate(
-                Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    playingFile));
+            string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, playingFile).Replace("\\", "/");
+            Webview2.CoreWebView2.Navigate(new Uri(fullPath).AbsoluteUri);
         }
 
         private async void Webview2_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e) {
-            switch (_startArgs.RuntimeType) {
+            switch (App.AppInstance.Args.RuntimeType) {
                 case "RImage":
                 case "RVideo":
                     UpdateRectToWebview();
-                    await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+                    await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, App.AppInstance.Args.RuntimeType, App.AppInstance.Args.FilePath);
                     break;
                 case "RImage3D":
                     UpdateRectToWebview();
-                    await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
+                    await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, App.AppInstance.Args.FilePath, App.AppInstance.Args.DepthFilePath);
                     break;
                 default:
                     break;
             }
-            LoadWpEffect(_startArgs.WpEffectFilePathUsing);
+            LoadWpEffect(App.AppInstance.Args.WpEffectFilePathUsing);
             _ = ExecuteScriptFunctionAsync(Fileds.Play);
 
             App.WriteToParent(new VirtualPaperMessageProcId() {
@@ -455,17 +449,17 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         private string GetPlayingFile() {
-            return _startArgs.RuntimeType switch {
+            return App.AppInstance.Args.RuntimeType switch {
                 "RImage" => Constants.PlayingFile.PlayerWeb,
                 "RImage3D" => Constants.PlayingFile.PlayerWeb3D,
                 "RVideo" => Constants.PlayingFile.PlayerWeb,
-                _ => throw new ArgumentException(nameof(_startArgs.RuntimeType)),
+                _ => throw new ArgumentException(nameof(App.AppInstance.Args.RuntimeType)),
             };
         }
 
         #region window title bar
         private void SetWindowStyle() {
-            this.SystemBackdrop = ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.SystemBackdrop switch {
+            this.SystemBackdrop = App.AppInstance.Args.SystemBackdrop switch {
                 AppSystemBackdrop.Mica => new MicaBackdrop(),
                 AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
                 _ => default,
@@ -486,7 +480,7 @@ namespace VirtualPaper.PlayerWeb {
             }
             else {
                 AppTitleBar.Visibility = Visibility.Collapsed;
-                this.UseImmersiveDarkModeEx(ObjectProvider.GetRequiredService<IUserSettingsClient>().Settings.ApplicationTheme == AppTheme.Dark);
+                this.UseImmersiveDarkModeEx(App.AppInstance.Args.ApplicationTheme == AppTheme.Dark);
             }
         }
 

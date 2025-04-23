@@ -5,6 +5,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using VirtualPaper.AccountPanel;
 using VirtualPaper.AppSettingsPanel;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge.Base;
@@ -18,14 +19,8 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
 using VirtualPaper.WpSettingsPanel;
 using Windows.Graphics;
-using Windows.Graphics.Imaging;
-using Windows.Storage.Streams;
-using Windows.Storage;
 using WinRT.Interop;
 using WinUIEx;
-using Microsoft.UI.Xaml.Shapes;
-using Microsoft.UI.Xaml.Media.Imaging;
-using System.Runtime.InteropServices.WindowsRuntime;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -200,9 +195,9 @@ namespace VirtualPaper.UI {
                 else if (args.SelectedItemContainer.Name == Nav_Draft.Name) {
                     pageType = typeof(Draft);
                 }
-                //else if (args.SelectedItemContainer.Name == Account.Name) {
-                //    pageType = typeof(Account);
-                //}
+                else if (args.SelectedItemContainer.Name ==Nav_Account.Name) {
+                    pageType = typeof(Account);
+                }
                 else if (args.SelectedItemContainer.Name == Nav_AppSettings.Name) {
                     pageType = typeof(AppSettings);
                 }

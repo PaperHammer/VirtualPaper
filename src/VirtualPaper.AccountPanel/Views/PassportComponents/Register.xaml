@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VirtualPaper.AccountPanel.Views.PassportComponents.Register"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.AccountPanel.Views.PassportComponents"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Page.Resources>
+
+    <StackPanel
+        Margin="0 -50 0 0"
+        Width="320"
+        Spacing="10"
+        VerticalAlignment="Center"
+        HorizontalAlignment="Center">
+        <TextBlock Text="{x:Bind _viewModel.Account_RegisterWithEmail}" FontSize="22" />
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="16"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Text="{x:Bind _viewModel.Account_EmailTextWithColon}" FontSize="15" VerticalAlignment="Center"/>
+            <Border Grid.Column="1" Padding="0" Height="40">
+                <TextBox 
+                    x:Name="tbxEmail" 
+                    IsSpellCheckEnabled="False"
+                    PlaceholderText="{x:Bind _viewModel.Account_EmailText}" 
+                    Text="{x:Bind _viewModel.Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    InputScope="EmailSmtpAddress"
+                    VerticalAlignment="Center" 
+                    FontSize="14"/>
+            </Border>
+            <FontIcon 
+                x:Name="fiEmail"
+                Grid.Column="3"
+                FontSize="16"
+                VerticalAlignment="Center"
+                Foreground="Red"
+                Glyph="&#xE783;" 
+                Visibility="{x:Bind _viewModel.IsEmailOk, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Reverse}"
+                ToolTipService.Placement="Mouse">
+                <ToolTipService.ToolTip>
+                    <ToolTip
+                        Content="{x:Bind _viewModel.Account_Email_InvalidTip}"
+                        HorizontalOffset="0"
+                        FontSize="14"
+                        Foreground="Red"
+                        VerticalOffset="0"/>
+                </ToolTipService.ToolTip>
+            </FontIcon>
+        </Grid>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="110"/>
+                <ColumnDefinition Width="26"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Text="{x:Bind _viewModel.Account_CodeTextWithColon}" FontSize="15" VerticalAlignment="Center"/>
+            <Border Grid.Column="1" Padding="0" Height="40">
+                <TextBox 
+                    x:Name="tbxCode" 
+                    IsSpellCheckEnabled="False"
+                    PlaceholderText="{x:Bind _viewModel.Account_CodeText}" 
+                    Text="{x:Bind _viewModel.Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    VerticalAlignment="Center" 
+                    FontSize="14"/>
+            </Border>
+            <Button
+                Grid.Column="3"
+                HorizontalAlignment="Stretch"
+                Background="{ThemeResource AccentAcrylicBackgroundFillColorBaseBrush}" 
+                IsEnabled="{x:Bind _viewModel.IsRequestCodeButtonEnabled, Mode=OneWay}"
+                Content="{x:Bind _viewModel.Account_RequestCodeText, Mode=OneWay}" 
+                Click="BtnRequestCode_Clicked"/>
+        </Grid>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="16"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Text="{x:Bind _viewModel.Account_UsernameTextWithColon}" VerticalAlignment="Center"/>
+            <Border Grid.Column="1" Padding="0" Height="40">
+                <TextBox 
+                    Grid.Column="1"
+                    x:Name="tbxUsername" 
+                    IsSpellCheckEnabled="False"
+                    Text="{x:Bind _viewModel.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    PlaceholderText="{x:Bind _viewModel.Account_UsernameText}"
+                    VerticalAlignment="Center"
+                    FontSize="14"/>
+            </Border>
+            <FontIcon 
+                x:Name="fiUsername"
+                Grid.Column="3"
+                FontSize="16"
+                VerticalAlignment="Center"
+                Foreground="Red"
+                Glyph="&#xE783;" 
+                Visibility="{x:Bind _viewModel.IsUsernameOk, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Reverse}"
+                ToolTipService.Placement="Mouse">
+                <ToolTipService.ToolTip>
+                    <ToolTip
+                        Content="{x:Bind _viewModel.Account_Username_InvalidTip}"
+                        HorizontalOffset="0"
+                        FontSize="14"
+                        Foreground="Red"
+                        VerticalOffset="0"/>
+                </ToolTipService.ToolTip>
+            </FontIcon>
+        </Grid>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="16"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Text="{x:Bind _viewModel.Account_PwdTextWithColon}" VerticalAlignment="Center"/>
+            <Border Grid.Column="1" Padding="0" Height="40">
+                <PasswordBox 
+                    Grid.Column="1"
+                    x:Name="pwbPassword" 
+                    Password="{x:Bind _viewModel.Pwd, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    PlaceholderText="{x:Bind _viewModel.Account_PwdText}"
+                    VerticalAlignment="Center"
+                    FontSize="14"/>
+            </Border>
+            <FontIcon 
+                x:Name="fiPwd"
+                Grid.Column="3"
+                FontSize="16"
+                VerticalAlignment="Center"
+                Foreground="Red"
+                Glyph="&#xE783;" 
+                Visibility="{x:Bind _viewModel.IsPwdOk, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Reverse}"
+                ToolTipService.Placement="Mouse">
+                <ToolTipService.ToolTip>
+                    <ToolTip
+                        Content="{x:Bind _viewModel.Account_Pwd_InvalidTip}"
+                        HorizontalOffset="0"
+                        FontSize="14"
+                        Foreground="Red"
+                        VerticalOffset="0"/>
+                </ToolTipService.ToolTip>
+            </FontIcon>
+        </Grid>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="16"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Text="{x:Bind _viewModel.Account_ConfirmPwdTextWithColon}" VerticalAlignment="Center"/>
+            <Border Grid.Column="1" Padding="0" Height="40">
+                <PasswordBox 
+                    Grid.Column="1"
+                    x:Name="pwbConfirmPassword" 
+                    Password="{x:Bind _viewModel.ConfirmPwd, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    PlaceholderText="{x:Bind _viewModel.Account_ConfirmPwdText}"
+                    VerticalAlignment="Center"
+                    FontSize="14"/>
+            </Border>
+            <FontIcon 
+                x:Name="fiConfirmPwd"
+                Grid.Column="3"
+                FontSize="16"
+                VerticalAlignment="Center"
+                Foreground="Red"
+                Glyph="&#xE783;" 
+                Visibility="{x:Bind _viewModel.IsConfirmPwdOk, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Reverse}"
+                ToolTipService.Placement="Mouse">
+                <ToolTipService.ToolTip>
+                    <ToolTip
+                        Content="{x:Bind _viewModel.Account_ConfirmPwd_InvalidTip}"
+                        HorizontalOffset="0"
+                        FontSize="14"
+                        Foreground="Red"
+                        VerticalOffset="0"/>
+                </ToolTipService.ToolTip>
+            </FontIcon>
+        </Grid>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="26"/>
+            </Grid.ColumnDefinitions>
+
+            <Button
+                HorizontalAlignment="Stretch"        
+                Content="{x:Bind _viewModel.Account_RegisterText}" 
+                Background="{ThemeResource AccentAcrylicBackgroundFillColorBaseBrush}" 
+                IsEnabled="{x:Bind _viewModel.IsOk, Mode=OneWay}"
+                Click="Register_Clicked"/>
+            <HyperlinkButton
+                Grid.Column="2"
+                HorizontalAlignment="Stretch"
+                Content="{x:Bind _viewModel.Account_BackText}" 
+                Click="BtnBack_Clicked"/>
+        </Grid>
+    </StackPanel>
+</Page>

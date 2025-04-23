@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Cores;
@@ -97,7 +98,7 @@ namespace VirtualPaper.UIComponent.ViewModels {
         }
 
         public DetailsViewModel(string wpBasicDataFilePath) : this() {
-            _wpBasicData = JsonSaver.Load<WpBasicData>(wpBasicDataFilePath, WpBasicDataContext.Default);
+            _wpBasicDataFilePath = wpBasicDataFilePath;
             InitData();
         }
 
@@ -114,7 +115,8 @@ namespace VirtualPaper.UIComponent.ViewModels {
             Details_TextVersionInfo = LanguageUtil.GetI18n(Constants.I18n.Text_VersionInfo);
         }
 
-        private void InitData() {
+        private async void InitData() {
+            _wpBasicData ??= await JsonSaver.LoadAsync<WpBasicData>(_wpBasicDataFilePath, WpBasicDataContext.Default);
             Title = _wpBasicData.Title;
             Desc = _wpBasicData.Desc;
             Authors = _wpBasicData.Authors;
@@ -128,6 +130,7 @@ namespace VirtualPaper.UIComponent.ViewModels {
             VersionInfo = $"{_wpBasicData.AppInfo.AppVersion}_{_wpBasicData.AppInfo.FileVersion}";
         }
 
-        private readonly IWpBasicData _wpBasicData;
+        private IWpBasicData _wpBasicData;
+        private readonly string _wpBasicDataFilePath;
     }
 }

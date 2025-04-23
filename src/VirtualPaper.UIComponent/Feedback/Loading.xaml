@@ -10,6 +10,10 @@
     x:Name="self"
     mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
+
     <StackPanel
         Orientation="Vertical"
         VerticalAlignment="Center"
@@ -45,7 +49,7 @@
 
         <Grid
             Margin="20"
-            HorizontalAlignment="Center"
+            HorizontalAlignment="Center"            
             Visibility="{Binding ProgressbarEnable, Converter={StaticResource BooleanToVisibilityConverter}, ElementName=self}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>

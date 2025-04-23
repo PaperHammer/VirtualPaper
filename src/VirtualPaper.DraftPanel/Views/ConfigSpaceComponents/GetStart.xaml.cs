@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.Model.NavParam;
@@ -29,7 +30,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            this._configSpace ??= e.Parameter as IConfigSpace;
+            this._configSpace ??= e.Parameter as ConfigSpace;
             _viewModel = ObjectProvider.GetRequiredService<GetStartViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
 
@@ -112,7 +113,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         }
 
         private GetStartViewModel _viewModel;
-        private IConfigSpace _configSpace;
+        private ConfigSpace _configSpace;
         private readonly IStrategy[] _strategies = [
             new OpenVpd(),
             new OpenFile(),

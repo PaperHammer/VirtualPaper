@@ -2,13 +2,10 @@
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.Shell;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Services;
-using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Cores.Players.Web {
     internal partial class PlayerWeb : IWpPlayer {
@@ -52,6 +49,9 @@ namespace VirtualPaper.Cores.Players.Web {
             cmdArgs.Append($" --effect-file-path-temporary {data.WpEffectFilePathTemporary}");
             cmdArgs.Append($" --effect-file-path-template {data.WpEffectFilePathTemplate}");
             cmdArgs.Append($" -r {data.RType.ToString()}");
+            cmdArgs.Append($" --system-backdrop {App.UserSettings.Settings.SystemBackdrop}");
+            cmdArgs.Append($" -t {App.UserSettings.Settings.ApplicationTheme}");
+            cmdArgs.Append($" -l {App.UserSettings.Settings.Language}");
 
             ProcessStartInfo start = new() {
                 FileName = Path.Combine(

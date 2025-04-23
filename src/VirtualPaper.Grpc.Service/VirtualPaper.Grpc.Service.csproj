@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Protobuf Include="Protos\account.proto" />
     <Protobuf Include="Protos\monitorManager.proto" />
     <Protobuf Include="Protos\userSettings.proto" />
     <Protobuf Include="Protos\wallpaperControl.proto" />

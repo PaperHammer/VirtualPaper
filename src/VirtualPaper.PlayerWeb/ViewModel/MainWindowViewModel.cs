@@ -63,26 +63,6 @@ namespace VirtualPaper.PlayerWeb.ViewModel {
         }
         #endregion
 
-        #region infobar
-        private bool _infoBarIsOpen = false;
-        public bool InfoBarIsOpen {
-            get => _infoBarIsOpen;
-            set { _infoBarIsOpen = value; OnPropertyChanged(); }
-        }
-
-        private string _infobarMsg;
-        public string InfobarMsg {
-            get { return _infobarMsg; }
-            set { _infobarMsg = value; OnPropertyChanged(); }
-        }
-
-        private InfoBarSeverity _infoBarSeverity;
-        public InfoBarSeverity InfoBarSeverity {
-            get { return _infoBarSeverity; }
-            set { _infoBarSeverity = value; OnPropertyChanged(); }
-        }
-        #endregion
-
         public MainWindowViewModel() {
             _localizer = LanguageUtil.LocalizerInstacne;
             
@@ -129,17 +109,6 @@ namespace VirtualPaper.PlayerWeb.ViewModel {
         internal void UpdateProgressbarValue(int curValue, int toltalValue) {
             TotalValue = toltalValue;
             CurValue = curValue;
-        }
-        #endregion
-
-        #region infobar_logic
-        internal void ShowMessge(
-            bool isNeedLocallizer,
-            string msg,
-            InfoBarSeverity infoBarSeverity) {
-            InfoBarSeverity = infoBarSeverity;
-            InfobarMsg = isNeedLocallizer ? _localizer.GetLocalizedString(msg) : msg;
-            InfoBarIsOpen = true;
         }
         #endregion
 

@@ -9,7 +9,7 @@
         Height="450"
         mc:Ignorable="d"
         WindowStyle="None"
-        ResizeMode="NoResize"        
+        ResizeMode="NoResize"
         ShowInTaskbar="False"
         Topmost="True"
         WindowState="Maximized"

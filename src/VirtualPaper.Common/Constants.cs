@@ -59,6 +59,7 @@ namespace VirtualPaper.Common {
         public static class WorkingDir {
             public static string ML { get; } = Path.Combine("Plugins", "ML", "Models");
             public static string PlayerWeb { get; } = Path.Combine("Plugins", "PlayerWeb", "win-x64");
+            public static string WebPlayer { get; } = Path.Combine("Plugins", "WebPlayer");
             public static string ScrSaver { get; } = Path.Combine("Plugins", "ScrSaver");
             public static string UI { get; } = Path.Combine("Plugins", "UI", "win-x64");
         }
@@ -68,6 +69,7 @@ namespace VirtualPaper.Common {
             public static string UI { get; } = "VirtualPaper.UI.exe";
             public static string ScrSaver { get; } = "VirtualPaper.ScreenSaver.exe";
             public static string PlayerWeb { get; } = "VirtualPaper.PlayerWeb.exe";
+            public static string WebPlayer { get; } = "VirtualPaper.WebPlayer.exe";
         }
 
         public static class PlayingFile {

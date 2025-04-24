@@ -1,10 +1,12 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Text.Json;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
+using OpenCvSharp.Internal;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.IPC;
@@ -53,7 +55,7 @@ namespace VirtualPaper.Cores.WpControl {
                 if (e.Reason == SessionSwitchReason.SessionUnlock) {
 
                     if (!(DesktopWorkerW == IntPtr.Zero || Native.IsWindow(DesktopWorkerW))) {
-                        App.Log.Info("WorkerW Invalid after unlock, resetting..");
+                        App.Log.Info("WorkerW invalid after unlock, resetting..");
                         ResetWallpaperAsync();
                     }
                     else {
@@ -181,7 +183,7 @@ namespace VirtualPaper.Cores.WpControl {
                 throw;
             }
             catch (Exception ex) {
-                App.Log.Error($"An Error occurred while preview wallpaper: {ex.Message}");
+                App.Log.Error($"An error occurred while preview wallpaper: {ex.Message}");
                 _previews.Remove((data.WallpaperUid, data.RType));
 
                 throw;
@@ -271,7 +273,7 @@ namespace VirtualPaper.Cores.WpControl {
                 App.Log.Info($"Setting wallpaper: {data.FilePath}");
 
                 if (data.RType == RuntimeType.RUnknown) {
-                    throw new Exception("rtype Error");
+                    throw new Exception("rtype error");
                 }
 
                 #region init
@@ -390,7 +392,7 @@ namespace VirtualPaper.Cores.WpControl {
                             CloseWallpaper(instance.Monitor);
                             isStarted = await instance.ShowAsync(token) && !instance.Proc.HasExited;
 
-                            if (isStarted && !TrySetWallpaperPerMonitor(instance, instance.Monitor)) {
+                            if (isStarted && !TrySetWallpaperPerMonitor(instance.Handle, instance.Monitor)) {
                                 isStarted = false;
                                 App.Log.Error("Failed to set wallpaper as child of WorkerW");
 
@@ -410,7 +412,7 @@ namespace VirtualPaper.Cores.WpControl {
                             CloseAllWallpapers();
                             isStarted = await instance.ShowAsync(token) && !instance.Proc.HasExited;
 
-                            if (isStarted && !TrySetWallpaperSpanMonitor(instance)) {
+                            if (isStarted && !TrySetWallpaperSpanMonitor(instance.Handle)) {
                                 isStarted = false;
                                 App.Log.Error("Failed to set wallpaper as child of WorkerW");
 
@@ -431,7 +433,7 @@ namespace VirtualPaper.Cores.WpControl {
                                 IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, item);
                                 isStarted = await instance.ShowAsync(token) && !instance.Proc.HasExited;
 
-                                if (isStarted && !TrySetWallpaperPerMonitor(instance, instance.Monitor)) {
+                                if (isStarted && !TrySetWallpaperPerMonitor(instance.Handle, instance.Monitor)) {
                                     isStarted = false;
                                     App.Log.Error("Failed to set wallpaper as child of WorkerW");
 
@@ -712,7 +714,7 @@ namespace VirtualPaper.Cores.WpControl {
             string filePath,
             FileType ftype) {
             IWpBasicData newData = CreateBasicData(filePath, ftype, folderName: folderName, isAutoSave: false)
-                ?? throw new Exception("Create basic-data Error");
+                ?? throw new Exception("Create basic-data error");
 
             try {
                 IWpBasicData oldData = await JsonSaver.LoadAsync<WpBasicData>(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName), WpBasicDataContext.Default);
@@ -871,7 +873,7 @@ namespace VirtualPaper.Cores.WpControl {
                     }
                 }
                 catch (Exception e) {
-                    App.Log.Error($"An Error occurred on restoration of {layout.FolderPath} | {e.Message}");
+                    App.Log.Error($"An error occurred on restoration of {layout.FolderPath} | {e.Message}");
                 }
             }
         }
@@ -945,29 +947,20 @@ namespace VirtualPaper.Cores.WpControl {
         /// </summary>
         /// <param name="handle">window handle of process to add as wallpaper</param>
         /// <param name="targetMonitor">monitorstring of monitor to sent wp to.</param>
-        private static bool TrySetWallpaperPerMonitor(IWpPlayer wallpaper, IMonitor targetMonitor) {
-            IntPtr handle = wallpaper.Proc.MainWindowHandle;
-            RemoveTitleBarAndBorder(handle);
-
+        private static bool TrySetWallpaperPerMonitor(nint handle, IMonitor targetMonitor) {
             _ = Native.GetWindowRect(_workerW, out Native.RECT rect);
-            App.Log.Info($"Sending wallpaper(Monitor): {targetMonitor.DeviceId} | {targetMonitor.Bounds}");
-            //Position the wp fullscreen to corresponding monitor.
-            if (!Native.SetWindowPos(handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, (int)Native.SWP_NOACTIVATE)) {
-                App.Log.Error("Failed to set perscreen wallpaper(1)");
-            }
-
             _ = Native.MapWindowPoints(handle, _workerW, ref rect, 2);
-            ConvertPopupToChildWindow(wallpaper.Handle);
-            var success = TrySetParentProgman(handle) && TrySetParentWorkerW(wallpaper.Handle); // todo：存在失败的可能
-            if (!Native.SetWindowPos(wallpaper.Handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, (int)Native.SWP_NOACTIVATE)) {
-                App.Log.Error("Failed to set perscreen wallpaper(2)}");
+            ConvertPopupToChildWindow(handle);
+            var success = TrySetParentWorkerW(handle);
+            if (!Native.SetWindowPos(handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, (int)Native.SWP_NOACTIVATE)) {
+                App.Log.Error("Failed to set perscreen wallpaper(1)}");
             }
 
-            bool isPositionCorrect = IsWindowPositionCorrect(wallpaper.Handle, targetMonitor.Bounds);
+            bool isPositionCorrect = IsWindowPositionCorrect(handle, targetMonitor.Bounds);
             if (!isPositionCorrect) {
                 App.Log.Warn("Set perscreen not correct");
-                if (!Native.SetWindowPos(wallpaper.Handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, (int)Native.SWP_NOACTIVATE)) {
-                    App.Log.Error("Failed to set perscreen wallpaper(3)");
+                if (!Native.SetWindowPos(handle, 1, targetMonitor.Bounds.X, targetMonitor.Bounds.Y, targetMonitor.Bounds.Width, targetMonitor.Bounds.Height, (int)Native.SWP_NOACTIVATE)) {
+                    App.Log.Error("Failed to set perscreen wallpaper(2)");
                 }
             }
             DesktopUtil.RefreshDesktop();
@@ -978,25 +971,16 @@ namespace VirtualPaper.Cores.WpControl {
         /// <summary>
         /// Spans wp across All screens.
         /// </summary>
-        private static bool TrySetWallpaperSpanMonitor(IWpPlayer wallpaper) {
-            IntPtr handle = wallpaper.Proc.MainWindowHandle;
-            RemoveTitleBarAndBorder(handle);
-
+        private static bool TrySetWallpaperSpanMonitor(nint handle) {
             _ = Native.GetWindowRect(_workerW, out Native.RECT rect);
-            App.Log.Info($"Sending wallpaper(Expand): ({rect.Left}, {rect.Top}, {rect.Right - rect.Left}, {rect.Bottom - rect.Top}).");
-            //Position the wp fullscreen to corresponding monitor.
-            if (!Native.SetWindowPos(handle, 1, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top, (int)Native.SWP_NOACTIVATE)) {
-                App.Log.Error("Failed to set multiscreen wallpaper");
-            }
-
             _ = Native.MapWindowPoints(handle, _workerW, ref rect, 2);
-            ConvertPopupToChildWindow(wallpaper.Handle);
-            var success = TrySetParentProgman(handle) && TrySetParentWorkerW(wallpaper.Handle);
-            if (!Native.SetWindowPos(wallpaper.Handle, 1, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top, (int)Native.SWP_NOACTIVATE)) {
-                App.Log.Error("Failed to set multiscreen wallpaper(2)");
+            ConvertPopupToChildWindow(handle);
+            var success = TrySetParentWorkerW(handle);
+            if (!Native.SetWindowPos(handle, 1, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top, (int)Native.SWP_NOACTIVATE)) {
+                App.Log.Error("Failed to set multiscreen wallpaper(1)");
             }
 
-            bool isPositionCorrect = IsWindowPositionCorrect(wallpaper.Handle, new Rectangle() {
+            bool isPositionCorrect = IsWindowPositionCorrect(handle, new Rectangle() {
                 X = 0,
                 Y = 0,
                 Width = rect.Right - rect.Left,
@@ -1004,8 +988,8 @@ namespace VirtualPaper.Cores.WpControl {
             });
             if (!isPositionCorrect) {
                 App.Log.Warn("Set perscreen not correct");
-                if (!Native.SetWindowPos(wallpaper.Handle, 1, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top, (int)Native.SWP_NOACTIVATE)) {
-                    App.Log.Error("Failed to set multiscreen wallpaper(3)");
+                if (!Native.SetWindowPos(handle, 1, 0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top, (int)Native.SWP_NOACTIVATE)) {
+                    App.Log.Error("Failed to set multiscreen wallpaper(2)");
                 }
             }
             DesktopUtil.RefreshDesktop();

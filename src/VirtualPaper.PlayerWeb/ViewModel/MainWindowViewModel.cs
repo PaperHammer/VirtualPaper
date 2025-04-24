@@ -1,9 +1,7 @@
 ﻿using System.Threading;
-using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
-using WinUI3Localizer;
 
 namespace VirtualPaper.PlayerWeb.ViewModel {
     internal partial class MainWindowViewModel : ObservableObject {
@@ -64,14 +62,12 @@ namespace VirtualPaper.PlayerWeb.ViewModel {
         #endregion
 
         public MainWindowViewModel() {
-            _localizer = LanguageUtil.LocalizerInstacne;
-            
             InitText();
         }
 
         private void InitText() {           
-            TextLoading = _localizer.GetLocalizedString(Constants.I18n.Text_Loading);
-            TextCancel = _localizer.GetLocalizedString(Constants.I18n.Text_Cancel);
+            TextLoading = LanguageUtil.GetI18n(Constants.I18n.Text_Loading);
+            TextCancel = LanguageUtil.GetI18n(Constants.I18n.Text_Cancel);
         }
 
         #region loading_ui_logic
@@ -112,7 +108,6 @@ namespace VirtualPaper.PlayerWeb.ViewModel {
         }
         #endregion
 
-        private readonly ILocalizer _localizer;
         private readonly SemaphoreSlim _loadingSemaphoreSlim = new(1, 1);
     }
 }

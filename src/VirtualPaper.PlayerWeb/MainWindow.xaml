@@ -68,7 +68,6 @@
                     PointerPressed="Webview2_PointerPressed"/>
             </Frame>
 
-            <!--加载界面-->
             <loading:Loading
                 CancelEnable="{x:Bind _viewModel.CancelEnable, Mode=OneWay}"
                 ProgressbarEnable="{x:Bind _viewModel.ProgressbarEnable, Mode=OneWay}"

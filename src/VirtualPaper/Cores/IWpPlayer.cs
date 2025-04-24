@@ -2,13 +2,11 @@
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Models.Cores.Interfaces;
 
-namespace VirtualPaper.Cores
-{
+namespace VirtualPaper.Cores {
     /// <summary>
     /// 播放时的壁纸对象
     /// </summary>
-    public interface IWpPlayer : IDisposable, IEquatable<IWpPlayer>
-    {
+    public interface IWpPlayer : IDisposable, IEquatable<IWpPlayer> {
         /// <summary>
         /// Get process information.
         /// </summary>
@@ -18,7 +16,6 @@ namespace VirtualPaper.Cores
         /// <summary>
         /// Get web-window handle.
         /// </summary>
-        /// <returns></returns>
         nint Handle { get; }
 
         /// <summary>
@@ -43,9 +40,9 @@ namespace VirtualPaper.Cores
         /// </summary>
         /// <returns></returns>
         bool IsLoaded { get; }
-        
+
         bool IsPreview { get; }
-        EventHandler? Closing { get; set; }        
+        EventHandler? Closing { get; set; }
         EventHandler? Apply { get; set; }
 
         Task<bool> ShowAsync(CancellationToken cancellationToken = default);
@@ -82,11 +79,10 @@ namespace VirtualPaper.Cores
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
-        Task ScreenCapture(string filePath);        
+        Task ScreenCapture(string filePath);
     }
 
-    public enum PlaybackPosType
-    {
+    public enum PlaybackPosType {
         absolutePercent,
         relativePercent
     }

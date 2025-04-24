@@ -13,56 +13,56 @@ namespace VirtualPaper.UIComponent.Feedback {
             set { SetValue(CancelEnableProperty, value); }
         }
         public static readonly DependencyProperty CancelEnableProperty =
-            DependencyProperty.Register("CancelSelectionEnable", typeof(bool), typeof(Loading), new PropertyMetadata(false));
+            DependencyProperty.Register(nameof(CancelEnable), typeof(bool), typeof(Loading), new PropertyMetadata(false));
 
         public bool ProgressbarEnable {
             get { return (bool)GetValue(ProgressbarEnableProperty); }
             set { SetValue(ProgressbarEnableProperty, value); }
         }
         public static readonly DependencyProperty ProgressbarEnableProperty =
-            DependencyProperty.Register("ProgressbarEnable", typeof(bool), typeof(Loading), new PropertyMetadata(false));
+            DependencyProperty.Register(nameof(ProgressbarEnable), typeof(bool), typeof(Loading), new PropertyMetadata(false));
 
         public CancellationTokenSource[] CtsTokens {
             get { return (CancellationTokenSource[])GetValue(CtsTokensProperty); }
             set { SetValue(CtsTokensProperty, value); }
         }
         public static readonly DependencyProperty CtsTokensProperty =
-            DependencyProperty.Register("CtsTokens", typeof(CancellationTokenSource[]), typeof(Loading), new PropertyMetadata(Array.Empty<CancellationTokenSource>()));
+            DependencyProperty.Register(nameof(CtsTokens), typeof(CancellationTokenSource[]), typeof(Loading), new PropertyMetadata(Array.Empty<CancellationTokenSource>()));
 
         public int TotalValue {
             get { return (int)GetValue(ImportTotalCntProperty); }
             set { SetValue(ImportTotalCntProperty, value); }
         }
         public static readonly DependencyProperty ImportTotalCntProperty =
-            DependencyProperty.Register("TotalValue", typeof(int), typeof(Loading), new PropertyMetadata(0, InitValue));
+            DependencyProperty.Register(nameof(TotalValue), typeof(int), typeof(Loading), new PropertyMetadata(0, InitValue));
 
         public int CurValue {
             get { return (int)GetValue(ImportValueProperty); }
             set { SetValue(ImportValueProperty, value); }
         }
         public static readonly DependencyProperty ImportValueProperty =
-            DependencyProperty.Register("CurValue", typeof(int), typeof(Loading), new PropertyMetadata(0, UpdateValue));
+            DependencyProperty.Register(nameof(CurValue), typeof(int), typeof(Loading), new PropertyMetadata(0, UpdateValue));
 
         public string TextLoading {
             get { return (string)GetValue(TextLoadingProperty); }
             set { SetValue(TextLoadingProperty, value); }
         }
         public static readonly DependencyProperty TextLoadingProperty =
-            DependencyProperty.Register("TextLoading", typeof(string), typeof(Loading), new PropertyMetadata("Loading..."));
+            DependencyProperty.Register(nameof(TextLoading), typeof(string), typeof(Loading), new PropertyMetadata("Loading..."));
 
         public string TextCancel {
             get { return (string)GetValue(TextCancelProperty); }
             set { SetValue(TextCancelProperty, value); }
         }
         public static readonly DependencyProperty TextCancelProperty =
-            DependencyProperty.Register("TextCancel", typeof(string), typeof(Loading), new PropertyMetadata("Cancel"));
+            DependencyProperty.Register(nameof(TextCancel), typeof(string), typeof(Loading), new PropertyMetadata("Cancel"));
 
         private string ValueString {
             get { return (string)GetValue(ValueStringProperty); }
             set { SetValue(ValueStringProperty, value); }
         }
         private static readonly DependencyProperty ValueStringProperty =
-            DependencyProperty.Register("ValueString", typeof(string), typeof(Loading), new PropertyMetadata(string.Empty));
+            DependencyProperty.Register(nameof(ValueString), typeof(string), typeof(Loading), new PropertyMetadata(string.Empty));
 
         public Loading() {
             this.InitializeComponent();

@@ -39,7 +39,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 cmdArgs.Append($" --right {monitor.WorkingArea.Right}");
                 cmdArgs.Append($" --bottom {monitor.WorkingArea.Bottom}");
             }
-            
+
             cmdArgs.Append($" -f {data.FilePath}");
             cmdArgs.Append($" -b {Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName)}");
             if (data.RType == RuntimeType.RImage3D) {
@@ -184,7 +184,7 @@ namespace VirtualPaper.Cores.Players.Web {
 
         private void SendMessage(string msg) {
             try {
-                Debug.WriteLine(msg);
+                //Debug.WriteLine(msg);
                 Proc?.StandardInput.WriteLine(msg);
             }
             catch (Exception e) {
@@ -215,14 +215,10 @@ namespace VirtualPaper.Cores.Players.Web {
                     if (obj.Type == MessageType.msg_procid) {
                         Exception? error = null;
                         try {
-                            nint procid = new(((VirtualPaperMessageProcId)obj).ProcId);
-                            Process process = Process.GetProcessById((int)procid);
+                            nint procId = new(((VirtualPaperMessageProcId)obj).ProcId);
+                            Process process = Process.GetProcessById((int)procId);
                             Handle = process.MainWindowHandle; // chrome_widgetwin_1
-                            App.Log.Info($"PlayerWeb-{_uniqueId}: ProcId: {procid} - WindowHwnd: {Handle}");
-
-                            if (Equals(Handle, IntPtr.Zero)) {
-                                throw new Exception("Browser input/window handle NULL.");
-                            }
+                            App.Log.Info($"PlayerWeb-{_uniqueId}: ProcId: {procId} - WindowHwnd: {Handle}");
                             IsLoaded = true;
                         }
                         catch (Exception ie) {
@@ -240,129 +236,12 @@ namespace VirtualPaper.Cores.Players.Web {
             }
         }
 
-        ///// <summary>
-        ///// 查找指定父窗口下的最后一个类名为 targetClassName 的子窗口。
-        ///// </summary>
-        ///// <param name="parentHandle">父窗口的句柄。</param>
-        ///// <param name="targetClassName">目标子窗口的类名。</param>
-        ///// <returns>符合条件的最后一个窗口句柄，如果没有找到则为 nint.Zero。</returns>
-        //public static nint FindLastChildWindow(nint parentHandle, string targetClassName) {
-        //    nint lastMatchingHandle = nint.Zero;
-
-        //    Native.EnumChildWindows(parentHandle, (hWnd, param) => {
-        //        StringBuilder className = new(Native.MAX_CLASS_NAME_LENGTH);
-        //        _ = Native.GetClassName(hWnd, className, className.Capacity);
-
-        //        if (className.ToString() == targetClassName) {
-        //            lastMatchingHandle = hWnd;
-        //        }
-
-        //        // Recursively check child windows of the current window
-        //        FindLastChildWindow(hWnd, targetClassName);
-
-        //        return true; // Continue enumeration
-        //    }, IntPtr.Zero);
-
-        //    return lastMatchingHandle;
-        //}
-
-        ///// <summary>
-        ///// 查找指定父窗口下的所有名为 targetWindowTitleOrClass 的子窗口，并重新设置它们的父窗口。
-        ///// </summary>
-        ///// <param name="parentHandle">父窗口的句柄。</param>
-        ///// <param name="targetWindowTitleOrClass">目标子窗口的标题或类名。</param>
-        ///// <param name="newParentHandle">新的父窗口的句柄。</param>
-        //public static void ReparentAllWindowsNamed(nint parentHandle, string targetWindowTitleOrClass, nint newParentHandle) {
-        //    // Enumerate all child windows of the given parent handle and re-parent matching windows
-        //    Native.EnumChildWindows(parentHandle, (hWnd, param) =>
-        //    {
-        //        StringBuilder className = new(Native.MAX_CLASS_NAME_LENGTH);
-        //        _ = Native.GetClassName(hWnd, className, Native.MAX_CLASS_NAME_LENGTH);
-
-        //        // Check if the window's class name or title matches the target
-        //        if (className.ToString() == targetWindowTitleOrClass) {
-        //            // Change the parent of the found window
-        //            Native.SetParent(hWnd, newParentHandle);
-        //            Console.WriteLine($"Reparented 'Intermediate D3D Window' with handle: {hWnd}");
-        //        }
-
-        //        // Continue enumeration
-        //        return true;
-        //    }, nint.Zero);
-        //}
-
-        //private static IntPtr EnumerateChildWindows(IntPtr parentHandle, string targetClassName) {
-        //    IntPtr childHandle = Native.FindWindowEx(parentHandle, IntPtr.Zero, null, null); // 开始枚举第一个子窗口
-
-        //    while (childHandle != IntPtr.Zero) {
-        //        // 如果找到了目标窗口，返回其句柄
-        //        var targetHandel = Native.FindWindowEx(childHandle, IntPtr.Zero, targetClassName, null);
-        //        if (targetHandel != IntPtr.Zero)
-        //            return targetHandel;
-
-        //        // 否则，递归检查此子窗口的子窗口
-        //        IntPtr resultFromChild = EnumerateChildWindows(childHandle, targetClassName);
-        //        if (resultFromChild != IntPtr.Zero)
-        //            return resultFromChild;
-
-        //        // 移动到下一个兄弟窗口
-        //        childHandle = Native.FindWindowEx(parentHandle, childHandle, null, null);
-        //    }
-
-        //    // 如果没有找到，返回IntPtr.Zero
-        //    return IntPtr.Zero;
-        //}
-
         private void Proc_Exited(object? sender, EventArgs e) {
             _tcsProcessWait.TrySetResult(null);
             Proc.OutputDataReceived -= Proc_OutputDataReceived;
             Terminate();
             IsExited = true;
         }
-
-        //private async Task<Exception?> WaitForProcessWithTimeoutAsync()
-        //{
-        //    var cancellationTokenSource = new CancellationTokenSource(_timeout);
-
-        //    try
-        //    {
-        //        // 创建一个任务用于等待进程退出
-        //        var processWaitTask = Task.Run(() => Proc?.WaitForExitAsync(cancellationTokenSource.Token), cancellationTokenSource.Token);
-
-        //        // 使用 WhenAny 等待进程结束或超时
-        //        var completedTask = await Task.WhenAny(processWaitTask, Task.Delay(_timeout));
-
-        //        // 如果是进程结束的任务先完成
-        //        if (completedTask == processWaitTask)
-        //        {
-        //            // 获取进程退出代码并决定是否抛出异常
-        //            int exitCode = Proc.ExitCode;
-        //            if (exitCode != 0)
-        //            {
-        //                return new Exception($"The process ends with a non-zero exit code {exitCode}");
-        //            }
-        //            return null;
-        //        }
-        //        else
-        //        {
-        //            // 超时则取消进程并抛出异常
-        //            cancellationTokenSource.Cancel();
-        //            Proc?.Kill();
-        //            return new TimeoutException("Process start timeout");
-        //        }
-        //    }
-        //    catch (OperationCanceledException)
-        //    {
-        //        // 当取消令牌被触发时（即超时）
-        //        Proc?.Kill();
-        //        return new TimeoutException("Process start timeout");
-        //    }
-        //    catch (Exception)
-        //    {
-        //        Proc?.Kill();
-        //        return new TimeoutException("An Error occurred");
-        //    }
-        //}
 
         public bool Equals(IWpPlayer? other) {
             return this.Data.WallpaperUid == other?.Data.WallpaperUid && this.Data.RType == other?.Data.RType;

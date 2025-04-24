@@ -78,8 +78,8 @@ namespace VirtualPaper.PlayerWeb.Utils {
             if (_toolContainer == null) {
                 _startArgs = startArgs;
                 _toolContainer = new(new AppConfigOptions(
-                    _startArgs.SystemBackdrop, 
-                    _startArgs.ApplicationTheme, 
+                    _startArgs.SystemBackdrop,
+                    _startArgs.ApplicationTheme,
                     _startArgs.Language));
                 _toolContainer.Closed += ToolContainer_Closed;
                 static void ToolContainer_Closed(object _, WindowEventArgs __) {
@@ -114,12 +114,12 @@ namespace VirtualPaper.PlayerWeb.Utils {
             return _effectConfig == null || _details == null;
         }
 
+        private static StartArgs _startArgs;
         private static EffectConfig _effectConfig;
         private static Details _details;
         private static ToolWindow _toolContainer;
         private static EventHandler _toolContainerClose;
         private readonly static AppWindow _appWindow;
         private readonly static MainWindow _mainWindow;
-        private static StartArgs _startArgs;
     }
 }

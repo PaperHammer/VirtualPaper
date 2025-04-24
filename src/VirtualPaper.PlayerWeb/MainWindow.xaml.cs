@@ -49,18 +49,18 @@ namespace VirtualPaper.PlayerWeb {
 
             _viewModel = new MainWindowViewModel();
             this.ContentGrid.DataContext = _viewModel;
-            _filePath = App.AppInstance.Args.FilePath;
+            _filePath = _startArgs.FilePath;
 
-            if (App.AppInstance.Args.IsPreview) {
+            if (_startArgs.IsPreview) {
                 SetWindowStyle();
                 SetWindowTitleBar();
             }
             else {
                 _windowRc = new() {
-                    Left = App.AppInstance.Args.Left,
-                    Top = App.AppInstance.Args.Top,
-                    Right = App.AppInstance.Args.Right,
-                    Bottom = App.AppInstance.Args.Bottom,
+                    Left = _startArgs.Left,
+                    Top = _startArgs.Top,
+                    Right = _startArgs.Right,
+                    Bottom = _startArgs.Bottom,
                 };
                 AppTitleBar.Visibility = Visibility.Collapsed;
             }
@@ -86,7 +86,7 @@ namespace VirtualPaper.PlayerWeb {
 
                 await InitializeWebViewAsync();
 
-                if (App.AppInstance.Args.IsPreview) {
+                if (_startArgs.IsPreview) {
                     WindowUtil.ActiveToolWindow(_startArgs);
                     WindowUtil.AddEffectConfigPage();
                     WindowUtil.AddDetailsPage();
@@ -258,16 +258,16 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         private async Task HandleUpdateCommandAsync(VirtualPaperUpdateCmd update) {
-            if (App.AppInstance.Args.FilePath != update.FilePath) {
-                App.AppInstance.Args.FilePath = update.FilePath;
-                App.AppInstance.Args.RuntimeType = update.RType;
-                App.AppInstance.Args.WpEffectFilePathTemplate = update.WpEffectFilePathTemplate;
-                App.AppInstance.Args.WpEffectFilePathTemporary = update.WpEffectFilePathTemporary;
-                App.AppInstance.Args.WpEffectFilePathUsing = update.WpEffectFilePathUsing;
-                await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, App.AppInstance.Args.RuntimeType, App.AppInstance.Args.FilePath);
+            if (_startArgs.FilePath != update.FilePath) {
+                _startArgs.FilePath = update.FilePath;
+                _startArgs.RuntimeType = update.RType;
+                _startArgs.WpEffectFilePathTemplate = update.WpEffectFilePathTemplate;
+                _startArgs.WpEffectFilePathTemporary = update.WpEffectFilePathTemporary;
+                _startArgs.WpEffectFilePathUsing = update.WpEffectFilePathUsing;
+                await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
             }
 
-            LoadWpEffect(App.AppInstance.Args.WpEffectFilePathUsing);
+            LoadWpEffect(_startArgs.WpEffectFilePathUsing);
         }
         #endregion
 
@@ -278,7 +278,7 @@ namespace VirtualPaper.PlayerWeb {
         private void ParallaxControl() {
             try {
                 if (_isParallaxOn &&
-                    (_isFocusOnDesk || App.AppInstance.Args.IsPreview && IsFocusOnWindow)) {
+                    (_isFocusOnDesk || _startArgs.IsPreview && IsFocusOnWindow)) {
                     if (Interlocked.CompareExchange(ref _isParallaxRunning, 1, 0) == 1) return;
 
                     App.WriteToParent(new VirtualPaperMessageConsole() {
@@ -351,20 +351,20 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         private async void Webview2_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e) {
-            switch (App.AppInstance.Args.RuntimeType) {
+            switch (_startArgs.RuntimeType) {
                 case "RImage":
                 case "RVideo":
                     UpdateRectToWebview();
-                    await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, App.AppInstance.Args.RuntimeType, App.AppInstance.Args.FilePath);
+                    await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
                     break;
                 case "RImage3D":
                     UpdateRectToWebview();
-                    await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, App.AppInstance.Args.FilePath, App.AppInstance.Args.DepthFilePath);
+                    await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
                     break;
                 default:
                     break;
             }
-            LoadWpEffect(App.AppInstance.Args.WpEffectFilePathUsing);
+            LoadWpEffect(_startArgs.WpEffectFilePathUsing);
             _ = ExecuteScriptFunctionAsync(Fileds.Play);
 
             App.WriteToParent(new VirtualPaperMessageProcId() {
@@ -449,17 +449,17 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         private string GetPlayingFile() {
-            return App.AppInstance.Args.RuntimeType switch {
+            return _startArgs.RuntimeType switch {
                 "RImage" => Constants.PlayingFile.PlayerWeb,
                 "RImage3D" => Constants.PlayingFile.PlayerWeb3D,
                 "RVideo" => Constants.PlayingFile.PlayerWeb,
-                _ => throw new ArgumentException(nameof(App.AppInstance.Args.RuntimeType)),
+                _ => throw new ArgumentException(nameof(_startArgs.RuntimeType)),
             };
         }
 
         #region window title bar
         private void SetWindowStyle() {
-            this.SystemBackdrop = App.AppInstance.Args.SystemBackdrop switch {
+            this.SystemBackdrop = _startArgs.SystemBackdrop switch {
                 AppSystemBackdrop.Mica => new MicaBackdrop(),
                 AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
                 _ => default,
@@ -480,7 +480,7 @@ namespace VirtualPaper.PlayerWeb {
             }
             else {
                 AppTitleBar.Visibility = Visibility.Collapsed;
-                this.UseImmersiveDarkModeEx(App.AppInstance.Args.ApplicationTheme == AppTheme.Dark);
+                this.UseImmersiveDarkModeEx(_startArgs.ApplicationTheme == AppTheme.Dark);
             }
         }
 

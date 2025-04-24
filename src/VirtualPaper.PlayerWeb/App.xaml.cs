@@ -22,7 +22,6 @@ namespace VirtualPaper.PlayerWeb {
     public partial class App : Application {
         public static App AppInstance { get; private set; }
         public static MainWindow MainWindowInstance { get; private set; }
-        public StartArgs Args { get => _startArgs; private set { _startArgs = value; } }
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -34,7 +33,11 @@ namespace VirtualPaper.PlayerWeb {
             SetupUnhandledExceptionLogging();
 
             //string s = "a " +
-            //    "--is-preview " +
+            //    //"--is-preview " +
+            //    "--left 0 " +
+            //    "--top 0 " +
+            //    "--right 2560 " +
+            //    "--bottom 1600 " +
             //    "-f C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\q3zqwwix.t2l.jpg " +
             //    "-b C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\wp_metadata_basic.json " +
             //    "-e C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\1\\RImage\\wpEffectFilePathUsing.json " +

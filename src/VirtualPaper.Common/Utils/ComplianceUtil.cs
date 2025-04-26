@@ -60,28 +60,27 @@ namespace VirtualPaper.Common.Utils {
             if (string.IsNullOrWhiteSpace(value)) {
                 return false;
             }
-            return Regex.IsMatch(value, _emailPattern);
+            return EmailRegex().IsMatch(value);
         }
 
         public static bool IsValidPwd(string value) {
             if (string.IsNullOrWhiteSpace(value)) {
                 return false;
             }
-            return Regex.IsMatch(value, _passwordPattern);
+            return PwdRegex().IsMatch(value);
         }
 
         public static bool IsValidUserName(string value) {
             if (string.IsNullOrWhiteSpace(value)) {
-                return false; // 空值或仅包含空白字符无效
+                return false;
             }
 
-            // 检查长度
             if (value.Length < UserNameMinLength || value.Length > UserNameMaxLength) {
                 return false;
             }
 
             // 检查字符集（允许字母、数字、下划线、点、连字符）
-            if (Regex.IsMatch(value, _usernamePattern)) {
+            if (!UsernameRegex().IsMatch(value)) {
                 return false;
             }
 
@@ -96,7 +95,6 @@ namespace VirtualPaper.Common.Utils {
                 return false;
             }
 
-            // 黑名单检查
             if (IsBlacklisted(value)) {
                 return false;
             }
@@ -105,15 +103,30 @@ namespace VirtualPaper.Common.Utils {
         }
 
         private static bool IsBlacklisted(string value) {
-            string[] blacklistedNames = { "admin", "root", "test", "guest", "user", "system" };
-            return blacklistedNames.Contains(value.ToLower());
+            return _blacklistedNames.Contains(value.ToLower());
         }
 
+        public static bool IsValidSign(string sign) {
+            if (sign.Length > 100) {
+                return false;
+            }
+
+            return SignRegex().IsMatch(sign);
+        }
+
+        private static readonly HashSet<string> _blacklistedNames = ["admin", "root", "test", "guest", "user", "system"];
+
         // 不允许空格字符
-        private static readonly char[] ValidChars =
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.!@#$%^&()[]{}+=-_\\/:"
-                .Concat(Enumerable.Range(0x4e00, 0x9fa5 - 0x4e00 + 1).Select(c => (char)c)) // 中文
-                .ToArray();
+        private static readonly HashSet<char> ValidChars =
+            [.. "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.!@#$%^&()[]{}+=-_\\/:"
+                .Concat(Enumerable.Range(0x4e00, 0x9fa5 - 0x4e00 + 1).Select(c => (char)c))]; // 中文
+                
+        private const int UserNameMinLength = 3;
+        private const int UserNameMaxLength = 20;
+
+        [GeneratedRegex(@"^[\p{L}0-9_\.-]+$", RegexOptions.Compiled)]
+        private static partial Regex UsernameRegex();
+
         /*
             必须包含一个 @ 符号
             @ 符号前后必须有内容
@@ -126,7 +139,8 @@ namespace VirtualPaper.Common.Utils {
             \.：匹配一个点号 .。
             [^@\s]+$：表示 . 后的部分，不能包含空格或 @，且至少有一个字符。
          */
-        private static readonly string _emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+        [GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled)]
+        private static partial Regex EmailRegex();
 
         /*
             长度在 8 到 32 个字符之间。
@@ -135,17 +149,24 @@ namespace VirtualPaper.Common.Utils {
             至少包含一个数字。
             至少包含一个特殊字符（如 !@#$%^&*() 等）
 
-            ^ 和 $：分别表示字符串的开头和结尾，确保整个字符串都符合规则。
             (?=.*[A-Z])：断言字符串中至少包含一个大写字母。
             (?=.*[a-z])：断言字符串中至少包含一个小写字母。
             (?=.*\d)：断言字符串中至少包含一个数字。
             (?=.*[\W_])：断言字符串中至少包含一个特殊字符（\W 匹配非字母数字字符，_ 单独列出以确保包含下划线）。
             .{8,32}：匹配长度在 8 到 32 个字符之间的字符串。
          */
-        private static readonly string _passwordPattern = @"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,32}$";
+        [GeneratedRegex(@"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,32}$", RegexOptions.Compiled)]
+        private static partial Regex PwdRegex();
 
-        private const int UserNameMinLength = 3;
-        private const int UserNameMaxLength = 20;
-        private static readonly string _usernamePattern = @"^[a-zA-Z0-9._-]+$";
+        /*
+            \p{L} - 任何语言的字母
+            \p{N} - 任何数字
+            \p{P} - 标点符号
+            \p{S} - 特殊符号
+            \p{Zs} - 空格分隔符
+            {0,100} - 长度限制0到100个字符
+         */
+        [GeneratedRegex(@"^[\p{L}\p{N}\p{P}\p{S}\p{Zs}]{0,100}$", RegexOptions.Compiled)]
+        private static partial Regex SignRegex();
     }
 }

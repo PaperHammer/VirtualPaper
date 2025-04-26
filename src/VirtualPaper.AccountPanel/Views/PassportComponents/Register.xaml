@@ -15,7 +15,7 @@
 
     <StackPanel
         Margin="0 -50 0 0"
-        Width="320"
+        Width="330"
         Spacing="10"
         VerticalAlignment="Center"
         HorizontalAlignment="Center">
@@ -23,13 +23,13 @@
 
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="70"/>
+                <ColumnDefinition Width="75"/>
                 <ColumnDefinition/>
                 <ColumnDefinition Width="10"/>
                 <ColumnDefinition Width="16"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Column="0" Text="{x:Bind _viewModel.Account_EmailTextWithColon}" FontSize="15" VerticalAlignment="Center"/>
+            <TextBlock Text="{x:Bind _viewModel.Account_EmailTextWithColon}" FontSize="15" VerticalAlignment="Center"/>
             <Border Grid.Column="1" Padding="0" Height="40">
                 <TextBox 
                     x:Name="tbxEmail" 
@@ -62,10 +62,10 @@
 
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="70"/>
+                <ColumnDefinition Width="75"/>
                 <ColumnDefinition/>
                 <ColumnDefinition Width="10"/>
-                <ColumnDefinition Width="110"/>
+                <ColumnDefinition Width="80"/>
                 <ColumnDefinition Width="26"/>
             </Grid.ColumnDefinitions>
 
@@ -90,7 +90,7 @@
 
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="70"/>
+                <ColumnDefinition Width="75"/>
                 <ColumnDefinition/>
                 <ColumnDefinition Width="10"/>
                 <ColumnDefinition Width="16"/>
@@ -129,7 +129,7 @@
 
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="70"/>
+                <ColumnDefinition Width="75"/>
                 <ColumnDefinition/>
                 <ColumnDefinition Width="10"/>
                 <ColumnDefinition Width="16"/>
@@ -167,7 +167,7 @@
 
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="70"/>
+                <ColumnDefinition Width="75"/>
                 <ColumnDefinition/>
                 <ColumnDefinition Width="10"/>
                 <ColumnDefinition Width="16"/>

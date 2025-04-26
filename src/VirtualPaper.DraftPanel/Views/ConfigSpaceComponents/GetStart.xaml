@@ -99,8 +99,7 @@
                     FontSize="12"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Center"
-                    TextChanged="OnFilterChanged"
-                    KeyboardAcceleratorPlacementMode="Hidden">
+                    TextChanged="OnFilterChanged">
                     <TextBox.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu" Key="S" Invoked="KeyboardAccelerator_Invoked_SearchRecentUsed"/>
                     </TextBox.KeyboardAccelerators>
@@ -114,8 +113,7 @@
                     ItemTemplate="{StaticResource RecentUsedItemTemplate}"
                     SelectionMode="None"
                     IsItemClickEnabled="True"
-                    ItemClick="RecentUsedsListView_ItemClick"
-                    KeyboardAcceleratorPlacementMode="Hidden">
+                    ItemClick="RecentUsedsListView_ItemClick">
                     <ListView.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu" Key="R" Invoked="KeyboardAccelerator_Invoked_RecentUseds"/>
                     </ListView.KeyboardAccelerators>
@@ -142,8 +140,7 @@
                     ItemTemplate="{StaticResource StartupItemTemplate}"
                     SelectionMode="None"
                     IsItemInvokedEnabled="True"
-                    ItemInvoked="StartupItemsView_ItemInvoked"
-                    KeyboardAcceleratorPlacementMode="Hidden">
+                    ItemInvoked="StartupItemsView_ItemInvoked">
                     <ItemsView.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu" Key="V" Invoked="KeyboardAccelerator_Invoked_Startups"/>
                         <KeyboardAccelerator Modifiers="Menu" Key="F" Invoked="KeyboardAccelerator_Invoked_Startups"/>
@@ -151,20 +148,6 @@
                         <KeyboardAccelerator Modifiers="Menu" Key="N" Invoked="KeyboardAccelerator_Invoked_Startups"/>
                     </ItemsView.KeyboardAccelerators>
                 </ItemsView>
-
-                <!--<HyperlinkButton
-                    Grid.Row="2"
-                    Margin="0 4 0 0"
-                    HorizontalAlignment="Center"
-                    FontSize="12"
-                    Click="ContinueWithoutAny_HyperlinkButton_Click"
-                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                    Content="{x:Bind _viewModel.Project_ContinueWithoutFile}"
-                    KeyboardAcceleratorPlacementMode="Hidden">
-                    <HyperlinkButton.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Menu" Key="W"/>
-                    </HyperlinkButton.KeyboardAccelerators>
-                </HyperlinkButton>-->
             </Grid>
         </Grid>
     </data:Card>

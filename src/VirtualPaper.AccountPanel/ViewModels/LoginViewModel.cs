@@ -1,19 +1,22 @@
 ﻿using System.Threading.Tasks;
+using Octokit;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
+using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Models.AccountPanel;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.AccountPanel.ViewModels {
     partial class LoginViewModel : ObservableObject {
-        private string _email;
+        private string _email = string.Empty;
         public string Email {
             get { return _email; }
             set { _email = value; IsEmailOk = ComplianceUtil.IsValidEmail(value); }
         }
 
-        private string _pwd;
+        private string _pwd = string.Empty;
         public string Pwd {
             get { return _pwd; }
             set { _pwd = value; IsPwdOk = ComplianceUtil.IsValidPwd(value); }
@@ -64,19 +67,34 @@ namespace VirtualPaper.AccountPanel.ViewModels {
             Account_RegisterText = LanguageUtil.GetI18n(nameof(Constants.I18n.Account_RegisterText));
         }
 
-        internal async Task<bool> LoginAsync() {
-            Account.Instance.GetNotify().Loading(false, false);
-            var response = await _accountClient.LoginAsync(Email, Pwd);
-            if (!response.Success) {
+        internal async Task<UserInfo> LoginAsync() {
+            try {
+                Account.Instance.GetNotify().Loading(false, false);
+                var response = await _accountClient.LoginAsync(Email, Pwd);
+                if (!response.Success) {
+                    Account.Instance.GetNotify().ShowMsg(
+                        true,
+                        response.Message,
+                        InfoBarType.Error,
+                        key: response.Message,
+                        isAllowDuplication: false);
+                }
+
+                return response.Success ? DataAssist.FromGrpcUserInfo(response.User) : null;
+            }
+            catch (System.Exception ex) {
                 Account.Instance.GetNotify().ShowMsg(
                     true,
-                    response.Message,
+                    nameof(Constants.I18n.InnerErr),
                     InfoBarType.Error,
+                    key: nameof(Constants.I18n.InnerErr),
                     isAllowDuplication: false);
             }
-            Account.Instance.GetNotify().Loaded();
+            finally {
+                Account.Instance.GetNotify().Loaded();
+            }
 
-            return response.Success;
+            return null;
         }
 
         private readonly IAccountClient _accountClient;

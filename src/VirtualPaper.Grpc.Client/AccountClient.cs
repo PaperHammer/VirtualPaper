@@ -1,7 +1,9 @@
 ﻿using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
+using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Account;
+using VirtualPaper.Models.AccountPanel;
 
 namespace VirtualPaper.Grpc.Client {
     public class AccountClient : IAccountClient {
@@ -51,6 +53,14 @@ namespace VirtualPaper.Grpc.Client {
                 Email = email,
             };
             var res = await _client.SendEmailCodeAsync(request, cancellationToken: cancellationToken);
+            return res;
+        }
+
+        public async Task<UpdateUserInfoResponse> UpdateUserInfoAsync(UserInfo newUserInfo, CancellationToken cancellationToken = default) {
+            UpdateUserInfoRequest request = new() {
+                User = DataAssist.UserInfoTpGrpc(newUserInfo),
+            };
+            var res = await _client.UpdateUserInfoAsync(request, cancellationToken: cancellationToken);
             return res;
         }
 

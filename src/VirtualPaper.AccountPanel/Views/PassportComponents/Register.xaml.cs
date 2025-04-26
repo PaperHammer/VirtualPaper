@@ -26,10 +26,9 @@ namespace VirtualPaper.AccountPanel.Views.PassportComponents {
         }
 
         private async void Register_Clicked(object sender, RoutedEventArgs e) {
-            bool op = await _viewModel.RegsiterAsync();
-            if (op) {
-                Account.Instance.ChangePanelState(AccountPanelState.Login, null);
-            }
+            var userInfo = await _viewModel.RegsiterAsync();
+            if (userInfo == null) return;
+            _passport.ChangePanelState(AccountPanelState.UserCenter, userInfo);
         }
 
         private void BtnBack_Clicked(object sender, RoutedEventArgs e) {

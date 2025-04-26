@@ -310,20 +310,28 @@ namespace VirtualPaper.Common {
             public static string? Account_RegisterText { get; }
             public static string? Account_BackText { get; }
             public static string? Account_RequestCodeText { get; }
-            public static string? Server_Success { get; }
-            public static string? Server_InnerError { get; }
-            public static string? Server_EmailFormatIllegal { get; }
-            public static string? Server_EmailOccupied { get; }
-            public static string? Server_UsernameFormatIllegal { get; }
-            public static string? Server_UsernameOccupied { get; }
-            public static string? Server_PasswordFormatIllegal { get; }
-            public static string? Server_ConfirmPasswordIllegal { get; }
-            public static string? Server_UsernNotFindOrPasswordError { get; }
-            public static string? Server_SecurityCodeError { get; }
-            public static string? Server_SecurityCodeExpired { get; }
-            public static string? Server_PotentialRisks { get; }
-            public static string? Server_Inaccessible { get; }
             public static string? Account_Username_InvalidTip { get; }
+            public static string? Server_CannotAccess { get; }
+            public static string? Account_ConfirmPwd_InvalidTip { get; }
+            public static string? Account_SelBarItem1_Cloud { get; set; }
+            public static string? Account_SelBarItem2_Star { get; set; }
+            public static string? Account_SelBarItem3_Upload { get; set; }
+            public static string? InnerErr { get; }
+            public static string? Account_DefaultSign { get; }
+            public static string? Account_AvatarDesc { get; }
+            public static string? Account_ChangeAvatar { get; }
+            public static string? Account_Username { get; }
+            public static string? Account_Sign { get; }
+            public static string? Account_UserAccount { get; }
+            public static string? Account_PersonalInfo { get; }
+            public static string? Account_Email { get; }
+            public static string? Account_Sign_InvalidTip { get; }
+            public static string? Text_FileNotAccess { get; }
+            public static string? Text_FileSizeIllegal_5MB { get; }
+            public static string? Account_Username_InvalidTip_Sim { get; }
+            public static string? Account_Usersign_InvalidTip_Sim { get; }
+            public static string? Account_UpdateUserInfo_Fail { get; }
+            public static string? Account_Logout { get; }
         }
 
         public static class Field {

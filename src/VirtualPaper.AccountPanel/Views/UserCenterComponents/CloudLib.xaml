@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="VirtualPaper.WpSettingsPanel.Views.LibraryContents"
+    x:Class="VirtualPaper.AccountPanel.Views.UserCenterComponents.CloudLib"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:VirtualPaper.WpSettingsPanel.Views"
+    xmlns:local="using:VirtualPaper.AccountPanel.Views.UserCenterComponents"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:VirtualPaper.Models.Cores.Interfaces"
@@ -133,27 +133,11 @@
             <MenuFlyout
                 x:Name="ItemsViewMenu">
                 <MenuFlyoutItem
-                    x:Name="Details"
+                    x:Name="DetailsAndEdit"
                     Text="{x:Bind _viewModel.MenuFlyout_Text_DetailedInfo}"
                     Click="ContextMenu_Click">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE946;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem
-                    x:Name="UpdateConfig"
-                    Text="{x:Bind _viewModel.MenuFlyout_Text_Update}"
-                    Click="ContextMenu_Click">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE753;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem
-                    x:Name="Edit"
-                    Text="{x:Bind _viewModel.MenuFlyout_Text_EditInfo}"
-                    Click="ContextMenu_Click">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE70F;" />
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutItem 
@@ -165,31 +149,15 @@
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutItem 
-                    x:Name="Apply" 
-                    Text="{x:Bind _viewModel.MenuFlyout_Text_Apply}"
+                    x:Name="Download" 
+                    Text="{x:Bind _viewModel.MenuFlyout_Text_Downlaod}"
                     Click="ContextMenu_Click" >
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE8FB;" />
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem 
-                    x:Name="LockBackground" 
-                    Text="{x:Bind _viewModel.MenuFlyout_Text_ApplyToLockBG}"
-                    Click="ContextMenu_Click" >
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xEE3F;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
                 <MenuFlyoutItem
-                    x:Name="ShowOnDisk"
-                    Text="{x:Bind _viewModel.MenuFlyout_Text_ShowOnDisk}"
-                    Click="ContextMenu_Click">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xED25;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem
-                    x:Name="DeleteFromDisk"
+                    x:Name="DeleteFromCloud"
                     Text="{x:Bind _viewModel.MenuFlyout_Text_Delete}"
                     Click="ContextMenu_Click">
                     <MenuFlyoutItem.Icon>

@@ -1,12 +1,41 @@
-﻿using VirtualPaper.Common;
+﻿using Google.Protobuf;
+using VirtualPaper.Common;
+using VirtualPaper.Grpc.Service.Account;
 using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Models;
+using VirtualPaper.Models.AccountPanel;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using Monitor = VirtualPaper.Models.Cores.Monitor;
 
 namespace VirtualPaper.DataAssistor {
     public static class DataAssist {
+        public static UserInfo? FromGrpcUserInfo(Grpc_UserInfo? grpcUser) {
+            if (grpcUser == null) return null;
+
+            return new UserInfo(grpcUser.Uid, (UserStatus)grpcUser.Status) {
+                Avatar = grpcUser.Avatar.Length > 0 ? grpcUser.Avatar.ToByteArray() : null,
+                Name = grpcUser.Name,
+                Email = grpcUser.Email,
+                Sign = grpcUser.Sign.Length > 0 ? grpcUser.Sign : null,
+            };
+        }
+
+        public static Grpc_UserInfo? UserInfoTpGrpc(UserInfo? userInfo) {
+            if (userInfo == null) return null;
+
+            Grpc_UserInfo grpc_UserInfo = new() {
+                Uid = userInfo.Uid,
+                Avatar = ByteString.CopyFrom(userInfo.Avatar ?? []),
+                Name = userInfo.Name,
+                Email = userInfo.Email,
+                Sign = userInfo.Sign ?? string.Empty,
+                Status = (Grpc_UserStatus)userInfo.Status
+            };
+
+            return grpc_UserInfo;
+        }
+
         public static Grpc_WpBasicData BasicDataToGrpcData(IWpBasicData source) {
             Grpc_WpBasicData grpc_WpBasicData = new() {
                 WallpaperUid = source.WallpaperUid,
@@ -183,7 +212,7 @@ namespace VirtualPaper.DataAssistor {
             data.WpEffectFilePathTemporary = wpRuntimeData.WpEffectFilePathTemporary;
             data.WpEffectFilePathTemplate = wpRuntimeData.WpEffectFilePathTemplate;
             data.WpEffectFilePathUsing = wpRuntimeData.WpEffectFilePathUsing;
-            data.DepthFilePath = wpRuntimeData.DepthFilePath;         
+            data.DepthFilePath = wpRuntimeData.DepthFilePath;
         }
 
         public static Grpc_SettingsData SettingsToGrpc(ISettings settings) {

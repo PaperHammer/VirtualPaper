@@ -75,8 +75,7 @@
                     FontSize="12"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Center"
-                    TextChanged="OnFilterChanged"
-                    KeyboardAcceleratorPlacementMode="Hidden">
+                    TextChanged="OnFilterChanged">
                     <TextBox.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu" Key="S" Invoked="KeyboardAccelerator_Invoked_SearchTemplate"/>
                     </TextBox.KeyboardAccelerators>
@@ -89,8 +88,7 @@
                     ItemsSource="{x:Bind _viewModel.AvailableTemplates}"
                     ItemTemplate="{StaticResource AvailableItemTemplate}"
                     SelectionMode="Single"
-                    SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}"
-                    KeyboardAcceleratorPlacementMode="Hidden">
+                    SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}">
                     <ListView.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu" Key="R" Invoked="KeyboardAccelerator_Invoked_Template"/>
                     </ListView.KeyboardAccelerators>
@@ -135,8 +133,7 @@
                         Text="{x:Bind _viewModel.ProjectName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         PlaceholderText="{x:Bind _viewModel.Project_NewProjectName_Placeholder}"
                         FontSize="12"
-                        Width="500"
-                        KeyboardAcceleratorPlacementMode="Hidden">
+                        Width="500">
                         <TextBox.KeyboardAccelerators>
                             <KeyboardAccelerator Modifiers="Menu" Key="J" Invoked="KeyboardAccelerator_Invoked_InputProjName"/>
                         </TextBox.KeyboardAccelerators>

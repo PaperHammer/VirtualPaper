@@ -52,6 +52,9 @@ namespace VirtualPaper.Common.Utils.Files {
             [FileType.FProject] = [FileExtension.FE_Project],
         };
 
+        public static string[] AvatarFilter =>
+            [".jpg", ".bmp", ".png", ".jpe", ".gif", ".tif", ".tiff", ".heic", ".heif", ".heics", ".heifs", ".avif", ".avifs"];
+
         private static readonly Dictionary<string, FileType> _fileHeaderMap = new()
         {
             {"FFD8FF", FileType.FImage}, // .jpg .jpeg

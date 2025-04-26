@@ -766,7 +766,7 @@ contains at least one special character</value>
     <value>Confirm Password</value>
   </data>
   <data name="Account_ConfirmPwdTextWithColon" xml:space="preserve">
-    <value>Confirm Password:</value>
+    <value>Confirm:</value>
   </data>
   <data name="Account_CodeText" xml:space="preserve">
     <value>Code</value>
@@ -820,10 +820,7 @@ contains at least one special character</value>
     <value>The user does not exist or the password is incorrect</value>
   </data>
   <data name="Server_SecurityCodeError" xml:space="preserve">
-    <value>The verification code is incorrect</value>
-  </data>
-  <data name="Server_SecurityCodeExpired" xml:space="preserve">
-    <value>The verification code has expired, please retrieve it again</value>
+    <value>The verification code is incorrect or expired</value>
   </data>
   <data name="Server_PotentialRisks" xml:space="preserve">
     <value>The current operation poses potential risks and has been terminated</value>
@@ -839,6 +836,7 @@ Only the following types of characters can be used:
   - Underline_
   - Dot.
   - hyphen-
+  - Most Unicode characters
 Usernames cannot be named with a dot . or hyphen - the beginning or end;
 The following words cannot be used as usernames:
   -admin
@@ -847,5 +845,74 @@ The following words cannot be used as usernames:
   -guest
   -user
   -system</value>
+  </data>
+  <data name="Server_CannotAccess" xml:space="preserve">
+    <value>Unable to connect to the server</value>
+  </data>
+  <data name="Account_ConfirmPwd_InvalidTip" xml:space="preserve">
+    <value>Inconsistent with the original password</value>
+  </data>
+  <data name="Account_SelBarItem1_Cloud" xml:space="preserve">
+    <value>Cloud</value>
+  </data>
+  <data name="Account_SelBarItem2_Star" xml:space="preserve">
+    <value>Favorites</value>
+  </data>
+  <data name="Account_SelBarItem3_Upload" xml:space="preserve">
+    <value>Upload</value>
+  </data>
+  <data name="InnerErr" xml:space="preserve">
+    <value>Client-side internal i error</value>
+  </data>
+  <data name="Account_DefaultSign" xml:space="preserve">
+    <value>No trace has been left yet~</value>
+  </data>
+  <data name="Account_AvatarDesc" xml:space="preserve">
+    <value>Add a photo to personalize your account. Your profile picture appears on apps that use your account</value>
+  </data>
+  <data name="Account_ChangeAvatar" xml:space="preserve">
+    <value>Change avatar</value>
+  </data>
+  <data name="Account_Username" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="Account_Sign" xml:space="preserve">
+    <value>Signature</value>
+  </data>
+  <data name="Account_UserAccount" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="Account_PersonalInfo" xml:space="preserve">
+    <value>Personal Information</value>
+  </data>
+  <data name="Account_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Account_Sign_InvalidTip" xml:space="preserve">
+    <value>Signature Rules:
+  - Alphabet in any language
+  - Any number
+  - Punctuation mark
+  - Special symbols
+  - Space separators
+  - The length is limited to 0 to 100 characters</value>
+  </data>
+  <data name="Text_FileNotAccess" xml:space="preserve">
+    <value>File parsing failed, try to check file validity</value>
+  </data>
+  <data name="Text_FileSizeIllegal_5MB" xml:space="preserve">
+    <value>The file size is abnormal (it must be not exceed 5MB).</value>
+  </data>
+  <data name="Account_Usersign_InvalidTip_Sim" xml:space="preserve">
+    <value>The signature is not formatted correctly</value>
+  </data>
+  <data name="Account_UpdateUserInfo_Fail" xml:space="preserve">
+    <value>The data update failed, please try again later</value>
+  </data>
+  <data name="Account_Username_InvalidTip_Sim" xml:space="preserve">
+    <value>The username format is incorrect</value>
+  </data>
+  <data name="Account_Logout" xml:space="preserve">
+    <value>Logout</value>
   </data>
 </root>

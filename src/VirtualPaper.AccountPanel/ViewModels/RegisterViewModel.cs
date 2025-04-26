@@ -1,34 +1,37 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Octokit;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
+using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Models.AccountPanel;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.AccountPanel.ViewModels {
     partial class RegisterViewModel : ObservableObject {
-        private string _email;
+        private string _email = string.Empty;
         public string Email {
             get { return _email; }
             set { _email = value; IsEmailOk = ComplianceUtil.IsValidEmail(value); }
         }
 
-        public string Code { get; set; }
+        public string Code { get; set; } = string.Empty;
 
-        private string _username;
+        private string _username = string.Empty;
         public string Username {
             get { return _username; }
             set { _username = value; IsUsernameOk = ComplianceUtil.IsValidUserName(value); }
         }
 
-        private string _pwd;
+        private string _pwd = string.Empty;
         public string Pwd {
             get { return _pwd; }
             set { _pwd = value; IsPwdOk = ComplianceUtil.IsValidPwd(value); }
         }
 
-        private string _confirmPwd;
+        private string _confirmPwd = string.Empty;
         public string ConfirmPwd {
             get { return _confirmPwd; }
             set { _confirmPwd = value; IsConfirmPwdOk = Pwd == value; }
@@ -113,6 +116,7 @@ namespace VirtualPaper.AccountPanel.ViewModels {
         private void InitText() {
             Account_Email_InvalidTip = LanguageUtil.GetI18n(nameof(Constants.I18n.Account_Email_InvalidTip));
             Account_Pwd_InvalidTip = LanguageUtil.GetI18n(nameof(Constants.I18n.Account_Pwd_InvalidTip));
+            Account_ConfirmPwd_InvalidTip = LanguageUtil.GetI18n(nameof(Constants.I18n.Account_ConfirmPwd_InvalidTip));
             Account_Username_InvalidTip = LanguageUtil.GetI18n(nameof(Constants.I18n.Account_Username_InvalidTip));
             Account_RegisterWithEmail = LanguageUtil.GetI18n(nameof(Constants.I18n.Account_RegisterWithEmail));
             Account_EmailText = LanguageUtil.GetI18n(nameof(Constants.I18n.Account_EmailText));
@@ -131,28 +135,43 @@ namespace VirtualPaper.AccountPanel.ViewModels {
         }
 
         internal async Task<bool> SendEmailCodeAsync() {
-            Account.Instance.GetNotify().Loading(false, false);
-            var response = await _accountClient.SendEmailCodeAsync(Email);
-            if (!response.Success) {
+            try {
+                Account.Instance.GetNotify().Loading(false, false);
+                var response = await _accountClient.SendEmailCodeAsync(Email);
+                if (!response.Success) {
+                    Account.Instance.GetNotify().ShowMsg(
+                        true,
+                        response.Message,
+                        InfoBarType.Error,
+                        key: response.Message,
+                        isAllowDuplication: false);
+                }
+                else {
+                    StartCountdown();
+                }
+
+                return response.Success;
+            }
+            catch (Exception) {
                 Account.Instance.GetNotify().ShowMsg(
                     true,
-                    response.Message,
+                    nameof(Constants.I18n.InnerErr),
                     InfoBarType.Error,
+                    key: nameof(Constants.I18n.InnerErr),
                     isAllowDuplication: false);
             }
-            else {
-                StartCountdown();
+            finally {
+                Account.Instance.GetNotify().Loaded();
             }
-            Account.Instance.GetNotify().Loaded();
 
-            return response.Success;
+            return false;
         }
 
         private async void StartCountdown() {
             IsRequestCodeButtonEnabled = false;
             _remainingSeconds = 60;
             while (_remainingSeconds > 0) {
-                Account_RequestCodeText = _requestCodeText + $" ({_remainingSeconds})";
+                Account_RequestCodeText = $"{_remainingSeconds}";
                 await Task.Delay(1000);
                 _remainingSeconds--;
             }
@@ -164,23 +183,36 @@ namespace VirtualPaper.AccountPanel.ViewModels {
             IsRequestCodeButtonEnabled = IsEmailOk && _remainingSeconds == 0;
         }
 
-        internal async Task<bool> RegsiterAsync() {
-            Account.Instance.GetNotify().Loading(false, false);
-            var response = await _accountClient.RegisterAsync(Email, Username, Code, Pwd, ConfirmPwd);
-            if (!response.Success) {
+        internal async Task<UserInfo> RegsiterAsync() {
+            try {
+                Account.Instance.GetNotify().Loading(false, false);
+                var response = await _accountClient.RegisterAsync(Email, Username, Code, Pwd, ConfirmPwd);
+                if (!response.Success) {
+                    Account.Instance.GetNotify().ShowMsg(
+                        true,
+                        response.Message,
+                        InfoBarType.Error,
+                        key: response.Message,
+                        isAllowDuplication: false);
+                    return null;
+                }
+                StartCountdown();
+
+                return response.Success ? DataAssist.FromGrpcUserInfo(response.User) : null;
+            }
+            catch (Exception) {
                 Account.Instance.GetNotify().ShowMsg(
                     true,
-                    response.Message,
+                    nameof(Constants.I18n.InnerErr),
                     InfoBarType.Error,
+                    key: nameof(Constants.I18n.InnerErr),
                     isAllowDuplication: false);
             }
-            else {
-                StartCountdown();
+            finally {
+                Account.Instance.GetNotify().Loaded();
             }
-            Account.Instance.GetNotify().Loaded();
 
-
-            return response.Success;
+            return null;
         }
 
         private readonly IAccountClient _accountClient;

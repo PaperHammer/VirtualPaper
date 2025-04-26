@@ -64,10 +64,6 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             }
         }
 
-        private void ContinueWithoutAny_HyperlinkButton_Click(object sender, RoutedEventArgs e) {
-            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, null);
-        }
-
         private void RecentUsedsListView_ItemClick(object sender, ItemClickEventArgs e) {
             if (e.ClickedItem is RecentUsed ru) {
                 _configSpace.ChangePanelState(DraftPanelState.WorkSpace, new ToWorkSpace([ru.FilePath]));

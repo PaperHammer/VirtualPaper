@@ -73,6 +73,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Remove="Assets\account\default_user_avatar.png" />
 		<None Remove="Assets\BadgeLogo.scale-100.png" />
 		<None Remove="Assets\BadgeLogo.scale-125.png" />
 		<None Remove="Assets\icon-vp-48.png" />
@@ -154,6 +155,9 @@
 		<ProjectCapability Include="Msix" />
 	</ItemGroup>
 	<ItemGroup>
+		<Content Update="Assets\account\default_user_avatar.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 		<Content Update="Assets\icon-vp-48.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>

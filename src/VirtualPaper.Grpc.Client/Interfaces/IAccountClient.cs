@@ -1,4 +1,5 @@
 ﻿using VirtualPaper.Grpc.Service.Account;
+using VirtualPaper.Models.AccountPanel;
 
 namespace VirtualPaper.Grpc.Client.Interfaces {
     public interface IAccountClient {
@@ -7,7 +8,8 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         Task<SendEmailCodeResponse> SendEmailCodeAsync(string email, CancellationToken cancellationToken = default);
         Task<bool> ResetPasswordAsync(string email, string code, string newPassword, CancellationToken cancellationToken = default);
         Task<bool> ChangePasswordAsync(string oldPassword, string newPassword, CancellationToken cancellationToken = default);
-        Task<bool> LogoutAsync(CancellationToken cancellationToken = default);
+        //Task<LogoutResponse> LogoutAsync();
         Task<bool> IsLoginAsync(CancellationToken cancellationToken = default);
+        Task<UpdateUserInfoResponse> UpdateUserInfoAsync(UserInfo newUserInfo, CancellationToken cancellationToken = default);
     }
 }

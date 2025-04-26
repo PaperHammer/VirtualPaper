@@ -5,6 +5,7 @@
     <RootNamespace>VirtualPaper.AccountPanel</RootNamespace>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     <UseWinUI>true</UseWinUI>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Account.xaml" />
@@ -12,6 +13,8 @@
     <None Remove="Views\PassportComponents\Login.xaml" />
     <None Remove="Views\PassportComponents\Register.xaml" />
     <None Remove="Views\UserCenter.xaml" />
+    <None Remove="Views\UserCenterComponents\CloudLib.xaml" />
+    <None Remove="Views\Utils\UserInfoEdit.xaml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
@@ -42,6 +45,19 @@
   </ItemGroup>
   <ItemGroup>
     <Page Update="Account.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\UserCenterComponents\CloudLib.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\Utils\UserInfoEdit.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

@@ -15,7 +15,6 @@ using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DataAssistor;
-using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Models.Cores;
@@ -92,7 +91,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        internal async Task DetailedInfoAsync(IWpBasicData data) {
+        internal async Task DetailInfoAsync(IWpBasicData data) {
             try {
                 if (!data.IsAvailable()) return;
                 await CheckFileUpdateAsync(data);

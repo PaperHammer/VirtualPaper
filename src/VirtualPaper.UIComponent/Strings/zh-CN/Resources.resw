@@ -819,10 +819,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>用户不存在 或 密码错误</value>
   </data>
   <data name="Server_SecurityCodeError" xml:space="preserve">
-    <value>验证码 错误</value>
-  </data>
-  <data name="Server_SecurityCodeExpired" xml:space="preserve">
-    <value>验证码 已失效，请重新获取</value>
+    <value>验证码 错误或已失效</value>
   </data>
   <data name="Server_PotentialRisks" xml:space="preserve">
     <value>当前操作存在潜在风险，已终止</value>
@@ -838,6 +835,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   - 下划线 _
   - 点 .
   - 连字符 -
+  - 多数 Unicode 字符
 用户名不能以点 . 或连字符 - 开头或结尾；
 以下词语不可作为用户名：
   - admin
@@ -847,5 +845,74 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   - user
   - system
 </value>
+  </data>
+  <data name="Server_CannotAccess" xml:space="preserve">
+    <value>无法连接到服务器</value>
+  </data>
+  <data name="Account_ConfirmPwd_InvalidTip" xml:space="preserve">
+    <value>两次密码不一致</value>
+  </data>
+  <data name="Account_SelBarItem1_Cloud" xml:space="preserve">
+    <value>云端</value>
+  </data>
+  <data name="Account_SelBarItem2_Star" xml:space="preserve">
+    <value>收藏夹</value>
+  </data>
+  <data name="Account_SelBarItem3_Upload" xml:space="preserve">
+    <value>上传</value>
+  </data>
+  <data name="InnerErr" xml:space="preserve">
+    <value>客户端内部i错误</value>
+  </data>
+  <data name="Account_DefaultSign" xml:space="preserve">
+    <value>还没有留下痕迹~</value>
+  </data>
+  <data name="Account_AvatarDesc" xml:space="preserve">
+    <value>添加照片，个性化你的账户。你的个人资料照片会显示在使用你的帐户的应用上</value>
+  </data>
+  <data name="Account_ChangeAvatar" xml:space="preserve">
+    <value>更换头像</value>
+  </data>
+  <data name="Account_Username" xml:space="preserve">
+    <value>用户名</value>
+  </data>
+  <data name="Account_Sign" xml:space="preserve">
+    <value>个性签名</value>
+  </data>
+  <data name="Account_UserAccount" xml:space="preserve">
+    <value>账户</value>
+  </data>
+  <data name="Account_PersonalInfo" xml:space="preserve">
+    <value>个人资料</value>
+  </data>
+  <data name="Account_Email" xml:space="preserve">
+    <value>邮箱</value>
+  </data>
+  <data name="Account_Sign_InvalidTip" xml:space="preserve">
+    <value>个性签名规则：
+  - 任何语言的字母
+  - 任何数字
+  - 标点符号
+  -  特殊符号
+  - 空格分隔符
+  - 长度限制0到100个字符</value>
+  </data>
+  <data name="Text_FileNotAccess" xml:space="preserve">
+    <value>文件解析失败，尝试检查文件有效性</value>
+  </data>
+  <data name="Text_FileSizeIllegal_5MB" xml:space="preserve">
+    <value>文件大小异常（不超过 5MB）</value>
+  </data>
+  <data name="Account_Usersign_InvalidTip_Sim" xml:space="preserve">
+    <value>签名 不合法，请检查格式要求</value>
+  </data>
+  <data name="Account_UpdateUserInfo_Fail" xml:space="preserve">
+    <value>数据更新失败，请稍后重试</value>
+  </data>
+  <data name="Account_Username_InvalidTip_Sim" xml:space="preserve">
+    <value>用户名 格式不正确</value>
+  </data>
+  <data name="Account_Logout" xml:space="preserve">
+    <value>退出登录</value>
   </data>
 </root>

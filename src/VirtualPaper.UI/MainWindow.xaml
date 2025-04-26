@@ -9,7 +9,7 @@
     xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
     xmlns:models="using:VirtualPaper.UIComponent.Models"
     mc:Ignorable="d"
-    Width="1410"
+    Width="1400"
     Height="880"
     MinWidth="300"
     MinHeight="80"    
@@ -58,13 +58,12 @@
         <NavigationView
             x:Name="NavView"
             Grid.Row="1"
-            PaneDisplayMode="Left"
+            PaneDisplayMode="LeftCompact"
             SelectionChanged="NavView_SelectionChanged"
             IsSettingsVisible="False"
             AlwaysShowHeader="False"
             IsBackEnabled="False"
             IsBackButtonVisible="Collapsed">
-
             <NavigationView.MenuItems>
                 <!--<NavigationViewItem 
                     Content="{Binding SidebarGallery}"

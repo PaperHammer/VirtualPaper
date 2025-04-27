@@ -62,7 +62,8 @@ namespace VirtualPaper.DataAssistor {
                 Resolution = source.Resolution,
                 AspectRatio = source.AspectRatio,
                 FileSize = source.FileSize,
-                FileExtension = source.FileExtension
+                FileExtension = source.FileExtension,
+                
             };
 
             return grpc_WpBasicData;
@@ -144,7 +145,8 @@ namespace VirtualPaper.DataAssistor {
                 Resolution = source.Resolution,
                 AspectRatio = source.AspectRatio,
                 FileSize = source.FileSize,
-                FileExtension = source.FileExtension
+                FileExtension = source.FileExtension,
+                Status = (WallpaperStatus)source.Status,
             };
 
             return basicData;

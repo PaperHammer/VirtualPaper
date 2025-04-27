@@ -13,6 +13,7 @@ service Grpc_WallpaperControlService {
 	rpc RestartAllWallpapers(google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.Models.Grpc_RestartWallpaperResponse);
 	rpc SetWallpaper(VirtualPaper.Grpc.Service.Models.Grpc_SetWallpaperRequest) returns (VirtualPaper.Grpc.Service.Models.Grpc_SetWallpaperResponse);
 	rpc CreateMetadataBasic(VirtualPaper.Grpc.Service.Models.Grpc_CreateMetadataBasicRequest) returns (VirtualPaper.Grpc.Service.Models.Grpc_WpBasicData);
+	rpc CreateMetadataBasicInMem(VirtualPaper.Grpc.Service.Models.Grpc_CreateMetadataBasicRequest) returns (VirtualPaper.Grpc.Service.Models.Grpc_WpBasicData);
 	rpc ChangeWallpaperLayoutFolrderPath(VirtualPaper.Grpc.Service.Models.Grpc_ChangePathRequest) returns (google.protobuf.Empty);
 	rpc GetRunMonitorByWallpaper(VirtualPaper.Grpc.Service.Models.Grpc_GetMonitorRequest) returns (VirtualPaper.Grpc.Service.Models.Grpc_MonitorData);	
     rpc SendMessageWallpaper(VirtualPaper.Grpc.Service.Models.Grpc_WallpaperMessageRequest) returns (google.protobuf.Empty);

@@ -915,4 +915,13 @@ The following words cannot be used as usernames:
   <data name="Account_Logout" xml:space="preserve">
     <value>Logout</value>
   </data>
+  <data name="MenuFlyout_Text_DetailAndEditInfo" xml:space="preserve">
+    <value>Dtails and edit</value>
+  </data>
+  <data name="MenuFlyout_Text_Downlaod" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="App_UserNotLogin" xml:space="preserve">
+    <value>User login data is abnormal, please attempt to log in again</value>
+  </data>
 </root>

@@ -92,11 +92,9 @@
         HorizontalAlignment="Stretch"
         VerticalContentAlignment="Top"
         HorizontalContentAlignment="Left"
-        ItemsSource="{x:Bind _viewModel.LibraryWallpapers, Mode=OneWay}"
+        ItemsSource="{x:Bind _viewModel.CloudLibWallpapers, Mode=OneWay}"
         Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}" 
-        AllowDrop="True"
-        DragOver="ItemsView_DragOver"
-        Drop="ItemsView_Drop"
+        AllowDrop="False"
         SelectionMode="None" 
         IsItemClickEnabled="True"
         ItemContainerStyle="{StaticResource LibGridViewItemStyle}"
@@ -134,7 +132,7 @@
                 x:Name="ItemsViewMenu">
                 <MenuFlyoutItem
                     x:Name="DetailsAndEdit"
-                    Text="{x:Bind _viewModel.MenuFlyout_Text_DetailedInfo}"
+                    Text="{x:Bind _viewModel.MenuFlyout_Text_DetailAndEditInfo}"
                     Click="ContextMenu_Click">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE946;" />

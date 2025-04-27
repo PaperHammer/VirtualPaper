@@ -1,10 +1,14 @@
-﻿using System.Text.Json;
+﻿using System.IO;
+using System.Text.Json;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using VirtualPaper.Common;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Service.Account;
+using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Models.AccountPanel;
+using VirtualPaper.Models.Cores;
+using VirtualPaper.Models.Net;
 using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.GrpcServers {
@@ -19,12 +23,12 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override async Task<LoginResponse> Login(LoginRequest request, ServerCallContext context) {
-            var data = await _accountService.LoginAsync(request.Email, request.Password);            
+            var data = await _accountService.LoginAsync(request.Email, request.Password);
             var user = data.Data == null ? null : JsonSerializer.Deserialize(data.Data.ToString() ?? string.Empty, UserInfoContext.Default.UserInfo);
             var response = new LoginResponse {
                 Success = data.Code == 1,
                 Message = data.MsgKey,
-                User = DataAssist.UserInfoTpGrpc(user),
+                User = DataAssist.UserInfoToGrpc(user),
             };
             return response;
         }
@@ -39,7 +43,7 @@ namespace VirtualPaper.GrpcServers {
             var response = new RegisterResponse {
                 Success = data.Code == 1,
                 Message = data.MsgKey,
-                User = DataAssist.UserInfoTpGrpc(user),
+                User = DataAssist.UserInfoToGrpc(user),
             };
             return response;
         }
@@ -71,11 +75,122 @@ namespace VirtualPaper.GrpcServers {
             var response = new UpdateUserInfoResponse {
                 Success = data.Code == 1,
                 Message = data.MsgKey,
-                User = DataAssist.UserInfoTpGrpc(user),
+                User = DataAssist.UserInfoToGrpc(user),
             };
             return response;
         }
 
+        public override async Task<CloudLibResponse> GetCloudLib(Empty request, ServerCallContext context) {
+            var data = await _accountService.GetCloudLibAsync();
+            var wallpapers = data.Data == null ? null : JsonSerializer.Deserialize<List<WpBasicDataDto>>(
+                data.Data.ToString(),
+                WpBasicDataDtoContext.Default.ListWpBasicDataDto);
+            var tasks = wallpapers?.Select(async wp => await ToGrpcWpBasciDataThuAsync(wp));
+            var grpcWallpapers = tasks == null ? [] : await Task.WhenAll(tasks);
+            var response = new CloudLibResponse {
+                Success = data.Code == 1,
+                Message = data.MsgKey,
+                Wallpapers = { grpcWallpapers },
+            };
+            return response;
+        }
+
+        public override async Task<PartitionsResponse> GetPartitions(Empty request, ServerCallContext context) {
+            var data = await _accountService.GetPartitionsAsync();
+            var partitions = data.Data == null ? null : JsonSerializer.Deserialize<List<string>>(data.Data.ToString() ?? string.Empty);
+            var response = new PartitionsResponse {
+                Success = data.Code == 1,
+                Message = data.MsgKey,
+                Partitions = { partitions },
+            };
+            return response;
+        }
+
+        public override async Task<UploadWallpaperResponse> UploadWallpaper(UplaodWallpaperRequest request, ServerCallContext context) {
+            if (App.User == null || string.IsNullOrEmpty(App.Token)) {
+                return new() {
+                    Success = false,
+                    Message = nameof(Constants.I18n.App_UserNotLogin),
+                };
+            }
+
+            var dto = await ToWpBasciDataDtoAsync(request.WpBasicData);
+            if (dto == null) {
+                return new() {
+                    Success = false,
+                    Message = nameof(Constants.I18n.Text_FileNotAccess),
+                };
+            }
+            var data = await _accountService.UploadWallpaperAsync(dto);
+            var response = new UploadWallpaperResponse {
+                Success = data.Code == 1,
+                Message = data.MsgKey
+            };
+            return response;
+        }
+
+        private static async Task<WpBasicDataDto?> ToWpBasciDataDtoAsync(Grpc_WpBasicData wpBasicData) {
+            try {
+                WpBasicDataDto dto = new() {
+                    Image = await File.ReadAllBytesAsync(wpBasicData.FilePath),
+                    ThuImage = await File.ReadAllBytesAsync(wpBasicData.ThumbnailPath),
+                    Uid = wpBasicData.WallpaperUid,
+                    UserUid = App.User.Uid,
+                    Title = wpBasicData.Title,
+                    Type = (FileType)wpBasicData.FType,
+                    FileExtension = wpBasicData.FileExtension,
+                    PublishDate = wpBasicData.PublishDate,
+                    Publisher = App.User.Name,
+                    Partition = wpBasicData.Partition,
+                    Tags = wpBasicData.Tags,
+                    Description = wpBasicData.Desc,
+                    Status = WallpaperStatus.Auditing,
+                };
+                return dto;
+            }
+            catch (Exception ex) { }
+
+            return null;
+        }
+
+        private static async Task<Grpc_WpBasicData?> ToGrpcWpBasciDataThuAsync(WpBasicDataDto dto) {
+            try {
+                string dir = Path.Combine(Constants.CommonPaths.TempDir, dto.Uid);
+                if (!Directory.Exists(dir)) {
+                    Directory.CreateDirectory(dir);
+                }
+                string thumbnailPath = dto.Uid == string.Empty ? "" : Path.Combine(dir, dto.Uid + Constants.Field.ThumGifSuff);                
+                await File.WriteAllBytesAsync(thumbnailPath, dto.ThuImage);
+                Grpc_WpBasicData grpc_data = new() {
+                    AppInfo = new() {
+                        AppName = dto.AppName,
+                        AppVersion = dto.AppVersion,
+                        FileVersion = dto.FileVersion,
+                    },
+                    ThumbnailPath = thumbnailPath,
+                    WallpaperUid = dto.Uid,
+                    Title = dto.Title,
+                    FType = (Grpc_FileType)dto.Type,
+                    FileExtension = dto.FileExtension,
+                    PublishDate = dto.PublishDate,
+                    Authors = dto.Publisher,
+                    Partition = dto.Partition,
+                    Tags = dto.Tags ?? string.Empty,
+                    Desc = dto.Description ?? string.Empty,
+                    Status = (Grpc_WallpaperStatus)dto.Status,                    
+                };
+
+                return grpc_data;
+            }
+            catch (Exception ex) { }
+
+            return null;
+        }
+
         private readonly IAccountService _accountService = accountService;
+        //static readonly JsonSerializerOptions _serializeOptions = new() {
+        //    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        //    WriteIndented = true,
+        //};
     }
 }

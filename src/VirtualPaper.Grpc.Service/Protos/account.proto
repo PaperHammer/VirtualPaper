@@ -1,6 +1,7 @@
 syntax = "proto3";
 package VirtualPaper.Grpc.Service.Account;
 import "google/protobuf/empty.proto";
+import "Protos/models.proto";
 
 service Grpc_AccountService {
     rpc ChangePassword (ChangePasswordRequest) returns (ChangePasswordResponse);
@@ -11,6 +12,30 @@ service Grpc_AccountService {
     rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse);
     rpc SendEmailCode (SendEmailCodeRequest) returns (SendEmailCodeResponse);
     rpc UpdateUserInfo (UpdateUserInfoRequest) returns (UpdateUserInfoResponse);
+    rpc GetCloudLib (google.protobuf.Empty) returns (CloudLibResponse);
+    rpc GetPartitions (google.protobuf.Empty) returns (PartitionsResponse);
+    rpc UploadWallpaper (UplaodWallpaperRequest) returns (UploadWallpaperResponse);
+}
+
+message UplaodWallpaperRequest {
+    VirtualPaper.Grpc.Service.Models.Grpc_WpBasicData wp_basic_data = 1;
+}
+
+message UploadWallpaperResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message PartitionsResponse {
+    bool success = 1;
+    string message = 2;
+    repeated string partitions = 3;
+}
+
+message CloudLibResponse {
+    bool success = 1;
+    string message = 2;
+    repeated VirtualPaper.Grpc.Service.Models.Grpc_WpBasicData wallpapers = 3;
 }
 
 message UpdateUserInfoRequest{

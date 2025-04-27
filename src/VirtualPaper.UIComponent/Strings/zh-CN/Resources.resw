@@ -915,4 +915,13 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Account_Logout" xml:space="preserve">
     <value>退出登录</value>
   </data>
+  <data name="MenuFlyout_Text_DetailAndEditInfo" xml:space="preserve">
+    <value>详情与编辑</value>
+  </data>
+  <data name="MenuFlyout_Text_Downlaod" xml:space="preserve">
+    <value>下载</value>
+  </data>
+  <data name="App_UserNotLogin" xml:space="preserve">
+    <value>用户登录数据异常，尝试重新登录</value>
+  </data>
 </root>

@@ -1,5 +1,4 @@
 using System;
-using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -9,7 +8,6 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models.Cores.Interfaces;
-using Windows.ApplicationModel.DataTransfer;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -26,12 +24,10 @@ namespace VirtualPaper.AccountPanel.Views.UserCenterComponents {
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            if (this._accountPanel == null) {
-                this._accountPanel = e.Parameter as IAccountPanelBridge;
+            this._accountPanel = e.Parameter as IAccountPanelBridge;
 
-                _viewModel = ObjectProvider.GetRequiredService<CloudLibViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
-                this.DataContext = _viewModel;
-            }
+            _viewModel = ObjectProvider.GetRequiredService<CloudLibViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
+            this.DataContext = _viewModel;
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
@@ -97,18 +93,6 @@ namespace VirtualPaper.AccountPanel.Views.UserCenterComponents {
             }
         }
 
-        private void ItemsView_DragOver(object sender, DragEventArgs e) {
-            e.AcceptedOperation = DataPackageOperation.Copy;
-        }
-
-        private async void ItemsView_Drop(object sender, DragEventArgs e) {
-            if (e.DataView.Contains(StandardDataFormats.StorageItems)) {
-                var items = await e.DataView.GetStorageItemsAsync();
-                await _viewModel.DropFilesAsync(items);
-            }
-            e.Handled = true;
-        }
-
         private void ItemsViewer_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
             e.Handled = true;
         }
@@ -116,6 +100,5 @@ namespace VirtualPaper.AccountPanel.Views.UserCenterComponents {
         private IAccountPanelBridge _accountPanel;
         private CloudLibViewModel _viewModel;
         private IWpBasicData _data;
-        private SpringVector3NaturalMotionAnimation _springAnimation;
     }
 }

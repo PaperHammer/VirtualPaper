@@ -19,7 +19,7 @@ namespace VirtualPaper.Common.Utils.Files {
 
             foreach (var entry in _fileHeaderMap) {
                 if (headerHex.Contains(entry.Key, StringComparison.OrdinalIgnoreCase)
-                    && FileTypeToExtension[entry.Value].Contains(extension)) {
+                    && FileTypeToExtension[entry.Value].Contains(extension.ToLower())) {
                     return entry.Value;
                 }
             }

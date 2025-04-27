@@ -98,6 +98,15 @@ namespace VirtualPaper.GrpcServers {
 
             return await Task.FromResult(grpc_data);
         }
+
+        public override async Task<Grpc_WpBasicData> CreateMetadataBasicInMem(Grpc_CreateMetadataBasicRequest request, ServerCallContext context) {
+            var token = context.CancellationToken;
+            var data = _wpControl.CreateBasicDataInMem(request.FilePath, (FileType)request.FType, token);
+
+            Grpc_WpBasicData grpc_data = DataAssist.BasicDataToGrpcData(data);
+
+            return await Task.FromResult(grpc_data);
+        }
         #endregion
 
         #region utils

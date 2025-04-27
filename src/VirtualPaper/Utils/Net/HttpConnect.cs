@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using VirtualPaper.Models;
 using VirtualPaper.Models.AccountPanel;
+using VirtualPaper.Models.Net;
 using VirtualPaper.Utils.Net.Interfaces;
 
 namespace VirtualPaper.Utils.Net {
@@ -41,13 +42,13 @@ namespace VirtualPaper.Utils.Net {
                 var res = await _httpConnect.PostAsync($"/User/Register", jsonContent);
                 var response = await res.Content.ReadAsStringAsync();
                 msgRes = JsonSerializer.Deserialize<NetMessage>(response, _serializeOptions) ?? new();
-                
+
                 return msgRes;
             }
             catch (Exception ex) {
                 Debug.WriteLine(ex);
                 return msgRes;
-            }            
+            }
         }
 
         public async Task<NetMessage> RequestCodeAsync(string email) {
@@ -102,13 +103,68 @@ namespace VirtualPaper.Utils.Net {
             }
         }
 
-        static readonly HttpClient _httpConnect = new() {
-            BaseAddress = new Uri("http://127.0.0.1:5057"),     
-        };
+        public async Task<NetMessage> GetCloudLibAsync(long uid, string token) {
+            NetMessage msg = new();
 
+            try {
+                _httpConnect.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                var res = await _httpConnect.GetAsync($"/Wallpaper/GetCloud/{uid}");
+                var response = await res.Content.ReadAsByteArrayAsync();
+                //var response = await res.Content.ReadAsStringAsync();
+                msg = JsonSerializer.Deserialize<NetMessage>(response, _serializeOptions) ?? new();
+
+                return msg;
+            }
+            catch (Exception ex) {
+                Debug.WriteLine(ex);
+                return msg;
+            }
+        }
+
+        public async Task<NetMessage> GetPartitionsAsync(string token) {
+            NetMessage msg = new();
+
+            try {
+                _httpConnect.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                var res = await _httpConnect.GetAsync($"/Wallpaper/GetPartitions");
+                var response = await res.Content.ReadAsStringAsync();
+                msg = JsonSerializer.Deserialize<NetMessage>(response, _serializeOptions) ?? new();
+
+                return msg;
+            }
+            catch (Exception ex) {
+                Debug.WriteLine(ex);
+                return msg;
+            }
+        }
+
+        public async Task<NetMessage> UploadWallpaperAsync(WpBasicDataDto dto) {
+            NetMessage msg = new();
+
+            try {
+                _httpConnect.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", App.Token);
+                using StringContent jsonContent = new(
+                    JsonSerializer.Serialize(dto, WpBasicDataDtoContext.Default.WpBasicDataDto),
+                    Encoding.UTF8,
+                    "application/json");
+                var res = await _httpConnect.PostAsync($"/Wallpaper/UploadWallpaper", jsonContent);
+                var response = await res.Content.ReadAsStringAsync();
+                msg = JsonSerializer.Deserialize<NetMessage>(response, _serializeOptions) ?? new();
+
+                return msg;
+            }
+            catch (Exception ex) {
+                Debug.WriteLine(ex);
+                return msg;
+            }
+        }
+
+        static readonly HttpClient _httpConnect = new() {
+            BaseAddress = new Uri("http://127.0.0.1:5057"),
+        };
         static readonly JsonSerializerOptions _serializeOptions = new() {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
+            WriteIndented = true,
         };
     }
 }

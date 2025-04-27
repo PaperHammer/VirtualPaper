@@ -74,10 +74,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         internal async Task InitContentAsync() {
             try {
+                WpSettings.Instance.GetNotify().Loading(false, false);
                 LibraryWallpapers.Clear();
                 _uid2idx.Clear();
-                WpSettings.Instance.GetNotify().Loading(false, false, null);
-
+                
                 var loader = new AsyncLoader<IWpBasicData>(maxDegreeOfParallelism: 10, channelCapacity: 100);
                 await foreach (var data in loader.LoadItemsAsync(ProcessFolders, _wallpaperInstallFolders)) {
                     UpdateLib(data);
@@ -87,7 +87,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 WpSettings.Instance.GetNotify().ShowExp(ex);
             }
             finally {
-                WpSettings.Instance.GetNotify().Loaded(null);
+                WpSettings.Instance.GetNotify().Loaded();
             }
         }
 

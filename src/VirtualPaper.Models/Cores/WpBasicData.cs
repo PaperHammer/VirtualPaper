@@ -35,6 +35,7 @@ namespace VirtualPaper.Models.Cores {
         public bool IsSingleRType { get; set; } = false;
         public string Partition { get; set; } = string.Empty;
         public string Tags { get; set; } = string.Empty;
+        public WallpaperStatus Status { get; set; }
 
         public string FolderName { get; set; } = string.Empty;
         public string FolderPath { get; set; } = string.Empty;
@@ -157,5 +158,13 @@ namespace VirtualPaper.Models.Cores {
         public bool Equals(IWpBasicData? other) {
             return other != null && other.WallpaperUid == this.WallpaperUid && other.FilePath == this.FilePath;
         }
+    }
+
+    public enum WallpaperStatus {
+        None,
+        Normal,
+        Auditing,
+        Locked,
+        Deleted,
     }
 }

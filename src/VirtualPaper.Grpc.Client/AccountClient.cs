@@ -1,9 +1,11 @@
-﻿using GrpcDotNetNamedPipes;
+﻿using Google.Protobuf.WellKnownTypes;
+using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Account;
 using VirtualPaper.Models.AccountPanel;
+using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Grpc.Client {
     public class AccountClient : IAccountClient {
@@ -58,9 +60,32 @@ namespace VirtualPaper.Grpc.Client {
 
         public async Task<UpdateUserInfoResponse> UpdateUserInfoAsync(UserInfo newUserInfo, CancellationToken cancellationToken = default) {
             UpdateUserInfoRequest request = new() {
-                User = DataAssist.UserInfoTpGrpc(newUserInfo),
+                User = DataAssist.UserInfoToGrpc(newUserInfo),
             };
             var res = await _client.UpdateUserInfoAsync(request, cancellationToken: cancellationToken);
+            return res;
+        }
+
+        public async Task<CloudLibResponse> GetCloudLibAsync(CancellationToken cancellationToken = default) {
+            var res = await _client.GetCloudLibAsync(new Empty(), cancellationToken: cancellationToken);
+            return res;
+        }
+
+        public async Task<CloudLibResponse> GetCloudLibAsync() {
+            var res = await _client.GetCloudLibAsync(new Empty());
+            return res;
+        }
+
+        public async Task<PartitionsResponse> GetPartitionsAsync() {
+            var res = await _client.GetPartitionsAsync(new Empty());
+            return res;
+        }
+
+        public async Task<UploadWallpaperResponse> UploadWallpaperAsync(IWpBasicData wpBasicData, CancellationToken cancellationToken = default) {
+            UplaodWallpaperRequest request = new() {
+                WpBasicData = DataAssist.BasicDataToGrpcData(wpBasicData)
+            };
+            var res = await _client.UploadWallpaperAsync(request, cancellationToken: cancellationToken);
             return res;
         }
 

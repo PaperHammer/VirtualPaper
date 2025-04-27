@@ -28,6 +28,7 @@ using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.GrpcServers;
 using VirtualPaper.lang;
+using VirtualPaper.Models.AccountPanel;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
@@ -51,6 +52,8 @@ namespace VirtualPaper {
         internal static JobService Jobs => Services.GetRequiredService<JobService>();
         internal static IHttpConnect HttpConnect => new HttpConnect();
         internal static IUserSettingsService UserSettings => Services.GetRequiredService<IUserSettingsService>();
+        internal static UserInfo? User { get; set; }
+        internal static string? Token { get; set; }
 
         public static IServiceProvider Services {
             get {

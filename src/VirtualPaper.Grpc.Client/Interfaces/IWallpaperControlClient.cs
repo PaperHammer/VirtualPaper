@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using VirtualPaper.Common;
+﻿using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -26,6 +25,8 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         #region data
         Task<Grpc_WpBasicData?> CreateBasicDataAsync(string sourceFilePath, FileType ftype, CancellationToken token = default);
         IWpMetadata GetWpMetadataByMonitorThu(string thumbnailPath);
+        Task<Grpc_WpBasicData> CreateBasicDataInMemAsync(string filePath, FileType ftype, CancellationToken token);
+
         #endregion
 
         #region utils

@@ -129,6 +129,5 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         private IWpSettingsPanel _wpSettingsPanel;
         private LibraryContentsViewModel _viewModel;
         private IWpBasicData _data;
-        private SpringVector3NaturalMotionAnimation _springAnimation;
     }
 }

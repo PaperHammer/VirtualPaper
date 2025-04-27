@@ -118,8 +118,23 @@ namespace VirtualPaper.Grpc.Client {
 
             return grpc_data;
         }
+
         public IWpMetadata GetWpMetadataByMonitorThu(string thumbnailPath) {
             return _wallpapers.Find(x => x.BasicData.ThumbnailPath == thumbnailPath)!;
+        }
+
+        public async Task<Grpc_WpBasicData> CreateBasicDataInMemAsync(
+            string filePath, 
+            FileType ftype, 
+            CancellationToken token) {
+            Grpc_WpBasicData grpc_data = await _client.CreateMetadataBasicInMemAsync(
+                new Grpc_CreateMetadataBasicRequest() {
+                    FilePath = filePath,
+                    FType = (Grpc_FileType)ftype
+                },
+                cancellationToken: token);
+
+            return grpc_data;
         }
         #endregion
 

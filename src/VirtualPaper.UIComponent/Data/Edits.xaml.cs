@@ -25,14 +25,14 @@ namespace VirtualPaper.UIComponent.Data {
             set { SetValue(TitleProperty, value); }
         }
         public static readonly DependencyProperty TitleProperty =
-            DependencyProperty.Register("Title", typeof(string), typeof(Edits), new PropertyMetadata(string.Empty));
+            DependencyProperty.Register(nameof(Title), typeof(string), typeof(Edits), new PropertyMetadata(string.Empty));
 
         public string Desc {
             get { return (string)GetValue(DescProperty); }
             set { SetValue(DescProperty, value); }
         }
         public static readonly DependencyProperty DescProperty =
-            DependencyProperty.Register("Desc", typeof(string), typeof(Edits), new PropertyMetadata(string.Empty));
+            DependencyProperty.Register(nameof(Desc), typeof(string), typeof(Edits), new PropertyMetadata(string.Empty));
 
         public ObservableCollection<string> TagList { get; set; }
 

@@ -21,7 +21,7 @@ namespace VirtualPaper.DataAssistor {
             };
         }
 
-        public static Grpc_UserInfo? UserInfoTpGrpc(UserInfo? userInfo) {
+        public static Grpc_UserInfo? UserInfoToGrpc(UserInfo? userInfo) {
             if (userInfo == null) return null;
 
             Grpc_UserInfo grpc_UserInfo = new() {

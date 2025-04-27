@@ -1,8 +1,10 @@
-using System.Threading.Tasks;
+using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.AccountPanel.ViewModels;
+using VirtualPaper.AccountPanel.Views.UserCenterComponents;
 using VirtualPaper.AccountPanel.Views.Utils;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
@@ -30,7 +32,7 @@ namespace VirtualPaper.AccountPanel.Views {
         #region nav
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
-            _viewModel = ObjectProvider.GetRequiredService<UserCenterViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            _viewModel = ObjectProvider.GetRequiredService<UserCenterViewModel>(ObjectLifetime.Transient, ObjectLifetime.Singleton);
             _viewModel.User ??= (e.Parameter as IAccountPanelBridge).GetSharedData() as UserInfo;
         }
         #endregion
@@ -55,7 +57,19 @@ namespace VirtualPaper.AccountPanel.Views {
         }
 
         private void SelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args) {
+            SelectorBarItem selectedItem = sender.SelectedItem;
+            int currentSelectedIndex = sender.Items.IndexOf(selectedItem);
 
+            Type pageType = currentSelectedIndex switch {
+                0 => typeof(CloudLib),
+                1 => typeof(Upload),
+                _ => null,
+            };
+            var slideNavigationTransitionEffect = currentSelectedIndex - _previousSelectedIndex > 0 ? SlideNavigationTransitionEffect.FromRight : SlideNavigationTransitionEffect.FromLeft;
+
+            ContentFrame.Navigate(pageType, this, new SlideNavigationTransitionInfo() { Effect = slideNavigationTransitionEffect });
+
+            _previousSelectedIndex = currentSelectedIndex;
         }
 
         #region bridge
@@ -74,6 +88,7 @@ namespace VirtualPaper.AccountPanel.Views {
         public void Log(LogType type, object message) => Account.Instance.Log(type, message);
         #endregion
 
+        private int _previousSelectedIndex = 0;
         private UserCenterViewModel _viewModel;
         private object _sharedData;
         public readonly string _selBarItem1;

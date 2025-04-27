@@ -25,7 +25,6 @@ using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 using WinEventHook;
 using static VirtualPaper.Common.Errors;
-// todo: player 有概率在非主屏无法显示;
 
 namespace VirtualPaper.Cores.WpControl {
     public partial class WallpaperControl : IWallpaperControl {
@@ -544,7 +543,7 @@ namespace VirtualPaper.Cores.WpControl {
                 data.IsSubscribed = true;
 
                 // 创建随机不重复文件夹，并更新 folderPath
-                folderName = folderName ?? Path.GetRandomFileName();
+                folderName ??= Path.GetRandomFileName();
                 data.FolderName = folderName;
                 data.WallpaperUid = "LCL" + folderName;
                 folderPath = Path.Combine(_userSettings.Settings.WallpaperDir, folderName);
@@ -575,6 +574,78 @@ namespace VirtualPaper.Cores.WpControl {
                 if (isAutoSave) {
                     data.Save();
                 }
+                #endregion
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested) {
+                if (Directory.Exists(folderPath)) {
+                    Directory.Delete(folderPath, true);
+                }
+
+                throw;
+            }
+            catch (Exception ex) {
+                App.Log.Error(ex);
+
+                if (Directory.Exists(folderPath)) {
+                    Directory.Delete(folderPath, true);
+                }
+
+                throw;
+            }
+
+            return data;
+        }
+        
+        public IWpBasicData CreateBasicDataInMem(
+            string filePath,
+            FileType ftype,
+            CancellationToken token = default,
+            string? folderName = null,
+            bool isAutoSave = true) {
+            WpBasicData data = new();
+            string folderPath = string.Empty;
+
+            try {
+                data.FType = ftype;
+                data.AppInfo = new() {
+                    AppName = _userSettings.Settings.AppName,
+                    AppVersion = _userSettings.Settings.AppVersion,
+                    FileVersion = _userSettings.Settings.FileVersion,
+                };
+                data.IsSubscribed = true;
+
+                // 创建随机不重复文件夹，并更新 folderPath
+                folderName ??= Path.GetRandomFileName();
+                data.FolderName = folderName;
+                data.WallpaperUid = folderName;
+                folderPath = Path.Combine(Constants.CommonPaths.TempDir, folderName);
+                //data.FolderPath = folderPath;
+
+                //// 创建壁纸存储路径与自定义配置文件路径,将原壁纸复制到 folder 下                
+                Directory.CreateDirectory(folderPath);
+                //string destFilePath = Path.Combine(folderPath, folderName + Path.GetExtension(filePath));
+                //if (filePath != destFilePath) {
+                //    File.Copy(filePath, destFilePath, true);
+                //}
+                data.FilePath = filePath;
+
+                #region 创建展示缩略图
+                string thumbnailPath = Path.Combine(folderPath, folderName + Constants.Field.ThumGifSuff);
+                WallpaperUtil.CreateGif(filePath, thumbnailPath, ftype, token);
+                data.ThumbnailPath = thumbnailPath;
+                #endregion
+
+                #region 文件元数据
+                var fileProperty = WallpaperUtil.GetWpProperty(filePath, ftype);
+                data.Resolution = fileProperty.Resolution;
+                data.AspectRatio = fileProperty.AspectRatio;
+                data.FileSize = fileProperty.FileSize;
+                data.FileExtension = fileProperty.FileExtension;
+
+                //string basicDatafilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
+                //if (isAutoSave) {
+                //    data.Save();
+                //}
                 #endregion
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested) {

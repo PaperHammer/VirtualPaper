@@ -106,7 +106,7 @@
                 Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                 HorizontalAlignment="Stretch">
                 <SelectorBarItem x:Name="s1" Text="{x:Bind _selBarItem1}" Tag="CloudView" IsSelected="True"/>
-                <SelectorBarItem x:Name="s2" Text="{x:Bind _selBarItem2}" Tag="StarView"/>
+                <!--<SelectorBarItem x:Name="s2" Text="{x:Bind _selBarItem2}" Tag="StarView"/>-->
                 <SelectorBarItem x:Name="s3" Text="{x:Bind _selBarItem3}" Tag="UplaodView"/>
             </SelectorBar>
 

@@ -177,6 +177,10 @@ namespace VirtualPaper.Common {
         Passport,
         UserCenter,
     }
+    
+    public enum GalleryPanelState {
+        WallpaperLib
+    }
     #endregion
 
     #region common

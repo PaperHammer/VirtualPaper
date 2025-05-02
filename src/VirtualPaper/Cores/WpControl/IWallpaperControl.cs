@@ -41,21 +41,21 @@ namespace VirtualPaper.Cores.WpControl {
         (string?, RuntimeType?) GetPrimaryWpFilePathRType();
         IWpMetadata GetWallpaperByFolderPath(string folderPath, string monitorContent, string rtype);
         IWpBasicData GetWpBasicDataByForlderPath(string folderPath);
-        bool AdjustWallpaper(string monitorDeviceId, CancellationToken toke);
-        Task<bool> PreviewWallpaperAsync(string monitorDeviceId, IWpPlayerData wpPlayingData, CancellationToken toke);
+        bool AdjustWallpaper(string monitorDeviceId, CancellationToken token = default);
+        Task<bool> PreviewWallpaperAsync(string monitorDeviceId, IWpPlayerData wpPlayingData, CancellationToken toke = default);
         Task ResetWallpaperAsync();
         Grpc_RestartWallpaperResponse RestoreWallpaper();
-        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, CancellationToken token, bool fromPreview = false);
+        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, CancellationToken token = default, bool fromPreview = false);
         void SeekWallpaper(IWpPlayerData data, float seek, PlaybackPosType type);
         void SeekWallpaper(IMonitor monitor, float seek, PlaybackPosType type);
         void SendMessageWallpaper(IMonitor monitor, string folderPath, string ipcMsg);
         #endregion
 
         #region data
-        IWpBasicData CreateBasicData(string filePath, FileType ftype, CancellationToken token, string? folderName = null, bool isAutoSave = true);
-        IWpBasicData CreateBasicDataInMem(string filePath, FileType ftype, CancellationToken token, string? folderName = null, bool isAutoSave = true);
+        IWpBasicData CreateBasicData(string filePath, FileType ftype, string? folderName = null, bool isAutoSave = true, CancellationToken token = default);
+        IWpBasicData CreateBasicDataInMem(string filePath, FileType ftype, string? folderName = null, bool isAutoSave = true, CancellationToken token = default);
         IWpRuntimeData CreateRuntimeData(string filePath, string folderPath, RuntimeType rtype, bool isPreview, string monitorContent);
-        Task<IWpBasicData> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype);
+        Task<IWpBasicData> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype, CancellationToken token = default);
         #endregion
 
         #region utils

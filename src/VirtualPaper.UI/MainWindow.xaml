@@ -65,12 +65,12 @@
             IsBackEnabled="False"
             IsBackButtonVisible="Collapsed">
             <NavigationView.MenuItems>
-                <!--<NavigationViewItem 
+                <NavigationViewItem 
                     Content="{Binding SidebarGallery}"
                     x:Name="Gallery"
                     Icon="Library"
                     IsSelected="True">
-                </NavigationViewItem>-->
+                </NavigationViewItem>
                 <NavigationViewItem 
                     Content="{Binding SidebarWpSettings}" 
                     x:Name="Nav_WpSettings">

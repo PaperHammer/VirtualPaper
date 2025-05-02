@@ -61,7 +61,7 @@ namespace VirtualPaper.AccountPanel.Views {
             int currentSelectedIndex = sender.Items.IndexOf(selectedItem);
 
             Type pageType = currentSelectedIndex switch {
-                0 => typeof(CloudLib),
+                0 => typeof(PersonalCloudLib),
                 1 => typeof(Upload),
                 _ => null,
             };

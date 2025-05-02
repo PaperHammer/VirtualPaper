@@ -103,12 +103,12 @@ namespace VirtualPaper.Utils.Net {
             }
         }
 
-        public async Task<NetMessage> GetCloudLibAsync(long uid, string token) {
+        public async Task<NetMessage> GetPersonalCloudLibAsync(long uid, string token) {
             NetMessage msg = new();
 
             try {
                 _httpConnect.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                var res = await _httpConnect.GetAsync($"/Wallpaper/GetCloud/{uid}");
+                var res = await _httpConnect.GetAsync($"/Wallpaper/GetPersonalCloud/{uid}");
                 var response = await res.Content.ReadAsByteArrayAsync();
                 //var response = await res.Content.ReadAsStringAsync();
                 msg = JsonSerializer.Deserialize<NetMessage>(response, _serializeOptions) ?? new();
@@ -149,6 +149,40 @@ namespace VirtualPaper.Utils.Net {
                     "application/json");
                 var res = await _httpConnect.PostAsync($"/Wallpaper/UploadWallpaper", jsonContent);
                 var response = await res.Content.ReadAsStringAsync();
+                msg = JsonSerializer.Deserialize<NetMessage>(response, _serializeOptions) ?? new();
+
+                return msg;
+            }
+            catch (Exception ex) {
+                Debug.WriteLine(ex);
+                return msg;
+            }
+        }
+
+        public async Task<NetMessage> GetCloudLibAsync(string searchKey) {
+            NetMessage msg = new();
+
+            try {
+                //_httpConnect.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                var res = await _httpConnect.GetAsync($"/Wallpaper/GetCloud/{searchKey}");
+                var response = await res.Content.ReadAsByteArrayAsync();
+                //var response = await res.Content.ReadAsStringAsync();
+                msg = JsonSerializer.Deserialize<NetMessage>(response, _serializeOptions) ?? new();
+
+                return msg;
+            }
+            catch (Exception ex) {
+                Debug.WriteLine(ex);
+                return msg;
+            }
+        }
+
+        public async Task<NetMessage> GetWpSourceDataByWpUidAsync(string wallpaperUid) {
+            NetMessage msg = new();
+
+            try {
+                var res = await _httpConnect.GetAsync($"/Wallpaper/GetWpSourceData/{wallpaperUid}");
+                var response = await res.Content.ReadAsByteArrayAsync();
                 msg = JsonSerializer.Deserialize<NetMessage>(response, _serializeOptions) ?? new();
 
                 return msg;

@@ -6,10 +6,45 @@ using VirtualPaper.Models;
 using VirtualPaper.Models.AccountPanel;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.Net;
 using Monitor = VirtualPaper.Models.Cores.Monitor;
 
 namespace VirtualPaper.DataAssistor {
     public static class DataAssist {
+        public static async Task<Grpc_WpBasicData?> ToGrpcWpBasciDataThuAsync(WpBasicDataDto dto) {
+            try {
+                string dir = Path.Combine(Constants.CommonPaths.TempDir, dto.Uid);
+                if (!Directory.Exists(dir)) {
+                    Directory.CreateDirectory(dir);
+                }
+                string thumbnailPath = dto.Uid == string.Empty ? "" : Path.Combine(dir, dto.Uid + Constants.Field.ThumGifSuff);
+                await File.WriteAllBytesAsync(thumbnailPath, dto.ThuImage);
+                Grpc_WpBasicData grpc_data = new() {
+                    AppInfo = new() {
+                        AppName = dto.AppName,
+                        AppVersion = dto.AppVersion,
+                        FileVersion = dto.FileVersion,
+                    },
+                    ThumbnailPath = thumbnailPath,
+                    WallpaperUid = dto.Uid,
+                    Title = dto.Title,
+                    FType = (Grpc_FileType)dto.Type,
+                    FileExtension = dto.FileExtension,
+                    PublishDate = dto.PublishDate,
+                    Authors = dto.Publisher,
+                    Partition = dto.Partition,
+                    Tags = dto.Tags ?? string.Empty,
+                    Desc = dto.Description ?? string.Empty,
+                    Status = (Grpc_WallpaperStatus)dto.Status,
+                };
+
+                return grpc_data;
+            }
+            catch (Exception ex) { }
+
+            return null;
+        }
+
         public static UserInfo? FromGrpcUserInfo(Grpc_UserInfo? grpcUser) {
             if (grpcUser == null) return null;
 
@@ -63,7 +98,7 @@ namespace VirtualPaper.DataAssistor {
                 AspectRatio = source.AspectRatio,
                 FileSize = source.FileSize,
                 FileExtension = source.FileExtension,
-                
+
             };
 
             return grpc_WpBasicData;

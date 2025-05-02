@@ -40,10 +40,6 @@ namespace VirtualPaper.AppSettingsPanel
             return _windowBridge.GetWindowHandle();
         }
 
-        public object GetParam() {
-            return _param;
-        }
-
         public INoifyBridge GetNotify() {
             return _windowBridge.GetNotify();
         }
@@ -73,8 +69,6 @@ namespace VirtualPaper.AppSettingsPanel
 
         private int _previousSelectedIndex = 0;
         private IWindowBridge _windowBridge;
-        private object _param;
-
         public readonly string _selBarItem1;
         public readonly string _selBarItem2;
         public readonly string _selBarItem3;

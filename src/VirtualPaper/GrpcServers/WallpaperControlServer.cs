@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.WpControl;
@@ -62,7 +61,8 @@ namespace VirtualPaper.GrpcServers {
 
         public override async Task<Grpc_PreviewWallpaperResponse> PreviewWallpaper(Grpc_PreviewWallpaperRequest request, ServerCallContext context) {
             var playingData = DataAssist.GrpcToPlayerData(request.WpPlayerData);
-            bool isOk = await _wpControl.PreviewWallpaperAsync(request.MonitorDeviceId, playingData, context.CancellationToken);
+            bool isOk = await _wpControl.PreviewWallpaperAsync(
+                request.MonitorDeviceId == string.Empty ? _monitorManager.PrimaryMonitor.DeviceId : request.MonitorDeviceId, playingData, context.CancellationToken);
             Grpc_PreviewWallpaperResponse response = new() {
                 IsOk = isOk,
             };
@@ -91,8 +91,7 @@ namespace VirtualPaper.GrpcServers {
 
         #region data
         public override async Task<Grpc_WpBasicData> CreateMetadataBasic(Grpc_CreateMetadataBasicRequest request, ServerCallContext context) {
-            var token = context.CancellationToken;
-            var data = _wpControl.CreateBasicData(request.FilePath, (FileType)request.FType, token);
+            var data = _wpControl.CreateBasicData(request.FilePath, (FileType)request.FType, token: context.CancellationToken);
 
             Grpc_WpBasicData grpc_data = DataAssist.BasicDataToGrpcData(data);
 
@@ -100,8 +99,7 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override async Task<Grpc_WpBasicData> CreateMetadataBasicInMem(Grpc_CreateMetadataBasicRequest request, ServerCallContext context) {
-            var token = context.CancellationToken;
-            var data = _wpControl.CreateBasicDataInMem(request.FilePath, (FileType)request.FType, token);
+            var data = _wpControl.CreateBasicDataInMem(request.FilePath, (FileType)request.FType, token: context.CancellationToken);
 
             Grpc_WpBasicData grpc_data = DataAssist.BasicDataToGrpcData(data);
 
@@ -150,12 +148,12 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override async Task<Grpc_WpBasicData> UpdateBasicData(Grpc_UpdateBasicDataRequest request, ServerCallContext context) {
-            var token = context.CancellationToken;
             var data = await _wpControl.UpdateBasicDataAsync(
                 request.FolderPath,
                 request.FolderName,
                 request.FilePath,
-                (FileType)request.FType);
+                (FileType)request.FType,
+                context.CancellationToken);
             Grpc_WpBasicData grpc_data = DataAssist.BasicDataToGrpcData(data);
 
             return await Task.FromResult(grpc_data);

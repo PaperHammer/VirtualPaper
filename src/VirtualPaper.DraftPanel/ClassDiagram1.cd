@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="VirtualPaper.DraftPanel.Views.ConfigSpace">
+    <Position X="3" Y="3.75" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAgAAEAACQQAASAARAAQggAEQAAAEECQBMAAA=</HashCode>
+      <FileName>Views\ConfigSpace.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.DraftPanel.Views.ConfigSpaceComponents.GetStart" Collapsed="true">
+    <Position X="5.5" Y="2.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>ARAQAAACAAQAAABQAAAAAJwAgBAQAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Views\ConfigSpaceComponents\GetStart.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.DraftPanel.Views.ConfigSpaceComponents.DraftConfig" Collapsed="true">
+    <Position X="5.5" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAAAAAAAAQAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Views\ConfigSpaceComponents\DraftConfig.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.DraftPanel.Views.ConfigSpaceComponents.ProjectConfig" Collapsed="true">
+    <Position X="5.5" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAQAAAAAgQAAAJQAAAAAAQAABAQIAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Views\ConfigSpaceComponents\ProjectConfig.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.DraftPanel.ViewModels.ConfigSpaceViewModel">
+    <Position X="0.5" Y="3.75" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAYAAAgGAAgAAACQAAwAAAAQAAAAAEAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\ConfigSpaceViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VirtualPaper.DraftPanel.ViewModels.GetStartViewModel" Collapsed="true">
+    <Position X="7.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAQCAAAAAYAAAEAAIAAABAAAAAQAAAIAAAAAAAA=</HashCode>
+      <FileName>ViewModels\GetStartViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VirtualPaper.DraftPanel.ViewModels.DraftConfigViewModel" Collapsed="true">
+    <Position X="7.75" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAQAAABAASIFIFIKiwAAAABgAAAYEQQAAAEDAkAAQA=</HashCode>
+      <FileName>ViewModels\DraftConfigViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VirtualPaper.DraftPanel.ViewModels.ProjectConfigViewModel" Collapsed="true">
+    <Position X="7.75" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAEAAIAIBACAQAAEABAAAggkAABAAEDAkIIAg=</HashCode>
+      <FileName>ViewModels\ProjectConfigViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VirtualPaper.Models.DraftPanel.Startup">
+    <Position X="10" Y="0.5" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="VirtualPaper.Models.DraftPanel.RecentUsed">
+    <Position X="10" Y="3" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="VirtualPaper.Models.DraftPanel.ProjectTemplate">
+    <Position X="10" Y="5.75" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="Workloads.Creation.StaticImg.MainPage">
+    <Position X="7.5" Y="11.75" Width="1.5" />
+    <TypeIdentifier />
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.DraftPanel.Views.WorkSpace">
+    <Position X="4.25" Y="11.25" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAACAAQCEAAAASAgAAAAQAAAAAAAAAAAAAgQAAABA=</HashCode>
+      <FileName>Views\WorkSpace.xaml.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="WorkSpaceViewModel" />
+      <Property Name="MainPage" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.DraftPanel.ViewModels.WorkSpaceViewModel">
+    <Position X="0.75" Y="11.25" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>CAAKAgIAAAGQAADEEAAAAAAAAIAAAAAAECAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\WorkSpaceViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Microsoft YaHei UI" Size="9.5" />
+</ClassDiagram>

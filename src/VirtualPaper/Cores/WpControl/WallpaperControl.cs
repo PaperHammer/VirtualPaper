@@ -138,7 +138,7 @@ namespace VirtualPaper.Cores.WpControl {
             return data;
         }
 
-        public bool AdjustWallpaper(string monitorDeviceId, CancellationToken token) {
+        public bool AdjustWallpaper(string monitorDeviceId, CancellationToken token = default) {
             if (string.IsNullOrEmpty(monitorDeviceId)) {
                 monitorDeviceId = _monitorManager.PrimaryMonitor.DeviceId;
             }
@@ -153,7 +153,7 @@ namespace VirtualPaper.Cores.WpControl {
             return false;
         }
 
-        public async Task<bool> PreviewWallpaperAsync(string monitorDeviceId, IWpPlayerData data, CancellationToken token) {
+        public async Task<bool> PreviewWallpaperAsync(string monitorDeviceId, IWpPlayerData data, CancellationToken token = default) {
             _previews.TryGetValue((data.WallpaperUid, data.RType), out IWpPlayer? instance);
             if (instance != null) {
                 instance.SendMessage(new VirtualPaperActiveCmd());
@@ -527,9 +527,9 @@ namespace VirtualPaper.Cores.WpControl {
         public IWpBasicData CreateBasicData(
             string filePath,
             FileType ftype,
-            CancellationToken token = default,
             string? folderName = null,
-            bool isAutoSave = true) {
+            bool isAutoSave = true,
+            CancellationToken token = default) {
             WpBasicData data = new();
             string folderPath = string.Empty;
 
@@ -598,10 +598,10 @@ namespace VirtualPaper.Cores.WpControl {
         
         public IWpBasicData CreateBasicDataInMem(
             string filePath,
-            FileType ftype,
-            CancellationToken token = default,
+            FileType ftype,            
             string? folderName = null,
-            bool isAutoSave = true) {
+            bool isAutoSave = true,
+            CancellationToken token = default) {
             WpBasicData data = new();
             string folderPath = string.Empty;
 
@@ -783,8 +783,9 @@ namespace VirtualPaper.Cores.WpControl {
             string folderPath,
             string folderName,
             string filePath,
-            FileType ftype) {
-            IWpBasicData newData = CreateBasicData(filePath, ftype, folderName: folderName, isAutoSave: false)
+            FileType ftype,
+            CancellationToken token = default) {
+            IWpBasicData newData = CreateBasicData(filePath, ftype, token: token, folderName: folderName, isAutoSave: false)
                 ?? throw new Exception("Create basic-data error");
 
             try {

@@ -13,7 +13,6 @@
     <None Remove="Views\PassportComponents\Login.xaml" />
     <None Remove="Views\PassportComponents\Register.xaml" />
     <None Remove="Views\UserCenter.xaml" />
-    <None Remove="Views\UserCenterComponents\CloudLib.xaml" />
     <None Remove="Views\UserCenterComponents\Upload.xaml" />
     <None Remove="Views\Utils\UserInfoEdit.xaml" />
   </ItemGroup>
@@ -58,7 +57,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Page Update="Views\UserCenterComponents\CloudLib.xaml">
+    <Page Update="Views\UserCenterComponents\PersonalCloudLib.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

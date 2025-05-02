@@ -70,6 +70,19 @@ namespace VirtualPaper.Grpc.Client {
             return response.IsOk;
         }
 
+        public async Task<bool> PreviewWallpaperAsync(IWpBasicData data, RuntimeType rtype, CancellationToken token) {
+            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
+
+            var response = await _client.PreviewWallpaperAsync(
+                new Grpc_PreviewWallpaperRequest() {
+                    WpPlayerData = wpPlayerdata,
+                    MonitorDeviceId = string.Empty,
+                },
+                cancellationToken: token);
+
+            return response.IsOk;
+        }
+
         public async Task<bool> PreviewWallpaperAsync(string monitorDeviceId, IWpBasicData data, RuntimeType rtype, CancellationToken token) {
             Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
 
@@ -108,11 +121,12 @@ namespace VirtualPaper.Grpc.Client {
         public async Task<Grpc_WpBasicData?> CreateBasicDataAsync(
             string filePath,
             FileType ftype,
-            CancellationToken token) {
+            CancellationToken token,
+            bool isTemp = false) {
             Grpc_WpBasicData grpc_data = await _client.CreateMetadataBasicAsync(
                 new Grpc_CreateMetadataBasicRequest() {
                     FilePath = filePath,
-                    FType = (Grpc_FileType)ftype
+                    FType = (Grpc_FileType)ftype,
                 },
                 cancellationToken: token);
 

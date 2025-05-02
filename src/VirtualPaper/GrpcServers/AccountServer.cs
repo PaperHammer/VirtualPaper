@@ -10,6 +10,8 @@ using VirtualPaper.Models.AccountPanel;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Net;
 using VirtualPaper.Services.Interfaces;
+using VirtualPaper.Utils;
+using static VirtualPaper.Common.Utils.Archive.ZipUtil;
 
 namespace VirtualPaper.GrpcServers {
     internal class AccountServer(
@@ -80,14 +82,14 @@ namespace VirtualPaper.GrpcServers {
             return response;
         }
 
-        public override async Task<CloudLibResponse> GetCloudLib(Empty request, ServerCallContext context) {
-            var data = await _accountService.GetCloudLibAsync();
-            var wallpapers = data.Data == null ? null : JsonSerializer.Deserialize<List<WpBasicDataDto>>(
+        public override async Task<PersonalCloudLibResponse> GetPersonalCloudLib(Empty request, ServerCallContext context) {
+            var data = await _accountService.GetPersonalCloudLibAsync();
+            var wallpapers = data.Data == null ? null : JsonSerializer.Deserialize(
                 data.Data.ToString(),
                 WpBasicDataDtoContext.Default.ListWpBasicDataDto);
-            var tasks = wallpapers?.Select(async wp => await ToGrpcWpBasciDataThuAsync(wp));
+            var tasks = wallpapers?.Select(async wp => await DataAssist.ToGrpcWpBasciDataThuAsync(wp));
             var grpcWallpapers = tasks == null ? [] : await Task.WhenAll(tasks);
-            var response = new CloudLibResponse {
+            var response = new PersonalCloudLibResponse {
                 Success = data.Code == 1,
                 Message = data.MsgKey,
                 Wallpapers = { grpcWallpapers },
@@ -144,48 +146,13 @@ namespace VirtualPaper.GrpcServers {
                     Partition = wpBasicData.Partition,
                     Tags = wpBasicData.Tags,
                     Description = wpBasicData.Desc,
-                    Status = WallpaperStatus.Auditing,
                 };
                 return dto;
             }
             catch (Exception ex) { }
 
             return null;
-        }
-
-        private static async Task<Grpc_WpBasicData?> ToGrpcWpBasciDataThuAsync(WpBasicDataDto dto) {
-            try {
-                string dir = Path.Combine(Constants.CommonPaths.TempDir, dto.Uid);
-                if (!Directory.Exists(dir)) {
-                    Directory.CreateDirectory(dir);
-                }
-                string thumbnailPath = dto.Uid == string.Empty ? "" : Path.Combine(dir, dto.Uid + Constants.Field.ThumGifSuff);                
-                await File.WriteAllBytesAsync(thumbnailPath, dto.ThuImage);
-                Grpc_WpBasicData grpc_data = new() {
-                    AppInfo = new() {
-                        AppName = dto.AppName,
-                        AppVersion = dto.AppVersion,
-                        FileVersion = dto.FileVersion,
-                    },
-                    ThumbnailPath = thumbnailPath,
-                    WallpaperUid = dto.Uid,
-                    Title = dto.Title,
-                    FType = (Grpc_FileType)dto.Type,
-                    FileExtension = dto.FileExtension,
-                    PublishDate = dto.PublishDate,
-                    Authors = dto.Publisher,
-                    Partition = dto.Partition,
-                    Tags = dto.Tags ?? string.Empty,
-                    Desc = dto.Description ?? string.Empty,
-                    Status = (Grpc_WallpaperStatus)dto.Status,                    
-                };
-
-                return grpc_data;
-            }
-            catch (Exception ex) { }
-
-            return null;
-        }
+        }        
 
         private readonly IAccountService _accountService = accountService;
         //static readonly JsonSerializerOptions _serializeOptions = new() {

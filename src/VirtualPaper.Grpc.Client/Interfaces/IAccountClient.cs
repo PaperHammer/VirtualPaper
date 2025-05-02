@@ -12,7 +12,7 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         //Task<LogoutResponse> LogoutAsync();
         Task<bool> IsLoginAsync(CancellationToken cancellationToken = default);
         Task<UpdateUserInfoResponse> UpdateUserInfoAsync(UserInfo newUserInfo, CancellationToken cancellationToken = default);
-        Task<CloudLibResponse> GetCloudLibAsync();
+        Task<PersonalCloudLibResponse> GetPersonalCloudLibAsync(CancellationToken cancellationToken = default);
         Task<PartitionsResponse> GetPartitionsAsync();
         Task<UploadWallpaperResponse> UploadWallpaperAsync(IWpBasicData wpBasicData, CancellationToken cancellationToken = default);
     }

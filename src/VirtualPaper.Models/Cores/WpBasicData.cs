@@ -152,7 +152,7 @@ namespace VirtualPaper.Models.Cores {
         }
 
         public bool IsAvailable() {
-            return this.WallpaperUid != string.Empty && this.AppInfo.AppVersion != string.Empty && this.FileSize != string.Empty && this.ThumbnailPath != string.Empty;
+            return this.FType != FileType.FUnknown && this.WallpaperUid != string.Empty && this.AppInfo.AppVersion != string.Empty && this.ThumbnailPath != string.Empty;
         }
 
         public bool Equals(IWpBasicData? other) {
@@ -161,10 +161,9 @@ namespace VirtualPaper.Models.Cores {
     }
 
     public enum WallpaperStatus {
-        None,
-        Normal,
-        Auditing,
         Locked,
+        Normal,
+        Auditing,        
         Deleted,
     }
 }

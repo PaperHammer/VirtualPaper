@@ -33,16 +33,16 @@ namespace VirtualPaper.PlayerWeb {
             SetupUnhandledExceptionLogging();
 
             //string s = "a " +
-            //    //"--is-preview " +
+            //    "--is-preview " +
             //    "--left 0 " +
             //    "--top 0 " +
             //    "--right 2560 " +
             //    "--bottom 1600 " +
-            //    "-f C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\q3zqwwix.t2l.jpg " +
-            //    "-b C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\wp_metadata_basic.json " +
-            //    "-e C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\1\\RImage\\wpEffectFilePathUsing.json " +
-            //    "--effect-file-path-temporary C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\1\\RImage\\wpEffectFilePathTemporary.json " +
-            //    "--effect-file-path-template C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\q3zqwwix.t2l\\wpEffectFilePathTemplate.json " +
+            //    "-f C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\temp\\4dfj1bgy.zl5\\4dfj1bgy.zl5.JPG " +
+            //    "-b C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\temp\\4dfj1bgy.zl5\\wp_metadata_basic.json " +
+            //    "-e C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\temp\\4dfj1bgy.zl5\\1\\RImage\\wpEffectFilePathUsing.json " +
+            //    "--effect-file-path-temporary C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\temp\\4dfj1bgy.zl5\\1\\RImage\\wpEffectFilePathTemporary.json " +
+            //    "--effect-file-path-template C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\temp\\4dfj1bgy.zl5\\wpEffectFilePathTemplate.json " +
             //    "-r RImage " +
             //    "--system-backdrop Default " +
             //    "-t Light " +

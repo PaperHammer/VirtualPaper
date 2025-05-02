@@ -12,7 +12,7 @@ service Grpc_AccountService {
     rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse);
     rpc SendEmailCode (SendEmailCodeRequest) returns (SendEmailCodeResponse);
     rpc UpdateUserInfo (UpdateUserInfoRequest) returns (UpdateUserInfoResponse);
-    rpc GetCloudLib (google.protobuf.Empty) returns (CloudLibResponse);
+    rpc GetPersonalCloudLib (google.protobuf.Empty) returns (PersonalCloudLibResponse);
     rpc GetPartitions (google.protobuf.Empty) returns (PartitionsResponse);
     rpc UploadWallpaper (UplaodWallpaperRequest) returns (UploadWallpaperResponse);
 }
@@ -32,7 +32,7 @@ message PartitionsResponse {
     repeated string partitions = 3;
 }
 
-message CloudLibResponse {
+message PersonalCloudLibResponse {
     bool success = 1;
     string message = 2;
     repeated VirtualPaper.Grpc.Service.Models.Grpc_WpBasicData wallpapers = 3;

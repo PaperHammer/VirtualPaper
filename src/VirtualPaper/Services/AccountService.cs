@@ -9,7 +9,7 @@ using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Services {
     class AccountService : IAccountService {
-        public async Task<NetMessage> GetCloudLibAsync() {
+        public async Task<NetMessage> GetPersonalCloudLibAsync() {
             if (App.User == null || string.IsNullOrEmpty(App.Token)) {
                 return new() {
                     Code = 1001,
@@ -17,7 +17,7 @@ namespace VirtualPaper.Services {
                 };
             }
 
-            var data = await App.HttpConnect.GetCloudLibAsync(App.User.Uid, App.Token);
+            var data = await App.HttpConnect.GetPersonalCloudLibAsync(App.User.Uid, App.Token);
             return data;
         }
 

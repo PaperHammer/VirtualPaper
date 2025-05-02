@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading;
@@ -10,56 +8,37 @@ using VirtualPaper.Common;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
 
-namespace VirtualPaper.AccountPanel.ViewModels {
-    partial class PersonalCloudLibViewModel : ObservableObject {
-        public ObservableCollection<IWpBasicData> CloudLibWallpapers { get; set; }
-        public string MenuFlyout_Text_DetailAndEditInfo { get; set; } = string.Empty;
-        public string MenuFlyout_Text_Downlaod { get; set; } = string.Empty;
-        public string MenuFlyout_Text_Preview { get; set; } = string.Empty;
-        public string MenuFlyout_Text_Delete { get; set; } = string.Empty;
+namespace VirtualPaper.GalleryPanel.ViewModels {
+    class WallpaperLibViewModel {
+        public ObservableCollection<IWpBasicData> GalleryWallpapers { get; set; } = [];
 
-        public PersonalCloudLibViewModel(
+        public WallpaperLibViewModel(
             IGalleryClient galleryClient,
-            IUserSettingsClient userSettingsClient,
-            IAccountClient accountClient,
-            IWallpaperControlClient wallpaperControlClient) {
+            IWallpaperControlClient wpControlClient) {
             _galleryClient = galleryClient;
-            _userSettingsClient = userSettingsClient;
-            _wpControlClient = wallpaperControlClient;
-            _accountClient = accountClient;
-
-            InitText();
-            InitColletions();
-        }
-
-        private void InitColletions() {
-            CloudLibWallpapers = [];
-            _wallpaperInstallFolders = [
-                _userSettingsClient.Settings.WallpaperDir,
-            ];
-        }
-
-        private void InitText() {
-            MenuFlyout_Text_DetailAndEditInfo = LanguageUtil.GetI18n(nameof(Constants.I18n.MenuFlyout_Text_DetailAndEditInfo));
-            MenuFlyout_Text_Downlaod = LanguageUtil.GetI18n(nameof(Constants.I18n.MenuFlyout_Text_Downlaod));
-            MenuFlyout_Text_Preview = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Preview));
-            MenuFlyout_Text_Delete = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_DeleteFromDisk));
+            _wpControlClient = wpControlClient;
         }
 
         internal async Task InitContentAsync() {
-            try {
-                Account.Instance.GetNotify().Loading(false, false);
-                CloudLibWallpapers.Clear();
-                _uid2idx.Clear();
+            await AsyncGetContent();
+        }
 
-                var response = await _accountClient.GetPersonalCloudLibAsync();
+        internal async Task SearchContentAsync(string searchKey) {
+            await AsyncGetContent(searchKey);
+        }
+
+        private async Task AsyncGetContent(string searchKey = "") {
+            try {
+                Gallery.Instance.GetNotify().Loading(false, false);
+                GalleryWallpapers.Clear();
+
+                var response = await _galleryClient.GetCloudLibAsync(searchKey);
                 if (!response.Success) {
-                    Account.Instance.GetNotify().ShowMsg(
+                    Gallery.Instance.GetNotify().ShowMsg(
                         true,
                         response.Message,
                         InfoBarType.Error,
@@ -73,31 +52,21 @@ namespace VirtualPaper.AccountPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                Account.Instance.GetNotify().ShowExp(ex);
+                Gallery.Instance.GetNotify().ShowExp(ex);
             }
             finally {
-                Account.Instance.GetNotify().Loaded();
+                Gallery.Instance.GetNotify().Loaded();
             }
         }
 
         private void UpdateLib(IWpBasicData data) {
             try {
                 ArgumentNullException.ThrowIfNull(nameof(data));
-                if (_uid2idx.TryGetValue(data.WallpaperUid, out int idx)) {
-                    CloudLibWallpapers[idx] = data;
-                }
-                else {
-                    _uid2idx[data.WallpaperUid] = CloudLibWallpapers.Count;
-                    CloudLibWallpapers.Add(data);
-                }
+                GalleryWallpapers.Add(data);
             }
             catch (Exception ex) {
-                Account.Instance.GetNotify().ShowExp(ex);
+                Gallery.Instance.GetNotify().ShowExp(ex);
             }
-        }
-
-        internal async Task DetailAndEditInfoAsync(IWpBasicData data) {
-            throw new NotImplementedException();
         }
 
         internal async Task PreviewAsync(IWpBasicData data) {
@@ -106,11 +75,11 @@ namespace VirtualPaper.AccountPanel.ViewModels {
                 if (!data.IsAvailable()) return;
 
                 _ctsPreview = new CancellationTokenSource();
-                Account.Instance.GetNotify().Loading(true, false, [_ctsPreview]);
+                Gallery.Instance.GetNotify().Loading(true, false, [_ctsPreview]);
 
                 var response = await _galleryClient.GetWpSourceDataByWpUidAsync(data.WallpaperUid);
                 if (!response.Success || response.SourceData.Data.ToByteArray() is not byte[] bytes) {
-                    Account.Instance.GetNotify().ShowMsg(
+                    Gallery.Instance.GetNotify().ShowMsg(
                         true,
                         response.Message,
                         InfoBarType.Error,
@@ -118,18 +87,19 @@ namespace VirtualPaper.AccountPanel.ViewModels {
                         isAllowDuplication: false);
                     return;
                 }
-
+                
                 string tempDir = Path.Combine(Constants.CommonPaths.TempDir, data.WallpaperUid);
                 string tempFilePath = Path.Combine(tempDir, data.WallpaperUid + data.FileExtension);
                 data.FilePath = tempFilePath;
                 data.FolderPath = tempDir;
-                Directory.CreateDirectory(tempDir);
+                Directory.CreateDirectory(tempDir);               
                 await File.WriteAllBytesAsync(tempFilePath, response.SourceData.Data.ToByteArray());
                 var fileProperty = await _galleryClient.GetFilePropertyAsync(data.FilePath, data.FType);
                 data.Resolution = fileProperty.Resolution;
                 data.AspectRatio = fileProperty.AspectRatio;
                 data.FileSize = fileProperty.FileSize;
                 data.Save();
+
                 var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                 if (rtype == RuntimeType.RUnknown) return;
 
@@ -137,30 +107,22 @@ namespace VirtualPaper.AccountPanel.ViewModels {
             }
             catch (RpcException ex) {
                 if (ex.StatusCode == StatusCode.Cancelled) {
-                    Account.Instance.GetNotify().ShowCanceled();
+                    Gallery.Instance.GetNotify().ShowCanceled();
                 }
                 else {
-                    Account.Instance.GetNotify().ShowExp(ex);
+                    Gallery.Instance.GetNotify().ShowExp(ex);
                 }
             }
             catch (OperationCanceledException) {
-                Account.Instance.GetNotify().ShowCanceled();
+                Gallery.Instance.GetNotify().ShowCanceled();
             }
             catch (Exception ex) {
-                Account.Instance.GetNotify().ShowExp(ex);
+                Gallery.Instance.GetNotify().ShowExp(ex);
             }
             finally {
-                Account.Instance.GetNotify().Loaded([_ctsPreview]);
+                Gallery.Instance.GetNotify().Loaded([_ctsPreview]);
                 _previewSemaphoreSlim.Release();
             }
-        }
-
-        internal async Task DownloadAsync(IWpBasicData data) {
-            throw new NotImplementedException();
-        }
-
-        internal async Task DeleteAsync(IWpBasicData data) {
-            throw new NotImplementedException();
         }
 
         private async Task<RuntimeType> GetWallpaperRTypeByFTypeAsync(FileType ftype) {
@@ -168,7 +130,7 @@ namespace VirtualPaper.AccountPanel.ViewModels {
                 case FileType.FImage:
                 case FileType.FGif:
                     var wpCreateDialogViewModel = new WallpaperCreateViewModel();
-                    var dialogRes = await Account.Instance.GetDialog().ShowDialogAsync(
+                    var dialogRes = await Gallery.Instance.GetDialog().ShowDialogAsync(
                         new WallpaperCreateView(wpCreateDialogViewModel),
                         LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_CreateType),
                         LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
@@ -188,11 +150,7 @@ namespace VirtualPaper.AccountPanel.ViewModels {
         }
 
         private readonly IGalleryClient _galleryClient;
-        private readonly IAccountClient _accountClient;
         private readonly IWallpaperControlClient _wpControlClient;
-        private readonly IUserSettingsClient _userSettingsClient;
-        private List<string> _wallpaperInstallFolders;
-        private readonly ConcurrentDictionary<string, int> _uid2idx = [];
         private CancellationTokenSource _ctsPreview;
         private readonly SemaphoreSlim _previewSemaphoreSlim = new(1, 1);
     }

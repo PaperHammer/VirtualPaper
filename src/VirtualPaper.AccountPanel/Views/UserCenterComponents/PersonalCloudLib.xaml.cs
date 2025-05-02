@@ -16,8 +16,8 @@ namespace VirtualPaper.AccountPanel.Views.UserCenterComponents {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class CloudLib : Page {
-        public CloudLib() {
+    public sealed partial class PersonalCloudLib : Page {
+        public PersonalCloudLib() {
             this.InitializeComponent();
         }
 
@@ -25,8 +25,7 @@ namespace VirtualPaper.AccountPanel.Views.UserCenterComponents {
             base.OnNavigatedTo(e);
 
             this._accountPanel = e.Parameter as IAccountPanelBridge;
-
-            _viewModel = ObjectProvider.GetRequiredService<CloudLibViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
+            _viewModel = ObjectProvider.GetRequiredService<PersonalCloudLibViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
         }
 
@@ -98,7 +97,7 @@ namespace VirtualPaper.AccountPanel.Views.UserCenterComponents {
         }
 
         private IAccountPanelBridge _accountPanel;
-        private CloudLibViewModel _viewModel;
+        private PersonalCloudLibViewModel _viewModel;
         private IWpBasicData _data;
     }
 }

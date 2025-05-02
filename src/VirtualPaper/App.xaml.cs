@@ -21,6 +21,7 @@ using VirtualPaper.Factories;
 using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Grpc.Service.Account;
 using VirtualPaper.Grpc.Service.Commands;
+using VirtualPaper.Grpc.Service.Gallery;
 using VirtualPaper.Grpc.Service.MonitorManager;
 using VirtualPaper.Grpc.Service.ScrCommands;
 using VirtualPaper.Grpc.Service.Update;
@@ -201,12 +202,14 @@ namespace VirtualPaper {
                 .AddSingleton<IWallpaperConfigFolderFactory, WallpaperConfigFolderFactory>()
 
                 .AddSingleton<JobService>()
+                .AddSingleton<IGalleryService, GalleryService>()
                 .AddSingleton<IAccountService, AccountService>()
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
 
+                .AddSingleton<GalleryServer>()
                 .AddSingleton<AccountServer>()
                 .AddSingleton<WallpaperControlServer>()
                 .AddSingleton<MonitorManagerServer>()
@@ -237,6 +240,7 @@ namespace VirtualPaper {
             Grpc_CommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<CommandsServer>());
             Grpc_ScrCommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<ScrCommandsServer>());
             Grpc_AccountService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<AccountServer>());
+            Grpc_GalleryService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<GalleryServer>());
             server.Start();
 
             return server;

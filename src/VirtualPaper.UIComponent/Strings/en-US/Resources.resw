@@ -548,7 +548,7 @@ Author: PaperHammer</value>
   <data name="Text_FileSize" xml:space="preserve">
     <value>File Size：</value>
   </data>
-  <data name="Text_esolution" xml:space="preserve">
+  <data name="Text_Resolution" xml:space="preserve">
     <value>Resolution：</value>
   </data>
   <data name="Text_Type" xml:space="preserve">

@@ -201,14 +201,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             try {
                 await _previewSemaphoreSlim.WaitAsync();
                 if (!data.IsAvailable()) return;
+
+                _ctsPreview = new CancellationTokenSource();
+                WpSettings.Instance.GetNotify().Loading(true, false, [_ctsPreview]);
                 await CheckFileUpdateAsync(data);
 
                 var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
-                if (rtype == RuntimeType.RUnknown) return;
+                if (rtype == RuntimeType.RUnknown) return;                
                 
-                _ctsPreview = new CancellationTokenSource();
-                WpSettings.Instance.GetNotify().Loading(true, false, [_ctsPreview]);
-
                 await _wpControlClient.PreviewWallpaperAsync(_wpSettingsViewModel.SelectedMonitor.DeviceId, data, rtype, _ctsPreview.Token);
             }
             catch (RpcException ex) {

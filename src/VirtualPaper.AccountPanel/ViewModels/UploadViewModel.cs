@@ -6,14 +6,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
-using static VirtualPaper.Common.Utils.Archive.ZipUtil;
 
 namespace VirtualPaper.AccountPanel.ViewModels {
     partial class UploadViewModel : ObservableObject {
@@ -188,7 +186,7 @@ namespace VirtualPaper.AccountPanel.ViewModels {
 
         private void MergeInput() {
             WpBasicData.Title = Title;
-            WpBasicData.Desc = Title;
+            WpBasicData.Desc = Desc;
             WpBasicData.Partition = SelectedPartition ?? Partitions.FirstOrDefault(string.Empty);
             WpBasicData.Tags = string.Join(';', TagList);
             WpBasicData.PublishDate = DateTime.Now.ToString();

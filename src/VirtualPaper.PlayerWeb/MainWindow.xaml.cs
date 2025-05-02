@@ -131,6 +131,10 @@ namespace VirtualPaper.PlayerWeb {
                     while (!_ctsConsoleIn.IsCancellationRequested) {
                         var msg = await Console.In.ReadLineAsync(_ctsConsoleIn.Token);
                         if (string.IsNullOrEmpty(msg)) {
+                            App.WriteToParent(new VirtualPaperMessageConsole {
+                                MsgType = ConsoleMessageType.Log,
+                                Message = "Ipc stdin none, closing"
+                            });
                             //When the redirected stream is closed, a null line is sent to the event handler. 
 #if !DEBUG
                             break;
@@ -539,7 +543,7 @@ namespace VirtualPaper.PlayerWeb {
         }; // workaround: avoid cache
         internal readonly StartArgs _startArgs;
         private static bool _isPaused = false;
-        private static bool _isParallaxOn = true;
+        private static bool _isParallaxOn = false;
         private static int _isParallaxRunning = 0;
         private static bool _isFocusOnDesk = false;
         private static Native.RECT _windowRc;

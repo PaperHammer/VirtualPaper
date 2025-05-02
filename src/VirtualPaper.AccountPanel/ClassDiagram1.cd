@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="VirtualPaper.AccountPanel.Views.Passport">
+    <Position X="0.75" Y="2.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAEAAAAQAASAARAAQgAAAAAAAEEAABMAAA=</HashCode>
+      <FileName>Views\Passport.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.AccountPanel.Views.PassportComponents.Login">
+    <Position X="2.75" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAACAAAAAQAAAAAAQAAAIAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Views\PassportComponents\Login.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.AccountPanel.Views.PassportComponents.Register">
+    <Position X="2.75" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAAARCAAAAAQAAAAQAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Views\PassportComponents\Register.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.AccountPanel.ViewModels.LoginViewModel">
+    <Position X="5" Y="1.25" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Properties" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAACAgAIBCiABAEIAMIACGAAAoAIAAAQAAAAE=</HashCode>
+      <FileName>ViewModels\LoginViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VirtualPaper.AccountPanel.ViewModels.RegisterViewModel">
+    <Position X="7.5" Y="3" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Properties" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>QAAAAAQBACIgCIlCgQBgEIAMICIGBggoAoYCDyIAABE=</HashCode>
+      <FileName>ViewModels\RegisterViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VirtualPaper.AccountPanel.Views.UserCenterComponents.CloudLib">
+    <Position X="0.5" Y="11" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAABAAAAAAwAAAAAQQBAQAAAAAAAAGIAAAAAgA=</HashCode>
+      <FileName>Views\UserCenterComponents\CloudLib.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.AccountPanel.ViewModels.CloudLibViewModel">
+    <Position X="3.5" Y="10.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>BAAIQAAAAAAEAIAAICAEAAAAAAgCCAAAAAAEGAgAgJA=</HashCode>
+      <FileName>ViewModels\CloudLibViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VirtualPaper.AccountPanel.Views.UserCenterComponents.Upload">
+    <Position X="7" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAYCAAAAAQAARAIAAAAAAAAAAAAAgA=</HashCode>
+      <FileName>Views\UserCenterComponents\Upload.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.AccountPanel.ViewModels.UploadViewModel">
+    <Position X="13.75" Y="10.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>ICABCAAAAPAACEAQACEAAAAIABACAEAQAAAAQQBAgAA=</HashCode>
+      <FileName>ViewModels\UploadViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VirtualPaper.AccountPanel.ViewModels.UserInfoEditViewModel">
+    <Position X="10.75" Y="11.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAABAAAAAQAAIIwAAACAAAAAAACgBIYAAoAAACIAEAA=</HashCode>
+      <FileName>ViewModels\UserInfoEditViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Microsoft YaHei UI" Size="9.5" />
+</ClassDiagram>

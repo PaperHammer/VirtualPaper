@@ -2,10 +2,9 @@
 using VirtualPaper.Models.AccountPanel;
 using VirtualPaper.Models.Net;
 
-namespace VirtualPaper.Services.Interfaces
-{
+namespace VirtualPaper.Services.Interfaces {
     interface IAccountService {
-        Task<NetMessage> GetCloudLibAsync();
+        Task<NetMessage> GetPersonalCloudLibAsync();
         Task<NetMessage> GetPartitionsAsync();
         Task<NetMessage> LoginAsync(string email, string password);
         Task<NetMessage> RegisterAsync(string email, string username, string securityCode, string password, string confirmPassword);

@@ -66,13 +66,8 @@ namespace VirtualPaper.Grpc.Client {
             return res;
         }
 
-        public async Task<CloudLibResponse> GetCloudLibAsync(CancellationToken cancellationToken = default) {
-            var res = await _client.GetCloudLibAsync(new Empty(), cancellationToken: cancellationToken);
-            return res;
-        }
-
-        public async Task<CloudLibResponse> GetCloudLibAsync() {
-            var res = await _client.GetCloudLibAsync(new Empty());
+        public async Task<PersonalCloudLibResponse> GetPersonalCloudLibAsync(CancellationToken cancellationToken = default) {
+            var res = await _client.GetPersonalCloudLibAsync(new Empty(), cancellationToken: cancellationToken);
             return res;
         }
 

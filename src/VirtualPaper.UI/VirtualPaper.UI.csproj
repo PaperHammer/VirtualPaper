@@ -133,8 +133,6 @@
 		<None Remove="Assets\Wide310x150Logo.scale-150.png" />
 		<None Remove="Assets\Wide310x150Logo.scale-200.png" />
 		<None Remove="Assets\Wide310x150Logo.scale-400.png" />
-		<None Remove="Views\Account.xaml" />
-		<None Remove="Views\Gallery.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -215,14 +213,6 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
-	<ItemGroup>
-		<Page Update="Views\Account.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-		<Page Update="Views\Gallery.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-	</ItemGroup>
 
 	<!-- 
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution 
@@ -236,6 +226,7 @@
 		<ProjectReference Include="..\VirtualPaper.AccountPanel\VirtualPaper.AccountPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.AppSettingsPanel\VirtualPaper.AppSettingsPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.DraftPanel\VirtualPaper.DraftPanel.csproj" />
+		<ProjectReference Include="..\VirtualPaper.GalleryPanel\VirtualPaper.GalleryPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj" />
 	</ItemGroup>
 </Project>

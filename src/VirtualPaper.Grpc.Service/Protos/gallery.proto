@@ -1,0 +1,41 @@
+syntax = "proto3";
+package VirtualPaper.Grpc.Service.Gallery;
+import "google/protobuf/empty.proto";
+import "Protos/models.proto";
+
+service Grpc_GalleryService {
+    rpc GetCloudLib (CloudLibRequest) returns (CloudLibResponse);
+    rpc GetWpSourceDataByWpUid (WpSourceDataRequest) returns (WpSourceDataResponse);
+    rpc GetFileProperty (FilePropertyRequest) returns (FilePropertyResponse);    
+}
+
+message FilePropertyRequest {
+    string file_path = 1;
+    VirtualPaper.Grpc.Service.Models.Grpc_FileType f_type = 2;
+}
+
+message FilePropertyResponse {
+    string resolution = 1;
+    string aspect_ratio = 2;
+    string file_size = 3;
+}
+
+message WpSourceDataRequest {
+    string wallpaper_uid = 1;
+}
+
+message WpSourceDataResponse {
+    bool success = 1;
+    string message = 2;
+    VirtualPaper.Grpc.Service.Models.Grpc_WpSourceData source_data = 3;
+}
+
+message CloudLibRequest {
+    string search_key = 1;
+}
+
+message CloudLibResponse {
+    bool success = 1;
+    string message = 2;
+    repeated VirtualPaper.Grpc.Service.Models.Grpc_WpBasicData wallpapers = 3;
+}

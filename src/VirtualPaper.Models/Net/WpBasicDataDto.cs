@@ -17,7 +17,7 @@ namespace VirtualPaper.Models.Net {
         public string AppVersion { get; set; } = string.Empty;
         public string FileVersion { get; set; } = string.Empty;
         public byte[] ThuImage { get; set; } = [];
-        public byte[] Image { get; set; } = [];
+        public byte[] MainSource { get; set; } = [];
         public string Uid { get; set; } = string.Empty;
         public string UserUid { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;

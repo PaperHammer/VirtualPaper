@@ -7,11 +7,8 @@ using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Service.Account;
 using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Models.AccountPanel;
-using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Net;
 using VirtualPaper.Services.Interfaces;
-using VirtualPaper.Utils;
-using static VirtualPaper.Common.Utils.Archive.ZipUtil;
 
 namespace VirtualPaper.GrpcServers {
     internal class AccountServer(
@@ -134,7 +131,7 @@ namespace VirtualPaper.GrpcServers {
         private static async Task<WpBasicDataDto?> ToWpBasciDataDtoAsync(Grpc_WpBasicData wpBasicData) {
             try {
                 WpBasicDataDto dto = new() {
-                    Image = await File.ReadAllBytesAsync(wpBasicData.FilePath),
+                    MainSource = await File.ReadAllBytesAsync(wpBasicData.FilePath),
                     ThuImage = await File.ReadAllBytesAsync(wpBasicData.ThumbnailPath),
                     Uid = wpBasicData.WallpaperUid,
                     UserUid = App.User.Uid,

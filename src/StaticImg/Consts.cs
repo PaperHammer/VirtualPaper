@@ -205,7 +205,7 @@ namespace Workloads.Creation.StaticImg {
         Eraser, // 橡皮擦
         PaintBrush, // 画笔
         //Text, // 文本
-        //Image, // 图片
+        //MainSource, // 图片
         //Shape, // 图形
         Fill, // 填充
         //Lasso, // 套索工具

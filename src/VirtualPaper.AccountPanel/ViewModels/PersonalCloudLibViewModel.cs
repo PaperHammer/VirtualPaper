@@ -6,22 +6,25 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
+using VirtualPaper.AccountPanel.Views.Utils;
 using VirtualPaper.Common;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
+using WinUIEx;
 
 namespace VirtualPaper.AccountPanel.ViewModels {
     partial class PersonalCloudLibViewModel : ObservableObject {
-        public ObservableCollection<IWpBasicData> CloudLibWallpapers { get; set; }
+        public ObservableList<IWpBasicData> CloudLibWallpapers { get; set; }
         public string MenuFlyout_Text_DetailAndEditInfo { get; set; } = string.Empty;
         public string MenuFlyout_Text_Downlaod { get; set; } = string.Empty;
         public string MenuFlyout_Text_Preview { get; set; } = string.Empty;
-        public string MenuFlyout_Text_Delete { get; set; } = string.Empty;
+        public string MenuFlyout_Text_DeleteFromServer { get; set; } = string.Empty;
 
         public PersonalCloudLibViewModel(
             IGalleryClient galleryClient,
@@ -48,15 +51,15 @@ namespace VirtualPaper.AccountPanel.ViewModels {
             MenuFlyout_Text_DetailAndEditInfo = LanguageUtil.GetI18n(nameof(Constants.I18n.MenuFlyout_Text_DetailAndEditInfo));
             MenuFlyout_Text_Downlaod = LanguageUtil.GetI18n(nameof(Constants.I18n.MenuFlyout_Text_Downlaod));
             MenuFlyout_Text_Preview = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Preview));
-            MenuFlyout_Text_Delete = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_DeleteFromDisk));
+            MenuFlyout_Text_DeleteFromServer = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_DeleteFromServer));
         }
 
         internal async Task InitContentAsync() {
             try {
                 Account.Instance.GetNotify().Loading(false, false);
                 CloudLibWallpapers.Clear();
-                _uid2idx.Clear();
-
+                _uid2idx.Clear();                
+                
                 var response = await _accountClient.GetPersonalCloudLibAsync();
                 if (!response.Success) {
                     Account.Instance.GetNotify().ShowMsg(
@@ -67,6 +70,7 @@ namespace VirtualPaper.AccountPanel.ViewModels {
                         isAllowDuplication: false);
                     return;
                 }
+
                 foreach (var lib in response.Wallpapers) {
                     var data = DataAssist.GrpcToBasicData(lib);
                     UpdateLib(data);
@@ -80,7 +84,7 @@ namespace VirtualPaper.AccountPanel.ViewModels {
             }
         }
 
-        private void UpdateLib(IWpBasicData data) {
+        private void UpdateLib(WpBasicData data) {
             try {
                 ArgumentNullException.ThrowIfNull(nameof(data));
                 if (_uid2idx.TryGetValue(data.WallpaperUid, out int idx)) {
@@ -97,7 +101,12 @@ namespace VirtualPaper.AccountPanel.ViewModels {
         }
 
         internal async Task DetailAndEditInfoAsync(IWpBasicData data) {
-            throw new NotImplementedException();
+            var fileProperty = await _galleryClient.GetFilePropertyAsync(data.FilePath, data.FType);
+            data.Resolution = fileProperty.Resolution;
+            data.AspectRatio = fileProperty.AspectRatio;
+            data.FileSize = fileProperty.FileSize;
+            WallpaperEdit we = new(data);
+            we.Show();
         }
 
         internal async Task PreviewAsync(IWpBasicData data) {
@@ -160,7 +169,31 @@ namespace VirtualPaper.AccountPanel.ViewModels {
         }
 
         internal async Task DeleteAsync(IWpBasicData data) {
-            throw new NotImplementedException();
+            try {
+                var dialogRes = await Account.Instance.GetDialog().ShowDialogAsync(
+                    LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDelete)
+                    , LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Prompt)
+                    , LanguageUtil.GetI18n(Constants.I18n.Text_Confirm)
+                    , LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
+                if (dialogRes != DialogResult.Primary) return;
+
+                var response = await _galleryClient.DeleteWallpaper(data.WallpaperUid);
+                if (!response.Success) {
+                    Account.Instance.GetNotify().ShowMsg(
+                        true,
+                        response.Message,
+                        InfoBarType.Error,
+                        key: response.Message,
+                        isAllowDuplication: false);
+                    return;
+                }
+
+                _uid2idx.Remove(data.WallpaperUid, out _);
+                CloudLibWallpapers.Remove(data);
+            }
+            catch (Exception ex) {
+                Account.Instance.GetNotify().ShowExp(ex);
+            }
         }
 
         private async Task<RuntimeType> GetWallpaperRTypeByFTypeAsync(FileType ftype) {

@@ -317,8 +317,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 bool isUsing = await CheckFileUsingAsync(data, false);
                 if (isUsing) return;
 
-                string uid = data.WallpaperUid;
-                _uid2idx.Remove(uid, out _);
+                _uid2idx.Remove(data.WallpaperUid, out _);
                 LibraryWallpapers.Remove(data);
                 DirectoryInfo di = new(data.FolderPath);
                 di.Delete(true);

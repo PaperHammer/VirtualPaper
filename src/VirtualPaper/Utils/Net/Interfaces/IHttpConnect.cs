@@ -14,5 +14,6 @@ namespace VirtualPaper.Utils.Net.Interfaces {
         Task<NetMessage> UploadWallpaperAsync(WpBasicDataDto dto);
         Task<NetMessage> GetCloudLibAsync(string searchKey);
         Task<NetMessage> GetWpSourceDataByWpUidAsync(string wallpaperUid);
+        Task<NetMessage> DeleteWallpaperAsync(string wallpaperUid);
     }
 }

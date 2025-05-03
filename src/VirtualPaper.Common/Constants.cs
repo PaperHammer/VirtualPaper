@@ -333,6 +333,7 @@ namespace VirtualPaper.Common {
             public static string? MenuFlyout_Text_DetailAndEditInfo { get; }
             public static string? MenuFlyout_Text_Downlaod { get; }
             public static string? App_UserNotLogin { get; }
+            public static string? Text_DeleteFromServer { get; }
         }
 
         public static class Field {

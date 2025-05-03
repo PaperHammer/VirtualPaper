@@ -10,6 +10,16 @@ using VirtualPaper.Utils;
 namespace VirtualPaper.GrpcServers {
     class GalleryServer(
         IGalleryService galleryService) : Grpc_GalleryService.Grpc_GalleryServiceBase {
+        public override async Task<DeleteWallpaperResponse> DeleteWallpaper(DeleteWallpaperRequest request, ServerCallContext context) {
+            var data = await _galleryService.DeleteWallpaperAsync(request.WallpaperUid);
+            DeleteWallpaperResponse response = new() {
+                Success = data.Code == 1,
+                Message = data.MsgKey,
+            };
+
+            return response;
+        }
+
         public override Task<FilePropertyResponse> GetFileProperty(FilePropertyRequest request, ServerCallContext context) {
             var property = WallpaperUtil.GetWpProperty(request.FilePath, (Common.FileType)request.FType);
             var response = new FilePropertyResponse {

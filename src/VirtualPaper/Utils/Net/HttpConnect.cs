@@ -193,6 +193,27 @@ namespace VirtualPaper.Utils.Net {
             }
         }
 
+        public async Task<NetMessage> DeleteWallpaperAsync(string wallpaperUid) {
+            NetMessage msg = new();
+
+            try {
+                UserWpTupleDto dto = new(App.User.Uid, wallpaperUid);
+                using StringContent jsonContent = new(
+                    JsonSerializer.Serialize(dto, UserWpTupleDtoContext.Default.UserWpTupleDto),
+                    Encoding.UTF8,
+                    "application/json");
+                var res = await _httpConnect.PutAsync($"/Wallpaper/DeleteWallpaper", jsonContent);
+                var response = await res.Content.ReadAsByteArrayAsync();
+                msg = JsonSerializer.Deserialize<NetMessage>(response, _serializeOptions) ?? new();
+
+                return msg;
+            }
+            catch (Exception ex) {
+                Debug.WriteLine(ex);
+                return msg;
+            }
+        }
+
         static readonly HttpClient _httpConnect = new() {
             BaseAddress = new Uri("http://127.0.0.1:5057"),
         };

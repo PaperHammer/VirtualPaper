@@ -15,6 +15,7 @@
     <None Remove="Views\UserCenter.xaml" />
     <None Remove="Views\UserCenterComponents\Upload.xaml" />
     <None Remove="Views\Utils\UserInfoEdit.xaml" />
+    <None Remove="Views\Utils\WallpaperEdit.xaml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
@@ -50,6 +51,11 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\Utils\WallpaperEdit.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\UserCenterComponents\Upload.xaml">

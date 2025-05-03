@@ -6,7 +6,17 @@ import "Protos/models.proto";
 service Grpc_GalleryService {
     rpc GetCloudLib (CloudLibRequest) returns (CloudLibResponse);
     rpc GetWpSourceDataByWpUid (WpSourceDataRequest) returns (WpSourceDataResponse);
-    rpc GetFileProperty (FilePropertyRequest) returns (FilePropertyResponse);    
+    rpc GetFileProperty (FilePropertyRequest) returns (FilePropertyResponse);  
+    rpc DeleteWallpaper (DeleteWallpaperRequest) returns (DeleteWallpaperResponse);
+}
+
+message DeleteWallpaperRequest {
+    string wallpaper_uid = 1;
+}
+
+message DeleteWallpaperResponse {
+    bool success = 1;
+    string message = 2;
 }
 
 message FilePropertyRequest {

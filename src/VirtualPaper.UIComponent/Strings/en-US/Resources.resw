@@ -924,4 +924,7 @@ The following words cannot be used as usernames:
   <data name="App_UserNotLogin" xml:space="preserve">
     <value>User login data is abnormal, please attempt to log in again</value>
   </data>
+  <data name="Text_DeleteFromServer" xml:space="preserve">
+    <value>Delete from the cloud</value>
+  </data>
 </root>

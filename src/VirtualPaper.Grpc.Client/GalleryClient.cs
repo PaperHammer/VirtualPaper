@@ -35,6 +35,14 @@ namespace VirtualPaper.Grpc.Client {
             return res;
         }
 
+        public async Task<DeleteWallpaperResponse> DeleteWallpaper(string wallpaperUid) {
+            DeleteWallpaperRequest request = new() {
+                WallpaperUid = wallpaperUid,
+            };
+            var res = await _client.DeleteWallpaperAsync(request);
+            return res;
+        }
+
         private readonly Grpc_GalleryService.Grpc_GalleryServiceClient _client;
 
     }

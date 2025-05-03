@@ -9,6 +9,7 @@ using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.Models.Cores.Interfaces;
 using Windows.System;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -21,6 +22,13 @@ namespace VirtualPaper.AccountPanel.Views.UserCenterComponents {
     public sealed partial class Upload : Page {
         public Upload() {
             this.InitializeComponent();
+        }
+
+        public Upload(IWpBasicData data) : this() {
+            _viewModel = ObjectProvider.GetRequiredService<UploadViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
+            _viewModel.WpBasicData = data;
+            _viewModel.FillData();
+            this.DataContext = _viewModel;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {

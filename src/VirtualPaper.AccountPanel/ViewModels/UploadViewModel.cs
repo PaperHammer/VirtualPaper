@@ -200,6 +200,13 @@ namespace VirtualPaper.AccountPanel.ViewModels {
             SelectedPartition = null;
         }
 
+        internal void FillData() {
+            Title = WpBasicData.Title;
+            Desc = WpBasicData.Desc;
+            TagList = [.. WpBasicData.Tags.Split(';')];
+            SelectedPartition = WpBasicData.Partition;
+        }
+
         private readonly IAccountClient _accountClient;
         private readonly IWallpaperControlClient _wpControlClient;
         private CancellationTokenSource _ctsImport, _ctsUplaod;

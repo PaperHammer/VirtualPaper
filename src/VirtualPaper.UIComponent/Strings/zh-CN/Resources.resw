@@ -927,4 +927,10 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Text_DeleteFromServer" xml:space="preserve">
     <value>从云端删除</value>
   </data>
+  <data name="Server_Account_Locked" xml:space="preserve">
+    <value>账户已被锁定，请联系管理员处理</value>
+  </data>
+  <data name="Server_Authentication_Failed" xml:space="preserve">
+    <value>账户身份认证失败，请尝试重新登录</value>
+  </data>
 </root>

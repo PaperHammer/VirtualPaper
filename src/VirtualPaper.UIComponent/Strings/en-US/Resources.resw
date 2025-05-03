@@ -927,4 +927,10 @@ The following words cannot be used as usernames:
   <data name="Text_DeleteFromServer" xml:space="preserve">
     <value>Delete from the cloud</value>
   </data>
+  <data name="Server_Account_Locked" xml:space="preserve">
+    <value>The account has been locked, please contact the administrator to deal with it</value>
+  </data>
+  <data name="Server_Authentication_Failed" xml:space="preserve">
+    <value>The account authentication fails, please try to log in again</value>
+  </data>
 </root>

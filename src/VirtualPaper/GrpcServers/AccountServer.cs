@@ -99,7 +99,7 @@ namespace VirtualPaper.GrpcServers {
 
         public override async Task<PartitionsResponse> GetPartitions(Empty request, ServerCallContext context) {
             var data = await _accountService.GetPartitionsAsync();
-            var partitions = data.Data == null ? null : JsonSerializer.Deserialize<List<string>>(data.Data.ToString() ?? string.Empty);
+            var partitions = data.Data == null ? [] : JsonSerializer.Deserialize<List<string>>(data.Data.ToString() ?? string.Empty);
             var response = new PartitionsResponse {
                 Success = data.Code == 1,
                 Message = data.MsgKey,

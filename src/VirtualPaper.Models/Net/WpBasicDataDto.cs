@@ -19,7 +19,7 @@ namespace VirtualPaper.Models.Net {
         public byte[] ThuImage { get; set; } = [];
         public byte[] Image { get; set; } = [];
         public string Uid { get; set; } = string.Empty;
-        public long UserUid { get; set; }
+        public string UserUid { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public FileType Type { get; set; }
         public string FileExtension { get; set; } = string.Empty;

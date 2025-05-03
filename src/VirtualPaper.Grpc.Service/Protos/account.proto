@@ -49,7 +49,7 @@ message UpdateUserInfoResponse {
 }
 
 message Grpc_UserInfo {
-  int64 uid = 1;
+  string uid = 1;
   bytes avatar = 2;
   string name = 3;
   string email = 4;

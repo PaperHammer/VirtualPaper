@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using VirtualPaper.Models;
@@ -87,6 +88,7 @@ namespace VirtualPaper.Utils.Net {
             NetMessage msg = new();
 
             try {
+                _httpConnect.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.Token);
                 using StringContent jsonContent = new(
                     JsonSerializer.Serialize(userInfo),
                     Encoding.UTF8,
@@ -103,12 +105,12 @@ namespace VirtualPaper.Utils.Net {
             }
         }
 
-        public async Task<NetMessage> GetPersonalCloudLibAsync(long uid, string token) {
+        public async Task<NetMessage> GetPersonalCloudLibAsync() {
             NetMessage msg = new();
 
             try {
-                _httpConnect.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                var res = await _httpConnect.GetAsync($"/Wallpaper/GetPersonalCloud/{uid}");
+                _httpConnect.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.Token);
+                var res = await _httpConnect.GetAsync($"/Wallpaper/GetPersonalCloud/{App.User.Uid}");
                 var response = await res.Content.ReadAsByteArrayAsync();
                 //var response = await res.Content.ReadAsStringAsync();
                 msg = JsonSerializer.Deserialize<NetMessage>(response, _serializeOptions) ?? new();
@@ -121,11 +123,11 @@ namespace VirtualPaper.Utils.Net {
             }
         }
 
-        public async Task<NetMessage> GetPartitionsAsync(string token) {
+        public async Task<NetMessage> GetPartitionsAsync() {
             NetMessage msg = new();
 
             try {
-                _httpConnect.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                _httpConnect.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.Token);
                 var res = await _httpConnect.GetAsync($"/Wallpaper/GetPartitions");
                 var response = await res.Content.ReadAsStringAsync();
                 msg = JsonSerializer.Deserialize<NetMessage>(response, _serializeOptions) ?? new();
@@ -142,7 +144,7 @@ namespace VirtualPaper.Utils.Net {
             NetMessage msg = new();
 
             try {
-                _httpConnect.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", App.Token);
+                _httpConnect.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.Token);
                 using StringContent jsonContent = new(
                     JsonSerializer.Serialize(dto, WpBasicDataDtoContext.Default.WpBasicDataDto),
                     Encoding.UTF8,
@@ -163,7 +165,6 @@ namespace VirtualPaper.Utils.Net {
             NetMessage msg = new();
 
             try {
-                //_httpConnect.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 var res = await _httpConnect.GetAsync($"/Wallpaper/GetCloud/{searchKey}");
                 var response = await res.Content.ReadAsByteArrayAsync();
                 //var response = await res.Content.ReadAsStringAsync();
@@ -197,6 +198,7 @@ namespace VirtualPaper.Utils.Net {
             NetMessage msg = new();
 
             try {
+                _httpConnect.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.Token);
                 UserWpTupleDto dto = new(App.User.Uid, wallpaperUid);
                 using StringContent jsonContent = new(
                     JsonSerializer.Serialize(dto, UserWpTupleDtoContext.Default.UserWpTupleDto),

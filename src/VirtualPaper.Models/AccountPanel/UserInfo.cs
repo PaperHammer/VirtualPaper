@@ -10,7 +10,7 @@ namespace VirtualPaper.Models.AccountPanel {
 
     public class UserInfo : ObservableObject, IEquatable<UserInfo> {
         [JsonInclude]
-        public long Uid { get; }
+        public string Uid { get; }
 
         private byte[]? _avatar;
         public byte[]? Avatar {
@@ -25,7 +25,7 @@ namespace VirtualPaper.Models.AccountPanel {
         public UserStatus Status { get; }
 
         [JsonConstructor]
-        public UserInfo(long uid, UserStatus status) {
+        public UserInfo(string uid, UserStatus status) {
             Uid = uid;
             Status = status;
         }
@@ -68,9 +68,10 @@ namespace VirtualPaper.Models.AccountPanel {
         }
     }
 
+    [Flags]
     public enum UserStatus {
-        Normal = 0,
-        Locked = 1,
-        Deleted = 2
+        Normal = 1 << 0, // 001
+        Locked = 1 << 1, // 010
+        Deleted = 1 << 2 // 100
     }
 }

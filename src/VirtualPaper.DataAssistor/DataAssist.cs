@@ -48,7 +48,7 @@ namespace VirtualPaper.DataAssistor {
         public static UserInfo? FromGrpcUserInfo(Grpc_UserInfo? grpcUser) {
             if (grpcUser == null) return null;
 
-            return new UserInfo(grpcUser.Uid, (UserStatus)grpcUser.Status) {
+            return new UserInfo(grpcUser.Uid, grpcUser.Status.ToDomain()) {
                 Avatar = grpcUser.Avatar.Length > 0 ? grpcUser.Avatar.ToByteArray() : null,
                 Name = grpcUser.Name,
                 Email = grpcUser.Email,
@@ -65,7 +65,7 @@ namespace VirtualPaper.DataAssistor {
                 Name = userInfo.Name,
                 Email = userInfo.Email,
                 Sign = userInfo.Sign ?? string.Empty,
-                Status = (Grpc_UserStatus)userInfo.Status
+                Status = userInfo.Status.ToGrpc(),
             };
 
             return grpc_UserInfo;
@@ -382,6 +382,26 @@ namespace VirtualPaper.DataAssistor {
             }
 
             return data;
+        }
+    }
+
+    public static class UserStatusExtensions {
+        public static Grpc_UserStatus ToGrpc(this UserStatus status) {
+            return status switch {
+                UserStatus.Normal => Grpc_UserStatus.Normal,
+                UserStatus.Locked => Grpc_UserStatus.Locked,
+                UserStatus.Deleted => Grpc_UserStatus.Deleted,
+                _ => throw new ArgumentException($"Cannot convert combined UserStatus to Grpc_UserStatus: {status}")
+            };
+        }
+
+        public static UserStatus ToDomain(this Grpc_UserStatus status) {
+            return status switch {
+                Grpc_UserStatus.Normal => UserStatus.Normal,
+                Grpc_UserStatus.Locked => UserStatus.Locked,
+                Grpc_UserStatus.Deleted => UserStatus.Deleted,
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
+            };
         }
     }
 }

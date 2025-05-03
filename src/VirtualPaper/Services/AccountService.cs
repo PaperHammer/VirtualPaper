@@ -17,7 +17,7 @@ namespace VirtualPaper.Services {
                 };
             }
 
-            var data = await App.HttpConnect.GetPersonalCloudLibAsync(App.User.Uid, App.Token);
+            var data = await App.HttpConnect.GetPersonalCloudLibAsync();
             return data;
         }
 
@@ -29,7 +29,7 @@ namespace VirtualPaper.Services {
                 };
             }
 
-            var data = await App.HttpConnect.GetPartitionsAsync(App.Token);
+            var data = await App.HttpConnect.GetPartitionsAsync();
             return data;
         }
 

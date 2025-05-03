@@ -58,8 +58,8 @@ namespace VirtualPaper.AccountPanel.ViewModels {
             try {
                 Account.Instance.GetNotify().Loading(false, false);
                 CloudLibWallpapers.Clear();
-                _uid2idx.Clear();                
-                
+                _uid2idx.Clear();
+
                 var response = await _accountClient.GetPersonalCloudLibAsync();
                 if (!response.Success) {
                     Account.Instance.GetNotify().ShowMsg(
@@ -101,12 +101,55 @@ namespace VirtualPaper.AccountPanel.ViewModels {
         }
 
         internal async Task DetailAndEditInfoAsync(IWpBasicData data) {
-            var fileProperty = await _galleryClient.GetFilePropertyAsync(data.FilePath, data.FType);
-            data.Resolution = fileProperty.Resolution;
-            data.AspectRatio = fileProperty.AspectRatio;
-            data.FileSize = fileProperty.FileSize;
-            WallpaperEdit we = new(data);
-            we.Show();
+            try {
+                await _detailsSemaphoreSlim.WaitAsync();
+                if (!data.IsAvailable()) return;
+
+                _ctsDetails = new CancellationTokenSource();
+                Account.Instance.GetNotify().Loading(true, false, [_ctsDetails]);
+
+                var response = await _galleryClient.GetWpSourceDataByWpUidAsync(data.WallpaperUid);
+                if (!response.Success || response.SourceData.Data.ToByteArray() is not byte[] bytes) {
+                    Account.Instance.GetNotify().ShowMsg(
+                        true,
+                        response.Message,
+                        InfoBarType.Error,
+                        key: response.Message,
+                        isAllowDuplication: false);
+                    return;
+                }
+
+                string tempDir = Path.Combine(Constants.CommonPaths.TempDir, data.WallpaperUid);
+                string tempFilePath = Path.Combine(tempDir, data.WallpaperUid + data.FileExtension);
+                data.FilePath = tempFilePath;
+                data.FolderPath = tempDir;
+                Directory.CreateDirectory(tempDir);
+                await File.WriteAllBytesAsync(tempFilePath, response.SourceData.Data.ToByteArray());
+                var fileProperty = await _galleryClient.GetFilePropertyAsync(data.FilePath, data.FType);
+                data.Resolution = fileProperty.Resolution;
+                data.AspectRatio = fileProperty.AspectRatio;
+                data.FileSize = fileProperty.FileSize;
+                WallpaperEdit we = new(data);
+                we.Show();
+            }
+            catch (RpcException ex) {
+                if (ex.StatusCode == StatusCode.Cancelled) {
+                    Account.Instance.GetNotify().ShowCanceled();
+                }
+                else {
+                    Account.Instance.GetNotify().ShowExp(ex);
+                }
+            }
+            catch (OperationCanceledException) {
+                Account.Instance.GetNotify().ShowCanceled();
+            }
+            catch (Exception ex) {
+                Account.Instance.GetNotify().ShowExp(ex);
+            }
+            finally {
+                Account.Instance.GetNotify().Loaded([_ctsDetails]);
+                _detailsSemaphoreSlim.Release();
+            }
         }
 
         internal async Task PreviewAsync(IWpBasicData data) {
@@ -226,7 +269,8 @@ namespace VirtualPaper.AccountPanel.ViewModels {
         private readonly IUserSettingsClient _userSettingsClient;
         private List<string> _wallpaperInstallFolders;
         private readonly ConcurrentDictionary<string, int> _uid2idx = [];
-        private CancellationTokenSource _ctsPreview;
+        private CancellationTokenSource _ctsPreview, _ctsDetails;
         private readonly SemaphoreSlim _previewSemaphoreSlim = new(1, 1);
+        private readonly SemaphoreSlim _detailsSemaphoreSlim = new(1, 1);
     }
 }

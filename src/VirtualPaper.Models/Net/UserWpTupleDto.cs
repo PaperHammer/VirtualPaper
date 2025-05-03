@@ -5,9 +5,9 @@ namespace VirtualPaper.Models.Net {
     public partial class UserWpTupleDtoContext : JsonSerializerContext { }
 
     [method: JsonConstructor]
-    public class UserWpTupleDto(long uid, string wallpaperId) {
+    public class UserWpTupleDto(string uid, string wallpaperId) {
         [JsonInclude]
-        public long Uid { get; } = uid;
+        public string Uid { get; } = uid;
         [JsonInclude]
         public string WallpaperId { get; } = wallpaperId;
     }

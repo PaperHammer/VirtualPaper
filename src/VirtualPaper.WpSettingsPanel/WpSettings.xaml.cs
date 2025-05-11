@@ -90,10 +90,9 @@ namespace VirtualPaper.WpSettingsPanel {
         }
 
         #region btn_click
-        private async void BtnClose_Click(object sender, RoutedEventArgs e) {
+        private void BtnClose_Click(object sender, RoutedEventArgs e) {
             BtnClose.IsEnabled = false;
             _viewModel.Close();
-            await Task.Delay(3000);
             BtnClose.IsEnabled = true;
         }
 

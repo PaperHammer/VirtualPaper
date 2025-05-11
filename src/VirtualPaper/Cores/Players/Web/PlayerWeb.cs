@@ -88,8 +88,9 @@ namespace VirtualPaper.Cores.Players.Web {
         }
 
         public void Close() {
-            SendMessage(new VirtualPaperCloseCmd());
-            Closing?.Invoke(this, EventArgs.Empty);
+            //SendMessage(new VirtualPaperCloseCmd());
+            //Closing?.Invoke(this, EventArgs.Empty);
+            Terminate();
         }
 
         public void Pause() {

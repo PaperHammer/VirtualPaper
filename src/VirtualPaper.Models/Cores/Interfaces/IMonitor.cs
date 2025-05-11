@@ -1,5 +1,4 @@
 ﻿using System.Drawing;
-using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.Models.Cores.Interfaces {
     public interface IMonitor : IEquatable<IMonitor> {

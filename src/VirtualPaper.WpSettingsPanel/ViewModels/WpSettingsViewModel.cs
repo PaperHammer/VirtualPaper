@@ -32,12 +32,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public int SelectedWpArrangementsIndex {
             get => _selectedWpArrangementsIndex;
             set {
-                if (_selectedWpArrangementsIndex != value) {
-                    _selectedWpArrangementsIndex = value;
-                    OnPropertyChanged();
-                    UpdateWpArrange(value);
-                    InitMonitors();
-                }
+                if (_selectedWpArrangementsIndex == value) return;
+
+                _selectedWpArrangementsIndex = value;
+                UpdateWpArrange(value);
+                OnPropertyChanged();
             }
         }
 
@@ -87,18 +86,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         }
                     }
                     break;
+                case WallpaperArrangement.Duplicate:
                 case WallpaperArrangement.Expand: {
-                        IMonitor monitor = _monitorManagerClient.PrimaryMonitor;
-                        monitor.Content = "Expand";
-                        monitor.ThumbnailPath = _monitorManagerClient.Monitors[0].ThumbnailPath;
-                        _monitors.Add(monitor);
-                    }
-                    break;
-                case WallpaperArrangement.Duplicate: {
-                        IMonitor monitor = _monitorManagerClient.PrimaryMonitor;
-                        monitor.Content = "Duplicate";
-                        monitor.ThumbnailPath = _monitorManagerClient.Monitors[0].ThumbnailPath;
-                        _monitors.Add(monitor);
+                        _monitors.Add(new Models.Cores.Monitor() {
+                            Content = _userSettingsClient.Settings.WallpaperArrangement.ToString(),
+                            ThumbnailPath = _monitorManagerClient.PrimaryMonitor.ThumbnailPath,
+                        });
                     }
                     break;
             }
@@ -133,22 +126,28 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                 var type = (WallpaperArrangement)tag;
                 if (type == _userSettingsClient.Settings.WallpaperArrangement) return;
-
+                var oldType = _userSettingsClient.Settings.WallpaperArrangement;
                 _userSettingsClient.Settings.WallpaperArrangement = type;
                 await _userSettingsClient.SaveAsync<ISettings>();
 
                 var response = await _wpControlClient.RestartAllWallpapersAsync();
-                if (response.IsFinished != true) {
+                if (response.IsFinished != true) {                    
                     _wpSettingsPanel.GetNotify().ShowMsg(
                         true,
                         LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_ApplyError),
                         InfoBarType.Error);
+                    // 恢复
+                    SelectedWpArrangementsIndex = (int)oldType;
+                    _userSettingsClient.Settings.WallpaperArrangement = oldType;
+                    await _userSettingsClient.SaveAsync<ISettings>();
+                    return;
                 }
             }
             catch (Exception ex) {
                 _wpSettingsPanel.Log(LogType.Error, ex);
             }
             finally {
+                InitMonitors();
                 _wpSettingsPanel.GetNotify().Loaded(null);
             }
         }

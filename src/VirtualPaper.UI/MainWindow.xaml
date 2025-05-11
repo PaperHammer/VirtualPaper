@@ -127,13 +127,13 @@
                 </ItemsControl>
 
                 <feedback:Loading
-                    CancelEnable="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CancelEnable}"
-                    ProgressbarEnable="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ProgressbarEnable}"
-                    CtsTokens="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CtsTokens}"
-                    TotalValue="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TotalValue}"
+                    CancelEnable="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CancelEnable, Mode=OneWay}"
+                    ProgressbarEnable="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ProgressbarEnable, Mode=OneWay}"
+                    CtsTokens="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CtsTokens, Mode=OneWay}"
+                    TotalValue="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TotalValue, Mode=OneWay}"
                     CurValue="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CurValue, Mode=OneWay}"
                     TextLoading="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TextLoading, Mode=OneWay}"
-                    TextCancel="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TextCancel}"
+                    TextCancel="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TextCancel, Mode=OneWay}"
                     Visibility="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.IsVisiable, Mode=OneWay}"/>
             </Grid>
         </NavigationView>

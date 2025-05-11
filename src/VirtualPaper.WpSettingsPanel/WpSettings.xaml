@@ -6,8 +6,13 @@
     xmlns:local="using:VirtualPaper.WpSettingsPanel"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
+
+    <Page.Resources>
+        <cvs:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
+    </Page.Resources>
 
     <Grid
         x:Name="GridMain">
@@ -97,8 +102,8 @@
                                                 <Grid
                                                     Width="184"
                                                     Height="120">
-                                                    <Image                                                            
-                                                        Source="{Binding ThumbnailPath}"
+                                                    <Image
+                                                        Source="{Binding ThumbnailPath, Converter={StaticResource StringToImageSourceConverter}}"
                                                         Stretch="UniformToFill" />
                                                     <Canvas >
                                                         <Canvas.Background>

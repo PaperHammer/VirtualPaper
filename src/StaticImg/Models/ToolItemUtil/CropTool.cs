@@ -22,6 +22,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
         public override void OnPointerEntered(CanvasPointerEventArgs e) {
             base.OnPointerEntered(e);
+            SaveBaseContent();
             SystemCursorChangeRequested?.Invoke(this, new(InputSystemCursor.Create(InputSystemCursorShape.Cross)));
         }
 
@@ -32,7 +33,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             }
             if (!IsPointerOverTaregt(e) || e.Pointer.Properties.IsMiddleButtonPressed) return;
 
-            if (_baseContent == null) SaveBaseContent();
+            //if (_baseContent == null) SaveBaseContent();
             var position = e.Pointer.Position;
             switch (_currentState) {
                 case SelectionState.None:

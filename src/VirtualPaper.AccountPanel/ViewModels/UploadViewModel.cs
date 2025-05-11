@@ -40,7 +40,7 @@ namespace VirtualPaper.AccountPanel.ViewModels {
         private string _desc;
         public string Desc {
             get { return _desc; }
-            set { if (_desc == value) return;  _desc = value; OnPropertyChanged(); }
+            set { if (_desc == value) return; _desc = value; OnPropertyChanged(); }
         }
 
         private string _selectedPartition;
@@ -55,8 +55,8 @@ namespace VirtualPaper.AccountPanel.ViewModels {
             set { _isOk = value; OnPropertyChanged(); }
         }
 
-        public List<string> Partitions { get; private set; } = [];
-        public ObservableCollection<string> TagList { get; set; } = [];
+        public ObservableList<string> Partitions { get; private set; } = [];
+        public ObservableList<string> TagList { get; set; } = [];
 
         public UploadViewModel(
             IAccountClient accountClient,
@@ -83,6 +83,7 @@ namespace VirtualPaper.AccountPanel.ViewModels {
                 foreach (var part in response.Partitions) {
                     Partitions.Add(part);
                 }
+                FillData();
 
                 return true;
             }
@@ -193,17 +194,18 @@ namespace VirtualPaper.AccountPanel.ViewModels {
         }
 
         internal void Clear() {
-            this.WpBasicData = null;
-            this.TagList.Clear();
+            WpBasicData = null;
+            TagList.Clear();
             Title = null;
             Desc = null;
             SelectedPartition = null;
         }
 
-        internal void FillData() {
+        private void FillData() {
+            if (WpBasicData == null) return;            
             Title = WpBasicData.Title;
             Desc = WpBasicData.Desc;
-            TagList = [.. WpBasicData.Tags.Split(';')];
+            TagList.AddRange(WpBasicData.Tags.Split(';'));
             SelectedPartition = WpBasicData.Partition;
         }
 

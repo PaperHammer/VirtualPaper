@@ -26,8 +26,7 @@ namespace VirtualPaper.AccountPanel.Views.UserCenterComponents {
 
         public Upload(IWpBasicData data) : this() {
             _viewModel = ObjectProvider.GetRequiredService<UploadViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
-            _viewModel.WpBasicData = data;
-            _viewModel.FillData();
+            _viewModel.WpBasicData = data;            
             this.DataContext = _viewModel;
         }
 

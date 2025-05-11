@@ -10,5 +10,19 @@ service Grpc_UserSettingsService {
 	rpc SetAppRulesSettings (VirtualPaper.Grpc.Service.Models.Grpc_AppRulesSettings) returns (google.protobuf.Empty);
 
 	rpc GetSettings (google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.Models.Grpc_SettingsData);
-	rpc SetSettings (VirtualPaper.Grpc.Service.Models.Grpc_SettingsData) returns (google.protobuf.Empty);	
+	rpc SetSettings (VirtualPaper.Grpc.Service.Models.Grpc_SettingsData) returns (google.protobuf.Empty);
+	
+	rpc GetRecentUseds (google.protobuf.Empty) returns (Grpc_RecentUseds);
+	rpc SetRecentUseds (Grpc_RecentUseds) returns (google.protobuf.Empty);
+}
+
+message Grpc_RecentUseds {
+    repeated Grpc_RecentUsed recent_useds = 1;    
+}
+
+message Grpc_RecentUsed {    
+    VirtualPaper.Grpc.Service.Models.Grpc_FileType f_type = 1;
+	string file_name = 2;
+	string file_path = 3;
+	string date_time = 4;
 }

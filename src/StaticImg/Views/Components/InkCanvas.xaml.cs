@@ -191,11 +191,13 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             _viewModel.BasicData.UpdatePointerPos(pointerPoint.Position);
             HandleToolEvent(tool => tool.OnPointerMoved(new(pointerPoint, _viewModel.BasicData.SelectedInkCanvas.Render)));
+            RebuildCompositeTarget();
         }
 
         internal new void OnPointerPressed(PointerRoutedEventArgs e) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             HandleToolEvent(tool => tool.OnPointerPressed(new(pointerPoint, _viewModel.BasicData.SelectedInkCanvas.Render)));
+            RebuildCompositeTarget();
         }
 
         internal new void OnPointerReleased(PointerRoutedEventArgs e) {
@@ -227,7 +229,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
 
             action(_selectedTool);
-            RebuildCompositeTarget();
+            //RebuildCompositeTarget();
         }
         #endregion
 

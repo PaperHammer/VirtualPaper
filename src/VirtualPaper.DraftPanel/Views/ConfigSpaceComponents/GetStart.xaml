@@ -18,7 +18,7 @@
                     <StackPanel Spacing="6">
                         <Grid>
                             <TextBlock
-                                Text="{x:Bind ProjectName}"
+                                Text="{x:Bind FileName}"
                                 FontWeight="Bold"
                                 FontSize="14"/>
                             <TextBlock 
@@ -113,6 +113,7 @@
                     ItemTemplate="{StaticResource RecentUsedItemTemplate}"
                     SelectionMode="None"
                     IsItemClickEnabled="True"
+                    KeyboardAcceleratorPlacementMode="Hidden"
                     ItemClick="RecentUsedsListView_ItemClick">
                     <ListView.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu" Key="R" Invoked="KeyboardAccelerator_Invoked_RecentUseds"/>

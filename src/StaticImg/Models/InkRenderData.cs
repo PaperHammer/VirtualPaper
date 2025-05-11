@@ -6,11 +6,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
-using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common.Utils.Archive;
 using Windows.Foundation;
 using Windows.Graphics.DirectX;
-using Windows.Security.Cryptography.Certificates;
 using Windows.Storage;
 using Windows.Storage.Streams;
 

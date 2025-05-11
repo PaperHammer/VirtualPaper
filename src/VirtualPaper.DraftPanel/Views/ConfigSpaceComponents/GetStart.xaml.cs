@@ -7,12 +7,12 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG;
 using VirtualPaper.DraftPanel.ViewModels;
+using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.DraftPanel;
 
 // To learn more about WinUI, the WinUI draft structure,
@@ -43,11 +43,11 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             AddBack_Procs(filtered);
         }
 
-        private bool Filter(RecentUsed recentUsed) {
-            return recentUsed.ProjectName.Contains(tbSearchName.Text, StringComparison.InvariantCultureIgnoreCase);
+        private bool Filter(IRecentUsed recentUsed) {
+            return recentUsed.FileName.Contains(tbSearchName.Text, StringComparison.InvariantCultureIgnoreCase);
         }
 
-        private void Remove_NonMatching(IEnumerable<RecentUsed> recentuseds) {
+        private void Remove_NonMatching(IEnumerable<IRecentUsed> recentuseds) {
             for (int i = _viewModel.RecentUseds.Count - 1; i >= 0; i--) {
                 var item = _viewModel.RecentUseds[i];
                 if (!recentuseds.Contains(item)) {
@@ -56,7 +56,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             }
         }
 
-        private void AddBack_Procs(IEnumerable<RecentUsed> recentuseds) {
+        private void AddBack_Procs(IEnumerable<IRecentUsed> recentuseds) {
             foreach (var item in recentuseds) {
                 if (!_viewModel.RecentUseds.Contains(item)) {
                     _viewModel.RecentUseds.Add(item);

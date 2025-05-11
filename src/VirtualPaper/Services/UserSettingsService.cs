@@ -4,6 +4,7 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 
@@ -12,12 +13,14 @@ namespace VirtualPaper.Services {
         public ISettings Settings { get; private set; }
         public List<IApplicationRules> AppRules { get; private set; } = [];
         public List<IWallpaperLayout> WallpaperLayouts { get; private set; } = [];
+        public List<IRecentUsed> RecentUseds { get; private set; } = [];
 
         public UserSettingsService(
             IMonitorManager moitorManager) {
             Load<ISettings>();
             Load<List<IApplicationRules>>();
             Load<List<IWallpaperLayout>>();
+            Load<List<IRecentUsed>>();
 
             Settings.SelectedMonitor = Settings.SelectedMonitor != null ?
                 moitorManager.Monitors.FirstOrDefault(x => x.Equals(Settings.SelectedMonitor)) ?? moitorManager.PrimaryMonitor : moitorManager.PrimaryMonitor;
@@ -77,6 +80,16 @@ namespace VirtualPaper.Services {
                     Save<List<IWallpaperLayout>>();
                 }
             }
+            else if (typeof(T) == typeof(List<IRecentUsed>)) {
+                try {
+                    RecentUseds = new List<IRecentUsed>(JsonSaver.Load<List<RecentUsed>>(_recentUsedPath, RecentUsedContext.Default));
+                }
+                catch (Exception e) {
+                    App.Log.Error(e.ToString());
+                    RecentUseds = [];
+                    Save<List<IRecentUsed>>();
+                }
+            }
             else {
                 throw new InvalidCastException($"ValueType not found: {typeof(T)}");
             }
@@ -92,6 +105,9 @@ namespace VirtualPaper.Services {
             else if (typeof(T) == typeof(List<IWallpaperLayout>)) {
                 JsonSaver.Store(_wallpaperLayoutPath, WallpaperLayouts, WallpaperLayoutContext.Default);
             }
+            else if (typeof(T) == typeof(List<IRecentUsed>)) {
+                JsonSaver.Store(_recentUsedPath, RecentUseds, RecentUsedContext.Default);
+            }
             else {
                 throw new InvalidCastException($"ValueType not found: {typeof(T)}");
             }
@@ -100,5 +116,6 @@ namespace VirtualPaper.Services {
         private readonly string _settingsPath = Constants.CommonPaths.UserSettingsPath;
         private readonly string _appRulesPath = Constants.CommonPaths.AppRulesPath;
         private readonly string _wallpaperLayoutPath = Constants.CommonPaths.WallpaperLayoutPath;
+        private readonly string _recentUsedPath = Constants.CommonPaths.RecentUsedPath;
     }
 }

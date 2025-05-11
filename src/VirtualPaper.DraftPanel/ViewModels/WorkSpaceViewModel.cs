@@ -12,6 +12,7 @@ using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Model.NavParam;
+using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using Windows.System;
 
@@ -25,7 +26,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             set { if (_selectedTabIndex == value) return; _selectedTabIndex = value; OnPropertyChanged(); }
         }
 
-        public WorkSpaceViewModel() {
+        public WorkSpaceViewModel(
+            IUserSettingsClient userSettings) {
+            this._userSettings = userSettings;
             //TabViewItems.CollectionChanged += TabViewItems_CollectionChanged;
         }
 
@@ -127,6 +130,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     break;
                 case FileType.FDesign:
                     await ReadDraftFileAsync(filePath); // [folder]/xxx.vpd
+                    await _userSettings.UpdateRecetUsedAsync(filePath);
                     break;
                 //case FileType.FProject:
                 //     ReadProjectFile(filePath); // [folder]/xxx.vproj
@@ -172,5 +176,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         internal readonly ObservableCollection<MenuBarItem> _middleMenuItems = [];
         private readonly List<IRuntime> _rt = [];
+        private readonly IUserSettingsClient _userSettings;
     }
 }

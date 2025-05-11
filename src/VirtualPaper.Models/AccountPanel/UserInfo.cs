@@ -18,9 +18,19 @@ namespace VirtualPaper.Models.AccountPanel {
             set { _avatar = value; OnPropertyChanged(); }
         }
 
-        public string Name { get; set; } = string.Empty;
+        private string _name = string.Empty;
+        public string Name {
+            get => _name;
+            set { _name = value; OnPropertyChanged(); }
+        }
+
         public string Email { get; set; } = string.Empty;
-        public string? Sign { get; set; }
+
+        private string? _sign;
+        public string? Sign {
+            get => _sign;
+            set { _sign = value; OnPropertyChanged(); }
+        }
         [JsonInclude]
         public UserStatus Status { get; }
 

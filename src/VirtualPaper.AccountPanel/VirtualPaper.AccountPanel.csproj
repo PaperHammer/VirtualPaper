@@ -8,14 +8,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Models\**" />
-    <Content Remove="Models\**" />
-    <EmbeddedResource Remove="Models\**" />
-    <None Remove="Models\**" />
-    <Page Remove="Models\**" />
-    <PRIResource Remove="Models\**" />
-  </ItemGroup>
-  <ItemGroup>
     <None Remove="Account.xaml" />
     <None Remove="Views\Passport.xaml" />
     <None Remove="Views\PassportComponents\Login.xaml" />

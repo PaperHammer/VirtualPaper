@@ -51,8 +51,6 @@ namespace VirtualPaper.UI {
         }
 
         private static void ConfigureServices() {
-            ObjectProvider.RegisterRelation<IGalleryClient, GalleryClient>();
-            ObjectProvider.RegisterRelation<IAccountClient, AccountClient>();
             ObjectProvider.RegisterRelation<IWallpaperControlClient, WallpaperControlClient>();
             ObjectProvider.RegisterRelation<IMonitorManagerClient, MonitorManagerClient>();
             ObjectProvider.RegisterRelation<IUserSettingsClient, UserSettingsClient>();

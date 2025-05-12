@@ -1,76 +1,12 @@
-﻿using Google.Protobuf;
-using VirtualPaper.Common;
-using VirtualPaper.Grpc.Service.Account;
+﻿using VirtualPaper.Common;
 using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Models;
-using VirtualPaper.Models.AccountPanel;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.Net;
 using Monitor = VirtualPaper.Models.Cores.Monitor;
 
 namespace VirtualPaper.DataAssistor {
-    public static class DataAssist {
-        public static async Task<Grpc_WpBasicData?> ToGrpcWpBasciDataThuAsync(WpBasicDataDto dto) {
-            try {
-                string dir = Path.Combine(Constants.CommonPaths.TempDir, dto.Uid);
-                if (!Directory.Exists(dir)) {
-                    Directory.CreateDirectory(dir);
-                }
-                string thumbnailPath = dto.Uid == string.Empty ? "" : Path.Combine(dir, dto.Uid + Constants.Field.ThumGifSuff);
-                await File.WriteAllBytesAsync(thumbnailPath, dto.ThuImage);
-                Grpc_WpBasicData grpc_data = new() {
-                    AppInfo = new() {
-                        AppName = dto.AppName,
-                        AppVersion = dto.AppVersion,
-                        FileVersion = dto.FileVersion,
-                    },
-                    ThumbnailPath = thumbnailPath,
-                    WallpaperUid = dto.Uid,
-                    Title = dto.Title,
-                    FType = (Grpc_FileType)dto.Type,
-                    FileExtension = dto.FileExtension,
-                    PublishDate = dto.PublishDate,
-                    Authors = dto.Publisher,
-                    Partition = dto.Partition,
-                    Tags = dto.Tags ?? string.Empty,
-                    Desc = dto.Description ?? string.Empty,
-                    Status = (Grpc_WallpaperStatus)dto.Status,
-                };
-
-                return grpc_data;
-            }
-            catch (Exception ex) { }
-
-            return null;
-        }
-
-        public static UserInfo? FromGrpcUserInfo(Grpc_UserInfo? grpcUser) {
-            if (grpcUser == null) return null;
-
-            return new UserInfo(grpcUser.Uid, grpcUser.Status.ToDomain()) {
-                Avatar = grpcUser.Avatar.Length > 0 ? grpcUser.Avatar.ToByteArray() : null,
-                Name = grpcUser.Name,
-                Email = grpcUser.Email,
-                Sign = grpcUser.Sign.Length > 0 ? grpcUser.Sign : null,
-            };
-        }
-
-        public static Grpc_UserInfo? UserInfoToGrpc(UserInfo? userInfo) {
-            if (userInfo == null) return null;
-
-            Grpc_UserInfo grpc_UserInfo = new() {
-                Uid = userInfo.Uid,
-                Avatar = ByteString.CopyFrom(userInfo.Avatar ?? []),
-                Name = userInfo.Name,
-                Email = userInfo.Email,
-                Sign = userInfo.Sign ?? string.Empty,
-                Status = userInfo.Status.ToGrpc(),
-            };
-
-            return grpc_UserInfo;
-        }
-
+    public static class DataAssist {        
         public static Grpc_WpBasicData BasicDataToGrpcData(IWpBasicData source) {
             Grpc_WpBasicData grpc_WpBasicData = new() {
                 WallpaperUid = source.WallpaperUid,
@@ -382,26 +318,6 @@ namespace VirtualPaper.DataAssistor {
             }
 
             return data;
-        }
-    }
-
-    public static class UserStatusExtensions {
-        public static Grpc_UserStatus ToGrpc(this UserStatus status) {
-            return status switch {
-                UserStatus.Normal => Grpc_UserStatus.Normal,
-                UserStatus.Locked => Grpc_UserStatus.Locked,
-                UserStatus.Deleted => Grpc_UserStatus.Deleted,
-                _ => throw new ArgumentException($"Cannot convert combined UserStatus to Grpc_UserStatus: {status}")
-            };
-        }
-
-        public static UserStatus ToDomain(this Grpc_UserStatus status) {
-            return status switch {
-                Grpc_UserStatus.Normal => UserStatus.Normal,
-                Grpc_UserStatus.Locked => UserStatus.Locked,
-                Grpc_UserStatus.Deleted => UserStatus.Deleted,
-                _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
-            };
         }
     }
 }

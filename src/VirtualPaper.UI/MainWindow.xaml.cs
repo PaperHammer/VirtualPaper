@@ -5,14 +5,12 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using VirtualPaper.AccountPanel;
 using VirtualPaper.AppSettingsPanel;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel;
-using VirtualPaper.GalleryPanel;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.ViewModels;
@@ -186,17 +184,11 @@ namespace VirtualPaper.UI {
         private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
             try {
                 Type pageType = null;
-                if (args.SelectedItemContainer.Name == Gallery.Name) {
-                    pageType = typeof(Gallery);
-                }
-                else if (args.SelectedItemContainer.Name == Nav_WpSettings.Name) {
+                if (args.SelectedItemContainer.Name == Nav_WpSettings.Name) {
                     pageType = typeof(WpSettings);
                 }
                 else if (args.SelectedItemContainer.Name == Nav_Draft.Name) {
                     pageType = typeof(Draft);
-                }
-                else if (args.SelectedItemContainer.Name == Nav_Account.Name) {
-                    pageType = typeof(Account);
                 }
                 else if (args.SelectedItemContainer.Name == Nav_AppSettings.Name) {
                     pageType = typeof(AppSettings);

@@ -19,9 +19,7 @@ using VirtualPaper.Cores.TrayControl;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Factories;
 using VirtualPaper.Factories.Interfaces;
-using VirtualPaper.Grpc.Service.Account;
 using VirtualPaper.Grpc.Service.Commands;
-using VirtualPaper.Grpc.Service.Gallery;
 using VirtualPaper.Grpc.Service.MonitorManager;
 using VirtualPaper.Grpc.Service.ScrCommands;
 using VirtualPaper.Grpc.Service.Update;
@@ -29,13 +27,10 @@ using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.GrpcServers;
 using VirtualPaper.lang;
-using VirtualPaper.Models.AccountPanel;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
-using VirtualPaper.Utils.Net;
-using VirtualPaper.Utils.Net.Interfaces;
 using VirtualPaper.Utils.Theme;
 using VirtualPaper.Views;
 using VirtualPaper.Views.WindowsMsg;
@@ -51,10 +46,7 @@ namespace VirtualPaper {
     public partial class App : Application {
         internal static Logger Log => _log;
         internal static JobService Jobs => Services.GetRequiredService<JobService>();
-        internal static IHttpConnect HttpConnect => new HttpConnect();
         internal static IUserSettingsService UserSettings => Services.GetRequiredService<IUserSettingsService>();
-        internal static UserInfo? User { get; set; }
-        internal static string? Token { get; set; }
 
         public static IServiceProvider Services {
             get {
@@ -202,15 +194,11 @@ namespace VirtualPaper {
                 .AddSingleton<IWallpaperConfigFolderFactory, WallpaperConfigFolderFactory>()
 
                 .AddSingleton<JobService>()
-                .AddSingleton<IGalleryService, GalleryService>()
-                .AddSingleton<IAccountService, AccountService>()
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
 
-                .AddSingleton<GalleryServer>()
-                .AddSingleton<AccountServer>()
                 .AddSingleton<WallpaperControlServer>()
                 .AddSingleton<MonitorManagerServer>()
                 .AddSingleton<UserSettingServer>()
@@ -239,8 +227,6 @@ namespace VirtualPaper {
             Grpc_UpdateService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<AppUpdateServer>());
             Grpc_CommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<CommandsServer>());
             Grpc_ScrCommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<ScrCommandsServer>());
-            Grpc_AccountService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<AccountServer>());
-            Grpc_GalleryService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<GalleryServer>());
             server.Start();
 
             return server;

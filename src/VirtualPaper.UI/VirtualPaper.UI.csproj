@@ -1,0 +1,176 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+		<RootNamespace>VirtualPaper.UI</RootNamespace>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<Platforms>x86;x64;ARM64</Platforms>
+		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
+		<UseWinUI>true</UseWinUI>
+		<EnableMsixTooling>true</EnableMsixTooling>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<!--NETSDK1152-->
+	<!--ref: https://learn.microsoft.com/zh-cn/dotnet/core/compatibility/sdk/6.0/duplicate-files-in-output-->
+	<PropertyGroup>
+		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+		<DefaultLanguage>zh-CN</DefaultLanguage>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(IsMsixRelease)' != 'true'">
+		<!--<WindowsPackageType>None</WindowsPackageType>-->
+		<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(IsMsixRelease)' == 'true'">
+		<GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+		<AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+		<AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
+		<GenerateTestArtifacts>True</GenerateTestArtifacts>
+		<AppxBundle>Always</AppxBundle>
+		<AppxBundlePlatforms>x64</AppxBundlePlatforms>
+		<GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
+		<HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+		<!-- Create Properties/PublishProfiles for each release, Example: win10-x86.pubxml-->
+		<PublishProfile>win-$(Platform).pubxml</PublishProfile>
+		<!-- Temporary cert-->
+		<!--
+    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+    <PackageCertificateThumbprint>AFCC4AADFFAC311F4E8090D3AF1B8F278AB907BC</PackageCertificateThumbprint>
+    <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    -->
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(IsMsixRelease)' == 'true'">
+		<!-- Include self-contained core build here (excluding UI plugin.) -->
+		<Folder Include="Build\" />
+		<Content Include="Build\**">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<PropertyGroup>
+		<OutputPath>..\VirtualPaper\Plugins\UI\</OutputPath>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<DefaultLanguage>zh-cn</DefaultLanguage>
+		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+		<RootNamespace>VirtualPaper.UI</RootNamespace>
+		<ApplicationIcon>virtualpaper.ico</ApplicationIcon>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Content Include="Nlog.config">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="virtualpaper.ico">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="Assets\BadgeLogo.scale-100.png" />
+		<None Remove="Assets\BadgeLogo.scale-125.png" />
+		<None Remove="Assets\icon-vp-48.png" />
+		<None Remove="Assets\LockScreenLogo.scale-200.png" />
+		<None Remove="Assets\splashCol.png" />
+		<None Remove="Assets\SplashScreen.scale-100.png" />
+		<None Remove="Assets\SplashScreen.scale-125.png" />
+		<None Remove="Assets\SplashScreen.scale-150.png" />
+		<None Remove="Assets\SplashScreen.scale-200.png" />
+		<None Remove="Assets\SplashScreen.scale-400.png" />
+		<None Remove="Assets\Square150x150Logo.scale-100.png" />
+		<None Remove="Assets\Square150x150Logo.scale-125.png" />
+		<None Remove="Assets\Square150x150Logo.scale-150.png" />
+		<None Remove="Assets\Square150x150Logo.scale-200.png" />
+		<None Remove="Assets\Square44x44Logo.altform-lightunplated_targetsize-16.png" />
+		<None Remove="Assets\Square44x44Logo.altform-lightunplated_targetsize-24.png" />
+		<None Remove="Assets\Square44x44Logo.altform-lightunplated_targetsize-256.png" />
+		<None Remove="Assets\Square44x44Logo.altform-lightunplated_targetsize-32.png" />
+		<None Remove="Assets\Square44x44Logo.altform-lightunplated_targetsize-48.png" />
+		<None Remove="Assets\Square44x44Logo.altform-unplated_targetsize-16.png" />
+		<None Remove="Assets\Square44x44Logo.altform-unplated_targetsize-256.png" />
+		<None Remove="Assets\Square44x44Logo.altform-unplated_targetsize-32.png" />
+		<None Remove="Assets\Square44x44Logo.altform-unplated_targetsize-48.png" />
+		<None Remove="Assets\Square44x44Logo.scale-100.png" />
+		<None Remove="Assets\Square44x44Logo.scale-125.png" />
+		<None Remove="Assets\Square44x44Logo.scale-150.png" />
+		<None Remove="Assets\Square44x44Logo.scale-200.png" />
+		<None Remove="Assets\Square44x44Logo.scale-400.png" />
+		<None Remove="Assets\Square44x44Logo.targetsize-16.png" />
+		<None Remove="Assets\Square44x44Logo.targetsize-24.png" />
+		<None Remove="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+		<None Remove="Assets\Square44x44Logo.targetsize-256.png" />
+		<None Remove="Assets\Square44x44Logo.targetsize-32.png" />
+		<None Remove="Assets\Square44x44Logo.targetsize-48.png" />
+		<None Remove="Assets\Square71x71Logo.scale-100.png" />
+		<None Remove="Assets\Square71x71Logo.scale-125.png" />
+		<None Remove="Assets\Square71x71Logo.scale-400.png" />
+		<None Remove="Assets\StoreLogo.backup.png" />
+		<None Remove="Assets\StoreLogo.scale-100.png" />
+		<None Remove="Assets\StoreLogo.scale-125.png" />
+		<None Remove="Assets\StoreLogo.scale-150.png" />
+		<None Remove="Assets\StoreLogo.scale-200.png" />
+		<None Remove="Assets\StoreLogo.scale-400.png" />
+		<None Remove="Assets\ui_components\icons8-image-96.png" />
+		<None Remove="Assets\ui_components\icons8-picture-94.png" />
+		<None Remove="Assets\Wide310x150Logo.scale-100.png" />
+		<None Remove="Assets\Wide310x150Logo.scale-125.png" />
+		<None Remove="Assets\Wide310x150Logo.scale-150.png" />
+		<None Remove="Assets\Wide310x150Logo.scale-200.png" />
+		<None Remove="Assets\Wide310x150Logo.scale-400.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
+		<PackageReference Include="Vanara.PInvoke.ComCtl32" Version="4.0.3" />
+		<PackageReference Include="Vanara.PInvoke.DwmApi" Version="4.0.3" />
+		<PackageReference Include="Vanara.PInvoke.User32" Version="4.0.3" />
+		<Manifest Include="$(ApplicationManifest)" />
+	</ItemGroup>
+
+	<!-- 
+    Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
+    Tools extension to be activated for this project even if the Windows App SDK Nuget
+    package has not yet been restored.
+  -->
+	<ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+		<ProjectCapability Include="Msix" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Update="Assets\icon-vp-48.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\splashCol.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\ui_components\icons8-image-96.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\ui_components\icons8-picture-94.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	<ItemGroup>
+		<None Update="Players\Web\default.html">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<!-- 
+    Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution 
+    Explorer "Package and Publish" context menu entry to be enabled for this project even if 
+    the Windows App SDK Nuget package has not yet been restored.
+  -->
+	<PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+		<HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\VirtualPaper.AppSettingsPanel\VirtualPaper.AppSettingsPanel.csproj" />
+		<ProjectReference Include="..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj" />
+	</ItemGroup>
+</Project>

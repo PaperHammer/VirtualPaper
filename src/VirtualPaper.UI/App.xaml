@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="VirtualPaper.UI.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    xmlns:local="using:VirtualPaper.UI">
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <controls:XamlControlsResources>
+                    <controls:XamlControlsResources.MergedDictionaries>
+                        <ResourceDictionary>
+                            <x:Double x:Key="ContentDialogMaxWidth">800</x:Double>
+                        </ResourceDictionary>
+                    </controls:XamlControlsResources.MergedDictionaries>
+                </controls:XamlControlsResources>
+
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/ResouresXaml/ResourceDictionary.xaml" />
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ColorPicker/ArcColorPicker.xaml" />
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ColorPicker/ArcColorSpectrum.xaml" />
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/CheckBox/ArcCheckBox.xaml" />
+                
+                <!--Other merged dictionaries here-->
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

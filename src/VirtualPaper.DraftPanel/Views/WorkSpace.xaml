@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VirtualPaper.DraftPanel.Views.WorkSpace"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.DraftPanel.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:container="using:VirtualPaper.UIComponent.Container"
+    xmlns:cmd="using:VirtualPaper.UIComponent.Command"
+    mc:Ignorable="d"
+    NavigationCacheMode="Enabled">
+
+    <Page.Resources>
+        <cmd:KeepToLeft x:Key="LeftMenuItems">
+            <MenuBarItem 
+                Title="文件(F)"
+                KeyboardAcceleratorPlacementMode="Hidden">
+                <MenuBarItem.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="F"/>
+                </MenuBarItem.KeyboardAccelerators>
+
+                <MenuFlyoutItem Text="新建">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="N"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="添加">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="D"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="打开">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="O"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="保存" Click="MFI_Save_Clicked">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="S"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="全部保存" Click="MFI_SaveAll_Clicked">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control,Shift" Key="S"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="退出" Click="MFI_Exit_Clicked">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="F4"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+            </MenuBarItem>
+
+            <MenuBarItem 
+                Title="编辑(E)"
+                KeyboardAcceleratorPlacementMode="Hidden">
+                <MenuBarItem.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="E"/>
+                </MenuBarItem.KeyboardAccelerators>
+
+                <MenuFlyoutItem Text="撤销">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="Z"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="还原">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control, Shift" Key="Z"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+
+                <MenuFlyoutSeparator />
+
+                <MenuFlyoutItem Text="剪切">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="X"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="复制">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="C"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="粘贴">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="V"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+            </MenuBarItem>
+        </cmd:KeepToLeft>
+
+        <cmd:KeepToRight x:Key="RightMenuItems">
+            <MenuBarItem 
+              Title="帮助(H)"
+              KeyboardAcceleratorPlacementMode="Hidden">
+                <MenuBarItem.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="H"/>
+                </MenuBarItem.KeyboardAccelerators>
+
+                <MenuFlyoutItem Text="关于">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="None" Key="A"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+            </MenuBarItem>
+        </cmd:KeepToRight>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <ContentControl
+            x:Name="menuContent">
+            <cmd:ObservableMenuBar
+                KeepToLeft="{StaticResource LeftMenuItems}"
+                KeepToRight="{StaticResource RightMenuItems}"
+                MiddleItems="{x:Bind _viewModel._middleMenuItems}"/>
+            <!--<MenuBar>
+                
+
+                <MenuBarItem 
+                Title="图像(I)"
+                KeyboardAcceleratorPlacementMode="Hidden">
+                    <MenuBarItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="I"/>
+                    </MenuBarItem.KeyboardAccelerators>
+
+
+                </MenuBarItem>
+
+                <MenuBarItem 
+                Title="图层(L)"
+                KeyboardAcceleratorPlacementMode="Hidden">
+                    <MenuBarItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="L"/>
+                    </MenuBarItem.KeyboardAccelerators>
+
+
+                </MenuBarItem>
+
+               
+            </MenuBar>-->
+        </ContentControl>
+
+        <Grid
+            x:Name="contentGrid"
+            Grid.Row="1">
+            <TabView
+                x:Name="TabViewControl"
+                VerticalAlignment="Stretch"
+                HorizontalAlignment="Stretch"
+                Loaded="TabViewControl_Loaded"
+                TabWidthMode="SizeToContent"
+                CloseButtonOverlayMode="OnPointerOver"
+                SelectedIndex="{x:Bind _viewModel.SelectedTabIndex, Mode=TwoWay}"
+                TabItemsSource="{x:Bind _viewModel.TabViewItems}"               
+                AddTabButtonClick="TabViewControl_AddTabButtonClick"
+                TabCloseRequested="TabViewControl_TabCloseRequested"/>
+        </Grid>
+    </Grid>
+</Page>

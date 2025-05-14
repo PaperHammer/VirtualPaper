@@ -1,0 +1,27 @@
+﻿<Window x:Class="VirtualPaper.ScreenSaver.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:VirtualPaper.ScreenSaver"
+        xmlns:rxnav="https://github.com/reactivemarbles/CrissCross"
+        Width="800"
+        Height="450"
+        mc:Ignorable="d"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowState="Maximized"
+        Closing="Window_Closing">
+
+    <Grid>
+        <rxnav:WebView2Wpf 
+            x:Name="Webview2"
+            AutoDispose="True">
+            <Canvas
+                x:Name="canvas"
+                Background="Transparent"/>
+        </rxnav:WebView2Wpf>
+    </Grid>
+</Window>

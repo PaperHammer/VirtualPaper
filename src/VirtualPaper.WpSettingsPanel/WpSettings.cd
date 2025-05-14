@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="VirtualPaper.WpSettingsPanel.ViewModels.LibraryContentsViewModel">
+    <Position X="3.75" Y="1.25" Width="2.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Properties" Collapsed="true" />
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Struct Name="VirtualPaper.WpSettingsPanel.ViewModels.LibraryContentsViewModel.ImportValue" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>ViewModels\LibraryContentsViewModel.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>BCQIBABjAQQEIIBAAAAEUAAIFMgUicgAAAAIGkhBwJA=</HashCode>
+      <FileName>ViewModels\LibraryContentsViewModel.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="AsyncLoader" />
+      <Property Name="WpBasicData" />
+      <Property Name="WallpaperControlClient" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="VirtualPaper.WpSettingsPanel.Views.LibraryContents" BaseTypeListCollapsed="true">
+    <Position X="0.5" Y="3" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>ABAAAABABABAAAA4AAAAAQQBAQAAAgAAAAGIAAAAAAA=</HashCode>
+      <FileName>Views\LibraryContents.xaml.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="LibraryContentsViewModel" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="VirtualPaper.Common.Utils.AsyncLoader&lt;T&gt;">
+    <Position X="1.25" Y="1.25" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier />
+  </Class>
+  <Class Name="VirtualPaper.Models.Cores.WpBasicData">
+    <Position X="13" Y="1.5" Width="1.5" />
+    <TypeIdentifier />
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.DataAssistor.DataAssist">
+    <Position X="11" Y="2.25" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="VirtualPaper.Grpc.Client.WallpaperControlClient">
+    <Position X="7.25" Y="1.25" Width="1.5" />
+    <TypeIdentifier />
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.WpSettingsPanel.Views.ScreenSaver">
+    <Position X="0.5" Y="9.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAQAAAAACBAQABwAAAAAAQAARAQAAQBAEAAAgAAAQA=</HashCode>
+      <FileName>Views\ScreenSaver.xaml.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="ScreenSaverViewModel" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.WpSettingsPanel.ViewModels.ScreenSaverViewModel">
+    <Position X="3" Y="9.5" Width="2.25" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>A8AJA0QAEGDAEIAgKgUIAASQBAAwAQARAAgBABFEAEA=</HashCode>
+      <FileName>ViewModels\ScreenSaverViewModel.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="ScrCommandsClient" />
+      <Property Name="UserSettingsClient" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.Grpc.Client.ScrCommandsClient">
+    <Position X="6.5" Y="9.5" Width="2.25" />
+    <TypeIdentifier />
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VirtualPaper.Grpc.Client.UserSettingsClient">
+    <Position X="6.5" Y="12.25" Width="2.25" />
+    <TypeIdentifier />
+    <Lollipop Position="0.2" />
+  </Class>
+  <Font Name="Microsoft YaHei UI" Size="9.5" />
+</ClassDiagram>

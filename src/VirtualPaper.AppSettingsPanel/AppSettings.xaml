@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VirtualPaper.AppSettingsPanel.AppSettings"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.AppSettingsPanel"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    NavigationCacheMode="Enabled">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <SelectorBar 
+            x:Name="SelBar"
+            Grid.Row="0"
+            SelectionChanged="SelectorBar_SelectionChanged"
+            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+            HorizontalAlignment="Stretch">
+            <SelectorBarItem x:Name="s1" Text="{x:Bind _selBarItem1}" Tag="GeneralView" IsSelected="True"/>
+            <SelectorBarItem x:Name="s2" Text="{x:Bind _selBarItem2}" Tag="PerformanceView"/>
+            <SelectorBarItem x:Name="s3" Text="{x:Bind _selBarItem3}" Tag="SystemView"/>
+            <SelectorBarItem x:Name="s4" Text="{x:Bind _selBarItem4}" Tag="OthersView"/>
+        </SelectorBar>
+
+        <Frame 
+            x:Name="ContentFrame" 
+            Grid.Row="1"/>
+    </Grid>
+</Page>

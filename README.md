@@ -1,6 +1,6 @@
 # VirtualPaper
 
-[![GitHub release](https://img.shields.io/badge/release-v0.3.0.0-blue)](https://github.com/PaperHammer/VirtualPaper/releases)
+[![GitHub release](https://img.shields.io/badge/release-v0.3.0.1-blue)](https://github.com/PaperHammer/VirtualPaper/releases)
 [![GitHub stars](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2FPaperHammer%2FVirtualPaper&query=stargazers_count&label=Stars&color=pink)](https://github.com/PaperHammer/VirtualPaper/stargazers)
 [![Documentation](https://img.shields.io/badge/Docs-Wiki-green)](https://github.com/PaperHammer/VirtualPaper/wiki)
 [![Issues](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2FPaperHammer%2FVirtualPaper&query=open_issues&label=Issues&color=orange)](https://github.com/PaperHammer/VirtualPaper/issues)

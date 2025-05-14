@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="VirtualPaper.UIComponent.Input.ArcPalette"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.UIComponent.Input"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:extension="using:VirtualPaper.UIComponent.Extensions"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Style x:Key="ColorButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border
+                                x:Name="BackgroundBorder"
+                                CornerRadius="{TemplateBinding CornerRadius}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                Background="{TemplateBinding Background}">
+                                <ContentPresenter
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"/>
+                            </Border>
+
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver">
+                                        <Storyboard>
+                                            <ColorAnimation
+                                                Storyboard.TargetName="BackgroundBorder"
+                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                To="LightGray" Duration="0:0:0.1"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <Storyboard>
+                                            <ColorAnimation
+                                                Storyboard.TargetName="BackgroundBorder"
+                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                To="DarkGray" Duration="0:0:0.1"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="ColorItemTemplate">
+            <Button 
+                CornerRadius="100"
+                Style="{StaticResource ColorButtonStyle}" 
+                Tag="{Binding}"
+                Click="SelectColorBtn_Click"
+                RightTapped="RightSelectionBtn_Click">
+                <Ellipse
+                    Height="22" 
+                    Width="22"
+                    Fill="{Binding}" 
+                    Stroke="Gray" 
+                    StrokeThickness="1"/>
+            </Button>
+        </DataTemplate>
+
+        <ItemsPanelTemplate x:Key="HorizontalPanelTemplate">
+            <StackPanel Spacing="1" Orientation="Horizontal"/>
+        </ItemsPanelTemplate>
+
+        <extension:XList x:Key="FirstRowColors">
+            <SolidColorBrush Color="#000000"/>
+            <SolidColorBrush Color="#7f7f7f"/>
+            <SolidColorBrush Color="#880015"/>
+            <SolidColorBrush Color="#ed1c24"/>
+            <SolidColorBrush Color="#ff7f27"/>
+            <SolidColorBrush Color="#fff200"/>
+            <SolidColorBrush Color="#22b14c"/>
+            <SolidColorBrush Color="#00a2e8"/>
+            <SolidColorBrush Color="#3f48cc"/>
+            <SolidColorBrush Color="#a349a4"/>
+        </extension:XList>
+
+        <extension:XList x:Key="SecondRowColors">
+            <SolidColorBrush Color="#ffffff"/>
+            <SolidColorBrush Color="#c3c3c3"/>
+            <SolidColorBrush Color="#b97a57"/>
+            <SolidColorBrush Color="#ffaec9"/>
+            <SolidColorBrush Color="#ffc90e"/>
+            <SolidColorBrush Color="#efe4b0"/>
+            <SolidColorBrush Color="#b5e61d"/>
+            <SolidColorBrush Color="#99d9ea"/>
+            <SolidColorBrush Color="#7092be"/>
+            <SolidColorBrush Color="#c8bfe7"/>
+        </extension:XList>
+    </UserControl.Resources>
+
+    <StackPanel
+        Spacing="6"
+        Orientation="Vertical">
+        <StackPanel 
+            Orientation="Vertical"
+            HorizontalAlignment="Stretch" 
+            VerticalAlignment="Center">
+            <ItemsControl 
+                ItemsSource="{StaticResource FirstRowColors}"
+                ItemTemplate="{StaticResource ColorItemTemplate}"
+                ItemsPanel="{StaticResource HorizontalPanelTemplate}"/>
+
+            <ItemsControl 
+                ItemsSource="{StaticResource SecondRowColors}"
+                ItemTemplate="{StaticResource ColorItemTemplate}"
+                ItemsPanel="{StaticResource HorizontalPanelTemplate}"/>
+            
+            <ItemsControl 
+                ItemsSource="{x:Bind CustomBrushes}"
+                ItemTemplate="{StaticResource ColorItemTemplate}"
+                ItemsPanel="{StaticResource HorizontalPanelTemplate}"/>
+        </StackPanel>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel
+                Spacing="4"
+                Orientation="Horizontal">
+                <Button 
+                    x:Name="aColor"
+                    Height="40"
+                    Width="40"
+                    BorderThickness="0"
+                    BorderBrush="SkyBlue"
+                    Style="{StaticResource ColorButtonStyle}"
+                    Click="A_ColorBtn_Click">
+                    <Rectangle  
+                        x:Name="aRectangle" 
+                        Width="30" 
+                        Height="30" 
+                        Fill="{x:Bind AColor, Mode=OneWay}" 
+                        Stroke="Gray" 
+                        StrokeThickness="1"/>
+                </Button>
+
+                <Button 
+                    x:Name="bColor"
+                    Height="40"
+                    Width="40"
+                    BorderThickness="0"
+                    BorderBrush="SkyBlue"
+                    Style="{StaticResource ColorButtonStyle}"
+                    Click="B_ColorBtn_Click">
+                    <Rectangle   
+                        x:Name="bRectangle" 
+                        Width="28" 
+                        Height="28"
+                        Fill="{x:Bind BColor, Mode=OneWay}" 
+                        Stroke="Gray" StrokeThickness="1" />
+                </Button>
+            </StackPanel>
+
+            <Button 
+                Grid.Column="2"
+                Height="40"
+                Width="40"
+                Style="{StaticResource ColorButtonStyle}"
+                Click="OpenArcColorPickerBtn_Click">
+                <Rectangle 
+                    Width="30" 
+                    Height="30" 
+                    VerticalAlignment="Center" 
+                    HorizontalAlignment="Center">
+                    <Rectangle.Fill>
+                        <LinearGradientBrush >
+                            <GradientStop Color="Red" Offset="0.0"/>
+                            <GradientStop Color="Orange" Offset="0.25"/>
+                            <GradientStop Color="Yellow" Offset="0.375"/>
+                            <GradientStop Color="LightGreen" Offset="0.5"/>
+                            <GradientStop Color="Violet" Offset="0.75"/>
+                            <GradientStop Color="Indigo" Offset="0.875"/>
+                            <GradientStop Color="SkyBlue" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+            </Button>
+        </Grid>
+
+        <local:ArcColorPicker
+            x:Name="arcColorPicker"
+            AddBtnIsVisible="True"
+            AddToCustomCommand="{x:Bind AddToCustomCommand}"
+            ColorSpectrumShape="Box"
+            IsMoreButtonVisible="False"
+            IsColorSliderVisible="True"
+            IsColorChannelTextInputVisible="True"
+            IsHexInputVisible="True"
+            IsAlphaEnabled="True"
+            IsAlphaSliderVisible="True"
+            IsAlphaTextInputVisible="True"/>
+    </StackPanel>
+</UserControl>

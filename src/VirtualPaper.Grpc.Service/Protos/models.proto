@@ -1,0 +1,391 @@
+syntax = "proto3";
+package VirtualPaper.Grpc.Service.Models;
+import "google/protobuf/timestamp.proto";
+
+message Grpc_WpSourceData {
+	bytes data = 1; 
+}
+
+message Grpc_UIRecievedCmd {
+	int32 ipc_msg = 1;
+}
+
+message Grpc_ScreensaverRequest {
+	Grpc_ScreensaverState state = 1;
+	int32 preview_hwnd = 2;
+}
+
+message Grpc_MonitorData {
+	string device_id = 1;	
+	string content = 2;
+	bool is_primary = 3;
+	Grpc_Rectangle bounds = 4;
+	Grpc_Rectangle working_area = 5;
+	string thumbnail_path = 6;
+}
+
+message Grpc_Rectangle {
+	int32 x = 1;
+	int32 y = 2;
+	int32 width = 3;
+	int32 height = 4;
+	int32 bottom = 5;
+	int32 left = 6;
+	int32 right = 7;
+	int32 top = 8;
+}
+
+message Grpc_GetMonitorsResponse {
+	repeated Grpc_MonitorData monitors = 1;
+}
+
+message Grpc_LockData {
+	bool is_lock = 1;
+}
+
+message Grpc_ProcInfoData {
+    string proc_name = 1;
+    string icon_path = 2;
+    bool is_running = 3;
+}
+
+message Grpc_UpdateResponse {
+	Grpc_UpdateStatus status = 1;
+	string version = 2;
+	string url = 3;
+	string changelog = 4;
+	google.protobuf.Timestamp time = 5;
+}
+
+message Grpc_WallpaperLayoutsSettings {
+    repeated Grpc_WallpaperLayout wallpaper_layouts = 1;    
+}
+
+message Grpc_WallpaperLayout {    
+    string folder_path = 1;
+	string monitor_device_id = 2;
+	string monitor_content = 3;
+	string r_type = 4;
+}
+
+message Grpc_SettingsData {
+	Grpc_AppRulesEnum app_focus_pause = 1;
+	Grpc_AppRulesEnum app_fullscreen_pause = 2;
+    Grpc_AppTheme application_theme = 3;
+    Grpc_AppRulesEnum battery_pause = 4;
+    Grpc_AppRulesEnum power_save_mode_pause = 5;
+    Grpc_AppRulesEnum remote_desktop_pause = 6;
+    Grpc_AppSystemBackdrop system_backdrop = 7;
+    string app_name = 8;
+    string app_version = 9;
+    string language = 10;    
+    bool is_updated = 11;
+    bool is_auto_start = 12;
+    bool is_first_run = 13;
+
+    string wallpaper_dir = 14;
+
+    Grpc_MonitorData selected_monitor = 15;
+    bool is_audio_only_on_desktop = 16;
+    Grpc_StatuMechanismEnum statu_mechanism = 17;
+    Grpc_WallpaperScaler wallpaper_scaling = 18;
+    int32 wallpaper_wait_time = 19;
+
+    Grpc_InputForwardMode input_forward = 20;
+    bool mouse_input_mov_always = 21;
+
+    Grpc_WallpaperArrangement wallpaper_arrangement = 22;
+
+    bool is_screensaver_lock_on_resume = 23;
+    bool is_screensaver_empty_screen_show_black = 24;
+
+    int32 process_timer_interval = 25;
+
+    bool is_screen_saver_on = 26;
+    bool is_running_lock = 27;
+    int32 waiting_time = 28;
+    Grpc_ScrEffectEnum screen_saver_effect = 29;
+    repeated Grpc_ProcInfoData white_list_scr = 30; 
+}
+
+message Grpc_AppRulesSettings {
+  repeated Grpc_AppRulesData app_rules = 1;
+}
+
+message Grpc_AppRulesData {
+  string app_name = 1;
+  Grpc_AppRulesEnum rule = 2;
+}
+
+message Grpc_StringValue {
+	string value = 1;
+}
+
+message Grpc_GetCoreStatsResponse {
+	string base_directory = 1;
+	string assembly_version = 2;
+}
+
+message Grpc_CloseWallpaperByMonitorRequest {
+    string monitor_id = 1;
+}
+
+message Grpc_AdjustWallpaperRequest {
+	string monitor_device_id = 1;
+}
+
+message Grpc_PreviewWallpaperRequest {
+	string monitor_device_id = 1;
+	Grpc_WpPlayerData wp_player_data = 2;
+}
+
+message Grpc_ModifyPreviewRequest {
+	string control_name = 1;
+	string property_name = 2;
+	string value = 3;
+}
+
+message Grpc_SetWallpaperRequest {
+	Grpc_WpPlayerData wp_player_data = 1;
+	string monitor_id = 2;
+}
+
+message Grpc_UpdateWpRequest {
+	Grpc_WpPlayerData wp_player_data = 1;
+	string monitor_id = 2;
+}
+
+message Grpc_AdjustWallpaperResponse {
+	bool is_ok = 1;
+}
+
+message Grpc_PreviewWallpaperResponse {
+	bool is_ok = 1;
+}
+
+message Grpc_SetWallpaperResponse {
+	bool is_finished = 1;
+}
+
+message Grpc_RestartWallpaperResponse {
+	bool is_finished = 1;
+}
+
+message Grpc_WallpaperMessageRequest {
+	string monitor_id = 1;
+	string folder_path = 2;
+	string msg = 3;
+}
+
+message Grpc_WallpaperScreenshotRequest {
+	string monitor_id = 1;
+	string save_path = 2;
+}
+
+message Grpc_GetWallpaperRequest {
+	string folder_path = 1;
+	string monitor_content = 2;
+	string r_type = 3;
+}
+
+message Grpc_CreateMetadataBasicRequest {
+	string file_path = 1;
+	Grpc_FileType f_type = 2;
+}
+
+message Grpc_CreateMetadataRuntimeRequest {
+	string file_path = 1;
+	string folder_path = 2;
+	string wp_effect_file_path_template = 3;
+	Grpc_RuntimeType r_type = 4;
+	string monitor_content = 5;
+}
+
+message Grpc_UpdateBasicDataRequest {
+	string folder_path = 1;
+	string folder_name = 2;
+	string file_path = 3;
+	Grpc_FileType f_type = 4;
+}
+
+message Grpc_UpdateRuntimeDataRequest {
+	string folder_path = 1;
+	Grpc_RuntimeType r_type = 2;
+}
+
+message Grpc_ChangePathRequest {
+	string previous_dir = 1;
+	string new_dir = 2;
+}
+
+message Grpc_GetMonitorRequest {
+	string wp_uid = 1;
+}
+
+message Grpc_GetWallpapersResponse {
+	repeated Grpc_WpMetaData grpc_datas  = 1;
+}
+
+message Grpc_WallpaperErrorResponse {
+	Grpc_ErrorType error = 1;
+	string error_msg = 2;
+}
+
+message Grpc_WpBasicData {
+	string wallpaper_uid = 1;
+	Grpc_ApplicationInfo app_info = 2;
+	string title = 3;
+    string desc  = 4;
+    string authors = 5;
+	string publish_date = 6;
+	double rating = 7;
+    Grpc_FileType f_type = 8;
+	bool is_single_r_type = 9;
+    string partition = 10;
+    string tags = 11;
+
+	string folder_name = 12;
+    string folder_path = 13;
+    string file_path = 14;
+	string thumbnail_path = 15;
+
+	string resolution = 16;
+	string aspect_ratio = 17;
+	string file_size = 18;
+	string file_extension = 19;
+
+	bool is_subscribed = 20;
+	Grpc_WallpaperStatus status = 21;
+}
+
+message Grpc_WpRuntimeData {
+	string monitor_content = 1;
+	string folder_path = 2;
+	string depth_file_path = 3;
+	Grpc_ApplicationInfo app_info = 4;
+	string wp_effect_file_path_template = 5;
+    string wp_effect_file_path_temporary = 6;
+    string wp_effect_file_path_using = 7;
+	Grpc_RuntimeType r_type = 8;
+}
+
+message Grpc_WpDownloadData {
+	bool is_downloading = 1;
+	float downloading_progress = 2;
+}
+
+message Grpc_WpPlayerData {
+	string wallpaper_uid = 1;
+	Grpc_RuntimeType r_type = 2;
+	string folder_path = 3;
+	string file_path = 4;
+	string thumbnail_path = 5;
+}
+
+message Grpc_WpMetaData {
+	Grpc_WpBasicData wp_basic_data = 1;
+	Grpc_WpRuntimeData wp_runtime_data = 2;
+}
+
+message Grpc_ApplicationInfo {
+	string app_name = 1;
+    string app_version = 2;
+	string file_version = 3;
+}
+
+enum Grpc_ErrorType {
+	workerw = 0;
+	wallpaper_not_found = 1;
+	wallpaper_plugin_fail = 2;
+	wallpaper_plugin_not_found = 3;
+	wallpaper_plugin_media_codec_missing = 4;
+	wallpaper_not_allowed = 5;
+	screen_not_found = 6;
+	general = 7;
+}
+
+enum Grpc_AppRulesEnum {
+    pause = 0;
+    ignore = 1;
+    kill = 2;
+}
+
+enum Grpc_AppTheme {
+    auto = 0;
+    light = 1;
+    dark = 2;
+}
+
+enum Grpc_AppSystemBackdrop {
+    default = 0;
+    mica = 1;
+    acrylic = 2;
+}
+
+enum Grpc_ScrEffectEnum {
+    none_ = 0;
+    bubble = 1;
+}
+
+enum Grpc_StatuMechanismEnum {
+    perdisplay = 0;
+    alldisplay = 1;
+}
+
+enum Grpc_WallpaperScaler{        
+    none = 0;
+    fill = 1;
+    uniform = 2;
+    uniformFill = 3;
+    autofit = 4;
+}
+
+enum Grpc_InputForwardMode {
+    off = 0;
+    mouse = 1;
+    mousekeybord = 2;
+}
+
+enum Grpc_WallpaperArrangement {
+    per = 0;
+    span = 1;
+    duplicate = 2;
+}
+
+
+enum Grpc_UpdateStatus {
+	uptodate = 0;
+	available = 1;
+	invalid = 2;
+	notchecked = 3;
+	error = 4;
+}
+
+enum Grpc_FileType {
+	f_unknown = 0;
+	f_picture = 1;
+	f_gif = 2;
+	f_video = 3;
+}
+
+enum Grpc_WallpaperStatus {
+	g_none = 0;
+	g_normal = 1;
+	g_auditing = 2;
+	g_locked = 3;
+	g_deleted = 4;
+}
+
+enum Grpc_RuntimeType {
+	r_unknown = 0;
+	r_image = 1;
+	r_image3d = 2;
+	r_video = 3;
+}
+
+enum Grpc_ScreensaverState {
+	start = 0;
+	stop = 1;
+	preview = 2;
+	configure = 3;
+}

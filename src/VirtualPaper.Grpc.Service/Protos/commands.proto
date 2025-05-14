@@ -1,0 +1,14 @@
+﻿syntax = "proto3";
+package VirtualPaper.Grpc.Service.Commands;
+import "google/protobuf/empty.proto";
+import "Protos/models.proto";
+
+service Grpc_CommandsService {
+	rpc ShowUI (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc CloseUI (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc RestartUI (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc ShowDebugView (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc ShutDown (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc SaveRectUI (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc SubscribeUIRecievedCmd (google.protobuf.Empty) returns (stream VirtualPaper.Grpc.Service.Models.Grpc_UIRecievedCmd);
+}

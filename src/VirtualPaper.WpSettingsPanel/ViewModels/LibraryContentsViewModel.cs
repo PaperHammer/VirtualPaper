@@ -208,7 +208,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                 var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                 if (rtype == RuntimeType.RUnknown) return;
-
                 await _wpControlClient.PreviewWallpaperAsync(_wpSettingsViewModel.SelectedMonitor.DeviceId, data, rtype, _ctsPreview.Token);
             }
             catch (RpcException ex) {

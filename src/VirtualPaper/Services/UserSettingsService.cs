@@ -100,6 +100,5 @@ namespace VirtualPaper.Services {
         private readonly string _settingsPath = Constants.CommonPaths.UserSettingsPath;
         private readonly string _appRulesPath = Constants.CommonPaths.AppRulesPath;
         private readonly string _wallpaperLayoutPath = Constants.CommonPaths.WallpaperLayoutPath;
-        private readonly string _recentUsedPath = Constants.CommonPaths.RecentUsedPath;
     }
 }

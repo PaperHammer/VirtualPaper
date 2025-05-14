@@ -600,7 +600,7 @@ Author: PaperHammer</value>
     <value>Can not set the storage directory to the root of your application data</value>
   </data>
   <data name="Text_VersionInfo" xml:space="preserve">
-    <value>Version info：</value>
+    <value>Version Info：</value>
   </data>
   <data name="InfobarMsg_ImportErr" xml:space="preserve">
     <value>The file import error</value>

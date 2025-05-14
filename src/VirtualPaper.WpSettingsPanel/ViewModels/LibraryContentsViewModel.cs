@@ -77,7 +77,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 WpSettings.Instance.GetNotify().Loading(false, false);
                 LibraryWallpapers.Clear();
                 _uid2idx.Clear();
-                
+
                 var loader = new AsyncLoader<IWpBasicData>(maxDegreeOfParallelism: 10, channelCapacity: 100);
                 await foreach (var data in loader.LoadItemsAsync(ProcessFolders, _wallpaperInstallFolders)) {
                     UpdateLib(data);
@@ -170,7 +170,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             try {
                 WpSettings.Instance.GetNotify().Loading(false, false, null);
 
-                bool isUsing = await CheckFileUsingAsync(data, false);
+                bool isUsing = await IsFileInUseAsync(data);
                 if (isUsing) {
                     WpSettings.Instance.GetNotify().ShowMsg(
                         true,
@@ -207,8 +207,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 await CheckFileUpdateAsync(data);
 
                 var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
-                if (rtype == RuntimeType.RUnknown) return;                
-                
+                if (rtype == RuntimeType.RUnknown) return;
+
                 await _wpControlClient.PreviewWallpaperAsync(_wpSettingsViewModel.SelectedMonitor.DeviceId, data, rtype, _ctsPreview.Token);
             }
             catch (RpcException ex) {
@@ -314,8 +314,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     , LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
                 if (dialogRes != DialogResult.Primary) return;
 
-                bool isUsing = await CheckFileUsingAsync(data, false);
-                if (isUsing) return;
+                bool isUsing = await IsFileInUseAsync(data);
+                if (isUsing) {
+                    WpSettings.Instance.GetNotify().ShowMsg(
+                        true,
+                        Constants.I18n.Text_FileUsing,
+                        InfoBarType.Informational);
+                    return;
+                }
 
                 _uid2idx.Remove(data.WallpaperUid, out _);
                 LibraryWallpapers.Remove(data);
@@ -459,22 +465,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        private async Task<bool> CheckFileUsingAsync(IWpBasicData data, bool isSlient) {
+        public async Task<bool> IsFileInUseAsync(IWpBasicData data) {
             await _userSettingsClient.LoadAsync<List<IWallpaperLayout>>();
-            foreach (var wl in _userSettingsClient.WallpaperLayouts) {
-                if (wl.FolderPath == data.FolderPath) {
-                    if (!isSlient) {
-                        await WpSettings.Instance.GetDialog().ShowDialogAsync(
-                        LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_WpIsUsing),
-                        LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Prompt),
-                        LanguageUtil.GetI18n(Constants.I18n.Text_Confirm));
-                    }
-
-                    return true;
-                }
-            }
-
-            return false;
+            return _userSettingsClient.WallpaperLayouts.Any(wl => wl.FolderPath == data.FolderPath);
         }
 
         private static void AddDetailsPage(IWpBasicData data, ToolWindow toolContainer) {

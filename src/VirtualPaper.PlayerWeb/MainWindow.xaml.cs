@@ -375,7 +375,9 @@ namespace VirtualPaper.PlayerWeb {
                 ProcId = Webview2.CoreWebView2.BrowserProcessId,
             });
 
-            //Webview2.CoreWebView2.OpenDevToolsWindow();
+#if DEBUG
+            Webview2.CoreWebView2.OpenDevToolsWindow();
+#endif
 
             _viewModel.Loaded([]);
         }

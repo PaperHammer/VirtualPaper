@@ -45,8 +45,7 @@ namespace VirtualPaper.ML.DepthEstimate {
                 }
             }
 
-            var inputs = new List<NamedOnnxValue>
-            {
+            var inputs = new List<NamedOnnxValue> {
                 NamedOnnxValue.CreateFromTensor(_modelName, dt),
             };
 
@@ -58,11 +57,11 @@ namespace VirtualPaper.ML.DepthEstimate {
         }
 
         public static string SaveDepthMap(
-            float[] normalisedOutput, 
-            int width, 
-            int height, 
-            int originalWidth, 
-            int originalHeight, 
+            float[] normalisedOutput,
+            int width,
+            int height,
+            int originalWidth,
+            int originalHeight,
             string outputFolder) {
             string outputFilePath = Path.Combine(outputFolder, Utils.Fileds.OutputFileName);
 

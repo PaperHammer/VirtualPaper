@@ -44,7 +44,6 @@ namespace VirtualPaper.Common {
             public static string AppRulesPath { get; } = Path.Combine(AppDataDir, "AppRules.json");
             public static string WallpaperLayoutPath { get; } = Path.Combine(AppDataDir, "WallpaperLayout.json");
             public static string UserSettingsPath { get; } = Path.Combine(AppDataDir, "UserSettings.json");
-            public static string RecentUsedPath { get; } = Path.Combine(AppDataDir, "RecentUseds.json");
 
             public static string TempWebView2Dir { get; } = Path.Combine(AppDataDir, "WebView2");
             public static string TempScrWebView2Dir { get; } = Path.Combine(AppDataDir, "ScrWebView2");

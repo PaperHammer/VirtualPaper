@@ -8,7 +8,6 @@ namespace VirtualPaper.Services.Interfaces {
         ISettings Settings { get; }
         List<IApplicationRules> AppRules { get; }
         List<IWallpaperLayout> WallpaperLayouts { get; }
-        List<IRecentUsed> RecentUseds { get; }
         void Save<T>();
         void Load<T>();
     }

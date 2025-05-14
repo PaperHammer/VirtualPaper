@@ -59,9 +59,11 @@ namespace VirtualPaper.Common {
 
         public static class WorkingDir {
             public static string ML { get; } = Path.Combine("Plugins", "ML", "Models");
-            public static string PlayerWeb { get; } = Path.Combine("Plugins", "PlayerWeb", "win-x64");
+            public static string PlayerWeb { get; } = Path.Combine("Plugins", "PlayerWeb");
+            //public static string PlayerWeb { get; } = Path.Combine("Plugins", "PlayerWeb", "win-x64");
             public static string ScrSaver { get; } = Path.Combine("Plugins", "ScrSaver");
-            public static string UI { get; } = Path.Combine("Plugins", "UI", "win-x64");
+            public static string UI { get; } = Path.Combine("Plugins", "UI");
+            //public static string UI { get; } = Path.Combine("Plugins", "UI", "win-x64");
         }
 
         public static class ModuleName {

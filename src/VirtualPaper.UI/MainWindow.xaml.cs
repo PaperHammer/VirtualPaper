@@ -10,7 +10,6 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.ThreadContext;
-using VirtualPaper.DraftPanel;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.ViewModels;
@@ -186,9 +185,6 @@ namespace VirtualPaper.UI {
                 Type pageType = null;
                 if (args.SelectedItemContainer.Name == Nav_WpSettings.Name) {
                     pageType = typeof(WpSettings);
-                }
-                else if (args.SelectedItemContainer.Name == Nav_Draft.Name) {
-                    pageType = typeof(Draft);
                 }
                 else if (args.SelectedItemContainer.Name == Nav_AppSettings.Name) {
                     pageType = typeof(AppSettings);

@@ -5,7 +5,6 @@ using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 
@@ -14,40 +13,6 @@ namespace VirtualPaper.GrpcServers {
         IMonitorManager monitorManager,
         IUserSettingsService userSetting,
         IUIRunnerService uiRunner) : Grpc_UserSettingsService.Grpc_UserSettingsServiceBase {
-        public override Task<Grpc_RecentUseds> GetRecentUseds(Empty request, ServerCallContext context) {
-            var resq = new Grpc_RecentUseds();
-            foreach (var item in _userSetting.RecentUseds) {
-                resq.RecentUseds.Add(new Grpc_RecentUsed {
-                    FType = (Grpc_FileType)item.Type,
-                    FileName = item.FileName,
-                    FilePath = item.FilePath,
-                    DateTime = item.DateTime
-                });
-            }
-
-            return Task.FromResult(resq);
-        }
-
-        public override Task<Empty> SetRecentUseds(Grpc_RecentUseds request, ServerCallContext context) {
-            _userSetting.RecentUseds.Clear();
-            foreach (var item in request.RecentUseds) {
-                _userSetting.RecentUseds.Add(new RecentUsed(
-                    (Common.FileType)item.FType,
-                    item.FileName,
-                    item.FilePath,
-                    item.DateTime));
-            }
-
-            try {
-                return Task.FromResult(new Empty());
-            }
-            finally {
-                lock (appRulesWriteLock) {
-                    _userSetting.Save<List<IRecentUsed>>();
-                }
-            }
-        }
-
         public override Task<Grpc_WallpaperLayoutsSettings> GetWallpaperLayouts(Empty request, ServerCallContext context) {
             var resp = new Grpc_WallpaperLayoutsSettings();
             foreach (var layout in _userSetting.WallpaperLayouts) {

@@ -73,13 +73,14 @@
                 </NavigationViewItem>-->
                 <NavigationViewItem 
                     Content="{Binding SidebarWpSettings}" 
-                    x:Name="Nav_WpSettings">
+                    x:Name="Nav_WpSettings"
+                    IsSelected="True">
                     <NavigationViewItem.Icon>
                         <FontIcon 
                             Glyph="&#xE91B;"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem 
+                <!--<NavigationViewItem 
                     Content="{Binding SidebarProject}" 
                     x:Name="Nav_Draft"
                     IsSelected="True" >
@@ -87,7 +88,7 @@
                         <FontIcon 
                             Glyph="&#xF156;"/>
                     </NavigationViewItem.Icon>
-                </NavigationViewItem>
+                </NavigationViewItem>-->
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>

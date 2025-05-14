@@ -105,11 +105,11 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         private void Webview2_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
-            e.Handled = true; // ×èÖ¹£¨Êó±êµÈ£©Ö¸Õë²Ù×÷
+            e.Handled = true; // é˜»æ­¢ï¼ˆé¼ æ ‡ç­‰ï¼‰æŒ‡é’ˆæ“ä½œ
         }
 
         private void Webview2_PreviewKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e) {
-            e.Handled = true;  // ×èÖ¹¼üÅÌ²Ù×÷
+            e.Handled = true;  // é˜»æ­¢é”®ç›˜æ“ä½œ
         }
 
         private void Closing() {
@@ -375,7 +375,9 @@ namespace VirtualPaper.PlayerWeb {
                 ProcId = Webview2.CoreWebView2.BrowserProcessId,
             });
 
-            //Webview2.CoreWebView2.OpenDevToolsWindow();
+#if DEBUG
+            Webview2.CoreWebView2.OpenDevToolsWindow();
+#endif
 
             _viewModel.Loaded([]);
         }

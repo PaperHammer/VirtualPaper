@@ -3,8 +3,8 @@
 
 #define AppId "{{95F4CECE-7C7C-40E1-B485-07DA64D1905F}"
 #define MyAppName "Virtual_Paper"
-#define MyAppVersion "0.3.0.0"
-#define MyAppVersionText "0300"
+#define MyAppVersion "0.3.0.1"
+#define MyAppVersionText "0301"
 #define MyAppPublisher "PaperHammer"
 #define MyAppURL "https://github.com/PaperHammer/VirtualPaper"
 #define MyAppExeName "VirtualPaper.exe"
@@ -53,8 +53,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; Name: "windowsstartup";Description: "{cm:AutoStartProgram,{#MyAppName}}"
 
 [Files]
-Source: "D:\Virtuals\VirtualPaper\src\SourceCode\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Virtuals\VirtualPaper\src\SourceCode\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml,*.vshost.*,*.config"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "D:\Virtuals\VirtualPaper\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\Virtuals\VirtualPaper\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml,*.vshost.*,*.config"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]

@@ -265,16 +265,16 @@ namespace VirtualPaper.Common {
     [JsonSerializable(typeof(VideoCostumize))]
     public partial class VideoCostumizeContext : JsonSerializerContext { }
     public class VideoCostumize : UniverseCostumise {
-        [JsonPropertyOrder(8)]
+        [JsonPropertyOrder(7)]
         public Speed Speed { get; }
 
-        [JsonPropertyOrder(9)]
+        [JsonPropertyOrder(8)]
         public Volume Volume { get; }
 
-        [JsonPropertyOrder(10)]
+        [JsonPropertyOrder(9)]
         public Scaling Scaling { get; }
 
-        [JsonPropertyOrder(11)]
+        [JsonPropertyOrder(10)]
         public Parallax Parallax { get; }
 
         public VideoCostumize() {
@@ -293,7 +293,14 @@ namespace VirtualPaper.Common {
     [JsonSerializable(typeof(Picture3DCostumize))]
     public partial class Picture3DCostumizeContext : JsonSerializerContext { }
     public class Picture3DCostumize : UniverseCostumise {
+        [JsonPropertyOrder(11)]
+        public Parallax Parallax { get; }
 
+        public Picture3DCostumize() {
+            Parallax = new();
+
+            _properties[nameof(Parallax)] = Parallax;
+        }
     }
 
     public class Saturation {

@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace Workloads.Creation.StaticImg.Models {
-    class ToolItem : IEquatable<ToolItem> {
+    public class ToolItem : IEquatable<ToolItem> {
         public ToolType Type { get; set; }
         public string Glyph { get; set; } // 图标字符（FontIcon 的 Glyph）
         public string ImageSourceKey { get; set; } // 图片路径（ImageIcon 的 Source）

@@ -9,17 +9,10 @@ using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
-namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
-    class EraserTool(LayerBasicData data) : Tool, IDisposable {
-        public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
-
-        public override void OnPointerEntered(CanvasPointerEventArgs e) {
-            base.OnPointerEntered(e);
-            SystemCursorChangeRequested?.Invoke(this, new(InputSystemCursor.Create(InputSystemCursorShape.Cross)));
-        }
-
+namespace Workloads.Creation.StaticImg.Models.ToolItems {
+    partial class PaintBrushTool(InkCanvasConfigData data) : Tool, IDisposable {
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
-            if (!IsPointerOverTaregt(e)) return;
+            if (!IsPointerOverTarget(e)) return;
 
             PointerPoint pointerPoint = e.Pointer;
             if (pointerPoint.Properties.IsMiddleButtonPressed)
@@ -27,7 +20,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
             _isDrawing = true;
             _blendedColor = BlendColor(pointerPoint.Properties.IsRightButtonPressed ?
-                data.BackgroundColor : Colors.Transparent, data.EraserOpacity / 100);
+                data.BackgroundColor : data.ForegroundColor, data.BrushOpacity / 100);
             _lastClickPoint = pointerPoint.Position;
             _currentStroke.Clear();
             _pointerQueue.Clear();
@@ -39,7 +32,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
 
         public override void OnPointerMoved(CanvasPointerEventArgs e) {
             if (!_isDrawing) return;
-            if (!IsPointerOverTaregt(e)) {
+            if (!IsPointerOverTarget(e)) {
                 EndDrawing();
                 return;
             }
@@ -68,16 +61,15 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             _pointerQueue.Clear();
             _historyPoints.Clear();
 
-            // 定期清理不常用的笔刷
-            if (_brushCache.Count > 20) // 超过20个笔刷时清理
-            {
+            // 定期清理不常用的笔刷 超过20个笔刷时清理
+            if (_brushCache.Count > 20) {
                 var toRemove = _brushCache
                     .OrderByDescending(x => x.Key.Item1) // 按笔刷大小排序
                     .Skip(10) // 保留最常用的10个
                     .ToList();
 
                 foreach (var item in toRemove) {
-                    SafeDispose(item.Value);
+                    item.Value?.Dispose();
                     _brushCache.Remove(item.Key);
                 }
             }
@@ -111,19 +103,19 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
             _backBuffer = null;
         }
 
-        // 绘制笔迹 方形
+        // 绘制笔迹
         private void DrawStroke(CanvasDrawingSession ds) {
             if (_currentStroke.Count == 0) return;
 
-            ds.Blend = CanvasBlend.Copy;
-            int size = (int)data.EraserSize;
+            int size = (int)data.BrushThickness;
             if (!_brushCache.TryGetValue((size, _blendedColor), out var brush)) {
-                // 创建方形笔刷纹理
-                var renderTarget = new CanvasRenderTarget(MainPage.Instance.SharedDevice, size, size, data.Size.Dpi);
+                var renderTarget = new CanvasRenderTarget(
+                    MainPage.Instance.SharedDevice, size, size, data.Size.Dpi,
+                    Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                    CanvasAlphaMode.Premultiplied);
                 using (var _tmpDs = renderTarget.CreateDrawingSession()) {
-                    _tmpDs.Blend = CanvasBlend.Copy;
                     _tmpDs.Clear(Colors.Transparent);
-                    _tmpDs.FillRectangle(0, 0, size, size, _blendedColor); // 修改为矩形填充
+                    _tmpDs.FillCircle(size / 2, size / 2, size / 2, _blendedColor);
                 }
                 _brushCache[(size, _blendedColor)] = renderTarget;
                 brush = _brushCache[(size, _blendedColor)];
@@ -138,13 +130,14 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                 return;
             }
 
-            // 保持相同的贝塞尔曲线逻辑
+            // 使用优化的贝塞尔曲线连接点
             for (int i = 1; i < _currentStroke.Count; i++) {
                 var p0 = i > 1 ? _currentStroke[i - 2] : _currentStroke[i - 1];
                 var p1 = _currentStroke[i - 1];
                 var p2 = _currentStroke[i];
                 var p3 = i < _currentStroke.Count - 1 ? _currentStroke[i + 1] : p2;
 
+                // 优化的控制点计算
                 var cp1 = new Point(
                     p1.X + (p2.X - p0.X) * GetDynamicTension(p0, p1, p2),
                     p1.Y + (p2.Y - p0.Y) * GetDynamicTension(p0, p1, p2));
@@ -153,7 +146,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
                     p2.X - (p3.X - p1.X) * GetDynamicTension(p1, p2, p3),
                     p2.Y - (p3.Y - p1.Y) * GetDynamicTension(p1, p2, p3));
 
-                // 相同插值逻辑
+                // 更精细的曲线分段
+                // 从0.1改为0.05增加细分
                 for (double t = 0; t <= 1; t += 0.05) {
                     double x = Math.Pow(1 - t, 3) * p1.X +
                              3 * Math.Pow(1 - t, 2) * t * cp1.X +
@@ -256,20 +250,15 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         private void ReleaseAllResources() {
             // 释放笔刷缓存
             foreach (var brush in _brushCache.Values) {
-                SafeDispose(brush);
+                brush?.Dispose();
             }
             _brushCache.Clear();
 
             // 释放后备缓冲区
-            SafeDispose(_backBuffer);
-        }
+            _backBuffer?.Dispose();
+            _backBuffer = null;
 
-        // 安全释放方法
-        private static void SafeDispose(IDisposable resource) {
-            try {
-                resource?.Dispose();
-            }
-            catch { }
+            // RenderTarget由外部管理，此处不释放
         }
         #endregion
 
@@ -291,7 +280,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         //毛笔效果：0.25-0.35 
         private double _baseTension = 0.2;       // 基础曲线张力
         private Color _blendedColor;
-        //private bool _isDrawable = false;
         private bool _isDrawing = false;
         private Point _lastClickPoint;
         private readonly List<Point> _currentStroke = [];
@@ -299,8 +287,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
         private readonly Queue<Point> _historyPoints = new(5);
         private const int _historySize = 5;
         private Point _lastProcessedPoint;
-        //private CanvasDevice _device;
-        //private CanvasControl _canvasControl;
         private CanvasRenderTarget _backBuffer;
         private readonly Dictionary<(int, Color), CanvasBitmap> _brushCache = [];
     }

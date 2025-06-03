@@ -1,9 +1,9 @@
 ﻿namespace Workloads.Creation.StaticImg.Models {
-    class AspectRatioItem {
-        public string DisplayText { get;}
-        public double BorderWidth { get;  }
-        public double BorderHeight { get;  }
-        public double Ratio { get; }        
+    public class AspectRatioItem {
+        public string DisplayText { get; }
+        public double BorderWidth { get; }
+        public double BorderHeight { get; }
+        public double Ratio { get; }
 
         public AspectRatioItem(string displayText, double borderWidth, double borderHeight) {
             DisplayText = displayText;

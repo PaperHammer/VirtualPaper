@@ -8,6 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:container="using:VirtualPaper.UIComponent.Container"
     xmlns:cmd="using:VirtualPaper.UIComponent.Command"
+    xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
@@ -119,45 +120,21 @@
                 KeepToLeft="{StaticResource LeftMenuItems}"
                 KeepToRight="{StaticResource RightMenuItems}"
                 MiddleItems="{x:Bind _viewModel._middleMenuItems}"/>
-            <!--<MenuBar>
-                
-
-                <MenuBarItem 
-                Title="图像(I)"
-                KeyboardAcceleratorPlacementMode="Hidden">
-                    <MenuBarItem.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Menu" Key="I"/>
-                    </MenuBarItem.KeyboardAccelerators>
-
-
-                </MenuBarItem>
-
-                <MenuBarItem 
-                Title="图层(L)"
-                KeyboardAcceleratorPlacementMode="Hidden">
-                    <MenuBarItem.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Menu" Key="L"/>
-                    </MenuBarItem.KeyboardAccelerators>
-
-
-                </MenuBarItem>
-
-               
-            </MenuBar>-->
         </ContentControl>
 
         <Grid
             x:Name="contentGrid"
             Grid.Row="1">
             <TabView
-                x:Name="TabViewControl"
+                x:Name="tabViewControl"
                 VerticalAlignment="Stretch"
                 HorizontalAlignment="Stretch"
                 Loaded="TabViewControl_Loaded"
                 TabWidthMode="SizeToContent"
                 CloseButtonOverlayMode="OnPointerOver"
                 SelectedIndex="{x:Bind _viewModel.SelectedTabIndex, Mode=TwoWay}"
-                TabItemsSource="{x:Bind _viewModel.TabViewItems}"               
+                TabItemsSource="{x:Bind _viewModel.TabViewItems}"
+                TabItemsChanged="TabViewControl_TabItemsChanged"
                 AddTabButtonClick="TabViewControl_AddTabButtonClick"
                 TabCloseRequested="TabViewControl_TabCloseRequested"/>
         </Grid>

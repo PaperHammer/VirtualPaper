@@ -18,28 +18,37 @@ using Windows.Foundation;
 using Windows.UI;
 
 namespace Workloads.Creation.StaticImg.Models {
-    [JsonSerializable(typeof(LayerBasicData))]
+    [JsonSerializable(typeof(InkCanvasConfigData))]
     [JsonSerializable(typeof(ObservableList<InkCanvasData>))]
     [JsonSerializable(typeof(ObservableList<Color>))]
-    internal partial class LayerBasicDataContext : JsonSerializerContext { }
+    internal partial class InkCanvasConfigDataContext : JsonSerializerContext { }
 
-    internal partial class LayerBasicData : ObservableObject {
+    internal partial class InkCanvasConfigData : ObservableObject {
         public event EventHandler InkDataEnabledChanged;
+        public event EventHandler<NotifyCollectionChangedEventArgs> InkDatasCollectionChanged;
         public event EventHandler SeletcedToolChanged;
         public event EventHandler SeletcedLayerChanged;
-        public event EventHandler<double> SeletcedCropAspectClicked;
-        public event EventHandler Rebuild;
+        public event EventHandler<double> SelectedCropAspectClicked;
+        public event EventHandler<ArcSize> SizeChanged;
 
+        #region serilizable properties
         public ObservableList<InkCanvasData> InkDatas { get; set; } = [];
         public ObservableList<Color> CustomColors { get; set; } = [];
 
         ArcSize _size = new(1920, 1080, 96, RebuildMode.None); // 像素
         public ArcSize Size {
             get => _size;
+            set { _size = value; ArcSizeChanged(); OnPropertyChanged(); }
+        }
+        #endregion
+
+        float _canvasZoom; // 0.2 -- 7.0
+        [JsonIgnore]
+        public float CanvasZoom {
+            get { return _canvasZoom; }
             set {
-                CanvasSizeText = $"{value.Width:F0} * {value.Height:F0} px ({value.Dpi} / {ArcSize.HardwareDpi} DPI)";
-                _size = value;                
-                ArcSizeChanged();
+                if (Consts.IsDoubleValueEqual(_canvasZoom, value)) return;
+                _canvasZoom = value;
                 OnPropertyChanged();
             }
         }
@@ -120,14 +129,13 @@ namespace Workloads.Creation.StaticImg.Models {
             set { if (_seletcedBrush == value) return; _seletcedBrush = value; OnPropertyChanged(); }
         }
 
-        AspectRatioItem _seletcedAspectitem;
+        AspectRatioItem _seletcedAspectItem;
         [JsonIgnore]
-        public AspectRatioItem SeletcedAspectitem {
-            get { return _seletcedAspectitem; }
+        public AspectRatioItem SeletcedAspectItem {
+            get { return _seletcedAspectItem; }
             set {
-                _seletcedAspectitem = value;
-                SeletcedCropAspectClicked?.Invoke(this, value.Ratio);
-                OnPropertyChanged();
+                if (_seletcedAspectItem == value) return;
+                _seletcedAspectItem = value; SelectedCropAspectClicked?.Invoke(this, value.Ratio); OnPropertyChanged();
             }
         }
 
@@ -136,10 +144,8 @@ namespace Workloads.Creation.StaticImg.Models {
         public ToolItem SelectedToolItem {
             get { return _selectedToolItem; }
             set {
-                if (_selectedToolItem == value) return;
-                _selectedToolItem = value;
-                SeletcedToolChanged?.Invoke(this, EventArgs.Empty);
-                OnPropertyChanged();
+                if (_selectedToolItem == value || value == null) return;
+                _selectedToolItem = value; SeletcedToolChanged?.Invoke(this, EventArgs.Empty); OnPropertyChanged();
             }
         }
 
@@ -183,9 +189,9 @@ namespace Workloads.Creation.StaticImg.Models {
 
         [JsonConstructor]
         [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
-        internal LayerBasicData() { }
+        internal InkCanvasConfigData() { }
 
-        public LayerBasicData(string entryFilePath) {
+        public InkCanvasConfigData(string entryFilePath) {
             _entryFilePath = entryFilePath;
             this.InkDatas.CollectionChanged += InkDatas_CollectionChanged;
         }
@@ -209,12 +215,13 @@ namespace Workloads.Creation.StaticImg.Models {
                     }
                 }
             }
+            //InkDatasCollectionChanged?.Invoke(sender, e);
         }
 
         private void OnInkDataChanged(object sender, PropertyChangedEventArgs e) {
             if (e.PropertyName == nameof(InkCanvasData.IsEnable)) {
                 InkDataEnabledChanged?.Invoke(this, EventArgs.Empty);
-            }            
+            }
         }
 
         internal async Task InitDataAsync() {
@@ -223,7 +230,7 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         internal async Task SaveBasicAsync() {
-            await JsonSaver.SaveAsync(_entryFilePath, this, LayerBasicDataContext.Default);
+            await JsonSaver.SaveAsync(_entryFilePath, this, InkCanvasConfigDataContext.Default);
         }
 
         internal async Task SaveRenderDataAsync() {
@@ -241,7 +248,7 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         internal async Task LoadBasicDataAsync() {
-            var tmp = await JsonSaver.LoadAsync<LayerBasicData>(_entryFilePath, LayerBasicDataContext.Default);
+            var tmp = await JsonSaver.LoadAsync<InkCanvasConfigData>(_entryFilePath, InkCanvasConfigDataContext.Default);
             this.Size = tmp.Size;
             this.InkDatas.SetRange(tmp.InkDatas);
             _isInkDataLoadCompleted.TrySetResult(true);
@@ -329,16 +336,16 @@ namespace Workloads.Creation.StaticImg.Models {
             await SaveBasicAsync();
         }
 
-        internal async Task UpdateForegroundColorsAsync(ColorChangeEventArgs e) {
+        internal void UpdateForegroundColor(ColorChangeEventArgs e) {
             if (e.NewItem != null)
                 ForegroundColor = (Color)e.NewItem;
-            await SaveBasicAsync();
+            //await SaveBasicAsync();
         }
 
-        internal async Task UpdateBackgroundColorsAsync(ColorChangeEventArgs e) {
+        internal void UpdateBackgroundColor(ColorChangeEventArgs e) {
             if (e.NewItem != null)
                 BackgroundColor = (Color)e.NewItem;
-            await SaveBasicAsync();
+            //await SaveBasicAsync();
         }
 
         internal void UpdatePointerPos(Point? position = null) {
@@ -358,14 +365,14 @@ namespace Workloads.Creation.StaticImg.Models {
                 $"W: {_selectionRect.Width:F0} px, H: {_selectionRect.Height:F0} px";
         }
 
-        internal async void ArcSizeChanged() {
+        private async void ArcSizeChanged() {
             var tasks = InkDatas
                 .Where(ink => ink.Render != null)
                 .Select(ink => ink.Render.ResizeRenderTargetAsync(Size))
                 .ToList();
-
             await Task.WhenAll(tasks);
-            Rebuild?.Invoke(this, EventArgs.Empty);
+            CanvasSizeText = $"{Size.Width:F0} * {Size.Height:F0} px ({Size.Dpi} / {ArcSize.HardwareDpi} DPI)";
+            SizeChanged?.Invoke(this, Size);
         }
 
         private int _nextLayerNumberTag = 1;

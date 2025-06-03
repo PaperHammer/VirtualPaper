@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Workloads.Creation.StaticImg.Views.Tools.BottomDataBarControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:root="using:Workloads.Creation.StaticImg"
+    xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    mc:Ignorable="d">
+
+    <Grid
+        Height="32"
+        Padding="6 0">
+        <StackPanel
+            Orientation="Horizontal"
+            Spacing="8">
+            <StackPanel
+                MinWidth="140"
+                Orientation="Horizontal"
+                Spacing="6"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center">
+                <ImageIcon
+                    Margin="0 2 0 0"
+                    Height="16"
+                    Width="16"
+                    Source="{StaticResource DraftPanel_StatusBar_CursorIcon}"/>
+                <TextBlock
+                    FontSize="12"
+                    Text="{x:Bind PointerPosText, Mode=OneWay}"/>
+            </StackPanel>
+
+            <Line
+                VerticalAlignment="Center"
+                X1="0" Y1="0" X2="0" Y2="20"
+                Stroke="{ThemeResource ControlStrongStrokeColorDefaultBrush}"/>
+
+            <StackPanel
+                MinWidth="160"
+                Orientation="Horizontal"
+                Spacing="4"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center">
+                <ImageIcon
+                    Margin="0 2 0 0"
+                    Height="16"
+                    Width="16"
+                    Source="{StaticResource DraftPanel_StatusBar_BorderIcon}"/>
+                <TextBlock
+                    FontSize="12"
+                    Text="{x:Bind SelectionSizeText, Mode=OneWay}"/>
+            </StackPanel>
+
+            <Line
+                VerticalAlignment="Center"
+                X1="0" Y1="0" X2="0" Y2="20"
+                Stroke="{ThemeResource ControlStrongStrokeColorDefaultBrush}"/>
+
+            <StackPanel
+                MinWidth="140"
+                Orientation="Horizontal"
+                Spacing="4"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center">
+                <ImageIcon
+                    Margin="0 2 0 0"
+                    Height="16"
+                    Width="16"
+                    Source="{StaticResource DraftPanel_StatusBar_SizeIcon}"/>
+                <TextBlock
+                    FontSize="12"
+                    Text="{x:Bind CanvasSizeText, Mode=OneWay}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel
+            Orientation="Horizontal"
+            Spacing="4"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Right">
+            <Button
+                x:Name="btnFitView"
+                Padding="10 4"
+                BorderThickness="0"
+                Background="Transparent"
+                Click="FitView_ButtonClick"
+                Style="{StaticResource MorePronouncedButton}"
+                ToolTipService.Placement="Top"
+                ToolTipService.ToolTip="适应窗口大小">
+                <ImageIcon
+                    Margin="0 2 0 0"
+                    Height="16"
+                    Width="16"
+                    Source="{StaticResource DraftPanel_StatusBar_FitViewIcon}"/>
+            </Button>
+
+            <input:ArcComboBox
+                x:Name="ZoomComboBox"
+                CornerRadius="4"
+                Height="30"
+                Width="92"
+                VerticalAlignment="Center"
+                IsEditable="True"
+                FontSize="12"
+                ItemsSource="{x:Bind _comboZoomFactors}"
+                IsTextSearchEnabled="False"
+                SelectionChanged="ZoomComboBox_SelectionChanged"
+                TextSubmitted="ZoomComboBox_TextSubmitted"/>
+
+            <Button
+                Padding="10 4"
+                BorderThickness="0"
+                Background="Transparent"
+                Style="{StaticResource MorePronouncedButton}"
+                ToolTipService.Placement="Top"
+                ToolTipService.ToolTip="缩小"
+                Click="ZoomOut_ButtonClick">
+                <FontIcon 
+                    Glyph="&#xE71F;" 
+                    FontSize="16"/>
+            </Button>
+
+            <Slider
+                x:Name="zoomSlider"
+                Width="130"
+                Minimum="{x:Bind root:Consts.DecimalToPercent(root:Consts.MinZoomFactor)}"
+                Maximum="{x:Bind root:Consts.DecimalToPercent(root:Consts.MaxZoomFactor)}"
+                ValueChanged="ZoomSlider_ValueChanged"
+                StepFrequency="1"/>
+
+            <Button
+                Padding="10 4"
+                BorderThickness="0"
+                Background="Transparent"
+                Style="{StaticResource MorePronouncedButton}"
+                ToolTipService.Placement="Top"
+                ToolTipService.ToolTip="放大"
+                Click="ZoomIn_ButtonClick">
+                <FontIcon 
+                    Glyph="&#xE8A3;" 
+                    FontSize="16"/>
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -3,26 +3,145 @@
     x:Class="Workloads.Creation.StaticImg.Views.Components.InkCanvas"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:root="using:Workloads.Creation.StaticImg"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Components"
+    xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    xmlns:collection="using:VirtualPaper.UIComponent.Collection"
+    xmlns:lcl_tools="using:Workloads.Creation.StaticImg.Views.Tools"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:win2d="using:Microsoft.Graphics.Canvas.UI.Xaml"
-    mc:Ignorable="d">
-    
-    <Grid
-        x:Name="container"
-        Background="Transparent"
-        BorderThickness="1"
-        BorderBrush="Gray"
-        DataContext="{x:Bind _viewModel.BasicData, Mode=OneWay}"
-        Width="{x:Bind _viewModel.BasicData.Size.Width, Mode=OneWay}"
-        Height="{x:Bind _viewModel.BasicData.Size.Height, Mode=OneWay}">
-        <Grid
-            x:Name="workground"
-            Canvas.ZIndex="-1"/>
-        <win2d:CanvasControl
-            x:Name="inkCanvas"
-            Loaded="InkingCanvas_Loaded"
-            Draw="InkCanvas_Draw"/>
+    mc:Ignorable="d"
+    DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer
+                x:Name="canvasContainer"
+                HorizontalScrollBarVisibility="Auto" 
+                VerticalScrollBarVisibility="Auto"
+                ZoomMode="Enabled"
+                IsZoomInertiaEnabled="True"
+                MinZoomFactor="{x:Bind root:Consts.MinZoomFactor}"
+                MaxZoomFactor="{x:Bind root:Consts.MaxZoomFactor}"
+                Background="{ThemeResource ControlStrokeColorDefaultBrush}"
+                ViewChanging="CanvasContainer_ViewChanging"
+                PointerEntered="CanvasContainer_PointerEntered"
+                PointerMoved="CanvasContainer_PointerMoved"
+                PointerPressed="CanvasContainer_PointerPressed"
+                PointerReleased="CanvasContainer_PointerReleased"
+                PointerExited="CanvasContainer_PointerExited">
+                <Grid
+                    x:Name="container"
+                    Margin="80"
+                    Background="Transparent"
+                    DataContext="{x:Bind _viewModel.ConfigData, Mode=OneWay}"
+                    Width="{x:Bind _viewModel.ConfigData.Size.Width, Mode=OneWay}"
+                    Height="{x:Bind _viewModel.ConfigData.Size.Height, Mode=OneWay}">
+                    <Grid
+                        x:Name="workground"
+                        Canvas.ZIndex="-1"/>
+                    <win2d:CanvasControl
+                        x:Name="inkCanvas"
+                        Loaded="InkingCanvas_Loaded"
+                        Draw="InkCanvas_Draw"/>
+                </Grid>
+            </ScrollViewer>
+
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Horizontal"
+                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+                <ScrollViewer
+                    Width="350"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Hidden"
+                    HorizontalScrollMode="Disabled"
+                    VerticalScrollMode="Auto">
+                    <StackPanel>
+                        <Grid x:Name="DynamicExpander">
+                            <lcl_tools:CanvasSetControl
+                                x:Name="CanvasSet"
+                                Size="{x:Bind _viewModel.ConfigData.Size, Mode=OneWay}"
+                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=CanvasSet}"
+                                OnValueChanged="CanvasSet_OnValueChanged"
+                                CanvasOperationRequested="CanvasOperationBtn_Click"/>
+                            <lcl_tools:SelectionControl
+                                x:Name="Selection"
+                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=Selection}"
+                                SelectCancel="Selection_SelectCancel"
+                                SelectCommit="Selection_SelectCommit"/>
+                            <lcl_tools:PaintBrushControl
+                                x:Name="PaintBrush"
+                                SelectedBrush="{x:Bind _viewModel.ConfigData.SelectedBrush, Mode=TwoWay}"
+                                BrushThickness="{x:Bind _viewModel.ConfigData.BrushThickness, Mode=OneWay}"
+                                BrushOpacity="{x:Bind _viewModel.ConfigData.BrushOpacity, Mode=OneWay}"
+                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=PaintBrush}"/>
+                            <lcl_tools:EraserControl
+                                x:Name="Eraser"
+                                EraserSize="{x:Bind _viewModel.ConfigData.EraserSize, Mode=OneWay}"
+                                EraserOpacity="{x:Bind _viewModel.ConfigData.EraserOpacity, Mode=OneWay}"
+                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter= Eraser}"/>
+                            <lcl_tools:CropControl
+                                x:Name="Crop"
+                                SeletcedAspect="{x:Bind _viewModel.ConfigData.SeletcedAspectItem, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                AspectRatios="{x:Bind _viewModel._aspectRatios}"
+                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=Crop}"
+                                CropCancelRequest="Crop_CropCancelRequest"
+                                CropCommitRequest="Crop_CropCommitRequest"/>
+                        </Grid>
+
+                        <lcl_tools:ColorPaletteControl 
+                            x:Name="ColorPalette"
+                            ForegroundColor="{x:Bind _viewModel.ConfigData.ForegroundColor, Mode=TwoWay}"
+                            BackgroundColor="{x:Bind _viewModel.ConfigData.BackgroundColor, Mode=TwoWay}"
+                            CustomColors="{x:Bind _viewModel.ConfigData.CustomColors, Mode=OneWay}"
+                            CustomeColorChanged="ColorPalette_CustomeColorChanged"/>
+                        <lcl_tools:LayerManageControl 
+                            x:Name="LayerManage"
+                            SelectedInkCanvas="{x:Bind _viewModel.ConfigData.SelectedInkCanvas, Mode=TwoWay}"
+                            InkDatas="{x:Bind _viewModel.ConfigData.InkDatas}"
+                            AddLayerRequest="LayerManage_AddLayerRequest"
+                            CopyLayerRequest="LayerManage_CopyLayerRequest"
+                            RenameLayerRequest="LayerManage_RenameLayerRequest"
+                            DeleteLayerRequest="LayerManage_DeleteLayerRequest"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Line X1="0" Y1="0" X2="0" Y2="1" Stretch="Fill" 
+                    Stroke="{ThemeResource ControlStrokeColorOnAccentDisabledBrush}"/>
+
+                <lcl_tools:ToolListConrtol
+                    x:Name="toolItemListView"
+                    SelectedTool="{x:Bind _viewModel.ConfigData.SelectedToolItem, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    ToolItems="{x:Bind _viewModel._toolItems}"/>
+            </StackPanel>
+        </Grid>
+
+        <lcl_tools:BottomDataBarControl
+            x:Name="bottomDataBarControl"
+            Grid.Row="1"
+            FitViewRequest="BottomDataBarControl_FitViewRequest"
+            ZoomComboBoxSelectionChanged="BottomDataBarControl_ZoomComboBoxSelectionChanged"
+            ZoomComboBoxTextSubmitted="BottomDataBarControl_ZoomComboBoxTextSubmitted"
+            ZoomInRequest="BottomDataBarControl_ZoomInRequest"
+            ZoomOutRequest="BottomDataBarControl_ZoomOutRequest"
+            ZoomSliderValueChanged="BottomDataBarControl_ZoomSliderValueChanged"
+            PointerPosText="{x:Bind _viewModel.ConfigData.PointerPosText, Mode=OneWay}"
+            SelectionSizeText="{x:Bind _viewModel.ConfigData.SelectionSizeText, Mode=OneWay}"
+            CanvasSizeText="{x:Bind _viewModel.ConfigData.CanvasSizeText, Mode=OneWay}"
+            CanvasZoom="{x:Bind _viewModel.ConfigData.CanvasZoom, Mode=OneWay}"/>
     </Grid>
 </UserControl>

@@ -9,9 +9,9 @@ using VirtualPaper.Models.Mvvm;
 
 namespace Workloads.Creation.StaticImg.Models {
     [JsonSerializable(typeof(InkCanvasData))]
-    internal partial class InkCanvasDataContext : JsonSerializerContext { }
+    public partial class InkCanvasDataContext : JsonSerializerContext { }
 
-    internal partial class InkCanvasData : ObservableObject {
+    public partial class InkCanvasData : ObservableObject {
         [JsonIgnore]
         public InkRenderData Render { get; set; }
         public long Tag { get; }
@@ -89,7 +89,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         internal void SetDataFilePath(object filePath) {
             string folder = System.IO.Path.GetDirectoryName(filePath.ToString()) ?? string.Empty;
-            _dataFilePath = System.IO.Path.Combine(folder, Tag + ".data");
+            _dataFilePath = System.IO.Path.Combine(folder, Tag + "._data");
         }
 
         internal async Task DeletAsync() {

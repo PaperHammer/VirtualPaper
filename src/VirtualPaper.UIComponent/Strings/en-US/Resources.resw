@@ -933,4 +933,37 @@ The following words cannot be used as usernames:
   <data name="Server_Authentication_Failed" xml:space="preserve">
     <value>The account authentication fails, please try to log in again</value>
   </data>
+  <data name="SIG_CanvasSet_Header" xml:space="preserve">
+    <value>Canvas</value>
+  </data>
+  <data name="SIG_CanvasSet_AdjustSize" xml:space="preserve">
+    <value>Resize the canvas</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelWidth" xml:space="preserve">
+    <value>Width (Pixels)</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelHeight" xml:space="preserve">
+    <value>Height (Pixels)</value>
+  </data>
+  <data name="SIG_CanvasSet_LockAspectRatio" xml:space="preserve">
+    <value>Lock the aspect ratio</value>
+  </data>
+  <data name="SIG_CanvasSet_SacleContent" xml:space="preserve">
+    <value>Synchronously zoom the canvas content</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateAndFlip" xml:space="preserve">
+    <value>Rotate and Flip</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateLeftNinety" xml:space="preserve">
+    <value>Rotate 90° to the left</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateRightNinety" xml:space="preserve">
+    <value>Rotate 90° to the right</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipHorizon" xml:space="preserve">
+    <value>Flip horizontally</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipVertical" xml:space="preserve">
+    <value>Flip vertically</value>
+  </data>
 </root>

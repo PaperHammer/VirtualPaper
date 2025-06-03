@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Files;
@@ -14,13 +12,13 @@ using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
-using Windows.System;
+using VirtualPaper.UIComponent.Navigation;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject {
-        internal ObservableCollection<TabViewItem> TabViewItems { get; set; } = [];
+        internal ObservableCollection<ArcTabViewItem> TabViewItems { get; set; } = [];
 
-        int _selectedTabIndex;
+        int _selectedTabIndex = -1;
         public int SelectedTabIndex {
             get { return _selectedTabIndex; }
             set { if (_selectedTabIndex == value) return; _selectedTabIndex = value; OnPropertyChanged(); }
@@ -29,55 +27,57 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         public WorkSpaceViewModel(
             IUserSettingsClient userSettings) {
             this._userSettings = userSettings;
-            //TabViewItems.CollectionChanged += TabViewItems_CollectionChanged;
         }
 
-        public MenuBarItem NewMenuBarItem(string title, VirtualKeyModifiers modifiers = VirtualKeyModifiers.None, VirtualKey key = VirtualKey.None) {
-            MenuBarItem menuBarItem = new() {
-                Title = title,
-                KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden,
-            };
-            menuBarItem.KeyboardAccelerators.Add(new KeyboardAccelerator() {
-                Modifiers = modifiers,
-                Key = key,
-            });
+        //public MenuBarItem NewMenuBarItem(string title, VirtualKeyModifiers modifiers = VirtualKeyModifiers.None, VirtualKey key = VirtualKey.None) {
+        //    MenuBarItem menuBarItem = new() {
+        //        Title = title,
+        //        KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden,
+        //    };
+        //    menuBarItem.KeyboardAccelerators.Add(new KeyboardAccelerator() {
+        //        Modifiers = modifiers,
+        //        Key = key,
+        //    });
 
-            return menuBarItem;
-        }
+        //    return menuBarItem;
+        //}
 
-        private void TabViewItems_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
+        internal void OnTabItemsChanged(TabView sender, Windows.Foundation.Collections.IVectorChangedEventArgs args) {
             // 如果集合为空，则取消选择
             if (TabViewItems.Count == 0) {
                 SelectedTabIndex = -1;
                 return;
             }
 
-            switch (e.Action) {
-                case NotifyCollectionChangedAction.Add:
-                    // 如果当前没有选中的tab，则选中新添加的第一个tab
-                    if (SelectedTabIndex == -1 && e.NewItems?.Count > 0) {
-                        SelectedTabIndex = 0;
-                    }
+            switch (args.CollectionChange) {
+                case Windows.Foundation.Collections.CollectionChange.ItemInserted:
+                    SelectedTabIndex = (int)args.Index;
                     break;
-                case NotifyCollectionChangedAction.Remove:
-                    // 若被移除的项包含当前选中项，则需要更新选中项
-                    if (e.OldItems?.Contains(TabViewItems[SelectedTabIndex]) == true) {
-                        // 使用被移除项的起始索引来决定下一个选中项
-                        int newIndex = e.OldStartingIndex;
-                        if (newIndex >= TabViewItems.Count) {
-                            newIndex = TabViewItems.Count - 1;
-                        }
-                        SelectedTabIndex = newIndex;
-                    }
-                    break;
+                case Windows.Foundation.Collections.CollectionChange.ItemRemoved:
+                    // 如果被移除的是当前选中项
+                    if (args.Index == SelectedTabIndex) {
+                        // 优先尝试选中前一个选项卡
+                        int newIndex = (int)args.Index - 1;
 
-                case NotifyCollectionChangedAction.Reset:
-                    // 重置时设置第一个tab为当前选中项
+                        // 如果前一个不存在（如删除的是第一个），则尝试选后一个
+                        if (newIndex < 0 && TabViewItems.Count > 0) {
+                            newIndex = 0;
+                        }
+
+                        // 确保索引有效
+                        SelectedTabIndex = Math.Clamp(newIndex, -1, TabViewItems.Count - 1);
+                    }
+                    // 如果被移除项在当前选中项之前，需要调整选中索引
+                    else if (args.Index < SelectedTabIndex) {
+                        SelectedTabIndex = Math.Clamp(SelectedTabIndex - 1, -1, TabViewItems.Count - 1);
+                    }
+                    break;
+                case Windows.Foundation.Collections.CollectionChange.Reset:
+                    // 重置时默认选中第一个选项卡
                     SelectedTabIndex = TabViewItems.Count > 0 ? 0 : -1;
                     break;
-                case NotifyCollectionChangedAction.Replace:
-                case NotifyCollectionChangedAction.Move:
-                    // 其它动作不更新选中逻辑
+                case Windows.Foundation.Collections.CollectionChange.ItemChanged:
+                default:
                     break;
             }
         }
@@ -164,13 +164,14 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         private void AddToWorkSpace(string filePath, IRuntime runtime) {
             _rt.Add(runtime);
-            TabViewItems.Add(new() {
+            TabViewItems.Add(new ArcTabViewItem() {
                 Header = new TextBlock {
                     Text = Path.GetFileName(filePath),
                     TextTrimming = TextTrimming.CharacterEllipsis, // 文本超出时显示省略号
                     MaxWidth = 200
                 },
                 Content = runtime,
+                IsUnsaved = false,
             });
         }
 

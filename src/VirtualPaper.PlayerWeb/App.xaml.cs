@@ -45,7 +45,7 @@ namespace VirtualPaper.PlayerWeb {
             //    "--effect-file-path-template C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\temp\\4dfj1bgy.zl5\\wpEffectFilePathTemplate.json " +
             //    "-r RImage " +
             //    "--system-backdrop Default " +
-            //    "-t Light " +
+            //    "-T Light " +
             //    "-l zh-CN";
             //string[] startArgs = s.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1..];
 

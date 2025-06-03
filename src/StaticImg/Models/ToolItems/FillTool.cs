@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 using VirtualPaper.UIComponent.Services;
@@ -9,17 +7,12 @@ using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
-namespace Workloads.Creation.StaticImg.Models.ToolItemUtil {
-    class FillTool(LayerBasicData data) : Tool, IDisposable {
-        public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
-
-        public override void OnPointerEntered(CanvasPointerEventArgs e) {
-            base.OnPointerEntered(e);
-            SystemCursorChangeRequested?.Invoke(this, new(InputSystemCursor.Create(InputSystemCursorShape.Cross)));
-        }
+namespace Workloads.Creation.StaticImg.Models.ToolItems {
+    partial class FillTool(InkCanvasConfigData data) : Tool, IDisposable {
+        //public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
 
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
-            if (!IsPointerOverTaregt(e)) return;
+            if (!IsPointerOverTarget(e)) return;
 
             PointerPoint pointerPoint = e.Pointer;
             _blendedColor = pointerPoint.Properties.IsRightButtonPressed ? data.BackgroundColor : data.ForegroundColor;

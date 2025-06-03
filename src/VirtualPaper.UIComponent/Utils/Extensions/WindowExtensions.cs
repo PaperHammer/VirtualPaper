@@ -6,7 +6,7 @@ using WinRT;
 
 namespace VirtualPaper.UIComponent.Utils.Extensions
 {
-    //Note: Don't prefer extensions, remove when not required; suffix all methods with Ex.
+    //Note: Don'T prefer extensions, remove when not required; suffix all methods with Ex.
     public static class WindowExtensions
     {
         public static void SetIconEx(this Window window, string iconName)

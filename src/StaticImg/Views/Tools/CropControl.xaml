@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Workloads.Creation.StaticImg.Views.Tools.CropControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <DataTemplate x:Key="AspectRatioTemplate" x:DataType="lcl_models:AspectRatioItem">
+            <GridViewItem 
+                Width="90" 
+                Height="100" 
+                Margin="6">
+                <StackPanel 
+                    Orientation="Vertical"
+                    Spacing="10">
+                    <Border 
+                        Width="{x:Bind BorderWidth}" 
+                        Height="{x:Bind BorderHeight}"
+                        BorderBrush="{ThemeResource SystemAccentColor}"
+                        BorderThickness="1">
+                    </Border>
+                    <TextBlock 
+                        Text="{x:Bind DisplayText}" 
+                        HorizontalAlignment="Center" 
+                        VerticalAlignment="Center"/>
+                </StackPanel>
+            </GridViewItem>
+        </DataTemplate>
+
+        <ItemsPanelTemplate x:Key="AspectRatioPanel">
+            <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="3"/>
+        </ItemsPanelTemplate>
+    </UserControl.Resources>
+
+    <Expander Style="{StaticResource RightExpanderStyle}">
+        <Expander.Header>
+            <TextBlock Text="裁剪"/>
+        </Expander.Header>
+        <Expander.Content>
+            <StackPanel 
+                Orientation="Vertical"
+                Spacing="6">
+
+                <GridView 
+                    SelectionMode="Single"
+                    HorizontalAlignment="Stretch"
+                    IsItemClickEnabled="True"
+                    ItemClick="AspectRatio_ItemClick"
+                    SelectedItem="{x:Bind SeletcedAspect, Mode=OneWay}"
+                    ItemsSource="{x:Bind AspectRatios}"
+                    ItemTemplate="{StaticResource AspectRatioTemplate}"
+                    ItemsPanel="{StaticResource AspectRatioPanel}"/>
+
+                <!--TODO-->
+                <!--<Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel
+                            Orientation="Vertical"
+                            Spacing="4">
+                            <TextBlock 
+                                Text="宽度(像素)" 
+                                VerticalAlignment="Center"/>
+                            <TextBox
+                                Text="1135"
+                                FontSize="12"/>
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Orientation="Vertical"
+                            Spacing="4">
+                            <TextBlock 
+                                Text="高度(像素)" 
+                                VerticalAlignment="Center"/>
+                            <TextBox
+                                Text="638"
+                                FontSize="12"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <CheckBox Content="锁定纵横比"/>-->
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+
+                    <Button
+                        Content="取消"
+                        Height="40"
+                        HorizontalAlignment="Stretch"
+                        Click="CropCancelBtn_Click"/>
+
+                    <Button 
+                        Grid.Column="2"
+                        Content="完成"
+                        Height="40"
+                        HorizontalAlignment="Stretch"
+                        Click="CropCommitBtn_Click"/>
+                </Grid>
+            </StackPanel>
+        </Expander.Content>
+    </Expander>
+</UserControl>

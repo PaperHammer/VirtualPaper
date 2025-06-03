@@ -933,4 +933,37 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Server_Authentication_Failed" xml:space="preserve">
     <value>账户身份认证失败，请尝试重新登录</value>
   </data>
+  <data name="SIG_CanvasSet_Header" xml:space="preserve">
+    <value>画布</value>
+  </data>
+  <data name="SIG_CanvasSet_AdjustSize" xml:space="preserve">
+    <value>调整画布大小</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelWidth" xml:space="preserve">
+    <value>宽度(像素)</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelHeight" xml:space="preserve">
+    <value>高度(像素)</value>
+  </data>
+  <data name="SIG_CanvasSet_LockAspectRatio" xml:space="preserve">
+    <value>锁定纵横比</value>
+  </data>
+  <data name="SIG_CanvasSet_SacleContent" xml:space="preserve">
+    <value>同步缩放画布内容</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateAndFlip" xml:space="preserve">
+    <value>旋转和翻转</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateLeftNinety" xml:space="preserve">
+    <value>向左旋转90°</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateRightNinety" xml:space="preserve">
+    <value>向右旋转90°</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipHorizon" xml:space="preserve">
+    <value>水平翻转</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipVertical" xml:space="preserve">
+    <value>垂直翻转</value>
+  </data>
 </root>

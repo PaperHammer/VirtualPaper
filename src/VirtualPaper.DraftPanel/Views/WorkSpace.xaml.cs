@@ -32,6 +32,10 @@ namespace VirtualPaper.DraftPanel.Views {
             _viewModel.InitTabViewItems(data);
         }
 
+        private void TabViewControl_TabItemsChanged(TabView sender, Windows.Foundation.Collections.IVectorChangedEventArgs args) {
+            _viewModel.OnTabItemsChanged(sender, args);
+        }
+
         private void TabViewControl_AddTabButtonClick(TabView sender, object args) {
             _viewModel.AddDraftItem();
         }

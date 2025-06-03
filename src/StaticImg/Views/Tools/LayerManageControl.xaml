@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Workloads.Creation.StaticImg.Views.Tools.LayerManageControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:collection="using:VirtualPaper.UIComponent.Collection"
+    xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
+    xmlns:lcl_components="using:Workloads.Creation.StaticImg.Views.Components"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <MenuFlyout x:Key="Layers_MenuFlyout">
+            <MenuFlyoutItem Text="{x:Bind _SIG_Text_AddLayer}" Click="AddLayer_Click"/>
+            <MenuFlyoutItem Text="{x:Bind _SIG_Text_CopyLayer}" Click="CopyLayer_Click"/>
+            <MenuFlyoutItem Text="{x:Bind _SIG_Text_RenameLayer}" Click="RenameLayer_Click"/>
+            <MenuFlyoutSeparator/>
+            <MenuFlyoutItem Text="{x:Bind _SIG_Text_DeleteLayer}" Click="DeleteLayer_Click"/>
+        </MenuFlyout>
+
+        <DataTemplate  x:Key="LayerItemTemplate" x:DataType="lcl_models:InkCanvasData">
+            <ListViewItem Height="60">
+                <lcl_components:LayerItem
+                    LayerName="{x:Bind Name, Mode=TwoWay}"
+                    IsEnable="{x:Bind IsEnable, Mode=TwoWay}"
+                    LayerThum="{x:Bind LayerThum, Mode=OneWay}"
+                    ItemTag="{x:Bind Tag}"/>
+            </ListViewItem>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Expander
+        Padding="0 16"
+        Style="{StaticResource RightExpanderStyle}">
+        <Expander.Header>
+            <TextBlock Text="图层集"/>
+        </Expander.Header>
+        <Expander.Content>
+            <collection:ArcListView
+                x:Name="layersListView"
+                SelectionMode="Single"
+                CancelSelectionEnable="False"
+                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                RightTapped="Listview_RightTapped"
+                SelectedItem="{x:Bind SelectedInkCanvas, Mode=TwoWay}"
+                ItemsSource="{x:Bind InkDatas, Mode=OneWay}"
+                ItemTemplate="{StaticResource LayerItemTemplate}">
+                <collection:ArcListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                        <Setter Property="ContextFlyout" Value="{StaticResource Layers_MenuFlyout}" />
+                    </Style>
+                </collection:ArcListView.ItemContainerStyle>
+            </collection:ArcListView>
+        </Expander.Content>
+    </Expander>
+</UserControl>

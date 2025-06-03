@@ -8,7 +8,7 @@
     <UseWinUI>true</UseWinUI>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <ItemGroup>
+  <!--<ItemGroup>
     <None Remove="Container\PageContainer.xaml" />
     <None Remove="Data\Details.xaml" />
     <None Remove="Data\Edits.xaml" />
@@ -16,10 +16,12 @@
     <None Remove="Feedback\Loading.xaml" />
     <None Remove="Input\ArcPalette.xaml" />
     <None Remove="Input\ComboBox\ArcComboBox.xaml" />
+    <None Remove="Navigation\ArcTabView.xaml" />
+    <None Remove="Navigation\TabView\ArcTabView.xaml" />
     <None Remove="Others\ColorEyeDropWindow.xaml" />
     <None Remove="Others\RenameView.xaml" />
     <None Remove="Others\WallpaperCreateView.xaml" />
-  </ItemGroup>
+  </ItemGroup>-->
   <ItemGroup>
     <PRIResource Remove="Strings\en-US\Resources.resw" />
     <PRIResource Remove="Strings\zh-CN\Resources.resw" />
@@ -108,7 +110,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Update="Input\ComboBox\ArcComboBox.xaml">
+    <Page Update="Navigation\TabView\ArcTabViewItem.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Navigation\ArcTabView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

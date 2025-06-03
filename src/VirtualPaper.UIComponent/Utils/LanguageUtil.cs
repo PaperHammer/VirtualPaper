@@ -45,7 +45,7 @@ namespace VirtualPaper.UIComponent.Utils {
               "Strings",
                CreationCollisionOption.OpenIfExists);
 
-            // Create string resources file from app resources if doesn't exists.
+            // Create string resources file from app resources if doesn'T exists.
             string resourceFileName = "Resources.resw";
             await CreateStringResourceFileIfNotExists(stringsFolder, "zh-CN", resourceFileName);
             await CreateStringResourceFileIfNotExists(stringsFolder, "en-US", resourceFileName);

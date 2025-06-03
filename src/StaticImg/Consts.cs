@@ -7,20 +7,24 @@ using Windows.UI;
 namespace Workloads.Creation.StaticImg {
     class Consts {
         public static float MinZoomFactor => 0.2f;
-        public static float MaxZoomFactor => 7f;
+        public static float MaxZoomFactor => 8f;
         public static int LayerThumWidth => 60;
         public static int LayerThumHeight => 38;
 
         public static double DecimalToPercent(float value) {
-            return Math.Round(value * 100, 1);
+            return DecimalToPercent(value, 1);
+        }
+        
+        public static double DecimalToPercent(float value, int digits) {
+            return Math.Round(value * 100, digits);
         }
 
-        internal static double PercentToDeciaml(double value) {
-            return Math.Round(value / 100, 1);
+        internal static double PercentToDeciaml(float value, int digits = 1) {
+            return (int)Math.Round(value / 100, digits);
         }
 
-        internal static double RoundToNearestFive(double value) {
-            return (int)(Math.Round(value, 1) * 10) / 10.0;
+        internal static double RoundToNearestFive(double value, int digits = 1) {
+            return (int)(Math.Round(value, digits) * 10) / 10.0;
         }
 
         internal static double GetAddStepSize(double curValue) {
@@ -32,8 +36,16 @@ namespace Workloads.Creation.StaticImg {
         }
 
         public static bool IsZoomValid(double zoom) {
-            float zoomFloat = (float)zoom;
-            return zoomFloat >= MinZoomFactor - _epsilon && zoomFloat <= MaxZoomFactor + _epsilon;
+            return zoom >= MinZoomFactor - _epsilon && zoom <= MaxZoomFactor + _epsilon;
+        }
+
+        public static bool IsDoubleValueEqual(double a, double b) {
+            return Math.Abs(a - b) < Math.Pow(10, -5);
+        }
+
+        public static bool IsPointerOverTaregt(Point? position, ArcSize range) {
+            return position.Value.X >= 0 && position.Value.X < range.Width &&
+                   position.Value.Y >= 0 && position.Value.Y < range.Height;
         }
 
         private static readonly float _epsilon = 1e-6f;
@@ -126,7 +138,7 @@ namespace Workloads.Creation.StaticImg {
         }
     }
 
-    readonly struct ArcSize : IEquatable<ArcSize> {
+    public readonly struct ArcSize : IEquatable<ArcSize> {
         [JsonConstructor]
         [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
         internal ArcSize(double width, double height, uint dpi) {
@@ -187,7 +199,7 @@ namespace Workloads.Creation.StaticImg {
     }
 
     // TODO
-    enum PaintBrushType {
+    public enum PaintBrushType {
         CommonBrush, // 画笔
         //WritingBrush, // 毛笔
         //Pen, // 书写笔(钢笔 ???)
@@ -200,7 +212,7 @@ namespace Workloads.Creation.StaticImg {
     }
 
     // TODO
-    enum ToolType {
+    public enum ToolType {
         None,
         Eraser, // 橡皮擦
         PaintBrush, // 画笔
@@ -215,7 +227,7 @@ namespace Workloads.Creation.StaticImg {
     }
 
     // rotate per 90 degree
-    enum RebuildMode {
+    public enum RebuildMode {
         None, ResizeExpand, ResizeScale, RotateLeft, RotateRight, FlipHorizontal, FlipVertical,
     }
 }

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Workloads.Creation.StaticImg.Views.Tools.CanvasSetControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools"
+    xmlns:root_models="using:Workloads.Creation.StaticImg.Models"
+    xmlns:i18n="using:VirtualPaper.UIComponent.Extensions"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    
+    <Expander Style="{StaticResource RightExpanderStyle}">
+        <Expander.Header>
+            <TextBlock x:Uid="_SIG_CanvasSet_Header"/>
+            <!--<TextBlock Text="{x:Bind _SIG_CanvasSet_Header}"/>-->
+        </Expander.Header>
+        <Expander.Content>
+            <StackPanel Spacing="10">
+                <TextBlock 
+                    Text="{x:Bind _SIG_CanvasSet_AdjustSize}" 
+                    FontSize="12"/>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Spacing="4">
+                        <TextBlock                                                         
+                            Text="{x:Bind _SIG_CanvasSet_PixelWidth}" 
+                            FontSize="12"
+                            VerticalAlignment="Center"/>
+                        <TextBox
+                            x:Name="widthTextBox"
+                            InputScope="Digits"
+                            LostFocus="OnSizeBoxLostFocus"
+                            KeyDown="OnSizeBoxKeyDown"
+                            Text="{x:Bind Size.Width, Mode=OneWay}"
+                            FontSize="12" />
+                    </StackPanel>
+
+                    <StackPanel
+                        Grid.Column="2"
+                        Spacing="4">
+                        <TextBlock 
+                            Text="{x:Bind _SIG_CanvasSet_PixelHeight}" 
+                            FontSize="12"
+                            VerticalAlignment="Center"/>
+                        <TextBox
+                            x:Name="heightTextBox"
+                            InputScope="Digits"
+                            LostFocus="OnSizeBoxLostFocus"
+                            KeyDown="OnSizeBoxKeyDown"
+                            Text="{x:Bind Size.Height, Mode=OneWay}"
+                            FontSize="12"/>
+                    </StackPanel>
+                </Grid>
+
+                <CheckBox 
+                    x:Name="lockAspectRatio"
+                    Content="{x:Bind _SIG_CanvasSet_LockAspectRatio}"
+                    Checked="LockAspectRatio_Checked"
+                    Unchecked="LockAspectRatio_Unchecked"
+                    FontSize="12"/>
+
+                <CheckBox 
+                    x:Name="scaleContent"
+                    Content="{x:Bind _SIG_CanvasSet_SacleContent}"
+                    Checked="SacleContent_Checked"
+                    Unchecked="SacleContent_Unchecked"
+                    FontSize="12"/>
+
+                <StackPanel Spacing="6">
+                    <TextBlock 
+                        Text="{x:Bind _SIG_CanvasSet_RotateAndFlip}" 
+                        FontSize="12"/>
+
+                    <StackPanel
+                        Orientation="Horizontal"
+                        Spacing="4">
+                        <Button 
+                            x:Name="rotateLeft"
+                            Height="45"
+                            Width="45"
+                            ToolTipService.ToolTip="{x:Bind _SIG_CanvasSet_RotateLeftNinety}"
+                            Tag="{x:Bind root_models:CanvasOperation.RotateLeft}"
+                            Click="CanvasOperationBtn_Click">
+                            <SymbolIcon Symbol="Rotate">
+                                <SymbolIcon.RenderTransform>
+                                    <ScaleTransform CenterX="10" ScaleX="-1" ScaleY="1"/>
+                                </SymbolIcon.RenderTransform>
+                            </SymbolIcon>
+                        </Button>
+
+                        <Button 
+                            x:Name="rotateRight"
+                            Grid.Column="1" 
+                            Height="45"
+                            Width="45"
+                            Tag="{x:Bind root_models:CanvasOperation.RotateRight}"
+                            Click="CanvasOperationBtn_Click"
+                            ToolTipService.ToolTip="{x:Bind _SIG_CanvasSet_RotateRightNinety}">
+                            <SymbolIcon Symbol="Rotate"/>
+                        </Button>
+
+                        <Button 
+                            x:Name="flipHorizontally"
+                            Grid.Column="2" 
+                            Height="45"
+                            Width="45"
+                            Tag="{x:Bind root_models:CanvasOperation.FlipHorizontally}"
+                            Click="CanvasOperationBtn_Click"
+                            ToolTipService.ToolTip="{x:Bind _SIG_CanvasSet_FlipHorizon}">
+                            <FontIcon Glyph="&#xEA44;" />
+                        </Button>
+
+                        <Button 
+                            x:Name="flipVertically"
+                            Grid.Column="3" 
+                            Height="45"
+                            Width="45"
+                            Tag="{x:Bind root_models:CanvasOperation.FlipVertically}"
+                            Click="CanvasOperationBtn_Click" 
+                            ToolTipService.ToolTip="{x:Bind _SIG_CanvasSet_FlipVertical}">
+                            <FontIcon Glyph="&#xEA44;">
+                                <FontIcon.RenderTransform>
+                                    <RotateTransform CenterX="10" CenterY="10" Angle="90"/>
+                                </FontIcon.RenderTransform>
+                            </FontIcon>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Expander.Content>
+    </Expander>
+</UserControl>

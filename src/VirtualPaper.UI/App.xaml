@@ -21,7 +21,9 @@
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ColorPicker/ArcColorPicker.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ColorPicker/ArcColorSpectrum.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/CheckBox/ArcCheckBox.xaml" />
-                
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ComboBox/ArcComboBox.xaml" />
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Navigation/TabView/ArcTabViewItem.xaml" />
+
                 <!--Other merged dictionaries here-->
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

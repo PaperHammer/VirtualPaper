@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Workloads.Creation.StaticImg.Views.Tools.ColorPaletteControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    mc:Ignorable="d">
+
+    <Expander Style="{StaticResource RightExpanderStyle}">
+        <Expander.Header>
+            <TextBlock Text="调色板"/>
+        </Expander.Header>
+        <Expander.Content>
+            <input:ArcPalette                                        
+                ForegroundColor="{x:Bind ForegroundColor, Mode=TwoWay}"
+                BackgroundColor="{x:Bind BackgroundColor, Mode=TwoWay}"
+                InitCustomColors="{x:Bind CustomColors, Mode=OneWay}"                
+                OnCustomeColorChangedEvent="ArcPalette_OnCustomeColorChangedEvent"/>
+        </Expander.Content>
+    </Expander>
+</UserControl>

@@ -50,7 +50,7 @@ namespace VirtualPaper.Cores.Players.Web {
             cmdArgs.Append($" --effect-file-path-template {data.WpEffectFilePathTemplate}");
             cmdArgs.Append($" -r {data.RType.ToString()}");
             cmdArgs.Append($" --system-backdrop {App.UserSettings.Settings.SystemBackdrop}");
-            cmdArgs.Append($" -t {App.UserSettings.Settings.ApplicationTheme}");
+            cmdArgs.Append($" -T {App.UserSettings.Settings.ApplicationTheme}");
             cmdArgs.Append($" -l {App.UserSettings.Settings.Language}");
 
             ProcessStartInfo start = new() {

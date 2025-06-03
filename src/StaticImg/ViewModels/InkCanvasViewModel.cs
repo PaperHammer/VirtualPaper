@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
@@ -7,53 +8,30 @@ using Workloads.Creation.StaticImg.Models;
 
 namespace Workloads.Creation.StaticImg.ViewModels {
     internal partial class InkCanvasViewModel : ObservableObject {
-        internal event EventHandler RequestFullRender;
-        internal event EventHandler SeletcedToolChanging;
-        internal event EventHandler SeletcedLayerChanged;
-        internal event EventHandler<double> SeletcedCropAspectCliked;
-        internal event EventHandler Rebuild;
-        internal TaskCompletionSource<bool> BasicDataLoaded => _basicDataLoaded;
+        //internal event EventHandler Rebuild;
+        internal event EventHandler Ready;
+        //internal event EventHandler SeletcedToolChanged;
+        //internal event EventHandler SeletcedLayerChanged;
+        //internal event EventHandler<double> SelectedCropAspectClicked;
 
-        private LayerBasicData _basicData;
-        public LayerBasicData BasicData {
-            get { return _basicData; }
-            set { _basicData = value; }
+        internal TaskCompletionSource<bool> BasicDataLoaded => _basicDataLoaded;
+        internal TaskCompletionSource<bool> Rendered => _rendered;
+
+        private InkCanvasConfigData _configData;
+        public InkCanvasConfigData ConfigData {
+            get { return _configData; }
+            set { _configData = value; }
         }
 
         public InkCanvasViewModel(string entryFilePath, FileType fileType) {
             _fileType = fileType;
             _entryFilePath = entryFilePath;
-            BasicData = new(entryFilePath);
-            BasicData.InkDataEnabledChanged += OnInkDataEnabledChanged;
-            BasicData.SeletcedToolChanged += OnSeletcedToolChanged;
-            BasicData.SeletcedLayerChanged += OnSeletcedLayerChanged;
-            BasicData.SeletcedCropAspectClicked += OnSeletcedCropAspectClicked;
-            BasicData.Rebuild += OnRebuild;
-        }
-
-        private void OnRebuild(object sender, EventArgs e) {
-            Rebuild?.Invoke(this, EventArgs.Empty);
-        }
-
-        private void OnSeletcedCropAspectClicked(object sender, double e) {
-            SeletcedCropAspectCliked?.Invoke(this, e);
-        }
-
-        private void OnSeletcedLayerChanged(object sender, EventArgs e) {
-            SeletcedLayerChanged?.Invoke(this, EventArgs.Empty);
-        }
-
-        private void OnSeletcedToolChanged(object sender, EventArgs e) {
-            SeletcedToolChanging?.Invoke(this, EventArgs.Empty);
-        }
-
-        private void OnInkDataEnabledChanged(object sender, EventArgs e) {
-            Rebuild?.Invoke(this, EventArgs.Empty);
+            ConfigData = new InkCanvasConfigData(entryFilePath);
         }
 
         internal async Task SaveAsync() {
-            await BasicData.SaveBasicAsync();
-            await BasicData.SaveRenderDataAsync();
+            await ConfigData.SaveBasicAsync();
+            await ConfigData.SaveRenderDataAsync();
         }
 
         internal async Task LoadBasicOrInit() {
@@ -62,7 +40,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                     case FileType.FImage:
                         break;
                     case FileType.FProject:
-                        await LoadProjectAsync();
+                        await LoadBasicDataAsync();
                         break;
                     default:
                         break;
@@ -74,22 +52,39 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             }
         }
 
-        private async Task LoadProjectAsync() {
+        private async Task LoadBasicDataAsync() {
             if (!File.Exists(_entryFilePath)) {
-                await BasicData.InitDataAsync();
-                await BasicData.SaveRenderDataAsync();
+                await ConfigData.InitDataAsync();
+                await ConfigData.SaveRenderDataAsync();
             }
-            await BasicData.LoadBasicDataAsync();
+            await ConfigData.LoadBasicDataAsync();
             BasicDataLoaded.TrySetResult(true);
         }
 
         internal async Task LoadRenderDataAsync() {
-            await BasicData.LoadRenderDataAsync();
-            RequestFullRender?.Invoke(this, EventArgs.Empty);
+            await ConfigData.LoadRenderDataAsync();
+            Rendered.TrySetResult(true);
+            Ready?.Invoke(this, EventArgs.Empty);
         }
 
         private readonly string _entryFilePath;
         private readonly FileType _fileType;
-        private readonly TaskCompletionSource<bool> _basicDataLoaded = new();
+        private readonly TaskCompletionSource<bool> _basicDataLoaded = new(), _rendered = new();
+        internal readonly List<AspectRatioItem> _aspectRatios = [
+            new(displayText: "16:9", borderWidth: 48, borderHeight: 27 ),
+            new(displayText: "5:3", borderWidth: 40, borderHeight: 24),
+            new(displayText : "3:2", borderWidth : 39, borderHeight : 26),
+            new(displayText : "4:3", borderWidth : 40, borderHeight : 30),
+            new(displayText : "1:1", borderWidth : 30, borderHeight : 30),
+            new(displayText : "9:16", borderWidth : 27, borderHeight : 48)
+        ];
+        internal readonly List<ToolItem> _toolItems = [
+            new() { Type = ToolType.Selection, ToolName = "选择", Glyph = "\uE8B0", },
+            new() { Type = ToolType.PaintBrush, ToolName = "画笔", Glyph = "\uEE56", },
+            new() { Type = ToolType.Fill, ToolName = "填充", ImageSourceKey = "DraftPanel_FuncBar_ColorFill", },
+            new() { Type = ToolType.Eraser, ToolName = "擦除", Glyph = "\uE75C", },
+            new() { Type = ToolType.Crop, ToolName = "裁剪", Glyph = "\uE7A8", },
+            new() { Type = ToolType.CanvasSet, ToolName = "画布", Glyph = "\uE9E9", },
+        ];
     }
 }

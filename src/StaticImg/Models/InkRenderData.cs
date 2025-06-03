@@ -13,7 +13,7 @@ using Windows.Storage;
 using Windows.Storage.Streams;
 
 namespace Workloads.Creation.StaticImg.Models {
-    internal partial class InkRenderData : IDisposable {
+    public partial class InkRenderData : IDisposable {
         public CanvasRenderTarget RenderTarget { get; private set; }
         public bool IsRootBackground { get; }
         public Matrix3x2 Transform { get; private set; } = Matrix3x2.Identity;

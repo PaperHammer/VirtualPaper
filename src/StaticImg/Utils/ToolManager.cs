@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Workloads.Creation.StaticImg.Models.ToolItemUtil;
+using Workloads.Creation.StaticImg.Models.ToolItems;
 
 namespace Workloads.Creation.StaticImg.Utils {
     class ToolManager {

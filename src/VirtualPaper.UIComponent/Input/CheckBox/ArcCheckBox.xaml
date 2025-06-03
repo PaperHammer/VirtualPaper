@@ -280,6 +280,7 @@
     <Thickness x:Key="CheckBoxFocusVisualMargin">-7,-3,-7,-3</Thickness>
     <x:String x:Key="CheckBoxCheckedGlyph">&#xE73E;</x:String>
     <x:String x:Key="CheckBoxIndeterminateGlyph">&#xE9AE;</x:String>
+    
     <Style TargetType="input:ArcCheckBox" BasedOn="{StaticResource DefaultCheckBoxStyle}" />
     <Style x:Key="DefaultCheckBoxStyle" TargetType="input:ArcCheckBox">
         <Setter Property="Background" Value="{ThemeResource CheckBoxBackgroundUnchecked}" />

@@ -1018,7 +1018,7 @@ namespace VirtualPaper.Cores.WpControl {
         }
 
         /// <summary>
-        /// Calculates the position of window w.r.t parent _workerW handle & sets it as child window to it.
+        /// Calculates the position of window w.r.T parent _workerW handle & sets it as child window to it.
         /// </summary>
         /// <param name="handle">window handle of process to add as wallpaper</param>
         /// <param name="targetMonitor">monitorstring of monitor to sent wp to.</param>

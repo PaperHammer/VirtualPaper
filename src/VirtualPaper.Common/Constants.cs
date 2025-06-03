@@ -337,6 +337,17 @@ namespace VirtualPaper.Common {
             public static string? MenuFlyout_Text_Downlaod { get; }
             public static string? App_UserNotLogin { get; }
             public static string? Text_DeleteFromServer { get; }
+            public static string? SIG_CanvasSet_Header { get; }
+            public static string? SIG_CanvasSet_AdjustSize { get; }
+            public static string? SIG_CanvasSet_PixelWidth { get; }
+            public static string? SIG_CanvasSet_PixelHeight { get; }
+            public static string? SIG_CanvasSet_LockAspectRatio { get; }
+            public static string? SIG_CanvasSet_SacleContent { get; }
+            public static string? SIG_CanvasSet_RotateAndFlip { get; }
+            public static string? SIG_CanvasSet_RotateLeftNinety { get; }
+            public static string? SIG_CanvasSet_RotateRightNinety { get; }
+            public static string? SIG_CanvasSet_FlipHorizon { get; }
+            public static string? SIG_CanvasSet_FlipVertical { get; }
         }
 
         public static class Field {

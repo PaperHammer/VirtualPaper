@@ -97,7 +97,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         /* These functions go through the current list being displayed (procsFiltered), and remove
-        any items not in the filtered collection (any items that don't belong), or add back any items
+        any items not in the filtered collection (any items that don'T belong), or add back any items
         from the original allProcs list that are now supposed to be displayed (i.e. when backspace is hit). */
         private void Remove_NonMatching(IEnumerable<ProcInfo> procInfos) {
             for (int i = _viewModel.ProcsFiltered.Count - 1; i >= 0; i--) {

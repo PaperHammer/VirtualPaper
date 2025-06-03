@@ -32,7 +32,7 @@ namespace VirtualPaper.Common.Utils {
         }
 
         /// <summary>
-        /// Removes window border and some menuitems. Won't remove everything in apps with custom UI system.<para>
+        /// Removes window border and some menuitems. Won'T remove everything in apps with custom UI system.<para>
         /// Ref: https://github.com/Codeusa/Borderless-Gaming
         /// </para>
         /// </summary>

@@ -196,7 +196,7 @@ namespace VirtualPaper.Views.WindowsMsg {
         /// <param name="isPressed">Key is pressed.</param>
         private void ForwardMessageKeyboard(int msg, IntPtr wParam, int scanCode, bool isPressed) {
             try {
-                //Don't forward when not on desktop.
+                //Don'T forward when not on desktop.
                 if (_userSettings.Settings.InputForward == InputForwardMode.mousekeyboard && IsDesktop()) {
                     //Detect active wp based on cursor pos, better way to do this?
                     if (!Native.GetCursorPos(out Native.POINT P))
@@ -212,7 +212,7 @@ namespace VirtualPaper.Views.WindowsMsg {
                                 uint lParam = 1u; //press
                                 lParam |= (uint)scanCode << 16; //oem code
                                 lParam |= 1u << 24; //extended key
-                                lParam |= 0u << 29; //context code; Note: Alt key combos wont't work
+                                lParam |= 0u << 29; //context code; Note: Alt key combos wont'T work
                                 /* Same as:
                                  * lParam = isPressed ? (lParam |= 0u << 30) : (lParam |= 1u << 30); //prev key state
                                  * lParam = isPressed ? (lParam |= 0u << 31) : (lParam |= 1u << 31); //transition state
@@ -241,7 +241,7 @@ namespace VirtualPaper.Views.WindowsMsg {
             if (_userSettings.Settings.InputForward == InputForwardMode.off) {
                 return;
             }
-            else if (!IsDesktop()) //Don't forward when not on desktop.
+            else if (!IsDesktop()) //Don'T forward when not on desktop.
             {
                 if (msg != (int)Native.WM.MOUSEMOVE || !_userSettings.Settings.MouseInputMovAlways) {
                     return;

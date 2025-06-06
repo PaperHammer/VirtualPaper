@@ -407,6 +407,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private async void LayerManage_DeleteLayerRequest(object sender, long e) {
             await _viewModel.ConfigData.DeleteAsync(e);
+            RenderToCompositeTarget();
+        }
+
+        private async void LayerManage_MoveLayerRequest(object sender, EventArgs e) {
+            await _viewModel.ConfigData.SaveBasicAsync();
+            RenderToCompositeTarget();
         }
         #endregion
 

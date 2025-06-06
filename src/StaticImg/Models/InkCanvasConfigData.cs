@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.Json.Serialization;
@@ -25,7 +24,6 @@ namespace Workloads.Creation.StaticImg.Models {
 
     internal partial class InkCanvasConfigData : ObservableObject {
         public event EventHandler InkDataEnabledChanged;
-        public event EventHandler<NotifyCollectionChangedEventArgs> InkDatasCollectionChanged;
         public event EventHandler SeletcedToolChanged;
         public event EventHandler SeletcedLayerChanged;
         public event EventHandler<double> SelectedCropAspectClicked;
@@ -116,9 +114,10 @@ namespace Workloads.Creation.StaticImg.Models {
                 if (value == null || _selectedInkCanvas == value) return;
                 _selectedInkCanvas = value;
                 SeletcedLayerChanged?.Invoke(this, EventArgs.Empty);
-                if (value.IsEnable)
-                    MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
                 OnPropertyChanged();
+
+                if (value.IsEnable)
+                    MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));                
             }
         }
 
@@ -193,29 +192,6 @@ namespace Workloads.Creation.StaticImg.Models {
 
         public InkCanvasConfigData(string entryFilePath) {
             _entryFilePath = entryFilePath;
-            this.InkDatas.CollectionChanged += InkDatas_CollectionChanged;
-        }
-
-        private void InkDatas_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
-            if (e.NewItems == null || e.NewItems.Count == 0) {
-                SelectedInkCanvas = InkDatas.FirstOrDefault();
-
-                if (e.OldItems == null || e.OldItems.Count == 0) return;
-                foreach (var item in e.OldItems) {
-                    if (item is InkCanvasData layer) {
-                        layer.PropertyChanged -= OnInkDataChanged;
-                    }
-                }
-            }
-            else {
-                SelectedInkCanvas ??= e.NewItems[0] as InkCanvasData;
-                foreach (var item in e.NewItems) {
-                    if (item is InkCanvasData layer) {
-                        layer.PropertyChanged += OnInkDataChanged;
-                    }
-                }
-            }
-            //InkDatasCollectionChanged?.Invoke(sender, e);
         }
 
         private void OnInkDataChanged(object sender, PropertyChangedEventArgs e) {

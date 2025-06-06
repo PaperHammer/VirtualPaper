@@ -101,7 +101,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         }
 
         private async void KeyboardAccelerator_Invoked_Startups(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
-            var startup = (ivStartups.ItemsSource as List<Startup>).Find(x => x.ShortCut == args.KeyboardAccelerator.Key);
+            var startup = (ivStartups.ItemsSource as IList<Startup>).FirstOrDefault(x => x.ShortCut == args.KeyboardAccelerator.Key);
             if (startup != null) {
                 await HandleStartupAsync(startup);
             }

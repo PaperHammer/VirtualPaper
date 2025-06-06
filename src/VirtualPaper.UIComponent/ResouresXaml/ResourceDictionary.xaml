@@ -7,11 +7,14 @@
     <cvs:DynamicVisibilityConverter x:Key="DynamicVisibilityConverter"/>
     <cvs:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
     <cvs:ThemeResourceConverter x:Key="ThemeResourceConverter"/>
+    <cvs:ImgKeyConverters x:Key="ImgKeyConverters"/>
+    <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
     <BitmapImage x:Key="UIC_Create_Common" UriSource="ms-appx:///Assets/ui_components/icons8-image-96.png"/>
     <BitmapImage x:Key="UIC_Create_3D" UriSource="ms-appx:///Assets/ui_components/icons8-picture-94.png"/>
     <BitmapImage x:Key="DraftPanel_Create_StaticImge_Desc" UriSource="ms-appx:///Assets/ui_components/project-create-static-image-desc.png"/>
     <BitmapImage x:Key="DraftPanel_Create_StaticImge" UriSource="ms-appx:///Assets/ui_components/project-create-static-img.png"/>
+    <BitmapImage x:Key="DraftPanel_Create_StaticImge_LayerThu" UriSource="ms-appx:///Assets/staticImg/layer_thu_grid.png"/>
 
     <Style x:Key="RightExpanderStyle" TargetType="Expander">
         <Setter Property="HorizontalAlignment" Value="Stretch"/>

@@ -39,14 +39,20 @@
         </Expander.Header>
         <Expander.Content>
             <collection:ArcListView
-                x:Name="layersListView"
+                x:Name="LayersListView"
                 SelectionMode="Single"
                 CancelSelectionEnable="False"
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                RightTapped="Listview_RightTapped"
+                RightTapped="LayersListView_RightTapped"
+                ItemsMoved="LayersListView_ItemsMoved"
+                CanReorderItems="True"
+                CanDragItems="True"
+                IsSwipeEnabled="True"
+                AllowDrop="True"
+                IsAllwaysSeletedNewItem="{x:Bind IsAllwaysSeletedNewItem, Mode=OneWay}"
                 SelectedItem="{x:Bind SelectedInkCanvas, Mode=TwoWay}"
-                ItemsSource="{x:Bind InkDatas, Mode=OneWay}"
+                ItemsSource="{x:Bind InkDatas}"
                 ItemTemplate="{StaticResource LayerItemTemplate}">
                 <collection:ArcListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">

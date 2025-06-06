@@ -176,6 +176,9 @@
 		<Content Update="Assets\staticImg\Dark\ic_fluent_select_object_24_filled.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<Content Update="Assets\staticImg\layer_thu_grid.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 		<Content Update="Assets\staticImg\Light\ic_fluent_border_24_filled.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>

@@ -27,12 +27,19 @@
             Spacing="10">
 
             <Border
+                Width="60" 
+                Height="38" 
                 BorderBrush="Gray"
                 BorderThickness="0.5">
-                <Image  
-                    Width="60" 
-                    Height="38" 
-                    Source="{x:Bind LayerThum, Mode=OneWay}"/>
+                <Grid>
+                    <Image 
+                        Stretch="Fill"
+                        Source="{StaticResource DraftPanel_Create_StaticImge_LayerThu}"/>
+
+                    <Image  
+                        Stretch="Fill"
+                        Source="{x:Bind LayerThum, Mode=OneWay}"/>
+                </Grid>
             </Border>
 
             <TextBlock

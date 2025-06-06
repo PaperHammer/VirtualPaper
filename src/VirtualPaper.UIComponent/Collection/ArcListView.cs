@@ -4,9 +4,12 @@ using System.Collections.Specialized;
 using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.ApplicationModel.DataTransfer;
 
 namespace VirtualPaper.UIComponent.Collection {
     public partial class ArcListView : ListView {
+        public event EventHandler ItemsMoved;
+
         ~ArcListView() {
             UnregisterPropertyChangedCallback(ItemsSourceProperty, _itemsSourceChangedToken);
         }
@@ -19,40 +22,86 @@ namespace VirtualPaper.UIComponent.Collection {
         public static readonly DependencyProperty CancelSelectionEnableProperty =
             DependencyProperty.Register(nameof(CancelSelectionEnable), typeof(bool), typeof(ArcListView), new PropertyMetadata(true));
 
+        public bool IsAllwaysSeletedNewItem {
+            get { return (bool)GetValue(IsAllwaysSeletedNewItemProperty); }
+            set { SetValue(IsAllwaysSeletedNewItemProperty, value); }
+        }
+        public static readonly DependencyProperty IsAllwaysSeletedNewItemProperty =
+            DependencyProperty.Register(nameof(IsAllwaysSeletedNewItem), typeof(bool), typeof(ArcListView), new PropertyMetadata(true));
+
         public ArcListView() {
             DefaultStyleKey = typeof(ListView);
             this.SelectionChanged += ArcListView_SelectionChanged;
+            this.DragItemsStarting += ArcListView_DragItemsStarting;
+            this.DragItemsCompleted += ArcListView_DragItemsCompleted;          
 
-            _itemsSourceChangedToken = RegisterPropertyChangedCallback(
-                ItemsSourceProperty,
-                OnItemsSourcePropertyChanged);        
+            _itemsSourceChangedToken = RegisterPropertyChangedCallback(ItemsSourceProperty, OnItemsSourcePropertyChanged);
         }
 
-        private void ArcListView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            if (CancelSelectionEnable) return;
+        // 拖动时，不触发 Remove 与 Add 事件通知外部，避免多次渲染
+        private void ArcListView_DragItemsCompleted(ListViewBase sender, DragItemsCompletedEventArgs args) {
+            if (args.DropResult == DataPackageOperation.Move) {
+                var newIndex = (this.ItemsSource as IList)?.IndexOf(args.Items[0]) ?? -1;
 
-            // 如果没有新的选中项，恢复到上一个选中项或选中第一个元素
-            if (e.AddedItems == null || e.AddedItems.Count == 0) {
-                if (_lastSelectedItem != null && Items.Contains(_lastSelectedItem)) {
-                    SelectedItem = _lastSelectedItem; // 恢复到上一个选中项
+                if (_oldIndex != -1 && newIndex != -1 && _oldIndex != newIndex) {
+                    ItemsMoved?.Invoke(this, EventArgs.Empty);
                 }
-                else if (Items.Count > 0) {
-                    SelectedItem = Items[0]; // 选中第一个元素
-                }
-                return;
             }
+            _isDragging = false;            
+        }
 
-            // 更新上一个选中项
-            _lastSelectedItem = e.AddedItems[0];
+        private void ArcListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e) {
+            _isDragging = true;
+            _oldIndex = (this.ItemsSource as IList)?.IndexOf(e.Items[0]) ?? -1;
+        }
+
+        private void ArcListView_SelectionChanged(object sender, SelectionChangedEventArgs e) {            
+            TryPreventNullSelectOnSelectionChanged(e);
+        }
+
+        private void TryPreventNullSelectOnSelectionChanged(SelectionChangedEventArgs e) {
+            if (e.AddedItems.Count > 0) _lastSelectedItem = e.AddedItems[0];
+            
+            if (_isDragging || CancelSelectionEnable || SelectedItem != null) return;
+
+            if (_lastSelectedItem != null && Items.Contains(_lastSelectedItem)) {
+                SelectedItem = _lastSelectedItem;
+            }
+            else {
+                SelectedItem = Items.FirstOrDefault();
+            }
         }
 
         private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
-            if (e.Action == NotifyCollectionChangedAction.Remove) {
-                // 如果删除了选中的元素，选中第一个元素
-                if (SelectedItem == null && Items.Count > 0) {
-                    SelectedItem = Items[0];
-                }
+            switch (e.Action) {
+                case NotifyCollectionChangedAction.Add:
+                    TrySelectNewestItem(e);
+                    break;
+                case NotifyCollectionChangedAction.Remove:
+                    TryPreventNullSelectOnCollectionChanged();
+                    break;
+                case NotifyCollectionChangedAction.Replace:
+                    break;
+                case NotifyCollectionChangedAction.Move:
+                    break;
+                case NotifyCollectionChangedAction.Reset:
+                    break;
+                default:
+                    break;
             }
+        }
+
+        private void TryPreventNullSelectOnCollectionChanged() {
+            if (_isDragging || CancelSelectionEnable || SelectedItem != null) return;
+
+            SelectedItem = Items.FirstOrDefault();
+        }
+
+        private void TrySelectNewestItem(NotifyCollectionChangedEventArgs e) {
+            if (_isDragging || !IsAllwaysSeletedNewItem) return;
+
+            SelectedItem = e.NewItems?[0];
+            _lastSelectedItem = SelectedItem;
         }
 
         private void OnItemsSourcePropertyChanged(DependencyObject sender, DependencyProperty dp) {
@@ -96,7 +145,12 @@ namespace VirtualPaper.UIComponent.Collection {
             }
         }
 
+        /// <summary>
+        /// 用于还原选择项，防止空选择
+        /// </summary>
         private object _lastSelectedItem;
+        private bool _isDragging;
+        private int _oldIndex;
         private readonly long _itemsSourceChangedToken;
     }
 }

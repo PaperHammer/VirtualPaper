@@ -13,9 +13,6 @@
     NavigationCacheMode="Enabled">
 
     <Page.Resources>
-        <cvs:ImgKeyConverters x:Key="ImgKeyConverters"/>
-        <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        
         <DataTemplate  x:Key="AvailableItemTemplate" x:DataType="draft:ProjectTemplate">
             <ListViewItem>
                 <Grid Margin="4 10 10 10">

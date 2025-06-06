@@ -117,7 +117,7 @@ namespace VirtualPaper.UIComponent.Input {
             if (d is ArcPalette instance) {
                 instance.InitCustomColors.CollectionChanged += instance.InitCustomColors_CollectionChanged;
 
-                var colors = e.NewValue as List<Color>;
+                var colors = e.NewValue as IList<Color>;
                 instance.CustomBrushes.Clear();
                 foreach (var color in colors) {
                     instance.CustomBrushes.Add(new SolidColorBrush(color));

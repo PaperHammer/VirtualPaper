@@ -46,11 +46,13 @@
                 <Grid
                     x:Name="container"
                     Margin="80"
+                    BorderBrush="Gray"
+                    BorderThickness="1"
                     Background="Transparent"
                     DataContext="{x:Bind _viewModel.ConfigData, Mode=OneWay}"
                     Width="{x:Bind _viewModel.ConfigData.Size.Width, Mode=OneWay}"
                     Height="{x:Bind _viewModel.ConfigData.Size.Height, Mode=OneWay}">
-                    <Grid
+                    <Grid                        
                         x:Name="workground"
                         Canvas.ZIndex="-1"/>
                     <win2d:CanvasControl
@@ -111,12 +113,14 @@
                             CustomeColorChanged="ColorPalette_CustomeColorChanged"/>
                         <lcl_tools:LayerManageControl 
                             x:Name="LayerManage"
+                            IsAllwaysSeletedNewItem="True"
                             SelectedInkCanvas="{x:Bind _viewModel.ConfigData.SelectedInkCanvas, Mode=TwoWay}"
                             InkDatas="{x:Bind _viewModel.ConfigData.InkDatas}"
                             AddLayerRequest="LayerManage_AddLayerRequest"
                             CopyLayerRequest="LayerManage_CopyLayerRequest"
                             RenameLayerRequest="LayerManage_RenameLayerRequest"
-                            DeleteLayerRequest="LayerManage_DeleteLayerRequest"/>
+                            DeleteLayerRequest="LayerManage_DeleteLayerRequest"
+                            MoveLayerRequest="LayerManage_MoveLayerRequest"/>
                     </StackPanel>
                 </ScrollViewer>
 

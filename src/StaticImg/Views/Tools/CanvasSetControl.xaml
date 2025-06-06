@@ -9,11 +9,10 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
-    
+
     <Expander Style="{StaticResource RightExpanderStyle}">
         <Expander.Header>
-            <TextBlock x:Uid="_SIG_CanvasSet_Header"/>
-            <!--<TextBlock Text="{x:Bind _SIG_CanvasSet_Header}"/>-->
+            <TextBlock Text="{x:Bind _SIG_CanvasSet_Header}"/>
         </Expander.Header>
         <Expander.Content>
             <StackPanel Spacing="10">

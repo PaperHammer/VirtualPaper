@@ -13,7 +13,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
     public partial class InkCanvasData : ObservableObject {
         [JsonIgnore]
-        public InkRenderData Render { get; set; }
+        public InkRenderData RenderData { get; set; }
         public long Tag { get; }
         public bool IsRootBackground { get; }
 
@@ -33,7 +33,7 @@ namespace Workloads.Creation.StaticImg.Models {
         public bool IsEnable {
             get => _isEnable;
             set {
-                if (_isEnable == value) return; 
+                if (_isEnable == value) return;
                 _isEnable = value;
                 if (value)
                     MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
@@ -69,7 +69,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         internal async Task SaveAsync() {
             try {
-                await Render.SaveWithProgressAsync(_dataFilePath, null, default);
+                await RenderData.SaveWithProgressAsync(_dataFilePath, null, default);
             }
             catch (Exception ex) {
                 MainPage.Instance.Bridge.Log(LogType.Error, ex);
@@ -79,7 +79,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         internal async Task LoadAsync() {
             try {
-                await Render.LoadWithProgressAsync(_dataFilePath, null, default);
+                await RenderData.LoadWithProgressAsync(_dataFilePath, null, default);
             }
             catch (Exception ex) {
                 MainPage.Instance.Bridge.Log(LogType.Error, ex);
@@ -101,7 +101,7 @@ namespace Workloads.Creation.StaticImg.Models {
                 Name = Name,
                 Opacity = Opacity,
                 IsEnable = IsEnable,
-                Render = Render.Clone()
+                RenderData = RenderData.Clone()
             };
             return newInk;
         }

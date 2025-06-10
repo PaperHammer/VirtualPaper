@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
@@ -8,10 +8,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.UIComponent.Input;
-using Windows.Foundation;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.EventArg;
 using Workloads.Creation.StaticImg.Models.ToolItems;
@@ -24,7 +22,7 @@ using Workloads.Creation.StaticImg.Views.Tools;
 
 namespace Workloads.Creation.StaticImg.Views.Components {
     public sealed partial class InkCanvas : UserControl {
-        public TaskCompletionSource<bool> IsReady => _isReady;
+        public TaskCompletionSource<bool> IsInited => _isInited;
 
         public InkCanvas() {
             this.InitializeComponent();
@@ -33,8 +31,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             _tool = new();
             _viewModel = new(MainPage.Instance.EntryFilePath, MainPage.Instance.RtFileType);
             RegisterTools();
-            SetupHandlers();
-            RebuildComposite();
         }
 
         #region children event
@@ -43,10 +39,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 RebuildComposite();
                 RenderToCompositeTarget();
             };
-            _viewModel.Ready += (s, e) => {
-                RenderToCompositeTarget();
-                IsReady.TrySetResult(true);
-            };
+            //_viewModel.Ready += (s, e) => {
+            //    //RenderToCompositeTarget();
+            //    //RenderToCompositeTarget();
+            //    IsInited.TrySetResult(true);
+            //};
             _viewModel.ConfigData.SeletcedToolChanged += (s, e) => {
                 //before
                 HandleSelectionTool_Before();
@@ -86,7 +83,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 if (op) RenderToCompositeTarget();
             }
         }
-        #endregion
 
         private void RebuildComposite() {
             _compositeTarget = new CanvasRenderTarget(
@@ -96,59 +92,47 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 _viewModel.ConfigData.Size.Dpi,
                 Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
                 CanvasAlphaMode.Premultiplied);
-            _renderState = new RenderState(_compositeTarget);
-            _renderState.RenderComposite += (s, e) => {
-                RenderToCompositeTarget();
-            };
+            //_renderState = new RenderState(_compositeTarget);
+            //_renderState.RenderComposite += (s, e) => {
+            //    RenderToCompositeTarget();
+            //};
         }
+        #endregion
 
-        internal void RenderToCompositeTarget() {
-            using (var ds = _compositeTarget.CreateDrawingSession()) {
-                ds.Clear(Colors.Transparent);
-                // È·±£²ã¼¶µÄÕýÈ·ÐÔ
-                for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
-                    var layer = _viewModel.ConfigData.InkDatas[i];
-                    if (!layer.IsEnable || layer.Render == null) continue;
-                    ds.DrawImage(layer.Render.RenderTarget);
-                }
-            }
-
-            inkCanvas.Invalidate();
-        }
         //internal void RenderToCompositeTarget() {
-        //    // Ê¹ÓÃË«»º³å±ÜÃâÉÁË¸
+        //    // ä½¿ç”¨åŒç¼“å†²é¿å…é—ªçƒ
         //    if (_renderState.NeedsFullRedraw || _renderState.DirtyRects.Count == 0) {
         //        using (var ds = _compositeTarget.CreateDrawingSession()) {
         //            ds.Clear(Colors.Transparent);
         //            for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
         //                var layer = _viewModel.ConfigData.InkDatas[i];
-        //                if (!layer.IsEnable || layer.Render == null) continue;
-        //                ds.DrawImage(layer.Render.RenderTarget);
+        //                if (!layer.IsEnable || layer.RenderData == null) continue;
+        //                ds.DrawImage(layer.RenderData.RenderTarget);
         //            }
         //        }
         //        _renderState.NeedsFullRedraw = false;
         //    }
         //    else {
-        //        // ÔöÁ¿ÖØ»æ
+        //        // å¢žé‡é‡ç»˜
         //        using (var ds = _compositeTarget.CreateDrawingSession()) {
-        //            // ÏÈºÏ²¢ËùÓÐÔà¾ØÐÎ
+        //            // å…ˆåˆå¹¶æ‰€æœ‰è„çŸ©å½¢
         //            var mergedRect = _renderState.MergeDirtyRects();
         //            ds.FillRectangle(mergedRect, Colors.Transparent);
 
-        //            // ·Ö²ã»æÖÆ
+        //            // åˆ†å±‚ç»˜åˆ¶
         //            for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
         //                var layer = _viewModel.ConfigData.InkDatas[i];
-        //                if (!layer.IsEnable || layer.Render == null) continue;
+        //                if (!layer.IsEnable || layer.RenderData == null) continue;
 
         //                foreach (var dirtyRect in _renderState.DirtyRects) {
         //                    var sourceRect = new Rect(
-        //                        dirtyRect.X - layer.Render.RenderTarget.Bounds.X,
-        //                        dirtyRect.Y - layer.Render.RenderTarget.Bounds.Y,
+        //                        dirtyRect.X - layer.RenderData.RenderTarget.Bounds.X,
+        //                        dirtyRect.Y - layer.RenderData.RenderTarget.Bounds.Y,
         //                        dirtyRect.Width,
         //                        dirtyRect.Height);
 
         //                    ds.DrawImage(
-        //                        layer.Render.RenderTarget,
+        //                        layer.RenderData.RenderTarget,
         //                        dirtyRect,
         //                        sourceRect);
         //                }
@@ -164,10 +148,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             await _viewModel.SaveAsync();
         }
 
-        #region init
         private void RegisterTools() {
             _tool.RegisterTool(ToolType.PaintBrush, new PaintBrushTool(_viewModel.ConfigData));
-            //_tool.RegisterTool(ToolType.PaintBrush, new PaintBrushTool2(_viewModel.ConfigData));
             _tool.RegisterTool(ToolType.Fill, new FillTool(_viewModel.ConfigData));
             _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.ConfigData));
             _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.ConfigData));
@@ -177,84 +159,142 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 tool.SystemCursorChangeRequested += (s, e) => {
                     this.ProtectedCursor = e.Cursor ?? _originalInputCursor;
                 };
+
+                tool.RenderRequest += (s, e) => {
+                    //if (e.Mode == RenderMode.PartialRegion && e.RenderData.DirtyRegion != Rect.Empty) {
+                    //    RenderPartial(e.RenderData.DirtyRegion);
+                    //    return;
+                    //}
+                    RenderToCompositeTarget();
+                };
             }
         }
 
-        private void RenderWorkerground() {
-            int gridSize = 10; // Íø¸ñ¼ä¾à
-            var color1 = Colors.LightGray; // Ç³»ÒÉ«
-            var color2 = Colors.DarkGray;  // Éî»ÒÉ«
-            var lightGeometryGroup = new GeometryGroup();
-            var darkGeometryGroup = new GeometryGroup();
+        #region inkcanvas and redner
+        private async void InkingCanvas_Loaded(object sender, RoutedEventArgs e) {
+            try {
+                await _viewModel.LoadBasicOrInit();
+                FitView();
+                await _viewModel.LoadRenderDataAsync();
+                await _viewModel.RenderDataLoaded.Task;
+                RebuildComposite();
+                RenderToCompositeTarget();
+                SetupHandlers();
+                IsInited.TrySetResult(true);
+            }
+            catch (Exception ex) {
+                MainPage.Instance.Bridge.Log(LogType.Error, ex);
+                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
+            }
+        }
 
-            for (int x = 0; x < container.Width; x += gridSize) {
-                for (int y = 0; y < container.Height; y += gridSize) {
-                    bool isLight = ((x / gridSize) + (y / gridSize)) % 2 == 0;
-                    // ´´½¨¾ØÐÎ¼¸ºÎÍ¼ÐÎ
-                    var rectangleGeometry = new RectangleGeometry() { Rect = new Rect(x, y, gridSize, gridSize) };
-                    if (isLight) {
-                        lightGeometryGroup.Children.Add(rectangleGeometry);
-                    }
-                    else {
-                        darkGeometryGroup.Children.Add(rectangleGeometry);
-                    }
+        private void InkCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
+            if (_compositeTarget != null) {
+                args.DrawingSession.DrawImage(_compositeTarget);
+            }
+        }
+
+        //private void InkCanvas_RegionsInvalidated(CanvasVirtualControl sender, CanvasRegionsInvalidatedEventArgs args) {
+        //    foreach (var region in args.InvalidatedRegions) {
+        //        using (var ds = sender.CreateDrawingSession(region)) {
+        //            //switch (_renderMode) {
+        //            //    case RenderMode.FullRegion:
+        //            //        DrawFullRegion(ds, region);
+        //            //        break;
+        //            //    case RenderMode.PartialRegion:
+        //            //        DrawPartialRegion(ds, region);
+        //            //        break;
+        //            //    default:
+        //            //        break;
+        //            //}
+        //            ds.DrawImage(_compositeTarget);
+        //        }
+        //    }
+        //}
+
+        //private void DrawFullRegion(CanvasDrawingSession ds, Rect region) {
+        //    //for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
+        //    //    var layer = _viewModel.ConfigData.InkDatas[i];
+        //    //    if (!layer.IsEnable || layer.RenderData == null) continue;
+
+        //    //    if (Consts.TryGetIntersect(region, layer.RenderData.Bound, out var intersectRegion)) {
+        //    //        ds.DrawImage(layer.RenderData.RenderTarget, intersectRegion);
+        //    //    }
+        //    //}
+        //    ds.DrawImage(_compositeTarget);
+        //}
+
+        //private void DrawPartialRegion(CanvasDrawingSession ds, Rect region) {
+        //    //for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
+        //    //    var layer = _viewModel.ConfigData.InkDatas[i];
+        //    //    if (!layer.IsEnable || layer.RenderData == null) continue;
+
+        //    //    if (Consts.TryGetIntersect(region, layer.RenderData.DirtyRegion, out var intersectRegion)) {
+        //    //        ds.DrawImage(layer.RenderData.RenderTarget, intersectRegion);
+        //    //    }
+        //    //}
+        //    ds.DrawImage(_compositeTarget);
+        //}
+
+        //private void RenderToCompositeTarget() {
+        //    //_renderMode = RenderMode.FullRegion;
+        //    RenderToCompositeTarget();
+        //    //inkCanvas.Invalidate();
+        //}
+
+        //private void RenderPartial(Rect region) {
+        //    _renderMode = RenderMode.PartialRegion;
+        //    RenderToCompositeTarget();
+        //    inkCanvas.Invalidate(region);
+        //}
+
+        internal void RenderToCompositeTarget() {
+            using (var ds = _compositeTarget.CreateDrawingSession()) {
+                ds.Clear(Colors.Transparent);
+                // ç¡®ä¿å±‚çº§çš„æ­£ç¡®æ€§
+                for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
+                    var layer = _viewModel.ConfigData.InkDatas[i];
+                    if (!layer.IsEnable || layer.RenderData == null) continue;
+                    ds.DrawImage(layer.RenderData.RenderTarget);
                 }
             }
 
-            var lightPath = new Microsoft.UI.Xaml.Shapes.Path {
-                Fill = new SolidColorBrush(color1),
-                Data = lightGeometryGroup,
-            };
-            var darkPath = new Microsoft.UI.Xaml.Shapes.Path {
-                Fill = new SolidColorBrush(color2),
-                Data = darkGeometryGroup,
-            };
-
-            workground.Children.Add(lightPath);
-            workground.Children.Add(darkPath);
-        }
-
-        private async void InkingCanvas_Loaded(object sender, RoutedEventArgs e) {
-            await _viewModel.LoadBasicOrInit();
-            await _viewModel.LoadRenderDataAsync();
-            await _viewModel.Rendered.Task;
-            RenderToCompositeTarget();
-            FitView();
+            inkCanvas.Invalidate();
         }
         #endregion
 
         #region scroll 
         private void CanvasContainer_ViewChanging(object sender, ScrollViewerViewChangingEventArgs e) {
-            // ¼ì²éÊÇ·ñÎªÓÃ»§´¥·¢µÄ¹ö¶¯/Ëõ·Å
+            // æ£€æŸ¥æ˜¯å¦ä¸ºç”¨æˆ·è§¦å‘çš„æ»šåŠ¨/ç¼©æ”¾
             //if (e.IsInertial) {
-            //    // Ê¹ÓÃÊó±ê¹öÂÖ
-            //    // ÔÚ ScrollViewer ºÍÆäËûÖ§³ÖÖ±½Ó²Ù×÷µÄ¿Ø¼þÉÏÊ¹ÓÃ¼ü±Ê»®
-            //    // µ÷ÓÃÆôÓÃÁË¶¯»­µÄ ChangeView 
+            //    // ä½¿ç”¨é¼ æ ‡æ»šè½®
+            //    // åœ¨ ScrollViewer å’Œå…¶ä»–æ”¯æŒç›´æŽ¥æ“ä½œçš„æŽ§ä»¶ä¸Šä½¿ç”¨é”®ç¬”åˆ’
+            //    // è°ƒç”¨å¯ç”¨äº†åŠ¨ç”»çš„ ChangeView 
 
             _viewModel.ConfigData.CanvasZoom = e.FinalView.ZoomFactor;
             //}
         }
 
         private void FitView() {
-            // »ñÈ¡¿ÉÓÃÏÔÊ¾ÇøÓò
+            // èŽ·å–å¯ç”¨æ˜¾ç¤ºåŒºåŸŸ
             double availableWidth = canvasContainer.ViewportWidth;
             double availableHeight = canvasContainer.ViewportHeight;
 
-            // ¿¼ÂÇ±ß¾à
+            // è€ƒè™‘è¾¹è·
             double effectiveWidth = availableWidth - (container.Margin.Left + container.Margin.Right);
             double effectiveHeight = availableHeight - (container.Margin.Top + container.Margin.Bottom);
 
-            // ¼ÆËãËõ·Å±ÈÀý
+            // è®¡ç®—ç¼©æ”¾æ¯”ä¾‹
             double widthRatio = effectiveWidth / _viewModel.ConfigData.Size.Width;
             double heightRatio = effectiveHeight / _viewModel.ConfigData.Size.Height;
 
-            // Ñ¡Ôñ½ÏÐ¡µÄ±ÈÀýÒÔÈ·±£ÍêÈ«ÏÔÊ¾
+            // é€‰æ‹©è¾ƒå°çš„æ¯”ä¾‹ä»¥ç¡®ä¿å®Œå…¨æ˜¾ç¤º
             double zoomFactor = Math.Min(widthRatio, heightRatio);
 
-            // Ó¦ÓÃËõ·ÅÏÞÖÆ
+            // åº”ç”¨ç¼©æ”¾é™åˆ¶
             zoomFactor = Math.Max(Consts.MinZoomFactor, Math.Min(zoomFactor, Consts.MaxZoomFactor));
 
-            // Ó¦ÓÃËõ·Å
+            // åº”ç”¨ç¼©æ”¾
             UpdateScrollViewerZoom((float)zoomFactor);
         }
 
@@ -391,13 +431,13 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         #region Layer Mangaer
         private async void LayerManage_AddLayerRequest(object sender, EventArgs e) {
             var layer = await _viewModel.ConfigData.AddLayerAsync();
-            await layer.Render.IsCompleted.Task;
+            await layer.RenderData.IsCompleted.Task;
             RenderToCompositeTarget();
         }
 
         private async void LayerManage_CopyLayerRequest(object sender, long e) {
             var layer = await _viewModel.ConfigData.CopyLayerAsync(e);
-            await layer.Render.IsCompleted.Task;
+            await layer.RenderData.IsCompleted.Task;
             RenderToCompositeTarget();
         }
 
@@ -429,44 +469,35 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         #endregion
 
         #region ui events
-        private void InkCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
-            if (_compositeTarget != null) {
-                args.DrawingSession.DrawImage(_compositeTarget);
-            }
-        }
-
         internal new void OnPointerEntered(PointerRoutedEventArgs e) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             HandleToolEvent(tool => tool.OnPointerEntered(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.Render),
-                _renderState));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData)));
         }
 
         internal new void OnPointerMoved(PointerRoutedEventArgs e) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             _viewModel.ConfigData.UpdatePointerPos(pointerPoint.Position);
             HandleToolEvent(tool => tool.OnPointerMoved(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.Render)));
-            RenderToCompositeTarget();
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData)));
         }
 
         internal new void OnPointerPressed(PointerRoutedEventArgs e) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             HandleToolEvent(tool => tool.OnPointerPressed(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.Render)));
-            RenderToCompositeTarget();
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData)));
         }
 
         internal new void OnPointerReleased(PointerRoutedEventArgs e) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             HandleToolEvent(tool => tool.OnPointerReleased(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.Render)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData)));
         }
 
         internal new void OnPointerExited(PointerRoutedEventArgs e) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             HandleToolEvent(tool => tool.OnPointerExited(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.Render)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData)));
         }
 
         private void HandleToolEvent(Action<Tool> action) {
@@ -482,26 +513,21 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             _selectedTool = _tool.GetTool(_viewModel.ConfigData.SelectedToolItem.Type);
             if (_selectedTool == null) {
-                // »¹Ô­¹â±ê
+                // è¿˜åŽŸå…‰æ ‡
                 this.ProtectedCursor = _originalInputCursor;
                 return;
             }
 
             action(_selectedTool);
-            //RenderToCompositeTarget();
         }
         #endregion
 
-        private Tool _selectedTool;
+        private Tool? _selectedTool;
         private readonly ToolManager _tool;
         private readonly InkCanvasViewModel _viewModel;
         private readonly InputCursor _originalInputCursor;
-        internal CanvasRenderTarget _compositeTarget;
-        private readonly TaskCompletionSource<bool> _isReady = new();
-
-        private RenderState _renderState;
-        //private readonly object _renderLock = new();
-        //private DateTime _lastRenderTime;
-        //private const int RenderIntervalMs = 16; // 60fps
+        private CanvasRenderTarget _compositeTarget;
+        private readonly TaskCompletionSource<bool> _isInited = new();
+        //private RenderMode _renderMode;
     }
 }

@@ -210,17 +210,24 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         internal async Task SaveRenderDataAsync() {
-            foreach (var ink in InkDatas) {
-                await ink.SaveAsync();
-            }
+            //foreach (var ink in InkDatas) {
+            //    await ink.SaveAsync();
+            //}
+            await Task.WhenAll(InkDatas.Select(ink => ink.SaveAsync()));
         }
 
         internal async Task LoadRenderDataAsync() {
             await _isInkDataLoadCompleted.Task;
-            foreach (var ink in InkDatas) {
-                ink.Render = new(Size, ink.IsRootBackground);
+            //foreach (var ink in InkDatas) {
+            //    ink.RenderData = new(Size, ink.IsRootBackground);
+            //    await ink.LoadAsync();
+            //}
+            var loadTasks = InkDatas.Select(async ink => {
+                ink.RenderData = new(Size, ink.IsRootBackground);
                 await ink.LoadAsync();
-            }
+            });
+
+            await Task.WhenAll(loadTasks);
         }
 
         internal async Task LoadBasicDataAsync() {
@@ -248,7 +255,7 @@ namespace Workloads.Creation.StaticImg.Models {
             InkCanvasData layerData = new(_entryFilePath, isBackground) {
                 Name = name ?? $"图层_{_nextLayerNumberTag++}",
                 ZIndex = InkDatas.Count,
-                Render = new(Size, isBackground),
+                RenderData = new(Size, isBackground),
             };
             await AddAsync(layerData);
 
@@ -343,8 +350,8 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private async void ArcSizeChanged() {
             var tasks = InkDatas
-                .Where(ink => ink.Render != null)
-                .Select(ink => ink.Render.ResizeRenderTargetAsync(Size))
+                .Where(ink => ink.RenderData != null)
+                .Select(ink => ink.RenderData.ResizeRenderTargetAsync(Size))
                 .ToList();
             await Task.WhenAll(tasks);
             CanvasSizeText = $"{Size.Width:F0} * {Size.Height:F0} px ({Size.Dpi} / {ArcSize.HardwareDpi} DPI)";

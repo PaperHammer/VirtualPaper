@@ -14,7 +14,7 @@ namespace Workloads.Creation.StaticImg {
         public static double DecimalToPercent(float value) {
             return DecimalToPercent(value, 1);
         }
-        
+
         public static double DecimalToPercent(float value, int digits) {
             return Math.Round(value * 100, digits);
         }
@@ -44,8 +44,30 @@ namespace Workloads.Creation.StaticImg {
         }
 
         public static bool IsPointerOverTaregt(Point? position, ArcSize range) {
-            return position.Value.X >= 0 && position.Value.X < range.Width &&
+            return position != null && position.Value.X >= 0 && position.Value.X < range.Width &&
                    position.Value.Y >= 0 && position.Value.Y < range.Height;
+        }
+
+        public static bool IsRectIntersect(Rect rect1, Rect rect2) {
+            return rect1.X < rect2.X + rect2.Width &&
+                   rect1.X + rect1.Width > rect2.X &&
+                   rect1.Y < rect2.Y + rect2.Height &&
+                   rect1.Y + rect1.Height > rect2.Y;
+        }
+
+        public static bool TryGetIntersect(Rect rect1, Rect rect2, out Rect intersect) {
+            intersect = Rect.Empty;
+            if (!IsRectIntersect(rect1, rect2)) {
+                return false;
+            }
+
+            double x = Math.Max(rect1.X, rect2.X);
+            double y = Math.Max(rect1.Y, rect2.Y);
+            double width = Math.Min(rect1.X + rect1.Width, rect2.X + rect2.Width) - x;
+            double height = Math.Min(rect1.Y + rect1.Height, rect2.Y + rect2.Height) - y;
+            intersect = new Rect(x, y, width, height);
+            
+            return true;
         }
 
         private static readonly float _epsilon = 1e-6f;
@@ -171,31 +193,25 @@ namespace Workloads.Creation.StaticImg {
         public RebuildMode Rebuild { get; }
         [JsonIgnore]
         public static uint HardwareDpi => MainPage.Instance.Bridge.GetHardwareDpi();
+        [JsonIgnore]
+        public Rect Bound => new(0, 0, Width, Height);
 
         // readonly 关键字在此处意味着这个方法不会修改任何实例的状态（即它不会改变对象的任何字段）。
         // 这有助于编译器优化，并明确地传达了该方法是纯粹基于现有数据进行计算而不改变对象状态的事实。
-        public readonly bool Equals(ArcSize other) {
-            return Width == other.Width && Height == other.Height && Dpi == other.Dpi;
-        }
+        public readonly bool Equals(ArcSize other)
+            => Width == other.Width && Height == other.Height && Dpi == other.Dpi;
 
-        public override readonly bool Equals(object obj)
-            => obj is ArcSize objS && Equals(objS);
+        public override readonly bool Equals(object? obj) => obj is ArcSize objS && Equals(objS);
 
-        public override readonly int GetHashCode()
-            => HashCode.Combine(Width, Height, Dpi);
-        public static bool operator ==(ArcSize left, ArcSize right) {
-            return left.Equals(right);
-        }
+        public override readonly int GetHashCode() => HashCode.Combine(Width, Height, Dpi);
 
-        public static bool operator !=(ArcSize left, ArcSize right) {
-            return !(left == right);
-        }
+        public static bool operator ==(ArcSize left, ArcSize right) => left.Equals(right);
+
+        public static bool operator !=(ArcSize left, ArcSize right) => !(left == right);
 
         public static double Area(Size size) => size.Width * size.Height;
 
-        internal Size GetSize() {
-            return new Size(Width, Height);
-        }
+        public Size GetSize() => new(Width, Height);        
     }
 
     // TODO
@@ -229,5 +245,10 @@ namespace Workloads.Creation.StaticImg {
     // rotate per 90 degree
     public enum RebuildMode {
         None, ResizeExpand, ResizeScale, RotateLeft, RotateRight, FlipHorizontal, FlipVertical,
+    }
+
+    public enum RenderMode {
+        FullRegion,
+        PartialRegion,
     }
 }

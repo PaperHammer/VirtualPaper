@@ -42,6 +42,5 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         public LayerItem() {
             this.InitializeComponent();
         }
-
     }
 }

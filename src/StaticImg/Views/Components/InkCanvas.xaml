@@ -37,12 +37,7 @@
                 MinZoomFactor="{x:Bind root:Consts.MinZoomFactor}"
                 MaxZoomFactor="{x:Bind root:Consts.MaxZoomFactor}"
                 Background="{ThemeResource ControlStrokeColorDefaultBrush}"
-                ViewChanging="CanvasContainer_ViewChanging"
-                PointerEntered="CanvasContainer_PointerEntered"
-                PointerMoved="CanvasContainer_PointerMoved"
-                PointerPressed="CanvasContainer_PointerPressed"
-                PointerReleased="CanvasContainer_PointerReleased"
-                PointerExited="CanvasContainer_PointerExited">
+                ViewChanging="CanvasContainer_ViewChanging">
                 <Grid
                     x:Name="container"
                     Margin="80"
@@ -51,14 +46,20 @@
                     Background="Transparent"
                     DataContext="{x:Bind _viewModel.ConfigData, Mode=OneWay}"
                     Width="{x:Bind _viewModel.ConfigData.Size.Width, Mode=OneWay}"
-                    Height="{x:Bind _viewModel.ConfigData.Size.Height, Mode=OneWay}">
-                    <Grid                        
-                        x:Name="workground"
-                        Canvas.ZIndex="-1"/>
+                    Height="{x:Bind _viewModel.ConfigData.Size.Height, Mode=OneWay}"
+                    PointerEntered="CanvasContainer_PointerEntered"
+                    PointerMoved="CanvasContainer_PointerMoved"
+                    PointerPressed="CanvasContainer_PointerPressed"
+                    PointerReleased="CanvasContainer_PointerReleased"
+                    PointerExited="CanvasContainer_PointerExited">
                     <win2d:CanvasControl
-                        x:Name="inkCanvas"
+                        x:Name="inkCanvas"                        
                         Loaded="InkingCanvas_Loaded"
                         Draw="InkCanvas_Draw"/>
+                    <!--<win2d:CanvasVirtualControl
+                        x:Name="inkCanvas"
+                        Loaded="InkingCanvas_Loaded"
+                        RegionsInvalidated="InkCanvas_RegionsInvalidated"/>-->
                 </Grid>
             </ScrollViewer>
 

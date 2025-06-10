@@ -65,7 +65,7 @@ namespace Workloads.Creation.StaticImg {
             _viewModel.IsEanble = false;
             Bridge.GetNotify().Loading(false, false);
 
-            await inkCanvas.IsReady.Task;
+            await inkCanvas.IsInited.Task;
 
             Bridge.GetNotify().Loaded();
             _viewModel.IsEanble = true;

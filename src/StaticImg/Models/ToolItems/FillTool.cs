@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
-using VirtualPaper.UIComponent.Services;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;

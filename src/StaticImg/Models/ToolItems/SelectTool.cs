@@ -13,8 +13,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         //public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
         public Rect SelectionRect => _selectionRect;
 
-        public override void OnPointerEntered(CanvasPointerEventArgs e, RenderState state) {
-            base.OnPointerEntered(e, state);
+        public override void OnPointerEntered(CanvasPointerEventArgs e) {
+            base.OnPointerEntered(e);
             SaveBaseContent();
         }
 

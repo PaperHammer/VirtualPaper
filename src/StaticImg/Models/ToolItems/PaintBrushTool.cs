@@ -4,13 +4,14 @@ using System.Linq;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
 using Microsoft.UI.Input;
-using VirtualPaper.UIComponent.Services;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
-    partial class PaintBrushTool(InkCanvasConfigData data) : Tool, IDisposable {
+    partial class PaintBrushTool(InkCanvasConfigData data) : Tool {
+        public override event EventHandler<RenderTargetChangedEventArgs>? RenderRequest;
+
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
             if (!IsPointerOverTarget(e)) return;
 
@@ -26,6 +27,20 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             _pointerQueue.Clear();
             _currentStroke.Add(_lastClickPoint);
             _lastProcessedPoint = _lastClickPoint;
+
+            _size = (int)data.BrushThickness;
+            if (!_brushCache.TryGetValue((_size, _blendedColor), out _brush)) {
+                var renderTarget = new CanvasRenderTarget(
+                    MainPage.Instance.SharedDevice, _size, _size, data.Size.Dpi,
+                    Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                    CanvasAlphaMode.Premultiplied);
+                using (var _tmpDs = renderTarget.CreateDrawingSession()) {
+                    _tmpDs.Clear(Colors.Transparent);
+                    _tmpDs.FillCircle(_size / 2, _size / 2, _size / 2, _blendedColor);
+                }
+                _brushCache[(_size, _blendedColor)] = renderTarget;
+                _brush = renderTarget;
+            }
 
             RenderToTarget();
         }
@@ -60,6 +75,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             }
             _pointerQueue.Clear();
             _historyPoints.Clear();
+            data.SelectedInkCanvas.RenderData.DirtyRegion = Rect.Empty;
 
             // 定期清理不常用的笔刷 超过20个笔刷时清理
             if (_brushCache.Count > 20) {
@@ -99,34 +115,21 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             _brushCache.Clear();
             RenderTarget?.Dispose();
             RenderTarget = null;
-            _backBuffer?.Dispose();
-            _backBuffer = null;
         }
 
         // 绘制笔迹
         private void DrawStroke(CanvasDrawingSession ds) {
             if (_currentStroke.Count == 0) return;
 
-            int size = (int)data.BrushThickness;
-            if (!_brushCache.TryGetValue((size, _blendedColor), out var brush)) {
-                var renderTarget = new CanvasRenderTarget(
-                    MainPage.Instance.SharedDevice, size, size, data.Size.Dpi,
-                    Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                    CanvasAlphaMode.Premultiplied);
-                using (var _tmpDs = renderTarget.CreateDrawingSession()) {
-                    _tmpDs.Clear(Colors.Transparent);
-                    _tmpDs.FillCircle(size / 2, size / 2, size / 2, _blendedColor);
-                }
-                _brushCache[(size, _blendedColor)] = renderTarget;
-                brush = _brushCache[(size, _blendedColor)];
-            }
-
             // 单点绘制模式
             if (_currentStroke.Count == 1) {
                 var point = _currentStroke[0];
-                ds.DrawImage(brush,
-                    (float)(point.X - size / 2),
-                    (float)(point.Y - size / 2));
+                ds.DrawImage(_brush,
+                    (float)(point.X - _size / 2),
+                    (float)(point.Y - _size / 2));
+                //UpdateSegmentBounds(point);
+                NotifySegmentCompleted();
+
                 return;
             }
 
@@ -136,6 +139,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 var p1 = _currentStroke[i - 1];
                 var p2 = _currentStroke[i];
                 var p3 = i < _currentStroke.Count - 1 ? _currentStroke[i + 1] : p2;
+
+                //_currentSegmentBounds = Rect.Empty;
 
                 // 优化的控制点计算
                 var cp1 = new Point(
@@ -159,9 +164,57 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                              3 * (1 - t) * t * t * cp2.Y +
                              t * t * t * p2.Y;
 
-                    ds.DrawImage(brush, (float)(x - size / 2), (float)(y - size / 2));
+                    ds.DrawImage(_brush, (float)(x - _size / 2), (float)(y - _size / 2));
+                    //Point point = new((float)(x - _size / 2), (float)(y - _size / 2));
+                    //ds.DrawImage(_brush,
+                    //    (float)(point.X - _size / 2),
+                    //    (float)(point.Y - _size / 2));
+                    //UpdateSegmentBounds(point);
                 }
             }
+            NotifySegmentCompleted();
+        }
+
+        //private void UpdateSegmentBounds(Point point) {
+        //    var pointRect = GetPointRefreshRect(point, _size);
+
+        //    if (_currentSegmentBounds.IsEmpty) {
+        //        _currentSegmentBounds = pointRect;
+        //    }
+        //    else {
+        //        // 合并到当前段边界
+        //        _currentSegmentBounds = new Rect(
+        //            Math.Min(_currentSegmentBounds.X, pointRect.X),
+        //            Math.Min(_currentSegmentBounds.Y, pointRect.Y),
+        //            Math.Max(_currentSegmentBounds.Right, pointRect.Right) - Math.Min(_currentSegmentBounds.X, pointRect.X),
+        //            Math.Max(_currentSegmentBounds.Bottom, pointRect.Bottom) - Math.Min(_currentSegmentBounds.Y, pointRect.Y));
+        //    }
+        //}
+
+        private void NotifySegmentCompleted() {
+            //if (!_currentSegmentBounds.IsEmpty) {
+            //    // 像素对齐
+            //    var alignedRect = new Rect(
+            //        Math.Floor(_currentSegmentBounds.X),
+            //        Math.Floor(_currentSegmentBounds.Y),
+            //        Math.Ceiling(_currentSegmentBounds.Width),
+            //        Math.Ceiling(_currentSegmentBounds.Height));
+
+            //    // 通知外部
+            //    data.SelectedInkCanvas.RenderData.DirtyRegion = alignedRect;
+            //    RenderRequest?.Invoke(this,
+            //        new RenderTargetChangedEventArgs(
+            //            data.SelectedInkCanvas.RenderData,
+            //            RenderMode.PartialRegion));
+            //}
+
+            //// 重置边界
+            //_currentSegmentBounds = Rect.Empty;
+
+            RenderRequest?.Invoke(this,
+                    new RenderTargetChangedEventArgs(
+                        data.SelectedInkCanvas.RenderData,
+                        RenderMode.PartialRegion));
         }
 
         private double GetDynamicTension(Point p0, Point p1, Point p2) {
@@ -229,9 +282,19 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                          (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t);
         }
 
+        //private static Rect GetPointRefreshRect(Point point, int brushSize) {
+        //    // 增加1像素的padding确保边缘完全覆盖
+        //    double halfSize = (brushSize / 2.0) + 1;
+        //    return new Rect(
+        //        point.X - halfSize,
+        //        point.Y - halfSize,
+        //        brushSize + 2,  // 两边各加1像素
+        //        brushSize + 2);
+        //}
+
         #region dispose
         private bool _disposed = false;
-        public void Dispose() {
+        public override void Dispose() {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
@@ -243,42 +306,36 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 // 释放托管资源
                 ReleaseAllResources();
             }
+            base.Dispose();
 
             _disposed = true;
         }
 
         private void ReleaseAllResources() {
-            // 释放笔刷缓存
             foreach (var brush in _brushCache.Values) {
                 brush?.Dispose();
             }
             _brushCache.Clear();
-
-            // 释放后备缓冲区
-            _backBuffer?.Dispose();
-            _backBuffer = null;
-
-            // RenderTarget由外部管理，此处不释放
         }
         #endregion
 
-        //作用​​：控制渲染频率，避免UI线程过载
-        //​​推荐值​​：
+        //作用：控制渲染频率，避免UI线程过载
+        //推荐值：
         //  普通设备：8-16ms（对应60Hz屏幕）
         //  高刷设备：4-8ms（120Hz/144Hz屏幕） 
-        private int _renderThrottleMs = 8;       // 渲染节流时间
+        private readonly int _renderThrottleMs = 8;       // 渲染节流时间
 
-        //​​作用​​：限制高速移动时的最大插值点数
-        //        ​​推荐值​​：
+        //作用：限制高速移动时的最大插值点数
+        //推荐值：
         //手写笔记：8-12
         //绘画涂鸦：12-20
-        private int _maxInterpolationSteps = 25; // 最大插值步数
+        private readonly int _maxInterpolationSteps = 25; // 最大插值步数
 
-        //        控制曲线平滑度（值越小越尖锐，越大越平滑）
-        //            ​​推荐值​​：
+        //控制曲线平滑度（值越小越尖锐，越大越平滑）
+        //推荐值：
         //钢笔效果：0.15-0.25
         //毛笔效果：0.25-0.35 
-        private double _baseTension = 0.2;       // 基础曲线张力
+        private readonly double _baseTension = 0.2;       // 基础曲线张力
         private Color _blendedColor;
         private bool _isDrawing = false;
         private Point _lastClickPoint;
@@ -287,7 +344,9 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         private readonly Queue<Point> _historyPoints = new(5);
         private const int _historySize = 5;
         private Point _lastProcessedPoint;
-        private CanvasRenderTarget _backBuffer;
+        private CanvasBitmap? _brush;
+        private int _size;
         private readonly Dictionary<(int, Color), CanvasBitmap> _brushCache = [];
+        //private Rect _currentSegmentBounds = Rect.Empty;
     }
 }

@@ -20,8 +20,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             this._configData = basicData;
         }
 
-        public override void OnPointerEntered(CanvasPointerEventArgs e, RenderState state) {
-            base.OnPointerEntered(e, state);
+        public override void OnPointerEntered(CanvasPointerEventArgs e) {
+            base.OnPointerEntered(e);
             SaveBaseContent();
         }
 
@@ -318,7 +318,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         public void ApplyAspectRatio(double ratio) {
-            RenderTarget ??= _configData.SelectedInkCanvas.Render.RenderTarget;
+            RenderTarget ??= _configData.SelectedInkCanvas.RenderData.RenderTarget;
             if (_baseContent == null) SaveBaseContent();
             TryRestoreOriginalContent();
             _ratioController.ApplyRatio(ratio);

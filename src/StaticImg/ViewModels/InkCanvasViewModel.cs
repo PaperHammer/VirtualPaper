@@ -9,13 +9,13 @@ using Workloads.Creation.StaticImg.Models;
 namespace Workloads.Creation.StaticImg.ViewModels {
     internal partial class InkCanvasViewModel : ObservableObject {
         //internal event EventHandler Rebuild;
-        internal event EventHandler Ready;
+        //internal event EventHandler Ready;
         //internal event EventHandler SeletcedToolChanged;
         //internal event EventHandler SeletcedLayerChanged;
         //internal event EventHandler<double> SelectedCropAspectClicked;
 
         internal TaskCompletionSource<bool> BasicDataLoaded => _basicDataLoaded;
-        internal TaskCompletionSource<bool> Rendered => _rendered;
+        internal TaskCompletionSource<bool> RenderDataLoaded => _renderDataLoaded;
 
         private InkCanvasConfigData _configData;
         public InkCanvasConfigData ConfigData {
@@ -35,20 +35,14 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         }
 
         internal async Task LoadBasicOrInit() {
-            try {
-                switch (_fileType) {
-                    case FileType.FImage:
-                        break;
-                    case FileType.FProject:
-                        await LoadBasicDataAsync();
-                        break;
-                    default:
-                        break;
-                }
-            }
-            catch (Exception ex) {
-                MainPage.Instance.Bridge.Log(LogType.Error, ex);
-                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
+            switch (_fileType) {
+                case FileType.FImage:
+                    break;
+                case FileType.FProject:
+                    await LoadBasicDataAsync();
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -63,13 +57,13 @@ namespace Workloads.Creation.StaticImg.ViewModels {
 
         internal async Task LoadRenderDataAsync() {
             await ConfigData.LoadRenderDataAsync();
-            Rendered.TrySetResult(true);
-            Ready?.Invoke(this, EventArgs.Empty);
+            RenderDataLoaded.TrySetResult(true);
+            //Ready?.Invoke(this, EventArgs.Empty);
         }
 
         private readonly string _entryFilePath;
         private readonly FileType _fileType;
-        private readonly TaskCompletionSource<bool> _basicDataLoaded = new(), _rendered = new();
+        private readonly TaskCompletionSource<bool> _basicDataLoaded = new(), _renderDataLoaded = new();
         internal readonly List<AspectRatioItem> _aspectRatios = [
             new(displayText: "16:9", borderWidth: 48, borderHeight: 27 ),
             new(displayText: "5:3", borderWidth: 40, borderHeight: 24),

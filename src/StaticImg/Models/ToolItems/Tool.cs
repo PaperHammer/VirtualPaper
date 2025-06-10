@@ -6,14 +6,14 @@ using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
-    abstract class Tool : ICursorService {
-        public event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
-        protected virtual CanvasRenderTarget RenderTarget { get; set; }
-        protected virtual RenderState State { get; set; }
+    abstract class Tool : ICursorService, IDisposable {
+        public event EventHandler<CursorChangedEventArgs>? SystemCursorChangeRequested;
+        public virtual event EventHandler<RenderTargetChangedEventArgs>? RenderRequest;
 
-        public virtual void OnPointerEntered(CanvasPointerEventArgs e, RenderState state) {
+        protected virtual CanvasRenderTarget? RenderTarget { get; set; }
+
+        public virtual void OnPointerEntered(CanvasPointerEventArgs e) {
             RenderTarget = e.RenderData.RenderTarget;
-            State = state;
             SystemCursorChangeRequested?.Invoke(this, new(InputSystemCursor.Create(InputSystemCursorShape.Cross)));
         }
         public virtual void OnPointerPressed(CanvasPointerEventArgs e) { }
@@ -23,8 +23,9 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             SystemCursorChangeRequested?.Invoke(this, new CursorChangedEventArgs(null));
         }
         public virtual bool IsPointerOverTarget(CanvasPointerEventArgs e) {
-            return e.Pointer.Position.X >= 0 && e.Pointer.Position.X < RenderTarget.SizeInPixels.Width &&
-                   e.Pointer.Position.Y >= 0 && e.Pointer.Position.Y < RenderTarget.SizeInPixels.Height;
+            return RenderTarget != null &&
+                e.Pointer.Position.X >= 0 && e.Pointer.Position.X < RenderTarget.SizeInPixels.Width &&
+                e.Pointer.Position.Y >= 0 && e.Pointer.Position.Y < RenderTarget.SizeInPixels.Height;
         }
 
         protected static Color BlendColor(Color color, double brushOpacity) {
@@ -39,5 +40,10 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         public virtual void RequestCursorChange(InputCursor cursor) { }
+
+        public virtual void Dispose() {
+            SystemCursorChangeRequested = null;
+            RenderRequest = null;
+        }
     }
 }

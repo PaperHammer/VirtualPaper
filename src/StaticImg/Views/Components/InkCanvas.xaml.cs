@@ -39,11 +39,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 RebuildComposite();
                 RenderToCompositeTarget();
             };
-            //_viewModel.Ready += (s, e) => {
-            //    //RenderToCompositeTarget();
-            //    //RenderToCompositeTarget();
-            //    IsInited.TrySetResult(true);
-            //};
             _viewModel.ConfigData.SeletcedToolChanged += (s, e) => {
                 //before
                 HandleSelectionTool_Before();
@@ -92,57 +87,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 _viewModel.ConfigData.Size.Dpi,
                 Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
                 CanvasAlphaMode.Premultiplied);
-            //_renderState = new RenderState(_compositeTarget);
-            //_renderState.RenderComposite += (s, e) => {
-            //    RenderToCompositeTarget();
-            //};
         }
         #endregion
-
-        //internal void RenderToCompositeTarget() {
-        //    // 使用双缓冲避免闪烁
-        //    if (_renderState.NeedsFullRedraw || _renderState.DirtyRects.Count == 0) {
-        //        using (var ds = _compositeTarget.CreateDrawingSession()) {
-        //            ds.Clear(Colors.Transparent);
-        //            for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
-        //                var layer = _viewModel.ConfigData.InkDatas[i];
-        //                if (!layer.IsEnable || layer.RenderData == null) continue;
-        //                ds.DrawImage(layer.RenderData.RenderTarget);
-        //            }
-        //        }
-        //        _renderState.NeedsFullRedraw = false;
-        //    }
-        //    else {
-        //        // 增量重绘
-        //        using (var ds = _compositeTarget.CreateDrawingSession()) {
-        //            // 先合并所有脏矩形
-        //            var mergedRect = _renderState.MergeDirtyRects();
-        //            ds.FillRectangle(mergedRect, Colors.Transparent);
-
-        //            // 分层绘制
-        //            for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
-        //                var layer = _viewModel.ConfigData.InkDatas[i];
-        //                if (!layer.IsEnable || layer.RenderData == null) continue;
-
-        //                foreach (var dirtyRect in _renderState.DirtyRects) {
-        //                    var sourceRect = new Rect(
-        //                        dirtyRect.X - layer.RenderData.RenderTarget.Bounds.X,
-        //                        dirtyRect.Y - layer.RenderData.RenderTarget.Bounds.Y,
-        //                        dirtyRect.Width,
-        //                        dirtyRect.Height);
-
-        //                    ds.DrawImage(
-        //                        layer.RenderData.RenderTarget,
-        //                        dirtyRect,
-        //                        sourceRect);
-        //                }
-        //            }
-        //        }
-        //        _renderState.DirtyRects.Clear();
-        //    }
-
-        //    inkCanvas.Invalidate();
-        //}
 
         internal async Task SaveAsync() {
             await _viewModel.SaveAsync();
@@ -161,10 +107,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 };
 
                 tool.RenderRequest += (s, e) => {
-                    //if (e.Mode == RenderMode.PartialRegion && e.RenderData.DirtyRegion != Rect.Empty) {
-                    //    RenderPartial(e.RenderData.DirtyRegion);
-                    //    return;
-                    //}
                     RenderToCompositeTarget();
                 };
             }
@@ -190,68 +132,21 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void InkCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
             if (_compositeTarget != null) {
-                args.DrawingSession.DrawImage(_compositeTarget);
+                using (args.DrawingSession) {
+                    args.DrawingSession.DrawImage(_compositeTarget);
+                }
             }
         }
 
-        //private void InkCanvas_RegionsInvalidated(CanvasVirtualControl sender, CanvasRegionsInvalidatedEventArgs args) {
-        //    foreach (var region in args.InvalidatedRegions) {
-        //        using (var ds = sender.CreateDrawingSession(region)) {
-        //            //switch (_renderMode) {
-        //            //    case RenderMode.FullRegion:
-        //            //        DrawFullRegion(ds, region);
-        //            //        break;
-        //            //    case RenderMode.PartialRegion:
-        //            //        DrawPartialRegion(ds, region);
-        //            //        break;
-        //            //    default:
-        //            //        break;
-        //            //}
-        //            ds.DrawImage(_compositeTarget);
-        //        }
-        //    }
-        //}
-
-        //private void DrawFullRegion(CanvasDrawingSession ds, Rect region) {
-        //    //for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
-        //    //    var layer = _viewModel.ConfigData.InkDatas[i];
-        //    //    if (!layer.IsEnable || layer.RenderData == null) continue;
-
-        //    //    if (Consts.TryGetIntersect(region, layer.RenderData.Bound, out var intersectRegion)) {
-        //    //        ds.DrawImage(layer.RenderData.RenderTarget, intersectRegion);
-        //    //    }
-        //    //}
-        //    ds.DrawImage(_compositeTarget);
-        //}
-
-        //private void DrawPartialRegion(CanvasDrawingSession ds, Rect region) {
-        //    //for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
-        //    //    var layer = _viewModel.ConfigData.InkDatas[i];
-        //    //    if (!layer.IsEnable || layer.RenderData == null) continue;
-
-        //    //    if (Consts.TryGetIntersect(region, layer.RenderData.DirtyRegion, out var intersectRegion)) {
-        //    //        ds.DrawImage(layer.RenderData.RenderTarget, intersectRegion);
-        //    //    }
-        //    //}
-        //    ds.DrawImage(_compositeTarget);
-        //}
-
-        //private void RenderToCompositeTarget() {
-        //    //_renderMode = RenderMode.FullRegion;
-        //    RenderToCompositeTarget();
-        //    //inkCanvas.Invalidate();
-        //}
-
-        //private void RenderPartial(Rect region) {
-        //    _renderMode = RenderMode.PartialRegion;
-        //    RenderToCompositeTarget();
-        //    inkCanvas.Invalidate(region);
-        //}
-
         internal void RenderToCompositeTarget() {
+            if ((DateTime.Now - _lastRenderTime).TotalMilliseconds < 16) // 60 fps
+                return;
+
+            _lastRenderTime = DateTime.Now;
+
             using (var ds = _compositeTarget.CreateDrawingSession()) {
                 ds.Clear(Colors.Transparent);
-                // 确保层级的正确性
+                // 逆序遍历，确保层级正确性
                 for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
                     var layer = _viewModel.ConfigData.InkDatas[i];
                     if (!layer.IsEnable || layer.RenderData == null) continue;
@@ -528,6 +423,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private readonly InputCursor _originalInputCursor;
         private CanvasRenderTarget _compositeTarget;
         private readonly TaskCompletionSource<bool> _isInited = new();
-        //private RenderMode _renderMode;
+        private DateTime _lastRenderTime = DateTime.MinValue;
     }
 }

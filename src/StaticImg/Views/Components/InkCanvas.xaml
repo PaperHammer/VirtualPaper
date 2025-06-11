@@ -53,7 +53,7 @@
                     PointerReleased="CanvasContainer_PointerReleased"
                     PointerExited="CanvasContainer_PointerExited">
                     <win2d:CanvasControl
-                        x:Name="inkCanvas"                        
+                        x:Name="inkCanvas"
                         Loaded="InkingCanvas_Loaded"
                         Draw="InkCanvas_Draw"/>
                     <!--<win2d:CanvasVirtualControl

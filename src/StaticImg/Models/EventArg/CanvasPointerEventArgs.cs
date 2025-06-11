@@ -2,7 +2,7 @@
 using Microsoft.UI.Input;
 
 namespace Workloads.Creation.StaticImg.Models.EventArg {
-    internal class CanvasPointerEventArgs : EventArgs {
+    public class CanvasPointerEventArgs : EventArgs {
         public PointerPoint Pointer { get; }
         public InkRenderData RenderData { get; }
         

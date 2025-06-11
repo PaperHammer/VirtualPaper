@@ -1,14 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 using VirtualPaper.UIComponent.Services;
+using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
-    abstract class Tool : ICursorService, IDisposable {
+    public abstract class Tool : ICursorService, IDisposable {
         public event EventHandler<CursorChangedEventArgs>? SystemCursorChangeRequested;
-        public virtual event EventHandler<RenderTargetChangedEventArgs>? RenderRequest;
+        public virtual event EventHandler? RenderRequest;
+        //public virtual event EventHandler<RenderTargetChangedEventArgs>? RenderRequest;
 
         protected virtual CanvasRenderTarget? RenderTarget { get; set; }
 
@@ -44,6 +47,16 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         public virtual void Dispose() {
             SystemCursorChangeRequested = null;
             RenderRequest = null;
+        }
+    }
+
+    public class StrokeSegment {
+        public Point StartPoint { get; }
+        public List<Point> Points { get; } = [];
+
+        public StrokeSegment(Point startPoint) {
+            StartPoint = startPoint;
+            Points.Add(startPoint);
         }
     }
 }

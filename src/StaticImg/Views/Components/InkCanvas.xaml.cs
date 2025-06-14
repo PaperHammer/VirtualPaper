@@ -56,7 +56,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void HandleCropAspectClicked(double e) {
             if (_selectedTool is CropTool ct) {
                 ct.ApplyAspectRatio(e);
-                RenderToCompositeTarget();
             }
         }
 
@@ -70,11 +69,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void TryRestore() {
             if (_selectedTool is SelectionTool st) {
-                var op = st.TryRestoreOriginalContent();
+                var op = st.RestoreOriginalContent();
                 if (op) RenderToCompositeTarget();
             }
             else if (_selectedTool is CropTool ct) {
-                var op = ct.TryRestoreOriginalContent();
+                var op = ct.RestoreOriginalContent();
                 if (op) RenderToCompositeTarget();
             }
         }
@@ -158,8 +157,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
         #endregion
 
-        #region scroll 
-        private void CanvasContainer_ViewChanging(object sender, ScrollViewerViewChangingEventArgs e) {
+        #region Scroll 
+        private void Scroll_ViewChanging(object sender, ScrollViewerViewChangingEventArgs e) {
             // 检查是否为用户触发的滚动/缩放
             //if (e.IsInertial) {
             //    // 使用鼠标滚轮
@@ -172,12 +171,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void FitView() {
             // 获取可用显示区域
-            double availableWidth = canvasContainer.ViewportWidth;
-            double availableHeight = canvasContainer.ViewportHeight;
+            double availableWidth = Scroll.ViewportWidth;
+            double availableHeight = Scroll.ViewportHeight;
 
             // 考虑边距
-            double effectiveWidth = availableWidth - (container.Margin.Left + container.Margin.Right);
-            double effectiveHeight = availableHeight - (container.Margin.Top + container.Margin.Bottom);
+            double effectiveWidth = availableWidth - (Container.Margin.Left + Container.Margin.Right);
+            double effectiveHeight = availableHeight - (Container.Margin.Top + Container.Margin.Bottom);
 
             // 计算缩放比例
             double widthRatio = effectiveWidth / _viewModel.ConfigData.Size.Width;
@@ -195,29 +194,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void UpdateScrollViewerZoom(double value) {
             _viewModel.ConfigData.CanvasZoom = (float)value;
-            canvasContainer.ChangeView(null, null, _viewModel.ConfigData.CanvasZoom);
+            Scroll.ChangeView(null, null, _viewModel.ConfigData.CanvasZoom);
         }
-
-        private void CanvasContainer_PointerEntered(object sender, PointerRoutedEventArgs e) {
-            OnPointerEntered(e);
-        }
-
-        private void CanvasContainer_PointerMoved(object sender, PointerRoutedEventArgs e) {
-            OnPointerMoved(e);
-        }
-
-        private void CanvasContainer_PointerPressed(object sender, PointerRoutedEventArgs e) {
-            OnPointerPressed(e);
-        }
-
-        private void CanvasContainer_PointerReleased(object sender, PointerRoutedEventArgs e) {
-            OnPointerReleased(e);
-        }
-
-        private void CanvasContainer_PointerExited(object sender, PointerRoutedEventArgs e) {
-            OnPointerExited(e);
-        }
-
+        
         private void BottomDataBarControl_ZoomComboBoxSelectionChanged(object sender, SelectionChangedEventArgs e) {
             var val = double.Parse((e.AddedItems[0] as string).TrimEnd('%')) / 100;
             UpdateScrollViewerZoom((float)val);
@@ -286,7 +265,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                     if (op) RenderToCompositeTarget();
                     break;
                 case SeletionRequest.Cancel:
-                    op = st.TryRestoreOriginalContent();
+                    op = st.RestoreOriginalContent();
                     if (op) RenderToCompositeTarget();
                     break;
                 default:
@@ -314,7 +293,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                     if (op) RenderToCompositeTarget();
                     break;
                 case CropRequest.Cancel:
-                    op = ct.TryRestoreOriginalContent();
+                    op = ct.RestoreOriginalContent();
                     if (op) RenderToCompositeTarget();
                     break;
                 default:
@@ -364,39 +343,82 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         #endregion
 
         #region ui events
-        internal new void OnPointerEntered(PointerRoutedEventArgs e) {
-            var pointerPoint = e.GetCurrentPoint(inkCanvas);
-            HandleToolEvent(tool => tool.OnPointerEntered(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData)));
+        // 由子控件冒泡事件传递
+        private void Scroll_PointerMoved(object sender, PointerRoutedEventArgs e) {
+            OnPointerMoved(e, PointerPosition.InsideContainer);
         }
 
-        internal new void OnPointerMoved(PointerRoutedEventArgs e) {
+        private void Scroll_PointerPressed(object sender, PointerRoutedEventArgs e) {
+            OnPointerPressed(e, PointerPosition.InsideContainer);
+        }
+
+        private void Scroll_PointerReleased(object sender, PointerRoutedEventArgs e) {
+            OnPointerReleased(e, PointerPosition.InsideContainer);
+        }
+
+        private void Scroll_PointerExited(object sender, PointerRoutedEventArgs e) {
+            OnPointerExited(e, PointerPosition.OutsideContainer);
+        }
+
+        private void Container_PointerEntered(object sender, PointerRoutedEventArgs e) {
+            OnPointerEntered(e, PointerPosition.InsideCanvas);
+        }
+
+        private void Container_PointerMoved(object sender, PointerRoutedEventArgs e) {
+            OnPointerMoved(e, PointerPosition.InsideCanvas);
+            e.Handled = true;
+        }
+
+        private void Container_PointerPressed(object sender, PointerRoutedEventArgs e) {
+            OnPointerPressed(e, PointerPosition.InsideCanvas);
+            e.Handled = true;
+        }
+
+        private void Container_PointerReleased(object sender, PointerRoutedEventArgs e) {
+            OnPointerReleased(e, PointerPosition.InsideCanvas);
+            e.Handled = true;
+        }
+
+        private void Container_PointerExited(object sender, PointerRoutedEventArgs e) {
+            OnPointerExited(e, PointerPosition.InsideContainer);
+        }
+
+        internal void OnPointerEntered(PointerRoutedEventArgs e, PointerPosition pointerPos) {
+            var pointerPoint = e.GetCurrentPoint(inkCanvas);
+            HandleToolEvent(tool => tool.OnPointerEntered(
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData, pointerPos)));
+        }
+
+        internal void OnPointerMoved(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             _viewModel.ConfigData.UpdatePointerPos(pointerPoint.Position);
             HandleToolEvent(tool => tool.OnPointerMoved(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData, pointerPos)));
         }
 
-        internal new void OnPointerPressed(PointerRoutedEventArgs e) {
+        internal void OnPointerPressed(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             HandleToolEvent(tool => tool.OnPointerPressed(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData, pointerPos)));
         }
 
-        internal new void OnPointerReleased(PointerRoutedEventArgs e) {
+        internal void OnPointerReleased(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             HandleToolEvent(tool => tool.OnPointerReleased(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData, pointerPos)));
         }
 
-        internal new void OnPointerExited(PointerRoutedEventArgs e) {
+        internal void OnPointerExited(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(inkCanvas);
             HandleToolEvent(tool => tool.OnPointerExited(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData, pointerPos)));
         }
 
         private void HandleToolEvent(Action<Tool> action) {
-            if (_viewModel.ConfigData.SelectedInkCanvas == null || _viewModel.ConfigData.SelectedToolItem == null) {
+            if (_viewModel.ConfigData.SelectedToolItem == null || 
+                _viewModel.ConfigData.SelectedInkCanvas == null || 
+                _viewModel.ConfigData.SelectedInkCanvas.RenderData == null ||
+                _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget == null) {
                 MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), InfoBarType.Error, key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable), isAllowDuplication: false);
                 return;
             }
@@ -423,6 +445,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private readonly InputCursor _originalInputCursor;
         private CanvasRenderTarget _compositeTarget;
         private readonly TaskCompletionSource<bool> _isInited = new();
-        private DateTime _lastRenderTime = DateTime.MinValue;
+        private DateTime _lastRenderTime = DateTime.MinValue;        
     }
 }

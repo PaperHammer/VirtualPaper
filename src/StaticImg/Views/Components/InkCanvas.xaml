@@ -29,7 +29,7 @@
             </Grid.ColumnDefinitions>
 
             <ScrollViewer
-                x:Name="canvasContainer"
+                x:Name="Scroll"
                 HorizontalScrollBarVisibility="Auto" 
                 VerticalScrollBarVisibility="Auto"
                 ZoomMode="Enabled"
@@ -37,29 +37,27 @@
                 MinZoomFactor="{x:Bind root:Consts.MinZoomFactor}"
                 MaxZoomFactor="{x:Bind root:Consts.MaxZoomFactor}"
                 Background="{ThemeResource ControlStrokeColorDefaultBrush}"
-                ViewChanging="CanvasContainer_ViewChanging">
+                ViewChanging="Scroll_ViewChanging"
+                PointerPressed="Scroll_PointerPressed"
+                PointerMoved="Scroll_PointerMoved"                
+                PointerReleased="Scroll_PointerReleased"
+                PointerExited="Scroll_PointerExited">
                 <Grid
-                    x:Name="container"
+                    x:Name="Container"
                     Margin="80"
-                    BorderBrush="Gray"
-                    BorderThickness="1"
                     Background="Transparent"
                     DataContext="{x:Bind _viewModel.ConfigData, Mode=OneWay}"
                     Width="{x:Bind _viewModel.ConfigData.Size.Width, Mode=OneWay}"
                     Height="{x:Bind _viewModel.ConfigData.Size.Height, Mode=OneWay}"
-                    PointerEntered="CanvasContainer_PointerEntered"
-                    PointerMoved="CanvasContainer_PointerMoved"
-                    PointerPressed="CanvasContainer_PointerPressed"
-                    PointerReleased="CanvasContainer_PointerReleased"
-                    PointerExited="CanvasContainer_PointerExited">
+                    PointerEntered="Container_PointerEntered"
+                    PointerPressed="Container_PointerPressed"
+                    PointerMoved="Container_PointerMoved"
+                    PointerReleased="Container_PointerReleased"
+                    PointerExited="Container_PointerExited">
                     <win2d:CanvasControl
                         x:Name="inkCanvas"
                         Loaded="InkingCanvas_Loaded"
                         Draw="InkCanvas_Draw"/>
-                    <!--<win2d:CanvasVirtualControl
-                        x:Name="inkCanvas"
-                        Loaded="InkingCanvas_Loaded"
-                        RegionsInvalidated="InkCanvas_RegionsInvalidated"/>-->
                 </Grid>
             </ScrollViewer>
 
@@ -89,17 +87,17 @@
                             <lcl_tools:PaintBrushControl
                                 x:Name="PaintBrush"
                                 SelectedBrush="{x:Bind _viewModel.ConfigData.SelectedBrush, Mode=TwoWay}"
-                                BrushThickness="{x:Bind _viewModel.ConfigData.BrushThickness, Mode=OneWay}"
-                                BrushOpacity="{x:Bind _viewModel.ConfigData.BrushOpacity, Mode=OneWay}"
+                                BrushThickness="{x:Bind _viewModel.ConfigData.BrushThickness, Mode=TwoWay}"
+                                BrushOpacity="{x:Bind _viewModel.ConfigData.BrushOpacity, Mode=TwoWay}"
                                 Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=PaintBrush}"/>
                             <lcl_tools:EraserControl
                                 x:Name="Eraser"
-                                EraserSize="{x:Bind _viewModel.ConfigData.EraserSize, Mode=OneWay}"
-                                EraserOpacity="{x:Bind _viewModel.ConfigData.EraserOpacity, Mode=OneWay}"
+                                EraserSize="{x:Bind _viewModel.ConfigData.EraserSize, Mode=TwoWay}"
+                                EraserOpacity="{x:Bind _viewModel.ConfigData.EraserOpacity, Mode=TwoWay}"
                                 Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter= Eraser}"/>
                             <lcl_tools:CropControl
                                 x:Name="Crop"
-                                SeletcedAspect="{x:Bind _viewModel.ConfigData.SeletcedAspectItem, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                SeletcedAspect="{x:Bind _viewModel.ConfigData.SeletcedAspectItem, Mode=TwoWay}"
                                 AspectRatios="{x:Bind _viewModel._aspectRatios}"
                                 Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=Crop}"
                                 CropCancelRequest="Crop_CropCancelRequest"
@@ -130,7 +128,7 @@
 
                 <lcl_tools:ToolListConrtol
                     x:Name="toolItemListView"
-                    SelectedTool="{x:Bind _viewModel.ConfigData.SelectedToolItem, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    SelectedTool="{x:Bind _viewModel.ConfigData.SelectedToolItem, Mode=TwoWay}"
                     ToolItems="{x:Bind _viewModel._toolItems}"/>
             </StackPanel>
         </Grid>

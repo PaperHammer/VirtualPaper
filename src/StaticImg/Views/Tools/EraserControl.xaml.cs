@@ -7,18 +7,18 @@ using Microsoft.UI.Xaml.Controls;
 namespace Workloads.Creation.StaticImg.Views.Tools {
     public sealed partial class EraserControl : UserControl {
         public double EraserSize {
-            get { return (double)GetValue(BrushThicknessProperty); }
-            set { SetValue(BrushThicknessProperty, value); }
+            get { return (double)GetValue(EraserSizeProperty); }
+            set { SetValue(EraserSizeProperty, value); }
         }
-        public static readonly DependencyProperty BrushThicknessProperty =
-            DependencyProperty.Register("EraserSize", typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0));
+        public static readonly DependencyProperty EraserSizeProperty =
+            DependencyProperty.Register(nameof(EraserSize), typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0));
 
         public double EraserOpacity {
-            get { return (double)GetValue(BrushOpacityProperty); }
-            set { SetValue(BrushOpacityProperty, value); }
+            get { return (double)GetValue(EraserOpacityProperty); }
+            set { SetValue(EraserOpacityProperty, value); }
         }
-        public static readonly DependencyProperty BrushOpacityProperty =
-            DependencyProperty.Register("EraserOpacity", typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0));
+        public static readonly DependencyProperty EraserOpacityProperty =
+            DependencyProperty.Register(nameof(EraserOpacity), typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0));
 
         public EraserControl() {
             this.InitializeComponent();

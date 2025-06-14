@@ -9,30 +9,25 @@ using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
-    internal abstract class SegementTool(InkCanvasConfigData data) : Tool {
-        public override event EventHandler? RenderRequest;
-
+    internal abstract class DrawingTool(InkCanvasConfigData data) : Tool {
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
-            if (!IsPointerOverTarget(e)) return;
+            if (e.PointerPos != PointerPosition.InsideCanvas) return;
 
             PointerPoint pointerPoint = e.Pointer;
             if (pointerPoint.Properties.IsMiddleButtonPressed)
                 return;
 
-            // 初始化绘制状态
-            _isDrawing = true;
-            _blendedColor = BlendColor(pointerPoint.Properties.IsRightButtonPressed ?
-                data.BackgroundColor : data.ForegroundColor, data.BrushOpacity / 100);
-            _size = (int)data.BrushThickness;
-            _lastProcessedPoint = pointerPoint.Position;
+            InitDrawState(pointerPoint);
+            InitSegement(e);
+            InitBrush();
 
-            // 初始化分段数据
-            _strokeSegments.Clear();
-            _currentSegment = new StrokeSegment(e.Pointer.Position);
-            _pointerQueue.Clear();
-            _lastProcessedPoint = e.Pointer.Position;
+            RenderToTarget();
+        }
 
-            // 获取或创建笔刷
+        /// <summary>
+        /// 初始化笔刷
+        /// </summary>
+        protected virtual void InitBrush() {
             if (!_brushCache.TryGetValue((_size, _blendedColor), out _brush)) {
                 var renderTarget = new CanvasRenderTarget(
                     MainPage.Instance.SharedDevice, _size, _size, data.Size.Dpi,
@@ -45,14 +40,33 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
                 _brushCache[(_size, _blendedColor)] = renderTarget;
                 _brush = renderTarget;
             }
+        }
 
-            RenderToTarget();
+        /// <summary>
+        /// 初始化分段数据
+        /// </summary>
+        /// <param name="e"></param>
+        protected virtual void InitSegement(CanvasPointerEventArgs e) {
+            _strokeSegments.Clear();
+            _currentSegment = new StrokeSegment(e.Pointer.Position);
+            _pointerQueue.Clear();
+            _lastProcessedPoint = e.Pointer.Position;
+        }
+
+        /// <summary>
+        /// 初始化绘制状态
+        /// </summary>
+        /// <param name="pointerPoint"></param>
+        protected virtual void InitDrawState(PointerPoint pointerPoint) {
+            _isDrawing = true;
+            _blendedColor = BlendColor(pointerPoint.Properties.IsRightButtonPressed ?
+                data.BackgroundColor : data.ForegroundColor, data.BrushOpacity / 100);
+            _size = (int)data.BrushThickness;
+            _lastProcessedPoint = pointerPoint.Position;
         }
 
         public override void OnPointerMoved(CanvasPointerEventArgs e) {
-            if (!_isDrawing) return;
-
-            if (!IsPointerOverTarget(e)) {
+            if (!_isDrawing || e.PointerPos != PointerPosition.InsideCanvas) {
                 EndDrawing();
                 return;
             }
@@ -62,17 +76,17 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
         }
 
         public override void OnPointerReleased(CanvasPointerEventArgs e) {
-            if (!_isDrawing) return;
             EndDrawing();
         }
 
         public override void OnPointerExited(CanvasPointerEventArgs e) {
             base.OnPointerExited(e);
-            if (!_isDrawing) return;
             EndDrawing();
         }
 
         protected void EndDrawing() {
+            if (!_isDrawing) return;
+
             _isDrawing = false;
 
             if (_pointerQueue.Count > 0) {
@@ -112,15 +126,11 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
                     DrawSegment(ds, _currentSegment.Points);
                 }
 
-                RenderRequest?.Invoke(this, EventArgs.Empty);
+                Render();
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();
             }
-        }
-
-        protected static bool IsDeviceLost(Exception ex) {
-            return ex.HResult == unchecked((int)0x8899000C); // DXGI_ERROR_DEVICE_REMOVED
         }
 
         protected void HandleDeviceLost() {
@@ -144,6 +154,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
         protected void DrawSegment(CanvasDrawingSession ds, List<Point> points) {
             if (points.Count == 0) return;
 
+            ds.Blend = _canvasBlend;
             // 单点绘制模式
             if (points.Count == 1) {
                 ds.DrawImage(_brush,
@@ -262,7 +273,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
         protected bool _disposed = false;
         public override void Dispose() {
             Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing) {
@@ -333,6 +343,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
         protected readonly Dictionary<(int, Color), CanvasBitmap> _brushCache = [];
         protected CanvasBitmap? _brush;
         protected DateTime _lastRenderTime = DateTime.MinValue;
+        protected CanvasBlend _canvasBlend = CanvasBlend.SourceOver;
         #endregion
     }
 }

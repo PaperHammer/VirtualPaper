@@ -8,10 +8,8 @@ using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
     partial class FillTool(InkCanvasConfigData data) : Tool, IDisposable {
-        //public override event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
-
         public override void OnPointerPressed(CanvasPointerEventArgs e) {
-            if (!IsPointerOverTarget(e)) return;
+            if (e.PointerPos != PointerPosition.InsideCanvas) return;
 
             PointerPoint pointerPoint = e.Pointer;
             _blendedColor = pointerPoint.Properties.IsRightButtonPressed ? data.BackgroundColor : data.ForegroundColor;
@@ -29,6 +27,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 using (var ds = RenderTarget.CreateDrawingSession()) {
                     FloodFill(_lastClickPoint, _blendedColor, ds);
                 }
+
+                Render();
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();

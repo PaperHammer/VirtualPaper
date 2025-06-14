@@ -85,7 +85,8 @@
                     ItemsSource="{x:Bind _viewModel.AvailableTemplates}"
                     ItemTemplate="{StaticResource AvailableItemTemplate}"
                     SelectionMode="Single"
-                    SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}">
+                    SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}"
+                    KeyboardAcceleratorPlacementMode="Hidden">
                     <ListView.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu" Key="R" Invoked="KeyboardAccelerator_Invoked_Template"/>
                     </ListView.KeyboardAccelerators>

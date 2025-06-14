@@ -34,6 +34,10 @@
         <Setter Property="KeyboardAcceleratorPlacementMode" Value="Hidden"/>
     </Style>
 
+    <!--<Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+        <Setter Property="KeyboardAcceleratorPlacementMode" Value="Hidden"/>
+    </Style>-->
+
     <Style x:Key="MorePronouncedButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
         <Setter Property="Template">
             <Setter.Value>

@@ -13,21 +13,21 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             set { SetValue(SelectedBrushProperty, value); }
         }
         public static readonly DependencyProperty SelectedBrushProperty =
-            DependencyProperty.Register("SelectedBrush", typeof(PaintBrushItem), typeof(PaintBrushControl), new PropertyMetadata(null));
+            DependencyProperty.Register(nameof(SelectedBrush), typeof(PaintBrushItem), typeof(PaintBrushControl), new PropertyMetadata(null));
 
         public double BrushThickness {
             get { return (double)GetValue(BrushThicknessProperty); }
             set { SetValue(BrushThicknessProperty, value); }
         }
         public static readonly DependencyProperty BrushThicknessProperty =
-            DependencyProperty.Register("EraserSize", typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0));
+            DependencyProperty.Register(nameof(BrushThickness), typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0));
 
         public double BrushOpacity {
             get { return (double)GetValue(BrushOpacityProperty); }
             set { SetValue(BrushOpacityProperty, value); }
         }
         public static readonly DependencyProperty BrushOpacityProperty =
-            DependencyProperty.Register("EraserOpacity", typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0));
+            DependencyProperty.Register(nameof(BrushOpacity), typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0));
 
         public PaintBrushControl() {
             this.InitializeComponent();
@@ -36,12 +36,10 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         private void PaintBrushExpander_Loaded(object sender, RoutedEventArgs e) {
             if (paintBrushListView.ItemsSource is IList<object> items && items.Count > 0) {
                 paintBrushListView.SelectedItem = items[0];
-                //inkCanvas._viewModel.ConfigData.SelectedBrush = items[0] as PaintBrushItem;
             }
         }
 
         private void PaintBrushListView_ItemClick(object sender, ItemClickEventArgs e) {
-            //inkCanvas._viewModel.ConfigData.SelectedBrush = e.ClickedItem as PaintBrushItem;
             paintBrushFlyout?.Hide();
         }
 
@@ -58,8 +56,6 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
                 sender.SelectionStart = sender.Text.Length;
                 return;
             }
-
-            //inkCanvas._viewModel.ConfigData.EraserSize = parsedValue;
         }
 
         private void PaintBrushThicknessTextBox_LostFocus(object sender, RoutedEventArgs e) {
@@ -81,8 +77,6 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
                 sender.SelectionStart = sender.Text.Length;
                 return;
             }
-
-            //inkCanvas._viewModel.ConfigData.EraserOpacity = parsedValue;
         }
 
         private void PaintBrushOpacityTextBox_LostFocus(object sender, RoutedEventArgs e) {

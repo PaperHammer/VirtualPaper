@@ -51,7 +51,7 @@
                     HorizontalAlignment="Stretch"
                     IsItemClickEnabled="True"
                     ItemClick="AspectRatio_ItemClick"
-                    SelectedItem="{x:Bind SeletcedAspect, Mode=OneWay}"
+                    SelectedItem="{x:Bind SeletcedAspect, Mode=TwoWay}"
                     ItemsSource="{x:Bind AspectRatios}"
                     ItemTemplate="{StaticResource AspectRatioTemplate}"
                     ItemsPanel="{StaticResource AspectRatioPanel}"/>

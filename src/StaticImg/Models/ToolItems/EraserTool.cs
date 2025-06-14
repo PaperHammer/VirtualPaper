@@ -1,46 +1,34 @@
 ﻿using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
 using Microsoft.UI.Input;
-using Workloads.Creation.StaticImg.Models.EventArg;
 using Workloads.Creation.StaticImg.Models.ToolItems.BaseTool;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
-    partial class EraserTool(InkCanvasConfigData data) : SegementTool(data) {
-        public override void OnPointerPressed(CanvasPointerEventArgs e) {
-            if (!IsPointerOverTarget(e)) return;
-
-            PointerPoint pointerPoint = e.Pointer;
-            if (pointerPoint.Properties.IsMiddleButtonPressed)
-                return;
-
-            // 初始化绘制状态
+    partial class EraserTool(InkCanvasConfigData data) : DrawingTool(data) {
+        protected override void InitDrawState(PointerPoint pointerPoint) {
+            _canvasBlend = CanvasBlend.Copy;
             _isDrawing = true;
             _blendedColor = BlendColor(pointerPoint.Properties.IsRightButtonPressed ?
-                data.BackgroundColor : Colors.Transparent, data.EraserOpacity / 100);
-            _size = (int)data.BrushThickness;
+                _data.BackgroundColor : Colors.Transparent, _data.EraserOpacity / 100);
+            _size = (int)_data.EraserSize;
             _lastProcessedPoint = pointerPoint.Position;
+        }
 
-            // 初始化分段数据
-            _strokeSegments.Clear();
-            _currentSegment = new StrokeSegment(e.Pointer.Position);
-            _pointerQueue.Clear();
-            _lastProcessedPoint = e.Pointer.Position;
-
-            // 获取或创建笔刷
+        protected override void InitBrush() {
             if (!_brushCache.TryGetValue((_size, _blendedColor), out _brush)) {
+                // 创建方形笔刷纹理
                 var renderTarget = new CanvasRenderTarget(
-                    MainPage.Instance.SharedDevice, _size, _size, data.Size.Dpi,
-                    Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                    CanvasAlphaMode.Premultiplied);
+                    MainPage.Instance.SharedDevice, _size, _size, _data.Size.Dpi);
                 using (var _tmpDs = renderTarget.CreateDrawingSession()) {
+                    _tmpDs.Blend = CanvasBlend.Copy;
                     _tmpDs.Clear(Colors.Transparent);
-                    _tmpDs.FillCircle(_size / 2, _size / 2, _size / 2, _blendedColor);
+                    _tmpDs.FillRectangle(0, 0, _size, _size, _blendedColor);
                 }
                 _brushCache[(_size, _blendedColor)] = renderTarget;
-                _brush = renderTarget;
+                _brush = _brushCache[(_size, _blendedColor)];
             }
-
-            RenderToTarget();
         }
+        
+        private readonly InkCanvasConfigData _data = data;
     }
 }

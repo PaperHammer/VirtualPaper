@@ -138,11 +138,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         internal void RenderToCompositeTarget() {
-            if ((DateTime.Now - _lastRenderTime).TotalMilliseconds < 16) // 60 fps
-                return;
-
-            _lastRenderTime = DateTime.Now;
-
             using (var ds = _compositeTarget.CreateDrawingSession()) {
                 ds.Clear(Colors.Transparent);
                 // 逆序遍历，确保层级正确性

@@ -7,6 +7,7 @@ using Windows.Foundation;
 using Windows.UI;
 using Microsoft.UI;
 using Microsoft.UI.Input;
+using System.Diagnostics;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
     internal abstract class AreaSelector(InkCanvasConfigData data) : Tool {

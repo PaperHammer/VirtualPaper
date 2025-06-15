@@ -97,11 +97,9 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         public void ApplyAspectRatio(double ratio) {
-            if (RenderTarget == null) {
-                RenderTarget = _data.SelectedInkCanvas.RenderData.RenderTarget;
-                SaveBaseContent();
-            }
+            RenderTarget = _data.SelectedInkCanvas.RenderData.RenderTarget;
             RestoreOriginalContent();
+            SaveBaseContent();
             _ratioController.ApplyRatio(ratio);
         }
 
@@ -112,9 +110,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             private double _currentRatio;
 
             public void ApplyRatio(double ratio) {
-                if (parent.RenderTarget == null) return;
-
                 _currentRatio = ratio;
+                if (ratio <= 0) return;
                 CreateCenteredCrop();
                 parent.RenderToTarget();
             }

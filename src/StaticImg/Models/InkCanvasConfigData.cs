@@ -134,7 +134,7 @@ namespace Workloads.Creation.StaticImg.Models {
             get { return _seletcedAspectItem; }
             set {
                 if (_seletcedAspectItem == value) return;
-                _seletcedAspectItem = value; SelectedCropAspectClicked?.Invoke(this, value.Ratio); OnPropertyChanged();
+                _seletcedAspectItem = value; SelectedCropAspectClicked?.Invoke(this, value == null ? -1 : value.Ratio); OnPropertyChanged();
             }
         }
 

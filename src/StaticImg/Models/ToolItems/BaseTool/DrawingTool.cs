@@ -126,7 +126,9 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
                     DrawSegment(ds, _currentSegment.Points);
                 }
 
-                Render();
+                //Render();
+                var dirtyRect = CalculateSegmentBounds(_currentSegment);
+                OnRendered(new RenderTargetChangedEventArgs(RenderMode.PartialRegion, dirtyRect));
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();

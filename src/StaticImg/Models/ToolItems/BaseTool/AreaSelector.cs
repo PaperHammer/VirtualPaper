@@ -254,7 +254,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
                     }
                 }
 
-                Render();
+                //Render();
+                OnRendered(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();

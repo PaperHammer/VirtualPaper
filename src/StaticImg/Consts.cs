@@ -246,9 +246,4 @@ namespace Workloads.Creation.StaticImg {
     public enum RebuildMode {
         None, ResizeExpand, ResizeScale, RotateLeft, RotateRight, FlipHorizontal, FlipVertical,
     }
-
-    public enum RenderMode {
-        FullRegion,
-        PartialRegion,
-    }
 }

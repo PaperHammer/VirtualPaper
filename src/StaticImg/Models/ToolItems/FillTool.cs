@@ -28,7 +28,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                     FloodFill(_lastClickPoint, _blendedColor, ds);
                 }
 
-                Render();
+                OnRendered(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                //Render();
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();

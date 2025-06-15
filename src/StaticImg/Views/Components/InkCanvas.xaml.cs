@@ -9,7 +9,9 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Extensions;
 using VirtualPaper.UIComponent.Input;
+using Windows.Foundation;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.EventArg;
 using Workloads.Creation.StaticImg.Models.ToolItems;
@@ -37,7 +39,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void SetupHandlers() {
             _viewModel.ConfigData.SizeChanged += (s, e) => {
                 RebuildComposite();
-                RenderToCompositeTarget();
+                RenderToCompositeTarget(RenderMode.FullRegion);
             };
             _viewModel.ConfigData.SeletcedToolChanged += (s, e) => {
                 //before
@@ -70,11 +72,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void TryRestore() {
             if (_selectedTool is SelectionTool st) {
                 var op = st.RestoreOriginalContent();
-                if (op) RenderToCompositeTarget();
+                if (op) RenderToCompositeTarget(RenderMode.FullRegion);
             }
             else if (_selectedTool is CropTool ct) {
                 var op = ct.RestoreOriginalContent();
-                if (op) RenderToCompositeTarget();
+                if (op) RenderToCompositeTarget(RenderMode.FullRegion);
             }
         }
 
@@ -106,7 +108,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 };
 
                 tool.RenderRequest += (s, e) => {
-                    RenderToCompositeTarget();
+                    RenderToCompositeTarget(e.Mode, e.Region);
                 };
             }
         }
@@ -119,7 +121,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 await _viewModel.LoadRenderDataAsync();
                 await _viewModel.RenderDataLoaded.Task;
                 RebuildComposite();
-                RenderToCompositeTarget();
+                RenderToCompositeTarget(RenderMode.FullRegion);
                 SetupHandlers();
                 IsInited.TrySetResult(true);
             }
@@ -137,7 +139,27 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
         }
 
-        internal void RenderToCompositeTarget() {
+        internal void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
+            //using (var ds = _compositeTarget.CreateDrawingSession()) {
+            //    ds.Clear(Colors.Transparent);
+            //    // 逆序遍历，确保层级正确性
+            //    for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
+            //        var layer = _viewModel.ConfigData.InkDatas[i];
+            //        if (!layer.IsEnable || layer.RenderData == null) continue;
+            //        ds.DrawImage(layer.RenderData.RenderTarget);
+            //    }
+            //}
+            if (mode == RenderMode.FullRegion) {
+                FullRender();
+            }
+            else {
+                PartialRender(region);
+            }
+
+            inkCanvas.Invalidate();
+        }
+
+        private void FullRender() {
             using (var ds = _compositeTarget.CreateDrawingSession()) {
                 ds.Clear(Colors.Transparent);
                 // 逆序遍历，确保层级正确性
@@ -147,8 +169,28 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                     ds.DrawImage(layer.RenderData.RenderTarget);
                 }
             }
+        }
 
-            inkCanvas.Invalidate();
+        private void PartialRender(Rect region) {
+            using (var ds = _compositeTarget.CreateDrawingSession()) {
+                for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
+                    var layer = _viewModel.ConfigData.InkDatas[i];
+                    if (!layer.IsEnable || layer.RenderData == null) continue;
+
+                    // 计算图层与脏区域的交集
+                    var layerBounds = new Rect(
+                        0, 0,
+                        layer.RenderData.RenderTarget.Size.Width,
+                        layer.RenderData.RenderTarget.Size.Height);
+
+                    var visibleRect = region.GetIntersect(layerBounds);
+                    if (!visibleRect.IsEmpty) {
+                        ds.DrawImage(layer.RenderData.RenderTarget,
+                            visibleRect,  // 目标区域
+                            visibleRect); // 源区域
+                    }
+                }
+            }
         }
         #endregion
 
@@ -191,7 +233,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             _viewModel.ConfigData.CanvasZoom = (float)value;
             Scroll.ChangeView(null, null, _viewModel.ConfigData.CanvasZoom);
         }
-        
+
         private void BottomDataBarControl_ZoomComboBoxSelectionChanged(object sender, SelectionChangedEventArgs e) {
             var val = double.Parse((e.AddedItems[0] as string).TrimEnd('%')) / 100;
             UpdateScrollViewerZoom((float)val);
@@ -257,11 +299,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             switch (sr) {
                 case SeletionRequest.Commit:
                     op = st.CommitSelection();
-                    if (op) RenderToCompositeTarget();
+                    if (op) RenderToCompositeTarget(RenderMode.FullRegion);
                     break;
                 case SeletionRequest.Cancel:
                     op = st.RestoreOriginalContent();
-                    if (op) RenderToCompositeTarget();
+                    if (op) RenderToCompositeTarget(RenderMode.FullRegion);
                     break;
                 default:
                     break;
@@ -285,11 +327,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             switch (cr) {
                 case CropRequest.Commit:
                     op = ct.CommitSelection();
-                    if (op) RenderToCompositeTarget();
+                    if (op) RenderToCompositeTarget(RenderMode.FullRegion);
                     break;
                 case CropRequest.Cancel:
                     op = ct.RestoreOriginalContent();
-                    if (op) RenderToCompositeTarget();
+                    if (op) RenderToCompositeTarget(RenderMode.FullRegion);
                     break;
                 default:
                     break;
@@ -301,13 +343,13 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private async void LayerManage_AddLayerRequest(object sender, EventArgs e) {
             var layer = await _viewModel.ConfigData.AddLayerAsync();
             await layer.RenderData.IsCompleted.Task;
-            RenderToCompositeTarget();
+            RenderToCompositeTarget(RenderMode.FullRegion);
         }
 
         private async void LayerManage_CopyLayerRequest(object sender, long e) {
             var layer = await _viewModel.ConfigData.CopyLayerAsync(e);
             await layer.RenderData.IsCompleted.Task;
-            RenderToCompositeTarget();
+            RenderToCompositeTarget(RenderMode.FullRegion);
         }
 
         private async void LayerManage_RenameLayerRequest(object sender, long e) {
@@ -316,12 +358,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private async void LayerManage_DeleteLayerRequest(object sender, long e) {
             await _viewModel.ConfigData.DeleteAsync(e);
-            RenderToCompositeTarget();
+            RenderToCompositeTarget(RenderMode.FullRegion);
         }
 
         private async void LayerManage_MoveLayerRequest(object sender, EventArgs e) {
             await _viewModel.ConfigData.SaveBasicAsync();
-            RenderToCompositeTarget();
+            RenderToCompositeTarget(RenderMode.FullRegion);
         }
         #endregion
 
@@ -410,8 +452,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void HandleToolEvent(Action<Tool> action) {
-            if (_viewModel.ConfigData.SelectedToolItem == null || 
-                _viewModel.ConfigData.SelectedInkCanvas == null || 
+            if (_viewModel.ConfigData.SelectedToolItem == null ||
+                _viewModel.ConfigData.SelectedInkCanvas == null ||
                 _viewModel.ConfigData.SelectedInkCanvas.RenderData == null ||
                 _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget == null) {
                 MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), InfoBarType.Error, key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable), isAllowDuplication: false);
@@ -440,6 +482,5 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private readonly InputCursor _originalInputCursor;
         private CanvasRenderTarget _compositeTarget;
         private readonly TaskCompletionSource<bool> _isInited = new();
-        private DateTime _lastRenderTime = DateTime.MinValue;        
     }
 }

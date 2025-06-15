@@ -6,6 +6,7 @@ using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI;
 using Windows.Foundation;
 using Windows.UI;
+using Workloads.Creation.StaticImg.Models.EventArg;
 using Workloads.Creation.StaticImg.Models.ToolItems.BaseTool;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
@@ -89,7 +90,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                     }
                 }
 
-                Render();
+                OnRendered(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                //Render();
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();

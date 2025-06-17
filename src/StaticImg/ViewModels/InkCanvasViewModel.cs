@@ -8,12 +8,6 @@ using Workloads.Creation.StaticImg.Models;
 
 namespace Workloads.Creation.StaticImg.ViewModels {
     internal partial class InkCanvasViewModel : ObservableObject {
-        //internal event EventHandler Rebuild;
-        //internal event EventHandler Ready;
-        //internal event EventHandler SeletcedToolChanged;
-        //internal event EventHandler SeletcedLayerChanged;
-        //internal event EventHandler<double> SelectedCropAspectClicked;
-
         internal TaskCompletionSource<bool> BasicDataLoaded => _basicDataLoaded;
         internal TaskCompletionSource<bool> RenderDataLoaded => _renderDataLoaded;
 

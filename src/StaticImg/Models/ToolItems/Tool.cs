@@ -10,7 +10,6 @@ using Workloads.Creation.StaticImg.Models.EventArg;
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
     public abstract class Tool : ICursorService, IDisposable {
         public event EventHandler<CursorChangedEventArgs>? SystemCursorChangeRequested;
-        //public event EventHandler? RenderRequest;
         public event EventHandler<RenderTargetChangedEventArgs>? RenderRequest;
 
         protected Rect Viewport { get; private set; } = Rect.Empty;
@@ -19,7 +18,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             get => _renderTarget;
             set {
                 if (_renderTarget != value) {
-                    _renderTarget?.Dispose();
                     _renderTarget = value;
                     UpdateRelatedVariables();
                 }
@@ -68,10 +66,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         public virtual void RequestCursorChange(InputCursor cursor) { }
-
-        //protected virtual void Render() {
-        //    RenderRequest?.Invoke(this, EventArgs.Empty);
-        //}
 
         protected virtual void OnRendered(RenderTargetChangedEventArgs e) {
             RenderRequest?.Invoke(this, e);

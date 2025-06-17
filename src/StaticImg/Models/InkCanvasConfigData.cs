@@ -194,7 +194,7 @@ namespace Workloads.Creation.StaticImg.Models {
             _entryFilePath = entryFilePath;
         }
 
-        private void OnInkDataChanged(object sender, PropertyChangedEventArgs e) {
+        private void OnInkDataChanged(object? sender, PropertyChangedEventArgs e) {
             if (e.PropertyName == nameof(InkCanvasData.IsEnable)) {
                 InkDataEnabledChanged?.Invoke(this, EventArgs.Empty);
             }
@@ -210,18 +210,11 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         internal async Task SaveRenderDataAsync() {
-            //foreach (var ink in InkDatas) {
-            //    await ink.SaveAsync();
-            //}
             await Task.WhenAll(InkDatas.Select(ink => ink.SaveAsync()));
         }
 
         internal async Task LoadRenderDataAsync() {
             await _isInkDataLoadCompleted.Task;
-            //foreach (var ink in InkDatas) {
-            //    ink.RenderData = new(Size, ink.IsRootBackground);
-            //    await ink.LoadAsync();
-            //}
             var loadTasks = InkDatas.Select(async ink => {
                 ink.RenderData = new(Size, ink.IsRootBackground);
                 await ink.LoadAsync();
@@ -248,6 +241,7 @@ namespace Workloads.Creation.StaticImg.Models {
             for (int i = 0; i < sortedLayers.Count; i++) {
                 sortedLayers[i].SetDataFilePath(_entryFilePath);
                 sortedLayers[i].ZIndex = i;
+                sortedLayers[i].PropertyChanged += OnInkDataChanged;
             }
         }
 
@@ -264,6 +258,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private async Task AddAsync(InkCanvasData data) {
             this.InkDatas.Insert(0, data);
+            data.PropertyChanged += OnInkDataChanged;
             await SaveBasicAsync();
             await data.LoadAsync();
         }
@@ -307,6 +302,7 @@ namespace Workloads.Creation.StaticImg.Models {
             }
 
             await InkDatas[idx].DeletAsync();
+            PropertyChanged -= OnInkDataChanged;
             InkDatas.RemoveAt(idx);
             await SaveBasicAsync();
         }

@@ -37,6 +37,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         #region children event
         private void SetupHandlers() {
+            _viewModel.ConfigData.InkDataEnabledChanged += (s, e) => {
+                RenderToCompositeTarget(RenderMode.FullRegion);
+            };
             _viewModel.ConfigData.SizeChanged += (s, e) => {
                 RebuildComposite();
                 RenderToCompositeTarget(RenderMode.FullRegion);
@@ -140,15 +143,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         internal void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
-            //using (var ds = _compositeTarget.CreateDrawingSession()) {
-            //    ds.Clear(Colors.Transparent);
-            //    // 逆序遍历，确保层级正确性
-            //    for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
-            //        var layer = _viewModel.ConfigData.InkDatas[i];
-            //        if (!layer.IsEnable || layer.RenderData == null) continue;
-            //        ds.DrawImage(layer.RenderData.RenderTarget);
-            //    }
-            //}
             if (mode == RenderMode.FullRegion) {
                 FullRender();
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
@@ -257,7 +258,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void BottomDataBarControl_ZoomSliderValueChanged(object sender, RangeBaseValueChangedEventArgs e) {
+            Debug.WriteLine("-" + e.NewValue);
             var newZoomFactor = Consts.PercentToDeciaml((float)e.NewValue);
+            Debug.WriteLine("--" + newZoomFactor);
             UpdateScrollViewerZoom(newZoomFactor);
         }
         #endregion

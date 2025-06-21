@@ -19,12 +19,13 @@ namespace Workloads.Creation.StaticImg {
             return Math.Round(value * 100, digits);
         }
 
-        internal static double PercentToDeciaml(float value, int digits = 1) {
-            return (int)Math.Round(value / 100, digits);
+        // 保留 3 位小数，避免从 Slider 传入的数值被四舍五入导致精度丢失
+        internal static double PercentToDeciaml(float value, int digits = 3) {
+            return Math.Round(value / 100, digits);
         }
 
         internal static double RoundToNearestFive(double value, int digits = 1) {
-            return (int)(Math.Round(value, digits) * 10) / 10.0;
+            return (Math.Round(value, digits) * 10) / 10.0;
         }
 
         internal static double GetAddStepSize(double curValue) {

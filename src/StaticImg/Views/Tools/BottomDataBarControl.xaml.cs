@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -46,10 +47,12 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         private static void OnCanvasZoomChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var instance = d as BottomDataBarControl;
             if (instance == null) return;
+
             double newValue = Consts.DecimalToPercent((float)e.NewValue, 1);
+            Debug.WriteLine(newValue);
             instance.ZoomComboBox.SelectedItem = $"{newValue}%";
             instance._lastCanvasZoomText = $"{newValue}%";
-            instance.zoomSlider.Value = newValue;            
+            instance.zoomSlider.Value = newValue;
         }
 
         public BottomDataBarControl() {
@@ -89,7 +92,6 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
 
         private void RestoreZoomDisplay() {
             ZoomComboBox.SelectedItem = _lastCanvasZoomText;
-            //ZoomComboBox.SelectedItem = $"{Consts.DecimalToPercent(CanvasZoom),1}%";
         }
 
         private void ZoomOut_ButtonClick(object sender, RoutedEventArgs e) {

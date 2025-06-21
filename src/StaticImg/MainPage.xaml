@@ -9,9 +9,9 @@
     xmlns:lcl_components="using:Workloads.Creation.StaticImg.Views.Components"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
+    Unloaded="Page_Unloaded"
+    IsEnabled="False"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <lcl_components:InkCanvas
-        x:Name="inkCanvas"
-        IsEnabled="{x:Bind _viewModel.IsEanble, Mode=OneWay}" />
+    <lcl_components:InkCanvas x:Name="InkCanvas"/>
 </Page>

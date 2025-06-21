@@ -15,6 +15,8 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
 using Windows.Foundation;
 using Windows.UI;
+using Workloads.Creation.StaticImg.Models.EventArg;
+using Workloads.Creation.StaticImg.Models.ToolItems.Utils;
 
 namespace Workloads.Creation.StaticImg.Models {
     [JsonSerializable(typeof(InkCanvasConfigData))]
@@ -23,11 +25,12 @@ namespace Workloads.Creation.StaticImg.Models {
     internal partial class InkCanvasConfigDataContext : JsonSerializerContext { }
 
     internal partial class InkCanvasConfigData : ObservableObject {
-        public event EventHandler InkDataEnabledChanged;
-        public event EventHandler SeletcedToolChanged;
-        public event EventHandler SeletcedLayerChanged;
-        public event EventHandler<double> SelectedCropAspectClicked;
-        public event EventHandler<ArcSize> SizeChanged;
+        public event EventHandler? InkDataEnabledChanged;
+        public event EventHandler? SeletcedToolChanged;
+        public event EventHandler? SeletcedLayerChanged;
+        public event EventHandler<double>? SelectedCropAspectClicked;
+        public event EventHandler<ArcSize>? SizeChanged;
+        public event EventHandler<RenderTargetChangedEventArgs>? ManualRender;
 
         #region serilizable properties
         public ObservableList<InkCanvasData> InkDatas { get; set; } = [];
@@ -51,7 +54,7 @@ namespace Workloads.Creation.StaticImg.Models {
             }
         }
 
-        string _pointerPosText;
+        string _pointerPosText = string.Empty;
         [JsonIgnore]
         public string PointerPosText {
             get { return _pointerPosText; }
@@ -79,7 +82,7 @@ namespace Workloads.Creation.StaticImg.Models {
             set { if (_tolerance == value) return; _tolerance = value; OnPropertyChanged(); }
         }
 
-        string _canvasSizeText;
+        string _canvasSizeText = string.Empty;
         [JsonIgnore]
         public string CanvasSizeText {
             get { return _canvasSizeText; }
@@ -99,7 +102,7 @@ namespace Workloads.Creation.StaticImg.Models {
             }
         }
 
-        string _selectionSizeText;
+        string _selectionSizeText = string.Empty;
         [JsonIgnore]
         public string SelectionSizeText {
             get { return _selectionSizeText; }
@@ -111,13 +114,13 @@ namespace Workloads.Creation.StaticImg.Models {
         public InkCanvasData SelectedInkCanvas {
             get { return _selectedInkCanvas; }
             set {
-                if (value == null || _selectedInkCanvas == value) return;
+                if (_selectedInkCanvas == value) return;
                 _selectedInkCanvas = value;
-                SeletcedLayerChanged?.Invoke(this, EventArgs.Empty);
                 OnPropertyChanged();
 
-                if (value.IsEnable)
-                    MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));                
+                if (value == null) return;
+                SeletcedLayerChanged?.Invoke(this, EventArgs.Empty);
+                if (value.IsEnable) MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
             }
         }
 
@@ -227,6 +230,7 @@ namespace Workloads.Creation.StaticImg.Models {
             var tmp = await JsonSaver.LoadAsync<InkCanvasConfigData>(_entryFilePath, InkCanvasConfigDataContext.Default);
             this.Size = tmp.Size;
             this.InkDatas.SetRange(tmp.InkDatas);
+            SelectedInkCanvas = this.InkDatas.FirstOrDefault();
             _isInkDataLoadCompleted.TrySetResult(true);
             this.CustomColors.SetRange(tmp.CustomColors);
 
@@ -245,9 +249,9 @@ namespace Workloads.Creation.StaticImg.Models {
             }
         }
 
-        public async Task<InkCanvasData> AddLayerAsync(string name = null, bool isBackground = false) {
+        public async Task<InkCanvasData> AddLayerAsync(string? name = null, bool isBackground = false) {
             InkCanvasData layerData = new(_entryFilePath, isBackground) {
-                Name = name ?? $"图层_{_nextLayerNumberTag++}",
+                Name = name ?? $"图层 {_nextLayerNumberTag++}",
                 ZIndex = InkDatas.Count,
                 RenderData = new(Size, isBackground),
             };
@@ -256,11 +260,19 @@ namespace Workloads.Creation.StaticImg.Models {
             return layerData;
         }
 
-        private async Task AddAsync(InkCanvasData data) {
+        private async Task AddAsync(InkCanvasData data, bool recordUndo = true) {
             this.InkDatas.Insert(0, data);
             data.PropertyChanged += OnInkDataChanged;
             await SaveBasicAsync();
             await data.LoadAsync();
+
+            if (!recordUndo) return;
+
+            MainPage.Instance.UnReUtil.RecordCommand(
+                execute: async () => await AddAsync(data, false),
+                undo: async () => await DeleteAsync(data.Tag, false),
+                opType: SI_UndoRedo_OP_Type.Serializable
+            );
         }
 
         internal async Task<InkCanvasData> CopyLayerAsync(long itemTag) {
@@ -268,16 +280,24 @@ namespace Workloads.Creation.StaticImg.Models {
             if (idx < 0) return null;
 
             var newLayer = InkDatas[idx].Clone();
-            newLayer.Name += $"_副本{_nextCopyedLayerNumberTag++}";
+            newLayer.Name += $"_副本";
+            if (newLayer.Name.Length > 30) newLayer.Name = newLayer.Name[..30];
             newLayer.ZIndex = InkDatas.Count;
             await AddAsync(newLayer);
 
             return newLayer;
         }
 
-        internal async Task RenameAsync(long itemTag) {
+        internal async Task RenameAsync(long itemTag, bool isUndoRedoOperation = false, string undoName = "") {
             var idx = InkDatas.FindIndex(x => x.Tag == itemTag);
             if (idx < 0) return;
+
+            // 如果是撤销/重做操作，直接应用修改而不显示对话框
+            if (isUndoRedoOperation) {
+                InkDatas[idx].Name = undoName;
+                await SaveBasicAsync();
+                return;
+            }
 
             string oldName = InkDatas[idx].Name;
             var viewModel = new RenameViewModel(oldName);
@@ -290,58 +310,66 @@ namespace Workloads.Creation.StaticImg.Models {
             InkDatas[idx].Name = viewModel.NewName;
 
             await SaveBasicAsync();
+
+            MainPage.Instance.UnReUtil.RecordCommand(
+                execute: async () => await RenameAsync(itemTag, true, viewModel.NewName),
+                undo: async () => await RenameAsync(itemTag, true, oldName),
+                opType: SI_UndoRedo_OP_Type.Serializable
+            );
         }
 
-        internal async Task DeleteAsync(long itemTag) {
+        internal async Task DeleteAsync(long itemTag, bool recordUndo = true) {
             var idx = InkDatas.FindIndex(x => x.Tag == itemTag);
             if (idx < 0) return;
 
-            if (InkDatas[idx].IsRootBackground) {
+            var layer = InkDatas[idx];
+            if (layer.IsRootBackground) {
                 MainPage.Instance.Bridge.GetNotify().ShowWarn(nameof(Constants.I18n.Project_CannotDelete_RootBackground));
                 return;
             }
 
-            await InkDatas[idx].DeletAsync();
+            await layer.DeletAsync();
             PropertyChanged -= OnInkDataChanged;
             InkDatas.RemoveAt(idx);
             await SaveBasicAsync();
+
+            if (!recordUndo) return;
+
+            MainPage.Instance.UnReUtil.RecordCommand(
+                execute: async () => await DeleteAsync(itemTag, false),
+                undo: async () => await AddAsync(layer.Clone(), false),
+                opType: SI_UndoRedo_OP_Type.Serializable
+            );
         }
 
         internal async Task UpdateCustomColorsAsync(ColorChangeEventArgs e) {
-            if (e.OldItem != null)
-                CustomColors.Remove((Color)e.OldItem);
-            if (e.NewItem != null)
-                CustomColors.Add((Color)e.NewItem);
+            if (e.OldItem != null) CustomColors.Remove((Color)e.OldItem);
+            if (e.NewItem != null) CustomColors.Add((Color)e.NewItem);
             await SaveBasicAsync();
         }
 
         internal void UpdateForegroundColor(ColorChangeEventArgs e) {
-            if (e.NewItem != null)
-                ForegroundColor = (Color)e.NewItem;
-            //await SaveBasicAsync();
+            if (e.NewItem != null) ForegroundColor = (Color)e.NewItem;
         }
 
         internal void UpdateBackgroundColor(ColorChangeEventArgs e) {
-            if (e.NewItem != null)
-                BackgroundColor = (Color)e.NewItem;
-            //await SaveBasicAsync();
+            if (e.NewItem != null) BackgroundColor = (Color)e.NewItem;
         }
 
         internal void UpdatePointerPos(Point? position = null) {
             PointerPosText = position == null || !IsPointerOverTaregt(position) ?
-                string.Empty :
-                $"{position.Value.X:F0}, {position.Value.Y:F0} px";
+                string.Empty : $"{position.Value.X:F0}, {position.Value.Y:F0} px";
         }
 
         private bool IsPointerOverTaregt(Point? position) {
-            return position.Value.X >= 0 && position.Value.X < Size.Width &&
-                   position.Value.Y >= 0 && position.Value.Y < Size.Height;
+            return position != null &&
+                position.Value.X >= 0 && position.Value.X < Size.Width &&
+                position.Value.Y >= 0 && position.Value.Y < Size.Height;
         }
 
         private void UpdateSelectionSizeText() {
             SelectionSizeText = _selectionRect.IsEmpty ?
-                string.Empty :
-                $"W: {_selectionRect.Width:F0} px, H: {_selectionRect.Height:F0} px";
+                string.Empty : $"W: {_selectionRect.Width:F0} px, H: {_selectionRect.Height:F0} px";
         }
 
         private async void ArcSizeChanged() {
@@ -355,8 +383,7 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         private int _nextLayerNumberTag = 1;
-        private int _nextCopyedLayerNumberTag = 1;
-        private readonly string _entryFilePath;
+        private readonly string _entryFilePath = string.Empty;
         private readonly TaskCompletionSource<bool> _isInkDataLoadCompleted = new();
     }
 }

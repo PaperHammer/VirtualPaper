@@ -8,7 +8,7 @@ namespace VirtualPaper.Models.Mvvm {
         public ObservableList(IList<T> items) => AddRange(items);
 
         public void AddRange(IList<T> items) {
-            ArgumentNullException.ThrowIfNull(items);
+            if (items == null) return;
 
             for (int i = 0; i < items.Count; i++) { 
                 InsertItem(i, items[i]);
@@ -16,22 +16,23 @@ namespace VirtualPaper.Models.Mvvm {
         }
 
         public void AddRangeReverse(IList<T> items) {
-            ArgumentNullException.ThrowIfNull(items);
+            if (items == null) return;
 
-            for (int i = items.Count - 1; i >= 0; i--) {
-                InsertItem(i, items[i]);
+            int n = items.Count;
+            for (int i = n - 1; i >= 0; i--) {
+                InsertItem(n - i - 1, items[i]);
             }
         }
 
         public void SetRange(IList<T> items) {
-            ArgumentNullException.ThrowIfNull(items);
+            if (items == null) return;
 
             ClearItems();
             AddRange(items);
         }
 
         public void SetRangeReverse(IList<T> items) {
-            ArgumentNullException.ThrowIfNull(items);
+            if (items == null) return;
 
             ClearItems();
             AddRangeReverse(items);
@@ -42,7 +43,7 @@ namespace VirtualPaper.Models.Mvvm {
         }
 
         public int FindIndex(Predicate<T> match) {
-            ArgumentNullException.ThrowIfNull(match);
+            if (match == null) return -1;
 
             for (int i = 0; i < Count; i++) {
                 if (match(this[i]))

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Windows.Input;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -92,18 +91,11 @@ namespace VirtualPaper.UIComponent.Input {
             this.InitializeComponent();
             AddToCustomCommand = new RelayCommand(OnAddToCustom);
 
-            //InitializeArcColorPicker();
             UpdateOuterColors();
         }
 
-        //private void InitializeArcColorPicker() {
-        //    // 确保控件已经加载到视觉树中, 避免卡顿
-        //    //arcColorPicker.Visibility = Visibility.Collapsed;
-        //}
-
         private static void OnOuterColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is ArcPalette instance) {
-                Debug.WriteLine($"OuterColorChanged: {instance.ForegroundColor} {instance.BackgroundColor}");
                 instance.UpdateVisual();
             }
         }
@@ -156,12 +148,6 @@ namespace VirtualPaper.UIComponent.Input {
         private void OnSelectionChanged() {
             UpdateOuterColors();
         }
-
-        //private static void OnInnerColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-        //    if (d is ArcPalette palette) {
-        //        palette.CurrentSelection = palette.ForegroundColor == palette.AColor.Color ? Selection.A : Selection.B;
-        //    }
-        //}
 
         private void UpdateOuterColors() {
             ForegroundColor = CurrentSelection == Selection.A ? AColor.Color : BColor.Color;

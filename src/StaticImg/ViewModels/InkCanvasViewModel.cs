@@ -40,7 +40,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             }
         }
 
-        private async Task LoadBasicDataAsync() {
+        private async Task LoadBasicDataAsync() {          
             if (!File.Exists(_entryFilePath)) {
                 await ConfigData.InitDataAsync();
                 await ConfigData.SaveRenderDataAsync();
@@ -52,7 +52,6 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         internal async Task LoadRenderDataAsync() {
             await ConfigData.LoadRenderDataAsync();
             RenderDataLoaded.TrySetResult(true);
-            //Ready?.Invoke(this, EventArgs.Empty);
         }
 
         private readonly string _entryFilePath;

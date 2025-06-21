@@ -31,7 +31,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
             _tool = new();
-            _viewModel = new(MainPage.Instance.EntryFilePath, MainPage.Instance.RtFileType);
+            _viewModel = new(MainPage.Instance.EntryFilePath, MainPage.Instance.RTFileType);
+        }
+
+        private void UserControl_Loaded(object sender, RoutedEventArgs e) {
             RegisterTools();
         }
 
@@ -55,6 +58,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             };
             _viewModel.ConfigData.SelectedCropAspectClicked += (s, e) => {
                 HandleCropAspectClicked(e);
+            };
+            _viewModel.ConfigData.ManualRender += (s, e) => {
+                RenderToCompositeTarget(e.Mode, e.Region);
             };
         }
 
@@ -92,7 +98,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
                 CanvasAlphaMode.Premultiplied);
         }
-        #endregion
+        #endregion       
 
         internal async Task SaveAsync() {
             await _viewModel.SaveAsync();

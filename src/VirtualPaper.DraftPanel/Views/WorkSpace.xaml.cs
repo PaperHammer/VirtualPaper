@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -54,6 +55,14 @@ namespace VirtualPaper.DraftPanel.Views {
 
         private async void MFI_SaveAll_Clicked(object sender, RoutedEventArgs e) {
             await _viewModel.SaveAllAsync();
+        }
+
+        private async void MFI_Undo_Clicked(object sender, RoutedEventArgs e) {
+            await _viewModel.UndoAsync();
+        }
+
+        private async void MFI_Redo_Clicked(object sender, RoutedEventArgs e) {
+            await _viewModel.RedoAsync();
         }
 
         private WorkSpaceViewModel _viewModel;

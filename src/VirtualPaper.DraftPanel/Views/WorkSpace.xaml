@@ -14,8 +14,7 @@
 
     <Page.Resources>
         <cmd:KeepToLeft x:Key="LeftMenuItems">
-            <MenuBarItem 
-                Title="文件(F)"
+            <MenuBarItem Title="文件(F)"
                 KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="F"/>
@@ -53,19 +52,18 @@
                 </MenuFlyoutItem>
             </MenuBarItem>
 
-            <MenuBarItem 
-                Title="编辑(E)"
+            <MenuBarItem Title="编辑(E)"
                 KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="E"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem Text="撤销">
+                <MenuFlyoutItem Text="撤销" Click="MFI_Undo_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="Z"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="还原">
+                <MenuFlyoutItem Text="重做" Click="MFI_Redo_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control, Shift" Key="Z"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -92,12 +90,23 @@
         </cmd:KeepToLeft>
 
         <cmd:KeepToRight x:Key="RightMenuItems">
-            <MenuBarItem 
-              Title="帮助(H)"
+            <MenuBarItem Title="帮助(H)"
               KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="H"/>
                 </MenuBarItem.KeyboardAccelerators>
+
+                <MenuFlyoutItem Text="仓库">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="None" Key="R"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+
+                <MenuFlyoutItem Text="手册">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="None" Key="M"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
 
                 <MenuFlyoutItem Text="关于">
                     <MenuFlyoutItem.KeyboardAccelerators>

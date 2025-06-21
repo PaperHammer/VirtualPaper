@@ -67,6 +67,16 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         private void LayersListView_RightTapped(object sender, RightTappedRoutedEventArgs e) {
             var container = LayersListView.ContainerFromItem((e.OriginalSource as FrameworkElement)?.DataContext) as ListViewItem;
             _rightTappedItem = container.Content as LayerItem;
+            RightClick();
+        }
+
+        private void RightClick() {
+            if (_rightTappedItem == null) {
+                LayersListView.ContextFlyout.Hide();
+            }
+            else {
+                LayersListView.ContextFlyout.ShowAt(_rightTappedItem);
+            }
         }
 
         private LayerItem _rightTappedItem;

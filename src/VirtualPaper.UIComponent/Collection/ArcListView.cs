@@ -33,7 +33,7 @@ namespace VirtualPaper.UIComponent.Collection {
             DefaultStyleKey = typeof(ListView);
             this.SelectionChanged += ArcListView_SelectionChanged;
             this.DragItemsStarting += ArcListView_DragItemsStarting;
-            this.DragItemsCompleted += ArcListView_DragItemsCompleted;          
+            this.DragItemsCompleted += ArcListView_DragItemsCompleted;
 
             _itemsSourceChangedToken = RegisterPropertyChangedCallback(ItemsSourceProperty, OnItemsSourcePropertyChanged);
         }
@@ -55,7 +55,7 @@ namespace VirtualPaper.UIComponent.Collection {
             _oldIndex = (this.ItemsSource as IList)?.IndexOf(e.Items[0]) ?? -1;
         }
 
-        private void ArcListView_SelectionChanged(object sender, SelectionChangedEventArgs e) {            
+        private void ArcListView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             TryPreventNullSelectOnSelectionChanged(e);
         }
 
@@ -68,7 +68,7 @@ namespace VirtualPaper.UIComponent.Collection {
                 SelectedItem = _lastSelectedItem;
             }
             else {
-                SelectedItem = Items.FirstOrDefault();
+                SelectedItem = Items.FirstOrDefault(); // 如果删除的是被选择项则 ui 无法显示出第一项的视觉效果，需要刷新一次
             }
         }
 
@@ -92,16 +92,15 @@ namespace VirtualPaper.UIComponent.Collection {
         }
 
         private void TryPreventNullSelectOnCollectionChanged() {
-            if (_isDragging || CancelSelectionEnable || SelectedItem != null) return;
+            if (_isDragging || CancelSelectionEnable) return;
 
-            SelectedItem = Items.FirstOrDefault();
+            SelectedItem = null; // 刷新一次 ui 使得删除的项不再被选中，让 ui 显示被选中项的视觉效果
         }
 
         private void TrySelectNewestItem(NotifyCollectionChangedEventArgs e) {
             if (_isDragging || !IsAllwaysSeletedNewItem) return;
 
             SelectedItem = e.NewItems?[0];
-            _lastSelectedItem = SelectedItem;
         }
 
         private void OnItemsSourcePropertyChanged(DependencyObject sender, DependencyProperty dp) {
@@ -128,11 +127,9 @@ namespace VirtualPaper.UIComponent.Collection {
             switch (newItemsSource) {
                 case null:
                     return;
-
                 case IList list when list.Count > 0:
                     SelectedItem = list[0];
                     return;
-
                 case IEnumerable enumerable:
                     try {
                         var firstItem = enumerable.OfType<object>().FirstOrDefault();

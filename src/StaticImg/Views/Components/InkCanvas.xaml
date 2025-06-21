@@ -14,7 +14,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:win2d="using:Microsoft.Graphics.Canvas.UI.Xaml"
     mc:Ignorable="d"
-    DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}">
+    DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}"
+    Loaded="UserControl_Loaded">
 
     <Grid>
         <Grid.RowDefinitions>

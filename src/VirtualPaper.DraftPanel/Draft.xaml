@@ -11,5 +11,5 @@
 
     <Frame 
         x:Name="FrameCardComp"
-        Loaded="FrameCardComp_Loaded"/>
+        Loaded="FrameCardComp_Loaded" />
 </Page>

@@ -130,8 +130,8 @@
             </DataTemplate>
         </GridView.ItemTemplate>
         <GridView.ContextFlyout>
-            <MenuFlyout
-                x:Name="ItemsViewMenu">
+            <MenuFlyout x:Name="ItemsViewMenu"
+                        ShowMode="Transient">
                 <MenuFlyoutItem
                     x:Name="Details"
                     Text="{x:Bind _viewModel.MenuFlyout_Text_DetailedInfo}"

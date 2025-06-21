@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -82,6 +83,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             }
         }
 
+        #region ui events
         internal async void AddDraftItem() {
             //var dialogRes = await _draftPanel.GetDialog().ShowDialogAsync(
             //    new WallpaperCreateView(wpCreateDialogViewModel),
@@ -91,21 +93,28 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             //if (dialogRes != DialogResult.Primary) return;
         }
 
-        internal async Task SaveAsync() {
-            if (SelectedTabIndex == -1) return;
-            await (TabViewItems[SelectedTabIndex].Content as IRuntime)?.SaveAsync();
-        }
+        internal async Task SaveAsync() => await ExecuteRuntimeCommandAsync(x => x.SaveAsync());
 
-        internal async Task SaveAllAsync() {
-            foreach (var item in TabViewItems) {
-                await (item.Content as IRuntime)?.SaveAsync();
-            }
-        }
+        internal async Task SaveAllAsync() => await Task.WhenAll(
+            TabViewItems.Select(item => ExecuteRuntimeCommandAsync(x => x.SaveAsync(), item)));
 
         internal async Task ExitAsync() {
             await SaveAllAsync();
         }
 
+        internal async Task UndoAsync() => await ExecuteRuntimeCommandAsync(x => x.UndoAsync());
+
+        internal async Task RedoAsync() => await ExecuteRuntimeCommandAsync(x => x.RedoAsync());
+
+        private Task ExecuteRuntimeCommandAsync(Func<IRuntime, Task> command, TabViewItem? specificItem = null) {
+            var targetItem = specificItem ?? TabViewItems.ElementAtOrDefault(SelectedTabIndex);
+            return targetItem?.Content is IRuntime runtime
+                ? command(runtime)
+                : Task.CompletedTask;
+        }
+        #endregion
+
+        #region init
         internal void InitTabViewItems(ToWorkSpace data) {
             foreach (var filePath in data.FilePaths) {
                 InitRuntimeItemAsync(filePath);
@@ -174,6 +183,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 IsUnsaved = false,
             });
         }
+        #endregion
 
         internal readonly ObservableCollection<MenuBarItem> _middleMenuItems = [];
         private readonly List<IRuntime> _rt = [];

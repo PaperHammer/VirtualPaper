@@ -12,14 +12,6 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <MenuFlyout x:Key="Layers_MenuFlyout">
-            <MenuFlyoutItem Text="{x:Bind _SIG_Text_AddLayer}" Click="AddLayer_Click"/>
-            <MenuFlyoutItem Text="{x:Bind _SIG_Text_CopyLayer}" Click="CopyLayer_Click"/>
-            <MenuFlyoutItem Text="{x:Bind _SIG_Text_RenameLayer}" Click="RenameLayer_Click"/>
-            <MenuFlyoutSeparator/>
-            <MenuFlyoutItem Text="{x:Bind _SIG_Text_DeleteLayer}" Click="DeleteLayer_Click"/>
-        </MenuFlyout>
-
         <DataTemplate  x:Key="LayerItemTemplate" x:DataType="lcl_models:InkCanvasData">
             <ListViewItem Height="60">
                 <lcl_components:LayerItem
@@ -54,11 +46,15 @@
                 SelectedItem="{x:Bind SelectedInkCanvas, Mode=TwoWay}"
                 ItemsSource="{x:Bind InkDatas}"
                 ItemTemplate="{StaticResource LayerItemTemplate}">
-                <collection:ArcListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
-                        <Setter Property="ContextFlyout" Value="{StaticResource Layers_MenuFlyout}" />
-                    </Style>
-                </collection:ArcListView.ItemContainerStyle>
+                <collection:ArcListView.ContextFlyout>
+                    <MenuFlyout x:Name="MenuFlyoutLayers">
+                        <MenuFlyoutItem Text="{x:Bind _SIG_Text_AddLayer}" Click="AddLayer_Click"/>
+                        <MenuFlyoutItem Text="{x:Bind _SIG_Text_CopyLayer}" Click="CopyLayer_Click"/>
+                        <MenuFlyoutItem Text="{x:Bind _SIG_Text_RenameLayer}" Click="RenameLayer_Click"/>
+                        <MenuFlyoutSeparator/>
+                        <MenuFlyoutItem Text="{x:Bind _SIG_Text_DeleteLayer}" Click="DeleteLayer_Click"/>
+                    </MenuFlyout>
+                </collection:ArcListView.ContextFlyout>
             </collection:ArcListView>
         </Expander.Content>
     </Expander>

@@ -2,7 +2,7 @@
 
 namespace VirtualPaper.Common.Extensions {
     public static class RectExtensions {
-        public static Rect GetIntersect(this Rect x, Rect y) {
+        public static Rect IntersectRect(this Rect x, Rect y) {
             if (x.IsEmpty || y.IsEmpty)
                 return Rect.Empty;
             double x1 = Math.Max(x.X, y.X);
@@ -12,6 +12,20 @@ namespace VirtualPaper.Common.Extensions {
             if (x1 < x2 && y1 < y2)
                 return new Rect(x1, y1, x2 - x1, y2 - y1);
             return Rect.Empty;
+        }
+
+        public static Size GetSize(this Rect rect) => new(rect.Width, rect.Height);
+
+        public static Rect UnionRect(this Rect rect1, Rect rect2) {
+            if (rect1.IsEmpty) return rect2;
+            if (rect2.IsEmpty) return rect1;
+
+            double left = Math.Min(rect1.Left, rect2.Left);
+            double top = Math.Min(rect1.Top, rect2.Top);
+            double right = Math.Max(rect1.Right, rect2.Right);
+            double bottom = Math.Max(rect1.Bottom, rect2.Bottom);
+
+            return new Rect(left, top, right - left, bottom - top);
         }
     }
 }

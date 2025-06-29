@@ -6,6 +6,7 @@ using VirtualPaper.UIComponent.Services;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
+using Workloads.Creation.StaticImg.Models.ToolItems.Utils;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
     public abstract class Tool : ICursorService, IDisposable {
@@ -17,10 +18,10 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         protected virtual CanvasRenderTarget? RenderTarget {
             get => _renderTarget;
             set {
-                if (_renderTarget != value) {
-                    _renderTarget = value;
-                    UpdateRelatedVariables();
-                }
+                if (_renderTarget == value) return;
+
+                _renderTarget = value;
+                UpdateRelatedVariables();
             }
         }
 
@@ -48,12 +49,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 RenderTarget.SizeInPixels.Height);
         }
 
-        //protected virtual bool IsPointerOverTarget(CanvasPointerEventArgs e) {
-        //    return RenderTarget != null && (HandlesPointerOutsideContentArea ||
-        //        e.Pointer.Position.X >= 0 && e.Pointer.Position.X < RenderTarget.SizeInPixels.Width &&
-        //        e.Pointer.Position.Y >= 0 && e.Pointer.Position.Y < RenderTarget.SizeInPixels.Height);
-        //}
-
         protected static Color BlendColor(Color color, double brushOpacity) {
             byte blendedA = (byte)(color.A * brushOpacity);
 
@@ -71,6 +66,27 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             RenderRequest?.Invoke(this, e);
         }
 
+        /// <summary>
+        /// 将内容变更提交到 Undo/Redo 系统
+        /// </summary>
+        protected virtual void CommitContentChange(RenderSnapshot? snapshot, CanvasRenderTarget target) {
+            if (RenderTarget == null || snapshot == null) return;
+            
+            snapshot.Commit(target);
+            MainPage.Instance.UnReUtil.RecordCommand(
+                execute: () => {
+                    snapshot.RenderToTarget(target, SnapshotMode.Destination);
+                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.PartialRegion, snapshot.AffectedRegion));
+                },
+                undo: () => {
+                    snapshot.RenderToTarget(target, SnapshotMode.Origin);
+                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+
+                },
+                opType: SI_UndoRedo_OP_Type.Region
+            );
+        }
+
         public virtual void Dispose() {
             SystemCursorChangeRequested = null;
             RenderRequest = null;
@@ -84,7 +100,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         private CanvasRenderTarget? _renderTarget;
     }
 
-    public class StrokeSegment {
+    public partial class StrokeSegment {
         public Point StartPoint { get; }
         public List<Point> Points { get; } = [];
 

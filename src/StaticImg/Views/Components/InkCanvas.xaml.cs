@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
-using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -60,7 +59,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             _viewModel.ConfigData.SelectedCropAspectClicked += (s, e) => {
                 HandleCropAspectClicked(e);
             };
-            _viewModel.ConfigData.ManualRender += (s, e) => {
+            _viewModel.ConfigData.RenderRequest += (s, e) => {
                 RenderToCompositeTarget(e.Mode, e.Region);
             };
         }
@@ -150,49 +149,94 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         internal void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
-            if (mode == RenderMode.FullRegion) {
-                FullRender();
-            }
-            else {
-                PartialRender(region);
+            //if (mode == RenderMode.FullRegion) {
+            //    FullRender();
+            //}
+            //else {
+            //    PartialRender(region);
+            //}
+
+            //inkCanvas.Invalidate();
+
+            using (var commandList = new CanvasCommandList(_compositeTarget.Device)) {
+                using (var ds = commandList.CreateDrawingSession()) {
+                    if (mode == RenderMode.FullRegion) {
+                        FullRender(ds);
+                    }
+                    else {
+                        PartialRender(ds, region);
+                    }
+                }
+
+                // 单次提交所有绘制命令
+                using (var finalDs = _compositeTarget.CreateDrawingSession()) {
+                    finalDs.DrawImage(commandList);
+                }
             }
 
             inkCanvas.Invalidate();
         }
 
-        private void FullRender() {
-            using (var ds = _compositeTarget.CreateDrawingSession()) {
-                ds.Clear(Colors.Transparent);
-                // 逆序遍历，确保层级正确性
-                for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
-                    var layer = _viewModel.ConfigData.InkDatas[i];
-                    if (!layer.IsEnable || layer.RenderData == null) continue;
-                    ds.DrawImage(layer.RenderData.RenderTarget);
-                }
+        private void FullRender(CanvasDrawingSession ds) {
+            // 逆序遍历
+            for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
+                var layer = _viewModel.ConfigData.InkDatas[i];
+                if (!layer.IsEnable || layer.RenderData == null) continue;
+                ds.DrawImage(layer.RenderData.RenderTarget);
             }
         }
 
-        private void PartialRender(Rect region) {
-            using (var ds = _compositeTarget.CreateDrawingSession()) {
-                for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
-                    var layer = _viewModel.ConfigData.InkDatas[i];
-                    if (!layer.IsEnable || layer.RenderData == null) continue;
+        private void PartialRender(CanvasDrawingSession ds, Rect region) {
+            for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
+                var layer = _viewModel.ConfigData.InkDatas[i];
+                if (!layer.IsEnable || layer.RenderData == null) continue;
 
-                    // 计算图层与脏区域的交集
-                    var layerBounds = new Rect(
-                        0, 0,
-                        layer.RenderData.RenderTarget.Size.Width,
-                        layer.RenderData.RenderTarget.Size.Height);
+                var layerBounds = new Rect(0, 0,
+                    layer.RenderData.RenderTarget.Size.Width,
+                    layer.RenderData.RenderTarget.Size.Height);
 
-                    var visibleRect = region.GetIntersect(layerBounds);
-                    if (!visibleRect.IsEmpty) {
-                        ds.DrawImage(layer.RenderData.RenderTarget,
-                            visibleRect,  // 目标区域
-                            visibleRect); // 源区域
-                    }
+                var visibleRect = region.IntersectRect(layerBounds);
+                if (!visibleRect.IsEmpty) {
+                    // 禁用抗锯齿（开启抗锯齿的局部刷新会导致刷新区域边界出现细线）
+                    // 抗锯齿算法将由个工具自己实现
+                    ds.Antialiasing = CanvasAntialiasing.Aliased;
+                    ds.DrawImage(layer.RenderData.RenderTarget, visibleRect, visibleRect);
                 }
             }
         }
+        //private void FullRender() {
+        //    using (var ds = _compositeTarget.CreateDrawingSession()) {
+        //        ds.Clear(Colors.Transparent);
+        //        // 逆序遍历，确保层级正确性
+        //        for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
+        //            var layer = _viewModel.ConfigData.InkDatas[i];
+        //            if (!layer.IsEnable || layer.RenderData == null) continue;
+        //            ds.DrawImage(layer.RenderData.RenderTarget);
+        //        }
+        //    }
+        //}
+
+        //private void PartialRender(Rect region) {
+        //    using (var ds = _compositeTarget.CreateDrawingSession()) {
+        //        for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
+        //            var layer = _viewModel.ConfigData.InkDatas[i];
+        //            if (!layer.IsEnable || layer.RenderData == null) continue;
+
+        //            // 计算图层与脏区域的交集
+        //            var layerBounds = new Rect(
+        //                0, 0,
+        //                layer.RenderData.RenderTarget.Size.Width,
+        //                layer.RenderData.RenderTarget.Size.Height);
+
+        //            var visibleRect = region.IntersectRect(layerBounds);
+        //            if (!visibleRect.IsEmpty) {
+        //                ds.DrawImage(layer.RenderData.RenderTarget,
+        //                    visibleRect,  // 目标区域
+        //                    visibleRect); // 源区域
+        //            }
+        //        }
+        //    }
+        //}
         #endregion
 
         #region Scroll 

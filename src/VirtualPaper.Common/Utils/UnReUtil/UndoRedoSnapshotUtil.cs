@@ -8,6 +8,11 @@
         public bool CanUndo => _undoStack.Count > 0;
         public bool CanRedo => _redoStack.Count > 0;
 
+        /// <param name="maxStackSize">最大栈大小，0表示无限制</param>
+        public UndoRedoSnapshotUtil(int maxStackSize = 0) {
+            _maxStackSize = maxStackSize;
+        }
+
         /// <summary>
         /// 记录同步操作
         /// </summary>
@@ -28,12 +33,27 @@
         /// <param name="undo">撤销</param>
         /// <param name="opType">操作类型</param>
         public void RecordCommand(Func<Task> execute, Func<Task> undo, int opType) {
+            //try {
+            //    _rwSlim.EnterWriteLock();
+            //    _redoStack.Clear(); // 清除 redo 栈
+            //    _undoStack.Push(new Command(execute, undo, opType));
+            //}
+            //finally { _rwSlim.ExitWriteLock(); }
+
             try {
                 _rwSlim.EnterWriteLock();
                 _redoStack.Clear(); // 清除 redo 栈
-                _undoStack.Push(new Command(execute, undo, opType));
+
+                // 应用LRU淘汰策略
+                if (_maxStackSize > 0 && _undoStack.Count >= _maxStackSize) {
+                    _undoStack.RemoveFirst();
+                }
+
+                _undoStack.AddLast(new Command(execute, undo, opType));
             }
-            finally { _rwSlim.ExitWriteLock(); }
+            finally {
+                _rwSlim.ExitWriteLock();
+            }
         }
 
         /// <summary> 
@@ -45,9 +65,10 @@
                 if (_undoStack.Count == 0) return false;
 
                 OnPreviewUndo?.Invoke(this, EventArgs.Empty);
-                var command = _undoStack.Pop();
+                var command = _undoStack.Last();
                 await command.Undo();
-                _redoStack.Push(command);
+                _undoStack.RemoveLast();
+                _redoStack.AddLast(command);
                 OnUndoDone?.Invoke(this, EventArgs.Empty);
 
                 return true;
@@ -64,9 +85,10 @@
                 if (_redoStack.Count == 0) return false;
 
                 OnPreviewRedo?.Invoke(this, EventArgs.Empty);
-                var command = _redoStack.Pop();
+                var command = _redoStack.Last();
                 await command.Execute();
-                _undoStack.Push(command);
+                _redoStack.RemoveLast();
+                _undoStack.AddLast(command);
                 OnRedoDone?.Invoke(this, EventArgs.Empty);
 
                 return true;
@@ -81,9 +103,10 @@
 
         private record Command(Func<Task> Execute, Func<Task> Undo, int OpType);
 
-        private readonly Stack<Command> _undoStack = new();
-        private readonly Stack<Command> _redoStack = new();
+        private readonly LinkedList<Command> _undoStack = new();
+        private readonly LinkedList<Command> _redoStack = new();
         // 轻量级读写锁（比lock更好）&& 让 _currentState 也能保证线程安全
         private readonly ReaderWriterLockSlim _rwSlim = new(LockRecursionPolicy.SupportsRecursion);
+        private readonly int _maxStackSize;
     }
 }

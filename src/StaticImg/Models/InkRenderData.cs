@@ -11,6 +11,7 @@ using Windows.Foundation;
 using Windows.Graphics.DirectX;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using Workloads.Creation.StaticImg.Models.Extensions;
 
 namespace Workloads.Creation.StaticImg.Models {
     public partial class InkRenderData : IDisposable {
@@ -19,7 +20,6 @@ namespace Workloads.Creation.StaticImg.Models {
         public Matrix3x2 Transform { get; private set; } = Matrix3x2.Identity;
         public TaskCompletionSource<bool> IsCompleted => _isCompleted;
         public Rect Bound => _arcSize.Bound;
-        public Rect DirtyRegion { get; set; } = Rect.Empty;
 
         public InkRenderData(ArcSize arcSize, bool isRootBackground = false) {
             _arcSize = arcSize;
@@ -42,7 +42,7 @@ namespace Workloads.Creation.StaticImg.Models {
         #region save and load
         public async Task SaveWithProgressAsync(
             string filePath,
-            IProgress<double> progress = null,
+            IProgress<double>? progress = null,
             CancellationToken cancellationToken = default) {
             string folderPath = Path.GetDirectoryName(filePath);
             var folder = await StorageFolder.GetFolderFromPathAsync(folderPath);
@@ -58,7 +58,7 @@ namespace Workloads.Creation.StaticImg.Models {
             using (var outputStream = await tempFile.OpenStreamForWriteAsync()) {
                 // 先获取PNG数据总大小
                 using var pngStream = new InMemoryRandomAccessStream();
-                await RenderTarget.SaveAsync(pngStream, CanvasBitmapFileFormat.Png);
+                await RenderTarget.SaveAsync(pngStream, CanvasBitmapFileFormat.Png); // 该内容已在内存中，直接使用即可
                 ulong totalBytes = pngStream.Size;
                 long processedBytes = 0;
 
@@ -101,7 +101,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         public async Task LoadWithProgressAsync(
             string filePath,
-            IProgress<double> progress = null,
+            IProgress<double>? progress = null,
             CancellationToken cancellationToken = default) {
             var pool = ArrayPool<byte>.Shared;
             var headerBuffer = pool.Rent(8); // 用于读取块头
@@ -193,7 +193,9 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         internal InkRenderData Clone() {
-            var newRender = new InkRenderData(_arcSize);
+            var newRender = new InkRenderData(_arcSize) {
+                RenderTarget = this.RenderTarget.Clone()
+            };
             return newRender;
         }
 
@@ -368,7 +370,7 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         private ArcSize _arcSize;
-        private CanvasBitmap _cachedContent;
+        private CanvasBitmap? _cachedContent;
         private readonly object _lockResize = new();
         private readonly TaskCompletionSource<bool> _isCompleted = new();
     }

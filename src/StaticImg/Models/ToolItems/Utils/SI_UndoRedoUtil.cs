@@ -8,7 +8,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.Utils {
         public bool CanRedo => _undoRedoCore.CanRedo;
 
         public SI_UndoRedoUtil() {
-            _undoRedoCore = new UndoRedoSnapshotUtil();
+            _undoRedoCore = new UndoRedoSnapshotUtil(20);
         }
 
         /// <summary>
@@ -17,16 +17,18 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.Utils {
         /// <param name="execute">恢复</param>
         /// <param name="undo">撤销</param>
         /// <param name="opType">操作类型</param>
-        public void RecordCommand(Action execute, Action undo, SI_UndoRedo_OP_Type opType) 
+        public void RecordCommand(Action execute, Action undo, SI_UndoRedo_OP_Type opType)
             => _undoRedoCore.RecordCommand(execute, undo, (int)opType);
+
         /// <summary>
         /// 记录异步操作
         /// </summary>
         /// <param name="execute">恢复</param>
         /// <param name="undo">撤销</param>
         /// <param name="opType">操作类型</param>
-        public void RecordCommand(Func<Task> execute, Func<Task> undo, SI_UndoRedo_OP_Type opType) 
-            => _undoRedoCore.RecordCommand(execute, undo, (int)opType);        
+        public void RecordCommand(Func<Task> execute, Func<Task> undo, SI_UndoRedo_OP_Type opType)
+            => _undoRedoCore.RecordCommand(execute, undo, (int)opType);
+
         public async Task UndoAsync() => await _undoRedoCore.TryUndoAsync();
         public async Task RedoAsync() => await _undoRedoCore.TryRedoAsync();
         public void Dispose() => _undoRedoCore.Dispose();

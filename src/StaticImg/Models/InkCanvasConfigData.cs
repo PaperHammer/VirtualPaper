@@ -30,7 +30,7 @@ namespace Workloads.Creation.StaticImg.Models {
         public event EventHandler? SeletcedLayerChanged;
         public event EventHandler<double>? SelectedCropAspectClicked;
         public event EventHandler<ArcSize>? SizeChanged;
-        public event EventHandler<RenderTargetChangedEventArgs>? ManualRender;
+        public event EventHandler<RenderTargetChangedEventArgs>? RenderRequest;
 
         #region serilizable properties
         public ObservableList<InkCanvasData> InkDatas { get; set; } = [];
@@ -269,8 +269,14 @@ namespace Workloads.Creation.StaticImg.Models {
             if (!recordUndo) return;
 
             MainPage.Instance.UnReUtil.RecordCommand(
-                execute: async () => await AddAsync(data, false),
-                undo: async () => await DeleteAsync(data.Tag, false),
+                execute: async () => {
+                    await AddAsync(data, false);
+                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                },
+                undo: async () => {
+                    await DeleteAsync(data.Tag, false);
+                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                },
                 opType: SI_UndoRedo_OP_Type.Serializable
             );
         }
@@ -336,8 +342,14 @@ namespace Workloads.Creation.StaticImg.Models {
             if (!recordUndo) return;
 
             MainPage.Instance.UnReUtil.RecordCommand(
-                execute: async () => await DeleteAsync(itemTag, false),
-                undo: async () => await AddAsync(layer.Clone(), false),
+                execute: async () => {
+                    await DeleteAsync(itemTag, false);
+                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                },
+                undo: async () => {
+                    await AddAsync(layer.Clone(), false);
+                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                },
                 opType: SI_UndoRedo_OP_Type.Serializable
             );
         }

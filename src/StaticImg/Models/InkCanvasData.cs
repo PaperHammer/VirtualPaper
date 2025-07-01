@@ -23,12 +23,6 @@ namespace Workloads.Creation.StaticImg.Models {
             set { if (_name == value) return; _name = value; OnPropertyChanged(); }
         }
 
-        float _opacity = 1f;
-        public float Opacity {
-            get => _opacity;
-            set { if (_opacity == value) return; _opacity = value; OnPropertyChanged(); }
-        }
-
         bool _isEnable = true;
         public bool IsEnable {
             get => _isEnable;
@@ -39,12 +33,6 @@ namespace Workloads.Creation.StaticImg.Models {
                     MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
                 OnPropertyChanged();
             }
-        }
-
-        private int _zIndex;
-        public int ZIndex {
-            get { return _zIndex; }
-            set { _zIndex = value; }
         }
 
         ImageSource _layerThum;
@@ -61,10 +49,10 @@ namespace Workloads.Creation.StaticImg.Models {
             IsRootBackground = isRootBackground;
         }
 
-        public InkCanvasData(string entryFilePath, bool isRootBackground = false) {
+        public InkCanvasData(bool isRootBackground = false) {
             Tag = IdentifyUtil.GenerateIdShort();
             IsRootBackground = isRootBackground;
-            SetDataFilePath(entryFilePath);
+            SetDataFilePath();
         }
 
         internal async Task SaveAsync() {
@@ -87,8 +75,8 @@ namespace Workloads.Creation.StaticImg.Models {
             }
         }
 
-        internal void SetDataFilePath(object filePath) {
-            string folder = System.IO.Path.GetDirectoryName(filePath.ToString()) ?? string.Empty;
+        internal void SetDataFilePath() {
+            string folder = System.IO.Path.GetDirectoryName(MainPage.Instance.EntryFilePath) ?? string.Empty;
             _dataFilePath = System.IO.Path.Combine(folder, Tag + "._data");
         }
 
@@ -97,15 +85,14 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         internal InkCanvasData Clone() {
-            var newInk = new InkCanvasData(_dataFilePath, IsRootBackground) {
+            var newInk = new InkCanvasData(IsRootBackground) {
                 Name = Name,
-                Opacity = Opacity,
                 IsEnable = IsEnable,
                 RenderData = RenderData.Clone()
             };
             return newInk;
         }
 
-        private string _dataFilePath;
+        private string _dataFilePath = string.Empty;
     }
 }

@@ -185,7 +185,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         public async Task UpdateScrSettginsAsync() {
             await _userSettingsClient.LoadAsync<ISettings>();
-            CrossThreadInvoker.InvokeOnUiThread(() => {
+            CrossThreadInvoker.InvokeOnUIThread(() => {
                 IsScreenSaverOn = _userSettingsClient.Settings.IsScreenSaverOn;
                 IsRunningLock = _userSettingsClient.Settings.IsRunningLock;
                 SeletedEffectIndx = (int)_userSettingsClient.Settings.ScreenSaverEffect;

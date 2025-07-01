@@ -40,7 +40,7 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         internal void NavigetBasedState(DraftPanelState nextState) {
-            CrossThreadInvoker.InvokeOnUiThread(() => {
+            CrossThreadInvoker.InvokeOnUIThread(() => {
                 _currentPanel = nextState;
 
                 Type targetPageType;

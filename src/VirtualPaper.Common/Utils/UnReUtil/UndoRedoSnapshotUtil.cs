@@ -1,4 +1,6 @@
-﻿namespace VirtualPaper.Common.Utils.UnReUtil {
+﻿using System.Diagnostics;
+
+namespace VirtualPaper.Common.Utils.UnReUtil {
     public sealed class UndoRedoSnapshotUtil : IDisposable {
         public event EventHandler? OnPreviewUndo;
         public event EventHandler? OnUndoDone;
@@ -33,23 +35,18 @@
         /// <param name="undo">撤销</param>
         /// <param name="opType">操作类型</param>
         public void RecordCommand(Func<Task> execute, Func<Task> undo, int opType) {
-            //try {
-            //    _rwSlim.EnterWriteLock();
-            //    _redoStack.Clear(); // 清除 redo 栈
-            //    _undoStack.Push(new Command(execute, undo, opType));
-            //}
-            //finally { _rwSlim.ExitWriteLock(); }
-
             try {
                 _rwSlim.EnterWriteLock();
                 _redoStack.Clear(); // 清除 redo 栈
 
                 // 应用LRU淘汰策略
                 if (_maxStackSize > 0 && _undoStack.Count >= _maxStackSize) {
-                    _undoStack.RemoveFirst();
+                    _undoStack.RemoveFirst();                    
                 }
 
                 _undoStack.AddLast(new Command(execute, undo, opType));
+                Debug.WriteLine($"undoStack size: {_undoStack.Count}");
+                Debug.WriteLine($"redoStack size: {_redoStack.Count}");
             }
             finally {
                 _rwSlim.ExitWriteLock();
@@ -71,6 +68,9 @@
                 _redoStack.AddLast(command);
                 OnUndoDone?.Invoke(this, EventArgs.Empty);
 
+                Debug.WriteLine($"undoStack size: {_undoStack.Count}");
+                Debug.WriteLine($"redoStack size: {_redoStack.Count}");
+
                 return true;
             }
             finally { _rwSlim.ExitWriteLock(); }
@@ -90,6 +90,9 @@
                 _redoStack.RemoveLast();
                 _undoStack.AddLast(command);
                 OnRedoDone?.Invoke(this, EventArgs.Empty);
+
+                Debug.WriteLine($"undoStack size: {_undoStack.Count}");
+                Debug.WriteLine($"redoStack size: {_redoStack.Count}");
 
                 return true;
             }

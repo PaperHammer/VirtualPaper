@@ -168,7 +168,7 @@ namespace VirtualPaper.UI {
                 MessageType messageType = (MessageType)type;
                 switch (messageType) {
                     case MessageType.cmd_active:
-                        CrossThreadInvoker.InvokeOnUiThread(() => {
+                        CrossThreadInvoker.InvokeOnUIThread(() => {
                             this.BringToFront();
                         });
                         break;

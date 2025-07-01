@@ -31,6 +31,18 @@ namespace VirtualPaper.Models.Mvvm {
             AddRange(items);
         }
 
+        public void SetRange(IList<T> items, Action<T>? configureItem = null) {
+            if (items == null) return;
+
+            ClearItems();
+
+            for (int i = 0; i < items.Count; i++) {
+                var item = items[i];
+                Add(item);
+                configureItem?.Invoke(item);
+            }
+        }
+
         public void SetRangeReverse(IList<T> items) {
             if (items == null) return;
 

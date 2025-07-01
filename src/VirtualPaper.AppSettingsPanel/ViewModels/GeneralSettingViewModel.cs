@@ -279,7 +279,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private void AppUpdater_UpdateChecked(object sender, AppUpdaterEventArgs e) {
-            CrossThreadInvoker.InvokeOnUiThread(() => {
+            CrossThreadInvoker.InvokeOnUIThread(() => {
                 MenuUpdate(e.UpdateStatus, e.UpdateDate, e.UpdateVersion);
             });
         }

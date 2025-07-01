@@ -17,10 +17,8 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             set { _configData = value; }
         }
 
-        public InkCanvasViewModel(string entryFilePath, FileType fileType) {
-            _fileType = fileType;
-            _entryFilePath = entryFilePath;
-            ConfigData = new InkCanvasConfigData(entryFilePath);
+        public InkCanvasViewModel() {
+            ConfigData = new InkCanvasConfigData();
         }
 
         internal async Task SaveAsync() {
@@ -29,7 +27,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         }
 
         internal async Task LoadBasicOrInit() {
-            switch (_fileType) {
+            switch (MainPage.Instance.RTFileType) {
                 case FileType.FImage:
                     break;
                 case FileType.FProject:
@@ -41,7 +39,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         }
 
         private async Task LoadBasicDataAsync() {          
-            if (!File.Exists(_entryFilePath)) {
+            if (!File.Exists(MainPage.Instance.EntryFilePath)) {
                 await ConfigData.InitDataAsync();
                 await ConfigData.SaveRenderDataAsync();
             }
@@ -54,8 +52,6 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             RenderDataLoaded.TrySetResult(true);
         }
 
-        private readonly string _entryFilePath;
-        private readonly FileType _fileType;
         private readonly TaskCompletionSource<bool> _basicDataLoaded = new(), _renderDataLoaded = new();
         internal readonly List<AspectRatioItem> _aspectRatios = [
             new(displayText: "16:9", borderWidth: 48, borderHeight: 27 ),

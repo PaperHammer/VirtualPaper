@@ -11,7 +11,9 @@ using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.UIComponent.Input;
+using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
+using Windows.System;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.EventArg;
 using Workloads.Creation.StaticImg.Models.ToolItems;
@@ -31,11 +33,61 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
             _tool = new();
-            _viewModel = new(MainPage.Instance.EntryFilePath, MainPage.Instance.RTFileType);
+            _viewModel = new();
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e) {
             RegisterTools();
+            RegisterKeyboardAccelerators();
+        }
+
+        private void RegisterTools() {
+            _tool.RegisterTool(ToolType.PaintBrush, new PaintBrushTool(_viewModel.ConfigData));
+            _tool.RegisterTool(ToolType.Fill, new FillTool(_viewModel.ConfigData));
+            _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.ConfigData));
+            _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.ConfigData));
+            _tool.RegisterTool(ToolType.Crop, new CropTool(_viewModel.ConfigData));
+
+            foreach (var tool in _tool.GetAllTools()) {
+                tool.SystemCursorChangeRequested += (s, e) => {
+                    this.ProtectedCursor = e.Cursor ?? _originalInputCursor;
+                };
+
+                tool.RenderRequest += (s, e) => {
+                    RenderToCompositeTarget(e.Mode, e.Region);
+                };
+            }
+        }
+
+        private void RegisterKeyboardAccelerators() {
+            KeyboardSinglePressUtil.Instance.AddListener(this);
+
+            KeyboardSinglePressUtil.Instance.RegisterShortcut(
+                async () => {
+                   await AddLayerAsync();
+                },
+                VirtualKey.Number1,
+                VirtualKeyModifiers.Control);
+            KeyboardSinglePressUtil.Instance.RegisterShortcut(
+                async () => {
+                   await CopyLayerAsync(_viewModel.ConfigData.SelectedInkCanvas.Tag);
+                },
+                VirtualKey.Number2,
+                VirtualKeyModifiers.Control);
+            KeyboardSinglePressUtil.Instance.RegisterShortcut(
+                async () => {
+                   await DeleteLayerAsync(_viewModel.ConfigData.SelectedInkCanvas.Tag);
+                },
+                VirtualKey.Delete);
+            KeyboardSinglePressUtil.Instance.RegisterShortcut(
+                async () => {
+                    await _viewModel.ConfigData.RenameAsync(_viewModel.ConfigData.SelectedInkCanvas.Tag);
+                },
+                VirtualKey.F2);
+        }
+
+        internal async Task SaveAsync() {
+            await _viewModel.SaveAsync();
         }
 
         #region children event
@@ -61,6 +113,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             };
             _viewModel.ConfigData.RenderRequest += (s, e) => {
                 RenderToCompositeTarget(e.Mode, e.Region);
+            };
+            _viewModel.ConfigData.GetFocus += (s, e) => {
+                this.Focus(FocusState.Programmatic);
             };
         }
 
@@ -100,29 +155,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
         #endregion       
 
-        internal async Task SaveAsync() {
-            await _viewModel.SaveAsync();
-        }
-
-        private void RegisterTools() {
-            _tool.RegisterTool(ToolType.PaintBrush, new PaintBrushTool(_viewModel.ConfigData));
-            _tool.RegisterTool(ToolType.Fill, new FillTool(_viewModel.ConfigData));
-            _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.ConfigData));
-            _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.ConfigData));
-            _tool.RegisterTool(ToolType.Crop, new CropTool(_viewModel.ConfigData));
-
-            foreach (var tool in _tool.GetAllTools()) {
-                tool.SystemCursorChangeRequested += (s, e) => {
-                    this.ProtectedCursor = e.Cursor ?? _originalInputCursor;
-                };
-
-                tool.RenderRequest += (s, e) => {
-                    RenderToCompositeTarget(e.Mode, e.Region);
-                };
-            }
-        }
-
-        #region inkcanvas and redner
+        #region redner
         private async void InkingCanvas_Loaded(object sender, RoutedEventArgs e) {
             try {
                 await _viewModel.LoadBasicOrInit();
@@ -149,15 +182,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         internal void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
-            //if (mode == RenderMode.FullRegion) {
-            //    FullRender();
-            //}
-            //else {
-            //    PartialRender(region);
-            //}
-
-            //inkCanvas.Invalidate();
-
             using (var commandList = new CanvasCommandList(_compositeTarget.Device)) {
                 using (var ds = commandList.CreateDrawingSession()) {
                     if (mode == RenderMode.FullRegion) {
@@ -198,45 +222,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 var visibleRect = region.IntersectRect(layerBounds);
                 if (!visibleRect.IsEmpty) {
                     // 禁用抗锯齿（开启抗锯齿的局部刷新会导致刷新区域边界出现细线）
-                    // 抗锯齿算法将由个工具自己实现
+                    // 抗锯齿算法将由各工具自己实现
                     ds.Antialiasing = CanvasAntialiasing.Aliased;
                     ds.DrawImage(layer.RenderData.RenderTarget, visibleRect, visibleRect);
                 }
             }
         }
-        //private void FullRender() {
-        //    using (var ds = _compositeTarget.CreateDrawingSession()) {
-        //        ds.Clear(Colors.Transparent);
-        //        // 逆序遍历，确保层级正确性
-        //        for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
-        //            var layer = _viewModel.ConfigData.InkDatas[i];
-        //            if (!layer.IsEnable || layer.RenderData == null) continue;
-        //            ds.DrawImage(layer.RenderData.RenderTarget);
-        //        }
-        //    }
-        //}
-
-        //private void PartialRender(Rect region) {
-        //    using (var ds = _compositeTarget.CreateDrawingSession()) {
-        //        for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
-        //            var layer = _viewModel.ConfigData.InkDatas[i];
-        //            if (!layer.IsEnable || layer.RenderData == null) continue;
-
-        //            // 计算图层与脏区域的交集
-        //            var layerBounds = new Rect(
-        //                0, 0,
-        //                layer.RenderData.RenderTarget.Size.Width,
-        //                layer.RenderData.RenderTarget.Size.Height);
-
-        //            var visibleRect = region.IntersectRect(layerBounds);
-        //            if (!visibleRect.IsEmpty) {
-        //                ds.DrawImage(layer.RenderData.RenderTarget,
-        //                    visibleRect,  // 目标区域
-        //                    visibleRect); // 源区域
-        //            }
-        //        }
-        //    }
-        //}
         #endregion
 
         #region Scroll 
@@ -388,15 +379,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         #region Layer Mangaer
         private async void LayerManage_AddLayerRequest(object sender, EventArgs e) {
-            var layer = await _viewModel.ConfigData.AddLayerAsync();
-            await layer.RenderData.IsCompleted.Task;
-            RenderToCompositeTarget(RenderMode.FullRegion);
+            await AddLayerAsync();
         }
 
         private async void LayerManage_CopyLayerRequest(object sender, long e) {
-            var layer = await _viewModel.ConfigData.CopyLayerAsync(e);
-            await layer.RenderData.IsCompleted.Task;
-            RenderToCompositeTarget(RenderMode.FullRegion);
+            await CopyLayerAsync(e);
         }
 
         private async void LayerManage_RenameLayerRequest(object sender, long e) {
@@ -404,12 +391,28 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private async void LayerManage_DeleteLayerRequest(object sender, long e) {
-            await _viewModel.ConfigData.DeleteAsync(e);
-            RenderToCompositeTarget(RenderMode.FullRegion);
+            await DeleteLayerAsync(e);
         }
 
         private async void LayerManage_MoveLayerRequest(object sender, EventArgs e) {
             await _viewModel.ConfigData.SaveBasicAsync();
+            RenderToCompositeTarget(RenderMode.FullRegion);
+        }
+
+        private async Task AddLayerAsync() {
+            var layer = await _viewModel.ConfigData.AddLayerAsync();
+            await layer.RenderData.IsCompleted.Task;
+            RenderToCompositeTarget(RenderMode.FullRegion);
+        }
+
+        private async Task CopyLayerAsync(long e) {
+            var layer = await _viewModel.ConfigData.CopyLayerAsync(e);
+            await layer.RenderData.IsCompleted.Task;
+            RenderToCompositeTarget(RenderMode.FullRegion);
+        }
+
+        private async Task DeleteLayerAsync(long e) {
+            await _viewModel.ConfigData.DeleteAsync(e);
             RenderToCompositeTarget(RenderMode.FullRegion);
         }
         #endregion

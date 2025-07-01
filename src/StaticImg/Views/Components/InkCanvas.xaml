@@ -112,9 +112,10 @@
                             CustomColors="{x:Bind _viewModel.ConfigData.CustomColors, Mode=OneWay}"
                             CustomeColorChanged="ColorPalette_CustomeColorChanged"/>
                         <lcl_tools:LayerManageControl 
-                            x:Name="LayerManage"
+                            x:Name="LayerManager"
                             IsAllwaysSeletedNewItem="True"
                             SelectedInkCanvas="{x:Bind _viewModel.ConfigData.SelectedInkCanvas, Mode=TwoWay}"
+                            KeyboardAcceleratorPlacementMode="Hidden"
                             InkDatas="{x:Bind _viewModel.ConfigData.InkDatas}"
                             AddLayerRequest="LayerManage_AddLayerRequest"
                             CopyLayerRequest="LayerManage_CopyLayerRequest"

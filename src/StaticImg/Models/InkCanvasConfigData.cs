@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.Json.Serialization;
@@ -25,6 +24,7 @@ namespace Workloads.Creation.StaticImg.Models {
     internal partial class InkCanvasConfigDataContext : JsonSerializerContext { }
 
     internal partial class InkCanvasConfigData : ObservableObject {
+        public event EventHandler? GetFocus;
         public event EventHandler? InkDataEnabledChanged;
         public event EventHandler? SeletcedToolChanged;
         public event EventHandler? SeletcedLayerChanged;
@@ -189,13 +189,13 @@ namespace Workloads.Creation.StaticImg.Models {
         [JsonIgnore]
         public int EraserFeather { get; internal set; } = 0;
 
-        [JsonConstructor]
-        [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
-        internal InkCanvasConfigData() { }
+        //[JsonConstructor]
+        ////[Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
+        //public InkCanvasConfigData() { }
 
-        public InkCanvasConfigData(string entryFilePath) {
-            _entryFilePath = entryFilePath;
-        }
+        //public InkCanvasConfigData(string entryFilePath) {
+        //    _entryFilePath = entryFilePath;
+        //}
 
         private void OnInkDataChanged(object? sender, PropertyChangedEventArgs e) {
             if (e.PropertyName == nameof(InkCanvasData.IsEnable)) {
@@ -209,7 +209,7 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         internal async Task SaveBasicAsync() {
-            await JsonSaver.SaveAsync(_entryFilePath, this, InkCanvasConfigDataContext.Default);
+            await JsonSaver.SaveAsync(MainPage.Instance.EntryFilePath, this, InkCanvasConfigDataContext.Default);
         }
 
         internal async Task SaveRenderDataAsync() {
@@ -227,32 +227,21 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         internal async Task LoadBasicDataAsync() {
-            var tmp = await JsonSaver.LoadAsync<InkCanvasConfigData>(_entryFilePath, InkCanvasConfigDataContext.Default);
+            var tmp = await JsonSaver.LoadAsync<InkCanvasConfigData>(
+                MainPage.Instance.EntryFilePath, InkCanvasConfigDataContext.Default);
             this.Size = tmp.Size;
-            this.InkDatas.SetRange(tmp.InkDatas);
+            this.InkDatas.SetRange(tmp.InkDatas, (x) => {
+                x.SetDataFilePath();
+                x.PropertyChanged += OnInkDataChanged;
+            });
             SelectedInkCanvas = this.InkDatas.FirstOrDefault();
             _isInkDataLoadCompleted.TrySetResult(true);
             this.CustomColors.SetRange(tmp.CustomColors);
-
-            DiscretizeZIndexesOnLoad(tmp.InkDatas);
-        }
-
-        private void DiscretizeZIndexesOnLoad(IEnumerable<InkCanvasData> data) {
-            var sortedLayers = data
-                .OrderBy(layer => layer.ZIndex)
-                .ToList();
-
-            for (int i = 0; i < sortedLayers.Count; i++) {
-                sortedLayers[i].SetDataFilePath(_entryFilePath);
-                sortedLayers[i].ZIndex = i;
-                sortedLayers[i].PropertyChanged += OnInkDataChanged;
-            }
         }
 
         public async Task<InkCanvasData> AddLayerAsync(string? name = null, bool isBackground = false) {
-            InkCanvasData layerData = new(_entryFilePath, isBackground) {
+            InkCanvasData layerData = new(isBackground) {
                 Name = name ?? $"图层 {_nextLayerNumberTag++}",
-                ZIndex = InkDatas.Count,
                 RenderData = new(Size, isBackground),
             };
             await AddAsync(layerData);
@@ -260,17 +249,15 @@ namespace Workloads.Creation.StaticImg.Models {
             return layerData;
         }
 
-        private async Task AddAsync(InkCanvasData data, bool recordUndo = true) {
-            this.InkDatas.Insert(0, data);
-            data.PropertyChanged += OnInkDataChanged;
-            await SaveBasicAsync();
+        private async Task AddAsync(InkCanvasData data, bool recordUndo = true, int pos = 0) {
+            await InertDataAsync(data, pos);
             await data.LoadAsync();
 
             if (!recordUndo) return;
 
             MainPage.Instance.UnReUtil.RecordCommand(
                 execute: async () => {
-                    await AddAsync(data, false);
+                    await AddAsync(data, false, pos);
                     RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
                 },
                 undo: async () => {
@@ -281,17 +268,39 @@ namespace Workloads.Creation.StaticImg.Models {
             );
         }
 
-        internal async Task<InkCanvasData> CopyLayerAsync(long itemTag) {
+        internal async Task<InkCanvasData?> CopyLayerAsync(long itemTag, bool recordUndo = true, int pos = -1) {
             var idx = InkDatas.FindIndex(x => x.Tag == itemTag);
             if (idx < 0) return null;
 
-            var newLayer = InkDatas[idx].Clone();
-            newLayer.Name += $"_副本";
-            if (newLayer.Name.Length > 30) newLayer.Name = newLayer.Name[..30];
-            newLayer.ZIndex = InkDatas.Count;
-            await AddAsync(newLayer);
+            var layer = InkDatas[idx].Clone();
+            layer.Name += $"_副本";
+            if (layer.Name.Length > 30) layer.Name = layer.Name[..30];
+            await InertDataAsync(layer, pos == -1 ? idx : pos);
 
-            return newLayer;
+            if (!recordUndo) return null;
+
+            MainPage.Instance.UnReUtil.RecordCommand(
+                execute: async () => {
+                    await CopyLayerAsync(layer.Tag, false, idx);
+                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                },
+                undo: async () => {
+                    await DeleteAsync(layer.Tag, false);
+                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                },
+                opType: SI_UndoRedo_OP_Type.Serializable
+            );
+
+            return layer;
+        }
+
+        private async Task InertDataAsync(InkCanvasData data, int pos = 0) {
+            int idx = Math.Min(pos, InkDatas.Count - 1);
+            this.InkDatas.Insert(idx, data);
+            data.PropertyChanged -= OnInkDataChanged; // 避免从 redo 中恢复的图层重复订阅事件
+            data.PropertyChanged += OnInkDataChanged;
+
+            await SaveBasicAsync();
         }
 
         internal async Task RenameAsync(long itemTag, bool isUndoRedoOperation = false, string undoName = "") {
@@ -305,23 +314,28 @@ namespace Workloads.Creation.StaticImg.Models {
                 return;
             }
 
-            string oldName = InkDatas[idx].Name;
-            var viewModel = new RenameViewModel(oldName);
-            var dialogRes = await MainPage.Instance.Bridge.GetDialog().ShowDialogAsync(
-                new RenameView(viewModel),
-                LanguageUtil.GetI18n(nameof(Constants.I18n.Dialog_Title_Rename)),
-                LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
-                LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
-            if (dialogRes != DialogResult.Primary || !ComplianceUtil.IsValidValueOnlyLength(viewModel.NewName)) return;
-            InkDatas[idx].Name = viewModel.NewName;
+            try {
+                string oldName = InkDatas[idx].Name;
+                var viewModel = new RenameViewModel(oldName);
+                var dialogRes = await MainPage.Instance.Bridge.GetDialog().ShowDialogAsync(
+                    new RenameView(viewModel),
+                    LanguageUtil.GetI18n(nameof(Constants.I18n.Dialog_Title_Rename)),
+                    LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
+                    LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
+                if (dialogRes != DialogResult.Primary || !ComplianceUtil.IsValidValueOnlyLength(viewModel.NewName)) return;
+                InkDatas[idx].Name = viewModel.NewName;
 
-            await SaveBasicAsync();
+                await SaveBasicAsync();
 
-            MainPage.Instance.UnReUtil.RecordCommand(
-                execute: async () => await RenameAsync(itemTag, true, viewModel.NewName),
-                undo: async () => await RenameAsync(itemTag, true, oldName),
-                opType: SI_UndoRedo_OP_Type.Serializable
-            );
+                MainPage.Instance.UnReUtil.RecordCommand(
+                    execute: async () => await RenameAsync(itemTag, true, viewModel.NewName),
+                    undo: async () => await RenameAsync(itemTag, true, oldName),
+                    opType: SI_UndoRedo_OP_Type.Serializable
+                );
+            }
+            finally {
+                GetFocus?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         internal async Task DeleteAsync(long itemTag, bool recordUndo = true) {
@@ -347,7 +361,7 @@ namespace Workloads.Creation.StaticImg.Models {
                     RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
                 },
                 undo: async () => {
-                    await AddAsync(layer.Clone(), false);
+                    await AddAsync(layer.Clone(), false, idx);
                     RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
                 },
                 opType: SI_UndoRedo_OP_Type.Serializable
@@ -395,7 +409,6 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         private int _nextLayerNumberTag = 1;
-        private readonly string _entryFilePath = string.Empty;
         private readonly TaskCompletionSource<bool> _isInkDataLoadCompleted = new();
     }
 }

@@ -11,10 +11,7 @@ namespace Workloads.Creation.StaticImg.Models.Extensions {
                 source.Dpi,
                 source.Format,
                 source.AlphaMode);
-
-            using (var ds = clone.CreateDrawingSession()) {
-                clone.SetPixelBytes(pixels);
-            }
+            clone.SetPixelBytes(pixels);
 
             return clone;
         }

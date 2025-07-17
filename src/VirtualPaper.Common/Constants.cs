@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices;
-
-namespace VirtualPaper.Common {
+﻿namespace VirtualPaper.Common {
     public static class Constants {
 
         //public static string GetMemory(object o) // 获取引用类型的内存地址方法    
@@ -288,10 +286,10 @@ namespace VirtualPaper.Common {
             public static string? RenameDialog_Text_AfterChange { get; }
             public static string? RenameDialog_Text_BeforeChange { get; }
             public static string? Dialog_Title_Rename { get; }
-            public static string? Project_CannotDelete_RootBackground { get; }
+            public static string? Project_CannotDelete_OnlyCanvas { get; }
             public static string? Project_STI_LayerSaveFailed { get; }
             public static string? Project_STI_LayerLoadFailed { get; }
-            public static string? ArcColorPicker_AddToCustom { get; }
+            //public static string? ArcColorPicker_AddToCustom { get; }
             public static string? StaticImg_CanvasSizeInput_Illegal { get; }
             public static string? Account_Email_InvalidTip { get; }
             public static string? Account_Pwd_InvalidTip { get; }
@@ -348,6 +346,12 @@ namespace VirtualPaper.Common {
             public static string? SIG_CanvasSet_RotateRightNinety { get; }
             public static string? SIG_CanvasSet_FlipHorizon { get; }
             public static string? SIG_CanvasSet_FlipVertical { get; }
+            public static string? Project_SI_Text_Layer { get; }
+            public static string? Project_SI_Text_Copy { get; }
+            public static string? Project_SI_Text_UnnamedLayer { get; }
+            public static string? Project_SI_FileNotFound { get; }
+            public static string? SIG_Text_RemoveFromList { get; }
+            public static string? SIG_Text_CopyPath { get; }
         }
 
         public static class Field {

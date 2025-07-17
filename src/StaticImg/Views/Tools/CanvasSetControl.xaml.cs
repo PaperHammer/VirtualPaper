@@ -22,7 +22,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             set { SetValue(SizeProperty, value); }
         }
         public static readonly DependencyProperty SizeProperty =
-            DependencyProperty.Register("Size", typeof(ArcSize), typeof(CanvasSetControl), new PropertyMetadata(0));
+            DependencyProperty.Register(nameof(Size), typeof(ArcSize), typeof(CanvasSetControl), new PropertyMetadata(0));
 
         //public int PixelWidth {
         //    get { return (int)GetValue(PixelWidthProperty); }

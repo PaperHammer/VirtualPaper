@@ -68,6 +68,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Navigation\TabView\ArcTabViewItemHeader.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Resource Remove="Data\Details.xaml" />
   </ItemGroup>
 
@@ -107,6 +111,12 @@
   <ItemGroup>
     <Folder Include="Input\ColorPicker\" />
     <Folder Include="Input\Palette\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Navigation\TabView\ArcTabViewItemHeader.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

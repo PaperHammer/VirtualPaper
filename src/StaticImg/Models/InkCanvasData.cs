@@ -15,7 +15,6 @@ namespace Workloads.Creation.StaticImg.Models {
         [JsonIgnore]
         public InkRenderData RenderData { get; set; }
         public long Tag { get; }
-        public bool IsRootBackground { get; }
 
         private string _name = string.Empty;
         public string Name {
@@ -44,14 +43,12 @@ namespace Workloads.Creation.StaticImg.Models {
 
         [JsonConstructor]
         [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
-        internal InkCanvasData(long tag, bool isRootBackground) {
+        internal InkCanvasData(long tag) {
             Tag = tag;
-            IsRootBackground = isRootBackground;
         }
 
-        public InkCanvasData(bool isRootBackground = false) {
+        public InkCanvasData() {
             Tag = IdentifyUtil.GenerateIdShort();
-            IsRootBackground = isRootBackground;
             SetDataFilePath();
         }
 
@@ -77,7 +74,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         internal void SetDataFilePath() {
             string folder = System.IO.Path.GetDirectoryName(MainPage.Instance.EntryFilePath) ?? string.Empty;
-            _dataFilePath = System.IO.Path.Combine(folder, Tag + "._data");
+            _dataFilePath = System.IO.Path.Combine(folder, Tag + ".sidata");
         }
 
         internal async Task DeletAsync() {
@@ -85,7 +82,7 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         internal InkCanvasData Clone() {
-            var newInk = new InkCanvasData(IsRootBackground) {
+            var newInk = new InkCanvasData() {
                 Name = Name,
                 IsEnable = IsEnable,
                 RenderData = RenderData.Clone()

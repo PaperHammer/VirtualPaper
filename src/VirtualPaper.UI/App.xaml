@@ -11,9 +11,9 @@
             <ResourceDictionary.MergedDictionaries>
                 <controls:XamlControlsResources>
                     <controls:XamlControlsResources.MergedDictionaries>
-                        <ResourceDictionary>
+                        <!--<ResourceDictionary>
                             <x:Double x:Key="ContentDialogMaxWidth">800</x:Double>
-                        </ResourceDictionary>
+                        </ResourceDictionary>-->
                     </controls:XamlControlsResources.MergedDictionaries>
                 </controls:XamlControlsResources>
 

@@ -1,13 +1,12 @@
-﻿using Microsoft.Graphics.Canvas.Brushes;
-using Microsoft.Graphics.Canvas.Geometry;
+﻿using System;
 using Microsoft.Graphics.Canvas;
-using System;
-using Workloads.Creation.StaticImg.Models.EventArg;
-using Windows.Foundation;
-using Windows.UI;
+using Microsoft.Graphics.Canvas.Brushes;
+using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI;
 using Microsoft.UI.Input;
-using System.Diagnostics;
+using Windows.Foundation;
+using Windows.UI;
+using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
     internal abstract class AreaSelector(InkCanvasConfigData data) : Tool {
@@ -19,7 +18,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
             var position = e.Pointer.Position;
             switch (_currentState) {
                 case SelectionState.None:
-                    if (e.PointerPos != PointerPosition.InsideCanvas || 
+                    if (e.PointerPos != PointerPosition.InsideCanvas ||
                         !e.Pointer.Properties.IsLeftButtonPressed) return;
                     StartNewSelection(position);
                     break;
@@ -103,7 +102,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
         }
 
         public override void OnPointerExited(CanvasPointerEventArgs e) {
-            if (e.PointerPos == PointerPosition.InsideCanvas || 
+            if (e.PointerPos == PointerPosition.InsideCanvas ||
                 e.PointerPos == PointerPosition.InsideContainer) return;
             base.OnPointerExited(e);
             EndSelection();
@@ -131,58 +130,59 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
         }
 
         public bool RestoreOriginalContent() {
-            if (_baseContent == null || _selectionContent == null) return false;
+            if (_selectionContent == null) return false;
 
             // 恢复原位置内容
-            using (var ds = _baseContent.CreateDrawingSession()) {
-                // 先清除当前选区位置（防止重叠）
-                ds.FillRectangle(_selectionRect, Colors.Transparent);
-
-                // 恢复到原始位置
+            using (var ds = _baseContent!.CreateDrawingSession()) {
+                ds.Blend = CanvasBlend.Copy; // 覆盖模式
                 ds.DrawImage(_selectionContent,
                     (float)_originalSelectionRect.X,
                     (float)_originalSelectionRect.Y);
             }
-
-            // 重置状态
-            StopSelection();
+            Reset();
             RenderToTarget();
+            _baseContent?.Dispose();
+            _baseContent = null;
 
             return true;
         }
 
-        private void StopSelection() {
+        private void Reset() {
             _selectionContent?.Dispose();
-            _selectionContent = null;
+            _selectionContent = null;            
             _currentState = SelectionState.None;
+            _originalSelectionRect = Rect.Empty;
             UpdateSelectionRect(Rect.Empty);
         }
 
         private void StartNewSelection(Point position) {
-            SaveBaseContent();
-            _currentState = SelectionState.Selecting;
+            SaveBaseContent();            
             _startPoint = position;
             UpdateSelectionRect(new Rect(position, new Size(0, 0)));
-            _isDragging = false;
             _originalSelectionRect = Rect.Empty;
+            _currentState = SelectionState.Selecting;
+            _isDragging = false;
         }
 
         private void StartDragSelection(Point position) {
-            _currentState = SelectionState.Selecting;
-            _moveStartPoint = position;
-            _isDragging = true;
             _currentDragStartRect = _selectionRect; // 记录当前拖动开始时的位置
+            _moveStartPoint = position;
+            _currentState = SelectionState.Selecting;
+            _isDragging = true;            
         }
 
         protected void SaveBaseContent() {
+            //_baseContent?.Dispose();
             _baseContent ??= new CanvasRenderTarget(
                 RenderTarget,
                 RenderTarget.SizeInPixels.Width,
                 RenderTarget.SizeInPixels.Height,
-                RenderTarget.Dpi);
+                RenderTarget.Dpi,
+                RenderTarget.Format,
+                RenderTarget.AlphaMode);
 
             using (var ds = _baseContent.CreateDrawingSession()) {
-                ds.Clear(Colors.Transparent);
+                ds.Blend = CanvasBlend.Copy;
                 ds.DrawImage(RenderTarget);
             }
         }
@@ -190,29 +190,25 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
         protected void CaptureSelectionContent() {
             if (_selectionRect.IsEmpty) return;
 
-            // 保存原始位置（在首次捕获时记录）
-            if (!_isDragging) {
-                _originalSelectionRect = _selectionRect;
-            }
-
             //_selectionContent?.Dispose();
             _selectionContent ??= new CanvasRenderTarget(
                 RenderTarget,
                 (float)_selectionRect.Width,
                 (float)_selectionRect.Height,
-                RenderTarget.Dpi);
+                RenderTarget.Dpi,
+                RenderTarget.Format,
+                RenderTarget.AlphaMode);
+
+            _originalSelectionRect = _selectionRect;
 
             //捕获选区内容
             using (var ds = _selectionContent.CreateDrawingSession()) {
                 ds.Blend = CanvasBlend.Copy;
-                ds.Clear(Colors.Transparent);
-                ds.DrawImage(_baseContent,
-                    new Rect(0, 0, _selectionRect.Width, _selectionRect.Height),
-                    _selectionRect);
+                ds.DrawImage(_baseContent, _selectionContent.Bounds, _selectionRect);
             }
 
             //剪切原位置
-            using (var ds = _baseContent.CreateDrawingSession()) {
+            using (var ds = _baseContent!.CreateDrawingSession()) {
                 ds.Blend = CanvasBlend.Copy;
                 ds.FillRectangle(_selectionRect, Colors.Transparent);
             }
@@ -222,11 +218,14 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
             if (_currentState != SelectionState.Selected || _selectionContent == null) return false;
 
             // 将选区内容合并到基础层
-            using (var ds = _baseContent.CreateDrawingSession()) {
+            using (var ds = _baseContent!.CreateDrawingSession()) {
+                ds.Blend = CanvasBlend.Copy;
                 ds.DrawImage(_selectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
             }
-            StopSelection();
+            Reset();
             RenderToTarget();
+            _baseContent?.Dispose();
+            _baseContent = null;
 
             return true;
         }
@@ -236,7 +235,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
                 if (RenderTarget == null) return;
 
                 using (var ds = RenderTarget.CreateDrawingSession()) {
-                    ds.Clear(Colors.Transparent);
+                    ds.Blend = CanvasBlend.Copy; // 覆盖模式
 
                     // 绘制基准内容
                     if (_baseContent != null) {
@@ -245,7 +244,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
 
                     // 绘制选区内容（自动裁剪到画布边界）
                     if (_selectionContent != null && _currentState != SelectionState.None) {
-                        DrawSelectionContentWithClipping(ds);
+                        ds.DrawImage(_selectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
                     }
 
                     // 绘制完整的选择框（包括延伸到画布外的部分）
@@ -254,7 +253,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
                     }
                 }
 
-                //Render();
                 OnRendered(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
@@ -262,33 +260,10 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
             }
         }
 
-        private void DrawSelectionContentWithClipping(CanvasDrawingSession ds) {
-            // 只绘制画布内的选区内容部分
-            float srcX = (float)Math.Max(0, -_selectionRect.X);
-            float srcY = (float)Math.Max(0, -_selectionRect.Y);
-            float destX = (float)Math.Max(0, _selectionRect.X);
-            float destY = (float)Math.Max(0, _selectionRect.Y);
-
-            float drawWidth = (float)Math.Min(
-                _selectionContent.Size.Width - srcX,
-                RenderTarget.SizeInPixels.Width - destX);
-
-            float drawHeight = (float)Math.Min(
-                _selectionContent.Size.Height - srcY,
-                RenderTarget.SizeInPixels.Height - destY);
-
-            if (drawWidth > 0 && drawHeight > 0) {
-                var sourceRect = new Rect(srcX, srcY, drawWidth, drawHeight);
-                var destRect = new Rect(destX, destY, drawWidth, drawHeight);
-                ds.DrawImage(_selectionContent, destRect, sourceRect);
-            }
-        }
-
         private void DrawFullSelectionBorder(CanvasDrawingSession ds) {
             using (var borderBrush = new CanvasSolidColorBrush(RenderTarget, _selectionBorderColor)) {
                 // 直接绘制完整的选择框，不进行边界裁剪
                 ds.DrawRectangle(_selectionRect, borderBrush, _selectionBorderWidth, _borderStrokeStyle);
-
                 // 可视区域边界指示
                 DrawViewportIndicator(ds);
             }

@@ -350,14 +350,6 @@
                                  The TabViewItem.Content property will be implictly bound to the Content property of the ContentPresenter.
                                  To prevent this, we explicitly set a default empty content here and update the content in code behind. -->
                             <ContentPresenter x:Name="ContentPresenter" Grid.Column="1" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Content="" ContentTemplate="{TemplateBinding HeaderTemplate}" ContentTransitions="{TemplateBinding ContentTransitions}" FontWeight="{TemplateBinding FontWeight}" FontSize="{ThemeResource TabViewItemHeaderFontSize}" Foreground="{ThemeResource TabViewItemHeaderForeground}" OpticalMarginAlignment="TrimSideBearings" HighContrastAdjustment="None" />
-                            <Ellipse 
-                                x:Name="UnsavedDot"
-                                Grid.Column="2"
-                                Width="8" Height="8"
-                                Margin="6 0"
-                                VerticalAlignment="Center"
-                                Fill="{ThemeResource SystemAccentColor}"
-                                Visibility="{Binding IsUnsaved, RelativeSource={RelativeSource TemplatedParent}}"/>
                             <Button x:Name="CloseButton" Grid.Column="3" Margin="{ThemeResource TabViewItemHeaderCloseMargin}" Content="&#xE711;" IsTextScaleFactorEnabled="False" IsTabStop="False" Style="{ThemeResource TabViewCloseButtonStyle}" HighContrastAdjustment="None" />
                         </Grid>
                     </Grid>

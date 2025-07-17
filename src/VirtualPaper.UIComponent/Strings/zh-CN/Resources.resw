@@ -719,8 +719,8 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Dialog_Title_Rename" xml:space="preserve">
     <value>重命名</value>
   </data>
-  <data name="Project_CannotDelete_RootBackground" xml:space="preserve">
-    <value>无法删除根背景图层</value>
+  <data name="Project_CannotDelete_OnlyCanvas" xml:space="preserve">
+    <value>无法删除唯一的图层</value>
   </data>
   <data name="Project_STI_LayerSaveFailed" xml:space="preserve">
     <value>图层保存失败: </value>
@@ -965,5 +965,23 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="SIG_CanvasSet_FlipVertical" xml:space="preserve">
     <value>垂直翻转</value>
+  </data>
+  <data name="Project_SI_Text_Layer" xml:space="preserve">
+    <value>图层</value>
+  </data>
+  <data name="Project_SI_Text_Copy" xml:space="preserve">
+    <value>副本</value>
+  </data>
+  <data name="Project_SI_Text_UnnamedLayer" xml:space="preserve">
+    <value>未命名图层</value>
+  </data>
+  <data name="Project_SI_FileNotFound" xml:space="preserve">
+    <value>该文件不存在或已被移除，是否从列表中删除？</value>
+  </data>
+  <data name="SIG_Text_RemoveFromList" xml:space="preserve">
+    <value>从列表中移出</value>
+  </data>
+  <data name="SIG_Text_CopyPath" xml:space="preserve">
+    <value>复制路径</value>
   </data>
 </root>

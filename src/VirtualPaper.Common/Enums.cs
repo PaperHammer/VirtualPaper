@@ -147,7 +147,7 @@ namespace VirtualPaper.Common {
     public enum DialogResult {
         None,
         Primary,
-        Seconday
+        Secondary
     }
 
     public static class FileExtension {

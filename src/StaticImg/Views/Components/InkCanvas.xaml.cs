@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -14,6 +15,7 @@ using VirtualPaper.UIComponent.Input;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.System;
+using Windows.UI;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.EventArg;
 using Workloads.Creation.StaticImg.Models.ToolItems;
@@ -64,19 +66,19 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             KeyboardSinglePressUtil.Instance.RegisterShortcut(
                 async () => {
-                   await AddLayerAsync();
+                    await AddLayerAsync();
                 },
                 VirtualKey.Number1,
                 VirtualKeyModifiers.Control);
             KeyboardSinglePressUtil.Instance.RegisterShortcut(
                 async () => {
-                   await CopyLayerAsync(_viewModel.ConfigData.SelectedInkCanvas.Tag);
+                    await CopyLayerAsync(_viewModel.ConfigData.SelectedInkCanvas.Tag);
                 },
                 VirtualKey.Number2,
                 VirtualKeyModifiers.Control);
             KeyboardSinglePressUtil.Instance.RegisterShortcut(
                 async () => {
-                   await DeleteLayerAsync(_viewModel.ConfigData.SelectedInkCanvas.Tag);
+                    await DeleteLayerAsync(_viewModel.ConfigData.SelectedInkCanvas.Tag);
                 },
                 VirtualKey.Delete);
             KeyboardSinglePressUtil.Instance.RegisterShortcut(
@@ -153,15 +155,14 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
                 CanvasAlphaMode.Premultiplied);
         }
-        #endregion       
+        #endregion
 
         #region redner
         private async void InkingCanvas_Loaded(object sender, RoutedEventArgs e) {
             try {
-                await _viewModel.LoadBasicOrInit();
+                await _viewModel.LoadOrInitAsync();
                 FitView();
-                await _viewModel.LoadRenderDataAsync();
-                await _viewModel.RenderDataLoaded.Task;
+                await _viewModel.ConfigData.RenderDataLoaded.Task;
                 RebuildComposite();
                 RenderToCompositeTarget(RenderMode.FullRegion);
                 SetupHandlers();
@@ -194,6 +195,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
                 // 单次提交所有绘制命令
                 using (var finalDs = _compositeTarget.CreateDrawingSession()) {
+                    finalDs.Blend = mode == RenderMode.FullRegion
+                        ? CanvasBlend.Copy  // 全屏渲染需要完全覆盖
+                        : CanvasBlend.SourceOver; // 局部渲染需要混合
                     finalDs.DrawImage(commandList);
                 }
             }
@@ -202,6 +206,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void FullRender(CanvasDrawingSession ds) {
+            ds.Blend = CanvasBlend.Copy;
             // 逆序遍历
             for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
                 var layer = _viewModel.ConfigData.InkDatas[i];
@@ -211,6 +216,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void PartialRender(CanvasDrawingSession ds, Rect region) {
+            // 禁用抗锯齿（开启抗锯齿的局部刷新会导致刷新区域边界出现细线）
+            // 抗锯齿算法将由各工具自己实现      
+            ds.Antialiasing = CanvasAntialiasing.Aliased;
+
             for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
                 var layer = _viewModel.ConfigData.InkDatas[i];
                 if (!layer.IsEnable || layer.RenderData == null) continue;
@@ -221,12 +230,37 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
                 var visibleRect = region.IntersectRect(layerBounds);
                 if (!visibleRect.IsEmpty) {
-                    // 禁用抗锯齿（开启抗锯齿的局部刷新会导致刷新区域边界出现细线）
-                    // 抗锯齿算法将由各工具自己实现
-                    ds.Antialiasing = CanvasAntialiasing.Aliased;
                     ds.DrawImage(layer.RenderData.RenderTarget, visibleRect, visibleRect);
                 }
             }
+        }
+
+        private void InitializeGridPattern(ICanvasResourceCreator resourceCreator) {
+            // 创建棋盘格纹理（20x20像素）
+            _gridTexture = new CanvasRenderTarget(
+                resourceCreator, 20, 20, MainPage.Instance.Bridge.GetHardwareDpi());
+
+            using (var ds = _gridTexture.CreateDrawingSession()) {
+                ds.Clear(Color.FromArgb(255, 168, 168, 168));
+                ds.FillRectangle(10, 0, 10, 10, Color.FromArgb(255, 150, 150, 150));
+                ds.FillRectangle(0, 10, 10, 10, Color.FromArgb(255, 150, 150, 150));
+            }
+
+            // 创建平铺画刷
+            _gridBrush = new CanvasImageBrush(resourceCreator, _gridTexture) {
+                ExtendX = CanvasEdgeBehavior.Wrap, // 水平平铺
+                ExtendY = CanvasEdgeBehavior.Wrap, // 垂直平铺
+                SourceRectangle = new Rect(0, 0, 20, 20) // 源纹理区域
+            };
+        }
+
+        private void BackgroundGrid_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
+            if (_gridTexture == null) {
+                InitializeGridPattern(sender);
+            }
+
+            args.DrawingSession.FillRectangle(
+                0, 0, (float)sender.ActualWidth, (float)sender.ActualHeight, _gridBrush);
         }
         #endregion
 
@@ -532,5 +566,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private readonly InputCursor _originalInputCursor;
         private CanvasRenderTarget _compositeTarget;
         private readonly TaskCompletionSource<bool> _isInited = new();
+        private CanvasRenderTarget _gridTexture;
+        private CanvasImageBrush _gridBrush;
     }
 }

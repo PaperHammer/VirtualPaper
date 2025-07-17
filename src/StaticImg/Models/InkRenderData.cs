@@ -16,14 +16,14 @@ using Workloads.Creation.StaticImg.Models.Extensions;
 namespace Workloads.Creation.StaticImg.Models {
     public partial class InkRenderData : IDisposable {
         public CanvasRenderTarget RenderTarget { get; private set; }
-        public bool IsRootBackground { get; }
+        public bool IsNeedBackground { get; }
         public Matrix3x2 Transform { get; private set; } = Matrix3x2.Identity;
         public TaskCompletionSource<bool> IsCompleted => _isCompleted;
         public Rect Bound => _arcSize.Bound;
 
-        public InkRenderData(ArcSize arcSize, bool isRootBackground = false) {
+        public InkRenderData(ArcSize arcSize, bool isNeedBackground = false) {
             _arcSize = arcSize;
-            IsRootBackground = isRootBackground;
+            IsNeedBackground = isNeedBackground;
             InitializeRenderTarget();
         }
 
@@ -34,8 +34,9 @@ namespace Workloads.Creation.StaticImg.Models {
                 (float)_arcSize.Width,
                 (float)_arcSize.Height,
                 _arcSize.Dpi,
-                DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                CanvasAlphaMode.Premultiplied);
+                MainPage.Instance.SharedFormat,
+                MainPage.Instance.SharedAlphaMode);
+            if (IsNeedBackground) InitializeBlankRenderTarget(); // 初始化空白画布
             IsCompleted.SetResult(true);
         }
 
@@ -89,9 +90,9 @@ namespace Workloads.Creation.StaticImg.Models {
                     await tempFile.CopyAndReplaceAsync(file);
                     progress?.Report(1.0);
                 }
-                catch (Exception ex) {
-                    throw;
-                }
+                //catch (Exception ex) {
+                //    throw;
+                //}
                 finally {
                     ArrayPool<byte>.Shared.Return(buffer);
                     await tempFile.DeleteAsync();
@@ -170,9 +171,9 @@ namespace Workloads.Creation.StaticImg.Models {
 
                 progress?.Report(1.0);
             }
-            catch (Exception ex) {
-                throw;
-            }
+            //catch (Exception ex) {
+            //    throw;
+            //}
             finally {
                 pool.Return(headerBuffer);
                 await tempFile.DeleteAsync();
@@ -182,7 +183,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private void InitializeBlankRenderTarget() {
             using var ds = RenderTarget.CreateDrawingSession();
-            if (IsRootBackground) {
+            if (IsNeedBackground) {
                 ds.Clear(Colors.White);
                 ds.DrawRectangle(new Rect(0, 0, RenderTarget.Size.Width, RenderTarget.Size.Height),
                                 Colors.Transparent, 1f);
@@ -287,9 +288,9 @@ namespace Workloads.Creation.StaticImg.Models {
 
             // 绘制到新目标
             using (var ds = RenderTarget.CreateDrawingSession()) {
-                if (IsRootBackground) {
-                    ds.Clear(Colors.White);
-                }
+                //if (IsNeedBackground) {
+                //    ds.Clear(Colors.White);
+                //}
                 // 在左上角绘制原始内容（1:1不缩放）
                 if (_cachedContent != null) {
                     var contentRect = new Rect(

@@ -36,14 +36,14 @@ namespace VirtualPaper.UI.Utils {
                 SecondaryButtonText = secondaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton).Content.XamlRoot,
-            };
+            }; 
 
             var result = await dialog.ShowAsync();
 
             return result switch {
                 ContentDialogResult.None => DialogResult.None,
                 ContentDialogResult.Primary => DialogResult.Primary,
-                ContentDialogResult.Secondary => DialogResult.Seconday,
+                ContentDialogResult.Secondary => DialogResult.Secondary,
                 _ => DialogResult.None,
             };
         }
@@ -66,7 +66,7 @@ namespace VirtualPaper.UI.Utils {
             return result switch {
                 ContentDialogResult.None => DialogResult.None,
                 ContentDialogResult.Primary => DialogResult.Primary,
-                ContentDialogResult.Secondary => DialogResult.Seconday,
+                ContentDialogResult.Secondary => DialogResult.Secondary,
                 _ => DialogResult.None,
             };
         }
@@ -89,10 +89,10 @@ namespace VirtualPaper.UI.Utils {
             return result switch {
                 ContentDialogResult.None => DialogResult.None,
                 ContentDialogResult.Primary => DialogResult.Primary,
-                ContentDialogResult.Secondary => DialogResult.Seconday,
+                ContentDialogResult.Secondary => DialogResult.Secondary,
                 _ => DialogResult.None,
             };
-        }        
+        }
         
         public async Task<DialogResult> ShowDialogWithoutTitleAsync(
             object content,
@@ -110,7 +110,7 @@ namespace VirtualPaper.UI.Utils {
             return result switch {
                 ContentDialogResult.None => DialogResult.None,
                 ContentDialogResult.Primary => DialogResult.Primary,
-                ContentDialogResult.Secondary => DialogResult.Seconday,
+                ContentDialogResult.Secondary => DialogResult.Secondary,
                 _ => DialogResult.None,
             };
         }

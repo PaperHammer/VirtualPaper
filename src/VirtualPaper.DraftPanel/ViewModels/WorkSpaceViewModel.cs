@@ -14,6 +14,7 @@ using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Navigation;
+using VirtualPaper.UIComponent.Navigation.TabView;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject {
@@ -174,13 +175,15 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private void AddToWorkSpace(string filePath, IRuntime runtime) {
             _rt.Add(runtime);
             TabViewItems.Add(new ArcTabViewItem() {
-                Header = new TextBlock {
-                    Text = Path.GetFileName(filePath),
-                    TextTrimming = TextTrimming.CharacterEllipsis, // 文本超出时显示省略号
-                    MaxWidth = 200
+                Header = new ArcTabViewItemHeader() {
+                    MainContent = new TextBlock {
+                        Text = Path.GetFileName(filePath),
+                        TextTrimming = TextTrimming.CharacterEllipsis, // 文本超出时显示省略号
+                        MaxWidth = 200
+                    },
+                    IsUnsaved = false,
                 },
                 Content = runtime,
-                IsUnsaved = false,
             });
         }
         #endregion

@@ -25,15 +25,13 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             try {
                 newBaseContent = new CanvasRenderTarget(
                     RenderTarget,
-                    RenderTarget.SizeInPixels.Width,
+                    RenderTarget!.SizeInPixels.Width,
                     RenderTarget.SizeInPixels.Height,
-                    RenderTarget.Dpi);
+                    RenderTarget.Dpi,
+                    RenderTarget.Format,
+                    RenderTarget.AlphaMode);
 
                 using (var ds = newBaseContent.CreateDrawingSession()) {
-                    // 清空整个画布
-                    ds.Clear(Colors.Transparent);
-
-                    // 将选区内容绘制到原始位置
                     ds.DrawImage(_selectionContent,
                         new Rect(_selectionRect.X, _selectionRect.Y,
                                 _selectionRect.Width, _selectionRect.Height));
@@ -91,7 +89,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 }
 
                 OnRendered(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-                //Render();
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();

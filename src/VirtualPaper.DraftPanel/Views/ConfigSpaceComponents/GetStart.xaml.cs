@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -14,6 +15,7 @@ using VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.DraftPanel;
+using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI draft structure,
 // and more about our draft templates, see: http://aka.ms/winui-draft-info.
@@ -64,8 +66,20 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             }
         }
 
-        private void RecentUsedsListView_ItemClick(object sender, ItemClickEventArgs e) {
+        private async void RecentUsedsListView_ItemClick(object sender, ItemClickEventArgs e) {
             if (e.ClickedItem is RecentUsed ru) {
+                if (!Path.Exists(ru.FilePath)) {
+                    var diaRes = await Draft.Instance.GetDialog().ShowDialogWithoutTitleAsync(
+                        LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_FileNotFound)),
+                        LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm)),
+                        LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel))
+                    );
+                    if (diaRes == DialogResult.Primary) {
+                        _viewModel.RemoveFromListCommand.Execute(e.ClickedItem);
+                    }
+                    return;
+                }
+
                 _configSpace.ChangePanelState(DraftPanelState.WorkSpace, new ToWorkSpace([ru.FilePath]));
             }
         }
@@ -108,6 +122,14 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             args.Handled = true;
         }
 
+        //private void RemoveFromList_Click(object sender, RoutedEventArgs e) {
+        //    _viewModel.RecentUseds.Remove((sender as FrameworkElement)?.DataContext as IRecentUsed);
+        //}
+
+        //private void CopyPath_Click(object sender, RoutedEventArgs e) {
+
+        //}
+
         private GetStartViewModel _viewModel;
         private ConfigSpace _configSpace;
         private readonly IStrategy[] _strategies = [
@@ -115,5 +137,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             new OpenFile(),
             new NewVpd(),
         ];
+        private readonly string _SIG_Text_RemoveFromList = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_RemoveFromList));
+        private readonly string _SIG_Text_CopyPath = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_CopyPath));
     }
 }

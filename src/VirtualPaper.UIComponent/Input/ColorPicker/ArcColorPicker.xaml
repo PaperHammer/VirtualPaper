@@ -363,10 +363,11 @@
                                         Visibility="{TemplateBinding AddBtnIsVisible}">
                                         <Button
                                             HorizontalAlignment="Right"
+                                            Padding="11 5"
                                             Command="{TemplateBinding AddToCustomCommand}">
-                                            <TextBlock
-                                                FontSize="13"
-                                                Text="{TemplateBinding Text_AddToCustom}"/>
+                                            <FontIcon 
+                                                FontSize="16"
+                                                Glyph="&#xE710;" />
                                         </Button>
                                     </Grid>
 

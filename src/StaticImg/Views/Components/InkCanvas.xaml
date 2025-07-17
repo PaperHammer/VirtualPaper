@@ -55,6 +55,14 @@
                     PointerMoved="Container_PointerMoved"
                     PointerReleased="Container_PointerReleased"
                     PointerExited="Container_PointerExited">
+
+                    <!-- 背景方格 -->
+                    <win2d:CanvasControl
+                        x:Name="backgroundGrid"
+                        Draw="BackgroundGrid_Draw"
+                        UseSharedDevice="True"/>
+
+                    <!-- 主画布 -->
                     <win2d:CanvasControl
                         x:Name="inkCanvas"
                         Loaded="InkingCanvas_Loaded"

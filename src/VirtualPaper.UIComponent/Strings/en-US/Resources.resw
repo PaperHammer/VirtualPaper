@@ -719,8 +719,8 @@ Author: PaperHammer</value>
   <data name="Dialog_Title_Rename" xml:space="preserve">
     <value>Rename</value>
   </data>
-  <data name="Project_CannotDelete_RootBackground" xml:space="preserve">
-    <value>The root background layer cannot be deleted</value>
+  <data name="Project_CannotDelete_OnlyCanvas" xml:space="preserve">
+    <value>Unable to delete the only layer</value>
   </data>
   <data name="Project_STI_LayerSaveFailed" xml:space="preserve">
     <value>Layer save failed: </value>
@@ -965,5 +965,23 @@ The following words cannot be used as usernames:
   </data>
   <data name="SIG_CanvasSet_FlipVertical" xml:space="preserve">
     <value>Flip vertically</value>
+  </data>
+  <data name="Project_SI_Text_Layer" xml:space="preserve">
+    <value>Layer</value>
+  </data>
+  <data name="Project_SI_Text_Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Project_SI_Text_UnnamedLayer" xml:space="preserve">
+    <value>Unnamed layer</value>
+  </data>
+  <data name="Project_SI_FileNotFound" xml:space="preserve">
+    <value>The file does not exist or has been removed. Would you like to delete it from the list?</value>
+  </data>
+  <data name="SIG_Text_RemoveFromList" xml:space="preserve">
+    <value>Remove from the list</value>
+  </data>
+  <data name="SIG_Text_CopyPath" xml:space="preserve">
+    <value>Copy the path</value>
   </data>
 </root>

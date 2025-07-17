@@ -1,4 +1,5 @@
 ﻿using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.Grpc.Client.Interfaces {
     public interface IUserSettingsClient {
@@ -11,5 +12,6 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         Task LoadAsync<T>();
         void Load<T>();
         Task UpdateRecetUsedAsync(string filePath);
+        Task DeleteRecetUsedAsync(IRecentUsed item);
     }
 }

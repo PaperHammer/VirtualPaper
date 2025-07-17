@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Bridge;
+using Windows.Graphics.DirectX;
 using Workloads.Creation.StaticImg.Models.ToolItems.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -22,6 +23,8 @@ namespace Workloads.Creation.StaticImg {
         internal SI_UndoRedoUtil UnReUtil { get; }
         internal string EntryFilePath { get; }
         internal FileType RTFileType { get; }
+        internal DirectXPixelFormat SharedFormat { get;  }
+        internal CanvasAlphaMode SharedAlphaMode { get;  }
 
         /// <summary>
         /// ¾²Ì¬Í¼Ïñ¹¤×÷Ò³Ãæ
@@ -33,6 +36,8 @@ namespace Workloads.Creation.StaticImg {
             EntryFilePath = entryFilePath;
             RTFileType = rtFileType;
             SharedDevice = CanvasDevice.GetSharedDevice();
+            SharedFormat = DirectXPixelFormat.B8G8R8A8UIntNormalized;
+            SharedAlphaMode = CanvasAlphaMode.Premultiplied;
             UnReUtil = new SI_UndoRedoUtil();
 
             this.InitializeComponent();

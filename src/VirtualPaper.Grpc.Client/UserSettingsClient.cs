@@ -217,6 +217,11 @@ namespace VirtualPaper.Grpc.Client {
             await SetRecentUsedsAsync();
         }
 
+        public async Task DeleteRecetUsedAsync(IRecentUsed item) {
+            RecentUseds.Remove(item);
+            await SetRecentUsedsAsync();
+        }
+
         private readonly Grpc_UserSettingsService.Grpc_UserSettingsServiceClient _client;
     }
 }

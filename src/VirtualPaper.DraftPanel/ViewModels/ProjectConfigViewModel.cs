@@ -62,13 +62,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     Desc = "静态图像",
                     Type = ProjectType.PImage,
                 },
-                new() {
-                    ItemImageKey = "ui_components/project-create-static-img.png",
-                    DescImageKey = "ui_components/project-create-static-image-desc.png",
-                    Name = "静态图像2",
-                    Desc = "静态图像2",
-                    Type = ProjectType.PImage,
-                },
             ];
 
             _availableTemplates = [.. AvailableTemplates];

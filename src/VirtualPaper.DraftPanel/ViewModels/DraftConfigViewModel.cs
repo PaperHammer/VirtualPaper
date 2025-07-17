@@ -6,7 +6,6 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model;
-using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.Models.Mvvm;

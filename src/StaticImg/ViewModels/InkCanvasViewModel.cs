@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
@@ -8,9 +7,6 @@ using Workloads.Creation.StaticImg.Models;
 
 namespace Workloads.Creation.StaticImg.ViewModels {
     internal partial class InkCanvasViewModel : ObservableObject {
-        internal TaskCompletionSource<bool> BasicDataLoaded => _basicDataLoaded;
-        internal TaskCompletionSource<bool> RenderDataLoaded => _renderDataLoaded;
-
         private InkCanvasConfigData _configData;
         public InkCanvasConfigData ConfigData {
             get { return _configData; }
@@ -26,33 +22,29 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             await ConfigData.SaveRenderDataAsync();
         }
 
-        internal async Task LoadBasicOrInit() {
+        internal async Task LoadOrInitAsync() {
             switch (MainPage.Instance.RTFileType) {
                 case FileType.FImage:
                     break;
                 case FileType.FProject:
-                    await LoadBasicDataAsync();
+                    await LoadProjectAsync();
                     break;
                 default:
                     break;
             }
         }
 
-        private async Task LoadBasicDataAsync() {          
+        internal async Task LoadProjectAsync() {
             if (!File.Exists(MainPage.Instance.EntryFilePath)) {
                 await ConfigData.InitDataAsync();
-                await ConfigData.SaveRenderDataAsync();
+                await SaveAsync();
             }
-            await ConfigData.LoadBasicDataAsync();
-            BasicDataLoaded.TrySetResult(true);
+            else {
+                await ConfigData.LoadBasicDataAsync();                
+                await ConfigData.LoadRenderDataAsync();                
+            }
         }
 
-        internal async Task LoadRenderDataAsync() {
-            await ConfigData.LoadRenderDataAsync();
-            RenderDataLoaded.TrySetResult(true);
-        }
-
-        private readonly TaskCompletionSource<bool> _basicDataLoaded = new(), _renderDataLoaded = new();
         internal readonly List<AspectRatioItem> _aspectRatios = [
             new(displayText: "16:9", borderWidth: 48, borderHeight: 27 ),
             new(displayText: "5:3", borderWidth: 40, borderHeight: 24),

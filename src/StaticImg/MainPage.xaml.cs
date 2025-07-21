@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Xaml;
@@ -23,8 +24,13 @@ namespace Workloads.Creation.StaticImg {
         internal SI_UndoRedoUtil UnReUtil { get; }
         internal string EntryFilePath { get; }
         internal FileType RTFileType { get; }
-        internal DirectXPixelFormat SharedFormat { get;  }
-        internal CanvasAlphaMode SharedAlphaMode { get;  }
+        internal DirectXPixelFormat SharedFormat { get; }
+        internal CanvasAlphaMode SharedAlphaMode { get; }
+
+        public double FrameTimeMs {
+            get { lock (_frameTimeLock) return _frameTimeMs; }
+            private set { lock (_frameTimeLock) _frameTimeMs = value; }
+        }
 
         /// <summary>
         /// 静态图像工作页面
@@ -49,13 +55,52 @@ namespace Workloads.Creation.StaticImg {
 
             await InkCanvas.IsInited.Task;
 
+            StartFrameTimeMonitor();
             Bridge.GetNotify().Loaded();
             this.IsEnabled = true;
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            StopFrameTimeMonitor();
             SharedDevice.Dispose();
             UnReUtil.Dispose();
+        }
+
+        private void StartFrameTimeMonitor() {
+            if (_frameTimeRunning) return;
+
+            _frameTimeRunning = true;
+            _frameTimeTask = Task.Run(async () => {
+                while (_frameTimeRunning && !_frameTimeCts.IsCancellationRequested) {
+                    try {
+                        var now = DateTime.Now;
+                        if (_lastFrameTime != default) {
+                            FrameTimeMs = (now - _lastFrameTime).TotalMilliseconds;
+                        }
+                        _lastFrameTime = now;
+
+                        // 动态调整采样频率（帧时间越长，采样间隔越大）
+                        int delayMs = FrameTimeMs < 16.6 ? 1 : (int)Math.Min(FrameTimeMs / 2, 33);
+                        await Task.Delay(delayMs, _frameTimeCts.Token);
+                    }
+                    catch (TaskCanceledException) {
+                        // 正常退出
+                    }
+                    catch (Exception ex) {
+                        Bridge.Log(LogType.Error, $"FrameTime monitor error: {ex.Message}");
+                    }
+                }
+            }, _frameTimeCts.Token);
+        }
+
+        private void StopFrameTimeMonitor() {
+            _frameTimeRunning = false;
+            _frameTimeCts.Cancel();
+
+            try {
+                _frameTimeTask?.Wait(50); // 等待50ms确保线程退出
+            }
+            catch { /* 忽略线程结束时的异常 */ }
         }
 
         #region workSpace events
@@ -90,5 +135,12 @@ namespace Workloads.Creation.StaticImg {
             }
         }
         #endregion
+
+        private volatile bool _frameTimeRunning = false;
+        private Task _frameTimeTask;
+        private readonly object _frameTimeLock = new();
+        private double _frameTimeMs;
+        private DateTime _lastFrameTime;
+        private readonly CancellationTokenSource _frameTimeCts = new();
     }
 }

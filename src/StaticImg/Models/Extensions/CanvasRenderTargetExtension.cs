@@ -14,6 +14,6 @@ namespace Workloads.Creation.StaticImg.Models.Extensions {
             clone.SetPixelBytes(pixels);
 
             return clone;
-        }
+        }   
     }
 }

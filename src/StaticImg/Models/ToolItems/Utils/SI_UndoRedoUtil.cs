@@ -8,7 +8,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.Utils {
         public bool CanRedo => _undoRedoCore.CanRedo;
 
         public SI_UndoRedoUtil() {
-            _undoRedoCore = new UndoRedoSnapshotUtil(20);
+            _undoRedoCore = new UndoRedoUtil(20);
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.Utils {
         public async Task RedoAsync() => await _undoRedoCore.TryRedoAsync();
         public void Dispose() => _undoRedoCore.Dispose();
 
-        private readonly UndoRedoSnapshotUtil _undoRedoCore;        
+        private readonly UndoRedoUtil _undoRedoCore;        
     }
 
     public enum SI_UndoRedo_OP_Type {

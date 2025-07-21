@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
+using VirtualPaper.Common.Utils.UnReUtil;
 using VirtualPaper.UIComponent.Services;
 using Windows.Foundation;
 using Windows.UI;
@@ -69,22 +70,40 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         /// <summary>
         /// 将内容变更提交到 Undo/Redo 系统
         /// </summary>
-        protected virtual void CommitContentChange(RenderSnapshot? snapshot, CanvasRenderTarget target) {
-            if (RenderTarget == null || snapshot == null) return;
-            
-            snapshot.Commit(target);
+        protected virtual void CommitContentChange(IEnumerable<StrokeSegment> strokeSegments, CanvasRenderTarget target) {
+            var rect = CalculateTotalAffectedRegion(strokeSegments);
             MainPage.Instance.UnReUtil.RecordCommand(
                 execute: () => {
-                    snapshot.RenderToTarget(target, SnapshotMode.Destination);
-                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.PartialRegion, snapshot.AffectedRegion));
+                    foreach (var segment in strokeSegments) {
+                        segment.ApplyToRenderTarget(target, UndoRedoOPType.Redo);
+                    }
+                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.PartialRegion, rect));
                 },
                 undo: () => {
-                    snapshot.RenderToTarget(target, SnapshotMode.Origin);
-                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-
+                    foreach (var segment in strokeSegments) {
+                        segment.ApplyToRenderTarget(target, UndoRedoOPType.Undo);
+                    }
+                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.PartialRegion, rect));
                 },
                 opType: SI_UndoRedo_OP_Type.Region
             );
+        }
+
+        // 计算所有线段合并的脏矩形区域
+        private static Rect CalculateTotalAffectedRegion(IEnumerable<StrokeSegment> segments) {
+            int left = int.MaxValue, top = int.MaxValue;
+            int right = 0, bottom = 0;
+
+            foreach (var segment in segments) {
+                foreach (var point in segment.Points) {
+                    left = Math.Min(left, point.Left);
+                    top = Math.Min(top, point.Top);
+                    right = Math.Max(right, point.Left + point.Width);
+                    bottom = Math.Max(bottom, point.Top + point.Height);
+                }
+            }
+
+            return new Rect(left, top, right - left, bottom - top);
         }
 
         public virtual void Dispose() {
@@ -101,12 +120,37 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
     }
 
     public partial class StrokeSegment {
-        public Point StartPoint { get; }
-        public List<Point> Points { get; } = [];
+        public List<StrokePoint> Points { get; } = [];
 
-        public StrokeSegment(Point startPoint) {
-            StartPoint = startPoint;
-            Points.Add(startPoint);
+        public StrokeSegment(StrokePoint point) {
+            Points.Add(point);
+        }
+
+        public void ApplyToRenderTarget(CanvasRenderTarget target, UndoRedoOPType oPType) {
+            using (var ds = target.CreateDrawingSession()) {
+                foreach (var point in Points) {
+                    target.SetPixelBytes(
+                        oPType == UndoRedoOPType.Undo
+                            ? point.OldPixels
+                            : point.NewPixels,
+                        point.Left, point.Top, point.Width, point.Height
+                    );
+                }
+            }
+        }
+    }
+
+    public class StrokePoint {
+        public int Left, Top, Width, Height;
+        public byte[] OldPixels;
+        public byte[] NewPixels;
+        public float Thickness;
+        public Point StartPoint => new(Left, Top);
+
+        public StrokePoint(int left, int top, int width, int height, byte[] oldPixels, float thickness) {
+            Left = left; Top = top; Width = width; Height = height;
+            OldPixels = oldPixels;
+            Thickness = thickness;
         }
     }
 }

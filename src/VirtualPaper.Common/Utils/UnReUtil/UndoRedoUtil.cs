@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 
 namespace VirtualPaper.Common.Utils.UnReUtil {
-    public sealed class UndoRedoSnapshotUtil : IDisposable {
+    public sealed class UndoRedoUtil : IDisposable {
         public event EventHandler? OnPreviewUndo;
         public event EventHandler? OnUndoDone;
         public event EventHandler? OnPreviewRedo;
@@ -11,7 +11,7 @@ namespace VirtualPaper.Common.Utils.UnReUtil {
         public bool CanRedo => _redoStack.Count > 0;
 
         /// <param name="maxStackSize">最大栈大小，0表示无限制</param>
-        public UndoRedoSnapshotUtil(int maxStackSize = 0) {
+        public UndoRedoUtil(int maxStackSize = 0) {
             _maxStackSize = maxStackSize;
         }
 
@@ -111,5 +111,9 @@ namespace VirtualPaper.Common.Utils.UnReUtil {
         // 轻量级读写锁（比lock更好）&& 让 _currentState 也能保证线程安全
         private readonly ReaderWriterLockSlim _rwSlim = new(LockRecursionPolicy.SupportsRecursion);
         private readonly int _maxStackSize;
+    }
+
+    public enum UndoRedoOPType {
+        Undo, Redo
     }
 }

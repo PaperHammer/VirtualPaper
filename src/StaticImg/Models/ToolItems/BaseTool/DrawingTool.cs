@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Microsoft.Graphics.Canvas;
-using Microsoft.UI;
 using Microsoft.UI.Input;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
-using Workloads.Creation.StaticImg.Models.ToolItems.Utils;
+using Workloads.Creation.StaticImg.Models.Extensions;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
     internal abstract class DrawingTool(InkCanvasConfigData data) : Tool {
@@ -22,30 +20,25 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
             InitDrawState(pointerPoint);
             InitBrush();
             InitSegement(e);
-            InitSnapshot();
 
             RenderToTarget();
         }
 
         #region init
-        private void InitSnapshot() {
-            _snapshot = new(data.SelectedInkCanvas.Tag, RenderTarget!);
-        }
-
         /// <summary>
         /// 初始化笔刷
         /// </summary>
         protected virtual void InitBrush() {
-            if (!_brushCache.TryGetValue((_size, _blendedColor), out _brush)) {
+            if (!_brushCache.TryGetValue((_thickness, _blendedColor), out _brush)) {
                 var renderTarget = new CanvasRenderTarget(
-                    MainPage.Instance.SharedDevice, _size, _size, data.Size.Dpi,
-                    Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                    CanvasAlphaMode.Premultiplied);
+                    MainPage.Instance.SharedDevice, _thickness, _thickness, data.Size.Dpi,
+                    RenderTarget.Format,
+                    RenderTarget.AlphaMode);
                 using (var _tmpDs = renderTarget.CreateDrawingSession()) {
-                    _tmpDs.Clear(Colors.Transparent);
-                    _tmpDs.FillCircle(_size / 2, _size / 2, _size / 2, _blendedColor);
+                    _tmpDs.Blend = CanvasBlend.Copy;
+                    _tmpDs.FillCircle(_thickness / 2, _thickness / 2, _thickness / 2, _blendedColor);
                 }
-                _brushCache[(_size, _blendedColor)] = renderTarget;
+                _brushCache[(_thickness, _blendedColor)] = renderTarget;
                 _brush = renderTarget;
             }
         }
@@ -56,9 +49,13 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
         /// <param name="e"></param>
         protected virtual void InitSegement(CanvasPointerEventArgs e) {
             _strokeSegments.Clear();
-            _currentSegment = new StrokeSegment(e.Pointer.Position);
+            var pos = e.Pointer.Position;
+            _currentSegment = new StrokeSegment(new StrokePoint(
+                (int)pos.X, (int)pos.Y, 1, 1,
+                RenderTarget.GetPixelBytes((int)pos.X, (int)pos.Y, 1, 1),
+                _thickness));
             _pointerQueue.Clear();
-            _lastProcessedPoint = e.Pointer.Position;
+            _lastProcessedPoint = pos;
         }
 
         /// <summary>
@@ -69,7 +66,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
             _isDrawing = true;
             _blendedColor = BlendColor(pointerPoint.Properties.IsRightButtonPressed ?
                 data.BackgroundColor : data.ForegroundColor, data.BrushOpacity / 100);
-            _size = (int)data.BrushThickness;
+            _thickness = (int)data.BrushThickness;
             _lastProcessedPoint = pointerPoint.Position;
         }
         #endregion
@@ -106,10 +103,10 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
                 RenderToTarget();
             }
 
-            _strokeSegments.Clear();
             _pointerQueue.Clear();
             _historyPoints.Clear();
-            CommitContentChange(_snapshot, data.InkDatas.First(x => x.Tag == _snapshot!.Tag).RenderData.RenderTarget);
+            CommitContentChange([.. _strokeSegments], data.InkDatas.First(x => x.Tag == data.SelectedInkCanvas.Tag).RenderData.RenderTarget);
+            _strokeSegments.Clear();
 
             // 定期清理不常用的笔刷 超过20个笔刷时清理
             if (_brushCache.Count > 20) {
@@ -133,9 +130,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
                 _strokeSegments.AddLast(_currentSegment);
                 var dirtyRegion = CalculateSegmentBoundsSIMD(_currentSegment);
                 using (var ds = RenderTarget.CreateDrawingSession()) {
-                    DrawSegment(ds, _currentSegment.Points);
+                    DrawSegment(ds, _currentSegment);
                 }
-                _snapshot?.UpdateSnapshotData(dirtyRegion);
 
                 OnRendered(new RenderTargetChangedEventArgs(RenderMode.PartialRegion, dirtyRegion));
             }
@@ -159,13 +155,13 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
             var max = new Vector2(float.MinValue);
 
             foreach (var point in segment.Points) {
-                var v = new Vector2((float)point.X, (float)point.Y);
+                var v = new Vector2((float)point.StartPoint.X, (float)point.StartPoint.Y);
                 min = Vector2.Min(min, v);
                 max = Vector2.Max(max, v);
             }
 
             // 考虑笔刷大小扩展区域
-            var brushSize = new Vector2(_size);
+            var brushSize = new Vector2(_thickness);
             return new Rect(
                 min.X - brushSize.X,
                 min.Y - brushSize.Y,
@@ -174,22 +170,23 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
         }
 
         // 绘制笔迹
-        protected void DrawSegment(CanvasDrawingSession ds, List<Point> points) {
+        protected void DrawSegment(CanvasDrawingSession ds, StrokeSegment segment) {
+            var points = segment.Points;
             if (points.Count == 0) return;
 
             ds.Blend = _canvasBlend;
             // 单点绘制模式
             if (points.Count == 1) {
-                ds.DrawImage(_brush, (float)(points[0].X - _size / 2), (float)(points[0].Y - _size / 2));
+                ds.DrawImage(_brush, (float)(points[0].StartPoint.X - _thickness / 2), (float)(points[0].StartPoint.Y - _thickness / 2));
                 return;
             }
 
             // 使用优化的贝塞尔曲线连接点
             for (int i = 1; i < points.Count; i++) {
-                var p0 = i > 1 ? points[i - 2] : points[i - 1];
-                var p1 = points[i - 1];
-                var p2 = points[i];
-                var p3 = i < points.Count - 1 ? points[i + 1] : p2;
+                var p0 = i > 1 ? points[i - 2].StartPoint : points[i - 1].StartPoint;
+                var p1 = points[i - 1].StartPoint;
+                var p2 = points[i].StartPoint;
+                var p3 = i < points.Count - 1 ? points[i + 1].StartPoint : p2;
 
                 // 优化的控制点计算
                 var cp1 = new Point(
@@ -213,7 +210,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
                              3 * (1 - t) * t * t * cp2.Y +
                              t * t * t * p2.Y;
 
-                    ds.DrawImage(_brush, (float)(x - _size / 2), (float)(y - _size / 2));
+                    ds.DrawImage(_brush, (float)(x - _thickness / 2), (float)(y - _thickness / 2));
                 }
             }
         }
@@ -231,65 +228,39 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
         }
 
         protected void ProcessPointerQueue() {
-            //while (_pointerQueue.TryDequeue(out var newPoint)) {
-            //    // 动态计算插值步数（基于移动速度）
-            //    double distance = Distance(newPoint, _lastProcessedPoint);
-            //    int steps = Math.Clamp((int)(distance / 2), 1, _maxInterpolationSteps);
-
-            //    // 线性插值确保点密度
-            //    for (int i = 1; i <= steps; i++) {
-            //        double t = (double)i / steps;
-            //        Point interpolated = new(
-            //            _lastProcessedPoint.X + t * (newPoint.X - _lastProcessedPoint.X),
-            //            _lastProcessedPoint.Y + t * (newPoint.Y - _lastProcessedPoint.Y));
-
-            //        _historyPoints.Enqueue(interpolated);
-            //        if (_historyPoints.Count > _historySize)
-            //            _historyPoints.Dequeue();
-
-            //        // 使用更高效的平滑算法
-            //        Point smoothed = _historyPoints.Count < 4 ?
-            //            interpolated : CalculateCatmullRomSmooth();
-
-            //        // 添加到当前段
-            //        _currentSegment.Points.Add(smoothed);
-            //        _lastProcessedPoint = smoothed;
-
-            //        // 段大小控制 (关键修改点)
-            //        if (_currentSegment.Points.Count >= _maxSegmentPoints) {
-            //            RenderToTarget();
-            //            _currentSegment = new StrokeSegment(_lastProcessedPoint);
-            //        }
-            //    }
-            //}
-
             while (_pointerQueue.TryDequeue(out var newPoint)) {
                 double distance = Distance(newPoint, _lastProcessedPoint);
                 int steps = Math.Clamp((int)(distance / 2), 1, _maxInterpolationSteps);
 
-                // 使用内存池减少分配
-                using var points = MemoryPool<Point>.Shared.Rent(steps);
-                var span = points.Memory.Span;
-
+                // 线性插值确保点密度
                 for (int i = 1; i <= steps; i++) {
                     double t = (double)i / steps;
-                    span[i - 1] = new Point(
+                    Point interpolated = new(
                         _lastProcessedPoint.X + t * (newPoint.X - _lastProcessedPoint.X),
                         _lastProcessedPoint.Y + t * (newPoint.Y - _lastProcessedPoint.Y));
-                }
 
-                foreach (var point in span[..steps]) {
-                    _historyPoints.Enqueue(point);
-                    if (_historyPoints.Count > _historySize) _historyPoints.Dequeue();
+                    _historyPoints.Enqueue(interpolated);
+                    if (_historyPoints.Count > _historySize)
+                        _historyPoints.Dequeue();
 
-                    Point smoothed = _historyPoints.Count < 4 ? point : CalculateCatmullRomSmooth();
+                    // 使用更高效的平滑算法
+                    Point smoothed = _historyPoints.Count < 4 ?
+                        interpolated : CalculateCatmullRomSmooth();
 
-                    _currentSegment.Points.Add(smoothed);
+                    // 添加到当前段
+                    StrokePoint strokePoint = new((int)smoothed.X, (int)smoothed.Y, 1, 1,
+                        RenderTarget.GetPixelBytes((int)smoothed.X, (int)smoothed.Y, 1, 1),
+                        _thickness);
+                    _currentSegment.Points.Add(strokePoint);
                     _lastProcessedPoint = smoothed;
 
+                    // 段大小控制 (关键修改点)
                     if (_currentSegment.Points.Count >= _maxSegmentPoints) {
                         RenderToTarget();
-                        _currentSegment = new StrokeSegment(_lastProcessedPoint);
+                        strokePoint = new((int)_lastProcessedPoint.X, (int)_lastProcessedPoint.Y, 1, 1,
+                            RenderTarget.GetPixelBytes((int)_lastProcessedPoint.X, (int)_lastProcessedPoint.Y, 1, 1),
+                            _thickness);
+                        _currentSegment = new StrokeSegment(strokePoint);
                     }
                 }
             }
@@ -385,7 +356,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
         protected Color _blendedColor;
         protected bool _isDrawing;
         protected Point _lastProcessedPoint;
-        protected int _size;
+        protected int _thickness;
 
         // 数据结构
         protected readonly LinkedList<StrokeSegment> _strokeSegments = new();
@@ -393,11 +364,17 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
         protected readonly Queue<Point> _pointerQueue = new();
         protected readonly Queue<Point> _historyPoints = new(_historySize);
         protected readonly Dictionary<(int, Color), CanvasBitmap> _brushCache = [];
-        protected CanvasBitmap? _brush;
+        protected CanvasBitmap _brush;
         protected DateTime _lastRenderTime = DateTime.MinValue;
         protected CanvasBlend _canvasBlend = CanvasBlend.SourceOver;
         protected Rect _affectedArea;
-        protected RenderSnapshot? _snapshot;
         #endregion
     }
+
+    //public enum BrushType {
+    //    SolidColor,    // 纯色笔刷
+    //    Rainbow,       // 彩虹渐变笔刷
+    //    Texture,        // 纹理笔刷（预留扩展）
+    //    PressureSensitive // 压感笔刷（预留扩展）
+    //}
 }

@@ -7,7 +7,7 @@ using Microsoft.UI;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
-using Workloads.Creation.StaticImg.Models.ToolItems.BaseTool;
+using Workloads.Creation.StaticImg.Models.ToolItems.Base;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
     partial class CropTool : AreaSelector {

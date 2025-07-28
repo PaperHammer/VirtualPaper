@@ -5,14 +5,14 @@ namespace Workloads.Creation.StaticImg.Models {
     public class PaintBrushItem : IEquatable<PaintBrushItem> {
         public string Name { get; set; } = string.Empty;
         public PaintBrushType Type { get; set; }
-        public Path Example { get; set; }
+        public Path? Example { get; set; }
         public string ConfigKey { get; set; } = string.Empty;
 
-        public bool Equals(PaintBrushItem other) {
-            return this.Type == other.Type;
+        public bool Equals(PaintBrushItem? other) {
+            return other != null && this.Type == other.Type;
         }
 
-        public override bool Equals(object obj) {
+        public override bool Equals(object? obj) {
             return Equals(obj as PaintBrushItem);
         }
 

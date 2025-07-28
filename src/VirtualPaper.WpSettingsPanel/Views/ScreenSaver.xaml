@@ -10,6 +10,14 @@
     Loaded="Page_Loaded"    
     NavigationCacheMode="Enabled">
 
+    <Page.Resources>
+        <MenuFlyout x:Key="MF_FilteredListView">
+            <MenuFlyoutItem 
+                Text="{x:Bind _viewModel.Text_Delete}" 
+                Click="RightClickMenuItem_Click"/>
+        </MenuFlyout>
+    </Page.Resources>
+
     <ScrollView
         VerticalAlignment="Stretch">
         <StackPanel
@@ -45,86 +53,88 @@
 
                             <TextBlock
                                 Grid.Row="0"
-                                Text="{Binding ScreenSaver_Server}"/>
+                                Text="{x:Bind _viewModel.ScreenSaver_Server}"/>
                             <TextBlock
                                 Grid.Row="1"                                        
-                                Text="{Binding ScreenSaver_ServerExplain}"
+                                Text="{x:Bind _viewModel.ScreenSaver_ServerExplain}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                         </Grid>
 
                         <ToggleButton
                             Grid.Column="2"
                             Width="200"
-                            Content="{Binding ScreenSaverStatu}" 
-                            IsChecked="{Binding IsScreenSaverOn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            Content="{x:Bind _viewModel.ScreenSaverStatu}" 
+                            IsChecked="{x:Bind _viewModel.IsScreenSaverOn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </Grid>
                 </Expander.Header>
                 <Expander.Content>
-                    <StackPanel
-                        Margin="35 10"
-                        Orientation="Vertical"
-                        HorizontalAlignment="Stretch">
-                        <NumberBox 
-                            Width="200"
-                            HorizontalAlignment="Left"
-                            Header="{Binding ScreenSaver_WaitingTime}"
-                            Value="{Binding WaitingTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            SpinButtonPlacementMode="Inline"
-                            Minimum="1"
-                            Maximum="60"
-                            SmallChange="1"
-                            LargeChange="1" />
-
-                        <CheckBox
-                            IsChecked="{Binding IsRunningLock, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            Checked="IsRunningLock_Checked"
-                            Unchecked="IsRunningLock_Unchecked"
-                            Margin="0 15 0 0">
-                            <CheckBox.Content>
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="auto"/>
-                                        <RowDefinition Height="auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock
-                                        Grid.Row="0"
-                                        Text="{Binding ScreenSaver_RunningLock}"/>
-                                    <TextBlock
-                                        Grid.Row="1"
-                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                        Text="{Binding ScreenSaver_RunningLockExplain}"/>
-                                </Grid>
-                            </CheckBox.Content>
-                        </CheckBox>
-
-                        <Grid
-                            x:Name="DynamicEffects"
-                            Height="100"
-                            Margin="0 15 0 0"
-                            VerticalAlignment="Center">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock 
-                                Grid.Row="0" 
-                                Text="{Binding ScreenSaver_DynamicEffects}"/>
-                            <TextBlock 
-                                Grid.Row="1" 
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="{Binding ScreenSaver_DynamicEffectsExplain}"/>
-                            <ComboBox
-                                x:Name="DynamicEffectsCombo"
-                                Grid.Row="2"
-                                ItemsSource="{Binding Effects}"
-                                SelectedIndex="{Binding SeletedEffectIndx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    <ContentControl IsEnabled="{x:Bind _viewModel.IsScreenSaverOn, Mode=OneWay}">
+                        <StackPanel
+                            Margin="35 10"
+                            Orientation="Vertical"
+                            HorizontalAlignment="Stretch">
+                            <NumberBox 
                                 Width="200"
-                                Margin="0 5 0 0"/>
-                        </Grid>
-                    </StackPanel>
+                                HorizontalAlignment="Left"
+                                Header="{x:Bind _viewModel.ScreenSaver_WaitingTime}"
+                                Value="{x:Bind _viewModel.WaitingTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                SpinButtonPlacementMode="Inline"
+                                Minimum="1"
+                                Maximum="60"
+                                SmallChange="1"
+                                LargeChange="1" />
+
+                            <CheckBox
+                                IsChecked="{x:Bind _viewModel.IsRunningLock, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                Checked="IsRunningLock_Checked"
+                                Unchecked="IsRunningLock_Unchecked"
+                                Margin="0 15 0 0">
+                                <CheckBox.Content>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="auto"/>
+                                            <RowDefinition Height="auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            Text="{x:Bind _viewModel.ScreenSaver_RunningLock}"/>
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                            Text="{x:Bind _viewModel.ScreenSaver_RunningLockExplain}"/>
+                                    </Grid>
+                                </CheckBox.Content>
+                            </CheckBox>
+
+                            <Grid
+                                x:Name="DynamicEffects"
+                                Height="100"
+                                Margin="0 15 0 0"
+                                VerticalAlignment="Center">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock 
+                                    Grid.Row="0" 
+                                    Text="{x:Bind _viewModel.ScreenSaver_DynamicEffects}"/>
+                                <TextBlock 
+                                    Grid.Row="1" 
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Text="{x:Bind _viewModel.ScreenSaver_DynamicEffectsExplain}"/>
+                                <ComboBox
+                                    x:Name="DynamicEffectsCombo"
+                                    Grid.Row="2"
+                                    ItemsSource="{x:Bind _viewModel.Effects}"
+                                    SelectedIndex="{x:Bind _viewModel.SeletedEffectIndx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Width="200"
+                                    Margin="0 5 0 0"/>
+                            </Grid>
+                        </StackPanel>
+                    </ContentControl>
                 </Expander.Content>
             </Expander>
 
@@ -155,11 +165,11 @@
 
                         <TextBlock
                             Grid.Row="0"
-                            Text="{Binding ScreenSaver_WhiteListTitle}"/>
+                            Text="{x:Bind _viewModel.ScreenSaver_WhiteListTitle}"/>
                         <TextBlock
                             Grid.Row="1"                                    
                             Height="20"
-                            Text="{Binding ScreenSaver_WhiteListExplain}"
+                            Text="{x:Bind _viewModel.ScreenSaver_WhiteListExplain}"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                     </Grid>
 
@@ -167,7 +177,7 @@
                         Grid.Column="1"
                         Width="100"
                         Height="34"
-                        Content="{Binding ScreenSaver_Add}"
+                        Content="{x:Bind _viewModel.ScreenSaver_Add}"
                         Click="AddToWhiteListBtn_Click"/>
 
                     <TextBox 
@@ -176,7 +186,7 @@
                         Height="34"
                         Width="240"
                         Grid.Column="2"
-                        PlaceholderText="{Binding ScreenSaver_SeekFromList}"
+                        PlaceholderText="{x:Bind _viewModel.ScreenSaver_SeekFromList}"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center"
                         TextChanged="OnFilterChanged"/>
@@ -184,7 +194,7 @@
 
                 <ListView
                     x:Name="FilteredListView"
-                    ItemsSource="{Binding ProcsFiltered}"
+                    ItemsSource="{x:Bind _viewModel.ProcsFiltered}"
                     Grid.Row="1"
                     Margin="0 10"
                     SelectionMode="Single"
@@ -195,15 +205,7 @@
                     HorizontalAlignment="Stretch">
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <Grid>
-                                <Grid.ContextFlyout>
-                                    <MenuFlyout>
-                                        <MenuFlyoutItem 
-                                            Text="{Binding Text_Delete}" 
-                                            Click="RightClickMenuItem_Click"/>
-                                    </MenuFlyout>
-                                </Grid.ContextFlyout>
-
+                            <Grid ContextFlyout="{StaticResource MF_FilteredListView}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>

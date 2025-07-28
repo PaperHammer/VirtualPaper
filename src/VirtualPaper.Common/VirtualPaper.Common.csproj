@@ -24,4 +24,9 @@
 		<PackageReference Include="System.Management" Version="8.0.0" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Utils\Security\" />
+	  <Folder Include="Utils\SpatialIndex\" />
+	</ItemGroup>
+
 </Project>

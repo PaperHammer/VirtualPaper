@@ -9,8 +9,7 @@
     xmlns:data="using:VirtualPaper.UIComponent.Data"
     mc:Ignorable="d"
     xmlns:draft="using:VirtualPaper.Models.DraftPanel"
-    NavigationCacheMode="Enabled"
-    x:Name="self">
+    NavigationCacheMode="Enabled">
 
     <Page.Resources>
         <MenuFlyout x:Key="MenuFlyoutRecentUsedItem">

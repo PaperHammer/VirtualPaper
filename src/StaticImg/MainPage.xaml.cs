@@ -21,7 +21,7 @@ namespace Workloads.Creation.StaticImg {
         internal static MainPage Instance { get; private set; }
         internal IDraftPanelBridge Bridge { get; }
         internal CanvasDevice SharedDevice { get; }
-        internal SI_UndoRedoUtil UnReUtil { get; }
+        internal StaticImgUndoRedoUtil UnReUtil { get; }
         internal string EntryFilePath { get; }
         internal FileType RTFileType { get; }
         internal DirectXPixelFormat SharedFormat { get; }
@@ -44,7 +44,7 @@ namespace Workloads.Creation.StaticImg {
             SharedDevice = CanvasDevice.GetSharedDevice();
             SharedFormat = DirectXPixelFormat.B8G8R8A8UIntNormalized;
             SharedAlphaMode = CanvasAlphaMode.Premultiplied;
-            UnReUtil = new SI_UndoRedoUtil();
+            UnReUtil = new StaticImgUndoRedoUtil();
 
             this.InitializeComponent();
         }

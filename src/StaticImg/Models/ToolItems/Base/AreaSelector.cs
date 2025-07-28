@@ -8,7 +8,7 @@ using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
 
-namespace Workloads.Creation.StaticImg.Models.ToolItems.BaseTool {
+namespace Workloads.Creation.StaticImg.Models.ToolItems.Base {
     internal abstract class AreaSelector(InkCanvasConfigData data) : Tool {
         public Rect SelectionRect => _selectionRect;
         protected override bool HandlesPointerOutsideContentArea => true;

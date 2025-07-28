@@ -15,6 +15,7 @@ using VirtualPaper.UIComponent.ViewModels;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.EventArg;
+using Workloads.Creation.StaticImg.Models.ToolItems.Base;
 using Workloads.Creation.StaticImg.Models.ToolItems.Utils;
 
 namespace Workloads.Creation.StaticImg.Models {
@@ -262,8 +263,7 @@ namespace Workloads.Creation.StaticImg.Models {
                 undo: async () => {
                     await DeleteAsync(layer.Tag, false);
                     RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-                },
-                opType: SI_UndoRedo_OP_Type.Serializable
+                }
             );
         }
 
@@ -286,8 +286,7 @@ namespace Workloads.Creation.StaticImg.Models {
                 undo: async () => {
                     await DeleteAsync(layer.Tag, false);
                     RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-                },
-                opType: SI_UndoRedo_OP_Type.Serializable
+                }
             );
 
             return layer;
@@ -328,8 +327,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
                 MainPage.Instance.UnReUtil.RecordCommand(
                     execute: async () => await RenameAsync(itemTag, true, viewModel.NewName),
-                    undo: async () => await RenameAsync(itemTag, true, oldName),
-                    opType: SI_UndoRedo_OP_Type.Serializable
+                    undo: async () => await RenameAsync(itemTag, true, oldName)
                 );
             }
             finally {
@@ -366,8 +364,7 @@ namespace Workloads.Creation.StaticImg.Models {
                     await AddAsync(clone, false, idx);
                     await clone.RenderData.IsCompleted.Task;
                     RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-                },
-                opType: SI_UndoRedo_OP_Type.Serializable
+                }
             );
         }
 

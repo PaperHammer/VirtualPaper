@@ -1,6 +1,6 @@
-﻿using Workloads.Creation.StaticImg.Models.ToolItems.BaseTool;
+﻿using Workloads.Creation.StaticImg.Models.ToolItems.Base;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
-    partial class PaintBrushTool(InkCanvasConfigData data) : DrawingTool(data) {        
+    sealed partial class PaintBrushTool(InkCanvasConfigData data) : TrackMapping(data) {
     }
 }

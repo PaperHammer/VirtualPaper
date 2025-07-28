@@ -20,7 +20,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class ScreenSaver : Page, IDisposable {
+    public sealed partial class ScreenSaver : Page {
         public ScreenSaver() {
             this.InitializeComponent();
         }
@@ -120,24 +120,5 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private ScreenSaverViewModel _viewModel;
         private IWpSettingsPanel _wpSettingsPanel;
-        private bool disposedValue;
-
-        private void Dispose(bool disposing) {
-            if (!disposedValue) {
-                if (disposing) {
-                    // TODO: 释放托管状态(托管对象)
-                }
-
-
-                // TODO: 释放未托管的资源(未托管的对象)并重写终结器
-                // TODO: 将大型字段设置为 null
-                disposedValue = true;
-            }
-        }
-
-        public void Dispose() {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
     }
 }

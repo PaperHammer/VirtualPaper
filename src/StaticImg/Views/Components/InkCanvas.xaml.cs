@@ -189,6 +189,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                         FullRender(ds);
                     }
                     else {
+                        if (region == default) return;
                         PartialRender(ds, region);
                     }
                 }

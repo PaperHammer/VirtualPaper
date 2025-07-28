@@ -3,11 +3,11 @@ using System.Threading.Tasks;
 using VirtualPaper.Common.Utils.UnReUtil;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems.Utils {
-    public sealed partial class SI_UndoRedoUtil : IDisposable {
+    public sealed partial class StaticImgUndoRedoUtil : IDisposable {
         public bool CanUndo => _undoRedoCore.CanUndo;
         public bool CanRedo => _undoRedoCore.CanRedo;
 
-        public SI_UndoRedoUtil() {
+        public StaticImgUndoRedoUtil() {
             _undoRedoCore = new UndoRedoUtil(20);
         }
 
@@ -17,8 +17,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.Utils {
         /// <param name="execute">恢复</param>
         /// <param name="undo">撤销</param>
         /// <param name="opType">操作类型</param>
-        public void RecordCommand(Action execute, Action undo, SI_UndoRedo_OP_Type opType)
-            => _undoRedoCore.RecordCommand(execute, undo, (int)opType);
+        public void RecordCommand(Action execute, Action undo)
+            => _undoRedoCore.RecordCommand(execute, undo);
 
         /// <summary>
         /// 记录异步操作
@@ -26,8 +26,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.Utils {
         /// <param name="execute">恢复</param>
         /// <param name="undo">撤销</param>
         /// <param name="opType">操作类型</param>
-        public void RecordCommand(Func<Task> execute, Func<Task> undo, SI_UndoRedo_OP_Type opType)
-            => _undoRedoCore.RecordCommand(execute, undo, (int)opType);
+        public void RecordCommand(Func<Task> execute, Func<Task> undo)
+            => _undoRedoCore.RecordCommand(execute, undo);
 
         public async Task UndoAsync() => await _undoRedoCore.TryUndoAsync();
         public async Task RedoAsync() => await _undoRedoCore.TryRedoAsync();
@@ -36,15 +36,15 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems.Utils {
         private readonly UndoRedoUtil _undoRedoCore;        
     }
 
-    public enum SI_UndoRedo_OP_Type {
-        /// <summary> 
-        /// 影响图层特定区域的操作（如绘制、擦除） 
-        /// </summary>
-        Region,
+    //public enum SI_UndoRedo_OP_Type {
+    //    /// <summary> 
+    //    /// 影响图层特定区域的操作（如绘制、擦除） 
+    //    /// </summary>
+    //    Region,
 
-        /// <summary> 
-        /// 针对可序列化表示对象的操作（如图层集合的添加、删除、移动图层）
-        /// </summary>
-        Serializable
-    }
+    //    /// <summary> 
+    //    /// 针对可序列化表示对象的操作（如图层集合的添加、删除、移动图层）
+    //    /// </summary>
+    //    Serializable
+    //}
 }

@@ -20,12 +20,10 @@ namespace VirtualPaper.Common.Utils.UnReUtil {
         /// </summary>
         /// <param name="execute">恢复</param>
         /// <param name="undo">撤销</param>
-        /// <param name="opType">操作类型</param>
-        public void RecordCommand(Action execute, Action undo, int opType)
+        public void RecordCommand(Action execute, Action undo)
             => RecordCommand(
                 execute: () => { execute(); return Task.CompletedTask; },
-                undo: () => { undo(); return Task.CompletedTask; },
-                opType
+                undo: () => { undo(); return Task.CompletedTask; }
             );
 
         /// <summary>
@@ -33,8 +31,7 @@ namespace VirtualPaper.Common.Utils.UnReUtil {
         /// </summary>
         /// <param name="execute">恢复</param>
         /// <param name="undo">撤销</param>
-        /// <param name="opType">操作类型</param>
-        public void RecordCommand(Func<Task> execute, Func<Task> undo, int opType) {
+        public void RecordCommand(Func<Task> execute, Func<Task> undo) {
             try {
                 _rwSlim.EnterWriteLock();
                 _redoStack.Clear(); // 清除 redo 栈
@@ -44,7 +41,7 @@ namespace VirtualPaper.Common.Utils.UnReUtil {
                     _undoStack.RemoveFirst();                    
                 }
 
-                _undoStack.AddLast(new Command(execute, undo, opType));
+                _undoStack.AddLast(new Command(execute, undo));
                 Debug.WriteLine($"undoStack size: {_undoStack.Count}");
                 Debug.WriteLine($"redoStack size: {_redoStack.Count}");
             }
@@ -104,7 +101,7 @@ namespace VirtualPaper.Common.Utils.UnReUtil {
             _redoStack.Clear();
         }
 
-        private record Command(Func<Task> Execute, Func<Task> Undo, int OpType);
+        private record Command(Func<Task> Execute, Func<Task> Undo);
 
         private readonly LinkedList<Command> _undoStack = new();
         private readonly LinkedList<Command> _redoStack = new();
@@ -113,7 +110,7 @@ namespace VirtualPaper.Common.Utils.UnReUtil {
         private readonly int _maxStackSize;
     }
 
-    public enum UndoRedoOPType {
-        Undo, Redo
-    }
+    //public enum UndoRedoOPType {
+    //    Undo, Redo
+    //}
 }

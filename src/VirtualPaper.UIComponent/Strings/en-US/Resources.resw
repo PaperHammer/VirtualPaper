@@ -456,7 +456,7 @@ Author: PaperHammer</value>
     <value>Play</value>
   </data>
   <data name="Settings_Perforemance_Text_System" xml:space="preserve">
-    <value>Syatem</value>
+    <value>System</value>
   </data>
   <data name="Settings_System_Developer_Debug" xml:space="preserve">
     <value>Debuger</value>

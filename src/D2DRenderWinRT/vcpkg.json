@@ -1,7 +1,0 @@
-{
-  "dependencies": [
-    "cppwinrt",
-    "directx-d3d11",
-    "microsoft-win2d"
-  ]
-}

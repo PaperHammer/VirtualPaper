@@ -1,20 +1,20 @@
 ﻿using System.Collections.Generic;
-using Workloads.Creation.StaticImg.Models.ToolItems;
+using BuiltIn.Tool.Bsae;
 
 namespace Workloads.Creation.StaticImg.Utils {
     class ToolManager {
-        internal void RegisterTool(ToolType toolType, Tool tool) {
+        internal void RegisterTool(ToolType toolType, CanvasRenderTargetInteract tool) {
             _tools[toolType] = tool;
         }
 
-        internal Tool GetTool(ToolType toolType) {
+        internal CanvasRenderTargetInteract? GetTool(ToolType toolType) {
             return _tools.TryGetValue(toolType, out var tool) ? tool : null;
         }
 
-        internal IEnumerable<Tool> GetAllTools() {
+        internal IEnumerable<CanvasRenderTargetInteract> GetAllTools() {
             return _tools.Values;
         }
 
-        private readonly Dictionary<ToolType, Tool> _tools = [];
+        private readonly Dictionary<ToolType, CanvasRenderTargetInteract> _tools = [];
     }
 }

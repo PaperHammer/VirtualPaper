@@ -16,6 +16,7 @@ using Workloads.Creation.StaticImg.Models.Extensions;
 namespace Workloads.Creation.StaticImg.Models {
     public partial class InkRenderData : IDisposable {
         public CanvasRenderTarget RenderTarget { get; private set; }
+        public CanvasRenderTarget ReadOnlyRenderTarget { get; private set; }
         public bool IsNeedBackground { get; }
         public Matrix3x2 Transform { get; private set; } = Matrix3x2.Identity;
         public TaskCompletionSource<bool> IsCompleted => _isCompleted;
@@ -38,6 +39,20 @@ namespace Workloads.Creation.StaticImg.Models {
                 MainPage.Instance.SharedAlphaMode);
             if (IsNeedBackground) InitializeBlankRenderTarget(); // 初始化空白画布
             IsCompleted.SetResult(true);
+        }
+
+        private void InitReadOnlyRenderTarget() {
+            //ReadOnlyRenderTarget = new CanvasRenderTarget(
+            //    MainPage.Instance.SharedDevice,
+            //    (float)_arcSize.Width,
+            //    (float)_arcSize.Height,
+            //    _arcSize.Dpi,
+            //    MainPage.Instance.SharedFormat,
+            //    MainPage.Instance.SharedAlphaMode);
+            //using (var ds = ReadOnlyRenderTarget.CreateDrawingSession()) {
+            //    ds.DrawImage(RenderTarget);
+            //}
+            ReadOnlyRenderTarget = RenderTarget.Clone();
         }
 
         #region save and load
@@ -169,6 +184,8 @@ namespace Workloads.Creation.StaticImg.Models {
                 ds.Clear(Colors.Transparent);
                 ds.DrawImage(bitmap);
 
+                InitReadOnlyRenderTarget();
+
                 progress?.Report(1.0);
             }
             //catch (Exception ex) {
@@ -187,6 +204,7 @@ namespace Workloads.Creation.StaticImg.Models {
                 ds.Clear(Colors.White);
                 ds.DrawRectangle(new Rect(0, 0, RenderTarget.Size.Width, RenderTarget.Size.Height),
                                 Colors.Transparent, 1f);
+                InitReadOnlyRenderTarget();
             }
             else {
                 ds.Clear(Colors.Transparent);

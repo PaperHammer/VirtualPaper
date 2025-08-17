@@ -1,0 +1,23 @@
+import "Windows.Foundation.Numerics.idl";
+
+namespace D2DEngine
+{
+    // 颜色结构体
+    struct Color
+    {
+        Single R;
+        Single G;
+        Single B;
+        Single A;
+    };
+
+    // 颜色转换函数接口
+    [default_interface]
+    runtimeclass ColorUtils
+    {
+        static D2DEngine.Color FromD2DColor(D2D1_COLOR_F color);
+        static D2D1_COLOR_F ToD2DColor(D2DEngine.Color color);
+        static D2DEngine.Color FromVector4(Windows.Foundation.Numerics.Vector4 vector);
+        static Windows.Foundation.Numerics.Vector4 ToVector4(D2DEngine.Color color);
+    };
+}

@@ -1,5 +1,5 @@
 ﻿namespace Workloads.Creation.StaticImg.Models {
-    internal enum CanvasOperation {
+    enum CanvasOperation {
         RotateLeft,
         RotateRight,
         FlipHorizontally,

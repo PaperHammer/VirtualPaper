@@ -1,19 +1,24 @@
 ﻿using System;
 using System.Numerics;
+using BuiltIn.Events;
+using BuiltIn.InkSystem.Core.Rendering;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI;
 using Windows.Foundation;
 using Windows.UI;
-using Workloads.Creation.StaticImg.Models.EventArg;
-using Workloads.Creation.StaticImg.Models.ToolItems.Base;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
-    partial class CropTool : AreaSelector {
-        public CropTool(InkCanvasConfigData data) : base(data) {
-            this._ratioController = new AspectRatioController(this);
-            this._data = data;
+    partial class CropTool : CanvasAreaSelector {
+        public CropTool(InkCanvasConfigData data) {
+            _data = data;
+            _ratioController = new AspectRatioController(this);
+            OnSelectRectChanged += CropTool_OnSelectRectChanged;
+        }
+
+        private void CropTool_OnSelectRectChanged(object? sender, Rect e) {
+            _data.SelectionRect = e;
         }
 
         public override bool CommitSelection() {
@@ -21,7 +26,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 return false;
 
             // 创建临时绘图目标
-            CanvasRenderTarget newBaseContent = null;
+            CanvasRenderTarget? newBaseContent = null;
             try {
                 newBaseContent = new CanvasRenderTarget(
                     RenderTarget,
@@ -56,6 +61,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         protected override void RenderToTarget() {
+            if (RenderTarget == null) return;
+
             try {
                 using (var ds = RenderTarget.CreateDrawingSession()) {
                     // 完全清空画布
@@ -88,7 +95,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                     }
                 }
 
-                OnRendered(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();
@@ -109,8 +116,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             private double _currentRatio;
 
             public void ApplyRatio(double ratio) {
+                if (parent.RenderTarget == null || ratio <= 0) return;
                 _currentRatio = ratio;
-                if (ratio <= 0) return;
                 CreateCenteredCrop();
                 parent.RenderToTarget();
             }
@@ -118,7 +125,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             private void CreateCenteredCrop() {
                 var size = CalculateInitialSize();
                 parent._selectionRect = new Rect(
-                    (parent.RenderTarget.SizeInPixels.Width - size.Width) / 2,
+                    (parent.RenderTarget!.SizeInPixels.Width - size.Width) / 2,
                     (parent.RenderTarget.SizeInPixels.Height - size.Height) / 2,
                     size.Width,
                     size.Height);
@@ -129,7 +136,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
 
             private Size CalculateInitialSize() {
                 const double maxScale = 0.8;
-                var canvas = parent.RenderTarget.SizeInPixels;
+                var canvas = parent.RenderTarget!.SizeInPixels;
 
                 // 自由比例模式（使用图片中的默认值）
                 if (_currentRatio == 0)

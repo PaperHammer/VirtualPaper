@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using BuiltIn.Events;
 using Microsoft.UI;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
@@ -14,17 +15,14 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
 using Windows.Foundation;
 using Windows.UI;
-using Workloads.Creation.StaticImg.Models.EventArg;
-using Workloads.Creation.StaticImg.Models.ToolItems.Base;
-using Workloads.Creation.StaticImg.Models.ToolItems.Utils;
 
 namespace Workloads.Creation.StaticImg.Models {
     [JsonSerializable(typeof(InkCanvasConfigData))]
     [JsonSerializable(typeof(ObservableList<InkCanvasData>))]
     [JsonSerializable(typeof(ObservableList<Color>))]
-    internal partial class InkCanvasConfigDataContext : JsonSerializerContext { }
+    public partial class InkCanvasConfigDataContext : JsonSerializerContext { }
 
-    internal partial class InkCanvasConfigData : ObservableObject {
+    public partial class InkCanvasConfigData : ObservableObject {
         public event EventHandler? GetFocus;
         public event EventHandler? InkDataEnabledChanged;
         public event EventHandler? SeletcedToolChanged;
@@ -355,17 +353,17 @@ namespace Workloads.Creation.StaticImg.Models {
 
             if (!recordUndo) return;
 
-            MainPage.Instance.UnReUtil.RecordCommand(
-                execute: async () => {
-                    await DeleteAsync(itemTag, false);
-                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-                },
-                undo: async () => {
-                    await AddAsync(clone, false, idx);
-                    await clone.RenderData.IsCompleted.Task;
-                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-                }
-            );
+            //MainPage.Instance.UnReUtil.RecordCommand(
+            //    execute: async () => {
+            //        await DeleteAsync(itemTag, false);
+            //        RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+            //    },
+            //    undo: async () => {
+            //        await AddAsync(clone, false, idx);
+            //        await clone.RenderData.IsCompleted.Task;
+            //        RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+            //    }
+            //);
         }
 
         internal async Task UpdateCustomColorsAsync(ColorChangeEventArgs e) {

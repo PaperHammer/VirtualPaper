@@ -124,43 +124,6 @@ namespace Workloads.Creation.StaticImg {
         }
     }
 
-    [MessagePackObject]
-    public struct ArcPoint {
-        public ArcPoint(float x, float y) : this() {
-            SetPos(x, y);
-        }
-
-        public ArcPoint(Point point) : this() {
-            SetPos(point);
-        }
-
-        [Key(0)]
-        public float X { get; private set; }
-        [Key(1)]
-        public float Y { get; private set; }
-
-        public void SetPos(float x, float y) {
-            this.X = (float)Math.Round(x, 1);
-            this.Y = (float)Math.Round(y, 1);
-        }
-
-        public void SetPos(Point point) {
-            SetPos((float)point.X, (float)point.Y);
-        }
-
-        public static ArcPoint FormatPoint(Point point, int digit) {
-            return new ArcPoint((float)Math.Round(point.X, digit), (float)Math.Round(point.Y, digit));
-        }
-
-        public static ArcPoint ToArcPoint(Point point) {
-            return new ArcPoint((float)point.X, (float)point.Y);
-        }
-
-        public static Point ToPoint(ArcPoint arcPoint) {
-            return new Point(arcPoint.X, arcPoint.Y);
-        }
-    }
-
     public readonly struct ArcSize : IEquatable<ArcSize> {
         [JsonConstructor]
         [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
@@ -215,18 +178,6 @@ namespace Workloads.Creation.StaticImg {
         public Size GetSize() => new(Width, Height);        
     }
 
-    // TODO
-    public enum PaintBrushType {
-        CommonBrush, // 画笔
-        //WritingBrush, // 毛笔
-        //Pen, // 书写笔(钢笔 ???)
-        //Airbrush, // 喷枪
-        //OilBrush, // 油画笔
-        //Crayon, // 蜡笔
-        //MarkerPen, // 记号笔
-        //OrdinaryPencil, // 普通铅笔
-        //WatercolorBrush, // 水彩画笔
-    }
 
     // TODO
     public enum ToolType {

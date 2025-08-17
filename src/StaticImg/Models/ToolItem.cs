@@ -8,11 +8,11 @@ namespace Workloads.Creation.StaticImg.Models {
         public string ToolName { get; set; } // 功能名称或标识符
         public string TypeString => Type.ToString();
 
-        public bool Equals(ToolItem other) {
-            return this.Type == other.Type;
+        public bool Equals(ToolItem? other) {
+            return other != null && this.Type == other.Type;
         }
 
-        public override bool Equals(object obj) {
+        public override bool Equals(object? obj) {
             return Equals(obj as ToolItem);
         }
 

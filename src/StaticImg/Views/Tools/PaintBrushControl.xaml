@@ -31,7 +31,7 @@
         </DataTemplate>
 
         <extension:XList x:Key="PaintBrushItems">
-            <lcl_models:PaintBrushItem Name="画笔" Type="CommonBrush" ConfigKey="common_brush_config">
+            <lcl_models:PaintBrushItem Name="画笔" Type="General" ConfigKey="common_brush_config">
                 <lcl_models:PaintBrushItem.Example>
                     <Path 
                         x:Name="CommonBrushPath"

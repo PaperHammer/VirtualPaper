@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using BuiltIn.Events;
+using BuiltIn.Tool.Bsae;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.UI.Xaml;
@@ -17,7 +19,6 @@ using Windows.Foundation;
 using Windows.System;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models;
-using Workloads.Creation.StaticImg.Models.EventArg;
 using Workloads.Creation.StaticImg.Models.ToolItems;
 using Workloads.Creation.StaticImg.Utils;
 using Workloads.Creation.StaticImg.ViewModels;
@@ -44,7 +45,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void RegisterTools() {
-            _tool.RegisterTool(ToolType.PaintBrush, new PaintBrushTool(_viewModel.ConfigData));
+            _tool.RegisterTool(ToolType.PaintBrush, new InkBrushTool(_viewModel.ConfigData));
             _tool.RegisterTool(ToolType.Fill, new FillTool(_viewModel.ConfigData));
             _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.ConfigData));
             _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.ConfigData));
@@ -158,7 +159,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         #endregion
 
         #region redner
-        private async void InkingCanvas_Loaded(object sender, RoutedEventArgs e) {
+        private async void RenderCanvas_Loaded(object sender, RoutedEventArgs e) {
             try {
                 await _viewModel.LoadOrInitAsync();
                 FitView();
@@ -174,7 +175,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
         }
 
-        private void InkCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
+        private void RenderCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
             if (_compositeTarget != null) {
                 using (args.DrawingSession) {
                     args.DrawingSession.DrawImage(_compositeTarget);
@@ -189,21 +190,20 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                         FullRender(ds);
                     }
                     else {
-                        if (region == default) return;
+                        if (region == Rect.Empty) return;
                         PartialRender(ds, region);
                     }
                 }
 
                 // 单次提交所有绘制命令
                 using (var finalDs = _compositeTarget.CreateDrawingSession()) {
-                    finalDs.Blend = mode == RenderMode.FullRegion
-                        ? CanvasBlend.Copy  // 全屏渲染需要完全覆盖
-                        : CanvasBlend.SourceOver; // 局部渲染需要混合
                     finalDs.DrawImage(commandList);
                 }
             }
 
-            inkCanvas.Invalidate();
+            //if (region != Rect.Empty) renderCanvas.Invalidate(region);
+            //else renderCanvas.Invalidate();
+            renderCanvas.Invalidate();
         }
 
         private void FullRender(CanvasDrawingSession ds) {
@@ -236,32 +236,57 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
         }
 
-        private void InitializeGridPattern(ICanvasResourceCreator resourceCreator) {
-            // 创建棋盘格纹理（20x20像素）
-            _gridTexture = new CanvasRenderTarget(
-                resourceCreator, 20, 20, MainPage.Instance.Bridge.GetHardwareDpi());
+        //private void InitializeGridPattern(ICanvasResourceCreator resourceCreator) {
+        //    // 创建棋盘格纹理（20x20像素）
+        //    _gridTexture = new CanvasRenderTarget(
+        //        resourceCreator, 20, 20, MainPage.Instance.Bridge.GetHardwareDpi());
 
-            using (var ds = _gridTexture.CreateDrawingSession()) {
+        //    using (var ds = _gridTexture.CreateDrawingSession()) {
+        //        ds.Clear(Color.FromArgb(255, 168, 168, 168));
+        //        ds.FillRectangle(10, 0, 10, 10, Color.FromArgb(255, 150, 150, 150));
+        //        ds.FillRectangle(0, 10, 10, 10, Color.FromArgb(255, 150, 150, 150));
+        //    }
+
+        //    // 创建平铺画刷
+        //    _gridBrush = new CanvasImageBrush(resourceCreator, _gridTexture) {
+        //        ExtendX = CanvasEdgeBehavior.Wrap, // 水平平铺
+        //        ExtendY = CanvasEdgeBehavior.Wrap, // 垂直平铺
+        //        SourceRectangle = new Rect(0, 0, 20, 20) // 源纹理区域
+        //    };
+        //}
+
+        //private void BackgroundGrid_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
+        //    if (_gridTexture == null) {
+        //        InitializeGridPattern(sender);
+        //    }
+
+        //    args.DrawingSession.FillRectangle(
+        //        0, 0, (float)sender.ActualWidth, (float)sender.ActualHeight, _gridBrush);
+        //}
+
+        private void InitializeGridPattern(ICanvasResourceCreator rc) {
+            _gridBrush?.Dispose();
+
+            using var texture = new CanvasRenderTarget(rc, _gridSize * 2, _gridSize * 2, 96);
+            using (var ds = texture.CreateDrawingSession()) {
                 ds.Clear(Color.FromArgb(255, 168, 168, 168));
-                ds.FillRectangle(10, 0, 10, 10, Color.FromArgb(255, 150, 150, 150));
-                ds.FillRectangle(0, 10, 10, 10, Color.FromArgb(255, 150, 150, 150));
+                ds.FillRectangle(_gridSize, 0, _gridSize, _gridSize, Color.FromArgb(255, 150, 150, 150));
+                ds.FillRectangle(0, _gridSize, _gridSize, _gridSize, Color.FromArgb(255, 150, 150, 150));
             }
 
-            // 创建平铺画刷
-            _gridBrush = new CanvasImageBrush(resourceCreator, _gridTexture) {
-                ExtendX = CanvasEdgeBehavior.Wrap, // 水平平铺
-                ExtendY = CanvasEdgeBehavior.Wrap, // 垂直平铺
-                SourceRectangle = new Rect(0, 0, 20, 20) // 源纹理区域
+            _gridBrush = new CanvasImageBrush(rc, texture) {
+                ExtendX = CanvasEdgeBehavior.Wrap,
+                ExtendY = CanvasEdgeBehavior.Wrap
             };
         }
 
-        private void BackgroundGrid_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
-            if (_gridTexture == null) {
-                InitializeGridPattern(sender);
-            }
+        private void BackgroundGrid_RegionsInvalidated(CanvasVirtualControl sender, CanvasRegionsInvalidatedEventArgs args) {
+            if (_gridBrush?.Device != sender.Device) InitializeGridPattern(sender);
 
-            args.DrawingSession.FillRectangle(
-                0, 0, (float)sender.ActualWidth, (float)sender.ActualHeight, _gridBrush);
+            foreach (var region in args.InvalidatedRegions) {
+                using var ds = sender.CreateDrawingSession(region);
+                ds.FillRectangle(region, _gridBrush);
+            }
         }
         #endregion
 
@@ -506,37 +531,37 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         internal void OnPointerEntered(PointerRoutedEventArgs e, PointerPosition pointerPos) {
-            var pointerPoint = e.GetCurrentPoint(inkCanvas);
-            HandleToolEvent(tool => tool.OnPointerEntered(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData, pointerPos)));
+            var pointerPoint = e.GetCurrentPoint(renderCanvas);
+            HandleToolEvent(tool => tool.HandleEntered(
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget, pointerPos)));
         }
 
         internal void OnPointerMoved(PointerRoutedEventArgs e, PointerPosition pointerPos) {
-            var pointerPoint = e.GetCurrentPoint(inkCanvas);
+            var pointerPoint = e.GetCurrentPoint(renderCanvas);
             _viewModel.ConfigData.UpdatePointerPos(pointerPoint.Position);
-            HandleToolEvent(tool => tool.OnPointerMoved(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData, pointerPos)));
+            HandleToolEvent(tool => tool.HandleMoved(
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget, pointerPos)));
         }
 
         internal void OnPointerPressed(PointerRoutedEventArgs e, PointerPosition pointerPos) {
-            var pointerPoint = e.GetCurrentPoint(inkCanvas);
-            HandleToolEvent(tool => tool.OnPointerPressed(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData, pointerPos)));
+            var pointerPoint = e.GetCurrentPoint(renderCanvas);
+            HandleToolEvent(tool => tool.HandlePressed(
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget, pointerPos)));
         }
 
         internal void OnPointerReleased(PointerRoutedEventArgs e, PointerPosition pointerPos) {
-            var pointerPoint = e.GetCurrentPoint(inkCanvas);
-            HandleToolEvent(tool => tool.OnPointerReleased(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData, pointerPos)));
+            var pointerPoint = e.GetCurrentPoint(renderCanvas);
+            HandleToolEvent(tool => tool.HandleReleased(
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget, pointerPos)));
         }
 
         internal void OnPointerExited(PointerRoutedEventArgs e, PointerPosition pointerPos) {
-            var pointerPoint = e.GetCurrentPoint(inkCanvas);
-            HandleToolEvent(tool => tool.OnPointerExited(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData, pointerPos)));
+            var pointerPoint = e.GetCurrentPoint(renderCanvas);
+            HandleToolEvent(tool => tool.HandleExited(
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget, pointerPos)));
         }
 
-        private void HandleToolEvent(Action<Tool> action) {
+        private void HandleToolEvent(Action<CanvasRenderTargetInteract> action) {
             if (_viewModel.ConfigData.SelectedToolItem == null ||
                 _viewModel.ConfigData.SelectedInkCanvas == null ||
                 _viewModel.ConfigData.SelectedInkCanvas.RenderData == null ||
@@ -561,13 +586,15 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
         #endregion
 
-        private Tool? _selectedTool;
+        private CanvasRenderTargetInteract? _selectedTool;
         private readonly ToolManager _tool;
         private readonly InkCanvasViewModel _viewModel;
         private readonly InputCursor _originalInputCursor;
         private CanvasRenderTarget _compositeTarget;
         private readonly TaskCompletionSource<bool> _isInited = new();
-        private CanvasRenderTarget _gridTexture;
+        //private CanvasRenderTarget _gridTexture;
         private CanvasImageBrush _gridBrush;
+        private const int _gridSize = 20;
+
     }
 }

@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using BuiltIn.Events;
+using BuiltIn.Tool.Bsae;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 using Windows.Foundation;
 using Windows.UI;
-using Workloads.Creation.StaticImg.Models.EventArg;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
-    partial class FillTool(InkCanvasConfigData data) : Tool, IDisposable {
-        public override void OnPointerPressed(CanvasPointerEventArgs e) {
+    partial class FillTool(InkCanvasConfigData data) : CanvasRenderTargetInteract, IDisposable {
+        public override void HandlePressed(CanvasPointerEventArgs e) {
             if (e.PointerPos != PointerPosition.InsideCanvas) return;
 
             PointerPoint pointerPoint = e.Pointer;
@@ -28,22 +29,12 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                     FloodFill(_lastClickPoint, _blendedColor, ds);
                 }
 
-                OnRendered(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-                //Render();
+                HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();
             }
-        }
-
-        private static bool IsDeviceLost(Exception ex) {
-            return ex.HResult == unchecked((int)0x8899000C); // DXGI_ERROR_DEVICE_REMOVED
-        }
-
-        private void HandleDeviceLost() {
-            RenderTarget?.Dispose();
-            RenderTarget = null;
-        }
+        }        
 
         public void FloodFill(Point startPoint, Color fillColor, CanvasDrawingSession ds) {
             if (RenderTarget == null || ds == null) return;

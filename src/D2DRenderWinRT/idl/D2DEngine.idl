@@ -1,0 +1,109 @@
+namespace D2DEngine
+{
+    // ???????
+    enum LayerType
+    {
+        Bitmap = 0,
+        Vector = 1
+    };
+
+    enum StrokeTool
+    {
+        Brush = 0,
+        Eraser = 1
+    };
+
+    // ??????
+    struct FillOptions
+    {
+        Windows.Foundation.Numerics.Vector4 Color; // ??? + ??§Õ
+        Single Opacity;    // 0~1
+        Single Tolerance;  // 0~1
+    };
+
+    // ??????
+    struct StrokeOptions
+    {
+        StrokeTool Tool;
+        Windows.Foundation.Numerics.Vector4 Color; // RGBA
+        Single Thickness;
+        Single Opacity; // 0~1
+    };
+
+    // ????????
+    enum SelectionHandle
+    {
+        None = 0,
+        TopLeft, TopCenter, TopRight,
+        MiddleLeft, MiddleRight,
+        BottomLeft, BottomCenter, BottomRight,
+        Move // ??????
+    };
+
+    // ??????
+    struct Selection
+    {
+        Windows.Foundation.Rect Rect;
+        Windows.Foundation.Rect OriginalRect;
+        Boolean Active;
+        Single HandleSize;
+    };
+
+    // ?¨¹??????????
+    [flags]
+    enum CropHandleType
+    {
+        None = 0,
+        TopLeft = 1,
+        TopCenter = 2,
+        TopRight = 4,
+        MiddleLeft = 8,
+        MiddleRight = 16,
+        BottomLeft = 32,
+        BottomCenter = 64,
+        BottomRight = 128,
+        Move = 256
+    };
+
+    // ?¨¹????
+    struct Crop
+    {
+        Windows.Foundation.Rect Rect;
+        Boolean Active;
+        Single OverlayOpacity;
+    };
+
+    // ???????WinRT ??
+    [default_interface]
+    runtimeclass Layer
+    {
+        Layer(String name, Int32 width, Int32 height, D2DEngine.LayerType type);
+
+        String Name { get; set; };
+        Int32 Width { get; };
+        Int32 Height { get; };
+        D2DEngine.LayerType Type { get; };
+        Boolean Visible { get; set; };
+        Double Opacity { get; set; };
+
+        void Resize(Int32 newWidth, Int32 newHeight);
+        void Rotate(Double angleDegrees);
+        void FlipHorizontal();
+        void FlipVertical();
+    }
+
+    // ????????
+    [default_interface]
+    runtimeclass LayerManager
+    {
+        LayerManager();
+
+        D2DEngine.Layer GetLayer(Int32 index);
+        Int32 LayerCount { get; };
+
+        void AddLayer(D2DEngine.Layer layer);
+        void RemoveLayer(Int32 index);
+        void MoveLayer(Int32 fromIndex, Int32 toIndex);       
+        void Clear();
+    }
+}

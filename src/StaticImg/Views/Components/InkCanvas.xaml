@@ -4,11 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:root="using:Workloads.Creation.StaticImg"
-    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Components"
-    xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
-    xmlns:input="using:VirtualPaper.UIComponent.Input"
-    xmlns:collection="using:VirtualPaper.UIComponent.Collection"
     xmlns:lcl_tools="using:Workloads.Creation.StaticImg.Views.Tools"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -56,17 +52,17 @@
                     PointerReleased="Container_PointerReleased"
                     PointerExited="Container_PointerExited">
 
-                    <!-- 背景方格 -->
-                    <win2d:CanvasControl
+                    <!-- 背景层 -->
+                    <win2d:CanvasVirtualControl
                         x:Name="backgroundGrid"
-                        Draw="BackgroundGrid_Draw"
+                        RegionsInvalidated="BackgroundGrid_RegionsInvalidated"
                         UseSharedDevice="True"/>
 
-                    <!-- 主画布 -->
                     <win2d:CanvasControl
-                        x:Name="inkCanvas"
-                        Loaded="InkingCanvas_Loaded"
-                        Draw="InkCanvas_Draw"/>
+                        x:Name="renderCanvas"
+                        Loaded="RenderCanvas_Loaded"
+                        Draw="RenderCanvas_Draw"
+                        UseSharedDevice="True"/>
                 </Grid>
             </ScrollViewer>
 

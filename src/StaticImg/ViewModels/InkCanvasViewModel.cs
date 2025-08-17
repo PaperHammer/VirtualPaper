@@ -6,7 +6,7 @@ using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.StaticImg.Models;
 
 namespace Workloads.Creation.StaticImg.ViewModels {
-    internal partial class InkCanvasViewModel : ObservableObject {
+    public partial class InkCanvasViewModel : ObservableObject {
         private InkCanvasConfigData _configData;
         public InkCanvasConfigData ConfigData {
             get { return _configData; }
@@ -40,8 +40,8 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 await SaveAsync();
             }
             else {
-                await ConfigData.LoadBasicDataAsync();                
-                await ConfigData.LoadRenderDataAsync();                
+                await ConfigData.LoadBasicDataAsync();
+                await ConfigData.LoadRenderDataAsync();
             }
         }
 

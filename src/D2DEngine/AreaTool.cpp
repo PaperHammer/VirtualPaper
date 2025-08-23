@@ -1,17 +1,17 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "AreaTool.h"
-using namespace Microsoft::WRL;
+using Microsoft::WRL::ComPtr;
 
 namespace winrt::D2DEngine::implementation
 {
-    // ¹¹Ôìº¯ÊıÒÑÄÚÁªÔÚÍ·ÎÄ¼şÖĞ
+    // æ„é€ å‡½æ•°å·²å†…è”åœ¨å¤´æ–‡ä»¶ä¸­
 
     void AreaTool::Start(D2D1_POINT_2F startPoint)
     {
         m_area.Rect = Windows::Foundation::Rect(startPoint.x, startPoint.y, 0, 0);
         m_area.OriginalRect = m_area.Rect;
         m_area.Active = true;
-        m_area.HandleSize = 8.0f; // Ä¬ÈÏ¿ØÖÆµã´óĞ¡
+        m_area.HandleSize = 8.0f; // é»˜è®¤æ§åˆ¶ç‚¹å¤§å°
         m_area.IsOverlay = m_isOverlay;
         m_area.OverlayOpacity = m_overlayOpacity;
     }
@@ -38,7 +38,7 @@ namespace winrt::D2DEngine::implementation
         ctx->SetTarget(targetBitmap);
         ctx->BeginDraw();
 
-        // »æÖÆÃÉ²ã£¨Èç¹ûÊÇ²Ã¼ô¹¤¾ß£©
+        // ç»˜åˆ¶è’™å±‚ï¼ˆå¦‚æœæ˜¯è£å‰ªå·¥å…·ï¼‰
         if (m_area.IsOverlay)
         {
             ComPtr<ID2D1SolidColorBrush> overlayBrush;
@@ -53,7 +53,7 @@ namespace winrt::D2DEngine::implementation
             ctx->PopAxisAlignedClip();
         }
 
-        // »æÖÆĞéÏß¿ò
+        // ç»˜åˆ¶è™šçº¿æ¡†
         ComPtr<ID2D1StrokeStyle> strokeStyle;
         D2D1_STROKE_STYLE_PROPERTIES props = {};
         props.dashStyle = D2D1_DASH_STYLE_DASH;
@@ -65,7 +65,7 @@ namespace winrt::D2DEngine::implementation
         D2D1_RECT_F rect = ConvertToD2DRect();
         ctx->DrawRectangle(rect, borderBrush.Get(), 1.0f, strokeStyle.Get());
 
-        // »æÖÆ¿ØÖÆµã
+        // ç»˜åˆ¶æ§åˆ¶ç‚¹
         auto handles = GetControlPoints();
         for (auto& pt : handles)
         {

@@ -1,7 +1,8 @@
-#pragma once
+ï»¿#pragma once
+#include "LayerManager.g.h"
 #include <vector>
-#include "D2DEngine.LayerManager.g.h"
 #include "D2DDeviceManager.h"
+using Microsoft::WRL::ComPtr;
 
 namespace winrt::D2DEngine::implementation
 {
@@ -10,33 +11,33 @@ namespace winrt::D2DEngine::implementation
         ~LayerManager() noexcept;
         LayerManager() = default;
 
-        // Í¼²ã¹ÜÀí
-        void AddLayer(D2DEngine::Layer const& layer);
+        // å›¾å±‚ç®¡ç†
+        void AddLayer(winrt::D2DEngine::Layer const& layer);
         void RemoveLayer(int32_t index);
         void MoveLayer(int32_t fromIndex, int32_t toIndex);
-        D2DEngine::Layer GetLayer(int32_t index);
+        winrt::D2DEngine::Layer GetLayer(int32_t index);
         int32_t LayerCount() const;
         void Clear();
 
-        // äÖÈ¾½Ó¿Ú
+        // æ¸²æŸ“æ¥å£
         void RenderAll();
 
-        // ¹²ÏíÎÆÀí¹ÜÀí
+        // å…±äº«çº¹ç†ç®¡ç†
         HRESULT Resize(uint32_t width, uint32_t height);
         HRESULT RenderToSharedTexture();
         HANDLE GetSharedHandle() const;
 
     private:
-        // Ê¹ÓÃÉè±¸¹ÜÀíÆ÷ÖĞµÄ×ÊÔ´
+        // ä½¿ç”¨è®¾å¤‡ç®¡ç†å™¨ä¸­çš„èµ„æº
         D2DDeviceManager& m_deviceManager = D2DDeviceManager::Instance();
 
-        // ¹²ÏíÎÆÀí×ÊÔ´
+        // å…±äº«çº¹ç†èµ„æº
         ComPtr<ID3D11Texture2D> m_sharedTexture;
         ComPtr<ID2D1Bitmap1> m_renderTarget;
         HANDLE m_sharedHandle = nullptr;
 
-        // Í¼²ãÊı¾İ
-        std::vector<D2DEngine::Layer> m_layers;
+        // å›¾å±‚æ•°æ®
+        std::vector<winrt::D2DEngine::Layer> m_layers;
         uint32_t m_width = 0;
         uint32_t m_height = 0;
     };

@@ -1,6 +1,7 @@
-#include "pch.h"
-#include "LayerManager.h"
+ï»¿#include "pch.h"
 #include "Layer.h"
+#include "LayerManager.h"
+#include "LayerManager.g.cpp"
 
 namespace winrt::D2DEngine::implementation
 {
@@ -13,7 +14,7 @@ namespace winrt::D2DEngine::implementation
 		}
 	}
 
-	void LayerManager::AddLayer(D2DEngine::Layer const& layer)
+	void LayerManager::AddLayer(winrt::D2DEngine::Layer const& layer)
 	{
 		m_layers.push_back(layer);
 	}
@@ -36,7 +37,7 @@ namespace winrt::D2DEngine::implementation
 		}
 	}
 
-	D2DEngine::Layer LayerManager::GetLayer(int32_t index)
+	winrt::D2DEngine::Layer LayerManager::GetLayer(int32_t index)
 	{
 		if (index >= 0 && index < static_cast<int32_t>(m_layers.size()))
 			return m_layers[index];
@@ -61,11 +62,11 @@ namespace winrt::D2DEngine::implementation
 		m_width = width;
 		m_height = height;
 
-		// ÊÍ·ÅÏÖÓĞ×ÊÔ´
+		// é‡Šæ”¾ç°æœ‰èµ„æº
 		m_renderTarget = nullptr;
 		m_sharedTexture = nullptr;
 
-		// ´´½¨¹²ÏíÎÆÀí
+		// åˆ›å»ºå…±äº«çº¹ç†
 		D3D11_TEXTURE2D_DESC desc = {};
 		desc.Width = width;
 		desc.Height = height;
@@ -81,7 +82,7 @@ namespace winrt::D2DEngine::implementation
 			&desc, nullptr, &m_sharedTexture);
 		if (FAILED(hr)) return hr;
 
-		// »ñÈ¡¹²Ïí¾ä±ú
+		// è·å–å…±äº«å¥æŸ„
 		ComPtr<IDXGIResource> dxgiResource;
 		hr = m_sharedTexture.As(&dxgiResource);
 		if (FAILED(hr)) return hr;
@@ -89,7 +90,7 @@ namespace winrt::D2DEngine::implementation
 		hr = dxgiResource->GetSharedHandle(&m_sharedHandle);
 		if (FAILED(hr)) return hr;
 
-		// ´´½¨D2DäÖÈ¾Ä¿±ê
+		// åˆ›å»ºD2Dæ¸²æŸ“ç›®æ ‡
 		ComPtr<IDXGISurface> surface;
 		hr = m_sharedTexture.As(&surface);
 		if (FAILED(hr)) return hr;
@@ -110,12 +111,12 @@ namespace winrt::D2DEngine::implementation
 
 		auto context = m_deviceManager.GetD2DContext();
 
-		// ÉèÖÃäÖÈ¾Ä¿±ê
+		// è®¾ç½®æ¸²æŸ“ç›®æ ‡
 		context->SetTarget(m_renderTarget.Get());
 		context->BeginDraw();
-		context->Clear(D2D1::ColorF(0, 0, 0, 0)); // Í¸Ã÷±³¾°
+		context->Clear(D2D1::ColorF(0, 0, 0, 0)); // é€æ˜èƒŒæ™¯
 
-		// äÖÈ¾ËùÓĞ¿É¼ûÍ¼²ã
+		// æ¸²æŸ“æ‰€æœ‰å¯è§å›¾å±‚
 		for (auto const& layer : m_layers)
 		{
 			auto impl = winrt::get_self<implementation::Layer>(layer);
@@ -148,7 +149,7 @@ namespace winrt::D2DEngine::implementation
 		if (!context) return;
 
 		context->BeginDraw();
-		context->Clear(D2D1::ColorF(0, 0, 0, 0)); // Í¸Ã÷±³¾°
+		context->Clear(D2D1::ColorF(0, 0, 0, 0)); // é€æ˜èƒŒæ™¯
 
 		for (auto const& layer : m_layers)
 		{

@@ -1,11 +1,11 @@
-#pragma once
+﻿#pragma once
 #include <d2d1_3.h>
 #include <winrt/Windows.Foundation.h>
 
 class RectConverter
 {
 public:
-	// Windows.Foundation.Rect ת D2D1_RECT_F
+	// Windows.Foundation.Rect to D2D1_RECT_F
 	static inline D2D1_RECT_F WinRTToD2D(const winrt::Windows::Foundation::Rect& rect)
 	{
 		return D2D1::RectF(
@@ -16,7 +16,7 @@ public:
 		);
 	}
 
-	// D2D1_RECT_F ת Windows.Foundation.Rect
+	// D2D1_RECT_F to Windows.Foundation.Rect
 	static inline winrt::Windows::Foundation::Rect D2DToWinRT(const D2D1_RECT_F& rect)
 	{
 		return winrt::Windows::Foundation::Rect(

@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>accd3aa8-1ba0-4223-9bbe-0c431709210b</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{926ab91d-31b4-48c3-b9a4-e681349f27f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\inc">
+      <UniqueIdentifier>{e050af2f-4061-43dc-95cf-0134e425b8d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\src">
+      <UniqueIdentifier>{a40e3e3f-82ce-4081-a1f6-89df3280ae6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\idl">
+      <UniqueIdentifier>{ef70e96b-6f95-41b9-93bd-66b6d89402d6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Class.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="Layer.cpp">
+      <Filter>Resources\src</Filter>
+    </ClCompile>
+    <ClCompile Include="D2DDeviceManager.cpp">
+      <Filter>Resources\src</Filter>
+    </ClCompile>
+    <ClCompile Include="AreaTool.cpp">
+      <Filter>Resources\src</Filter>
+    </ClCompile>
+    <ClCompile Include="LayerManager.cpp">
+      <Filter>Resources\src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Layer.h">
+      <Filter>Resources\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="ColorUtils.h">
+      <Filter>Resources\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DDeviceManager.h">
+      <Filter>Resources\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="RectUtils.h">
+      <Filter>Resources\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="AreaTool.h">
+      <Filter>Resources\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="LayerManager.h">
+      <Filter>Resources\inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="Layer.idl">
+      <Filter>Resources\idl</Filter>
+    </Midl>
+    <Midl Include="LayerManger.idl">
+      <Filter>Resources\idl</Filter>
+    </Midl>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D2DEngine.def" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PropertySheet.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+  </ItemGroup>
+</Project>

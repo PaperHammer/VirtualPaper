@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "D2DDeviceManager.h"
 #include <stdexcept>
 using Microsoft::WRL::ComPtr;
@@ -43,10 +43,10 @@ void D2DDeviceManager::Initialize()
         throw std::runtime_error("Failed to create D3D11 device");
     }
 
-    // »ñÈ¡ DXGI Éè±¸
+    // èŽ·å– DXGI è®¾å¤‡
     m_d3dDevice.As(&m_dxgiDevice);
 
-    // ´´½¨ D2D ¹¤³§
+    // åˆ›å»º D2D å·¥åŽ‚
     D2D1_FACTORY_OPTIONS options = {};
 #if defined(_DEBUG)
     options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
@@ -62,7 +62,7 @@ void D2DDeviceManager::Initialize()
         throw std::runtime_error("Failed to create D2D factory");
     }
 
-    // ´´½¨Éè±¸ºÍÉÏÏÂÎÄ
+    // åˆ›å»ºè®¾å¤‡å’Œä¸Šä¸‹æ–‡
     hr = m_d2dFactory->CreateDevice(m_dxgiDevice.Get(), &m_d2dDevice);
     if (FAILED(hr)) {
         throw std::runtime_error("Failed to create D2D device");

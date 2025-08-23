@@ -1,23 +1,23 @@
-#pragma once
+ï»¿#pragma once
 #include <d2d1_3.h>
 #include <winrt/Windows.Foundation.Numerics.h>
 
 class ColorConverter
 {
 public:
-	// Vector4 ×ª D2D1_COLOR_F
+	// Vector4 è½¬ D2D1_COLOR_F
 	static inline  D2D1_COLOR_F WinRTToD2DColor(const winrt::Windows::Foundation::Numerics::float4& vector)
 	{
 		return D2D1::ColorF(vector.x, vector.y, vector.z, vector.w);
 	}
 
-	// D2D1_COLOR_F ×ª Vector4
+	// D2D1_COLOR_F è½¬ Vector4
 	static inline winrt::Windows::Foundation::Numerics::float4 D2DColorToWinRT(const D2D1_COLOR_F& color)
 	{
 		return { color.r, color.g, color.b, color.a };
 	}
 
-	// ´ø²»Í¸Ã÷¶ÈµÄ×ª»»
+	// å¸¦ä¸é€æ˜åº¦çš„è½¬æ¢
 	static inline D2D1_COLOR_F WinRTToD2DColorWithOpacity(
 		const winrt::Windows::Foundation::Numerics::float4& vector,
 		float opacity)

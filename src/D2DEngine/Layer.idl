@@ -1,4 +1,6 @@
-﻿namespace D2DEngine{
+﻿import "BrushManager.idl";
+
+namespace D2DEngine{
     enum RotateDirection {
         Left = 0,
         Right = 1
@@ -8,28 +10,14 @@
     {
         Bitmap = 0,
         Vector = 1
-    };
-
-    enum StrokeTool
-    {
-        Brush = 0,
-        Eraser = 1
-    };
+    };    
 
     struct FillOptions
     {
         Windows.Foundation.Numerics.Vector4 Color;
         Single Opacity;
         Single Tolerance;
-    };
-
-    struct StrokeOptions
-    {
-        StrokeTool Tool;
-        Windows.Foundation.Numerics.Vector4 Color;
-        Single Thickness;
-        Single Opacity;
-    };
+    };    
 
     enum AreaHandle
     {
@@ -50,6 +38,9 @@
         Single OverlayOpacity;
     };
 
+    [version(1.0)]
+    [marshaling_behavior(agile)]
+    [threading(both)]
     [default_interface]
     runtimeclass Layer
     {
@@ -61,5 +52,23 @@
         LayerType Type { get; };
         Boolean Visible { get; set; };
         Double Opacity { get; set; };
+
+        Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IBuffer> RenderToBufferAsync();
+
+        void Resize(Int32 newWidth, Int32 newHeight, Boolean scaleContent);
+        void Rotate(RotateDirection direction);
+        void FlipHorizontal();
+        void FlipVertical();
+
+        void DrawStroke(Windows.Foundation.Collections.IVector<Windows.Foundation.Point> points, StrokeOptions options);
+        void FillRect(Windows.Foundation.Rect rect, FillOptions options);
+        void FillPath(Windows.Foundation.Collections.IVector<Windows.Foundation.Point> points, FillOptions options);
+        void FloodFill(Int32 x, Int32 y, FillOptions options);
+
+        AreaHandle HitTestSelectionHandle(Windows.Foundation.Point pt);
+        void ResizeSelection(Windows.Foundation.Point newPt, AreaHandle handle);
+
+        AreaHandle HitTestCropHandle(Windows.Foundation.Point pt);
+        void ResizeCrop(Windows.Foundation.Point newPt, AreaHandle handle);
     }
 }

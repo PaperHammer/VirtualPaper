@@ -17,6 +17,9 @@
     <Filter Include="Resources\idl">
       <UniqueIdentifier>{ef70e96b-6f95-41b9-93bd-66b6d89402d6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resources\inc\utils">
+      <UniqueIdentifier>{648750ca-c624-480d-95ed-894b729995ff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -34,19 +37,13 @@
     <ClCompile Include="LayerManager.cpp">
       <Filter>Resources\src</Filter>
     </ClCompile>
+    <ClCompile Include="BrushManager.cpp">
+      <Filter>Resources\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="Layer.h">
-      <Filter>Resources\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="ColorUtils.h">
-      <Filter>Resources\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DDeviceManager.h">
-      <Filter>Resources\inc</Filter>
-    </ClInclude>
-    <ClInclude Include="RectUtils.h">
       <Filter>Resources\inc</Filter>
     </ClInclude>
     <ClInclude Include="AreaTool.h">
@@ -55,12 +52,35 @@
     <ClInclude Include="LayerManager.h">
       <Filter>Resources\inc</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="resource1.h" />
+    <ClInclude Include="BrushManager.h">
+      <Filter>Resources\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="ColorUtils.h">
+      <Filter>Resources\inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DToWin2DUtils.h">
+      <Filter>Resources\inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="PointUtils.h">
+      <Filter>Resources\inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="RectUtils.h">
+      <Filter>Resources\inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DDeviceManager.h">
+      <Filter>Resources\inc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Layer.idl">
       <Filter>Resources\idl</Filter>
     </Midl>
     <Midl Include="LayerManger.idl">
+      <Filter>Resources\idl</Filter>
+    </Midl>
+    <Midl Include="BrushManager.idl">
       <Filter>Resources\idl</Filter>
     </Midl>
   </ItemGroup>
@@ -73,5 +93,10 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

@@ -1,9 +1,8 @@
 ﻿#pragma once
 #include "Layer.h"
 #include "D2DDeviceManager.h"
+#include <d2d1_1.h>
 #include <d2d1_3.h>
-#include <wrl/client.h>
-using Microsoft::WRL::ComPtr;
 
 namespace winrt::D2DEngine::implementation
 {
@@ -35,15 +34,15 @@ namespace winrt::D2DEngine::implementation
         Area m_area;
         bool m_isOverlay;
         float m_overlayOpacity;
-        ComPtr<ID2D1Bitmap1> m_areaBitmap;
+        winrt::com_ptr<ID2D1Bitmap1> m_areaBitmap;
 
         // 使用 D2DDeviceManager 获取资源
-        ComPtr<ID2D1Factory7> GetFactory() const {
+        winrt::com_ptr<ID2D1Factory7> GetFactory() const {
             return D2DDeviceManager::Instance().GetD2DFactory();
         }
 
-        ComPtr<ID2D1DeviceContext5> GetContext() const {
-            return D2DDeviceManager::Instance().GetD2DContext();
+        winrt::com_ptr<ID2D1DeviceContext5> GetContext() const {
+            return D2DDeviceManager::Instance().GetSharedD2DContext();
         }
 
         std::vector<D2D1_POINT_2F> GetControlPoints() const;

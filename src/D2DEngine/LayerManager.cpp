@@ -2,16 +2,19 @@
 #include "Layer.h"
 #include "LayerManager.h"
 #include "LayerManager.g.cpp"
+#include <d3d11.h>
+#include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
+#include <windows.graphics.directx.direct3d11.interop.h>
 
 namespace winrt::D2DEngine::implementation
 {
-	LayerManager::~LayerManager() noexcept
+	struct IBufferByteAccess : ::IUnknown
 	{
-		if (m_sharedHandle)
-		{
-			CloseHandle(m_sharedHandle);
-			m_sharedHandle = nullptr;
-		}
+		virtual HRESULT __stdcall Buffer(uint8_t** value) = 0;
+	};
+
+	LayerManager::LayerManager() {
+		m_compositeContext = D2DDeviceManager::Instance().CreateIndependentD2DContext();
 	}
 
 	void LayerManager::AddLayer(winrt::D2DEngine::Layer const& layer)
@@ -54,102 +57,36 @@ namespace winrt::D2DEngine::implementation
 		m_layers.clear();
 	}
 
-	HRESULT LayerManager::Resize(uint32_t width, uint32_t height)
+	void LayerManager::Render()
 	{
-		if (width == 0 || height == 0) return E_INVALIDARG;
-		if (width == m_width && height == m_height) return S_OK;
-
-		m_width = width;
-		m_height = height;
-
-		// 释放现有资源
-		m_renderTarget = nullptr;
-		m_sharedTexture = nullptr;
-
-		// 创建共享纹理
-		D3D11_TEXTURE2D_DESC desc = {};
-		desc.Width = width;
-		desc.Height = height;
-		desc.MipLevels = 1;
-		desc.ArraySize = 1;
-		desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-		desc.SampleDesc.Count = 1;
-		desc.Usage = D3D11_USAGE_DEFAULT;
-		desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-		desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
-
-		HRESULT hr = m_deviceManager.GetD3DDevice()->CreateTexture2D(
-			&desc, nullptr, &m_sharedTexture);
-		if (FAILED(hr)) return hr;
-
-		// 获取共享句柄
-		ComPtr<IDXGIResource> dxgiResource;
-		hr = m_sharedTexture.As(&dxgiResource);
-		if (FAILED(hr)) return hr;
-
-		hr = dxgiResource->GetSharedHandle(&m_sharedHandle);
-		if (FAILED(hr)) return hr;
-
-		// 创建D2D渲染目标
-		ComPtr<IDXGISurface> surface;
-		hr = m_sharedTexture.As(&surface);
-		if (FAILED(hr)) return hr;
-
-		auto props = D2D1::BitmapProperties1(
-			D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-			D2D1::PixelFormat(desc.Format, D2D1_ALPHA_MODE_PREMULTIPLIED)
-		);
-
-		return m_deviceManager.GetD2DContext()->CreateBitmapFromDxgiSurface(
-			surface.Get(), &props, &m_renderTarget);
+		if (m_isDirty)
+		{
+			RenderAll();
+			m_isDirty = false;
+		}
 	}
 
-	HRESULT LayerManager::RenderToSharedTexture()
+	void LayerManager::EnsureCompositeTarget()
 	{
-		if (!m_renderTarget || !m_deviceManager.GetD2DContext())
-			return E_NOT_VALID_STATE;
+		if (m_compositeBitmap && !m_isDirty) return;
 
-		auto context = m_deviceManager.GetD2DContext();
-
-		// 设置渲染目标
-		context->SetTarget(m_renderTarget.Get());
-		context->BeginDraw();
-		context->Clear(D2D1::ColorF(0, 0, 0, 0)); // 透明背景
-
-		// 渲染所有可见图层
-		for (auto const& layer : m_layers)
-		{
-			auto impl = winrt::get_self<implementation::Layer>(layer);
-			if (impl->Visible())
-			{
-				auto bmp = impl->GetBitmap();
-				if (bmp)
-				{
-					context->DrawBitmap(
-						bmp.Get(),
-						D2D1::RectF(0, 0, impl->Width(), impl->Height()),
-						impl->Opacity(),
-						D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
-					);
-				}
-			}
+		auto newBitmap = D2DDeviceManager::Instance().CreateRenderTargetForLayer(m_width, m_height, m_compositeContext);
+		if (!newBitmap) {
+			throw winrt::hresult_error(E_FAIL, L"Failed to create composite render target");
 		}
 
-		return context->EndDraw();
-	}
-
-	HANDLE LayerManager::GetSharedHandle() const
-	{
-		return m_sharedHandle;
+		m_compositeBitmap = newBitmap;
+		m_isDirty = false;
 	}
 
 	void LayerManager::RenderAll()
 	{
-		auto context = m_deviceManager.GetD2DContext();
-		if (!context) return;
+		EnsureCompositeTarget();
 
-		context->BeginDraw();
-		context->Clear(D2D1::ColorF(0, 0, 0, 0)); // 透明背景
+		auto ctx = m_compositeContext.get();
+		ctx->SetTarget(m_compositeBitmap.get());
+		ctx->BeginDraw();
+		ctx->Clear(D2D1::ColorF(0, 0, 0, 0)); // 透明背景
 
 		for (auto const& layer : m_layers)
 		{
@@ -159,9 +96,10 @@ namespace winrt::D2DEngine::implementation
 				auto bmp = impl->GetBitmap();
 				if (bmp)
 				{
-					context->DrawBitmap(
-						bmp.Get(),
-						D2D1::RectF(0, 0, impl->Width(), impl->Height()),
+					D2D1_RECT_F rect = D2D1::RectF(0, 0, (float)impl->Width(), (float)impl->Height());
+					ctx->DrawBitmap(
+						bmp.get(),
+						rect,
 						impl->Opacity(),
 						D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
 					);
@@ -169,6 +107,64 @@ namespace winrt::D2DEngine::implementation
 			}
 		}
 
-		context->EndDraw();
+		HRESULT hr = ctx->EndDraw();
+		if (FAILED(hr)) {
+			m_isDirty = true; // 标记失败，下次重试
+			throw winrt::hresult_error(hr, L"Composite draw failed");
+		}
+	}
+
+	winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface LayerManager::GetSurface()
+	{
+		RenderAll();
+
+		if (!m_compositeBitmap) {
+			return nullptr;
+		}
+
+		// 获取DXGI表面
+		winrt::com_ptr<IDXGISurface> dxgiSurface;
+		winrt::check_hresult(m_compositeBitmap->GetSurface(dxgiSurface.put()));
+
+		// 转换为Direct3DSurface
+		winrt::com_ptr<::IInspectable> surfaceInspectable;
+		winrt::check_hresult(
+			CreateDirect3D11SurfaceFromDXGISurface(
+				dxgiSurface.get(),
+				reinterpret_cast<::IInspectable**>(surfaceInspectable.put()))
+		);
+
+		return surfaceInspectable.as<winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface>();
+	}
+
+	winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Storage::Streams::IBuffer> LayerManager::RenderToBufferAsync()
+	{
+		uint32_t width = m_width;
+		uint32_t height = m_height;
+		if (!m_compositeBitmap) co_return nullptr;
+
+		uint32_t stride = width * 4; // 32位BGRA格式
+		D2D1_MAPPED_RECT mapped = {};
+		HRESULT hr = m_compositeBitmap->Map(D2D1_MAP_OPTIONS_READ, &mapped);
+		if (FAILED(hr)) co_return nullptr;
+
+		uint32_t bufferSize = stride * height;
+		winrt::Windows::Storage::Streams::Buffer buffer(bufferSize);
+
+		// 直接获取 buffer 的数据指针
+		uint8_t* data = buffer.data();
+		if (mapped.pitch == stride) {
+			// 内存连续，直接一次性拷贝
+			memcpy(data, mapped.bits, bufferSize);
+		}
+		else {
+			// 行间有填充，逐行拷贝
+			for (uint32_t y = 0; y < height; ++y) {
+				memcpy(data + y * stride, mapped.bits + y * mapped.pitch, stride);
+			}
+		}
+
+		m_compositeBitmap->Unmap();
+		co_return buffer;
 	}
 }

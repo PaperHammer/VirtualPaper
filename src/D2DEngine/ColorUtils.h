@@ -6,26 +6,26 @@ class ColorConverter
 {
 public:
 	// Vector4 转 D2D1_COLOR_F
-	static inline  D2D1_COLOR_F WinRTToD2DColor(const winrt::Windows::Foundation::Numerics::float4& vector)
+	static inline  D2D1_COLOR_F ToD2DColor(const winrt::Windows::Foundation::Numerics::float4& vector)
 	{
 		return D2D1::ColorF(vector.x, vector.y, vector.z, vector.w);
 	}
 
 	// D2D1_COLOR_F 转 Vector4
-	static inline winrt::Windows::Foundation::Numerics::float4 D2DColorToWinRT(const D2D1_COLOR_F& color)
+	static inline winrt::Windows::Foundation::Numerics::float4 ToWinrtColor(const D2D1_COLOR_F& color)
 	{
 		return { color.r, color.g, color.b, color.a };
 	}
 
 	// 带不透明度的转换
-	static inline D2D1_COLOR_F WinRTToD2DColorWithOpacity(
+	static inline D2D1_COLOR_F ToD2DColorWithOpacity(
 		const winrt::Windows::Foundation::Numerics::float4& vector,
 		float opacity)
 	{
 		return D2D1::ColorF(vector.x, vector.y, vector.z, vector.w * opacity);
 	}
 
-	static inline winrt::Windows::Foundation::Numerics::float4 D2DColorToWinRTWithOpacity(
+	static inline winrt::Windows::Foundation::Numerics::float4 ToWinrtColorWithOpacity(
 		const D2D1_COLOR_F& color,
 		float opacity)
 	{

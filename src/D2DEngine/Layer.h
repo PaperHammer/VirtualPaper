@@ -1,8 +1,6 @@
 ﻿#pragma once
 #include "Layer.g.h"
-#include <wrl.h>
 #include <d2d1_3.h>
-using Microsoft::WRL::ComPtr;
 using std::vector;
 
 namespace winrt::D2DEngine::implementation
@@ -34,23 +32,24 @@ namespace winrt::D2DEngine::implementation
 		void FlipHorizontal();
 		void FlipVertical();
 
-		// 渲染相关
-		ComPtr<ID2D1Bitmap1> GetBitmap();
-		ComPtr<ID2D1DeviceContext5> GetContext();
+		// 渲染
+		winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Storage::Streams::IBuffer> RenderToBufferAsync();
+		winrt::com_ptr<ID2D1Bitmap1> GetBitmap();
+		winrt::com_ptr<ID2D1DeviceContext5> GetContext();
 
 		// 绘图
-		void DrawStroke(vector<D2D1_POINT_2F> const& points, winrt::D2DEngine::StrokeOptions const& options);
-		void FillRect(D2D1_RECT_F const& rect, winrt::D2DEngine::FillOptions const& options);
-		void FillPath(vector<D2D1_POINT_2F> const& points, winrt::D2DEngine::FillOptions const& options);
+		void DrawStroke(winrt::Windows::Foundation::Collections::IVector<winrt::Windows::Foundation::Point> const& points, winrt::D2DEngine::StrokeOptions const& options);
+		void FillRect(winrt::Windows::Foundation::Rect const& rect, winrt::D2DEngine::FillOptions const& options);
+		void FillPath(winrt::Windows::Foundation::Collections::IVector<winrt::Windows::Foundation::Point> const& points, winrt::D2DEngine::FillOptions const& options);
 		void FloodFill(int x, int y, winrt::D2DEngine::FillOptions const& options);
 
 		// 选择
-		winrt::D2DEngine::AreaHandle HitTestSelectionHandle(D2D1_POINT_2F pt) const;
-		void ResizeSelection(D2D1_POINT_2F newPt, winrt::D2DEngine::AreaHandle handle);
+		winrt::D2DEngine::AreaHandle HitTestSelectionHandle(winrt::Windows::Foundation::Point pt) const;
+		void ResizeSelection(winrt::Windows::Foundation::Point newPt, winrt::D2DEngine::AreaHandle handle);
 
 		// 裁剪	
-		winrt::D2DEngine::AreaHandle HitTestCropHandle(D2D1_POINT_2F pt) const;
-		void ResizeCrop(D2D1_POINT_2F newPt, winrt::D2DEngine::AreaHandle handle);
+		winrt::D2DEngine::AreaHandle HitTestCropHandle(winrt::Windows::Foundation::Point pt) const;
+		void ResizeCrop(winrt::Windows::Foundation::Point newPt, winrt::D2DEngine::AreaHandle handle);
 
 	private:
 		hstring m_name;
@@ -61,18 +60,25 @@ namespace winrt::D2DEngine::implementation
 		double m_opacity{ 1.0 };
 
 		// 每个图层自己的 D2D 目标
-		ComPtr<ID2D1Bitmap1> m_bitmap;
+		winrt::com_ptr<ID2D1Bitmap1> m_bitmap;
+		// 每个图层自己的上下文
+		winrt::com_ptr<ID2D1DeviceContext5> m_ctx;
 
 		winrt::D2DEngine::Area m_selection;
-		ComPtr<ID2D1Bitmap1> m_selectionBitmap;
+		winrt::com_ptr<ID2D1Bitmap1> m_selectionBitmap;
 
 		winrt::D2DEngine::Area m_crop;
-		ComPtr<ID2D1Bitmap1> m_cropBitmap;
+		winrt::com_ptr<ID2D1Bitmap1> m_cropBitmap;
 
-		// 当前图层变换状态
+		// 图层变换状态
 		double m_rotation{ 0.0 }; // 角度
 		bool m_flipH{ false };
-		bool m_flipV{ false };
+		bool m_flipV{ false };		
+
+		// 绘制
+		vector<D2D1_POINT_2F> GenerateSmoothCurve(const vector<D2D1_POINT_2F>& points);
+		void CreatePathGeometry(const vector<D2D1_POINT_2F>& points, ID2D1PathGeometry** geometry);
+		void CreateEraserStrokeStyle(ID2D1StrokeStyle** style);
 	};
 }
 

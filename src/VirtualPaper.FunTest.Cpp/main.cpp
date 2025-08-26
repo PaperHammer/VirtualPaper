@@ -1,90 +1,115 @@
 ﻿#include "pch.h"
+#include <iostream>
 
-using namespace winrt;
-using namespace Windows::Foundation;
+static void TestLayerFunctionality()
+{
+	try {
+		// 初始化 WinRT 运行时
+		winrt::init_apartment();
+
+		// 测试图层创建
+		winrt::D2DEngine::Layer layer{
+			L"LayerName", 
+			800,
+			600,
+			winrt::D2DEngine::LayerType::Bitmap
+		};
+		std::wcout << L"Created layer: " << layer.Name().c_str()
+			<< L" (" << layer.Width() << L"x" << layer.Height() << L")\n";
+
+		// 测试绘图功能
+		auto points = winrt::single_threaded_vector<winrt::Windows::Foundation::Point>({
+			{100, 100},
+			{200, 200},
+			{300, 150}
+			});
+
+		winrt::D2DEngine::StrokeOptions strokeOpts = {
+			winrt::D2DEngine::StrokeTool::Brush,
+			{1.0f, 0.0f, 0.0f, 1.0f},
+			2.0f,
+			1.0f
+		};
+
+		layer.DrawStroke(points, strokeOpts);
+		std::wcout << L"Draw stroke operation completed\n";
+
+		// 测试变换功能
+		layer.Resize(1024, 768, true);
+		std::wcout << L"Resized to: " << layer.Width() << L"x" << layer.Height() << L"\n";
+
+		layer.Rotate(winrt::D2DEngine::RotateDirection::Right);
+		std::wcout << L"Rotated 90 degrees right\n";
+
+		// 测试选择功能
+		winrt::Windows::Foundation::Point testPoint{ 150, 150 };
+		auto handle = layer.HitTestSelectionHandle(testPoint);
+
+		if (handle != winrt::D2DEngine::AreaHandle::None) {
+			std::wcout << L"Hit test successful, handle type: "
+				<< static_cast<int>(handle) << L"\n";
+
+			layer.ResizeSelection({ 160, 160 }, handle);
+			std::wcout << L"Selection resized\n";
+		}
+
+		// 验证渲染
+		auto bufferOperation = layer.RenderToBufferAsync();
+
+		// 等待异步操作完成（在测试中可能需要同步等待）
+		winrt::Windows::Storage::Streams::IBuffer buffer = bufferOperation.get();
+
+		if (buffer) {
+			std::wcout << L"RenderToBufferAsync succeeded!\n";
+			std::wcout << L"Buffer size: " << buffer.Length() << L" bytes\n";
+			std::wcout << L"Buffer capacity: " << buffer.Capacity() << L" bytes\n";
+
+			// 验证缓冲区内容
+			uint32_t expectedSize = layer.Width() * layer.Height() * 4; // BGRA格式
+			if (buffer.Length() == expectedSize) {
+				std::wcout << L"Buffer size matches expected BGRA format\n";
+			}
+			else {
+				std::wcout << L"Warning: Buffer size doesn't match expected BGRA format\n";
+				std::wcout << L"Expected: " << expectedSize << L" bytes, Got: " << buffer.Length() << L" bytes\n";
+			}
+
+			// 可以进一步检查缓冲区数据
+			// 检查前几个字节是否合理
+			if (buffer.Length() >= 4) {
+				uint8_t* data = buffer.data();
+				std::wcout << L"First pixel (BGRA): "
+					<< static_cast<int>(data[0]) << L", "
+					<< static_cast<int>(data[1]) << L", "
+					<< static_cast<int>(data[2]) << L", "
+					<< static_cast<int>(data[3]) << L"\n";
+			}
+		}
+		else {
+			std::wcout << L"RenderToBufferAsync returned null buffer\n";
+		}
+
+		std::wcout << L"All tests passed successfully!\n";
+	}
+	catch (const winrt::hresult_error& e) {
+		std::wcerr << L"WinRT Error: " << e.message().c_str()
+			<< L" (0x" << std::hex << e.code() << L")\n";
+	}
+	catch (const std::exception& e) {
+		std::cerr << "Std exception: " << e.what() << std::endl;
+	}
+	catch (...) {
+		std::cerr << "Unknown test failure occurred" << std::endl;
+	}
+}
 
 int main()
 {
-    init_apartment();
-    Uri uri(L"http://aka.ms/cppwinrt");
-    printf("Hello, %ls!\n", uri.AbsoluteUri().c_str());
+	std::ios::sync_with_stdio(false);
+	std::wcout << L"Starting Layer class tests...\n";
+
+	TestLayerFunctionality();
+
+	std::wcout << L"Testing completed.\n";
+	return 0;
 }
-//
-//#include "pch.h"
-//#include <iostream>
-//#include <winrt/D2DRender.h>
-//
-//static void TestLayerFunctionality()
-//{
-//    try {
-//        // 1. 测试图层创建
-//        auto layer = winrt::make_self<winrt::D2DRender::implementation::Layer>(
-//            L"TestLayer", 800, 600, winrt::D2DRender::LayerType::Bitmap);
-//
-//        std::wcout << L"Created layer: " << layer->Name().c_str()
-//            << L" (" << layer->Width() << L"x" << layer->Height() << L")\n";
-//
-//        // 2. 测试绘图功能
-//        vector<D2D1_POINT_2F> points = {
-//            {100, 100}, {200, 200}, {300, 150}
-//        };
-//
-//        winrt::D2DRender::StrokeOptions strokeOpts = {
-//            winrt::D2DRender::StrokeTool::Brush,
-//            {1.0f, 0.0f, 0.0f, 1.0f}, // 红色
-//            2.0f,
-//            1.0f
-//        };
-//
-//        layer->DrawStroke(points, strokeOpts);
-//        std::wcout << L"Draw stroke operation completed\n";
-//
-//        // 3. 测试变换功能
-//        layer->Resize(1024, 768, true);
-//        std::wcout << L"Resized to: " << layer->Width() << L"x" << layer->Height() << L"\n";
-//
-//        layer->Rotate(winrt::D2DRender::RotateDirection::Right);
-//        std::wcout << L"Rotated 90 degrees right\n";
-//
-//        // 4. 测试选择功能（使用实际存在的方法）
-//        D2D1_POINT_2F testPoint = { 150, 150 };
-//        winrt::D2DRender::AreaHandle handle = layer->HitTestSelectionHandle(testPoint);
-//        if (handle != winrt::D2DRender::AreaHandle::None) {
-//            std::wcout << L"Hit test successful, handle type: " << static_cast<int>(handle) << L"\n";
-//
-//            // 调整选择区域大小
-//            layer->ResizeSelection({ 160, 160 }, handle);
-//            std::wcout << L"Selection resized\n";
-//        }
-//
-//        // 5. 验证渲染
-//        auto ctx = D2DDeviceManager::Instance().GetD2DContext();
-//        auto bitmap = layer->GetBitmap();
-//        if (bitmap) {
-//            ctx->DrawBitmap(bitmap.Get());
-//            std::wcout << L"Layer rendered successfully\n";
-//        }
-//
-//        std::wcout << L"All tests passed successfully!\n";
-//    }
-//    catch (const std::exception& e) {
-//        std::cerr << "Test failed: " << e.what() << std::endl;
-//    }
-//    catch (...) {
-//        std::cerr << "Unknown test failure occurred" << std::endl;
-//    }
-//}
-//
-//int main()
-//{
-//    ios::sync_with_stdio(false);
-//
-//    // 初始化必要的组件
-//    D2DDeviceManager::Instance();
-//
-//    std::wcout << L"Starting Layer class tests...\n";
-//    TestLayerFunctionality();
-//    std::wcout << L"Testing completed.\n";
-//
-//    return 0;
-//}

@@ -1,7 +1,6 @@
 ﻿#include "pch.h"
 #include "D2DDeviceManager.h"
 #include <stdexcept>
-using Microsoft::WRL::ComPtr;
 
 D2DDeviceManager& D2DDeviceManager::Instance()
 {
@@ -11,10 +10,12 @@ D2DDeviceManager& D2DDeviceManager::Instance()
 
 D2DDeviceManager::D2DDeviceManager()
 {
-    Initialize();
+    InitializeDirect3D();
+    InitializeDirect2D();
 }
 
-void D2DDeviceManager::Initialize()
+// 初始化D3D设备
+void D2DDeviceManager::InitializeDirect3D()
 {
     UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 #if defined(_DEBUG)
@@ -25,97 +26,132 @@ void D2DDeviceManager::Initialize()
         D3D_FEATURE_LEVEL_11_1,
         D3D_FEATURE_LEVEL_11_0
     };
-    D3D_FEATURE_LEVEL featureLevel;
 
-    HRESULT hr = D3D11CreateDevice(
-        nullptr,
-        D3D_DRIVER_TYPE_HARDWARE,
-        nullptr,
-        creationFlags,
-        featureLevels,
-        ARRAYSIZE(featureLevels),
-        D3D11_SDK_VERSION,
-        &m_d3dDevice,
-        &featureLevel,
-        &m_d3dContext);
+    winrt::check_hresult(
+        D3D11CreateDevice(
+            nullptr,
+            D3D_DRIVER_TYPE_HARDWARE,
+            nullptr,
+            creationFlags,
+            featureLevels,
+            ARRAYSIZE(featureLevels),
+            D3D11_SDK_VERSION,
+            m_d3dSharedDevice.put(),
+            nullptr,
+            m_d3dSharedContext.put()
+        )
+    );
+}
 
-    if (FAILED(hr)) {
-        throw std::runtime_error("Failed to create D3D11 device");
-    }
-
-    // 获取 DXGI 设备
-    m_d3dDevice.As(&m_dxgiDevice);
-
-    // 创建 D2D 工厂
+// 初始化D2D设备
+void D2DDeviceManager::InitializeDirect2D()
+{
     D2D1_FACTORY_OPTIONS options = {};
 #if defined(_DEBUG)
     options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 #endif
 
-    hr = D2D1CreateFactory(
-        D2D1_FACTORY_TYPE_SINGLE_THREADED,
-        __uuidof(ID2D1Factory7),
-        &options,
-        reinterpret_cast<void**>(m_d2dFactory.ReleaseAndGetAddressOf()));
+    // 创建D2D工厂
+    winrt::check_hresult(
+        D2D1CreateFactory(
+            D2D1_FACTORY_TYPE_SINGLE_THREADED,
+            __uuidof(ID2D1Factory7),
+            &options,
+            m_d2dFactory.put_void()
+        )
+    );
 
-    if (FAILED(hr)) {
-        throw std::runtime_error("Failed to create D2D factory");
-    }
+    // 获取DXGI设备
+    winrt::com_ptr<IDXGIDevice> dxgiDevice;
+    m_d3dSharedDevice->QueryInterface(dxgiDevice.put());
 
-    // 创建设备和上下文
-    hr = m_d2dFactory->CreateDevice(m_dxgiDevice.Get(), &m_d2dDevice);
-    if (FAILED(hr)) {
-        throw std::runtime_error("Failed to create D2D device");
-    }
+    // 创建D2D设备
+    winrt::check_hresult(
+        m_d2dFactory->CreateDevice(
+            dxgiDevice.get(),
+            m_d2dSharedDevice.put()
+        )
+    );
 
-    hr = m_d2dDevice->CreateDeviceContext(
-        D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
-        &m_d2dContext);
-
-    if (FAILED(hr)) {
-        throw std::runtime_error("Failed to create D2D device context");
-    }
+    // 创建设备上下文
+    winrt::check_hresult(
+        m_d2dSharedDevice->CreateDeviceContext(
+            D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
+            m_d2dSharedContext.put()
+        )
+    );
 }
 
-ComPtr<ID3D11Device> D2DDeviceManager::GetD3DDevice() const
+winrt::com_ptr<ID3D11Device> D2DDeviceManager::GetD3DDevice() const
 {
-    return m_d3dDevice;
+    return m_d3dSharedDevice;
 }
 
-ComPtr<ID3D11DeviceContext> D2DDeviceManager::GetD3DContext() const
-{
-    return m_d3dContext;
-}
-
-ComPtr<ID2D1DeviceContext5> D2DDeviceManager::GetD2DContext() const
-{
-    return m_d2dContext;
-}
-
-ComPtr<ID2D1Factory7> D2DDeviceManager::GetD2DFactory() const
+winrt::com_ptr<ID2D1Factory7> D2DDeviceManager::GetD2DFactory() const
 {
     return m_d2dFactory;
 }
 
-ComPtr<ID2D1Device5> D2DDeviceManager::GetD2DDevice() const
+winrt::com_ptr<ID2D1Device5> D2DDeviceManager::GetD2DDevice() const
 {
-    return m_d2dDevice;
+    return m_d2dSharedDevice;
 }
 
-ComPtr<ID2D1Bitmap1> D2DDeviceManager::CreateRenderTargetForLayer(int32_t width, int32_t height)
+winrt::com_ptr<ID2D1DeviceContext5> D2DDeviceManager::GetSharedD2DContext() const
+{
+	return m_d2dSharedContext;
+}
+
+winrt::com_ptr<ID3D11DeviceContext> D2DDeviceManager::GetSharedD3DContext() const
+{
+	return m_d3dSharedContext;
+}
+
+winrt::com_ptr<ID2D1DeviceContext5> D2DDeviceManager::CreateIndependentD2DContext() const
+{
+    std::lock_guard lock(m_mutex);
+    if (!m_d3dSharedDevice) {
+        throw winrt::hresult_error(DXGI_ERROR_DEVICE_REMOVED, L"D2D device not available");
+    }
+
+    winrt::com_ptr<ID2D1DeviceContext5> context;
+    HRESULT hr = m_d2dSharedDevice->CreateDeviceContext(
+        D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
+        reinterpret_cast<ID2D1DeviceContext**>(context.put())
+    );
+
+    if (FAILED(hr)) {
+        throw winrt::hresult_error(hr, L"Failed to create device context");
+    }
+    return context;
+}
+
+winrt::com_ptr<ID3D11DeviceContext> D2DDeviceManager::CreateIndependentD3DContext() const
+{
+    std::lock_guard lock(m_mutex);
+    if (!m_d3dSharedDevice) {
+        throw winrt::hresult_error(DXGI_ERROR_DEVICE_REMOVED, L"D3D device not available");
+    }
+
+    winrt::com_ptr<ID3D11DeviceContext> context;
+    m_d3dSharedDevice->GetImmediateContext(context.put());
+    return context;
+}
+
+winrt::com_ptr<ID2D1Bitmap1> D2DDeviceManager::CreateRenderTargetForLayer(int32_t width, int32_t height, winrt::com_ptr<ID2D1DeviceContext5> d2dContext)
 {
     D2D1_BITMAP_PROPERTIES1 props = D2D1::BitmapProperties1(
         D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
         D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)
     );
 
-    ComPtr<ID2D1Bitmap1> bitmap;
-    HRESULT hr = m_d2dContext->CreateBitmap(
+    winrt::com_ptr<ID2D1Bitmap1> bitmap;
+    HRESULT hr = d2dContext->CreateBitmap(
         D2D1::SizeU(width, height),
         nullptr,
         0,
         &props,
-        &bitmap);
+        bitmap.put());
 
     if (FAILED(hr)) {
         throw std::runtime_error("Failed to create render target bitmap");

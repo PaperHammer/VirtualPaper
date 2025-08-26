@@ -5,14 +5,16 @@
 #include "D2DDeviceManager.h"
 #include "RectUtils.h"
 #include <stack>
-using Microsoft::WRL::ComPtr;
+#include <PointUtils.h>
+#include <ppltasks.h>
 
 namespace winrt::D2DEngine::implementation
 {
 	Layer::Layer(hstring const& name, int32_t width, int32_t height, winrt::D2DEngine::LayerType type)
 		: m_name(name), m_width(width), m_height(height), m_type(type)
 	{
-		m_bitmap = D2DDeviceManager::Instance().CreateRenderTargetForLayer(width, height);
+		m_ctx = D2DDeviceManager::Instance().CreateIndependentD2DContext();
+		m_bitmap = D2DDeviceManager::Instance().CreateRenderTargetForLayer(width, height, m_ctx);
 	}
 
 #pragma region 属性
@@ -31,63 +33,96 @@ namespace winrt::D2DEngine::implementation
 	void Layer::Opacity(double value) { m_opacity = std::clamp(value, 0.0, 1.0); }
 #pragma endregion
 
-#pragma region 尺寸与变换
+#pragma region 尺寸与变换	
+	//void Layer::Resize(int32_t newWidth, int32_t newHeight, bool scaleContent)
+	//{
+	//	if (newWidth == m_width && newHeight == m_height) return;
+
+	//	// 创建新位图
+	//	auto newBitmap = D2DDeviceManager::Instance().CreateRenderTargetForLayer(newWidth, newHeight, m_ctx);
+	//	if (!newBitmap) {
+	//		throw winrt::hresult_error(E_FAIL, L"Failed to create render target");
+	//	}
+
+	//	auto ctx = m_ctx.get();
+	//	ctx->SetTarget(newBitmap.get());
+	//	ctx->BeginDraw();
+	//	ctx->Clear(D2D1::ColorF(0, 0, 0, 0));
+
+	//	if (m_bitmap) {
+	//		if (scaleContent) {
+	//			ctx->DrawBitmap(m_bitmap.get(),
+	//				D2D1::RectF(0, 0, (float)newWidth, (float)newHeight),
+	//				1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+	//		}
+	//		else {
+	//			// 非缩放保持左上角内容
+	//			D2D1_RECT_F srcRect = D2D1::RectF(
+	//				0, 0,
+	//				min((float)m_width, (float)newWidth),
+	//				min((float)m_height, (float)newHeight));
+
+	//			ctx->DrawBitmap(m_bitmap.get(), srcRect, 1.0f,
+	//				D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+	//		}
+	//	}
+
+	//	HRESULT hr = ctx->EndDraw();
+	//	if (FAILED(hr)) {
+	//		throw winrt::hresult_error(hr, L"Resize draw failed");
+	//	}
+
+	//	m_bitmap = newBitmap;
+	//	m_width = newWidth;
+	//	m_height = newHeight;
+	//}
 	void Layer::Resize(int32_t newWidth, int32_t newHeight, bool scaleContent)
 	{
-		if (newWidth <= 0 || newHeight <= 0) {
-			return;
-		}
+		if (newWidth == m_width && newHeight == m_height) return;
 
-		if (newWidth == m_width && newHeight == m_height) {
-			return;
-		}
-
-		ComPtr<ID2D1Bitmap1> newBitmap = D2DDeviceManager::Instance().CreateRenderTargetForLayer(newWidth, newHeight);
+		auto newBitmap = D2DDeviceManager::Instance().CreateRenderTargetForLayer(newWidth, newHeight, m_ctx);
 		if (!newBitmap) {
-			// 创建失败，保持原状态
-			return;
+			throw winrt::hresult_error(E_FAIL, L"Failed to create render target");
 		}
 
-		// 获取设备上下文
-		auto ctx = D2DDeviceManager::Instance().GetD2DContext();
-		ctx->SetTarget(newBitmap.Get());
-		ctx->BeginDraw();
-		ctx->Clear(D2D1::ColorF(0, 0, 0, 0)); // 透明背景
-
-		if (scaleContent && m_bitmap) {
-			// 需要缩放内容
-			D2D1_RECT_F destRect = D2D1::RectF(0, 0, static_cast<float>(newWidth), static_cast<float>(newHeight));
-			D2D1_RECT_F srcRect = D2D1::RectF(0, 0, static_cast<float>(m_width), static_cast<float>(m_height));
-
-			// 使用高质量插值缩放
-			ctx->DrawBitmap(
-				m_bitmap.Get(),
-				destRect,
-				1.0f,
-				D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
-				srcRect
-			);
+		// 使用独立上下文，避免资源冲突
+		auto tempCtx = D2DDeviceManager::Instance().CreateIndependentD2DContext();
+		if (!tempCtx) {
+			throw winrt::hresult_error(E_FAIL, L"Failed to create temp context");
 		}
-		else {
-			// 不需要缩放内容，仅调整画布大小
-			// 保持左上角内容不变，超出部分透明
-			if (m_bitmap) {
-				D2D1_RECT_F destRect = D2D1::RectF(0, 0,
-					min(static_cast<float>(newWidth), static_cast<float>(m_width)),
-					min(static_cast<float>(newHeight), static_cast<float>(m_height))
-				);
 
-				ctx->DrawBitmap(
-					m_bitmap.Get(),
-					destRect,
+		tempCtx->SetTarget(newBitmap.get());
+		tempCtx->BeginDraw();
+		tempCtx->Clear(D2D1::ColorF(0, 0, 0, 0));
+
+		if (m_bitmap) {
+			if (scaleContent) {
+				tempCtx->DrawBitmap(
+					m_bitmap.get(),
+					D2D1::RectF(0, 0, (float)newWidth, (float)newHeight),
 					1.0f,
-					D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
-					destRect
+					D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+				);
+			}
+			else {
+				D2D1_RECT_F srcRect = D2D1::RectF(
+					0, 0,
+					min((float)m_width, (float)newWidth),
+					min((float)m_height, (float)newHeight)
+				);
+				tempCtx->DrawBitmap(
+					m_bitmap.get(),
+					srcRect,
+					1.0f,
+					D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
 				);
 			}
 		}
 
-		ctx->EndDraw();
+		HRESULT hr = tempCtx->EndDraw();
+		if (FAILED(hr)) {
+			throw winrt::hresult_error(hr, L"Resize draw failed");
+		}
 
 		m_bitmap = newBitmap;
 		m_width = newWidth;
@@ -96,60 +131,42 @@ namespace winrt::D2DEngine::implementation
 
 	void Layer::Rotate(winrt::D2DEngine::RotateDirection direction)
 	{
-		// 确定旋转角度（顺时针为正，逆时针为负）
 		double angle = (direction == winrt::D2DEngine::RotateDirection::Right) ? DEFAULT_ROTATION_ANGLE : -DEFAULT_ROTATION_ANGLE;
-
-		// 更新累计旋转角度（标准化到0-360度范围）
 		m_rotation = fmod(m_rotation + angle, 360.0);
 		if (m_rotation < 0) m_rotation += 360.0;
 
-		// 对于位图图层，需要实际旋转像素数据
 		if (m_type == winrt::D2DEngine::LayerType::Bitmap && m_bitmap)
 		{
-			auto ctx = D2DDeviceManager::Instance().GetD2DContext();
-			ctx->SetTarget(m_bitmap.Get());
-			ctx->BeginDraw();
-			ctx->Clear(D2D1::ColorF(0, 0, 0, 0));
-
-			// 计算旋转后的尺寸（90度旋转时宽高交换）
 			int newWidth = m_height;
 			int newHeight = m_width;
 
-			// 创建临时位图保存旋转结果
-			auto rotatedBitmap = D2DDeviceManager::Instance().CreateRenderTargetForLayer(newWidth, newHeight);
-			if (rotatedBitmap)
-			{
-				auto rotCtx = D2DDeviceManager::Instance().GetD2DContext();
-				rotCtx->SetTarget(rotatedBitmap.Get());
-				rotCtx->BeginDraw();
-				rotCtx->Clear(D2D1::ColorF(0, 0, 0, 0));
+			auto rotatedBitmap = D2DDeviceManager::Instance().CreateRenderTargetForLayer(newWidth, newHeight, m_ctx);
+			if (!rotatedBitmap) return;
 
-				// 应用旋转
-				rotCtx->SetTransform(D2D1::Matrix3x2F::Rotation(
-					static_cast<float>(angle),
-					D2D1::Point2F(newWidth / 2.0f, newHeight / 2.0f)
-				));
+			auto ctx = m_ctx.get();
+			ctx->SetTarget(rotatedBitmap.get());
+			ctx->BeginDraw();
+			ctx->Clear(D2D1::ColorF(0, 0, 0, 0));
 
-				// 绘制原内容
-				rotCtx->DrawBitmap(
-					m_bitmap.Get(),
-					D2D1::RectF(
-						(newWidth - m_width) / 2.0f,
-						(newHeight - m_height) / 2.0f,
-						(newWidth + m_width) / 2.0f,
-						(newHeight + m_height) / 2.0f
-					)
-				);
+			// 设置旋转变换
+			D2D1_POINT_2F center = D2D1::Point2F(newWidth / 2.0f, newHeight / 2.0f);
+			ctx->SetTransform(D2D1::Matrix3x2F::Rotation(static_cast<float>(angle), center));
 
-				rotCtx->EndDraw();
+			// 绘制原图（居中）
+			float x = (newWidth - m_width) / 2.0f;
+			float y = (newHeight - m_height) / 2.0f;
+			ctx->DrawBitmap(
+				m_bitmap.get(),
+				D2D1::RectF(x, y, x + m_width, y + m_height)
+			);
 
-				// 更新图层位图和尺寸
-				m_bitmap = rotatedBitmap;
-				m_width = newWidth;
-				m_height = newHeight;
-			}
-
+			ctx->SetTransform(D2D1::Matrix3x2F::Identity()); // 重置变换
 			ctx->EndDraw();
+
+			// 更新图层
+			m_bitmap = rotatedBitmap;
+			m_width = newWidth;
+			m_height = newHeight;
 		}
 	}
 
@@ -157,123 +174,186 @@ namespace winrt::D2DEngine::implementation
 	{
 		m_flipH = !m_flipH;
 
-		// 对于位图图层，需要实际翻转像素数据
 		if (m_type == winrt::D2DEngine::LayerType::Bitmap && m_bitmap)
 		{
-			auto ctx = D2DDeviceManager::Instance().GetD2DContext();
-			ctx->SetTarget(m_bitmap.Get());
+			auto ctx = m_ctx.get();
+			ctx->SetTarget(m_bitmap.get());
 			ctx->BeginDraw();
 			ctx->Clear(D2D1::ColorF(0, 0, 0, 0));
 
-			// 创建临时位图保存翻转结果
-			auto flippedBitmap = D2DDeviceManager::Instance().CreateRenderTargetForLayer(m_width, m_height);
-			if (flippedBitmap)
-			{
-				auto flipCtx = D2DDeviceManager::Instance().GetD2DContext();
-				flipCtx->SetTarget(flippedBitmap.Get());
-				flipCtx->BeginDraw();
-				flipCtx->Clear(D2D1::ColorF(0, 0, 0, 0));
+			// 水平翻转：X 轴缩放 -1，中心为图像中心
+			ctx->SetTransform(D2D1::Matrix3x2F::Scale(
+				-1.0f, 1.0f,
+				D2D1::Point2F(m_width / 2.0f, m_height / 2.0f)
+			));
 
-				// 应用水平翻转
-				flipCtx->SetTransform(D2D1::Matrix3x2F::Scale(
-					-1.0f, 1.0f,
-					D2D1::Point2F(m_width / 2.0f, m_height / 2.0f)
-				));
+			ctx->DrawBitmap(m_bitmap.get());
 
-				// 绘制原内容
-				flipCtx->DrawBitmap(m_bitmap.Get());
-
-				flipCtx->EndDraw();
-
-				// 更新图层位图
-				m_bitmap = flippedBitmap;
-			}
-
+			ctx->SetTransform(D2D1::Matrix3x2F::Identity());
 			ctx->EndDraw();
+
+			// 们直接在原位图上绘制，所以内容已被翻转
+			// m_bitmap 不变，但像素内容已翻转
 		}
 	}
-
 	void Layer::FlipVertical()
 	{
 		m_flipV = !m_flipV;
 
-		// 对于位图图层，需要实际翻转像素数据
 		if (m_type == winrt::D2DEngine::LayerType::Bitmap && m_bitmap)
 		{
-			auto ctx = D2DDeviceManager::Instance().GetD2DContext();
-			ctx->SetTarget(m_bitmap.Get());
+			auto ctx = m_ctx.get();
+			ctx->SetTarget(m_bitmap.get());
 			ctx->BeginDraw();
 			ctx->Clear(D2D1::ColorF(0, 0, 0, 0));
 
-			// 创建临时位图保存翻转结果
-			auto flippedBitmap = D2DDeviceManager::Instance().CreateRenderTargetForLayer(m_width, m_height);
-			if (flippedBitmap)
-			{
-				auto flipCtx = D2DDeviceManager::Instance().GetD2DContext();
-				flipCtx->SetTarget(flippedBitmap.Get());
-				flipCtx->BeginDraw();
-				flipCtx->Clear(D2D1::ColorF(0, 0, 0, 0));
+			// 垂直翻转
+			ctx->SetTransform(D2D1::Matrix3x2F::Scale(
+				1.0f, -1.0f,
+				D2D1::Point2F(m_width / 2.0f, m_height / 2.0f)
+			));
 
-				// 应用垂直翻转
-				flipCtx->SetTransform(D2D1::Matrix3x2F::Scale(
-					1.0f, -1.0f,
-					D2D1::Point2F(m_width / 2.0f, m_height / 2.0f)
-				));
+			ctx->DrawBitmap(m_bitmap.get());
 
-				// 绘制原内容
-				flipCtx->DrawBitmap(m_bitmap.Get());
-
-				flipCtx->EndDraw();
-
-				// 更新图层位图
-				m_bitmap = flippedBitmap;
-			}
-
+			ctx->SetTransform(D2D1::Matrix3x2F::Identity());
 			ctx->EndDraw();
 		}
 	}
 #pragma endregion
 
 #pragma region 渲染
-	ComPtr<ID2D1Bitmap1> Layer::GetBitmap()
+	winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Storage::Streams::IBuffer> Layer::RenderToBufferAsync()
+	{
+		uint32_t width = m_width;
+		uint32_t height = m_height;
+		if (!m_bitmap) co_return nullptr;
+
+		uint32_t stride = width * 4; // 32位BGRA格式
+		D2D1_MAPPED_RECT mapped = {};
+		HRESULT hr = m_bitmap->Map(D2D1_MAP_OPTIONS_READ, &mapped);
+		if (FAILED(hr)) co_return nullptr;
+
+		uint32_t bufferSize = stride * height;
+		winrt::Windows::Storage::Streams::Buffer buffer(bufferSize);
+
+		// 直接获取 buffer 的数据指针
+		uint8_t* data = buffer.data();
+		if (mapped.pitch == stride) {
+			// 内存连续，直接一次性拷贝
+			memcpy(data, mapped.bits, bufferSize);
+		}
+		else {
+			// 行间有填充，逐行拷贝
+			for (uint32_t y = 0; y < height; ++y) {
+				memcpy(data + y * stride, mapped.bits + y * mapped.pitch, stride);
+			}
+		}
+
+		m_bitmap->Unmap();
+		co_return buffer;
+	}
+
+	winrt::com_ptr<ID2D1Bitmap1> Layer::GetBitmap()
 	{
 		return m_bitmap;
 	}
 
-	ComPtr<ID2D1DeviceContext5> Layer::GetContext()
+	winrt::com_ptr<ID2D1DeviceContext5> Layer::GetContext()
 	{
-		auto ctx = D2DDeviceManager::Instance().GetD2DContext();
-		ctx->SetTarget(m_bitmap.Get());
-		return ctx;
+		//auto ctx = D2DDeviceManager::Instance().GetD2DContext();
+		//ctx->SetTarget(m_bitmap.Get());
+		return m_ctx;
 	}
 #pragma endregion
 
-#pragma region 绘图
-	void Layer::DrawStroke(vector<D2D1_POINT_2F> const& points, winrt::D2DEngine::StrokeOptions const& options)
+#pragma region 绘图	
+	void Layer::DrawStroke(
+		winrt::Windows::Foundation::Collections::IVector<winrt::Windows::Foundation::Point> const& points,
+		winrt::D2DEngine::StrokeOptions const& options)
 	{
-		if (!m_bitmap || points.size() < 2)
-			return;
+		if (!m_bitmap || points.Size() < 1) return;
 
-		auto ctx = D2DDeviceManager::Instance().GetD2DContext();
-		ctx->SetTarget(m_bitmap.Get());
-		ctx->BeginDraw();
+		auto d2dPoints = PointUtils::ToD2DPoints(points);
+		m_ctx->SetTarget(m_bitmap.get());
+		m_ctx->BeginDraw();
 
 		// 创建画笔
-		ComPtr<ID2D1SolidColorBrush> brush;
-		D2D1_COLOR_F color = ColorConverter::WinRTToD2DColor(options.Color);
-		if (options.Tool == winrt::D2DEngine::StrokeTool::Eraser)
-		{
-			// 橡皮擦直接清空像素，使用透明
-			color = D2D1::ColorF(0, 0); // alpha = 0
+		winrt::com_ptr<ID2D1SolidColorBrush> brush;
+		D2D1_COLOR_F color = ColorConverter::ToD2DColor(options.Color);
+		if (options.Tool == winrt::D2DEngine::StrokeTool::Eraser) {
+			color = D2D1::ColorF(0, 0);
 		}
 
-		ctx->CreateSolidColorBrush(color, &brush);
+		winrt::check_hresult(
+			m_ctx->CreateSolidColorBrush(
+				color,
+				brush.put()
+			)
+		);
 
-		// 平滑曲线：使用 Catmull-Rom 样条插值
+		if (points.Size() == 1) {
+			const float radius = options.Thickness / 2.0f;
+			const auto& center = d2dPoints[0];
+			m_ctx->FillEllipse(
+				D2D1::Ellipse(center, radius, radius),
+				brush.get());
+		}
+		else {
+			auto smoothPoints = GenerateSmoothCurve(d2dPoints);
+
+			// 创建路径几何
+			winrt::com_ptr<ID2D1PathGeometry> geometry;
+			winrt::check_hresult(
+				D2DDeviceManager::Instance().GetD2DFactory()->CreatePathGeometry(
+					geometry.put()
+				)
+			);
+
+			winrt::com_ptr<ID2D1GeometrySink> sink;
+			winrt::check_hresult(
+				geometry->Open(sink.put())
+			);
+
+			sink->BeginFigure(smoothPoints[0], D2D1_FIGURE_BEGIN_HOLLOW);
+			for (size_t i = 1; i < smoothPoints.size(); ++i) {
+				sink->AddLine(smoothPoints[i]);
+			}
+			sink->EndFigure(D2D1_FIGURE_END_OPEN);
+			sink->Close();
+
+			// 笔触样式
+			winrt::com_ptr<ID2D1StrokeStyle> strokeStyle;
+			if (options.Tool == winrt::D2DEngine::StrokeTool::Eraser) {
+				D2D1_STROKE_STYLE_PROPERTIES props = {};
+				props.dashStyle = D2D1_DASH_STYLE_DASH;
+				winrt::check_hresult(
+					D2DDeviceManager::Instance().GetD2DFactory()->CreateStrokeStyle(
+						&props,
+						nullptr,
+						0,
+						strokeStyle.put()
+					)
+				);
+			}
+
+			m_ctx->DrawGeometry(
+				geometry.get(),
+				brush.get(),
+				options.Thickness,
+				strokeStyle.get());
+		}
+
+		m_ctx->EndDraw();
+	}
+
+	// 辅助方法：生成平滑曲线
+	vector<D2D1_POINT_2F> Layer::GenerateSmoothCurve(const vector<D2D1_POINT_2F>& points)
+	{
 		vector<D2D1_POINT_2F> smoothPoints;
+		if (points.size() < 2) return points;
+
 		smoothPoints.push_back(points[0]);
-		for (size_t i = 1; i + 2 < points.size(); ++i)
-		{
+		for (size_t i = 1; i + 2 < points.size(); ++i) {
 			D2D1_POINT_2F p0 = points[i - 1];
 			D2D1_POINT_2F p1 = points[i];
 			D2D1_POINT_2F p2 = points[i + 1];
@@ -293,54 +373,48 @@ namespace winrt::D2DEngine::implementation
 			}
 		}
 		smoothPoints.push_back(points.back());
+		return smoothPoints;
+	}
 
-		// 获取工厂对象（使用 D2DDeviceManager 提供的方法）
-		ComPtr<ID2D1Factory7> factory = D2DDeviceManager::Instance().GetD2DFactory();
+	void Layer::CreatePathGeometry(const vector<D2D1_POINT_2F>& points, ID2D1PathGeometry** outGeometry)
+	{
+		winrt::com_ptr<ID2D1PathGeometry> geometry;
+		winrt::check_hresult(D2DDeviceManager::Instance().GetD2DFactory()->CreatePathGeometry(geometry.put()));
 
-		// 创建路径几何
-		ComPtr<ID2D1PathGeometry> geometry;
-		factory->CreatePathGeometry(&geometry);
+		winrt::com_ptr<ID2D1GeometrySink> sink;
+		winrt::check_hresult(geometry->Open(sink.put()));
 
-		ComPtr<ID2D1GeometrySink> sink;
-		geometry->Open(&sink);
-		sink->BeginFigure(smoothPoints[0], D2D1_FIGURE_BEGIN_HOLLOW);
-		for (size_t i = 1; i < smoothPoints.size(); ++i)
-		{
-			sink->AddLine(smoothPoints[i]);
+		sink->BeginFigure(points[0], D2D1_FIGURE_BEGIN_HOLLOW);
+		for (size_t i = 1; i < points.size(); ++i) {
+			sink->AddLine(points[i]);
 		}
 		sink->EndFigure(D2D1_FIGURE_END_OPEN);
 		sink->Close();
 
-		// 创建笔触样式（可选）
-		ComPtr<ID2D1StrokeStyle> strokeStyle;
-		if (options.Tool == winrt::D2DEngine::StrokeTool::Eraser)
-		{
-			D2D1_STROKE_STYLE_PROPERTIES strokeProps = {};
-			strokeProps.dashStyle = D2D1_DASH_STYLE_DASH;
-			factory->CreateStrokeStyle(&strokeProps, nullptr, 0, &strokeStyle);
-		}
-
-		// 绘制几何图形
-		ctx->DrawGeometry(
-			geometry.Get(),        // 几何对象
-			brush.Get(),           // 画笔
-			options.Thickness,     // 线宽
-			strokeStyle.Get()      // 笔触样式
-		);
-
-		ctx->EndDraw();
+		*outGeometry = geometry.detach(); // 仅在不使用com_ptr时使用
 	}
 
-	void Layer::FillRect(D2D1_RECT_F const& rect, winrt::D2DEngine::FillOptions const& options)
+	// 辅助方法：创建橡皮擦笔触样式
+	void Layer::CreateEraserStrokeStyle(ID2D1StrokeStyle** style)
+	{
+		D2D1_STROKE_STYLE_PROPERTIES props = {};
+		props.dashStyle = D2D1_DASH_STYLE_DASH;
+		D2DDeviceManager::Instance().GetD2DFactory()
+			->CreateStrokeStyle(&props, nullptr, 0, style);
+	}
+
+	void Layer::FillRect(
+		winrt::Windows::Foundation::Rect const& rect,
+		winrt::D2DEngine::FillOptions const& options)
 	{
 		if (!m_bitmap) return;
 
-		auto ctx = D2DDeviceManager::Instance().GetD2DContext();
-		ctx->SetTarget(m_bitmap.Get());
-		ctx->BeginDraw();
+		auto rectF = RectConverter::ToD2DRect(rect);
+		m_ctx->SetTarget(m_bitmap.get());
+		m_ctx->BeginDraw();
 
-		// 创建填充画刷
-		ComPtr<ID2D1SolidColorBrush> brush;
+		// 创建画刷
+		winrt::com_ptr<ID2D1SolidColorBrush> brush;
 		D2D1_COLOR_F color = {
 			options.Color.x,
 			options.Color.y,
@@ -348,58 +422,63 @@ namespace winrt::D2DEngine::implementation
 			options.Color.w * options.Opacity
 		};
 
-		ctx->CreateSolidColorBrush(color, &brush);
+		winrt::check_hresult(m_ctx->CreateSolidColorBrush(color, brush.put()));
 
 		// 填充矩形
-		ctx->FillRectangle(rect, brush.Get());
-
-		ctx->EndDraw();
+		m_ctx->FillRectangle(rectF, brush.get());
+		m_ctx->EndDraw();
 	}
 
-	void Layer::FillPath(std::vector<D2D1_POINT_2F> const& points, winrt::D2DEngine::FillOptions const& options)
+	void Layer::FillPath(
+		winrt::Windows::Foundation::Collections::IVector<winrt::Windows::Foundation::Point> const& points,
+		winrt::D2DEngine::FillOptions const& options)
 	{
-		if (!m_bitmap || points.size() < 3) return;
+		if (!m_bitmap || points.Size() < 3) return;
 
-		auto ctx = D2DDeviceManager::Instance().GetD2DContext();
-		ctx->SetTarget(m_bitmap.Get());
-		ctx->BeginDraw();
+		auto d2dPoints = PointUtils::ToD2DPoints(points);
+		m_ctx->SetTarget(m_bitmap.get());
+		m_ctx->BeginDraw();
 
 		// 创建路径几何
-		ComPtr<ID2D1PathGeometry> path;
-		D2DDeviceManager::Instance().GetD2DFactory()->CreatePathGeometry(&path);
+		winrt::com_ptr<ID2D1PathGeometry> path;
+		winrt::check_hresult(
+			D2DDeviceManager::Instance().GetD2DFactory()->CreatePathGeometry(path.put())
+		);
 
-		ComPtr<ID2D1GeometrySink> sink;
-		path->Open(&sink);
+		// 2. 打开几何接收器
+		winrt::com_ptr<ID2D1GeometrySink> sink;
+		winrt::check_hresult(path->Open(sink.put())
+		);
 
 		// 绘制路径
-		sink->BeginFigure(points[0], D2D1_FIGURE_BEGIN_FILLED);
-		for (size_t i = 1; i < points.size(); ++i) {
-			sink->AddLine(points[i]);
+		sink->BeginFigure(d2dPoints[0], D2D1_FIGURE_BEGIN_FILLED);
+		for (size_t i = 1; i < d2dPoints.size(); ++i) {
+			sink->AddLine(d2dPoints[i]);
 		}
 		sink->EndFigure(D2D1_FIGURE_END_CLOSED);
 		sink->Close();
 
-		// 创建填充画刷
-		ComPtr<ID2D1SolidColorBrush> brush;
+		// 创建画刷（正确的CreateSolidColorBrush调用）
+		winrt::com_ptr<ID2D1SolidColorBrush> brush;
 		D2D1_COLOR_F color = {
 			options.Color.x,
 			options.Color.y,
 			options.Color.z,
 			options.Color.w * options.Opacity
 		};
-		ctx->CreateSolidColorBrush(color, &brush);
+
+		winrt::check_hresult(m_ctx->CreateSolidColorBrush(color, brush.put()));
 
 		// 填充路径
-		ctx->FillGeometry(path.Get(), brush.Get());
-
-		ctx->EndDraw();
+		m_ctx->FillGeometry(path.get(), brush.get());
+		m_ctx->EndDraw();
 	}
 
 	void Layer::FloodFill(int x, int y, winrt::D2DEngine::FillOptions const& options)
 	{
 		if (!m_bitmap) return;
 
-		// 1. Map bitmap
+		// Map bitmap
 		D2D1_MAPPED_RECT mapped;
 		HRESULT hr = m_bitmap->Map(D2D1_MAP_OPTIONS_READ | D2D1_MAP_OPTIONS_WRITE, &mapped);
 		if (FAILED(hr)) return;
@@ -408,7 +487,7 @@ namespace winrt::D2DEngine::implementation
 		auto height = m_height;
 		auto pixels = (uint32_t*)mapped.bits;
 
-		// 2. 获取起点颜色
+		// 获取起点颜色
 		auto index = y * mapped.pitch / 4 + x;
 		if (index < 0 || index >= width * height)
 		{
@@ -440,13 +519,13 @@ namespace winrt::D2DEngine::implementation
 		D2D1_COLOR_F targetColor = PixelToColor(targetPixel);
 		uint32_t fillPixel = FillColorToPixel(D2D1::ColorF(options.Color.x, options.Color.y, options.Color.z, options.Opacity));
 
-		if (ColorUtils::ColorWithinTolerance(targetColor, ColorConverter::WinRTToD2DColor(options.Color), options.Tolerance))
+		if (ColorUtils::ColorWithinTolerance(targetColor, ColorConverter::ToD2DColor(options.Color), options.Tolerance))
 		{
 			m_bitmap->Unmap();
 			return; // 相同颜色无需填充
 		}
 
-		// 3. 扫描线算法
+		// 扫描线算法
 		struct Span { int x1, x2, y; };
 		std::stack<Span> stack;
 		stack.push({ x, x, y });
@@ -499,16 +578,18 @@ namespace winrt::D2DEngine::implementation
 #pragma endregion
 
 #pragma region 选择
-	winrt::D2DEngine::AreaHandle Layer::HitTestSelectionHandle(D2D1_POINT_2F pt) const
+	winrt::D2DEngine::AreaHandle Layer::HitTestSelectionHandle(winrt::Windows::Foundation::Point pt) const
 	{
 		if (!m_selection.Active) return winrt::D2DEngine::AreaHandle::None;
 
-		D2D1_RECT_F rect = RectConverter::WinRTToD2D(m_selection.Rect);
+		auto point = PointUtils::ToD2DPoint(pt);
+
+		D2D1_RECT_F rect = RectConverter::ToD2DRect(m_selection.Rect);
 		float handleSize = m_selection.HandleSize;
 
 		auto Hit = [&](float cx, float cy) {
-			return pt.x >= cx - handleSize && pt.x <= cx + handleSize &&
-				pt.y >= cy - handleSize && pt.y <= cy + handleSize;
+			return point.x >= cx - handleSize && point.x <= cx + handleSize &&
+				point.y >= cy - handleSize && point.y <= cy + handleSize;
 			};
 
 		auto points = RectUtils::GetControlPoints(rect, handleSize);
@@ -522,34 +603,35 @@ namespace winrt::D2DEngine::implementation
 		if (Hit(points[6].x, points[6].y)) return winrt::D2DEngine::AreaHandle::BottomCenter;
 		if (Hit(points[7].x, points[7].y)) return winrt::D2DEngine::AreaHandle::BottomRight;
 
-		if (pt.x > rect.left && pt.x < rect.right &&
-			pt.y > rect.top && pt.y < rect.bottom)
+		if (point.x > rect.left && point.x < rect.right &&
+			point.y > rect.top && point.y < rect.bottom)
 			return winrt::D2DEngine::AreaHandle::Move;
 
 		return winrt::D2DEngine::AreaHandle::None;
 	}
 
 	// 选择工具调整大小
-	void Layer::ResizeSelection(D2D1_POINT_2F newPt, winrt::D2DEngine::AreaHandle handle)
+	void Layer::ResizeSelection(winrt::Windows::Foundation::Point newPt, winrt::D2DEngine::AreaHandle handle)
 	{
 		if (!m_selection.Active || handle == winrt::D2DEngine::AreaHandle::None) return;
 
-		D2D1_RECT_F rect = RectConverter::WinRTToD2D(m_selection.Rect);
+		auto newPoint = PointUtils::ToD2DPoint(newPt);
+		D2D1_RECT_F rect = RectConverter::ToD2DRect(m_selection.Rect);
 
 		switch (handle)
 		{
-		case winrt::D2DEngine::AreaHandle::TopLeft:      rect.left = newPt.x; rect.top = newPt.y; break;
-		case winrt::D2DEngine::AreaHandle::TopCenter:    rect.top = newPt.y; break;
-		case winrt::D2DEngine::AreaHandle::TopRight:     rect.right = newPt.x; rect.top = newPt.y; break;
-		case winrt::D2DEngine::AreaHandle::MiddleLeft:   rect.left = newPt.x; break;
-		case winrt::D2DEngine::AreaHandle::MiddleRight:  rect.right = newPt.x; break;
-		case winrt::D2DEngine::AreaHandle::BottomLeft:   rect.left = newPt.x; rect.bottom = newPt.y; break;
-		case winrt::D2DEngine::AreaHandle::BottomCenter: rect.bottom = newPt.y; break;
-		case winrt::D2DEngine::AreaHandle::BottomRight:  rect.right = newPt.x; rect.bottom = newPt.y; break;
+		case winrt::D2DEngine::AreaHandle::TopLeft:      rect.left = newPoint.x; rect.top = newPoint.y; break;
+		case winrt::D2DEngine::AreaHandle::TopCenter:    rect.top = newPoint.y; break;
+		case winrt::D2DEngine::AreaHandle::TopRight:     rect.right = newPoint.x; rect.top = newPoint.y; break;
+		case winrt::D2DEngine::AreaHandle::MiddleLeft:   rect.left = newPoint.x; break;
+		case winrt::D2DEngine::AreaHandle::MiddleRight:  rect.right = newPoint.x; break;
+		case winrt::D2DEngine::AreaHandle::BottomLeft:   rect.left = newPoint.x; rect.bottom = newPoint.y; break;
+		case winrt::D2DEngine::AreaHandle::BottomCenter: rect.bottom = newPoint.y; break;
+		case winrt::D2DEngine::AreaHandle::BottomRight:  rect.right = newPoint.x; rect.bottom = newPoint.y; break;
 		case winrt::D2DEngine::AreaHandle::Move:
 		{
-			float dx = newPt.x - (rect.left + rect.right) / 2.0f;
-			float dy = newPt.y - (rect.top + rect.bottom) / 2.0f;
+			float dx = newPoint.x - (rect.left + rect.right) / 2.0f;
+			float dy = newPoint.y - (rect.top + rect.bottom) / 2.0f;
 			rect.left += dx; rect.right += dx;
 			rect.top += dy; rect.bottom += dy;
 		} break;
@@ -571,16 +653,17 @@ namespace winrt::D2DEngine::implementation
 
 #pragma region 裁剪
 	// 裁剪工具控制点命中测试
-	winrt::D2DEngine::AreaHandle Layer::HitTestCropHandle(D2D1_POINT_2F pt) const
+	winrt::D2DEngine::AreaHandle Layer::HitTestCropHandle(winrt::Windows::Foundation::Point pt) const
 	{
 		if (!m_crop.Active) return winrt::D2DEngine::AreaHandle::None;
 
-		D2D1_RECT_F rect = RectConverter::WinRTToD2D(m_crop.Rect);
+		auto point = PointUtils::ToD2DPoint(pt);
+		D2D1_RECT_F rect = RectConverter::ToD2DRect(m_crop.Rect);
 		float handleSize = m_crop.HandleSize;
 
 		auto Hit = [&](float cx, float cy) {
-			return pt.x >= cx - handleSize && pt.x <= cx + handleSize &&
-				pt.y >= cy - handleSize && pt.y <= cy + handleSize;
+			return point.x >= cx - handleSize && point.x <= cx + handleSize &&
+				point.y >= cy - handleSize && point.y <= cy + handleSize;
 			};
 
 		auto points = RectUtils::GetControlPoints(rect, handleSize);
@@ -594,34 +677,35 @@ namespace winrt::D2DEngine::implementation
 		if (Hit(points[6].x, points[6].y)) return winrt::D2DEngine::AreaHandle::BottomCenter;
 		if (Hit(points[7].x, points[7].y)) return winrt::D2DEngine::AreaHandle::BottomRight;
 
-		if (pt.x > rect.left && pt.x < rect.right &&
-			pt.y > rect.top && pt.y < rect.bottom)
+		if (point.x > rect.left && point.x < rect.right &&
+			point.y > rect.top && point.y < rect.bottom)
 			return winrt::D2DEngine::AreaHandle::Move;
 
 		return winrt::D2DEngine::AreaHandle::None;
 	}
 
 	// 裁剪工具调整大小
-	void Layer::ResizeCrop(D2D1_POINT_2F newPt, winrt::D2DEngine::AreaHandle handle)
+	void Layer::ResizeCrop(winrt::Windows::Foundation::Point newPt, winrt::D2DEngine::AreaHandle handle)
 	{
 		if (!m_crop.Active || handle == winrt::D2DEngine::AreaHandle::None) return;
 
-		D2D1_RECT_F rect = RectConverter::WinRTToD2D(m_crop.Rect);
+		auto newPoint = PointUtils::ToD2DPoint(newPt);
+		D2D1_RECT_F rect = RectConverter::ToD2DRect(m_crop.Rect);
 
 		switch (handle)
 		{
-		case winrt::D2DEngine::AreaHandle::TopLeft:      rect.left = newPt.x; rect.top = newPt.y; break;
-		case winrt::D2DEngine::AreaHandle::TopCenter:    rect.top = newPt.y; break;
-		case winrt::D2DEngine::AreaHandle::TopRight:     rect.right = newPt.x; rect.top = newPt.y; break;
-		case winrt::D2DEngine::AreaHandle::MiddleLeft:   rect.left = newPt.x; break;
-		case winrt::D2DEngine::AreaHandle::MiddleRight:  rect.right = newPt.x; break;
-		case winrt::D2DEngine::AreaHandle::BottomLeft:   rect.left = newPt.x; rect.bottom = newPt.y; break;
-		case winrt::D2DEngine::AreaHandle::BottomCenter: rect.bottom = newPt.y; break;
-		case winrt::D2DEngine::AreaHandle::BottomRight:  rect.right = newPt.x; rect.bottom = newPt.y; break;
+		case winrt::D2DEngine::AreaHandle::TopLeft:      rect.left = newPoint.x; rect.top = newPoint.y; break;
+		case winrt::D2DEngine::AreaHandle::TopCenter:    rect.top = newPoint.y; break;
+		case winrt::D2DEngine::AreaHandle::TopRight:     rect.right = newPoint.x; rect.top = newPoint.y; break;
+		case winrt::D2DEngine::AreaHandle::MiddleLeft:   rect.left = newPoint.x; break;
+		case winrt::D2DEngine::AreaHandle::MiddleRight:  rect.right = newPoint.x; break;
+		case winrt::D2DEngine::AreaHandle::BottomLeft:   rect.left = newPoint.x; rect.bottom = newPoint.y; break;
+		case winrt::D2DEngine::AreaHandle::BottomCenter: rect.bottom = newPoint.y; break;
+		case winrt::D2DEngine::AreaHandle::BottomRight:  rect.right = newPoint.x; rect.bottom = newPoint.y; break;
 		case winrt::D2DEngine::AreaHandle::Move:
 		{
-			float dx = newPt.x - (rect.left + rect.right) / 2.0f;
-			float dy = newPt.y - (rect.top + rect.bottom) / 2.0f;
+			float dx = newPoint.x - (rect.left + rect.right) / 2.0f;
+			float dy = newPoint.y - (rect.top + rect.bottom) / 2.0f;
 			rect.left += dx; rect.right += dx;
 			rect.top += dy; rect.bottom += dy;
 		} break;

@@ -1,6 +1,5 @@
 ﻿#include "pch.h"
 #include "AreaTool.h"
-using Microsoft::WRL::ComPtr;
 
 namespace winrt::D2DEngine::implementation
 {
@@ -41,29 +40,29 @@ namespace winrt::D2DEngine::implementation
         // 绘制蒙层（如果是裁剪工具）
         if (m_area.IsOverlay)
         {
-            ComPtr<ID2D1SolidColorBrush> overlayBrush;
+            winrt::com_ptr<ID2D1SolidColorBrush> overlayBrush;
             ctx->CreateSolidColorBrush(
                 D2D1::ColorF(D2D1::ColorF::Black, m_area.OverlayOpacity),
-                &overlayBrush
+                overlayBrush.put()
             );
 
             D2D1_RECT_F rect = ConvertToD2DRect();
             ctx->PushAxisAlignedClip(rect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-            ctx->FillRectangle(D2D1::RectF(0, 0, 9999, 9999), overlayBrush.Get());
+            ctx->FillRectangle(D2D1::RectF(0, 0, 9999, 9999), overlayBrush.get());
             ctx->PopAxisAlignedClip();
         }
 
         // 绘制虚线框
-        ComPtr<ID2D1StrokeStyle> strokeStyle;
+        winrt::com_ptr<ID2D1StrokeStyle> strokeStyle;
         D2D1_STROKE_STYLE_PROPERTIES props = {};
         props.dashStyle = D2D1_DASH_STYLE_DASH;
-        GetFactory()->CreateStrokeStyle(&props, nullptr, 0, &strokeStyle);
+        GetFactory()->CreateStrokeStyle(&props, nullptr, 0, strokeStyle.put());
 
-        ComPtr<ID2D1SolidColorBrush> borderBrush;
-        ctx->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &borderBrush);
+        winrt::com_ptr<ID2D1SolidColorBrush> borderBrush;
+        ctx->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), borderBrush.put());
 
         D2D1_RECT_F rect = ConvertToD2DRect();
-        ctx->DrawRectangle(rect, borderBrush.Get(), 1.0f, strokeStyle.Get());
+        ctx->DrawRectangle(rect, borderBrush.get(), 1.0f, strokeStyle.get());
 
         // 绘制控制点
         auto handles = GetControlPoints();
@@ -75,7 +74,7 @@ namespace winrt::D2DEngine::implementation
                 pt.x + m_area.HandleSize,
                 pt.y + m_area.HandleSize
             };
-            ctx->FillRectangle(handleRect, borderBrush.Get());
+            ctx->FillRectangle(handleRect, borderBrush.get());
         }
 
         ctx->EndDraw();

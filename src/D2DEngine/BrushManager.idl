@@ -1,0 +1,28 @@
+﻿namespace D2DEngine
+{
+	enum StrokeTool
+	{
+		Brush = 0,
+		Eraser = 1
+	};
+
+	struct StrokeOptions
+	{
+		StrokeTool Tool;
+		Windows.Foundation.Numerics.Vector4 Color;
+		Single Thickness;
+		Single Opacity;
+	};
+
+	interface IBrushManager : IInspectable
+	{
+		Single StrokeWidth;
+		StrokeTool StrokeType;
+		void SetSolidColor(Windows.UI.Color color);
+		void SetGradient(
+			Windows.Foundation.Point startPoint, 
+			Windows.Foundation.Point endPoint, 
+			Windows.Foundation.Collections.IVector<Windows.UI.Color> gradientStops);
+		void CreateImageBrush(Windows.Storage.Streams.IBuffer imageData);
+	}
+}

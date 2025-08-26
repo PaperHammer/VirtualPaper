@@ -1,6 +1,9 @@
 ﻿import "Layer.idl";
 
 namespace D2DEngine{
+	[version(1.0)]
+	[marshaling_behavior(agile)]
+	[threading(both)]
 	[default_interface]
 	runtimeclass LayerManager
 	{

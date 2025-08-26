@@ -1,332 +1,7 @@
-﻿using System.Collections.Concurrent;
-using System.Numerics;
+﻿using System.Numerics;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
-using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.UI;
-using Windows.Foundation;
-using Windows.UI;
-
-//namespace BuiltIn.InkSystem.Core.Services {
-//public static class BrushManager {
-//    static BrushManager() {
-//        _baseTextures = LoadBaseTextures();
-//    }
-
-//    public static ICanvasImage GetImage(BrushGenerateArgs args, CanvasDevice device) {
-//        if (args.Type == BrushType.General)
-//            return GetSolidBrush(args.Color, args.Size, args.Shape, device);
-
-//        return _texturedBrushCache.GetOrAdd(args, key => CreateTexturedBrush(key, device));
-//    }
-
-//    public static void ClearCache() {
-//        DisposeAll(_solidBrushCache.Values);
-//        DisposeAll(_texturedBrushCache.Values);
-//        DisposeAll(_sharedTextureCache.Values);
-//    }
-
-//    #region Core brush generation
-//    private static CanvasBitmap GetSolidBrush(Color color, float size, BrushShape shape, CanvasDevice device) {
-//        return _solidBrushCache.GetOrAdd((color, size, shape), _ => {
-//            var renderTarget = new CanvasRenderTarget(device, size, size, 96);
-//            using (var ds = renderTarget.CreateDrawingSession()) {
-//                ds.Clear(Colors.Transparent);
-//                DrawShape(ds, shape, size, color);
-//            }
-//            return renderTarget;
-//        });
-//    }
-
-//    private static CanvasBitmap CreateTexturedBrush(BrushGenerateArgs args, CanvasDevice device) {
-//        return args.Type switch {
-//            BrushType.Calligraphy => CreateCalligraphyBrush(args, device),
-//            BrushType.Airbrush => CreateAirbrush(args, device),
-//            BrushType.Watercolor => CreateWatercolorBrush(args, device),
-//            BrushType.Oil => CreateOilBrush(args, device),
-//            BrushType.Marker => CreateMarkerBrush(args, device),
-//            BrushType.Pencil => CreatePencilBrush(args, device),
-//            _ => GetSolidBrush(args.Color, args.Size, args.Shape, device)
-//        };
-//    }
-//    #endregion
-
-//    #region Various types of brushes are implemented
-//    private static CanvasRenderTarget CreateCalligraphyBrush(BrushGenerateArgs args, CanvasDevice device) {
-//        var renderTarget = new CanvasRenderTarget(device, args.Size, args.Size, 96);
-//        using (var ds = renderTarget.CreateDrawingSession()) {
-//            // 基础形状
-//            if (args.Shape == BrushShape.Circle) {
-//                float ratio = 0.3f + 0.4f * args.Hardness;
-//                ds.FillEllipse(args.Size / 2, args.Size / 2,
-//                              args.Size / 2 * ratio,
-//                              args.Size / 2,
-//                              args.Color);
-//            }
-//            else {
-//                float cornerRadius = args.Size * 0.1f;
-//                ds.FillRoundedRectangle(0, 0, args.Size, args.Size,
-//                                       cornerRadius, cornerRadius,
-//                                       args.Color);
-//            }
-
-//            // 毛笔纹理
-//            using var noise = GetSharedTexture("calligraphy_noise");
-//            using var brush = new CanvasImageBrush(device, noise) {
-//                Opacity = 0.2f,
-//                Transform = Matrix3x2.CreateScale(args.Size / 256f)
-//            };
-//            DrawShape(ds, args.Shape, args.Size * 0.9f, brush);
-//        }
-//        return renderTarget;
-//    }
-
-//    private static CanvasRenderTarget CreateAirbrush(BrushGenerateArgs args, CanvasDevice device) {
-//        // 喷枪强制圆形
-//        if (args.Shape != BrushShape.Circle)
-//            args = args with { Shape = BrushShape.Circle };
-
-//        var renderTarget = new CanvasRenderTarget(device, args.Size, args.Size, 96);
-//        using (var ds = renderTarget.CreateDrawingSession()) {
-//            var stops = new[]
-//            {
-//                new CanvasGradientStop { Color = Color.FromArgb(0, args.Color.R, args.Color.G, args.Color.B), Position = 0 },
-//                new CanvasGradientStop { Color = Color.FromArgb(150, args.Color.R, args.Color.G, args.Color.B), Position = 0.7f },
-//                new CanvasGradientStop { Color = args.Color, Position = 1 }
-//            };
-
-//            using var brush = new CanvasRadialGradientBrush(device, stops) {
-//                Center = new Vector2(args.Size / 2),
-//                RadiusX = args.Size / 2,
-//                RadiusY = args.Size / 2,
-//                Opacity = args.Flow
-//            };
-//            ds.FillCircle(args.Size / 2, args.Size / 2, args.Size / 2, brush);
-//        }
-//        return renderTarget;
-//    }
-
-//    private static CanvasRenderTarget CreateWatercolorBrush(BrushGenerateArgs args, CanvasDevice device) {
-//        var renderTarget = new CanvasRenderTarget(device, args.Size, args.Size, 96);
-//        using (var ds = renderTarget.CreateDrawingSession()) {
-//            // 纸张纹理
-//            using var paperTex = _baseTextures[BrushType.Watercolor];
-//            using var paperBrush = new CanvasImageBrush(device, paperTex) {
-//                SourceRectangle = new Rect(0, 0, args.Size, args.Size),
-//                Transform = Matrix3x2.CreateScale(args.Size / 512f),
-//                Opacity = 0.5f
-//            };
-//            DrawShape(ds, args.Shape, args.Size, paperBrush);
-
-//            // 水彩色层
-//            ds.Blend = CanvasBlend.SourceOver;
-//            DrawShape(ds, args.Shape, args.Size * 0.8f, args.Color);
-//        }
-//        return ApplyWatercolorEffect(renderTarget, args.Flow);
-//    }
-
-//    private static CanvasRenderTarget CreateOilBrush(BrushGenerateArgs args, CanvasDevice device) {
-//        var renderTarget = new CanvasRenderTarget(device, args.Size, args.Size, 96);
-//        using (var ds = renderTarget.CreateDrawingSession()) {
-//            // 基础颜料层
-//            DrawShape(ds, args.Shape, args.Size, args.Color);
-
-//            // 笔触纹理
-//            using var strokeTex = _baseTextures[BrushType.Oil];
-//            using var strokeBrush = new CanvasImageBrush(device, strokeTex) {
-//                Opacity = 0.3f * args.Hardness,
-//                Transform = Matrix3x2.CreateRotation(Random.Shared.NextSingle() * MathF.PI) *
-//                           Matrix3x2.CreateScale(args.Size / 128f)
-//            };
-//            ds.Blend = CanvasBlend.SourceOver;
-//            DrawShape(ds, args.Shape, args.Size * 0.9f, strokeBrush);
-//        }
-//        return renderTarget;
-//    }
-
-//    private static CanvasRenderTarget CreateMarkerBrush(BrushGenerateArgs args, CanvasDevice device) {
-//        var renderTarget = new CanvasRenderTarget(device, args.Size, args.Size, 96);
-//        using (var ds = renderTarget.CreateDrawingSession()) {
-//            byte alpha = (byte)(args.Color.A * args.Flow * 0.7f);
-//            var color = Color.FromArgb(alpha, args.Color.R, args.Color.G, args.Color.B);
-//            DrawShape(ds, args.Shape, args.Size, color);
-
-//            // 边缘锐化
-//            using var effect = new EdgeDetectionEffect {
-//                Source = renderTarget,
-//                Amount = 0.2f,
-//                BlurAmount = 0.5f
-//            };
-//            ds.DrawImage(effect);
-//        }
-//        return renderTarget;
-//    }
-
-//    private static CanvasRenderTarget CreatePencilBrush(BrushGenerateArgs args, CanvasDevice device) {
-//        var renderTarget = new CanvasRenderTarget(device, args.Size, args.Size, 96);
-//        using (var ds = renderTarget.CreateDrawingSession()) {
-//            // 灰度转换
-//            byte gray = (byte)(args.Color.R * 0.3 + args.Color.G * 0.59 + args.Color.B * 0.11);
-//            var baseColor = Color.FromArgb(args.Color.A, gray, gray, gray);
-
-//            // 噪点纹理
-//            using var noise = _baseTextures[BrushType.Pencil];
-//            using var brush = new CanvasImageBrush(device, noise) {
-//                Transform = Matrix3x2.CreateScale(args.Size / 256f),
-//                Opacity = args.Hardness
-//            };
-//            DrawShape(ds, args.Shape, args.Size, brush);
-//            DrawShape(ds, args.Shape, args.Size, baseColor);
-//        }
-//        return renderTarget;
-//    }
-//    #endregion
-
-//    #region shape drawing
-//    private static void DrawShape(CanvasDrawingSession ds, BrushShape shape, float size, ICanvasBrush brush) {
-//        float center = size / 2;
-//        switch (shape) {
-//            case BrushShape.Circle:
-//                ds.FillCircle(center, center, center, brush);
-//                break;
-//            case BrushShape.Rectangle:
-//                ds.FillRectangle(0, 0, size, size, brush);
-//                break;
-//        }
-//    }
-
-//    private static void DrawShape(CanvasDrawingSession ds, BrushShape shape, float size, Color color) {
-//        float center = size / 2;
-//        switch (shape) {
-//            case BrushShape.Circle:
-//                ds.FillCircle(center, center, center, color);
-//                break;
-//            case BrushShape.Rectangle:
-//                ds.FillRectangle(0, 0, size, size, color);
-//                break;
-//        }
-//    }
-//    #endregion
-
-//    #region special effects processing
-//    private static CanvasRenderTarget ApplyWatercolorEffect(CanvasBitmap source, float wetness) {
-//        var device = source.Device;
-//        var result = new CanvasRenderTarget(device, (float)source.Size.Width, (float)source.Size.Height, 96);
-
-//        using (var ds = result.CreateDrawingSession())
-//        using (var blur = new GaussianBlurEffect {
-//            Source = source,
-//            BlurAmount = 2f * wetness,
-//            BorderMode = EffectBorderMode.Soft
-//        }) {
-//            ds.DrawImage(blur);
-//            ds.DrawImage(source); // 增强中心浓度
-//        }
-//        return result;
-//    }
-//    #endregion
-
-//    #region resource management
-//    private static CanvasBitmap GetSharedTexture(string key) {
-//        return _sharedTextureCache.GetOrAdd(key, _ => {
-//            return key switch {
-//                "calligraphy_noise" => GenerateNoiseTexture(256, 0.2f),
-//                _ => throw new KeyNotFoundException()
-//            };
-//        });
-//    }
-
-//    private static CanvasRenderTarget GenerateNoiseTexture(int size, float intensity) {
-//        var device = CanvasDevice.GetSharedDevice();
-//        var texture = new CanvasRenderTarget(device, size, size, 96);
-//        using (var ds = texture.CreateDrawingSession()) {
-//            var rnd = new Random();
-//            for (int i = 0; i < size * size * intensity; i++) {
-//                byte gray = (byte)rnd.Next(100, 250);
-//                ds.DrawCircle(
-//                    rnd.Next(0, size),
-//                    rnd.Next(0, size),
-//                    rnd.NextSingle() * 1.5f,
-//                    Color.FromArgb(255, gray, gray, gray));
-//            }
-//        }
-//        return texture;
-//    }
-
-//    private static Dictionary<BrushType, CanvasBitmap> LoadBaseTextures() {
-//        var device = CanvasDevice.GetSharedDevice();
-//        return new Dictionary<BrushType, CanvasBitmap> {
-//            [BrushType.Watercolor] = GenerateProceduralTexture(device, GenerateWatercolorPaper),
-//            [BrushType.Oil] = GenerateProceduralTexture(device, GenerateOilStroke),
-//            [BrushType.Pencil] = GenerateProceduralTexture(device, GeneratePencilNoise)
-//        };
-//    }
-
-//    private static CanvasRenderTarget GenerateProceduralTexture(CanvasDevice device, Action<CanvasDrawingSession> generator) {
-//        var texture = new CanvasRenderTarget(device, 512, 512, 96);
-//        using (var ds = texture.CreateDrawingSession()) {
-//            generator(ds);
-//        }
-//        return texture;
-//    }
-
-//    private static void GenerateWatercolorPaper(CanvasDrawingSession ds) {
-//        var rnd = new Random();
-//        for (int i = 0; i < 5000; i++) {
-//            var x = rnd.Next(0, 512);
-//            var y = rnd.Next(0, 512);
-//            var size = rnd.Next(1, 5);
-//            ds.FillCircle(x, y, size, Color.FromArgb(30, 220, 220, 220));
-//        }
-//    }
-
-//    private static void GenerateOilStroke(CanvasDrawingSession ds) {
-//        var colors = new[] { Colors.White, Colors.LightGray, Colors.Gray };
-//        var rnd = new Random();
-//        for (int i = 0; i < 200; i++) {
-//            var color = colors[rnd.Next(colors.Length)];
-//            var width = rnd.Next(5, 20);
-//            var height = rnd.Next(30, 100);
-//            var rotation = rnd.NextSingle() * MathF.PI;
-
-//            ds.Transform = Matrix3x2.CreateRotation(rotation) *
-//                          Matrix3x2.CreateTranslation(rnd.Next(0, 512), rnd.Next(0, 512));
-//            ds.FillRectangle(-width / 2, -height / 2, width, height, color);
-//        }
-//    }
-
-//    private static void GeneratePencilNoise(CanvasDrawingSession ds) {
-//        var rnd = new Random();
-//        for (int i = 0; i < 10000; i++) {
-//            byte gray = (byte)rnd.Next(150, 250);
-//            ds.DrawCircle(
-//                rnd.Next(0, 512),
-//                rnd.Next(0, 512),
-//                rnd.NextSingle() * 1.5f,
-//                Color.FromArgb(255, gray, gray, gray));
-//        }
-//    }
-
-//    private static void DisposeAll(IEnumerable<CanvasBitmap> textures) {
-//        foreach (var texture in textures) {
-//            texture.Dispose();
-//        }
-//    }
-//    #endregion
-
-//    private static readonly ConcurrentDictionary<(Color, float, BrushShape), CanvasBitmap> _solidBrushCache = new();
-//    private static readonly ConcurrentDictionary<BrushGenerateArgs, CanvasBitmap> _texturedBrushCache = new();
-//    private static readonly ConcurrentDictionary<string, CanvasBitmap> _sharedTextureCache = new();
-//    private static readonly IReadOnlyDictionary<BrushType, CanvasBitmap> _baseTextures;
-//}
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.Brushes;
-using Microsoft.Graphics.Canvas.Effects;
-using Microsoft.Graphics.Canvas.Geometry;
-using Windows.Foundation;
 using Windows.UI;
 
 namespace BuiltIn.InkSystem.Core.Services {
@@ -364,7 +39,7 @@ namespace BuiltIn.InkSystem.Core.Services {
             if (_brushCache.TryGetValue(args, out var cachedBrush))
                 return cachedBrush;
 
-            var brush = args.Type switch {
+            ICanvasBrush brush = args.Type switch {
                 BrushType.General => CreateSolidColorBrush(args.Color),
                 BrushType.Calligraphy => CreateCalligraphyBrush(args, device),
                 BrushType.Airbrush => CreateAirbrush(args, device),
@@ -393,7 +68,7 @@ namespace BuiltIn.InkSystem.Core.Services {
         }
 
         #region 核心笔刷创建方法
-        private static ICanvasBrush CreateSolidColorBrush(Color color) {
+        private static CanvasSolidColorBrush CreateSolidColorBrush(Color color) {
             var key = (color, 1f, BrushShape.Circle); // 尺寸和形状对纯色笔刷无影响
             if (!_solidBrushCache.TryGetValue(key, out var brush)) {
                 brush = new CanvasSolidColorBrush(CanvasDevice.GetSharedDevice(), color);
@@ -402,7 +77,7 @@ namespace BuiltIn.InkSystem.Core.Services {
             return brush;
         }
 
-        private static ICanvasBrush CreateCalligraphyBrush(BrushGenerateArgs args, CanvasDevice device) {
+        private static CanvasImageBrush CreateCalligraphyBrush(BrushGenerateArgs args, CanvasDevice device) {
             var texture = _baseTextures[BrushType.Calligraphy];
             return new CanvasImageBrush(device, texture) {
                 Transform = Matrix3x2.CreateRotation(args.Angle) *
@@ -413,7 +88,7 @@ namespace BuiltIn.InkSystem.Core.Services {
             };
         }
 
-        private static ICanvasBrush CreateAirbrush(BrushGenerateArgs args, CanvasDevice device) {
+        private static CanvasRadialGradientBrush CreateAirbrush(BrushGenerateArgs args, CanvasDevice device) {
             var stops = new[]
             {
                 new CanvasGradientStop { Color = Color.FromArgb(0, args.Color.R, args.Color.G, args.Color.B), Position = 0 },
@@ -428,7 +103,7 @@ namespace BuiltIn.InkSystem.Core.Services {
             };
         }
 
-        private static ICanvasBrush CreateOilBrush(BrushGenerateArgs args, CanvasDevice device) {
+        private static CanvasImageBrush CreateOilBrush(BrushGenerateArgs args, CanvasDevice device) {
             using var cmdList = new CanvasCommandList(device);
             using (var ds = cmdList.CreateDrawingSession()) {
                 ds.FillCircle(args.Size / 2, args.Size / 2, args.Size / 2, args.Color);
@@ -442,7 +117,7 @@ namespace BuiltIn.InkSystem.Core.Services {
             };
         }
 
-        private static ICanvasBrush CreateWatercolorBrush(BrushGenerateArgs args, CanvasDevice device) {
+        private static CanvasImageBrush CreateWatercolorBrush(BrushGenerateArgs args, CanvasDevice device) {
             var texture = _baseTextures[BrushType.Watercolor];
             return new CanvasImageBrush(device, texture) {
                 Transform = Matrix3x2.CreateScale(args.Size / (float)texture.Size.Width),
@@ -452,7 +127,7 @@ namespace BuiltIn.InkSystem.Core.Services {
             };
         }
 
-        private static ICanvasBrush CreateMarkerBrush(BrushGenerateArgs args, CanvasDevice device) {
+        private static CanvasLinearGradientBrush CreateMarkerBrush(BrushGenerateArgs args, CanvasDevice device) {
             var stops = new[]
             {
                 new CanvasGradientStop { Color = Color.FromArgb(150, args.Color.R, args.Color.G, args.Color.B), Position = 0 },
@@ -466,7 +141,7 @@ namespace BuiltIn.InkSystem.Core.Services {
             };
         }
 
-        private static ICanvasBrush CreatePencilBrush(BrushGenerateArgs args, CanvasDevice device) {
+        private static CompositeBrush CreatePencilBrush(BrushGenerateArgs args, CanvasDevice device) {
             // 计算灰度颜色（RGB转灰度）
             byte gray = (byte)(args.Color.R * 0.3 + args.Color.G * 0.59 + args.Color.B * 0.11);
             var baseColor = Color.FromArgb(args.Color.A, gray, gray, gray);

@@ -1,13 +1,15 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Bridge;
 using Windows.Graphics.DirectX;
+using Workloads.Creation.StaticImg.Models.SerializableData;
 using Workloads.Creation.StaticImg.Models.ToolItems.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -19,36 +21,51 @@ namespace Workloads.Creation.StaticImg {
     /// </summary>
     public sealed partial class MainPage : Page, IRuntime {
         internal static MainPage Instance { get; private set; }
+        internal Logger Log { get; init; }
         internal IDraftPanelBridge Bridge { get; }
         internal CanvasDevice SharedDevice { get; }
         internal StaticImgUndoRedoUtil UnReUtil { get; }
-        internal string EntryFilePath { get; }
+        internal ProjectFile ProjectUtil { get; }
         internal FileType RTFileType { get; }
         internal DirectXPixelFormat SharedFormat { get; }
         internal CanvasAlphaMode SharedAlphaMode { get; }
+        internal bool IsExited { get; private set; }
 
         public double FrameTimeMs {
             get { lock (_frameTimeLock) return _frameTimeMs; }
             private set { lock (_frameTimeLock) _frameTimeMs = value; }
         }
 
-        /// <summary>
-        /// ��̬ͼ����ҳ��
-        /// </summary>
-        /// <param name="entryFilePath">��������Ϊ FImage or FE_STATIC_IMG_PROJ ���ļ�·��</param>
-        public MainPage(IDraftPanelBridge bridge, string entryFilePath, FileType rtFileType) {
+        private MainPage(IDraftPanelBridge bridge) {
+            this.InitializeComponent();
             Instance = this;
             Bridge = bridge;
-            EntryFilePath = entryFilePath;
-            RTFileType = rtFileType;
             SharedDevice = CanvasDevice.GetSharedDevice();
             SharedFormat = DirectXPixelFormat.B8G8R8A8UIntNormalized;
             SharedAlphaMode = CanvasAlphaMode.Premultiplied;
             UnReUtil = new StaticImgUndoRedoUtil();
-
-            this.InitializeComponent();
+            Log = LogManager.GetCurrentClassLogger();            
         }
 
+        /// <summary>
+        /// 打开文件
+        /// </summary>
+        /// <param name="filePath">类型为 FDeign 或静态图像的文件路径</param>
+        public MainPage(IDraftPanelBridge bridge, FileType rtFileType, string filePath) : this(bridge) {
+            ProjectUtil = ProjectFile.Create(filePath);
+            RTFileType = rtFileType;            
+        }
+
+        /// <summary>
+        /// 新建项目
+        /// </summary>
+        /// <param name="fileName">项目名</param>
+        public MainPage(IDraftPanelBridge bridge, string fileName) : this(bridge) {
+            ProjectUtil = ProjectFile.Create(fileName);
+            RTFileType = FileType.FDesign;
+        }
+
+        // TODO: 考虑此处 restore
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             this.IsEnabled = false;
             Bridge.GetNotify().Loading(false, false);
@@ -60,6 +77,14 @@ namespace Workloads.Creation.StaticImg {
             this.IsEnabled = true;
         }
 
+        // TODO：切换左侧导航栏时会触发 page_unloaded
+        /*
+         * 方案一：使用 flag 尝试阻止 unloaded（obsolete）
+         * 方案二：使用 flag 尝试再 loaded 时从内存中恢复内容
+         * 
+         * flag：如果触发 exit 则表示无需保留内容，直接 unloaded-dispose；否则表示内容需要保留，下一次需要恢复
+         * 
+         */
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
             StopFrameTimeMonitor();
             SharedDevice.Dispose();
@@ -79,12 +104,12 @@ namespace Workloads.Creation.StaticImg {
                         }
                         _lastFrameTime = now;
 
-                        // ��̬��������Ƶ�ʣ�֡ʱ��Խ�����������Խ��
+                        // 动态调整采样频率（帧时间越长，采样间隔越大）
                         int delayMs = FrameTimeMs < 16.6 ? 1 : (int)Math.Min(FrameTimeMs / 2, 33);
                         await Task.Delay(delayMs, _frameTimeCts.Token);
                     }
                     catch (TaskCanceledException) {
-                        // �����˳�
+                        // 正常退出
                     }
                     catch (Exception ex) {
                         Bridge.Log(LogType.Error, $"FrameTime monitor error: {ex.Message}");
@@ -98,9 +123,9 @@ namespace Workloads.Creation.StaticImg {
             _frameTimeCts.Cancel();
 
             try {
-                _frameTimeTask?.Wait(50); // �ȴ�50msȷ���߳��˳�
+                _frameTimeTask?.Wait(50); // 等待50ms确保线程退出
             }
-            catch { /* �����߳̽���ʱ���쳣 */ }
+            catch { /* 忽略线程结束时的异常 */ }
         }
 
         #region workSpace events

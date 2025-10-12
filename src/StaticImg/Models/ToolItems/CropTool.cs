@@ -8,10 +8,11 @@ using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI;
 using Windows.Foundation;
 using Windows.UI;
+using Workloads.Creation.StaticImg.Models.Specific;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
     partial class CropTool : CanvasAreaSelector {
-        public CropTool(InkCanvasConfigData data) {
+        public CropTool(InkCanvasData data) {
             _data = data;
             _ratioController = new AspectRatioController(this);
             OnSelectRectChanged += CropTool_OnSelectRectChanged;
@@ -103,14 +104,14 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         public void ApplyAspectRatio(double ratio) {
-            RenderTarget = _data.SelectedInkCanvas.RenderData.RenderTarget;
+            RenderTarget = _data.SelectedLayer.RenderData.RenderTarget;
             RestoreOriginalContent();
             SaveBaseContent();
             _ratioController.ApplyRatio(ratio);
         }
 
         private readonly AspectRatioController _ratioController;
-        private readonly InkCanvasConfigData _data;
+        private readonly InkCanvasData _data;
 
         internal class AspectRatioController(CropTool parent) {
             private double _currentRatio;

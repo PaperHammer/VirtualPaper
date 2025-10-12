@@ -3,15 +3,13 @@ using System.Windows.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.System;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public class GetStartViewModel {
-        public List<Startup> Startups { get; private set; } = [];
+        //public List<Startup> Startups { get; private set; } = [];
         public ObservableList<IRecentUsed> RecentUseds { get; private set; } = [];
 
         public string Project_RecentUsed { get; private set; }
@@ -48,20 +46,20 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private void InitCollection() {
-            Startups = [
-                new(ConfigSpacePanelType.OpenVpd,
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenVsd),
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenVsd_Desc),
-                    VirtualKey.V),
-                new(ConfigSpacePanelType.OpenFile,
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile),
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile_Desc),
-                    VirtualKey.F),
-                new(ConfigSpacePanelType.NewVpd,
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd),
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd_Desc),
-                    VirtualKey.N),
-            ];
+            //Startups = [
+            //    new(ConfigSpacePanelType.OpenVpd,
+            //        LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenVsd),
+            //        LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenVsd_Desc),
+            //        VirtualKey.V),
+            //    new(ConfigSpacePanelType.OpenFile,
+            //        LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile),
+            //        LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile_Desc),
+            //        VirtualKey.F),
+            //    new(ConfigSpacePanelType.NewVpd,
+            //        LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd),
+            //        LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd_Desc),
+            //        VirtualKey.N),
+            //];
             RecentUseds.AddRange(_userSettingsClient.RecentUseds);
             _recentUsed = [.. RecentUseds];
         }

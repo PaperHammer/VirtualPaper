@@ -1,4 +1,5 @@
-﻿using Microsoft.Graphics.Canvas;
+﻿using BuiltIn.InkSystem.Core.Services;
+using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 
 namespace BuiltIn.Events {

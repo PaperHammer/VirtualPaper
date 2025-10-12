@@ -6,28 +6,20 @@ using Windows.UI;
 
 namespace BuiltIn.InkSystem.Core.Services {
     /// <summary>
-    /// 笔刷参数记录类型（不可变）
+    /// 笔刷参数记录类型
     /// </summary>
     public sealed record BrushGenerateArgs(
-        Color Color,
+        Color BrushColor,
         BrushType Type,
-        BrushShape Shape,
-        float Size = 1f,
-        float Hardness = 1.0f,
-        float Flow = 1.0f,
-        float Angle = 0f) // 仅书法笔需要角度
-    {
-        // 自动实现的Equals和GetHashCode
-    }
+        float Thickness = 1f,
+        float Hardness = 1f,
+        float Opacity = 1f,
+        float Angle = 0f); // 仅书法笔需要角度
 
     /// <summary>
     /// 笔刷管理器（静态工具类）
     /// </summary>
-    public static class BrushManager {
-        private static readonly IReadOnlyDictionary<BrushType, CanvasBitmap> _baseTextures;
-        private static readonly Dictionary<(Color, float, BrushShape), CanvasSolidColorBrush> _solidBrushCache = new();
-        private static readonly Dictionary<BrushGenerateArgs, ICanvasBrush> _brushCache = new();
-
+    internal static class BrushManager {
         static BrushManager() {
             _baseTextures = LoadBaseTextures();
         }
@@ -40,7 +32,7 @@ namespace BuiltIn.InkSystem.Core.Services {
                 return cachedBrush;
 
             ICanvasBrush brush = args.Type switch {
-                BrushType.General => CreateSolidColorBrush(args.Color),
+                BrushType.General or BrushType.Eraser => CreateSolidColorBrush(args),
                 BrushType.Calligraphy => CreateCalligraphyBrush(args, device),
                 BrushType.Airbrush => CreateAirbrush(args, device),
                 BrushType.Oil => CreateOilBrush(args, device),
@@ -68,10 +60,12 @@ namespace BuiltIn.InkSystem.Core.Services {
         }
 
         #region 核心笔刷创建方法
-        private static CanvasSolidColorBrush CreateSolidColorBrush(Color color) {
-            var key = (color, 1f, BrushShape.Circle); // 尺寸和形状对纯色笔刷无影响
+        private static CanvasSolidColorBrush CreateSolidColorBrush(BrushGenerateArgs args) {
+            var key = (args.BrushColor, args.Opacity);
             if (!_solidBrushCache.TryGetValue(key, out var brush)) {
-                brush = new CanvasSolidColorBrush(CanvasDevice.GetSharedDevice(), color);
+                brush = new CanvasSolidColorBrush(CanvasDevice.GetSharedDevice(), args.BrushColor) {
+                    Opacity = args.Opacity
+                };
                 _solidBrushCache[key] = brush;
             }
             return brush;
@@ -81,9 +75,9 @@ namespace BuiltIn.InkSystem.Core.Services {
             var texture = _baseTextures[BrushType.Calligraphy];
             return new CanvasImageBrush(device, texture) {
                 Transform = Matrix3x2.CreateRotation(args.Angle) *
-                           Matrix3x2.CreateScale(args.Size / (float)texture.Size.Width),
+                           Matrix3x2.CreateScale(args.Thickness / (float)texture.Size.Width),
                 ExtendX = CanvasEdgeBehavior.Wrap,
-                Opacity = args.Flow,
+                Opacity = args.Opacity,
                 Interpolation = CanvasImageInterpolation.HighQualityCubic
             };
         }
@@ -91,27 +85,27 @@ namespace BuiltIn.InkSystem.Core.Services {
         private static CanvasRadialGradientBrush CreateAirbrush(BrushGenerateArgs args, CanvasDevice device) {
             var stops = new[]
             {
-                new CanvasGradientStop { Color = Color.FromArgb(0, args.Color.R, args.Color.G, args.Color.B), Position = 0 },
-                new CanvasGradientStop { Color = args.Color, Position = 1 }
+                new CanvasGradientStop { Color = Color.FromArgb(0, args.BrushColor.R, args.BrushColor.G, args.BrushColor.B), Position = 0 },
+                new CanvasGradientStop { Color = args.BrushColor, Position = 1 }
             };
 
             return new CanvasRadialGradientBrush(device, stops) {
-                Center = new Vector2(args.Size / 2),
-                RadiusX = args.Size / 2,
-                RadiusY = args.Size / 2,
-                Opacity = args.Flow
+                Center = new Vector2(args.Thickness / 2),
+                RadiusX = args.Thickness / 2,
+                RadiusY = args.Thickness / 2,
+                Opacity = args.Opacity
             };
         }
 
         private static CanvasImageBrush CreateOilBrush(BrushGenerateArgs args, CanvasDevice device) {
             using var cmdList = new CanvasCommandList(device);
             using (var ds = cmdList.CreateDrawingSession()) {
-                ds.FillCircle(args.Size / 2, args.Size / 2, args.Size / 2, args.Color);
+                ds.FillCircle(args.Thickness / 2, args.Thickness / 2, args.Thickness / 2, args.BrushColor);
                 ds.DrawImage(_baseTextures[BrushType.Oil]);
             }
 
             return new CanvasImageBrush(device, cmdList) {
-                Transform = Matrix3x2.CreateScale(args.Size / 100f),
+                Transform = Matrix3x2.CreateScale(args.Thickness / 100f),
                 ExtendX = CanvasEdgeBehavior.Mirror,
                 Opacity = args.Hardness
             };
@@ -120,8 +114,8 @@ namespace BuiltIn.InkSystem.Core.Services {
         private static CanvasImageBrush CreateWatercolorBrush(BrushGenerateArgs args, CanvasDevice device) {
             var texture = _baseTextures[BrushType.Watercolor];
             return new CanvasImageBrush(device, texture) {
-                Transform = Matrix3x2.CreateScale(args.Size / (float)texture.Size.Width),
-                Opacity = args.Flow * 0.7f,
+                Transform = Matrix3x2.CreateScale(args.Thickness / (float)texture.Size.Width),
+                Opacity = args.Opacity * 0.7f,
                 ExtendX = CanvasEdgeBehavior.Wrap,
                 Interpolation = CanvasImageInterpolation.MultiSampleLinear
             };
@@ -130,30 +124,30 @@ namespace BuiltIn.InkSystem.Core.Services {
         private static CanvasLinearGradientBrush CreateMarkerBrush(BrushGenerateArgs args, CanvasDevice device) {
             var stops = new[]
             {
-                new CanvasGradientStop { Color = Color.FromArgb(150, args.Color.R, args.Color.G, args.Color.B), Position = 0 },
-                new CanvasGradientStop { Color = Color.FromArgb(50, args.Color.R, args.Color.G, args.Color.B), Position = 1 }
+                new CanvasGradientStop { Color = Color.FromArgb(150, args.BrushColor.R, args.BrushColor.G, args.BrushColor.B), Position = 0 },
+                new CanvasGradientStop { Color = Color.FromArgb(50, args.BrushColor.R, args.BrushColor.G, args.BrushColor.B), Position = 1 }
             };
 
             return new CanvasLinearGradientBrush(device, stops) {
                 StartPoint = new Vector2(0, 0),
-                EndPoint = new Vector2(args.Size, 0),
-                Opacity = args.Flow
+                EndPoint = new Vector2(args.Thickness, 0),
+                Opacity = args.Opacity
             };
         }
 
         private static CompositeBrush CreatePencilBrush(BrushGenerateArgs args, CanvasDevice device) {
             // 计算灰度颜色（RGB转灰度）
-            byte gray = (byte)(args.Color.R * 0.3 + args.Color.G * 0.59 + args.Color.B * 0.11);
-            var baseColor = Color.FromArgb(args.Color.A, gray, gray, gray);
+            byte gray = (byte)(args.BrushColor.R * 0.3 + args.BrushColor.G * 0.59 + args.BrushColor.B * 0.11);
+            var baseColor = Color.FromArgb(args.BrushColor.A, gray, gray, gray);
 
             // 创建基础笔刷（灰度底色）
             var baseBrush = new CanvasSolidColorBrush(device, baseColor) {
-                Opacity = args.Flow * 0.8f  // 基础层占比80%
+                Opacity = args.Opacity * 0.8f  // 基础层占比80%
             };
 
             // 创建纹理笔刷（铅笔噪点）
             var textureBrush = new CanvasImageBrush(device, _baseTextures[BrushType.Pencil]) {
-                Transform = Matrix3x2.CreateScale(args.Size / 50f),
+                Transform = Matrix3x2.CreateScale(args.Thickness / 50f),
                 Opacity = args.Hardness * 0.5f,  // 纹理层占比50%
                 ExtendX = CanvasEdgeBehavior.Wrap,
                 Interpolation = CanvasImageInterpolation.HighQualityCubic
@@ -162,7 +156,7 @@ namespace BuiltIn.InkSystem.Core.Services {
             // 构建复合笔刷
             return new CompositeBrush(baseBrush, textureBrush) {
                 // 全局控制参数
-                Opacity = args.Flow,  // 总透明度
+                Opacity = args.Opacity,  // 总透明度
                 Transform = Matrix3x2.CreateRotation(args.Angle)  // 统一旋转
             };
         }
@@ -319,15 +313,10 @@ namespace BuiltIn.InkSystem.Core.Services {
             }
         }
         #endregion
-    }
 
-    /// <summary>
-    /// 笔刷形状枚举
-    /// </summary>
-    public enum BrushShape {
-        Circle,
-        Rectangle,
-        RoundedRect
+        private static readonly IReadOnlyDictionary<BrushType, CanvasBitmap> _baseTextures;
+        private static readonly Dictionary<(Color, float Opacity), CanvasSolidColorBrush> _solidBrushCache = [];
+        private static readonly Dictionary<BrushGenerateArgs, ICanvasBrush> _brushCache = [];
     }
 
     /// <summary>
@@ -340,7 +329,7 @@ namespace BuiltIn.InkSystem.Core.Services {
         Oil,
         Watercolor,
         Marker,
-        Pencil
+        Pencil,
+        Eraser,
     }
 }
-//}

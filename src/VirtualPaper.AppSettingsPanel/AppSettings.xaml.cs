@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
@@ -38,6 +39,10 @@ namespace VirtualPaper.AppSettingsPanel
         #region bridge
         public nint GetWindowHandle() {
             return _windowBridge.GetWindowHandle();
+        }
+
+        public async Task<string?> GetStorageFolderAsync() {
+            return await _windowBridge.GetStorageFolderAsync();
         }
 
         public INoifyBridge GetNotify() {

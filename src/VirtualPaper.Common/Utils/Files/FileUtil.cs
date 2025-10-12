@@ -234,6 +234,30 @@ namespace VirtualPaper.Common.Utils.Files {
             return totalSize;
         }
 
+        public static bool IsValidFilePath(string path) {
+            try {
+                if (Path.GetInvalidPathChars().Any(path.Contains))
+                    return false;
+
+                string? dir = Path.GetDirectoryName(path);
+                return !string.IsNullOrEmpty(dir) && Directory.Exists(dir);
+            }
+            catch {
+                return false;
+            }
+        }
+
+        public static bool IsValidFileName(string name) {
+            try {
+                return !Path.GetInvalidFileNameChars().Any(name.Contains) &&
+                       name.Length <= 255 &&
+                       !string.IsNullOrWhiteSpace(Path.GetFileNameWithoutExtension(name));
+            }
+            catch {
+                return false;
+            }
+        }
+
         //ref: https://stackoverflow.com/questions/14488796/does-net-provide-an-easy-way-convert-bytes-to-kb-mb-gb-etc
         static readonly string[] SizeSuffixes =
                            ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];

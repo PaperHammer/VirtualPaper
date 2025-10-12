@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -8,7 +9,6 @@ using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.ThreadContext;
-using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.DraftPanel.Views.ConfigSpaceComponents;
 using VirtualPaper.UIComponent.Data;
@@ -47,9 +47,6 @@ namespace VirtualPaper.DraftPanel.Views {
                 switch (_currentPanel) {
                     case DraftPanelState.GetStart:
                         targetPageType = typeof(GetStart);
-                        break;
-                    case DraftPanelState.ProjectConfig:
-                        targetPageType = typeof(ProjectConfig);
                         break;
                     case DraftPanelState.DraftConfig:
                         targetPageType = typeof(DraftConfig);
@@ -119,15 +116,19 @@ namespace VirtualPaper.DraftPanel.Views {
             return Draft.Instance.GetHardwareDpi();
         }
     
-        public void ChangePanelState(DraftPanelState nextPanel, object data) {
+        public void ChangePanelState(DraftPanelState nextPanel, object? data) {
             _sharedData = data;
             NavigetBasedState(nextPanel);
         }
 
-        public object GetSharedData() => _sharedData;
+        public object? GetSharedData() => _sharedData;
 
         public nint GetWindowHandle() {
             return Draft.Instance.GetWindowHandle();
+        }
+
+        public async Task<string?> GetStorageFolderAsync() {
+            return await Draft.Instance.GetStorageFolderAsync();
         }
 
         public void Log(LogType type, object message) {
@@ -145,6 +146,6 @@ namespace VirtualPaper.DraftPanel.Views {
 
         private ConfigSpaceViewModel _viewModel;
         private DraftPanelState _currentPanel;
-        private object _sharedData;
+        private object? _sharedData;
     }
 }

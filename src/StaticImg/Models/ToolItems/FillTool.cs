@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using BuiltIn.Events;
-using BuiltIn.Tool.Bsae;
+using BuiltIn.InkSystem.Tool.Bsae;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 using Windows.Foundation;
 using Windows.UI;
+using Workloads.Creation.StaticImg.Events;
+using Workloads.Creation.StaticImg.Models.Specific;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
-    partial class FillTool(InkCanvasConfigData data) : CanvasRenderTargetInteract, IDisposable {
+    partial class FillTool(InkCanvasData data) : RenderBase, IDisposable {
         public override void HandlePressed(CanvasPointerEventArgs e) {
             if (e.PointerPos != PointerPosition.InsideCanvas) return;
 

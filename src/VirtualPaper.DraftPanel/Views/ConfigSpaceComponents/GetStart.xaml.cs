@@ -1,17 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
-using VirtualPaper.DraftPanel.Model.Interfaces;
+using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model.NavParam;
-using VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.DraftPanel;
@@ -33,10 +31,10 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             base.OnNavigatedTo(e);
 
             this._configSpace ??= e.Parameter as ConfigSpace;
-            _viewModel = ObjectProvider.GetRequiredService<GetStartViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-            this.DataContext = _viewModel;
+            this._configSpace?.SetBtnVisible(false);
 
-            this._configSpace.SetBtnVisible(false);
+            _viewModel = ObjectProvider.GetRequiredService<GetStartViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
+            this.DataContext = _viewModel;            
         }
 
         private void OnFilterChanged(object sender, TextChangedEventArgs e) {
@@ -84,59 +82,56 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             }
         }
 
-        private async void StartupItemsView_ItemInvoked(ItemsView sender, ItemsViewItemInvokedEventArgs args) {
-            await HandleStartupAsync(args.InvokedItem as Startup);
-        }
-
-        private async Task HandleStartupAsync(Startup startUp) {
-            foreach (var stg in _strategies) {
-                if (stg.CanHandle(startUp.Type)) {
-                    await stg.HandleAsync(_configSpace);
-                    break;
-                }
-            }
-        }
-
-        private void KeyboardAccelerator_Invoked_RecentUseds(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
-            FocusOnFirstItem();
-            args.Handled = true;
-        }
-
-        private void FocusOnFirstItem() {
-            if (lvRecentUsed.Items.Count > 0) {
-                var firstItemContainer = lvRecentUsed.ContainerFromIndex(0) as ListViewItem;
-                firstItemContainer?.Focus(FocusState.Programmatic);
-            }
-        }
-
-        private void KeyboardAccelerator_Invoked_SearchRecentUsed(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
-            tbSearchName.Focus(FocusState.Programmatic);
-            args.Handled = true;
-        }
-
-        private async void KeyboardAccelerator_Invoked_Startups(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
-            var startup = (ivStartups.ItemsSource as IList<Startup>).FirstOrDefault(x => x.ShortCut == args.KeyboardAccelerator.Key);
-            if (startup != null) {
-                await HandleStartupAsync(startup);
-            }
-            args.Handled = true;
-        }
-
-        //private void RemoveFromList_Click(object sender, RoutedEventArgs e) {
-        //    _viewModel.RecentUseds.Remove((sender as FrameworkElement)?.DataContext as IRecentUsed);
+        //private async Task HandleStartupAsync(Startup startUp) {
+        //    foreach (var stg in _strategies) {
+        //        if (stg.CanHandle(startUp.Type)) {
+        //            await stg.HandleAsync(_configSpace);
+        //            break;
+        //        }
+        //    }
         //}
 
-        //private void CopyPath_Click(object sender, RoutedEventArgs e) {
-
+        //private void FocusOnFirstItem() {
+        //    if (lvRecentUsed.Items.Count > 0) {
+        //        var firstItemContainer = lvRecentUsed.ContainerFromIndex(0) as ListViewItem;
+        //        firstItemContainer?.Focus(FocusState.Programmatic);
+        //    }
         //}
+
+        private void BtnStartupNew_Click(object sender, RoutedEventArgs e) {
+            _configSpace.ChangePanelState(DraftPanelState.DraftConfig, null);
+        }
+
+        private async void BtnStartupOpen_Click(object sender, RoutedEventArgs e) {
+            var storage = await WindowsStoragePickers.PickFilesAsync(
+                _configSpace.GetWindowHandle(),
+                [.. FileFilter.FileTypeToExtension[FileType.FImage], .. FileFilter.FileTypeToExtension[FileType.FDesign]],
+                true);
+            if (storage.Length < 1) return;
+
+            int n = storage.Length;
+            string[] filePaths = new string[n];
+            for (int i = 0; i < storage.Length; i++) {
+                filePaths[i] = storage[i].Path;
+            }
+            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, new ToWorkSpace([.. filePaths]));
+        }
+
+        private void GridDrop_Drop(object sender, DragEventArgs e) {
+
+        }
+
+        private void GridDrop_DragOver(object sender, DragEventArgs e) {
+
+        }
 
         private GetStartViewModel _viewModel;
         private ConfigSpace _configSpace;
-        private readonly IStrategy[] _strategies = [
-            new OpenVpd(),
-            new OpenFile(),
-            new NewVpd(),
-        ];
+        //private readonly IStrategy[] _strategies = [
+        //    new OpenVpd(),
+        //    new OpenFile(),
+        //    new NewVpd(),
+        //];
         private readonly string _SIG_Text_RemoveFromList = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_RemoveFromList));
         private readonly string _SIG_Text_CopyPath = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_CopyPath));
     }

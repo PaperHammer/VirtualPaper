@@ -3,13 +3,13 @@
 namespace Workloads.Creation.StaticImg.Models {
     public class ToolItem : IEquatable<ToolItem> {
         public ToolType Type { get; set; }
-        public string Glyph { get; set; } // 图标字符（FontIcon 的 Glyph）
-        public string ImageSourceKey { get; set; } // 图片路径（ImageIcon 的 Source）
-        public string ToolName { get; set; } // 功能名称或标识符
+        public string Glyph { get; set; } = string.Empty; // 图标字符（FontIcon 的 Glyph）
+        public string ImageSourceKey { get; set; } = string.Empty; // 图片路径（ImageIcon 的 Source）
+        public string ToolName { get; set; } = string.Empty; // 功能名称或标识符
         public string TypeString => Type.ToString();
 
         public bool Equals(ToolItem? other) {
-            return other != null && this.Type == other.Type;
+            return other != null && Type == other.Type;
         }
 
         public override bool Equals(object? obj) {

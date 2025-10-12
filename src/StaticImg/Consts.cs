@@ -127,7 +127,7 @@ namespace Workloads.Creation.StaticImg {
     public readonly struct ArcSize : IEquatable<ArcSize> {
         [JsonConstructor]
         [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
-        internal ArcSize(double width, double height, uint dpi) {
+        internal ArcSize(float width, float height, uint dpi) {
             this.Dpi = dpi;
             this.Width = width;
             this.Height = height;
@@ -135,8 +135,8 @@ namespace Workloads.Creation.StaticImg {
         }
 
         public ArcSize(
-            double width,
-            double height,
+            float width,
+            float height,
             uint dpi,
             RebuildMode rebuild) {
             this.Dpi = dpi;
@@ -145,11 +145,11 @@ namespace Workloads.Creation.StaticImg {
                 _ => (width, height)
             };
             this.Rebuild = rebuild;
-            this.Ratio = (float)(1.0f * width / height);
+            this.Ratio = width / height;
         }
 
-        public double Width { get; }
-        public double Height { get; }
+        public float Width { get; }
+        public float Height { get; }
         public uint Dpi { get; }
         [JsonIgnore]
         public float Ratio { get; } // 宽高比
@@ -178,7 +178,6 @@ namespace Workloads.Creation.StaticImg {
         public Size GetSize() => new(Width, Height);        
     }
 
-
     // TODO
     public enum ToolType {
         None,
@@ -186,7 +185,7 @@ namespace Workloads.Creation.StaticImg {
         PaintBrush, // 画笔
         //Text, // 文本
         //MainSource, // 图片
-        //Shape, // 图形
+        //Style, // 图形
         Fill, // 填充
         //Lasso, // 套索工具
         Crop, // 裁剪
@@ -197,5 +196,12 @@ namespace Workloads.Creation.StaticImg {
     // rotate per 90 degree
     public enum RebuildMode {
         None, ResizeExpand, ResizeScale, RotateLeft, RotateRight, FlipHorizontal, FlipVertical,
+    }
+
+    public enum CanvasOperation {
+        RotateLeft,
+        RotateRight,
+        FlipHorizontally,
+        FlipVertically,
     }
 }

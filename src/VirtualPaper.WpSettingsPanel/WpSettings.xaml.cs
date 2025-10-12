@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -28,6 +28,10 @@ namespace VirtualPaper.WpSettingsPanel {
         #region bridge
         public nint GetWindowHandle() {
             return _windowBridge.GetWindowHandle();
+        }
+
+        public async Task<string?> GetStorageFolderAsync() {
+            return await _windowBridge.GetStorageFolderAsync();
         }
 
         public INoifyBridge GetNotify() {
@@ -86,7 +90,7 @@ namespace VirtualPaper.WpSettingsPanel {
 
         private void Flyout_Opening(object sender, object e) {
             _viewModel.InitWpArrangments();
-            _viewModel.InitMonitors(); // ´ò¿ª¸ÃÒ³Ãæ²»»á´¥·¢°ó¶¨ÖµĞŞ¸Ä£¬ĞèÒªÊÖ¶¯µ÷ÓÃ¸üĞÂ
+            _viewModel.InitMonitors(); // æ‰“å¼€è¯¥é¡µé¢ä¸ä¼šè§¦å‘ç»‘å®šå€¼ä¿®æ”¹ï¼Œéœ€è¦æ‰‹åŠ¨è°ƒç”¨æ›´æ–°
         }
 
         #region btn_click

@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -22,20 +23,24 @@ namespace VirtualPaper.DraftPanel {
         public Draft() {
             Instance = this;
             this._currentPanel = DraftPanelState.ConfigSpace;
-            this.InitializeComponent();                        
+            this.InitializeComponent();
         }
 
         #region bridge
         public nint GetWindowHandle() {
             return _windowBridge.GetWindowHandle();
         }
-       
-        public void ChangePanelState(DraftPanelState nextPanel, object data) {
+
+        public async Task<string?> GetStorageFolderAsync() {
+            return await _windowBridge.GetStorageFolderAsync();
+        }
+
+        public void ChangePanelState(DraftPanelState nextPanel, object? data) {
             _sharedData = data;
             NavigetBasedState(nextPanel);
         }
 
-        public object GetSharedData() => _sharedData;
+        public object? GetSharedData() => _sharedData;
 
         public void Log(LogType type, object message) {
             _windowBridge.Log(type, message);
@@ -114,6 +119,6 @@ namespace VirtualPaper.DraftPanel {
 
         private IWindowBridge _windowBridge;
         private DraftPanelState _currentPanel;
-        private object _sharedData;
+        private object? _sharedData;
     }
 }

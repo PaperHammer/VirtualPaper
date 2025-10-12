@@ -11,7 +11,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Folder Include="Shaders\" />
+		<Folder Include="Utils\" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -19,6 +19,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\VirtualPaper.Shader\VirtualPaper.Shader.csproj" />
 		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
 	</ItemGroup>
 

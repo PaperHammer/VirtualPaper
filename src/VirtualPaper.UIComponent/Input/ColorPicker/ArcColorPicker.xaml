@@ -248,7 +248,7 @@
                                 </Rectangle>
                                 <primitives:ColorPickerSlider x:Name="ThirdDimensionSlider" Minimum="0" Maximum="100" ColorChannel="Value" Orientation="Horizontal" Style="{StaticResource ColorPickerSliderStyle}" IsThumbToolTipEnabled="False" TabIndex="1" />
                             </Grid>
-                            <Grid Margin="0,0,0,16" x:Name="AlphaSliderGrid" Grid.Row="2">
+                            <Grid Margin="0,0,0,16" x:Name="AlphaSliderGrid" Grid.Row="2" Visibility="Collapsed">
                                 <Rectangle x:Name="AlphaSliderCheckeredBackgroundRectangle" RenderTransformOrigin="0.5, 0.5" Height="12" VerticalAlignment="Center" RadiusX="{Binding CornerRadius, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource TopLeftCornerRadiusDoubleValueConverter}}" RadiusY="{Binding CornerRadius, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BottomRightCornerRadiusDoubleValueConverter}}">
                                     <Rectangle.Fill>
                                         <ImageBrush x:Name="AlphaSliderCheckeredBackgroundImageBrush" />
@@ -358,10 +358,15 @@
                                     x:Name="TextEntryGrid" 
                                     Orientation="Vertical"
                                     Spacing="4">
-                                    <Grid 
-                                        x:Name="AddBtnGrid"
-                                        Visibility="{TemplateBinding AddBtnIsVisible}">
+                                    <StackPanel x:Name="SpCustom"
+                                                Orientation="Horizontal"
+                                                Spacing="6"
+                                                HorizontalAlignment="Right">
+                                        <TextBox x:Name="HexTextBox"
+                                            Width="120"
+                                            Text="#FFFFFFFF" />
                                         <Button
+                                            Visibility="{TemplateBinding AddBtnIsVisible}"
                                             HorizontalAlignment="Right"
                                             Padding="11 5"
                                             Command="{TemplateBinding AddToCustomCommand}">
@@ -369,7 +374,7 @@
                                                 FontSize="16"
                                                 Glyph="&#xE710;" />
                                         </Button>
-                                    </Grid>
+                                    </StackPanel>
 
                                     <Grid x:Name="RGBTextEntryGrid">
                                         <Grid.ColumnDefinitions>
@@ -513,37 +518,25 @@
                                         </Grid>
                                     </Grid>-->
 
-                                    <Grid x:Name="AlphaTextEntryGrid">
+                                    <Grid x:Name="AlphaPanel">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="50"/>
                                             <ColumnDefinition/>
                                         </Grid.ColumnDefinitions>
 
                                         <TextBlock
-                                            x:Name="ArcAlphaLabel"
-                                            Text="Alpha"
+                                            x:Name="AlphaLabel"
+                                            Text="Opacity"
                                             Padding="0 5 0 0"
                                             Margin="0 0 10 0"
                                             VerticalAlignment="Center"
                                             Height="30" />
-
-                                        <Grid Grid.Column="1">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition/>
-                                                <ColumnDefinition/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <TextBox 
-                                                x:Name="AlphaTextBox" 
-                                                MaxLength="4" 
-                                                Text="100%" />
-
-                                            <TextBox 
-                                                x:Name="HexTextBox" 
-                                                Grid.Column="1" 
-                                                MaxLength="9" 
-                                                Text="#FFFFFFFF" />
-                                        </Grid>
+                                        
+                                        <TextBox 
+                                            x:Name="AlphaTextBox" 
+                                            Grid.Column="1"
+                                            MaxLength="4" 
+                                            Text="100%" />
                                     </Grid>
                                 </StackPanel>
                             </StackPanel>

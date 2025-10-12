@@ -1,50 +1,93 @@
 ﻿using System;
 using System.Threading.Tasks;
-using VirtualPaper.Common.Utils.UnReUtil;
+using Microsoft.Graphics.Canvas;
+using VirtualPaper.Common.Utils.UndoRedo;
+using Windows.Foundation;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems.Utils {
     public sealed partial class StaticImgUndoRedoUtil : IDisposable {
+        private readonly UndoRedoUtil<IUndoableCommand> _undoRedoCore;
+
         public bool CanUndo => _undoRedoCore.CanUndo;
         public bool CanRedo => _undoRedoCore.CanRedo;
 
-        public StaticImgUndoRedoUtil() {
-            _undoRedoCore = new UndoRedoUtil(20);
+        public StaticImgUndoRedoUtil(int maxStackSize = 20) {
+            _undoRedoCore = new UndoRedoUtil<IUndoableCommand>(maxStackSize);
         }
 
-        /// <summary>
-        /// 记录同步操作
-        /// </summary>
-        /// <param name="execute">恢复</param>
-        /// <param name="undo">撤销</param>
-        /// <param name="opType">操作类型</param>
-        public void RecordCommand(Action execute, Action undo)
-            => _undoRedoCore.RecordCommand(execute, undo);
+        public void RecordCommand(IUndoableCommand command) {
+            _undoRedoCore.Record(command);
+        }
 
-        /// <summary>
-        /// 记录异步操作
-        /// </summary>
-        /// <param name="execute">恢复</param>
-        /// <param name="undo">撤销</param>
-        /// <param name="opType">操作类型</param>
-        public void RecordCommand(Func<Task> execute, Func<Task> undo)
-            => _undoRedoCore.RecordCommand(execute, undo);
+        public void RecordDirtyRegion(
+            Guid layerId,
+            CanvasRenderTarget target,
+            Rect dirtyRegion,
+            string description = "") {
+            var snapshot = new DirtyRegionSnapshot(layerId, target, dirtyRegion);
+            var command = new LayerSnapshotCommand(snapshot, description);
+            _undoRedoCore.Record(command);
+        }
 
-        public async Task UndoAsync() => await _undoRedoCore.TryUndoAsync();
-        public async Task RedoAsync() => await _undoRedoCore.TryRedoAsync();
-        public void Dispose() => _undoRedoCore.Dispose();
+        public async Task UndoAsync() => await _undoRedoCore.UndoAsync();
+        public async Task RedoAsync() => await _undoRedoCore.RedoAsync();        
 
-        private readonly UndoRedoUtil _undoRedoCore;        
+        public void Dispose() {
+            _undoRedoCore.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 
-    //public enum SI_UndoRedo_OP_Type {
-    //    /// <summary> 
-    //    /// 影响图层特定区域的操作（如绘制、擦除） 
-    //    /// </summary>
-    //    Region,
+    class ActionCommand : IUndoableCommand {
+        private readonly Action _execute;
+        private readonly Action _undo;
+        public string Description { get; }
 
-    //    /// <summary> 
-    //    /// 针对可序列化表示对象的操作（如图层集合的添加、删除、移动图层）
-    //    /// </summary>
-    //    Serializable
-    //}
+        public ActionCommand(Action execute, Action undo, string description) {
+            _execute = execute;
+            _undo = undo;
+            Description = description;
+        }
+
+        public Task ExecuteAsync() {
+            _execute();
+            return Task.CompletedTask;
+        }
+
+        public Task UndoAsync() {
+            _undo();
+            return Task.CompletedTask;
+        }
+    }
+
+    class AsyncCommand : IUndoableCommand {
+        private readonly Func<Task> _execute;
+        private readonly Func<Task> _undo;
+        public string Description { get; }
+
+        public AsyncCommand(Func<Task> execute, Func<Task> undo, string description) {
+            _execute = execute;
+            _undo = undo;
+            Description = description;
+        }
+
+        public Task ExecuteAsync() => _execute();
+        public Task UndoAsync() => _undo();
+    }
+
+    class LayerSnapshotCommand : IUndoableCommand {
+        private readonly DirtyRegionSnapshot _snapshot;
+        public string Description { get; }
+
+        public LayerSnapshotCommand(DirtyRegionSnapshot snapshot, string description) {
+            _snapshot = snapshot;
+            Description = description;
+        }
+
+        public Task ExecuteAsync() =>
+            Task.Run(_snapshot.ApplyCurrent);
+
+        public Task UndoAsync() =>
+            Task.Run(_snapshot.RestoreOriginal);
+    }
 }

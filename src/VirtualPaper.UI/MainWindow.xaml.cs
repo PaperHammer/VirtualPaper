@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -9,8 +10,10 @@ using VirtualPaper.AppSettingsPanel;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.Common.Utils.IPC;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel;
+using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.ViewModels;
@@ -52,7 +55,14 @@ namespace VirtualPaper.UI {
 
         #region bridge
         public nint GetWindowHandle() {
-            return WindowNative.GetWindowHandle(this);
+            return _windowHandle = WindowNative.GetWindowHandle(this);
+        }
+
+        public async Task<string?> GetStorageFolderAsync() {
+            var storageFolder = await WindowsStoragePickers.PickFolderAsync(_windowHandle == -1 ? GetWindowHandle() : _windowHandle);
+            if (storageFolder == null) return null;
+
+            return storageFolder.Path;
         }
 
         public uint GetDpi() {
@@ -194,7 +204,7 @@ namespace VirtualPaper.UI {
                     pageType = typeof(AppSettings);
                 }
 
-                if (pageType != null) {
+                if (pageType != null) {                
                     ContentFrame.Navigate(pageType, this);
                 }
             }
@@ -258,6 +268,7 @@ namespace VirtualPaper.UI {
         private readonly ICommandsClient _commandsClient;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly MainWindowViewModel _viewModel;
+        private nint _windowHandle = -1;
 
         //private void Flyout_BackgreoundTask_Opening(object sender, object e) {
 

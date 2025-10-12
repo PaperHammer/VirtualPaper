@@ -1,3 +1,4 @@
+﻿using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -18,12 +19,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         public static readonly DependencyProperty LayerNameProperty =
             DependencyProperty.Register(nameof(LayerName), typeof(string), typeof(LayerItem), new PropertyMetadata(string.Empty));
 
-        public bool IsEnable {
-            get { return (bool)GetValue(IsEnableProperty); }
-            set { SetValue(IsEnableProperty, value); }
+        public bool IsVisible {
+            get { return (bool)GetValue(IsVisibleProperty); }
+            set { SetValue(IsVisibleProperty, value); }
         }
-        public static readonly DependencyProperty IsEnableProperty =
-            DependencyProperty.Register(nameof(IsEnable), typeof(bool), typeof(LayerItem), new PropertyMetadata(true));
+        public static readonly DependencyProperty IsVisibleProperty =
+            DependencyProperty.Register(nameof(IsVisible), typeof(bool), typeof(LayerItem), new PropertyMetadata(true));
 
         public ImageSource LayerThum {
             get { return (ImageSource)GetValue(LayerThumProperty); }
@@ -32,12 +33,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         public static readonly DependencyProperty LayerThumProperty =
             DependencyProperty.Register(nameof(LayerThum), typeof(ImageSource), typeof(LayerItem), new PropertyMetadata(null));
 
-        public long ItemTag {
-            get { return (long)GetValue(ItemTagProperty); }
+        public Guid ItemTag {
+            get { return (Guid)GetValue(ItemTagProperty); }
             set { SetValue(ItemTagProperty, value); }
         }
         public static readonly DependencyProperty ItemTagProperty =
-            DependencyProperty.Register(nameof(ItemTag), typeof(long), typeof(LayerItem), new PropertyMetadata(0));
+            DependencyProperty.Register(nameof(ItemTag), typeof(Guid), typeof(LayerItem), new PropertyMetadata(Guid.Empty));
 
         public LayerItem() {
             this.InitializeComponent();

@@ -1,5 +1,5 @@
 ﻿using BuiltIn.Events;
-using BuiltIn.Tool.Bsae;
+using BuiltIn.InkSystem.Tool.Bsae;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;
@@ -9,7 +9,10 @@ using Windows.Foundation;
 using Windows.UI;
 
 namespace BuiltIn.InkSystem.Core.Rendering {
-    public abstract class CanvasAreaSelector : CanvasRenderTargetInteract {
+    /// <summary>
+    /// 2D 画布区域选择器基类
+    /// </summary>
+    public abstract class CanvasAreaSelector : RenderBase {
         public event EventHandler<Rect>? OnSelectRectChanged;
 
         public Rect SelectionRect => _selectionRect;

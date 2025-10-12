@@ -2,8 +2,8 @@
 
 namespace BuiltIn.Events {
     public class RenderTargetChangedEventArgs(RenderMode mode, Rect region = default) : EventArgs {
-        public Rect Region { get; } = region;
         public RenderMode Mode { get; } = mode;
+        public Rect Region { get; } = region;
     }
 
     public enum RenderMode {

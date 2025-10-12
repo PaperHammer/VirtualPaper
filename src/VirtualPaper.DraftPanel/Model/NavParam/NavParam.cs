@@ -2,5 +2,5 @@
 
 namespace VirtualPaper.DraftPanel.Model.NavParam {
     public record ToDraftConfig(string ProjName, ProjectType ProjType);
-    public record ToWorkSpace(string[] FilePaths);
+    public record ToWorkSpace(string[] FilePaths, ProjectType ProjType = ProjectType.PUnknown);
 }

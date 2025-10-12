@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using BuiltIn.Events;
-using BuiltIn.Tool.Bsae;
+using BuiltIn.InkSystem.Tool.Bsae;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.UI.Xaml;
+using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -13,10 +16,9 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Extensions;
+using VirtualPaper.UIComponent.Collection;
 using VirtualPaper.UIComponent.Input;
-using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
-using Windows.System;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.ToolItems;
@@ -41,7 +43,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e) {
             RegisterTools();
-            RegisterKeyboardAccelerators();
         }
 
         private void RegisterTools() {
@@ -62,42 +63,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
         }
 
-        private void RegisterKeyboardAccelerators() {
-            KeyboardSinglePressUtil.Instance.AddListener(this);
-
-            KeyboardSinglePressUtil.Instance.RegisterShortcut(
-                async () => {
-                    await AddLayerAsync();
-                },
-                VirtualKey.Number1,
-                VirtualKeyModifiers.Control);
-            KeyboardSinglePressUtil.Instance.RegisterShortcut(
-                async () => {
-                    await CopyLayerAsync(_viewModel.ConfigData.SelectedInkCanvas.Tag);
-                },
-                VirtualKey.Number2,
-                VirtualKeyModifiers.Control);
-            KeyboardSinglePressUtil.Instance.RegisterShortcut(
-                async () => {
-                    await DeleteLayerAsync(_viewModel.ConfigData.SelectedInkCanvas.Tag);
-                },
-                VirtualKey.Delete);
-            KeyboardSinglePressUtil.Instance.RegisterShortcut(
-                async () => {
-                    await _viewModel.ConfigData.RenameAsync(_viewModel.ConfigData.SelectedInkCanvas.Tag);
-                },
-                VirtualKey.F2);
-        }
-
         internal async Task SaveAsync() {
             await _viewModel.SaveAsync();
         }
 
         #region children event
         private void SetupHandlers() {
-            _viewModel.ConfigData.InkDataEnabledChanged += (s, e) => {
-                RenderToCompositeTarget(RenderMode.FullRegion);
-            };
             _viewModel.ConfigData.SizeChanged += (s, e) => {
                 RebuildComposite();
                 RenderToCompositeTarget(RenderMode.FullRegion);
@@ -106,7 +77,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 //before
                 HandleSelectionTool_Before();
                 _selectedTool = _tool.GetTool(_viewModel.ConfigData.SelectedToolItem.Type);
-                //after             
+                //after
+
             };
             _viewModel.ConfigData.SeletcedLayerChanged += (s, e) => {
                 HandleLayerChanged();
@@ -150,23 +122,22 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void RebuildComposite() {
             _compositeTarget = new CanvasRenderTarget(
                 MainPage.Instance.SharedDevice,
-                (float)_viewModel.ConfigData.Size.Width,
-                (float)_viewModel.ConfigData.Size.Height,
-                _viewModel.ConfigData.Size.Dpi,
-                Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                CanvasAlphaMode.Premultiplied);
+                (float)_viewModel.ConfigData.CanvasSize.Width,
+                (float)_viewModel.ConfigData.CanvasSize.Height,
+                _viewModel.ConfigData.CanvasSize.Dpi,
+                MainPage.Instance.SharedFormat,
+                MainPage.Instance.SharedAlphaMode);
         }
         #endregion
 
         #region redner
         private async void RenderCanvas_Loaded(object sender, RoutedEventArgs e) {
             try {
-                await _viewModel.LoadOrInitAsync();
+                await _viewModel.ConfigData.LoadAsync();
+                SetupHandlers();
                 FitView();
-                await _viewModel.ConfigData.RenderDataLoaded.Task;
                 RebuildComposite();
                 RenderToCompositeTarget(RenderMode.FullRegion);
-                SetupHandlers();
                 IsInited.TrySetResult(true);
             }
             catch (Exception ex) {
@@ -184,85 +155,43 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         internal void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
-            using (var commandList = new CanvasCommandList(_compositeTarget.Device)) {
-                using (var ds = commandList.CreateDrawingSession()) {
-                    if (mode == RenderMode.FullRegion) {
-                        FullRender(ds);
-                    }
-                    else {
-                        if (region == Rect.Empty) return;
-                        PartialRender(ds, region);
-                    }
+            var layers = _viewModel.ConfigData.ActiveLayers;
+            using (var ds = _compositeTarget.CreateDrawingSession()) {
+                ds.Blend = CanvasBlend.Copy;
+                if (mode == RenderMode.FullRegion) {
+                    FullRender(layers, ds);
                 }
-
-                // 单次提交所有绘制命令
-                using (var finalDs = _compositeTarget.CreateDrawingSession()) {
-                    finalDs.DrawImage(commandList);
+                else {
+                    if (region == Rect.Empty) return;                    
+                    PartialRender(layers, ds, region);
                 }
             }
 
-            //if (region != Rect.Empty) renderCanvas.Invalidate(region);
-            //else renderCanvas.Invalidate();
             renderCanvas.Invalidate();
         }
 
-        private void FullRender(CanvasDrawingSession ds) {
-            ds.Blend = CanvasBlend.Copy;
+        private void FullRender(IEnumerable<LayerInfo> layers, CanvasDrawingSession ds) {
             // 逆序遍历
-            for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
-                var layer = _viewModel.ConfigData.InkDatas[i];
-                if (!layer.IsEnable || layer.RenderData == null) continue;
+            foreach (var layer in layers.Reverse()) {
+                if (layer.RenderData == null) continue;
                 ds.DrawImage(layer.RenderData.RenderTarget);
             }
         }
 
-        private void PartialRender(CanvasDrawingSession ds, Rect region) {
+        private void PartialRender(IEnumerable<LayerInfo> layers, CanvasDrawingSession ds, Rect region) {
             // 禁用抗锯齿（开启抗锯齿的局部刷新会导致刷新区域边界出现细线）
             // 抗锯齿算法将由各工具自己实现      
             ds.Antialiasing = CanvasAntialiasing.Aliased;
 
-            for (int i = _viewModel.ConfigData.InkDatas.Count - 1; i >= 0; i--) {
-                var layer = _viewModel.ConfigData.InkDatas[i];
-                if (!layer.IsEnable || layer.RenderData == null) continue;
+            foreach (var layer in layers.Reverse()) {
+                if (layer.RenderData == null) continue;
 
-                var layerBounds = new Rect(0, 0,
-                    layer.RenderData.RenderTarget.Size.Width,
-                    layer.RenderData.RenderTarget.Size.Height);
-
-                var visibleRect = region.IntersectRect(layerBounds);
+                var visibleRect = region.IntersectRect(layer.RenderData.RenderTarget.Bounds);
                 if (!visibleRect.IsEmpty) {
                     ds.DrawImage(layer.RenderData.RenderTarget, visibleRect, visibleRect);
                 }
             }
         }
-
-        //private void InitializeGridPattern(ICanvasResourceCreator resourceCreator) {
-        //    // 创建棋盘格纹理（20x20像素）
-        //    _gridTexture = new CanvasRenderTarget(
-        //        resourceCreator, 20, 20, MainPage.Instance.Bridge.GetHardwareDpi());
-
-        //    using (var ds = _gridTexture.CreateDrawingSession()) {
-        //        ds.Clear(Color.FromArgb(255, 168, 168, 168));
-        //        ds.FillRectangle(10, 0, 10, 10, Color.FromArgb(255, 150, 150, 150));
-        //        ds.FillRectangle(0, 10, 10, 10, Color.FromArgb(255, 150, 150, 150));
-        //    }
-
-        //    // 创建平铺画刷
-        //    _gridBrush = new CanvasImageBrush(resourceCreator, _gridTexture) {
-        //        ExtendX = CanvasEdgeBehavior.Wrap, // 水平平铺
-        //        ExtendY = CanvasEdgeBehavior.Wrap, // 垂直平铺
-        //        SourceRectangle = new Rect(0, 0, 20, 20) // 源纹理区域
-        //    };
-        //}
-
-        //private void BackgroundGrid_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
-        //    if (_gridTexture == null) {
-        //        InitializeGridPattern(sender);
-        //    }
-
-        //    args.DrawingSession.FillRectangle(
-        //        0, 0, (float)sender.ActualWidth, (float)sender.ActualHeight, _gridBrush);
-        //}
 
         private void InitializeGridPattern(ICanvasResourceCreator rc) {
             _gridBrush?.Dispose();
@@ -312,8 +241,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             double effectiveHeight = availableHeight - (Container.Margin.Top + Container.Margin.Bottom);
 
             // 计算缩放比例
-            double widthRatio = effectiveWidth / _viewModel.ConfigData.Size.Width;
-            double heightRatio = effectiveHeight / _viewModel.ConfigData.Size.Height;
+            double widthRatio = effectiveWidth / _viewModel.ConfigData.CanvasSize.Width;
+            double heightRatio = effectiveHeight / _viewModel.ConfigData.CanvasSize.Height;
 
             // 选择较小的比例以确保完全显示
             double zoomFactor = Math.Min(widthRatio, heightRatio);
@@ -362,7 +291,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         #region CanvasSet
         private void CanvasSet_OnValueChanged(object sender, ArcSize e) {
-            _viewModel.ConfigData.Size = new(e.Width, e.Height, e.Dpi, e.Rebuild);
+            _viewModel.ConfigData.CanvasSize = new(e.Width, e.Height, e.Dpi, e.Rebuild);
         }
 
         private void CanvasOperationBtn_Click(object sender, RoutedEventArgs e) {
@@ -373,10 +302,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 CanvasOperation.FlipVertically => RebuildMode.FlipVertical,
                 _ => RebuildMode.None,
             };
-            _viewModel.ConfigData.Size = new(
-                _viewModel.ConfigData.Size.Width,
-                _viewModel.ConfigData.Size.Height,
-                _viewModel.ConfigData.Size.Dpi,
+            _viewModel.ConfigData.CanvasSize = new(
+                _viewModel.ConfigData.CanvasSize.Width,
+                _viewModel.ConfigData.CanvasSize.Height,
+                _viewModel.ConfigData.CanvasSize.Dpi,
                 rm);
         }
         #endregion
@@ -438,41 +367,27 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         #endregion
 
         #region Layer Mangaer
-        private async void LayerManage_AddLayerRequest(object sender, EventArgs e) {
-            await AddLayerAsync();
-        }
-
-        private async void LayerManage_CopyLayerRequest(object sender, long e) {
-            await CopyLayerAsync(e);
-        }
-
-        private async void LayerManage_RenameLayerRequest(object sender, long e) {
-            await _viewModel.ConfigData.RenameAsync(e);
-        }
-
-        private async void LayerManage_DeleteLayerRequest(object sender, long e) {
-            await DeleteLayerAsync(e);
-        }
-
-        private async void LayerManage_MoveLayerRequest(object sender, EventArgs e) {
-            await _viewModel.ConfigData.SaveBasicAsync();
+        private void LayerManage_AddLayerRequest(object sender, EventArgs e) {
+            _viewModel.ConfigData.AddLayer();
             RenderToCompositeTarget(RenderMode.FullRegion);
         }
 
-        private async Task AddLayerAsync() {
-            var layer = await _viewModel.ConfigData.AddLayerAsync();
-            await layer.RenderData.IsCompleted.Task;
+        private void LayerManage_CopyLayerRequest(object sender, Guid id) {
+            _viewModel.ConfigData.CopyLayer(id);
             RenderToCompositeTarget(RenderMode.FullRegion);
         }
 
-        private async Task CopyLayerAsync(long e) {
-            var layer = await _viewModel.ConfigData.CopyLayerAsync(e);
-            await layer.RenderData.IsCompleted.Task;
+        private async void LayerManage_RenameLayerRequest(object sender, Guid id) {
+            await _viewModel.ConfigData.SetLayerNameAsync(id);
+        }
+
+        private void LayerManage_DeleteLayerRequest(object sender, Guid id) {
+            _viewModel.ConfigData.DeleteLayer(id);
             RenderToCompositeTarget(RenderMode.FullRegion);
         }
 
-        private async Task DeleteLayerAsync(long e) {
-            await _viewModel.ConfigData.DeleteAsync(e);
+        private void LayerManage_MoveLayerRequest(object sender, ItemMoveEventArgs e) {
+            _viewModel.ConfigData.MoveLayer(e.Item as LayerInfo, e.OldIndex, e.NewIndex);
             RenderToCompositeTarget(RenderMode.FullRegion);
         }
         #endregion
@@ -533,44 +448,44 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         internal void OnPointerEntered(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleEntered(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget, pointerPos)));
         }
 
         internal void OnPointerMoved(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             _viewModel.ConfigData.UpdatePointerPos(pointerPoint.Position);
             HandleToolEvent(tool => tool.HandleMoved(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget, pointerPos)));
         }
 
         internal void OnPointerPressed(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandlePressed(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget, pointerPos)));
         }
 
         internal void OnPointerReleased(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleReleased(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget, pointerPos)));
         }
 
         internal void OnPointerExited(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleExited(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget, pointerPos)));
         }
 
-        private void HandleToolEvent(Action<CanvasRenderTargetInteract> action) {
+        private void HandleToolEvent(Action<RenderBase> action) {
             if (_viewModel.ConfigData.SelectedToolItem == null ||
-                _viewModel.ConfigData.SelectedInkCanvas == null ||
-                _viewModel.ConfigData.SelectedInkCanvas.RenderData == null ||
-                _viewModel.ConfigData.SelectedInkCanvas.RenderData.RenderTarget == null) {
+                _viewModel.ConfigData.SelectedLayer == null ||
+                _viewModel.ConfigData.SelectedLayer.RenderData == null ||
+                _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget == null) {
                 MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), InfoBarType.Error, key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable), isAllowDuplication: false);
                 return;
             }
 
-            if (!_viewModel.ConfigData.SelectedInkCanvas.IsEnable) {
+            if (!_viewModel.ConfigData.SelectedLayer.IsVisible) {
                 MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerLocked), InfoBarType.Warning, key: nameof(Constants.I18n.Draft_SI_LayerLocked), isAllowDuplication: false);
                 return;
             }
@@ -586,15 +501,14 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
         #endregion
 
-        private CanvasRenderTargetInteract? _selectedTool;
+        private RenderBase? _selectedTool;
         private readonly ToolManager _tool;
         private readonly InkCanvasViewModel _viewModel;
         private readonly InputCursor _originalInputCursor;
         private CanvasRenderTarget _compositeTarget;
         private readonly TaskCompletionSource<bool> _isInited = new();
-        //private CanvasRenderTarget _gridTexture;
         private CanvasImageBrush _gridBrush;
         private const int _gridSize = 20;
-
+        private float _opacity = 1f;
     }
 }

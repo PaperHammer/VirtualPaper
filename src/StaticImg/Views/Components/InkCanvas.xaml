@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Class="Workloads.Creation.StaticImg.Views.Components.InkCanvas"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -44,24 +44,25 @@
                     Margin="80"
                     Background="Transparent"
                     DataContext="{x:Bind _viewModel.ConfigData, Mode=OneWay}"
-                    Width="{x:Bind _viewModel.ConfigData.Size.Width, Mode=OneWay}"
-                    Height="{x:Bind _viewModel.ConfigData.Size.Height, Mode=OneWay}"
+                    Width="{x:Bind _viewModel.ConfigData.CanvasSize.Width, Mode=OneWay}"
+                    Height="{x:Bind _viewModel.ConfigData.CanvasSize.Height, Mode=OneWay}"
                     PointerEntered="Container_PointerEntered"
                     PointerPressed="Container_PointerPressed"
                     PointerMoved="Container_PointerMoved"
                     PointerReleased="Container_PointerReleased"
                     PointerExited="Container_PointerExited">
 
-                    <!-- 背景层 -->
-                    <win2d:CanvasVirtualControl
-                        x:Name="backgroundGrid"
+                    <!--背景层 -->
+                    <win2d:CanvasVirtualControl x:Name="backgroundGrid"
                         RegionsInvalidated="BackgroundGrid_RegionsInvalidated"
+                        CustomDevice="{x:Bind root:MainPage.Instance.SharedDevice}"
                         UseSharedDevice="True"/>
 
-                    <win2d:CanvasControl
-                        x:Name="renderCanvas"
+                    <!--合成层-->
+                    <win2d:CanvasControl x:Name="renderCanvas"
                         Loaded="RenderCanvas_Loaded"
                         Draw="RenderCanvas_Draw"
+                        CustomDevice="{x:Bind root:MainPage.Instance.SharedDevice}"
                         UseSharedDevice="True"/>
                 </Grid>
             </ScrollViewer>
@@ -80,7 +81,7 @@
                         <Grid x:Name="DynamicExpander">
                             <lcl_tools:CanvasSetControl
                                 x:Name="CanvasSet"
-                                Size="{x:Bind _viewModel.ConfigData.Size, Mode=OneWay}"
+                                Size="{x:Bind _viewModel.ConfigData.CanvasSize, Mode=OneWay}"
                                 Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=CanvasSet}"
                                 OnValueChanged="CanvasSet_OnValueChanged"
                                 CanvasOperationRequested="CanvasOperationBtn_Click"/>
@@ -118,9 +119,9 @@
                         <lcl_tools:LayerManageControl 
                             x:Name="LayerManager"
                             IsAllwaysSeletedNewItem="True"
-                            SelectedInkCanvas="{x:Bind _viewModel.ConfigData.SelectedInkCanvas, Mode=TwoWay}"
+                            SelectedLayer="{x:Bind _viewModel.ConfigData.SelectedLayer, Mode=TwoWay}"
                             KeyboardAcceleratorPlacementMode="Hidden"
-                            InkDatas="{x:Bind _viewModel.ConfigData.InkDatas}"
+                            Layers="{x:Bind _viewModel.ConfigData.Layers}"
                             AddLayerRequest="LayerManage_AddLayerRequest"
                             CopyLayerRequest="LayerManage_CopyLayerRequest"
                             RenameLayerRequest="LayerManage_RenameLayerRequest"

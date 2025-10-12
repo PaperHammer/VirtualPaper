@@ -3,31 +3,24 @@ using BuiltIn.InkSystem.Core.Rendering;
 using BuiltIn.InkSystem.Core.Services;
 using BuiltIn.InkSystem.Extensions;
 using Microsoft.UI;
-using VirtualPaper.Common.Utils.DI;
+using Workloads.Creation.StaticImg.Models.Specific;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
-    sealed partial class EraserTool : InteractControl {
-        public EraserTool(InkCanvasConfigData data) {
+    sealed partial class EraserTool : CanvasPlotter {
+        public EraserTool(InkCanvasData data) {
             _data = data;
-            OnInitSegement += EraserTool_OnInitSegement;
         }
 
-        private void EraserTool_OnInitSegement(object? sender, CanvasPointerEventArgs e) {
-            if (RenderTarget == null) return;
-
-            _curStroke = DomainFactory<EraserStroke>.GetTool(MainPage.Instance);
-            _curStroke.Reset((float)_data.EraserSize, BrushShape.Rectangle);
-            _curStroke.InkBrush = BrushManager.GetBrush(
-                new BrushGenerateArgs(
-                    Color: e.Pointer.Properties.IsRightButtonPressed ?
-                           _data.BackgroundColor : Colors.Transparent,
-                    Type: BrushType.General,
-                    Shape: _curStroke.Shape
-                ),
-                RenderTarget.Device
-            );
+        protected override void InitCurrentStroke(CanvasPointerEventArgs e) {
+            var brushArgs = new BrushGenerateArgs(
+                BrushColor: Colors.Black,
+                Type: _data.SelectedBrush.Type,
+                Thickness: (float)_data.EraserSize,
+                Opacity: (float)(_data.EraserOpacity / 100f));
+            CurrentStroke = new EraserStroke(brushArgs);
+            CurrentStroke.InitInkBrush(MainPage.Instance.SharedDevice);
         }
 
-        private readonly InkCanvasConfigData _data;
+        private readonly InkCanvasData _data;
     }
 }

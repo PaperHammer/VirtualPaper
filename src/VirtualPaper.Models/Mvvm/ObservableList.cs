@@ -5,45 +5,39 @@ namespace VirtualPaper.Models.Mvvm {
     public class ObservableList<T> : ObservableCollection<T> {
         public ObservableList() { }
 
-        public ObservableList(IList<T> items) => AddRange(items);
+        public ObservableList(IEnumerable<T> items) => AddRange(items);
 
-        public void AddRange(IList<T> items) {
+        public void AddRange(IEnumerable<T> items) {
             if (items == null) return;
 
-            for (int i = 0; i < items.Count; i++) { 
-                InsertItem(i, items[i]);
-            }
+            foreach (var item in items) Add(item);
         }
 
-        public void AddRangeReverse(IList<T> items) {
+        public void AddRangeReverse(IEnumerable<T> items) {
             if (items == null) return;
 
-            int n = items.Count;
-            for (int i = n - 1; i >= 0; i--) {
-                InsertItem(n - i - 1, items[i]);
-            }
+            AddRange(items.Reverse());
         }
 
-        public void SetRange(IList<T> items) {
+        public void SetRange(IEnumerable<T> items) {
             if (items == null) return;
 
             ClearItems();
             AddRange(items);
         }
 
-        public void SetRange(IList<T> items, Action<T>? configureItem = null) {
+        public void SetRange(IEnumerable<T> items, Action<T>? configureItem = null) {
             if (items == null) return;
 
             ClearItems();
 
-            for (int i = 0; i < items.Count; i++) {
-                var item = items[i];
+            foreach (var item in items) {
                 Add(item);
                 configureItem?.Invoke(item);
             }
         }
 
-        public void SetRangeReverse(IList<T> items) {
+        public void SetRangeReverse(IEnumerable<T> items) {
             if (items == null) return;
 
             ClearItems();

@@ -15,6 +15,8 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.TabView;
+using static VirtualPaper.Common.Constants;
+using static VirtualPaper.Common.Utils.Archive.ZipUtil;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject {
@@ -118,7 +120,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         #region init
         internal void InitTabViewItems(ToWorkSpace data) {
             foreach (var filePath in data.FilePaths) {
-                InitRuntimeItemAsync(filePath);
+                if (FileUtil.IsValidFilePath(filePath)) {
+                    InitRuntimeItemAsync(filePath);
+                } else if (FileUtil.IsValidFileName(filePath)) {
+                    InitRuntimeItemAsync(filePath, data.ProjType);
+                }
             }
         }
 
@@ -150,6 +156,25 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             }
         }
 
+        private void InitRuntimeItemAsync(string fileName, ProjectType projectType) {
+            try {
+                IRuntime runtime;
+                switch (projectType) {
+                    case ProjectType.PUnknown:
+                        break;
+                    case ProjectType.PImage:
+                        runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, fileName);
+                        AddToWorkSpace(fileName, runtime);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (Exception ex) {
+                Draft.Instance.GetNotify().ShowExp(ex);
+            }
+        }
+
         private async Task ReadDraftFileAsync(string filePath) {
             try {
                 var draftMd = await DraftMetadata.LoadAsync(filePath);
@@ -159,7 +184,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     IRuntime runtime;
                     switch (projTag.Type) {
                         case ProjectType.PImage:
-                            runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, entryFilePath, FileType.FProject); // xxx.vproj
+                            runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, FileType.FDesign, entryFilePath); // xxx.vpd
                             AddToWorkSpace(entryFilePath, runtime);
                             break;
                         default:

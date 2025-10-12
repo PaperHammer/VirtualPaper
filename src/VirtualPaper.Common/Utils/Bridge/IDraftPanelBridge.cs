@@ -31,7 +31,7 @@ namespace VirtualPaper.Common.Utils.Bridge {
         ///     </item>
         /// </list>
         /// </remarks>
-        object GetSharedData();
+        object? GetSharedData();
         /// <summary>
         /// 导航到目标页面
         /// </summary>
@@ -42,10 +42,6 @@ namespace VirtualPaper.Common.Utils.Bridge {
         /// 根据目标页面，参数的类型应如下：
         /// <list type="bullet">
         ///     <item>
-        ///         <term><see cref="DraftPanelState.ConfigSpace"/></term>
-        ///         <description>参数类型为 <see cref="Nullable"/></description>
-        ///     </item>
-        ///     <item>
         ///         <term><see cref="DraftPanelState.WorkSpace"/></term>
         ///         <description>参数类型为 <see cref="Model.NavParam.ToWorkSpace"/> | <see cref="Nullable"/></description>
         ///     </item>
@@ -54,16 +50,12 @@ namespace VirtualPaper.Common.Utils.Bridge {
         ///         <description>参数类型为 <see cref="Nullable"/></description>
         ///     </item>
         ///     <item>
-        ///         <term><see cref="DraftPanelState.ProjectConfig"/></term>
-        ///         <description>参数类型为 <see cref="Nullable"/></description>
-        ///     </item>
-        ///     <item>
         ///         <term><see cref="DraftPanelState.DraftConfig"/></term>
         ///         <description>参数类型为 <see cref="Model.NavParam.ToDraftConfig"/> | <see cref="Nullable"/></description>
         ///     </item>
         /// </list>
         /// </remarks>
-        void ChangePanelState(DraftPanelState nextPanel, object data);
+        void ChangePanelState(DraftPanelState nextPanel, object? data);
         uint GetHardwareDpi();
         IDialogService GetDialog();
     }

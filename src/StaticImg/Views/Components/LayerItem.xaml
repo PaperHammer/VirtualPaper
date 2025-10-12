@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Class="Workloads.Creation.StaticImg.Views.Components.LayerItem"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -19,7 +19,7 @@
             MinWidth="0"
             Width="20"
             Margin="0 0 10 0"
-            IsChecked="{x:Bind IsEnable, Mode=TwoWay}"/>
+            IsChecked="{x:Bind IsVisible, Mode=TwoWay}"/>
 
         <StackPanel
             Grid.Column="1"

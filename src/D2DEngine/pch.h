@@ -1,9 +1,0 @@
-﻿#pragma once
-#include <unknwn.h>
-#include <winrt/base.h>
-#include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.Foundation.Collections.h>
-#include <winrt/Windows.Storage.Streams.h>
-#include <winrt/Windows.Graphics.Imaging.h>
-#include <winrt/Windows.UI.h>
-#include <winrt/D2DEngine.h>

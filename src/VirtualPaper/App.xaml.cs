@@ -11,6 +11,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.PlaybackControl;
@@ -35,6 +36,7 @@ using VirtualPaper.Utils.Theme;
 using VirtualPaper.Views;
 using VirtualPaper.Views.WindowsMsg;
 using Wpf.Ui.Appearance;
+using static VirtualPaper.Common.Constants;
 using Application = System.Windows.Application;
 using AppTheme = VirtualPaper.Common.AppTheme;
 using MessageBox = System.Windows.MessageBox;
@@ -126,8 +128,10 @@ namespace VirtualPaper {
                 Services.GetRequiredService<IPlayback>().Start(_ctsPlayback);
                 // 启动托盘（后台）服务
                 Services.GetRequiredService<MainWindow>().Show();
+                InitMemorySharedContext();
             }
             catch (Exception ex) {
+                Log.Error(ex);
                 MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
                 return;
             }
@@ -155,6 +159,7 @@ namespace VirtualPaper {
                 }
             }
             catch (Exception ex) {
+                Log.Error(ex);
                 MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
                 return;
             }
@@ -181,6 +186,17 @@ namespace VirtualPaper {
                 }
             };
             #endregion
+        }
+
+        private void InitMemorySharedContext() {
+            //Environment.SetEnvironmentVariable(EnviromentVarKey.BaseDir, AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.User);
+            var context = new SharedContext {
+                BaseDir = AppDomain.CurrentDomain.BaseDirectory,
+                PluginDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"),
+                Version = System.Reflection.Assembly.GetEntryAssembly().GetName().Version?.ToString(),
+            };
+
+            SharedStorage.Write(context);
         }
 
         private ServiceProvider ConfigureServices() {

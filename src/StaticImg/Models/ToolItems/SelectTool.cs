@@ -1,8 +1,9 @@
 ﻿using BuiltIn.InkSystem.Core.Rendering;
+using Workloads.Creation.StaticImg.Models.Specific;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
     sealed partial class SelectionTool : CanvasAreaSelector {
-        public SelectionTool(InkCanvasConfigData data) {
+        public SelectionTool(InkCanvasData data) {
             _data = data;
             OnSelectRectChanged += SelectionTool_OnSelectRectChanged;
         }
@@ -11,6 +12,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             _data.SelectionRect = e;
         }
 
-        private readonly InkCanvasConfigData _data;
+        private readonly InkCanvasData _data;
     }
 }

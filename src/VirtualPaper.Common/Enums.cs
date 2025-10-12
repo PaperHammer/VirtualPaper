@@ -96,7 +96,6 @@ namespace VirtualPaper.Common {
         FGif,
         FVideo,
         FDesign,
-        FProject,
     }
 
     public enum RuntimeType {
@@ -120,7 +119,8 @@ namespace VirtualPaper.Common {
         ScaleDown
     }
 
-    public enum ProjectType {
+    public enum ProjectType {        
+        PUnknown,
         PImage,
     }
 
@@ -152,7 +152,7 @@ namespace VirtualPaper.Common {
 
     public static class FileExtension {
         public const string FE_Design = ".vpd";
-        public const string FE_Project = ".vproj";
+        //public const string FE_Project = ".vproj";
     }
     #endregion
 
@@ -165,7 +165,7 @@ namespace VirtualPaper.Common {
     
     public enum DraftPanelState {
         GetStart,
-        ProjectConfig,
+        //ProjectConfig,
         DraftConfig,
         WorkSpace,
         ConfigSpace,

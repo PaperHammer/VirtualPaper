@@ -1,9 +1,10 @@
-using System;
+Ôªøusing System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Collection;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Views.Components;
@@ -13,25 +14,25 @@ using Workloads.Creation.StaticImg.Views.Components;
 
 namespace Workloads.Creation.StaticImg.Views.Tools {
     public sealed partial class LayerManageControl : UserControl {
-        public event EventHandler MoveLayerRequest;
+        public event EventHandler<ItemMoveEventArgs> MoveLayerRequest;
         public event EventHandler AddLayerRequest;
-        public event EventHandler<long> CopyLayerRequest;
-        public event EventHandler<long> RenameLayerRequest;
-        public event EventHandler<long> DeleteLayerRequest;
+        public event EventHandler<Guid> CopyLayerRequest;
+        public event EventHandler<Guid> RenameLayerRequest;
+        public event EventHandler<Guid> DeleteLayerRequest;
 
-        public InkCanvasData SelectedInkCanvas {
-            get { return (InkCanvasData)GetValue(SelectedInkCanvasProperty); }
-            set { SetValue(SelectedInkCanvasProperty, value); }
+        public LayerInfo SelectedLayer {
+            get { return (LayerInfo)GetValue(SelectedLayerProperty); }
+            set { SetValue(SelectedLayerProperty, value); }
         }
-        public static readonly DependencyProperty SelectedInkCanvasProperty =
-            DependencyProperty.Register(nameof(SelectedInkCanvas), typeof(InkCanvasData), typeof(LayerManageControl), new PropertyMetadata(null));
+        public static readonly DependencyProperty SelectedLayerProperty =
+            DependencyProperty.Register(nameof(SelectedLayer), typeof(LayerInfo), typeof(LayerManageControl), new PropertyMetadata(null));
 
-        public ObservableList<InkCanvasData> InkDatas {
-            get { return (ObservableList<InkCanvasData>)GetValue(InkDatasProperty); }
-            set { SetValue(InkDatasProperty, value); }
+        public ObservableList<LayerInfo> Layers {
+            get { return (ObservableList<LayerInfo>)GetValue(LayersProperty); }
+            set { SetValue(LayersProperty, value); }
         }
-        public static readonly DependencyProperty InkDatasProperty =
-            DependencyProperty.Register(nameof(InkDatas), typeof(ObservableList<InkCanvasData>), typeof(LayerManageControl), new PropertyMetadata(null));
+        public static readonly DependencyProperty LayersProperty =
+            DependencyProperty.Register(nameof(Layers), typeof(ObservableList<LayerInfo>), typeof(LayerManageControl), new PropertyMetadata(null));
 
         public bool IsAllwaysSeletedNewItem {
             get { return (bool)GetValue(IsAllwaysSeletedNewItemProperty); }
@@ -60,8 +61,8 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             DeleteLayerRequest?.Invoke(sender, _rightTappedItem.ItemTag);
         }
 
-        private void LayersListView_ItemsMoved(object sender, EventArgs e) {
-            MoveLayerRequest?.Invoke(sender, EventArgs.Empty);
+        private void LayersListView_ItemsMoved(object sender, ItemMoveEventArgs e) {
+            MoveLayerRequest?.Invoke(sender, e);
         }
 
         private void LayersListView_RightTapped(object sender, RightTappedRoutedEventArgs e) {
@@ -80,9 +81,9 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         }
 
         private LayerItem _rightTappedItem;
-        private readonly string _SIG_Text_AddLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_AddLayer)); // –¬‘ˆÕº≤„
-        private readonly string _SIG_Text_CopyLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_CopyLayer)); // ∏¥÷∆Õº≤„
-        private readonly string _SIG_Text_RenameLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_RenameLayer)); // …æ≥˝Õº≤„
-        private readonly string _SIG_Text_DeleteLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_DeleteLayer)); // ÷ÿ√¸√˚Õº≤„
+        private readonly string _SIG_Text_AddLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_AddLayer)); // Êñ∞Â¢ûÂõæÂ±Ç
+        private readonly string _SIG_Text_CopyLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_CopyLayer)); // Â§çÂà∂ÂõæÂ±Ç
+        private readonly string _SIG_Text_RenameLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_RenameLayer)); // Âà†Èô§ÂõæÂ±Ç
+        private readonly string _SIG_Text_DeleteLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_DeleteLayer)); // ÈáçÂëΩÂêçÂõæÂ±Ç
     }
 }

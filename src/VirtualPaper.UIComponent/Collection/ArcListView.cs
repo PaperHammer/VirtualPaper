@@ -8,7 +8,7 @@ using Windows.ApplicationModel.DataTransfer;
 
 namespace VirtualPaper.UIComponent.Collection {
     public partial class ArcListView : ListView {
-        public event EventHandler ItemsMoved;
+        public event EventHandler<ItemMoveEventArgs> ItemMoved;
 
         ~ArcListView() {
             UnregisterPropertyChangedCallback(ItemsSourceProperty, _itemsSourceChangedToken);
@@ -44,10 +44,10 @@ namespace VirtualPaper.UIComponent.Collection {
                 var newIndex = (this.ItemsSource as IList)?.IndexOf(args.Items[0]) ?? -1;
 
                 if (_oldIndex != -1 && newIndex != -1 && _oldIndex != newIndex) {
-                    ItemsMoved?.Invoke(this, EventArgs.Empty);
+                    ItemMoved?.Invoke(this, new(args.Items[0], _oldIndex, newIndex));
                 }
             }
-            _isDragging = false;            
+            _isDragging = false;
         }
 
         private void ArcListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e) {
@@ -61,7 +61,7 @@ namespace VirtualPaper.UIComponent.Collection {
 
         private void TryPreventNullSelectOnSelectionChanged(SelectionChangedEventArgs e) {
             if (e.AddedItems.Count > 0) _lastSelectedItem = e.AddedItems[0];
-            
+
             if (_isDragging || CancelSelectionEnable || SelectedItem != null) return;
 
             if (_lastSelectedItem != null && Items.Contains(_lastSelectedItem)) {
@@ -149,5 +149,17 @@ namespace VirtualPaper.UIComponent.Collection {
         private bool _isDragging;
         private int _oldIndex;
         private readonly long _itemsSourceChangedToken;
+    }
+
+    public class ItemMoveEventArgs : EventArgs {
+        public object Item { get; }
+        public int OldIndex { get; }
+        public int NewIndex { get; }
+
+        public ItemMoveEventArgs(object item, int oldIndex, int newIndex) {
+            Item = item;
+            OldIndex = oldIndex;
+            NewIndex = newIndex;
+        }
     }
 }

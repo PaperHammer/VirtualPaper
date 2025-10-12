@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Class="Workloads.Creation.StaticImg.Views.Tools.LayerManageControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -12,11 +12,11 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <DataTemplate  x:Key="LayerItemTemplate" x:DataType="lcl_models:InkCanvasData">
+        <DataTemplate  x:Key="LayerItemTemplate" x:DataType="lcl_models:LayerInfo">
             <ListViewItem Height="60">
                 <lcl_components:LayerItem
                     LayerName="{x:Bind Name, Mode=TwoWay}"
-                    IsEnable="{x:Bind IsEnable, Mode=TwoWay}"
+                    IsVisible="{x:Bind IsVisible, Mode=TwoWay}"
                     LayerThum="{x:Bind LayerThum, Mode=OneWay}"
                     ItemTag="{x:Bind Tag}"/>
             </ListViewItem>
@@ -37,14 +37,14 @@
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 RightTapped="LayersListView_RightTapped"
-                ItemsMoved="LayersListView_ItemsMoved"
+                ItemMoved="LayersListView_ItemsMoved"
                 CanReorderItems="True"
                 CanDragItems="True"
                 IsSwipeEnabled="True"
                 AllowDrop="True"
                 IsAllwaysSeletedNewItem="{x:Bind IsAllwaysSeletedNewItem, Mode=OneWay}"
-                SelectedItem="{x:Bind SelectedInkCanvas, Mode=TwoWay}"
-                ItemsSource="{x:Bind InkDatas}"
+                SelectedItem="{x:Bind SelectedLayer, Mode=TwoWay}"
+                ItemsSource="{x:Bind Layers}"
                 ItemTemplate="{StaticResource LayerItemTemplate}">
                 <collection:ArcListView.ContextFlyout>
                     <MenuFlyout x:Name="MenuFlyoutLayers">

@@ -1,48 +1,48 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.StaticImg.Models;
+using Workloads.Creation.StaticImg.Models.Specific;
 
 namespace Workloads.Creation.StaticImg.ViewModels {
     public partial class InkCanvasViewModel : ObservableObject {
-        private InkCanvasConfigData _configData;
-        public InkCanvasConfigData ConfigData {
+        private InkCanvasData _configData;
+        public InkCanvasData ConfigData {
             get { return _configData; }
             set { _configData = value; }
         }
 
         public InkCanvasViewModel() {
-            ConfigData = new InkCanvasConfigData();
+            ConfigData = new InkCanvasData();
         }
 
         internal async Task SaveAsync() {
-            await ConfigData.SaveBasicAsync();
-            await ConfigData.SaveRenderDataAsync();
+            //await ConfigData.SaveBasicAsync();
+            //await ConfigData.SaveRenderDataAsync();
         }
 
-        internal async Task LoadOrInitAsync() {
+        internal async Task LoadAsync() {
             switch (MainPage.Instance.RTFileType) {
                 case FileType.FImage:
                     break;
-                case FileType.FProject:
-                    await LoadProjectAsync();
+                case FileType.FDesign:
+                    await LoadDesignAsync();
                     break;
                 default:
                     break;
             }
         }
 
-        internal async Task LoadProjectAsync() {
-            if (!File.Exists(MainPage.Instance.EntryFilePath)) {
-                await ConfigData.InitDataAsync();
-                await SaveAsync();
-            }
-            else {
-                await ConfigData.LoadBasicDataAsync();
-                await ConfigData.LoadRenderDataAsync();
-            }
+        internal async Task LoadDesignAsync() {
+            //if (!File.Exists(MainPage.Instance.EntryFilePath)) {
+            //    await ConfigData.InitDataAsync();
+            //    await SaveAsync();
+            //}
+            //else {
+            //    await ConfigData.LoadBasicDataAsync();
+            //    await ConfigData.LoadRenderDataAsync();
+            //}
         }
 
         internal readonly List<AspectRatioItem> _aspectRatios = [

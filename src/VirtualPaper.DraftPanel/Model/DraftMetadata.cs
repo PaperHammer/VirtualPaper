@@ -57,7 +57,7 @@ namespace VirtualPaper.DraftPanel.Model {
         public ProjectTag(string name, ProjectType type) {
             Name = name;
             Type = type;
-            EntryRelativeFilePath = $"{name}/{name}{FileExtension.FE_Project}";
+            EntryRelativeFilePath = $"{name}/{name}{FileExtension.FE_Design}";
             NameHash = IdentifyUtil.ComputeHash(name);            
         }
     }

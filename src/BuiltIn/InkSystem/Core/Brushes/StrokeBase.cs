@@ -1,8 +1,9 @@
-﻿using System.Numerics;
+using System.Numerics;
 using BuiltIn.InkSystem.Core.Services;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;
+using VirtualPaper.Shader;
 using Windows.Foundation;
 
 namespace BuiltIn.InkSystem.Core.Brushes {
@@ -10,7 +11,10 @@ namespace BuiltIn.InkSystem.Core.Brushes {
         public BrushGenerateArgs BrushArgs { get; init; }
         public ICanvasImage? InkImage { get; set; }
         public ICanvasBrush? InkBrush { get; set; }
-        public ICanvasBrush? EffectBrush { get; set; }
+        public ShaderType Type { get; set; }
+        public List<Vector2> Points { get; set; } = [];
+        public bool ShouldRender => Points.Count > 0;
+        public bool IsSinglePoint => Points.Count == 1;
         public virtual CanvasStrokeStyle Style => new() {
             StartCap = CanvasCapStyle.Round,
             EndCap = CanvasCapStyle.Round,
@@ -18,26 +22,31 @@ namespace BuiltIn.InkSystem.Core.Brushes {
         };
         public virtual bool IsEraser => false;
 
-        //public bool IsAddEffectWithCopy { get; set; }  // 是否以 Copy 形式附加额外效果
-        //public bool IsAddEffect { get; set; }  // 是否附加额外效果
-        //public bool IsOnlyEffect { get; set; } // 是否只渲染效果层
         public StrokeMode EffectMode { get; set; }
 
         protected StrokeBase(BrushGenerateArgs brushArgs) {
             BrushArgs = brushArgs;
         }
 
-        public Rect GetBounds(IReadOnlyList<Vector2> points) {
-            if (points == null || points.Count == 0)
+        //public virtual void InitInkImage() { }
+
+        public virtual void InitInkBrush(CanvasDevice device) { }
+
+        public virtual void InitPixelsEffect(ShaderType type) {
+            Type = type;
+        }
+
+        public Rect GetBounds() {
+            if (Points.Count == 0)
                 return Rect.Empty;
 
-            float minX = points[0].X;
-            float maxX = points[0].X;
-            float minY = points[0].Y;
-            float maxY = points[0].Y;
+            float minX = Points[0].X;
+            float maxX = Points[0].X;
+            float minY = Points[0].Y;
+            float maxY = Points[0].Y;
 
-            for (int i = 1; i < points.Count; i++) {
-                var p = points[i];
+            for (int i = 1; i < Points.Count; i++) {
+                var p = Points[i];
                 if (p.X < minX) minX = p.X;
                 if (p.X > maxX) maxX = p.X;
                 if (p.Y < minY) minY = p.Y;
@@ -50,56 +59,30 @@ namespace BuiltIn.InkSystem.Core.Brushes {
             return new Rect(minX - half, minY - half, (maxX - minX) + half * 2, (maxY - minY) + half * 2);
         }
 
-        public virtual void InitInkImage() { }
+        public CanvasGeometry CreateStrokeGeometry(CanvasDevice device) {
+            if (Points.Count == 1)
+                return CanvasGeometry.CreateCircle(device, Points[0], BrushArgs.Thickness / 2);
 
-        public virtual void InitInkBrush(CanvasDevice device) { }
+            using var builder = new CanvasPathBuilder(device);
+            builder.BeginFigure(Points[0]);
+            for (int i = 1; i < Points.Count - 1; i++) {
+                var mid = (Points[i] + Points[i + 1]) / 2;
+                builder.AddQuadraticBezier(Points[i], mid);
+            }
+            builder.AddLine(Points[^1]);
+            builder.EndFigure(CanvasFigureLoop.Open);
 
-        /// <summary>
-        /// 绘制主笔迹
-        /// </summary>
-        public virtual void DrawStroke(CanvasDrawingSession ds, CanvasGeometry geometry, bool isSinglePoint = false) {
-            if (InkBrush == null) return;
-            
-            ds.Blend = CanvasBlend.SourceOver;
-            if (isSinglePoint) {
-                ds.FillGeometry(geometry, InkBrush);
-            }
-            else {
-                ds.DrawGeometry(geometry, InkBrush, BrushArgs.Thickness, Style);
-            }
+            return CanvasGeometry.CreatePath(builder);
         }
 
-        /// <summary>
-        /// 应用额外效果（擦除、淡化、发光等）
-        /// </summary>
-        public virtual void ApplyEffect(CanvasDrawingSession ds, CanvasGeometry geometry, Rect dirty, bool isSinglePoint = false) { }
+        public virtual void Render(CanvasDrawingSession dsTemp, CanvasGeometry geometry, Rect? bounds, CanvasRenderTarget? snapshotRenderTarget) { }        
 
-        /// <summary>
-        /// 应用额外效果（擦除、淡化、发光等）需要从快照中获取内容
-        /// </summary>
-        public virtual void ApplyEffectWithCopy(CanvasRenderTarget source, CanvasDrawingSession ds, CanvasGeometry geometry, Rect dirty, bool isSinglePoint = false) { }
+        protected byte[]? PixelsEffectBytes => ShaderLoader.GetShader(Type);
     }
 
-    [Flags]
     public enum StrokeMode {
-        /// <summary>
-        /// 正常笔触（DrawStroke）
-        /// </summary>
-        Normal = 0,
-
-        /// <summary>
-        /// 仅渲染效果层，不绘制笔迹
-        /// </summary>
-        OnlyEffect = 1 << 0,
-
-        /// <summary>
-        /// 附加额外效果（ApplyEffect）
-        /// </summary>
-        AddEffect = 1 << 1,
-
-        /// <summary>
-        /// 以 Copy 的方式覆盖目标（ApplyEffectWithCopy）
-        /// </summary>
-        AddEffectWithCopy = 1 << 2,
+        Normal,
+        Copy,
+        AddEffect,
     }
 }

@@ -1,19 +1,20 @@
 ﻿using BuiltIn.Events;
+using BuiltIn.InkSystem.Core.Brushes;
 using BuiltIn.InkSystem.Core.Services;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 using VirtualPaper.UIComponent.Services;
 using Windows.Foundation;
 
-namespace BuiltIn.InkSystem.Tool.Bsae {
+namespace BuiltIn.InkSystem.Tool {
     public abstract class RenderBase : IUnifiedInputProcessor<CanvasPointerEventArgs> {
         public event EventHandler<CursorChangedEventArgs>? SystemCursorChangeRequested;
         public event EventHandler<RenderTargetChangedEventArgs>? RenderRequest;
 
         protected Rect Viewport { get; private set; } = Rect.Empty;
-
-        protected CanvasRenderTarget? TempRenderTarget { get; private set; }
-        protected CanvasRenderTarget? SnapshotRenderTarget { get; private set; }
+        protected StrokeBase CurrentStroke { get; set; } = null!;
+        protected CanvasRenderTarget TempRenderTarget { get; private set; } = null!;
+        protected CanvasRenderTarget SnapshotRenderTarget { get; private set; } = null!;
 
         private CanvasRenderTarget? _renderTarget;
         protected CanvasRenderTarget? RenderTarget {
@@ -25,6 +26,14 @@ namespace BuiltIn.InkSystem.Tool.Bsae {
                 UpdateOtherRenderTarget();
             }
         }
+
+        public bool IsCanvasReady => RenderTarget != null &&
+            SnapshotRenderTarget != null &&
+            TempRenderTarget != null;
+
+        protected bool IsRenderReady =>
+            IsCanvasReady &&
+            CurrentStroke != null;
 
         //public bool IsInteracting { get; protected set; }
 

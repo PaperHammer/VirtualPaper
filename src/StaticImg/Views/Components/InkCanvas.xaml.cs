@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using BuiltIn.Events;
-using BuiltIn.InkSystem.Tool.Bsae;
+using BuiltIn.InkSystem.Tool;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.UI.Xaml;
@@ -46,7 +46,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void RegisterTools() {
-            _tool.RegisterTool(ToolType.PaintBrush, new InkBrushTool(_viewModel.ConfigData));
+            _tool.RegisterTool(ToolType.PaintBrush, new BrushTool(_viewModel.ConfigData));
             _tool.RegisterTool(ToolType.Fill, new FillTool(_viewModel.ConfigData));
             _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.ConfigData));
             _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.ConfigData));

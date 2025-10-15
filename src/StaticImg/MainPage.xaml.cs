@@ -8,6 +8,7 @@ using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Bridge;
+using VirtualPaper.Shader;
 using Windows.Graphics.DirectX;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 using Workloads.Creation.StaticImg.Models.ToolItems.Utils;
@@ -44,7 +45,7 @@ namespace Workloads.Creation.StaticImg {
             SharedFormat = DirectXPixelFormat.B8G8R8A8UIntNormalized;
             SharedAlphaMode = CanvasAlphaMode.Premultiplied;
             UnReUtil = new StaticImgUndoRedoUtil();
-            Log = LogManager.GetCurrentClassLogger();            
+            Log = LogManager.GetCurrentClassLogger();
         }
 
         /// <summary>
@@ -65,12 +66,16 @@ namespace Workloads.Creation.StaticImg {
             RTFileType = FileType.FDesign;
         }
 
+        private async void Page_Loading(FrameworkElement sender, object args) {
+            await ShaderLoader.LoadAllShadersAsync();
+        }
+
         // TODO: 考虑此处 restore
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             this.IsEnabled = false;
             Bridge.GetNotify().Loading(false, false);
 
-            await InkCanvas.IsInited.Task;
+            await InkCanvas.IsInited.Task;            
 
             StartFrameTimeMonitor();
             Bridge.GetNotify().Loaded();
@@ -89,6 +94,7 @@ namespace Workloads.Creation.StaticImg {
             StopFrameTimeMonitor();
             SharedDevice.Dispose();
             UnReUtil.Dispose();
+            ShaderLoader.ClearCache();
         }
 
         private void StartFrameTimeMonitor() {

@@ -1,5 +1,5 @@
 ﻿using BuiltIn.Events;
-using BuiltIn.InkSystem.Tool.Bsae;
+using BuiltIn.InkSystem.Tool;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;

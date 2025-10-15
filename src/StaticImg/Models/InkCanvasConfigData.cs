@@ -255,7 +255,7 @@
 //            MainPage.Instance.UnReUtil.RecordCommand(
 //                execute: async () => {
 //                    await AddAsync(layer, false, pos);
-//                    await layer.RenderData.IsReady.Task;
+//                    await layer.RenderData.IsRenderReady.Task;
 //                    RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
 //                },
 //                undo: async () => {
@@ -360,7 +360,7 @@
 //            //    },
 //            //    undo: async () => {
 //            //        await AddAsync(clone, false, idx);
-//            //        await clone.RenderData.IsReady.Task;
+//            //        await clone.RenderData.IsRenderReady.Task;
 //            //        RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(RenderMode.FullRegion));
 //            //    }
 //            //);

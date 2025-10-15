@@ -10,6 +10,7 @@ using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.FuntionTest.MLTest;
 using VirtualPaper.FuntionTest.ScrSaverTest;
+using VirtualPaper.FuntionTest.ShaderTest;
 
 namespace VirtualPaper.FuuntionTest
 {
@@ -23,6 +24,8 @@ namespace VirtualPaper.FuuntionTest
 
         static async Task Main(string[] args)
         {
+            ShaderTest_Complier.RunTest();
+
             //_optionsIpcMsg.Converters.Add(new IpcMessageConverter());
 
             //string loadActionJson = "{\"action\":\"--load\",\"source\":\"C:\\\\Users\\\\PaperHammer\\\\Desktop\\\\img28.jpg\",\"type\":\"picture\"}";
@@ -74,14 +77,14 @@ namespace VirtualPaper.FuuntionTest
 
             //await Console.Out.WriteLineAsync(start.Arguments);
 
-            Proc = MainTest_ScrSaver.InitScr(
-                "C:\\Users\\PaperHammer\\Desktop\\img29.jpg",
-                "FImage",
-                "Bubble");
+            //Proc = MainTest_ScrSaver.InitScr(
+            //    "C:\\Users\\PaperHammer\\Desktop\\img29.jpg",
+            //    "FImage",
+            //    "Bubble");
 
-            await ShowAsync();
+            //await ShowAsync();
 
-            Application.Run();
+            //Application.Run();
         }
 
         static async Task<bool> ShowAsync()

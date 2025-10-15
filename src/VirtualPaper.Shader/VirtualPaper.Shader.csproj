@@ -9,8 +9,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="Shaders\AlphaFadeErase.hlsl">
+	  <None Remove="Shaders\BrushEdgeHardness.bin" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="Shaders\BrushEdgeHardness.bin">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Shaders\BrushEdgeHardness.hlsl">
+		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
 

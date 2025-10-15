@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using BuiltIn.Events;
-using BuiltIn.InkSystem.Tool.Bsae;
+using BuiltIn.InkSystem.Tool;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 using Windows.Foundation;

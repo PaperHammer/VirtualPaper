@@ -189,14 +189,11 @@ namespace VirtualPaper {
         }
 
         private void InitMemorySharedContext() {
-            //Environment.SetEnvironmentVariable(EnviromentVarKey.BaseDir, AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.User);
             var context = new SharedContext {
                 BaseDir = AppDomain.CurrentDomain.BaseDirectory,
-                PluginDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"),
-                Version = System.Reflection.Assembly.GetEntryAssembly().GetName().Version?.ToString(),
             };
 
-            SharedStorage.Write(context);
+            FileShared.Write(context);
         }
 
         private ServiceProvider ConfigureServices() {

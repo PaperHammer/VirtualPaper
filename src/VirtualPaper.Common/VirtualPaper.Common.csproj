@@ -29,4 +29,8 @@
 	  <Folder Include="Utils\SpatialIndex\" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Include="Utils\Storage\FileShared.cs" />
+	</ItemGroup>
+
 </Project>

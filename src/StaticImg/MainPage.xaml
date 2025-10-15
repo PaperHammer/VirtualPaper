@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="Workloads.Creation.StaticImg.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -9,6 +9,7 @@
     xmlns:lcl_components="using:Workloads.Creation.StaticImg.Views.Components"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
+    Loading="Page_Loading"
     Unloaded="Page_Unloaded"
     IsEnabled="False"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">

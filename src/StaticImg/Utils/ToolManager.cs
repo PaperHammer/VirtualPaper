@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using BuiltIn.InkSystem.Tool.Bsae;
+using BuiltIn.InkSystem.Tool;
 
 namespace Workloads.Creation.StaticImg.Utils {
     class ToolManager {

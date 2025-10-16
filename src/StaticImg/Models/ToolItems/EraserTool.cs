@@ -17,14 +17,14 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 Thickness: (float)data.EraserSize,
                 Opacity: (float)(data.EraserOpacity / 100f));
             CurrentStroke = new EffectWithCopyStroke(brushArgs);
-            CurrentStroke.InitPixelsEffect(ShaderType.BrushEdgeHardness);
+            CurrentStroke.InitPixelsEffect(ShaderType.GeometryAlphaEraseEffect);
         }
 
-        protected override void Merge(Rect bounds) {            
-            using (var ds = RenderTarget.CreateDrawingSession()) {
-                ds.Blend = CanvasBlend.Copy;
-                ds.DrawImage(TempRenderTarget, bounds, bounds);
-            }
-        }
+        //protected override void Merge(Rect bounds) {            
+        //    using (var ds = RenderTarget.CreateDrawingSession()) {
+        //        ds.Blend = CanvasBlend.Copy;
+        //        ds.DrawImage(TempRenderTarget, bounds, bounds);
+        //    }
+        //}
     }
 }

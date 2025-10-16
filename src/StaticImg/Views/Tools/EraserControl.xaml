@@ -77,7 +77,7 @@
                     <Slider
                         x:Name="eraserOpacitySlider"
                         Value="{x:Bind EraserOpacity, Mode=TwoWay}"
-                        Minimum="1"
+                        Minimum="0"
                         Maximum="100"
                         IsThumbToolTipEnabled="False"/>
                 </StackPanel>

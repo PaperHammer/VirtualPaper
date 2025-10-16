@@ -19,7 +19,7 @@ if not exist %INCLUDEPATH%\d2d1effecthelpers.hlsli (
     goto WRONG_COMMAND_PROMPT
 )
 
-call :COMPILE BrushEdgeHardness.hlsl || goto END
+call :COMPILE GeometryAlphaEraseEffect.hlsl || goto END
 
 goto END
 

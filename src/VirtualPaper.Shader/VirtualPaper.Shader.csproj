@@ -9,14 +9,14 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="Shaders\BrushEdgeHardness.bin" />
+	  <None Remove="Shaders\GeometryAlphaEraseEffect.bin" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="Shaders\BrushEdgeHardness.bin">
+		<Content Include="Shaders\GeometryAlphaEraseEffect.bin">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
-		<Content Include="Shaders\BrushEdgeHardness.hlsl">
+		<Content Include="Shaders\GeometryAlphaEraseEffect.hlsl">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>

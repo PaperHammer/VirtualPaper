@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
@@ -129,7 +129,7 @@ namespace VirtualPaper.Shader {
         /// </summary>
         private static string ResolveShaderPathForUnpackaged(ShaderType type) {
             string fileName = ShaderTypeManager.GetShaderName(type);
-            if (_baseDir == null) return string.Empty;
+            if (_baseDir == null || fileName == string.Empty) return string.Empty;
 
             string filePath = Path.Combine(_baseDir, Constants.WorkingDir.Shader, fileName);
 

@@ -75,7 +75,20 @@ namespace BuiltIn.InkSystem.Core.Brushes {
             return CanvasGeometry.CreatePath(builder);
         }
 
-        public virtual void Render(CanvasDrawingSession dsTemp, CanvasGeometry geometry, Rect? bounds, CanvasRenderTarget? snapshotRenderTarget) { }        
+        // 1. 增量生成 (负责将笔触几何体绘制到 dsTemp)
+        // 这是所有笔刷和擦除工具必须实现的
+        public abstract void RenderIncrement(
+            CanvasDrawingSession dsTemp,
+            CanvasGeometry geometry
+        );
+
+        // 2. 图像混合/合成 (负责混合 TempRT 和 SnapshotRT)
+        // 这只在工具需要复杂混合时才使用 (如擦除)
+        public abstract ICanvasImage MergeImages(
+            CanvasRenderTarget foreground,
+            CanvasRenderTarget background,
+            CanvasDevice device
+        );
 
         protected byte[]? PixelsEffectBytes => ShaderLoader.GetShader(Type);
     }

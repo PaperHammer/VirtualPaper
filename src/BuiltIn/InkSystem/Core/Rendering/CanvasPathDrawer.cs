@@ -61,28 +61,33 @@ namespace BuiltIn.InkSystem.Core.Rendering {
         }
 
         protected void RenderToTarget() {
-            if (!IsRenderReady || !CurrentStroke.ShouldRender)
-                return;
+            if (!IsRenderReady || !CurrentStroke.ShouldRender) return;
 
-            var bounds = CurrentStroke.GetBounds().IntersectRect(RenderTarget!.Bounds);
+            using var geometry = CurrentStroke.CreateStrokeGeometry(RenderTarget!.Device);
+            var bounds = CurrentStroke.GetBounds();
+            
+            // *** TempRenderTarget 重用与增量绘制 ***
             using (var dsTemp = TempRenderTarget.CreateDrawingSession()) {
                 dsTemp.Clear(Colors.Transparent);
-
-                using var geometry = CurrentStroke.CreateStrokeGeometry(dsTemp.Device);
-                CurrentStroke.Render(dsTemp, geometry, bounds, SnapshotRenderTarget);
+                CurrentStroke.RenderIncrement(dsTemp, geometry); // 调用子类绘制增量
             }
-
-            Merge(bounds);
+            
+            // *** 合成并绘制到 RenderTarget ***
+            using (var mergedImage = CurrentStroke.MergeImages(
+                TempRenderTarget,
+                SnapshotRenderTarget,
+                RenderTarget!.Device
+            )) {
+                // 将合成结果写入 RenderTarget
+                using (var dsTarget = RenderTarget.CreateDrawingSession()) {
+                    // 注意：因为 MergeImages 返回的 Effect 已经包含了 SnapshotRT 的内容，
+                    // 所以我们用 Copy 模式替换 RenderTarget 的内容。
+                    dsTarget.Blend = CanvasBlend.Copy;
+                    dsTarget.DrawImage(mergedImage);
+                }
+            }
+           
             HandleRender(new RenderTargetChangedEventArgs(RenderMode.PartialRegion, bounds));
-        }
-
-        protected virtual void Merge(Rect bounds) {
-            using (var ds = RenderTarget!.CreateDrawingSession()) {
-                ds.Blend = CanvasBlend.Copy;
-                ds.DrawImage(SnapshotRenderTarget);
-                ds.Blend = CanvasBlend.SourceOver;
-                ds.DrawImage(TempRenderTarget, bounds, bounds);
-            }
         }
 
         private bool _isDrawing = false;

@@ -16,10 +16,13 @@ D2D_PS_ENTRY(main)
     if (maskValue <= 0.001)
         return original;
 
-    float erase = saturate(maskValue * eraseAmount);
-
-    float newAlpha = original.a * (1 - erase);
-    float3 newColor = original.rgb * newAlpha; // 预乘透明度
-
-    return float4(newColor, newAlpha);
+    // 应用擦除效果
+    float eraseFactor = eraseAmount * maskValue;
+    float finalAlpha = original.a * (1.0 - eraseFactor);
+    
+    // 预乘alpha计算
+    float alphaRatio = (original.a > 0.0) ? (finalAlpha / original.a) : 0.0;
+    float3 finalColor = original.rgb * alphaRatio;
+    
+    return float4(finalColor, finalAlpha);
 }

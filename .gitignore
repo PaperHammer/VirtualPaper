@@ -380,5 +380,4 @@ FodyWeavers.xsd
 Bundle/
 Plugins/
 Build/
-umls/
-VirtualPaper.Shader/Shaders/*.bin
+Shaders/*.bin

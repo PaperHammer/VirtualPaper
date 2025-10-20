@@ -1,5 +1,4 @@
 using Microsoft.UI.Xaml;
-using Microsoft.Windows.Storage;
 using VirtualPaper.Common;
 
 namespace VirtualPaper.UI.Utils {

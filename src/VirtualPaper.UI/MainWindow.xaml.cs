@@ -16,39 +16,36 @@ using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.UI.Utils;
 using VirtualPaper.UI.ViewModels;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
 using VirtualPaper.WpSettingsPanel;
 using Windows.Graphics;
-using Windows.UI;
 using WinRT.Interop;
-//using WinUIEx;
+using WinUIEx;
 
 namespace VirtualPaper.UI {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainWindow : Window, IWindowBridge {
+    public sealed partial class MainWindow : WindowEx, IWindowBridge {
         public NavigationView NavigationView {
             get { return NavigationViewControl; }
         }
 
         public MainWindow(
-            MainWindowViewModel mainWindowViewModel,
+            MainWindowViewModel viewModel,
             ICommandsClient commandsClient) {
             this.InitializeComponent();
 
             _commandsClient = commandsClient;
             _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
-            _viewModel = mainWindowViewModel;
+            _viewModel = viewModel;
             this.MainGrid.DataContext = _viewModel;
 
-            //SetWindowStartupPosition();
-            //SetWindowStyle();
-            //SetWindowTitleBar();
-            //SetAppTheme();
+            SetWindowStartupPosition();
+            SetWindowStyle();
+            SetWindowTitleBar();
         }
 
         private void CommandsClient_UIRecieveCmd(object? sender, int e) {
@@ -104,129 +101,75 @@ namespace VirtualPaper.UI {
         #endregion
 
         #region window property
-        //private void SetWindowStartupPosition() {
-        //    DisplayArea displayArea = SystemUtil.GetDisplayArea(this, DisplayAreaFallback.Nearest);
-        //    if (displayArea is not null) {
-        //        var centeredPosition = this.AppWindow.Position;
-        //        centeredPosition.X = (displayArea.WorkArea.Width - this.AppWindow.Size.Width) / 2;
-        //        centeredPosition.Y = (displayArea.WorkArea.Height - this.AppWindow.Size.Height) / 2;
-        //        this.AppWindow.Move(centeredPosition);
-        //    }
-        //}
-
-        //private void SetWindowTitleBar() {
-        //    //ref: https://learn.microsoft.com/en-us/windows/apps/develop/title-bar?tabs=wasdk
-        //    if (AppWindowTitleBar.IsCustomizationSupported()) {
-        //        var titleBar = this.AppWindow.TitleBar;
-        //        titleBar.ExtendsContentIntoTitleBar = true;
-        //        titleBar.ButtonBackgroundColor = Colors.Transparent;
-        //        titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-        //        titleBar.ButtonForegroundColor = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForeground).Color;
-
-        //        AppTitleBar.Loaded += AppTitleBar_Loaded;
-        //        AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
-        //        AppTitleBar.RequestedTheme = ElementTheme.Light;
-        //    }
-        //    else {
-        //        AppTitleBar.Visibility = Visibility.Collapsed;
-        //        this.UseImmersiveDarkModeEx(_viewModel._userSettings.Settings.ApplicationTheme == AppTheme.Dark);
-        //    }
-        //}
-        private void SetWindowProperties() {
-#if DEBUG
-            this.Title = "Virtual Paper Dev";
-            titleBar.Subtitle = "Dev";
-#else
-        this.Title = "Virtual Paper";
-#endif
-            this.ExtendsContentIntoTitleBar = true;
-            this.SetTitleBar(titleBar);
-            this.AppWindow.SetIcon("Assets/Tiles/GalleryIcon.ico");
-            this.AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
-        }
-
-        private void RootGrid_Loaded(object sender, RoutedEventArgs e) {
-            // We need to set the minimum size here because the XamlRoot is not available in the constructor.
-            WindowHelper.SetWindowMinSize(this, 640, 500);
-
-            if (sender is FrameworkElement rootGrid && rootGrid.XamlRoot is not null) {
-                rootGrid.XamlRoot.Changed += RootGridXamlRoot_Changed;
-            }
-
-            NavigationOrientationHelper.UpdateNavigationViewForElement(NavigationOrientationHelper.IsLeftMode());
-            TitleBarHelper.ApplySystemThemeToCaptionButtons(this, RootGrid.ActualTheme);
-        }
-
-        private void RootGridXamlRoot_Changed(XamlRoot sender, XamlRootChangedEventArgs args) {
-            WindowHelper.SetWindowMinSize(this, 640, 500);
-        }
-
-        private void aaa(ElementTheme et) {
-            WindowHelper.TrackWindow(this);
-            ThemeHelper.RootTheme = et;
-            var elementThemeResolved = ThemeHelper.RootTheme == ElementTheme.Default ? ThemeHelper.ActualTheme : ThemeHelper.RootTheme;
-            ApplySystemThemeToCaptionButtons(this, elementThemeResolved);
-        }
-
-        // workaround as AppWindow TitleBar doesn't update caption button colors correctly when changed while app is running
-        // https://task.ms/44172495
-        public static void ApplySystemThemeToCaptionButtons(Window window, ElementTheme currentTheme) {
-            if (window.AppWindow != null) {
-                var foregroundColor = currentTheme == ElementTheme.Dark ? Colors.White : Colors.Black;
-                window.AppWindow.TitleBar.ButtonForegroundColor = foregroundColor;
-                window.AppWindow.TitleBar.ButtonHoverForegroundColor = foregroundColor;
-
-                var backgroundHoverColor = currentTheme == ElementTheme.Dark ? Color.FromArgb(24, 255, 255, 255) : Color.FromArgb(24, 0, 0, 0);
-                window.AppWindow.TitleBar.ButtonHoverBackgroundColor = backgroundHoverColor;
+        private void SetWindowStartupPosition() {
+            DisplayArea displayArea = SystemUtil.GetDisplayArea(this, DisplayAreaFallback.Nearest);
+            if (displayArea is not null) {
+                var centeredPosition = this.AppWindow.Position;
+                centeredPosition.X = (displayArea.WorkArea.Width - this.AppWindow.Size.Width) / 2;
+                centeredPosition.Y = (displayArea.WorkArea.Height - this.AppWindow.Size.Height) / 2;
+                this.AppWindow.Move(centeredPosition);
             }
         }
 
-        //private void SetWindowStyle() {
-        //    this.SystemBackdrop = _viewModel._userSettings.Settings.SystemBackdrop switch {
-        //        AppSystemBackdrop.Mica => new MicaBackdrop(),
-        //        AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
-        //        _ => default,
-        //    };
-        //}
+        private void SetWindowTitleBar() {
+            //ref: https://learn.microsoft.com/en-us/windows/apps/develop/title-bar?tabs=wasdk
+            if (AppWindowTitleBar.IsCustomizationSupported()) {
+                var titleBar = this.AppWindow.TitleBar;
+                titleBar.ExtendsContentIntoTitleBar = true;
+                titleBar.ButtonBackgroundColor = Colors.Transparent;
+                titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+                titleBar.ButtonForegroundColor = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForeground).Color;
 
-        //private void SetAppTheme() {
-        //    ThemeManager.RegisterThemeRoot(MainGrid);
-        //    _viewModel.Theme = _viewModel._userSettings.Settings.ApplicationTheme;
-        //}
+                AppTitleBar.Loaded += AppTitleBar_Loaded;
+                AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
+            }
+            else {
+                AppTitleBar.Visibility = Visibility.Collapsed;
+                this.UseImmersiveDarkModeEx(_viewModel._userSettings.Settings.ApplicationTheme == AppTheme.Dark);
+            }
+        }
 
-        //private void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
-        //    if (args.WindowActivationState == WindowActivationState.Deactivated) {
-        //        TitleTextBlock.Foreground = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForegroundDisabled);
-        //    }
-        //    else {
-        //        TitleTextBlock.Foreground = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForeground);
-        //    }
-        //}
+        private void SetWindowStyle() {
+            this.SystemBackdrop = _viewModel._userSettings.Settings.SystemBackdrop switch {
+                AppSystemBackdrop.Mica => new MicaBackdrop(),
+                AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
+                _ => default,
+            };
+        }
 
-        //private void WindowEx_Closed(object sender, WindowEventArgs args) {
-        //    try {
-        //        _commandsClient.UIRecieveCmd -= CommandsClient_UIRecieveCmd;
+        private void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
+            if (args.WindowActivationState == WindowActivationState.Deactivated) {
+                TitleTextBlock.Foreground = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForegroundDisabled);
+            }
+            else {
+                TitleTextBlock.Foreground = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForeground);
+            }
+        }
 
-        //        if (_viewModel._userSettings.Settings.IsFirstRun) {
-        //            args.Handled = true;
-        //            _viewModel._userSettings.Settings.IsFirstRun = false;
-        //            _viewModel._userSettings.Save<ISettings>();
-        //            this.Close();
-        //        }
+        private void WindowEx_Closed(object sender, WindowEventArgs args) {
+            try {
+                _commandsClient.UIRecieveCmd -= CommandsClient_UIRecieveCmd;
 
-        //        if (_viewModel._userSettings.Settings.IsUpdated) {
-        //            args.Handled = true;
-        //            _viewModel._userSettings.Settings.IsUpdated = false;
-        //            _viewModel._userSettings.Save<ISettings>();
-        //            this.Close();
-        //        }
+                if (_viewModel._userSettings.Settings.IsFirstRun) {
+                    args.Handled = true;
+                    _viewModel._userSettings.Settings.IsFirstRun = false;
+                    _viewModel._userSettings.Save<ISettings>();
+                    this.Close();
+                }
 
-        //        App.ShutDown();
-        //    }
-        //    catch (InvalidOperationException ex) {
-        //        App.Log.Error("An error ocurred at UI closing: ", ex);
-        //    }
-        //}
+                if (_viewModel._userSettings.Settings.IsUpdated) {
+                    args.Handled = true;
+                    _viewModel._userSettings.Settings.IsUpdated = false;
+                    _viewModel._userSettings.Save<ISettings>();
+                    this.Close();
+                }
+
+                App.ShutDown();
+            }
+            catch (InvalidOperationException ex) {
+                App.Log.Error("An error ocurred at UI closing: ", ex);
+            }
+        }
         #endregion
 
         private void HandleIpcMessage(int type) {
@@ -248,15 +191,6 @@ namespace VirtualPaper.UI {
         }
 
         #region navigation control
-        private void OnPaneDisplayModeChanged(NavigationView sender, NavigationViewDisplayModeChangedEventArgs args) {
-            if (sender.PaneDisplayMode == NavigationViewPaneDisplayMode.Top) {
-                titleBar.IsPaneToggleButtonVisible = false;
-            }
-            else {
-                titleBar.IsPaneToggleButtonVisible = true;
-            }
-        }
-
         private void OnNavigationViewSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
             try {
                 var selectedItem = args.SelectedItemContainer;
@@ -284,61 +218,55 @@ namespace VirtualPaper.UI {
         }
         #endregion
 
-        #region title bar
-        private void TitleBar_BackRequested(TitleBar sender, object args) {
-            if (this.rootFrame.CanGoBack) {
-                this.rootFrame.GoBack();
+        #region window title bar
+        private void AppTitleBar_Loaded(object sender, RoutedEventArgs e) {
+            if (AppWindowTitleBar.IsCustomizationSupported()) {
+                SetDragRegionForCustomTitleBar(this.AppWindow);
             }
         }
 
-        //private void AppTitleBar_Loaded(object sender, RoutedEventArgs e) {
-        //    if (AppWindowTitleBar.IsCustomizationSupported()) {
-        //        SetDragRegionForCustomTitleBar(this.AppWindow);
-        //    }
-        //}
+        private void AppTitleBar_SizeChanged(object sender, SizeChangedEventArgs e) {
+            if (AppWindowTitleBar.IsCustomizationSupported()
+                && this.AppWindow.TitleBar.ExtendsContentIntoTitleBar) {
+                // Update drag region if the size of the title bar changes.
+                SetDragRegionForCustomTitleBar(this.AppWindow);
+            }
+        }
 
-        //private void AppTitleBar_SizeChanged(object sender, SizeChangedEventArgs e) {
-        //    if (AppWindowTitleBar.IsCustomizationSupported()
-        //        && this.AppWindow.TitleBar.ExtendsContentIntoTitleBar) {
-        //        // Update drag region if the size of the title bar changes.
-        //        SetDragRegionForCustomTitleBar(this.AppWindow);
-        //    }
-        //}
+        private void SetDragRegionForCustomTitleBar(AppWindow appWindow) {
+            if (AppWindowTitleBar.IsCustomizationSupported()
+                && appWindow.TitleBar.ExtendsContentIntoTitleBar) {
+                double scaleAdjustment = SystemUtil.GetScaleAdjustment(this);
 
-        //private void SetDragRegionForCustomTitleBar(AppWindow appWindow) {
-        //    if (AppWindowTitleBar.IsCustomizationSupported()
-        //        && appWindow.TitleBar.ExtendsContentIntoTitleBar) {
-        //        double scaleAdjustment = SystemUtil.GetScaleAdjustment(this);
+                RightPaddingColumn.Width = new GridLength(appWindow.TitleBar.RightInset / scaleAdjustment);
+                LeftPaddingColumn.Width = new GridLength(appWindow.TitleBar.LeftInset / scaleAdjustment);
 
-        //        RightPaddingColumn.Width = new GridLength(appWindow.TitleBar.RightInset / scaleAdjustment);
-        //        LeftPaddingColumn.Width = new GridLength(appWindow.TitleBar.LeftInset / scaleAdjustment);
+                List<RectInt32> dragRectsList = [];
 
-        //        List<RectInt32> dragRectsList = [];
+                RectInt32 dragRectL;
+                dragRectL.X = (int)((LeftPaddingColumn.ActualWidth) * scaleAdjustment);
+                dragRectL.Y = 0;
+                dragRectL.Height = (int)(AppTitleBar.ActualHeight * scaleAdjustment);
+                dragRectL.Width = (int)((IconColumn.ActualWidth
+                                        + TitleColumn.ActualWidth
+                                        + LeftDragColumn.ActualWidth) * scaleAdjustment);
+                dragRectsList.Add(dragRectL);
 
-        //        RectInt32 dragRectL;
-        //        dragRectL.X = (int)((LeftPaddingColumn.ActualWidth) * scaleAdjustment);
-        //        dragRectL.Y = 0;
-        //        dragRectL.Height = (int)(AppTitleBar.ActualHeight * scaleAdjustment);
-        //        dragRectL.Width = (int)((IconColumn.ActualWidth
-        //                                + TitleColumn.ActualWidth
-        //                                + LeftDragColumn.ActualWidth) * scaleAdjustment);
-        //        dragRectsList.Add(dragRectL);
+                RectInt32 dragRectR;
+                dragRectR.X = (int)((LeftPaddingColumn.ActualWidth
+                                    + IconColumn.ActualWidth
+                                    + TitleTextBlock.ActualWidth
+                                    + LeftDragColumn.ActualWidth) * scaleAdjustment);
+                dragRectR.Y = 0;
+                dragRectR.Height = (int)(AppTitleBar.ActualHeight * scaleAdjustment);
+                dragRectR.Width = (int)(RightDragColumn.ActualWidth * scaleAdjustment);
+                dragRectsList.Add(dragRectR);
 
-        //        RectInt32 dragRectR;
-        //        dragRectR.X = (int)((LeftPaddingColumn.ActualWidth
-        //                            + IconColumn.ActualWidth
-        //                            + TitleTextBlock.ActualWidth
-        //                            + LeftDragColumn.ActualWidth) * scaleAdjustment);
-        //        dragRectR.Y = 0;
-        //        dragRectR.Height = (int)(AppTitleBar.ActualHeight * scaleAdjustment);
-        //        dragRectR.Width = (int)(RightDragColumn.ActualWidth * scaleAdjustment);
-        //        dragRectsList.Add(dragRectR);
+                RectInt32[] dragRects = [.. dragRectsList];
 
-        //        RectInt32[] dragRects = [.. dragRectsList];
-
-        //        appWindow.TitleBar.SetDragRectangles(dragRects);
-        //    }
-        //}
+                appWindow.TitleBar.SetDragRectangles(dragRects);
+            }
+        }
         #endregion
 
         private readonly ICommandsClient _commandsClient;
@@ -346,13 +274,13 @@ namespace VirtualPaper.UI {
         private nint _windowHandle = -1;
 
         private void LightAndDarkButton_Click(object sender, RoutedEventArgs e) {
-            if (a == 1) {
-                aaa(ElementTheme.Dark);
-            }
-            else {
-                aaa(ElementTheme.Light);
-            }
-            a ^= 1;
+            //if (a == 1) {
+            //    aaa(ElementTheme.Dark);
+            //}
+            //else {
+            //    aaa(ElementTheme.Light);
+            //}
+            //a ^= 1;
         }
         private int a = 1;
     }

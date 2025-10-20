@@ -139,8 +139,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4654" />
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251003001" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
 		<PackageReference Include="Vanara.PInvoke.ComCtl32" Version="4.0.3" />
 		<PackageReference Include="Vanara.PInvoke.DwmApi" Version="4.0.3" />
 		<PackageReference Include="Vanara.PInvoke.User32" Version="4.0.3" />
@@ -229,6 +229,9 @@
 		</Content>
 		<Content Update="Assets\ui_components\Light\themelight-light.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\virtualpaper.ico">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 		<None Update="Players\Web\default.html">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>

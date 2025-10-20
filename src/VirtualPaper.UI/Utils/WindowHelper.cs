@@ -1,10 +1,6 @@
+using System.Collections.Generic;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using VirtualPaper.Common;
-using Windows.Storage;
 
 namespace VirtualPaper.UI.Utils
 {

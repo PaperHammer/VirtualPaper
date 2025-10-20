@@ -1,145 +1,146 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
-    <RootNamespace>VirtualPaper.UIComponent</RootNamespace>
-    <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">win-x86;win-x64;win-arm64</RuntimeIdentifiers>
-    <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
-    <UseWinUI>true</UseWinUI>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
-  </PropertyGroup>
-  <!--<ItemGroup>
-    <None Remove="Container\PageContainer.xaml" />
-    <None Remove="Data\Details.xaml" />
-    <None Remove="Data\Edits.xaml" />
-    <None Remove="Data\EffectConfig.xaml" />
-    <None Remove="Feedback\Loading.xaml" />
-    <None Remove="Input\ArcPalette.xaml" />
-    <None Remove="Input\ComboBox\ArcComboBox.xaml" />
-    <None Remove="Navigation\ArcTabView.xaml" />
-    <None Remove="Navigation\TabView\ArcTabView.xaml" />
-    <None Remove="Others\ColorEyeDropWindow.xaml" />
-    <None Remove="Others\RenameView.xaml" />
-    <None Remove="Others\WallpaperCreateView.xaml" />
-  </ItemGroup>-->
-  <ItemGroup>
-    <PRIResource Remove="Strings\en-US\Resources.resw" />
-    <PRIResource Remove="Strings\zh-CN\Resources.resw" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Strings\en-US\Resources.resw">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Strings\zh-CN\Resources.resw">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="virtualpaper.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<RootNamespace>VirtualPaper.UIComponent</RootNamespace>
+		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
+		<UseWinUI>true</UseWinUI>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-	  <PackageReference Include="H.Hooks" Version="1.6.0" />
-	  <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
-      <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
-      <PackageReference Include="WinUI3Localizer" Version="2.2.0" />
-      <PackageReference Include="WinUIEx" Version="2.4.2" />
-  </ItemGroup>
+	<ItemGroup>
+		<PRIResource Remove="Strings\en-US\Resources.resw" />
+		<PRIResource Remove="Strings\zh-CN\Resources.resw" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="Strings\en-US\Resources.resw">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Strings\zh-CN\Resources.resw">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="virtualpaper.ico">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
-    <ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="H.Hooks" Version="1.6.0" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251003001" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4654" />
+		<PackageReference Include="WinUI3Localizer" Version="2.2.0" />
+		<PackageReference Include="WinUIEx" Version="2.4.2" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Data\EffectConfig.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Data\EffectConfig.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Feedback\Loading.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Feedback\Loading.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <CustomAdditionalCompileInputs Remove="Data\Details.xaml" />
-  </ItemGroup>
+	<ItemGroup>
+		<CustomAdditionalCompileInputs Remove="Data\Details.xaml" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Remove="Navigation\TabView\ArcTabViewItemHeader.xaml" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="Navigation\RootView\ArcNavigationView.xaml" />
+		<None Remove="Navigation\RootView\ArcNavigationviewStyle.xaml" />
+		<None Remove="Navigation\TabView\ArcTabViewItemHeader.xaml" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Resource Remove="Data\Details.xaml" />
-  </ItemGroup>
+	<ItemGroup>
+		<Resource Remove="Data\Details.xaml" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Data\Edits.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Data\Edits.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Container\PageContainer.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Container\PageContainer.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Container\Card.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Update="Others\ColorEyeDropWindow.xaml">
-      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Update="Others\WallpaperCreateView.xaml">
-      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-      <SubType>Designer</SubType>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Container\Card.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Others\ColorEyeDropWindow.xaml">
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Others\WallpaperCreateView.xaml">
+			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+			<SubType>Designer</SubType>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="ResouresXaml\ResourceDictionary.xaml">
-      <CopyToOutputDirectory></CopyToOutputDirectory>
-      <SubType>Designer</SubType>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="ResouresXaml\ResourceDictionary.xaml">
+			<CopyToOutputDirectory></CopyToOutputDirectory>
+			<SubType>Designer</SubType>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Input\ColorPicker\" />
-    <Folder Include="Input\Palette\" />
-  </ItemGroup>
+	<ItemGroup>
+		<Folder Include="Input\ColorPicker\" />
+		<Folder Include="Input\Palette\" />
+		<Folder Include="Resources\" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Navigation\TabView\ArcTabViewItemHeader.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Navigation\TabView\ArcTabViewItem.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Navigation\RootView\ArcNavigationviewStyle.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Navigation\ArcTabView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Navigation\RootView\ArcNavigationView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Input\ArcPalette.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Navigation\TabView\ArcTabViewItemHeader.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Others\RenameView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Page Update="Navigation\TabView\ArcTabViewItem.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="Navigation\ArcTabView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="Input\ArcPalette.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="Others\RenameView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 </Project>

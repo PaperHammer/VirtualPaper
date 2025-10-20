@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -15,8 +15,6 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.TabView;
-using static VirtualPaper.Common.Constants;
-using static VirtualPaper.Common.Utils.Archive.ZipUtil;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject {

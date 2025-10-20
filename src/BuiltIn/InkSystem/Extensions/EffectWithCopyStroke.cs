@@ -1,11 +1,9 @@
-using System.Windows.Media.Media3D;
 using BuiltIn.InkSystem.Core.Brushes;
 using BuiltIn.InkSystem.Core.Services;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI;
-using Windows.Foundation;
 
 namespace BuiltIn.InkSystem.Extensions {
     public sealed partial record EffectWithCopyStroke : StrokeBase {

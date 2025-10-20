@@ -2,10 +2,8 @@ using BuiltIn.Events;
 using BuiltIn.InkSystem.Core.Rendering;
 using BuiltIn.InkSystem.Core.Services;
 using BuiltIn.InkSystem.Extensions;
-using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
 using VirtualPaper.Shader;
-using Windows.Foundation;
 using Workloads.Creation.StaticImg.Models.Specific;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
@@ -19,12 +17,5 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             CurrentStroke = new EffectWithCopyStroke(brushArgs);
             CurrentStroke.InitPixelsEffect(ShaderType.GeometryAlphaEraseEffect);
         }
-
-        //protected override void Merge(Rect bounds) {            
-        //    using (var ds = RenderTarget.CreateDrawingSession()) {
-        //        ds.Blend = CanvasBlend.Copy;
-        //        ds.DrawImage(TempRenderTarget, bounds, bounds);
-        //    }
-        //}
     }
 }

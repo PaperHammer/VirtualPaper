@@ -14,11 +14,21 @@ namespace VirtualPaper.UIComponent.Navigation.TabView {
             DependencyProperty.Register(nameof(MainContent), typeof(object), typeof(ArcTabViewItemHeader), new PropertyMetadata(null));
 
         public bool IsUnsaved {
-            get { return (bool)GetValue(IsUnsaveProperty); }
-            set { SetValue(IsUnsaveProperty, value); }
+            get { return (bool)GetValue(IsUnsavedProperty); }
+            set { SetValue(IsUnsavedProperty, value); }
         }
-        public static readonly DependencyProperty IsUnsaveProperty =
-            DependencyProperty.Register(nameof(IsUnsaved), typeof(bool), typeof(ArcTabViewItem), new PropertyMetadata(true));
+        public static readonly DependencyProperty IsUnsavedProperty =
+        DependencyProperty.Register(
+            nameof(IsUnsaved),
+            typeof(bool),
+            typeof(ArcTabViewItemHeader),
+            new PropertyMetadata(false, OnIsUnsavedChanged));
+
+        private static void OnIsUnsavedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            if (d is ArcTabViewItemHeader control) {
+                control.IsUnsaved = (bool)e.NewValue;
+            }
+        }
 
         public ArcTabViewItemHeader() {
             this.InitializeComponent();

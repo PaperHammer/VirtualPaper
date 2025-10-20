@@ -4,8 +4,6 @@ using BuiltIn.InkSystem.Tool;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
 using Microsoft.UI.Input;
-using VirtualPaper.Common.Extensions;
-using Windows.Foundation;
 
 namespace BuiltIn.InkSystem.Core.Rendering {
     /// <summary>
@@ -69,7 +67,7 @@ namespace BuiltIn.InkSystem.Core.Rendering {
             // *** TempRenderTarget 重用与增量绘制 ***
             using (var dsTemp = TempRenderTarget.CreateDrawingSession()) {
                 dsTemp.Clear(Colors.Transparent);
-                CurrentStroke.RenderIncrement(dsTemp, geometry); // 调用子类绘制增量
+                CurrentStroke.RenderIncrement(dsTemp, geometry);
             }
             
             // *** 合成并绘制到 RenderTarget ***
@@ -81,7 +79,7 @@ namespace BuiltIn.InkSystem.Core.Rendering {
                 // 将合成结果写入 RenderTarget
                 using (var dsTarget = RenderTarget.CreateDrawingSession()) {
                     // 注意：因为 MergeImages 返回的 Effect 已经包含了 SnapshotRT 的内容，
-                    // 所以我们用 Copy 模式替换 RenderTarget 的内容。
+                    // 所以用 Copy 模式替换 RenderTarget 的内容。
                     dsTarget.Blend = CanvasBlend.Copy;
                     dsTarget.DrawImage(mergedImage);
                 }

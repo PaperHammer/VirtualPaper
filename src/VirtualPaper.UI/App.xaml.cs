@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -10,6 +10,7 @@ using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.UI.Utils;
 using VirtualPaper.UIComponent.Utils;
 using Windows.ApplicationModel.Core;
 using WinUIEx;
@@ -47,7 +48,7 @@ namespace VirtualPaper.UI {
 
             ConfigureServices();
             _userSettings = ObjectProvider.GetRequiredService<IUserSettingsClient>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-            SetAppTheme(_userSettings.Settings.ApplicationTheme);
+            //SetAppTheme(_userSettings.Settings.ApplicationTheme);
         }
 
         private static void ConfigureServices() {
@@ -67,7 +68,7 @@ namespace VirtualPaper.UI {
             CrossThreadInvoker.Initialize(new UiSynchronizationContext());
 
             // ref: https://github.com/microsoft/WindowsAppSDK/issues/1687
-            //ApplicationLanguages.PrimaryLanguageOverride = _userSettingsClient.Settings.Language;
+            //ApplicationLanguages.PrimaryLanguageOverride = _userSettings.Settings.Language;
 
             // ref: https://github.com/AndrewKeepCoding/WinUI3Localizer
             if (Constants.ApplicationType.IsMSIX) {

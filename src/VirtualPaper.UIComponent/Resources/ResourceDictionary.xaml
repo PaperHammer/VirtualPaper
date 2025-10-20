@@ -23,20 +23,19 @@
         <Setter Property="VerticalContentAlignment" Value="Stretch"/>
         <Setter Property="IsExpanded" Value="True"/>
     </Style>
+
+    <Style TargetType="ToolTip">
+        <Setter Property="Visibility" Value="Collapsed"/>
+    </Style>
     
+    <Style TargetType="Control" BasedOn="{StaticResource DefaultControlStyle}">
+        <Setter Property="KeyboardAcceleratorPlacementMode" Value="Hidden"/>
+    </Style>
+
     <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
         <Setter Property="ContextFlyout" Value="{x:Null}"/>
-        <Setter Property="KeyboardAcceleratorPlacementMode" Value="Hidden"/>
         <Setter Property="IsSpellCheckEnabled" Value="False"/>
     </Style>
-
-    <Style TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
-        <Setter Property="KeyboardAcceleratorPlacementMode" Value="Hidden"/>
-    </Style>
-
-    <!--<Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
-        <Setter Property="KeyboardAcceleratorPlacementMode" Value="Hidden"/>
-    </Style>-->
 
     <Style x:Key="MorePronouncedButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
         <Setter Property="Template">
@@ -84,6 +83,9 @@
     <!--  Other app resources here  -->
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
+            <BitmapImage x:Key="NaviIcon_ThemeAuto" UriSource="ms-appx:///Assets/ui_components/Light/theme_auto_light.png"/>
+            <BitmapImage x:Key="NaviIcon_ThemeLight" UriSource="ms-appx:///Assets/ui_components/Light/themelight_light.png"/>
+            <BitmapImage x:Key="NaviIcon_ThemeDark" UriSource="ms-appx:///Assets/ui_components/Light/themedark_light.png"/>
             <BitmapImage x:Key="DraftPanel_StatusBar_CursorIcon" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_cursor_24_regular.png"/>
             <BitmapImage x:Key="DraftPanel_StatusBar_BorderIcon" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_border_24_filled.png"/>
             <BitmapImage x:Key="DraftPanel_StatusBar_FitViewIcon" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_resize_small_24_filled.png"/>
@@ -92,6 +94,9 @@
         </ResourceDictionary>
 
         <ResourceDictionary x:Key="Dark">
+            <BitmapImage x:Key="NaviIcon_ThemeAuto" UriSource="ms-appx:///Assets/ui_components/Dark/theme_auto_dark.png"/>
+            <BitmapImage x:Key="NaviIcon_ThemeLight" UriSource="ms-appx:///Assets/ui_components/Dark/themelight_dark.png"/>
+            <BitmapImage x:Key="NaviIcon_ThemeDark" UriSource="ms-appx:///Assets/ui_components/Dark/themedark_dark.png"/>
             <BitmapImage x:Key="DraftPanel_StatusBar_CursorIcon" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_cursor_24_regular.png"/>
             <BitmapImage x:Key="DraftPanel_StatusBar_BorderIcon" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_border_24_filled.png"/>
             <BitmapImage x:Key="DraftPanel_StatusBar_FitViewIcon" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_resize_small_24_filled.png"/>

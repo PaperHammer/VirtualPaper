@@ -1,4 +1,4 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Grpc.Service.Models;
@@ -150,8 +150,7 @@ namespace VirtualPaper.GrpcServers {
 
         public override Task<Empty> SetSettings(Grpc_SettingsData request, ServerCallContext context) {
             bool restartRequired =
-                (Common.AppTheme)request.ApplicationTheme != _userSetting.Settings.ApplicationTheme
-                || request.Language != _userSetting.Settings.Language
+                request.Language != _userSetting.Settings.Language
                 || (Common.AppSystemBackdrop)request.SystemBackdrop != _userSetting.Settings.SystemBackdrop;
 
             if (request.IsAutoStart != _userSetting.Settings.IsAutoStart) {

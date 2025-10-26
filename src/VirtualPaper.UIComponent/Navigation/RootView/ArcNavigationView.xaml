@@ -200,7 +200,14 @@
                                     <ContentControl x:Name="PaneTitlePresenter" Margin="{ThemeResource NavigationViewPaneTitlePresenterMargin}" IsTabStop="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
                                 </Grid>--><!--
                             </Grid>-->
-                            <Button x:Name="NavigationViewBackButton" Style="{StaticResource ArcNavigationBackButtonNormalStyle}" Width="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TemplateSettings.SmallerPaneToggleButtonWidth}" VerticalAlignment="Top" Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TemplateSettings.BackButtonVisibility}" IsEnabled="{TemplateBinding IsBackEnabled}" HorizontalAlignment="Center" />
+                            <Button x:Name="NavigationViewBackButton" 
+                                Content="&#xE830;"
+                                Style="{StaticResource ArcNavigationButtonNormalStyle}"
+                                Width="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TemplateSettings.SmallerPaneToggleButtonWidth}" 
+                                VerticalAlignment="Top"                                 
+                                Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TemplateSettings.BackButtonVisibility}" 
+                                IsEnabled="{TemplateBinding IsBackEnabled}" 
+                                HorizontalAlignment="Center"/>
                         </Grid>
                         <!-- Content layouts -->
                         <Grid>

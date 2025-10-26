@@ -491,8 +491,8 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="SidebarProject" xml:space="preserve">
     <value>项目</value>
   </data>
-  <data name="SidebarWpSettings" xml:space="preserve">
-    <value>本地</value>
+  <data name="SidebarRepository" xml:space="preserve">
+    <value>仓库</value>
   </data>
   <data name="Text_Adjust" xml:space="preserve">
     <value>调整</value>

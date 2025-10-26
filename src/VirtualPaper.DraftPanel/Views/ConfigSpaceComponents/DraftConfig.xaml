@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="VirtualPaper.DraftPanel.Views.ConfigSpaceComponents.DraftConfig"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -20,17 +20,17 @@
                     </Grid.ColumnDefinitions>
 
                     <Image 
-                    Width="40"
-                    Height="40"
-                    Source="{x:Bind ItemImageKey, Converter={StaticResource ImgKeyConverters}}"
-                    Margin="0 0 10 0"/>
+                        Width="40"
+                        Height="40"
+                        Source="{x:Bind ItemImageKey, Converter={StaticResource ImgKeyConverters}}"
+                        Margin="0 0 10 0"/>
 
                     <TextBlock
-                    Grid.Column="1"
-                    FontSize="14"
-                    Margin="0 -2 0 0"
-                    VerticalAlignment="Center"
-                    Text="{x:Bind Name}"/>
+                        Grid.Column="1"
+                        FontSize="14"
+                        Margin="0 -2 0 0"
+                        VerticalAlignment="Center"
+                        Text="{x:Bind Name}"/>
                 </Grid>
             </ListViewItem>
         </DataTemplate>

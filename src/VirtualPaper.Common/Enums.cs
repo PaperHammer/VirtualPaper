@@ -15,6 +15,7 @@ namespace VirtualPaper.Common {
     }
 
     public enum AppTheme {
+        None,
         Auto,
         Light,
         Dark,

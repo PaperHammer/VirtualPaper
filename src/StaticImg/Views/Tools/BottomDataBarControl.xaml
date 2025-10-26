@@ -26,7 +26,7 @@
                     Margin="0 2 0 0"
                     Height="16"
                     Width="16"
-                    Source="{StaticResource DraftPanel_StatusBar_CursorIcon}"/>
+                    Source="{ThemeResource DraftPanel_StatusBar_CursorIcon}"/>
                 <TextBlock
                     FontSize="12"
                     Text="{x:Bind PointerPosText, Mode=OneWay}"/>
@@ -47,7 +47,7 @@
                     Margin="0 2 0 0"
                     Height="16"
                     Width="16"
-                    Source="{StaticResource DraftPanel_StatusBar_BorderIcon}"/>
+                    Source="{ThemeResource DraftPanel_StatusBar_BorderIcon}"/>
                 <TextBlock
                     FontSize="12"
                     Text="{x:Bind SelectionSizeText, Mode=OneWay}"/>
@@ -68,7 +68,7 @@
                     Margin="0 2 0 0"
                     Height="16"
                     Width="16"
-                    Source="{StaticResource DraftPanel_StatusBar_SizeIcon}"/>
+                    Source="{ThemeResource DraftPanel_StatusBar_SizeIcon}"/>
                 <TextBlock
                     FontSize="12"
                     Text="{x:Bind CanvasSizeText, Mode=OneWay}"/>
@@ -93,7 +93,7 @@
                     Margin="0 2 0 0"
                     Height="16"
                     Width="16"
-                    Source="{StaticResource DraftPanel_StatusBar_FitViewIcon}"/>
+                    Source="{ThemeResource DraftPanel_StatusBar_FitViewIcon}"/>
             </Button>
 
             <input:ArcComboBox

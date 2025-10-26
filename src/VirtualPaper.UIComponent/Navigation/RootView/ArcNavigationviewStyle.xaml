@@ -4,8 +4,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     xmlns:animatedvisuals="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals"
-    xmlns:local="using:VirtualPaper.UIComponent.Navigation">
-    <Style x:Key="ArcNavigationBackButtonNormalStyle" TargetType="Button">
+    xmlns:local="using:VirtualPaper.UIComponent.Navigation"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters">
+    <Style x:Key="ArcNavigationButtonNormalStyle" TargetType="Button">
         <Setter Property="Background" Value="{ThemeResource NavigationViewBackButtonBackground}" />
         <Setter Property="Foreground" Value="{ThemeResource NavigationViewItemForeground}" />
         <Setter Property="FontFamily" Value="{ThemeResource SymbolThemeFontFamily}" />
@@ -15,7 +16,6 @@
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="UseSystemFocusVisuals" Value="{StaticResource UseSystemFocusVisuals}" />
-        <Setter Property="Content" Value="&#xE830;" />
         <Setter Property="Margin" Value="4,2" />
         <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}" />
         <Setter Property="Template">
@@ -32,12 +32,15 @@
                                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootGrid" Storyboard.TargetProperty="Background">
                                             <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource NavigationViewButtonBackgroundPointerOver}" />
                                         </ObjectAnimationUsingKeyFrames>
-                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Content" Storyboard.TargetProperty="Foreground">
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ActiveIcon" Storyboard.TargetProperty="Foreground">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource NavigationViewButtonForegroundPointerOver}" />
+                                        </ObjectAnimationUsingKeyFrames>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ActivePresenter" Storyboard.TargetProperty="Foreground">
                                             <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource NavigationViewButtonForegroundPointerOver}" />
                                         </ObjectAnimationUsingKeyFrames>
                                     </Storyboard>
                                     <VisualState.Setters>
-                                        <Setter Target="Content.(controls:AnimatedIcon.State)" Value="PointerOver" />
+                                        <Setter Target="ActiveContent.(controls:AnimatedIcon.State)" Value="PointerOver" />
                                     </VisualState.Setters>
                                 </VisualState>
 
@@ -46,37 +49,54 @@
                                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootGrid" Storyboard.TargetProperty="Background">
                                             <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource NavigationViewButtonBackgroundPressed}" />
                                         </ObjectAnimationUsingKeyFrames>
-                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Content" Storyboard.TargetProperty="Foreground">
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ActiveIcon" Storyboard.TargetProperty="Foreground">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource NavigationViewButtonForegroundPressed}" />
+                                        </ObjectAnimationUsingKeyFrames>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ActivePresenter" Storyboard.TargetProperty="Foreground">
                                             <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource NavigationViewButtonForegroundPressed}" />
                                         </ObjectAnimationUsingKeyFrames>
                                     </Storyboard>
                                     <VisualState.Setters>
-                                        <Setter Target="Content.(controls:AnimatedIcon.State)" Value="Pressed" />
+                                        <Setter Target="ActiveContent.(controls:AnimatedIcon.State)" Value="Pressed" />
                                     </VisualState.Setters>
                                 </VisualState>
 
                                 <VisualState x:Name="Disabled">
                                     <Storyboard>
-                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Content" Storyboard.TargetProperty="Foreground">
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ActiveIcon" Storyboard.TargetProperty="Foreground">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource NavigationViewButtonForegroundDisabled}" />
+                                        </ObjectAnimationUsingKeyFrames>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ActivePresenter" Storyboard.TargetProperty="Foreground">
                                             <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource NavigationViewButtonForegroundDisabled}" />
                                         </ObjectAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </VisualState>
                             </VisualStateGroup>
-
                         </VisualStateManager.VisualStateGroups>
 
-                        <FontIcon x:Name="Content" 
-                            Height="{TemplateBinding Height}" 
-                            Width="{TemplateBinding Width}"
-                            FontSize="{TemplateBinding FontSize}"
-                            FontFamily="{TemplateBinding FontFamily}"
-                            Glyph="{TemplateBinding Content}"
-                            Foreground="{TemplateBinding Foreground}"
-                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                            MirroredWhenRightToLeft="True"/>
+                        <Grid x:Name="ActiveContent">
+                            <FontIcon x:Name="ActiveIcon"
+                                Visibility="{Binding Content, 
+                                    RelativeSource={RelativeSource TemplatedParent}, 
+                                    Converter={StaticResource IsStringConverter}}"
+                                Height="{TemplateBinding Height}" 
+                                Width="{TemplateBinding Width}"
+                                Glyph="{TemplateBinding Content}"
+                                FontFamily="{TemplateBinding FontFamily}"
+                                FontSize="{TemplateBinding FontSize}"
+                                Foreground="{TemplateBinding Foreground}"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                MirroredWhenRightToLeft="True"/>
 
+                            <ContentPresenter x:Name="ActivePresenter"
+                                Visibility="{Binding Content, 
+                                    RelativeSource={RelativeSource TemplatedParent}, 
+                                    Converter={StaticResource IsStringConverter}, ConverterParameter=Invert}"
+                                Content="{TemplateBinding Content}"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Grid>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

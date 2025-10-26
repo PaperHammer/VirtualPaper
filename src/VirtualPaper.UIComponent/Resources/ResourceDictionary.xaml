@@ -4,12 +4,16 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters">
 
-    <cvs:DynamicVisibilityConverter x:Key="DynamicVisibilityConverter"/>
-    <cvs:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
-    <cvs:ThemeResourceConverter x:Key="ThemeResourceConverter"/>
-    <cvs:ImgKeyConverters x:Key="ImgKeyConverters"/>
     <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    <cvs:DynamicVisibilityConverter x:Key="DynamicVisibilityConverter"/>
+    <cvs:ImgKeyConverters x:Key="ImgKeyConverters"/>
+    <cvs:IsStringConverter x:Key="IsStringConverter"/>
+    <cvs:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
+    <cvs:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+    <cvs:ThemeResourceConverter x:Key="ThemeResourceConverter"/>
 
+    <BitmapImage x:Key="NaviIcon_ThemeLight" UriSource="ms-appx:///Assets/ui_components/Light/theme_light.png"/>
+    <BitmapImage x:Key="NaviIcon_ThemeDark" UriSource="ms-appx:///Assets/ui_components/Dark/theme_dark.png"/>
     <BitmapImage x:Key="UIC_Create_Common" UriSource="ms-appx:///Assets/ui_components/icons8-image-96.png"/>
     <BitmapImage x:Key="UIC_Create_3D" UriSource="ms-appx:///Assets/ui_components/icons8-picture-94.png"/>
     <BitmapImage x:Key="DraftPanel_Create_StaticImge_Desc" UriSource="ms-appx:///Assets/ui_components/project-create-static-image-desc.png"/>
@@ -41,8 +45,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border 
-                        x:Name="RootBorder"
+                    <Border x:Name="RootBorder"
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
@@ -67,8 +70,7 @@
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
 
-                        <ContentPresenter 
-                            x:Name="ContentPresenter"
+                        <ContentPresenter x:Name="ContentPresenter"
                             Content="{TemplateBinding Content}"
                             ContentTemplate="{TemplateBinding ContentTemplate}"
                             Margin="{TemplateBinding Padding}"
@@ -83,9 +85,7 @@
     <!--  Other app resources here  -->
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
-            <BitmapImage x:Key="NaviIcon_ThemeAuto" UriSource="ms-appx:///Assets/ui_components/Light/theme_auto_light.png"/>
-            <BitmapImage x:Key="NaviIcon_ThemeLight" UriSource="ms-appx:///Assets/ui_components/Light/themelight_light.png"/>
-            <BitmapImage x:Key="NaviIcon_ThemeDark" UriSource="ms-appx:///Assets/ui_components/Light/themedark_light.png"/>
+            <BitmapImage x:Key="NaviIcon_ThemeAuto" UriSource="ms-appx:///Assets/ui_components/Light/theme_auto.png"/>
             <BitmapImage x:Key="DraftPanel_StatusBar_CursorIcon" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_cursor_24_regular.png"/>
             <BitmapImage x:Key="DraftPanel_StatusBar_BorderIcon" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_border_24_filled.png"/>
             <BitmapImage x:Key="DraftPanel_StatusBar_FitViewIcon" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_resize_small_24_filled.png"/>
@@ -94,9 +94,7 @@
         </ResourceDictionary>
 
         <ResourceDictionary x:Key="Dark">
-            <BitmapImage x:Key="NaviIcon_ThemeAuto" UriSource="ms-appx:///Assets/ui_components/Dark/theme_auto_dark.png"/>
-            <BitmapImage x:Key="NaviIcon_ThemeLight" UriSource="ms-appx:///Assets/ui_components/Dark/themelight_dark.png"/>
-            <BitmapImage x:Key="NaviIcon_ThemeDark" UriSource="ms-appx:///Assets/ui_components/Dark/themedark_dark.png"/>
+            <BitmapImage x:Key="NaviIcon_ThemeAuto" UriSource="ms-appx:///Assets/ui_components/Dark/theme_auto.png"/>
             <BitmapImage x:Key="DraftPanel_StatusBar_CursorIcon" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_cursor_24_regular.png"/>
             <BitmapImage x:Key="DraftPanel_StatusBar_BorderIcon" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_border_24_filled.png"/>
             <BitmapImage x:Key="DraftPanel_StatusBar_FitViewIcon" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_resize_small_24_filled.png"/>

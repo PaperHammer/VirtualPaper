@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -19,37 +18,47 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.ViewModels;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
+using VirtualPaper.UIComponent.Windowing;
 using VirtualPaper.WpSettingsPanel;
-using Windows.Graphics;
 using WinRT.Interop;
-using WinUIEx;
 
 namespace VirtualPaper.UI {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainWindow : WindowEx, IWindowBridge {
+    public sealed partial class MainWindow : ArcWindow, IWindowBridge {
+        public override IReadOnlyList<FrameworkElement> TitleBarChildren =>
+            [this.TitleBarIcon, this.TitleTextBlock, this.SubTitleTextBlock];
+        public override Grid AppRoot => this.MainGrid;
+        public override Grid AppTitleBar => this.TitleBar;
+        public override NavigationView AppNavView => this.NavigationViewControl;
+        public override AppSystemBackdrop CurrentBackdrop => _userSettings.Settings.SystemBackdrop;
+        public override Image AppThemeTransitionImage => this.ThemeTransitionImage;
+
         public NavigationView NavigationView {
             get { return NavigationViewControl; }
         }
 
         public MainWindow(
             MainWindowViewModel viewModel,
-            ICommandsClient commandsClient) {
+            IUserSettingsClient userSettingsClient,
+            ICommandsClient commandsClient) : base() {
             this.InitializeComponent();
 
+            _userSettings = userSettingsClient;
             _commandsClient = commandsClient;
             _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
             _viewModel = viewModel;
-            this.MainGrid.DataContext = _viewModel;
+            this.AppRoot.DataContext = _viewModel;
 
             SetWindowStartupPosition();
             SetWindowStyle();
             SetWindowTitleBar();
         }
 
-        private void CommandsClient_UIRecieveCmd(object? sender, int e) {
-            HandleIpcMessage(e);
+        private async void MainGrid_Loaded(object sender, RoutedEventArgs e) {
+            AfterRootLoaded();
+            await SetThemeAsync(_userSettings.Settings.ApplicationTheme);
         }
 
         #region bridge
@@ -115,52 +124,44 @@ namespace VirtualPaper.UI {
             //ref: https://learn.microsoft.com/en-us/windows/apps/develop/title-bar?tabs=wasdk
             if (AppWindowTitleBar.IsCustomizationSupported()) {
                 var titleBar = this.AppWindow.TitleBar;
-                titleBar.ExtendsContentIntoTitleBar = true;
-                titleBar.ButtonBackgroundColor = Colors.Transparent;
-                titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-                titleBar.ButtonForegroundColor = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForeground).Color;
 
-                AppTitleBar.Loaded += AppTitleBar_Loaded;
-                AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
+#if DEBUG
+                SubTitleTextBlock.Visibility = Visibility.Visible;
+#endif
+                this.ExtendsContentIntoTitleBar = true;
+                this.SetTitleBar(AppTitleBar);
+                this.AppWindow.SetIcon("Assets/virtualpaper.ico");
+                titleBar.PreferredHeightOption = TitleBarHeightOption.Standard;
             }
             else {
-                AppTitleBar.Visibility = Visibility.Collapsed;
-                this.UseImmersiveDarkModeEx(_viewModel._userSettings.Settings.ApplicationTheme == AppTheme.Dark);
+                AppTitleBar.Visibility = Visibility.Collapsed;                
+                this.UseImmersiveDarkModeEx(_userSettings.Settings.ApplicationTheme == AppTheme.Dark);
             }
         }
 
         private void SetWindowStyle() {
-            this.SystemBackdrop = _viewModel._userSettings.Settings.SystemBackdrop switch {
+            this.SystemBackdrop = _userSettings.Settings.SystemBackdrop switch {
                 AppSystemBackdrop.Mica => new MicaBackdrop(),
                 AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
                 _ => default,
             };
         }
 
-        private void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
-            if (args.WindowActivationState == WindowActivationState.Deactivated) {
-                TitleTextBlock.Foreground = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForegroundDisabled);
-            }
-            else {
-                TitleTextBlock.Foreground = ResourcesUtil.GetBrush(Constants.ColorKey.WindowCaptionForeground);
-            }
-        }
-
         private void WindowEx_Closed(object sender, WindowEventArgs args) {
             try {
                 _commandsClient.UIRecieveCmd -= CommandsClient_UIRecieveCmd;
 
-                if (_viewModel._userSettings.Settings.IsFirstRun) {
+                if (_userSettings.Settings.IsFirstRun) {
                     args.Handled = true;
-                    _viewModel._userSettings.Settings.IsFirstRun = false;
-                    _viewModel._userSettings.Save<ISettings>();
+                    _userSettings.Settings.IsFirstRun = false;
+                    _userSettings.Save<ISettings>();
                     this.Close();
                 }
 
-                if (_viewModel._userSettings.Settings.IsUpdated) {
+                if (_userSettings.Settings.IsUpdated) {
                     args.Handled = true;
-                    _viewModel._userSettings.Settings.IsUpdated = false;
-                    _viewModel._userSettings.Save<ISettings>();
+                    _userSettings.Settings.IsUpdated = false;
+                    _userSettings.Save<ISettings>();
                     this.Close();
                 }
 
@@ -172,13 +173,18 @@ namespace VirtualPaper.UI {
         }
         #endregion
 
+        #region ipc
+        private void CommandsClient_UIRecieveCmd(object? sender, int e) {
+            HandleIpcMessage(e);
+        }
+
         private void HandleIpcMessage(int type) {
             try {
                 MessageType messageType = (MessageType)type;
                 switch (messageType) {
                     case MessageType.cmd_active:
                         CrossThreadInvoker.InvokeOnUIThread(() => {
-                            this.BringToFront();
+                            this.Activate();
                         });
                         break;
                     default:
@@ -189,6 +195,7 @@ namespace VirtualPaper.UI {
                 App.Log.Error(ex);
             }
         }
+        #endregion
 
         #region navigation control
         private void OnNavigationViewSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
@@ -196,13 +203,13 @@ namespace VirtualPaper.UI {
                 var selectedItem = args.SelectedItemContainer;
 
                 if (args.SelectedItemContainer.Name == Nav_WpSettings.Name) {
-                    Navigate(typeof(WpSettings));
+                    Navigate(typeof(WpSettings), this);
                 }
                 else if (args.SelectedItemContainer.Name == Nav_Draft.Name) {
-                    Navigate(typeof(Draft));
+                    Navigate(typeof(Draft), this);
                 }
                 else if (args.SelectedItemContainer.Name == Nav_AppSettings.Name) {
-                    Navigate(typeof(AppSettings));
+                    Navigate(typeof(AppSettings), this);
                 }
             }
             catch (Exception ex) {
@@ -211,77 +218,25 @@ namespace VirtualPaper.UI {
             }
         }
 
-        // Wraps a call to rootFrame.Navigate to give the Page a way to know which NavigationRootPage is navigating.
-        // Please call this function rather than rootFrame.Navigate to navigate the rootFrame.
         public void Navigate(Type pageType, object? targetPageArguments = null, NavigationTransitionInfo? navigationTransitionInfo = null) {
             rootFrame.Navigate(pageType, targetPageArguments, navigationTransitionInfo);
         }
         #endregion
 
-        #region window title bar
-        private void AppTitleBar_Loaded(object sender, RoutedEventArgs e) {
-            if (AppWindowTitleBar.IsCustomizationSupported()) {
-                SetDragRegionForCustomTitleBar(this.AppWindow);
+        private async void LightAndDarkButton_Click(object sender, RoutedEventArgs e) {
+            LightAndDarkButton.IsEnabled = false;
+            try {
+                await SetThemeAsync();
+            }
+            finally {
+                await Task.Delay(200);
+                LightAndDarkButton.IsEnabled = true;
             }
         }
 
-        private void AppTitleBar_SizeChanged(object sender, SizeChangedEventArgs e) {
-            if (AppWindowTitleBar.IsCustomizationSupported()
-                && this.AppWindow.TitleBar.ExtendsContentIntoTitleBar) {
-                // Update drag region if the size of the title bar changes.
-                SetDragRegionForCustomTitleBar(this.AppWindow);
-            }
-        }
-
-        private void SetDragRegionForCustomTitleBar(AppWindow appWindow) {
-            if (AppWindowTitleBar.IsCustomizationSupported()
-                && appWindow.TitleBar.ExtendsContentIntoTitleBar) {
-                double scaleAdjustment = SystemUtil.GetScaleAdjustment(this);
-
-                RightPaddingColumn.Width = new GridLength(appWindow.TitleBar.RightInset / scaleAdjustment);
-                LeftPaddingColumn.Width = new GridLength(appWindow.TitleBar.LeftInset / scaleAdjustment);
-
-                List<RectInt32> dragRectsList = [];
-
-                RectInt32 dragRectL;
-                dragRectL.X = (int)((LeftPaddingColumn.ActualWidth) * scaleAdjustment);
-                dragRectL.Y = 0;
-                dragRectL.Height = (int)(AppTitleBar.ActualHeight * scaleAdjustment);
-                dragRectL.Width = (int)((IconColumn.ActualWidth
-                                        + TitleColumn.ActualWidth
-                                        + LeftDragColumn.ActualWidth) * scaleAdjustment);
-                dragRectsList.Add(dragRectL);
-
-                RectInt32 dragRectR;
-                dragRectR.X = (int)((LeftPaddingColumn.ActualWidth
-                                    + IconColumn.ActualWidth
-                                    + TitleTextBlock.ActualWidth
-                                    + LeftDragColumn.ActualWidth) * scaleAdjustment);
-                dragRectR.Y = 0;
-                dragRectR.Height = (int)(AppTitleBar.ActualHeight * scaleAdjustment);
-                dragRectR.Width = (int)(RightDragColumn.ActualWidth * scaleAdjustment);
-                dragRectsList.Add(dragRectR);
-
-                RectInt32[] dragRects = [.. dragRectsList];
-
-                appWindow.TitleBar.SetDragRectangles(dragRects);
-            }
-        }
-        #endregion
-
+        private readonly IUserSettingsClient _userSettings;
         private readonly ICommandsClient _commandsClient;
-        private readonly MainWindowViewModel _viewModel;
+        internal readonly MainWindowViewModel _viewModel;
         private nint _windowHandle = -1;
-
-        private void LightAndDarkButton_Click(object sender, RoutedEventArgs e) {
-            //if (a == 1) {
-            //    aaa(ElementTheme.Dark);
-            //}
-            //else {
-            //    aaa(ElementTheme.Light);
-            //}
-            //a ^= 1;
-        }
-        private int a = 1;
     }
 }

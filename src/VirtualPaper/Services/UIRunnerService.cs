@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using VirtualPaper.Common;
@@ -81,7 +81,7 @@ namespace VirtualPaper.Services {
                         SetWindowRect(_processUI, prevWindowRect);
                     }
                     catch (Exception ie) {
-                        App.Log.Error($"Failed to restore windowrect: {ie.Message}");
+                        App.Log.Error(ie);
                     }
                 }
                 _isFirstRun = false;

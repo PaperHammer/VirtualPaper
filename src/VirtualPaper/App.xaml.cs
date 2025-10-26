@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
@@ -36,9 +36,7 @@ using VirtualPaper.Utils.Theme;
 using VirtualPaper.Views;
 using VirtualPaper.Views.WindowsMsg;
 using Wpf.Ui.Appearance;
-using static VirtualPaper.Common.Constants;
 using Application = System.Windows.Application;
-using AppTheme = VirtualPaper.Common.AppTheme;
 using MessageBox = System.Windows.MessageBox;
 
 namespace VirtualPaper {

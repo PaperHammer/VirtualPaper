@@ -19,6 +19,7 @@
 
                 <!--Controls-->
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Resources/ResourceDictionary.xaml" />
+
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ColorPicker/ArcColorPicker.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ColorPicker/ArcColorSpectrum.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/CheckBox/ArcCheckBox.xaml" />

@@ -16,12 +16,12 @@
         <DataTemplate x:Key="ToolItemTemplate" x:DataType="lcl_models:ToolItem">
             <Grid>
                 <FontIcon 
-                    Visibility="{x:Bind Glyph, Converter={StaticResource NullToVisibilityConverter}}" 
+                    Visibility="{x:Bind Glyph, Converter={StaticResource StringToVisibilityConverter}}" 
                     Glyph="{x:Bind Glyph}" 
                     Width="20"/>
                 <ImageIcon 
-                    Visibility="{x:Bind ImageSourceKey, Converter={StaticResource NullToVisibilityConverter}}" 
-                    Source="{x:Bind ImageSourceKey, Converter={StaticResource ThemeResourceConverter}}" 
+                    Visibility="{x:Bind ImageSourceKey, Converter={StaticResource StringToVisibilityConverter}}" 
+                    Source="{x:Bind ImageSourceKey, Converter={StaticResource ThemeResourceConverter}, Mode=OneWay}" 
                     Width="22" 
                     Height="22"/>
             </Grid>

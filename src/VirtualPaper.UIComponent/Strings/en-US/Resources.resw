@@ -491,8 +491,8 @@ Author: PaperHammer</value>
   <data name="SidebarProject" xml:space="preserve">
     <value>Project</value>
   </data>
-  <data name="SidebarWpSettings" xml:space="preserve">
-    <value>Local</value>
+  <data name="SidebarRepository" xml:space="preserve">
+    <value>Repo</value>
   </data>
   <data name="Text_Adjust" xml:space="preserve">
     <value>Adjust</value>

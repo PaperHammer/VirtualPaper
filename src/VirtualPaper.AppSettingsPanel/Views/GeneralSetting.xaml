@@ -229,56 +229,6 @@
                 </Grid>
 
                 <Grid
-                    x:Name="Themes"
-                    Height="90"
-                    Margin="0 5"
-                    Padding="20 0"
-                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <FontIcon
-                        Grid.Column="0" 
-                        Margin="0 0 20 0"
-                        Glyph="&#xE790;"/>
-
-                    <Grid
-                        Grid.Column="1"
-                        VerticalAlignment="Center">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                        </Grid.RowDefinitions>
-
-                        <TextBlock 
-                            Grid.Row="0" 
-                            Text="{Binding AppearanceAndAction_AppTheme}"/>
-                        <TextBlock 
-                            Grid.Row="1" 
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{Binding AppearanceAndAction_AppThemeExplain}"/>
-                        <HyperlinkButton 
-                            Grid.Row="2" 
-                            Margin="0"
-                            Padding="0"
-                            Content="{Binding AppearanceAndAction_AppThemeHyperlink}"
-                            Click="HyperlinkButton_Click"/>
-                    </Grid>
-
-                    <ComboBox 
-                        x:Name="AppThemeCombo"
-                        Grid.Column="2"
-                        VerticalAlignment="Center"
-                        ItemsSource="{Binding Themes}"
-                        SelectedIndex="{Binding SeletedThemeIndx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        Width="200" />
-                </Grid>
-
-                <Grid
                     x:Name="SystemBackdrop"
                     Height="90"
                     Margin="0 5"

@@ -1,4 +1,4 @@
-﻿namespace VirtualPaper.Common {
+namespace VirtualPaper.Common {
     public static class Constants {
 
         //public static string GetMemory(object o) // 获取引用类型的内存地址方法    
@@ -83,6 +83,7 @@
             public static string GrpcPipeServerName => "Grpc_" + PipeServerName;
             public static string PipeServerName => UniqueAppUid + Environment.UserName;
             public static string UniqueAppUid => "Virtual:WALLPAPERSYSTEM";
+            public static string UniqueAppUIUid => "Virtual:UI:WALLPAPERSYSTEM";
         }
 
         public static class EnviromentVarKey {
@@ -208,7 +209,7 @@
             public static string SidebarAppSettings => "SidebarAppSettings";
             public static string SidebarGallery => "SidebarGallery";
             public static string SidebarProject => "SidebarProject";
-            public static string SidebarWpSettings => "SidebarWpSettings";
+            public static string SidebarRepository => "SidebarRepository";
             public static string Text_Adjust => "Text_Adjust";
             public static string Text_Apply => "Text_Apply";
             public static string Text_ApplyToLockBG => "Text_ApplyToLockBG";

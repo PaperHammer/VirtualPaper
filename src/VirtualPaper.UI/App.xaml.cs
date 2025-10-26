@@ -1,19 +1,22 @@
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using NLog;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
-using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UI.Utils;
 using VirtualPaper.UIComponent.Utils;
 using Windows.ApplicationModel.Core;
-using WinUIEx;
+using WinRT.Interop;
+using WinRT;
+//using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -24,6 +27,21 @@ namespace VirtualPaper.UI {
     /// </summary>
     public partial class App : Application {
         internal static Logger Log => LogManager.GetCurrentClassLogger();
+
+        // 来自 Application-IApplicationFactoryMethods
+        // 升级 WinUI 3 SDK 后请确认此 GUID 未更改
+        //public static ref readonly Guid IID {
+        //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //    get {
+        //        return ref Unsafe.As<byte, Guid>(ref MemoryMarshal.GetReference((ReadOnlySpan<byte>)
+        //            [
+        //                87, 102, 217, 159, 148, 82, 101, 90, 161, 219,
+        //                79, 234, 20, 53, 151, 218
+        //            ]));
+        //    }
+        //}
+        private static readonly Guid IApplicationIID =
+            new(0x9FD96657, 0x5294, 0x5A65, 0xA1, 0xDB, 0x4F, 0xEA, 0x14, 0x35, 0x97, 0xDA);
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -38,6 +56,21 @@ namespace VirtualPaper.UI {
                 Process.GetCurrentProcess().Kill();
             }
 #endif
+
+            #region 唯一实例检查
+            try {
+                // 保证全局只有一个实例
+                if (!_mutex.WaitOne(TimeSpan.FromSeconds(1), false)) {
+                    ShutDown();
+                    return;
+                }
+            }
+            catch (AbandonedMutexException e) {
+                //unexpected app termination.
+                Debug.WriteLine(e.Message);
+            }
+            #endregion
+
             Log.Info("Starting...");
 
             this.InitializeComponent();
@@ -78,26 +111,8 @@ namespace VirtualPaper.UI {
                 await LanguageUtil.InitializeLocalizerForUnpackaged(_userSettings.Settings.Language);
             }
 
-            ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton, ObjectLifetime.Singleton).Show();
-            // 避免文字无法初始化
-            //ObjectProvider.GetRequiredService<TrayCommand>();
-            //Services.GetRequiredService<TrayCommand>();
-        }
-
-        //Cannot change runtime.
-        //Issue: https://github.com/microsoft/microsoft-ui-xaml/issues/4474
-        private void SetAppTheme(AppTheme theme) {
-            switch (theme) {
-                case AppTheme.Auto:
-                    //Nothing
-                    break;
-                case AppTheme.Light:
-                    this.RequestedTheme = ApplicationTheme.Light;
-                    break;
-                case AppTheme.Dark:
-                    this.RequestedTheme = ApplicationTheme.Dark;
-                    break;
-            }
+            var m_window = ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            m_window.Activate();
         }
 
         private static void LogUnhandledException<T>(T exception) => Log.Error(exception);
@@ -128,5 +143,6 @@ namespace VirtualPaper.UI {
         }
 
         private readonly IUserSettingsClient _userSettings;
+        private readonly Mutex _mutex = new(false, Constants.CoreField.UniqueAppUIUid);
     }
 }

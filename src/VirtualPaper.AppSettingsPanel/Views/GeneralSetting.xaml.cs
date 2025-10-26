@@ -1,4 +1,3 @@
-using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -6,8 +5,6 @@ using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
-using Windows.System;
-using WinRT;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -47,10 +44,6 @@ namespace VirtualPaper.AppSettingsPanel.Views {
             UpdateProgressRing.IsActive = false;
 
             await _viewModel.StartDownloadAsync();
-        }
-
-        private async void HyperlinkButton_Click(object _, RoutedEventArgs e) {
-            await Launcher.LaunchUriAsync(new Uri("ms-settings:themes"));
         }
 
         private void ChangeFileStorageButton_Click(object sender, RoutedEventArgs e) {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -39,9 +39,6 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         public string Text_AppearanceAndAction { get; set; } = string.Empty;
         public string AppearanceAndAction_AutoStart { get; set; } = string.Empty;
         public string AppearanceAndAction_AutoStatExplain { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppTheme { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppThemeExplain { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppThemeHyperlink { get; set; } = string.Empty;
         public string AppearanceAndAction_AppSystemBackdrop { get; set; } = string.Empty;
         public string AppearanceAndAction_AppSystemBackdropExplain { get; set; } = string.Empty;
         public string AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink { get; set; } = string.Empty;
@@ -66,7 +63,6 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
         }
 
-        public List<string> Themes { get; set; } = [];
         public List<string> SystemBackdrops { get; set; } = [];
         public List<LanguagesModel> Languages { get; set; } = [];
 
@@ -121,19 +117,6 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 if (_userSettingsClient.Settings.IsAutoStart == value) return;
 
                 _userSettingsClient.Settings.IsAutoStart = value;
-                UpdateSettingsConfigFile();
-                OnPropertyChanged();
-            }
-        }
-
-        private int _seletedThemeIndx;
-        public int SeletedThemeIndx {
-            get => _seletedThemeIndx;
-            set {
-                _seletedThemeIndx = value;
-                if (_userSettingsClient.Settings.ApplicationTheme == (AppTheme)value) return;
-
-                _userSettingsClient.Settings.ApplicationTheme = (AppTheme)value;
                 UpdateSettingsConfigFile();
                 OnPropertyChanged();
             }
@@ -211,7 +194,6 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
         private void InitContent() {
             _appUpdater.UpdateChecked += AppUpdater_UpdateChecked;
-            _seletedThemeIndx = (int)_userSettingsClient.Settings.ApplicationTheme;
             _seletedSystemBackdropIndx = (int)_userSettingsClient.Settings.SystemBackdrop;
             _selectedLanguage = SupportedLanguages.GetLanguage(_userSettingsClient.Settings.Language);
 
@@ -235,13 +217,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
             Text_AppearanceAndAction = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Text_AppearanceAndAction);
             AppearanceAndAction_AutoStart = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AutoStart);
-            AppearanceAndAction_AutoStatExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AutoStatExplain);
-            AppearanceAndAction_AppTheme = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppTheme);
-            AppearanceAndAction_AppThemeExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppThemeExplain);
-            AppearanceAndAction_AppThemeHyperlink = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppThemeHyperlink);
-            _themeDark = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction__themeDark);
-            _themeLight = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction__themeLight);
-            _themeFollowSystem = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction__themeFollowSystem);
+            AppearanceAndAction_AutoStatExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AutoStatExplain);            
             AppearanceAndAction_AppSystemBackdrop = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppSystemBackdrop);
             AppearanceAndAction_AppSystemBackdropExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppSystemBackdropExplain);
             AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink);
@@ -258,7 +234,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private void InitCollections() {
-            Themes = [_themeFollowSystem, _themeLight, _themeDark];
+            //Themes = [_themeFollowSystem, _themeLight, _themeDark];
             Languages = [.. SupportedLanguages.Languages];
             SystemBackdrops = [_sysbdDefault, _sysbdMica, _sysbdAcrylic];
         }
@@ -278,7 +254,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             await _appUpdater.CheckUpdate();
         }
 
-        private void AppUpdater_UpdateChecked(object sender, AppUpdaterEventArgs e) {
+        private void AppUpdater_UpdateChecked(object? sender, AppUpdaterEventArgs e) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
                 MenuUpdate(e.UpdateStatus, e.UpdateDate, e.UpdateVersion);
             });
@@ -440,9 +416,6 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
         }
 
-        private string _themeDark = string.Empty;
-        private string _themeLight = string.Empty;
-        private string _themeFollowSystem = string.Empty;
         private string _sysbdDefault = string.Empty;
         private string _sysbdMica = string.Empty;
         private string _sysbdAcrylic = string.Empty;

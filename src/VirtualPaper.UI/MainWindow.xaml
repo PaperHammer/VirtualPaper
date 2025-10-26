@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<winex:WindowEx
+<arcwin:ArcWindow
     x:Class="VirtualPaper.UI.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,55 +7,64 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:winex="using:WinUIEx"
+    xmlns:arcwin="using:VirtualPaper.UIComponent.Windowing"
     xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
     xmlns:models="using:VirtualPaper.UIComponent.Models"
     xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
     mc:Ignorable="d"
-    Width="1400"
-    Height="880"
-    MinWidth="300"
-    MinHeight="80"   
-    Closed="WindowEx_Closed"
-    Activated="WindowEx_Activated"
-    TaskBarIcon="virtualpaper.ico"
+    Closed="WindowEx_Closed"    
+    Width="1440"
+    Height="900"
+    MinHeight="640"
+    MinWidth="500"
     Title="Virtual Paper">
 
-    <Grid x:Name="MainGrid">
+    <Grid x:Name="MainGrid" Loaded="MainGrid_Loaded">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid x:Name="AppTitleBar"
+        <Grid x:Name="TitleBar"
             Height="32">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="LeftPaddingColumn" Width="0" />
                 <ColumnDefinition x:Name="IconColumn" Width="Auto" />
                 <ColumnDefinition x:Name="TitleColumn" Width="Auto" />
+                <ColumnDefinition x:Name="SubTitleColumn" Width="Auto" />
                 <ColumnDefinition x:Name="LeftDragColumn" Width="*" />
                 <ColumnDefinition x:Name="RightDragColumn" Width="*" />
                 <ColumnDefinition x:Name="RightPaddingColumn" Width="0" />
             </Grid.ColumnDefinitions>
 
-            <Image x:Name="TitleBarIcon"
+            <ImageIcon x:Name="TitleBarIcon"
                 Grid.Column="1"
-                Width="16"
-                Height="16"
+                Height="20"
                 Margin="8,0,0,0"
-                VerticalAlignment="Center"
-                Source="ms-appx:///Assets/icon-vp-48.png" />
+                Source="/Assets/virtualpaper.ico" />
             <TextBlock x:Name="TitleTextBlock"
+                Tag="main"
                 Grid.Column="2"
                 Margin="8,0,0,0"
                 VerticalAlignment="Center"
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Text="Virtual Paper" />
+            <TextBlock x:Name="SubTitleTextBlock"
+                Tag="sub"
+                Grid.Column="3"
+                Margin="8,0,0,0"
+                VerticalAlignment="Center"
+                Visibility="Collapsed"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                Text="Dev" />
         </Grid>
 
         <navi:ArcNavigationView x:Name="NavigationViewControl"
             Grid.Row="1"
             CompactPaneLength="64"
             IsBackButtonVisible="Visible"
+            IsBackEnabled="{x:Bind rootFrame.CanGoBack, Mode=OneWay}"
             IsPaneToggleButtonVisible="False"
             IsSettingsVisible="False"
             IsTabStop="False"
@@ -69,10 +78,10 @@
                 </NavigationViewItem>-->
                 <NavigationViewItem x:Name="Nav_WpSettings">
                     <NavigationViewItem.ContentTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="local:MainWindow">
                             <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
-                                <FontIcon Glyph="&#xE7B8;" FontSize="25" HorizontalAlignment="Center"/>
-                                <TextBlock Text="Repo" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
+                                <FontIcon Glyph="&#xE7B8;" FontSize="22" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding NavRepository}" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
                             </StackPanel>
                         </DataTemplate>
                     </NavigationViewItem.ContentTemplate>
@@ -83,8 +92,8 @@
                     <NavigationViewItem.ContentTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
-                                <FontIcon Glyph="&#xF156;" FontSize="25" HorizontalAlignment="Center"/>
-                                <TextBlock Text="Project" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
+                                <FontIcon Glyph="&#xF156;" FontSize="22" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding NavProject}" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
                             </StackPanel>
                         </DataTemplate>
                     </NavigationViewItem.ContentTemplate>
@@ -96,26 +105,16 @@
                             Orientation="Vertical"
                             HorizontalAlignment="Stretch"
                             Margin="-2 0 0 0">
-                    <!--<Button x:Name="LightAndDarkButton" 
-                            Style="{StaticResource ArcNavigationBackButtonNormalStyle}"
+                    <Button x:Name="LightAndDarkButton" 
+                            Style="{StaticResource ArcNavigationButtonNormalStyle}"
                             VerticalAlignment="Center" 
                             HorizontalContentAlignment="Center"
                             Width="Auto"
                             HorizontalAlignment="Stretch"
-                            Tag="{x:Bind _viewModel.Theme, Mode=OneWay}"
-                            Command="{x:Bind _viewModel.LightAndDarkSwitchCommand}">-->
-                        <Button x:Name="LightAndDarkButton" 
-                            Style="{StaticResource ArcNavigationBackButtonNormalStyle}"
-                            VerticalAlignment="Center" 
-                            HorizontalContentAlignment="Center"
-                            Width="Auto"
-                            HorizontalAlignment="Stretch"
-                            Tag="{x:Bind _viewModel.Theme, Mode=OneWay}"
                             Click="LightAndDarkButton_Click">
                         <ImageIcon
-                            Height="25"
-                            Width="25"
-                            Source="{x:Bind _viewModel.CurrentThemeIcon, Mode=OneWay}"/>
+                            Width="28"
+                            Source="{x:Bind _propertyHost.CurrentThemeIcon, Mode=OneWay}"/>
                     </Button>
                 </StackPanel>
             </navi:ArcNavigationView.PaneFooter>
@@ -129,7 +128,7 @@
                     <NavigationViewItem.ContentTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
-                                <FontIcon Glyph="&#xE713;" FontSize="25" HorizontalAlignment="Center"/>
+                                <FontIcon Glyph="&#xE713;" FontSize="22" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </DataTemplate>
                     </NavigationViewItem.ContentTemplate>
@@ -143,11 +142,9 @@
             <Grid>
                 <Frame
                     x:Name="rootFrame"
-                    IsEnabled="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ControlIsEnable, Mode=OneWay}"/>
-                <!--<Frame x:Name="ContentFrame"
                     Opacity="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ControlOpacity, Mode=OneWay}"
                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                    IsEnabled="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ControlIsEnable, Mode=OneWay}"/>-->
+                    IsEnabled="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ControlIsEnable, Mode=OneWay}"/>
 
                 <ItemsControl 
                     HorizontalAlignment="Center"
@@ -178,5 +175,11 @@
                     Visibility="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.IsVisiable, Mode=OneWay}"/>
             </Grid>
         </navi:ArcNavigationView>
+
+        <Image x:Name="ThemeTransitionImage"
+            Grid.RowSpan="2"
+            Stretch="Fill"
+            Opacity="0"
+            Visibility="Collapsed"/>
     </Grid>
-</winex:WindowEx>
+</arcwin:ArcWindow>

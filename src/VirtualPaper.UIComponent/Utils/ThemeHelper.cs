@@ -12,7 +12,9 @@ namespace VirtualPaper.UIComponent.Utils {
     /// 静态主题管理器，用于在运行时热切换 UI 主题，并监听系统主题变化。
     /// </summary>
     public static class ThemeHelper {
-        public static event EventHandler? OnSystemThemeChanged;
+        public static event EventHandler? OnAppThemeChanged;
+
+        public static AppTheme CurrentPreference { get; private set; } = AppTheme.Auto;
 
         /// <summary>
         /// 注册主UI的根元素，并开始监听系统主题变化。
@@ -53,7 +55,7 @@ namespace VirtualPaper.UIComponent.Utils {
 
             _lastThemeApplyTime = DateTime.Now;
 
-            if (_currentPreference == AppTheme.Auto) {
+            if (CurrentPreference == AppTheme.Auto) {
                 CrossThreadInvoker.InvokeOnUIThread(() => {
                     WindowHelper.UpdateThemeFromSys(AppTheme.Auto);
                 });
@@ -72,7 +74,7 @@ namespace VirtualPaper.UIComponent.Utils {
             try {
                 // 保证内部共享资源一致性（对 _themeRootReferences 的并发访问）
                 lock (_lock) {
-                    _currentPreference = theme;
+                    CurrentPreference = theme;
                     ElementTheme elementTheme = theme switch {
                         AppTheme.Auto => ElementTheme.Default,
                         AppTheme.Light => ElementTheme.Light,
@@ -91,7 +93,7 @@ namespace VirtualPaper.UIComponent.Utils {
                         }
                     }
 
-                    OnSystemThemeChanged?.Invoke(null, EventArgs.Empty);
+                    OnAppThemeChanged?.Invoke(null, EventArgs.Empty);
                 }
             }
             finally {
@@ -103,20 +105,59 @@ namespace VirtualPaper.UIComponent.Utils {
             return (window.Content as FrameworkElement)?.ActualTheme ?? ElementTheme.Default;
         }
 
+        public static bool TryGetThemeResource(string key, FrameworkElement? context, out object? resource) {
+            resource = null;
+            if (string.IsNullOrEmpty(key))
+                return false;
+
+            string themeKey;
+            if (context is not null) {
+                // 优先使用控件自己的主题
+                var actualTheme = context.ActualTheme;
+                themeKey = actualTheme switch {
+                    ElementTheme.Dark or ElementTheme.Light => actualTheme.ToString(),
+                    _ => Application.Current.RequestedTheme == ApplicationTheme.Dark ? "Dark" : "Light"
+                };
+            }
+            else {
+                // 没有上下文时，用全局偏好
+                themeKey = CurrentPreference switch {
+                    AppTheme.Dark or AppTheme.Light => CurrentPreference.ToString(),
+                    _ => Application.Current.RequestedTheme == ApplicationTheme.Dark ? "Dark" : "Light",
+                };
+            }
+
+            if (TryGetResourceFromThemeDictionary(themeKey, key, out object rawResource) ||
+                Application.Current.Resources.TryGetValue(key, out rawResource)) {
+                resource = rawResource;
+                return resource != null;
+            }
+
+            return false;
+        }
+
+        private static bool TryGetResourceFromThemeDictionary(string themeKey, string resourceKey, out object resource) {
+            if (Application.Current.Resources.ThemeDictionaries.TryGetValue(themeKey, out var dictObj) &&
+                dictObj is ResourceDictionary dict) {
+                return dict.TryGetValue(resourceKey, out resource);
+            }
+            resource = null;
+            return false;
+        }
+
         public static void Cleanup() {
             lock (_lock) {
                 if (_uiSettings != null) {
                     _uiSettings.ColorValuesChanged -= OnSystemColorValuesChanged;
                     _uiSettings = null;
                 }
-                OnSystemThemeChanged = null;
+                OnAppThemeChanged = null;
                 _themeRootReferences.RemoveAll(r => !r.TryGetTarget(out _));
             }
         }
 
         private static readonly List<WeakReference<FrameworkElement>> _themeRootReferences = [];
         private static UISettings? _uiSettings;
-        private static AppTheme _currentPreference = AppTheme.Auto;
         private static readonly object _lock = new();
         private static readonly TimeSpan _minThemeInterval = TimeSpan.FromMilliseconds(300);
         private static DateTime _lastThemeApplyTime;

@@ -16,14 +16,6 @@ namespace VirtualPaper.UI.ViewModels {
             _dialog = new DialogUtil();
         }
 
-        //private void InitText() {
-        //    //SidebarGallery = LanguageUtil.GetI18n(Constants.I18n.SidebarGallery);
-        //    NavRepository = LanguageUtil.GetI18n(Constants.I18n.NavRepository);
-        //    NavProject = LanguageUtil.GetI18n(Constants.I18n.NavProject);
-        //    //SidebarAccount = LanguageUtil.GetI18n(Constants.I18n.SidebarAccount);
-        //    //SidebarAppSettings = LanguageUtil.GetI18n(Constants.I18n.SidebarAppSettings);
-        //}
-
         internal readonly BasicComponentUtil _basicComponentUtil;
         internal readonly DialogUtil _dialog;
     }

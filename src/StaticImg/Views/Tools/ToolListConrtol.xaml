@@ -8,6 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:collection="using:VirtualPaper.UIComponent.Collection"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    xmlns:styles="using:VirtualPaper.UIComponent.Styles"
     xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
     mc:Ignorable="d"
     DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}">
@@ -19,9 +20,9 @@
                     Visibility="{x:Bind Glyph, Converter={StaticResource StringToVisibilityConverter}}" 
                     Glyph="{x:Bind Glyph}" 
                     Width="20"/>
-                <ImageIcon 
+                <styles:ArcImageIcon 
                     Visibility="{x:Bind ImageSourceKey, Converter={StaticResource StringToVisibilityConverter}}" 
-                    Source="{x:Bind ImageSourceKey, Converter={StaticResource ThemeResourceConverter}, Mode=OneWay}" 
+                    ResourceKey="{x:Bind ImageSourceKey}" 
                     Width="22" 
                     Height="22"/>
             </Grid>

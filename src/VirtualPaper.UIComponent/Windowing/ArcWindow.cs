@@ -5,7 +5,6 @@ using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using VirtualPaper.Common;
 using VirtualPaper.UIComponent.Utils;
@@ -32,11 +31,10 @@ namespace VirtualPaper.UIComponent.Windowing {
         }
 
         private void UpdateThemeIcon() {
-            _propertyHost.CurrentThemeIcon = _currentTheme switch {
-                AppTheme.Auto => (BitmapImage)Application.Current.Resources["NaviIcon_ThemeAuto"],
-                AppTheme.Light => (BitmapImage)Application.Current.Resources["NaviIcon_ThemeLight"],
-                AppTheme.Dark => (BitmapImage)Application.Current.Resources["NaviIcon_ThemeDark"],
-                _ => (BitmapImage)Application.Current.Resources["NaviIcon_ThemeAuto"]
+            _propertyHost.ThemeIconKey = _currentTheme switch {
+                AppTheme.Light => "NaviIcon_ThemeLight",
+                AppTheme.Dark => "NaviIcon_ThemeDark",
+                _ => "NaviIcon_ThemeAuto"
             };
         }
 
@@ -64,10 +62,10 @@ namespace VirtualPaper.UIComponent.Windowing {
             var fadeAnim = _compositor.CreateScalarKeyFrameAnimation();
             fadeAnim.InsertKeyFrame(0f, 1f);
             fadeAnim.InsertKeyFrame(1f, 0f);
-            fadeAnim.Duration = TimeSpan.FromMilliseconds(900);
+            fadeAnim.Duration = TimeSpan.FromMilliseconds(600);
             imageVisual.StartAnimation(nameof(imageVisual.Opacity), fadeAnim);
 
-            await Task.Delay(900);
+            await Task.Delay(600);
 
             AppThemeTransitionImage.Visibility = Visibility.Collapsed;
             AppThemeTransitionImage.Source = null;
@@ -96,13 +94,13 @@ namespace VirtualPaper.UIComponent.Windowing {
     }
 
     public partial class PropertyHost : FrameworkElement {
-        public ImageSource CurrentThemeIcon {
-            get => (ImageSource)GetValue(CurrentThemeIconProperty);
-            set => SetValue(CurrentThemeIconProperty, value);
+        public string ThemeIconKey {
+            get => (string)GetValue(ThemeIconKeyProperty);
+            set => SetValue(ThemeIconKeyProperty, value);
         }
 
-        public static readonly DependencyProperty CurrentThemeIconProperty =
-            DependencyProperty.Register(nameof(CurrentThemeIcon), typeof(ImageSource),
+        public static readonly DependencyProperty ThemeIconKeyProperty =
+            DependencyProperty.Register(nameof(ThemeIconKey), typeof(string),
                 typeof(PropertyHost), new PropertyMetadata(null));
     }
 }

@@ -1,0 +1,56 @@
+using System;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
+using VirtualPaper.UIComponent.Utils;
+
+namespace VirtualPaper.UIComponent.Styles {
+    public partial class ArcImageIcon : ImageIcon {
+        public string ResourceKey {
+            get { return (string)GetValue(ResourceKeyProperty); }
+            set { SetValue(ResourceKeyProperty, value); }
+        }
+        public static readonly DependencyProperty ResourceKeyProperty =
+            DependencyProperty.Register(nameof(ResourceKey), typeof(string), typeof(ArcImageIcon), new PropertyMetadata(null, OnThemeResourceKeyChanged));
+
+        public ArcImageIcon() {
+            Loaded += ArcImageIcon_Loaded;
+            Unloaded += ArcImageIcon_Unloaded;
+        }
+
+        private void ArcImageIcon_Loaded(object sender, RoutedEventArgs e) {
+            UpdateSource();
+            ThemeHelper.OnAppThemeChanged += ThemeHelper_OnAppThemeChanged;
+        }
+
+        private void ArcImageIcon_Unloaded(object sender, RoutedEventArgs e) {
+            ThemeHelper.OnAppThemeChanged -= ThemeHelper_OnAppThemeChanged;
+            Loaded -= ArcImageIcon_Loaded;
+            Unloaded -= ArcImageIcon_Unloaded;
+        }
+
+        private void ThemeHelper_OnAppThemeChanged(object? sender, EventArgs e) {
+            UpdateSource();
+        }
+
+        private static void OnThemeResourceKeyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            if (d is ArcImageIcon icon) {
+                icon.UpdateSource();
+            }
+        }
+
+        private void UpdateSource() {
+            if (string.IsNullOrEmpty(ResourceKey)) {
+                this.Source = null;
+                return;
+            }
+
+            if (ThemeHelper.TryGetThemeResource(ResourceKey, this, out var resource) && resource is BitmapImage image) {
+                Source = image;
+            }
+            else {
+                this.Source = null;
+            }
+        }
+    }
+}

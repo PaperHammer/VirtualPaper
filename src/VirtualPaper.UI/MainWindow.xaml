@@ -11,6 +11,7 @@
     xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
     xmlns:models="using:VirtualPaper.UIComponent.Models"
     xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
+    xmlns:styles="using:VirtualPaper.UIComponent.Styles"
     mc:Ignorable="d"
     Closed="WindowEx_Closed"    
     Width="1440"
@@ -112,9 +113,9 @@
                             Width="Auto"
                             HorizontalAlignment="Stretch"
                             Click="LightAndDarkButton_Click">
-                        <ImageIcon
+                        <styles:ArcImageIcon
                             Width="28"
-                            Source="{x:Bind _propertyHost.CurrentThemeIcon, Mode=OneWay}"/>
+                            ResourceKey="{x:Bind _propertyHost.ThemeIconKey, Mode=OneWay}"/>
                     </Button>
                 </StackPanel>
             </navi:ArcNavigationView.PaneFooter>

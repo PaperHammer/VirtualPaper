@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
@@ -56,8 +56,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             ProjectName = "New_Project";
             AvailableTemplates = [
                 new() {
-                    ItemImageKey = "ui_components/project-create-static-img.png",
-                    DescImageKey = "ui_components/project-create-static-image-desc.png",
+                    ItemImageKey = "DraftPanel_Create_StaticImge",
+                    DescImageKey = "DraftPanel_Create_StaticImge_Desc",
                     Name = "静态图像",
                     Desc = "静态图像",
                     Type = ProjectType.PImage,

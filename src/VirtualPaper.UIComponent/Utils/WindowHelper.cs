@@ -12,7 +12,7 @@ namespace VirtualPaper.UIComponent.Utils {
     // windows.  In the future, we would like to support this in platform APIs.
     public static partial class WindowHelper {
         static WindowHelper() {
-            ThemeHelper.OnSystemThemeChanged += (sender, args) => {
+            ThemeHelper.OnAppThemeChanged += (sender, args) => {
                 foreach (ArcWindow window in _activeWindows) {
                     var currentTheme = ThemeHelper.GetCurrentTheme(window).ToAppTheme();
                     UpdateWindowVisualState(window);
@@ -71,41 +71,6 @@ namespace VirtualPaper.UIComponent.Utils {
             }
         }
 
-        //static public void SetWindowMinSize(ArcWindow window, double width, double height) {
-        //    if (window.Content is not FrameworkElement windowContent) {
-        //        System.Diagnostics.Debug.WriteLine("Window content is not a FrameworkElement.");
-        //        return;
-        //    }
-
-        //    if (windowContent.XamlRoot is null) {
-        //        System.Diagnostics.Debug.WriteLine("Window content's XamlRoot is null.");
-        //        return;
-        //    }
-
-        //    if (window.AppWindow.Presenter is not OverlappedPresenter presenter) {
-        //        System.Diagnostics.Debug.WriteLine("Window's AppWindow.Presenter is not an OverlappedPresenter.");
-        //        return;
-        //    }
-
-        //    var scale = windowContent.XamlRoot.RasterizationScale;
-        //    var minWidth = width * scale;
-        //    var minHeight = height * scale;
-        //    presenter.PreferredMinimumWidth = (int)minWidth;
-        //    presenter.PreferredMinimumHeight = (int)minHeight;
-        //}
-
-        //static public void FindVisualChildren(FrameworkElement parent, List<FrameworkElement> results) {
-        //    for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++) {
-        //        if (VisualTreeHelper.GetChild(parent, i) is FrameworkElement child) {
-        //            if (child is TextBlock || child is ImageIcon || child is PathIcon)
-        //                results.Add(child);
-
-        //            FindVisualChildren(child, results);
-        //        }
-        //    }
-        //}
-
-        static public List<ArcWindow> ActiveWindows { get { return _activeWindows; } }
         private static readonly List<ArcWindow> _activeWindows = [];
     }
 }

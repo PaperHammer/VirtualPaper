@@ -229,7 +229,6 @@ namespace VirtualPaper.UI {
                 await SetThemeAsync();
             }
             finally {
-                await Task.Delay(200);
                 LightAndDarkButton.IsEnabled = true;
             }
         }

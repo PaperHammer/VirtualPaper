@@ -5,10 +5,9 @@
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters">
 
     <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-    <cvs:DynamicVisibilityConverter x:Key="DynamicVisibilityConverter"/>
     <cvs:IsStringConverter x:Key="IsStringConverter"/>
     <cvs:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
-    <cvs:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+    <cvs:VisibilityByValueConverter x:Key="VisibilityByValueConverter"/>
 
     <BitmapImage x:Key="NaviIcon_ThemeLight" UriSource="ms-appx:///Assets/ui_components/Light/theme_light.png"/>
     <BitmapImage x:Key="NaviIcon_ThemeDark" UriSource="ms-appx:///Assets/ui_components/Dark/theme_dark.png"/>

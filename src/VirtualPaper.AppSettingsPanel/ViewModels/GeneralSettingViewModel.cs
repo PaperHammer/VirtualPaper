@@ -16,6 +16,7 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Storage;
 using Windows.System;
@@ -24,17 +25,24 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
     public partial class GeneralSettingViewModel : ObservableObject {
         public event EventHandler WallpaperInstallDirChanged;
 
-        public string Text_Version { get; set; } = string.Empty;
-        public string Version_Release_Notes { get; set; } = string.Empty;
-        public string Version_UpdateCheck { get; set; } = string.Empty;
+        //public string Text_Version => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Text_Version);
+        public string Version_Release_Notes => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_Release_Notes);
+        public string Version_UpdateCheck => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_UpdateCheck);
         public string Version_DownloadCancel { get; set; } = string.Empty;
-        public string Version_DownloadStart { get; set; } = string.Empty;
-        public string Version_FindNew { get; set; } = string.Empty;
+        public string Version_DownloadStart => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownloadStart);
+        public string Version_FindNew => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_FindNew);
         public string Version_Download { get; set; } = string.Empty;
-        public string Version_SeeNews { get; set; } = string.Empty;
-        public string Version_UpdateErr { get; set; } = string.Empty;
+        public string Version_SeeNews => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_SeeNews);
+        public string Version_UpdateErr => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_UpdateErr);
         public string Version_Install { get; set; } = string.Empty;
-        public string Version_UptoNewest { get; set; } = string.Empty;
+        public string Version_UptoNewest => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_UptoNewest);
+        public string Version_DownloadingTitle => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownloadingTitle);
+        public string Version_DownloadFailedTitle => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownloadFailedTitle);
+        public string Version_DownloadFailedMsg => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownloadFailedMsg);
+        public string Version_VerifyFailedTitle => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_VerifyFailedTitle);
+        public string Version_VerifyFailedMsg => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_VerifyFailedMsg);
+        public string Version_NewVersionDownLoadedTitle => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_NewVersionDownLoadedTitle);
+        public string Version_DownLoadedMsg => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownLoadedMsg);
 
         public string Text_AppearanceAndAction { get; set; } = string.Empty;
         public string AppearanceAndAction_AutoStart { get; set; } = string.Empty;
@@ -72,28 +80,16 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             set { _autoStartStatu = value; OnPropertyChanged(); }
         }
 
-        private Visibility _infoBar_Version_FindNew = Visibility.Collapsed;
-        public Visibility InfoBar_Version_FindNew {
-            get => _infoBar_Version_FindNew;
-            set { _infoBar_Version_FindNew = value; OnPropertyChanged(); }
-        }
-
-        private Visibility _infoBar_Version_UpdateErr = Visibility.Collapsed;
-        public Visibility InfoBar_Version_UpdateErr {
-            get => _infoBar_Version_UpdateErr;
-            set { _infoBar_Version_UpdateErr = value; OnPropertyChanged(); }
-        }
-
-        private Visibility _infoBar_Version_UptoNewest = Visibility.Collapsed;
-        public Visibility InfoBar_Version_UptoNewest {
-            get => _infoBar_Version_UptoNewest;
-            set { _infoBar_Version_UptoNewest = value; OnPropertyChanged(); }
+        private VersionState _currentVersionState = VersionState.None;
+        public VersionState CurrentVersionState {
+            get => _currentVersionState;
+            set { _currentVersionState = value; OnPropertyChanged(); }
         }
 
         private string _version_LastCheckDate = string.Empty;
         public string Version_LastCheckDate {
             get => _version_LastCheckDate;
-            set { _version_LastCheckDate = value; OnPropertyChanged(); }
+            private set { _version_LastCheckDate = value; OnPropertyChanged(); }
         }
 
         private string _version = string.Empty;
@@ -102,10 +98,22 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             set { _version = value; OnPropertyChanged(); }
         }
 
-        private bool _isStoped = true;
-        public bool IsStoped {
-            get => _isStoped;
-            set { _isStoped = value; OnPropertyChanged(); }
+        private bool _isUpdateBtnEnable = true;
+        public bool IsUpdateBtnEnable {
+            get => _isUpdateBtnEnable;
+            set { _isUpdateBtnEnable = value; OnPropertyChanged(); }
+        }
+
+        private float _downloadProgress = 0;
+        public float DownloadProgress {
+            get => _downloadProgress;
+            set { _downloadProgress = value; OnPropertyChanged(); }
+        }
+        
+        private string _downloadProgressText = string.Empty;
+        public string DownloadProgressText {
+            get => _downloadProgressText;
+            set { _downloadProgressText = value; OnPropertyChanged(); }
         }
 
         private bool _isAutoStart;
@@ -187,9 +195,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private void InfoBarVisibilityRestore() {
-            InfoBar_Version_FindNew = Visibility.Collapsed;
-            InfoBar_Version_UpdateErr = Visibility.Collapsed;
-            InfoBar_Version_UptoNewest = Visibility.Collapsed;
+            CurrentVersionState = VersionState.None;
         }
 
         private void InitContent() {
@@ -202,17 +208,9 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private void InitText() {
-            Text_Version = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Text_Version);
-            Version_Release_Notes = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_Release_Notes);
-            Version_UpdateCheck = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_UpdateCheck);
             Version_DownloadCancel = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownloadCancel);
-            Version_DownloadStart = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownloadStart);
-            Version_FindNew = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_FindNew);
             Version_Download = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_Download);
-            Version_SeeNews = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_SeeNews);
-            Version_UpdateErr = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_UpdateErr);
             Version_Install = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_Install);
-            Version_UptoNewest = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_UptoNewest);
             Version_LastCheckDate = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_LastCheckDate);
 
             Text_AppearanceAndAction = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Text_AppearanceAndAction);
@@ -234,7 +232,6 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private void InitCollections() {
-            //Themes = [_themeFollowSystem, _themeLight, _themeDark];
             Languages = [.. SupportedLanguages.Languages];
             SystemBackdrops = [_sysbdDefault, _sysbdMica, _sysbdAcrylic];
         }
@@ -263,28 +260,28 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private void MenuUpdate(AppUpdateStatus status, DateTime date, Version version) {
             switch (status) {
                 case AppUpdateStatus.Uptodate:
-                    InfoBar_Version_UptoNewest = Visibility.Visible;
+                    CurrentVersionState = VersionState.UptoNewest;
                     break;
                 case AppUpdateStatus.Available:
                     Version = $"v{version}";
-                    InfoBar_Version_FindNew = Visibility.Visible;
+                    CurrentVersionState = VersionState.FindNew;
                     break;
                 case AppUpdateStatus.Invalid or AppUpdateStatus.Error:
-                    InfoBar_Version_UpdateErr = Visibility.Visible;
+                    CurrentVersionState = VersionState.UpdateErr;
                     break;
                 default:
                     break;
             }
-            Version_LastCheckDate = LanguageUtil.GetI18n("Settings_General_Version_LastCheckDate");
+            Version_LastCheckDate = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_LastCheckDate);
             Version_LastCheckDate += status == AppUpdateStatus.Notchecked ? "" : $"{date}";
         }
 
         internal async Task StartDownloadAsync() {
-            IsStoped = false;
+            IsUpdateBtnEnable = false;
 
             await _appUpdater.StartDownload();
 
-            IsStoped = true;
+            IsUpdateBtnEnable = true;
         }
 
         internal async void WallpaperDirectoryChange() {
@@ -423,5 +420,16 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private readonly IAppUpdaterClient _appUpdater;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly IWallpaperControlClient _wpControlClient;
+    }
+
+    public enum VersionState {
+        None,              // 无状态
+        UptoNewest,        // 已是最新
+        FindNew,           // 发现新版本
+        Downloading,       // 正在下载
+        DownloadFailed,    // 下载失败
+        VerifyFailed,      // 校验失败
+        Downloaded,        // 下载完成
+        UpdateErr          // 网络或更新错误
     }
 }

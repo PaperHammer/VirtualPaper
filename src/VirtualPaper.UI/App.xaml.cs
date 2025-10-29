@@ -16,6 +16,7 @@ using VirtualPaper.UIComponent.Utils;
 using Windows.ApplicationModel.Core;
 using WinRT.Interop;
 using WinRT;
+using VirtualPaper.UIComponent.Converters;
 //using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -55,8 +56,7 @@ namespace VirtualPaper.UI {
                 //Sad dev noises.. this.Exit() does not work without Window: https://github.com/microsoft/microsoft-ui-xaml/issues/5931
                 Process.GetCurrentProcess().Kill();
             }
-#endif
-
+            
             #region 唯一实例检查
             try {
                 // 保证全局只有一个实例
@@ -70,6 +70,9 @@ namespace VirtualPaper.UI {
                 Debug.WriteLine(e.Message);
             }
             #endregion
+#else
+            VisibilityByValueConverter.DebugEnabled = true;
+#endif
 
             Log.Info("Starting...");
 

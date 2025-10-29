@@ -42,9 +42,11 @@ namespace VirtualPaper.UIComponent.Styles {
         private void UpdateSource() {
             if (string.IsNullOrEmpty(ResourceKey)) {
                 this.Source = null;
+                this.Visibility = Visibility.Collapsed;
                 return;
             }
 
+            this.Visibility = Visibility.Visible;
             if (ThemeHelper.TryGetThemeResource(ResourceKey, this, out var resource) && resource is BitmapImage image) {
                 Source = image;
             }

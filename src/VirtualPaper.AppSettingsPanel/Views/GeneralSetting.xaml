@@ -6,30 +6,27 @@
     xmlns:local="using:VirtualPaper.AppSettingsPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
-
-    <Page.Resources>
-        <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-    </Page.Resources>
 
     <ScrollView>
         <StackPanel
             Margin="15 0 15 15"
             Orientation="Vertical">
-            <StackPanel
-                x:Name="Version"
+            <StackPanel x:Name="Version"
                 Orientation="Vertical">
 
-                <TextBlock
-                    x:Name="VersionHeader"
+                <!--<TextBlock x:Name="VersionHeader"
                     Margin="0 10"
-                    Text="{Binding Text_Version}"   
+                    Text="{x:Bind _viewModel.Text_Version}"   
+                    FontWeight="Bold"/>-->
+                <TextBlock x:Name="VersionHeader"
+                    Margin="0 10"
+                    Text="{markup:I18n Key=Settings_General_Text_Version}"
                     FontWeight="Bold"/>
 
-                <Grid
-                    x:Name="VersionContent"
+                <Grid x:Name="VersionContent"
                     Height="90"
                     Margin="0 5"
                     Padding="20 0"
@@ -55,15 +52,15 @@
 
                         <TextBlock 
                             Grid.Row="0" 
-                            Text="{Binding AppVersionText}" 
+                            Text="{x:Bind _viewModel.AppVersionText}" 
                             FontSize="16"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{Binding Version_LastCheckDate}"/>
+                            Text="{x:Bind _viewModel.Version_LastCheckDate, Mode=OneWay}"/>
                         <HyperlinkButton
                             Grid.Row="2"
-                            Content="{Binding Version_Release_Notes}"
+                            Content="{x:Bind _viewModel.Version_Release_Notes}"
                             Margin="0"
                             Padding="0"
                             NavigateUri="https://github.com/PaperHammer/VirtualPaper/releases"/>
@@ -88,10 +85,10 @@
                             Grid.Column="1" 
                             Width="200"
                             HorizontalAlignment="Stretch"
-                            Content="{Binding Version_UpdateCheck}"
-                            IsEnabled="{Binding IsStoped}"
+                            Content="{x:Bind _viewModel.Version_UpdateCheck}"
+                            IsEnabled="{x:Bind _viewModel.IsUpdateBtnEnable, Mode=OneWay}"
                             Click="CheckUpdateButton_Click"
-                            Visibility="{Binding IsWinStore, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay, ConverterParameter=Reverse}"/>
+                            Visibility="{x:Bind _viewModel.IsWinStore, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
                     </Grid>
                 </Grid>
 
@@ -100,9 +97,9 @@
                     IsOpen="True"
                     IsClosable="False"
                     Severity="Informational"
-                    Visibility="{Binding InfoBar_Version_FindNew}"
-                    Title="{Binding Version_FindNew}"
-                    Message="{Binding Version}" >
+                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=FindNew}"
+                    Title="{x:Bind _viewModel.Version_FindNew, Mode=OneWay}"
+                    Message="{x:Bind _viewModel.Version, Mode=OneWay}" >
                     <InfoBar.Content>
                         <Grid
                             Padding="10 0"
@@ -113,15 +110,14 @@
                             </Grid.ColumnDefinitions>
 
                             <Button
-                                Grid.Column="0"
-                                Content="{Binding Version_DownloadStart}"
-                                IsEnabled="{Binding IsStoped}"
+                                Content="{x:Bind _viewModel.Version_DownloadStart}"
+                                IsEnabled="{x:Bind _viewModel.IsUpdateBtnEnable, Mode=OneWay}"
                                 Width="100"
                                 Click="StartDownloadButton_Click"/>
 
                             <HyperlinkButton
                                 Grid.Column="1"
-                                Content="{Binding Version_SeeNews}"
+                                Content="{x:Bind _viewModel.Version_SeeNews}"
                                 HorizontalAlignment="Right"
                                 NavigateUri="https://github.com/PaperHammer/VirtualPaper/releases"/>
                         </Grid>
@@ -130,50 +126,74 @@
 
                 <InfoBar
                     x:Name="InfoBarNetErr"
-                    Visibility="{Binding InfoBar_Version_UpdateErr}"
+                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=UpdateErr}"
                     IsOpen="True"
                     IsClosable="False"
                     Severity="Error"
-                    Title="{Binding Version_UpdateErr}"/>
-
-                <!--<InfoBar
-                    x:Name="InfoBarFinishDownlaod"
-                    Visibility="{Binding InfoBar_Version_NewVersionDownLoaded}"
-                    IsOpen="True"
-                    IsClosable="False"
-                    Severity="Success"
-                    Title="{Binding Version_NewVersionDownLoaded}"
-                    Message="{Binding Version}" >
-                    <InfoBar.Content>
-                        <Grid
-                            Padding="10 0"
-                            Margin="0 0 0 10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition/>
-                                <ColumnDefinition/>
-                            </Grid.ColumnDefinitions>
-
-                            <Button
-                                Grid.Column="0"
-                                Width="100"
-                                Content="{Binding Version_Install}"/>
-                            <HyperlinkButton
-                                Grid.Column="1"
-                                Content="{Binding Version_SeeNews}"
-                                HorizontalAlignment="Right"
-                                NavigateUri="http://www.microsoft.com"/>
-                        </Grid>
-                    </InfoBar.Content>
-                </InfoBar>-->
+                    Title="{x:Bind _viewModel.Version_UpdateErr}"/>
 
                 <InfoBar
                     x:Name="InfoBarUptoNewest"
-                    Visibility="{Binding InfoBar_Version_UptoNewest}"
+                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=UptoNewest}"
                     IsOpen="True"
                     IsClosable="False"
                     Severity="Success"
-                    Title="{Binding Version_UptoNewest}" >
+                    Title="{x:Bind _viewModel.Version_UptoNewest}" >
                 </InfoBar>
+
+                <InfoBar x:Name="InfoBarDownloading"
+                    IsOpen="True"
+                    IsClosable="False"
+                    Severity="Informational"
+                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Downloading}"
+                    Title="{x:Bind _viewModel.Version_DownloadingTitle}">
+                    <InfoBar.Content>
+                        <Grid Margin="0 0 0 10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ProgressBar
+                                Height="4"
+                                VerticalAlignment="Center"
+                                Value="{x:Bind _viewModel.DownloadProgress, Mode=OneWay}"
+                                Minimum="0"
+                                Maximum="100"
+                                Margin="0 5 10 0"/>
+
+                            <TextBlock
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Text="{x:Bind _viewModel.DownloadProgressText, Mode=OneWay}"
+                                Margin="0 0 10 0"/>
+                        </Grid>
+                    </InfoBar.Content>
+                </InfoBar>
+
+                <InfoBar x:Name="InfoBarDownloadFailed"
+                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=DownloadFailed}"
+                    IsOpen="True"
+                    IsClosable="False"
+                    Severity="Error"
+                    Title="{x:Bind _viewModel.Version_DownloadFailedTitle}"
+                    Message="{x:Bind _viewModel.Version_DownloadFailedMsg}"/>
+
+                <InfoBar x:Name="InfoBarVerifyFailed"
+                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=VerifyFailed}"
+                    IsOpen="True"
+                    IsClosable="False"
+                    Severity="Warning"
+                    Title="{x:Bind _viewModel.Version_VerifyFailedTitle}"
+                    Message="{x:Bind _viewModel.Version_VerifyFailedMsg}"/>
+
+                <InfoBar x:Name="InfoBarDownloaded"
+                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Downloaded}"
+                    IsOpen="True"
+                    IsClosable="False"
+                    Severity="Success"
+                    Title="{x:Bind _viewModel.Version_NewVersionDownLoadedTitle}"
+                    Message="{x:Bind _viewModel.Version_DownLoadedMsg}"/>
             </StackPanel>
 
             <StackPanel

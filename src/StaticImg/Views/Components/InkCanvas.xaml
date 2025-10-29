@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Class="Workloads.Creation.StaticImg.Views.Components.InkCanvas"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -82,12 +82,12 @@
                             <lcl_tools:CanvasSetControl
                                 x:Name="CanvasSet"
                                 Size="{x:Bind _viewModel.ConfigData.CanvasSize, Mode=OneWay}"
-                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=CanvasSet}"
+                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=CanvasSet}"
                                 OnValueChanged="CanvasSet_OnValueChanged"
                                 CanvasOperationRequested="CanvasOperationBtn_Click"/>
                             <lcl_tools:SelectionControl
                                 x:Name="Selection"
-                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=Selection}"
+                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Selection}"
                                 SelectCancel="Selection_SelectCancel"
                                 SelectCommit="Selection_SelectCommit"/>
                             <lcl_tools:PaintBrushControl
@@ -95,17 +95,17 @@
                                 SelectedBrush="{x:Bind _viewModel.ConfigData.SelectedBrush, Mode=TwoWay}"
                                 BrushThickness="{x:Bind _viewModel.ConfigData.BrushThickness, Mode=TwoWay}"
                                 BrushOpacity="{x:Bind _viewModel.ConfigData.BrushOpacity, Mode=TwoWay}"
-                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=PaintBrush}"/>
+                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=PaintBrush}"/>
                             <lcl_tools:EraserControl
                                 x:Name="Eraser"
                                 EraserSize="{x:Bind _viewModel.ConfigData.EraserSize, Mode=TwoWay}"
                                 EraserOpacity="{x:Bind _viewModel.ConfigData.EraserOpacity, Mode=TwoWay}"
-                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter= Eraser}"/>
+                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter= Eraser}"/>
                             <lcl_tools:CropControl
                                 x:Name="Crop"
                                 SeletcedAspect="{x:Bind _viewModel.ConfigData.SeletcedAspectItem, Mode=TwoWay}"
                                 AspectRatios="{x:Bind _viewModel._aspectRatios}"
-                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource DynamicVisibilityConverter}, ConverterParameter=Crop}"
+                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Crop}"
                                 CropCancelRequest="Crop_CropCancelRequest"
                                 CropCommitRequest="Crop_CropCommitRequest"/>
                         </Grid>

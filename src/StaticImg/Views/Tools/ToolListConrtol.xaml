@@ -17,11 +17,10 @@
         <DataTemplate x:Key="ToolItemTemplate" x:DataType="lcl_models:ToolItem">
             <Grid>
                 <FontIcon 
-                    Visibility="{x:Bind Glyph, Converter={StaticResource StringToVisibilityConverter}}" 
+                    Visibility="{x:Bind Glyph, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}" 
                     Glyph="{x:Bind Glyph}" 
                     Width="20"/>
                 <styles:ArcImageIcon 
-                    Visibility="{x:Bind ImageSourceKey, Converter={StaticResource StringToVisibilityConverter}}" 
                     ResourceKey="{x:Bind ImageSourceKey}" 
                     Width="22" 
                     Height="22"/>

@@ -16,7 +16,7 @@ namespace VirtualPaper.UIComponent.Windowing {
         public abstract Grid AppRoot { get; }
         public abstract Image AppThemeTransitionImage { get; }
         public abstract Grid AppTitleBar { get; }
-        public abstract NavigationView AppNavView { get; }
+        public virtual NavigationView? AppNavView { get; }
         public abstract AppSystemBackdrop CurrentBackdrop { get; }
 
         protected ArcWindow() {
@@ -45,7 +45,7 @@ namespace VirtualPaper.UIComponent.Windowing {
         }
 
         public async Task SetThemeAsync(AppTheme theme = AppTheme.None) {
-            if (!_isLoaded || AppRoot == null || AppRoot.ActualWidth <= 0 || AppRoot.ActualHeight <= 0)
+            if (!_isLoaded || _compositor == null || AppRoot == null || AppRoot.ActualWidth <= 0 || AppRoot.ActualHeight <= 0)
                 return;
 
             // 捕获当前界面图像
@@ -87,7 +87,7 @@ namespace VirtualPaper.UIComponent.Windowing {
             };
         }
 
-        protected Compositor _compositor;
+        protected Compositor? _compositor;
         protected AppTheme _currentTheme = AppTheme.None;
         protected bool _isLoaded;
         protected readonly PropertyHost _propertyHost;

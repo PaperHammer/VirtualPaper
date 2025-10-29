@@ -38,7 +38,7 @@ namespace VirtualPaper.UIComponent.Data {
 
         public Edits() {
             this.InitializeComponent();
-            _localizer = LanguageUtil.LocalizerInstacne;
+            _localizer = LanguageUtil.LocalizerInstance;
             InitText();
         }
 

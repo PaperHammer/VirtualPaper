@@ -38,7 +38,7 @@ namespace VirtualPaper.UIComponent.Utils {
         public static void UpdateWindowVisualState(ArcWindow window) {
             var currentTheme = ThemeHelper.GetCurrentTheme(window).ToAppTheme();
             TitleBarHelper.UpdateTitleBar(window, window.TitleBarChildren, currentTheme, true);
-            TitleBarHelper.UpdateNaviVisualStates(window.AppNavView, currentTheme, window.CurrentBackdrop);
+            if (window.AppNavView != null) TitleBarHelper.UpdateNaviVisualStates(window.AppNavView, currentTheme, window.CurrentBackdrop);
             TitleBarHelper.UpdateTitleBarVisualStates(window.AppTitleBar, currentTheme, window.CurrentBackdrop);
         }
 

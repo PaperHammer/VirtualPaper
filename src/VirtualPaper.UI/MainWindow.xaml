@@ -13,11 +13,9 @@
     xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
     xmlns:styles="using:VirtualPaper.UIComponent.Styles"
     mc:Ignorable="d"
-    Closed="WindowEx_Closed"    
-    Width="1440"
-    Height="900"
-    MinHeight="640"
-    MinWidth="500"
+    Closed="WindowEx_Closed"
+    Width="1440" Height="900"
+    MinHeight="684" MinWidth="754"
     Title="Virtual Paper">
 
     <Grid x:Name="MainGrid" Loaded="MainGrid_Loaded">
@@ -27,7 +25,7 @@
         </Grid.RowDefinitions>
 
         <Grid x:Name="TitleBar"
-            Height="32">
+            Height="48">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="LeftPaddingColumn" Width="0" />
                 <ColumnDefinition x:Name="IconColumn" Width="Auto" />
@@ -40,7 +38,7 @@
 
             <ImageIcon x:Name="TitleBarIcon"
                 Grid.Column="1"
-                Height="20"
+                Height="22"
                 Margin="8,0,0,0"
                 Source="/Assets/virtualpaper.ico" />
             <TextBlock x:Name="TitleTextBlock"

@@ -52,9 +52,10 @@ message Grpc_ProcInfoData {
 message Grpc_UpdateResponse {
 	Grpc_UpdateStatus status = 1;
 	string version = 2;
-	string url = 3;
-	string changelog = 4;
-	google.protobuf.Timestamp time = 5;
+	string uri = 3;
+	string sha_uri = 4;
+	string changelog = 5;
+	google.protobuf.Timestamp time = 6;
 }
 
 message Grpc_WallpaperLayoutsSettings {

@@ -1,4 +1,4 @@
-﻿using VirtualPaper.Common.Events;
+using VirtualPaper.Common.Events;
 
 namespace VirtualPaper.Grpc.Client.Interfaces {
     public interface IAppUpdaterClient : IDisposable {
@@ -8,9 +8,9 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         Version LastCheckVersion { get; }
         AppUpdateStatus Status { get; }
 
-        event EventHandler<AppUpdaterEventArgs> UpdateChecked;
+        event EventHandler<AppUpdaterEventArgs>? UpdateChecked;
 
-        Task CheckUpdate();
-        Task StartDownload();
+        Task CheckUpdateAsync();
+        Task StartDownloadAsync();
     }
 }

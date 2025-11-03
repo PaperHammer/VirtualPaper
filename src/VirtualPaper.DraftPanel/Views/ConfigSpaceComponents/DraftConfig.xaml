@@ -126,7 +126,7 @@
                         Orientation="Horizontal"
                         Spacing="4"
                         Margin="2 0 0 0"
-                        Visibility="{x:Bind _viewModel.IsNameOk, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Reverse}">
+                        Visibility="{x:Bind _viewModel.IsNameOk, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Reverse}">
                         <FontIcon 
                             FontSize="14"
                             VerticalAlignment="Bottom"

@@ -11,6 +11,8 @@ namespace VirtualPaper.UIComponent.Converters {
     /// 3. “!” 前缀参数：逻辑取反；
     /// 4. 参数 "HasValue"：值非空时显示；
     /// 5. Debug 标签：当参数中包含 "Debug" 且 DebugEnabled 为 true 时强制显示。
+    /// 7. 默认行为：非空即 Visible；
+    /// 8. 支持 ConvertBack：Visibility → bool。
     /// </summary>
     public partial class VisibilityByValueConverter : IValueConverter {
         /// <summary>
@@ -73,7 +75,36 @@ namespace VirtualPaper.UIComponent.Converters {
             return result ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, string language)
-            => throw new NotImplementedException();
+        /// <summary>
+        /// Visibility → bool 反向转换。
+        /// 支持：
+        /// - Visible → true；
+        /// - Collapsed/Hidden → false；
+        /// - “!” 前缀参数：逻辑取反；
+        /// - Debug 标签：当参数中包含 "Debug" 且 DebugEnabled 为 true 时返回 true。
+        /// </summary>
+        public object ConvertBack(object value, Type targetType, object parameter, string language) {
+            string param = parameter as string ?? string.Empty;
+
+            // “!” 前缀逻辑
+            bool negateParam = false;
+            if (!string.IsNullOrEmpty(param) && param.StartsWith('!')) {
+                negateParam = true;
+                param = param[1..];
+            }
+
+            // Debug 模式：直接返回 true
+            if (DebugEnabled && param.Contains("Debug", StringComparison.OrdinalIgnoreCase)) {
+                return true;
+            }
+
+            bool result = value is Visibility vis && vis == Visibility.Visible;
+
+            // 取反逻辑
+            if (negateParam)
+                result = !result;
+
+            return result;
+        }
     }
 }

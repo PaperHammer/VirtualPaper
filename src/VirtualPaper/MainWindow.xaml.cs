@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -12,6 +12,7 @@ using VirtualPaper.Cores.WpControl;
 using VirtualPaper.lang;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
+using Wpf.Ui;
 using Wpf.Ui.Controls;
 using MenuItem = System.Windows.Controls.MenuItem;
 

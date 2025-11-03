@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
-using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Utils.Bridge;
@@ -16,14 +15,13 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Storage;
 using Windows.System;
 
 namespace VirtualPaper.AppSettingsPanel.ViewModels {
     public partial class GeneralSettingViewModel : ObservableObject {
-        public event EventHandler WallpaperInstallDirChanged;
+        public event EventHandler? WallpaperInstallDirChanged;
 
         //public string Text_Version => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Text_Version);
         public string Version_Release_Notes => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_Release_Notes);
@@ -36,13 +34,6 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         public string Version_UpdateErr => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_UpdateErr);
         public string Version_Install { get; set; } = string.Empty;
         public string Version_UptoNewest => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_UptoNewest);
-        public string Version_DownloadingTitle => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownloadingTitle);
-        public string Version_DownloadFailedTitle => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownloadFailedTitle);
-        public string Version_DownloadFailedMsg => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownloadFailedMsg);
-        public string Version_VerifyFailedTitle => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_VerifyFailedTitle);
-        public string Version_VerifyFailedMsg => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_VerifyFailedMsg);
-        public string Version_NewVersionDownLoadedTitle => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_NewVersionDownLoadedTitle);
-        public string Version_DownLoadedMsg => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownLoadedMsg);
 
         public string Text_AppearanceAndAction { get; set; } = string.Empty;
         public string AppearanceAndAction_AutoStart { get; set; } = string.Empty;
@@ -248,7 +239,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         internal async Task CheckUpdateAsync() {
             InfoBarVisibilityRestore();
 
-            await _appUpdater.CheckUpdate();
+            await _appUpdater.CheckUpdateAsync();
         }
 
         private void AppUpdater_UpdateChecked(object? sender, AppUpdaterEventArgs e) {
@@ -258,28 +249,30 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private void MenuUpdate(AppUpdateStatus status, DateTime date, Version version) {
-            switch (status) {
-                case AppUpdateStatus.Uptodate:
-                    CurrentVersionState = VersionState.UptoNewest;
-                    break;
-                case AppUpdateStatus.Available:
-                    Version = $"v{version}";
-                    CurrentVersionState = VersionState.FindNew;
-                    break;
-                case AppUpdateStatus.Invalid or AppUpdateStatus.Error:
-                    CurrentVersionState = VersionState.UpdateErr;
-                    break;
-                default:
-                    break;
-            }
+            Version = $"v{version}";
+            CurrentVersionState = VersionState.FindNew;
+            //switch (status) {
+            //    case AppUpdateStatus.Uptodate:
+            //        CurrentVersionState = VersionState.UptoNewest;
+            //        break;
+            //    case AppUpdateStatus.Available:
+            //        Version = $"v{version}";
+            //        CurrentVersionState = VersionState.FindNew;
+            //        break;
+            //    case AppUpdateStatus.Invalid or AppUpdateStatus.Error:
+            //        CurrentVersionState = VersionState.UpdateErr;
+            //        break;
+            //    default:
+            //        break;
+            //}
             Version_LastCheckDate = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_LastCheckDate);
-            Version_LastCheckDate += status == AppUpdateStatus.Notchecked ? "" : $"{date}";
+            Version_LastCheckDate += status == AppUpdateStatus.Notchecked ? "" : $" {date}";
         }
 
         internal async Task StartDownloadAsync() {
             IsUpdateBtnEnable = false;
 
-            await _appUpdater.StartDownload();
+            await _appUpdater.StartDownloadAsync();
 
             IsUpdateBtnEnable = true;
         }

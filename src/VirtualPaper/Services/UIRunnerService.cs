@@ -71,7 +71,7 @@ namespace VirtualPaper.Services {
                     _processUI = null;
                     _ = MessageBox.Show(
                         $"{LanguageManager.Instance["UIRunnerService_VirtualPaperExceptionGeneral"]}\nEXCEPTION:\n{e.Message}",
-                        LanguageManager.Instance["UIRunnerService_Error"],
+                        LanguageManager.Instance["Common_TextError"],
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
                 }

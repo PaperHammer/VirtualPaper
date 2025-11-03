@@ -1,4 +1,4 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using GrpcDotNetNamedPipes;
 using NLog;
 using VirtualPaper.Common;
@@ -15,6 +15,7 @@ namespace VirtualPaper.Grpc.Client {
         public Version LastCheckVersion { get; private set; } = new Version(0, 0, 0, 0);
         public string LastCheckChangelog { get; private set; } = string.Empty;
         public Uri LastCheckUri { get; private set; }
+        public Uri LastCheckShaUri { get; private set; }
 
         public AppUpdaterClient() {
             _client = new Grpc_UpdateService.Grpc_UpdateServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
@@ -27,11 +28,11 @@ namespace VirtualPaper.Grpc.Client {
             _updateCheckedChangedTask = Task.Run(() => SubscribeUpdateCheckedStream(_cancellationTokenUpdateChecked.Token));
         }
 
-        public async Task CheckUpdate() {
+        public async Task CheckUpdateAsync() {
             await _client.CheckUpdateAsync(new Empty());
         }
 
-        public async Task StartDownload() {
+        public async Task StartDownloadAsync() {
             await _client.StartDownloadAsync(new Empty());
         }
 
@@ -42,7 +43,8 @@ namespace VirtualPaper.Grpc.Client {
             LastCheckChangelog = resp.Changelog;
             try {
                 LastCheckVersion = string.IsNullOrEmpty(resp.Version) ? null : new Version(resp.Version);
-                LastCheckUri = string.IsNullOrEmpty(resp.Url) ? null : new Uri(resp.Url);
+                LastCheckUri = string.IsNullOrEmpty(resp.Uri) ? null : new Uri(resp.Uri);
+                LastCheckShaUri = string.IsNullOrEmpty(resp.ShaUri) ? null : new Uri(resp.ShaUri);
             }
             catch { /* TODO */ }
         }
@@ -55,7 +57,7 @@ namespace VirtualPaper.Grpc.Client {
                     try {
                         var resp = call.ResponseStream.Current;
                         await UpdateStatusRefresh();
-                        UpdateChecked?.Invoke(this, new AppUpdaterEventArgs(Status, LastCheckVersion, LastCheckTime, LastCheckUri, LastCheckChangelog));
+                        UpdateChecked?.Invoke(this, new AppUpdaterEventArgs(Status, LastCheckVersion, LastCheckTime, LastCheckUri, LastCheckShaUri, LastCheckChangelog));
                     }
                     finally {
                         _updateCheckedLock.Release();

@@ -20,6 +20,7 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
 using VirtualPaper.UIComponent.Windowing;
 using VirtualPaper.WpSettingsPanel;
+using Windows.System;
 using WinRT.Interop;
 
 namespace VirtualPaper.UI {

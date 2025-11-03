@@ -1,11 +1,12 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 
 namespace VirtualPaper.Common.Events {
     public class AppUpdaterEventArgs : EventArgs {
-        public AppUpdaterEventArgs(AppUpdateStatus updateStatus, Version updateVersion, DateTime updateDate, Uri updateUri, string changeLog) {
+        public AppUpdaterEventArgs(AppUpdateStatus updateStatus, Version updateVersion, DateTime updateDate, Uri updateUri, Uri updateSHAUri, string changeLog) {
             UpdateStatus = updateStatus;
             UpdateVersion = updateVersion;
             UpdateUri = updateUri;
+            UpdateSHAUri = updateSHAUri;
             UpdateDate = updateDate;
             ChangeLog = changeLog;
         }
@@ -13,6 +14,7 @@ namespace VirtualPaper.Common.Events {
         public AppUpdateStatus UpdateStatus { get; }
         public Version UpdateVersion { get; }
         public Uri UpdateUri { get; }
+        public Uri UpdateSHAUri { get; }
         public DateTime UpdateDate { get; }
         public string ChangeLog { get; }
     }

@@ -28,13 +28,16 @@ using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.GrpcServers;
 using VirtualPaper.lang;
+using VirtualPaper.Models;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils.Theme;
+using VirtualPaper.ViewModels;
 using VirtualPaper.Views;
 using VirtualPaper.Views.WindowsMsg;
+using Wpf.Ui;
 using Wpf.Ui.Appearance;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
@@ -200,6 +203,7 @@ namespace VirtualPaper {
                 .AddSingleton<IMonitorManager, MonitorManager>()
                 .AddSingleton<IPlayback, Playback>()
                 .AddSingleton<IScrControl, ScrControl>()
+                .AddSingleton<IContentDialogService, ContentDialogService>()
 
                 .AddSingleton<IWallpaperFactory, WallpaperFactory>()
                 .AddSingleton<IWallpaperConfigFolderFactory, WallpaperConfigFolderFactory>()
@@ -209,6 +213,7 @@ namespace VirtualPaper {
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
+                .AddSingleton<IWindowService, WindowService>()
 
                 .AddSingleton<WallpaperControlServer>()
                 .AddSingleton<MonitorManagerServer>()
@@ -221,6 +226,8 @@ namespace VirtualPaper {
                 .AddSingleton<RawInputMsgWindow>()
                 .AddSingleton<MainWindow>()
                 .AddTransient<DebugLog>()
+                .AddTransient<AppUpdaterWindow>()
+                .AddTransient<AppUpdaterWindowViewModel>()
 
                 .AddTransient<TrayCommand>()
 
@@ -285,35 +292,29 @@ namespace VirtualPaper {
             });
         }
 
-        private static AppUpdater? updateWindow;
-        public static void AppUpdateDialog(Uri uri, string changelog) {
-            updateNotify = false;
-            if (updateWindow == null) {
-                updateWindow = new AppUpdater(uri, changelog) {
-                    WindowStartupLocation = WindowStartupLocation.CenterScreen
-                };
-                updateWindow.Closed += (s, e) => { updateWindow = null; };
-                updateWindow.Show();
-            }
+        public static void AppUpdateDialog(AppUpdaterEventArgs e) {
+            _updateNotify = false;
+            var windowService = Services.GetRequiredService<IWindowService>();
+            var info = new AppUpdateInfo (e.UpdateUri, e.UpdateSHAUri, e.UpdateVersion.ToString(), e.ChangeLog);
+            windowService.Show<AppUpdaterWindow>(info);
         }
 
-        private static int updateNotifyAmt = 1;
-        private static bool updateNotify = false;
-
+        private static int _updateNotifyAmt = 1;
+        private static bool _updateNotify = false;
         private void AppUpdateChecked(object sender, AppUpdaterEventArgs e) {
             _ = Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new ThreadStart(delegate {
                 if (e.UpdateStatus == AppUpdateStatus.Available) {
-                    if (updateNotifyAmt > 0) {
-                        updateNotifyAmt--;
-                        updateNotify = true;
+                    if (_updateNotifyAmt > 0) {
+                        _updateNotifyAmt--;
+                        _updateNotify = true;
                         new ToastContentBuilder()
                             .AddText(LanguageManager.Instance["Find_New_Verison"])
                             .Show();
                     }
 
                     //If UI program already running then notification is displayed withing the it.
-                    if (!Services.GetRequiredService<IUIRunnerService>().IsVisibleUI && updateNotify) {
-                        AppUpdateDialog(e.UpdateUri, e.ChangeLog);
+                    if (!Services.GetRequiredService<IUIRunnerService>().IsVisibleUI && _updateNotify) {
+                        AppUpdateDialog(e);
                     }
                 }
                 Log.Info($"AppUpdate status: {e.UpdateStatus}");

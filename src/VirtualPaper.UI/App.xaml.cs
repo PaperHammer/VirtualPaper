@@ -72,6 +72,7 @@ namespace VirtualPaper.UI {
             #endregion
 #else
             VisibilityByValueConverter.DebugEnabled = true;
+            BoolByValueConverter.DebugEnabled = true;
 #endif
 
             Log.Info("Starting...");

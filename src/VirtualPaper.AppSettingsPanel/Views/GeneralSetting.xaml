@@ -17,10 +17,6 @@
             <StackPanel x:Name="Version"
                 Orientation="Vertical">
 
-                <!--<TextBlock x:Name="VersionHeader"
-                    Margin="0 10"
-                    Text="{x:Bind _viewModel.Text_Version}"   
-                    FontWeight="Bold"/>-->
                 <TextBlock x:Name="VersionHeader"
                     Margin="0 10"
                     Text="{markup:I18n Key=Settings_General_Text_Version}"
@@ -88,7 +84,7 @@
                             Content="{x:Bind _viewModel.Version_UpdateCheck}"
                             IsEnabled="{x:Bind _viewModel.IsUpdateBtnEnable, Mode=OneWay}"
                             Click="CheckUpdateButton_Click"
-                            Visibility="{x:Bind _viewModel.IsWinStore, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
+                            Visibility="{x:Bind _viewModel.IsWinStore, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
                     </Grid>
                 </Grid>
 
@@ -140,60 +136,6 @@
                     Severity="Success"
                     Title="{x:Bind _viewModel.Version_UptoNewest}" >
                 </InfoBar>
-
-                <InfoBar x:Name="InfoBarDownloading"
-                    IsOpen="True"
-                    IsClosable="False"
-                    Severity="Informational"
-                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Downloading}"
-                    Title="{x:Bind _viewModel.Version_DownloadingTitle}">
-                    <InfoBar.Content>
-                        <Grid Margin="0 0 0 10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <ProgressBar
-                                Height="4"
-                                VerticalAlignment="Center"
-                                Value="{x:Bind _viewModel.DownloadProgress, Mode=OneWay}"
-                                Minimum="0"
-                                Maximum="100"
-                                Margin="0 5 10 0"/>
-
-                            <TextBlock
-                                Grid.Column="1"
-                                VerticalAlignment="Center"
-                                Text="{x:Bind _viewModel.DownloadProgressText, Mode=OneWay}"
-                                Margin="0 0 10 0"/>
-                        </Grid>
-                    </InfoBar.Content>
-                </InfoBar>
-
-                <InfoBar x:Name="InfoBarDownloadFailed"
-                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=DownloadFailed}"
-                    IsOpen="True"
-                    IsClosable="False"
-                    Severity="Error"
-                    Title="{x:Bind _viewModel.Version_DownloadFailedTitle}"
-                    Message="{x:Bind _viewModel.Version_DownloadFailedMsg}"/>
-
-                <InfoBar x:Name="InfoBarVerifyFailed"
-                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=VerifyFailed}"
-                    IsOpen="True"
-                    IsClosable="False"
-                    Severity="Warning"
-                    Title="{x:Bind _viewModel.Version_VerifyFailedTitle}"
-                    Message="{x:Bind _viewModel.Version_VerifyFailedMsg}"/>
-
-                <InfoBar x:Name="InfoBarDownloaded"
-                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Downloaded}"
-                    IsOpen="True"
-                    IsClosable="False"
-                    Severity="Success"
-                    Title="{x:Bind _viewModel.Version_NewVersionDownLoadedTitle}"
-                    Message="{x:Bind _viewModel.Version_DownLoadedMsg}"/>
             </StackPanel>
 
             <StackPanel

@@ -7,9 +7,12 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.UIComponent.Templates {
     public abstract class ArcPage : Page {
-        public abstract ArcPageHost PageHost { get; }
         public abstract ArcPageContext Context { get; }
         public abstract Type PageType { get; }
+        /// <summary>
+        /// 页面是否在导航后仍保持在内存中继续运行
+        /// </summary>
+        public virtual bool KeepAlive => false;
 
         protected ArcPage() {
             this.Loaded += ArcPage_Loaded;
@@ -27,15 +30,18 @@ namespace VirtualPaper.UIComponent.Templates {
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
+            EnsureContextRegistered();
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e) {
             base.OnNavigatedFrom(e);
+            UnregisterContext();
         }
         #endregion
 
         #region utils
         private void EnsureContextRegistered() {
+            Context.IsActive = true;
             if (!PageContextManager.HasContext(PageType)) {
                 PageContextManager.RegisterContext(PageType, Context!);
             }
@@ -43,6 +49,7 @@ namespace VirtualPaper.UIComponent.Templates {
 
         private void UnregisterContext() {
             if (Context != null) {
+                Context.IsActive = false;
                 PageContextManager.UnregisterContext(PageType);
             }
         }

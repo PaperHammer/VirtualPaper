@@ -11,7 +11,6 @@ namespace VirtualPaper.UIComponent.Utils {
     public static class PageContextManager {
         private static readonly ConcurrentDictionary<Type, ArcPageContext> _contexts = new();
 
-        #region 上下文注册管理
         public static void RegisterContext(Type pageType, ArcPageContext context) {
             ArgumentNullException.ThrowIfNull(pageType);
             ArgumentNullException.ThrowIfNull(context);
@@ -68,6 +67,5 @@ namespace VirtualPaper.UIComponent.Utils {
                 context.IsActive = isActive;
             }
         }
-        #endregion
     }
 }

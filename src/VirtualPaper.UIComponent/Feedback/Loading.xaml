@@ -8,61 +8,64 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"   
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    IsHitTestVisible="True"
     mc:Ignorable="d">
 
     <UserControl.Resources>
         <cvs:VisibilityByValueConverter x:Key="VisibilityByValueConverter"/>
     </UserControl.Resources>
 
-    <StackPanel
-        Orientation="Vertical"
-        VerticalAlignment="Center"
-        HorizontalAlignment="Center">
-        <Grid
-            Margin="20"
+    <Grid>
+        <Rectangle x:Name="OverlayMask"
+            Fill="{ThemeResource SolidBackgroundFillColorBase}"
+            Opacity="0.7"/>
+        
+        <StackPanel
+            Orientation="Vertical"
+            VerticalAlignment="Center"
             HorizontalAlignment="Center">
-            <ProgressRing 
-                x:Name="progressBar"
-                Margin="0 0 20 0"
+            <Grid Margin="20" HorizontalAlignment="Center">
+                <ProgressRing 
+                    x:Name="progressBar"
+                    Margin="0 0 20 0"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    IsActive="True"
+                    Height="50"
+                    Width="50"
+                    Background="Transparent"/>
+            </Grid>
+
+            <Grid
+                Margin="20"
+                HorizontalAlignment="Center"            
+                Visibility="{x:Bind ProgressbarEnable, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <ProgressBar 
+                    Margin="0 0 20 0"
+                    Width="340"
+                    Value="{x:Bind CurValue, Mode=OneWay}"
+                    Maximum="{x:Bind TotalValue, Mode=OneWay}"/>
+
+                <TextBlock
+                    Grid.Column="1"
+                    FontWeight="Bold"
+                    Text="{x:Bind ValueString, Mode=OneWay}"/>
+            </Grid>
+
+            <Button x:Name="BtnCancel"
+                Margin="20"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                IsActive="True"
-                Height="50"
-                Width="50"
-                Background="Transparent"/>
-        </Grid>
-
-        <Grid
-            Margin="20"
-            HorizontalAlignment="Center"            
-            Visibility="{x:Bind ProgressbarEnable, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-
-            <ProgressBar 
-                Grid.Column="0"
-                Margin="0 0 20 0"
-                Width="340"
-                Value="{x:Bind CurValue, Mode=OneWay}"
-                Maximum="{x:Bind TotalValue, Mode=OneWay}"/>
-
-            <TextBlock
-                Grid.Column="1"
-                FontWeight="Bold"
-                Text="{x:Bind ValueString, Mode=OneWay}"/>
-        </Grid>
-
-        <Button
-            x:Name="BtnCancel"
-            Margin="20"
-            VerticalAlignment="Center"
-            HorizontalAlignment="Center"
-            Width="100" 
-            Height="40"
-            Visibility="{x:Bind CancelEnable, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
-            Content="{markup:I18n Key=Text_Cancel}"
-            Click="BtnCancel_Click"/>
-    </StackPanel>
+                Width="100" 
+                Height="40"
+                Visibility="{x:Bind CancelEnable, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
+                Content="{markup:I18n Key=Text_Cancel}"
+                Click="BtnCancel_Click"/>
+        </StackPanel>
+    </Grid>
 </UserControl>

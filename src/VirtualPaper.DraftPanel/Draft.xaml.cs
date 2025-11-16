@@ -18,7 +18,6 @@ namespace VirtualPaper.DraftPanel {
     /// </summary>
     public sealed partial class Draft : ArcPage, IDraftPanelBridge {
         internal static IDraftPanelBridge Instance { get; private set; }
-        public override ArcPageHost PageHost => this.MainHost;
         public override ArcPageContext Context { get; }
         public override Type PageType => typeof(Draft);
 
@@ -39,10 +38,6 @@ namespace VirtualPaper.DraftPanel {
         #endregion
 
         #region navigate
-        protected override void OnNavigatedTo(NavigationEventArgs e) {
-            base.OnNavigatedTo(e);
-        }
-
         private void FrameCardComp_Loaded(object sender, RoutedEventArgs e) {
             NavigetBasedState(_currentPanel);
         }

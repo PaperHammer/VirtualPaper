@@ -2,10 +2,6 @@ using System;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
 using VirtualPaper.AppSettingsPanel.Views;
-using VirtualPaper.Common;
-using VirtualPaper.UIComponent.Context;
-using VirtualPaper.UIComponent.Templates;
-using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -14,19 +10,9 @@ namespace VirtualPaper.AppSettingsPanel {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class AppSettings : ArcPage {
-        public override ArcPageHost PageHost => this.MainHost;
-        public override ArcPageContext Context { get; }
-        public override Type PageType => typeof(AppSettings);
-
+    public sealed partial class AppSettings : Page {
         public AppSettings() {
             this.InitializeComponent();
-            Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);
-
-            _selBarItem1 = LanguageUtil.GetI18n(Constants.I18n.AppSettings_SelBarItem1_General);
-            _selBarItem2 = LanguageUtil.GetI18n(Constants.I18n.AppSettings_SelBarItem2_Performance);
-            _selBarItem3 = LanguageUtil.GetI18n(Constants.I18n.AppSettings_SelBarItem3_System);
-            _selBarItem4 = LanguageUtil.GetI18n(Constants.I18n.AppSettings_SelBarItem4_Others);
         }
 
         private void SelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs _) {
@@ -38,7 +24,7 @@ namespace VirtualPaper.AppSettingsPanel {
                 1 => typeof(PerformanceSetting),
                 2 => typeof(SystemSetting),
                 3 => typeof(OthersSetting),
-                _ => null,
+                _ => throw new NotImplementedException(),
             };
             var slideNavigationTransitionEffect = currentSelectedIndex - _previousSelectedIndex > 0 ? SlideNavigationTransitionEffect.FromRight : SlideNavigationTransitionEffect.FromLeft;
 
@@ -48,9 +34,5 @@ namespace VirtualPaper.AppSettingsPanel {
         }
 
         private int _previousSelectedIndex = 0;
-        public readonly string _selBarItem1;
-        public readonly string _selBarItem2;
-        public readonly string _selBarItem3;
-        public readonly string _selBarItem4;
     }
 }

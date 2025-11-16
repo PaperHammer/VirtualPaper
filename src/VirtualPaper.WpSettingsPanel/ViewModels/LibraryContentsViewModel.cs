@@ -34,15 +34,7 @@ using WinUIEx;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class LibraryContentsViewModel : ObservableObject {
-        public ObservableCollection<IWpBasicData> LibraryWallpapers { get; set; }
-        public string MenuFlyout_Text_DetailedInfo { get; set; } = string.Empty;
-        public string MenuFlyout_Text_Update { get; set; } = string.Empty;
-        public string MenuFlyout_Text_EditInfo { get; set; } = string.Empty;
-        public string MenuFlyout_Text_Preview { get; set; } = string.Empty;
-        public string MenuFlyout_Text_Apply { get; set; } = string.Empty;
-        public string MenuFlyout_Text_ApplyToLockBG { get; set; } = string.Empty;
-        public string MenuFlyout_Text_ShowOnDisk { get; set; } = string.Empty;
-        public string MenuFlyout_Text_Delete { get; set; } = string.Empty;
+        public ObservableCollection<IWpBasicData> LibraryWallpapers { get; set; } = [];
 
         public LibraryContentsViewModel(
             IUserSettingsClient userSettingsClient,
@@ -52,31 +44,18 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             _wpControlClient = wallpaperControlClient;
             _wpSettingsViewModel = wpSettingsViewModel;
 
-            InitText();
             InitColletions();
         }
 
         private void InitColletions() {
-            LibraryWallpapers = [];
             _wallpaperInstallFolders = [
                 _userSettingsClient.Settings.WallpaperDir,
             ];
         }
 
-        private void InitText() {
-            MenuFlyout_Text_DetailedInfo = LanguageUtil.GetI18n(Constants.I18n.Text_Details);
-            MenuFlyout_Text_Update = LanguageUtil.GetI18n(Constants.I18n.Text_UpdateConfig);
-            MenuFlyout_Text_EditInfo = LanguageUtil.GetI18n(Constants.I18n.Text_Edit);
-            MenuFlyout_Text_Preview = LanguageUtil.GetI18n(Constants.I18n.Text_Preview);
-            MenuFlyout_Text_Apply = LanguageUtil.GetI18n(Constants.I18n.Text_Apply);
-            MenuFlyout_Text_ApplyToLockBG = LanguageUtil.GetI18n(Constants.I18n.Text_ApplyToLockBG);
-            MenuFlyout_Text_ShowOnDisk = LanguageUtil.GetI18n(Constants.I18n.Text_ShowOnDisk);
-            MenuFlyout_Text_Delete = LanguageUtil.GetI18n(Constants.I18n.Text_DeleteFromDisk);
-        }
-
         internal async Task InitContentAsync() {
             try {
-                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(false);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.ShowLoading(false);
                 LibraryWallpapers.Clear();
                 _uid2idx.Clear();
                 
@@ -90,7 +69,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
+                PageContextManager.GetContext<WpSettings>()?.Loading?.HideLoading();
             }
         }
 
@@ -170,7 +149,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         internal async Task UpdateAsync(IWpBasicData data) {
             try {
-                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(false);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.ShowLoading(false);
 
                 bool isUsing = await IsFileInUseAsync(data);
                 if (isUsing) {
@@ -190,7 +169,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
+                PageContextManager.GetContext<WpSettings>()?.Loading?.HideLoading();
             }
         }
 
@@ -200,13 +179,15 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 if (!data.IsAvailable()) return;
 
                 _ctsPreview = new CancellationTokenSource();
-                PageContextManager.GetContext<WpSettings>().Loading.SetCancellationToken([_ctsPreview]);
-                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(false);
-                await CheckFileUpdateAsync(data);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.SetCancellationToken([_ctsPreview]);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.ShowLoading(false);
+                //await CheckFileUpdateAsync(data);
 
-                var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
-                if (rtype == RuntimeType.RUnknown) return;
-                await _wpControlClient.PreviewWallpaperAsync(_wpSettingsViewModel.SelectedMonitor.DeviceId, data, rtype, _ctsPreview.Token);
+                //var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
+                //if (rtype == RuntimeType.RUnknown) return;
+                //await _wpControlClient.PreviewWallpaperAsync(_wpSettingsViewModel.SelectedMonitor.DeviceId, data, rtype, _ctsPreview.Token);
+
+                await Task.Delay(10000);
             }
             catch (RpcException ex) {
                 if (ex.StatusCode == StatusCode.Cancelled) {
@@ -225,7 +206,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
+                PageContextManager.GetContext<WpSettings>()?.Loading?.HideLoading();
                 _previewSemaphoreSlim.Release();
             }
         }
@@ -237,8 +218,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 await CheckFileUpdateAsync(data);
 
                 _ctsApply = new CancellationTokenSource();
-                PageContextManager.GetContext<WpSettings>().Loading.SetCancellationToken([_ctsApply]);
-                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(false);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.SetCancellationToken([_ctsApply]);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.ShowLoading(false);
 
                 var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                 if (rtype == RuntimeType.RUnknown) return;
@@ -269,7 +250,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
+                PageContextManager.GetContext<WpSettings>()?.Loading?.HideLoading();
                 _applySemaphoreSlim.Release();
             }
         }
@@ -277,8 +258,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         internal async Task ApplyToLockBGAsync(IWpBasicData data) {
             try {
                 _ctsApplyLockBG = new CancellationTokenSource();
-                PageContextManager.GetContext<WpSettings>().Loading.SetCancellationToken([_ctsApplyLockBG]);
-                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(false);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.SetCancellationToken([_ctsApplyLockBG]);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.ShowLoading(false);
                 if (!data.IsAvailable()) return;
 
                 if (data.FType != FileType.FImage && data.FType != FileType.FGif) {
@@ -296,7 +277,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
+                PageContextManager.GetContext<WpSettings>()?.Loading?.HideLoading();
             }
         }
 
@@ -346,20 +327,20 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         internal async Task DropFilesAsync(IReadOnlyList<IStorageItem> items) {
             try {
                 _ctsImport = new CancellationTokenSource();
-                PageContextManager.GetContext<WpSettings>().Loading.SetCancellationToken([_ctsImport]);
-                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(true);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.SetCancellationToken([_ctsImport]);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.ShowLoading(true);
                 List<ImportValue> importValues = await GetImportValueFromLocalAsync(items);
                 await ImportFromValuesAsync(importValues);
             }
             finally {
-                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
+                PageContextManager.GetContext<WpSettings>()?.Loading?.HideLoading();
             }
         }
 
         private async Task ImportFromValuesAsync(List<ImportValue> importValues) {
             try {
                 int finishedCnt = 0;
-                PageContextManager.GetContext<WpSettings>().Loading.UpdateProgress(0, importValues.Count);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.UpdateProgress(0, importValues.Count);
 
                 foreach (var importValue in importValues) {
                     try {
@@ -368,21 +349,24 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                                 importValue.FilePath,
                                 importValue.FType,
                                 _ctsImport.Token);
+                            if (grpc_data == null) {
+                                GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true, extraMsg: importValue.FilePath);
+                                return;
+                            }
+
                             WpBasicData data = DataAssist.GrpcToBasicData(grpc_data);
                             if (data.IsAvailable()) {
                                 UpdateLib(data);
                             }
                             else {
-                                //string msg = $"{LanguageUtil.GetI18n(Constants.I18n.InfobarMsg_ImportErr)}: {importValue.FilePath}";        
-                                GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true);
+                                GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true, extraMsg: importValue.FilePath);
                             }
                         }
                         else {
-                            GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_Import_Failed_Lib, isNeedLocalizer: true);
-                            //$"\"{importValue.FilePath}\"\n" + LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_Import_Failed_Lib);
+                            GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_Import_Failed_Lib, isNeedLocalizer: true, extraMsg: importValue.FilePath);
                         }
 
-                        PageContextManager.GetContext<WpSettings>().Loading.UpdateProgress(++finishedCnt, importValues.Count);
+                        PageContextManager.GetContext<WpSettings>()?.Loading?.UpdateProgress(++finishedCnt, importValues.Count);
                     }
                     catch (RpcException ex) {
                         if (ex.StatusCode == StatusCode.Cancelled) {
@@ -535,7 +519,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly WpSettingsViewModel _wpSettingsViewModel;
-        private List<string> _wallpaperInstallFolders;
+        private List<string> _wallpaperInstallFolders = [];
         private CancellationTokenSource _ctsImport, _ctsApply, _ctsApplyLockBG, _ctsPreview;
         private readonly ConcurrentDictionary<string, int> _uid2idx = [];
         private readonly SemaphoreSlim _applySemaphoreSlim = new(1, 1);

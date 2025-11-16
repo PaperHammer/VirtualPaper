@@ -22,12 +22,12 @@ namespace VirtualPaper.UIComponent.Feedback {
         public static readonly DependencyProperty ProgressbarEnableProperty =
             DependencyProperty.Register(nameof(ProgressbarEnable), typeof(bool), typeof(Loading), new PropertyMetadata(false));
 
-        public CancellationTokenSource[] CtsTokens {
-            get { return (CancellationTokenSource[])GetValue(CtsTokensProperty); }
+        public CancellationTokenSource[]? CtsTokens {
+            get { return (CancellationTokenSource[]?)GetValue(CtsTokensProperty); }
             set { SetValue(CtsTokensProperty, value); }
         }
         public static readonly DependencyProperty CtsTokensProperty =
-            DependencyProperty.Register(nameof(CtsTokens), typeof(CancellationTokenSource[]), typeof(Loading), new PropertyMetadata(Array.Empty<CancellationTokenSource>()));
+            DependencyProperty.Register(nameof(CtsTokens), typeof(CancellationTokenSource[]), typeof(Loading), new PropertyMetadata(null));
 
         public int TotalValue {
             get { return (int)GetValue(ImportTotalCntProperty); }

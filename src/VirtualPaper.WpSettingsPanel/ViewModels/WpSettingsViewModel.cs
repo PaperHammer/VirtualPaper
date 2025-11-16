@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
@@ -15,19 +14,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class WpSettingsViewModel : ObservableObject {
         public ObservableList<IMonitor> MonitorThus { get; set; } = [];
         public List<WpArrangeDataModel> WpArrangements { get; set; } = [];
-        public string WpSettings_NavItem1 { get; set; } = string.Empty;
-        public string WpSettings_NavItem2 { get; set; } = string.Empty;
-        public string Text_Close { get; set; } = string.Empty;
-        public string Text_Detect { get; set; } = string.Empty;
-        public string Text_Identify { get; set; } = string.Empty;
-        public string Text_Adjust { get; set; } = string.Empty;
-        public string Text_WpArrange { get; set; } = string.Empty;
-        public string WpArrange_Per { get; set; } = string.Empty;
-        public string WpArrange_PerExplain { get; set; } = string.Empty;
-        public string WpArrange_Expand { get; set; } = string.Empty;
-        public string WpArrange_ExpandExplain { get; set; } = string.Empty;
-        public string WpArrange_Duplicate { get; set; } = string.Empty;
-        public string WpArrange_DuplicateExplain { get; set; } = string.Empty;
 
         private int _selectedWpArrangementsIndex = -1;
         public int SelectedWpArrangementsIndex {
@@ -41,10 +27,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        private IMonitor _selectedMonitor;
+        private IMonitor _selectedMonitor = null!;
         public IMonitor SelectedMonitor {
             get => _selectedMonitor;
-            set { _selectedMonitor = value; OnPropertyChanged(); }
+            set { if (_selectedMonitor == value) return; _selectedMonitor = value; OnPropertyChanged(); }
         }
 
         public WpSettingsViewModel(
@@ -55,29 +41,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             _wpControlClient = wallpaperControlClient;
             _userSettingsClient = userSettingsClient;
 
-            InitText();
             InitMonitors();
         }
 
         #region Init
-        private void InitText() {
-            Text_Close = LanguageUtil.GetI18n(Constants.I18n.Text_Close);
-            Text_Detect = LanguageUtil.GetI18n(Constants.I18n.Text_Detect);
-            Text_Identify = LanguageUtil.GetI18n(Constants.I18n.Text_Identify);
-            Text_Adjust = LanguageUtil.GetI18n(Constants.I18n.Text_Adjust);
-
-            Text_WpArrange = LanguageUtil.GetI18n(Constants.I18n.Text_WpArrange);
-            WpArrange_Per = LanguageUtil.GetI18n(Constants.I18n.WpArrange_Per);
-            WpArrange_PerExplain = LanguageUtil.GetI18n(Constants.I18n.WpArrange_PerExplain);
-            WpArrange_Expand = LanguageUtil.GetI18n(Constants.I18n.WpArrange_Expand);
-            WpArrange_ExpandExplain = LanguageUtil.GetI18n(Constants.I18n.WpArrange_ExpandExplain);
-            WpArrange_Duplicate = LanguageUtil.GetI18n(Constants.I18n.WpArrange_Duplicate);
-            WpArrange_DuplicateExplain = LanguageUtil.GetI18n(Constants.I18n.WpArrange_DuplicateExplain);
-
-            WpSettings_NavItem1 = LanguageUtil.GetI18n(Constants.I18n.WpSettings_NavTitle_LibraryContents);
-            WpSettings_NavItem2 = LanguageUtil.GetI18n(Constants.I18n.WpSettings_NavTitle_ScrSettings);
-        }
-
         internal void InitMonitors() {
             _monitors.Clear();
             switch (_userSettingsClient.Settings.WallpaperArrangement) {
@@ -97,7 +64,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     break;
             }
 
-            _monitorCnt = _monitorManagerClient.Monitors.Count;
             MonitorThus.SetRange(_monitors);
             if (MonitorThus.Count > 0) {
                 SelectedMonitor = MonitorThus[0];
@@ -105,25 +71,23 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal void InitWpArrangments() {
-            WpArrangements.Add(new() {
-                Method = WpArrange_Per,
-                Tooltip = WpArrange_PerExplain,
-            });
-            WpArrangements.Add(new() {
-                Method = WpArrange_Duplicate,
-                Tooltip = WpArrange_DuplicateExplain,
-            });
-            WpArrangements.Add(new() {
-                Method = WpArrange_Expand,
-                Tooltip = WpArrange_ExpandExplain,
-            });
+            WpArrangements.Add(new WpArrangeDataModel(
+                Method: LanguageUtil.GetI18n(Constants.I18n.WpArrange_Per),
+                Tooltip: LanguageUtil.GetI18n(Constants.I18n.WpArrange_PerExplain)));
+            WpArrangements.Add(new WpArrangeDataModel(
+                Method: LanguageUtil.GetI18n(Constants.I18n.WpArrange_Duplicate),
+                Tooltip: LanguageUtil.GetI18n(Constants.I18n.WpArrange_DuplicateExplain)));
+            WpArrangements.Add(new WpArrangeDataModel(
+                Method: LanguageUtil.GetI18n(Constants.I18n.WpArrange_Expand),
+                Tooltip: LanguageUtil.GetI18n(Constants.I18n.WpArrange_ExpandExplain)));
+
             SelectedWpArrangementsIndex = (int)_userSettingsClient.Settings.WallpaperArrangement;
         }
         #endregion
 
         internal async void UpdateWpArrange(int tag) {
             try {
-                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(false);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.ShowLoading(false);
 
                 var type = (WallpaperArrangement)tag;
                 if (type == _userSettingsClient.Settings.WallpaperArrangement) return;
@@ -148,7 +112,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
             finally {
                 InitMonitors();
-                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
+                PageContextManager.GetContext<WpSettings>()?.Loading?.HideLoading();
             }
         }
 
@@ -160,8 +124,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         internal void Detect() {
             InitMonitors();
-
-            GlobalMessageUtil.ShowInfo(message: Constants.I18n.Dialog_Content_GetMonitorsAsync, isNeedLocalizer: true);
+            GlobalMessageUtil.ShowInfo(
+                message: Constants.I18n.Dialog_Content_GetMonitorsAsync, 
+                isNeedLocalizer: true, 
+                extraMsg: $" {MonitorThus.Count}");
         }
 
         internal async Task IdentifyAsync() {
@@ -173,8 +139,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 await _adjustSemaphoreSlim.WaitAsync();
 
                 var _ctsAdjust = new CancellationTokenSource();
-                PageContextManager.GetContext<WpSettings>().Loading.SetCancellationToken([_ctsAdjust]);
-                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading();
+                PageContextManager.GetContext<WpSettings>()?.Loading?.SetCancellationToken([_ctsAdjust]);
+                PageContextManager.GetContext<WpSettings>()?.Loading?.ShowLoading();
 
                 if (SelectedMonitor.ThumbnailPath == string.Empty) {
                     return;
@@ -200,7 +166,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
+                PageContextManager.GetContext<WpSettings>()?.Loading?.HideLoading();
                 _adjustSemaphoreSlim.Release();
             }
         }
@@ -210,12 +176,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IMonitorManagerClient _monitorManagerClient;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
-        private readonly SemaphoreSlim _adjustSemaphoreSlim = new(1, 1);
-        private int _monitorCnt;
-
-        public class WpArrangeDataModel {
-            public string Method { get; set; } = string.Empty;
-            public string Tooltip { get; set; } = string.Empty;
-        }
+        private readonly SemaphoreSlim _adjustSemaphoreSlim = new(1, 1);        
     }
+    
+    public record WpArrangeDataModel(string Method, string Tooltip);
 }

@@ -20,41 +20,29 @@ namespace VirtualPaper.WpSettingsPanel {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class WpSettings : ArcPage {
-        public override ArcPageHost PageHost => this.MainHost;
         public override ArcPageContext Context { get; }
         public override Type PageType => typeof(WpSettings);
 
         public WpSettings() {
-            Loaded += WpSettings_Loaded;
             this.InitializeComponent();
+            _viewModel = ObjectProvider.GetRequiredService<WpSettingsViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            this.DataContext = _viewModel;
             Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);
         }
 
-        private void WpSettings_Loaded(object sender, RoutedEventArgs e) {
-            _viewModel = ObjectProvider.GetRequiredService<WpSettingsViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-            this.DataContext = _viewModel;
-        }
-
         #region nav
-        protected override void OnNavigatedTo(NavigationEventArgs e) {
-            base.OnNavigatedTo(e);
-        }
-
         private void NvLocal_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
-            try {
+            try {               
+                Type pageType = args.SelectedItemContainer.Name switch {
+                    "Nav_LibraryContents" => typeof(LibraryContents),
+                    "Nav_ScreenSaver" => typeof(ScreenSaver),
+                    _ => throw new NotImplementedException(),
+                };
+                
                 FrameNavigationOptions navOptions = new() {
                     TransitionInfoOverride = args.RecommendedNavigationTransitionInfo,
                     IsNavigationStackEnabled = false
                 };
-
-                Type pageType = null;
-                if (args.SelectedItemContainer.Name == Nav_LibraryContents.Name) {
-                    pageType = typeof(LibraryContents);
-                }
-                else if (args.SelectedItemContainer.Name == Nav_ScreenSaver.Name) {
-                    pageType = typeof(ScreenSaver);
-                }
-
                 ContentFrame.NavigateToType(pageType, this, navOptions);
             }
             catch (Exception ex) {
@@ -95,6 +83,6 @@ namespace VirtualPaper.WpSettingsPanel {
         }
         #endregion
 
-        private WpSettingsViewModel _viewModel;
+        private readonly WpSettingsViewModel _viewModel;
     }
 }

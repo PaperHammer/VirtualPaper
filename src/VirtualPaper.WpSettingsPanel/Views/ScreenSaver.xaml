@@ -6,23 +6,23 @@
     xmlns:local="using:VirtualPaper.WpSettingsPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
-    Loaded="Page_Loaded"    
+    Loaded="Page_Loaded"
+    Unloaded="Page_Unloaded"
     NavigationCacheMode="Enabled">
 
     <Page.Resources>
         <MenuFlyout x:Key="MF_FilteredListView">
             <MenuFlyoutItem 
-                Text="{x:Bind _viewModel.Text_Delete}" 
+                Text="{markup:I18n Key=Text_Delete}"
                 Click="RightClickMenuItem_Click"/>
         </MenuFlyout>
     </Page.Resources>
 
-    <ScrollView
-        VerticalAlignment="Stretch">
-        <StackPanel
-            Margin="15 0 15 15"
-            x:Name="VirtualPaperScreenSaver"
+    <ScrollView VerticalAlignment="Stretch">
+        <StackPanel x:Name="VirtualPaperScreenSaver"
+            Margin="15 0 15 15"           
             Orientation="Vertical">
             <Expander
                 Margin="0 5"
@@ -38,33 +38,26 @@
                             <ColumnDefinition Width="auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <FontIcon
-                            Grid.Column="0" 
-                            Margin="0 0 20 0"
-                            Glyph="&#xF182;"/>
+                        <FontIcon Margin="0 0 20 0" Glyph="&#xF182;"/>
 
-                        <Grid
-                            Margin="0 23"
-                            Grid.Column="1">
+                        <Grid Margin="0 23" Grid.Column="1">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="auto"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock
-                                Grid.Row="0"
-                                Text="{x:Bind _viewModel.ScreenSaver_Server}"/>
+                            <TextBlock Text="{markup:I18n Key=ScreenSaver_Server}"/>
                             <TextBlock
                                 Grid.Row="1"                                        
-                                Text="{x:Bind _viewModel.ScreenSaver_ServerExplain}"
+                                Text="{markup:I18n Key=ScreenSaver_ServerExplain}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                         </Grid>
 
                         <ToggleButton
                             Grid.Column="2"
                             Width="200"
-                            Content="{x:Bind _viewModel.ScreenSaverStatu}" 
-                            IsChecked="{x:Bind _viewModel.IsScreenSaverOn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            Content="{x:Bind _viewModel.ScreenSaverStatu, Mode=OneWay}" 
+                            IsChecked="{x:Bind _viewModel.IsScreenSaverOn, Mode=TwoWay}"/>
                     </Grid>
                 </Expander.Header>
                 <Expander.Content>
@@ -76,8 +69,8 @@
                             <NumberBox 
                                 Width="200"
                                 HorizontalAlignment="Left"
-                                Header="{x:Bind _viewModel.ScreenSaver_WaitingTime}"
-                                Value="{x:Bind _viewModel.WaitingTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                Header="{markup:I18n Key=ScreenSaver_WaitingTime}"
+                                Value="{x:Bind _viewModel.WaitingTime, Mode=TwoWay}"
                                 SpinButtonPlacementMode="Inline"
                                 Minimum="1"
                                 Maximum="60"
@@ -85,9 +78,7 @@
                                 LargeChange="1" />
 
                             <CheckBox
-                                IsChecked="{x:Bind _viewModel.IsRunningLock, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                Checked="IsRunningLock_Checked"
-                                Unchecked="IsRunningLock_Unchecked"
+                                IsChecked="{x:Bind _viewModel.IsRunningLock, Mode=TwoWay}"
                                 Margin="0 15 0 0">
                                 <CheckBox.Content>
                                     <Grid>
@@ -96,19 +87,16 @@
                                             <RowDefinition Height="auto"/>
                                         </Grid.RowDefinitions>
 
-                                        <TextBlock
-                                            Grid.Row="0"
-                                            Text="{x:Bind _viewModel.ScreenSaver_RunningLock}"/>
+                                        <TextBlock Text="{markup:I18n Key=ScreenSaver_RunningLock}"/>
                                         <TextBlock
                                             Grid.Row="1"
                                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                            Text="{x:Bind _viewModel.ScreenSaver_RunningLockExplain}"/>
+                                            Text="{markup:I18n Key=ScreenSaver_RunningLockExplain}"/>
                                     </Grid>
                                 </CheckBox.Content>
                             </CheckBox>
 
-                            <Grid
-                                x:Name="DynamicEffects"
+                            <Grid x:Name="DynamicEffects"
                                 Height="100"
                                 Margin="0 15 0 0"
                                 VerticalAlignment="Center">
@@ -118,18 +106,15 @@
                                     <RowDefinition Height="auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock 
-                                    Grid.Row="0" 
-                                    Text="{x:Bind _viewModel.ScreenSaver_DynamicEffects}"/>
+                                <TextBlock Text="{markup:I18n Key=ScreenSaver_DynamicEffects}"/>
                                 <TextBlock 
                                     Grid.Row="1" 
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="{x:Bind _viewModel.ScreenSaver_DynamicEffectsExplain}"/>
-                                <ComboBox
-                                    x:Name="DynamicEffectsCombo"
+                                    Text="{markup:I18n Key=ScreenSaver_DynamicEffectsExplain}"/>
+                                <ComboBox x:Name="DynamicEffectsCombo"
                                     Grid.Row="2"
                                     ItemsSource="{x:Bind _viewModel.Effects}"
-                                    SelectedIndex="{x:Bind _viewModel.SeletedEffectIndx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    SelectedIndex="{x:Bind _viewModel.SeletedEffectIndx, Mode=TwoWay}"
                                     Width="200"
                                     Margin="0 5 0 0"/>
                             </Grid>
@@ -138,8 +123,7 @@
                 </Expander.Content>
             </Expander>
 
-            <Grid
-                x:Name="WhiteList"
+            <Grid x:Name="WhiteList"
                 Margin="0 5"
                 Padding="15 10"
                 Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
@@ -148,28 +132,24 @@
                     <RowDefinition/>
                 </Grid.RowDefinitions>
 
-                <Grid
-                    Grid.Row="0">
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <Grid
-                        Grid.Column="0">
+                    <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock
-                            Grid.Row="0"
-                            Text="{x:Bind _viewModel.ScreenSaver_WhiteListTitle}"/>
+                        <TextBlock Text="{markup:I18n Key=ScreenSaver_WhiteListTitle}"/>
                         <TextBlock
                             Grid.Row="1"                                    
                             Height="20"
-                            Text="{x:Bind _viewModel.ScreenSaver_WhiteListExplain}"
+                            Text="{markup:I18n Key=ScreenSaver_WhiteListExplain}"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                     </Grid>
 
@@ -177,23 +157,21 @@
                         Grid.Column="1"
                         Width="100"
                         Height="34"
-                        Content="{x:Bind _viewModel.ScreenSaver_Add}"
-                        Click="AddToWhiteListBtn_Click"/>
+                        Content="{markup:I18n Key=ScreenSaver_Add}"
+                        Command="{x:Bind _viewModel.AddToWhiteListCommand}"/>
 
-                    <TextBox 
-                        x:Name="TargetProName"
+                    <TextBox x:Name="TargetProName"
                         Margin="10 0"
                         Height="34"
                         Width="240"
                         Grid.Column="2"
-                        PlaceholderText="{x:Bind _viewModel.ScreenSaver_SeekFromList}"
+                        PlaceholderText="{markup:I18n Key=ScreenSaver_SeekFromList}"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center"
                         TextChanged="OnFilterChanged"/>
                 </Grid>
 
-                <ListView
-                    x:Name="FilteredListView"
+                <ListView x:Name="FilteredListView"
                     ItemsSource="{x:Bind _viewModel.ProcsFiltered}"
                     Grid.Row="1"
                     Margin="0 10"
@@ -212,7 +190,6 @@
                                 </Grid.ColumnDefinitions>
 
                                 <BitmapIcon 
-                                    Grid.Column="0"
                                     Width="36"
                                     Height="36"
                                     Margin="6"

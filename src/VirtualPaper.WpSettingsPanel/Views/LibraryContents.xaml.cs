@@ -3,12 +3,12 @@ using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Logging;
+using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.DataTransfer;
@@ -20,20 +20,16 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class LibraryContents : Page {
+    public sealed partial class LibraryContents : ArcPage {
+        public override ArcPageContext Context { get; }
+        public override Type PageType => typeof(LibraryContents);
+        public override bool KeepAlive => true;
+
         public LibraryContents() {
             this.InitializeComponent();
-        }
-
-        protected override void OnNavigatedTo(NavigationEventArgs e) {
-            base.OnNavigatedTo(e);
-
-            if (this._wpSettingsPanel == null) {
-                this._wpSettingsPanel = e.Parameter as IWpSettingsPanel;
-
-                _viewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
-                this.DataContext = _viewModel;
-            }
+            _viewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
+            this.DataContext = _viewModel;
+            Context = new ArcPageContext(this);
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
@@ -127,8 +123,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             e.Handled = true;
         }
 
-        private IWpSettingsPanel _wpSettingsPanel;
-        private LibraryContentsViewModel _viewModel;
-        private IWpBasicData _data;
+        private readonly LibraryContentsViewModel _viewModel;
+        private IWpBasicData? _data;
     }
 }

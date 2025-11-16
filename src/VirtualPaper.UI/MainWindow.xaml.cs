@@ -2,7 +2,7 @@ using System;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.AppSettingsPanel;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.ThreadContext;
@@ -28,7 +28,7 @@ namespace VirtualPaper.UI {
         public MainWindow(
             MainWindowViewModel viewModel,
             IUserSettingsClient userSettings,
-            ICommandsClient commandsClient) : base(userSettings.Settings.ApplicationTheme, userSettings.Settings.SystemBackdrop) {            
+            ICommandsClient commandsClient) : base(userSettings.Settings.ApplicationTheme, userSettings.Settings.SystemBackdrop) {
             this.InitializeComponent();
             base.InitializeWindow();
             this.InitWindowConst();
@@ -37,7 +37,7 @@ namespace VirtualPaper.UI {
             _commandsClient = commandsClient;
             _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
             _viewModel = viewModel;
-            this.ContentHost.AppRoot.DataContext = _viewModel;                       
+            this.ContentHost.AppRoot.DataContext = _viewModel;
         }
 
         private void InitWindowConst() {
@@ -98,26 +98,23 @@ namespace VirtualPaper.UI {
         #region navigation control
         private void OnNavigationViewSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
             try {
-                var selectedItem = args.SelectedItemContainer;
-
-                if (args.SelectedItemContainer.Name == Nav_WpSettings.Name) {
-                    Navigate(typeof(WpSettings), this);
-                }
-                else if (args.SelectedItemContainer.Name == Nav_Draft.Name) {
-                    Navigate(typeof(Draft), this);
-                }
-                else if (args.SelectedItemContainer.Name == Nav_AppSettings.Name) {
-                    Navigate(typeof(AppSettings), this);
-                }
+                Type pageType = args.SelectedItemContainer.Name switch {
+                    "Nav_WpSettings" => typeof(WpSettings),
+                    "Nav_Draft" => typeof(Draft),
+                    "Nav_AppSettings" => typeof(AppSettings),
+                    _ => throw new NotImplementedException(),
+                };
+                
+                FrameNavigationOptions navOptions = new() {
+                    TransitionInfoOverride = args.RecommendedNavigationTransitionInfo,
+                    IsNavigationStackEnabled = false
+                };
+                ContentFrame.NavigateToType(pageType, this, navOptions);
             }
             catch (Exception ex) {
                 GlobalMessageUtil.ShowException(ex);
                 ArcLog.GetLogger<MainWindow>().Error(ex);
             }
-        }
-
-        public void Navigate(Type pageType, object? targetPageArguments = null, NavigationTransitionInfo? navigationTransitionInfo = null) {
-            rootFrame.Navigate(pageType, targetPageArguments, navigationTransitionInfo);
         }
         #endregion
 

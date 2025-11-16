@@ -1,14 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.Win32;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils;
-using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models;
 using VirtualPaper.WpSettingsPanel.ViewModels;
@@ -23,60 +18,22 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     public sealed partial class ScreenSaver : Page {
         public ScreenSaver() {
             this.InitializeComponent();
-        }
-
-        protected override void OnNavigatedTo(NavigationEventArgs e) {
-            base.OnNavigatedTo(e);
-
-            if (this._wpSettingsPanel == null) {
-                this._wpSettingsPanel = e.Parameter as IWpSettingsPanel;
-
-                _viewModel = ObjectProvider.GetRequiredService<ScreenSaverViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-                _viewModel._wpSettingsPanel = this._wpSettingsPanel;
-                this.DataContext = _viewModel;
-            }
-        }
-
-        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e) {
-            base.OnNavigatingFrom(e);
-
-            _viewModel.StopListenForClients();
+            _viewModel = ObjectProvider.GetRequiredService<ScreenSaverViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            this.DataContext = _viewModel;
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e) {
             _ = _viewModel.ListenForClients();
         }
 
-        private void IsRunningLock_Checked(object sender, RoutedEventArgs e) {
-            _viewModel.IsRunningLock = true;
-        }
-
-        private void IsRunningLock_Unchecked(object sender, RoutedEventArgs e) {
-            _viewModel.IsRunningLock = false;
+        private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            _viewModel.StopListenForClients();
         }
 
         private void RightClickMenuItem_Click(object sender, RoutedEventArgs e) {
             var item = (sender as FrameworkElement).DataContext;
             var procInfo = item as ProcInfo;
             _viewModel.RemoveFromWhiteScr(procInfo);
-        }
-
-        private void AddToWhiteListBtn_Click(object sender, RoutedEventArgs e) {
-            OpenFileDialog openFileDialog = new() {
-                Filter = "Executable Files (*.exe)|*.exe"
-            };
-            bool? result = openFileDialog.ShowDialog();
-
-            if (result == true) {
-                string procPath = openFileDialog.FileName;
-                string procName = Path.GetFileNameWithoutExtension(procPath);
-
-                using System.Drawing.Image img = Win32Util.GetIconByFileName("FILE", procPath).ToBitmap();
-                string iconPath = Path.Combine(Constants.CommonPaths.ExeIconDir, procName) + ".png";
-                img.Save(iconPath);
-
-                _viewModel.AddToWhiteListScr(new ProcInfo(procName, procPath, iconPath));
-            }
         }
 
         // Whenever text changes in any of the filtering text boxes, the following function is called:
@@ -118,7 +75,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             }
         }
 
-        private ScreenSaverViewModel _viewModel;
-        private IWpSettingsPanel _wpSettingsPanel;
+        private readonly ScreenSaverViewModel _viewModel;
     }
 }

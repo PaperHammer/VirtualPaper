@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <UserControl
-    x:Class="VirtualPaper.UIComponent.Templates.ArcPageHost"
+    x:Class="VirtualPaper.UIComponent.Templates.ArcPageSimpleHost"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:VirtualPaper.UIComponent.Templates"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
     mc:Ignorable="d">
 
     <Grid x:Name="PART_ContentGrid">
@@ -14,15 +13,5 @@
             Content="{x:Bind RootContent, Mode=OneWay}"
             HorizontalContentAlignment="Stretch"
             VerticalContentAlignment="Stretch"/>
-
-        <feedback:Loading x:Name="PART_LoadingControlHost"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            CancelEnable="{x:Bind LoadingCancelEnable, Mode=OneWay}"
-            ProgressbarEnable="{x:Bind LoadingProgressbarEnable, Mode=OneWay}"
-            CtsTokens="{x:Bind LoadingCtsTokens, Mode=OneWay}"
-            TotalValue="{x:Bind LoadingTotalValue, Mode=OneWay}"
-            CurValue="{x:Bind LoadingCurValue, Mode=OneWay}"
-            Visibility="{x:Bind LoadingVisibility, Mode=OneWay}"/>
     </Grid>
 </UserControl>

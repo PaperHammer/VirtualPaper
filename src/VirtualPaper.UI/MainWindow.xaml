@@ -21,7 +21,7 @@
             <navi:ArcNavigationView x:Name="NavigationViewControl"
                 CompactPaneLength="64"
                 IsBackButtonVisible="Visible"
-                IsBackEnabled="{x:Bind rootFrame.CanGoBack, Mode=OneWay}"
+                IsBackEnabled="False"
                 IsPaneToggleButtonVisible="False"
                 IsSettingsVisible="False"
                 IsTabStop="False"
@@ -94,7 +94,7 @@
                 1. Draft 页导航缓存-->
 
                 <Grid>
-                    <Frame x:Name="rootFrame"
+                    <Frame x:Name="ContentFrame"
                            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"/>
 
                     <ItemsControl 

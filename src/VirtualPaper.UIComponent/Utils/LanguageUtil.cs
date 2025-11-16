@@ -3,9 +3,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Microsoft.UI.Xaml.Markup;
 using VirtualPaper.Common;
-using VirtualPaper.UIComponent.ArcMarkupExtension;
 using Windows.Storage;
 using WinUI3Localizer;
 

@@ -23,14 +23,16 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
         /// 隐藏加载状态
         /// </summary>
         public static void Hide(this Loading loading) {
-            if (loading == null) return;
+            if (loading == null || loading.Visibility == Visibility.Collapsed) return;
 
             CrossThreadInvoker.InvokeOnUIThread(() => {
                 loading.Visibility = Visibility.Collapsed;
-                foreach (var cts in loading.CtsTokens) {
-                    cts.Dispose();
+                if (loading.CtsTokens != null) {
+                    foreach (var cts in loading.CtsTokens) {
+                        cts.Dispose();
+                    }
                 }
-                loading.CtsTokens = [];
+                loading.CtsTokens = null;
                 loading.CancelEnable = false;
             });
         }

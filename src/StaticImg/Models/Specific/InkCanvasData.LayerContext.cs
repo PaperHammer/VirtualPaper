@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -41,7 +41,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
                 if (value == null) return;
                 SeletcedLayerChanged?.Invoke(this, EventArgs.Empty);
-                if (value.IsVisible) MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
+                if (value.IsVisible) GlobalMessageUtil.CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
             }
         }
 
@@ -144,7 +144,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             try {
                 string oldName = layer.Name;
                 var viewModel = new RenameViewModel(oldName);
-                var dialogRes = await MainPage.Instance.Bridge.GetDialog().ShowDialogAsync(
+                var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
                     new RenameView(viewModel),
                     LanguageUtil.GetI18n(nameof(Constants.I18n.Dialog_Title_Rename)),
                     LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),

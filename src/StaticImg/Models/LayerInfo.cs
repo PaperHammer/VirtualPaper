@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Utils;
 
 namespace Workloads.Creation.StaticImg.Models {
     public partial class LayerInfo : ObservableObject {
@@ -20,7 +21,7 @@ namespace Workloads.Creation.StaticImg.Models {
             set {
                 if (_isVisible == value) return;
                 _isVisible = value;
-                if (value) MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
+                if (value) GlobalMessageUtil.CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
                 OnPropertyChanged();
             }
         }

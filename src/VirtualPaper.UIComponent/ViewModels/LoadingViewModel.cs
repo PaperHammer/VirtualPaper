@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;

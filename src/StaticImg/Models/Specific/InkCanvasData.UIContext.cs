@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Input;
 using Windows.Foundation;
 using Windows.UI;
@@ -216,7 +217,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 .Where(ink => ink.RenderData != null)
                 .Select(ink => ink.RenderData.ResizeRenderTargetAsync(CanvasSize));
             await Task.WhenAll(tasks);
-            CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {ArcSize.HardwareDpi} DPI)";
+            CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {WindowConsts.Dpi} DPI)";
             SizeChanged?.Invoke(this, new LayerSizeChangedEventArgs(CanvasSize));
         }
 

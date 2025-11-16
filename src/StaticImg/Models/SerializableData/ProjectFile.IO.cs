@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Security;
+using VirtualPaper.UIComponent;
+using VirtualPaper.UIComponent.Logging;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
     // IO part of ProjectFile
@@ -43,7 +44,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
             }
             catch (Exception ex) {
-                MainPage.Instance.Bridge.Log(LogType.Error, ex);
+                ArcLog.GetLogger<ProjectFile>().Error(ex);
                 return (null, null, null);
             }
             finally {
@@ -60,7 +61,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             await _ioLock.WaitAsync();
 
             if (IsFileName) {
-                string? selectedPath = await MainPage.Instance.Bridge.GetStorageFolderAsync();
+                string? selectedPath = await WindowConsts.GetStorageFolderAsync();
                 if (string.IsNullOrEmpty(selectedPath))
                     return (false, null);
 
@@ -98,7 +99,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 return (true, FilePath);
             }
             catch (Exception ex) {
-                MainPage.Instance.Bridge.Log(LogType.Error, ex);
+                ArcLog.GetLogger<ProjectFile>().Error(ex);
                 return (false, null);
             }
             finally {
@@ -142,7 +143,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 return true;
             }
             catch (Exception ex) {
-                MainPage.Instance.Bridge.Log(LogType.Error, ex);
+                ArcLog.GetLogger<ProjectFile>().Error(ex);
                 return false;
             }
             finally {
@@ -189,7 +190,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 return true;
             }
             catch (Exception ex) {
-                MainPage.Instance.Bridge.Log(LogType.Error, ex);
+                ArcLog.GetLogger<ProjectFile>().Error(ex);
                 return false;
             }
             finally {

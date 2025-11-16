@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,6 +13,7 @@ using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.DraftPanel;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI draft structure,
@@ -67,7 +68,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         private async void RecentUsedsListView_ItemClick(object sender, ItemClickEventArgs e) {
             if (e.ClickedItem is RecentUsed ru) {
                 if (!Path.Exists(ru.FilePath)) {
-                    var diaRes = await Draft.Instance.GetDialog().ShowDialogWithoutTitleAsync(
+                    var diaRes = await GlobalDialogUtils.ShowDialogWithoutTitleAsync(
                         LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_FileNotFound)),
                         LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm)),
                         LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel))
@@ -104,7 +105,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
 
         private async void BtnStartupOpen_Click(object sender, RoutedEventArgs e) {
             var storage = await WindowsStoragePickers.PickFilesAsync(
-                _configSpace.GetWindowHandle(),
+                WindowConsts.WindowHandle,
                 [.. FileFilter.FileTypeToExtension[FileType.FImage], .. FileFilter.FileTypeToExtension[FileType.FDesign]],
                 true);
             if (storage.Length < 1) return;

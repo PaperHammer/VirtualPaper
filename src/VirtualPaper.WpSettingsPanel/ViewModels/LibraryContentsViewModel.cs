@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -20,8 +20,10 @@ using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Container;
 using VirtualPaper.UIComponent.Data;
+using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
@@ -74,7 +76,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         internal async Task InitContentAsync() {
             try {
-                WpSettings.Instance.GetNotify().Loading(false, false);
+                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(false);
                 LibraryWallpapers.Clear();
                 _uid2idx.Clear();
                 
@@ -84,10 +86,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                WpSettings.Instance.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                WpSettings.Instance.GetNotify().Loaded();
+                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
             }
         }
 
@@ -101,7 +104,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     return;
                 }
 
-                var mainWindow = (WindowEx)WpSettings.Instance.GetMainWindow();
+                var mainWindow = WindowConsts.ArcWindowInstance;
                 toolWindow = new ToolWindow(new(
                     _userSettingsClient.Settings.SystemBackdrop,
                     _userSettingsClient.Settings.ApplicationTheme,
@@ -118,7 +121,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 toolWindow.Show();
             }
             catch (Exception ex) {
-                WpSettings.Instance.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
@@ -132,7 +136,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     return;
                 }
 
-                var mainWindow = (WindowEx)WpSettings.Instance.GetMainWindow();
+                var mainWindow = WindowConsts.ArcWindowInstance;
                 toolWindow = new ToolWindow(new(
                     _userSettingsClient.Settings.SystemBackdrop,
                     _userSettingsClient.Settings.ApplicationTheme,
@@ -147,10 +151,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         data.Tags = string.Join(';', edits.TagList);
                         data.Save();
                         UpdateLib(data);
-                        WpSettings.Instance.GetNotify().ShowMsg(
-                            true,
-                            Constants.I18n.InfobarMsg_Success,
-                            InfoBarType.Success);
+                        GlobalMessageUtil.ShowSuccess(Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
                     }
 
                     _wp2TocEdit.Remove(data.FilePath);
@@ -162,20 +163,18 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 toolWindow.Show();
             }
             catch (Exception ex) {
-                WpSettings.Instance.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
         internal async Task UpdateAsync(IWpBasicData data) {
             try {
-                WpSettings.Instance.GetNotify().Loading(false, false, null);
+                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(false);
 
                 bool isUsing = await IsFileInUseAsync(data);
                 if (isUsing) {
-                    WpSettings.Instance.GetNotify().ShowMsg(
-                        true,
-                        Constants.I18n.Text_FileUsing,
-                        InfoBarType.Informational);
+                    GlobalMessageUtil.ShowInfo(message: Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
                     return;
                 }
 
@@ -184,16 +183,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 data = DataAssist.GrpcToBasicData(grpc_basicData);
                 UpdateLib(data);
 
-                WpSettings.Instance.GetNotify().ShowMsg(
-                    true,
-                    Constants.I18n.InfobarMsg_Success,
-                    InfoBarType.Success);
+                GlobalMessageUtil.ShowSuccess(message: Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
             }
             catch (Exception ex) {
-                WpSettings.Instance.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                WpSettings.Instance.GetNotify().Loaded(null);
+                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
             }
         }
 
@@ -203,7 +200,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 if (!data.IsAvailable()) return;
 
                 _ctsPreview = new CancellationTokenSource();
-                WpSettings.Instance.GetNotify().Loading(true, false, [_ctsPreview]);
+                PageContextManager.GetContext<WpSettings>().Loading.SetCancellationToken([_ctsPreview]);
+                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(false);
                 await CheckFileUpdateAsync(data);
 
                 var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
@@ -212,20 +210,22 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
             catch (RpcException ex) {
                 if (ex.StatusCode == StatusCode.Cancelled) {
-                    WpSettings.Instance.GetNotify().ShowCanceled();
+                    GlobalMessageUtil.ShowCanceled();
                 }
                 else {
-                    WpSettings.Instance.GetNotify().ShowExp(ex);
+                    ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                    GlobalMessageUtil.ShowException(ex);
                 }
             }
             catch (OperationCanceledException) {
-                WpSettings.Instance.GetNotify().ShowCanceled();
+                GlobalMessageUtil.ShowCanceled();
             }
             catch (Exception ex) {
-                WpSettings.Instance.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                WpSettings.Instance.GetNotify().Loaded([_ctsPreview]);
+                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
                 _previewSemaphoreSlim.Release();
             }
         }
@@ -237,7 +237,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 await CheckFileUpdateAsync(data);
 
                 _ctsApply = new CancellationTokenSource();
-                WpSettings.Instance.GetNotify().Loading(true, false, [_ctsApply]);
+                PageContextManager.GetContext<WpSettings>().Loading.SetCancellationToken([_ctsApply]);
+                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(false);
 
                 var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                 if (rtype == RuntimeType.RUnknown) return;
@@ -248,28 +249,27 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     rtype,
                     _ctsApply.Token);
                 if (!response.IsFinished) {
-                    WpSettings.Instance.GetNotify().ShowMsg(
-                        true,
-                        Constants.I18n.Dialog_Content_ApplyError,
-                        InfoBarType.Error);
+                    GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
                 }
             }
             catch (RpcException ex) {
                 if (ex.StatusCode == StatusCode.Cancelled) {
-                    WpSettings.Instance.GetNotify().ShowCanceled();
+                    GlobalMessageUtil.ShowCanceled();
                 }
                 else {
-                    WpSettings.Instance.GetNotify().ShowExp(ex);
+                    ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                    GlobalMessageUtil.ShowException(ex);
                 }
             }
             catch (OperationCanceledException) {
-                WpSettings.Instance.GetNotify().ShowCanceled();
+                GlobalMessageUtil.ShowCanceled();
             }
             catch (Exception ex) {
-                WpSettings.Instance.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                WpSettings.Instance.GetNotify().Loaded([_ctsApply]);
+                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
                 _applySemaphoreSlim.Release();
             }
         }
@@ -277,36 +277,32 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         internal async Task ApplyToLockBGAsync(IWpBasicData data) {
             try {
                 _ctsApplyLockBG = new CancellationTokenSource();
-                WpSettings.Instance.GetNotify().Loading(true, false, [_ctsApplyLockBG]);
+                PageContextManager.GetContext<WpSettings>().Loading.SetCancellationToken([_ctsApplyLockBG]);
+                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(false);
                 if (!data.IsAvailable()) return;
 
                 if (data.FType != FileType.FImage && data.FType != FileType.FGif) {
-                    WpSettings.Instance.GetNotify().ShowMsg(
-                        true,
-                        Constants.I18n.Dialog_Content_OnlyPictureAndGif,
-                        InfoBarType.Error);
+                    GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_OnlyPictureAndGif, isNeedLocalizer: true);
                     return;
                 }
 
                 StorageFile storageFile = await StorageFile.GetFileFromPathAsync(data.FilePath);
                 await LockScreen.SetImageFileAsync(storageFile);
 
-                WpSettings.Instance.GetNotify().ShowMsg(
-                    true,
-                    Constants.I18n.InfobarMsg_Success,
-                    InfoBarType.Success);
+                GlobalMessageUtil.ShowSuccess(Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
             }
             catch (Exception ex) {
-                WpSettings.Instance.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                WpSettings.Instance.GetNotify().Loaded([_ctsApplyLockBG]);
+                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
             }
         }
 
         internal async Task DeleteAsync(IWpBasicData data) {
             try {
-                var dialogRes = await WpSettings.Instance.GetDialog().ShowDialogAsync(
+                var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
                     LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDelete)
                     , LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Prompt)
                     , LanguageUtil.GetI18n(Constants.I18n.Text_Confirm)
@@ -315,10 +311,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                 bool isUsing = await IsFileInUseAsync(data);
                 if (isUsing) {
-                    WpSettings.Instance.GetNotify().ShowMsg(
-                        true,
-                        Constants.I18n.Text_FileUsing,
-                        InfoBarType.Informational);
+                    GlobalMessageUtil.ShowInfo(Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
                     return;
                 }
 
@@ -328,7 +321,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 di.Delete(true);
             }
             catch (Exception ex) {
-                WpSettings.Instance.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
@@ -344,26 +338,28 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                WpSettings.Instance.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
         internal async Task DropFilesAsync(IReadOnlyList<IStorageItem> items) {
             try {
                 _ctsImport = new CancellationTokenSource();
-                WpSettings.Instance.GetNotify().Loading(true, true, [_ctsImport]);
+                PageContextManager.GetContext<WpSettings>().Loading.SetCancellationToken([_ctsImport]);
+                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(true);
                 List<ImportValue> importValues = await GetImportValueFromLocalAsync(items);
                 await ImportFromValuesAsync(importValues);
             }
             finally {
-                WpSettings.Instance.GetNotify().Loaded([_ctsImport]);
+                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
             }
         }
 
         private async Task ImportFromValuesAsync(List<ImportValue> importValues) {
             try {
                 int finishedCnt = 0;
-                WpSettings.Instance.GetNotify().UpdateProgressbarValue(0, importValues.Count);
+                PageContextManager.GetContext<WpSettings>().Loading.UpdateProgress(0, importValues.Count);
 
                 foreach (var importValue in importValues) {
                     try {
@@ -377,35 +373,29 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                                 UpdateLib(data);
                             }
                             else {
-                                //string msg = $"{LanguageUtil.GetI18n(Constants.I18n.InfobarMsg_ImportErr)}: {importValue.FilePath}";
-                                WpSettings.Instance.GetNotify().ShowMsg(
-                                    false,
-                                    Constants.I18n.InfobarMsg_ImportErr,
-                                    InfoBarType.Error,
-                                    importValue.FilePath);
+                                //string msg = $"{LanguageUtil.GetI18n(Constants.I18n.InfobarMsg_ImportErr)}: {importValue.FilePath}";        
+                                GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true);
                             }
                         }
                         else {
-                            WpSettings.Instance.GetNotify().ShowMsg(
-                                true,
-                                Constants.I18n.Dialog_Content_Import_Failed_Lib,
-                               //$"\"{importValue.FilePath}\"\n" + LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_Import_Failed_Lib),
-                               InfoBarType.Error,
-                               importValue.FilePath);
+                            GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_Import_Failed_Lib, isNeedLocalizer: true);
+                            //$"\"{importValue.FilePath}\"\n" + LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_Import_Failed_Lib);
                         }
 
-                        WpSettings.Instance.GetNotify().UpdateProgressbarValue(++finishedCnt, importValues.Count);
+                        PageContextManager.GetContext<WpSettings>().Loading.UpdateProgress(++finishedCnt, importValues.Count);
                     }
                     catch (RpcException ex) {
                         if (ex.StatusCode == StatusCode.Cancelled) {
-                            WpSettings.Instance.GetNotify().ShowCanceled();
+                            GlobalMessageUtil.ShowCanceled();
                         }
                         else {
-                            WpSettings.Instance.GetNotify().ShowExp(ex);
+                            ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                            GlobalMessageUtil.ShowException(ex);
                         }
                     }
                     catch (Exception ex) {
-                        WpSettings.Instance.GetNotify().ShowExp(ex);
+                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                        GlobalMessageUtil.ShowException(ex);
                     }
 
                     if (_ctsImport.IsCancellationRequested)
@@ -413,7 +403,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
             catch (OperationCanceledException) {
-                WpSettings.Instance.GetNotify().ShowCanceled();
+                GlobalMessageUtil.ShowCanceled();
             }
         }
 
@@ -422,7 +412,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 case FileType.FImage:
                 case FileType.FGif:
                     var wpCreateDialogViewModel = new WallpaperCreateViewModel();
-                    var dialogRes = await WpSettings.Instance.GetDialog().ShowDialogAsync(
+                    var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
                         new WallpaperCreateView(wpCreateDialogViewModel),
                         LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_CreateType),
                         LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
@@ -454,7 +444,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         private async Task CheckFileUpdateAsync(IWpBasicData data) {
             if (data.AppInfo.FileVersion != _userSettingsClient.Settings.FileVersion) {
-                var dialogRes = await WpSettings.Instance.GetDialog().ShowDialogAsync(
+                var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
                     LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_Import_NeedUpdate),
                     LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Prompt),
                     LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),

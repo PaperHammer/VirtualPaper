@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection.Metadata;
 using System.Text;
@@ -24,7 +24,7 @@ namespace VirtualPaper.FuuntionTest
 
         static async Task Main(string[] args)
         {
-            ShaderTest_Complier.RunTest();
+            //ShaderTest_Complier.RunTest();
 
             //_optionsIpcMsg.Converters.Add(new IpcMessageConverter());
 
@@ -47,35 +47,35 @@ namespace VirtualPaper.FuuntionTest
             //MLTest_DepthImage mLTest_DepthImage = new();
             //mLTest_DepthImage.GetDepthImage();
 
-            //string filePath = "C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\3tezpyj1.few\\3tezpyj1.few.jpg";
-            //string customizePath = "C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\3tezpyj1.few\\1\\wpEffectFilePathUsing.json";
+            string filePath = "C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\3tezpyj1.few\\3tezpyj1.few.jpg";
+            string customizePath = "C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\Library\\wallpapers\\3tezpyj1.few\\1\\wpEffectFilePathUsing.json";
 
-            //DirectoryInfo path = new(AppDomain.CurrentDomain.BaseDirectory);
-            //string workingDir = path.Parent.Parent.Parent.Parent.FullName;
-            //workingDir = Path.Combine(workingDir,"VirtualPaper", "Plugins", "ScrSaver");
+            DirectoryInfo path = new(AppDomain.CurrentDomain.BaseDirectory);
+            string workingDir = path.Parent.Parent.Parent.Parent.FullName;
+            workingDir = Path.Combine(workingDir, "VirtualPaper", "Plugins", "PlayerWeb");
 
-            //StringBuilder cmdArgs = new();
-            //cmdArgs.Append(" --working-dir " + "\"" + workingDir + "\"");
-            //cmdArgs.Append(" --file-path " + "\"" + filePath + "\"");
-            //cmdArgs.Append(" --wallpaper-type " + "picture");
-            //cmdArgs.Append(" --effect-file-path " + "\"" + customizePath + "\"");
+            StringBuilder cmdArgs = new();
+            cmdArgs.Append(" --working-dir " + "\"" + workingDir + "\"");
+            cmdArgs.Append(" --file-path " + "\"" + filePath + "\"");
+            cmdArgs.Append(" --wallpaper-type " + "picture");
+            cmdArgs.Append(" --effect-file-path " + "\"" + customizePath + "\"");
 
-            //ProcessStartInfo start = new() {
-            //    FileName = Path.Combine(workingDir, "VirtualPaper.PlayerWeb.exe"),
-            //    RedirectStandardInput = true,
-            //    RedirectStandardOutput = true,
-            //    RedirectStandardError = false,
-            //    UseShellExecute = false,
-            //    WorkingDirectory = workingDir,
-            //    Arguments = cmdArgs.ToString(),
-            //};
+            ProcessStartInfo start = new() {
+                FileName = Path.Combine(workingDir, "VirtualPaper.PlayerWeb.exe"),
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = false,
+                UseShellExecute = false,
+                WorkingDirectory = workingDir,
+                Arguments = cmdArgs.ToString(),
+            };
 
-            //Process _process = new() {
-            //    EnableRaisingEvents = true,
-            //    StartInfo = start,
-            //};
-
-            //await Console.Out.WriteLineAsync(start.Arguments);
+            Process _process = new() {
+                EnableRaisingEvents = true,
+                StartInfo = start,
+            };
+           
+            await Console.Out.WriteLineAsync(start.Arguments);
 
             //Proc = MainTest_ScrSaver.InitScr(
             //    "C:\\Users\\PaperHammer\\Desktop\\img29.jpg",
@@ -84,7 +84,7 @@ namespace VirtualPaper.FuuntionTest
 
             //await ShowAsync();
 
-            //Application.Run();
+            Application.Run();
         }
 
         static async Task<bool> ShowAsync()

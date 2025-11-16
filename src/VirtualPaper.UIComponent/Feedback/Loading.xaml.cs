@@ -43,20 +43,6 @@ namespace VirtualPaper.UIComponent.Feedback {
         public static readonly DependencyProperty ImportValueProperty =
             DependencyProperty.Register(nameof(CurValue), typeof(int), typeof(Loading), new PropertyMetadata(0, UpdateValue));
 
-        public string TextLoading {
-            get { return (string)GetValue(TextLoadingProperty); }
-            set { SetValue(TextLoadingProperty, value); }
-        }
-        public static readonly DependencyProperty TextLoadingProperty =
-            DependencyProperty.Register(nameof(TextLoading), typeof(string), typeof(Loading), new PropertyMetadata("Loading..."));
-
-        public string TextCancel {
-            get { return (string)GetValue(TextCancelProperty); }
-            set { SetValue(TextCancelProperty, value); }
-        }
-        public static readonly DependencyProperty TextCancelProperty =
-            DependencyProperty.Register(nameof(TextCancel), typeof(string), typeof(Loading), new PropertyMetadata("Cancel"));
-
         private string ValueString {
             get { return (string)GetValue(ValueStringProperty); }
             set { SetValue(ValueStringProperty, value); }

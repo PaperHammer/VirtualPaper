@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -12,6 +12,7 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
@@ -135,7 +136,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal async Task ListenForClients() {
-            _wpSettingsPanel.Log(LogType.Info, "[PipeServer] Pipe Server is running...");
+            ArcLog.GetLogger<ScreenSaverViewModel>().Info("[PipeServer] Pipe Server is running...");
 
             try {
                 await Task.Run(async () => {
@@ -144,7 +145,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         await server.WaitForConnectionAsync(_ctsListen.Token);
                         using var reader = new StreamReader(server);
                         string cmd = await reader.ReadLineAsync(_ctsListen.Token);
-                        _wpSettingsPanel.Log(LogType.Info, $"[PipeServer] Received command: {cmd}");
+                        ArcLog.GetLogger<ScreenSaverViewModel>().Info($"[PipeServer] Received command: {cmd}");
 
                         if (cmd == "UPDATE_SCRSETTINGS") {
                             await UpdateScrSettginsAsync();
@@ -153,10 +154,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 });
             }
             catch (OperationCanceledException) when (_ctsListen.IsCancellationRequested) {
-                _wpSettingsPanel.Log(LogType.Warn, "[PipeServer] Listening was canceled.");
+                ArcLog.GetLogger<ScreenSaverViewModel>().Warn("[PipeServer] Listening was canceled.");
             }
             catch (Exception ex) {
-                _wpSettingsPanel.Log(LogType.Error, $"[PipeServer] An Error occurred while waiting for or processing client connections: ${ex.Message}");
+                ArcLog.GetLogger<ScreenSaverViewModel>().Error($"[PipeServer] An Error occurred while waiting for or processing client connections: ${ex.Message}");
             }
         }
 

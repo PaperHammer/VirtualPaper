@@ -1,12 +1,14 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge;
-using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.UIComponent.Context;
+using VirtualPaper.UIComponent.Logging;
+using VirtualPaper.UIComponent.Templates;
+using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using VirtualPaper.WpSettingsPanel.Views;
 
@@ -17,51 +19,25 @@ namespace VirtualPaper.WpSettingsPanel {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class WpSettings : Page, IWpSettingsPanel {
-        internal static IWpSettingsPanel Instance { get; private set; }
+    public sealed partial class WpSettings : ArcPage {
+        public override ArcPageHost PageHost => this.MainHost;
+        public override ArcPageContext Context { get; }
+        public override Type PageType => typeof(WpSettings);
 
         public WpSettings() {
-            Instance = this;
+            Loaded += WpSettings_Loaded;
             this.InitializeComponent();
+            Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);
         }
 
-        #region bridge
-        public nint GetWindowHandle() {
-            return _windowBridge.GetWindowHandle();
+        private void WpSettings_Loaded(object sender, RoutedEventArgs e) {
+            _viewModel = ObjectProvider.GetRequiredService<WpSettingsViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            this.DataContext = _viewModel;
         }
-
-        public async Task<string?> GetStorageFolderAsync() {
-            return await _windowBridge.GetStorageFolderAsync();
-        }
-
-        public INoifyBridge GetNotify() {
-            return _windowBridge.GetNotify();
-        }
-
-        public void Log(LogType type, object message) {
-            _windowBridge.Log(type, message);
-        }
-
-        public object GetMainWindow() {
-            return _windowBridge.GetMainWindow();
-        }
-
-        public IDialogService GetDialog() {
-            return _windowBridge.GetDialog();
-        }
-        #endregion
 
         #region nav
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
-
-            if (this._windowBridge == null) {
-                ContentFrame.CacheSize = 2;
-                this._windowBridge = e.Parameter as IWindowBridge;
-                _viewModel = ObjectProvider.GetRequiredService<WpSettingsViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-                _viewModel._wpSettingsPanel = this;
-                this.DataContext = _viewModel;
-            }
         }
 
         private void NvLocal_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
@@ -82,8 +58,8 @@ namespace VirtualPaper.WpSettingsPanel {
                 ContentFrame.NavigateToType(pageType, this, navOptions);
             }
             catch (Exception ex) {
-                _windowBridge.GetNotify().ShowExp(ex);
-                _windowBridge.Log(LogType.Error, ex);
+                ArcLog.GetLogger<WpSettings>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
         #endregion     
@@ -119,7 +95,6 @@ namespace VirtualPaper.WpSettingsPanel {
         }
         #endregion
 
-        private IWindowBridge _windowBridge;
         private WpSettingsViewModel _viewModel;
     }
 }

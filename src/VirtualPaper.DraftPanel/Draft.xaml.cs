@@ -1,14 +1,13 @@
-﻿using System;
+using System;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
-using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Views;
+using VirtualPaper.UIComponent.Context;
+using VirtualPaper.UIComponent.Templates;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -17,53 +16,31 @@ namespace VirtualPaper.DraftPanel {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class Draft : Page, IDraftPanelBridge {
+    public sealed partial class Draft : ArcPage, IDraftPanelBridge {
         internal static IDraftPanelBridge Instance { get; private set; }
+        public override ArcPageHost PageHost => this.MainHost;
+        public override ArcPageContext Context { get; }
+        public override Type PageType => typeof(Draft);
 
         public Draft() {
-            Instance = this;
-            this._currentPanel = DraftPanelState.ConfigSpace;
             this.InitializeComponent();
+            Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);
+            Instance = this;
+            this._currentPanel = DraftPanelState.ConfigSpace;            
         }
 
         #region bridge
-        public nint GetWindowHandle() {
-            return _windowBridge.GetWindowHandle();
-        }
-
-        public async Task<string?> GetStorageFolderAsync() {
-            return await _windowBridge.GetStorageFolderAsync();
-        }
-
         public void ChangePanelState(DraftPanelState nextPanel, object? data) {
             _sharedData = data;
             NavigetBasedState(nextPanel);
         }
 
         public object? GetSharedData() => _sharedData;
-
-        public void Log(LogType type, object message) {
-            _windowBridge.Log(type, message);
-        }
-
-        public INoifyBridge GetNotify() {
-            return _windowBridge.GetNotify();
-        }
-
-        public uint GetHardwareDpi() {
-            return _windowBridge.GetDpi();
-        }
-
-        public IDialogService GetDialog() {
-            return _windowBridge.GetDialog();
-        }
         #endregion
 
         #region navigate
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
-
-            this._windowBridge ??= e.Parameter as IWindowBridge;
         }
 
         private void FrameCardComp_Loaded(object sender, RoutedEventArgs e) {
@@ -117,7 +94,6 @@ namespace VirtualPaper.DraftPanel {
         }
         #endregion
 
-        private IWindowBridge _windowBridge;
         private DraftPanelState _currentPanel;
         private object? _sharedData;
     }

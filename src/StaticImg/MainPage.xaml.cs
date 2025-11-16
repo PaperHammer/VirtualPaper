@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
@@ -9,6 +9,9 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Shader;
+using VirtualPaper.UIComponent.Context;
+using VirtualPaper.UIComponent.Logging;
+using VirtualPaper.UIComponent.Utils;
 using Windows.Graphics.DirectX;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 using Workloads.Creation.StaticImg.Models.ToolItems.Utils;
@@ -22,7 +25,7 @@ namespace Workloads.Creation.StaticImg {
     /// </summary>
     public sealed partial class MainPage : Page, IRuntime {
         internal static MainPage Instance { get; private set; }
-        internal Logger Log { get; init; }
+        internal ArcPageContext Context { get; private set; }
         internal IDraftPanelBridge Bridge { get; }
         internal CanvasDevice SharedDevice { get; }
         internal StaticImgUndoRedoUtil UnReUtil { get; }
@@ -37,22 +40,22 @@ namespace Workloads.Creation.StaticImg {
             private set { lock (_frameTimeLock) _frameTimeMs = value; }
         }
 
-        private MainPage(IDraftPanelBridge bridge) {
+        private MainPage(ArcPageContext context, IDraftPanelBridge bridge) {
             this.InitializeComponent();
             Instance = this;
+            Context = context;
             Bridge = bridge;
             SharedDevice = CanvasDevice.GetSharedDevice();
             SharedFormat = DirectXPixelFormat.B8G8R8A8UIntNormalized;
             SharedAlphaMode = CanvasAlphaMode.Premultiplied;
             UnReUtil = new StaticImgUndoRedoUtil();
-            Log = LogManager.GetCurrentClassLogger();
         }
 
         /// <summary>
         /// 打开文件
         /// </summary>
         /// <param name="filePath">类型为 FDeign 或静态图像的文件路径</param>
-        public MainPage(IDraftPanelBridge bridge, FileType rtFileType, string filePath) : this(bridge) {
+        public MainPage(ArcPageContext context, IDraftPanelBridge bridge, FileType rtFileType, string filePath) : this(context, bridge) {
             ProjectUtil = ProjectFile.Create(filePath);
             RTFileType = rtFileType;            
         }
@@ -61,7 +64,7 @@ namespace Workloads.Creation.StaticImg {
         /// 新建项目
         /// </summary>
         /// <param name="fileName">项目名</param>
-        public MainPage(IDraftPanelBridge bridge, string fileName) : this(bridge) {
+        public MainPage(ArcPageContext context, IDraftPanelBridge bridge, string fileName) : this(context, bridge) {
             ProjectUtil = ProjectFile.Create(fileName);
             RTFileType = FileType.FDesign;
         }
@@ -73,12 +76,13 @@ namespace Workloads.Creation.StaticImg {
         // TODO: 考虑此处 restore
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             this.IsEnabled = false;
-            Bridge.GetNotify().Loading(false, false);
+
+            Context.Loading?.ShowLoading(false);
 
             await InkCanvas.IsInited.Task;            
 
             StartFrameTimeMonitor();
-            Bridge.GetNotify().Loaded();
+            Context.Loading?.HideLoading();
             this.IsEnabled = true;
         }
 
@@ -118,7 +122,7 @@ namespace Workloads.Creation.StaticImg {
                         // 正常退出
                     }
                     catch (Exception ex) {
-                        Bridge.Log(LogType.Error, $"FrameTime monitor error: {ex.Message}");
+                        ArcLog.GetLogger<MainPage>().Error($"FrameTime monitor error: {ex.Message}");
                     }
                 }
             }, _frameTimeCts.Token);
@@ -140,8 +144,8 @@ namespace Workloads.Creation.StaticImg {
                 await InkCanvas.SaveAsync();
             }
             catch (Exception ex) {
-                Bridge.Log(LogType.Error, ex);
-                Bridge.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
@@ -151,8 +155,8 @@ namespace Workloads.Creation.StaticImg {
                 await UnReUtil.UndoAsync();
             }
             catch (Exception ex) {
-                Bridge.Log(LogType.Error, ex);
-                Bridge.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
@@ -161,8 +165,8 @@ namespace Workloads.Creation.StaticImg {
                 await UnReUtil.RedoAsync();
             }
             catch (Exception ex) {
-                Bridge.Log(LogType.Error, ex);
-                Bridge.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
         #endregion

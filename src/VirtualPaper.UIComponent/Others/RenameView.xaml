@@ -8,7 +8,11 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d">
-    
+
+    <UserControl.Resources>
+        <cvs:VisibilityByValueConverter x:Key="VisibilityByValueConverter"/>
+    </UserControl.Resources>
+
     <StackPanel
         Orientation="Vertical"
         Spacing="8">

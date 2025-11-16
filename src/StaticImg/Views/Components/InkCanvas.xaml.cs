@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -18,6 +18,8 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.UIComponent.Collection;
 using VirtualPaper.UIComponent.Input;
+using VirtualPaper.UIComponent.Logging;
+using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models;
@@ -141,8 +143,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 IsInited.TrySetResult(true);
             }
             catch (Exception ex) {
-                MainPage.Instance.Bridge.Log(LogType.Error, ex);
-                MainPage.Instance.Bridge.GetNotify().ShowExp(ex);
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
@@ -481,12 +483,18 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 _viewModel.ConfigData.SelectedLayer == null ||
                 _viewModel.ConfigData.SelectedLayer.RenderData == null ||
                 _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget == null) {
-                MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerNotAvailable), InfoBarType.Error, key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable), isAllowDuplication: false);
+                GlobalMessageUtil.ShowError(
+                    message: nameof(Constants.I18n.Draft_SI_LayerNotAvailable),
+                    key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable),
+                    isNeedLocalizer: true);
                 return;
             }
 
             if (!_viewModel.ConfigData.SelectedLayer.IsVisible) {
-                MainPage.Instance.Bridge.GetNotify().ShowMsg(true, nameof(Constants.I18n.Draft_SI_LayerLocked), InfoBarType.Warning, key: nameof(Constants.I18n.Draft_SI_LayerLocked), isAllowDuplication: false);
+                GlobalMessageUtil.ShowWarning(
+                    message: nameof(Constants.I18n.Draft_SI_LayerLocked),
+                    key: nameof(Constants.I18n.Draft_SI_LayerLocked),
+                    isNeedLocalizer: true);
                 return;
             }
 

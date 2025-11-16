@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<arc:ArcWindow
+    x:Class="VirtualPaper.WpSettingsPanel.Windows.PreviewWithWeb"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.WpSettingsPanel.Windows"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    mc:Ignorable="d"  
+    Width="1400" Height="850"
+    TaskBarIcon="virtualpaper.ico"
+    Title="Virtual Paper Preview">
+
+    <Grid x:Name="MainGrid">
+        <Frame x:Name="ContentFrame">
+            <WebView2 x:Name="Webview2"
+                AllowDrop="False"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                PreviewKeyDown="Webview2_PreviewKeyDown"
+                PointerPressed="Webview2_PointerPressed"/>
+        </Frame>
+    </Grid>
+</arc:ArcWindow>

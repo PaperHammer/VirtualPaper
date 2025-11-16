@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using VirtualPaper.UIComponent.Logging;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 
 namespace Workloads.Creation.StaticImg.Models.Specific {
@@ -45,7 +46,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 return true;
             }
             catch (Exception ex) {
-                MainPage.Instance.Log.Error($"Load failed: {ex.Message}");
+                ArcLog.GetLogger<StaticImg.MainPage>().Error($"Load failed: {ex.Message}");
                 return false;
             }
         }
@@ -76,7 +77,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 return true;
             }
             catch (Exception ex) {
-                MainPage.Instance.Log.Error($"Save failed: {ex.Message}");
+                ArcLog.GetLogger<StaticImg.MainPage>().Error($"Save failed: {ex.Message}");
                 return false;
             }
         }

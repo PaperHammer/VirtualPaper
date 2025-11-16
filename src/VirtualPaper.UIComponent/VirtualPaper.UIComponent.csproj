@@ -15,6 +15,9 @@
 		<PRIResource Remove="Strings\zh-CN\Resources.resw" />
 	</ItemGroup>
 	<ItemGroup>
+		<Content Include="Logging\Nlog.config">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 		<Content Include="Strings\en-US\Resources.resw">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -48,9 +51,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Remove="Host\ArcWindowContent.xaml" />
 		<None Remove="Navigation\RootView\ArcNavigationView.xaml" />
 		<None Remove="Navigation\RootView\ArcNavigationviewStyle.xaml" />
 		<None Remove="Navigation\TabView\ArcTabViewItemHeader.xaml" />
+		<None Remove="Templates\ArcPageHost.xaml" />
+		<None Remove="Windowing\ArcWindow.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -59,12 +65,6 @@
 
 	<ItemGroup>
 		<Page Update="Data\Edits.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Page Update="Container\PageContainer.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 	</ItemGroup>
@@ -98,6 +98,24 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Templates\ArcPageHost.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Host\ArcWindowContent.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Windowing\ArcWindow.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,4 +1,4 @@
-﻿//using System;
+//using System;
 //using System.ComponentModel;
 //using System.Linq;
 //using System.Text.Json.Serialization;
@@ -50,7 +50,7 @@
 //        public float CanvasZoom {
 //            get { return _canvasZoom; }
 //            set {
-//                if (Consts.IsDoubleValueEqual(_canvasZoom, value)) return;
+//                if (WindowConsts.IsDoubleValueEqual(_canvasZoom, value)) return;
 //                _canvasZoom = value;
 //                OnPropertyChanged();
 //            }

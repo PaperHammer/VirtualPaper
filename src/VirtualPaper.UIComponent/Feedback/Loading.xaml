@@ -6,9 +6,13 @@
     xmlns:local="using:VirtualPaper.UIComponent.Feedback"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
-    x:Name="self"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"   
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <cvs:VisibilityByValueConverter x:Key="VisibilityByValueConverter"/>
+    </UserControl.Resources>
 
     <StackPanel
         Orientation="Vertical"
@@ -17,14 +21,8 @@
         <Grid
             Margin="20"
             HorizontalAlignment="Center">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-
             <ProgressRing 
                 x:Name="progressBar"
-                Grid.Column="0"
                 Margin="0 0 20 0"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
@@ -32,21 +30,12 @@
                 Height="50"
                 Width="50"
                 Background="Transparent"/>
-
-            <TextBlock
-                x:Name="proTbk"
-                Grid.Column="1"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                FontSize="20"
-                FontWeight="Bold"
-                Text="{Binding TextLoading, ElementName=self}"/>
         </Grid>
 
         <Grid
             Margin="20"
             HorizontalAlignment="Center"            
-            Visibility="{Binding ProgressbarEnable, Converter={StaticResource VisibilityByValueConverter}, ElementName=self}">
+            Visibility="{x:Bind ProgressbarEnable, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
@@ -56,13 +45,13 @@
                 Grid.Column="0"
                 Margin="0 0 20 0"
                 Width="340"
-                Value="{Binding CurValue, ElementName=self}"
-                Maximum="{Binding TotalValue, ElementName=self}"/>
+                Value="{x:Bind CurValue, Mode=OneWay}"
+                Maximum="{x:Bind TotalValue, Mode=OneWay}"/>
 
             <TextBlock
                 Grid.Column="1"
                 FontWeight="Bold"
-                Text="{Binding ValueString, ElementName=self}"/>
+                Text="{x:Bind ValueString, Mode=OneWay}"/>
         </Grid>
 
         <Button
@@ -72,8 +61,8 @@
             HorizontalAlignment="Center"
             Width="100" 
             Height="40"
-            Visibility="{Binding CancelEnable, Converter={StaticResource VisibilityByValueConverter}, ElementName=self}"
-            Content="{Binding TextCancel, ElementName=self}"
+            Visibility="{x:Bind CancelEnable, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
+            Content="{markup:I18n Key=Text_Cancel}"
             Click="BtnCancel_Click"/>
     </StackPanel>
 </UserControl>

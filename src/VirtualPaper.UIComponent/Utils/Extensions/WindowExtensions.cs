@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common.Utils.PInvoke;
@@ -18,7 +18,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions
         public static void SetWindowSizeEx(this Window window, int width, int height)
         {
             //Issue: https://github.com/microsoft/microsoft-ui-xaml/issues/6353
-            //IntPtr hWnd = WinRT.Interop.WindowNative.GetWindowHandle(m_window);
+            //IntPtr hWnd = WinRT.Interop.WindowNative.WindowHandle(m_window);
             //var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd);
             //var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
             //appWindow.Resize(new Windows.Graphics.SizeInt32(1200, 720));

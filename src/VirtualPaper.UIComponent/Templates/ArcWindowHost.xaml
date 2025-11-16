@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="VirtualPaper.UIComponent.Templates.ArcWindowHost"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.UIComponent.Templates"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    xmlns:style="using:VirtualPaper.UIComponent.Styles"
+    mc:Ignorable="d">
+
+    <Grid x:Name="PART_RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="PART_RootTitleBar"  
+            Height="48"  
+            Background="Transparent">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="LeftPaddingColumn" Width="0" />
+                <ColumnDefinition x:Name="IconColumn" Width="Auto" />
+                <ColumnDefinition x:Name="TitleColumn" Width="Auto" />
+                <ColumnDefinition x:Name="SubTitleColumn" Width="Auto" />
+                <ColumnDefinition x:Name="LeftDragColumn" Width="*" />
+                <ColumnDefinition x:Name="RightDragColumn" Width="*" />
+                <ColumnDefinition x:Name="RightPaddingColumn" Width="0" />
+            </Grid.ColumnDefinitions>
+
+            <style:ArcImageIcon x:Name="PART_RootTitleBarIcon"  
+                Grid.Column="1"  
+                Height="22"  
+                Margin="8,0,0,0"
+                ResourceKey="{x:Bind TitleBarIconKey}"/>
+
+            <TextBlock x:Name="PART_RootTitleTextBlock"
+                Grid.Column="2"  
+                Margin="8,0,0,0"  
+                VerticalAlignment="Center"  
+                Tag="main"                      
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="{x:Bind Title}"/>
+
+            <TextBlock x:Name="PART_RootSubTitleTextBlock"  
+                Grid.Column="3"  
+                Margin="8,0,0,0"  
+                VerticalAlignment="Center"  
+                Style="{StaticResource CaptionTextBlockStyle}"  
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"  
+                Text="Dev"
+                Visibility="Collapsed"/>
+        </Grid>
+
+        <ContentPresenter x:Name="PART_RootRootContent"
+            Grid.Row="1"  
+            Content="{x:Bind RootContent, Mode=OneWay}"
+            HorizontalContentAlignment="Stretch"
+            VerticalContentAlignment="Stretch"/>
+
+        <Image x:Name="PART_RootThemeTransitionImage"  
+            Grid.RowSpan="2"  
+            Stretch="Fill"  
+            Opacity="0"
+            Visibility="Collapsed"/>
+    </Grid>
+</UserControl>

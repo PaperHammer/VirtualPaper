@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +8,7 @@ using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
@@ -122,7 +123,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         internal async void UpdateWpArrange(int tag) {
             try {
-                _wpSettingsPanel.GetNotify().Loading(false, false, null);
+                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading(false);
 
                 var type = (WallpaperArrangement)tag;
                 if (type == _userSettingsClient.Settings.WallpaperArrangement) return;
@@ -131,11 +132,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 await _userSettingsClient.SaveAsync<ISettings>();
 
                 var response = await _wpControlClient.RestartAllWallpapersAsync();
-                if (response.IsFinished != true) {                    
-                    _wpSettingsPanel.GetNotify().ShowMsg(
-                        true,
-                        LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_ApplyError),
-                        InfoBarType.Error);
+                if (response.IsFinished != true) {
+                    GlobalMessageUtil.ShowError(
+                        message: nameof(Constants.I18n.Dialog_Content_ApplyError),
+                        isNeedLocalizer: true);
                     // 恢复
                     SelectedWpArrangementsIndex = (int)oldType;
                     _userSettingsClient.Settings.WallpaperArrangement = oldType;
@@ -144,11 +144,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                _wpSettingsPanel.Log(LogType.Error, ex);
+                ArcLog.GetLogger<WpSettingsViewModel>().Error(ex);
             }
             finally {
                 InitMonitors();
-                _wpSettingsPanel.GetNotify().Loaded(null);
+                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
             }
         }
 
@@ -161,11 +161,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         internal void Detect() {
             InitMonitors();
 
-            _wpSettingsPanel.GetNotify().ShowMsg(
-                true,
-                Constants.I18n.Dialog_Content_GetMonitorsAsync,
-                InfoBarType.Informational,
-                _monitorCnt.ToString());
+            GlobalMessageUtil.ShowInfo(message: Constants.I18n.Dialog_Content_GetMonitorsAsync, isNeedLocalizer: true);
         }
 
         internal async Task IdentifyAsync() {
@@ -176,8 +172,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             try {
                 await _adjustSemaphoreSlim.WaitAsync();
 
-                _ctsAdjust = new CancellationTokenSource();
-                _wpSettingsPanel.GetNotify().Loading(true, false, [_ctsAdjust]);
+                var _ctsAdjust = new CancellationTokenSource();
+                PageContextManager.GetContext<WpSettings>().Loading.SetCancellationToken([_ctsAdjust]);
+                PageContextManager.GetContext<WpSettings>().Loading.ShowLoading();
 
                 if (SelectedMonitor.ThumbnailPath == string.Empty) {
                     return;
@@ -190,37 +187,35 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
             catch (RpcException ex) {
                 if (ex.StatusCode == StatusCode.Cancelled) {
-                    _wpSettingsPanel.GetNotify().ShowCanceled();
+                    GlobalMessageUtil.ShowCanceled();
                 }
                 else {
-                    _wpSettingsPanel.GetNotify().ShowExp(ex);
+                    GlobalMessageUtil.ShowException(ex);
                 }
             }
             catch (OperationCanceledException) {
-                _wpSettingsPanel.GetNotify().ShowCanceled();
+                GlobalMessageUtil.ShowCanceled();
             }
             catch (Exception ex) {
-                _wpSettingsPanel.GetNotify().ShowExp(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                _wpSettingsPanel.GetNotify().Loaded([_ctsAdjust]);
+                PageContextManager.GetContext<WpSettings>().Loading.HideLoading();
                 _adjustSemaphoreSlim.Release();
             }
         }
         #endregion
 
         private readonly IList<IMonitor> _monitors = [];
-        internal IWpSettingsPanel _wpSettingsPanel;
         private readonly IMonitorManagerClient _monitorManagerClient;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly SemaphoreSlim _adjustSemaphoreSlim = new(1, 1);
-        private CancellationTokenSource _ctsAdjust;
         private int _monitorCnt;
 
         public class WpArrangeDataModel {
-            public string Method { get; set; }
-            public string Tooltip { get; set; }
+            public string Method { get; set; } = string.Empty;
+            public string Tooltip { get; set; } = string.Empty;
         }
     }
 }

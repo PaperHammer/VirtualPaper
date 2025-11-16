@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
-using VirtualPaper.UIComponent.Windowing;
+using VirtualPaper.UIComponent.Templates;
 using Windows.UI;
 
 namespace VirtualPaper.UIComponent.Utils {
@@ -67,14 +67,10 @@ namespace VirtualPaper.UIComponent.Utils {
             foreach (var element in titlebarElements) {
                 switch (element) {
                     case TextBlock textBlock:
-                        bool isMainTitle = element.Tag?.ToString() == "main";
+                        bool isMainTitle = element.Tag?.ToString()?.ToLower() == "main";
                         textBlock.Foreground = isActive
                             ? (isMainTitle ? activeBrush : subtitleBrush)
                             : inactiveBrush;
-                        break;
-
-                    case ImageIcon imageIcon:
-                        imageIcon.Foreground = isActive ? activeBrush : inactiveBrush;
                         break;
                 }
             }

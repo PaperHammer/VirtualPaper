@@ -12,6 +12,7 @@
 	<ItemGroup>
 	  <None Remove="Views\LibraryContents.xaml" />
 	  <None Remove="Views\ScreenSaver.xaml" />
+	  <None Remove="Windows\PreviewWithWeb.xaml" />
 	  <None Remove="WpSettings.xaml" />
 	</ItemGroup>
 
@@ -37,6 +38,12 @@
 	  <Page Update="WpSettings.xaml">
 	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 	    <SubType>Designer</SubType>
+	  </Page>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Windows\PreviewWithWeb.xaml">
+	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -8,24 +8,7 @@ using VirtualPaper.UIComponent.Utils;
 namespace VirtualPaper.AppSettingsPanel.ViewModels {
     public partial class PerformanceSettingViewModel : ObservableObject {
         public List<string> PlayStatus { get; set; } = [];
-        public List<string> StatuMechanisms { get; set; } = [];
-        public string Text_Play { get; set; } = string.Empty;
-        public string Play_OthersFullScreen { get; set; } = string.Empty;
-        public string Play_OthersFullScreenExplain { get; set; } = string.Empty;
-        public string Play_OthersFocus { get; set; } = string.Empty;
-        public string Play_OthersFocusExplain { get; set; } = string.Empty;
-        public string Play_Audio { get; set; } = string.Empty;
-        public string Text_Laptop { get; set; } = string.Empty;
-        public string Laptop_BatteryPoweredn { get; set; } = string.Empty;
-        public string Laptop_BatteryPowerednExplain { get; set; } = string.Empty;
-        public string Laptop_PowerSaving { get; set; } = string.Empty;
-        public string Laptop_PowerSavingExplain { get; set; } = string.Empty;
-        public string Text_System { get; set; } = string.Empty;
-        public string System_RemoteDesktop { get; set; } = string.Empty;
-        public string System_RemoteDesktopExplain { get; set; } = string.Empty;
-        public string System_StatuMechanism { get; set; } = string.Empty;
-        public string System_StatuMechanismExplain_ForPer { get; set; } = string.Empty;
-        public string System_StatuMechanismExplain_ForAll { get; set; } = string.Empty;
+        public List<string> StatuMechanisms { get; set; } = [];        
 
         private int _selectedFullScreenPlayStatuIndex;
         public int SelectedFullScreenPlayStatuIndex {
@@ -149,37 +132,15 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private void InitText() {
-            Text_Play = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Text_Play);
-            Play_OthersFullScreen = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Play_OthersFullScreen);
-            Play_OthersFullScreenExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Play_OthersFullScreenExplain);
             _playStatu_Silence = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Play__playStatu_Silence);
             _playStatu_Pause = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Play__playStatu_Pause);
             _playStatu_KeepRun = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Play__playStatu_KeepRun);
-            Play_OthersFocus = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Play_OthersFocus);
-            Play_OthersFocusExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Play_OthersFocusExplain);
-            Play_Audio = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Play_Audio);
-            Text_Laptop = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Text_Laptop);
-            Laptop_BatteryPoweredn = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Laptop_BatteryPoweredn);
-            Laptop_BatteryPowerednExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Laptop_BatteryPowerednExplain);
-            Laptop_PowerSaving = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Laptop_PowerSaving);
-            Laptop_PowerSavingExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Laptop_PowerSavingExplain);
-            Text_System = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_Text_System);
-            System_RemoteDesktop = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_System_RemoteDesktop);
-            System_RemoteDesktopExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_System_RemoteDesktopExplain);
-            System_StatuMechanism = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_System_StatuMechanism);
-            System_StatuMechanismExplain_ForPer = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_System_StatuMechanismExplain_ForPer);
-            System_StatuMechanismExplain_ForAll = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_System_StatuMechanismExplain_ForAll);
             _statuMechanism_per = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_System__statuMechanism_per);
             _statuMechanism_all = LanguageUtil.GetI18n(Constants.I18n.Settings_Perforemance_System__statuMechanism_all);
         }
 
         private void ChangeAudioStatu(bool isAudioOnlyOnDesktop) {
-            if (isAudioOnlyOnDesktop) {
-                AudioStatu = LanguageUtil.GetI18n(Constants.I18n.Text_On);
-            }
-            else {
-                AudioStatu = LanguageUtil.GetI18n(Constants.I18n.Text_Off);
-            }
+            AudioStatu = LanguageUtil.GetI18n(isAudioOnlyOnDesktop ? Constants.I18n.Text_On : Constants.I18n.Text_Off);
         }
 
         private async void UpdateSettingsConfigFile() {

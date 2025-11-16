@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -45,19 +45,24 @@ namespace VirtualPaper.PlayerWeb {
             //    "--effect-file-path-template C:\\Users\\PaperHammer\\AppData\\Local\\VirtualPaper\\temp\\4dfj1bgy.zl5\\wpEffectFilePathTemplate.json " +
             //    "-r RImage " +
             //    "--system-backdrop Default " +
-            //    "-T Light " +
+            //    "-t Light " +
             //    "-l zh-CN";
             //string[] startArgs = s.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1..];
 
             string[] startArgs = Environment.GetCommandLineArgs()[1..];
-            Parser.Default.ParseArguments<StartArgs>(startArgs)
-                .WithParsed((x) => _startArgs = x)
-                .WithNotParsed(HandleParseError);
-            if (_startArgs == null) {
-                throw new NoNullAllowedException(nameof(StartArgs));
-            }
+            try {
+                Parser.Default.ParseArguments<StartArgs>(startArgs)
+                                .WithParsed((x) => _startArgs = x)
+                                .WithNotParsed(HandleParseError);
+                if (_startArgs == null) {
+                    throw new NoNullAllowedException(nameof(StartArgs));
+                }
 
-            SetAppTheme(_startArgs.ApplicationTheme);
+                SetAppTheme(_startArgs.ApplicationTheme);
+            }
+            catch (Exception e) {
+                LogUnhandledException(e, "App");
+            }
         }
 
         /// <summary>

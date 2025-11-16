@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -9,6 +8,8 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.UIComponent.Logging;
+using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.DataTransfer;
 
@@ -40,7 +41,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private void Image_ImageFailed(object sender, ExceptionRoutedEventArgs e) {
-            this._wpSettingsPanel.Log(LogType.Error, $"RImage loading failed: {e.ErrorMessage}");
+            ArcLog.GetLogger<LibraryContents>().Error($"RImage loading failed: {e.ErrorMessage}");
         }
 
         private void GridView_ItemClick(object sender, ItemClickEventArgs e) {
@@ -61,7 +62,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private void RightClick(object sender, RightTappedRoutedEventArgs e) {
             if (_data == null) {
-                // Hide() ∑Ω∑®ø…ƒ‹Œﬁ–ß «“ÚŒ™ MenuFlyout  «”… ContextFlyout  Ù–‘¥•∑¢
+                // Hide() ÊñπÊ≥ïÂèØËÉΩÊó†ÊïàÊòØÂõ†‰∏∫ MenuFlyout ÊòØÁî± ContextFlyout Â±ûÊÄßËß¶Âèë
                 // ItemsViewMenu.Hide();
                 wallpapersLibView.ContextFlyout = null;
             }
@@ -105,8 +106,8 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                 }
             }
             catch (Exception ex) {
-                this._wpSettingsPanel.GetNotify().ShowExp(ex);
-                this._wpSettingsPanel.Log(LogType.Error, ex);
+                GlobalMessageUtil.ShowException(ex);
+                ArcLog.GetLogger<LibraryContents>().Error(ex);
             }
         }
 

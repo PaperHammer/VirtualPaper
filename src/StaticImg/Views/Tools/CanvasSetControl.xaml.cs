@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -118,17 +119,15 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         }
 
         private static void CloseSizeIllegalMsg() {
-            MainPage.Instance.Bridge.GetNotify().CloseAndRemoveMsg(nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal));
+            GlobalMessageUtil.CloseAndRemoveMsg(nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal));
         }
 
         private static void ShowSizeIllegalMsg() {
-            MainPage.Instance.Bridge.GetNotify().ShowMsg(
-                true,
-                nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
-                InfoBarType.Error,
-                MAX_CANVAS_SIZE_WITH_DPI.ToString(),
-                nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
-                false);
+            GlobalMessageUtil.ShowError(
+                message: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
+                key: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
+                isNeedLocalizer: true,
+                extraMsg: MAX_CANVAS_SIZE_WITH_DPI.ToString());
         }
 
         private void LockAspectRatio_Checked(object sender, RoutedEventArgs e) {
@@ -160,18 +159,18 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         private bool _isScaleContent;
 
         private static int MAX_CANVAS_EDGE => MainPage.Instance.SharedDevice.MaximumBitmapSizeInPixels;
-        private static int MAX_CANVAS_SIZE_WITH_DPI => (int)(1.0F * MAX_CANVAS_EDGE / MainPage.Instance.Bridge.GetHardwareDpi() * 96);
+        private static int MAX_CANVAS_SIZE_WITH_DPI => (int)(1.0F * MAX_CANVAS_EDGE / WindowConsts.Dpi * 96);
 
-        private readonly string _SIG_CanvasSet_Header = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_Header)); // »­²¼
-        private readonly string _SIG_CanvasSet_AdjustSize = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_AdjustSize)); // µ÷Õû»­²¼´óĞ¡
-        private readonly string _SIG_CanvasSet_PixelWidth = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_PixelWidth)); // ¿í¶È(ÏñËØ)
-        private readonly string _SIG_CanvasSet_PixelHeight = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_PixelHeight)); // ¸ß¶È(ÏñËØ)
-        private readonly string _SIG_CanvasSet_LockAspectRatio = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_LockAspectRatio)); // Ëø¶¨×İºá±È
-        private readonly string _SIG_CanvasSet_SacleContent = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_SacleContent)); // Í¬²½Ëõ·Å»­²¼ÄÚÈİ
-        private readonly string _SIG_CanvasSet_RotateAndFlip = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateAndFlip)); // Ğı×ªºÍ·­×ª
-        private readonly string _SIG_CanvasSet_RotateLeftNinety = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateLeftNinety)); // Ïò×óĞı×ª90¡ã
-        private readonly string _SIG_CanvasSet_RotateRightNinety = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateRightNinety)); // ÏòÓÒĞı×ª90¡ã
-        private readonly string _SIG_CanvasSet_FlipHorizon = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_FlipHorizon)); // Ë®Æ½·­×ª
-        private readonly string _SIG_CanvasSet_FlipVertical = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_FlipVertical)); // ´¹Ö±·­×ª
+        private readonly string _SIG_CanvasSet_Header = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_Header)); // ç”»å¸ƒ
+        private readonly string _SIG_CanvasSet_AdjustSize = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_AdjustSize)); // è°ƒæ•´ç”»å¸ƒå¤§å°
+        private readonly string _SIG_CanvasSet_PixelWidth = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_PixelWidth)); // å®½åº¦(åƒç´ )
+        private readonly string _SIG_CanvasSet_PixelHeight = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_PixelHeight)); // é«˜åº¦(åƒç´ )
+        private readonly string _SIG_CanvasSet_LockAspectRatio = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_LockAspectRatio)); // é”å®šçºµæ¨ªæ¯”
+        private readonly string _SIG_CanvasSet_SacleContent = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_SacleContent)); // åŒæ­¥ç¼©æ”¾ç”»å¸ƒå†…å®¹
+        private readonly string _SIG_CanvasSet_RotateAndFlip = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateAndFlip)); // æ—‹è½¬å’Œç¿»è½¬
+        private readonly string _SIG_CanvasSet_RotateLeftNinety = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateLeftNinety)); // å‘å·¦æ—‹è½¬90Â°
+        private readonly string _SIG_CanvasSet_RotateRightNinety = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateRightNinety)); // å‘å³æ—‹è½¬90Â°
+        private readonly string _SIG_CanvasSet_FlipHorizon = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_FlipHorizon)); // æ°´å¹³ç¿»è½¬
+        private readonly string _SIG_CanvasSet_FlipVertical = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_FlipVertical)); // å‚ç›´ç¿»è½¬
     }
 }

@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
+using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils.Extensions;
-using VirtualPaper.UIComponent.Windowing;
 
 namespace VirtualPaper.UIComponent.Utils {
     // Helper class to allow the app to find the Window that contains an
@@ -11,6 +11,8 @@ namespace VirtualPaper.UIComponent.Utils {
     // rather than "new Window" so we can keep track of all the relevant
     // windows.  In the future, we would like to support this in platform APIs.
     public static partial class WindowHelper {
+        public static ArcWindow ActiveWindow => _activeWindow;
+
         static WindowHelper() {
             ThemeHelper.OnAppThemeChanged += (sender, args) => {
                 foreach (ArcWindow window in _activeWindows) {
@@ -26,8 +28,11 @@ namespace VirtualPaper.UIComponent.Utils {
             };
             window.Activated += (sender, args) => {
                 var isActive = args.WindowActivationState != WindowActivationState.Deactivated;
+                if (isActive) {
+                    _activeWindow = window;
+                }
                 var currentTheme = ThemeHelper.GetCurrentTheme(window).ToAppTheme();
-                TitleBarHelper.UpdateTitleBar(window, window.TitleBarChildren, currentTheme, isActive);
+                TitleBarHelper.UpdateTitleBar(window, window.ContentHost.TitleBarChildren, currentTheme, isActive);
             };
             if (window.Content is FrameworkElement root) {
                 ThemeHelper.RegisterThemeRoot(root);
@@ -37,9 +42,9 @@ namespace VirtualPaper.UIComponent.Utils {
 
         public static void UpdateWindowVisualState(ArcWindow window) {
             var currentTheme = ThemeHelper.GetCurrentTheme(window).ToAppTheme();
-            TitleBarHelper.UpdateTitleBar(window, window.TitleBarChildren, currentTheme, true);
+            TitleBarHelper.UpdateTitleBar(window, window.ContentHost.TitleBarChildren, currentTheme, true);
             if (window.AppNavView != null) TitleBarHelper.UpdateNaviVisualStates(window.AppNavView, currentTheme, window.CurrentBackdrop);
-            TitleBarHelper.UpdateTitleBarVisualStates(window.AppTitleBar, currentTheme, window.CurrentBackdrop);
+            TitleBarHelper.UpdateTitleBarVisualStates(window.ContentHost.AppTitleBar, currentTheme, window.CurrentBackdrop);
         }
 
         static public ArcWindow GetWindowForElement(UIElement element) {
@@ -72,5 +77,6 @@ namespace VirtualPaper.UIComponent.Utils {
         }
 
         private static readonly List<ArcWindow> _activeWindows = [];
+        private static ArcWindow _activeWindow;
     }
 }

@@ -1,7 +1,7 @@
-﻿using VirtualPaper.Common.Utils.Bridge.Base;
+using VirtualPaper.Common.Utils.Bridge.Base;
 
 namespace VirtualPaper.Common.Utils.Bridge {
-    public interface IDraftPanelBridge : IPanelBridge, ILogBridge {
+    public interface IDraftPanelBridge : IPanelBridge {
         /// <summary>
         /// 父级共享参数
         /// </summary>
@@ -56,7 +56,5 @@ namespace VirtualPaper.Common.Utils.Bridge {
         /// </list>
         /// </remarks>
         void ChangePanelState(DraftPanelState nextPanel, object? data);
-        uint GetHardwareDpi();
-        IDialogService GetDialog();
     }
 }

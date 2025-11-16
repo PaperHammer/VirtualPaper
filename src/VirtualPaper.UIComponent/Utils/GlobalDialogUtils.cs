@@ -3,12 +3,11 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge.Base;
-using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.UIComponent.Templates;
 
-namespace VirtualPaper.UI.Utils {
-    public class DialogUtil : IDialogService {
-        public async Task ShowDialogAsync(
+namespace VirtualPaper.UIComponent.Utils {
+    public static class GlobalDialogUtils {
+        public static async Task ShowDialogAsync(
             string message,
             string title,
             string primaryBtnText) {
@@ -17,14 +16,14 @@ namespace VirtualPaper.UI.Utils {
                 Content = new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap },
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = ContentDialogButton.Primary,
-                XamlRoot = ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton).Content.XamlRoot,
-                RequestedTheme = (ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton).Content as Grid)?.RequestedTheme ?? ElementTheme.Default,
+                XamlRoot = WindowHelper.ActiveWindow.Content.XamlRoot,
+                RequestedTheme = WindowHelper.ActiveWindow.ContentHost.AppRoot.RequestedTheme,
             };
 
             await dialog.ShowAsync();
         }
 
-        public async Task<DialogResult> ShowDialogAsync(
+        public static async Task<DialogResult> ShowDialogAsync(
             object content,
             string title,
             string primaryBtnText,
@@ -36,9 +35,9 @@ namespace VirtualPaper.UI.Utils {
                 PrimaryButtonText = primaryBtnText,
                 SecondaryButtonText = secondaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
-                XamlRoot = ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton).Content.XamlRoot,
-                RequestedTheme = (ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton).Content as Grid)?.RequestedTheme ?? ElementTheme.Default,
-            }; 
+                XamlRoot = WindowHelper.ActiveWindow.Content.XamlRoot,
+                RequestedTheme = WindowHelper.ActiveWindow.ContentHost.AppRoot.RequestedTheme,
+            };
 
             var result = await dialog.ShowAsync();
 
@@ -50,7 +49,7 @@ namespace VirtualPaper.UI.Utils {
             };
         }
 
-        public async Task<DialogResult> ShowDialogAsync(
+        public static async Task<DialogResult> ShowDialogAsync(
             object content,
             string title,
             string primaryBtnText,
@@ -60,8 +59,8 @@ namespace VirtualPaper.UI.Utils {
                 Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
-                XamlRoot = ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton).Content.XamlRoot,
-                RequestedTheme = (ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton).Content as Grid)?.RequestedTheme ?? ElementTheme.Default,
+                XamlRoot = WindowHelper.ActiveWindow.Content.XamlRoot,
+                RequestedTheme = WindowHelper.ActiveWindow.ContentHost.AppRoot.RequestedTheme,
             };
 
             var result = await dialog.ShowAsync();
@@ -74,7 +73,7 @@ namespace VirtualPaper.UI.Utils {
             };
         }
 
-        public async Task<DialogResult> ShowDialogWithoutTitleAsync(
+        public static async Task<DialogResult> ShowDialogWithoutTitleAsync(
             object content,
             string primaryBtnText,
             string secondaryBtnText,
@@ -84,8 +83,8 @@ namespace VirtualPaper.UI.Utils {
                 PrimaryButtonText = primaryBtnText,
                 SecondaryButtonText = secondaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
-                XamlRoot = ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton).Content.XamlRoot,
-                RequestedTheme = (ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton).Content as Grid)?.RequestedTheme ?? ElementTheme.Default,
+                XamlRoot = WindowHelper.ActiveWindow.Content.XamlRoot,
+                RequestedTheme = WindowHelper.ActiveWindow.ContentHost.AppRoot.RequestedTheme,
             };
 
             var result = await dialog.ShowAsync();
@@ -97,8 +96,8 @@ namespace VirtualPaper.UI.Utils {
                 _ => DialogResult.None,
             };
         }
-        
-        public async Task<DialogResult> ShowDialogWithoutTitleAsync(
+
+        public static async Task<DialogResult> ShowDialogWithoutTitleAsync(
             object content,
             string primaryBtnText,
             bool isDefaultPrimary = true) {
@@ -106,8 +105,8 @@ namespace VirtualPaper.UI.Utils {
                 Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
-                XamlRoot = ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton).Content.XamlRoot,
-                RequestedTheme = (ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton).Content as Grid)?.RequestedTheme ?? ElementTheme.Default,
+                XamlRoot = WindowHelper.ActiveWindow.Content.XamlRoot,
+                RequestedTheme = WindowHelper.ActiveWindow.ContentHost.AppRoot.RequestedTheme,
             };
 
             var result = await dialog.ShowAsync();

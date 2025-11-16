@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualPaper.UIComponent.Logging;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
     public partial class Layer : IDisposable {
@@ -91,12 +92,12 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                     var layer = await DeserializeSignleAsync(layerData, canvasSize);
                     layers.Add(layer);
                 }
-                catch (Exception ex) when (i < layerCount - 1) {
-                    MainPage.Instance.Log.Error($"Layer {i} deserialization failed: {ex.Message}");
+                catch (Exception ex) when (i < layerCount - 1) {                    
+                    ArcLog.GetLogger<StaticImg.MainPage>().Error($"Layer {i} deserialization failed: {ex.Message}");
 
                     // 尝试恢复位置到下一个图层起始处
                     if (!TryFindNextLayer(fs, LAYER_MAGIC)) {
-                        MainPage.Instance.Log.Error("Unable to locate the next valid layer, aborting read.");
+                        ArcLog.GetLogger<StaticImg.MainPage>().Error("Unable to locate the next valid layer, aborting read.");
                         break;
                     }
                 }

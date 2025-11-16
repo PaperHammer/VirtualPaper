@@ -1,0 +1,73 @@
+using System;
+using System.Collections.Concurrent;
+using System.Linq;
+using VirtualPaper.UIComponent.Context;
+using VirtualPaper.UIComponent.Templates;
+
+namespace VirtualPaper.UIComponent.Utils {
+    /// <summary>
+    /// 页面上下文管理器 - 支持缓存页面管理
+    /// </summary>
+    public static class PageContextManager {
+        private static readonly ConcurrentDictionary<Type, ArcPageContext> _contexts = new();
+
+        #region 上下文注册管理
+        public static void RegisterContext(Type pageType, ArcPageContext context) {
+            ArgumentNullException.ThrowIfNull(pageType);
+            ArgumentNullException.ThrowIfNull(context);
+
+            _contexts[pageType] = context;
+        }
+
+        public static void UnregisterContext(Type pageType) {
+            if (pageType == null) return;
+
+            _contexts.TryRemove(pageType, out _);
+        }
+
+        public static ArcPageContext? GetContext(Type pageType) {
+            if (_contexts.TryGetValue(pageType, out var context) && context.IsValid) {
+                return context;
+            }
+            return null;
+        }
+
+        public static ArcPageContext? GetContext<T>() where T : ArcPage {
+            return GetContext(typeof(T));
+        }
+
+        public static LoadingContext? GetLoadingContext(Type pageType) {
+            return GetContext(pageType)?.Loading;
+        }
+
+        public static LoadingContext? GetLoadingContext<T>() where T : ArcPage {
+            return GetContext<T>()?.Loading;
+        }
+
+        /// <summary>
+        /// 检查指定页面类型是否已注册上下文
+        /// </summary>
+        public static bool HasContext(Type pageType) {
+            return _contexts.ContainsKey(pageType) && _contexts[pageType].IsValid;
+        }
+
+        /// <summary>
+        /// 获取当前活动的页面上下文
+        /// </summary>
+        public static ArcPageContext? GetActiveContext() {
+            return _contexts.Values.FirstOrDefault(context =>
+                context.IsValid && context.IsActive);
+        }
+
+        /// <summary>
+        /// 设置页面活动状态
+        /// </summary>
+        public static void SetPageActiveState(Type pageType, bool isActive) {
+            var context = GetContext(pageType);
+            if (context != null) {
+                context.IsActive = isActive;
+            }
+        }
+        #endregion
+    }
+}

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json.Serialization;
 using MessagePack;
 using Windows.Foundation;
@@ -155,8 +155,6 @@ namespace Workloads.Creation.StaticImg {
         public float Ratio { get; } // 宽高比
         [JsonIgnore]
         public RebuildMode Rebuild { get; }
-        [JsonIgnore]
-        public static uint HardwareDpi => MainPage.Instance.Bridge.GetHardwareDpi();
         [JsonIgnore]
         public Rect Bound => new(0, 0, Width, Height);
 

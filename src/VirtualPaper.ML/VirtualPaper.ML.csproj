@@ -17,13 +17,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="Models\model-small.onnx">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
+	  <ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
+	  <None Update="Models\model-small.onnx">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 	<PropertyGroup>

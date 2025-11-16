@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Grpc.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Events;
-using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Localization;
 using VirtualPaper.Common.Utils.Storage;
@@ -15,6 +15,8 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent;
+using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Storage;
 using Windows.System;
@@ -22,32 +24,6 @@ using Windows.System;
 namespace VirtualPaper.AppSettingsPanel.ViewModels {
     public partial class GeneralSettingViewModel : ObservableObject {
         public event EventHandler? WallpaperInstallDirChanged;
-
-        //public string Text_Version => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Text_Version);
-        public string Version_Release_Notes => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_Release_Notes);
-        public string Version_UpdateCheck => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_UpdateCheck);
-        public string Version_DownloadCancel { get; set; } = string.Empty;
-        public string Version_DownloadStart => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownloadStart);
-        public string Version_FindNew => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_FindNew);
-        public string Version_Download { get; set; } = string.Empty;
-        public string Version_SeeNews => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_SeeNews);
-        public string Version_UpdateErr => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_UpdateErr);
-        public string Version_Install { get; set; } = string.Empty;
-        public string Version_UptoNewest => LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_UptoNewest);
-
-        public string Text_AppearanceAndAction { get; set; } = string.Empty;
-        public string AppearanceAndAction_AutoStart { get; set; } = string.Empty;
-        public string AppearanceAndAction_AutoStatExplain { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppSystemBackdrop { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppSystemBackdropExplain { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppLanguage { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppLanguageExplain { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppFileStorage { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppFileStorageExplain { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppFileStorage_ModifyTooltip { get; set; } = string.Empty;
-        public string AppearanceAndAction_AppFileStorage_OpenTooltip { get; set; } = string.Empty;
 
         public bool IsWinStore => Constants.ApplicationType.IsMSIX;
 
@@ -95,12 +71,18 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             set { _isUpdateBtnEnable = value; OnPropertyChanged(); }
         }
 
+        private bool _isUpdateRingActive = false;
+        public bool IsUpdateRingActive {
+            get => _isUpdateRingActive;
+            set { _isUpdateRingActive = value; OnPropertyChanged(); }
+        }
+
         private float _downloadProgress = 0;
         public float DownloadProgress {
             get => _downloadProgress;
             set { _downloadProgress = value; OnPropertyChanged(); }
         }
-        
+
         private string _downloadProgressText = string.Empty;
         public string DownloadProgressText {
             get => _downloadProgressText;
@@ -134,7 +116,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
         }
 
-        private LanguagesModel _selectedLanguage;
+        private LanguagesModel _selectedLanguage = null!;
         public LanguagesModel SelectedLanguage {
             get => _selectedLanguage;
             set {
@@ -172,6 +154,11 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             set { _isWallpaperDirectoryChangeEnable = value; OnPropertyChanged(); }
         }
 
+        public ICommand? ChangeFileStorageCommand { get; private set; }
+        public ICommand? OpenFileStorageCommand { get; private set; }
+        public ICommand? CheckUpdateCommand { get; private set; }
+        public ICommand? StartDownloadComand { get; private set; }
+
         public GeneralSettingViewModel(
             IAppUpdaterClient appUpdater,
             IUserSettingsClient userSettingsClient,
@@ -183,10 +170,22 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             InitText();
             InitCollections();
             InitContent();
+            InitCommand();
         }
 
-        private void InfoBarVisibilityRestore() {
-            CurrentVersionState = VersionState.None;
+        private void InitCommand() {
+            ChangeFileStorageCommand = new RelayCommand(() => {
+                WallpaperDirectoryChange();
+            });
+            OpenFileStorageCommand = new RelayCommand(() => {
+                OpenFolder();
+            });
+            CheckUpdateCommand = new RelayCommand(async () => {
+                await CheckUpdateAsync();
+            });
+            StartDownloadComand = new RelayCommand(async () => {
+                await StartDownloadAsync();
+            });
         }
 
         private void InitContent() {
@@ -199,27 +198,11 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private void InitText() {
-            Version_DownloadCancel = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_DownloadCancel);
-            Version_Download = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_Download);
-            Version_Install = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_Install);
             Version_LastCheckDate = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_LastCheckDate);
 
-            Text_AppearanceAndAction = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Text_AppearanceAndAction);
-            AppearanceAndAction_AutoStart = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AutoStart);
-            AppearanceAndAction_AutoStatExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AutoStatExplain);            
-            AppearanceAndAction_AppSystemBackdrop = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppSystemBackdrop);
-            AppearanceAndAction_AppSystemBackdropExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppSystemBackdropExplain);
-            AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink);
-            AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink);
             _sysbdDefault = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction__sysbdDefault);
             _sysbdMica = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction__sysbdMica);
             _sysbdAcrylic = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction__sysbdAcrylic);
-            AppearanceAndAction_AppLanguage = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppLanguage);
-            AppearanceAndAction_AppLanguageExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppLanguageExplain);
-            AppearanceAndAction_AppFileStorage = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppFileStorage);
-            AppearanceAndAction_AppFileStorageExplain = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppFileStorageExplain);
-            AppearanceAndAction_AppFileStorage_ModifyTooltip = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppFileStorage_ModifyTooltip);
-            AppearanceAndAction_AppFileStorage_OpenTooltip = LanguageUtil.GetI18n(Constants.I18n.Settings_General_AppearanceAndAction_AppFileStorage_OpenTooltip);
         }
 
         private void InitCollections() {
@@ -236,12 +219,20 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
         }
 
-        internal async Task CheckUpdateAsync() {
+        private async Task CheckUpdateAsync() {
+            IsUpdateBtnEnable = false;
+            IsUpdateRingActive = true;
             InfoBarVisibilityRestore();
 
             await _appUpdater.CheckUpdateAsync();
+
+            IsUpdateBtnEnable = true;
+            IsUpdateRingActive = false;
         }
 
+        private void InfoBarVisibilityRestore() {
+            CurrentVersionState = VersionState.None;
+        }
         private void AppUpdater_UpdateChecked(object? sender, AppUpdaterEventArgs e) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
                 MenuUpdate(e.UpdateStatus, e.UpdateDate, e.UpdateVersion);
@@ -250,26 +241,29 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
         private void MenuUpdate(AppUpdateStatus status, DateTime date, Version version) {
             Version = $"v{version}";
+#if DEBUG
             CurrentVersionState = VersionState.FindNew;
-            //switch (status) {
-            //    case AppUpdateStatus.Uptodate:
-            //        CurrentVersionState = VersionState.UptoNewest;
-            //        break;
-            //    case AppUpdateStatus.Available:
-            //        Version = $"v{version}";
-            //        CurrentVersionState = VersionState.FindNew;
-            //        break;
-            //    case AppUpdateStatus.Invalid or AppUpdateStatus.Error:
-            //        CurrentVersionState = VersionState.UpdateErr;
-            //        break;
-            //    default:
-            //        break;
-            //}
+#else
+            switch (status) {
+                case AppUpdateStatus.Uptodate:
+                    CurrentVersionState = VersionState.UptoNewest;
+                    break;
+                case AppUpdateStatus.Available:
+                    Version = $"v{version}";
+                    CurrentVersionState = VersionState.FindNew;
+                    break;
+                case AppUpdateStatus.Invalid or AppUpdateStatus.Error:
+                    CurrentVersionState = VersionState.UpdateErr;
+                    break;
+                default:
+                    break;
+            }
+#endif
             Version_LastCheckDate = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_LastCheckDate);
             Version_LastCheckDate += status == AppUpdateStatus.Notchecked ? "" : $" {date}";
         }
 
-        internal async Task StartDownloadAsync() {
+        private async Task StartDownloadAsync() {
             IsUpdateBtnEnable = false;
 
             await _appUpdater.StartDownloadAsync();
@@ -277,23 +271,21 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             IsUpdateBtnEnable = true;
         }
 
-        internal async void WallpaperDirectoryChange() {
-            var storageFolder = await WindowsStoragePickers.PickFolderAsync(_appSettingsPanel.GetWindowHandle());
-            if (storageFolder == null) return;
+        private async void WallpaperDirectoryChange() {
+            var storagePath = await WindowConsts.GetStorageFolderAsync();
+            if (storagePath == null) return;
 
-            if (storageFolder.Path == Constants.CommonPaths.AppDataDir) {
-                _appSettingsPanel.GetNotify().ShowMsg(true,
-                    LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_WallpaperDirectoryChangePathInvalid),
-                    InfoBarType.Error);
+            if (storagePath == Constants.CommonPaths.AppDataDir) {
+                GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_WallpaperDirectoryChangePathInvalid, isNeedLocalizer: true);
                 return;
             }
 
-            if (!string.Equals(storageFolder.Path, _userSettingsClient.Settings.WallpaperDir, StringComparison.OrdinalIgnoreCase)) {
-                await WallpaperDirectoryChange(storageFolder.Path);
+            if (!string.Equals(storagePath, _userSettingsClient.Settings.WallpaperDir, StringComparison.OrdinalIgnoreCase)) {
+                await WallpaperDirectoryChange(storagePath);
             }
         }
 
-        internal async void OpenFolder() {
+        private async void OpenFolder() {
             var folder = await StorageFolder.GetFolderFromPathAsync(WallpaperDir);
             await Launcher.LaunchFolderAsync(folder);
         }
@@ -311,10 +303,10 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 bool isDirChanged = await WallpaperDirectoryUpdateAsync(
                     [_userSettingsClient.Settings.WallpaperDir], destFolderPath);
                 if (!isDirChanged) {
-                    _appSettingsPanel.GetNotify().ShowMsg(true, Constants.I18n.InfobarMsg_Err, InfoBarType.Error);
+                    GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_Err, isNeedLocalizer: true);
                     return;
                 }
-                #endregion             
+                #endregion
 
                 #region 更新存储的运行信息，重启壁纸
                 var previousDirFolderPath = _userSettingsClient.Settings.WallpaperDir;
@@ -332,25 +324,24 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 #region 删除原目录下的文件
                 _ = await FileUtil.TryDeleteDirectoryAsync(previousDirFolderPath, 1000, 3000);
                 #endregion
-
             }
             catch (RpcException ex) {
                 if (ex.StatusCode == StatusCode.Cancelled) {
-                    _appSettingsPanel.GetNotify().ShowCanceled();
+                    GlobalMessageUtil.ShowCanceled();
                 }
                 else {
-                    _appSettingsPanel.GetNotify().ShowExp(ex);
+                    GlobalMessageUtil.ShowException(ex);
                 }
             }
             catch (OperationCanceledException) {
-                _appSettingsPanel.GetNotify().ShowMsg(true, Constants.I18n.InfobarMsg_Cancel, InfoBarType.Warning);
+                GlobalMessageUtil.ShowCanceled();
                 if (destFolderPath != string.Empty) {
                     FileUtil.EmptyDirectory(destFolderPath);
                 }
             }
             catch (Exception ex) {
-                _appSettingsPanel.GetNotify().ShowMsg(true, Constants.I18n.InfobarMsg_Err, InfoBarType.Error);
-                _appSettingsPanel.Log(LogType.Error, ex.Message);
+                GlobalMessageUtil.ShowException(ex);
+                ArcLog.GetLogger<GeneralSettingViewModel>().Error(ex.Message);
                 if (destFolderPath != string.Empty) {
                     FileUtil.EmptyDirectory(destFolderPath);
                 }
@@ -376,7 +367,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
             catch (Exception ex) {
                 allOperationsSuccessful = false;
-                _appSettingsPanel.GetNotify().ShowExp(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
 
             return allOperationsSuccessful;
@@ -409,7 +400,6 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private string _sysbdDefault = string.Empty;
         private string _sysbdMica = string.Empty;
         private string _sysbdAcrylic = string.Empty;
-        internal IAppSettingsPanel _appSettingsPanel;
         private readonly IAppUpdaterClient _appUpdater;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly IWallpaperControlClient _wpControlClient;

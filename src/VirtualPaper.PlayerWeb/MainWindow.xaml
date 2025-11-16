@@ -13,8 +13,7 @@
     Activated="WindowEx_Activated"   
     Closed="WindowEx_Closed"    
     SizeChanged="WindowEx_SizeChanged"    
-    Width="1400"
-    Height="850"
+    Width="1400" Height="850"
     TaskBarIcon="virtualpaper.ico"
     Title="PlayerWeb">
 
@@ -53,8 +52,7 @@
                 Text="{x:Bind _filePath}" />
         </Grid>
 
-        <Grid
-            x:Name="ContentGrid"
+        <Grid x:Name="ContentGrid"
             Grid.Row="1">
             <Frame 
                 x:Name="ContentFrame"
@@ -74,8 +72,6 @@
                 CtsTokens="{x:Bind _viewModel.CtsTokens, Mode=OneWay}"
                 TotalValue="{x:Bind _viewModel.TotalValue, Mode=OneWay}"
                 CurValue="{x:Bind _viewModel.CurValue, Mode=OneWay}"
-                TextLoading="{x:Bind _viewModel.TextLoading, Mode=OneWay}"
-                TextCancel="{x:Bind _viewModel.TextCancel, Mode=OneWay}"
                 Visibility="{x:Bind _viewModel.LoadingIsVisiable, Mode=OneWay}"/>
         </Grid>
     </Grid>

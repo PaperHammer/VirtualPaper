@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -112,36 +112,12 @@ namespace VirtualPaper.DraftPanel.Views {
             _viewModel.NextStep = action;
         }
 
-        public uint GetHardwareDpi() {
-            return Draft.Instance.GetHardwareDpi();
-        }
-    
         public void ChangePanelState(DraftPanelState nextPanel, object? data) {
             _sharedData = data;
             NavigetBasedState(nextPanel);
         }
 
         public object? GetSharedData() => _sharedData;
-
-        public nint GetWindowHandle() {
-            return Draft.Instance.GetWindowHandle();
-        }
-
-        public async Task<string?> GetStorageFolderAsync() {
-            return await Draft.Instance.GetStorageFolderAsync();
-        }
-
-        public void Log(LogType type, object message) {
-            Draft.Instance.Log(type, message);
-        }
-
-        public INoifyBridge GetNotify() {
-            return Draft.Instance.GetNotify();
-        }
-
-        public IDialogService GetDialog() {
-            return Draft.Instance.GetDialog();
-        }
         #endregion
 
         private ConfigSpaceViewModel _viewModel;

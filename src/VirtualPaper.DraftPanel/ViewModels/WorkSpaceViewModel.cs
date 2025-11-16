@@ -15,6 +15,7 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.TabView;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject {
@@ -161,7 +162,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     case ProjectType.PUnknown:
                         break;
                     case ProjectType.PImage:
-                        runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, fileName);
+                        runtime = new Workloads.Creation.StaticImg.MainPage(PageContextManager.GetContext<Draft>(), Draft.Instance, fileName);
                         AddToWorkSpace(fileName, runtime);
                         break;
                     default:
@@ -169,7 +170,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                Draft.Instance.GetNotify().ShowExp(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
@@ -182,7 +183,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     IRuntime runtime;
                     switch (projTag.Type) {
                         case ProjectType.PImage:
-                            runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, FileType.FDesign, entryFilePath); // xxx.vpd
+                            runtime = new Workloads.Creation.StaticImg.MainPage(PageContextManager.GetContext(typeof(Draft)), Draft.Instance, FileType.FDesign, entryFilePath); // xxx.vpd
                             AddToWorkSpace(entryFilePath, runtime);
                             break;
                         default:
@@ -191,7 +192,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                Draft.Instance.GetNotify().ShowExp(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 

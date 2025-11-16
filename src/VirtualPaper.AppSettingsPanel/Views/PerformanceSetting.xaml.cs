@@ -1,9 +1,6 @@
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -16,20 +13,11 @@ namespace VirtualPaper.AppSettingsPanel.Views {
     public sealed partial class PerformanceSetting : Page {
         public PerformanceSetting() {
             this.InitializeComponent();
+
+            _viewModel = ObjectProvider.GetRequiredService<PerformanceSettingViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            this.DataContext = _viewModel;
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e) {
-            base.OnNavigatedTo(e);
-
-            if (this._appSettingsPanel == null) {
-                this._appSettingsPanel = e.Parameter as IAppSettingsPanel;
-
-                _viewModel = ObjectProvider.GetRequiredService<PerformanceSettingViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-                this.DataContext = _viewModel;
-            }
-        }
-
-        private PerformanceSettingViewModel _viewModel;
-        private IAppSettingsPanel _appSettingsPanel;
+        private readonly PerformanceSettingViewModel _viewModel;
     }
 }

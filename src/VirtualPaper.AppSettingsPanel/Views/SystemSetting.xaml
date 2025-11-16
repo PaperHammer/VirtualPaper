@@ -6,26 +6,21 @@
     xmlns:local="using:VirtualPaper.AppSettingsPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    mc:Ignorable="d"    
     NavigationCacheMode="Enabled">
 
     <ScrollView>
-        <StackPanel
-            Margin="15 0 15 15"
-            Orientation="Vertical">
+        <StackPanel Margin="15 0 15 15" Orientation="Vertical">
 
-            <StackPanel
-                x:Name="Developer"
-                Orientation="Vertical">
+            <StackPanel x:Name="Developer" Orientation="Vertical">
 
-                <TextBlock
-                    x:Name="DeveloperHeader"
+                <TextBlock x:Name="DeveloperHeader"
                     Margin="0 10"
-                    Text="{Binding Text_Developer}"   
+                    Text="{markup:I18n Key=Settings_System_Text_Developer}"   
                     FontWeight="Bold"/>
 
-                <Grid
-                    x:Name="Debug"
+                <Grid x:Name="Debug"
                     Height="90"
                     Margin="0 5"
                     Padding="20 0"
@@ -36,37 +31,29 @@
                         <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <FontIcon
-                        Grid.Column="0" 
-                        Margin="0 0 20 0"
-                        Glyph="&#xEC7A;"/>
+                    <FontIcon Margin="0 0 20 0" Glyph="&#xEC7A;"/>
 
-                    <Grid
-                        Grid.Column="1"
-                        VerticalAlignment="Center">
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock 
-                            Grid.Row="0" 
-                            Text="{Binding Developer_Debug}"/>
+                        <TextBlock Text="{markup:I18n Key=Settings_System_Developer_Debug}"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{Binding Developer_DebugExplain}"/>
+                            Text="{markup:I18n Key=Settings_System_Developer_DebugExplain}"/>
                     </Grid>
 
                     <Button
                         Grid.Column="2"
                         Width="200"
-                        Content="{Binding Debug}" 
-                        Click="DebugButton_Click"/>
+                        Content="{markup:I18n Key=Settings_System_Text_Debug}"
+                        Command="{x:Bind _viewModel.DebugCommand}"/>
                 </Grid>
 
-                <Grid
-                    x:Name="Log"
+                <Grid x:Name="Log"
                     Height="90"
                     Margin="0 5"
                     Padding="20 0"
@@ -77,33 +64,26 @@
                         <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <FontIcon   
-                        Grid.Column="0" 
-                        Margin="0 0 20 0"
-                        Glyph="&#xE9F9;"/>
+                    <FontIcon Margin="0 0 20 0" Glyph="&#xE9F9;"/>
 
-                    <Grid
-                        Grid.Column="1"
-                        VerticalAlignment="Center">
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock 
-                            Grid.Row="0" 
-                            Text="{Binding Developer_Log}"/>
+                        <TextBlock Text="{markup:I18n Key=Settings_System_Developer_Log}"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{Binding Developer_LogExplain}"/>
+                            Text="{markup:I18n Key=Settings_System_Developer_LogExplain}"/>
                     </Grid>
 
                     <Button
                         Grid.Column="2"
                         Width="200"
-                        Content="{Binding Log}" 
-                        Click="LogButton_Click"/>
+                        Content="{markup:I18n Key=Settings_System_Log}"
+                        Command="{x:Bind _viewModel.LogCommand}"/>
                 </Grid>
             </StackPanel>
         </StackPanel>

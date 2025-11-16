@@ -1,22 +1,19 @@
 using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
-using NLog;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
-using VirtualPaper.UI.Utils;
+using VirtualPaper.UIComponent.Converters;
+using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Utils;
 using Windows.ApplicationModel.Core;
-using WinRT.Interop;
-using WinRT;
-using VirtualPaper.UIComponent.Converters;
 //using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -27,36 +24,18 @@ namespace VirtualPaper.UI {
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
     public partial class App : Application {
-        internal static Logger Log => LogManager.GetCurrentClassLogger();
-
-        // 来自 Application-IApplicationFactoryMethods
-        // 升级 WinUI 3 SDK 后请确认此 GUID 未更改
-        //public static ref readonly Guid IID {
-        //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //    get {
-        //        return ref Unsafe.As<byte, Guid>(ref MemoryMarshal.GetReference((ReadOnlySpan<byte>)
-        //            [
-        //                87, 102, 217, 159, 148, 82, 101, 90, 161, 219,
-        //                79, 234, 20, 53, 151, 218
-        //            ]));
-        //    }
-        //}
-        private static readonly Guid IApplicationIID =
-            new(0x9FD96657, 0x5294, 0x5A65, 0xA1, 0xDB, 0x4F, 0xEA, 0x14, 0x35, 0x97, 0xDA);
-
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
         /// </summary>
         public App() {
 #if !DEBUG
-            if (!SingleInstanceUtil.IsAppMutexRunning(Constants.CoreField.UniqueAppUid))
-            {
+            if (!SingleInstanceUtil.IsAppMutexRunning(Constants.CoreField.UniqueAppUid)) {
                 _ = Native.MessageBox(IntPtr.Zero, "Wallpaper core is not running, run VirtualPaper.exe first before opening UI.", "Virtual Paper", 16);
                 //Sad dev noises.. this.Exit() does not work without Window: https://github.com/microsoft/microsoft-ui-xaml/issues/5931
                 Process.GetCurrentProcess().Kill();
             }
-            
+
             #region 唯一实例检查
             try {
                 // 保证全局只有一个实例
@@ -75,7 +54,7 @@ namespace VirtualPaper.UI {
             BoolByValueConverter.DebugEnabled = true;
 #endif
 
-            Log.Info("Starting...");
+            ArcLog.GetLogger<App>().Info("Starting...");
 
             this.InitializeComponent();
             // ref: https://github.com/microsoft/microsoft-ui-xaml/issues/1146 
@@ -85,7 +64,6 @@ namespace VirtualPaper.UI {
 
             ConfigureServices();
             _userSettings = ObjectProvider.GetRequiredService<IUserSettingsClient>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-            //SetAppTheme(_userSettings.Settings.ApplicationTheme);
         }
 
         private static void ConfigureServices() {
@@ -119,7 +97,9 @@ namespace VirtualPaper.UI {
             m_window.Activate();
         }
 
-        private static void LogUnhandledException<T>(T exception) => Log.Error(exception);
+        private static void LogUnhandledException(Exception exception) => ArcLog.GetLogger<App>().Error(exception);
+        
+        private static void LogUnhandledException(UnhandledError exception) => ArcLog.GetLogger<App>().Error(exception);
 
         //Not working ugh..
         //Issue: https://github.com/microsoft/microsoft-ui-xaml/issues/5221
@@ -142,11 +122,13 @@ namespace VirtualPaper.UI {
                 await ObjectProvider.GetRequiredService<IWallpaperControlClient>(ObjectLifetime.Singleton, ObjectLifetime.Singleton).CloseAllPreviewAsync();
 
                 ObjectProvider.Clean();
-                Log.Info("UI was closed");
+                ArcLog.GetLogger<App>().Info("UI was closed");
             });
         }
 
         private readonly IUserSettingsClient _userSettings;
+#if !DEBUG
         private readonly Mutex _mutex = new(false, Constants.CoreField.UniqueAppUIUid);
+#endif
     }
 }

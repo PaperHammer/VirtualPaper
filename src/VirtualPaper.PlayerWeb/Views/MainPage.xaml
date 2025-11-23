@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<arc:ArcWindow
-    x:Class="VirtualPaper.WpSettingsPanel.Windows.PreviewWithWeb"
+<arc:ArcPage
+    x:Class="VirtualPaper.PlayerWeb.Views.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:VirtualPaper.WpSettingsPanel.Windows"
+    xmlns:local="using:VirtualPaper.PlayerWeb.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
-    mc:Ignorable="d"  
-    Width="1400" Height="850"
-    TaskBarIcon="virtualpaper.ico"
-    Title="Virtual Paper Preview">
+    mc:Ignorable="d"
+    SizeChanged="ArcPage_SizeChanged"
+    Loaded="ArcPage_Loaded"
+    Unloaded="ArcPage_Unloaded">
 
-    <Grid x:Name="MainGrid">
+    <arc:ArcPageHost x:Name="MainHost">
         <WebView2 x:Name="Webview2"
             AllowDrop="False"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
+            NavigationCompleted="Webview2_NavigationCompleted"
             PreviewKeyDown="Webview2_PreviewKeyDown"
             PointerPressed="Webview2_PointerPressed"/>
-    </Grid>
-</arc:ArcWindow>
+    </arc:ArcPageHost>
+</arc:ArcPage>

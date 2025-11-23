@@ -23,7 +23,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     public sealed partial class LibraryContents : ArcPage {
         public override ArcPageContext Context { get; }
         public override Type PageType => typeof(LibraryContents);
-        public override bool KeepAlive => true;
 
         public LibraryContents() {
             this.InitializeComponent();
@@ -33,7 +32,10 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
+            if (!_isColdLaunch) return;
+
             await _viewModel.InitContentAsync();
+            _isColdLaunch = false;
         }
 
         private void Image_ImageFailed(object sender, ExceptionRoutedEventArgs e) {
@@ -125,5 +127,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private readonly LibraryContentsViewModel _viewModel;
         private IWpBasicData? _data;
+        private bool _isColdLaunch = true;
     }
 }

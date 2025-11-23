@@ -6,6 +6,8 @@ using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models;
+using VirtualPaper.UIComponent.Context;
+using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -15,11 +17,15 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class ScreenSaver : Page {
+    public sealed partial class ScreenSaver : ArcPage {
+        public override ArcPageContext Context { get; }
+        public override Type PageType => typeof(ScreenSaver);
+
         public ScreenSaver() {
             this.InitializeComponent();
             _viewModel = ObjectProvider.GetRequiredService<ScreenSaverViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
+            Context = new ArcPageContext(this);
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e) {
@@ -29,6 +35,8 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
             _viewModel.StopListenForClients();
         }
+
+        
 
         private void RightClickMenuItem_Click(object sender, RoutedEventArgs e) {
             var item = (sender as FrameworkElement).DataContext;

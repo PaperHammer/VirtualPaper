@@ -2,9 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Templates;
@@ -19,6 +19,7 @@ namespace VirtualPaper.WpSettingsPanel {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
+    [KeepAlive]
     public sealed partial class WpSettings : ArcPage {
         public override ArcPageContext Context { get; }
         public override Type PageType => typeof(WpSettings);
@@ -38,16 +39,12 @@ namespace VirtualPaper.WpSettingsPanel {
                     "Nav_ScreenSaver" => typeof(ScreenSaver),
                     _ => throw new NotImplementedException(),
                 };
-                
-                FrameNavigationOptions navOptions = new() {
-                    TransitionInfoOverride = args.RecommendedNavigationTransitionInfo,
-                    IsNavigationStackEnabled = false
-                };
-                ContentFrame.NavigateToType(pageType, this, navOptions);
+
+                ContentFrame.Navigate(pageType, this);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WpSettings>().Error(ex);
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ex, key: ex.Message);
             }
         }
         #endregion     

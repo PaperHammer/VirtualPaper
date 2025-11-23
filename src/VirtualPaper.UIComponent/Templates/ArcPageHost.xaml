@@ -18,11 +18,6 @@
         <feedback:Loading x:Name="PART_LoadingControlHost"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            CancelEnable="{x:Bind LoadingCancelEnable, Mode=OneWay}"
-            ProgressbarEnable="{x:Bind LoadingProgressbarEnable, Mode=OneWay}"
-            CtsTokens="{x:Bind LoadingCtsTokens, Mode=OneWay}"
-            TotalValue="{x:Bind LoadingTotalValue, Mode=OneWay}"
-            CurValue="{x:Bind LoadingCurValue, Mode=OneWay}"
-            Visibility="{x:Bind LoadingVisibility, Mode=OneWay}"/>
+            Visibility="Collapsed"/>
     </Grid>
 </UserControl>

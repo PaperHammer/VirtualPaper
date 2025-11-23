@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -22,12 +21,12 @@ namespace VirtualPaper.UIComponent.Feedback {
         public static readonly DependencyProperty ProgressbarEnableProperty =
             DependencyProperty.Register(nameof(ProgressbarEnable), typeof(bool), typeof(Loading), new PropertyMetadata(false));
 
-        public CancellationTokenSource[]? CtsTokens {
-            get { return (CancellationTokenSource[]?)GetValue(CtsTokensProperty); }
+        public CancellationTokenSource? CtsToken {
+            get { return (CancellationTokenSource?)GetValue(CtsTokensProperty); }
             set { SetValue(CtsTokensProperty, value); }
         }
         public static readonly DependencyProperty CtsTokensProperty =
-            DependencyProperty.Register(nameof(CtsTokens), typeof(CancellationTokenSource[]), typeof(Loading), new PropertyMetadata(null));
+            DependencyProperty.Register(nameof(CtsToken), typeof(CancellationTokenSource), typeof(Loading), new PropertyMetadata(null));
 
         public int TotalValue {
             get { return (int)GetValue(ImportTotalCntProperty); }
@@ -55,11 +54,8 @@ namespace VirtualPaper.UIComponent.Feedback {
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e) {
-            if (CtsTokens == null) return;
-
-            foreach (var token in CtsTokens) {
-                token?.Cancel();
-            }
+            CtsToken?.Cancel();
+            this.Visibility = Visibility.Collapsed;
         }
 
         private static void InitValue(DependencyObject d, DependencyPropertyChangedEventArgs e) {

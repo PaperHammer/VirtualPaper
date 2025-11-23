@@ -1,7 +1,10 @@
 using System;
-using Microsoft.UI.Xaml;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
+using VirtualPaper.Common.Utils.TaskUtils;
+using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Utils;
 
@@ -10,49 +13,85 @@ namespace VirtualPaper.UIComponent.Templates {
         public abstract ArcPageContext Context { get; }
         public abstract Type PageType { get; }
         /// <summary>
-        /// 页面是否在导航后仍保持在内存中继续运行
+        /// 页面是否保活
         /// </summary>
-        public virtual bool KeepAlive => false;
+        public bool KeepAlive => GetType().GetCustomAttribute<KeepAliveAttribute>()?.Value == true;
+        public new Type GetType() => PageType;
+        public bool IsPreLeaved => Volatile.Read(ref _isPreLeaved) == 1;
 
-        protected ArcPage() {
-            this.Loaded += ArcPage_Loaded;
-            this.Unloaded += ArcPage_Unloaded;
+        #region async life-cycle hooks
+        public void NavigateEnter(object? parameter) {
+            Volatile.Write(ref _isPreLeaved, 0);
+            _ = OnEnterAsync(parameter);
         }
 
-        #region life cycle
-        private void ArcPage_Loaded(object sender, RoutedEventArgs e) {
+        public async void NavigateExit(Action? beforeLeaveCallback = null) {
+            await OnPreLeaveAsync();
+
+            beforeLeaveCallback?.Invoke();
+
+            await OnLeaveAsync();
+            await OnDestroyAsync();
+        }
+
+        /// <summary>
+        /// 页面进入（Loaded 或导航到本页面时）
+        /// </summary>
+        protected virtual Task OnEnterAsync(object? parameter) {
             EnsureContextRegistered();
+
+            return Task.CompletedTask;
         }
 
-        private void ArcPage_Unloaded(object sender, RoutedEventArgs e) {
-            UnregisterContext();
+        protected virtual async Task<bool> OnPreLeaveAsync() {
+            await Context.Blocking.WaitUntilAllReleasedAsync();
+
+            // 避免 JIT 优化代码顺序
+            Volatile.Write(ref _isPreLeaved, 1);
+            return await Task.FromResult(true);
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e) {
-            base.OnNavigatedTo(e);
-            EnsureContextRegistered();
+        /// <summary>
+        /// 页面离开（导航到其他页面时）
+        /// </summary>
+        protected virtual Task OnLeaveAsync() {
+            if (!KeepAlive) {
+                UnregisterContext();
+            }
+
+            return Task.CompletedTask;
         }
 
-        protected override void OnNavigatedFrom(NavigationEventArgs e) {
-            base.OnNavigatedFrom(e);
-            UnregisterContext();
+        /// <summary>
+        /// 页面销毁
+        /// </summary>
+        protected virtual Task OnDestroyAsync(bool force = false) {
+            if (force || !KeepAlive) {
+                UnregisterContext();
+            }
+
+            return Task.CompletedTask;
         }
         #endregion
 
         #region utils
         private void EnsureContextRegistered() {
-            Context.IsActive = true;
-            if (!PageContextManager.HasContext(PageType)) {
-                PageContextManager.RegisterContext(PageType, Context!);
+            if (Context != null) {
+                Context.IsActive = true;
+                if (!PageContextManager.HasContext(PageType)) {
+                    PageContextManager.RegisterContext(PageType, Context);
+                }
             }
         }
 
         private void UnregisterContext() {
-            if (Context != null) {
-                Context.IsActive = false;
-                PageContextManager.UnregisterContext(PageType);
-            }
+            if (Context == null) return;
+
+            Context.IsActive = false;
+            PageContextManager.UnregisterContext(PageType);
         }
         #endregion
+
+        private int _isPreLeaved;
     }
 }

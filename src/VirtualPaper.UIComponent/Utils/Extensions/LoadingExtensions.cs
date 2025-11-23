@@ -27,12 +27,8 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
 
             CrossThreadInvoker.InvokeOnUIThread(() => {
                 loading.Visibility = Visibility.Collapsed;
-                if (loading.CtsTokens != null) {
-                    foreach (var cts in loading.CtsTokens) {
-                        cts.Dispose();
-                    }
-                }
-                loading.CtsTokens = null;
+                loading.CtsToken?.Dispose();
+                loading.CtsToken = null;
                 loading.CancelEnable = false;
             });
         }
@@ -52,11 +48,11 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
         /// <summary>
         /// 设置取消令牌
         /// </summary>
-        public static void SetCancellation(this Loading loading, CancellationTokenSource[] cts) {
+        public static void SetCancellation(this Loading loading, CancellationTokenSource cts) {
             if (loading == null) return;
 
             CrossThreadInvoker.InvokeOnUIThread(() => {
-                loading.CtsTokens = cts;
+                loading.CtsToken = cts;
                 loading.CancelEnable = true;
             });
         }
@@ -68,7 +64,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
             this Loading loading,
             Func<Task> operation,
             bool showProgress = false,
-            CancellationTokenSource[]? cts = null) {
+            CancellationTokenSource? cts = null) {
             if (loading == null) return;
 
             try {
@@ -89,7 +85,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
             this Loading loading,
             Func<Task<T>> operation,
             bool showProgress = false,
-            CancellationTokenSource[]? cts = null) {
+            CancellationTokenSource? cts = null) {
             if (loading == null) return default!;
 
             try {

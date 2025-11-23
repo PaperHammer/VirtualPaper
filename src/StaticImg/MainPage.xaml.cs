@@ -75,15 +75,18 @@ namespace Workloads.Creation.StaticImg {
 
         // TODO: 考虑此处 restore
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
-            this.IsEnabled = false;
+            //this.IsEnabled = false;
 
-            Context.Loading?.ShowLoading(false);
+            //var ctx = PageContextManager.GetContext<MainPage>();
+            //var loading
 
-            await InkCanvas.IsInited.Task;            
+            //Context.LoadingContext?.ShowLoading(false);
 
-            StartFrameTimeMonitor();
-            Context.Loading?.HideLoading();
-            this.IsEnabled = true;
+            //await InkCanvas.IsInited.Task;            
+
+            //StartFrameTimeMonitor();
+            //Context.LoadingContext?.HideLoading();
+            //this.IsEnabled = true;
         }
 
         // TODO：切换左侧导航栏时会触发 page_unloaded

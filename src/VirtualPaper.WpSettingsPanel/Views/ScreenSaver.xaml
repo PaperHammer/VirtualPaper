@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Page
+<arc:ArcPage
     x:Class="VirtualPaper.WpSettingsPanel.Views.ScreenSaver"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,18 +7,19 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
     Unloaded="Page_Unloaded"
     NavigationCacheMode="Enabled">
 
-    <Page.Resources>
+    <arc:ArcPage.Resources>
         <MenuFlyout x:Key="MF_FilteredListView">
             <MenuFlyoutItem 
                 Text="{markup:I18n Key=Text_Delete}"
                 Click="RightClickMenuItem_Click"/>
         </MenuFlyout>
-    </Page.Resources>
+    </arc:ArcPage.Resources>
 
     <ScrollView VerticalAlignment="Stretch">
         <StackPanel x:Name="VirtualPaperScreenSaver"
@@ -210,4 +211,4 @@
             </Grid>
         </StackPanel>
     </ScrollView>
-</Page>
+</arc:ArcPage>

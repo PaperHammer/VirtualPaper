@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
@@ -54,10 +54,10 @@ namespace VirtualPaper.PlayerWeb.ViewModel {
             set { _textCancel = value; OnPropertyChanged(); }
         }
 
-        private CancellationTokenSource[] _ctsTokens;
-        public CancellationTokenSource[] CtsTokens {
-            get { return _ctsTokens; }
-            set { _ctsTokens = value; OnPropertyChanged(); }
+        private CancellationTokenSource _ctsToken;
+        public CancellationTokenSource CtsToken {
+            get { return _ctsToken; }
+            set { _ctsToken = value; OnPropertyChanged(); }
         }
         #endregion
 
@@ -74,7 +74,7 @@ namespace VirtualPaper.PlayerWeb.ViewModel {
         internal async void Loading(
             bool cancelEnable,
             bool progressbarEnable,
-            CancellationTokenSource[] cts) {
+            CancellationTokenSource cts) {
 
             if (_loadingSemaphoreSlim.CurrentCount == 0) return;
 
@@ -82,7 +82,7 @@ namespace VirtualPaper.PlayerWeb.ViewModel {
 
             FrameIsEnable = false;
             LoadingIsVisiable = true;
-            CtsTokens = cts;
+            CtsToken = cts;
             CancelEnable = cancelEnable;
             ProgressbarEnable = progressbarEnable;
         }

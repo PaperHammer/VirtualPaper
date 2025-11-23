@@ -18,6 +18,9 @@ using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.PlayerWeb.Utils;
 using VirtualPaper.PlayerWeb.ViewModel;
+using VirtualPaper.PlayerWeb.Views;
+using VirtualPaper.UIComponent.Logging;
+using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
 using WinUIEx;
@@ -29,9 +32,9 @@ namespace VirtualPaper.PlayerWeb {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainWindow : WindowEx {
-        public SolidColorBrush WindowCaptionForeground => (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
-        public SolidColorBrush WindowCaptionForegroundDisabled => (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
+    public sealed partial class MainWindow : ArcWindow {
+        public override ArcWindowHost ContentHost => this.MainHost;
+        public StartArgs Args => _startArgs;
 
         private bool _isFocusOnWindow;
         public bool IsFocusOnWindow {
@@ -48,70 +51,53 @@ namespace VirtualPaper.PlayerWeb {
             _startArgs = startArgs;
             this.InitializeComponent();
 
-            _viewModel = new MainWindowViewModel();
-            this.ContentGrid.DataContext = _viewModel;
-            _filePath = _startArgs.FilePath;
-
-            if (_startArgs.IsPreview) {
-                SetWindowStyle();
-                SetWindowTitleBar();
-            }
-            else {
+            if (!_startArgs.IsPreview) {
                 _windowRc = new() {
                     Left = _startArgs.Left,
                     Top = _startArgs.Top,
                     Right = _startArgs.Right,
                     Bottom = _startArgs.Bottom,
                 };
-                AppTitleBar.Visibility = Visibility.Collapsed;
+                ContentHost.Visibility = Visibility.Collapsed;
             }
         }
 
-        private void WindowEx_SizeChanged(object sender, WindowSizeChangedEventArgs args) {
-            SetWindowRect();
-        }
-
-        private async void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
-            if (args.WindowActivationState == WindowActivationState.Deactivated) {
-                TitleTextBlock.Foreground = WindowCaptionForegroundDisabled;
-                IsFocusOnWindow = false;
+        private void ContentFrame_Loaded(object sender, RoutedEventArgs e) {
+            try {
+                ContentFrame.Navigate(typeof(MainPage), this);
             }
-            else {
-                TitleTextBlock.Foreground = WindowCaptionForeground;
-                IsFocusOnWindow = true;
-            }
-
-            if (_isFirstRun) {
-                _isFirstRun = false;
-                _viewModel.Loading(false, false, []);
-
-                await InitializeWebViewAsync();
-
-                if (_startArgs.IsPreview) {
-                    WindowUtil.ActiveToolWindow(_startArgs);
-                    WindowUtil.AddEffectConfigPage();
-                    WindowUtil.AddDetailsPage();
-                }
-                else {
-                    this.Activated -= WindowEx_Activated;
-                    this.SizeChanged -= WindowEx_SizeChanged;
-                }
-
-                _ = StdInListener();
+            catch (Exception ex) {
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex, key: ex.Message);
             }
         }
+
+        //private void WindowEx_SizeChanged(object sender, WindowSizeChangedEventArgs args) {
+        //    SetWindowRect();
+        //}
+
+        //private void WindowEx_Activated(object sender, WindowActivatedEventArgs args) {
+        //    if (_isFirstRun) {
+        //        _isFirstRun = false;
+
+        //        if (_startArgs.IsPreview) {
+        //            WindowUtil.ActiveToolWindow(_startArgs);
+        //            WindowUtil.AddEffectConfigPage();
+        //            WindowUtil.AddDetailsPage();
+        //        }
+        //        else {
+        //            this.Activated -= WindowEx_Activated;
+        //            this.SizeChanged -= WindowEx_SizeChanged;
+        //        }
+
+        //        _ = StdInListener();
+        //    }
+        //}
 
         private void WindowEx_Closed(object sender, WindowEventArgs args) {
             Closing();
         }
 
-        private void Webview2_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
-            e.Handled = true; // 阻止（鼠标等）指针操作
-        }
-
-        private void Webview2_PreviewKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e) {
-            e.Handled = true;  // 阻止键盘操作
-        }
 
         private void Closing() {
             this.Hide();
@@ -119,11 +105,6 @@ namespace VirtualPaper.PlayerWeb {
             _ctsConsoleIn?.Cancel();
             WindowUtil.CloseToolWindow();
             StopParallaxLoop();
-
-            _dispatcherQueue.TryEnqueue(() => {
-                Webview2?.Close();
-                App.AppInstance.Exit();
-            });
         }
 
         private async Task StdInListener() {
@@ -166,16 +147,16 @@ namespace VirtualPaper.PlayerWeb {
                         HandleCloseCommand();
                         break;
                     case MessageType.cmd_apply:
-                        _ = ExecuteScriptFunctionAsync(Fileds.ApplyFilter);
-                        _ = ExecuteScriptFunctionAsync(Fileds.Play);
+                        //_ = ExecuteScriptFunctionAsync(Fileds.ApplyFilter);
+                        //_ = ExecuteScriptFunctionAsync(Fileds.Play);
                         break;
                     case MessageType.cmd_active:
                         HandleActiveCommand((VirtualPaperActiveCmd)obj);
                         break;
                     case MessageType.cmd_reload:
-                        _dispatcherQueue.TryEnqueue(() => {
-                            Webview2?.Reload();
-                        });
+                        //_dispatcherQueue.TryEnqueue(() => {
+                        //    Webview2?.Reload();
+                        //});
                         break;
                     case MessageType.cmd_suspend:
                         await HandlePlaybackCommandAsync(true);
@@ -232,7 +213,7 @@ namespace VirtualPaper.PlayerWeb {
 
         #region handel_ipcmessage
         private void HandleUIElementMsg(string propertyName, object propertyValue) {
-            _ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, propertyName, propertyValue);
+            //_ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, propertyName, propertyValue);
         }
 
         private static void HandleCloseCommand() {
@@ -254,12 +235,12 @@ namespace VirtualPaper.PlayerWeb {
         private async Task HandlePlaybackCommandAsync(bool pause) {
             if (_isPaused == pause) return;
 
-            await ExecuteScriptFunctionAsync(Fileds.PlaybackChanged, pause);
+            //await ExecuteScriptFunctionAsync(Fileds.PlaybackChanged, pause);
             _isPaused = pause;
         }
 
         private async Task HandleMuteCommandAsync(VirtualPaperMutedCmd muted) {
-            await ExecuteScriptFunctionAsync(Fileds.AudioMuteChanged, muted.IsMuted);
+            //await ExecuteScriptFunctionAsync(Fileds.AudioMuteChanged, muted.IsMuted);
         }
 
         private async Task HandleUpdateCommandAsync(VirtualPaperUpdateCmd update) {
@@ -269,7 +250,7 @@ namespace VirtualPaper.PlayerWeb {
                 _startArgs.WpEffectFilePathTemplate = update.WpEffectFilePathTemplate;
                 _startArgs.WpEffectFilePathTemporary = update.WpEffectFilePathTemporary;
                 _startArgs.WpEffectFilePathUsing = update.WpEffectFilePathUsing;
-                await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+                //await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
             }
 
             LoadWpEffect(_startArgs.WpEffectFilePathUsing);
@@ -297,14 +278,14 @@ namespace VirtualPaper.PlayerWeb {
                                 var pos = RawInput.GetMousePos();
                                 int mouseX = pos.X, mouseY = pos.Y;
 
-                                if (_windowRc.Left <= mouseX && mouseX <= _windowRc.Right &&
-                                    _windowRc.Top <= mouseY && mouseY <= _windowRc.Bottom) {
-                                    _ = ExecuteScriptFunctionAsync(
-                                       Fileds.MouseMove, mouseX, mouseY);
-                                }
-                                else {
-                                    _ = ExecuteScriptFunctionAsync(Fileds.MouseOut);
-                                }
+                                //if (_windowRc.Left <= mouseX && mouseX <= _windowRc.Right &&
+                                //    _windowRc.Top <= mouseY && mouseY <= _windowRc.Bottom) {
+                                //    _ = ExecuteScriptFunctionAsync(
+                                //       Fileds.MouseMove, mouseX, mouseY);
+                                //}
+                                //else {
+                                //    _ = ExecuteScriptFunctionAsync(Fileds.MouseOut);
+                                //}
 
                                 await Task.Delay(100);
                             }
@@ -320,7 +301,7 @@ namespace VirtualPaper.PlayerWeb {
                 else {
                     if (Interlocked.CompareExchange(ref _isParallaxRunning, 0, 1) == 0) return;
 
-                    _ = ExecuteScriptFunctionAsync(Fileds.MouseOut);
+                    //_ = ExecuteScriptFunctionAsync(Fileds.MouseOut);
 
                     App.WriteToParent(new VirtualPaperMessageConsole() {
                         MsgType = ConsoleMessageType.Log,
@@ -336,53 +317,6 @@ namespace VirtualPaper.PlayerWeb {
             }
         }
 
-        private async Task InitializeWebViewAsync() {
-            var env = await CoreWebView2Environment.CreateWithOptionsAsync(null, Constants.CommonPaths.TempWebView2Dir, _environmentOptions);
-            await Webview2.EnsureCoreWebView2Async(env);
-
-            Webview2.CoreWebView2.ProcessFailed += (s, e) => {
-                App.WriteToParent(new VirtualPaperMessageConsole() {
-                    MsgType = ConsoleMessageType.Error,
-                    Message = $"Process fail: {e.Reason}",
-                });
-                _dispatcherQueue.TryEnqueue(App.AppInstance.Exit);
-            };
-
-            Webview2.NavigationCompleted += Webview2_NavigationCompleted;
-
-            string playingFile = GetPlayingFile();
-            string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, playingFile).Replace("\\", "/");
-            Webview2.CoreWebView2.Navigate(new Uri(fullPath).AbsoluteUri);
-        }
-
-        private async void Webview2_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e) {
-            switch (_startArgs.RuntimeType) {
-                case "RImage":
-                case "RVideo":
-                    UpdateRectToWebview();
-                    await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
-                    break;
-                case "RImage3D":
-                    UpdateRectToWebview();
-                    await ExecuteScriptFunctionAsync(Fileds.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
-                    break;
-                default:
-                    break;
-            }
-            LoadWpEffect(_startArgs.WpEffectFilePathUsing);
-            _ = ExecuteScriptFunctionAsync(Fileds.Play);
-
-            App.WriteToParent(new VirtualPaperMessageProcId() {
-                ProcId = Webview2.CoreWebView2.BrowserProcessId,
-            });
-
-#if DEBUG
-            Webview2.CoreWebView2.OpenDevToolsWindow();
-#endif
-
-            _viewModel.Loaded([]);
-        }
-
         private void LoadWpEffect(string wpEffectFilePath) {
             try {
                 if (wpEffectFilePath == null) return;
@@ -392,13 +326,13 @@ namespace VirtualPaper.PlayerWeb {
                     if (!uiElementType.Equals("Button", StringComparison.OrdinalIgnoreCase) && !uiElementType.Equals("Label", StringComparison.OrdinalIgnoreCase)) {
                         if (uiElementType.Equals("Slider", StringComparison.OrdinalIgnoreCase) ||
                             uiElementType.Equals("Dropdown", StringComparison.OrdinalIgnoreCase)) {
-                            _ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
+                            //_ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
                         }
                         else if (uiElementType.Equals("Checkbox", StringComparison.OrdinalIgnoreCase)) {
                             ExecuteCheckBoxSet(item.Name, bool.Parse(item.Value.GetProperty("Value").ToString()));
                         }
                         else if (uiElementType.Equals("Color", StringComparison.OrdinalIgnoreCase) || uiElementType.Equals("Textbox", StringComparison.OrdinalIgnoreCase)) {
-                            _ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
+                            //_ = ExecuteScriptFunctionAsync(Fileds.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
                         }
                     }
                 }
@@ -421,129 +355,118 @@ namespace VirtualPaper.PlayerWeb {
             }
         }
 
-        internal async Task<string> ExecuteScriptFunctionAsync(string functionName, params object[] parameters) {
-            StringBuilder sb_script = new();
-            sb_script.Append(functionName);
-            sb_script.Append('(');
-            for (int i = 0; i < parameters.Length; i++) {
-                sb_script.Append(JsonSerializer.Serialize(parameters[i]));
-                if (i < parameters.Length - 1) {
-                    sb_script.Append(", ");
-                }
-            }
-            sb_script.Append(");");
+        //internal async Task<string> ExecuteScriptFunctionAsync(string functionName, params object[] parameters) {
+        //    StringBuilder sb_script = new();
+        //    sb_script.Append(functionName);
+        //    sb_script.Append('(');
+        //    for (int i = 0; i < parameters.Length; i++) {
+        //        sb_script.Append(JsonSerializer.Serialize(parameters[i]));
+        //        if (i < parameters.Length - 1) {
+        //            sb_script.Append(", ");
+        //        }
+        //    }
+        //    sb_script.Append(");");
 
-            string script = string.Empty;
-            await _dispatcherQueue.EnqueueOrInvokeAsync(async () => {
-                if (Webview2.CoreWebView2 == null) { // ???
-                    await Webview2.EnsureCoreWebView2Async();
-                }
-                await Webview2.ExecuteScriptAsync(sb_script.ToString());
-            });
+        //    string script = string.Empty;
+        //    await _dispatcherQueue.EnqueueOrInvokeAsync(async () => {
+        //        if (Webview2.CoreWebView2 == null) { // ???
+        //            await Webview2.EnsureCoreWebView2Async();
+        //        }
+        //        await Webview2.ExecuteScriptAsync(sb_script.ToString());
+        //    });
 
-            return script;
-        }
+        //    return script;
+        //}
 
-        private void SetWindowRect() {
-            _windowRc = RawInput.GetWindowRECT(this);
-            UpdateRectToWebview();
-        }
+        //private void SetWindowRect() {
+        //    _windowRc = RawInput.GetWindowRECT(this);
+        //    UpdateRectToWebview();
+        //}
 
-        private async void UpdateRectToWebview() {
-            if (Webview2 == null || Webview2.CoreWebView2 == null) return;
+        //private async void UpdateRectToWebview() {
+        //    if (Webview2 == null || Webview2.CoreWebView2 == null) return;
 
-            await ExecuteScriptFunctionAsync(Fileds.UpdateDimensions, _windowRc.Right - _windowRc.Left, _windowRc.Bottom - _windowRc.Top);
-        }
+        //    await ExecuteScript(Fileds.UpdateDimensions, _windowRc.Right - _windowRc.Left, _windowRc.Bottom - _windowRc.Top);
+        //}
 
-        private string GetPlayingFile() {
-            return _startArgs.RuntimeType switch {
-                "RImage" => Constants.PlayingFile.PlayerWeb,
-                "RImage3D" => Constants.PlayingFile.PlayerWeb3D,
-                "RVideo" => Constants.PlayingFile.PlayerWeb,
-                _ => throw new ArgumentException(nameof(_startArgs.RuntimeType)),
-            };
-        }
 
-        #region window title bar
-        private void SetWindowStyle() {
-            this.SystemBackdrop = _startArgs.SystemBackdrop switch {
-                AppSystemBackdrop.Mica => new MicaBackdrop(),
-                AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
-                _ => default,
-            };
-        }
+        //#region window title bar
+        //private void SetWindowStyle() {
+        //    this.SystemBackdrop = _startArgs.SystemBackdrop switch {
+        //        AppSystemBackdrop.Mica => new MicaBackdrop(),
+        //        AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
+        //        _ => default,
+        //    };
+        //}
 
-        private void SetWindowTitleBar() {
-            //ref: https://learn.microsoft.com/en-us/windows/apps/develop/title-bar?tabs=wasdk
-            if (AppWindowTitleBar.IsCustomizationSupported()) {
-                var titleBar = this.AppWindow.TitleBar;
-                titleBar.ExtendsContentIntoTitleBar = true;
-                titleBar.ButtonBackgroundColor = Colors.Transparent;
-                titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-                titleBar.ButtonForegroundColor = ((SolidColorBrush)App.Current.Resources["WindowCaptionForeground"]).Color;
+        //private void SetWindowTitleBar() {
+        //    //ref: https://learn.microsoft.com/en-us/windows/apps/develop/title-bar?tabs=wasdk
+        //    if (AppWindowTitleBar.IsCustomizationSupported()) {
+        //        var titleBar = this.AppWindow.TitleBar;
+        //        titleBar.ExtendsContentIntoTitleBar = true;
+        //        titleBar.ButtonBackgroundColor = Colors.Transparent;
+        //        titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+        //        titleBar.ButtonForegroundColor = ((SolidColorBrush)App.Current.Resources["WindowCaptionForeground"]).Color;
 
-                AppTitleBar.Loaded += AppTitleBar_Loaded;
-                AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
-            }
-            else {
-                AppTitleBar.Visibility = Visibility.Collapsed;
-                this.UseImmersiveDarkModeEx(_startArgs.ApplicationTheme == AppTheme.Dark);
-            }
-        }
+        //        AppTitleBar.Loaded += AppTitleBar_Loaded;
+        //        AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
+        //    }
+        //    else {
+        //        AppTitleBar.Visibility = Visibility.Collapsed;
+        //        this.UseImmersiveDarkModeEx(_startArgs.ApplicationTheme == AppTheme.Dark);
+        //    }
+        //}
 
-        private void AppTitleBar_Loaded(object sender, RoutedEventArgs e) {
-            if (AppWindowTitleBar.IsCustomizationSupported()) {
-                SetDragRegionForCustomTitleBar(this.AppWindow);
-            }
-        }
+        //private void AppTitleBar_Loaded(object sender, RoutedEventArgs e) {
+        //    if (AppWindowTitleBar.IsCustomizationSupported()) {
+        //        SetDragRegionForCustomTitleBar(this.AppWindow);
+        //    }
+        //}
 
-        private void AppTitleBar_SizeChanged(object sender, SizeChangedEventArgs e) {
-            if (AppWindowTitleBar.IsCustomizationSupported()
-                && this.AppWindow.TitleBar.ExtendsContentIntoTitleBar) {
-                // Update drag region if the size of the title bar changes.
-                SetDragRegionForCustomTitleBar(this.AppWindow);
-            }
-        }
+        //private void AppTitleBar_SizeChanged(object sender, SizeChangedEventArgs e) {
+        //    if (AppWindowTitleBar.IsCustomizationSupported()
+        //        && this.AppWindow.TitleBar.ExtendsContentIntoTitleBar) {
+        //        // Update drag region if the size of the title bar changes.
+        //        SetDragRegionForCustomTitleBar(this.AppWindow);
+        //    }
+        //}
 
-        private void SetDragRegionForCustomTitleBar(AppWindow appWindow) {
-            if (AppWindowTitleBar.IsCustomizationSupported()
-                && appWindow.TitleBar.ExtendsContentIntoTitleBar) {
-                double scaleAdjustment = SystemUtil.GetScaleAdjustment(this);
+        //private void SetDragRegionForCustomTitleBar(AppWindow appWindow) {
+        //    if (AppWindowTitleBar.IsCustomizationSupported()
+        //        && appWindow.TitleBar.ExtendsContentIntoTitleBar) {
+        //        double scaleAdjustment = SystemUtil.GetScaleAdjustment(this);
 
-                RightPaddingColumn.Width = new GridLength(appWindow.TitleBar.RightInset / scaleAdjustment);
-                LeftPaddingColumn.Width = new GridLength(appWindow.TitleBar.LeftInset / scaleAdjustment);
+        //        RightPaddingColumn.Width = new GridLength(appWindow.TitleBar.RightInset / scaleAdjustment);
+        //        LeftPaddingColumn.Width = new GridLength(appWindow.TitleBar.LeftInset / scaleAdjustment);
 
-                List<Windows.Graphics.RectInt32> dragRectsList = [];
+        //        List<Windows.Graphics.RectInt32> dragRectsList = [];
 
-                Windows.Graphics.RectInt32 dragRectL;
-                dragRectL.X = (int)((LeftPaddingColumn.ActualWidth) * scaleAdjustment);
-                dragRectL.Y = 0;
-                dragRectL.Height = (int)(AppTitleBar.ActualHeight * scaleAdjustment);
-                dragRectL.Width = (int)((IconColumn.ActualWidth
-                                        + TitleColumn.ActualWidth
-                                        + LeftDragColumn.ActualWidth) * scaleAdjustment);
-                dragRectsList.Add(dragRectL);
+        //        Windows.Graphics.RectInt32 dragRectL;
+        //        dragRectL.X = (int)((LeftPaddingColumn.ActualWidth) * scaleAdjustment);
+        //        dragRectL.Y = 0;
+        //        dragRectL.Height = (int)(AppTitleBar.ActualHeight * scaleAdjustment);
+        //        dragRectL.Width = (int)((IconColumn.ActualWidth
+        //                                + TitleColumn.ActualWidth
+        //                                + LeftDragColumn.ActualWidth) * scaleAdjustment);
+        //        dragRectsList.Add(dragRectL);
 
-                Windows.Graphics.RectInt32 dragRectR;
-                dragRectR.X = (int)((LeftPaddingColumn.ActualWidth
-                                    + IconColumn.ActualWidth
-                                    + TitleTextBlock.ActualWidth
-                                    + LeftDragColumn.ActualWidth) * scaleAdjustment);
-                dragRectR.Y = 0;
-                dragRectR.Height = (int)(AppTitleBar.ActualHeight * scaleAdjustment);
-                dragRectR.Width = (int)(RightDragColumn.ActualWidth * scaleAdjustment);
-                dragRectsList.Add(dragRectR);
+        //        Windows.Graphics.RectInt32 dragRectR;
+        //        dragRectR.X = (int)((LeftPaddingColumn.ActualWidth
+        //                            + IconColumn.ActualWidth
+        //                            + TitleTextBlock.ActualWidth
+        //                            + LeftDragColumn.ActualWidth) * scaleAdjustment);
+        //        dragRectR.Y = 0;
+        //        dragRectR.Height = (int)(AppTitleBar.ActualHeight * scaleAdjustment);
+        //        dragRectR.Width = (int)(RightDragColumn.ActualWidth * scaleAdjustment);
+        //        dragRectsList.Add(dragRectR);
 
-                Windows.Graphics.RectInt32[] dragRects = dragRectsList.ToArray();
+        //        Windows.Graphics.RectInt32[] dragRects = dragRectsList.ToArray();
 
-                appWindow.TitleBar.SetDragRectangles(dragRects);
-            }
-        }
-        #endregion
+        //        appWindow.TitleBar.SetDragRectangles(dragRects);
+        //    }
+        //}
+        //#endregion
 
-        private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
-            AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1"
-        }; // workaround: avoid cache
         internal readonly StartArgs _startArgs;
         private static bool _isPaused = false;
         private static bool _isParallaxOn = false;
@@ -551,9 +474,10 @@ namespace VirtualPaper.PlayerWeb {
         private static bool _isFocusOnDesk = false;
         private static Native.RECT _windowRc;
         private readonly DispatcherQueue _dispatcherQueue;
-        private readonly string _filePath = string.Empty;
+        //private readonly string _filePath = string.Empty;
         private static bool _isFirstRun = true;
         private readonly MainWindowViewModel _viewModel;
         private static CancellationTokenSource _ctsConsoleIn;
+        private readonly TaskCompletionSource _firstRunTcs = new();
     }
 }

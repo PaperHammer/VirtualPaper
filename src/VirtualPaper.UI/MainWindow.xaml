@@ -7,7 +7,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
-    xmlns:utils="using:VirtualPaper.UIComponent.Utils"
     xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
     xmlns:styles="using:VirtualPaper.UIComponent.Styles"
     mc:Ignorable="d"
@@ -93,28 +92,7 @@
                 <!--TODO:
                 1. Draft 页导航缓存-->
 
-                <Grid>
-                    <Frame x:Name="ContentFrame"
-                           Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"/>
-
-                    <ItemsControl 
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Top"
-                        ItemsSource="{x:Bind utils:GlobalMessageUtil.InfobarMessages}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="utils:GlobalMsgInfo">
-                                <InfoBar
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Top"
-                                    IsIconVisible="True"
-                                    IsOpen="{x:Bind IsOpen, Mode=TwoWay}"
-                                    Severity="{x:Bind Severity}"
-                                    Message="{x:Bind Message}"
-                                    MaxWidth="900"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </Grid>
+                <navi:ArcNavigationContentView x:Name="NaviContent"/>
             </navi:ArcNavigationView>
         </Grid>
     </arc:ArcWindowHost>

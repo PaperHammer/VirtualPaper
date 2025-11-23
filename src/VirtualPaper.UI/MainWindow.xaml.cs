@@ -2,7 +2,6 @@ using System;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.AppSettingsPanel;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.ThreadContext;
@@ -38,6 +37,7 @@ namespace VirtualPaper.UI {
             _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
             _viewModel = viewModel;
             this.ContentHost.AppRoot.DataContext = _viewModel;
+
         }
 
         private void InitWindowConst() {
@@ -104,12 +104,8 @@ namespace VirtualPaper.UI {
                     "Nav_AppSettings" => typeof(AppSettings),
                     _ => throw new NotImplementedException(),
                 };
-                
-                FrameNavigationOptions navOptions = new() {
-                    TransitionInfoOverride = args.RecommendedNavigationTransitionInfo,
-                    IsNavigationStackEnabled = false
-                };
-                ContentFrame.NavigateToType(pageType, this, navOptions);
+
+                NaviContent.Navigate(pageType);
             }
             catch (Exception ex) {
                 GlobalMessageUtil.ShowException(ex);

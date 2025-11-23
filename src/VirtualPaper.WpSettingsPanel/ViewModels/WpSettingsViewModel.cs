@@ -86,34 +86,38 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         #endregion
 
         internal async void UpdateWpArrange(int tag) {
-            try {
-                PageContextManager.GetContext<WpSettings>()?.Loading?.ShowLoading(false);
+            var ctx = PageContextManager.GetContext<WpSettings>();
+            var loadingCtx = ctx?.LoadingContext;
+            if (loadingCtx == null) return;
 
-                var type = (WallpaperArrangement)tag;
-                if (type == _userSettingsClient.Settings.WallpaperArrangement) return;
-                var oldType = _userSettingsClient.Settings.WallpaperArrangement;
-                _userSettingsClient.Settings.WallpaperArrangement = type;
-                await _userSettingsClient.SaveAsync<ISettings>();
+            await loadingCtx.RunAsync(
+                operation: async token => {
+                    try {
+                        var type = (WallpaperArrangement)tag;
+                        if (type == _userSettingsClient.Settings.WallpaperArrangement) return;
+                        var oldType = _userSettingsClient.Settings.WallpaperArrangement;
+                        _userSettingsClient.Settings.WallpaperArrangement = type;
+                        await _userSettingsClient.SaveAsync<ISettings>();
 
-                var response = await _wpControlClient.RestartAllWallpapersAsync();
-                if (response.IsFinished != true) {
-                    GlobalMessageUtil.ShowError(
-                        message: nameof(Constants.I18n.Dialog_Content_ApplyError),
-                        isNeedLocalizer: true);
-                    // 恢复
-                    SelectedWpArrangementsIndex = (int)oldType;
-                    _userSettingsClient.Settings.WallpaperArrangement = oldType;
-                    await _userSettingsClient.SaveAsync<ISettings>();
-                    return;
-                }
-            }
-            catch (Exception ex) {
-                ArcLog.GetLogger<WpSettingsViewModel>().Error(ex);
-            }
-            finally {
-                InitMonitors();
-                PageContextManager.GetContext<WpSettings>()?.Loading?.HideLoading();
-            }
+                        var response = await _wpControlClient.RestartAllWallpapersAsync();
+                        if (response.IsFinished != true) {
+                            GlobalMessageUtil.ShowError(
+                                message: nameof(Constants.I18n.Dialog_Content_ApplyError),
+                                isNeedLocalizer: true);
+                            // 恢复
+                            SelectedWpArrangementsIndex = (int)oldType;
+                            _userSettingsClient.Settings.WallpaperArrangement = oldType;
+                            await _userSettingsClient.SaveAsync<ISettings>();
+                            return;
+                        }
+                    }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<WpSettingsViewModel>().Error(ex);
+                    }
+                    finally {
+                        InitMonitors();
+                    }
+                });
         }
 
         #region Buttons Command
@@ -125,8 +129,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         internal void Detect() {
             InitMonitors();
             GlobalMessageUtil.ShowInfo(
-                message: Constants.I18n.Dialog_Content_GetMonitorsAsync, 
-                isNeedLocalizer: true, 
+                message: Constants.I18n.Dialog_Content_GetMonitorsAsync,
+                isNeedLocalizer: true,
                 extraMsg: $" {MonitorThus.Count}");
         }
 
@@ -135,40 +139,38 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal async Task AdjustAsync() {
-            try {
-                await _adjustSemaphoreSlim.WaitAsync();
+            var ctx = PageContextManager.GetContext<WpSettings>();
+            var loadingCtx = ctx?.LoadingContext;
+            if (loadingCtx == null) return;
 
-                var _ctsAdjust = new CancellationTokenSource();
-                PageContextManager.GetContext<WpSettings>()?.Loading?.SetCancellationToken([_ctsAdjust]);
-                PageContextManager.GetContext<WpSettings>()?.Loading?.ShowLoading();
+            var ctsAdjust = new CancellationTokenSource();
+            await loadingCtx.RunAsync(
+                operation: async token => {
+                    try {
+                        await _adjustSemaphoreSlim.WaitAsync(token);
 
-                if (SelectedMonitor.ThumbnailPath == string.Empty) {
-                    return;
-                }
+                        if (SelectedMonitor.ThumbnailPath == string.Empty) {
+                            return;
+                        }
 
-                bool isOk = await _wpControlClient.AdjustWallpaperAsync(SelectedMonitor.DeviceId, _ctsAdjust.Token);
-                if (!isOk) {
-                    throw new Exception("Failed to evoke custom adjustment window.");
-                }
-            }
-            catch (RpcException ex) {
-                if (ex.StatusCode == StatusCode.Cancelled) {
-                    GlobalMessageUtil.ShowCanceled();
-                }
-                else {
-                    GlobalMessageUtil.ShowException(ex);
-                }
-            }
-            catch (OperationCanceledException) {
-                GlobalMessageUtil.ShowCanceled();
-            }
-            catch (Exception ex) {
-                GlobalMessageUtil.ShowException(ex);
-            }
-            finally {
-                PageContextManager.GetContext<WpSettings>()?.Loading?.HideLoading();
-                _adjustSemaphoreSlim.Release();
-            }
+                        bool isOk = await _wpControlClient.AdjustWallpaperAsync(SelectedMonitor.DeviceId, token);
+                        if (!isOk) {
+                            throw new Exception("Failed to evoke custom adjustment window.");
+                        }
+                    }
+                    catch (Exception ex) when (
+                            ex is OperationCanceledException ||
+                            (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
+                        GlobalMessageUtil.ShowCanceled();
+                        return;
+                    }
+                    catch (Exception ex) {
+                        GlobalMessageUtil.ShowException(ex);
+                    }
+                    finally {
+                        _adjustSemaphoreSlim.Release();
+                    }
+                }, cts: ctsAdjust);
         }
         #endregion
 
@@ -176,8 +178,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IMonitorManagerClient _monitorManagerClient;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
-        private readonly SemaphoreSlim _adjustSemaphoreSlim = new(1, 1);        
+        private readonly SemaphoreSlim _adjustSemaphoreSlim = new(1, 1);
     }
-    
+
     public record WpArrangeDataModel(string Method, string Tooltip);
 }

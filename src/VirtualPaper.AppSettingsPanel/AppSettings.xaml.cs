@@ -2,6 +2,8 @@ using System;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
 using VirtualPaper.AppSettingsPanel.Views;
+using VirtualPaper.UIComponent.Context;
+using VirtualPaper.UIComponent.Templates;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -10,9 +12,13 @@ namespace VirtualPaper.AppSettingsPanel {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class AppSettings : Page {
+    public sealed partial class AppSettings : ArcPage {
+        public override ArcPageContext Context { get; }
+        public override Type PageType => typeof(AppSettings);
+
         public AppSettings() {
             this.InitializeComponent();
+            Context = new ArcPageContext(this);
         }
 
         private void SelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs _) {

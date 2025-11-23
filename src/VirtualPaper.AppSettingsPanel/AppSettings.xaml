@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Page
+<arc:ArcPage
     x:Class="VirtualPaper.AppSettingsPanel.AppSettings"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     mc:Ignorable="d">
 
     <Grid>
@@ -27,4 +28,4 @@
 
         <Frame x:Name="ContentFrame" Grid.Row="1"/>
     </Grid>
-</Page>
+</arc:ArcPage>

@@ -51,7 +51,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Remove="Container\SlidingSidePanel.xaml" />
 		<None Remove="Host\ArcWindowContent.xaml" />
+		<None Remove="Navigation\RootView\ArcNavigationContentView.xaml" />
 		<None Remove="Navigation\RootView\ArcNavigationView.xaml" />
 		<None Remove="Navigation\RootView\ArcNavigationviewStyle.xaml" />
 		<None Remove="Navigation\TabView\ArcTabViewItemHeader.xaml" />
@@ -99,6 +101,18 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Container\SlidingSidePanel.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Navigation\RootView\ArcNavigationContentView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 
 	<ItemGroup>

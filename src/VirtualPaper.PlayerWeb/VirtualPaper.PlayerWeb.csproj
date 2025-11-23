@@ -91,6 +91,9 @@
 		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
 	</ItemGroup>
 	<ItemGroup>
+		<Page Update="Views\MainPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</Page>
 		<None Update="Web\3d_depth_map.html">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
@@ -131,6 +134,10 @@
 
 	<ItemGroup>
 		<PRIResource Remove="Web\js\3d_depth\jsm\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Remove="Views\MainPage.xaml" />
 	</ItemGroup>
 
 	<!--<ItemGroup>

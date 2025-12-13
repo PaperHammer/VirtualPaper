@@ -1,4 +1,5 @@
 using System;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common.Utils.TaskUtils;
 using VirtualPaper.UIComponent.Feedback;
@@ -31,8 +32,7 @@ namespace VirtualPaper.UIComponent.Context {
             _pageReference = new WeakReference<Page>(pageInstance);
         }
 
-        public ArcPageContext(Page pageInstance, Loading loadingControl) {
-            _pageReference = new WeakReference<Page>(pageInstance);
+        public ArcPageContext(Page pageInstance, Loading loadingControl) : this(pageInstance) {
             _loadingContext = new ArcLoadingContext(this, loadingControl);
         }
 

@@ -4,10 +4,10 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent.Context;
-using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
@@ -25,10 +25,10 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         public override Type PageType => typeof(LibraryContents);
 
         public LibraryContents() {
-            this.InitializeComponent();
             _viewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
             Context = new ArcPageContext(this);
+            this.InitializeComponent();
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
@@ -42,78 +42,56 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             ArcLog.GetLogger<LibraryContents>().Error($"RImage loading failed: {e.ErrorMessage}");
         }
 
-        private void GridView_ItemClick(object sender, ItemClickEventArgs e) {
-            _data = e.ClickedItem as IWpBasicData;
-            LeftClick();
-        }
-
-        private void GridView_RightTapped(object sender, RightTappedRoutedEventArgs e) {
-            var dataContext = ((FrameworkElement)e.OriginalSource).DataContext;
-            _data = dataContext as IWpBasicData;
-            RightClick(sender, e);
-        }
-
-        private async void LeftClick() {
-            if (_data == null) return;
-            await _viewModel.PreviewAsync(_data);
-        }
-
-        private void RightClick(object sender, RightTappedRoutedEventArgs e) {
-            if (_data == null) {
-                // Hide() 方法可能无效是因为 MenuFlyout 是由 ContextFlyout 属性触发
-                // ItemsViewMenu.Hide();
-                wallpapersLibView.ContextFlyout = null;
-            }
-            else {
-                wallpapersLibView.ContextFlyout = ItemsViewMenu;
-            }
+        private async void Item_Tapped(object sender, TappedRoutedEventArgs e) {
+            if (((FrameworkElement)sender).DataContext is not IWpBasicData data) return;
+            await _viewModel.PreviewAsync(data);
         }
 
         private async void ContextMenu_Click(object sender, RoutedEventArgs e) {
-            if (_data == null) return;
-
             try {
+                if (((FrameworkElement)sender).DataContext is not IWpBasicData data)
+                    return;
+                
                 var selectedMeun = (MenuFlyoutItem)sender;
-                string name = selectedMeun.Name;
-
+                string? name = selectedMeun.Tag.ToString();
                 switch (name) {
                     case "Details":
-                        await _viewModel.DetailInfoAsync(_data);
+                        _viewModel.ShowDetail(data);
                         break;
                     case "UpdateConfig":
-                        await _viewModel.UpdateAsync(_data);
+                        await _viewModel.UpdateAsync(data);
                         break;
                     case "Edit":
-                        await _viewModel.EditInfoAsync(_data);
+                        await _viewModel.EditInfoAsync(data);
                         break;
-                    case "Preview":
-                        await _viewModel.PreviewAsync(_data);
+                    case "PreviewForWeb":
+                        await _viewModel.PreviewAsync(data);
                         break;
                     case "Apply":
-                        await _viewModel.ApplyAsync(_data);
+                        await _viewModel.ApplyAsync(data);
                         break;
                     case "LockBackground":
-                        await _viewModel.ApplyToLockBGAsync(_data);
+                        await _viewModel.ApplyToLockBGAsync(data);
                         break;
                     case "ShowOnDisk":
-                        Process.Start("Explorer", "/select," + _data.FilePath);
+                        Process.Start("Explorer", "/select," + data.FilePath);
                         break;
                     case "DeleteFromDisk":
-                        await _viewModel.DeleteAsync(_data);
+                        await _viewModel.DeleteAsync(data);
                         break;
                 }
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                 ArcLog.GetLogger<LibraryContents>().Error(ex);
             }
         }
 
-        private void ItemsView_DragOver(object sender, DragEventArgs e) {
+        private void WallpapersLibView_DragOver(object sender, DragEventArgs e) {
             e.AcceptedOperation = DataPackageOperation.Copy;
         }
 
-        private async void ItemsView_Drop(object sender, DragEventArgs e) {
+        private async void WallpapersLibView_Drop(object sender, DragEventArgs e) {
             if (e.DataView.Contains(StandardDataFormats.StorageItems)) {
                 var items = await e.DataView.GetStorageItemsAsync();
                 await _viewModel.DropFilesAsync(items);
@@ -121,12 +99,11 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             e.Handled = true;
         }
 
-        private void ItemsViewer_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
+        private void WallpapersLibView_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
             e.Handled = true;
         }
 
         private readonly LibraryContentsViewModel _viewModel;
-        private IWpBasicData? _data;
         private bool _isColdLaunch = true;
     }
 }

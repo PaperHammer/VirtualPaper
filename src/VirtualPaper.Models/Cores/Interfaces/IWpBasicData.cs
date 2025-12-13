@@ -1,4 +1,4 @@
-﻿using VirtualPaper.Common;
+using VirtualPaper.Common;
 
 namespace VirtualPaper.Models.Cores.Interfaces {
     public interface IWpBasicData : IEquatable<IWpBasicData> {
@@ -74,7 +74,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         /// </summary>
         FileType FType { get; set; }
         /// <summary>
-        /// 标识是否在生成是是否存在多种形式
+        /// 标识是否在生成时是否存在多种形式
         /// </summary>
         bool IsSingleRType { get; set; }
 

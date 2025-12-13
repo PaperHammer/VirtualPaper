@@ -11,11 +11,10 @@ namespace VirtualPaper.AppSettingsPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class PerformanceSetting : Page {
-        public PerformanceSetting() {
-            this.InitializeComponent();
-
+        public PerformanceSetting() {           
             _viewModel = ObjectProvider.GetRequiredService<PerformanceSettingViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
+            this.InitializeComponent();
         }
 
         private readonly PerformanceSettingViewModel _viewModel;

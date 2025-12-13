@@ -22,7 +22,7 @@
 
 	<ItemGroup>
 	  <None Update="Models\model-small.onnx">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>
 

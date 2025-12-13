@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
@@ -102,15 +100,11 @@ namespace VirtualPaper.ScreenSaver {
                 App.ShutDown();
             };
 
-            //Webview.CoreWebView2.OpenDevToolsWindow();
-
             Webview2.NavigationCompleted += Webview2_NavigationCompleted;
 
             Webview2.CoreWebView2.Navigate(
                 Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Players",
-                    Constants.PlayingFile.PlayerWeb));
+                    AppDomain.CurrentDomain.BaseDirectory, "Players", "Web", "default.html"));
         }
 
         private async void Webview2_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e) {

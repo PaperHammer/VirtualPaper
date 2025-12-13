@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Interop;
 using Linearstar.Windows.RawInput;
 using Linearstar.Windows.RawInput.Native;
@@ -110,11 +110,11 @@ namespace VirtualPaper.Views.WindowsMsg {
                 var data = RawInputData.FromHandle(lparam);
 
                 //You can identify the source device using Header.DeviceHandle or just Device.
-                //var sourceDeviceHandle = data.Header.DeviceHandle;
-                //var sourceDevice = data.Device;
+                //var sourceDeviceHandle = _data.Header.DeviceHandle;
+                //var sourceDevice = _data.Device;
 
-                // The data will be an instance of either RawInputMouseData, RawInputKeyboardData, or RawInputHidData.
-                // They contain the raw input data in their properties.
+                // The _data will be an instance of either RawInputMouseData, RawInputKeyboardData, or RawInputHidData.
+                // They contain the raw input _data in their properties.
                 switch (data) {
                     case RawInputMouseData mouse:
                         //RawInput only gives relative mouse movement value.. 
@@ -277,7 +277,7 @@ namespace VirtualPaper.Views.WindowsMsg {
         /// </summary>
         /// <param name="x">Cursor pos x</param>
         /// <param name="y">Cursor pos y</param>
-        /// <param name="monitor">Target monitor device</param>
+        /// <param name="monitor">Target _monitor device</param>
         /// <returns>本地化的游标值</returns>
         private Point CalculateMousePos(int x, int y, IMonitor monitor, WallpaperArrangement arrangement) {
             if (_monitorManager.IsMultiScreen()) {

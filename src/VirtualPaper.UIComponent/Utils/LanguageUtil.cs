@@ -10,15 +10,12 @@ using WinUI3Localizer;
 namespace VirtualPaper.UIComponent.Utils {
     public class LanguageUtil {
         public static ILocalizer LocalizerInstance { get; private set; }
-
-        static LanguageUtil() {
-            SetInstance();
-        }
+        public static string CurrentLanguage { get; private set; }
 
         #region load language       
         public static async void LanguageChanged(string lang) {
             await Localizer.Get().SetLanguage(lang);
-            SetInstance();
+            SetInstance(lang);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -90,7 +87,7 @@ namespace VirtualPaper.UIComponent.Utils {
                     options.DefaultLanguage = lang;
                 })
                 .Build();
-            SetInstance();
+            SetInstance(lang);
         }
 
         public static async Task InitializeLocalizerForPackaged(string lang) {
@@ -111,7 +108,7 @@ namespace VirtualPaper.UIComponent.Utils {
                     options.DefaultLanguage = lang;
                 })
                 .Build();
-            SetInstance();
+            SetInstance(lang);
         }
 
         private static async Task CreateStringResourceFileIfNotExists(StorageFolder stringsFolder, string language, string resourceFileName) {
@@ -131,7 +128,8 @@ namespace VirtualPaper.UIComponent.Utils {
             return await StorageFile.GetFileFromApplicationUriAsync(resourcesFileUri);
         }
 
-        private static void SetInstance() {
+        private static void SetInstance(string lang) {
+            CurrentLanguage = lang;
             LocalizerInstance = Localizer.Get();
         }
         #endregion

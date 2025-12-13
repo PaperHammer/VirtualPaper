@@ -4,10 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
@@ -86,7 +86,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         #endregion
 
         internal async void UpdateWpArrange(int tag) {
-            var ctx = PageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null) return;
 
@@ -102,6 +102,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         var response = await _wpControlClient.RestartAllWallpapersAsync();
                         if (response.IsFinished != true) {
                             GlobalMessageUtil.ShowError(
+                                ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                                 message: nameof(Constants.I18n.Dialog_Content_ApplyError),
                                 isNeedLocalizer: true);
                             // 恢复
@@ -129,6 +130,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         internal void Detect() {
             InitMonitors();
             GlobalMessageUtil.ShowInfo(
+                ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                 message: Constants.I18n.Dialog_Content_GetMonitorsAsync,
                 isNeedLocalizer: true,
                 extraMsg: $" {MonitorThus.Count}");
@@ -139,7 +141,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal async Task AdjustAsync() {
-            var ctx = PageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null) return;
 
@@ -161,11 +163,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     catch (Exception ex) when (
                             ex is OperationCanceledException ||
                             (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                        GlobalMessageUtil.ShowCanceled();
+                        GlobalMessageUtil.ShowCanceled(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)));
                         return;
                     }
                     catch (Exception ex) {
-                        GlobalMessageUtil.ShowException(ex);
+                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                     }
                     finally {
                         _adjustSemaphoreSlim.Release();

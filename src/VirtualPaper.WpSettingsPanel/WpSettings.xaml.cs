@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Context;
-using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
@@ -24,11 +24,11 @@ namespace VirtualPaper.WpSettingsPanel {
         public override ArcPageContext Context { get; }
         public override Type PageType => typeof(WpSettings);
 
-        public WpSettings() {
-            this.InitializeComponent();
+        public WpSettings() {            
             _viewModel = ObjectProvider.GetRequiredService<WpSettingsViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
-            Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);
+            this.InitializeComponent();
+            Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);            
         }
 
         #region nav
@@ -44,7 +44,7 @@ namespace VirtualPaper.WpSettingsPanel {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WpSettings>().Error(ex);
-                GlobalMessageUtil.ShowException(ex, key: ex.Message);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex, key: ex.Message);
             }
         }
         #endregion     

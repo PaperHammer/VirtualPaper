@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -17,15 +16,15 @@ namespace VirtualPaper.DraftPanel.Views {
     /// </summary>
     public sealed partial class WorkSpace : Page {
         public WorkSpace() {
+            _viewModel = ObjectProvider.GetRequiredService<WorkSpaceViewModel>(ObjectLifetime.Transient, ObjectLifetime.Singleton);
+            this.DataContext = _viewModel;
             this.InitializeComponent();
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            _viewModel = ObjectProvider.GetRequiredService<WorkSpaceViewModel>(ObjectLifetime.Transient, ObjectLifetime.Singleton);
             _draftPanelBridge = e.Parameter as IDraftPanelBridge;
-            this.DataContext = _viewModel;
         }
 
         private void TabViewControl_Loaded(object sender, RoutedEventArgs e) {

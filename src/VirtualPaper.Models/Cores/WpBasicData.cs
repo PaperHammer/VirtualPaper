@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Text.Json.Serialization;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
@@ -10,7 +10,7 @@ namespace VirtualPaper.Models.Cores {
     [JsonSerializable(typeof(IWpBasicData))]
     public partial class WpBasicDataContext : JsonSerializerContext { }
 
-    public class WpBasicData : IWpBasicData {       
+    public class WpBasicData : IWpBasicData {
         public string WallpaperUid { get; set; } = string.Empty;
         public ApplicationInfo AppInfo { get; set; } = new();
         public string Title { get; set; } = string.Empty;
@@ -114,7 +114,7 @@ namespace VirtualPaper.Models.Cores {
 
         public void Save() {
             JsonSaver.Store<IWpBasicData>(
-                Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName), 
+                Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName),
                 this,
                 WpBasicDataContext.Default);
         }
@@ -163,7 +163,7 @@ namespace VirtualPaper.Models.Cores {
     public enum WallpaperStatus {
         Locked,
         Normal,
-        Auditing,        
+        Auditing,
         Deleted,
     }
 }

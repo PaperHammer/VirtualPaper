@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using VirtualPaper.Common;
 using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -18,7 +18,7 @@ namespace VirtualPaper.Factories {
                 var dataFolder = Path.Combine(userSettings.Settings.WallpaperDir);
                 try {
                     //extract last digits of the Monitor class DeviceName, eg: \\.\DISPLAY4 -> 4
-                    //var monitorNumber = monitor.Content;
+                    //var monitorNumber = _monitor.Content;
                     if (monitorContent != null) {
                         //Create a directory with the wp foldername in SaveData/wpdata/, copy wpConfig.json into this.
                         //Further modifications are done to the copy file.

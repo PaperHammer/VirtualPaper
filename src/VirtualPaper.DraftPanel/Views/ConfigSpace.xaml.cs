@@ -1,12 +1,9 @@
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
-using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.ViewModels;
@@ -22,19 +19,13 @@ namespace VirtualPaper.DraftPanel.Views {
     /// </summary>
     public sealed partial class ConfigSpace : Page, ICardComponent, IDraftPanelBridge {
         public ConfigSpace() {
+            _viewModel = ObjectProvider.GetRequiredService<ConfigSpaceViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            this.DataContext = _viewModel;
             this.InitializeComponent();
-
             _currentPanel = DraftPanelState.GetStart;
         }
 
         #region nav
-        protected override void OnNavigatedTo(NavigationEventArgs e) {
-            base.OnNavigatedTo(e);
-
-            _viewModel = ObjectProvider.GetRequiredService<ConfigSpaceViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-            this.DataContext = _viewModel;
-        }
-
         private void FrameComp_Loaded(object sender, RoutedEventArgs e) {
             NavigetBasedState(_currentPanel);
         }
@@ -120,7 +111,7 @@ namespace VirtualPaper.DraftPanel.Views {
         public object? GetSharedData() => _sharedData;
         #endregion
 
-        private ConfigSpaceViewModel _viewModel;
+        private readonly ConfigSpaceViewModel _viewModel;
         private DraftPanelState _currentPanel;
         private object? _sharedData;
     }

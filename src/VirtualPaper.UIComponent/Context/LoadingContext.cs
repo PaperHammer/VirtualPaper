@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Feedback;
+using VirtualPaper.UIComponent.Utils.Extensions;
 
 namespace VirtualPaper.UIComponent.Context {
     /// <summary>
@@ -34,10 +35,9 @@ namespace VirtualPaper.UIComponent.Context {
 
             CancellationToken token = cts?.Token ?? CancellationToken.None;
 
-            EnterLoading(showProgress);
+            EnterLoading(showProgress, cts);
 
-            IDisposable blockingHandle = _arcPageContext.Blocking.Add(token);
-            LoadingControl!.CtsToken = cts;
+            IDisposable blockingHandle = _arcPageContext.Blocking.Add(token);            
 
             await operation(token);
 
@@ -68,9 +68,13 @@ namespace VirtualPaper.UIComponent.Context {
                 showProgress: true);
         }
 
-        private void EnterLoading(bool showProgress) {
+        private void EnterLoading(bool showProgress, CancellationTokenSource? cts) {
             if (!IsValid) return;
 
+            if (cts != null) {
+                LoadingControl!.CtsToken = cts;
+                LoadingControl.CancelEnable = true;
+            }
             LoadingControl!.ProgressbarEnable = showProgress;
             LoadingControl.Visibility = Visibility.Visible;
         }

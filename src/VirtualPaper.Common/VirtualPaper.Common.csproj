@@ -8,6 +8,12 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <Content Include="Logging\Nlog.config">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
 	<!--NETSDK1152-->
 	<!--ref: https://learn.microsoft.com/zh-cn/dotnet/core/compatibility/sdk/6.0/duplicate-files-in-output-->
 	<!--<PropertyGroup>

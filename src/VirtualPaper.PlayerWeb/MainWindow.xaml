@@ -7,14 +7,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
-    xmlns:lcl_views="using:VirtualPaper.PlayerWeb.Views"
-    mc:Ignorable="d"    
-    Closed="WindowEx_Closed" 
+    xmlns:pages="using:VirtualPaper.PlayerWeb.Core.WebView.Pages"
+    mc:Ignorable="d"
     Width="1400" Height="850"
-    Title="Virtual Paper Preview">
+    Title="Virtual Paper PlayerWeb">
 
     <arc:ArcWindowHost x:Name="MainHost">
-        <Frame x:Name="ContentFrame" Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-            Loaded="ContentFrame_Loaded"/>
+        <Frame x:Name="ContentFrame">
+            <pages:MainPage x:Name="ContentPage"/>
+        </Frame>
     </arc:ArcWindowHost>
 </arc:ArcWindow>

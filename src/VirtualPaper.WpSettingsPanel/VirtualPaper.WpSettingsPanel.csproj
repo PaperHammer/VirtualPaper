@@ -12,18 +12,17 @@
 	<ItemGroup>
 	  <None Remove="Views\LibraryContents.xaml" />
 	  <None Remove="Views\ScreenSaver.xaml" />
-	  <None Remove="Windows\PreviewWithWeb.xaml" />
 	  <None Remove="WpSettings.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
-		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
-	  <ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
+	  <ProjectReference Include="..\VirtualPaper.PlayerWeb.Core\VirtualPaper.PlayerWeb.Core.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -38,12 +37,6 @@
 	  <Page Update="WpSettings.xaml">
 	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 	    <SubType>Designer</SubType>
-	  </Page>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Page Update="Windows\PreviewWithWeb.xaml">
-	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>
 </Project>

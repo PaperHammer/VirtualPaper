@@ -7,6 +7,7 @@ using System.Windows.Input;
 using Grpc.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Events;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Localization;
 using VirtualPaper.Common.Utils.Storage;
@@ -16,7 +17,6 @@ using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
-using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Storage;
 using Windows.System;
@@ -276,7 +276,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             if (storagePath == null) return;
 
             if (storagePath == Constants.CommonPaths.AppDataDir) {
-                GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_WallpaperDirectoryChangePathInvalid, isNeedLocalizer: true);
+                GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.Dialog_Content_WallpaperDirectoryChangePathInvalid, isNeedLocalizer: true);
                 return;
             }
 
@@ -303,7 +303,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 bool isDirChanged = await WallpaperDirectoryUpdateAsync(
                     [_userSettingsClient.Settings.WallpaperDir], destFolderPath);
                 if (!isDirChanged) {
-                    GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_Err, isNeedLocalizer: true);
+                    GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.InfobarMsg_Err, isNeedLocalizer: true);
                     return;
                 }
                 #endregion
@@ -325,22 +325,13 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 _ = await FileUtil.TryDeleteDirectoryAsync(previousDirFolderPath, 1000, 3000);
                 #endregion
             }
-            catch (RpcException ex) {
-                if (ex.StatusCode == StatusCode.Cancelled) {
-                    GlobalMessageUtil.ShowCanceled();
-                }
-                else {
-                    GlobalMessageUtil.ShowException(ex);
-                }
-            }
-            catch (OperationCanceledException) {
-                GlobalMessageUtil.ShowCanceled();
-                if (destFolderPath != string.Empty) {
-                    FileUtil.EmptyDirectory(destFolderPath);
-                }
+            catch (Exception ex) when
+                        (ex is OperationCanceledException ||
+                        (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
+                GlobalMessageUtil.ShowCanceled(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)));
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                 ArcLog.GetLogger<GeneralSettingViewModel>().Error(ex.Message);
                 if (destFolderPath != string.Empty) {
                     FileUtil.EmptyDirectory(destFolderPath);
@@ -367,7 +358,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
             catch (Exception ex) {
                 allOperationsSuccessful = false;
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
 
             return allOperationsSuccessful;

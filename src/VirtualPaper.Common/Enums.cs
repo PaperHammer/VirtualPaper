@@ -125,20 +125,6 @@ namespace VirtualPaper.Common {
         PImage,
     }
 
-    //public enum InfoBarType {
-    //    Informational,
-    //    Warning,
-    //    Error,
-    //    Success,
-    //}
-
-    //public enum LogType {
-    //    Info,
-    //    Warn,
-    //    Error,
-    //    Trace,
-    //}
-
     public enum ObjectLifetime {
         Singleton,
         Scoped,
@@ -191,6 +177,10 @@ namespace VirtualPaper.Common {
         UnSelected,
         PointerOver,
         DragOver,
+    }
+
+    public enum ProcRun {
+        WarmUp
     }
     #endregion
 

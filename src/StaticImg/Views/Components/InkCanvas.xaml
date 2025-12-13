@@ -100,7 +100,7 @@
                                 x:Name="Eraser"
                                 EraserSize="{x:Bind _viewModel.ConfigData.EraserSize, Mode=TwoWay}"
                                 EraserOpacity="{x:Bind _viewModel.ConfigData.EraserOpacity, Mode=TwoWay}"
-                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter= Eraser}"/>
+                                Visibility="{x:Bind _viewModel.ConfigData.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Eraser}"/>
                             <lcl_tools:CropControl
                                 x:Name="Crop"
                                 SeletcedAspect="{x:Bind _viewModel.ConfigData.SeletcedAspectItem, Mode=TwoWay}"

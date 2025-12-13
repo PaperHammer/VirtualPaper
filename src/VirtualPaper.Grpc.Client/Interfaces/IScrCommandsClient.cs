@@ -1,5 +1,5 @@
-﻿namespace VirtualPaper.Grpc.Client.Interfaces {
-    public interface IScrCommandsClient {
+namespace VirtualPaper.Grpc.Client.Interfaces {
+    public interface IScrCommandsClient : IDisposable {
         void AddToWhiteList(string procName);
         void ChangeLockStatu(bool isLock);
         void RemoveFromWhiteList(string procName);

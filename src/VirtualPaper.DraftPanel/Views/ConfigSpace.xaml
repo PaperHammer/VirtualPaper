@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="VirtualPaper.DraftPanel.Views.ConfigSpace"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -23,7 +23,7 @@
                 Loaded="FrameComp_Loaded"/>
 
             <Grid 
-                Visibility="{x:Bind _viewModel.BtnVisible, Mode=OneWay}"
+                Visibility="{x:Bind _viewModel.BtnVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
                 Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>

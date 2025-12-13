@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text;
 using System.Windows.Threading;
 using Microsoft.Win32;
@@ -13,7 +13,7 @@ using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Cores.PlaybackControl {
     /// <summary>
-    /// System monitor logic to Pause/unpause wallpaper playback.
+    /// System _monitor logic to Pause/unpause wallpaper playback.
     /// </summary>
     public partial class Playback : IPlayback {
         public event EventHandler<PlaybackMode>? PlaybackModeChanged;
@@ -449,7 +449,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
                 Rectangle screenBounds;
                 _ = Native.GetWindowRect(hWnd, out Native.RECT appBounds);
                 screenBounds = _monitorManger.GetMonitorByHWnd(hWnd).Bounds;
-                //If foreground app 95% working-area( -taskbar of monitor)
+                //If foreground app 95% working-area( -taskbar of _monitor)
                 if ((appBounds.Bottom - appBounds.Top) >= screenBounds.Height * .95f && (appBounds.Right - appBounds.Left) >= screenBounds.Width * .95f)
                     return true;
                 else
@@ -468,7 +468,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
         private bool IsZoomedSpan(IntPtr hWnd) {
             _ = Native.GetWindowRect(hWnd, out Native.RECT appBounds);
             var screenArea = _monitorManger.VirtualScreenBounds;
-            // If foreground app 95% working-area( - taskbar of monitor)
+            // If foreground app 95% working-area( - taskbar of _monitor)
             return ((appBounds.Bottom - appBounds.Top) >= screenArea.Height * .95f &&
                (appBounds.Right - appBounds.Left) >= screenArea.Width * .95f);
         }

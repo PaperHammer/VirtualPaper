@@ -1,4 +1,4 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
@@ -36,6 +36,23 @@ namespace VirtualPaper.Grpc.Client {
                 ProcName = procName,
             });
         }
+
+        #region Dispose
+        private bool _isDisposed;
+        protected virtual void Dispose(bool disposing) {
+            if (_isDisposed) return;
+
+            if (disposing) {
+            }
+
+            _isDisposed = true;
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
 
         private readonly Grpc_ScrCommandsService.Grpc_ScrCommandsServiceClient _client;
     }

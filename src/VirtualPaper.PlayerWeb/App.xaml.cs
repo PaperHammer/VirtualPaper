@@ -8,9 +8,11 @@ using System.Threading.Tasks;
 using CommandLine;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils.IPC;
-using VirtualPaper.PlayerWeb.Utils;
+using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.UIComponent.Utils;
+using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -28,6 +30,15 @@ namespace VirtualPaper.PlayerWeb {
         /// executed, and as such is the logical equivalent of main() or WinMain().
         /// </summary>
         public App() {
+            string[] args = Environment.GetCommandLineArgs()[1..];
+
+            // 预热
+            if (args.Length == 1 && args[0].Equals(ProcRun.WarmUp.ToString(), StringComparison.OrdinalIgnoreCase)) {
+                Console.WriteLine("WarmUp OK: module initialized successfully.");
+                Environment.Exit(0);
+                return;
+            }
+
             AppInstance = this;
             this.InitializeComponent();
             SetupUnhandledExceptionLogging();
@@ -49,19 +60,18 @@ namespace VirtualPaper.PlayerWeb {
             //    "-l zh-CN";
             //string[] startArgs = s.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1..];
 
-            string[] startArgs = Environment.GetCommandLineArgs()[1..];
             try {
-                Parser.Default.ParseArguments<StartArgs>(startArgs)
+                Parser.Default.ParseArguments<StartArgsWeb>(args)
                                 .WithParsed((x) => _startArgs = x)
                                 .WithNotParsed(HandleParseError);
                 if (_startArgs == null) {
-                    throw new NoNullAllowedException(nameof(StartArgs));
+                    throw new NoNullAllowedException(nameof(StartArgsWeb));
                 }
 
                 SetAppTheme(_startArgs.ApplicationTheme);
             }
             catch (Exception e) {
-                LogUnhandledException(e, "App");
+                LogUnhandledException(e, "PlayerWeb_App");
             }
         }
 
@@ -70,6 +80,8 @@ namespace VirtualPaper.PlayerWeb {
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
         protected override async void OnLaunched(LaunchActivatedEventArgs args) {
+            CrossThreadInvoker.Initialize(new UiSynchronizationContext());
+
             // ref: https://github.com/AndrewKeepCoding/WinUI3Localizer
             if (Constants.ApplicationType.IsMSIX) {
                 await LanguageUtil.InitializeLocalizerForPackaged(_startArgs.Language);
@@ -80,9 +92,7 @@ namespace VirtualPaper.PlayerWeb {
 
             // 避免文字无法初始化
             MainWindowInstance = new MainWindow(_startArgs);
-            if (!_startArgs.IsPreview) {
-                WindowUtil.InitWindowAsBackground();
-            }
+            MainWindowInstance.Show();
             MainWindowInstance.Activate();
         }
 
@@ -135,6 +145,6 @@ namespace VirtualPaper.PlayerWeb {
             Console.WriteLine(msg);
         }
 
-        private StartArgs _startArgs;
+        private StartArgsWeb _startArgs;
     }
 }

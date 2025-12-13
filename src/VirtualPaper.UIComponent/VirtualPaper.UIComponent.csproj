@@ -10,14 +10,17 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
+	<!--避免打包时生成额外的语言包文件夹-->
+	<PropertyGroup>
+		<SupportedCultures>zh-CN;en-US</SupportedCultures>
+		<GenerateSatelliteAssemblies>false</GenerateSatelliteAssemblies>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<PRIResource Remove="Strings\en-US\Resources.resw" />
 		<PRIResource Remove="Strings\zh-CN\Resources.resw" />
 	</ItemGroup>
 	<ItemGroup>
-		<Content Include="Logging\Nlog.config">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
 		<Content Include="Strings\en-US\Resources.resw">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -28,26 +31,16 @@
 
 	<ItemGroup>
 		<PackageReference Include="H.Hooks" Version="1.6.0" />
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
-		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
 		<PackageReference Include="WinUI3Localizer" Version="2.2.0" />
 		<PackageReference Include="WinUIEx" Version="2.4.2" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Page Update="Data\EffectConfig.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
 	</ItemGroup>
 
 	<ItemGroup>
 		<Page Update="Feedback\Loading.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
-	</ItemGroup>
-
-	<ItemGroup>
-		<CustomAdditionalCompileInputs Remove="Data\Details.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -60,10 +53,6 @@
 		<None Remove="Templates\ArcPageHost.xaml" />
 		<None Remove="Templates\ArcPageSimpleHost.xaml" />
 		<None Remove="Windowing\ArcWindow.xaml" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Resource Remove="Data\Details.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -100,13 +89,28 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
+	  <ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Page Update="Container\SlidingSidePanel.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Page>
+	  <None Update="PlayersRun\Web\3d_depth_map.html">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="PlayersRun\Web\default.html">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="PlayersRun\Web\js\3d_depth\run.js">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="PlayersRun\Web\js\3d_depth\three.module.min.js">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="PlayersRun\Web\js\base.js">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="PlayersRun\Web\js\default\run.js">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 	<ItemGroup>

@@ -20,18 +20,18 @@ namespace VirtualPaper.UIComponent.Styles {
 
         private void ArcImageIcon_Loaded(object sender, RoutedEventArgs e) {
             UpdateSource();
-            ThemeHelper.OnAppThemeChanged += ThemeHelper_OnAppThemeChanged;
+            //ArcThemeUtil.OnAppThemeChanged += ThemeHelper_OnAppThemeChanged;
         }
 
         private void ArcImageIcon_Unloaded(object sender, RoutedEventArgs e) {
-            ThemeHelper.OnAppThemeChanged -= ThemeHelper_OnAppThemeChanged;
+            //ArcThemeUtil.OnAppThemeChanged -= ThemeHelper_OnAppThemeChanged;
             Loaded -= ArcImageIcon_Loaded;
             Unloaded -= ArcImageIcon_Unloaded;
         }
 
-        private void ThemeHelper_OnAppThemeChanged(object? sender, EventArgs e) {
-            UpdateSource();
-        }
+        //private void ThemeHelper_OnAppThemeChanged(object? sender, EventArgs e) {
+        //    UpdateSource();
+        //}
 
         private static void OnThemeResourceKeyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is ArcImageIcon icon) {
@@ -47,7 +47,7 @@ namespace VirtualPaper.UIComponent.Styles {
             }
 
             this.Visibility = Visibility.Visible;
-            if (ThemeHelper.TryGetThemeResource(ResourceKey, this, out var resource) && resource is BitmapImage image) {
+            if (ArcThemeUtil.TryGetThemeResource(ResourceKey, this, out var resource) && resource is BitmapImage image) {
                 Source = image;
             }
             else {

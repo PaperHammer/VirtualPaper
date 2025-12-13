@@ -33,6 +33,7 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
+using VirtualPaper.Utils;
 using VirtualPaper.Utils.Theme;
 using VirtualPaper.ViewModels;
 using VirtualPaper.Views;
@@ -69,8 +70,10 @@ namespace VirtualPaper {
                 }
             }
             catch (AbandonedMutexException e) {
+#if DEBUG
                 //unexpected app termination.
                 Debug.WriteLine(e.Message);
+#endif
             }
             #endregion
 
@@ -108,7 +111,12 @@ namespace VirtualPaper {
             _grpcServer = ConfigureGrpcServer();
             #endregion
 
-            // 用户配置
+            #region 用户配置
+            if (UserSettings.Settings.IsUpdated || UserSettings.Settings.IsFirstRun) {
+                SplashWindow? spl = UserSettings.Settings.IsFirstRun ? new(0, 500) : null; spl?.Show();
+                spl?.Close();
+            }
+
             if (UserSettings.Settings.WallpaperDir == string.Empty
                 || !Directory.Exists(UserSettings.Settings.WallpaperDir)) {
                 UserSettings.Settings.WallpaperDir = Path.Combine(Constants.CommonPaths.LibraryDir, Constants.FolderName.WpStoreFolderName);
@@ -118,6 +126,7 @@ namespace VirtualPaper {
             ChangeLanguage(UserSettings.Settings.Language);
 
             UserSettings.Save<ISettings>();
+            #endregion
 
             #region 启动相关后台服务
             try {
@@ -138,10 +147,13 @@ namespace VirtualPaper {
             }
             #endregion
 
-            if (UserSettings.Settings.IsUpdated || UserSettings.Settings.IsFirstRun) {
-                SplashWindow? spl = UserSettings.Settings.IsFirstRun ? new(0, 500) : null; spl?.Show();
-                spl?.Close();
-            }
+            #region warm-up proc
+            ProcWarmUpUtil.RegisterProcessWarmUp(Constants.WorkingDir.UI, Constants.ModuleName.UI);
+            ProcWarmUpUtil.RegisterProcessWarmUp(Constants.WorkingDir.ScrSaver, Constants.ModuleName.ScrSaver);
+            ProcWarmUpUtil.RegisterProcessWarmUp(Constants.WorkingDir.PlayerWeb, Constants.ModuleName.PlayerWeb);
+
+            ProcWarmUpUtil.Run();
+            #endregion
 
             try {
                 //restore wallpaper(s) from previous run.

@@ -12,11 +12,10 @@ namespace VirtualPaper.AppSettingsPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class GeneralSetting : Page {
-        public GeneralSetting() {
-            this.InitializeComponent();
-            
+        public GeneralSetting() {                        
             _viewModel = ObjectProvider.GetRequiredService<GeneralSettingViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
+            this.InitializeComponent();
         }
 
         private readonly GeneralSettingViewModel _viewModel;

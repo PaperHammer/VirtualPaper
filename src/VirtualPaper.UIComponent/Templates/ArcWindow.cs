@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Windowing;
@@ -14,56 +15,80 @@ using WinUIEx;
 
 namespace VirtualPaper.UIComponent.Templates {
     public abstract partial class ArcWindow : WindowEx {
-        public AppTheme CurrentTheme => _currentTheme;
-        public AppSystemBackdrop CurrentBackdrop => _currentBackdrop;
         public virtual NavigationView? AppNavView { get; }
+        public virtual bool IsMainWindow => false;
+        protected virtual bool IsNeedTrack => true;
         public abstract ArcWindowHost ContentHost { get; }
+        public abstract ArcWindowManagerKey Key { get; }
         protected PropertyHost PropertyHost => _propertyHost;
+        public ObservableCollection<GlobalMsgInfo> InfobarMessages { get; } = [];
+        public bool IsActive { get; private set; } = false;
 
-        public ArcWindow(AppTheme initialTheme = AppTheme.Auto, AppSystemBackdrop systemBackdrop = default) {
-            _currentTheme = initialTheme;
-            _currentBackdrop = systemBackdrop;
+        public ArcWindow(AppTheme appTheme = AppTheme.Auto, AppSystemBackdrop systemBackdrop = default) {
             _propertyHost = new();
+            if (IsMainWindow) {
+                ArcThemeUtil.SetMainWindowAppTheme(appTheme);
+                ArcThemeUtil.SetMainWindowBackdrop(systemBackdrop);
+            }
 
+            this.Activated += ArcWindow_Activated;
             this.Closed += ArcWindow_Closed;
         }
 
+        private void ArcWindow_Activated(object sender, WindowActivatedEventArgs args) {
+            var isActive = args.WindowActivationState != WindowActivationState.Deactivated;
+            this.IsActive = isActive;
+            ArcWindowTitleBarUtil.UpdateTitleBar(this, this.ContentHost.TitleBarChildren, ArcThemeUtil.GetFormatMainWindowTheme(), isActive);
+        }
+
         private void ArcWindow_Closed(object sender, WindowEventArgs args) {
-            ThemeHelper.Cleanup();
+            // Window.Closed 的触发时机并不保证晚于 Activated/VisibilityChanged
+            this.Activated -= ArcWindow_Activated;
+            // 避免子窗口的关闭导致 ArcThemeUtil 清理
+            if (IsMainWindow) {
+                ArcWindowManager.Cleanup();
+                ArcThemeUtil.Cleanup();
+            }
         }
 
         private async void AppRoot_Loaded(object sender, RoutedEventArgs e) {
-            AfterRootLoaded();
-            await SetThemeAsync(_currentTheme);
+            _compositor = ElementCompositionPreview.GetElementVisual(this.ContentHost.AppRoot).Compositor;
+            _isLoaded = true;
+            await SetThemeAsync();
         }
 
         protected void InitializeWindow() {
             this.ContentHost.AppRoot.Loaded += AppRoot_Loaded;
 
-            WindowHelper.TrackWindow(this);
+            if (IsNeedTrack) {
+                ArcWindowManager.TrackWindow(Key, this);
+            }
             SetWindowStartupPosition();
             SetWindowStyle();
             SetWindowTitleBar();
         }
 
         #region theme
+        protected void UpdateThemeFromThemeBtnClick(AppTheme theme) {
+            if (!IsMainWindow) return;
+            ArcThemeUtil.UpdateThemeGlobal(theme);
+        }
+
         private void UpdateThemeIcon() {
-            _propertyHost.ThemeIconKey = _currentTheme switch {
+            if (!IsMainWindow) return;
+
+            _propertyHost.ThemeIconKey = ArcThemeUtil.MainWindowAppTheme switch {
                 AppTheme.Light => "NaviIcon_ThemeLight",
                 AppTheme.Dark => "NaviIcon_ThemeDark",
                 _ => "NaviIcon_ThemeAuto"
             };
         }
 
-        private void AfterRootLoaded() {
-            ThemeHelper.RegisterThemeRoot(this.ContentHost.AppRoot);
-            _compositor = ElementCompositionPreview.GetElementVisual(this.ContentHost.AppRoot).Compositor;
-            _isLoaded = true;
-        }
-
-        public async Task SetThemeAsync(AppTheme theme = AppTheme.None) {
+        public async Task SetThemeAsync() {
             if (!_isLoaded || _compositor == null || this.ContentHost.AppRoot == null || this.ContentHost.AppRoot.ActualWidth <= 0 || this.ContentHost.AppRoot.ActualHeight <= 0)
                 return;
+
+            UpdateThemeIcon();
 
             // 捕获当前界面图像
             var bitmap = new RenderTargetBitmap();
@@ -72,7 +97,7 @@ namespace VirtualPaper.UIComponent.Templates {
             this.ContentHost.AppThemeTransitionImage.Visibility = Visibility.Visible;
             this.ContentHost.AppThemeTransitionImage.Opacity = 1.0;
 
-            UpdateTheme(theme);
+            UpdateTheme();
 
             // 动画
             var imageVisual = ElementCompositionPreview.GetElementVisual(this.ContentHost.AppThemeTransitionImage);
@@ -88,20 +113,9 @@ namespace VirtualPaper.UIComponent.Templates {
             this.ContentHost.AppThemeTransitionImage.Source = null;
         }
 
-        public void UpdateTheme(AppTheme theme) {
-            _currentTheme = theme == AppTheme.None ? GetNextTheme(_currentTheme) : theme;
-
-            ThemeHelper.ApplyTheme(_currentTheme);
-            UpdateThemeIcon();
-        }
-
-        private static AppTheme GetNextTheme(AppTheme current) {
-            return current switch {
-                AppTheme.Light => AppTheme.Dark,
-                AppTheme.Dark => AppTheme.Auto,
-                AppTheme.Auto => AppTheme.Light,
-                _ => AppTheme.Light
-            };
+        private void UpdateTheme() {
+            ArcThemeUtil.ApplyTheme(this.ContentHost.AppRoot);
+            ArcWindowManager.UpdateWindowVisualState(this);
         }
         #endregion
 
@@ -127,12 +141,12 @@ namespace VirtualPaper.UIComponent.Templates {
             }
             else {
                 this.ContentHost.AppTitleBar.Visibility = Visibility.Collapsed;
-                this.UseImmersiveDarkModeEx(_currentTheme == AppTheme.Dark);
+                this.UseImmersiveDarkModeEx(ArcThemeUtil.MainWindowAppTheme == AppTheme.Dark);
             }
         }
 
         private void SetWindowStyle() {
-            this.SystemBackdrop = _currentBackdrop switch {
+            this.SystemBackdrop = ArcThemeUtil.MainWindowBackdrop switch {
                 AppSystemBackdrop.Mica => new MicaBackdrop(),
                 AppSystemBackdrop.Acrylic => new DesktopAcrylicBackdrop(),
                 _ => default,
@@ -140,10 +154,8 @@ namespace VirtualPaper.UIComponent.Templates {
         }
         #endregion
 
-        private AppTheme _currentTheme;
         private bool _isLoaded;
         private Compositor _compositor = null!;
-        private readonly AppSystemBackdrop _currentBackdrop;
         private readonly PropertyHost _propertyHost;
     }
 

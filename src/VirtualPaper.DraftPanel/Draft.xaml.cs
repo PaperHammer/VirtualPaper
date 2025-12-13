@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.ThreadContext;

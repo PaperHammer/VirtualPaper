@@ -1,8 +1,9 @@
 using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
 using GrpcDotNetNamedPipes;
-using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Events;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Update;
 
@@ -64,25 +65,43 @@ namespace VirtualPaper.Grpc.Client {
                     }
                 }
             }
+            catch (Exception ex) when
+                        (ex is OperationCanceledException ||
+                        (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
+                return;
+            }
             catch (Exception e) {
-                _logger.Error(e);
+                ArcLog.GetLogger<AppUpdaterClient>().Error(e);
             }
         }
 
         #region Dispose
-        private bool _disposedValue;
+        private bool _isDisposed;
         protected virtual void Dispose(bool disposing) {
-            if (!_disposedValue) {
+            if (!_isDisposed) {
                 if (disposing) {
-                    _cancellationTokenUpdateChecked?.Cancel();
-                    _updateCheckedChangedTask?.Wait();
+                    UpdateChecked = null;
+                    try {
+                        _cancellationTokenUpdateChecked?.Cancel();
+
+                        // 不等待任务完成，仅记录异常
+                        _updateCheckedChangedTask?.ContinueWith(t => {
+                            if (t.Exception != null)
+                                ArcLog.GetLogger<AppUpdaterClient>().Error(t.Exception);
+                        }, TaskContinuationOptions.OnlyOnFaulted);
+                    }
+                    catch (AggregateException ex) { ArcLog.GetLogger<AppUpdaterClient>().Error("Task cancelled during Dispose", ex); }
+                    catch (OperationCanceledException) { }
+
+                    _cancellationTokenUpdateChecked?.Dispose();
+                    _updateCheckedLock.Dispose();
                 }
-                _disposedValue = true;
+                _isDisposed = true;
             }
         }
 
         public void Dispose() {
-            Dispose(disposing: true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
         #endregion
@@ -91,6 +110,5 @@ namespace VirtualPaper.Grpc.Client {
         private readonly SemaphoreSlim _updateCheckedLock = new(1, 1);
         private readonly CancellationTokenSource _cancellationTokenUpdateChecked;
         private readonly Task _updateCheckedChangedTask;
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

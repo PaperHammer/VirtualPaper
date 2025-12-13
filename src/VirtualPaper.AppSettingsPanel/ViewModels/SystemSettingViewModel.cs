@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Grpc.Client.Interfaces;
@@ -46,7 +47,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                     LogUtil.ExportLogFiles(saveFile.Path);
                 }
                 catch (Exception ex) {
-                    GlobalMessageUtil.ShowException(ex);
+                    ArcLog.GetLogger<SystemSettingViewModel>().Error(ex);
+                    GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                 }
             }
         }

@@ -26,6 +26,8 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
     public sealed partial class GetStart : Page {
         public GetStart() {
             this.InitializeComponent();
+            _viewModel = ObjectProvider.GetRequiredService<GetStartViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
+            this.DataContext = _viewModel;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
@@ -33,9 +35,6 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
 
             this._configSpace ??= e.Parameter as ConfigSpace;
             this._configSpace?.SetBtnVisible(false);
-
-            _viewModel = ObjectProvider.GetRequiredService<GetStartViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
-            this.DataContext = _viewModel;            
         }
 
         private void OnFilterChanged(object sender, TextChangedEventArgs e) {

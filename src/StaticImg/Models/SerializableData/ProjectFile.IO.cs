@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Security;
 using VirtualPaper.UIComponent;
-using VirtualPaper.UIComponent.Logging;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
     // IO part of ProjectFile

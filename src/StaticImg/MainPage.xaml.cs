@@ -6,11 +6,11 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using NLog;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Shader;
 using VirtualPaper.UIComponent.Context;
-using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Graphics.DirectX;
 using Workloads.Creation.StaticImg.Models.SerializableData;
@@ -77,7 +77,7 @@ namespace Workloads.Creation.StaticImg {
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             //this.IsEnabled = false;
 
-            //var ctx = PageContextManager.GetContext<MainPage>();
+            //var ctx = ArcPageContextManager.GetContext<MainPage>();
             //var loading
 
             //Context.LoadingContext?.ShowLoading(false);
@@ -148,7 +148,7 @@ namespace Workloads.Creation.StaticImg {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
         }
 
@@ -159,7 +159,7 @@ namespace Workloads.Creation.StaticImg {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
         }
 
@@ -169,7 +169,7 @@ namespace Workloads.Creation.StaticImg {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
         }
         #endregion

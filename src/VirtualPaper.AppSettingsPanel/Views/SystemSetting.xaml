@@ -12,9 +12,7 @@
 
     <ScrollView>
         <StackPanel Margin="15 0 15 15" Orientation="Vertical">
-
             <StackPanel x:Name="Developer" Orientation="Vertical">
-
                 <TextBlock x:Name="DeveloperHeader"
                     Margin="0 10"
                     Text="{markup:I18n Key=Settings_System_Text_Developer}"   

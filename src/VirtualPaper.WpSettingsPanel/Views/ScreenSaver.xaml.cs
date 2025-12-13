@@ -21,11 +21,11 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         public override ArcPageContext Context { get; }
         public override Type PageType => typeof(ScreenSaver);
 
-        public ScreenSaver() {
-            this.InitializeComponent();
+        public ScreenSaver() {            
             _viewModel = ObjectProvider.GetRequiredService<ScreenSaverViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
             Context = new ArcPageContext(this);
+            this.InitializeComponent();
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e) {

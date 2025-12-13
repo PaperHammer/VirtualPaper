@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Win32;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
@@ -197,7 +197,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                 ArcLog.GetLogger<ScreenSaverViewModel>().Error(ex);
             }
         }

@@ -11,26 +11,26 @@
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
-    NavigationCacheMode="Required">
+    NavigationCacheMode="Required"
+    x:Name="rootPage">
 
     <arc:ArcPage.Resources>
         <Style x:Key="LibGridViewItemStyle" TargetType="GridViewItem">
-            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Margin" Value="5 5 5 10"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="GridViewItem">
-                        <Grid x:Name="RootGrid" Background="Transparent">
-                            <Grid Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
-                                <ContentPresenter 
-                                    x:Name="ContentPresenter"
-                                    RenderTransformOrigin="0.5 0.5"
-                                    Content="{TemplateBinding Content}"
-                                    ContentTemplate="{TemplateBinding ContentTemplate}">
-                                    <ContentPresenter.RenderTransform>
-                                        <CompositeTransform x:Name="ContentPresenterTransform" ScaleX="1" ScaleY="1"/>
-                                    </ContentPresenter.RenderTransform>
-                                </ContentPresenter>
-                            </Grid>
+                        <Grid x:Name="rootGrid"                            
+                            Width="{TemplateBinding Width}"
+                            Height="{TemplateBinding Height}">
+                            <ContentPresenter x:Name="contentPresenter"
+                                RenderTransformOrigin="0.5 0.5"
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}">
+                                <ContentPresenter.RenderTransform>
+                                    <CompositeTransform x:Name="ContentPresenterTransform" ScaleX="1" ScaleY="1"/>
+                                </ContentPresenter.RenderTransform>
+                            </ContentPresenter>
 
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup x:Name="CommonStates">
@@ -61,7 +61,7 @@
                                             <DoubleAnimation 
                                                 Storyboard.TargetName="ContentPresenterTransform"
                                                 Storyboard.TargetProperty="ScaleX"
-                                                To="0.85"
+                                                To="0.9"
                                                 Duration="0:0:0.3">
                                                 <DoubleAnimation.EasingFunction>
                                                     <BackEase Amplitude="0.4" EasingMode="EaseOut"/>
@@ -70,7 +70,7 @@
                                             <DoubleAnimation 
                                                 Storyboard.TargetName="ContentPresenterTransform"
                                                 Storyboard.TargetProperty="ScaleY"
-                                                To="0.85"
+                                                To="0.9"
                                                 Duration="0:0:0.3">
                                                 <DoubleAnimation.EasingFunction>
                                                     <BackEase Amplitude="0.4" EasingMode="EaseOut"/>
@@ -85,121 +85,121 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <DataTemplate x:Key="WallpaperItemTemplate" x:DataType="models:IWpBasicData">
+            <Grid
+                Width="320"
+                Height="200"
+                CornerRadius="8"
+                Tapped="Item_Tapped"
+                ContextFlyout="{StaticResource WallpaperContextFlyout}">
+
+                <Image 
+                    Source="{x:Bind ThumbnailPath}"
+                    Stretch="UniformToFill"
+                    ImageFailed="Image_ImageFailed"/>
+
+                <Border 
+                    VerticalAlignment="Bottom"
+                    Padding="6"
+                    Height="48"
+                    Background="{ThemeResource SystemControlBackgroundBaseMediumLowBrush}">
+                    <TextBlock Text="{x:Bind Title}"
+                        MaxLines="2"
+                        FontSize="14"
+                        TextTrimming="CharacterEllipsis"/>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <ItemsPanelTemplate x:Key="WallpaperItemsPanel">
+            <ItemsWrapGrid x:Name="InternalItemsWrapGrid"
+                Orientation="Horizontal" 
+                VerticalAlignment="Top"
+                           HorizontalAlignment="Center"/>
+        </ItemsPanelTemplate>
+
+        <MenuFlyout x:Key="WallpaperContextFlyout" ShowMode="Transient">
+            <MenuFlyoutItem
+                Tag="Details"
+                Text="{markup:I18n Key=Text_Details}"
+                Click="ContextMenu_Click">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE946;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem
+                Tag="UpdateConfig"
+                Text="{markup:I18n Key=Text_UpdateConfig}"
+                Click="ContextMenu_Click">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE753;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem
+                Tag="Edit"
+                Text="{markup:I18n Key=Text_Edit}"
+                Click="ContextMenu_Click">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE70F;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem 
+                Tag="Preview"                         
+                Text="{markup:I18n Key=Text_Preview}"
+                Click="ContextMenu_Click" >
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE8A1;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem 
+                Tag="Apply" 
+                Text="{markup:I18n Key=Text_Apply}"
+                Click="ContextMenu_Click" >
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE8FB;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem 
+                Tag="LockBackground" 
+                Text="{markup:I18n Key=Text_ApplyToLockBG}"
+                Click="ContextMenu_Click" >
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xEE3F;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem
+                Tag="ShowOnDisk"
+                Text="{markup:I18n Key=Text_ShowOnDisk}"
+                Click="ContextMenu_Click">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xED25;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem
+                Tag="DeleteFromDisk"
+                Text="{markup:I18n Key=Text_DeleteFromDisk}"
+                Click="ContextMenu_Click">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE74D;" Foreground="Goldenrod"/>
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+        </MenuFlyout>
     </arc:ArcPage.Resources>
 
     <GridView x:Name="wallpapersLibView"
         Margin="5 0 5 10"
-        VerticalAlignment="Stretch"
-        HorizontalAlignment="Stretch"
-        VerticalContentAlignment="Top"
-        HorizontalContentAlignment="Left"
-        ItemsSource="{x:Bind _viewModel.LibraryWallpapers, Mode=OneWay}"
-        Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}" 
+        DataContext="{x:Bind _viewModel}"
+        ItemsSource="{x:Bind _viewModel.LibraryWallpapers}"
+        Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
         AllowDrop="True"
-        DragOver="ItemsView_DragOver"
-        Drop="ItemsView_Drop"
-        SelectionMode="None" 
-        IsItemClickEnabled="True"
+        DragOver="WallpapersLibView_DragOver"
+        Drop="WallpapersLibView_Drop"
+        HorizontalAlignment="Stretch"
+        VerticalContentAlignment="Stretch"
         ItemContainerStyle="{StaticResource LibGridViewItemStyle}"
-        ItemClick="GridView_ItemClick"
-        RightTapped="GridView_RightTapped"       
-        PreviewKeyDown="ItemsViewer_PreviewKeyDown">
-        <GridView.ItemTemplate>
-            <DataTemplate x:DataType="models:IWpBasicData">
-                <StackPanel
-                    Orientation="Vertical"
-                    Width="320"
-                    MaxWidth="320"
-                    Height="230">
-                    <Image
-                        Source="{x:Bind ThumbnailPath}"
-                        Height="200"
-                        Width="320"
-                        Stretch="Uniform" 
-                        HorizontalAlignment="Stretch" 
-                        VerticalAlignment="Stretch"
-                        ImageFailed="Image_ImageFailed"/>
-                    <TextBlock 
-                        Height="25"
-                        Text="{x:Bind Title}"
-                        MaxLines="2"
-                        FontSize="16"
-                        TextWrapping="Wrap"
-                        HorizontalTextAlignment="Left"
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                </StackPanel>
-            </DataTemplate>
-        </GridView.ItemTemplate>
-        <GridView.ContextFlyout>
-            <MenuFlyout x:Name="ItemsViewMenu"
-                        ShowMode="Transient">
-                <MenuFlyoutItem
-                    x:Name="Details"
-                    Text="{markup:I18n Key=Text_Details}"
-                    Click="ContextMenu_Click">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE946;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem
-                    x:Name="UpdateConfig"
-                    Text="{markup:I18n Key=Text_UpdateConfig}"
-                    Click="ContextMenu_Click">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE753;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem
-                    x:Name="Edit"
-                    Text="{markup:I18n Key=Text_Edit}"
-                    Click="ContextMenu_Click">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE70F;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem 
-                    x:Name="Preview"                         
-                    Text="{markup:I18n Key=Text_Preview}"
-                    Click="ContextMenu_Click" >
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE8A1;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem 
-                    x:Name="Apply" 
-                    Text="{markup:I18n Key=Text_Apply}"
-                    Click="ContextMenu_Click" >
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE8FB;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem 
-                    x:Name="LockBackground" 
-                    Text="{markup:I18n Key=Text_ApplyToLockBG}"
-                    Click="ContextMenu_Click" >
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xEE3F;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem
-                    x:Name="ShowOnDisk"
-                    Text="{markup:I18n Key=Text_ShowOnDisk}"
-                    Click="ContextMenu_Click">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xED25;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem
-                    x:Name="DeleteFromDisk"
-                    Text="{markup:I18n Key=Text_DeleteFromDisk}"
-                    Click="ContextMenu_Click">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon 
-                            Glyph="&#xE74D;" 
-                            Foreground="Goldenrod"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-            </MenuFlyout>
-        </GridView.ContextFlyout>
+        ItemTemplate="{StaticResource WallpaperItemTemplate}"
+        ItemsPanel="{StaticResource WallpaperItemsPanel}"
+        PreviewKeyDown="WallpapersLibView_PreviewKeyDown">
     </GridView>
 </arc:ArcPage>

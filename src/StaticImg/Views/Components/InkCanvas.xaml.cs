@@ -8,7 +8,6 @@ using BuiltIn.InkSystem.Tool;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.UI.Xaml;
-using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -16,9 +15,9 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Extensions;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.UIComponent.Collection;
 using VirtualPaper.UIComponent.Input;
-using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.UI;
@@ -144,7 +143,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
         }
 
@@ -484,6 +483,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 _viewModel.ConfigData.SelectedLayer.RenderData == null ||
                 _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget == null) {
                 GlobalMessageUtil.ShowError(
+                    ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                     message: nameof(Constants.I18n.Draft_SI_LayerNotAvailable),
                     key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable),
                     isNeedLocalizer: true);
@@ -492,6 +492,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             if (!_viewModel.ConfigData.SelectedLayer.IsVisible) {
                 GlobalMessageUtil.ShowWarning(
+                    ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                     message: nameof(Constants.I18n.Draft_SI_LayerLocked),
                     key: nameof(Constants.I18n.Draft_SI_LayerLocked),
                     isNeedLocalizer: true);

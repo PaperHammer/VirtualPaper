@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.DraftPanel.Model;
@@ -162,7 +163,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     case ProjectType.PUnknown:
                         break;
                     case ProjectType.PImage:
-                        runtime = new Workloads.Creation.StaticImg.MainPage(PageContextManager.GetContext<Draft>(), Draft.Instance, fileName);
+                        runtime = new Workloads.Creation.StaticImg.MainPage(ArcPageContextManager.GetContext<Draft>(), Draft.Instance, fileName);
                         AddToWorkSpace(fileName, runtime);
                         break;
                     default:
@@ -170,7 +171,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowException(ex);
+                ArcLog.GetLogger<WorkSpaceViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
         }
 
@@ -183,7 +185,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     IRuntime runtime;
                     switch (projTag.Type) {
                         case ProjectType.PImage:
-                            runtime = new Workloads.Creation.StaticImg.MainPage(PageContextManager.GetContext(typeof(Draft)), Draft.Instance, FileType.FDesign, entryFilePath); // xxx.vpd
+                            runtime = new Workloads.Creation.StaticImg.MainPage(ArcPageContextManager.GetContext(typeof(Draft)), Draft.Instance, FileType.FDesign, entryFilePath); // xxx.vpd
                             AddToWorkSpace(entryFilePath, runtime);
                             break;
                         default:
@@ -192,7 +194,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowException(ex);
+                ArcLog.GetLogger<WorkSpaceViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
         }
 

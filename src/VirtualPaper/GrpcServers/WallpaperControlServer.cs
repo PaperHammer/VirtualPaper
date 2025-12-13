@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using VirtualPaper.Common;
@@ -34,8 +34,6 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override Task<Empty> CloseAllPreview(Empty request, ServerCallContext context) {
-            _wpControl.CloseAllPreview();
-
             return Task.FromResult(new Empty());
         }
 
@@ -59,12 +57,12 @@ namespace VirtualPaper.GrpcServers {
             return await Task.FromResult(response);
         }
 
-        public override async Task<Grpc_PreviewWallpaperResponse> PreviewWallpaper(Grpc_PreviewWallpaperRequest request, ServerCallContext context) {
+        public override async Task<Grpc_GetPlayerStartArgsResponse> GetPlayerStartArgs(Grpc_GetPlayerStartArgsRequest request, ServerCallContext context) {
             var playingData = DataAssist.GrpcToPlayerData(request.WpPlayerData);
-            bool isOk = await _wpControl.PreviewWallpaperAsync(
+            var data = _wpControl.GetPlayerStartArgs(
                 request.MonitorDeviceId == string.Empty ? _monitorManager.PrimaryMonitor.DeviceId : request.MonitorDeviceId, playingData, context.CancellationToken);
-            Grpc_PreviewWallpaperResponse response = new() {
-                IsOk = isOk,
+            Grpc_GetPlayerStartArgsResponse response = new() {
+                Data = data,
             };
 
             return await Task.FromResult(response);

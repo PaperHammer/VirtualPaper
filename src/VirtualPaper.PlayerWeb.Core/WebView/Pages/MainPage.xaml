@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<arc:ArcPage
+    x:Class="VirtualPaper.PlayerWeb.Core.WebView.Pages.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.PlayerWeb.Core.WebView.Pages"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    xmlns:comp="using:VirtualPaper.PlayerWeb.Core.WebView.Components"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    mc:Ignorable="d"
+    SizeChanged="ArcPage_SizeChanged"
+    Loaded="ArcPage_Loaded"
+    Unloaded="ArcPage_Unloaded"
+    GotFocus="ArcPage_GotFocus"
+    LostFocus="ArcPage_LostFocus">
+
+    <arc:ArcPage.Resources>
+        <cvs:VisibilityByValueConverter x:Key="VisibilityByValueConverter"/>
+    </arc:ArcPage.Resources>
+
+    <arc:ArcPageHost x:Name="MainHost">
+        <Grid>
+            <WebView2 x:Name="Webview2"
+                AllowDrop="False"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                NavigationCompleted="Webview2_NavigationCompleted"
+                PreviewKeyDown="Webview2_PreviewKeyDown"
+                PointerPressed="Webview2_PointerPressed"/>
+
+            <comp:SlidingSidePanel x:Name="SidePanel" Visibility="{x:Bind StartArgs.IsPreview, Converter={StaticResource VisibilityByValueConverter}}">
+                <comp:SlidingSidePanel.PanelContent>
+                    <comp:DataConfig PageContext="{x:Bind Context}"/>
+                </comp:SlidingSidePanel.PanelContent>
+            </comp:SlidingSidePanel>
+        </Grid>
+    </arc:ArcPageHost>
+</arc:ArcPage>

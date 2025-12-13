@@ -41,7 +41,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
                 if (value == null) return;
                 SeletcedLayerChanged?.Invoke(this, EventArgs.Empty);
-                if (value.IsVisible) GlobalMessageUtil.CloseAndRemoveMsg(nameof(Constants.I18n.Draft_SI_LayerLocked));
+                if (value.IsVisible) GlobalMessageUtil.CloseAndRemoveMsg(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), nameof(Constants.I18n.Draft_SI_LayerLocked));
             }
         }
 

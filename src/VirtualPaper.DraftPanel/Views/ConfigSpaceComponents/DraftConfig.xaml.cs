@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.UI.Xaml.Controls;
@@ -14,17 +14,17 @@ using VirtualPaper.Models.DraftPanel;
 namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
     public sealed partial class DraftConfig : Page {
         public DraftConfig() {
+            _viewModel = ObjectProvider.GetRequiredService<DraftConfigViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            this.DataContext = _viewModel;
             this.InitializeComponent();
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            _viewModel = ObjectProvider.GetRequiredService<DraftConfigViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
             _viewModel._configSpace = e.Parameter as ConfigSpace;
             _viewModel.InitContent();
             _viewModel.InitConfigSpace();
-            this.DataContext = _viewModel;
         }
 
         private void OnFilterChanged(object sender, TextChangedEventArgs e) {

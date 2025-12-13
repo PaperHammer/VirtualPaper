@@ -17,7 +17,7 @@ namespace VirtualPaper.Services.Download {
                 MaxTryAgainOnFailover = 5, // the maximum number of times to fail
                 ParallelDownload = false, // download parts of file as parallel or not. Web value is false
                 Timeout = 10000, // timeout (millisecond) Per stream block reader, default values is 1000
-                // clear package chunks data when download completed with failure, default value is false
+                // clear package chunks _data when download completed with failure, default value is false
                 ClearPackageOnCompletionWithFailure = false,
                 // Before starting the download, reserve the storage space of the file as file size, default value is false
                 ReserveStorageSpaceBeforeStartingDownload = false,

@@ -11,12 +11,8 @@
     NavigationCacheMode="Enabled">
 
     <ScrollView>
-        <StackPanel
-            Margin="15 0 15 15"
-            Orientation="Vertical">
-            <StackPanel x:Name="Version"
-                Orientation="Vertical">
-
+        <StackPanel Margin="15 0 15 15" Orientation="Vertical">
+            <StackPanel x:Name="Version" Orientation="Vertical">
                 <TextBlock x:Name="VersionHeader"
                     Margin="0 10"
                     Text="{markup:I18n Key=Settings_General_Text_Version}"

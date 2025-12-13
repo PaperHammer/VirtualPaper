@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -14,7 +15,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
             this ArcNavigationContentView navView,
             Grid keepAliveBuffer,
             Type targetPageType,
-            object? parameter = null,
+            NavigationPayload? parameter = null,
             ArcNavigationOptions? options = null) {
             if (!typeof(ArcPage).IsAssignableFrom(targetPageType))
                 throw new InvalidOperationException($"{targetPageType.Name} is not ArcPage.");
@@ -35,7 +36,8 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
             Grid keepAliveBuffer,
             ArcPage? oldPage,
             ArcPage newPage,
-            object? parameter) {
+            NavigationPayload? parameter) {
+            navView.ContentFrame.Content = null;
             navView.ContentFrame.Content = newPage;
             newPage.NavigateEnter(parameter);
 
@@ -50,13 +52,12 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
             Grid keepAliveBuffer,
             ArcPage? oldPage,
             ArcPage newPage,
-            object? parameter,
+            NavigationPayload? parameter,
             ArcNavigationTransition transition) {
             navView.ContentFrame.Content = null;
-
-            newPage.NavigateEnter(parameter);
             newPage.Opacity = 0;
             navView.ContentFrame.Content = newPage;
+            newPage.NavigateEnter(parameter);
 
             if (oldPage != null)
                 MoveToBufferAndExit(navView, keepAliveBuffer, oldPage);
@@ -105,7 +106,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
             bool keepAlive = type.GetCustomAttribute<KeepAliveAttribute>()?.Value == true;
 
             if (keepAlive) {
-                var ctx = PageContextManager.GetContext(type);
+                var ctx = ArcPageContextManager.GetContext(type);
                 if (ctx?.PageInstance is ArcPage page)
                     return page;
             }
@@ -160,6 +161,31 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
                 Duration = Duration,
                 EasingFunction = Ease
             };
+        }
+    }
+
+    public record NavigationPayload {
+        private Dictionary<string, object?> Data { get; } = [];
+
+        public object? this[string key] {
+            set => Data[key] = value;
+        }
+
+        public bool Get<T>(string key, out T value) {
+            if (Data.TryGetValue(key, out var obj) && obj is T t) {
+                value = t;
+                return true;
+            }
+
+            value = default!;
+            return false;
+        }
+
+        public T Get<T>(string key) {
+            if (Data.TryGetValue(key, out var value) && value is T t)
+                return t;
+
+            return default!;
         }
     }
 }

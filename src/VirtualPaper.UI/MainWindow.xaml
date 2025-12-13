@@ -9,9 +9,10 @@
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
     xmlns:styles="using:VirtualPaper.UIComponent.Styles"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     Closed="WindowEx_Closed"
-    Width="1440" Height="900"
+    Width="1410" Height="900"
     MinHeight="684" MinWidth="754"
     Title="Virtual Paper">
 
@@ -32,23 +33,23 @@
                         Icon="Library"
                         IsSelected="True">
                     </NavigationViewItem>-->
-                    <NavigationViewItem x:Name="Nav_WpSettings">
+                    <NavigationViewItem x:Name="Nav_WpSettings" IsSelected="True">
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate x:DataType="local:MainWindow">
                                 <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
                                     <FontIcon Glyph="&#xE7B8;" FontSize="22" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="{Binding NavRepository}" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
+                                    <TextBlock Text="{markup:I18n Key=SidebarRepository}" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
                                 </StackPanel>
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="Nav_Draft" IsSelected="True" >
+                    <NavigationViewItem x:Name="Nav_Draft">
                         <!--TODO：IsSelected = true 时，若直接设置 Content 为 非IconElement or 非String 时会报错 -->
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
                                     <FontIcon Glyph="&#xF156;" FontSize="22" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="{Binding NavProject}" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
+                                    <TextBlock Text="{markup:I18n Key=SidebarProject}" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
                                 </StackPanel>
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>
@@ -92,7 +93,7 @@
                 <!--TODO:
                 1. Draft 页导航缓存-->
 
-                <navi:ArcNavigationContentView x:Name="NaviContent"/>
+                <navi:ArcNavigationContentView x:Name="NaviContent" InfobarMessages="{x:Bind InfobarMessages}"/>
             </navi:ArcNavigationView>
         </Grid>
     </arc:ArcWindowHost>

@@ -73,8 +73,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="CommandLineParser" Version="2.9.1" />
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
-		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
 		<PackageReference Include="WinUIEx" Version="2.4.2" />
 		<Manifest Include="$(ApplicationManifest)" />
 	</ItemGroup>
@@ -88,12 +88,6 @@
 		<ProjectCapability Include="Msix" />
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
-	</ItemGroup>
-	<ItemGroup>
-		<Page Update="Views\MainPage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
-		</Page>
 		<None Update="Web\3d_depth_map.html">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
@@ -137,14 +131,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Remove="Views\MainPage.xaml" />
+	  <ProjectReference Include="..\VirtualPaper.PlayerWeb.Core\VirtualPaper.PlayerWeb.Core.csproj" />
 	</ItemGroup>
-
-	<!--<ItemGroup>
-	  <PRIResource Remove="Strings\en-US\Resources.resw" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <PRIResource Remove="Strings\zh-CN\Resources.resw" />
-	</ItemGroup>-->
 </Project>

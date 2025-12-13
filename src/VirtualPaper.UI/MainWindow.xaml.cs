@@ -3,14 +3,14 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.AppSettingsPanel;
+using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.UI.ViewModels;
 using VirtualPaper.UIComponent;
-using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel;
@@ -23,21 +23,19 @@ namespace VirtualPaper.UI {
     public sealed partial class MainWindow : ArcWindow {
         public override ArcWindowHost ContentHost => this.MainHost;
         public override NavigationView AppNavView => this.NavigationViewControl;
+        public override bool IsMainWindow => true;
+        public override ArcWindowManagerKey Key => _windowKey;
 
-        public MainWindow(
-            MainWindowViewModel viewModel,
-            IUserSettingsClient userSettings,
-            ICommandsClient commandsClient) : base(userSettings.Settings.ApplicationTheme, userSettings.Settings.SystemBackdrop) {
+        public MainWindow(IUserSettingsClient userSettings, ICommandsClient commandsClient) 
+            : base(userSettings.Settings.ApplicationTheme, userSettings.Settings.SystemBackdrop) {
+            _windowKey = new ArcWindowManagerKey(ArcWindowKey.Main);
             this.InitializeComponent();
-            base.InitializeWindow();
             this.InitWindowConst();
+            base.InitializeWindow();
 
             _userSettings = userSettings;
             _commandsClient = commandsClient;
             _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
-            _viewModel = viewModel;
-            this.ContentHost.AppRoot.DataContext = _viewModel;
-
         }
 
         private void InitWindowConst() {
@@ -108,24 +106,35 @@ namespace VirtualPaper.UI {
                 NaviContent.Navigate(pageType);
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(Key), ex);
                 ArcLog.GetLogger<MainWindow>().Error(ex);
             }
         }
         #endregion
 
-        private async void LightAndDarkButton_Click(object sender, RoutedEventArgs e) {
+        private void LightAndDarkButton_Click(object sender, RoutedEventArgs e) {
             LightAndDarkButton.IsEnabled = false;
             try {
-                await SetThemeAsync();
+                var nxTheme = GetNextTheme(ArcThemeUtil.MainWindowAppTheme);
+                //await SetThemeAsync(nxTheme);
+                UpdateThemeFromThemeBtnClick(nxTheme);
             }
             finally {
                 LightAndDarkButton.IsEnabled = true;
             }
         }
 
+        private static AppTheme GetNextTheme(AppTheme current) {
+            return current switch {
+                AppTheme.Light => AppTheme.Dark,
+                AppTheme.Dark => AppTheme.Auto,
+                AppTheme.Auto => AppTheme.Light,
+                _ => AppTheme.Light
+            };
+        }
+
         private readonly IUserSettingsClient _userSettings;
         private readonly ICommandsClient _commandsClient;
-        internal readonly MainWindowViewModel _viewModel;
+        private readonly ArcWindowManagerKey _windowKey;
     }
 }

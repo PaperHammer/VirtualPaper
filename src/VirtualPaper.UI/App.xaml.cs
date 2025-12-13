@@ -4,17 +4,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
-using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Converters;
-using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Utils;
 using Windows.ApplicationModel.Core;
-//using WinUIEx;
+using WinUIEx;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -29,13 +27,6 @@ namespace VirtualPaper.UI {
         /// executed, and as such is the logical equivalent of main() or WinMain().
         /// </summary>
         public App() {
-#if !DEBUG
-            if (!SingleInstanceUtil.IsAppMutexRunning(Constants.CoreField.UniqueAppUid)) {
-                _ = Native.MessageBox(IntPtr.Zero, "Wallpaper core is not running, run VirtualPaper.exe first before opening UI.", "Virtual Paper", 16);
-                //Sad dev noises.. this.Exit() does not work without Window: https://github.com/microsoft/microsoft-ui-xaml/issues/5931
-                Process.GetCurrentProcess().Kill();
-            }
-
             #region 唯一实例检查
             try {
                 // 保证全局只有一个实例
@@ -45,16 +36,34 @@ namespace VirtualPaper.UI {
                 }
             }
             catch (AbandonedMutexException e) {
+#if DEBUG
                 //unexpected app termination.
                 Debug.WriteLine(e.Message);
+#endif
             }
             #endregion
+
+            string[] args = Environment.GetCommandLineArgs()[1..];
+
+            // 预热
+            if (args.Length == 1 && args[0].Equals(ProcRun.WarmUp.ToString(), StringComparison.OrdinalIgnoreCase)) {
+                Console.WriteLine("WarmUp OK: module initialized successfully.");
+                Environment.Exit(0);
+                return;
+            }
+
+#if !DEBUG
+            if (!SingleInstanceUtil.IsAppMutexRunning(Constants.CoreField.UniqueAppUid)) {
+                _ = Native.MessageBox(IntPtr.Zero, "Wallpaper core is not running, run VirtualPaper.exe first before opening UI.", "Virtual Paper", 16);
+                //Sad dev noises.. this.Exit() does not work without Window: https://github.com/microsoft/microsoft-ui-xaml/issues/5931
+                Process.GetCurrentProcess().Kill();
+            }            
 #else
             VisibilityByValueConverter.DebugEnabled = true;
             BoolByValueConverter.DebugEnabled = true;
 #endif
 
-            ArcLog.GetLogger<App>().Info("Starting...");
+            ArcLog.GetLogger<App>().Info("Starting UI...");
 
             this.InitializeComponent();
             // ref: https://github.com/microsoft/microsoft-ui-xaml/issues/1146 
@@ -94,11 +103,12 @@ namespace VirtualPaper.UI {
             }
 
             var m_window = ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            m_window.Show();
             m_window.Activate();
         }
 
         private static void LogUnhandledException(Exception exception) => ArcLog.GetLogger<App>().Error(exception);
-        
+
         private static void LogUnhandledException(UnhandledError exception) => ArcLog.GetLogger<App>().Error(exception);
 
         //Not working ugh..
@@ -118,17 +128,11 @@ namespace VirtualPaper.UI {
         }
 
         public static void ShutDown() {
-            Task.Run(async () => {
-                await ObjectProvider.GetRequiredService<IWallpaperControlClient>(ObjectLifetime.Singleton, ObjectLifetime.Singleton).CloseAllPreviewAsync();
-
-                ObjectProvider.Clean();
-                ArcLog.GetLogger<App>().Info("UI was closed");
-            });
+            ObjectProvider.Clean();
+            ArcLog.GetLogger<App>().Info("UI was closed");
         }
 
         private readonly IUserSettingsClient _userSettings;
-#if !DEBUG
         private readonly Mutex _mutex = new(false, Constants.CoreField.UniqueAppUIUid);
-#endif
     }
 }

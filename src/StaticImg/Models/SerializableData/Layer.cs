@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using VirtualPaper.UIComponent.Logging;
+using VirtualPaper.Common.Logging;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
     public partial class Layer : IDisposable {

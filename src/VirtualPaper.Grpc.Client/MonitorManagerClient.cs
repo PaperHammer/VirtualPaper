@@ -1,8 +1,10 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
 using GrpcDotNetNamedPipes;
 using NLog;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.MonitorManager;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -92,8 +94,13 @@ namespace VirtualPaper.Grpc.Client {
                     }
                 }
             }
+            catch (Exception ex) when
+                        (ex is OperationCanceledException ||
+                        (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
+                return;
+            }
             catch (Exception e) {
-                _logger.Error(e);
+                ArcLog.GetLogger<MonitorManagerClient>().Error(e);
             }
         }
 
@@ -116,8 +123,13 @@ namespace VirtualPaper.Grpc.Client {
                     }
                 }
             }
+            catch (Exception ex) when
+                        (ex is OperationCanceledException ||
+                        (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
+                return;
+            }
             catch (Exception e) {
-                _logger.Error(e);
+                ArcLog.GetLogger<MonitorManagerClient>().Error(e);
             }
         }
 
@@ -126,10 +138,28 @@ namespace VirtualPaper.Grpc.Client {
         protected virtual void Dispose(bool disposing) {
             if (!_isDisposed) {
                 if (disposing) {
-                    _ctsMonitorChanged?.Cancel();
-                    _ctsMonitorPropertyChanged?.Cancel();
-                    _monitorChangedTask?.Wait();
-                    _monitorPropertyChangedTask?.Wait();
+                    MonitorChanged = null;
+                    MonitorPropertyUpdated = null;
+                    try {
+                        _ctsMonitorChanged?.Cancel();
+                        _ctsMonitorPropertyChanged?.Cancel();
+
+                        _ = _monitorChangedTask?.ContinueWith(t => {
+                            if (t.Exception != null)
+                                ArcLog.GetLogger<MonitorManagerClient>().Error(t.Exception);
+                        }, TaskContinuationOptions.OnlyOnFaulted);
+
+                        _ = _monitorPropertyChangedTask?.ContinueWith(t => {
+                            if (t.Exception != null)
+                                ArcLog.GetLogger<MonitorManagerClient>().Error(t.Exception);
+                        }, TaskContinuationOptions.OnlyOnFaulted);
+                    }
+                    catch (AggregateException ex) { ArcLog.GetLogger<MonitorManagerClient>().Error("Task cancelled during Dispose", ex); }
+                    catch (OperationCanceledException) { }
+
+                    _ctsMonitorChanged?.Dispose();
+                    _ctsMonitorPropertyChanged?.Dispose();
+                    _monitorChangedLock?.Dispose();
                 }
 
                 _isDisposed = true;
@@ -148,6 +178,5 @@ namespace VirtualPaper.Grpc.Client {
         private readonly CancellationTokenSource _ctsMonitorChanged;
         private readonly CancellationTokenSource _ctsMonitorPropertyChanged;
         private readonly Task _monitorChangedTask, _monitorPropertyChangedTask;
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

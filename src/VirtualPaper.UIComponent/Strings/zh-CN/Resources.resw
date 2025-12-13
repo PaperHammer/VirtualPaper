@@ -512,9 +512,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Text_Restore" xml:space="preserve">
     <value>还原</value>
   </data>
-  <data name="Text_SaveAndApply" xml:space="preserve">
-    <value>保存并应用</value>
-  </data>
   <data name="Text_WpArrange" xml:space="preserve">
     <value>壁纸布局</value>
   </data>
@@ -600,13 +597,13 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>无法将存储目录设置为应用程序数据根目录</value>
   </data>
   <data name="Text_VersionInfo" xml:space="preserve">
-    <value>版本信息：</value>
+    <value>版本：</value>
   </data>
   <data name="InfobarMsg_ImportErr" xml:space="preserve">
     <value>该文件无法导入</value>
   </data>
   <data name="Text_FileUsing" xml:space="preserve">
-    <value>文件使用中，请关闭使用源</value>
+    <value>当前文件正在作为壁纸使用中，请关闭后重试</value>
   </data>
   <data name="Project_RecentUsed" xml:space="preserve">
     <value>打开最近使用的项目(R)</value>
@@ -1001,5 +998,20 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Settings_General_Version_DownLoadedMsg" xml:space="preserve">
     <value>更新包已准备好，点击“安装”按钮以开始更新</value>
+  </data>
+  <data name="Text_ApplyAndClose" xml:space="preserve">
+    <value>应用并关闭</value>
+  </data>
+  <data name="Webview_SelBarItem1_GeneralEffect" xml:space="preserve">
+    <value>基础效果</value>
+  </data>
+  <data name="Webview_SelBarItem2_GeneralInfo" xml:space="preserve">
+    <value>基础信息</value>
+  </data>
+  <data name="Text_FileInPreview" xml:space="preserve">
+    <value>当前文件正在预览中，请关闭后重试</value>
+  </data>
+  <data name="Details_Text_FileProperty" xml:space="preserve">
+    <value>文件属性</value>
   </data>
 </root>

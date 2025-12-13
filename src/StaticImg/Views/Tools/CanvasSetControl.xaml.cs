@@ -119,11 +119,12 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         }
 
         private static void CloseSizeIllegalMsg() {
-            GlobalMessageUtil.CloseAndRemoveMsg(nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal));
+            GlobalMessageUtil.CloseAndRemoveMsg(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal));
         }
 
         private static void ShowSizeIllegalMsg() {
             GlobalMessageUtil.ShowError(
+                ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                 message: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
                 key: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
                 isNeedLocalizer: true,

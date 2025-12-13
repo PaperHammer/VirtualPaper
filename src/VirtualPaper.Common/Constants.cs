@@ -72,14 +72,9 @@ namespace VirtualPaper.Common {
             public static string PlayerWeb => "VirtualPaper.PlayerWeb.exe";
         }
 
-        public static class PlayingFile {
-            public static string PlayerWeb3D => Path.Combine("Web", "3d_depth_map.html");
-            public static string PlayerWeb => Path.Combine("Web", "default.html");
-        }
-
         public static class CoreField {
             public static string AppName => "VirtualPaper";
-            public static string FileVersion => "0.1.0";
+            public static string FileVersion => "18";
             public static string GrpcPipeServerName => "Grpc_" + PipeServerName;
             public static string PipeServerName => UniqueAppUid + Environment.UserName;
             public static string UniqueAppUid => "Virtual:WALLPAPERSYSTEM";
@@ -235,6 +230,7 @@ namespace VirtualPaper.Common {
             public static string Text_FileExtension => "Text_FileExtension";
             public static string Text_FileSize => "Text_FileSize";
             public static string Text_FileUsing => "Text_FileUsing";
+            public static string Text_FileInPreview => "Text_FileInPreview";
             public static string Text_Identify => "Text_Identify";
             public static string Text_Loading => "Text_Loading";
             public static string Text_Off => "Text_Off";

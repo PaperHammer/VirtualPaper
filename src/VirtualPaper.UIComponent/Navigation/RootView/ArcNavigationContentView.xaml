@@ -19,7 +19,7 @@
         <ItemsControl x:Name="PART_InfoBarItemsContaner"
             HorizontalAlignment="Center"
             VerticalAlignment="Top"
-            ItemsSource="{x:Bind utils:GlobalMessageUtil.InfobarMessages}">
+            ItemsSource="{x:Bind InfobarMessages}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="utils:GlobalMsgInfo">
                     <InfoBar

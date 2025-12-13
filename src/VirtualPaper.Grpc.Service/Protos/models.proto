@@ -135,7 +135,7 @@ message Grpc_AdjustWallpaperRequest {
 	string monitor_device_id = 1;
 }
 
-message Grpc_PreviewWallpaperRequest {
+message Grpc_GetPlayerStartArgsRequest {
 	string monitor_device_id = 1;
 	Grpc_WpPlayerData wp_player_data = 2;
 }
@@ -160,8 +160,8 @@ message Grpc_AdjustWallpaperResponse {
 	bool is_ok = 1;
 }
 
-message Grpc_PreviewWallpaperResponse {
-	bool is_ok = 1;
+message Grpc_GetPlayerStartArgsResponse {
+	string data = 1;
 }
 
 message Grpc_SetWallpaperResponse {

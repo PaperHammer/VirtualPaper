@@ -4,12 +4,14 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Grpc.Core;
-using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.PInvoke;
@@ -20,11 +22,11 @@ using VirtualPaper.Grpc.Service.Models;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.UIComponent;
+using VirtualPaper.PlayerWeb.Core;
+using VirtualPaper.PlayerWeb.Core.WebView.Windows;
 using VirtualPaper.UIComponent.Container;
-using VirtualPaper.UIComponent.Data;
-using VirtualPaper.UIComponent.Logging;
 using VirtualPaper.UIComponent.Others;
+using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
 using Windows.Storage;
@@ -54,7 +56,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal async Task InitContentAsync() {
-            var ctx = PageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -72,87 +74,119 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ex);
+                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                     }
                 });
         }
 
-        internal async Task DetailInfoAsync(IWpBasicData data) {
+        internal void ShowDetail(IWpBasicData data) {
             try {
                 if (!data.IsAvailable()) return;
-                await CheckFileUpdateAsync(data);
 
-                if (_wp2TocDetail.TryGetValue(data.FilePath, out ToolWindow toolWindow)) {
-                    toolWindow.BringToFront();
+                if (_details.TryGetValue(data.WallpaperUid, out var onlyDetail)) {
+                    onlyDetail.Activate();
                     return;
                 }
 
-                var mainWindow = WindowConsts.ArcWindowInstance;
-                toolWindow = new ToolWindow(new(
-                    _userSettingsClient.Settings.SystemBackdrop,
-                    _userSettingsClient.Settings.ApplicationTheme,
-                    _userSettingsClient.Settings.Language));
-                toolWindow.Closed += ToolContainer_Closed;
-                void ToolContainer_Closed(object _, WindowEventArgs __) {
-                    toolWindow.Closed -= ToolContainer_Closed;
-                    _wp2TocDetail.Remove(data.FilePath);
-                }
-
-                SetToolWindowParent(toolWindow, mainWindow);
-                AddDetailsPage(data, toolWindow);
-                _wp2TocDetail[data.FilePath] = toolWindow;
-                toolWindow.Show();
+                var jsonString = GetStartArgsString(data);
+                var onlyDetailWindow = data.FType switch {
+                    FileType.FImage or FileType.FGif or FileType.FVideo => new OnlyDetails(jsonString, DataConfigTab.GeneralInfo),
+                    _ => throw new NotImplementedException(),
+                };
+                onlyDetailWindow.Closed += (sender, args) => {
+                    _details.Remove(data.WallpaperUid);
+                };
+                _details.Add(data.WallpaperUid, onlyDetailWindow);
+                onlyDetailWindow.Show();
+                onlyDetailWindow.Activate();
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
         }
 
+        private string GetStartArgsString(IWpBasicData data) {
+            var args = new StartArgsWeb() {
+                FilePath = data.FilePath,
+                WpBasicDataFilePath = Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName),                
+                ApplicationTheme = ArcThemeUtil.MainWindowAppTheme,
+                SystemBackdrop = ArcThemeUtil.MainWindowBackdrop,
+                Language = LanguageUtil.CurrentLanguage,
+            };
+
+            var json = JsonSerializer.Serialize(args, StartArgsWebContext.Default.StartArgsWeb);
+
+            return json;
+        }
+
         internal async Task EditInfoAsync(IWpBasicData data) {
+            //try {
+            //    if (!data.IsAvailable()) return;
+            //    await CheckFileUpdateAsync(data);
+
+            //    if (_wp2TocEdit.TryGetValue(data.FilePath, out ToolWindow toolWindow)) {
+            //        toolWindow.BringToFront();
+            //        return;
+            //    }
+
+            //    var mainWindow = WindowConsts.ArcWindowInstance;
+            //    toolWindow = new ToolWindow(new(
+            //        _userSettingsClient.Settings.SystemBackdrop,
+            //        _userSettingsClient.Settings.ApplicationTheme,
+            //        _userSettingsClient.Settings.Language));
+            //    toolWindow.Closed += ToolContainer_Closed;
+            //    void ToolContainer_Closed(object _, WindowEventArgs __) {
+            //        toolWindow.Closed -= ToolContainer_Closed;
+            //        Edits edits = toolWindow.GetContentByTag($"Edits_{data.FilePath}") as Edits;
+            //        if (edits.IsSaved) {
+            //            data.Title = edits.Title;
+            //            data.Desc = edits.Desc;
+            //            data.Tags = string.Join(';', edits.TagList);
+            //            data.Save();
+            //            UpdateLib(data);
+            //            GlobalMessageUtil.ShowSuccess(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
+            //        }
+
+            //        _wp2TocEdit.Remove(data.FilePath);
+            //    }
+
+            //    SetToolWindowParent(toolWindow, mainWindow);
+            //    _wp2TocEdit[data.FilePath] = toolWindow;
+            //    toolWindow.Show();
+            //}
+            //catch (Exception ex) {
+            //    ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+            //    GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+            //}
             try {
                 if (!data.IsAvailable()) return;
-                await CheckFileUpdateAsync(data);
 
-                if (_wp2TocEdit.TryGetValue(data.FilePath, out ToolWindow toolWindow)) {
-                    toolWindow.BringToFront();
+                if (_details.TryGetValue(data.WallpaperUid, out var editDetail)) {
+                    editDetail.Activate();
                     return;
                 }
 
-                var mainWindow = WindowConsts.ArcWindowInstance;
-                toolWindow = new ToolWindow(new(
-                    _userSettingsClient.Settings.SystemBackdrop,
-                    _userSettingsClient.Settings.ApplicationTheme,
-                    _userSettingsClient.Settings.Language));
-                toolWindow.Closed += ToolContainer_Closed;
-                void ToolContainer_Closed(object _, WindowEventArgs __) {
-                    toolWindow.Closed -= ToolContainer_Closed;
-                    Edits edits = toolWindow.GetContentByTag($"Edits_{data.FilePath}") as Edits;
-                    if (edits.IsSaved) {
-                        data.Title = edits.Title;
-                        data.Desc = edits.Desc;
-                        data.Tags = string.Join(';', edits.TagList);
-                        data.Save();
-                        UpdateLib(data);
-                        GlobalMessageUtil.ShowSuccess(Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
-                    }
-
-                    _wp2TocEdit.Remove(data.FilePath);
-                }
-
-                SetToolWindowParent(toolWindow, mainWindow);
-                AddEditsPage(data, toolWindow);
-                _wp2TocEdit[data.FilePath] = toolWindow;
-                toolWindow.Show();
+                var jsonString = GetStartArgsString(data);
+                var editDetailWindow = data.FType switch {
+                    FileType.FImage or FileType.FGif or FileType.FVideo => new OnlyDetails(jsonString, DataConfigTab.GeneralInfoEdit),
+                    _ => throw new NotImplementedException(),
+                };
+                editDetailWindow.Closed += (sender, args) => {
+                    _details.Remove(data.WallpaperUid);
+                };
+                _details.Add(data.WallpaperUid, editDetailWindow);
+                editDetailWindow.Show();
+                editDetailWindow.Activate();
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
         }
 
         internal async Task UpdateAsync(IWpBasicData data) {
-            var ctx = PageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -162,7 +196,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     try {
                         bool isUsing = await IsFileInUseAsync(data);
                         if (isUsing) {
-                            GlobalMessageUtil.ShowInfo(message: Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
+                            GlobalMessageUtil.ShowInfo(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), message: Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
+                            return;
+                        }
+
+                        bool isPreview = IsFileInPreview(data);
+                        if (isPreview) {
+                            GlobalMessageUtil.ShowInfo(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), message: Constants.I18n.Text_FileInPreview, isNeedLocalizer: true);
                             return;
                         }
 
@@ -171,17 +211,17 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         data = DataAssist.GrpcToBasicData(grpc_basicData);
                         UpdateLib(data);
 
-                        GlobalMessageUtil.ShowSuccess(message: Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
+                        GlobalMessageUtil.ShowSuccess(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), message: Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ex);
+                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                     }
                 });
         }
 
         internal async Task PreviewAsync(IWpBasicData data) {
-            var ctx = PageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -192,21 +232,36 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     try {
                         await _previewSemaphoreSlim.WaitAsync(token);
                         if (!data.IsAvailable()) return;
-
                         await CheckFileUpdateAsync(data);
 
                         var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                         if (rtype == RuntimeType.RUnknown) return;
-                        await _wpControlClient.PreviewWallpaperAsync(_wpSettingsViewModel.SelectedMonitor.DeviceId, data, rtype, token);
+
+                        if (_previews.TryGetValue((data.WallpaperUid, rtype), out var preview)) {
+                            preview.Activate();
+                            return;
+                        }
+
+                        var jsonString = await _wpControlClient.GetPlayerStartArgsAsync(_wpSettingsViewModel.SelectedMonitor.DeviceId, data, rtype, token);
+                        var previewWindow = rtype switch {
+                            RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo => new PreviewWithWeb(jsonString),
+                            _ or RuntimeType.RUnknown => throw new NotImplementedException(),
+                        };
+                        previewWindow.Closed += (sender, args) => {
+                            _previews.Remove((data.WallpaperUid, rtype));
+                        };
+                        _previews.Add((data.WallpaperUid, rtype), previewWindow);
+                        previewWindow.Show();
+                        previewWindow.Activate();
                     }
                     catch (Exception ex) when
                         (ex is OperationCanceledException ||
                         (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                        GlobalMessageUtil.ShowCanceled();
+                        GlobalMessageUtil.ShowCanceled(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)));
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ex);
+                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                     }
                     finally {
                         _previewSemaphoreSlim.Release();
@@ -215,7 +270,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal async Task ApplyAsync(IWpBasicData data) {
-            var ctx = PageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -224,7 +279,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             await loadingCtx.RunAsync(
                 operation: async token => {
                     try {
-                        await _applySemaphoreSlim.WaitAsync(token);
                         if (!data.IsAvailable()) return;
                         await CheckFileUpdateAsync(data);
 
@@ -237,26 +291,23 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                             rtype,
                             token);
                         if (!response.IsFinished) {
-                            GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
+                            GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
                         }
                     }
                     catch (Exception ex) when
                         (ex is OperationCanceledException ||
                         (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                        GlobalMessageUtil.ShowCanceled();
+                        GlobalMessageUtil.ShowCanceled(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)));
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ex);
-                    }
-                    finally {
-                        _applySemaphoreSlim.Release();
+                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                     }
                 }, cts: ctsApply);
         }
 
         internal async Task ApplyToLockBGAsync(IWpBasicData data) {
-            var ctx = PageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -268,21 +319,18 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         if (!data.IsAvailable()) return;
 
                         if (data.FType != FileType.FImage && data.FType != FileType.FGif) {
-                            GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_OnlyPictureAndGif, isNeedLocalizer: true);
+                            GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.Dialog_Content_OnlyPictureAndGif, isNeedLocalizer: true);
                             return;
                         }
 
                         StorageFile storageFile = await StorageFile.GetFileFromPathAsync(data.FilePath);
                         await LockScreen.SetImageFileAsync(storageFile);
 
-                        GlobalMessageUtil.ShowSuccess(Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
+                        GlobalMessageUtil.ShowSuccess(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ex);
-                    }
-                    finally {
-                        _applySemaphoreSlim.Release();
+                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                     }
                 }, cts: ctsApplyLockBG);
         }
@@ -298,7 +346,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                 bool isUsing = await IsFileInUseAsync(data);
                 if (isUsing) {
-                    GlobalMessageUtil.ShowInfo(Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
+                    GlobalMessageUtil.ShowInfo(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
                     return;
                 }
 
@@ -309,7 +357,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
         }
 
@@ -326,12 +374,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
         }
 
         internal async Task DropFilesAsync(IReadOnlyList<IStorageItem> items) {
-            var ctx = PageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -345,13 +393,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ex);
+                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                     }
                 }, cts: ctsImport);
         }
 
         private async Task ImportFromValuesAsync(List<ImportValue> importValues) {
-            var ctx = PageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -374,6 +422,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                                 if (grpcData == null) {
                                     GlobalMessageUtil.ShowError(
+                                        ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                                         Constants.I18n.InfobarMsg_ImportErr,
                                         isNeedLocalizer: true,
                                         extraMsg: importValue.FilePath);
@@ -386,12 +435,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                                     UpdateLib(data);
                                 else
                                     GlobalMessageUtil.ShowError(
+                                        ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                                         Constants.I18n.InfobarMsg_ImportErr,
                                         isNeedLocalizer: true,
                                         extraMsg: importValue.FilePath);
                             }
                             else {
                                 GlobalMessageUtil.ShowError(
+                                    ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                                     Constants.I18n.Dialog_Content_Import_Failed_Lib,
                                     isNeedLocalizer: true,
                                     extraMsg: importValue.FilePath);
@@ -402,12 +453,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         catch (Exception ex) when (
                             ex is OperationCanceledException ||
                             (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                            GlobalMessageUtil.ShowCanceled();
+                            GlobalMessageUtil.ShowCanceled(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)));
                             return;
                         }
                         catch (Exception ex) {
                             ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                            GlobalMessageUtil.ShowException(ex);
+                            GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                         }
                     }
                 }, total: importValues.Count, cts: ctsImport);
@@ -449,19 +500,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        public async Task<bool> IsFileInUseAsync(IWpBasicData data) {
+        private async Task<bool> IsFileInUseAsync(IWpBasicData data) {
             await _userSettingsClient.LoadAsync<List<IWallpaperLayout>>();
             return _userSettingsClient.WallpaperLayouts.Any(wl => wl.FolderPath == data.FolderPath);
         }
 
-        private static void AddDetailsPage(IWpBasicData data, ToolWindow toolContainer) {
-            Details details = new(data);
-            toolContainer.AddContent(Constants.I18n.Text_Details, $"Details_{data.FilePath}", details);
-        }
-
-        private static void AddEditsPage(IWpBasicData data, ToolWindow toolContainer) {
-            Edits edits = new(data, toolContainer);
-            toolContainer.AddContent(Constants.I18n.Text_Edit, $"Edits_{data.FilePath}", edits);
+        private bool IsFileInPreview(IWpBasicData data) {
+            return _previews.Keys.Any(k => k.uid == data.WallpaperUid);
         }
 
         private static void SetToolWindowParent(WindowEx childWindow, WindowEx parentWindow) {
@@ -532,9 +577,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly WpSettingsViewModel _wpSettingsViewModel;
         private List<string> _wallpaperInstallFolders = [];
         private readonly ConcurrentDictionary<string, int> _uid2idx = [];
-        private readonly SemaphoreSlim _applySemaphoreSlim = new(1, 1);
         private readonly SemaphoreSlim _previewSemaphoreSlim = new(1, 1);
-        private static readonly Dictionary<string, ToolWindow> _wp2TocDetail = [];
+        private static readonly Dictionary<string, ArcWindow> _details = [];
         private static readonly Dictionary<string, ToolWindow> _wp2TocEdit = [];
+        private static readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];
     }
 }

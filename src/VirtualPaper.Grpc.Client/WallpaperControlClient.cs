@@ -1,8 +1,10 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
 using GrpcDotNetNamedPipes;
 using NLog;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
@@ -20,7 +22,8 @@ namespace VirtualPaper.Grpc.Client {
         public string BaseDirectory { get; private set; } = string.Empty;
 
         public WallpaperControlClient() {
-            _client = new Grpc_WallpaperControlService.Grpc_WallpaperControlServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
+            _channel = new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName);
+            _client = new Grpc_WallpaperControlService.Grpc_WallpaperControlServiceClient(_channel);
 
             Task.Run(async () => {
                 var status = await GetCoreStats().ConfigureAwait(false);
@@ -46,16 +49,13 @@ namespace VirtualPaper.Grpc.Client {
             });
         }
 
-        public async Task CloseAllPreviewAsync() {
-            await _client.CloseAllPreviewAsync(new Empty());
-        }
-
-        public async Task<Grpc_WpMetaData> GetWallpaperAsync(string folderPath,string monitorContent, string rtype) {
+        public async Task<Grpc_WpMetaData> GetWallpaperAsync(string folderPath, string monitorContent, string rtype) {
             Grpc_WpMetaData grpc_data = await _client.GetWallpaperAsync(
-                new Grpc_GetWallpaperRequest() { 
-                    FolderPath = folderPath, 
-                    MonitorContent = monitorContent, 
-                    RType = rtype });
+                new Grpc_GetWallpaperRequest() {
+                    FolderPath = folderPath,
+                    MonitorContent = monitorContent,
+                    RType = rtype
+                });
 
             return grpc_data;
         }
@@ -70,30 +70,17 @@ namespace VirtualPaper.Grpc.Client {
             return response.IsOk;
         }
 
-        public async Task<bool> PreviewWallpaperAsync(IWpBasicData data, RuntimeType rtype, CancellationToken token) {
+        public async Task<string> GetPlayerStartArgsAsync(string monitorDeviceId, IWpBasicData data, RuntimeType rtype, CancellationToken token) {
             Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
 
-            var response = await _client.PreviewWallpaperAsync(
-                new Grpc_PreviewWallpaperRequest() {
-                    WpPlayerData = wpPlayerdata,
-                    MonitorDeviceId = string.Empty,
-                },
-                cancellationToken: token);
-
-            return response.IsOk;
-        }
-
-        public async Task<bool> PreviewWallpaperAsync(string monitorDeviceId, IWpBasicData data, RuntimeType rtype, CancellationToken token) {
-            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
-
-            var response = await _client.PreviewWallpaperAsync(
-                new Grpc_PreviewWallpaperRequest() {
+            var response = await _client.GetPlayerStartArgsAsync(
+                new Grpc_GetPlayerStartArgsRequest() {
                     WpPlayerData = wpPlayerdata,
                     MonitorDeviceId = monitorDeviceId
                 },
                 cancellationToken: token);
 
-            return response.IsOk;
+            return response.Data;
         }
 
         public async Task<Grpc_RestartWallpaperResponse> RestartAllWallpapersAsync() {
@@ -138,8 +125,8 @@ namespace VirtualPaper.Grpc.Client {
         }
 
         public async Task<Grpc_WpBasicData> CreateBasicDataInMemAsync(
-            string filePath, 
-            FileType ftype, 
+            string filePath,
+            FileType ftype,
             CancellationToken token) {
             Grpc_WpBasicData grpc_data = await _client.CreateMetadataBasicInMemAsync(
                 new Grpc_CreateMetadataBasicRequest() {
@@ -217,8 +204,13 @@ namespace VirtualPaper.Grpc.Client {
                     }
                 }
             }
+            catch (Exception ex) when
+                        (ex is OperationCanceledException ||
+                        (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
+                return;
+            }
             catch (Exception e) {
-                _logger.Error(e);
+                ArcLog.GetLogger<WallpaperControlClient>().Error(e);
             }
         }
 
@@ -241,8 +233,13 @@ namespace VirtualPaper.Grpc.Client {
                     WallpaperError?.Invoke(this, exp);
                 }
             }
+            catch (Exception ex) when
+                        (ex is OperationCanceledException ||
+                        (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
+                return;
+            }
             catch (Exception ex) {
-                _logger.Error(ex);
+                ArcLog.GetLogger<WallpaperControlClient>().Error(ex);
             }
         }
 
@@ -256,27 +253,49 @@ namespace VirtualPaper.Grpc.Client {
         #region dispose
         private bool _disposed;
         protected virtual void Dispose(bool disposing) {
-            if (!_disposed) {
-                if (disposing) {
+            if (_disposed) return;
+
+            if (disposing) {
+                WallpaperChanged = null;
+                WallpaperError = null;
+
+                try {
                     _ctsWallpaperChanged?.Cancel();
                     _ctsWallpaperError?.Cancel();
-                    Task.WaitAll(_wallpaperChangedTask, _wallpaperErrorTask);
+
+                    _wallpaperChangedTask?.ContinueWith(t => {
+                        if (t.Exception != null)
+                            ArcLog.GetLogger<WallpaperControlClient>().Error(t.Exception);
+                    }, TaskContinuationOptions.OnlyOnFaulted);
+
+                    _wallpaperErrorTask?.ContinueWith(t => {
+                        if (t.Exception != null)
+                            ArcLog.GetLogger<WallpaperControlClient>().Error(t.Exception);
+                    }, TaskContinuationOptions.OnlyOnFaulted);
                 }
-                _disposed = true;
+                catch (AggregateException ex) { ArcLog.GetLogger<WallpaperControlClient>().Error("Task cancelled during Dispose", ex); }
+                catch (OperationCanceledException) { }
+
+                _ctsWallpaperChanged?.Dispose();
+                _ctsWallpaperError?.Dispose();
+                _wallpaperChangedLock.Dispose();
             }
+
+            _disposed = true;
         }
 
         public void Dispose() {
-            Dispose(disposing: true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
         #endregion
 
+
         private readonly List<IWpMetadata> _wallpapers = [];
+        private readonly NamedPipeChannel _channel;
         private readonly Grpc_WallpaperControlService.Grpc_WallpaperControlServiceClient _client;
         private readonly SemaphoreSlim _wallpaperChangedLock = new(1, 1);
         private readonly CancellationTokenSource _ctsWallpaperChanged, _ctsWallpaperError;
         private readonly Task _wallpaperChangedTask, _wallpaperErrorTask;
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

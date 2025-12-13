@@ -1,8 +1,7 @@
-﻿using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.Mvvm;
+using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Grpc.Client.Interfaces {
-    public interface IUserSettingsClient {
+    public interface IUserSettingsClient : IDisposable {
         ISettings Settings { get; }
         List<IApplicationRules> AppRules { get; }
         List<IWallpaperLayout> WallpaperLayouts { get; }

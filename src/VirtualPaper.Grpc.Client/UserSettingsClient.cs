@@ -1,4 +1,4 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
@@ -221,6 +221,23 @@ namespace VirtualPaper.Grpc.Client {
             RecentUseds.Remove(item);
             await SetRecentUsedsAsync();
         }
+
+        #region Dispose
+        private bool _disposed;
+        protected virtual void Dispose(bool disposing) {
+            if (_disposed) return;
+
+            if (disposing) {
+            }
+
+            _disposed = true;
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
 
         private readonly Grpc_UserSettingsService.Grpc_UserSettingsServiceClient _client;
     }

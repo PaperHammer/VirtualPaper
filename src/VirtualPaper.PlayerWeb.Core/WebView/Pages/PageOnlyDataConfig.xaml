@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <arc:ArcPage
-    x:Class="VirtualPaper.PlayerWeb.Core.WebView.Pages.MainPageWithoutSidePanel"
+    x:Class="VirtualPaper.PlayerWeb.Core.WebView.Pages.PageOnlyDataConfig"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:VirtualPaper.PlayerWeb.Core.WebView.Pages"
@@ -11,6 +11,6 @@
     mc:Ignorable="d">
 
     <arc:ArcPageHost x:Name="MainHost">
-        <comp:DataConfig PageContext="{x:Bind Context}"/>
+        <comp:DataConfig Payload="{x:Bind Payload}"/>
     </arc:ArcPageHost>
 </arc:ArcPage>

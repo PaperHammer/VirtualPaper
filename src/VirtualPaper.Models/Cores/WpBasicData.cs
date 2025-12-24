@@ -4,16 +4,24 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.Models.Cores {
     [JsonSerializable(typeof(WpBasicData))]
     [JsonSerializable(typeof(IWpBasicData))]
     public partial class WpBasicDataContext : JsonSerializerContext { }
 
-    public class WpBasicData : IWpBasicData {
+    public class WpBasicData : ObservableObject, IWpBasicData {
         public string WallpaperUid { get; set; } = string.Empty;
         public ApplicationInfo AppInfo { get; set; } = new();
-        public string Title { get; set; } = string.Empty;
+
+        private string _title = string.Empty;
+        public string Title {
+            get => _title;
+            set { if (_title == value) return; _title = value; OnPropertyChanged(); }
+        }
+        //public string Title { get; set; } = string.Empty;
+
         public string Desc { get; set; } = string.Empty;
         public string Authors { get; set; } = string.Empty;
         public string PublishDate { get; set; } = string.Empty;
@@ -113,7 +121,14 @@ namespace VirtualPaper.Models.Cores {
         }
 
         public void Save() {
-            JsonSaver.Store<IWpBasicData>(
+            JsonSaver.Save<IWpBasicData>(
+                Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName),
+                this,
+                WpBasicDataContext.Default);
+        }
+
+        public async Task SaveAsync() {
+            await JsonSaver.SaveAsync<IWpBasicData>(
                 Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName),
                 this,
                 WpBasicDataContext.Default);

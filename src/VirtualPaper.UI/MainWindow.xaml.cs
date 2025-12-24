@@ -40,7 +40,7 @@ namespace VirtualPaper.UI {
 
         private void InitWindowConst() {
             WindowConsts.ArcWindowInstance = this;
-            WindowConsts.Dpi = SystemUtil.GetDpi(SystemUtil.GetDisplayArea(this, DisplayAreaFallback.Primary)); ;
+            //WindowConsts.Dpi = SystemUtil.GetDpi(SystemUtil.GetDisplayArea(this, DisplayAreaFallback.Primary));
             WindowConsts.WindowHandle = WindowNative.GetWindowHandle(this);
         }
 

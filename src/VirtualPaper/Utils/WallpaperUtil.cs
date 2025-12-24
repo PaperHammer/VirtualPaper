@@ -53,15 +53,15 @@ namespace VirtualPaper.Utils {
             switch (rtype) {
                 case RuntimeType.RImage:
                     PictureAndGifCostumise pictureAndGifCostumize = new();
-                    JsonSaver.Store(wpEffectFilePathTemplate, pictureAndGifCostumize, PictureAndGifCostumiseContext.Default);
+                    JsonSaver.Save(wpEffectFilePathTemplate, pictureAndGifCostumize, PictureAndGifCostumiseContext.Default);
                     break;
                 case RuntimeType.RImage3D:
                     Picture3DCostumize picture3DCostumize = new();
-                    JsonSaver.Store(wpEffectFilePathTemplate, picture3DCostumize, Picture3DCostumizeContext.Default);
+                    JsonSaver.Save(wpEffectFilePathTemplate, picture3DCostumize, Picture3DCostumizeContext.Default);
                     break;
                 case RuntimeType.RVideo:
                     VideoCostumize videoCostumize = new();
-                    JsonSaver.Store(wpEffectFilePathTemplate, videoCostumize, VideoCostumizeContext.Default);
+                    JsonSaver.Save(wpEffectFilePathTemplate, videoCostumize, VideoCostumizeContext.Default);
                     break;
                 default:
                     break;

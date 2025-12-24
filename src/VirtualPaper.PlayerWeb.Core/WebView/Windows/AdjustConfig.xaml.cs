@@ -4,6 +4,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.PlayerWeb.Core.WebView.Components;
+using VirtualPaper.PlayerWeb.Core.WebView.Pages;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 
@@ -26,7 +27,8 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         private void NaviContent_Loaded(object sender, RoutedEventArgs e) {
             try {
                 //var previewWindow = ArcWindowManager.GetArcWindow(_windowKey);
-                NaviContent.Navigate(typeof(DataConfig));
+                // todo
+                NaviContent.Navigate(typeof(PageOnlyDataConfig));
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<AdjustConfig>().Error(ex);

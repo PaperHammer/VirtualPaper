@@ -1,8 +1,8 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common.Runtime.PlayerWeb;
-using VirtualPaper.PlayerWeb.Core.Utils.Interfaces;
 using VirtualPaper.PlayerWeb.Core.ViewModels;
+using VirtualPaper.UIComponent.Utils.Extensions;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -18,9 +18,10 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
-            _startArgs ??= (e.Parameter as IMainPage)?.StartArgs;
-
-            InitViewModel();
+            if (e.Parameter is NavigationPayload payload) {
+                payload.TryGet(NaviPayLoadKey.StartArgs.ToString(), out _startArgs);
+                InitViewModel();
+            }            
         }
 
         private void InitViewModel() {

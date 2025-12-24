@@ -1,7 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using VirtualPaper.Common.Runtime.PlayerWeb;
-using VirtualPaper.PlayerWeb.Core.Utils.Interfaces;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils.Extensions;
@@ -13,24 +11,20 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainPageWithoutSidePanel : ArcPage, IMainPage {
+    public sealed partial class PageOnlyDataConfig : ArcPage {
         public override ArcPageContext Context { get; }
-        public override Type PageType => typeof(MainPageWithoutSidePanel);
+        public override Type PageType => typeof(PageOnlyDataConfig);
         protected override bool IsMultiInstance => true;
-        public StartArgsWeb StartArgs { get; private set; } = null!;
-        public DataConfigTab AvailableConfigTab { get; private set; }
+        public NavigationPayload? Payload { get; private set; }
 
-        public MainPageWithoutSidePanel() {
+        public PageOnlyDataConfig() {
             this.InitializeComponent();
             Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);
         }
 
         protected override async Task OnEnterAsync(NavigationPayload? payload) {
             await base.OnEnterAsync(payload);
-            if (payload != null) {
-                StartArgs = payload.Get<StartArgsWeb>("StartArgs");
-                AvailableConfigTab = payload.Get<DataConfigTab>("ConfigTab");
-            }
+            Payload = payload;
         }
     }
 }

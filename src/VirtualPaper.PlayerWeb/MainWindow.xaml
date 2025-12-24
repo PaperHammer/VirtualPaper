@@ -7,14 +7,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
-    xmlns:pages="using:VirtualPaper.PlayerWeb.Core.WebView.Pages"
+    xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
     mc:Ignorable="d"
     Width="1400" Height="850"
     Title="Virtual Paper PlayerWeb">
 
-    <arc:ArcWindowHost x:Name="MainHost">
-        <Frame x:Name="ContentFrame">
-            <pages:MainPage x:Name="ContentPage"/>
-        </Frame>
+    <arc:ArcWindowHost x:Name="MainHost" Title="Virtual Paper PlayerWeb">
+        <navi:ArcNavigationContentView x:Name="NaviContent" 
+            Loaded="NaviContent_Loaded"
+            InfobarMessages="{x:Bind InfobarMessages}"/>
     </arc:ArcWindowHost>
 </arc:ArcWindow>

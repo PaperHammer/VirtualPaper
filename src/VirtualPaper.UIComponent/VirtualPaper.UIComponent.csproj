@@ -46,6 +46,7 @@
 	<ItemGroup>
 		<None Remove="Container\SlidingSidePanel.xaml" />
 		<None Remove="Host\ArcWindowContent.xaml" />
+		<None Remove="Input\Button\ArcButton.xaml" />
 		<None Remove="Navigation\RootView\ArcNavigationContentView.xaml" />
 		<None Remove="Navigation\RootView\ArcNavigationView.xaml" />
 		<None Remove="Navigation\RootView\ArcNavigationviewStyle.xaml" />
@@ -53,12 +54,6 @@
 		<None Remove="Templates\ArcPageHost.xaml" />
 		<None Remove="Templates\ArcPageSimpleHost.xaml" />
 		<None Remove="Windowing\ArcWindow.xaml" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Page Update="Data\Edits.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -93,6 +88,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Page Update="Input\Button\ArcButton.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	  <None Update="PlayersRun\Web\3d_depth_map.html">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>

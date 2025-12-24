@@ -470,9 +470,6 @@ Author: PaperHammer</value>
   <data name="Settings_System_Developer_LogExplain" xml:space="preserve">
     <value>Create a log protection report</value>
   </data>
-  <data name="Settings_System_Log" xml:space="preserve">
-    <value>Save</value>
-  </data>
   <data name="Settings_System_Text_Debug" xml:space="preserve">
     <value>Open</value>
   </data>
@@ -1013,5 +1010,11 @@ The following words cannot be used as usernames:
   </data>
   <data name="Details_Text_FileProperty" xml:space="preserve">
     <value>File Properties</value>
+  </data>
+  <data name="Webview_SelBarItem3_GeneralInfoEdit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Text_Save" xml:space="preserve">
+    <value>Save</value>
   </data>
 </root>

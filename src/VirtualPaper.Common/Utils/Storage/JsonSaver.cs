@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using static VirtualPaper.Common.Errors;
@@ -15,7 +15,7 @@ namespace VirtualPaper.Common.Utils.Storage {
             return LoadAsync<T>(filePath, context).Result;
         }
 
-        public static void Store<T>(string filePath, T data, JsonSerializerContext context) {
+        public static void Save<T>(string filePath, T data, JsonSerializerContext context) {
             SaveAsync(filePath, data, context).Wait();
         }
 

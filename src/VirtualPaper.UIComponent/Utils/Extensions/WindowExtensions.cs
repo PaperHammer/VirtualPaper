@@ -74,7 +74,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions
 
         private static void LoadIcon(string iconName, Window window)
         {
-            //Get the Window's HWND
+            // Get the Window's HWND
             var hwnd = window.As<IWindowNative>().WindowHandle;
             nint hIcon = Native.LoadImage(nint.Zero, iconName,
                       IMAGE_ICON, 32, 32, LR_LOADFROMFILE);

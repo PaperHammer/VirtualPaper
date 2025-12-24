@@ -11,9 +11,9 @@
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
-    <UserControl.Resources>
+    <Page.Resources>
         <cvs:VisibilityByValueConverter x:Key="VisibilityByValueConverter"/>
-    </UserControl.Resources>
+    </Page.Resources>
 
     <Grid x:Name="MainGrid"
         HorizontalAlignment="Stretch"

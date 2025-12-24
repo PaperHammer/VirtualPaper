@@ -20,9 +20,13 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="GridViewItem">
-                        <Grid x:Name="rootGrid"                            
-                            Width="{TemplateBinding Width}"
-                            Height="{TemplateBinding Height}">
+                        <Grid x:Name="rootGrid"
+                            Background="Transparent"
+                            Loaded="GridViewItem_Loaded"
+                            PointerEntered="GridViewItem_PointerEntered"
+                            PointerExited="GridViewItem_PointerExited"
+                            PointerCanceled="GridViewItem_PointerCanceled">
+
                             <ContentPresenter x:Name="contentPresenter"
                                 RenderTransformOrigin="0.5 0.5"
                                 Content="{TemplateBinding Content}"
@@ -31,55 +35,6 @@
                                     <CompositeTransform x:Name="ContentPresenterTransform" ScaleX="1" ScaleY="1"/>
                                 </ContentPresenter.RenderTransform>
                             </ContentPresenter>
-
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualState x:Name="Normal">
-                                        <Storyboard>
-                                            <DoubleAnimation 
-                                                Storyboard.TargetName="ContentPresenterTransform"
-                                                Storyboard.TargetProperty="ScaleX"
-                                                To="1.0"
-                                                Duration="0:0:0.3">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <CubicEase EasingMode="EaseOut"/>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation 
-                                                Storyboard.TargetName="ContentPresenterTransform"
-                                                Storyboard.TargetProperty="ScaleY"
-                                                To="1.0"
-                                                Duration="0:0:0.3">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <CubicEase EasingMode="EaseOut"/>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="PointerOver">
-                                        <Storyboard>
-                                            <DoubleAnimation 
-                                                Storyboard.TargetName="ContentPresenterTransform"
-                                                Storyboard.TargetProperty="ScaleX"
-                                                To="0.9"
-                                                Duration="0:0:0.3">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <BackEase Amplitude="0.4" EasingMode="EaseOut"/>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation 
-                                                Storyboard.TargetName="ContentPresenterTransform"
-                                                Storyboard.TargetProperty="ScaleY"
-                                                To="0.9"
-                                                Duration="0:0:0.3">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <BackEase Amplitude="0.4" EasingMode="EaseOut"/>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                        </Storyboard>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -91,7 +46,6 @@
                 Width="320"
                 Height="200"
                 CornerRadius="8"
-                Tapped="Item_Tapped"
                 ContextFlyout="{StaticResource WallpaperContextFlyout}">
 
                 <Image 
@@ -104,9 +58,11 @@
                     Padding="6"
                     Height="48"
                     Background="{ThemeResource SystemControlBackgroundBaseMediumLowBrush}">
-                    <TextBlock Text="{x:Bind Title}"
+                    <TextBlock 
+                        Text="{x:Bind Title, Mode=OneWay}"
                         MaxLines="2"
                         FontSize="14"
+                        Foreground="{Binding DataContext.WpTitleForeground, ElementName=rootPage}"
                         TextTrimming="CharacterEllipsis"/>
                 </Border>
             </Grid>
@@ -116,7 +72,7 @@
             <ItemsWrapGrid x:Name="InternalItemsWrapGrid"
                 Orientation="Horizontal" 
                 VerticalAlignment="Top"
-                           HorizontalAlignment="Center"/>
+                HorizontalAlignment="Center"/>
         </ItemsPanelTemplate>
 
         <MenuFlyout x:Key="WallpaperContextFlyout" ShowMode="Transient">
@@ -197,6 +153,8 @@
         Drop="WallpapersLibView_Drop"
         HorizontalAlignment="Stretch"
         VerticalContentAlignment="Stretch"
+        ItemClick="WallpapersLibView_ItemClick"
+        IsItemClickEnabled="True"
         ItemContainerStyle="{StaticResource LibGridViewItemStyle}"
         ItemTemplate="{StaticResource WallpaperItemTemplate}"
         ItemsPanel="{StaticResource WallpaperItemsPanel}"

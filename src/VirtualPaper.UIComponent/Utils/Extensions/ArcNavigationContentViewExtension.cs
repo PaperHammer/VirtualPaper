@@ -164,15 +164,17 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
         }
     }
 
-    public record NavigationPayload {
-        private Dictionary<string, object?> Data { get; } = [];
-
+    public sealed class NavigationPayload {
         public object? this[string key] {
-            set => Data[key] = value;
+            set => Set(key, value);
         }
 
-        public bool Get<T>(string key, out T value) {
-            if (Data.TryGetValue(key, out var obj) && obj is T t) {
+        public void Set(string key, object? value) {
+            _data[key] = value;
+        }
+
+        public bool TryGet<T>(string key, out T value) {
+            if (_data.TryGetValue(key, out var obj) && obj is T t) {
                 value = t;
                 return true;
             }
@@ -182,10 +184,12 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
         }
 
         public T Get<T>(string key) {
-            if (Data.TryGetValue(key, out var value) && value is T t)
+            if (_data.TryGetValue(key, out var value) && value is T t)
                 return t;
 
-            return default!;
+            throw new KeyNotFoundException($"NavigationPayload missing required key '{key}' ({typeof(T).Name})");
         }
+
+        private readonly Dictionary<string, object?> _data = [];
     }
 }

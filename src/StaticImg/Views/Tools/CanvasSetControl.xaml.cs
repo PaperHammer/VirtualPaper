@@ -160,7 +160,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         private bool _isScaleContent;
 
         private static int MAX_CANVAS_EDGE => MainPage.Instance.SharedDevice.MaximumBitmapSizeInPixels;
-        private static int MAX_CANVAS_SIZE_WITH_DPI => (int)(1.0F * MAX_CANVAS_EDGE / WindowConsts.Dpi * 96);
+        private static int MAX_CANVAS_SIZE_WITH_DPI => (int)(1.0F * MAX_CANVAS_EDGE / WindowConsts.ArcWindowInstance.Content.XamlRoot.RasterizationScale * 96);
 
         private readonly string _SIG_CanvasSet_Header = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_Header)); // 画布
         private readonly string _SIG_CanvasSet_AdjustSize = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_AdjustSize)); // 调整画布大小

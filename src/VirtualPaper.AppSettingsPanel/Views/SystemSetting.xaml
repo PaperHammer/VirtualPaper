@@ -80,7 +80,7 @@
                     <Button
                         Grid.Column="2"
                         Width="200"
-                        Content="{markup:I18n Key=Settings_System_Log}"
+                        Content="{markup:I18n Key=Text_Save}"
                         Command="{x:Bind _viewModel.LogCommand}"/>
                 </Grid>
             </StackPanel>

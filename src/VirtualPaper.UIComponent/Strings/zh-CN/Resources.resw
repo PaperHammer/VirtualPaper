@@ -470,9 +470,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Settings_System_Developer_LogExplain" xml:space="preserve">
     <value>创建日志保报告</value>
   </data>
-  <data name="Settings_System_Log" xml:space="preserve">
-    <value>保存</value>
-  </data>
   <data name="Settings_System_Text_Debug" xml:space="preserve">
     <value>打开</value>
   </data>
@@ -1013,5 +1010,11 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Details_Text_FileProperty" xml:space="preserve">
     <value>文件属性</value>
+  </data>
+  <data name="Webview_SelBarItem3_GeneralInfoEdit" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="Text_Save" xml:space="preserve">
+    <value>保存</value>
   </data>
 </root>

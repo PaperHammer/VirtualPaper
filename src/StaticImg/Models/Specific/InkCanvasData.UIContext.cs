@@ -217,7 +217,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 .Where(ink => ink.RenderData != null)
                 .Select(ink => ink.RenderData.ResizeRenderTargetAsync(CanvasSize));
             await Task.WhenAll(tasks);
-            CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {WindowConsts.Dpi} DPI)";
+            CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {WindowConsts.ArcWindowInstance.Content.XamlRoot.RasterizationScale} DPI)";
             SizeChanged?.Invoke(this, new LayerSizeChangedEventArgs(CanvasSize));
         }
 

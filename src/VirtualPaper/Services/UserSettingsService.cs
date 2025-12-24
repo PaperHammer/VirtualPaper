@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Cores.Monitor;
@@ -97,17 +97,17 @@ namespace VirtualPaper.Services {
 
         public void Save<T>() {
             if (typeof(T) == typeof(ISettings)) {
-                JsonSaver.Store(_settingsPath, Settings, SettingsContext.Default);
+                JsonSaver.Save(_settingsPath, Settings, SettingsContext.Default);
             }
             else if (typeof(T) == typeof(List<IApplicationRules>)) {
-                JsonSaver.Store(_appRulesPath, AppRules, ApplicationRulesContext.Default);
+                JsonSaver.Save(_appRulesPath, AppRules, ApplicationRulesContext.Default);
             }
             else if (typeof(T) == typeof(List<IWallpaperLayout>)) {
-                JsonSaver.Store(_wallpaperLayoutPath, WallpaperLayouts, WallpaperLayoutContext.Default);
+                JsonSaver.Save(_wallpaperLayoutPath, WallpaperLayouts, WallpaperLayoutContext.Default);
             }
             else if (typeof(T) == typeof(List<IRecentUsed>)) {
                 RecentUseds.Sort((x, y) => y.DateTime.CompareTo(x.DateTime));
-                JsonSaver.Store(_recentUsedPath, RecentUseds, RecentUsedContext.Default);
+                JsonSaver.Save(_recentUsedPath, RecentUseds, RecentUsedContext.Default);
             }
             else {
                 throw new InvalidCastException($"ValueType not found: {typeof(T)}");

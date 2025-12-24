@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Drawing.Imaging;
 using VirtualPaper.Common.Utils.PInvoke;
 

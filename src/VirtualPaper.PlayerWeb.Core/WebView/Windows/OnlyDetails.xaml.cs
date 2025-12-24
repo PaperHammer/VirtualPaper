@@ -1,9 +1,9 @@
 using System;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
+using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.PlayerWeb.Core.WebView.Pages;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
@@ -20,21 +20,31 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         public override ArcWindowHost ContentHost => this.MainHost;
         public override ArcWindowManagerKey Key => _windowKey;
 
-        public OnlyDetails(string jsonString, DataConfigTab configTab) {
-            _startArgs = JsonSerializer.Deserialize<StartArgsWeb>(jsonString);
+        private OnlyDetails(DataConfigTab configTab) {
             _configTab = configTab;
-            _windowKey = new ArcWindowManagerKey(ArcWindowKey.PlayerWebCoreOnlyDetails, _startArgs.FilePath);
+            _payload = new NavigationPayload() {
+                [NaviPayLoadKey.StartArgs.ToString()] = _startArgs,
+                [NaviPayLoadKey.AvailableConfigTab.ToString()] = _configTab,
+            };
+
             this.InitializeComponent();
             InitializeWindow();
         }
 
+        public OnlyDetails(string jsonString, DataConfigTab configTab) : this(configTab) {
+            _startArgs = JsonSerializer.Deserialize<StartArgsWeb>(jsonString);
+            _windowKey = new ArcWindowManagerKey(ArcWindowKey.PlayerWebCoreOnlyDetails, _startArgs.FilePath);
+            _payload[NaviPayLoadKey.StartArgs.ToString()] = _startArgs;
+        }
+
+        public OnlyDetails(DataConfigTab configTab, IWpBasicData wpBasicData) : this(configTab) {
+            _windowKey = new ArcWindowManagerKey(ArcWindowKey.PlayerWebCoreOnlyDetails, wpBasicData.FilePath);
+            _payload[NaviPayLoadKey.IWpBasicData.ToString()] = wpBasicData;
+        }
+
         private void NaviContent_Loaded(object sender, RoutedEventArgs e) {
             try {
-                var payload = new NavigationPayload() {
-                    ["StartArgs"] = _startArgs,
-                    ["ConfigTab"] = _configTab,
-                };
-                NaviContent.Navigate(typeof(MainPageWithoutSidePanel), payload);
+                NaviContent.Navigate(typeof(PageOnlyDataConfig), _payload);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<OnlyDetails>().Error(ex);
@@ -44,5 +54,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         private readonly ArcWindowManagerKey _windowKey;
         private readonly StartArgsWeb _startArgs = null!;
         private readonly DataConfigTab _configTab;
+        private readonly NavigationPayload _payload;
     }
 }

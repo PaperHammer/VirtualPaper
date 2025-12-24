@@ -9,6 +9,8 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Grpc.Core;
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
@@ -38,6 +40,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class LibraryContentsViewModel : ObservableObject {
         public ObservableCollection<IWpBasicData> LibraryWallpapers { get; set; } = [];
 
+        private Brush _wpTitleForeground = new SolidColorBrush(Colors.White);
+        public Brush WpTitleForeground {
+            get { return _wpTitleForeground; }
+            set { _wpTitleForeground = value; OnPropertyChanged(); }
+        }
+
         public LibraryContentsViewModel(
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient,
@@ -46,7 +54,19 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             _wpControlClient = wallpaperControlClient;
             _wpSettingsViewModel = wpSettingsViewModel;
 
+            InitEvent();
             InitColletions();
+        }
+
+        private void InitEvent() {
+            ArcThemeUtil.AppThemeChanged += (s, e) => {
+                RefreshWpTitleForeground();
+            };
+        }
+
+        internal void RefreshWpTitleForeground() {
+            var color = ArcThemeUtil.GetFormatMainWindowTheme() == AppTheme.Light ? Colors.White : Colors.Black;
+            WpTitleForeground = new SolidColorBrush(color);
         }
 
         private void InitColletions() {
@@ -109,7 +129,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private string GetStartArgsString(IWpBasicData data) {
             var args = new StartArgsWeb() {
                 FilePath = data.FilePath,
-                WpBasicDataFilePath = Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName),                
+                WpBasicDataFilePath = Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName),
                 ApplicationTheme = ArcThemeUtil.MainWindowAppTheme,
                 SystemBackdrop = ArcThemeUtil.MainWindowBackdrop,
                 Language = LanguageUtil.CurrentLanguage,
@@ -120,45 +140,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             return json;
         }
 
-        internal async Task EditInfoAsync(IWpBasicData data) {
-            //try {
-            //    if (!data.IsAvailable()) return;
-            //    await CheckFileUpdateAsync(data);
-
-            //    if (_wp2TocEdit.TryGetValue(data.FilePath, out ToolWindow toolWindow)) {
-            //        toolWindow.BringToFront();
-            //        return;
-            //    }
-
-            //    var mainWindow = WindowConsts.ArcWindowInstance;
-            //    toolWindow = new ToolWindow(new(
-            //        _userSettingsClient.Settings.SystemBackdrop,
-            //        _userSettingsClient.Settings.ApplicationTheme,
-            //        _userSettingsClient.Settings.Language));
-            //    toolWindow.Closed += ToolContainer_Closed;
-            //    void ToolContainer_Closed(object _, WindowEventArgs __) {
-            //        toolWindow.Closed -= ToolContainer_Closed;
-            //        Edits edits = toolWindow.GetContentByTag($"Edits_{data.FilePath}") as Edits;
-            //        if (edits.IsSaved) {
-            //            data.Title = edits.Title;
-            //            data.Desc = edits.Desc;
-            //            data.Tags = string.Join(';', edits.TagList);
-            //            data.Save();
-            //            UpdateLib(data);
-            //            GlobalMessageUtil.ShowSuccess(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
-            //        }
-
-            //        _wp2TocEdit.Remove(data.FilePath);
-            //    }
-
-            //    SetToolWindowParent(toolWindow, mainWindow);
-            //    _wp2TocEdit[data.FilePath] = toolWindow;
-            //    toolWindow.Show();
-            //}
-            //catch (Exception ex) {
-            //    ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-            //    GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
-            //}
+        internal void ShowEdit(IWpBasicData data) {
             try {
                 if (!data.IsAvailable()) return;
 
@@ -167,9 +149,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     return;
                 }
 
-                var jsonString = GetStartArgsString(data);
                 var editDetailWindow = data.FType switch {
-                    FileType.FImage or FileType.FGif or FileType.FVideo => new OnlyDetails(jsonString, DataConfigTab.GeneralInfoEdit),
+                    FileType.FImage or FileType.FGif or FileType.FVideo => new OnlyDetails(DataConfigTab.GeneralInfoEdit, data),
                     _ => throw new NotImplementedException(),
                 };
                 editDetailWindow.Closed += (sender, args) => {
@@ -352,8 +333,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                 _uid2idx.Remove(data.WallpaperUid, out _);
                 LibraryWallpapers.Remove(data);
-                DirectoryInfo di = new(data.FolderPath);
-                di.Delete(true);
+                if (Directory.Exists(data.FolderPath)) {
+                    Directory.Delete(data.FolderPath, true);
+                }
+
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);

@@ -1,5 +1,5 @@
 namespace VirtualPaper.PlayerWeb.Core.Utils {
-    internal static class Fileds {
+    public static class Fileds {
         public static string ApplyFilter { get; } = "applyFilter";
         public static string Play { get; } = "play";
         public static string PlaybackChanged { get; } = "playbackChanged";

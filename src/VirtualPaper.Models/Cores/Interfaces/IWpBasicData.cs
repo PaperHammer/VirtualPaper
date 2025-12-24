@@ -1,7 +1,8 @@
+using System.ComponentModel;
 using VirtualPaper.Common;
 
 namespace VirtualPaper.Models.Cores.Interfaces {
-    public interface IWpBasicData : IEquatable<IWpBasicData> {
+    public interface IWpBasicData : IEquatable<IWpBasicData>, INotifyPropertyChanged {
         /// <summary>
         /// 资源唯一标识符
         /// </summary>
@@ -86,6 +87,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         void Read(string filePath);
         Task MoveToAsync(string targetFolderPath);
         void Save();
+        Task SaveAsync();
         IWpBasicData Clone();
         bool IsAvailable();
         void Merge(IWpBasicData oldData);

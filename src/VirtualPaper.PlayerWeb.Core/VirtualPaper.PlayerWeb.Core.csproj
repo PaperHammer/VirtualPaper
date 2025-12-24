@@ -8,12 +8,12 @@
 		<UseWinUI>true</UseWinUI>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>
 	  <None Remove="WebView\Components\General\GeneralEffect.xaml" />
 	  <None Remove="WebView\Components\General\GeneralInfo.xaml" />
 	  <None Remove="WebView\Components\General\GeneralInfoEdit.xaml" />
-	  <None Remove="WebView\Pages\MainPageWithoutSidePanel.xaml" />
 	  <None Remove="WebView\Windows\OnlyDetails.xaml" />
 	</ItemGroup>
 	<ItemGroup>
@@ -45,7 +45,7 @@
 		<Page Update="WebView\Components\General\GeneralInfoEdit.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</Page>
-		<Page Update="WebView\Pages\MainPageWithoutSidePanel.xaml">
+		<Page Update="WebView\Pages\PageOnlyDataConfig.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="WebView\Windows\OnlyDetails.xaml">
@@ -74,6 +74,9 @@
 		<Page Update="WebView\Window\PreviewWithWeb.xaml">
 			<SubType>Designer</SubType>
 		</Page>
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Models\" />
 	</ItemGroup>
 
 </Project>

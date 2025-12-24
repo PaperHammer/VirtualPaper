@@ -1,7 +1,6 @@
 using System;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.PlayerWeb.Core.WebView.Pages;
@@ -30,13 +29,13 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         private void NaviContent_Loaded(object sender, RoutedEventArgs e) {
             try {
                 var payload = new NavigationPayload() {
-                    ["PreviewWithWeb"] = this,
-                    ["StartArgs"] = _startArgs,
+                    [NaviPayLoadKey.StartArgs.ToString()] = _startArgs,
+                    [NaviPayLoadKey.ArcWindow.ToString()] = this,
                 };
-                NaviContent.Navigate(typeof(MainPage), payload);
+                NaviContent.Navigate(typeof(PageWithPlaying), payload);
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<MainPage>().Error(ex);
+                ArcLog.GetLogger<PageWithPlaying>().Error(ex);
             }
         }
 

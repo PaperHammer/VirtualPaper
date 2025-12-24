@@ -1,7 +1,10 @@
 using System;
 using System.Diagnostics;
+using System.Numerics;
+using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
@@ -33,25 +36,28 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             if (!_isColdLaunch) return;
+            _isColdLaunch = false;
 
             await _viewModel.InitContentAsync();
-            _isColdLaunch = false;
+            _viewModel.RefreshWpTitleForeground();
         }
 
         private void Image_ImageFailed(object sender, ExceptionRoutedEventArgs e) {
+            // TODO 兜底图片
             ArcLog.GetLogger<LibraryContents>().Error($"RImage loading failed: {e.ErrorMessage}");
         }
 
-        private async void Item_Tapped(object sender, TappedRoutedEventArgs e) {
-            if (((FrameworkElement)sender).DataContext is not IWpBasicData data) return;
-            await _viewModel.PreviewAsync(data);
+        private async void WallpapersLibView_ItemClick(object sender, ItemClickEventArgs e) {
+            if (e.ClickedItem is IWpBasicData data) {
+                await _viewModel.PreviewAsync(data);
+            }
         }
 
         private async void ContextMenu_Click(object sender, RoutedEventArgs e) {
             try {
                 if (((FrameworkElement)sender).DataContext is not IWpBasicData data)
                     return;
-                
+
                 var selectedMeun = (MenuFlyoutItem)sender;
                 string? name = selectedMeun.Tag.ToString();
                 switch (name) {
@@ -62,7 +68,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                         await _viewModel.UpdateAsync(data);
                         break;
                     case "Edit":
-                        await _viewModel.EditInfoAsync(data);
+                        _viewModel.ShowEdit(data);
                         break;
                     case "PreviewForWeb":
                         await _viewModel.PreviewAsync(data);
@@ -103,7 +109,58 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             e.Handled = true;
         }
 
+        private void GridViewItem_PointerEntered(object sender, PointerRoutedEventArgs e) {
+            AnimateScale(sender, hover: true);
+        }
+
+        private void GridViewItem_PointerExited(object sender, PointerRoutedEventArgs e) {
+            AnimateScale(sender, hover: false);
+        }
+
+        private void GridViewItem_PointerCanceled(object sender, PointerRoutedEventArgs e) {
+            AnimateScale(sender, hover: false);
+        }
+
+        private void GridViewItem_Loaded(object sender, RoutedEventArgs e) {
+            if (sender is not Grid root || root.Children.Count == 0)
+                return;
+
+            var presenter = (FrameworkElement)root.Children[0];
+            var visual = ElementCompositionPreview.GetElementVisual(presenter);
+            visual.CenterPoint = new Vector3(
+                (float)presenter.ActualWidth * 0.5f,
+                (float)presenter.ActualHeight * 0.5f,
+                0f);
+            visual.Scale = Vector3.One;
+
+            var compositor = visual.Compositor;
+            var ease = compositor.CreateCubicBezierEasingFunction(
+                new Vector2(0.2f, 0.0f),
+                new Vector2(0.0f, 1.0f));
+
+            Vector3KeyFrameAnimation CreateScaleAnim(float scale) {
+                var anim = compositor.CreateVector3KeyFrameAnimation();
+                anim.Duration = TimeSpan.FromMilliseconds(300);
+                anim.InsertKeyFrame(1f, new Vector3(scale, scale, 1f), ease);
+                return anim;
+            }
+            var context = new ScaleAnimationContext(visual, CreateScaleAnim(1.0f), CreateScaleAnim(0.9f));
+
+            root.Tag = context;
+        }
+
+        private static void AnimateScale(object sender, bool hover) {
+            if (sender is not Grid root || root.Tag is not ScaleAnimationContext ctx)
+                return;
+
+            var visual = ctx.Visual;
+            visual.StartAnimation(nameof(visual.Scale), hover ? ctx.ScaleToHover : ctx.ScaleToNormal);
+        }
+
+
         private readonly LibraryContentsViewModel _viewModel;
         private bool _isColdLaunch = true;
     }
+
+    sealed record ScaleAnimationContext(Visual Visual, Vector3KeyFrameAnimation ScaleToNormal, Vector3KeyFrameAnimation ScaleToHover);
 }

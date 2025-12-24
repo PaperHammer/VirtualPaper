@@ -12,6 +12,7 @@ using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.PlayerWeb.Core.Utils.Interfaces;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.Extensions;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -27,8 +28,10 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
-            _effectService ??= e.Parameter as IEffectService;
-            _startArgs ??= (e.Parameter as IMainPage)?.StartArgs;
+            if (e.Parameter is NavigationPayload payload) {
+                payload.TryGet(NaviPayLoadKey.IEffectService.ToString(), out _effectService);
+                payload.TryGet(NaviPayLoadKey.StartArgs.ToString(), out _startArgs);
+            }
         }
 
         private void MainGrid_Loaded(object sender, RoutedEventArgs e) {
@@ -44,8 +47,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                 return;
             }
 
-            File.Copy(_startArgs.WpEffectFilePathUsing, _startArgs.WpEffectFilePathTemporary, true);
-            _wpEffectData = JsonNodeUtil.GetWritableJson(_startArgs.WpEffectFilePathTemporary);
+            _wpEffectData = JsonNodeUtil.GetWritableJson(_startArgs.WpEffectFilePathUsing);
             GenerateUIElements();
         }
 
@@ -97,7 +99,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                         };
                         tb.TextChanged += Textbox_TextChanged;
                     }
-                    Textbox_TextChanged(tb);
                     obj = tb;
                 }
                 else if (uiElementType.Equals("CheckBox", StringComparison.OrdinalIgnoreCase)) {
@@ -125,7 +126,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                         chk.Checked += Checkbox_CheckedChanged;
                         chk.Unchecked += Checkbox_CheckedChanged;
                     }
-                    Checkbox_CheckedChanged(chk);
                     obj = chk;
                 }
                 else if (uiElementType.Equals("Dropdown", StringComparison.OrdinalIgnoreCase)) {
@@ -148,7 +148,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                         }
                         cmbBox.SelectionChanged += ComboBox_SelectionChanged;
                     }
-                    ComboBox_SelectionChanged(cmbBox);
                     obj = cmbBox;
                 }
                 else if (uiElementType.Equals("Label", StringComparison.OrdinalIgnoreCase)) {
@@ -187,7 +186,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                     var title = textJsonNode.ToString();
                     TextBlock tb;
                     if (uiElementType.Equals("Slider", StringComparison.OrdinalIgnoreCase)) {
-                        tb = SetRealtimeValueElement(item, title);
+                        tb = SetSliderExtra(item, title);
                     }
                     else {
                         tb = new TextBlock {
@@ -210,7 +209,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             }
         }
 
-        private TextBlock SetRealtimeValueElement(KeyValuePair<string, JsonNode?> item, string title) {
+        private TextBlock SetSliderExtra(KeyValuePair<string, JsonNode?> item, string title) {
             var valueText = new TextBlock {
                 Name = item.Key + "_Value",
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -238,8 +237,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             grid.Children.Add(valueText);
 
             AddUIElement(item.Key + "_Title", grid, false);
-
-            Slider_ValueChanged(item);
 
             return tb;
         }
@@ -269,7 +266,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                 }
             }
             _controls.Clear();
-
         }
         #endregion
 
@@ -469,7 +465,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
         private void SaveAndApplyBtn_Click(object sender, RoutedEventArgs e) {
             UpdatePropertyFile(true);
-            _effectService?.Close();
         }
         #endregion
 
@@ -498,22 +493,18 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
         #region value changed        
         private void OnEffectValueChanged(DoubleValueChangedEventArgs e) {
-            UpdatePropertyFile(false);
             _effectService?.UpdateEffectValue(e);
         }
 
         private void OnEffectValueChanged(IntValueChangedEventArgs e) {
-            UpdatePropertyFile(false);
             _effectService?.UpdateEffectValue(e);
         }
 
         private void OnEffectValueChanged(BoolValueChangedEventArgs e) {
-            UpdatePropertyFile(false);
             _effectService?.UpdateEffectValue(e);
         }
 
         private void OnEffectValueChanged(StringValueChangedEventArgs e) {
-            UpdatePropertyFile(false);
             _effectService?.UpdateEffectValue(e);
         }
         #endregion
@@ -523,14 +514,12 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             if (isSave) {
                 JsonNodeUtil.Write(_startArgs.WpEffectFilePathUsing, _wpEffectData);
             }
-            JsonNodeUtil.Write(_startArgs.WpEffectFilePathTemporary, _wpEffectData);
         }
 
         private bool AnyFilePathsEmpty() {
             return _effectService == null ||
                 _startArgs == null ||
-                _startArgs.WpEffectFilePathUsing == string.Empty ||
-                _startArgs.WpEffectFilePathTemporary == string.Empty;
+                _startArgs.WpEffectFilePathUsing == string.Empty;
         }
         #endregion
 

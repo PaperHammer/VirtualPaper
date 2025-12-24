@@ -10,6 +10,17 @@ namespace VirtualPaper.UIComponent.Utils {
     /// 静态主题管理器，用于在运行时热切换 UI 主题，并监听系统主题变化。
     /// </summary>
     public static class ArcThemeUtil {
+        private static EventHandler<AppTheme>? _appThemeChanged;
+        public static event EventHandler<AppTheme> AppThemeChanged {
+            add {
+                _appThemeChanged -= value;
+                _appThemeChanged += value;
+            }
+            remove {
+                _appThemeChanged -= value;
+            }
+        }
+
         public static AppTheme MainWindowAppTheme { get; private set; } = AppTheme.Auto;
         public static AppSystemBackdrop MainWindowBackdrop { get; private set; } = AppSystemBackdrop.Default;
 
@@ -115,6 +126,7 @@ namespace VirtualPaper.UIComponent.Utils {
 
         internal static void SetMainWindowAppTheme(AppTheme appTheme) {
             MainWindowAppTheme = appTheme;
+            _appThemeChanged?.Invoke(null, appTheme);
         }
 
         internal static void SetMainWindowBackdrop(AppSystemBackdrop systemBackdrop) {

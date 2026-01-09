@@ -36,12 +36,16 @@ namespace VirtualPaper.UIComponent.Templates {
         }
 
         private void ArcWindow_Activated(object sender, WindowActivatedEventArgs args) {
+            if (args.WindowActivationState == WindowActivationState.CodeActivated) return;
+
             var isActive = args.WindowActivationState != WindowActivationState.Deactivated;
             this.IsActive = isActive;
             ArcWindowTitleBarUtil.UpdateTitleBar(this, this.ContentHost.TitleBarChildren, ArcThemeUtil.GetFormatMainWindowTheme(), isActive);
         }
 
         private void ArcWindow_Closed(object sender, WindowEventArgs args) {
+            // 点击关闭按钮时，主窗口会卡住几秒，才关闭窗口 todo（优化）
+            this.Hide();
             // Window.Closed 的触发时机并不保证晚于 Activated/VisibilityChanged
             this.Activated -= ArcWindow_Activated;
             // 避免子窗口的关闭导致 ArcThemeUtil 清理

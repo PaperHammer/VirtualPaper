@@ -101,11 +101,9 @@ namespace VirtualPaper.UIComponent.Utils {
         }
 
         public static void Cleanup() {
-            lock (_lock) {
-                if (_uiSettings != null) {
-                    _uiSettings.ColorValuesChanged -= OnSystemColorValuesChanged;
-                    _uiSettings = null;
-                }
+            if (_uiSettings != null) {
+                _uiSettings.ColorValuesChanged -= OnSystemColorValuesChanged;                
+                _uiSettings = null;
             }
         }
 
@@ -134,7 +132,6 @@ namespace VirtualPaper.UIComponent.Utils {
         }
 
         private static UISettings? _uiSettings;
-        private static readonly object _lock = new();
         private static readonly TimeSpan _minThemeInterval = TimeSpan.FromMilliseconds(1000);
         private static DateTime _lastThemeApplyTime;
     }

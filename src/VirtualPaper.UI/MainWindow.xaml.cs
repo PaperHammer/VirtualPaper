@@ -1,5 +1,4 @@
 using System;
-using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.AppSettingsPanel;
@@ -26,7 +25,7 @@ namespace VirtualPaper.UI {
         public override bool IsMainWindow => true;
         public override ArcWindowManagerKey Key => _windowKey;
 
-        public MainWindow(IUserSettingsClient userSettings, ICommandsClient commandsClient) 
+        public MainWindow(IUserSettingsClient userSettings, ICommandsClient commandsClient)
             : base(userSettings.Settings.ApplicationTheme, userSettings.Settings.SystemBackdrop) {
             _windowKey = new ArcWindowManagerKey(ArcWindowKey.Main);
             this.InitializeComponent();
@@ -45,28 +44,7 @@ namespace VirtualPaper.UI {
         }
 
         private void WindowEx_Closed(object sender, WindowEventArgs args) {
-            try {
-                _commandsClient.UIRecieveCmd -= CommandsClient_UIRecieveCmd;
-
-                if (_userSettings.Settings.IsFirstRun) {
-                    args.Handled = true;
-                    _userSettings.Settings.IsFirstRun = false;
-                    _userSettings.Save<ISettings>();
-                    this.Close();
-                }
-
-                if (_userSettings.Settings.IsUpdated) {
-                    args.Handled = true;
-                    _userSettings.Settings.IsUpdated = false;
-                    _userSettings.Save<ISettings>();
-                    this.Close();
-                }
-
-                App.ShutDown();
-            }
-            catch (InvalidOperationException ex) {
-                ArcLog.GetLogger<MainWindow>().Error("An error ocurred at UI closing: ", ex);
-            }
+            App.ShutDown();
         }
 
         #region ipc
@@ -118,6 +96,8 @@ namespace VirtualPaper.UI {
                 var nxTheme = GetNextTheme(ArcThemeUtil.MainWindowAppTheme);
                 //await SetThemeAsync(nxTheme);
                 UpdateThemeFromThemeBtnClick(nxTheme);
+                _userSettings.Settings.ApplicationTheme = nxTheme;
+                _userSettings.SaveAsync<ISettings>();
             }
             finally {
                 LightAndDarkButton.IsEnabled = true;

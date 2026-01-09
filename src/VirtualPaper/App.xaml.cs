@@ -115,6 +115,8 @@ namespace VirtualPaper {
             if (UserSettings.Settings.IsUpdated || UserSettings.Settings.IsFirstRun) {
                 SplashWindow? spl = UserSettings.Settings.IsFirstRun ? new(0, 500) : null; spl?.Show();
                 spl?.Close();
+                UserSettings.Settings.IsFirstRun = false;
+                UserSettings.Save<ISettings>();
             }
 
             if (UserSettings.Settings.WallpaperDir == string.Empty
@@ -307,7 +309,7 @@ namespace VirtualPaper {
         public static void AppUpdateDialog(AppUpdaterEventArgs e) {
             _updateNotify = false;
             var windowService = Services.GetRequiredService<IWindowService>();
-            var info = new AppUpdateInfo (e.UpdateUri, e.UpdateSHAUri, e.UpdateVersion.ToString(), e.ChangeLog);
+            var info = new AppUpdateInfo(e.UpdateUri, e.UpdateSHAUri, e.UpdateVersion.ToString(), e.ChangeLog);
             windowService.Show<AppUpdaterWindow>(info);
         }
 
@@ -336,9 +338,16 @@ namespace VirtualPaper {
         public static void ShutDown() {
             try {
                 _ctsPlayback.Cancel();
+                Jobs.Close();
                 ((ServiceProvider)Services)?.Dispose();
+                ((App)Current)._grpcServer?.Kill();
                 ((App)Current)._grpcServer?.Dispose();
                 ToastNotificationManagerCompat.Uninstall();
+
+                if (UserSettings.Settings.IsUpdated) {
+                    UserSettings.Settings.IsUpdated = false;
+                    UserSettings.Save<ISettings>();
+                }
             }
             catch (InvalidOperationException) { /* not initialised */ }
 

@@ -94,7 +94,18 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private void WallpapersLibView_DragOver(object sender, DragEventArgs e) {
-            e.AcceptedOperation = DataPackageOperation.Copy;
+            //e.AcceptedOperation = DataPackageOperation.Copy;
+
+            if (e.DataView.Contains(StandardDataFormats.StorageItems)) {
+                e.AcceptedOperation = DataPackageOperation.Copy;
+                e.DragUIOverride.Caption = "添加到库";
+                e.DragUIOverride.IsCaptionVisible = true;
+            }
+            else {
+                e.AcceptedOperation = DataPackageOperation.None;
+            }
+
+            e.Handled = true;
         }
 
         private async void WallpapersLibView_Drop(object sender, DragEventArgs e) {

@@ -128,8 +128,11 @@ namespace VirtualPaper.UI {
         }
 
         public static void ShutDown() {
-            ObjectProvider.Clean();
-            ArcLog.GetLogger<App>().Info("UI was closed");
+            Application.Current.Exit();
+            _ = Task.Run(() => {
+                ObjectProvider.Clean();
+                ArcLog.GetLogger<App>().Info("UI was closed");
+            });
         }
 
         private readonly IUserSettingsClient _userSettings;

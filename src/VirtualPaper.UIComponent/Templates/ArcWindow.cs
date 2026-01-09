@@ -36,8 +36,6 @@ namespace VirtualPaper.UIComponent.Templates {
         }
 
         private void ArcWindow_Activated(object sender, WindowActivatedEventArgs args) {
-            if (args.WindowActivationState == WindowActivationState.CodeActivated) return;
-
             var isActive = args.WindowActivationState != WindowActivationState.Deactivated;
             this.IsActive = isActive;
             ArcWindowTitleBarUtil.UpdateTitleBar(this, this.ContentHost.TitleBarChildren, ArcThemeUtil.GetFormatMainWindowTheme(), isActive);

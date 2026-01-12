@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Security;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.UIComponent;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
@@ -61,7 +62,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             await _ioLock.WaitAsync();
 
             if (IsFileName) {
-                string? selectedPath = await WindowConsts.GetStorageFolderAsync();
+                string? selectedPath = (await WindowsStoragePickers.PickFolderAsync(WindowConsts.WindowHandle))?.Path;
                 if (string.IsNullOrEmpty(selectedPath))
                     return (false, null);
 

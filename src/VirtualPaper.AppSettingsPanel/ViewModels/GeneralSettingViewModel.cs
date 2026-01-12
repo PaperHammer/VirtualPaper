@@ -272,7 +272,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private async void WallpaperDirectoryChange() {
-            var storagePath = await WindowConsts.GetStorageFolderAsync();
+            var storagePath = (await WindowsStoragePickers.PickFolderAsync(WindowConsts.WindowHandle))?.Path;
             if (storagePath == null) return;
 
             if (storagePath == Constants.CommonPaths.AppDataDir) {

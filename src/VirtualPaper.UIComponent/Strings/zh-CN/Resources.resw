@@ -1017,4 +1017,22 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Text_Save" xml:space="preserve">
     <value>保存</value>
   </data>
+  <data name="RunningAsAdminWarning" xml:space="preserve">
+    <value>管理员权限运行时，部分功能可能无法使用</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles" xml:space="preserve">
+    <value>选择文件</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles_Explain" xml:space="preserve">
+    <value>将受支持的文件添加到壁纸库</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolder" xml:space="preserve">
+    <value>选择文件夹</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolderExplain" xml:space="preserve">
+    <value>将文件夹内所有受支持的文件添加到壁纸库</value>
+  </data>
+  <data name="Add_To_Lib_DragDropFile" xml:space="preserve">
+    <value>拖拽至此以添加</value>
+  </data>
 </root>

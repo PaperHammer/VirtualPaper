@@ -10,6 +10,7 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 	<ItemGroup>
+	  <None Remove="Views\AddToLib.xaml" />
 	  <None Remove="Views\LibraryContents.xaml" />
 	  <None Remove="Views\ScreenSaver.xaml" />
 	  <None Remove="WpSettings.xaml" />
@@ -18,11 +19,18 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+		<PackageReference Include="UACHelper" Version="1.3.0.5" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
 	  <ProjectReference Include="..\VirtualPaper.PlayerWeb.Core\VirtualPaper.PlayerWeb.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Views\AddToLib.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 
 	<ItemGroup>

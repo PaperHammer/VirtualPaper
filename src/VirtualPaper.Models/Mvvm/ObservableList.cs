@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using VirtualPaper.Common.Utils.ThreadContext;
 
 namespace VirtualPaper.Models.Mvvm {
     [Serializable]
@@ -10,7 +11,9 @@ namespace VirtualPaper.Models.Mvvm {
         public void AddRange(IEnumerable<T> items) {
             if (items == null) return;
 
-            foreach (var item in items) Add(item);
+            CrossThreadInvoker.InvokeOnUIThread(() => {
+                foreach (var item in items) Add(item);
+            });
         }
 
         public void AddRangeReverse(IEnumerable<T> items) {
@@ -30,21 +33,24 @@ namespace VirtualPaper.Models.Mvvm {
             if (items == null) return;
 
             ClearItems();
-
-            foreach (var item in items) {
-                Add(item);
-                configureItem?.Invoke(item);
-            }
+            CrossThreadInvoker.InvokeOnUIThread(() => {
+                foreach (var item in items) {
+                    Add(item);
+                    configureItem?.Invoke(item);
+                }
+            });
         }
 
         public void SetRangeReverse(IEnumerable<T> items) {
             if (items == null) return;
 
-            ClearItems();
-            AddRangeReverse(items);
+            CrossThreadInvoker.InvokeOnUIThread(() => {
+                ClearItems();
+                AddRangeReverse(items);
+            }, true);
         }
 
-        public int FindIndex(T item) { 
+        public int FindIndex(T item) {
             return IndexOf(item);
         }
 

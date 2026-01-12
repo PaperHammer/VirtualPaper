@@ -2,13 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Grpc.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.WpSettingsPanel.Views;
+using Windows.Storage;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class WpSettingsViewModel : ObservableObject {
@@ -33,6 +37,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             set { if (_selectedMonitor == value) return; _selectedMonitor = value; OnPropertyChanged(); }
         }
 
+        public ICommand? AddToLibCommand { get; private set; }
+
         public WpSettingsViewModel(
             IMonitorManagerClient monitorManagerClient,
             IWallpaperControlClient wallpaperControlClient,
@@ -42,9 +48,16 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             _userSettingsClient = userSettingsClient;
 
             InitMonitors();
+            InitCommand();
         }
 
         #region Init
+        private void InitCommand() {
+            AddToLibCommand = new RelayCommand(async () => {
+                await ShowAddToLibDialogAsync();
+            });
+        }
+
         internal void InitMonitors() {
             _monitors.Clear();
             switch (_userSettingsClient.Settings.WallpaperArrangement) {
@@ -84,6 +97,34 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             SelectedWpArrangementsIndex = (int)_userSettingsClient.Settings.WallpaperArrangement;
         }
         #endregion
+
+        private async Task ShowAddToLibDialogAsync() {
+            IReadOnlyList<IStorageItem> files = [];
+
+            var addToLibViewModel = new AddToLibViewModel();
+            var dialog = GlobalDialogUtils.CreateDialogWithoutTitle(
+                new AddToLib(addToLibViewModel),
+                LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
+                LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
+
+            if (dialog == null) return;
+
+            addToLibViewModel.OnRequestAddFile += (_, e) => {
+                files = e;
+                dialog?.Hide();
+            };
+            addToLibViewModel.OnRequestAddFolder += async (_, e) => {
+                var items =  await e.GetItemsAsync();
+                files = items;
+
+                dialog?.Hide();
+            };
+
+            await dialog.ShowAsync();
+
+            var libViewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
+            await libViewModel.DropFilesAsync(files);
+        }
 
         internal async void UpdateWpArrange(int tag) {
             var ctx = ArcPageContextManager.GetContext<WpSettings>();

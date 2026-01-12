@@ -1017,4 +1017,25 @@ The following words cannot be used as usernames:
   <data name="Text_Save" xml:space="preserve">
     <value>Save</value>
   </data>
+  <data name="RunningAsAdminWarning" xml:space="preserve">
+    <value>Some features may not be available when run as administrator</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles" xml:space="preserve">
+    <value>Select File</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles_Explain" xml:space="preserve">
+    <value>Add supported files to the wallpaper library</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolder" xml:space="preserve">
+    <value>Select Folder</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolderExplain" xml:space="preserve">
+    <value>Add all supported files in the folder to the wallpaper library</value>
+  </data>
+  <data name="Add_To_Lib_DragDropFile" xml:space="preserve">
+    <value>Drag here to add</value>
+  </data>
+  <data name="Add_To_Lib_AddWallpaperDrop" xml:space="preserve">
+    <value>Add Wallpaper</value>
+  </data>
 </root>

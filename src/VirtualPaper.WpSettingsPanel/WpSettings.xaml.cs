@@ -47,7 +47,7 @@ namespace VirtualPaper.WpSettingsPanel {
                 GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex, key: ex.Message);
             }
         }
-        #endregion     
+        #endregion
 
         private void Flyout_Opening(object sender, object e) {
             _viewModel.InitWpArrangments();

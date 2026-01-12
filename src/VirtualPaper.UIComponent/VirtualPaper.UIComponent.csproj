@@ -44,7 +44,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Remove="Container\SlidingSidePanel.xaml" />
 		<None Remove="Host\ArcWindowContent.xaml" />
 		<None Remove="Input\Button\ArcButton.xaml" />
 		<None Remove="Navigation\RootView\ArcNavigationContentView.xaml" />
@@ -57,9 +56,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Page Update="Container\Card.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
 		<Page Update="Others\ColorEyeDropWindow.xaml">
 			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 			<SubType>Designer</SubType>

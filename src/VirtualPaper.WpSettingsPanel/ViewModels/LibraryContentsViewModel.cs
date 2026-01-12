@@ -16,7 +16,6 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
-using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
@@ -26,19 +25,17 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.PlayerWeb.Core;
 using VirtualPaper.PlayerWeb.Core.WebView.Windows;
-using VirtualPaper.UIComponent.Container;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
 using Windows.Storage;
 using Windows.System.UserProfile;
-using WinRT.Interop;
 using WinUIEx;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class LibraryContentsViewModel : ObservableObject {
-        public ObservableCollection<IWpBasicData> LibraryWallpapers { get; set; } = [];
+        public ObservableList<IWpBasicData> LibraryWallpapers { get; } = [];
 
         private Brush _wpTitleForeground = new SolidColorBrush(Colors.White);
         public Brush WpTitleForeground {
@@ -84,6 +81,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             await loadingCtx.RunAsync(
                 operation: async token => {
                     try {
+
                         LibraryWallpapers.Clear();
                         _uid2idx.Clear();
 
@@ -144,7 +142,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             try {
                 if (!data.IsAvailable()) return;
 
-                if (_details.TryGetValue(data.WallpaperUid, out var editDetail)) {
+                if (_edits.TryGetValue(data.WallpaperUid, out var editDetail)) {
                     editDetail.Activate();
                     return;
                 }
@@ -154,9 +152,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     _ => throw new NotImplementedException(),
                 };
                 editDetailWindow.Closed += (sender, args) => {
-                    _details.Remove(data.WallpaperUid);
+                    _edits.Remove(data.WallpaperUid);
                 };
-                _details.Add(data.WallpaperUid, editDetailWindow);
+                _edits.Add(data.WallpaperUid, editDetailWindow);
                 editDetailWindow.Show();
                 editDetailWindow.Activate();
             }
@@ -211,7 +209,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             await loadingCtx.RunAsync(
                 operation: async token => {
                     try {
-                        await _previewSemaphoreSlim.WaitAsync(token);
                         if (!data.IsAvailable()) return;
                         await CheckFileUpdateAsync(data);
 
@@ -243,9 +240,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
                         GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
-                    }
-                    finally {
-                        _previewSemaphoreSlim.Release();
                     }
                 }, cts: ctsPreview);
         }
@@ -492,11 +486,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             return _previews.Keys.Any(k => k.uid == data.WallpaperUid);
         }
 
-        private static void SetToolWindowParent(WindowEx childWindow, WindowEx parentWindow) {
-            IntPtr toolHwnd = WindowNative.GetWindowHandle(childWindow);
-            Native.SetWindowLong(toolHwnd, Native.GWL_HWNDPARENT, WindowNative.GetWindowHandle(parentWindow));
-        }
-
         private static async Task ProcessFolders(IEnumerable<string> folderPaths, ParallelOptions parallelOptions, ChannelWriter<IWpBasicData> writer, CancellationToken cancellationToken = default) {
             await Parallel.ForEachAsync(folderPaths, parallelOptions, async (storeDir, token) => {
                 DirectoryInfo root = new(storeDir);
@@ -560,9 +549,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly WpSettingsViewModel _wpSettingsViewModel;
         private List<string> _wallpaperInstallFolders = [];
         private readonly ConcurrentDictionary<string, int> _uid2idx = [];
-        private readonly SemaphoreSlim _previewSemaphoreSlim = new(1, 1);
         private static readonly Dictionary<string, ArcWindow> _details = [];
-        private static readonly Dictionary<string, ToolWindow> _wp2TocEdit = [];
+        private static readonly Dictionary<string, ArcWindow> _edits = [];
         private static readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];
     }
 }

@@ -94,18 +94,9 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private void WallpapersLibView_DragOver(object sender, DragEventArgs e) {
-            //e.AcceptedOperation = DataPackageOperation.Copy;
-
-            if (e.DataView.Contains(StandardDataFormats.StorageItems)) {
-                e.AcceptedOperation = DataPackageOperation.Copy;
-                e.DragUIOverride.Caption = "添加到库";
-                e.DragUIOverride.IsCaptionVisible = true;
-            }
-            else {
-                e.AcceptedOperation = DataPackageOperation.None;
-            }
-
-            e.Handled = true;
+            e.AcceptedOperation = DataPackageOperation.Copy;
+            e.DragUIOverride.Caption = LanguageUtil.GetI18n("Add_To_Lib_AddWallpaperDrop");
+            e.DragUIOverride.IsCaptionVisible = true;
         }
 
         private async void WallpapersLibView_Drop(object sender, DragEventArgs e) {
@@ -113,7 +104,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                 var items = await e.DataView.GetStorageItemsAsync();
                 await _viewModel.DropFilesAsync(items);
             }
-            e.Handled = true;
         }
 
         private void WallpapersLibView_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
@@ -167,7 +157,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             var visual = ctx.Visual;
             visual.StartAnimation(nameof(visual.Scale), hover ? ctx.ScaleToHover : ctx.ScaleToNormal);
         }
-
 
         private readonly LibraryContentsViewModel _viewModel;
         private bool _isColdLaunch = true;

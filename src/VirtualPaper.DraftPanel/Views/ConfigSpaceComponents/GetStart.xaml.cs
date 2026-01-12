@@ -107,7 +107,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
                 WindowConsts.WindowHandle,
                 [.. FileFilter.FileTypeToExtension[FileType.FImage], .. FileFilter.FileTypeToExtension[FileType.FDesign]],
                 true);
-            if (storage.Length < 1) return;
+            if (storage == null || storage.Length < 1) return;
 
             int n = storage.Length;
             string[] filePaths = new string[n];

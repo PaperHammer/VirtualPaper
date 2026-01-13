@@ -1,6 +1,5 @@
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.AppSettingsPanel.ViewModels;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -12,7 +11,7 @@ namespace VirtualPaper.AppSettingsPanel.Views {
     /// </summary>
     public sealed partial class OthersSetting : Page {
         public OthersSetting() {                        
-            _viewModel = ObjectProvider.GetRequiredService<OtherSettingViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            _viewModel = ObjectProvider.GetRequiredService<OtherSettingViewModel>();
             this.DataContext = _viewModel;
             this.InitializeComponent();
         }

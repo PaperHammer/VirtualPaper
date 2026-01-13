@@ -104,7 +104,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             var addToLibViewModel = new AddToLibViewModel();
             var dialog = GlobalDialogUtils.CreateDialogWithoutTitle(
                 new AddToLib(addToLibViewModel),
-                LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
                 LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
 
             if (dialog == null) return;
@@ -122,7 +121,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
             await dialog.ShowAsync();
 
-            var libViewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
+            var libViewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(ObjectLifetime.Singleton);
             await libViewModel.DropFilesAsync(files);
         }
 

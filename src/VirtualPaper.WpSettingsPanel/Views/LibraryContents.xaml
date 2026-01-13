@@ -133,8 +133,8 @@
                 </MenuFlyoutItem.Icon>
             </MenuFlyoutItem>
             <MenuFlyoutItem
-                Tag="DeleteFromDisk"
-                Text="{markup:I18n Key=Text_DeleteFromDisk}"
+                Tag="RemoveFromLib"
+                Text="{markup:I18n Key=Text_RemoveFromLib}"
                 Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon>
                     <FontIcon Glyph="&#xE74D;" Foreground="Goldenrod"/>
@@ -145,6 +145,7 @@
 
     <GridView x:Name="wallpapersLibView"
         Margin="5 0 5 10"
+        Padding="0 0 16 0"
         DataContext="{x:Bind _viewModel}"
         ItemsSource="{x:Bind _viewModel.LibraryWallpapers}"
         Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"

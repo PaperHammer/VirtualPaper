@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -32,6 +31,7 @@ using VirtualPaper.UIComponent.ViewModels;
 using Windows.Storage;
 using Windows.System.UserProfile;
 using WinUIEx;
+using UAC = UACHelper.UACHelper;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class LibraryContentsViewModel : ObservableObject {
@@ -53,6 +53,17 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
             InitEvent();
             InitColletions();
+            InitMsg();
+        }
+
+        private void InitMsg() {
+            if (UAC.IsElevated) {
+                GlobalMessageUtil.ShowWarning(
+                    ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
+                    message: nameof(Constants.I18n.RunningAsAdminWarning),
+                    key: nameof(Constants.I18n.RunningAsAdminWarning),
+                    isNeedLocalizer: true);
+            }
         }
 
         private void InitEvent() {
@@ -340,7 +351,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         private void UpdateLib(IWpBasicData data) {
             try {
-                ArgumentNullException.ThrowIfNull(nameof(data));
+                ArgumentNullException.ThrowIfNull(data);
                 if (_uid2idx.TryGetValue(data.WallpaperUid, out int idx)) {
                     LibraryWallpapers[idx] = data;
                 }

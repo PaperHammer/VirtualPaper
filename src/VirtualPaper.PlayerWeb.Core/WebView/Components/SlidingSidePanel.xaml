@@ -23,7 +23,7 @@
             <Border x:Name="HandleArea"
                 Width="30"
                 Height="100"
-                Background="{ThemeResource ControlFillColorDefaultBrush}"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
                 CornerRadius="8 0 0 8"
                 VerticalAlignment="Center"
                 PointerPressed="Handle_PointerPressed"
@@ -40,7 +40,7 @@
             <Border x:Name="ContentArea"
                 Width="340"
                 Height="520"
-                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                Background="{ThemeResource ControlFillColorDefaultBrush}"
                 CornerRadius="12,0,0,12">
                 <ContentPresenter x:Name="PART_ContentPresenter"/>
             </Border>

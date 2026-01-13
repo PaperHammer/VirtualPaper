@@ -28,7 +28,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         public override Type PageType => typeof(LibraryContents);
 
         public LibraryContents() {
-            _viewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
+            _viewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
             Context = new ArcPageContext(this);
             this.InitializeComponent();
@@ -82,7 +82,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                     case "ShowOnDisk":
                         Process.Start("Explorer", "/select," + data.FilePath);
                         break;
-                    case "DeleteFromDisk":
+                    case "RemoveFromLib":
                         await _viewModel.DeleteAsync(data);
                         break;
                 }

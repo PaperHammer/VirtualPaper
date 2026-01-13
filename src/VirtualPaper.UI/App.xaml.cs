@@ -72,7 +72,7 @@ namespace VirtualPaper.UI {
             SetupUnhandledExceptionLogging();
 
             ConfigureServices();
-            _userSettings = ObjectProvider.GetRequiredService<IUserSettingsClient>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            _userSettings = ObjectProvider.GetRequiredService<IUserSettingsClient>(ObjectLifetime.Singleton);
         }
 
         private static void ConfigureServices() {
@@ -102,7 +102,7 @@ namespace VirtualPaper.UI {
                 await LanguageUtil.InitializeLocalizerForUnpackaged(_userSettings.Settings.Language);
             }
 
-            var m_window = ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            var m_window = ObjectProvider.GetRequiredService<MainWindow>();
             m_window.Show();
             m_window.Activate();
         }

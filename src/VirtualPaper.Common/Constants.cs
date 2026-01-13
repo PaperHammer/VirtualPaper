@@ -360,6 +360,7 @@ namespace VirtualPaper.Common {
             public static string? Project_SI_FileNotFound { get; }
             public static string? SIG_Text_RemoveFromList { get; }
             public static string? SIG_Text_CopyPath { get; }
+            public static string? RunningAsAdminWarning { get; }
         }
 
         public static class Field {

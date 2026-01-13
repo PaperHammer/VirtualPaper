@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace VirtualPaper.Common.Utils.DI {
     public static class ObjectProvider {
         #region common
-        public static T GetRequiredService<T>(ObjectLifetime lifetime = ObjectLifetime.Transient, ObjectLifetime lifetimeForParams = ObjectLifetime.Transient, object? scope = null) {
+        public static T GetRequiredService<T>(ObjectLifetime lifetime = ObjectLifetime.Transient, ObjectLifetime lifetimeForParams = ObjectLifetime.Singleton, object? scope = null) {
             var type = typeof(T);
 
             // 如果是接口或抽象类，则查找注册的实现类型

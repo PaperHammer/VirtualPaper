@@ -25,7 +25,7 @@ namespace VirtualPaper.WpSettingsPanel {
         public override Type PageType => typeof(WpSettings);
 
         public WpSettings() {            
-            _viewModel = ObjectProvider.GetRequiredService<WpSettingsViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            _viewModel = ObjectProvider.GetRequiredService<WpSettingsViewModel>(ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
             this.InitializeComponent();
             Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);            

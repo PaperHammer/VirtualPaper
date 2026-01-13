@@ -169,8 +169,7 @@ Scale-down: The size is the same as the one in None or Contain, depending on whi
     <value>The file can be updated to accommodate new features, is it updated?</value>
   </data>
   <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
-    <value>Do you delete the file?
-Note: This operation is irreversible！</value>
+    <value>Do you want to delete this file?</value>
   </data>
   <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
     <value>Only the following file types are supported:
@@ -201,8 +200,8 @@ Note: This operation is irreversible！</value>
   <data name="Text_ApplyToLockBG" xml:space="preserve">
     <value>Apply to lock screen background</value>
   </data>
-  <data name="Text_DeleteFromDisk" xml:space="preserve">
-    <value>Remove from disk</value>
+  <data name="Text_RemoveFromLib" xml:space="preserve">
+    <value>Remove from wallpaper lib</value>
   </data>
   <data name="Text_ShowOnDisk" xml:space="preserve">
     <value>Open the directory where the file is located</value>

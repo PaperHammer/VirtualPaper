@@ -17,8 +17,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         public string Project_StartUp { get; private set; }
         public string Project_ContinueWithoutFile { get; private set; }
 
-        public ICommand RemoveFromListCommand { get; private set; }
-        public ICommand CopyPathCommand { get; private set; }
+        public ICommand? RemoveFromListCommand { get; private set; }
+        public ICommand? CopyPathCommand { get; private set; }
 
         public GetStartViewModel(IUserSettingsClient userSettingsClient) {
             this._userSettingsClient = userSettingsClient;

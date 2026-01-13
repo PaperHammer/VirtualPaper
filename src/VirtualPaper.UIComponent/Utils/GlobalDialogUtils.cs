@@ -134,5 +134,20 @@ namespace VirtualPaper.UIComponent.Utils {
                 _ => DialogResult.None,
             };
         }
+
+        public static ContentDialog? CreateDialogWithoutTitle(
+            object content,
+            string primaryBtnText,
+            bool isDefaultPrimary = true) {
+            var dialog = new ContentDialog() {
+                Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
+                PrimaryButtonText = primaryBtnText,
+                DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
+                XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+            };
+
+            return dialog;
+        }
     }
 }

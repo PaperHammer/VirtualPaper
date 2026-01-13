@@ -12,8 +12,8 @@
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     Closed="WindowEx_Closed"
-    Width="1410" Height="900"
-    MinHeight="684" MinWidth="754"
+    Width="1460" Height="900"
+    MinHeight="684" MinWidth="765"
     Title="Virtual Paper">
 
     <arc:ArcWindowHost x:Name="MainHost">

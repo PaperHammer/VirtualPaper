@@ -26,8 +26,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 if (_selectedWpArrangementsIndex == value) return;
 
                 _selectedWpArrangementsIndex = value;
-                UpdateWpArrange(value);
                 OnPropertyChanged();
+                UpdateWpArrange(value);                
             }
         }
 
@@ -38,6 +38,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         public ICommand? AddToLibCommand { get; private set; }
+        public ICommand? WpCloseCommand { get; private set; }
+        public ICommand? WpDetectCommand { get; private set; }
+        public ICommand? WpIdentifyCommand { get; private set; }
+        public ICommand? WpAdjustCommand { get; private set; }
 
         public WpSettingsViewModel(
             IMonitorManagerClient monitorManagerClient,
@@ -52,13 +56,34 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         #region Init
+        internal void InitFlyoutData() {
+            InitWpArrangments();
+            InitMonitors(); // 打开该页面不会触发绑定值修改，需要手动调用更新
+        }
+
         private void InitCommand() {
             AddToLibCommand = new RelayCommand(async () => {
                 await ShowAddToLibDialogAsync();
             });
+            WpCloseCommand = new RelayCommand(
+                Close,
+                () => Interlocked.CompareExchange(ref _canClose, 0, 0) == 1
+            );
+            WpDetectCommand = new RelayCommand(
+                Detect,
+                () => Interlocked.CompareExchange(ref _canDetect, 0, 0) == 1
+            );
+            WpIdentifyCommand = new RelayCommand(
+                Identify,
+                () => Interlocked.CompareExchange(ref _canIdentify, 0, 0) == 1
+            );
+            WpAdjustCommand = new RelayCommand(
+                Adjust,
+                () => Interlocked.CompareExchange(ref _canAdjust, 0, 0) == 1
+            );
         }
 
-        internal void InitMonitors() {
+        private void InitMonitors() {
             _monitors.Clear();
             switch (_userSettingsClient.Settings.WallpaperArrangement) {
                 case WallpaperArrangement.Per: {
@@ -83,7 +108,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        internal void InitWpArrangments() {
+        private void InitWpArrangments() {
+            WpArrangements.Clear();
+
             WpArrangements.Add(new WpArrangeDataModel(
                 Method: LanguageUtil.GetI18n(Constants.I18n.WpArrange_Per),
                 Tooltip: LanguageUtil.GetI18n(Constants.I18n.WpArrange_PerExplain)));
@@ -104,8 +131,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             var addToLibViewModel = new AddToLibViewModel();
             var dialog = GlobalDialogUtils.CreateDialogWithoutTitle(
                 new AddToLib(addToLibViewModel),
-                LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
-
+                LanguageUtil.GetI18n(Constants.I18n.Text_Confirm));
             if (dialog == null) return;
 
             addToLibViewModel.OnRequestAddFile += (_, e) => {
@@ -113,7 +139,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 dialog?.Hide();
             };
             addToLibViewModel.OnRequestAddFolder += async (_, e) => {
-                var items =  await e.GetItemsAsync();
+                var items = await e.GetItemsAsync();
                 files = items;
 
                 dialog?.Hide();
@@ -163,24 +189,48 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         #region Buttons Command
         internal async void Close() {
+            if (Interlocked.Exchange(ref _canClose, 0) != 1) return;
+            (WpCloseCommand as RelayCommand)?.RaiseCanExecuteChanged();
+
             await _wpControlClient.CloseWallpaperAsync(SelectedMonitor);
             SelectedMonitor.ThumbnailPath = string.Empty;
+
+            Interlocked.Exchange(ref _canClose, 1);
+            (WpCloseCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
-        internal void Detect() {
+        internal async void Detect() {
+            if (Interlocked.Exchange(ref _canDetect, 0) != 1) return;
+            (WpDetectCommand as RelayCommand)?.RaiseCanExecuteChanged();
+
             InitMonitors();
             GlobalMessageUtil.ShowInfo(
                 ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
-                message: Constants.I18n.Dialog_Content_GetMonitorsAsync,
+                message: nameof(Constants.I18n.Dialog_Content_GetMonitorsAsync),
+                key: nameof(Constants.I18n.Dialog_Content_GetMonitorsAsync),
                 isNeedLocalizer: true,
                 extraMsg: $" {MonitorThus.Count}");
+            await Task.Delay(3000);
+
+            Interlocked.Exchange(ref _canDetect, 1);
+            (WpDetectCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
-        internal async Task IdentifyAsync() {
+        internal async void Identify() {
+            if (Interlocked.Exchange(ref _canIdentify, 0) != 1) return;
+            (WpIdentifyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+
             await _monitorManagerClient.IdentifyMonitorsAsync();
+            await Task.Delay(3000);
+
+            Interlocked.Exchange(ref _canIdentify, 1);
+            (WpIdentifyCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
-        internal async Task AdjustAsync() {
+        internal async void Adjust() {
+            if (Interlocked.Exchange(ref _canAdjust, 0) != 1) return;
+            (WpAdjustCommand as RelayCommand)?.RaiseCanExecuteChanged();
+
             var ctx = ArcPageContextManager.GetContext<WpSettings>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null) return;
@@ -213,6 +263,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         _adjustSemaphoreSlim.Release();
                     }
                 }, cts: ctsAdjust);
+
+            Interlocked.Exchange(ref _canAdjust, 1);
+            (WpAdjustCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
         #endregion
 
@@ -221,6 +274,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly SemaphoreSlim _adjustSemaphoreSlim = new(1, 1);
+
+        private volatile int _canClose = 1;
+        private volatile int _canDetect = 1;
+        private volatile int _canIdentify = 1;
+        private volatile int _canAdjust = 1;
     }
 
     public record WpArrangeDataModel(string Method, string Tooltip);

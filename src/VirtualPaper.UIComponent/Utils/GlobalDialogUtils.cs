@@ -47,6 +47,25 @@ namespace VirtualPaper.UIComponent.Utils {
                 _ => DialogResult.None,
             };
         }
+        
+        public static ContentDialog? CreateDialog(
+            object content,
+            string title,
+            string primaryBtnText,
+            string secondaryBtnText,
+            bool isDefaultPrimary = true) {
+            var dialog = new ContentDialog() {
+                Title = new TextBlock() { Text = title, TextWrapping = TextWrapping.Wrap },
+                Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
+                PrimaryButtonText = primaryBtnText,
+                SecondaryButtonText = secondaryBtnText,
+                DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
+                XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+            };
+
+            return dialog;
+        }
 
         public static async Task<DialogResult> ShowDialogAsync(
             object content,
@@ -70,6 +89,23 @@ namespace VirtualPaper.UIComponent.Utils {
                 ContentDialogResult.Secondary => DialogResult.Secondary,
                 _ => DialogResult.None,
             };
+        }
+        
+        public static ContentDialog? CreateDialog(
+            object content,
+            string title,
+            string primaryBtnText,
+            bool isDefaultPrimary = true) {
+            var dialog = new ContentDialog() {
+                Title = new TextBlock() { Text = title, TextWrapping = TextWrapping.Wrap },
+                Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
+                PrimaryButtonText = primaryBtnText,
+                DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
+                XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+            };
+
+            return dialog;
         }
 
         public static async Task<DialogResult> ShowDialogWithoutTitleAsync(

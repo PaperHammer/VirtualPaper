@@ -50,35 +50,8 @@ namespace VirtualPaper.WpSettingsPanel {
         #endregion
 
         private void Flyout_Opening(object sender, object e) {
-            _viewModel.InitWpArrangments();
-            _viewModel.InitMonitors(); // 打开该页面不会触发绑定值修改，需要手动调用更新
-        }
-
-        #region btn_click
-        private void BtnClose_Click(object sender, RoutedEventArgs e) {
-            BtnClose.IsEnabled = false;
-            _viewModel.Close();
-            BtnClose.IsEnabled = true;
-        }
-
-        private async void BtnDetect_Click(object sender, RoutedEventArgs e) {
-            BtnDetect.IsEnabled = false;
-            _viewModel.Detect();
-            await Task.Delay(3000);
-            BtnDetect.IsEnabled = true;
-        }
-
-        private async void BtnIdentify_Click(object sender, RoutedEventArgs e) {
-            BtnIdentify.IsEnabled = false;
-            await _viewModel.IdentifyAsync();
-            await Task.Delay(3000);
-            BtnIdentify.IsEnabled = true;
-        }
-
-        private async void BtnAdjust_Click(object sender, RoutedEventArgs e) {
-            await _viewModel.AdjustAsync();
-        }
-        #endregion
+            _viewModel.InitFlyoutData();
+        }       
 
         private readonly WpSettingsViewModel _viewModel;
     }

@@ -38,7 +38,7 @@
                         Command="{x:Bind _viewModel.AddToLibCommand}">
                         <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xF8AA;" FontSize="16"/>
                     </Button>
-                    
+
                     <Button x:Name="ControlCenter"
                         Padding="12 5 11 5"
                         Background="Transparent"                                
@@ -62,25 +62,25 @@
                                             Margin="10 0 0 0"
                                             Content="{markup:I18n Key=Text_Close}"
                                             Background="PaleVioletRed"
-                                            Click="BtnClose_Click"/>
+                                            Command="{x:Bind _viewModel.WpCloseCommand}"/>
                                         <Button x:Name="BtnDetect"
                                             Height="33"
                                             MinWidth="66"
                                             Margin="10 0 0 0"
                                             Content="{markup:I18n Key=Text_Detect}"
-                                            Click="BtnDetect_Click"/>
+                                            Command="{x:Bind _viewModel.WpDetectCommand}"/>
                                         <Button x:Name="BtnIdentify"
                                             Height="33"
                                             MinWidth="66"
                                             Margin="10 0 0 0"
                                             Content="{markup:I18n Key=Text_Identify}"
-                                            Click="BtnIdentify_Click"/>
+                                            Command="{x:Bind _viewModel.WpIdentifyCommand}"/>
                                         <Button x:Name="BtnAdjust"
                                             Height="33"
                                             MinWidth="66"
                                             Margin="10 0 0 0"
                                             Content="{markup:I18n Key=Text_Adjust}"
-                                            Click="BtnAdjust_Click"/>
+                                            Command="{x:Bind _viewModel.WpAdjustCommand}"/>
                                     </StackPanel>
 
                                     <GridView

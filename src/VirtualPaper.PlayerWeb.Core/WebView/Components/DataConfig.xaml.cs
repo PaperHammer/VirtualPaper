@@ -10,7 +10,6 @@ using VirtualPaper.UIComponent.Utils.Extensions;
 
 namespace VirtualPaper.PlayerWeb.Core.WebView.Components {
     public sealed partial class DataConfig : UserControl {
-        //public ArcPageContext PageContext { get; set; } = null!;
         public NavigationPayload? Payload { get; set; }
 
         public DataConfig() {

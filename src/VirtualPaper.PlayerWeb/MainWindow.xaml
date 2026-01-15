@@ -9,6 +9,7 @@
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
     mc:Ignorable="d"
+    Closed="ArcWindow_Closed"
     Width="1400" Height="850"
     Title="Virtual Paper PlayerWeb">
 

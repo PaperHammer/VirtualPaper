@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Windows.Input;
 using Microsoft.UI;
@@ -68,18 +69,18 @@ namespace VirtualPaper.UIComponent.Input {
                 typeof(ArcPalette),
                 new PropertyMetadata(new SolidColorBrush(Colors.White)));
 
-        public ObservableList<Color> InitCustomColors {
-            get { return (ObservableList<Color>)GetValue(InitCustomColorsProperty); }
+        public ObservableCollection<Color> InitCustomColors {
+            get { return (ObservableCollection<Color>)GetValue(InitCustomColorsProperty); }
             set { SetValue(InitCustomColorsProperty, value); }
         }
         public static readonly DependencyProperty InitCustomColorsProperty =
             DependencyProperty.Register(
                 nameof(InitCustomColors),
-                typeof(ObservableList<Color>),
+                typeof(ObservableCollection<Color>),
                 typeof(ArcPalette),
                 new PropertyMetadata(null, OnInitCustomColorsInited));
 
-        private ObservableList<SolidColorBrush> CustomBrushes { get; set; } = [];
+        private ObservableCollection<SolidColorBrush> CustomBrushes { get; set; } = [];
 
         private Selection _curSelection = Selection.A;
         private Selection CurrentSelection {

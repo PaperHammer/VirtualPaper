@@ -1,12 +1,10 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Text.Json;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
-using OpenCvSharp.Internal;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.IPC;
@@ -314,7 +312,7 @@ namespace VirtualPaper.Cores.WpControl {
                     }), IntPtr.Zero);
 
                     if (IntPtr.Equals(_workerW, IntPtr.Zero)) {
-                        App.Log.Error("Failed to setup core, WorkerW handle not found..");
+                        App.Log.Error("Failed to setup core, WorkerW handle not found...");
                         WallpaperError?.Invoke(this, new WorkerWException(LanguageManager.Instance
                             ["WpControl_VirtualPaperExceptionWorkerWSetupFail"]));
                         WallpaperChanged?.Invoke(this, EventArgs.Empty);
@@ -559,6 +557,7 @@ namespace VirtualPaper.Cores.WpControl {
                 data.AspectRatio = fileProperty.AspectRatio;
                 data.FileSize = fileProperty.FileSize;
                 data.FileExtension = fileProperty.FileExtension;
+                data.CreatedTime = DateTime.UtcNow;
 
                 string basicDatafilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
                 if (isAutoSave) {

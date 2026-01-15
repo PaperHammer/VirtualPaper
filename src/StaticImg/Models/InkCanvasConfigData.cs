@@ -18,8 +18,8 @@
 
 //namespace Workloads.Creation.StaticImg.Models {
 //    [JsonSerializable(typeof(InkCanvasConfigData))]
-//    [JsonSerializable(typeof(ObservableList<InkCanvasData>))]
-//    [JsonSerializable(typeof(ObservableList<Color>))]
+//    [JsonSerializable(typeof(ObservableCollection<InkCanvasData>))]
+//    [JsonSerializable(typeof(ObservableCollection<Color>))]
 //    public partial class InkCanvasConfigDataContext : JsonSerializerContext { }
 
 //    public partial class InkCanvasConfigData : ObservableObject {
@@ -35,8 +35,8 @@
 //        internal TaskCompletionSource<bool> RenderDataLoaded => _renderDataLoaded;
 
 //        #region serilizable properties
-//        public ObservableList<InkCanvasData> Layers { get; set; } = [];
-//        public ObservableList<Color> CustomColors { get; set; } = [];
+//        public ObservableCollection<InkCanvasData> Layers { get; set; } = [];
+//        public ObservableCollection<Color> CustomColors { get; set; } = [];
 
 //        ArcSize _size = new(1920, 1080, 96, RebuildMode.None); // 像素
 //        public ArcSize Size {

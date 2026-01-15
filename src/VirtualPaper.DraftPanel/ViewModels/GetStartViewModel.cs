@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
@@ -10,7 +11,7 @@ using Windows.ApplicationModel.DataTransfer;
 namespace VirtualPaper.DraftPanel.ViewModels {
     public class GetStartViewModel {
         //public List<Startup> Startups { get; private set; } = [];
-        public ObservableList<IRecentUsed> RecentUseds { get; private set; } = [];
+        public ObservableCollection<IRecentUsed> RecentUseds { get; private set; } = [];
 
         public string Project_RecentUsed { get; private set; }
         public string Project_SearchRecentUsed { get; private set; }

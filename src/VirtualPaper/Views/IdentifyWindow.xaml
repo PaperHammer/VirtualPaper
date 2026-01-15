@@ -18,9 +18,7 @@
     <Border
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
-        Background="#4cc2ff"
-        BorderThickness="2"
-        BorderBrush="LightGray">
+        Background="Gray">
         <TextBlock
             HorizontalAlignment="Center"
             VerticalAlignment="Center"

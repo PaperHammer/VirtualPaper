@@ -20,7 +20,6 @@ namespace VirtualPaper.Models.Cores {
             get => _title;
             set { if (_title == value) return; _title = value; OnPropertyChanged(); }
         }
-        //public string Title { get; set; } = string.Empty;
 
         public string Desc { get; set; } = string.Empty;
         public string Authors { get; set; } = string.Empty;
@@ -42,7 +41,7 @@ namespace VirtualPaper.Models.Cores {
         }
         public bool IsSingleRType { get; set; } = false;
         public string Partition { get; set; } = string.Empty;
-        public string Tags { get; set; } = string.Empty;
+        public string Tags { get; set; } = string.Empty; // splite with ';'
         public WallpaperStatus Status { get; set; }
 
         public string FolderName { get; set; } = string.Empty;
@@ -54,6 +53,7 @@ namespace VirtualPaper.Models.Cores {
         public string AspectRatio { get; set; } = string.Empty;
         public string FileSize { get; set; } = string.Empty;
         public string FileExtension { get; set; } = string.Empty;
+        public DateTime CreatedTime { get; set; }
 
         public bool IsSubscribed { get; set; } = false;
 
@@ -80,6 +80,7 @@ namespace VirtualPaper.Models.Cores {
                 AspectRatio = this.AspectRatio,
                 FileSize = this.FileSize,
                 FileExtension = this.FileExtension,
+                CreatedTime = this.CreatedTime,
 
                 IsSubscribed = this.IsSubscribed,
             };
@@ -111,6 +112,7 @@ namespace VirtualPaper.Models.Cores {
             this.AspectRatio = source.AspectRatio;
             this.FileSize = source.FileSize;
             this.FileExtension = source.FileExtension;
+            this.CreatedTime = source.CreatedTime;
 
             this.IsSubscribed = source.IsSubscribed;
         }

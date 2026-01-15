@@ -1,8 +1,10 @@
 using System;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
+using VirtualPaper.PlayerWeb.Core.Interfaces;
 using VirtualPaper.PlayerWeb.Core.WebView.Pages;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
@@ -15,7 +17,9 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class PreviewWithWeb : ArcWindow {
+    public sealed partial class PreviewWithWeb : ArcWindow, IApplyService {
+        public event Func<PreviewWithWeb, object?, ValueTask>? Applied;
+
         public override ArcWindowHost ContentHost => this.MainHost;
         public override ArcWindowManagerKey Key => _windowKey;
 
@@ -31,11 +35,22 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
                 var payload = new NavigationPayload() {
                     [NaviPayLoadKey.StartArgs.ToString()] = _startArgs,
                     [NaviPayLoadKey.ArcWindow.ToString()] = this,
+                    [NaviPayLoadKey.ApplyService.ToString()] = this,
                 };
                 NaviContent.Navigate(typeof(PageWithPlaying), payload);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<PageWithPlaying>().Error(ex);
+            }
+        }
+
+        public async ValueTask ApplyAsync(object? context = null) {
+            if (Applied is not null) {
+                foreach (var handler in Applied.GetInvocationList()) {
+                    if (handler is Func<PreviewWithWeb, object?, ValueTask> asyncHandler) {
+                        await asyncHandler(this, context);
+                    }
+                }
             }
         }
 

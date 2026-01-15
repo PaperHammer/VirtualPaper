@@ -27,5 +27,6 @@ namespace VirtualPaper.PlayerWeb.Core {
         IWpBasicData,
         IIpcObserver,
         ArcWindow,
+        ApplyService,
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -29,7 +30,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 return _cachedActiveLayers;
             }
         }
-        public ObservableList<LayerInfo> Layers => _layers;
+        public ObservableCollection<LayerInfo> Layers => _layers;
 
         private LayerInfo _selectedLayer;
         public LayerInfo SelectedLayer {
@@ -217,7 +218,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         // 渲染使用的图层（仅包含有效图层）
         private readonly List<LayerInfo> _cachedActiveLayers = [];
         // 绑定到 UI 列表
-        private readonly ObservableList<LayerInfo> _layers = [];
+        private readonly ObservableCollection<LayerInfo> _layers = [];
         // 图层状态快照（用于脏检查）
         private readonly Dictionary<Guid, LayerState> _layerStates = [];
         private bool _isActiveLayersDirty = true;

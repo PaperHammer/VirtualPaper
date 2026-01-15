@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 
 namespace Workloads.Creation.StaticImg.Models.Specific {

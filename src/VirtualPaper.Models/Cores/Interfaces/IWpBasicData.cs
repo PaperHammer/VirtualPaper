@@ -69,6 +69,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         string AspectRatio { get; set; }
         string FileSize { get; set; }
         string FileExtension { get; set; }
+        DateTime CreatedTime { get; set; }
 
         /// <summary>
         /// 壁纸文件类型

@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common.Events.EffectValue;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.PlayerWeb.Core.Interfaces;
 using VirtualPaper.PlayerWeb.Core.Utils.Interfaces;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
@@ -31,6 +32,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             if (e.Parameter is NavigationPayload payload) {
                 payload.TryGet(NaviPayLoadKey.IEffectService.ToString(), out _effectService);
                 payload.TryGet(NaviPayLoadKey.StartArgs.ToString(), out _startArgs);
+                payload.TryGet(NaviPayLoadKey.ApplyService.ToString(), out _applyService);
             }
         }
 
@@ -463,8 +465,11 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             btnRestore.IsEnabled = true;
         }
 
-        private void SaveAndApplyBtn_Click(object sender, RoutedEventArgs e) {
+        private async void SaveAndApplyBtn_Click(object sender, RoutedEventArgs e) {
             UpdatePropertyFile(true);
+            if (_applyService != null) {
+                await _applyService.ApplyAsync();
+            }
         }
         #endregion
 
@@ -548,5 +553,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         private IEffectService _effectService = null!;
         private readonly Dictionary<string, UIElement> _controls = [];
         private bool _isInitialized;
+        private IApplyService _applyService;
     }
 }

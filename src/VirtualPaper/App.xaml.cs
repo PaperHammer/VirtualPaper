@@ -104,6 +104,10 @@ namespace VirtualPaper {
             }
             #endregion
 
+            #region pre
+            Constants.CommonPaths.MigrateAsync().Wait();
+            #endregion
+
             #region 初始化核心组件
             // 依赖注入
             _serviceProvider = ConfigureServices();

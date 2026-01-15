@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -27,12 +28,12 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         public static readonly DependencyProperty SelectedLayerProperty =
             DependencyProperty.Register(nameof(SelectedLayer), typeof(LayerInfo), typeof(LayerManageControl), new PropertyMetadata(null));
 
-        public ObservableList<LayerInfo> Layers {
-            get { return (ObservableList<LayerInfo>)GetValue(LayersProperty); }
+        public ObservableCollection<LayerInfo> Layers {
+            get { return (ObservableCollection<LayerInfo>)GetValue(LayersProperty); }
             set { SetValue(LayersProperty, value); }
         }
         public static readonly DependencyProperty LayersProperty =
-            DependencyProperty.Register(nameof(Layers), typeof(ObservableList<LayerInfo>), typeof(LayerManageControl), new PropertyMetadata(null));
+            DependencyProperty.Register(nameof(Layers), typeof(ObservableCollection<LayerInfo>), typeof(LayerManageControl), new PropertyMetadata(null));
 
         public bool IsAllwaysSeletedNewItem {
             get { return (bool)GetValue(IsAllwaysSeletedNewItemProperty); }

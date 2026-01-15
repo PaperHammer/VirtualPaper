@@ -28,7 +28,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class PageWithPlaying : ArcPage, IEffectService,
-        IIpcSubscribe<VirtualPaperCloseCmd>,
         IIpcSubscribe<VirtualPaperApplyCmd>,
         IIpcSubscribe<VirtualPaperReloadCmd>,
         IIpcSubscribe<VirtualPaperSuspendCmd>,
@@ -106,14 +105,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
 
         #region ipc
-        ValueTask IIpcSubscribe<VirtualPaperCloseCmd>.OnIpcAsync(VirtualPaperCloseCmd message) {
-            this.OnUnloaded();
-            return ValueTask.CompletedTask;
-        }
-
         ValueTask IIpcSubscribe<VirtualPaperApplyCmd>.OnIpcAsync(VirtualPaperApplyCmd message) {
-            //ExecuteScript(Fileds.ApplyFilter);
-            //ExecuteScript(Fileds.Play);
             _scriptExecutor?.EnqueueEvent(Fileds.ApplyFilter);
             _scriptExecutor?.EnqueueEvent(Fileds.Play);
             return ValueTask.CompletedTask;
@@ -157,12 +149,10 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
 
         private void HandlePlaybackCommand(bool pause) {
-            //ExecuteScript(Fileds.PlaybackChanged, pause);
             _scriptExecutor?.EnqueueEvent(Fileds.PlaybackChanged, pause);
         }
 
         private void HandleMuteCommand(VirtualPaperMutedCmd muted) {
-            //ExecuteScript(Fileds.AudioMuteChanged, muted.IsMuted);
             _scriptExecutor?.EnqueueEvent(Fileds.AudioMuteChanged, muted.IsMuted);
         }
 
@@ -175,7 +165,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                 _startArgs.WpEffectFilePathTemplate = update.WpEffectFilePathTemplate;
                 _startArgs.WpEffectFilePathTemporary = update.WpEffectFilePathTemporary;
                 _startArgs.WpEffectFilePathUsing = update.WpEffectFilePathUsing;
-                //ExecuteScript(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
                 _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
             }
 
@@ -331,33 +320,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             if (Webview2 == null || Webview2.CoreWebView2 == null) return;
 
             _scriptExecutor?.EnqueueEvent(Fileds.UpdateDimensions, _pageRegion.Right - _pageRegion.Left, _pageRegion.Bottom - _pageRegion.Top);
-            //ExecuteScript(Fileds.UpdateDimensions, _pageRegion.Right - _pageRegion.Left, _pageRegion.Bottom - _pageRegion.Top);
         }
-
-        //private void ExecuteScript(string functionName, params object[] parameters) {
-        //    try {
-        //        StringBuilder sb_script = new();
-        //        sb_script.Append(functionName);
-        //        sb_script.Append('(');
-        //        for (int i = 0; i < parameters.Length; i++) {
-        //            sb_script.Append(JsonSerializer.Serialize(parameters[i]));
-        //            if (i < parameters.Length - 1) {
-        //                sb_script.Append(", ");
-        //            }
-        //        }
-        //        sb_script.Append(");");
-
-        //        CrossThreadInvoker.InvokeOnUIThread(async () => {
-        //            if (Webview2.CoreWebView2 == null) { // ???
-        //                await Webview2.EnsureCoreWebView2Async();
-        //            }
-        //            await Webview2.ExecuteScriptAsync(sb_script.ToString());
-        //        });
-        //    }
-        //    catch (Exception e) {
-        //        ArcLog.GetLogger<PageWithPlaying>().Error(e);
-        //    }
-        //}
 
         private void LoadWpEffect(string? wpEffectFilePath) {
             try {
@@ -371,7 +334,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                             uiElementType.Equals("Color", StringComparison.OrdinalIgnoreCase) ||
                             uiElementType.Equals("Textbox", StringComparison.OrdinalIgnoreCase)) {
                             _scriptExecutor?.EnqueueEvent(Fileds.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
-                            //ExecuteScript();
                         }
                         else if (uiElementType.Equals("Checkbox", StringComparison.OrdinalIgnoreCase)) {
                             ExecuteCheckBoxSet(item.Name, bool.Parse(item.Value.GetProperty("Value").ToString()));

@@ -40,6 +40,10 @@ namespace VirtualPaper.PlayerWeb {
             _ = StdInListener();
         }
 
+        private void ArcWindow_Closed(object sender, WindowEventArgs args) {
+            PreClose();
+        }
+
         private void NaviContent_Loaded(object sender, RoutedEventArgs e) {
             try {
                 var payload = new NavigationPayload() {
@@ -63,12 +67,11 @@ namespace VirtualPaper.PlayerWeb {
             foreach (var itf in itfs) {
                 var messageType = itf.GetGenericArguments()[0];
 
-                // 安全检查：确保 1对1，防止逻辑覆盖
                 if (_handlers.ContainsKey(messageType)) {
                     continue;
                 }
 
-                // 性能核心：通过表达式树编译，消除反射产生的 object[] 分配
+                // 通过表达式树编译，消除反射产生的 object[] 分配
                 var handler = BuildHandler(subscriber, itf, messageType);
                 _handlers[messageType] = handler;
 
@@ -87,6 +90,11 @@ namespace VirtualPaper.PlayerWeb {
 
         public async ValueTask Dispatch(IpcMessage message) {
             if (message != null && _handlers.TryGetValue(message.GetType(), out var handler)) {
+                if (message is VirtualPaperCloseCmd) {
+                    this.Close();
+                    return;
+                }
+
                 await handler(message);
             }
         }
@@ -132,9 +140,6 @@ namespace VirtualPaper.PlayerWeb {
                     MsgType = ConsoleMessageType.Error,
                     Message = $"Ipc stdin Error: {e.Message}"
                 });
-            }
-            finally {
-                PreClose();
             }
         }
 

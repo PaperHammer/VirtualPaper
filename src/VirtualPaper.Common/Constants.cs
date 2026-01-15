@@ -39,13 +39,39 @@ namespace VirtualPaper.Common {
             /// </summary>
             public static string LibraryDir => Path.Combine(AppDataDir, "Library");
 
-            public static string AppRulesPath => Path.Combine(AppDataDir, "AppRules.json");
-            public static string WallpaperLayoutPath => Path.Combine(AppDataDir, "WallpaperLayout.json");
-            public static string UserSettingsPath => Path.Combine(AppDataDir, "UserSettings.json");
-            public static string RecentUsedPath => Path.Combine(AppDataDir, "RecentUseds.json");
+            public static string AppRulesPath => Path.Combine(AppDataDir, "app_rules.json");
+            public static string WallpaperLayoutPath => Path.Combine(AppDataDir, "wallpaper_layout.json");
+            public static string UserSettingsPath => Path.Combine(AppDataDir, "user_settings.json");
+            public static string RecentUsedPath => Path.Combine(AppDataDir, "recent_used.json");
 
             public static string TempWebView2Dir => Path.Combine(AppDataDir, "WebView2");
             public static string TempScrWebView2Dir => Path.Combine(AppDataDir, "ScrWebView2");
+
+            private static class Legacy {
+                public static string AppRulesPath => Path.Combine(AppDataDir, "AppRules.json");
+                public static string WallpaperLayoutPath => Path.Combine(AppDataDir, "WallpaperLayout.json");
+                public static string UserSettingsPath => Path.Combine(AppDataDir, "UserSettings.json");
+                public static string RecentUsedPath => Path.Combine(AppDataDir, "RecentUseds.json");
+            }
+
+            public static async Task MigrateAsync() {
+                await MigrateFileAsync(Legacy.AppRulesPath, AppRulesPath);
+                await MigrateFileAsync(Legacy.WallpaperLayoutPath, WallpaperLayoutPath);
+                await MigrateFileAsync(Legacy.UserSettingsPath, UserSettingsPath);
+                await MigrateFileAsync(Legacy.RecentUsedPath, RecentUsedPath);
+            }
+
+            private static async Task MigrateFileAsync(string oldPath, string newPath) {
+                try {
+                    bool oldExists = Path.Exists(oldPath);
+                    if (!oldExists) return;
+
+                    Directory.CreateDirectory(Path.GetDirectoryName(newPath)!);
+                    File.Move(oldPath, newPath, true);
+                    File.Delete(oldPath);
+                }
+                catch { }
+            }
         }
 
         public static class FolderName {
@@ -297,7 +323,6 @@ namespace VirtualPaper.Common {
             public static string? Project_CannotDelete_OnlyCanvas { get; }
             public static string? Project_STI_LayerSaveFailed { get; }
             public static string? Project_STI_LayerLoadFailed { get; }
-            //public static string? ArcColorPicker_AddToCustom { get; }
             public static string? StaticImg_CanvasSizeInput_Illegal { get; }
             public static string? Account_Email_InvalidTip { get; }
             public static string? Account_Pwd_InvalidTip { get; }

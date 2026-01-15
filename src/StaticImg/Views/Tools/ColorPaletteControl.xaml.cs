@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -27,12 +28,12 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         public static readonly DependencyProperty BackgroundColorProperty =
             DependencyProperty.Register(nameof(BackgroundColor), typeof(Color), typeof(ColorPaletteControl), new PropertyMetadata(Colors.Transparent));
 
-        public ObservableList<Color> CustomColors {
-            get { return (ObservableList<Color>)GetValue(CustomColorsProperty); }
+        public ObservableCollection<Color> CustomColors {
+            get { return (ObservableCollection<Color>)GetValue(CustomColorsProperty); }
             set { SetValue(CustomColorsProperty, value); }
         }
         public static readonly DependencyProperty CustomColorsProperty =
-            DependencyProperty.Register(nameof(CustomColors), typeof(ObservableList<Color>), typeof(ColorPaletteControl), new PropertyMetadata(null));
+            DependencyProperty.Register(nameof(CustomColors), typeof(ObservableCollection<Color>), typeof(ColorPaletteControl), new PropertyMetadata(null));
 
         public ColorPaletteControl() {
             this.InitializeComponent();

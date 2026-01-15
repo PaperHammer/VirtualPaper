@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI;
@@ -20,7 +21,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         //internal TaskCompletionSource<bool> BasicDataLoaded => _basicDataLoaded;
         //internal TaskCompletionSource<bool> RenderDataLoaded => _renderDataLoaded;
 
-        public ObservableList<Color> CustomColors { get; set; } = [];
+        public ObservableCollection<Color> CustomColors { get; set; } = [];
 
         ArcSize _canvasSize = new(1920, 1080, 96, RebuildMode.None); // 像素
         public ArcSize CanvasSize {

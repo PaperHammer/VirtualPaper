@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -16,7 +17,7 @@ using Windows.Storage;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class WpSettingsViewModel : ObservableObject {
-        public ObservableList<IMonitor> MonitorThus { get; set; } = [];
+        public ObservableCollection<IMonitor> MonitorThus { get; set; } = [];
         public List<WpArrangeDataModel> WpArrangements { get; set; } = [];
 
         private int _selectedWpArrangementsIndex = -1;

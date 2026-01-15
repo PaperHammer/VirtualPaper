@@ -62,7 +62,6 @@ namespace VirtualPaper.Cores.WpControl {
         void ChangeWallpaperLayoutFolrderPath(string previousDir, string newDir);
         FileProperty GetWpProperty(string filePath, FileType ftype);
         Grpc_MonitorData GetRunMonitorByWallpaper(string wpUid);
-        //void ModifyPreview(string controlName, string propertyName, string value);
         #endregion
     }
 }

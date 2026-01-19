@@ -163,6 +163,20 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private readonly LibraryContentsViewModel _viewModel;
         private bool _isColdLaunch = true;
+
+        private void WallpaperLibScrollViewer_ViewChanged(ScrollView sender, object args) {
+            if (sender == null) return;
+
+            double verticalOffset = sender.VerticalOffset;
+            double maxVerticalOffset = sender.ScrollableHeight;
+            double threshold = 100;
+
+            if (maxVerticalOffset - verticalOffset <= threshold) {
+                if (_viewModel.LibLoadingStatus != LoadingStatus.Changing) {
+                    _viewModel.LoadMoreAsync();
+                }
+            }
+        }
     }
 
     sealed record ScaleAnimationContext(Visual Visual, Vector3KeyFrameAnimation ScaleToNormal, Vector3KeyFrameAnimation ScaleToHover);

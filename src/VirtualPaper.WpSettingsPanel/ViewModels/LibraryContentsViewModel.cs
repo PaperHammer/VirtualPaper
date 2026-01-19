@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.UI;
@@ -42,6 +41,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public Brush WpTitleForeground {
             get { return _wpTitleForeground; }
             set { _wpTitleForeground = value; OnPropertyChanged(); }
+        }
+
+        private LoadingStatus _libLoadingStatus;
+        public LoadingStatus LibLoadingStatus {
+            get { return _libLoadingStatus; }
+            set { _libLoadingStatus = value; OnPropertyChanged(); }
         }
 
         public LibraryContentsViewModel(
@@ -396,7 +401,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 operation: async token => {
                     try {
                         List<ImportValue> importValues = await GetImportValueFromLocalAsync(items);
-                        await ImportFromValuesAsync(importValues);
+                        await ImportAsync(importValues);
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
@@ -405,18 +410,17 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }, cts: ctsImport);
         }
 
-        private async Task ImportFromValuesAsync(List<ImportValue> importValues) {
+        private async Task ImportAsync(List<ImportValue> importValues) {
             var ctx = ArcPageContextManager.GetContext<WpSettings>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
 
             var ctsImport = new CancellationTokenSource();
+            int finishedCnt = 0;
+            int total = importValues.Count;
             await loadingCtx.RunWithProgressAsync(
                 operation: async (token, reportProgress) => {
-                    int finishedCnt = 0;
-                    int total = importValues.Count;
-
                     foreach (var importValue in importValues) {
                         try {
                             token.ThrowIfCancellationRequested();
@@ -517,30 +521,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             return _previews.Keys.Any(k => k.uid == data.WallpaperUid);
         }
 
-        private static async Task ProcessFolders(IEnumerable<string> folderPaths, ParallelOptions parallelOptions, ChannelWriter<IWpBasicData> writer, CancellationToken cancellationToken = default) {
-            await Parallel.ForEachAsync(folderPaths, parallelOptions, async (storeDir, token) => {
-                DirectoryInfo root = new(storeDir);
-                DirectoryInfo[] folders = root.GetDirectories();
-
-                foreach (DirectoryInfo folder in folders) {
-                    string[] files = Directory.GetFiles(folder.FullName);
-
-                    foreach (string file in files) {
-                        if (Path.GetFileName(file) == Constants.Field.WpBasicDataFileName) {
-                            WpBasicData data = await JsonSaver.LoadAsync<WpBasicData>(file, WpBasicDataContext.Default);
-
-                            if (data.IsAvailable()) {
-                                await writer.WriteAsync(data, token);
-                                break;
-                            }
-                        }
-                        token.ThrowIfCancellationRequested();
-                    }
-                    token.ThrowIfCancellationRequested();
-                }
-            });
-        }
-
         private static async Task<List<ImportValue>> GetImportValueFromLocalAsync(IReadOnlyList<IStorageItem> items) {
             ConcurrentBag<ImportValue> importRes = [];
             SemaphoreSlim semaphore = new(20); // 并发度控制
@@ -601,6 +581,32 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
         }
+
+        internal async void LoadMoreAsync() {
+            try {
+                LibLoadingStatus = LoadingStatus.Changing;
+                await _wallpaperIndexService.Initialized.Task;
+
+                var entries = _wallpaperIndexService.Query(_offset, _limit);
+                foreach (var entry in entries) {
+                    var jsonPath = entry.JsonPath;
+                    WpBasicData? data = await JsonSaver.LoadAsync<WpBasicData>(jsonPath, WpBasicDataContext.Default);
+                    if (data == null || !data.IsAvailable())
+                        continue;
+
+                    LibraryWallpapers.Add(data);
+                    _libraryWallpapers.Add(data);
+                    _offset++;
+                }
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+            }
+            finally {
+                LibLoadingStatus = LoadingStatus.Ready;
+            }
+        }
         #endregion
 
         private struct ImportValue(string filePath, FileType ftype) {
@@ -619,5 +625,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private static readonly Dictionary<string, ArcWindow> _edits = [];
         private static readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];
         private List<IWpBasicData> _libraryWallpapers = [];
+    }
+
+    public enum LoadingStatus {
+        Ready, Changing
     }
 }

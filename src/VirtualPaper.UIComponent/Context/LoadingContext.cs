@@ -2,9 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
+using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Feedback;
-using VirtualPaper.UIComponent.Utils.Extensions;
 
 namespace VirtualPaper.UIComponent.Context {
     /// <summary>
@@ -16,7 +16,6 @@ namespace VirtualPaper.UIComponent.Context {
         /// </summary>
         public bool IsValid => LoadingControl != null;
         public bool IsLoading => LoadingControl?.Visibility == Visibility.Visible;
-        public Task? LoadingFinished => _loadingFinishedTcs?.Task;
         private Loading? LoadingControl => _loadingReference.TryGetTarget(out var loading) ? loading : null;
 
         public ArcLoadingContext(ArcPageContext arcPageContext, Loading loadingControl) {
@@ -37,7 +36,7 @@ namespace VirtualPaper.UIComponent.Context {
 
             EnterLoading(showProgress, cts);
 
-            IDisposable blockingHandle = _arcPageContext.Blocking.Add(token);            
+            IDisposable blockingHandle = _arcPageContext.Blocking.Add(token);
 
             await operation(token);
 
@@ -92,6 +91,5 @@ namespace VirtualPaper.UIComponent.Context {
 
         private readonly WeakReference<Loading> _loadingReference;
         private readonly ArcPageContext _arcPageContext;
-        private TaskCompletionSource? _loadingFinishedTcs;
     }
 }

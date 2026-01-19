@@ -1,6 +1,4 @@
 using System;
-using System.Threading.Tasks;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
@@ -9,6 +7,7 @@ using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.WpSettingsPanel.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using VirtualPaper.WpSettingsPanel.Views;
 
@@ -48,10 +47,16 @@ namespace VirtualPaper.WpSettingsPanel {
             }
         }
         #endregion
-
+      
         private void Flyout_Opening(object sender, object e) {
             _viewModel.InitFlyoutData();
-        }       
+        }
+
+        private void OnFilterChanged(object sender, TextChangedEventArgs e) {            
+            if (sender is TextBox tb && tb.Tag is FilterKey fk) {
+                _viewModel.OnFilterChanged(fk, tb.Text);
+            }
+        }
 
         private readonly WpSettingsViewModel _viewModel;
     }

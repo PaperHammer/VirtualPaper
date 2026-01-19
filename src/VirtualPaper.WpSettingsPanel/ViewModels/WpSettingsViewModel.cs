@@ -12,6 +12,7 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.WpSettingsPanel.Utils;
 using VirtualPaper.WpSettingsPanel.Views;
 using Windows.Storage;
 
@@ -125,6 +126,15 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             SelectedWpArrangementsIndex = (int)_userSettingsClient.Settings.WallpaperArrangement;
         }
         #endregion
+
+        public void RegisterLibraryContents(IFilterable filterable) {
+            if (_filterables.Contains(filterable)) return;
+            _filterables.Add(filterable);
+        }
+
+        internal void OnFilterChanged(FilterKey fk, string text) {
+            _filterables.Find(x => x.FilterKeyword == fk)?.ApplyFilter(text);
+        }
 
         private async Task ShowAddToLibDialogAsync() {
             IReadOnlyList<IStorageItem> files = [];
@@ -275,6 +285,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly SemaphoreSlim _adjustSemaphoreSlim = new(1, 1);
+        private readonly List<IFilterable> _filterables = [];
 
         private volatile int _canClose = 1;
         private volatile int _canDetect = 1;

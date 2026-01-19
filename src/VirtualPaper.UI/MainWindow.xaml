@@ -13,7 +13,7 @@
     mc:Ignorable="d"
     Closed="WindowEx_Closed"
     Width="1460" Height="900"
-    MinHeight="684" MinWidth="765"
+    MinHeight="648" MinWidth="800"
     Title="Virtual Paper">
 
     <arc:ArcWindowHost x:Name="MainHost">

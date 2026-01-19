@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -13,7 +14,6 @@ using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
-using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DataAssistor;
@@ -28,14 +28,15 @@ using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
+using VirtualPaper.WpSettingsPanel.Utils;
 using Windows.Storage;
 using Windows.System.UserProfile;
 using WinUIEx;
 using UAC = UACHelper.UACHelper;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
-    public partial class LibraryContentsViewModel : ObservableObject {
-        public ObservableList<IWpBasicData> LibraryWallpapers { get; } = [];
+    public partial class LibraryContentsViewModel : ObservableObject, IFilterable {
+        public ObservableCollection<IWpBasicData> LibraryWallpapers { get; private set; } = null!;
 
         private Brush _wpTitleForeground = new SolidColorBrush(Colors.White);
         public Brush WpTitleForeground {
@@ -46,14 +47,22 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public LibraryContentsViewModel(
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient,
-            WpSettingsViewModel wpSettingsViewModel) {
+            WpSettingsViewModel wpSettingsViewModel,
+            WallpaperIndexService wallpaperIndexService) {
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
             _wpSettingsViewModel = wpSettingsViewModel;
+            _wallpaperIndexService = wallpaperIndexService;
 
             InitEvent();
             InitColletions();
             InitMsg();
+            InitOthers();
+        }
+
+        private void InitOthers() {
+            _wallpaperIndexService.Initialize(_wallpaperInstallFolders);
+            _wpSettingsViewModel.RegisterLibraryContents(this);
         }
 
         private void InitMsg() {
@@ -81,6 +90,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             _wallpaperInstallFolders = [
                 _userSettingsClient.Settings.WallpaperDir,
             ];
+            LibraryWallpapers = [];
+            _libraryWallpapers = [];
         }
 
         internal async Task InitContentAsync() {
@@ -92,13 +103,18 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             await loadingCtx.RunAsync(
                 operation: async token => {
                     try {
+                        await _wallpaperIndexService.Initialized.Task;
 
-                        LibraryWallpapers.Clear();
-                        _uid2idx.Clear();
+                        var entries = _wallpaperIndexService.Query(_offset, _limit);
+                        foreach (var entry in entries) {
+                            var jsonPath = entry.JsonPath;
+                            WpBasicData? data = await JsonSaver.LoadAsync<WpBasicData>(jsonPath, WpBasicDataContext.Default);
+                            if (data == null || !data.IsAvailable())
+                                continue;
 
-                        var loader = new AsyncLoader<IWpBasicData>(maxDegreeOfParallelism: 10, channelCapacity: 100);
-                        await foreach (var data in loader.LoadItemsAsync(ProcessFolders, _wallpaperInstallFolders, token)) {
-                            UpdateLib(data);
+                            LibraryWallpapers.Add(data);
+                            _libraryWallpapers.Add(data);
+                            _offset++;
                         }
                     }
                     catch (Exception ex) {
@@ -239,6 +255,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         previewWindow.Closed += (sender, args) => {
                             _previews.Remove((data.WallpaperUid, rtype));
                         };
+                        previewWindow.Applied += async (sender, context) => {
+                            previewWindow.Close();
+                            await ApplyAsync(data);
+                        };
                         _previews.Add((data.WallpaperUid, rtype), previewWindow);
                         previewWindow.Show();
                         previewWindow.Activate();
@@ -336,12 +356,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     return;
                 }
 
-                _uid2idx.Remove(data.WallpaperUid, out _);
-                LibraryWallpapers.Remove(data);
+                HandleDelete(data);
                 if (Directory.Exists(data.FolderPath)) {
                     Directory.Delete(data.FolderPath, true);
                 }
-
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
@@ -349,21 +367,22 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
+        private void HandleDelete(IWpBasicData data) {
+            LibraryWallpapers.Remove(data);
+            _libraryWallpapers.Remove(data);
+            _wallpaperIndexService.Remove(data);
+        }
+
         private void UpdateLib(IWpBasicData data) {
-            try {
-                ArgumentNullException.ThrowIfNull(data);
-                if (_uid2idx.TryGetValue(data.WallpaperUid, out int idx)) {
-                    LibraryWallpapers[idx] = data;
-                }
-                else {
-                    _uid2idx[data.WallpaperUid] = LibraryWallpapers.Count;
-                    LibraryWallpapers.Add(data);
-                }
+            if (_wallpaperIndexService.TryGetValue(data.WallpaperUid, out int idx)) {
+                LibraryWallpapers[idx] = data;
+                _libraryWallpapers[idx] = data;
             }
-            catch (Exception ex) {
-                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+            else {
+                LibraryWallpapers.Insert(0, data);
+                _libraryWallpapers.Insert(0, data);
             }
+            _wallpaperIndexService.Update(data);
         }
 
         internal async Task DropFilesAsync(IReadOnlyList<IStorageItem> items) {
@@ -418,15 +437,16 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                                 }
 
                                 var data = DataAssist.GrpcToBasicData(grpcData);
-
-                                if (data.IsAvailable())
+                                if (data.IsAvailable()) {
                                     UpdateLib(data);
-                                else
+                                }
+                                else {
                                     GlobalMessageUtil.ShowError(
                                         ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                                         Constants.I18n.InfobarMsg_ImportErr,
                                         isNeedLocalizer: true,
                                         extraMsg: importValue.FilePath);
+                                }
                             }
                             else {
                                 GlobalMessageUtil.ShowError(
@@ -550,18 +570,54 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             return [.. importRes];
         }
 
+        #region filter
+        public FilterKey FilterKeyword { get; set; } = FilterKey.LibraryTitle;
+
+        public void ApplyFilter(string keyword) {
+            FilterByTitle(keyword);
+        }
+
+        internal void FilterByTitle(string keyword) {
+            var filtered = _libraryWallpapers.Where(basicData =>
+                basicData.Title != null && basicData.Title.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
+            );
+            Remove_NonMatching(filtered);
+            AddBack_Procs(filtered);
+        }
+
+        private void Remove_NonMatching(IEnumerable<IWpBasicData> basicDatas) {
+            for (int i = LibraryWallpapers.Count - 1; i >= 0; i--) {
+                var item = LibraryWallpapers[i];
+                if (!basicDatas.Contains(item)) {
+                    LibraryWallpapers.Remove(item);
+                }
+            }
+        }
+
+        private void AddBack_Procs(IEnumerable<IWpBasicData> basicDatas) {
+            foreach (var item in basicDatas) {
+                if (!LibraryWallpapers.Contains(item)) {
+                    LibraryWallpapers.Add(item);
+                }
+            }
+        }
+        #endregion
+
         private struct ImportValue(string filePath, FileType ftype) {
             internal string FilePath { get; set; } = filePath;
             internal FileType FType { get; set; } = ftype;
         }
 
+        private int _offset = 0;
+        private readonly int _limit = 30;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly WpSettingsViewModel _wpSettingsViewModel;
+        private readonly WallpaperIndexService _wallpaperIndexService;
         private List<string> _wallpaperInstallFolders = [];
-        private readonly ConcurrentDictionary<string, int> _uid2idx = [];
         private static readonly Dictionary<string, ArcWindow> _details = [];
         private static readonly Dictionary<string, ArcWindow> _edits = [];
         private static readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];
+        private List<IWpBasicData> _libraryWallpapers = [];
     }
 }

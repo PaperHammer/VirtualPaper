@@ -10,6 +10,7 @@
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:models="using:VirtualPaper.Models.Cores.Interfaces"
     xmlns:localViewModel="using:VirtualPaper.WpSettingsPanel.ViewModels"
+    xmlns:localUtils="using:VirtualPaper.WpSettingsPanel.Utils"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
@@ -23,7 +24,7 @@
             SelectionChanged="NvLocal_SelectionChanged">
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Name="Nav_LibraryContents" 
-                    Content="{markup:I18n Key=WpSettings_NavTitle_LibraryContents}"                    
+                    Content="{markup:I18n Key=WpSettings_NavTitle_LibraryContents}"
                     IsSelected="True"/>
                 <NavigationViewItem x:Name="Nav_ScreenSaver"
                     Content="{markup:I18n Key=WpSettings_NavTitle_ScrSettings}"/>
@@ -31,6 +32,17 @@
 
             <NavigationView.PaneFooter>
                 <StackPanel Orientation="Horizontal" Spacing="2">
+                    <TextBox x:Name="tbSearchName"
+                        Tag="{x:Bind localUtils:FilterKey.LibraryTitle}"
+                        Height="30"
+                        Width="280"
+                        PlaceholderText="Search in local lib by title..."
+                        FontSize="12"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        TextChanged="OnFilterChanged"
+                        IsEnabled="{x:Bind Nav_LibraryContents.IsSelected, Mode=OneWay}"/>
+                    
                     <Button x:Name="AddToLib"
                         Padding="12 5 11 5"
                         Background="Transparent"

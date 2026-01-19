@@ -198,13 +198,13 @@ Scale-down: The size is the same as the one in None or Contain, depending on whi
     <value>Apply</value>
   </data>
   <data name="Text_ApplyToLockBG" xml:space="preserve">
-    <value>Apply to lock screen background</value>
+    <value>Set as lock screen</value>
   </data>
   <data name="Text_RemoveFromLib" xml:space="preserve">
-    <value>Remove from wallpaper lib</value>
+    <value>Delete</value>
   </data>
   <data name="Text_ShowOnDisk" xml:space="preserve">
-    <value>Open the directory where the file is located</value>
+    <value>Open in explorer</value>
   </data>
   <data name="Text_UpdateConfig" xml:space="preserve">
     <value>Update config</value>

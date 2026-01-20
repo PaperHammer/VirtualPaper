@@ -7,8 +7,10 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:data="using:VirtualPaper.UIComponent.Data"
-    mc:Ignorable="d"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:draft="using:VirtualPaper.Models.DraftPanel"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
     <Page.Resources>
@@ -24,8 +26,7 @@
         </MenuFlyout>
 
         <DataTemplate  x:Key="RecentUsedItemTemplate" x:DataType="draft:RecentUsed">
-            <ListViewItem
-                ContextFlyout="{StaticResource MenuFlyoutRecentUsedItem}">
+            <ListViewItem ContextFlyout="{StaticResource MenuFlyoutRecentUsedItem}">
                 <Grid Margin="0 10 10 10">
                     <StackPanel Spacing="6">
                         <Grid>
@@ -63,9 +64,7 @@
                     <RowDefinition/>
                 </Grid.RowDefinitions>
 
-                <TextBlock
-                    Text="{x:Bind _viewModel.Project_RecentUsed}"
-                    FontSize="20"/>
+                <TextBlock Text="{x:Bind _viewModel.Project_RecentUsed}" FontSize="20"/>
 
                 <TextBox 
                     Grid.Row="1"
@@ -79,8 +78,7 @@
                     VerticalAlignment="Center"
                     TextChanged="OnFilterChanged"/>
 
-                <ListView
-                    x:Name="lvRecentUsed"
+                <ListView x:Name="lvRecentUsed"
                     Grid.Row="2"
                     Margin="0 20 0 0"
                     ItemsSource="{x:Bind _viewModel.RecentUseds}"
@@ -90,18 +88,14 @@
                     ItemClick="RecentUsedsListView_ItemClick"/>
             </Grid>
 
-            <Grid
-                x:Name="StartUseGrid"
-                Grid.Column="2">
+            <Grid x:Name="StartUseGrid"  Grid.Column="2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
                     <RowDefinition/>
                 </Grid.RowDefinitions>
 
-                <TextBlock
-                    Text="{x:Bind _viewModel.Project_StartUp}"
-                    FontSize="20"/>
+                <TextBlock Text="{x:Bind _viewModel.Project_StartUp}" FontSize="20"/>
 
                 <Grid x:Name="gridStartup"
                     Grid.Row="1"
@@ -112,7 +106,7 @@
                         <ColumnDefinition/> 
                     </Grid.ColumnDefinitions>
 
-                    <Button x:Name="btnStartupNew"
+                    <input:ArcButton x:Name="btnStartupNew"
                         Content="新建"
                         HorizontalAlignment="Stretch"
                         Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
@@ -132,18 +126,24 @@
                     Drop="GridDrop_Drop" 
                     DragOver="GridDrop_DragOver"
                     Margin="2 10 2 0"
-                      Height="300"
-                      VerticalAlignment="Top">
+                    Height="300"
+                    VerticalAlignment="Top">
                     <Rectangle 
                         StrokeDashArray="4,4" StrokeThickness="2" 
                         Stroke="{ThemeResource ControlStrongStrokeColorDefaultBrush}" 
                         Width="auto" Height="auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                     <TextBlock 
-                        Text="拖放文件" 
+                        Text="{markup:I18n Key=Text_Drop_Files}"
                         VerticalAlignment="Center"
                         HorizontalAlignment="Center"
                         FontSize="16" 
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <InfoBar x:Name="RunningAsAdminWarning"
+                        Margin="5"
+                        IsClosable="False"
+                        IsOpen="{x:Bind _viewModel.IsElevated}"
+                        Message="{markup:I18n Key=RunningAsAdminWarning}"
+                        Severity="Warning" />
                 </Grid>
             </Grid>
         </Grid>

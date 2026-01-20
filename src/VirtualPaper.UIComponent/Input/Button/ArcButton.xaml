@@ -21,68 +21,54 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="input:ArcButton">
-                    <Grid>
+                    <Grid  x:Name="RootGrid" CornerRadius="{TemplateBinding CornerRadius}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Overlay.Background" Value="White" />
+                                        <Setter Target="Overlay.Opacity" Value="0.1" />
+                                    </VisualState.Setters>
+                                </VisualState>
+
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Overlay.Background" Value="Black" />
+                                        <Setter Target="Overlay.Opacity" Value="0.05" />
+                                    </VisualState.Setters>
+                                </VisualState>
+
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootBorder.Background" Value="{ThemeResource ButtonBackgroundDisabled}" />
+                                        <Setter Target="RootBorder.BorderBrush" Value="{ThemeResource ButtonBorderBrushDisabled}" />
+                                        <Setter Target="Overlay.Opacity" Value="0" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        
                         <Border x:Name="RootBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="{TemplateBinding CornerRadius}" />
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}" />
 
                         <Border x:Name="Overlay"
-                                Background="White"
-                                Opacity="0"
-                                IsHitTestVisible="False"
-                                CornerRadius="{TemplateBinding CornerRadius}" />
+                            Background="White"
+                            Opacity="0"
+                            IsHitTestVisible="False"
+                            CornerRadius="{TemplateBinding CornerRadius}" />
 
-                        <ContentPresenter
-                            x:Name="ContentPresenter"
+                        <ContentPresenter x:Name="ContentPresenter"
                             Content="{TemplateBinding Content}"
                             ContentTemplate="{TemplateBinding ContentTemplate}"
                             Padding="{TemplateBinding Padding}"
                             Foreground="{TemplateBinding Foreground}"
                             HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                             VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-
-                        <VisualStateManager.VisualStateGroups>
-                            <VisualStateGroup x:Name="CommonStates">
-                                <VisualState x:Name="Normal">
-                                    <Storyboard>
-                                        <DoubleAnimation
-                                            Storyboard.TargetName="Overlay"
-                                            Storyboard.TargetProperty="Opacity"
-                                            To="0"
-                                            Duration="0:0:0.08"/>
-                                    </Storyboard>
-                                </VisualState>
-
-                                <VisualState x:Name="PointerOver">
-                                    <Storyboard>
-                                        <DoubleAnimation
-                                            Storyboard.TargetName="Overlay"
-                                            Storyboard.TargetProperty="Opacity"
-                                            To="0.12"
-                                            Duration="0:0:0.08"/>
-                                    </Storyboard>
-                                </VisualState>
-
-                                <VisualState x:Name="Pressed">
-                                    <Storyboard>
-                                        <ObjectAnimationUsingKeyFrames
-                                            Storyboard.TargetName="Overlay"
-                                            Storyboard.TargetProperty="Background">
-                                            <DiscreteObjectKeyFrame Value="Black"/>
-                                        </ObjectAnimationUsingKeyFrames>
-
-                                        <DoubleAnimation
-                                            Storyboard.TargetName="Overlay"
-                                            Storyboard.TargetProperty="Opacity"
-                                            To="0.18"
-                                            Duration="0:0:0.04"/>
-                                    </Storyboard>
-                                </VisualState>
-
-                            </VisualStateGroup>
-                        </VisualStateManager.VisualStateGroups>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

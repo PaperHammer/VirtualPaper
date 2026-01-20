@@ -7,6 +7,7 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 using Windows.ApplicationModel.DataTransfer;
+using UAC = UACHelper.UACHelper;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public class GetStartViewModel {
@@ -21,7 +22,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         public ICommand? RemoveFromListCommand { get; private set; }
         public ICommand? CopyPathCommand { get; private set; }
 
+        public bool IsElevated { get; }
+
         public GetStartViewModel(IUserSettingsClient userSettingsClient) {
+            IsElevated = UAC.IsElevated;
+
             this._userSettingsClient = userSettingsClient;
             InitText();
             InitCollection();

@@ -1037,4 +1037,10 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Lib_NotAnyMore" xml:space="preserve">
     <value>没有更多啦</value>
   </data>
+  <data name="Text_Drop_Files" xml:space="preserve">
+    <value>拖放文件</value>
+  </data>
+  <data name="Add_To_Lib_AddWallpaperDrop" xml:space="preserve">
+    <value>添加壁纸</value>
+  </data>
 </root>

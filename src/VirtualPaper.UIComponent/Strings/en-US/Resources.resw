@@ -1040,4 +1040,7 @@ The following words cannot be used as usernames:
   <data name="Lib_NotAnyMore" xml:space="preserve">
     <value>End of list</value>
   </data>
+  <data name="Text_Drop_Files" xml:space="preserve">
+    <value>Drop files</value>
+  </data>
 </root>

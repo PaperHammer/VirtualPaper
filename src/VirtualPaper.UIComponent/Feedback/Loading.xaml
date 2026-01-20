@@ -21,12 +21,12 @@
             Opacity="0.7"/>
         
         <StackPanel
+            Padding="0 0 18 0"
             Orientation="Vertical"
             VerticalAlignment="Center"
             HorizontalAlignment="Center">
             <Grid Margin="20" HorizontalAlignment="Center">
                 <ProgressRing x:Name="progressRing"
-                    Margin="0 0 20 0"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
                     IsActive="True"
@@ -56,7 +56,7 @@
                     Text="{x:Bind ValueString, Mode=OneWay}"/>
             </Grid>
 
-            <Button x:Name="BtnCancel"
+            <Button x:Name="BtnCancel"                   
                 Margin="20"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"

@@ -31,7 +31,6 @@ using VirtualPaper.WpSettingsPanel.Utils;
 using Windows.Storage;
 using Windows.System.UserProfile;
 using WinUIEx;
-using UAC = UACHelper.UACHelper;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class LibraryContentsViewModel : ObservableObject, IFilterable {
@@ -61,23 +60,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
             InitEvent();
             InitColletions();
-            InitMsg();
             InitOthers();
         }
 
         private void InitOthers() {
             _wallpaperIndexService.Initialize(_wallpaperInstallFolders);
             _wpSettingsViewModel.RegisterLibraryContents(this);
-        }
-
-        private void InitMsg() {
-            if (UAC.IsElevated) {
-                GlobalMessageUtil.ShowWarning(
-                    ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
-                    message: nameof(Constants.I18n.RunningAsAdminWarning),
-                    key: nameof(Constants.I18n.RunningAsAdminWarning),
-                    isNeedLocalizer: true);
-            }
         }
 
         private void InitEvent() {
@@ -407,7 +395,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
                         GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                     }
-                }, cts: ctsImport);
+                }, cts: ctsImport);            
         }
 
         private async Task ImportAsync(List<ImportValue> importValues) {

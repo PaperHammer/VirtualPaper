@@ -1037,4 +1037,7 @@ The following words cannot be used as usernames:
   <data name="Add_To_Lib_AddWallpaperDrop" xml:space="preserve">
     <value>Add Wallpaper</value>
   </data>
+  <data name="Lib_NotAnyMore" xml:space="preserve">
+    <value>End of list</value>
+  </data>
 </root>

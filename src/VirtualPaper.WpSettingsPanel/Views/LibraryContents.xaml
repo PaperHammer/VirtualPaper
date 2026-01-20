@@ -169,7 +169,7 @@
             <Grid HorizontalAlignment="Center">
                 <ProgressRing Height="20" Width="20"
                     Visibility="{x:Bind _viewModel.LibLoadingStatus, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Changing}"/>
-                <TextBlock Text="没有更多啦" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                <TextBlock Text="{markup:I18n Key=Lib_NotAnyMore}" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     Visibility="{x:Bind _viewModel.LibLoadingStatus, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Ready}"/>
             </Grid>
         </StackPanel>

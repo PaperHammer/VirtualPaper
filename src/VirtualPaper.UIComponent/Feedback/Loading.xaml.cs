@@ -29,17 +29,18 @@ namespace VirtualPaper.UIComponent.Feedback {
             DependencyProperty.Register(nameof(CtsToken), typeof(CancellationTokenSource), typeof(Loading), new PropertyMetadata(null));
 
         public int TotalValue {
-            get { return (int)GetValue(ImportTotalCntProperty); }
-            set { SetValue(ImportTotalCntProperty, value); }
+            get { return (int)GetValue(TotalValueProperty); }
+            set { SetValue(TotalValueProperty, value); }
         }
-        public static readonly DependencyProperty ImportTotalCntProperty =
+        public static readonly DependencyProperty TotalValueProperty =
             DependencyProperty.Register(nameof(TotalValue), typeof(int), typeof(Loading), new PropertyMetadata(0, InitValue));
 
+        // DependencyProperty 和 属性名一定要前缀相同，否则会不生效
         public int CurValue {
-            get { return (int)GetValue(ImportValueProperty); }
-            set { SetValue(ImportValueProperty, value); }
+            get { return (int)GetValue(CurValueProperty); }
+            set { SetValue(CurValueProperty, value); }
         }
-        public static readonly DependencyProperty ImportValueProperty =
+        public static readonly DependencyProperty CurValueProperty =
             DependencyProperty.Register(nameof(CurValue), typeof(int), typeof(Loading), new PropertyMetadata(0, UpdateValue));
 
         private string ValueString {
@@ -60,12 +61,12 @@ namespace VirtualPaper.UIComponent.Feedback {
 
         private static void InitValue(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             Loading instance = (Loading)d;
-            instance.ValueString = $"0 / {(int)e.NewValue}";
+            instance.ValueString = $"0 / {e.NewValue}";
         }
 
         private static void UpdateValue(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             Loading instance = (Loading)d;
-            instance.ValueString = $"{(int)e.NewValue} / {instance.TotalValue}";
+            instance.ValueString = $"{e.NewValue} / {instance.TotalValue}";
         }
     }
 }

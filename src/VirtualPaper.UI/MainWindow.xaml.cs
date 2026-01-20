@@ -94,7 +94,6 @@ namespace VirtualPaper.UI {
             LightAndDarkButton.IsEnabled = false;
             try {
                 var nxTheme = GetNextTheme(ArcThemeUtil.MainWindowAppTheme);
-                //await SetThemeAsync(nxTheme);
                 UpdateThemeFromThemeBtnClick(nxTheme);
                 _userSettings.Settings.ApplicationTheme = nxTheme;
                 _userSettings.SaveAsync<ISettings>();

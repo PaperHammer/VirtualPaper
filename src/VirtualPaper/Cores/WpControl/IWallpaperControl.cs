@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files.Models;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Cores.WpControl {
@@ -37,15 +37,14 @@ namespace VirtualPaper.Cores.WpControl {
         #region wallpaper actions
         void CloseAllWallpapers();
         void CloseWallpaper(IMonitor monitor);
-        //void CloseAllPreview();
         (string?, RuntimeType?) GetPrimaryWpFilePathRType();
         IWpMetadata GetWallpaperByFolderPath(string folderPath, string monitorContent, string rtype);
         IWpBasicData GetWpBasicDataByForlderPath(string folderPath);
         bool AdjustWallpaper(string monitorDeviceId, CancellationToken token = default);
-        string? GetPlayerStartArgs(string monitorDeviceId, IWpPlayerData wpPlayingData, CancellationToken toke = default);
+        string? GetPlayerStartArgs(IWpPlayerData wpPlayingData, CancellationToken toke = default);
         Task ResetWallpaperAsync();
         Grpc_RestartWallpaperResponse RestoreWallpaper();
-        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, CancellationToken token = default, bool fromPreview = false);
+        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, bool fromPreview = false, CancellationToken token = default);
         void SeekWallpaper(IWpPlayerData data, float seek, PlaybackPosType type);
         void SeekWallpaper(IMonitor monitor, float seek, PlaybackPosType type);
         void SendMessageWallpaper(IMonitor monitor, string folderPath, string ipcMsg);

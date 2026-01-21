@@ -20,8 +20,7 @@
                 IsHitTestVisible="False"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
-                NavigationCompleted="Webview2_NavigationCompleted"
-                PreviewKeyDown="Webview2_PreviewKeyDown"/>
+                NavigationCompleted="Webview2_NavigationCompleted"/>
 
             <Grid x:Name="InputLayer"
                 Background="Transparent"

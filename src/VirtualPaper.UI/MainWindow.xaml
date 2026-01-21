@@ -77,7 +77,7 @@
 
                 <navi:ArcNavigationView.FooterMenuItems>
                     <!--<NavigationViewItem x:Name="Nav_Account" 
-                        Content="{Binding SidebarAccount}"                         
+                        Content="{Binding SidebarAccount}"
                         Icon="Contact" />-->
                     <NavigationViewItem x:Name="Nav_AppSettings">
                         <NavigationViewItem.ContentTemplate>

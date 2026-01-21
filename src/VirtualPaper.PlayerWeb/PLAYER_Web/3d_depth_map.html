@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlayerWeb3DDepthMap</title>
+    <script src="js/base.js"></script>
+    <script type="module" src="js/3d_depth/run.js"></script>
+</head>
+
+<body>
+    <div class="root" draggable="false">
+        <div id="content" class="background" draggable="false"></div>
+    </div>        
+</body>
+
+</html>
+
+<style>
+    html,
+    body {
+        overflow: hidden;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .root {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        perspective: 1000px;
+    }
+</style>

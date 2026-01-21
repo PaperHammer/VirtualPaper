@@ -2,13 +2,12 @@ using System.Text.Json;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using GrpcDotNetNamedPipes;
-using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.Models.Cores.Interfaces;
 using static VirtualPaper.Common.Errors;
@@ -49,6 +48,10 @@ namespace VirtualPaper.Grpc.Client {
             });
         }
 
+        public async Task CloseAllPreviewAsync() {
+            await _client.CloseAllPreviewAsync(new Empty());
+        }
+
         public async Task<Grpc_WpMetaData> GetWallpaperAsync(string folderPath, string monitorContent, string rtype) {
             Grpc_WpMetaData grpc_data = await _client.GetWallpaperAsync(
                 new Grpc_GetWallpaperRequest() {
@@ -70,13 +73,12 @@ namespace VirtualPaper.Grpc.Client {
             return response.IsOk;
         }
 
-        public async Task<string> GetPlayerStartArgsAsync(string monitorDeviceId, IWpBasicData data, RuntimeType rtype, CancellationToken token) {
+        public async Task<string> GetPlayerStartArgsAsync(IWpBasicData data, RuntimeType rtype, CancellationToken token) {
             Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
 
             var response = await _client.GetPlayerStartArgsAsync(
                 new Grpc_GetPlayerStartArgsRequest() {
-                    WpPlayerData = wpPlayerdata,
-                    MonitorDeviceId = monitorDeviceId
+                    WpPlayerData = wpPlayerdata
                 },
                 cancellationToken: token);
 
@@ -289,7 +291,6 @@ namespace VirtualPaper.Grpc.Client {
             GC.SuppressFinalize(this);
         }
         #endregion
-
 
         private readonly List<IWpMetadata> _wallpapers = [];
         private readonly NamedPipeChannel _channel;

@@ -16,8 +16,7 @@
         </Grid.RowDefinitions>
 
         <SelectorBar x:Name="SelBar"
-            SelectionChanged="SelectorBar_SelectionChanged"
-            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+            SelectionChanged="SelectorBar_SelectionChanged"            
             HorizontalAlignment="Stretch"/>
 
         <Frame x:Name="ContentFrame" Grid.Row="1"/>

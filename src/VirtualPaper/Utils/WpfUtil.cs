@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using VirtualPaper.Common.Utils;
@@ -10,7 +10,7 @@ using Size = System.Windows.Size;
 namespace VirtualPaper.Utils {
     public class WpfUtil {
         /// <summary>
-        /// makes program window handle child of window ui framework element.
+        /// makes program window _handle child of window ui framework element.
         /// </summary>
         /// <param name="window"></param>
         /// <param name="pgmHandle"></param>

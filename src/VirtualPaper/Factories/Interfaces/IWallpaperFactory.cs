@@ -3,7 +3,7 @@ using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Factories.Interfaces {
     public interface IWallpaperFactory {
-        IWpPlayer CreatePlayer(IWpPlayerData data, IMonitor monitor, bool isPreview = false);
+        IWpPlayer CreatePlayer(IWpPlayerData data, IMonitor? monitor, bool isPreview = false);
         string? CreatePlayerStartArgs(IWpPlayerData data, bool isPreview = false);
     }
 }

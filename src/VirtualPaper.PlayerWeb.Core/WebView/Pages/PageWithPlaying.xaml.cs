@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,8 +8,6 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Events.EffectValue.Base;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
-using VirtualPaper.Common.Utils.IPC;
-using VirtualPaper.Common.Utils.IPC.Interfaces;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.PlayerWeb.Core.Utils;
@@ -27,19 +24,10 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class PageWithPlaying : ArcPage, IEffectService,
-        IIpcSubscribe<VirtualPaperApplyCmd>,
-        IIpcSubscribe<VirtualPaperReloadCmd>,
-        IIpcSubscribe<VirtualPaperSuspendCmd>,
-        IIpcSubscribe<VirtualPaperResumeCmd>,
-        IIpcSubscribe<VirtualPaperMutedCmd>,
-        IIpcSubscribe<VirtualPaperUpdateCmd>,
-        IIpcSubscribe<VirtualPaperParallaxSuspendCmd>,
-        IIpcSubscribe<VirtualPaperParallaxResumeCmd> {
+    public sealed partial class PageWithPlaying : ArcPage, IEffectService {
         public override ArcPageContext Context { get; }
         public override Type PageType => typeof(PageWithPlaying);
         protected override bool IsMultiInstance => true;
-        public NavigationPayload? Payload { get; private set; }
 
         public PageWithPlaying() {
             this.InitializeComponent();
@@ -51,10 +39,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             Payload = payload;
             if (payload != null) {
                 payload.TryGet(NaviPayLoadKey.StartArgs.ToString(), out _startArgs);
-                // 作为运行时桌面壁纸使用
-                if (payload.TryGet(NaviPayLoadKey.IIpcObserver.ToString(), out IIpcObserver ipcObserver)) {
-                    ipcObserver.Register(this);
-                }
                 // 预览窗口使用
                 payload.TryGet(NaviPayLoadKey.ArcWindow.ToString(), out _arcWindow);
                 payload.Set(NaviPayLoadKey.IEffectService.ToString(), this);
@@ -90,7 +74,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
 
         private void InputLayer_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
-            Interlocked.CompareExchange(ref _isPointerInsidePage, 1, 0);
+            _isPointerInsidePage = true;
         }
 
         private void InputLayer_PointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
@@ -101,85 +85,15 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
 
         private void InputLayer_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
-            Interlocked.CompareExchange(ref _isPointerInsidePage, 0, 1);
-        }
-
-        #region ipc
-        ValueTask IIpcSubscribe<VirtualPaperApplyCmd>.OnIpcAsync(VirtualPaperApplyCmd message) {
-            _scriptExecutor?.EnqueueEvent(Fileds.ApplyFilter);
-            _scriptExecutor?.EnqueueEvent(Fileds.Play);
-            return ValueTask.CompletedTask;
-        }
-
-        ValueTask IIpcSubscribe<VirtualPaperReloadCmd>.OnIpcAsync(VirtualPaperReloadCmd message) {
-            CrossThreadInvoker.InvokeOnUIThread(() => {
-                Webview2?.Reload();
-            });
-            return ValueTask.CompletedTask;
-        }
-
-        ValueTask IIpcSubscribe<VirtualPaperSuspendCmd>.OnIpcAsync(VirtualPaperSuspendCmd message) {
-            HandlePlaybackCommand(true);
-            return ValueTask.CompletedTask;
-        }
-
-        ValueTask IIpcSubscribe<VirtualPaperResumeCmd>.OnIpcAsync(VirtualPaperResumeCmd message) {
-            HandlePlaybackCommand(true);
-            return ValueTask.CompletedTask;
-        }
-
-        ValueTask IIpcSubscribe<VirtualPaperMutedCmd>.OnIpcAsync(VirtualPaperMutedCmd message) {
-            HandleMuteCommand(message);
-            return ValueTask.CompletedTask;
-        }
-
-        ValueTask IIpcSubscribe<VirtualPaperUpdateCmd>.OnIpcAsync(VirtualPaperUpdateCmd message) {
-            HandleUpdateCommand(message);
-            return ValueTask.CompletedTask;
-        }
-
-        ValueTask IIpcSubscribe<VirtualPaperParallaxSuspendCmd>.OnIpcAsync(VirtualPaperParallaxSuspendCmd message) {
-            _isFocusOnDesk = false;
-            return ValueTask.CompletedTask;
-        }
-
-        ValueTask IIpcSubscribe<VirtualPaperParallaxResumeCmd>.OnIpcAsync(VirtualPaperParallaxResumeCmd message) {
-            _isFocusOnDesk = true;
-            return ValueTask.CompletedTask;
-        }
-
-        private void HandlePlaybackCommand(bool pause) {
-            _scriptExecutor?.EnqueueEvent(Fileds.PlaybackChanged, pause);
-        }
-
-        private void HandleMuteCommand(VirtualPaperMutedCmd muted) {
-            _scriptExecutor?.EnqueueEvent(Fileds.AudioMuteChanged, muted.IsMuted);
-        }
-
-        private void HandleUpdateCommand(VirtualPaperUpdateCmd update) {
-            if (_startArgs == null) return;
-
-            if (_startArgs.FilePath != update.FilePath) {
-                _startArgs.FilePath = update.FilePath;
-                _startArgs.RuntimeType = update.RType;
-                _startArgs.WpEffectFilePathTemplate = update.WpEffectFilePathTemplate;
-                _startArgs.WpEffectFilePathTemporary = update.WpEffectFilePathTemporary;
-                _startArgs.WpEffectFilePathUsing = update.WpEffectFilePathUsing;
-                _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
-            }
-
-            LoadWpEffect(_startArgs.WpEffectFilePathUsing);
-        }
-        #endregion
+            _isPointerInsidePage = false;
+        }        
 
         #region effect change from ui
         public void UpdateEffectValue(EffectValueChanged<double> e) {
-            //ExecuteScript(Fileds.PropertyListener, e.PropertyName, e.Value);
             _scriptExecutor?.EnqueueEvent(Fileds.PropertyListener, e.PropertyName, e.Value);
         }
 
         public void UpdateEffectValue(EffectValueChanged<int> e) {
-            //ExecuteScript(Fileds.PropertyListener, e.PropertyName, e.Value);
             _scriptExecutor?.EnqueueEvent(Fileds.PropertyListener, e.PropertyName, e.Value);
         }
 
@@ -191,11 +105,11 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
         #endregion
 
-        #region parallax
-        private void StartParallaxLoop() {
+        #region parallax        
+        private void StartParallax() {
             if (Interlocked.CompareExchange(ref _isParallaxRunning, 1, 0) == 1) return;
 
-            Task.Run(() => {
+            Task.Run(async () => {
                 try {
                     int lastX = int.MinValue;
                     int lastY = int.MinValue;
@@ -204,12 +118,8 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                     while (_isParallaxRunning == 1) {
                         int x = (int)_mousePos.X;
                         int y = (int)_mousePos.Y;
-#if DEBUG
-                        //Debug.WriteLine($"mouse at {_mousePos}");
-#endif
-                        bool inside = _isPointerInsidePage == 1;
-                        if (inside) {
-                            //ExecuteScript(Fileds.MouseMove, x, y);
+
+                        if ((_arcWindow?.IsActive ?? false) && _isPointerInsidePage) {
                             _scriptExecutor?.EnqueueState(
                                 key: "MouseMove",
                                 functionName: Fileds.MouseMove,
@@ -223,19 +133,15 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                                 key: "MouseOut",
                                 functionName: Fileds.MouseOut
                             );
-                            //ExecuteScript(Fileds.MouseOut);
                         }
 
-                        lastInside = inside;
-                        //await Task.Delay(42, _parallaxCts.Token);
+                        lastInside = _isPointerInsidePage;
                     }
-                }
-                catch (Exception ex) when (ex is OperationCanceledException) {
                 }
                 catch (Exception e) {
                     ArcLog.GetLogger<PageWithPlaying>().Error("[Parallax] Loop error", e);
                 }
-            }, _parallaxCts.Token);
+            });
         }
 
         private void StopParallax() {
@@ -244,15 +150,11 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                 key: "MouseOut",
                 functionName: Fileds.MouseOut
             );
-            //ExecuteScript(Fileds.MouseOut);
         }
 
-        private void UpdateParallaxState() {
-            bool enable = _isParallaxOn &&
-                ((_startArgs.IsPreview && (_arcWindow?.IsActive ?? false)) || (!_startArgs.IsPreview && _isFocusOnDesk));
-
-            if (enable) {
-                StartParallaxLoop();
+        private void RunParallax(bool isParallaxOn) {
+            if (isParallaxOn) {
+                StartParallax();
             }
             else {
                 StopParallax();
@@ -265,44 +167,65 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             var env = await CoreWebView2Environment.CreateWithOptionsAsync(null, Constants.CommonPaths.TempWebView2Dir, _environmentOptions);
             await Webview2.EnsureCoreWebView2Async(env);
 
-            Webview2.CoreWebView2.ProcessFailed += (s, e) => {
-                ArcLog.GetLogger<PageWithPlaying>().Error(e.Reason.ToString());
-            };
+            Webview2.CoreWebView2.ProcessFailed += CoreWebView2_ProcessFailed;
+            Webview2.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
 
             string playingFile = GetPlayingFile();
             string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, playingFile).Replace("\\", "/");
-            Webview2.CoreWebView2.Navigate(new Uri(fullPath).AbsoluteUri);
+            Webview2.CoreWebView2.Navigate(new Uri(fullPath).AbsoluteUri);            
+        }
+
+        private void CoreWebView2_ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e) {
+            // Expected behavior: DebugActiveProcess(CEF_D3DRenderingSubProcess)
+            // Ref: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2processfailedkind
+            if (e.Reason == CoreWebView2ProcessFailedReason.Unresponsive)
+                return;
+
+            ArcLog.GetLogger<PageWithPlaying>().Error($"CoreWebView2 process failed: {e.Reason}");
+        }
+
+        private void CoreWebView2_DownloadStarting(object? sender, CoreWebView2DownloadStartingEventArgs e) {
+            // Cancel user requested downloads.
+            e.Cancel = true;
         }
 
         private void Webview2_NavigationCompleted(WebView2 sender, CoreWebView2NavigationCompletedEventArgs args) {
+            if (!args.IsSuccess) {
+                ArcLog.GetLogger<PageWithPlaying>().Error($"WebView navigation failed: {args.WebErrorStatus}");
+                return;
+            }
+
             switch (_startArgs.RuntimeType) {
                 case "RImage":
                 case "RVideo":
                     UpdateRectToWebview();
-                    //ExecuteScript(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
                     _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
                     break;
                 case "RImage3D":
                     UpdateRectToWebview();
-                    //ExecuteScript(Fileds.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
                     _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
                     break;
                 default:
                     break;
             }
             LoadWpEffect(_startArgs.WpEffectFilePathUsing);
-            //ExecuteScript(Fileds.Play);
             _scriptExecutor?.EnqueueEvent(Fileds.Play);
 
 #if DEBUG
+            Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
+            Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
             Webview2.CoreWebView2.OpenDevToolsWindow();
+#else
+            // Don't allow contextmenu and devtools.
+            Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+            Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
 #endif
 
             _loadedTcs.TrySetResult();
         }
 
-        private void Webview2_PreviewKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e) {
-            e.Handled = true;  // 阻止键盘操作
+        private void CoreWebView2_ProcessFailed(CoreWebView2 sender, CoreWebView2ProcessFailedEventArgs args) {
+            ArcLog.GetLogger<PageWithPlaying>().Error(args.Reason.ToString());
         }
         #endregion
 
@@ -349,8 +272,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         private void ExecuteCheckBoxSet(string propertyName, bool val) {
             switch (propertyName) {
                 case "Parallax":
-                    _isParallaxOn = val;
-                    UpdateParallaxState();
+                    RunParallax(val);
                     break;
                 default:
                     break;
@@ -358,12 +280,8 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
 
         private void OnUnloaded() {
-            _ctsConsoleIn?.Cancel();
-            _parallaxCts.Cancel();
-            if (Payload != null && Payload.TryGet(NaviPayLoadKey.IIpcObserver.ToString(), out IIpcObserver ipcObserver)) {
-                ipcObserver.Register(this);
-            }
-            CrossThreadInvoker.InvokeOnUIThread(() => {
+            Payload = null;
+            CrossThreadInvoker.InvokeOnUIThread(() => {                
                 Webview2?.Close();
             });
         }
@@ -372,17 +290,13 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         private WebViewScriptExecutor? _scriptExecutor;
         private StartArgsWeb _startArgs = null!;
         private ArcWindow? _arcWindow;
-        private bool _isParallaxOn = false;
-        private bool _isFocusOnDesk;
         private Point _mousePos;
         private Rect _pageRegion;
-        private volatile int _isParallaxRunning = 0; // 0 = stopped, 1 = running        
-        private volatile int _isPointerInsidePage; // 0 = false, 1 = true   
-        private static readonly CancellationTokenSource _ctsConsoleIn = new();
+        private volatile int _isParallaxRunning = 0; // 0 = stopped, 1 = running
+        private bool _isPointerInsidePage;
         private readonly TaskCompletionSource _loadedTcs = new();
-        private readonly CancellationTokenSource _parallaxCts = new();
         private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
-            AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1"
+            AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1 --autoplay-policy=no-user-gesture-required "
         }; // workaround: avoid cache
     }
 }

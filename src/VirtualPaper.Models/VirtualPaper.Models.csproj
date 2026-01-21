@@ -9,14 +9,14 @@
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
+	</ItemGroup>
+
 	<!--NETSDK1152-->
 	<!--ref: https://learn.microsoft.com/zh-cn/dotnet/core/compatibility/sdk/6.0/duplicate-files-in-output-->
 	<!--<PropertyGroup>
 		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
 	</PropertyGroup>-->
-
-	<ItemGroup>
-		<ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
-	</ItemGroup>
 
 </Project>

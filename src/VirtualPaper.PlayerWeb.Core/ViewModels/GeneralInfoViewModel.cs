@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Mvvm;
 
@@ -199,30 +198,24 @@ namespace VirtualPaper.PlayerWeb.Core.ViewModels {
 
         #endregion
 
-        public GeneralInfoViewModel(string? wpBasicDataFilePath) {
-            this._wpBasicDataFilePath = wpBasicDataFilePath;
-
-            InitData();
+        public GeneralInfoViewModel(WpBasicData? wpBasicData) {
+            InitData(wpBasicData);
         }
 
-        private async void InitData() {
-            if (_wpBasicDataFilePath == null) return;
+        private async void InitData(WpBasicData? wpBasicData) {
+            if (wpBasicData == null) return;
 
-            _wpBasicData ??= await JsonSaver.LoadAsync<WpBasicData>(_wpBasicDataFilePath, WpBasicDataContext.Default);
-            Title = _wpBasicData.Title;
-            Desc = _wpBasicData.Desc;
-            Authors = _wpBasicData.Authors;
-            Tags = _wpBasicData.Tags;
-            //Rating = _wpBasicData.Rating;
+            Title = wpBasicData.Title;
+            Desc = wpBasicData.Desc;
+            Authors = wpBasicData.Authors;
+            Tags = wpBasicData.Tags;
+            //Rating = wpBasicData.Rating;
 
-            Resolution = _wpBasicData.Resolution;
-            AspectRatio = _wpBasicData.AspectRatio;
-            FileExtension = _wpBasicData.FileExtension;
-            FileSize = _wpBasicData.FileSize;
-            VersionInfo = $"APP {_wpBasicData.AppInfo.AppVersion} · Feature {_wpBasicData.AppInfo.FileVersion}";
+            Resolution = wpBasicData.Resolution;
+            AspectRatio = wpBasicData.AspectRatio;
+            FileExtension = wpBasicData.FileExtension;
+            FileSize = wpBasicData.FileSize;
+            VersionInfo = $"App {wpBasicData.AppInfo.AppVersion} - Feature {wpBasicData.AppInfo.FileVersion}";
         }
-
-        private WpBasicData? _wpBasicData;
-        private readonly string? _wpBasicDataFilePath;
     }
 }

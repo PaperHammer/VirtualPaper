@@ -71,14 +71,14 @@ namespace VirtualPaper.UIComponent.Utils {
                 var actualTheme = context.ActualTheme;
                 themeKey = actualTheme switch {
                     ElementTheme.Dark or ElementTheme.Light => actualTheme.ToString(),
-                    _ => ArcWindowManager.MainWindowRootFe.ActualTheme == ElementTheme.Dark ? "Dark" : "Light"
+                    _ => ArcWindowManager.MainWindowRootFe?.ActualTheme == ElementTheme.Dark ? "Dark" : "Light"
                 };
             }
             else {
                 // 没有上下文时，用全局偏好
                 themeKey = MainWindowAppTheme switch {
                     AppTheme.Dark or AppTheme.Light => MainWindowAppTheme.ToString(),
-                    _ => ArcWindowManager.MainWindowRootFe.ActualTheme == ElementTheme.Dark ? "Dark" : "Light",
+                    _ => ArcWindowManager.MainWindowRootFe?.ActualTheme == ElementTheme.Dark ? "Dark" : "Light",
                 };
             }
 
@@ -119,7 +119,7 @@ namespace VirtualPaper.UIComponent.Utils {
             if (MainWindowAppTheme != AppTheme.Auto)
                 return MainWindowAppTheme;
 
-            return ArcWindowManager.MainWindowRootFe.ActualTheme.ToAppTheme();
+            return ArcWindowManager.MainWindowRootFe?.ActualTheme.ToAppTheme() ?? AppTheme.Light;
         }
 
         internal static void SetMainWindowAppTheme(AppTheme appTheme) {

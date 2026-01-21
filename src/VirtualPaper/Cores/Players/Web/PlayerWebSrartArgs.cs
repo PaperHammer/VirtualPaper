@@ -5,10 +5,10 @@ using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Cores.Players.Web {
-    record PlayerWebSrartArgs(IWpPlayerData Data, bool isPreview) {
-        public string GetStartArgs() {
+    record PlayerWebSrartArgs(IWpPlayerData Data, bool IsPreview, Dictionary<string, object>? extraFields = null) {
+        public string ToJson() {
             var args = new StartArgsWeb() {
-                IsPreview = isPreview,
+                IsPreview = this.IsPreview,
 
                 FilePath = Data.FilePath,
                 WpBasicDataFilePath = Path.Combine(Data.FolderPath, Constants.Field.WpBasicDataFileName),
@@ -26,6 +26,9 @@ namespace VirtualPaper.Cores.Players.Web {
                 SystemBackdrop = App.UserSettings.Settings.SystemBackdrop,
                 ApplicationTheme = App.UserSettings.Settings.ApplicationTheme,
                 Language = App.UserSettings.Settings.Language,
+
+                Extra = JsonSerializer.Serialize(extraFields),
+                IsDebug = false,
             };
 
             var json = JsonSerializer.Serialize(args, StartArgsWebContext.Default.StartArgsWeb);

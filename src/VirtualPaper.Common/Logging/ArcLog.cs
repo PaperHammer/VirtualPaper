@@ -34,65 +34,46 @@ namespace VirtualPaper.Common.Logging {
         [Conditional("DEBUG")]
         private void WriteDebugLine(string level, string? message) {
             Console.WriteLine($"[{level}] ({_inner.Name}): {message}");
-            System.Diagnostics.Debug.WriteLine($"[{level}] ({_inner.Name}): {message}");
         }
 
         public void Info(string message) {
-#if DEBUG
             WriteDebugLine("INFO", message);
-#endif
             _inner.Info(message);
         }
 
         [Conditional("DEBUG")]
         public void Debug(string message) {
-#if DEBUG
             WriteDebugLine("DEBUG", message);
-#endif
             _inner.Debug(message);
         }
 
         public void Warn(string message) {
-#if DEBUG
             WriteDebugLine("WARN", message);
-#endif
             _inner.Warn(message);
         }
 
         public void Error(string message, Exception? ex = null) {
-#if DEBUG
-            WriteDebugLine("ERROR", message);
-            if (ex != null)
-                System.Diagnostics.Debug.WriteLine(ex);
-#endif
-            _inner.Error(ex, message);
+            WriteDebugLine("ERROR", $"{message}\n\t{ex}");
+            _inner.Error(ex, message);            
         }
 
         public void Error(Exception ex) {
-#if DEBUG
             WriteDebugLine("ERROR", ex.ToString());
-#endif
             _inner.Error(ex);
         }
         
         public void Error(UnhandledError ex) {
-#if DEBUG
             WriteDebugLine("ERROR", ex.ToString());
-#endif
             _inner.Error(ex);
         }
 
         public void Fatal(string message) {
-#if DEBUG
             WriteDebugLine("FATAL", message);
-#endif
             _inner.Fatal(message);
         }
 
         public void Trace(string message) {
-#if DEBUG
             WriteDebugLine("TRACE", message);
-#endif
             _inner.Trace(message);
         }
     }

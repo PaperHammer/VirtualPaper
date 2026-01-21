@@ -33,7 +33,6 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
-using VirtualPaper.Utils;
 using VirtualPaper.Utils.Theme;
 using VirtualPaper.ViewModels;
 using VirtualPaper.Views;
@@ -151,14 +150,6 @@ namespace VirtualPaper {
                 MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
                 return;
             }
-            #endregion
-
-            #region warm-up proc
-            ProcWarmUpUtil.RegisterProcessWarmUp(Constants.WorkingDir.UI, Constants.ModuleName.UI);
-            ProcWarmUpUtil.RegisterProcessWarmUp(Constants.WorkingDir.ScrSaver, Constants.ModuleName.ScrSaver);
-            ProcWarmUpUtil.RegisterProcessWarmUp(Constants.WorkingDir.PlayerWeb, Constants.ModuleName.PlayerWeb);
-
-            ProcWarmUpUtil.Run();
             #endregion
 
             try {
@@ -342,7 +333,8 @@ namespace VirtualPaper {
         public static void ShutDown() {
             try {
                 _ctsPlayback.Cancel();
-                Jobs.Close();
+                Jobs?.Close();
+                Jobs?.Dispose();
                 ((ServiceProvider)Services)?.Dispose();
                 ((App)Current)._grpcServer?.Kill();
                 ((App)Current)._grpcServer?.Dispose();

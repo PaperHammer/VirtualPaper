@@ -11,8 +11,8 @@ namespace VirtualPaper.UIComponent.Utils {
     // rather than "new Window" so we can keep track of all the relevant
     // windows.  In the future, we would like to support this in platform APIs.
     public static partial class ArcWindowManager {
-        public static ArcWindow MainWindow => _mainWindow;
-        public static FrameworkElement MainWindowRootFe => _mainWindow.ContentHost.AppRoot;
+        public static ArcWindow? MainWindow => _mainWindow;
+        public static FrameworkElement? MainWindowRootFe => _mainWindow?.ContentHost?.AppRoot;
         public static IReadOnlyList<ArcWindow> ActiveWindows => [.. _activeWindows.Values];
 
         static public void TrackWindow(ArcWindowManagerKey key, ArcWindow window) {
@@ -27,7 +27,7 @@ namespace VirtualPaper.UIComponent.Utils {
         }
 
         internal static void UpdateWindowVisualState(ArcWindow window) {
-            ArcWindowTitleBarUtil.UpdateTitleBar(window, window.ContentHost.TitleBarChildren, ArcThemeUtil.GetFormatMainWindowTheme(), window.IsActive);
+            ArcWindowTitleBarUtil.UpdateTitleBar(window, ArcThemeUtil.GetFormatMainWindowTheme(), window.IsActive);
             if (window.AppNavView != null) ArcWindowTitleBarUtil.UpdateNaviVisualStates(window.AppNavView, ArcThemeUtil.GetFormatMainWindowTheme(), ArcThemeUtil.MainWindowBackdrop);
             ArcWindowTitleBarUtil.UpdateTitleBarVisualStates(window.ContentHost.AppTitleBar, ArcThemeUtil.GetFormatMainWindowTheme(), ArcThemeUtil.MainWindowBackdrop);
         }
@@ -75,7 +75,7 @@ namespace VirtualPaper.UIComponent.Utils {
             }
         }
 
-        private static ArcWindow _mainWindow = null!;
+        private static ArcWindow? _mainWindow;
         private static readonly Dictionary<ArcWindowManagerKey, ArcWindow> _activeWindows = [];
     }
 

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Models.Cores.Interfaces;
 
@@ -14,9 +14,14 @@ namespace VirtualPaper.Cores {
         Process Proc { get; }
 
         /// <summary>
-        /// Get web-window handle.
+        /// Get real-player-window _handle.
         /// </summary>
-        nint Handle { get; }
+        nint RealPlayerWindowHandle { get; }
+
+        /// <summary>
+        /// Get proc-window
+        /// </summary>
+        nint ProcWindowHandle { get; }
 
         /// <summary>
         /// 壁纸元数据
@@ -28,7 +33,7 @@ namespace VirtualPaper.Cores {
         /// 获取当前正在运行壁纸的显示设备
         /// </summary>
         /// <returns></returns>
-        IMonitor Monitor { get; set; }
+        IMonitor? Monitor { get; set; }
 
         /// <summary>
         /// Wallpaper exit event fired

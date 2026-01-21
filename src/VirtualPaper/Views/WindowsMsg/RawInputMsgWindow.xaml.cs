@@ -218,7 +218,7 @@ namespace VirtualPaper.Views.WindowsMsg {
                                  * lParam = isPressed ? (lParam |= 0u << 31) : (lParam |= 1u << 31); //transition state
                                  */
                                 lParam = isPressed ? lParam : (lParam |= 3u << 30);
-                                Native.PostMessageW(wallpaper.Handle, msg, wParam, (UIntPtr)lParam);
+                                Native.PostMessageW(wallpaper.RealPlayerWindowHandle, msg, wParam, (UIntPtr)lParam);
                             }
                         }
                     }
@@ -259,7 +259,7 @@ namespace VirtualPaper.Views.WindowsMsg {
                             uint lParam = Convert.ToUInt32(mouse.Y);
                             lParam <<= 16;
                             lParam |= Convert.ToUInt32(mouse.X);
-                            Native.PostMessageW(wallpaper.Handle, msg, wParam, (UIntPtr)lParam);
+                            Native.PostMessageW(wallpaper.RealPlayerWindowHandle, msg, wParam, (UIntPtr)lParam);
                         }
                     }
                 }

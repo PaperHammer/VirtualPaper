@@ -1,7 +1,5 @@
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using Microsoft.UI;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
@@ -12,11 +10,10 @@ namespace VirtualPaper.UIComponent.Utils {
     public static class ArcWindowTitleBarUtil {
         public static void UpdateTitleBar(
             ArcWindow window,
-            IReadOnlyList<FrameworkElement> titlebarElements,
             AppTheme theme,
             bool isWindowActive) {
-            UpdateSystemCaptionButtons(window, theme, isWindowActive);
-            UpdateTitleBarChildren(titlebarElements, theme, isWindowActive);
+            UpdateSystemCaptionButtons(window, theme);
+            UpdateTitleBarChildren(window, theme, isWindowActive);
         }
 
         public static void UpdateTitleBarVisualStates(
@@ -33,27 +30,30 @@ namespace VirtualPaper.UIComponent.Utils {
             navView.Background = GetOrCreateBackdropBrush(theme, backdrop);
         }
 
-        private static void UpdateSystemCaptionButtons(Window window, AppTheme theme, bool isActive) {
+        private static void UpdateSystemCaptionButtons(ArcWindow window, AppTheme theme) {
             if (window.AppWindow?.TitleBar == null) return;
+            
+            window.AppWindow.TitleBar.PreferredTheme = theme == AppTheme.Dark ? Microsoft.UI.Windowing.TitleBarTheme.Dark : Microsoft.UI.Windowing.TitleBarTheme.Light;
 
-            var foreground = GetCachedSolidBrush(
-                isActive
-                    ? (theme == AppTheme.Dark ? _activeDarkForeground : _activeLightForeground)
-                    : _inactiveForeground
-            );
+           // var foreground = GetCachedSolidBrush(
+           //    isActive
+           //        ? (theme == AppTheme.Dark ? _activeDarkForeground : _activeLightForeground)
+           //        : _inactiveForeground
+           //);
 
-            window.AppWindow.TitleBar.ButtonForegroundColor = foreground.Color;
-            window.AppWindow.TitleBar.ButtonHoverForegroundColor = foreground.Color;
+           // window.AppWindow.TitleBar.ButtonForegroundColor = foreground.Color;
+           // window.AppWindow.TitleBar.ButtonHoverForegroundColor = foreground.Color;
 
-            window.AppWindow.TitleBar.ButtonHoverBackgroundColor = theme == AppTheme.Dark
-                ? _hoverDarkBackground
-                : _hoverLightBackground;
+           // window.AppWindow.TitleBar.ButtonHoverBackgroundColor = theme == AppTheme.Dark
+           //     ? _hoverDarkBackground
+           //     : _hoverLightBackground;
         }
 
         private static void UpdateTitleBarChildren(
-            IReadOnlyList<FrameworkElement> titlebarElements,
+            ArcWindow window,
             AppTheme theme,
             bool isActive) {
+            var titlebarElements = window.ContentHost.TitleBarChildren;
             if (titlebarElements == null) return;
 
             var activeBrush = GetCachedSolidBrush(
@@ -104,8 +104,8 @@ namespace VirtualPaper.UIComponent.Utils {
         private static readonly Color _activeLightForeground = Color.FromArgb(255, 0, 0, 0);       // 纯黑
         private static readonly Color _activeDarkForeground = Color.FromArgb(255, 255, 255, 255); // 纯白
         private static readonly Color _inactiveForeground = Color.FromArgb(255, 120, 120, 120);   // 非活动灰
-        private static readonly Color _hoverLightBackground = Color.FromArgb(24, 0, 0, 0);         // 浅色悬停
-        private static readonly Color _hoverDarkBackground = Color.FromArgb(24, 255, 255, 255);    // 深色悬停
+        //private static readonly Color _hoverLightBackground = Color.FromArgb(24, 0, 0, 0);         // 浅色悬停
+        //private static readonly Color _hoverDarkBackground = Color.FromArgb(24, 255, 255, 255);    // 深色悬停
 
         // 副标题颜色
         private static readonly Color _subtitleLightColor = Color.FromArgb(255, 102, 102, 102);   // 中灰

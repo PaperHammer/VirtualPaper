@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Windows;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
 
 namespace VirtualPaper.ScreenSaver {
@@ -9,14 +8,6 @@ namespace VirtualPaper.ScreenSaver {
     /// </summary>
     public partial class App : Application {
         public App() {
-            string[] args = Environment.GetCommandLineArgs()[1..];
-
-            // 预热
-            if (args.Length == 1 && args[0].Equals(ProcRun.WarmUp.ToString(), StringComparison.OrdinalIgnoreCase)) {
-                Console.WriteLine("WarmUp OK: module initialized successfully.");
-                Environment.Exit(0);
-                return;
-            }
         }
 
         private void Application_Startup(object sender, StartupEventArgs e) {

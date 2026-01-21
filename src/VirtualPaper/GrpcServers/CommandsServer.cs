@@ -1,10 +1,10 @@
-﻿using System.Windows.Threading;
+using System.Windows.Threading;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Grpc.Service.Commands;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Views;
 using Application = System.Windows.Application;

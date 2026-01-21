@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using VirtualPaper.Common.Events;
 
 namespace VirtualPaper.Common.Utils.IPC {

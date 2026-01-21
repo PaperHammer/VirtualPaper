@@ -73,7 +73,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                     case "Edit":
                         _viewModel.ShowEdit(data);
                         break;
-                    case "PreviewForWeb":
+                    case "Preview":
                         await _viewModel.PreviewAsync(data);
                         break;
                     case "Apply":
@@ -98,8 +98,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private void WallpapersLibView_DragOver(object sender, DragEventArgs e) {
             e.AcceptedOperation = DataPackageOperation.Copy;
-            e.DragUIOverride.Caption = LanguageUtil.GetI18n("Add_To_Lib_AddWallpaperDrop");
-            e.DragUIOverride.IsCaptionVisible = true;
         }
 
         private async void WallpapersLibView_Drop(object sender, DragEventArgs e) {

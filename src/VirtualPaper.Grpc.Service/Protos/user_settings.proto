@@ -1,0 +1,17 @@
+syntax = "proto3";
+package VirtualPaper.Grpc.Service.UserSettings;
+import "google/protobuf/empty.proto";
+import "Protos/common_models.proto";
+
+service Grpc_UserSettingsService {
+	rpc GetWallpaperLayouts (google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_WallpaperLayoutsSettings);
+
+	rpc GetAppRulesSettings (google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_AppRulesSettings);
+	rpc SetAppRulesSettings (VirtualPaper.Grpc.Service.CommonModels.Grpc_AppRulesSettings) returns (google.protobuf.Empty);
+
+	rpc GetSettings (google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_SettingsData);
+	rpc SetSettings (VirtualPaper.Grpc.Service.CommonModels.Grpc_SettingsData) returns (google.protobuf.Empty);
+	
+	rpc GetRecentUseds (google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_RecentUseds);
+	rpc SetRecentUseds (VirtualPaper.Grpc.Service.CommonModels.Grpc_RecentUseds) returns (google.protobuf.Empty);
+}

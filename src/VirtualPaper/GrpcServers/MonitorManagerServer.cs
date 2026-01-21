@@ -1,8 +1,8 @@
-﻿using System.Windows.Threading;
+using System.Windows.Threading;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using VirtualPaper.Cores.Monitor;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.MonitorManager;
 using VirtualPaper.Views;
 using Application = System.Windows.Application;

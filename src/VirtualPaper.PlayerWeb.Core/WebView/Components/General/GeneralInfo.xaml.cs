@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common.Runtime.PlayerWeb;
+using VirtualPaper.Models.Cores;
 using VirtualPaper.PlayerWeb.Core.ViewModels;
 using VirtualPaper.UIComponent.Utils.Extensions;
 
@@ -19,16 +20,16 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
             if (e.Parameter is NavigationPayload payload) {
-                payload.TryGet(NaviPayLoadKey.StartArgs.ToString(), out _startArgs);
+                payload.TryGet(NaviPayLoadKey.IWpBasicData.ToString(), out _wpBasicData);
                 InitViewModel();
             }            
         }
 
         private void InitViewModel() {
-            _viewModel ??= new GeneralInfoViewModel(_startArgs.WpBasicDataFilePath);
+            _viewModel ??= new GeneralInfoViewModel(_wpBasicData);
         }
 
-        private StartArgsWeb _startArgs = null!;
+        private WpBasicData? _wpBasicData;
         private GeneralInfoViewModel _viewModel = null!;
     }
 }

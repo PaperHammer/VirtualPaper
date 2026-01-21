@@ -32,7 +32,7 @@ namespace VirtualPaper.Utils {
         /// <summary>
         /// 捕获窗口，如果不是前台，可以工作
         /// </summary>
-        /// <param name="hWnd">Window handle</param>
+        /// <param name="hWnd">Window _handle</param>
         /// <returns></returns>
         public static Bitmap CaptureWindow(IntPtr hWnd) {
             _ = Native.GetWindowRect(hWnd, out Native.RECT rect);

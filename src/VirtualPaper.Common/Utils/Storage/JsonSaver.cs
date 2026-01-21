@@ -33,7 +33,7 @@ namespace VirtualPaper.Common.Utils.Storage {
                 return await JsonSerializer.DeserializeAsync<T>(stream, combinedLoadOptions);
             }
             catch (Exception ex) {
-                throw new FileAccessException(filePath, "读取", ex);
+                throw new FileAccessException(filePath, "read json", ex);
             }
         }
 
@@ -56,7 +56,7 @@ namespace VirtualPaper.Common.Utils.Storage {
                 await JsonSerializer.SerializeAsync(stream, data, combinedStoreOptions);
             }
             catch (Exception ex) {
-                throw new FileAccessException(filePath, "写入", ex);
+                throw new FileAccessException(filePath, "read json", ex);
             }
         }
 

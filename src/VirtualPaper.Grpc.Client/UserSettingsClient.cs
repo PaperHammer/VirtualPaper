@@ -4,7 +4,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;

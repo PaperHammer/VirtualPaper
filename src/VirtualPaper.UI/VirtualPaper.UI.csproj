@@ -58,14 +58,8 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<DefaultLanguage>zh-cn</DefaultLanguage>
 		<RootNamespace>VirtualPaper.UI</RootNamespace>
-		<ApplicationIcon>virtualpaper.ico</ApplicationIcon>
+		<ApplicationIcon>Assets\virtualpaper.ico</ApplicationIcon>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<Content Include="virtualpaper.ico">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
-	</ItemGroup>
 
 	<ItemGroup>
 		<None Remove="Assets\BadgeLogo.scale-100.png" />
@@ -150,7 +144,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Content Update="Assets\icon-vp-48.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Assets\splashCol.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -217,11 +211,11 @@
 		<Content Update="Assets\ui_components\Dark\theme_auto.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Update="Assets\virtualpaper.ico">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
 		<Content Update="Assets\ui_components\Light\project_create_staticimg_light.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\virtualpaper.ico">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 		<None Update="Players\Web\default.html">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>

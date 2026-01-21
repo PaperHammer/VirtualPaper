@@ -31,7 +31,8 @@ namespace VirtualPaper.UI {
             try {
                 // 保证全局只有一个实例
                 if (!_mutex.WaitOne(TimeSpan.FromSeconds(1), false)) {
-                    ShutDown();
+                    ArcLog.GetLogger<App>().Warn("UI has been running.");
+                    Environment.Exit(0);
                     return;
                 }
             }
@@ -42,15 +43,6 @@ namespace VirtualPaper.UI {
 #endif
             }
             #endregion
-
-            string[] args = Environment.GetCommandLineArgs()[1..];
-
-            // 预热
-            if (args.Length == 1 && args[0].Equals(ProcRun.WarmUp.ToString(), StringComparison.OrdinalIgnoreCase)) {
-                Console.WriteLine("WarmUp OK: module initialized successfully.");
-                Environment.Exit(0);
-                return;
-            }
 
 #if !DEBUG
             if (!SingleInstanceUtil.IsAppMutexRunning(Constants.CoreField.UniqueAppUid)) {

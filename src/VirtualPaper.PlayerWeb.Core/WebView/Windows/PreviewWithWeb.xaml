@@ -9,10 +9,9 @@
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
     mc:Ignorable="d"
-    Width="1400" Height="850"
-    Title="Virtual Paper Preview">
+    Width="1400" Height="850">
 
-    <arc:ArcWindowHost x:Name="MainHost" Title="Virtual Paper Preview">
+    <arc:ArcWindowHost x:Name="MainHost">
         <navi:ArcNavigationContentView x:Name="NaviContent" 
             Loaded="NaviContent_Loaded"
             InfobarMessages="{x:Bind InfobarMessages}"/>

@@ -2,7 +2,7 @@ using Google.Protobuf.WellKnownTypes;
 using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Client.Interfaces;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.ScrCommands;
 
 namespace VirtualPaper.Grpc.Client {

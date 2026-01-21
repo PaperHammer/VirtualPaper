@@ -25,6 +25,8 @@ namespace VirtualPaper.Common.Utils.PInvoke {
         [DllImport("kernel32.dll")]
         public static extern uint GetLastError();
 
+        public static readonly int HWND_BOTTOM = 1;
+
         public const int HWND_TOP = 0;
         public const int HWND_TOPMOST = -1;
         public const uint SWP_NOACTIVATE = 0x0010;
@@ -32,6 +34,7 @@ namespace VirtualPaper.Common.Utils.PInvoke {
         public const uint SWP_NOSIZE = 0x0001;
         public const uint SWP_SHOWWINDOW = 0x0040;
         public const uint SWP_FRAMECHANGED = 0x0020;
+        public const uint SWP_HIDEWINDOW = 0x0080;
 
         public const int GWL_STYLE = -16;
         public const long WS_POPUP = 0x80000000;
@@ -1422,6 +1425,18 @@ namespace VirtualPaper.Common.Utils.PInvoke {
         [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr", SetLastError = true)]
         public static extern IntPtr SetWindowLongPtr64(HandleRef hWnd, int nIndex, IntPtr dwNewLong);
 
+        public static void SetNotVisible(IntPtr hwnd) {
+            var style = GetWindowLongPtr64(hwnd, GWL_STYLE).ToInt64();
+            style &= ~WS_VISIBLE;
+            SetWindowLongPtr64(hwnd, GWL_STYLE, new IntPtr(style));
+        }
+
+        public static void SetVisible(IntPtr hwnd) {
+            var style = GetWindowLongPtr64(hwnd, GWL_STYLE).ToInt64();
+            style |= WS_VISIBLE;
+            SetWindowLongPtr64(hwnd, GWL_STYLE, new IntPtr(style));
+        }
+
         #endregion
         //ref: https://docs.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.marshal.getlastwin32error?view=netframework-4.8
         //[DllImportAttribute("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -1619,7 +1634,7 @@ namespace VirtualPaper.Common.Utils.PInvoke {
 
         [DllImport("user32.dll", EntryPoint = "SetWindowPos", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool SetWindowPos(IntPtr hwnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
+        public static extern bool SetWindowPos(IntPtr hwnd, int hWndInsertAfter, int x, int y, int cx, int cy, int wFlags);
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetDesktopWindow();
@@ -1638,10 +1653,7 @@ namespace VirtualPaper.Common.Utils.PInvoke {
            int flags);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        public static extern bool SystemParametersInfo(
-     int uAction, int uParam, ref int lpvParam,
-     int flags);
-
+        public static extern bool SystemParametersInfo(int uAction, int uParam, ref int lpvParam, int flags);
 
         public static UInt32 SPIF_SENDWININICHANGE = 0x02;
         public static UInt32 SPI_SETDESKWALLPAPER = 20;

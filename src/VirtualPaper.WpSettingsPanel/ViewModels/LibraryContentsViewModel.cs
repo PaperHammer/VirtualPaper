@@ -17,7 +17,7 @@ using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
@@ -240,7 +240,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                             return;
                         }
 
-                        var jsonString = await _wpControlClient.GetPlayerStartArgsAsync(_wpSettingsViewModel.SelectedMonitor.DeviceId, data, rtype, token);
+                        var jsonString = await _wpControlClient.GetPlayerStartArgsAsync(data, rtype, token);
                         var previewWindow = rtype switch {
                             RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo => new PreviewWithWeb(jsonString),
                             _ or RuntimeType.RUnknown => throw new NotImplementedException(),
@@ -395,7 +395,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
                         GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                     }
-                }, cts: ctsImport);            
+                }, cts: ctsImport);
         }
 
         private async Task ImportAsync(List<ImportValue> importValues) {

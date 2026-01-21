@@ -1,9 +1,12 @@
 using System;
+using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
+using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.Models.Cores;
 using VirtualPaper.PlayerWeb.Core.Interfaces;
 using VirtualPaper.PlayerWeb.Core.WebView.Pages;
 using VirtualPaper.UIComponent.Templates;
@@ -28,12 +31,15 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
             _windowKey = new ArcWindowManagerKey(ArcWindowKey.PlayerWebCore, _startArgs.FilePath + _startArgs.RuntimeType);
             this.InitializeComponent();
             InitializeWindow();
+
+            AfterFeReady();
         }
 
         private void NaviContent_Loaded(object sender, RoutedEventArgs e) {
             try {
                 var payload = new NavigationPayload() {
                     [NaviPayLoadKey.StartArgs.ToString()] = _startArgs,
+                    [NaviPayLoadKey.IWpBasicData.ToString()] = _wpBasicData,
                     [NaviPayLoadKey.ArcWindow.ToString()] = this,
                     [NaviPayLoadKey.ApplyService.ToString()] = this,
                 };
@@ -42,6 +48,13 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
             catch (Exception ex) {
                 ArcLog.GetLogger<PageWithPlaying>().Error(ex);
             }
+        }
+        
+        private async void AfterFeReady() {
+            _wpBasicData ??= await JsonSaver.LoadAsync<WpBasicData>(_startArgs.WpBasicDataFilePath, WpBasicDataContext.Default);
+            string windowTitle = !string.IsNullOrEmpty(_wpBasicData.Title) ? $"{_wpBasicData.Title} (Preview)" :
+                (!string.IsNullOrEmpty(_startArgs.FilePath) ? $"{Path.GetFileName(_startArgs.FilePath)} (Preview)" : "Virtual Paper PlayerWeb  (Preview)");
+            this.Title = this.MainHost.Title = windowTitle;
         }
 
         public async ValueTask ApplyAsync(object? context = null) {
@@ -56,5 +69,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
 
         private readonly StartArgsWeb? _startArgs;
         private readonly ArcWindowManagerKey _windowKey;
+        private WpBasicData _wpBasicData;
     }
 }

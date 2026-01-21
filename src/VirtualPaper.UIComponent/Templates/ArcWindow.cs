@@ -22,7 +22,7 @@ namespace VirtualPaper.UIComponent.Templates {
         public abstract ArcWindowManagerKey Key { get; }
         protected PropertyHost PropertyHost => _propertyHost;
         public ObservableCollection<GlobalMsgInfo> InfobarMessages { get; } = [];
-        public bool IsActive { get; private set; } = false;
+        public bool IsActive => _isActive ?? false;
 
         public ArcWindow(AppTheme appTheme = AppTheme.Auto, AppSystemBackdrop systemBackdrop = default) {
             _propertyHost = new();
@@ -36,9 +36,11 @@ namespace VirtualPaper.UIComponent.Templates {
         }
 
         private void ArcWindow_Activated(object sender, WindowActivatedEventArgs args) {
-            var isActive = args.WindowActivationState != WindowActivationState.Deactivated;
-            this.IsActive = isActive;
-            ArcWindowTitleBarUtil.UpdateTitleBar(this, this.ContentHost.TitleBarChildren, ArcThemeUtil.GetFormatMainWindowTheme(), isActive);
+            bool isActive = args.WindowActivationState != WindowActivationState.Deactivated;
+            if (_isActive == isActive) return;
+            _isActive = isActive;
+
+            ArcWindowTitleBarUtil.UpdateTitleBar(this, ArcThemeUtil.GetFormatMainWindowTheme(), isActive);
         }
 
         private void ArcWindow_Closed(object sender, WindowEventArgs args) {
@@ -56,7 +58,7 @@ namespace VirtualPaper.UIComponent.Templates {
         private async void AppRoot_Loaded(object sender, RoutedEventArgs e) {
             _compositor = ElementCompositionPreview.GetElementVisual(this.ContentHost.AppRoot).Compositor;
             _isLoaded = true;
-            await SetThemeAsync();
+            await SetThemeAsync(); // todo 待优化
         }
 
         protected void InitializeWindow() {
@@ -67,7 +69,7 @@ namespace VirtualPaper.UIComponent.Templates {
             }
             SetWindowStartupPosition();
             SetWindowStyle();
-            SetWindowTitleBar();
+            SetWindowTitleBar(); // todo 待优化
         }
 
         #region theme
@@ -134,12 +136,10 @@ namespace VirtualPaper.UIComponent.Templates {
 
         private void SetWindowTitleBar() {
             if (AppWindowTitleBar.IsCustomizationSupported()) {
-                var titleBar = this.AppWindow.TitleBar;
-
                 this.ExtendsContentIntoTitleBar = true;
                 this.SetTitleBar(this.ContentHost.AppTitleBar);
                 this.AppWindow.SetIcon("Assets/virtualpaper.ico");
-                titleBar.PreferredHeightOption = TitleBarHeightOption.Standard;
+                this.AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Standard;
             }
             else {
                 this.ContentHost.AppTitleBar.Visibility = Visibility.Collapsed;
@@ -158,6 +158,7 @@ namespace VirtualPaper.UIComponent.Templates {
 
         private bool _isLoaded;
         private Compositor _compositor = null!;
+        private bool? _isActive = null;
         private readonly PropertyHost _propertyHost;
     }
 

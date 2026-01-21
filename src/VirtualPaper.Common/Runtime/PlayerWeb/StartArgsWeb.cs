@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace VirtualPaper.Common.Runtime.PlayerWeb {
@@ -7,7 +9,7 @@ namespace VirtualPaper.Common.Runtime.PlayerWeb {
     public class StartArgsWeb {
         [JsonPropertyName("isPreview")]
         public bool IsPreview { get; set; }
-        
+
         [JsonPropertyName("filePath")]
         public string? FilePath { get; set; }
 
@@ -37,5 +39,29 @@ namespace VirtualPaper.Common.Runtime.PlayerWeb {
 
         [JsonPropertyName("language")]
         public string? Language { get; set; }
+
+        [JsonPropertyName("extra")]
+        public string? Extra { get; set; }
+        
+        [JsonPropertyName("isDebug")]
+        public bool IsDebug { get; set; }
+    }
+
+    public static class StartArgsWebExtension {
+        public static bool TryGetDataFromExtra<T>(this StartArgsWeb args, string key, out T? res) {
+            res = default;
+            if (string.IsNullOrEmpty(args.Extra)) return false;
+
+            try {
+                var node = JsonNode.Parse(args.Extra);
+                var data = node?[key];
+                res = JsonSerializer.Deserialize<T>(data?.ToJsonString() ?? string.Empty);
+                
+                return res != null;
+            }
+            catch (Exception) { }
+
+            return false;
+        }
     }
 }

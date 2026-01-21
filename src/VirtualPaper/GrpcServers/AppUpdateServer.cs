@@ -3,7 +3,7 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using VirtualPaper.Common.Events;
 using VirtualPaper.Cores.AppUpdate;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.Update;
 
 namespace VirtualPaper.GrpcServers {

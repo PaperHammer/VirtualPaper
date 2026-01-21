@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Context;
@@ -22,6 +23,7 @@ namespace VirtualPaper.UIComponent.Templates {
         /// 该类型是否会存在多个实例（同类型多实例无法使用 ArcPageContext 管理器）
         /// </summary>
         protected virtual bool IsMultiInstance => false;
+        public NavigationPayload? Payload { get; protected set; }
 
         protected ArcPage() {
             this.Unloaded += ArcPage_Unloaded;

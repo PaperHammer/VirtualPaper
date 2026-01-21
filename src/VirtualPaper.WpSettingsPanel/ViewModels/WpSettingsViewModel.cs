@@ -255,11 +255,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         if (SelectedMonitor.ThumbnailPath == string.Empty) {
                             return;
                         }
-
+                        // todo
                         bool isOk = await _wpControlClient.AdjustWallpaperAsync(SelectedMonitor.DeviceId, token);
-                        if (!isOk) {
-                            throw new Exception("Failed to evoke custom adjustment window.");
-                        }
+                        //if (!isOk) {
+                        //    throw new Exception("Failed to evoke custom adjustment window.");
+                        //}
                     }
                     catch (Exception ex) when (
                             ex is OperationCanceledException ||

@@ -18,7 +18,7 @@ using Windows.Storage;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class WpSettingsViewModel : ObservableObject {
-        public ObservableCollection<IMonitor> MonitorThus { get; set; } = [];
+        public ObservableCollection<IMonitor> Monitors { get; set; } = [];
         public List<WpArrangeDataModel> WpArrangements { get; set; } = [];
 
         private int _selectedWpArrangementsIndex = -1;
@@ -29,14 +29,19 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                 _selectedWpArrangementsIndex = value;
                 OnPropertyChanged();
-                UpdateWpArrange(value);                
+                UpdateWpArrange(value);
             }
         }
+       
+        private int _selectedMonitorIndex = 0;
+        public int SelectedMonitorIndex {
+            get => _selectedMonitorIndex;
+            set {
+                if (_selectedMonitorIndex == value) return;
 
-        private IMonitor _selectedMonitor = null!;
-        public IMonitor SelectedMonitor {
-            get => _selectedMonitor;
-            set { if (_selectedMonitor == value) return; _selectedMonitor = value; OnPropertyChanged(); }
+                _selectedMonitorIndex = value;
+                OnPropertyChanged();
+            }
         }
 
         public ICommand? AddToLibCommand { get; private set; }
@@ -86,6 +91,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         private void InitMonitors() {
+            int cachedIndex = SelectedMonitorIndex;
+
             _monitors.Clear();
             switch (_userSettingsClient.Settings.WallpaperArrangement) {
                 case WallpaperArrangement.Per: {
@@ -104,10 +111,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     break;
             }
 
-            MonitorThus.SetRange(_monitors);
-            if (MonitorThus.Count > 0) {
-                SelectedMonitor = MonitorThus[0];
-            }
+            Monitors.SetRange(_monitors);
+            SelectedMonitorIndex = (cachedIndex >= 0 && cachedIndex < _monitors.Count) ? cachedIndex : 0;
         }
 
         private void InitWpArrangments() {
@@ -203,8 +208,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             if (Interlocked.Exchange(ref _canClose, 0) != 1) return;
             (WpCloseCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
-            await _wpControlClient.CloseWallpaperAsync(SelectedMonitor);
-            SelectedMonitor.ThumbnailPath = string.Empty;
+            await _wpControlClient.CloseWallpaperAsync(Monitors[SelectedMonitorIndex]);
+            Monitors[SelectedMonitorIndex].ThumbnailPath = string.Empty;
 
             Interlocked.Exchange(ref _canClose, 1);
             (WpCloseCommand as RelayCommand)?.RaiseCanExecuteChanged();
@@ -220,7 +225,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 message: nameof(Constants.I18n.Dialog_Content_GetMonitorsAsync),
                 key: nameof(Constants.I18n.Dialog_Content_GetMonitorsAsync),
                 isNeedLocalizer: true,
-                extraMsg: $" {MonitorThus.Count}");
+                extraMsg: $" {Monitors.Count}");
             await Task.Delay(3000);
 
             Interlocked.Exchange(ref _canDetect, 1);
@@ -252,11 +257,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     try {
                         await _adjustSemaphoreSlim.WaitAsync(token);
 
-                        if (SelectedMonitor.ThumbnailPath == string.Empty) {
+                        if (Monitors[SelectedMonitorIndex].ThumbnailPath == string.Empty) {
                             return;
                         }
                         // todo
-                        bool isOk = await _wpControlClient.AdjustWallpaperAsync(SelectedMonitor.DeviceId, token);
+                        bool isOk = await _wpControlClient.AdjustWallpaperAsync(Monitors[SelectedMonitorIndex].DeviceId, token);
                         //if (!isOk) {
                         //    throw new Exception("Failed to evoke custom adjustment window.");
                         //}

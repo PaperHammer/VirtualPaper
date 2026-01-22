@@ -189,7 +189,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         }
 
                         Grpc_WpBasicData grpc_basicData = await _wpControlClient.UpdateBasicDataAsync(data.FolderPath, data.FolderName, data.FilePath, data.FType)
-                            ?? throw new Exception("File update failed.");
+                            ?? throw new Exception("Config update failed.");
                         data = DataAssist.GrpcToBasicData(grpc_basicData);
                         UpdateLib(data);
 
@@ -268,7 +268,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         if (rtype == RuntimeType.RUnknown) return;
 
                         Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
-                            _wpSettingsViewModel.SelectedMonitor,
+                            _wpSettingsViewModel.Monitors[_wpSettingsViewModel.SelectedMonitorIndex],
                             data,
                             rtype,
                             token);

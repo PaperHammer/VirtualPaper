@@ -97,8 +97,8 @@
 
                                     <GridView
                                         HorizontalAlignment="Center"
-                                        ItemsSource="{x:Bind _viewModel.MonitorThus}"
-                                        SelectedItem="{x:Bind _viewModel.SelectedMonitor, Mode=TwoWay}">
+                                        ItemsSource="{x:Bind _viewModel.Monitors}"
+                                        SelectedIndex="{x:Bind _viewModel.SelectedMonitorIndex, Mode=TwoWay}">
                                         <GridView.ItemTemplate>
                                             <DataTemplate x:DataType="models:IMonitor">
                                                 <Grid Width="184" Height="120">

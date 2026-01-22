@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
@@ -21,7 +20,6 @@ using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.PlayerWeb.Core;
 using VirtualPaper.PlayerWeb.Core.WebView.Windows;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Templates;
@@ -126,9 +124,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     return;
                 }
 
-                var jsonString = GetStartArgsString(data);
                 var onlyDetailWindow = data.FType switch {
-                    FileType.FImage or FileType.FGif or FileType.FVideo => new OnlyDetails(jsonString, DataConfigTab.GeneralInfo),
+                    FileType.FImage or FileType.FGif or FileType.FVideo => new OnlyDetails(DataConfigTab.GeneralInfo, data),
                     _ => throw new NotImplementedException(),
                 };
                 onlyDetailWindow.Closed += (sender, args) => {
@@ -142,20 +139,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
-        }
-
-        private string GetStartArgsString(IWpBasicData data) {
-            var args = new StartArgsWeb() {
-                FilePath = data.FilePath,
-                WpBasicDataFilePath = Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName),
-                ApplicationTheme = ArcThemeUtil.MainWindowAppTheme,
-                SystemBackdrop = ArcThemeUtil.MainWindowBackdrop,
-                Language = LanguageUtil.CurrentLanguage,
-            };
-
-            var json = JsonSerializer.Serialize(args, StartArgsWebContext.Default.StartArgsWeb);
-
-            return json;
         }
 
         internal void ShowEdit(IWpBasicData data) {

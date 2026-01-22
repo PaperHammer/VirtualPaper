@@ -5,6 +5,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Views;
+using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 
@@ -15,6 +16,7 @@ namespace VirtualPaper.DraftPanel {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
+    [KeepAlive]
     public sealed partial class Draft : ArcPage, IDraftPanelBridge {
         internal static IDraftPanelBridge Instance { get; private set; }
         public override ArcPageContext Context { get; }

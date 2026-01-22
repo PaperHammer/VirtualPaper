@@ -1,5 +1,4 @@
 using System;
-using System.Text.Json;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
@@ -20,26 +19,18 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         public override ArcWindowHost ContentHost => this.MainHost;
         public override ArcWindowManagerKey Key => _windowKey;
 
-        private OnlyDetails(DataConfigTab configTab) {
+        public OnlyDetails(DataConfigTab configTab, IWpBasicData wpBasicData) {
             _configTab = configTab;
             _payload = new NavigationPayload() {
                 [NaviPayLoadKey.StartArgs.ToString()] = _startArgs,
                 [NaviPayLoadKey.AvailableConfigTab.ToString()] = _configTab,
+                [NaviPayLoadKey.IWpBasicData.ToString()] = wpBasicData,
             };
+            var arcKey = configTab == DataConfigTab.GeneralInfo ? ArcWindowKey.PlayerWebCoreOnlyDetails : ArcWindowKey.PlayerWebCoreDetailsEdit;
+            _windowKey = new ArcWindowManagerKey(arcKey, wpBasicData.FilePath);
 
             this.InitializeComponent();
             InitializeWindow();
-        }
-
-        public OnlyDetails(string jsonString, DataConfigTab configTab) : this(configTab) {
-            _startArgs = JsonSerializer.Deserialize<StartArgsWeb>(jsonString);
-            _windowKey = new ArcWindowManagerKey(ArcWindowKey.PlayerWebCoreOnlyDetails, _startArgs.FilePath);
-            _payload[NaviPayLoadKey.StartArgs.ToString()] = _startArgs;
-        }
-
-        public OnlyDetails(DataConfigTab configTab, IWpBasicData wpBasicData) : this(configTab) {
-            _windowKey = new ArcWindowManagerKey(ArcWindowKey.PlayerWebCoreOnlyDetails, wpBasicData.FilePath);
-            _payload[NaviPayLoadKey.IWpBasicData.ToString()] = wpBasicData;
         }
 
         private void NaviContent_Loaded(object sender, RoutedEventArgs e) {

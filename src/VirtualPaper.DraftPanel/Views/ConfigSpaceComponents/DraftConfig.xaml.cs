@@ -14,7 +14,7 @@ using VirtualPaper.Models.DraftPanel;
 namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
     public sealed partial class DraftConfig : Page {
         public DraftConfig() {
-            _viewModel = ObjectProvider.GetRequiredService<DraftConfigViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            _viewModel = ObjectProvider.GetRequiredService<DraftConfigViewModel>(ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
             this.InitializeComponent();
         }

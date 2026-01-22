@@ -19,7 +19,7 @@ namespace VirtualPaper.DraftPanel.Views {
     /// </summary>
     public sealed partial class ConfigSpace : Page, ICardComponent, IDraftPanelBridge {
         public ConfigSpace() {
-            _viewModel = ObjectProvider.GetRequiredService<ConfigSpaceViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
+            _viewModel = ObjectProvider.GetRequiredService<ConfigSpaceViewModel>(ObjectLifetime.Singleton);
             this.DataContext = _viewModel;
             this.InitializeComponent();
             _currentPanel = DraftPanelState.GetStart;

@@ -33,7 +33,7 @@
                         Icon="Library"
                         IsSelected="True">
                     </NavigationViewItem>-->
-                    <NavigationViewItem x:Name="Nav_WpSettings">
+                    <NavigationViewItem x:Name="Nav_WpSettings" IsSelected="True">
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate x:DataType="local:MainWindow">
                                 <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
@@ -43,7 +43,7 @@
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="Nav_Draft" IsSelected="True">
+                    <NavigationViewItem x:Name="Nav_Draft">
                         <!--TODO：IsSelected = true 时，若直接设置 Content 为 非IconElement or 非String 时会报错 -->
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate>

@@ -20,7 +20,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         public override ArcWindowManagerKey Key => _windowKey;
 
         public AdjustConfig(StartArgsWeb startArgs) {
-            _windowKey = new ArcWindowManagerKey(ArcWindowKey.PlayerWebCoreAdjustTool, startArgs.FilePath + startArgs.RuntimeType);
+            _windowKey = new ArcWindowManagerKey(ArcWindowKey.PlayerWebCoreAdjust, startArgs.FilePath + startArgs.RuntimeType);
             this.InitializeComponent();
         }
 

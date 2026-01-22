@@ -82,7 +82,8 @@ namespace VirtualPaper.UIComponent.Utils {
     public enum ArcWindowKey {
         Main,
         PlayerWebCore,
-        PlayerWebCoreAdjustTool,
+        PlayerWebCoreAdjust,
         PlayerWebCoreOnlyDetails,
+        PlayerWebCoreDetailsEdit,
     }
 }

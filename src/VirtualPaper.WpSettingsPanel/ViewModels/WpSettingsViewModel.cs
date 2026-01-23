@@ -7,14 +7,18 @@ using System.Windows.Input;
 using Grpc.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.PlayerWeb.Core.WebView.Windows;
+using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.Utils;
 using VirtualPaper.WpSettingsPanel.Views;
 using Windows.Storage;
+using WinUIEx;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class WpSettingsViewModel : ObservableObject {
@@ -243,6 +247,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             (WpIdentifyCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
+        // todo
         internal async void Adjust() {
             if (Interlocked.Exchange(ref _canAdjust, 0) != 1) return;
             (WpAdjustCommand as RelayCommand)?.RaiseCanExecuteChanged();
@@ -255,30 +260,31 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             await loadingCtx.RunAsync(
                 operation: async token => {
                     try {
-                        await _adjustSemaphoreSlim.WaitAsync(token);
-
                         if (Monitors[SelectedMonitorIndex].ThumbnailPath == string.Empty) {
                             return;
                         }
-                        // todo
-                        bool isOk = await _wpControlClient.AdjustWallpaperAsync(Monitors[SelectedMonitorIndex].DeviceId, token);
-                        //if (!isOk) {
-                        //    throw new Exception("Failed to evoke custom adjustment window.");
-                        //}
-                    }
-                    catch (Exception ex) when (
-                            ex is OperationCanceledException ||
-                            (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                        GlobalMessageUtil.ShowCanceled(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)));
-                        return;
+
+                        if (_adjusts.TryGetValue(Monitors[SelectedMonitorIndex].DeviceId, out var adjust)) {
+                            adjust.Activate();
+                            return;
+                        }
+
+                        string monitorId = Monitors[SelectedMonitorIndex].DeviceId;
+                        var jsonString = await _wpControlClient.GetPlayerStartArgsByMonitorIdAsync(monitorId, token);
+                        var adjustWindow = new AdjustConfig(jsonString);
+                        adjustWindow.Closed += (sender, args) => {
+                            _adjusts.Remove(monitorId);
+                        };
+                        _adjusts.Add(monitorId, adjustWindow);
+                        adjustWindow.Show();
+                        adjustWindow.Activate();
                     }
                     catch (Exception ex) {
+                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
                         GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                     }
-                    finally {
-                        _adjustSemaphoreSlim.Release();
-                    }
                 }, cts: ctsAdjust);
+            
 
             Interlocked.Exchange(ref _canAdjust, 1);
             (WpAdjustCommand as RelayCommand)?.RaiseCanExecuteChanged();
@@ -289,8 +295,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IMonitorManagerClient _monitorManagerClient;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
-        private readonly SemaphoreSlim _adjustSemaphoreSlim = new(1, 1);
         private readonly List<IFilterable> _filterables = [];
+        private readonly Dictionary<string, ArcWindow> _adjusts = [];
 
         private volatile int _canClose = 1;
         private volatile int _canDetect = 1;

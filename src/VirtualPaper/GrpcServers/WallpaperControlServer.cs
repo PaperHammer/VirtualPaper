@@ -42,21 +42,19 @@ namespace VirtualPaper.GrpcServers {
             return await Task.FromResult(resp);
         }
 
-        public override async Task<Grpc_AdjustWallpaperResponse> AdjustWallpaper(Grpc_AdjustWallpaperRequest request, ServerCallContext context) {
-            string monitorDeviceId = request.MonitorDeviceId;
-            bool isOk = _wpControl.AdjustWallpaper(monitorDeviceId, context.CancellationToken);
-
-            Grpc_AdjustWallpaperResponse response = new() {
-                IsOk = isOk,
-            };
-
-            return await Task.FromResult(response);
-        }
-
         public override async Task<Grpc_GetPlayerStartArgsResponse> GetPlayerStartArgs(Grpc_GetPlayerStartArgsRequest request, ServerCallContext context) {
             var playingData = DataAssist.GrpcToPlayerData(request.WpPlayerData);
             var data = _wpControl.GetPlayerStartArgs(playingData, context.CancellationToken);
             Grpc_GetPlayerStartArgsResponse response = new() {
+                Data = data,
+            };
+
+            return await Task.FromResult(response);
+        }
+        
+        public override async Task<Grpc_GetPlayerStartArgsInRunningResponse> GetPlayerStartArgsInRunning(Grpc_GetPlayerStartArgsInRunningRequest request, ServerCallContext context) {
+            var data = _wpControl.GetPlayerStartArgsInRunning(request.MonitorId);
+            Grpc_GetPlayerStartArgsInRunningResponse response = new() {
                 Data = data,
             };
 

@@ -20,6 +20,7 @@ namespace VirtualPaper.Cores.Players.Web {
         public bool IsExited { get; private set; }
         public bool IsLoaded { get; private set; }
         public bool IsPreview { get; private set; }
+        public string StartArgs { get; private set; }
         public EventHandler? Closing { get; set; }
         public EventHandler? Apply { get; set; }
 
@@ -105,11 +106,13 @@ namespace VirtualPaper.Cores.Players.Web {
                 Proc.Start();
                 App.Jobs.AddProcess(Proc.Id);
                 Proc.BeginOutputReadLine();
-                SendMessage(new PlayerWebSrartArgs(Data, IsPreview,
+
+                StartArgs = new PlayerWebSrartArgs(Data, IsPreview,
                     new Dictionary<string, object> {
                         ["WindowRect"] = new { Left = 0, Top = 0, Right = 1920, Bottom = 1080 }
                     }
-                ).ToJson());
+                ).ToJson();
+                SendMessage(StartArgs);
 
                 using var registration = token.Register(() => {
                     _tcsProcessWait.TrySetCanceled();

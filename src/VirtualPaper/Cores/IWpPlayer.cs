@@ -47,6 +47,9 @@ namespace VirtualPaper.Cores {
         bool IsLoaded { get; }
 
         bool IsPreview { get; }
+
+        string StartArgs { get;}
+
         EventHandler? Closing { get; set; }
         EventHandler? Apply { get; set; }
 

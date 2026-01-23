@@ -63,22 +63,22 @@ namespace VirtualPaper.Grpc.Client {
             return grpc_data;
         }
 
-        public async Task<bool> AdjustWallpaperAsync(string monitorDeviceId, CancellationToken token) {
-            var response = await _client.AdjustWallpaperAsync(
-                new Grpc_AdjustWallpaperRequest() {
-                    MonitorDeviceId = monitorDeviceId,
-                },
-                cancellationToken: token);
-
-            return response.IsOk;
-        }
-
         public async Task<string> GetPlayerStartArgsAsync(IWpBasicData data, RuntimeType rtype, CancellationToken token) {
             Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
 
             var response = await _client.GetPlayerStartArgsAsync(
                 new Grpc_GetPlayerStartArgsRequest() {
                     WpPlayerData = wpPlayerdata
+                },
+                cancellationToken: token);
+
+            return response.Data;
+        }
+        
+        public async Task<string> GetPlayerStartArgsByMonitorIdAsync(string monitorId, CancellationToken token) {
+            var response = await _client.GetPlayerStartArgsInRunningAsync(
+                new Grpc_GetPlayerStartArgsInRunningRequest() {
+                    MonitorId = monitorId
                 },
                 cancellationToken: token);
 

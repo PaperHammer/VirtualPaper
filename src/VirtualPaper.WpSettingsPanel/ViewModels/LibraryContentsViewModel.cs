@@ -592,9 +592,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly WpSettingsViewModel _wpSettingsViewModel;
         private readonly WallpaperIndexService _wallpaperIndexService;
         private List<string> _wallpaperInstallFolders = [];
-        private static readonly Dictionary<string, ArcWindow> _details = [];
-        private static readonly Dictionary<string, ArcWindow> _edits = [];
-        private static readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];
+        private readonly Dictionary<string, ArcWindow> _details = [];
+        private readonly Dictionary<string, ArcWindow> _edits = [];
+        private readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];
         private List<IWpBasicData> _libraryWallpapers = [];
     }
 

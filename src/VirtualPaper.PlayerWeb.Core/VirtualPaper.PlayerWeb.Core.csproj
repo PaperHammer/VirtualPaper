@@ -28,6 +28,7 @@
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
 	</ItemGroup>
 	<ItemGroup>
+	  <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
 	  <ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
 	</ItemGroup>
 	<ItemGroup>

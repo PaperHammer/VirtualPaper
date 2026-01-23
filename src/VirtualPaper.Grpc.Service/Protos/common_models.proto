@@ -10,6 +10,14 @@ message Grpc_GetPlayerStartArgsResponse {
 	string data = 1;
 }
 
+message Grpc_GetPlayerStartArgsInRunningRequest {
+	string monitor_id = 1;
+}
+
+message Grpc_GetPlayerStartArgsInRunningResponse {
+	string data = 1;
+}
+
 message Grpc_RecentUseds {
     repeated Grpc_RecentUsed recent_useds = 1;    
 }

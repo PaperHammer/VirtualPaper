@@ -40,7 +40,7 @@ namespace VirtualPaper.Cores.WpControl {
         (string?, RuntimeType?) GetPrimaryWpFilePathRType();
         IWpMetadata GetWallpaperByFolderPath(string folderPath, string monitorContent, string rtype);
         IWpBasicData GetWpBasicDataByForlderPath(string folderPath);
-        bool AdjustWallpaper(string monitorDeviceId, CancellationToken token = default);
+        string GetPlayerStartArgsInRunning(string monitorId);
         string? GetPlayerStartArgs(IWpPlayerData wpPlayingData, CancellationToken toke = default);
         Task ResetWallpaperAsync();
         Grpc_RestartWallpaperResponse RestoreWallpaper();

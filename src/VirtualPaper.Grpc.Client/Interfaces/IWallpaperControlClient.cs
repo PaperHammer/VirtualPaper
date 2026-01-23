@@ -15,10 +15,10 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         Task CloseAllWallpapersAsync();
         Task CloseWallpaperAsync(IMonitor monitor);
         Task<Grpc_WpMetaData> GetWallpaperAsync(string folderPath, string monitorContent, string rtype);
-        Task<bool> AdjustWallpaperAsync(string monitorDeviceId, CancellationToken token = default);
-        Task<string> GetPlayerStartArgsAsync(IWpBasicData data, RuntimeType rtype, CancellationToken cancellationToken);
+        Task<string> GetPlayerStartArgsAsync(IWpBasicData data, RuntimeType rtype, CancellationToken token);
+        Task<string> GetPlayerStartArgsByMonitorIdAsync(string monitorId, CancellationToken token);
         Task<Grpc_RestartWallpaperResponse> RestartAllWallpapersAsync();
-        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IMonitor monitor, IWpBasicData metaData, RuntimeType rtype, CancellationToken cancellationToken);
+        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IMonitor monitor, IWpBasicData metaData, RuntimeType rtype, CancellationToken token);
         #endregion
 
         #region data

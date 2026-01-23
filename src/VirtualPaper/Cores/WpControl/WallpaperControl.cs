@@ -138,37 +138,21 @@ namespace VirtualPaper.Cores.WpControl {
             return data;
         }
 
-        public bool AdjustWallpaper(string monitorDeviceId, CancellationToken token = default) {
-            if (string.IsNullOrEmpty(monitorDeviceId)) {
-                monitorDeviceId = _monitorManager.PrimaryMonitor.DeviceId;
-            }
-            var instance = _wallpapers.FirstOrDefault(x => x.Monitor.DeviceId == monitorDeviceId);
-            if (instance != null) {
-                instance.SendMessage(new VirtualPaperActiveCmd() {
-                    UIHwnd = (int)App.Services.GetRequiredService<IUIRunnerService>().GetUIHwnd()
-                });
-                return true;
-            }
+        public string? GetPlayerStartArgs(IWpPlayerData data, CancellationToken token = default) {
+            var wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, true, _monitorManager.PrimaryMonitor.Content);
+            DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
 
-            return false;
+            var startArgs = _wallpaperFactory.CreatePlayerStartArgs(data, true);
+
+            return startArgs;
         }
 
-        public string? GetPlayerStartArgs(IWpPlayerData data, CancellationToken token = default) {
-            try {
-                var wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, true, _monitorManager.PrimaryMonitor.Content);
-                DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
-
-                var startArgs = _wallpaperFactory.CreatePlayerStartArgs(data, true);
-
-                return startArgs;
+        public string GetPlayerStartArgsInRunning(string monitorId) {
+            var instance = _wallpapers.FirstOrDefault(x => x.Monitor.DeviceId == monitorId);
+            if (instance != null) {
+                return instance.StartArgs;
             }
-            catch (OperationCanceledException) when (token.IsCancellationRequested) {
-                throw;
-            }
-            catch (Exception ex) {
-                ArcLog.GetLogger<WallpaperControl>().Error($"An error occurred while preview wallpaper: {ex.Message}");
-                throw;
-            }
+            return string.Empty;
         }
 
         private void ApplyEvent(object? s, EventArgs e) {
@@ -896,7 +880,7 @@ namespace VirtualPaper.Cores.WpControl {
                 _userSettings.WallpaperLayouts.Clear();
                 foreach (var wallpaper in _wallpapers) {
                     if (wallpaper.Monitor == null) continue;
-                    
+
                     string monitorContent = _userSettings.Settings.WallpaperArrangement switch {
                         WallpaperArrangement.Per => wallpaper.Monitor.Content,
                         WallpaperArrangement.Duplicate => "Duplicate",

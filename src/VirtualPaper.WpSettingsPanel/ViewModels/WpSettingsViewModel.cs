@@ -4,11 +4,11 @@ using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Grpc.Core;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Events.EffectValue.Base;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
@@ -36,7 +36,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 UpdateWpArrange(value);
             }
         }
-       
+
         private int _selectedMonitorIndex = 0;
         public int SelectedMonitorIndex {
             get => _selectedMonitorIndex;
@@ -273,7 +273,18 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         var jsonString = await _wpControlClient.GetPlayerStartArgsByMonitorIdAsync(monitorId, token);
                         var adjustWindow = new AdjustConfig(jsonString);
                         adjustWindow.Closed += (sender, args) => {
+                            var ipcMessage = new VirtualPaperReloadEffectCmd();
+                            _wpControlClient.SendMessageWallpaperAsync(monitorId, ipcMessage);
                             _adjusts.Remove(monitorId);
+                        };
+                        adjustWindow.Applied += (sender, context) => {
+                            adjustWindow.Close();
+                        };
+                        adjustWindow.EffectChanged += (sender, e) => {
+                            var ipcMessage = new VirtualPaperGeneralEffect() {
+                                EffectValue = e,
+                            };
+                            _wpControlClient.SendMessageWallpaperAsync(monitorId, ipcMessage);
                         };
                         _adjusts.Add(monitorId, adjustWindow);
                         adjustWindow.Show();
@@ -284,7 +295,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                     }
                 }, cts: ctsAdjust);
-            
+
 
             Interlocked.Exchange(ref _canAdjust, 1);
             (WpAdjustCommand as RelayCommand)?.RaiseCanExecuteChanged();

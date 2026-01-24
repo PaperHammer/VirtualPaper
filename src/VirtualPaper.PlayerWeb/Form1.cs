@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Events.EffectValue.Base;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
@@ -135,7 +136,7 @@ namespace VirtualPaper.PlayerWeb {
 
         private void WebView2_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e) {
             // Restore default.
-            _webView2.DefaultBackgroundColor = Color.White;
+            _webView2.DefaultBackgroundColor = Color.Gray;
 
             if (!e.IsSuccess) {
                 Program.WriteToParent(new VirtualPaperMessageConsole() {
@@ -223,13 +224,13 @@ namespace VirtualPaper.PlayerWeb {
                         _scriptExecutor?.EnqueueEvent(Fileds.ApplyFilter);
                         _scriptExecutor?.EnqueueEvent(Fileds.Play);
                         break;
-                    //case MessageType.cmd_active:
-                    //    HandleActiveCommand((VirtualPaperActiveCmd)obj);
-                    //    break;
                     case MessageType.cmd_reload:
                         CrossThreadInvoker.InvokeOnUIThread(() => {
                             _webView2?.Reload();
                         });
+                        break;
+                    case MessageType.cmd_reload_effect:
+                        LoadWpEffect(_startArgs.WpEffectFilePathUsing);
                         break;
                     case MessageType.cmd_suspend:
                         await HandlePlaybackCommandAsync(true);
@@ -250,25 +251,28 @@ namespace VirtualPaper.PlayerWeb {
                         _isFocusOnDesk = true;
                         break;
 
-                    case MessageType.vp_slider:
-                        var sl = (VirtualPaperSlider)obj;
-                        HandleUIElementMsg(sl.Name, sl.Value);
-                        break;
-                    case MessageType.vp_textbox:
-                        var tb = (VirtualPaperTextBox)obj;
-                        HandleUIElementMsg(tb.Name, tb.Value);
-                        break;
-                    case MessageType.vp_dropdown:
-                        var dd = (VirtualPaperDropdown)obj;
-                        HandleUIElementMsg(dd.Name, dd.Value);
-                        break;
-                    case MessageType.vp_cpicker:
-                        var cp = (VirtualPaperColorPicker)obj;
-                        HandleUIElementMsg(cp.Name, cp.Value);
-                        break;
-                    case MessageType.vp_chekbox:
-                        var cb = (VirtualPaperCheckbox)obj;
-                        ExecuteCheckBoxSet(cb.Name, cb.Value);
+                    //case MessageType.vp_slider:
+                    //    var sl = (VirtualPaperSlider)obj;
+                    //    HandleUIElementMsg(sl.Name, sl.Value);
+                    //    break;
+                    //case MessageType.vp_textbox:
+                    //    var tb = (VirtualPaperTextBox)obj;
+                    //    HandleUIElementMsg(tb.Name, tb.Value);
+                    //    break;
+                    //case MessageType.vp_dropdown:
+                    //    var dd = (VirtualPaperDropdown)obj;
+                    //    HandleUIElementMsg(dd.Name, dd.Value);
+                    //    break;
+                    //case MessageType.vp_cpicker:
+                    //    var cp = (VirtualPaperColorPicker)obj;
+                    //    HandleUIElementMsg(cp.Name, cp.Value);
+                    //    break;
+                    //case MessageType.vp_chekbox:
+                    //    var cb = (VirtualPaperCheckbox)obj;
+                    //    ExecuteCheckBoxSet(cb.Name, cb.Value);
+                    //    break;
+                    case MessageType.vp_general_effect:
+                        HandleGenerealEffect((VirtualPaperGeneralEffect)obj);
                         break;
                     default:
                         throw new InvalidOperationException($"Unsupported message type: {obj.Type}");
@@ -283,8 +287,32 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         #region handel_ipcmessage
-        private void HandleUIElementMsg(string propertyName, object propertyValue) {
-            _scriptExecutor?.EnqueueEvent(Fileds.PropertyListener, propertyName, propertyValue);
+        private void HandleGenerealEffect(VirtualPaperGeneralEffect ge) {
+            switch (ge.EffectValue) {
+                case EffectValueChanged<double> d:
+                    UpdateEffectValueNumber(d);
+                    break;
+                case EffectValueChanged<int> i:
+                    UpdateEffectValueNumber(i);
+                    break;
+                case EffectValueChanged<bool> b:
+                    UpdateEffectValue(b);
+                    break;
+                case EffectValueChanged<string> s:
+                    UpdateEffectValue(s);
+                    break;
+            }
+        }
+
+        public void UpdateEffectValueNumber<T>(EffectValueChanged<T> e) where T : struct {
+            _scriptExecutor?.EnqueueEvent(Fileds.PropertyListener, e.PropertyName, e.Value);
+        }
+
+        public void UpdateEffectValue(EffectValueChanged<bool> e) {
+            ExecuteCheckBoxSet(e.PropertyName, e.Value);
+        }
+
+        public void UpdateEffectValue(EffectValueChanged<string> e) {
         }
 
         private void HandleCloseCommand() {

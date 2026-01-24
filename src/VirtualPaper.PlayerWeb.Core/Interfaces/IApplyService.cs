@@ -1,7 +1,10 @@
-﻿using System.Threading.Tasks;
+using System;
 
 namespace VirtualPaper.PlayerWeb.Core.Interfaces {
     public interface IApplyService {
-        ValueTask ApplyAsync(object? context = null);
+        void OnApply(ApplyEventArgs args);
+    }
+
+    public class ApplyEventArgs : EventArgs {
     }
 }

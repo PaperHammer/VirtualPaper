@@ -424,11 +424,11 @@ namespace VirtualPaper.Cores.WpControl {
             });
         }
 
-        public void SendMessageWallpaper(IMonitor monitor, string folderPath, string ipcMsg) {
+        public void SendMessageWallpaper(string deviceId, string ipcMsg) {
             IpcMessage msg = JsonSerializer.Deserialize(ipcMsg, IpcMessageContext.Default.IpcMessage)!;
-
+            var arrangement = _userSettings.Settings.WallpaperArrangement;
             _wallpapers.ForEach(x => {
-                if (x.Data.FolderPath == folderPath && x.Monitor == monitor) {
+                if (arrangement == WallpaperArrangement.Duplicate || x.Monitor?.DeviceId == deviceId) {
                     x.SendMessage(msg);
                 }
             });
@@ -454,7 +454,7 @@ namespace VirtualPaper.Cores.WpControl {
                 };
                 data.IsSubscribed = true;
 
-                // 创建随机不重复文件夹，并更新 folderPath
+                // 创建随机不重复文件夹，并更新 wallpaperUid
                 folderName ??= Path.GetRandomFileName();
                 data.FolderName = folderName;
                 data.WallpaperUid = "LCL" + folderName;
@@ -527,16 +527,16 @@ namespace VirtualPaper.Cores.WpControl {
                 };
                 data.IsSubscribed = true;
 
-                // 创建随机不重复文件夹，并更新 folderPath
+                // 创建随机不重复文件夹，并更新 wallpaperUid
                 folderName ??= Path.GetRandomFileName();
                 data.FolderName = folderName;
                 data.WallpaperUid = folderName;
                 folderPath = Path.Combine(Constants.CommonPaths.TempDir, folderName);
-                //_data.FolderPath = folderPath;
+                //_data.FolderPath = wallpaperUid;
 
                 //// 创建壁纸存储路径与自定义配置文件路径,将原壁纸复制到 folder 下                
                 Directory.CreateDirectory(folderPath);
-                //string destFilePath = Path.Combine(folderPath, folderName + Path.GetExtension(filePath));
+                //string destFilePath = Path.Combine(wallpaperUid, folderName + Path.GetExtension(filePath));
                 //if (filePath != destFilePath) {
                 //    File.Copy(filePath, destFilePath, true);
                 //}
@@ -555,7 +555,7 @@ namespace VirtualPaper.Cores.WpControl {
                 data.FileSize = fileProperty.FileSize;
                 data.FileExtension = fileProperty.FileExtension;
 
-                //string basicDatafilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
+                //string basicDatafilePath = Path.Combine(wallpaperUid, Constants.Field.WpBasicDataFileName);
                 //if (isAutoSave) {
                 //    _data.Save();
                 //}

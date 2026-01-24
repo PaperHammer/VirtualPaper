@@ -160,10 +160,9 @@ namespace VirtualPaper.Grpc.Client {
             return monitor_data;
         }
 
-        public async Task SendMessageWallpaperAsync(IMonitor monitor, IWpRuntimeData metaData, IpcMessage msg) {
+        public async Task SendMessageWallpaperAsync(string deviceId, IpcMessage msg) {
             await _client.SendMessageWallpaperAsync(new Grpc_WallpaperMessageRequest() {
-                MonitorId = monitor.DeviceId,
-                FolderPath = metaData.FolderPath,
+                MonitorId = deviceId,
                 Msg = JsonSerializer.Serialize(msg, IpcMessageContext.Default.IpcMessage),
             });
         }

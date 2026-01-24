@@ -31,7 +31,7 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         #region utils
         Task ChangeWallpaperLayoutFolrderPathAsync(string previousDir, string newDir);
         Task<Grpc_MonitorData?> GetRunMonitorByWallpaperAsync(string wpUid);
-        Task SendMessageWallpaperAsync(IMonitor monitor, IWpRuntimeData metaData, IpcMessage msg);
+        Task SendMessageWallpaperAsync(string deviceId, IpcMessage msg);
         Task TakeScreenshotAsync(string monitorId, string savePath);
         Task<Grpc_WpBasicData?> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype);
         #endregion

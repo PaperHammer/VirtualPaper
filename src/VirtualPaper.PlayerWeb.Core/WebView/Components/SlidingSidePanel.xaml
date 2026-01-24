@@ -19,11 +19,10 @@
         </Grid.RenderTransform>
 
         <StackPanel Orientation="Horizontal">
-            <!-- 拖动区域 -->
             <Border x:Name="HandleArea"
                 Width="30"
                 Height="100"
-                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                 CornerRadius="8 0 0 8"
                 VerticalAlignment="Center"
                 PointerPressed="Handle_PointerPressed"
@@ -36,11 +35,10 @@
                     FontSize="22"/>
             </Border>
 
-            <!-- 内容区域 -->
             <Border x:Name="ContentArea"
                 Width="340"
                 Height="520"
-                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 CornerRadius="12,0,0,12">
                 <ContentPresenter x:Name="PART_ContentPresenter"/>
             </Border>

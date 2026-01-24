@@ -47,7 +47,7 @@ namespace VirtualPaper.Cores.WpControl {
         Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, bool fromPreview = false, CancellationToken token = default);
         void SeekWallpaper(IWpPlayerData data, float seek, PlaybackPosType type);
         void SeekWallpaper(IMonitor monitor, float seek, PlaybackPosType type);
-        void SendMessageWallpaper(IMonitor monitor, string folderPath, string ipcMsg);
+        void SendMessageWallpaper(string deviceId, string ipcMsg);
         #endregion
 
         #region data

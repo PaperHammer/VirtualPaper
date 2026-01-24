@@ -3,11 +3,13 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
+using VirtualPaper.Common.Events.EffectValue.Base;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.PlayerWeb.Core.Interfaces;
+using VirtualPaper.PlayerWeb.Core.Utils.Interfaces;
 using VirtualPaper.PlayerWeb.Core.WebView.Pages;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
@@ -20,8 +22,9 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class AdjustConfig : ArcWindow, IApplyService {
-        public event Func<AdjustConfig, object?, ValueTask>? Applied;
+    public sealed partial class AdjustConfig : ArcWindow, IApplyService, IEffectService {
+        public event EventHandler<EffectValueChangedBase>? EffectChanged;
+        public event EventHandler<ApplyEventArgs>? Applied;
 
         public override ArcWindowHost ContentHost => this.MainHost;
         public override ArcWindowManagerKey Key => _windowKey;
@@ -41,6 +44,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
                     [NaviPayLoadKey.StartArgs.ToString()] = _startArgs,
                     [NaviPayLoadKey.IWpBasicData.ToString()] = _wpBasicData,
                     [NaviPayLoadKey.ApplyService.ToString()] = this,
+                    [NaviPayLoadKey.IEffectService.ToString()] = this,
                 };
                 NaviContent.Navigate(typeof(PageOnlyDataConfig), payload);
             }
@@ -56,14 +60,12 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
             this.Title = this.MainHost.Title = windowTitle;
         }
 
-        public async ValueTask ApplyAsync(object? context = null) {
-            if (Applied is not null) {
-                foreach (var handler in Applied.GetInvocationList()) {
-                    if (handler is Func<AdjustConfig, object?, ValueTask> asyncHandler) {
-                        await asyncHandler(this, context);
-                    }
-                }
-            }
+        public void OnApply(ApplyEventArgs args) {
+            Applied?.Invoke(this, args);
+        }
+
+        public void UpdateEffectValue<T>(EffectValueChanged<T> e) {
+            EffectChanged?.Invoke(this, e);
         }
 
         private readonly StartArgsWeb? _startArgs;

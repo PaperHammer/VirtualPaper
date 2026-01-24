@@ -89,19 +89,20 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }        
 
         #region effect change from ui
-        public void UpdateEffectValue(EffectValueChanged<double> e) {
-            _scriptExecutor?.EnqueueEvent(Fileds.PropertyListener, e.PropertyName, e.Value);
-        }
-
-        public void UpdateEffectValue(EffectValueChanged<int> e) {
-            _scriptExecutor?.EnqueueEvent(Fileds.PropertyListener, e.PropertyName, e.Value);
-        }
-
-        public void UpdateEffectValue(EffectValueChanged<bool> e) {
-            ExecuteCheckBoxSet(e.PropertyName, e.Value);
-        }
-
-        public void UpdateEffectValue(EffectValueChanged<string> e) {
+        public void UpdateEffectValue<T>(EffectValueChanged<T> e) {
+            switch (e.Value) {
+                case double:
+                case int:
+                    _scriptExecutor?.EnqueueEvent(Fileds.PropertyListener, e.PropertyName, e.Value);
+                    break;
+                case bool b:
+                    ExecuteCheckBoxSet(e.PropertyName, b);
+                    break;
+                case string s:
+                    break;
+                default:
+                    break;
+            }
         }
         #endregion
 

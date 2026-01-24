@@ -10,7 +10,11 @@
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
     mc:Ignorable="d"
-    Title="Virtual Paper ConfigTool for Web">
+    Width="370"
+    Height="560"
+    IsResizable="False"
+    IsMaximizable="False"    
+    Title="Virtual Paper Adjust for Web">
 
     <arc:ArcWindowHost x:Name="MainHost" Title="Adjust wallpaper">
         <navi:ArcNavigationContentView x:Name="NaviContent" 

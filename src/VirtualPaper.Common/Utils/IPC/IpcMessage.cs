@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using VirtualPaper.Common.Events;
+using VirtualPaper.Common.Events.EffectValue.Base;
 
 namespace VirtualPaper.Common.Utils.IPC {
     [JsonSerializable(typeof(IpcMessage))]
@@ -14,6 +15,7 @@ namespace VirtualPaper.Common.Utils.IPC {
     [JsonDerivedType(typeof(VirtualPaperMessageWallpaperLoaded), "msg_wploaded")]
     [JsonDerivedType(typeof(VirtualPaperCloseCmd), "cmd_close")]
     [JsonDerivedType(typeof(VirtualPaperReloadCmd), "cmd_reload")]
+    [JsonDerivedType(typeof(VirtualPaperReloadEffectCmd), "cmd_reload_effect")]
     [JsonDerivedType(typeof(VirtualPaperScreenshotCmd), "cmd_screenshot")]
     [JsonDerivedType(typeof(VirtualPaperApplyCmd), "cmd_apply")]
     [JsonDerivedType(typeof(VirtualPaperActiveCmd), "cmd_active")]
@@ -29,6 +31,7 @@ namespace VirtualPaper.Common.Utils.IPC {
     [JsonDerivedType(typeof(VirtualPaperCheckbox), "vp_chekbox")]
     [JsonDerivedType(typeof(VirtualPaperColorPicker), "vp_cpicker")]
     [JsonDerivedType(typeof(VirtualPaperButton), "vp_button")]
+    [JsonDerivedType(typeof(VirtualPaperGeneralEffect), "vp_general_effect")]
     public abstract class IpcMessage(MessageType type) {
         public MessageType Type { get; } = type;
     }
@@ -44,6 +47,7 @@ namespace VirtualPaper.Common.Utils.IPC {
         cmd_apply,
         cmd_active,
         cmd_reload,
+        cmd_reload_effect,
         cmd_close,
         cmd_screenshot,
         cmd_suspend, // 挂起(Pause)
@@ -59,6 +63,7 @@ namespace VirtualPaper.Common.Utils.IPC {
         vp_button,
         vp_cpicker,
         vp_chekbox,
+        vp_general_effect,
     }
 
     public enum ConsoleMessageType {
@@ -82,6 +87,12 @@ namespace VirtualPaper.Common.Utils.IPC {
         public string WpEffectFilePathTemporary { get; set; } = string.Empty;
         public string WpEffectFilePathUsing { get; set; } = string.Empty;
         public VirtualPaperUpdateCmd() : base(MessageType.cmd_update) { }
+    }
+
+    [Serializable]
+    public class VirtualPaperGeneralEffect : IpcMessage {
+        public EffectValueChangedBase EffectValue { get; init; } = null!;
+        public VirtualPaperGeneralEffect() : base(MessageType.vp_general_effect) { }
     }
 
     [Serializable]
@@ -125,6 +136,11 @@ namespace VirtualPaper.Common.Utils.IPC {
     public class VirtualPaperReloadCmd : IpcMessage {
         public VirtualPaperReloadCmd() : base(MessageType.cmd_reload) { }
     }
+    
+    [Serializable]
+    public class VirtualPaperReloadEffectCmd : IpcMessage {
+        public VirtualPaperReloadEffectCmd() : base(MessageType.cmd_reload_effect) { }
+    }
 
     [Serializable]
     public class VirtualPaperScreenshotCmd : IpcMessage {
@@ -135,7 +151,7 @@ namespace VirtualPaper.Common.Utils.IPC {
     }
 
     [Serializable]
-    public class VirtualPaperApplyCmd : IpcMessage {        
+    public class VirtualPaperApplyCmd : IpcMessage {
         public VirtualPaperApplyCmd() : base(MessageType.cmd_apply) { }
     }
 

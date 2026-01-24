@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common.Events.EffectValue;
+using VirtualPaper.Common.Events.EffectValue.Base;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.PlayerWeb.Core.Interfaces;
@@ -283,7 +284,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                     ((TextBlock)valueTb).Text = item.Value.ToString("0.#");
                 }
 
-                OnEffectValueChanged(new DoubleValueChangedEventArgs { ControlName = "Slider", PropertyName = item.Name, Value = (double)item.Value });
+                OnEffectValueChanged(new EffectValueChanged<double> { ControlName = "Slider", PropertyName = item.Name, Value = (double)item.Value });
             }
             catch { }
         }
@@ -294,7 +295,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             try {
                 var item = (ComboBox)sender;
                 _wpEffectData[item.Name]["Value"] = item.SelectedIndex;
-                OnEffectValueChanged(new IntValueChangedEventArgs { ControlName = "Dropdown", PropertyName = item.Name, Value = item.SelectedIndex });
+                OnEffectValueChanged(new EffectValueChanged<int> { ControlName = "Dropdown", PropertyName = item.Name, Value = item.SelectedIndex });
             }
             catch { }
         }
@@ -451,7 +452,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         #endregion
 
         #region button
-        private async void RestoretBtn_Click(object sender, RoutedEventArgs e) {
+        private void RestoretBtn_Click(object sender, RoutedEventArgs e) {
             if (AnyFilePathsEmpty()) {
                 return;
             }
@@ -461,15 +462,12 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             File.Copy(_startArgs.WpEffectFilePathUsing, _startArgs.WpEffectFilePathTemporary, true);
             InitUI();
 
-            await Task.Delay(1000);
             btnRestore.IsEnabled = true;
         }
 
-        private async void SaveAndApplyBtn_Click(object sender, RoutedEventArgs e) {
+        private void SaveAndApplyBtn_Click(object sender, RoutedEventArgs e) {
             UpdatePropertyFile(true);
-            if (_applyService != null) {
-                await _applyService.ApplyAsync();
-            }
+            _applyService?.OnApply(null);
         }
         #endregion
 
@@ -478,7 +476,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             try {
                 var item = (CheckBox)sender;
                 _wpEffectData[item.Name]["Value"] = item.IsChecked == true;
-                OnEffectValueChanged(new BoolValueChangedEventArgs { ControlName = "Checkbox", PropertyName = item.Name, Value = (bool)item.IsChecked });
+                OnEffectValueChanged(new EffectValueChanged<bool> { ControlName = "Checkbox", PropertyName = item.Name, Value = (bool)item.IsChecked });
             }
             catch { }
         }
@@ -489,7 +487,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             try {
                 var item = (TextBox)sender;
                 _wpEffectData[item.Name]["Value"] = item.Text;
-                OnEffectValueChanged(new StringValueChangedEventArgs { ControlName = "Textbox", PropertyName = item.Name, Value = item.Text });
+                OnEffectValueChanged(new EffectValueChanged<string> { ControlName = "Textbox", PropertyName = item.Name, Value = item.Text });
             }
             catch { }
         }
@@ -497,19 +495,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         #endregion
 
         #region value changed        
-        private void OnEffectValueChanged(DoubleValueChangedEventArgs e) {
-            _effectService?.UpdateEffectValue(e);
-        }
-
-        private void OnEffectValueChanged(IntValueChangedEventArgs e) {
-            _effectService?.UpdateEffectValue(e);
-        }
-
-        private void OnEffectValueChanged(BoolValueChangedEventArgs e) {
-            _effectService?.UpdateEffectValue(e);
-        }
-
-        private void OnEffectValueChanged(StringValueChangedEventArgs e) {
+        private void OnEffectValueChanged<T>(EffectValueChanged<T> e) {
             _effectService?.UpdateEffectValue(e);
         }
         #endregion

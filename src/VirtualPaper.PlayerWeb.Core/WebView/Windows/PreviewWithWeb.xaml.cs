@@ -21,7 +21,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class PreviewWithWeb : ArcWindow, IApplyService {
-        public event Func<PreviewWithWeb, object?, ValueTask>? Applied;
+        public event EventHandler<ApplyEventArgs>? Applied;
 
         public override ArcWindowHost ContentHost => this.MainHost;
         public override ArcWindowManagerKey Key => _windowKey;
@@ -57,14 +57,8 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
             this.Title = this.MainHost.Title = windowTitle;
         }
 
-        public async ValueTask ApplyAsync(object? context = null) {
-            if (Applied is not null) {
-                foreach (var handler in Applied.GetInvocationList()) {
-                    if (handler is Func<PreviewWithWeb, object?, ValueTask> asyncHandler) {
-                        await asyncHandler(this, context);
-                    }
-                }
-            }
+        public void OnApply(ApplyEventArgs args) {
+            Applied?.Invoke(this, args);
         }
 
         private readonly StartArgsWeb? _startArgs;

@@ -44,4 +44,8 @@
 	  <None Include="Utils\Storage\FileShared.cs" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Utils\Events\EffectValue\" />
+	</ItemGroup>
+
 </Project>

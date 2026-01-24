@@ -112,8 +112,7 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override Task<Empty> SendMessageWallpaper(Grpc_WallpaperMessageRequest request, ServerCallContext context) {
-            var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId) ?? _monitorManager.PrimaryMonitor;
-            _wpControl.SendMessageWallpaper(monitor, request.FolderPath, request.Msg);
+            _wpControl.SendMessageWallpaper(request.MonitorId, request.Msg);
 
             return Task.FromResult(new Empty());
         }

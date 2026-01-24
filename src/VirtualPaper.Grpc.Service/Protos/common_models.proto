@@ -192,8 +192,7 @@ message Grpc_RestartWallpaperResponse {
 
 message Grpc_WallpaperMessageRequest {
 	string monitor_id = 1;
-	string folder_path = 2;
-	string msg = 3;
+	string msg = 2;
 }
 
 message Grpc_WallpaperScreenshotRequest {

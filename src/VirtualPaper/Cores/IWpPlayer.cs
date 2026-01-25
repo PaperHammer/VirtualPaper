@@ -57,7 +57,7 @@ namespace VirtualPaper.Cores {
         void Pause();
         void Play();
         void PauseParallax();
-        void PlayParallax();
+        void ResumeParallax();
         void Stop();
         void Close();
 

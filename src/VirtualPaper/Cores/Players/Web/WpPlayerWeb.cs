@@ -78,11 +78,15 @@ namespace VirtualPaper.Cores.Players.Web {
         }
 
         public void PauseParallax() {
-            SendMessage(new VirtualPaperParallaxSuspendCmd());
+            if (Interlocked.CompareExchange(ref _parallaxState, 1, 0) == 0) {
+                SendMessage(new VirtualPaperParallaxSuspendCmd());
+            }
         }
 
-        public void PlayParallax() {
-            SendMessage(new VirtualPaperParallaxResumeCmd());
+        public void ResumeParallax() {
+            if (Interlocked.CompareExchange(ref _parallaxState, 0, 1) == 1) {
+                SendMessage(new VirtualPaperParallaxResumeCmd());
+            }
         }
 
         public Task ScreenCapture(string filePath) { return Task.FromResult(string.Empty); }
@@ -274,5 +278,6 @@ namespace VirtualPaper.Cores.Players.Web {
         private static int _globalCount;
         private readonly int _uniqueId;
         private bool _isInitialized;
+        private int _parallaxState = 0; // 0: 运行中, 1: 已暂停
     }
 }

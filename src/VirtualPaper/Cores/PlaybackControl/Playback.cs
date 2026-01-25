@@ -2,7 +2,9 @@ using System.Diagnostics;
 using System.Text;
 using System.Windows.Threading;
 using Microsoft.Win32;
+using OpenCvSharp.Internal;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Hardware;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.Monitor;
@@ -10,6 +12,7 @@ using VirtualPaper.Cores.ScreenSaver;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
+using Windows.Devices.Display.Core;
 
 namespace VirtualPaper.Cores.PlaybackControl {
     /// <summary>
@@ -36,13 +39,12 @@ namespace VirtualPaper.Cores.PlaybackControl {
 
             Initialize();
             _timer = new(TimeSpan.FromMilliseconds(Math.Max(_userSettings.Settings.ProcessTimerInterval, 500)));
-            wpControl.WallpaperReset += (s, e) => FindNewMonitorAndResetHandles();
         }
 
-        public async void Start(CancellationTokenSource cancellationTokenSource) {
+        public async void Start(CancellationTokenSource tokenSource) {
             try {
-                _ctsPlayback = cancellationTokenSource;
-                while (await _timer.WaitForNextTickAsync(cancellationTokenSource.Token)) {
+                _ctsPlayback = tokenSource;
+                while (await _timer.WaitForNextTickAsync(tokenSource.Token)) {
                     RunPlayback();
                 }
             }
@@ -68,21 +70,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
             SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
         }
 
-        #region private
-        private void FindNewMonitorAndResetHandles() {
-            _workerWOrig = IntPtr.Zero;
-            _progman = IntPtr.Zero;
-
-            _progman = Native.FindWindow("Progman", null);
-            var folderView = Native.FindWindowEx(_progman, IntPtr.Zero, "SHELLDLL_DefView", null);
-            if (folderView == IntPtr.Zero) {
-                do {
-                    _workerWOrig = Native.FindWindowEx(Native.GetDesktopWindow(), _workerWOrig, "WorkerW", null);
-                    folderView = Native.FindWindowEx(_workerWOrig, IntPtr.Zero, "SHELLDLL_DefView", null);
-                } while (folderView == IntPtr.Zero && _workerWOrig != IntPtr.Zero);
-            }
-        }
-
+        #region utils
         private void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e) {
             if (e.Reason == SessionSwitchReason.RemoteConnect) {
                 _isRemoteSession = true;
@@ -138,13 +126,17 @@ namespace VirtualPaper.Cores.PlaybackControl {
         }
 
         private void AdjustWpBehaviourBaseOnForegroundApp() {
-            bool isDesktop = false;
-            nint fHandle = Native.GetForegroundWindow(); // 当前最前台进程
+            nint fHandle = Native.GetForegroundWindow();
+            var isValidWindow = WindowUtil.IsVisibleTopLevelWindows(fHandle);
 
-            #region 白名单判断
-            if (IsWhitelistedClass(fHandle)) {
-                ChangeWpState(AppWpRunRulesEnum.KeepRun);
-                return;
+            #region 焦点是否在桌面
+            bool isDesktop;
+            if (isValidWindow) {
+                isDesktop = WindowUtil.IsExcludedDesktopWindowClass(fHandle);
+            }
+            else {
+                // We assume its desktop, not enough information otherwise since only foreground window is checked.
+                isDesktop = fHandle == Native.GetDesktopWindow() || fHandle == Native.GetShellWindow() || WindowUtil.IsExcludedDesktopWindowClass(fHandle);
             }
             #endregion
 
@@ -187,114 +179,98 @@ namespace VirtualPaper.Cores.PlaybackControl {
             #region 关于桌面焦点、应用程序是否最大化/覆盖全屏的检测
             try {
                 // 关于桌面焦点、应用程序是否最大化/覆盖全屏的检测
-                if (!(fHandle.Equals(Native.GetDesktopWindow())
-                    || fHandle.Equals(Native.GetShellWindow()))) {
-                    #region 单屏
-                    // 单屏
-                    if (!_monitorManger.IsMultiScreen() ||
-                        _userSettings.Settings.StatuMechanism == StatuMechanismEnum.All)
-                    //_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate)
-                    {
-                        // 检查前台窗口是否为桌面环境的一部分
-                        if (IntPtr.Equals(fHandle, _workerWOrig) || IntPtr.Equals(fHandle, _progman)) {
-                            // 焦点在桌面
-                            //win10 and win7 desktop foreground while running.
-                            isDesktop = true;
-                            ChangeWpState(AppWpRunRulesEnum.KeepRun);
-                            ChangeParralaxState(AppParallaxRulesEnum.KeepRun);
-                        }
-                        // 检查前台窗口是否最大化或几乎覆盖整个屏幕
-                        else if (Native.IsZoomed(fHandle) || IsZoomedCustom(fHandle)) {
-                            //maximised window or window covering whole screen.
-                            ChangeWpState(_userSettings.Settings.AppFullscreen);
-                            ChangeParralaxState(AppParallaxRulesEnum.Pause);
-                        }
-                        else {
-                            //window is just in focus, not covering screen.
-                            ChangeWpState(_userSettings.Settings.AppFocus);
-                            ChangeParralaxState(AppParallaxRulesEnum.Pause);
-                        }
-
-                        if (isDesktop) {
-                            ChangeWpState(AppWpRunRulesEnum.KeepRun);
-                        }
-                        else if (_userSettings.Settings.IsAudioOnlyOnDesktop) {
-                            ChangeWpState(AppWpRunRulesEnum.Silence);
-                        }
+                #region 单屏
+                // 单屏
+                if (!_monitorManger.IsMultiScreen() ||
+                    _userSettings.Settings.StatuMechanism == StatuMechanismEnum.All)
+                //_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate)
+                {
+                    // 检查前台窗口是否为桌面环境的一部分
+                    if (isDesktop) {
+                        // 焦点在桌面
+                        //win10 and win7 desktop foreground while running.
+                        ChangeWpState(AppWpRunRulesEnum.KeepRun);
+                        ChangeParralaxState(AppParallaxRulesEnum.KeepRun);
                     }
-                    #endregion
-
-                    #region 多屏
-                    // 多屏
+                    // 检查前台窗口是否最大化或几乎覆盖整个屏幕
+                    else if (Native.IsZoomed(fHandle) || IsZoomedCustom(fHandle)) {
+                        //maximised window or window covering whole screen.
+                        ChangeWpState(_userSettings.Settings.AppFullscreen);
+                        ChangeParralaxState(AppParallaxRulesEnum.Pause);
+                    }
                     else {
-                        // 仅聚焦屏幕播放声音
-                        Models.Cores.Monitor? focusedScreen;
-                        Native.GetCursorPos(out var pos);
-                        if ((focusedScreen = _monitorManger.GetMonitorByPoint(pos)) != null) {
-                            //unpausing the rest of _wallpapers.
-                            //only one window can be foreground!
-                            foreach (var item in _monitorManger.Monitors) {
-                                if (_userSettings.Settings.WallpaperArrangement != WallpaperArrangement.Expand &&
-                                    !focusedScreen.Equals(item)) {
-                                    ChangeWpState(AppWpRunRulesEnum.Silence, item);
-                                }
-                            }
-                        }
-                        else {
-                            // 未获取到合法显示器
-                            return;
-                        }
+                        //window is just in focus, not covering screen.
+                        ChangeWpState(_userSettings.Settings.AppFocus);
+                        ChangeParralaxState(AppParallaxRulesEnum.Pause);
+                    }
 
-                        // 检查前台窗口是否为桌面环境的一部分
-                        if (IntPtr.Equals(fHandle, _workerWOrig) || IntPtr.Equals(fHandle, _progman)) {
-                            //win10 and win7 desktop foreground while running.
-                            isDesktop = true;
-                            ChangeWpState(AppWpRunRulesEnum.KeepRun, focusedScreen);
-                            ChangeParralaxState(AppParallaxRulesEnum.KeepRun, focusedScreen);
-                        }
-                        // 说明在其他焦点应用程序上
-                        else if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand) {
-                            // 跨越多屏                            
-                            if (IsZoomedSpan(fHandle)) {
-                                ChangeWpState(AppWpRunRulesEnum.Pause);
-                            }
-                            else //window is not greater >90%
-                            {
-                                ChangeWpState(_userSettings.Settings.AppFocus);
-                            }
-                            ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
-                        }
-                        else if (Native.IsZoomed(fHandle) || IsZoomedCustom(fHandle)) {
-                            //maximised window or window covering whole screen.
-                            ChangeWpState(_userSettings.Settings.AppFullscreen, focusedScreen);
-                            ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
-                        }
-                        else {
-                            //window is just in focus, not covering screen.
-                            ChangeWpState(_userSettings.Settings.AppFocus, focusedScreen);
-                            ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
-                        }
+                    if (!isDesktop && _userSettings.Settings.IsAudioOnlyOnDesktop) {
+                        ChangeWpState(AppWpRunRulesEnum.Silence);
+                    }
+                }
+                #endregion
 
-                        if (isDesktop) {
-                            ChangeWpState(AppWpRunRulesEnum.KeepRun, focusedScreen);
-                        }
-                        else if (_userSettings.Settings.IsAudioOnlyOnDesktop) {
-                            ChangeWpState(AppWpRunRulesEnum.Silence, focusedScreen);
+                #region 多屏
+                // 多屏
+                else {
+                    // 仅聚焦屏幕播放声音
+                    Models.Cores.Monitor? focusedScreen;
+                    Native.GetCursorPos(out var pos);
+                    if ((focusedScreen = _monitorManger.GetMonitorByPoint(pos)) != null) {
+                        //unpausing the rest of _wallpapers.
+                        //only one window can be foreground!
+                        foreach (var item in _monitorManger.Monitors) {
+                            if (_userSettings.Settings.WallpaperArrangement != WallpaperArrangement.Expand &&
+                                !focusedScreen.Equals(item)) {
+                                ChangeWpState(AppWpRunRulesEnum.Silence, item);
+                            }
                         }
                     }
-                    #endregion
+                    else {
+                        // 未获取到合法显示器
+                        return;
+                    }
+
+                    // 检查前台窗口是否为桌面环境的一部分
+                    if (isDesktop) {
+                        // 焦点在桌面
+                        //win10 and win7 desktop foreground while running.
+                        ChangeWpState(AppWpRunRulesEnum.KeepRun);
+                        ChangeParralaxState(AppParallaxRulesEnum.KeepRun);
+                    }
+                    // 说明在其他焦点应用程序上
+                    else if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand) {
+                        // 跨越多屏                            
+                        if (IsZoomedSpan(fHandle)) {
+                            ChangeWpState(AppWpRunRulesEnum.Pause);
+                        }
+                        else //window is not greater >90%
+                        {
+                            ChangeWpState(_userSettings.Settings.AppFocus);
+                        }
+                        ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
+                    }
+                    else if (Native.IsZoomed(fHandle) || IsZoomedCustom(fHandle)) {
+                        //maximised window or window covering whole screen.
+                        ChangeWpState(_userSettings.Settings.AppFullscreen, focusedScreen);
+                        ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
+                    }
+                    else {
+                        //window is just in focus, not covering screen.
+                        ChangeWpState(_userSettings.Settings.AppFocus, focusedScreen);
+                        ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
+                    }
+
+                    if (!isDesktop && _userSettings.Settings.IsAudioOnlyOnDesktop) {
+                        ChangeWpState(AppWpRunRulesEnum.Silence);
+                    }
                 }
+                #endregion
             }
             catch (Exception ex) {
                 App.Log.Error("Playback Changes for Focus Error: ", ex);
             }
             #endregion
-        }
-
-        private bool IsWhitelistedClass(IntPtr hwnd) {
-            const int maxChars = 256;
-            StringBuilder className = new(maxChars);
-            return Native.GetClassName(hwnd, className, maxChars) > 0 && _classWhiteList.Any(x => x.Equals(className.ToString(), StringComparison.Ordinal));
         }
 
         private void PauseWallpapers() {
@@ -315,15 +291,15 @@ namespace VirtualPaper.Cores.PlaybackControl {
             }
         }
 
-        private void PlayParallaxs() {
+        private void ResumeParallaxs() {
             foreach (var x in _wpControl.Wallpapers) {
-                x.PlayParallax();
+                x.ResumeParallax();
             }
         }
 
         private void PauseWallpaper(IMonitor monitor) {
             foreach (var x in _wpControl.Wallpapers) {
-                if (x.Monitor.Equals(monitor)) {
+                if (x.Monitor?.Equals(monitor) == true) {
                     x.Pause();
                 }
             }
@@ -331,7 +307,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
 
         private void PlayWallpaper(IMonitor monitor) {
             foreach (var x in _wpControl.Wallpapers) {
-                if (x.Monitor.Equals(monitor)) {
+                if (x.Monitor?.Equals(monitor) == true) {
                     x.Play();
                 }
             }
@@ -339,16 +315,16 @@ namespace VirtualPaper.Cores.PlaybackControl {
 
         private void PauseParallax(IMonitor monitor) {
             foreach (var x in _wpControl.Wallpapers) {
-                if (x.Monitor.Equals(monitor)) {
+                if (x.Monitor?.Equals(monitor) == true) {
                     x.PauseParallax();
                 }
             }
         }
 
-        private void PlayParallax(IMonitor monitor) {
+        private void ResumeParallax(IMonitor monitor) {
             foreach (var x in _wpControl.Wallpapers) {
-                if (x.Monitor.Equals(monitor)) {
-                    x.PlayParallax();
+                if (x.Monitor?.Equals(monitor) == true) {
+                    x.ResumeParallax();
                 }
             }
         }
@@ -367,7 +343,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
 
         private void SilenceWallpaper(IMonitor monitor) {
             foreach (var x in _wpControl.Wallpapers) {
-                if (x.Monitor.Equals(monitor)) {
+                if (x.Monitor?.Equals(monitor) == true) {
                     x.SetMute(true);
                 }
             }
@@ -375,7 +351,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
 
         private void UnSilenceWallpaper(IMonitor monitor) {
             foreach (var x in _wpControl.Wallpapers) {
-                if (x.Monitor.Equals(monitor)) {
+                if (x.Monitor?.Equals(monitor) == true) {
                     x.SetMute(false);
                 }
             }
@@ -385,10 +361,10 @@ namespace VirtualPaper.Cores.PlaybackControl {
             switch (nextState) {
                 case AppParallaxRulesEnum.KeepRun:
                     if (targetMonitor == null) {
-                        PlayParallaxs();
+                        ResumeParallaxs();
                     }
                     else {
-                        PlayParallax(targetMonitor);
+                        ResumeParallax(targetMonitor);
                     }
                     break;
                 case AppParallaxRulesEnum.Pause:
@@ -512,30 +488,9 @@ namespace VirtualPaper.Cores.PlaybackControl {
         }
         #endregion
 
-        private readonly string[] _classWhiteList =
-        [
-            //startmeu, taskview (win10), action center etc
-            "Windows.UI.Core.CoreWindow",
-            //alt+tab screen (win10)
-            "MultitaskingViewFrame",
-            //taskview (win11)
-            "XamlExplorerHostIslandWindow",
-            //widget window (win11)
-            "WindowsDashboard",
-            //taskbar(s)
-            "Shell_TrayWnd",
-            "Shell_SecondaryTrayWnd",
-            //systray notifyicon expanded popup
-            "NotifyIconOverflowWindow",
-            //rainmeter widgets
-            "RainmeterMeterWindow",
-
-            "_cls_desk_"
-        ];
-        private nint _workerWOrig, _progman;
         private readonly PeriodicTimer _timer;
         private bool _isLockScreen, _isRemoteSession;
-        private CancellationTokenSource _ctsPlayback;
+        private CancellationTokenSource? _ctsPlayback;
         private readonly IUserSettingsService _userSettings;
         private readonly IWallpaperControl _wpControl;
         private readonly IMonitorManager _monitorManger;

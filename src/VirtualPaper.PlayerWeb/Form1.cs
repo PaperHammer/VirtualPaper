@@ -213,7 +213,7 @@ namespace VirtualPaper.PlayerWeb {
             }
         }
 
-        private async void HandleIpcMessage(string message) {
+        private void HandleIpcMessage(string message) {
             try {
                 var obj = JsonSerializer.Deserialize(message, IpcMessageContext.Default.IpcMessage);
                 switch (obj.Type) {
@@ -233,16 +233,16 @@ namespace VirtualPaper.PlayerWeb {
                         LoadWpEffect(_startArgs.WpEffectFilePathUsing);
                         break;
                     case MessageType.cmd_suspend:
-                        await HandlePlaybackCommandAsync(true);
+                        HandlePlaybackCommand(true);
                         break;
                     case MessageType.cmd_resume:
-                        await HandlePlaybackCommandAsync(false);
+                        HandlePlaybackCommand(false);
                         break;
                     case MessageType.cmd_muted:
-                        await HandleMuteCommandAsync((VirtualPaperMutedCmd)obj);
+                        HandleMuteCommand((VirtualPaperMutedCmd)obj);
                         break;
                     case MessageType.cmd_update:
-                        await HandleUpdateCommandAsync((VirtualPaperUpdateCmd)obj);
+                        HandleUpdateCommand((VirtualPaperUpdateCmd)obj);
                         break;
                     case MessageType.cmd_suspend_parallax:
                         _isFocusOnDesk = false;
@@ -250,27 +250,6 @@ namespace VirtualPaper.PlayerWeb {
                     case MessageType.cmd_resume_parallax:
                         _isFocusOnDesk = true;
                         break;
-
-                    //case MessageType.vp_slider:
-                    //    var sl = (VirtualPaperSlider)obj;
-                    //    HandleUIElementMsg(sl.Name, sl.Value);
-                    //    break;
-                    //case MessageType.vp_textbox:
-                    //    var tb = (VirtualPaperTextBox)obj;
-                    //    HandleUIElementMsg(tb.Name, tb.Value);
-                    //    break;
-                    //case MessageType.vp_dropdown:
-                    //    var dd = (VirtualPaperDropdown)obj;
-                    //    HandleUIElementMsg(dd.Name, dd.Value);
-                    //    break;
-                    //case MessageType.vp_cpicker:
-                    //    var cp = (VirtualPaperColorPicker)obj;
-                    //    HandleUIElementMsg(cp.Name, cp.Value);
-                    //    break;
-                    //case MessageType.vp_chekbox:
-                    //    var cb = (VirtualPaperCheckbox)obj;
-                    //    ExecuteCheckBoxSet(cb.Name, cb.Value);
-                    //    break;
                     case MessageType.vp_general_effect:
                         HandleGenerealEffect((VirtualPaperGeneralEffect)obj);
                         break;
@@ -321,7 +300,7 @@ namespace VirtualPaper.PlayerWeb {
             });
         }
 
-        private async Task HandlePlaybackCommandAsync(bool pause) {
+        private void HandlePlaybackCommand(bool pause) {
             if (_isPaused == pause) return;
 
             if (pause) {
@@ -334,11 +313,11 @@ namespace VirtualPaper.PlayerWeb {
             _isPaused = pause;
         }
 
-        private async Task HandleMuteCommandAsync(VirtualPaperMutedCmd muted) {
+        private void HandleMuteCommand(VirtualPaperMutedCmd muted) {
             _scriptExecutor?.EnqueueEvent(Fileds.AudioMuteChanged, muted.IsMuted);
         }
 
-        private async Task HandleUpdateCommandAsync(VirtualPaperUpdateCmd update) {
+        private void HandleUpdateCommand(VirtualPaperUpdateCmd update) {
             if (_startArgs.FilePath != update.FilePath) {
                 _startArgs.FilePath = update.FilePath;
                 _startArgs.RuntimeType = update.RType;
@@ -432,38 +411,46 @@ namespace VirtualPaper.PlayerWeb {
         private void StartParallax() {
             if (Interlocked.CompareExchange(ref _isParallaxRunning, 1, 0) == 1) return;
 
-            Task.Run(async () => {
+            Task.Run(() => {
                 try {
                     int lastX = int.MinValue;
                     int lastY = int.MinValue;
                     bool lastInside = false;
 
                     while (_isParallaxRunning == 1) {
-                        var pos = RawInput.GetMousePos();
-                        int mouseX = pos.X, mouseY = pos.Y;
+                        if (_isFocusOnDesk) {
+                            var pos = RawInput.GetMousePos();
+                            int mouseX = pos.X, mouseY = pos.Y;
 
-                        int x = (int)_mousePos.X;
-                        int y = (int)_mousePos.Y;
+                            int x = (int)_mousePos.X;
+                            int y = (int)_mousePos.Y;
 
-                        bool inside = _windowRc.Left <= mouseX && mouseX <= _windowRc.Right &&
-                                    _windowRc.Top <= mouseY && mouseY <= _windowRc.Bottom;
-                        if (_isFocusOnDesk && inside) {
-                            _scriptExecutor?.EnqueueState(
-                                key: "MouseMove",
-                                functionName: Fileds.MouseMove,
-                                x, y
-                            );
-                            lastX = x;
-                            lastY = y;
+                            bool inside = _windowRc.Left <= mouseX && mouseX <= _windowRc.Right &&
+                                        _windowRc.Top <= mouseY && mouseY <= _windowRc.Bottom;
+                            if (inside) {
+                                _scriptExecutor?.EnqueueState(
+                                    key: "MouseMove",
+                                    functionName: Fileds.MouseMove,
+                                    x, y
+                                );
+                                lastX = x;
+                                lastY = y;
+                            }
+                            else if (lastInside) {
+                                _scriptExecutor?.EnqueueState(
+                                    key: "MouseOut",
+                                    functionName: Fileds.MouseOut
+                                );
+                            }
+
+                            lastInside = inside;
                         }
-                        else if (lastInside) {
+                        else {
                             _scriptExecutor?.EnqueueState(
                                 key: "MouseOut",
                                 functionName: Fileds.MouseOut
                             );
                         }
-
-                        lastInside = inside;
                     }
                 }
                 catch (Exception ex) when (ex is OperationCanceledException) { }

@@ -217,9 +217,6 @@
 		<Content Update="Assets\virtualpaper.ico">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
-		<None Update="Players\Web\default.html">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
 	</ItemGroup>
 
 	<!-- 

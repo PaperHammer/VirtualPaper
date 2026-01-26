@@ -2,7 +2,6 @@
 let centerX;
 let centerY;
 let parallaxBackground;
-let curVideoElementId = null; // 存储当前视频元素的ID
 let volume = 0.8;
 let speed = 1.0;
 let muted = false;

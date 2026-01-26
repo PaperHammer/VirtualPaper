@@ -233,7 +233,15 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         };
                         previewWindow.Applied += async (sender, context) => {
                             previewWindow.Close();
-                            await ApplyAsync(data);
+
+                            Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
+                                _wpSettingsViewModel.Monitors[_wpSettingsViewModel.SelectedMonitorIndex],
+                                data,
+                                rtype,
+                                token);
+                            if (!response.IsFinished) {
+                                GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
+                            }
                         };
                         _previews.Add((data.WallpaperUid, rtype), previewWindow);
                         previewWindow.Show();

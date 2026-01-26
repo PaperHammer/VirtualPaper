@@ -16,6 +16,8 @@ namespace VirtualPaper.GrpcServers {
             foreach (var monitor in _monitorManager.Monitors) {
                 var item = new Grpc_MonitorData() {
                     DeviceId = monitor.DeviceId,
+                    Content = monitor.Content,
+                    SystemIndex = monitor.SystemIndex,
                     IsPrimary = monitor.IsPrimary,
                     Bounds = new() {
                         X = monitor.Bounds.X,
@@ -29,7 +31,7 @@ namespace VirtualPaper.GrpcServers {
                         Width = monitor.WorkingArea.Width,
                         Height = monitor.WorkingArea.Height
                     },
-                    ThumbnailPath = monitor.ThumbnailPath,
+                    ThumbnailPath = monitor.ThumbnailPath,                    
                 };
                 resp.Monitors.Add(item);
             }
@@ -59,7 +61,7 @@ namespace VirtualPaper.GrpcServers {
                     tasks.Add(Task.Run(async () => {
                         await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () => {
                             var monitor = _monitorManager.Monitors[monitorIndex];
-                            IdentifyWindow identifyWindow = new(monitorIndex + 1) {
+                            IdentifyWindow identifyWindow = new(monitor.SystemIndex) {
                                 Owner = App.Current.MainWindow,
                                 Left = monitor.WorkingArea.Left,
                                 Top = monitor.WorkingArea.Top,

@@ -5,30 +5,49 @@ let height;
 let mouse;
 
 function resourceLoad3D(imgFilePath, depthFilePath) {
-    /*背景/场景*/
+    // 先处理旧 content：加 fade-out，动画结束后移除
+    const root = document.querySelector('.root');
+    const oldContent = document.getElementById('content');
+    if (oldContent) {
+        // 替换 class 为 fade-out，避免叠加 class 影响布局
+        oldContent.setAttribute('class', 'fade-out');
+        setTimeout(() => {
+            oldContent.remove();
+        }, 500); // 与 CSS 动画时长 0.5s 对齐
+    }
+
+    // 创建新的 content 容器，添加 fade-in
+    const newContent = document.createElement('div');
+    newContent.id = 'content';
+    // 新 content 最终需要有 source 的样式，这里先加上 source + fade-in
+    newContent.className = 'source fade-in';
+    newContent.setAttribute('draggable', 'false');
+    root.appendChild(newContent);
+
+    /* 背景 / 场景 */
     const scene = new THREE.Scene();
     scene.background = null;
 
-    /*相机*/
-    const fov = 100 // 视野范围
-    const aspect = width / height; // 相机默认值 = 2, 画布的宽高比
-    const near = 0.1 // 近平面
-    const far = 1000 // 远平面
+    /* 相机 */
+    const fov = 100; // 视野范围
+    const aspect = width / height; // 画布的宽高比
+    const near = 0.1; // 近平面
+    const far = 1000; // 远平面
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     camera.position.set(0, 0, 4);
 
-    /*加载纹理*/
+    /* 加载纹理 */
     const textureLoader = new THREE.TextureLoader();
-    const texture = textureLoader.load(imgFilePath);//加载图片本身
-    const dapthTexture = textureLoader.load(depthFilePath);//加载深度图
+    const texture = textureLoader.load(imgFilePath);      // 图片
+    const dapthTexture = textureLoader.load(depthFilePath); // 深度图
 
-    /*鼠标坐标2维向量*/
+    /* 鼠标坐标 2D 向量 */
     mouse = new THREE.Vector2();
 
-    /*创建平面*/
+    /* 创建平面 */
     const geometry = new THREE.PlaneGeometry(16, 10);
 
-    /*着色器材质*/
+    /* 着色器材质 */
     const material = new THREE.ShaderMaterial({
         uniforms: {
             uTexture: { value: texture },
@@ -44,43 +63,43 @@ function resourceLoad3D(imgFilePath, depthFilePath) {
         `,
         fragmentShader: `
             uniform sampler2D uTexture;
-            uniform  sampler2D uDepthTexture;
-            uniform vec2  uMouse;
+            uniform sampler2D uDepthTexture;
+            uniform vec2 uMouse;
             varying vec2 vUv;
             void main() {
                 vec4 color = texture2D(uTexture, vUv);
                 vec4 depth = texture2D(uDepthTexture, vUv);
                 float depthValue = depth.r;
-                float x = vUv.x + uMouse.x*0.01*depthValue;
-                float y = vUv.y + uMouse.y*0.01*depthValue;
-                vec4 newColor = texture2D(uTexture,vec2(x,y));
+                float x = vUv.x + uMouse.x * 0.01 * depthValue;
+                float y = vUv.y + uMouse.y * 0.01 * depthValue;
+                vec4 newColor = texture2D(uTexture, vec2(x, y));
                 gl_FragColor = newColor;
             }
-            `,
+        `,
     });
 
     const plane = new THREE.Mesh(geometry, material);
     scene.add(plane);
 
-    /*渲染器*/
+    /* 渲染器 */
     const renderer = new THREE.WebGLRenderer({
-        antialias: true, // 反走样 抗锯齿
-        alpha: true, // 启用透明度
+        antialias: true,
+        alpha: true,
     });
     renderer.setClearAlpha(0);
-    renderer.setPixelRatio(window.devicePixelRatio); // 使用设备分辨率
+    renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
+
     requestAnimationFrame(function animate() {
         material.uniforms.uMouse.value = mouse;
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
     });
 
-    const container = document.getElementById('content');
-    container.classList.add('source');
-    container.appendChild(renderer.domElement); // 向指定 div 中添加
+    // 把 canvas 挂到新的 content 上
+    newContent.appendChild(renderer.domElement);
 
-    /*监听窗口变化*/
+    /* 监听窗口变化 */
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();

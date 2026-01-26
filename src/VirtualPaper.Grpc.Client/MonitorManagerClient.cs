@@ -42,7 +42,8 @@ namespace VirtualPaper.Grpc.Client {
                 var monitor = resp.Monitors[i];
                 monitors.Add(new Monitor() {
                     DeviceId = monitor.DeviceId,
-                    Content = (i + 1).ToString(),
+                    Content = monitor.Content,
+                    SystemIndex = monitor.SystemIndex,
                     IsPrimary = monitor.IsPrimary,
                     Bounds = new(
                         monitor.Bounds.X,

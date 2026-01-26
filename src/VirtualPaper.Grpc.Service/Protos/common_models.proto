@@ -45,10 +45,11 @@ message Grpc_ScreensaverRequest {
 message Grpc_MonitorData {
 	string device_id = 1;	
 	string content = 2;
-	bool is_primary = 3;
-	Grpc_Rectangle bounds = 4;
-	Grpc_Rectangle working_area = 5;
-	string thumbnail_path = 6;
+	int32 system_index = 3;
+	bool is_primary = 4;
+	Grpc_Rectangle bounds = 5;
+	Grpc_Rectangle working_area = 6;
+	string thumbnail_path = 7;
 }
 
 message Grpc_Rectangle {

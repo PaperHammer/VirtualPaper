@@ -5,6 +5,7 @@ let hueRotate = 0;
 let brightness = 0.0;
 let contrast = 0.0
 let newFit = "";
+let curVideoElementId = null; // 存储当前视频元素的ID
 
 function propertyListener(propertyType, val) {
     switch (propertyType) {

@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events.EffectValue.Base;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.IPC;
@@ -115,7 +115,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     break;
             }
 
-            Monitors.SetRange(_monitors);
+            Monitors.SetRange(_monitors.OrderBy(m => m.SystemIndex));
             SelectedMonitorIndex = (cachedIndex >= 0 && cachedIndex < _monitors.Count) ? cachedIndex : 0;
         }
 

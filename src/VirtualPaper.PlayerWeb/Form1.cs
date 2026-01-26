@@ -12,6 +12,7 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.PlayerWeb.Extensions;
 using VirtualPaper.PlayerWeb.Utils;
+using static VirtualPaper.Common.Utils.Archive.ZipUtil;
 using WebView = Microsoft.Web.WebView2.WinForms.WebView2;
 
 namespace VirtualPaper.PlayerWeb {
@@ -161,7 +162,7 @@ namespace VirtualPaper.PlayerWeb {
                     break;
                 case "RImage3D":
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
+                    _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, GetWallpaperVirtualPath(_startArgs.FilePath), GetWallpaperRootVirtualPath(Path.GetFileNameWithoutExtension(_startArgs.FilePath), _startArgs.DepthFilePath));
                     break;
                 default:
                     break;
@@ -175,12 +176,19 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         string GetWallpaperVirtualPath(string? filePath) {
-            if (string.IsNullOrWhiteSpace(filePath))
+            if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentNullException(nameof(filePath));
 
             var fileName = Path.GetFileName(filePath);
 
             return $"https://{CoreWebView2Extensions.WallpaperHost}/{Path.GetFileNameWithoutExtension(fileName)}/{fileName}";
+        }
+
+        string GetWallpaperRootVirtualPath(string? fileName, string? filePath) {
+            if (string.IsNullOrEmpty(fileName) || string.IsNullOrEmpty(filePath))
+                throw new ArgumentNullException(nameof(filePath));
+
+            return $"https://{CoreWebView2Extensions.WallpaperHost}/{fileName}/{Path.GetFileName(filePath)}";
         }
         #endregion
 

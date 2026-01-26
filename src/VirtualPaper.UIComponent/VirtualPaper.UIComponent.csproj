@@ -87,24 +87,6 @@
 	  <Page Update="Input\Button\ArcButton.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
-	  <None Update="PlayersRun\Web\3d_depth_map.html">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="PlayersRun\Web\default.html">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="PlayersRun\Web\js\3d_depth\run.js">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="PlayersRun\Web\js\3d_depth\three.module.min.js">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="PlayersRun\Web\js\base.js">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="PlayersRun\Web\js\default\run.js">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
 	</ItemGroup>
 
 	<ItemGroup>

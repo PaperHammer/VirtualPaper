@@ -7,6 +7,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         Rectangle Bounds { get; set; }
 
         string Content { get; set; }
+        int SystemIndex { get; set; }
         bool IsPrimary { get; set; }
         string ThumbnailPath { get; set; }
     }

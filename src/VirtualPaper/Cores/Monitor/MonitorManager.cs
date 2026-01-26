@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
@@ -18,6 +19,12 @@ namespace VirtualPaper.Cores.Monitor {
             get => _virtualScreenBounds;
             private set { _virtualScreenBounds = value; OnPropertyChanged(); }
         }
+
+        private const int PRIMARY_MONITOR = unchecked((int)0xBAADF00D);
+        private const int MONITORINFOF_PRIMARY = 0x00000001;
+        private const int MONITOR_DEFAULTTONEAREST = 0x00000002;
+        private const string DEAFULT_DISPLAY_DEVICENAME = "DISPLAY";
+        private static bool _multiMonitorSupport;
 
         public MonitorManager() {
             RefreshMonitorList();
@@ -87,12 +94,28 @@ namespace VirtualPaper.Cores.Monitor {
             // 写入新显示器
             for (int i = 0; i < hMonitors.Count; i++) {
                 var monitor = GetMonitorByHMonitor(hMonitors[i]);
+
+                // 如果没有从 deviceName 解析到系统编号，则分配一个新的编号
+                if (monitor.SystemIndex <= 0) {
+                    monitor.SystemIndex = GetNextSystemIndex();
+                }
+
                 int idx = Monitors.FindIndex(x => x.DeviceId == monitor.DeviceId);
                 if (idx >= 0) {
+                    // 已存在的显示器：更新状态即可
                     Monitors[idx].IsStale = false;
+                    Monitors[idx].IsPrimary = monitor.IsPrimary;
+                    Monitors[idx].Bounds = monitor.Bounds;
+                    Monitors[idx].WorkingArea = monitor.WorkingArea;
+                    Monitors[idx].SystemIndex = monitor.SystemIndex;
+                    Monitors[idx].DeviceId = monitor.DeviceId;
+
+                    // 同步 Content（用于 UI 显示编号）
+                    Monitors[idx].Content = monitor.SystemIndex.ToString();
                 }
                 else {
-                    monitor.Content = (i + 1).ToString();
+                    // 新显示器：使用 SystemIndex 作为内容编号
+                    monitor.Content = monitor.SystemIndex.ToString();
                     Monitors.Add(monitor);
                 }
             }
@@ -104,7 +127,6 @@ namespace VirtualPaper.Cores.Monitor {
                 Monitors.Remove(monitor);
             }
             staleDisplayMonitors.Clear();
-            staleDisplayMonitors = null;
 
             /*
              * 通过标记来删除显示器信息的原因：
@@ -124,17 +146,19 @@ namespace VirtualPaper.Cores.Monitor {
             Models.Cores.Monitor? monitor;
 
             if (!_multiMonitorSupport || hMonitor == (IntPtr)PRIMARY_MONITOR) {
-
-                monitor = new(DEAFULT_DISPLAY_DEVICENAME) {                 
+                // 默认主屏（没有具体 DISPLAYx 名称时）
+                monitor = new Models.Cores.Monitor(DEAFULT_DISPLAY_DEVICENAME) {
                     Bounds = GetVirtualScreenBounds(),
                     DeviceId = GetDefaultMonitorDeviceId(),
                     IsPrimary = true,
                     WorkingArea = GetWorkingArea(),
-                    IsStale = false
+                    IsStale = false,
+                    // 默认主屏的 SystemIndex，如解析不到，则 RefreshMonitorList 中会再补
+                    SystemIndex = ExtractDisplayNumber(DEAFULT_DISPLAY_DEVICENAME)
                 };
             }
             else {
-                var info = new Native.MONITORINFOEX();// MONITORINFOEX();
+                var info = new Native.MONITORINFOEX();
                 Native.GetMonitorInfo(new HandleRef(null, hMonitor), info);
 
                 string deviceName = new string(info.szDevice).TrimEnd((char)0);
@@ -151,12 +175,12 @@ namespace VirtualPaper.Cores.Monitor {
 
             var displayDevice = GetMonitorDevice(deviceName);
             monitor.DeviceId = displayDevice.DeviceID;
+            monitor.SystemIndex = ExtractDisplayNumber(deviceName);
 
             return monitor;
         }
 
         private void UpdateDisplayMonitor(Models.Cores.Monitor monitor, Native.MONITORINFOEX info) {
-            // 确保在 应用程序清单文件 里开启对每一块屏幕的 DPI 感知
             monitor.Bounds = new Rectangle(
                 info.rcMonitor.Left, info.rcMonitor.Top,
                 info.rcMonitor.Right - info.rcMonitor.Left,
@@ -173,9 +197,26 @@ namespace VirtualPaper.Cores.Monitor {
         }
 
         /// <summary>
+        /// 下一个可用的 SystemIndex（兜底用）
+        /// </summary>
+        private int GetNextSystemIndex() {
+            if (Monitors.Count == 0) {
+                return 1;
+            }
+
+            // 取当前已有的最大 SystemIndex，再 +1
+            var max = Monitors
+                .Where(m => m.SystemIndex > 0)
+                .Select(m => m.SystemIndex)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            return max + 1;
+        }
+
+        /// <summary>
         /// 获取 HMonitor 类型的显示器句柄
         /// </summary>
-        /// <returns></returns>
         private IList<IntPtr> GetHMonitors() {
             if (_multiMonitorSupport) {
                 var hMonitors = new List<IntPtr>();
@@ -219,17 +260,33 @@ namespace VirtualPaper.Cores.Monitor {
             return result;
         }
 
-        private static string GetDefaultMonitorDeviceId() => Native.GetSystemMetrics((int)Native.SystemMetric.SM_REMOTESESSION) != 0 ?
-                    "\\\\?\\DISPLAY#REMOTEDISPLAY#" : "\\\\?\\DISPLAY#LOCALDISPLAY#";
+        private static int ExtractDisplayNumber(string deviceName) {
+            // 从 "\\.\DISPLAY1" 中提取 1，解析失败返回 0
+            if (string.IsNullOrEmpty(deviceName))
+                return 0;
+
+            var match = MonitorNameIndex().Match(deviceName);
+            if (match.Success && int.TryParse(match.Groups[1].Value, out var n))
+                return n;
+
+            return 0;
+        }
+
+        private static string GetDefaultMonitorDeviceId() =>
+            Native.GetSystemMetrics((int)Native.SystemMetric.SM_REMOTESESSION) != 0
+                ? "\\\\?\\DISPLAY#REMOTEDISPLAY#"
+                : "\\\\?\\DISPLAY#LOCALDISPLAY#";
+
         /// <summary>
         /// 获取 Windows 定义的显示器虚拟边界
         /// </summary>
-        /// <returns></returns>
         private static Rectangle GetVirtualScreenBounds() {
-            var location = new Point(Native.GetSystemMetrics(
-                (int)Native.SystemMetric.SM_XVIRTUALSCREEN), Native.GetSystemMetrics((int)Native.SystemMetric.SM_YVIRTUALSCREEN));
-            var size = new Size(Native.GetSystemMetrics(
-                (int)Native.SystemMetric.SM_CXVIRTUALSCREEN), Native.GetSystemMetrics((int)Native.SystemMetric.SM_CYVIRTUALSCREEN));
+            var location = new Point(
+                Native.GetSystemMetrics((int)Native.SystemMetric.SM_XVIRTUALSCREEN),
+                Native.GetSystemMetrics((int)Native.SystemMetric.SM_YVIRTUALSCREEN));
+            var size = new Size(
+                Native.GetSystemMetrics((int)Native.SystemMetric.SM_CXVIRTUALSCREEN),
+                Native.GetSystemMetrics((int)Native.SystemMetric.SM_CYVIRTUALSCREEN));
             return new Rectangle(location, size);
         }
 
@@ -239,12 +296,9 @@ namespace VirtualPaper.Cores.Monitor {
             return new Rectangle(rc.Left, rc.Top,
                 rc.Right - rc.Left, rc.Bottom - rc.Top);
         }
-        #endregion
 
-        private const int PRIMARY_MONITOR = unchecked((int)0xBAADF00D);
-        private const int MONITORINFOF_PRIMARY = 0x00000001;
-        private const int MONITOR_DEFAULTTONEAREST = 0x00000002;
-        private const string DEAFULT_DISPLAY_DEVICENAME = "DISPLAY";
-        private static bool _multiMonitorSupport;
+        [GeneratedRegex(@"DISPLAY(\d+)$", RegexOptions.IgnoreCase, "zh-CN")]
+        private static partial Regex MonitorNameIndex();
+        #endregion
     }
 }

@@ -8,7 +8,6 @@ namespace VirtualPaper.Models.Cores {
     [JsonSerializable(typeof(IMonitor))]
     public partial class MonitorContext : JsonSerializerContext { }
 
-
     public partial class Monitor : ObservableObject, IMonitor {
         [JsonIgnore]
         public bool IsStale { get; set; }
@@ -17,7 +16,8 @@ namespace VirtualPaper.Models.Cores {
         public string DeviceId { get; set; } = string.Empty;
         public Rectangle Bounds { get; set; }
         public Rectangle WorkingArea { get; set; }
-        public string Content { get; set; } = string.Empty;
+        public string Content { get; set; } = "Monitor";
+        public int SystemIndex { get; set; } = -1;
         public bool IsPrimary { get; set; }
 
         private string _thumbnailPath = string.Empty;
@@ -28,7 +28,6 @@ namespace VirtualPaper.Models.Cores {
         #endregion
 
         public Monitor() {
-            Content = "-1";
         }
 
         public Monitor(string content) {

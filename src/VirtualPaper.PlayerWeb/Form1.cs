@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
@@ -29,7 +30,7 @@ namespace VirtualPaper.PlayerWeb {
                 this.FormBorderStyle = FormBorderStyle.Sizable;
                 this.WindowState = FormWindowState.Normal;
                 this.StartPosition = FormStartPosition.Manual;
-                this.Size = new Size(1920, 1080);
+                this.Size = new Size(1440, 810);
                 this.ShowInTaskbar = true;
                 this.MaximizeBox = true;
                 this.MinimizeBox = true;
@@ -43,7 +44,6 @@ namespace VirtualPaper.PlayerWeb {
             }
 
             _startArgs = args;
-            args.TryGetDataFromExtra("WindowRect", out _windowRc);
 
             InitializeWebView2Async().Await(() => {
                 _ = StdInListener();
@@ -216,6 +216,7 @@ namespace VirtualPaper.PlayerWeb {
         private void HandleIpcMessage(string message) {
             try {
                 var obj = JsonSerializer.Deserialize(message, IpcMessageContext.Default.IpcMessage);
+                if (obj == null) return;
                 switch (obj.Type) {
                     case MessageType.cmd_close:
                         HandleCloseCommand();
@@ -422,19 +423,17 @@ namespace VirtualPaper.PlayerWeb {
                             var pos = RawInput.GetMousePos();
                             int mouseX = pos.X, mouseY = pos.Y;
 
-                            int x = (int)_mousePos.X;
-                            int y = (int)_mousePos.Y;
-
                             bool inside = _windowRc.Left <= mouseX && mouseX <= _windowRc.Right &&
                                         _windowRc.Top <= mouseY && mouseY <= _windowRc.Bottom;
+                            //Debug.WriteLine(inside + " " + mouseX + "," + mouseY + " | " + _windowRc.Left + " " + +_windowRc.Right + " " + _windowRc.Top + " " + _windowRc.Bottom);
                             if (inside) {
                                 _scriptExecutor?.EnqueueState(
                                     key: "MouseMove",
                                     functionName: Fileds.MouseMove,
-                                    x, y
+                                    mouseX, mouseY
                                 );
-                                lastX = x;
-                                lastY = y;
+                                lastX = mouseX;
+                                lastY = mouseY;
                             }
                             else if (lastInside) {
                                 _scriptExecutor?.EnqueueState(
@@ -481,9 +480,8 @@ namespace VirtualPaper.PlayerWeb {
         private readonly StartArgsWeb _startArgs;
         private WebView _webView2 = null!;
         private WebViewScriptExecutor? _scriptExecutor;
-        private bool _isFocusOnDesk;
+        private bool _isFocusOnDesk = false;
         private bool _isPaused = false;
-        private Point _mousePos;
         private Native.RECT _windowRc;
         private volatile int _isParallaxRunning = 0; // 0 = stopped, 1 = running
         private int cefD3DRenderingSubProcessId;

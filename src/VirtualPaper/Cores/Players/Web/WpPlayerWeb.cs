@@ -111,11 +111,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 App.Jobs.AddProcess(Proc.Id);
                 Proc.BeginOutputReadLine();
 
-                StartArgs = new PlayerWebSrartArgs(Data, IsPreview,
-                    new Dictionary<string, object> {
-                        ["WindowRect"] = new { Left = 0, Top = 0, Right = 1920, Bottom = 1080 }
-                    }
-                ).ToJson();
+                StartArgs = new PlayerWebSrartArgs(Data, IsPreview).ToJson();
                 SendMessage(StartArgs);
 
                 using var registration = token.Register(() => {
@@ -217,7 +213,7 @@ namespace VirtualPaper.Cores.Players.Web {
                             ProcWindowHandle = Proc.GetProcessWindow(true);
 
                             App.Log.Info($"WpPlayerWeb-{_uniqueId}: ProcId: {Proc.Id} - ProcWindowHandle: 0x{ProcWindowHandle.ToInt64():X} - RealPlayerWindowHandle: 0x{RealPlayerWindowHandle.ToInt64():X}");
-                            
+
                             IsLoaded = true;
                         }
                         catch (Exception ie) {

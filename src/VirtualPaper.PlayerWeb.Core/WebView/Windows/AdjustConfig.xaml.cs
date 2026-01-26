@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common.Events.EffectValue.Base;
 using VirtualPaper.Common.Logging;

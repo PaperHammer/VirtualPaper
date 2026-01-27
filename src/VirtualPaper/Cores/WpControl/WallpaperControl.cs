@@ -155,20 +155,6 @@ namespace VirtualPaper.Cores.WpControl {
             return string.Empty;
         }
 
-        private void ApplyEvent(object? s, EventArgs e) {
-            if (s is not IWpPlayer instance) return;
-
-            if (instance.IsPreview) {
-                instance.Close();
-                SetWallpaperAsync(instance.Data, instance.Monitor, fromPreview: true);
-            }
-            else {
-                if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate) {
-                    UpdateWallpaper(instance);
-                }
-            }
-        }
-
         public async Task ResetWallpaperAsync() {
             await _semaphoreSlimWallpaperLoadingLock.WaitAsync();
 
@@ -231,14 +217,12 @@ namespace VirtualPaper.Cores.WpControl {
             IMonitor? monitor,
             bool fromPreview = false,
             CancellationToken token = default) {
-
-
             await _semaphoreSlimWallpaperLoadingLock.WaitAsync(token);
-            Grpc_SetWallpaperResponse response = new();
-            response.IsFinished = true;
+            Grpc_SetWallpaperResponse response = new() {
+                IsFinished = true
+            };
 
             if (monitor == null) {
-                //todo
                 response.IsFinished = false;
                 return response;
             }
@@ -250,7 +234,7 @@ namespace VirtualPaper.Cores.WpControl {
                     throw new Exception("rtype error");
                 }
 
-                #region init
+                #region pre-check
                 if (_workerW == nint.Zero) {
                     ArcLog.GetLogger<WallpaperControl>().Error("WorkerW is not found");
                     response.IsFinished = false;
@@ -278,7 +262,7 @@ namespace VirtualPaper.Cores.WpControl {
 
                     return response;
                 }
-                #endregion                
+                #endregion
 
                 bool isStarted = false;
                 IWpRuntimeData? wpRuntimeData;
@@ -293,6 +277,14 @@ namespace VirtualPaper.Cores.WpControl {
                     DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
                 }
                 int monitorIdx = _monitorManager.Monitors.FindIndex(x => x.DeviceId == monitor.DeviceId);
+
+                var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId);
+                if (runningInstance != null) {
+                    runningInstance.Update(data);
+                    _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
+                    WallpaperChanged?.Invoke(this, EventArgs.Empty);
+                    return response;
+                }
 
                 switch (_userSettings.Settings.WallpaperArrangement) {
                     case WallpaperArrangement.Per: {
@@ -310,7 +302,6 @@ namespace VirtualPaper.Cores.WpControl {
                             }
                             else {
                                 instance.Closing += ClosingEvent;
-                                instance.Apply += ApplyEvent;
                                 App.Jobs.AddProcess(instance.Proc.Id);
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                 _wallpapers.Add(instance);
@@ -331,7 +322,6 @@ namespace VirtualPaper.Cores.WpControl {
                             }
                             else {
                                 instance.Closing += ClosingEvent;
-                                instance.Apply += ApplyEvent;
                                 App.Jobs.AddProcess(instance.Proc.Id);
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                 _wallpapers.Add(instance);
@@ -353,7 +343,6 @@ namespace VirtualPaper.Cores.WpControl {
                                 }
                                 else {
                                     instance.Closing += ClosingEvent;
-                                    instance.Apply += ApplyEvent;
                                     App.Jobs.AddProcess(instance.Proc.Id);
                                     _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                     _wallpapers.Add(instance);
@@ -834,7 +823,6 @@ namespace VirtualPaper.Cores.WpControl {
             CloseAllWallpapers();
             for (int i = 0; i < wallpaperLayout.Count; i++) {
                 var layout = wallpaperLayout[i];
-                layout.MonitorContent = (i + 1).ToString();
                 try {
                     IWpMetadata data = WallpaperUtil.GetWallpaperByFolder(
                         layout.FolderPath, layout.MonitorContent, layout.RType);
@@ -845,11 +833,10 @@ namespace VirtualPaper.Cores.WpControl {
                     else {
                         if (data == null || !data.IsAvailable()) {
                             ArcLog.GetLogger<WallpaperControl>().Error($"Skipping restoration of {layout.FolderPath}");
-                            //CloseWallpaper(_monitor);
                             wallpaperLayout[i] = null;
                             continue;
                         }
-                        ArcLog.GetLogger<WallpaperControl>().Info($"Restoring _data: {data.BasicData.FolderPath}");
+                        ArcLog.GetLogger<WallpaperControl>().Info($"Restoring data: {data.BasicData.FolderPath}");
                         SetWallpaperAsync(data.GetPlayerData(), monitor);
                     }
                 }
@@ -863,9 +850,7 @@ namespace VirtualPaper.Cores.WpControl {
             if (s is not IWpPlayer instance) return;
 
             instance.Closing -= ClosingEvent;
-            instance.Apply -= ApplyEvent;
             instance.Closing = null;
-            instance.Apply = null;
             _wallpapers.Remove(instance);
             WallpaperChanged?.Invoke(this, EventArgs.Empty);
         }

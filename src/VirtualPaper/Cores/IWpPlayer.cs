@@ -51,7 +51,6 @@ namespace VirtualPaper.Cores {
         string StartArgs { get;}
 
         EventHandler? Closing { get; set; }
-        EventHandler? Apply { get; set; }
 
         Task<bool> ShowAsync(CancellationToken cancellationToken = default);
         void Pause();

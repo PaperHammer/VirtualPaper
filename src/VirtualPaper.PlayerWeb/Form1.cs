@@ -45,9 +45,9 @@ namespace VirtualPaper.PlayerWeb {
 
             _startArgs = args;
 
-            InitializeWebView2Async().Await(() => {
-                _ = StdInListener();
+            InitializeWebView2Async().Await(() => {                
                 _scriptExecutor = new WebViewScriptExecutor(_webView2);
+                _ = StdInListener();
             },
             (ex) => {
                 Program.WriteToParent(new VirtualPaperMessageConsole() {
@@ -153,21 +153,7 @@ namespace VirtualPaper.PlayerWeb {
                 });
             }
 
-            switch (_startArgs.RuntimeType) {
-                case "RImage":
-                case "RVideo":
-                    UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, _startArgs.RuntimeType, GetWallpaperVirtualPath(_startArgs.FilePath));
-                    break;
-                case "RImage3D":
-                    UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, GetWallpaperVirtualPath(_startArgs.FilePath), GetWallpaperRootVirtualPath(Path.GetFileNameWithoutExtension(_startArgs.FilePath), _startArgs.DepthFilePath));
-                    break;
-                default:
-                    break;
-            }
-            LoadWpEffect(_startArgs.WpEffectFilePathUsing);
-            _scriptExecutor?.EnqueueEvent(Fileds.Play);
+            Run();
 
             Program.WriteToParent(new VirtualPaperMessageHwnd() {
                 Hwnd = _webView2.Handle.ToInt64(),
@@ -250,7 +236,9 @@ namespace VirtualPaper.PlayerWeb {
                         HandleMuteCommand((VirtualPaperMutedCmd)obj);
                         break;
                     case MessageType.cmd_update:
-                        HandleUpdateCommand((VirtualPaperUpdateCmd)obj);
+                        CrossThreadInvoker.InvokeOnUIThread(() => {
+                            HandleUpdateCommand((VirtualPaperUpdateCmd)obj);
+                        });
                         break;
                     case MessageType.cmd_suspend_parallax:
                         _isFocusOnDesk = false;
@@ -325,21 +313,38 @@ namespace VirtualPaper.PlayerWeb {
             _scriptExecutor?.EnqueueEvent(Fileds.AudioMuteChanged, muted.IsMuted);
         }
 
-        private void HandleUpdateCommand(VirtualPaperUpdateCmd update) {
+        private void HandleUpdateCommand(VirtualPaperUpdateCmd update) {            
             if (_startArgs.FilePath != update.FilePath) {
                 _startArgs.FilePath = update.FilePath;
                 _startArgs.RuntimeType = update.RType;
                 _startArgs.WpEffectFilePathTemplate = update.WpEffectFilePathTemplate;
                 _startArgs.WpEffectFilePathTemporary = update.WpEffectFilePathTemporary;
                 _startArgs.WpEffectFilePathUsing = update.WpEffectFilePathUsing;
-                _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
             }
 
-            LoadWpEffect(_startArgs.WpEffectFilePathUsing);
+            Run();
         }
         #endregion
 
         #region utils
+        private void Run() {
+            switch (_startArgs.RuntimeType) {
+                case "RImage":
+                case "RVideo":
+                    UpdateRectToWebview();
+                    _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, _startArgs.RuntimeType, GetWallpaperVirtualPath(_startArgs.FilePath));
+                    break;
+                case "RImage3D":
+                    UpdateRectToWebview();
+                    _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, GetWallpaperVirtualPath(_startArgs.FilePath), GetWallpaperRootVirtualPath(Path.GetFileNameWithoutExtension(_startArgs.FilePath), _startArgs.DepthFilePath));
+                    break;
+                default:
+                    break;
+            }
+            LoadWpEffect(_startArgs.WpEffectFilePathUsing);
+            _scriptExecutor?.EnqueueEvent(Fileds.Play);
+        }
+
         /// <summary>
         /// Resumes the suspended CEF Direct3D rendering subprocess by detaching the debugger.
         /// Must be called on the same thread that previously attached, since debugger state is thread-specific.

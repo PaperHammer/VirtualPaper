@@ -22,7 +22,6 @@ namespace VirtualPaper.Cores.Players.Web {
         public bool IsPreview { get; private set; }
         public string StartArgs { get; private set; }
         public EventHandler? Closing { get; set; }
-        public EventHandler? Apply { get; set; }
 
         public WpPlayerWeb(IWpPlayerData data, IMonitor? monitor, bool isPreview) {
             string workingDir = Path.Combine(
@@ -141,6 +140,8 @@ namespace VirtualPaper.Cores.Players.Web {
                 RType = data.RType.ToString(),
                 FilePath = data.FilePath,
                 WpEffectFilePathUsing = data.WpEffectFilePathUsing,
+                WpEffectFilePathTemplate = data.WpEffectFilePathTemplate,
+                WpEffectFilePathTemporary = data.WpEffectFilePathTemporary,
             });
         }
 
@@ -224,9 +225,6 @@ namespace VirtualPaper.Cores.Players.Web {
                             _tcsProcessWait.TrySetResult(error);
                         }
                     }
-                }
-                else if (obj.Type == MessageType.cmd_apply) {
-                    Apply?.Invoke(this, EventArgs.Empty);
                 }
             }
             else {

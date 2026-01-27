@@ -80,4 +80,8 @@ function objectFitChanged(value) {
             newFit = 'fill';
             break;
     }
+
+    if (window.updateFit3D) {
+        window.updateFit3D(newFit);
+    }
 }

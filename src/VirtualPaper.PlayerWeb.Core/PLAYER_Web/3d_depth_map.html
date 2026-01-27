@@ -21,9 +21,7 @@
     html,
     body {
         overflow: hidden;
-    }
-
-    body {
+        height: 100%;
         margin: 0;
         padding: 0;
     }
@@ -34,5 +32,83 @@
         position: relative;
         overflow: hidden;
         perspective: 1000px;
+    }
+
+    /* 和 default 对齐的 content/source 基础样式 */
+    #content {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        transform-origin: center;
+        overflow: hidden; 
+    }
+
+    .source {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        object-fit: fill;
+    }
+
+    .source > canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+        outline: none;
+    }
+
+    /* ===== 3D canvas 的“伪 object-fit”类 ===== */
+
+    /* fill：拉伸铺满容器（可能变形，但跟 object-fit: fill 一致） */
+    .canvas-fit-fill {
+        width: 100%;
+        height: 100%;
+        transform: translate(-50%, -50%);
+    }
+
+    /* contain：等比缩放，完整显示，可能有黑边
+       等比部分在 JS 里通过设置 renderer/camera 来做，这里只负责居中 */
+    .canvas-fit-contain {
+        width: 100%;
+        height: 100%;
+        transform: translate(-50%, -50%);
+    }
+
+    /* cover：等比缩放，铺满并裁剪溢出，等比部分仍由 JS 控制 */
+    .canvas-fit-cover {
+        width: 100%;
+        height: 100%;
+        transform: translate(-50%, -50%);
+    }
+
+    /* none：按内容尺寸显示 */
+    .canvas-fit-none {
+        width: auto;
+        height: auto;
+        transform: translate(-50%, -50%);
+    }
+
+    /* 淡入效果 */
+    .fade-in {
+        opacity: 0;
+        animation: fadeIn 0.5s ease-in forwards;
+    }
+
+    @keyframes fadeIn {
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* 淡出效果 */
+    .fade-out {
+        opacity: 1;
+        animation: fadeOut 0.5s ease-out forwards;
+    }
+
+    @keyframes fadeOut {
+        to {
+            opacity: 0;
+        }
     }
 </style>

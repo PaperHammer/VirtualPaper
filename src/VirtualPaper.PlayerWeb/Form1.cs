@@ -12,7 +12,6 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.PlayerWeb.Extensions;
 using VirtualPaper.PlayerWeb.Utils;
-using static VirtualPaper.Common.Utils.Archive.ZipUtil;
 using WebView = Microsoft.Web.WebView2.WinForms.WebView2;
 
 namespace VirtualPaper.PlayerWeb {

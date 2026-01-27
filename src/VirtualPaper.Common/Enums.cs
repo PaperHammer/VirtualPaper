@@ -285,11 +285,16 @@ namespace VirtualPaper.Common {
     public partial class Picture3DCostumizeContext : JsonSerializerContext { }
     public class Picture3DCostumize : UniverseCostumise {
         [JsonPropertyOrder(11)]
+        public Scaling Scaling { get; }
+        
+        [JsonPropertyOrder(12)]
         public Parallax Parallax { get; }
 
         public Picture3DCostumize() {
+            Scaling = new();
             Parallax = new();
 
+            _properties[nameof(Scaling)] = Scaling;
             _properties[nameof(Parallax)] = Parallax;
         }
     }

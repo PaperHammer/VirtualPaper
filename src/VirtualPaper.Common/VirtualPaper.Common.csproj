@@ -9,8 +9,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Utils\Events\EffectValue\**" />
 	  <Compile Remove="Utils\SpatialIndex\**" />
+	  <EmbeddedResource Remove="Utils\Events\EffectValue\**" />
 	  <EmbeddedResource Remove="Utils\SpatialIndex\**" />
+	  <None Remove="Utils\Events\EffectValue\**" />
 	  <None Remove="Utils\SpatialIndex\**" />
 	</ItemGroup>
 
@@ -42,10 +45,6 @@
 
 	<ItemGroup>
 	  <None Include="Utils\Storage\FileShared.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Utils\Events\EffectValue\" />
 	</ItemGroup>
 
 </Project>

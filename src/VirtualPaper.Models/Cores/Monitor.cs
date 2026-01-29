@@ -11,6 +11,8 @@ namespace VirtualPaper.Models.Cores {
     public partial class Monitor : ObservableObject, IMonitor {
         [JsonIgnore]
         public bool IsStale { get; set; }
+        [JsonIgnore]
+        public bool IsCloned { get; private set; }
 
         #region Properties
         public string DeviceId { get; set; } = string.Empty;
@@ -32,6 +34,18 @@ namespace VirtualPaper.Models.Cores {
 
         public Monitor(string content) {
             Content = content;
+        }
+
+        public IMonitor CloneWithPrimaryInfo() {
+            var monitor = new Monitor() {
+                DeviceId = this.DeviceId,
+                Content = this.Content,
+                SystemIndex = this.SystemIndex,
+                IsPrimary = this.IsPrimary,
+                ThumbnailPath = this.ThumbnailPath,
+                IsCloned = true,
+            };
+            return monitor;
         }
 
         public bool Equals(IMonitor? other) {

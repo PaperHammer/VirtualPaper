@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
@@ -90,12 +89,12 @@ namespace VirtualPaper.Cores.WpControl {
                     item.ThumbnailPath = string.Empty;
                 }
             }
-            if (_wallpapers.Count > 0) {
-                _wallpapers.ForEach(x => x.Close());
-                _wallpapers.Clear();
-                WallpaperChanged?.Invoke(this, EventArgs.Empty);
-            }
-            ArcLog.GetLogger<WallpaperControl>().Info("Closed all wallpapers");
+            var tmp = _wallpapers.ToList();
+            if (tmp.Count > 0) {
+                tmp.ForEach(x => x.Close());
+                tmp.Clear();
+                ArcLog.GetLogger<WallpaperControl>().Info("Closed all wallpapers");
+            }            
         }
 
         public void CloseWallpaper(IMonitor? monitor) {
@@ -109,12 +108,8 @@ namespace VirtualPaper.Cores.WpControl {
 
             var tmp = _wallpapers.FindAll(x => x.Monitor.Equals(monitor));
             if (tmp.Count > 0) {
-                tmp.ForEach(x => {
-                    x.Close();
-                });
-
+                tmp.ForEach(x => x.Close());
                 _wallpapers.RemoveAll(tmp.Contains);
-                WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
                 ArcLog.GetLogger<WallpaperControl>().Info("Closed wallpaper at _monitor: " + monitor.DeviceId);
             }
@@ -187,18 +182,17 @@ namespace VirtualPaper.Cores.WpControl {
 
             try {
                 ArcLog.GetLogger<WallpaperControl>().Info("Restore wallpapers...");
-                var wallpaperLayouts = _userSettings.WallpaperLayouts.ToList();
+                var wallpaperLayouts = _userSettings.WallpaperLayouts.ToList().AsReadOnly();
                 if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand ||
                     _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Duplicate) {
-                    if (wallpaperLayouts.Count != 0) {
-                        var layout = wallpaperLayouts.Find(x => x.MonitorDeviceId == _monitorManager.PrimaryMonitor.DeviceId);
-                        var data = WallpaperUtil.GetWallpaperByFolder(
-                            layout.FolderPath, _monitorManager.PrimaryMonitor.Content, layout.RType);
+                    if (wallpaperLayouts.Count > 0) {
+                        var layout = wallpaperLayouts.FirstOrDefault(x => x.MonitorDeviceId == _monitorManager.PrimaryMonitor.DeviceId);
+                        var data = WallpaperUtil.GetWallpaperByFolder(layout.FolderPath, _monitorManager.PrimaryMonitor.Content, layout.RType);
                         SetWallpaperAsync(data.GetPlayerData(), _monitorManager.PrimaryMonitor);
                     }
                 }
-                else if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Per) {
-                    RestoreWallpaper(wallpaperLayouts);
+                else {
+                    Restore(wallpaperLayouts);
                 }
 
                 response.IsFinished = true;
@@ -278,16 +272,17 @@ namespace VirtualPaper.Cores.WpControl {
                 }
                 int monitorIdx = _monitorManager.Monitors.FindIndex(x => x.DeviceId == monitor.DeviceId);
 
-                var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId);
-                if (runningInstance != null) {
-                    runningInstance.Update(data);
-                    _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
-                    WallpaperChanged?.Invoke(this, EventArgs.Empty);
-                    return response;
-                }
-
                 switch (_userSettings.Settings.WallpaperArrangement) {
                     case WallpaperArrangement.Per: {
+                            var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId && x.Data.Arrangement == WallpaperArrangement.Per);
+                            if (runningInstance != null) {
+                                runningInstance.Update(data);
+                                _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
+                                break;
+                            }
+                            runningInstance?.Close();
+
+                            data.Arrangement = WallpaperArrangement.Per;
                             IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, monitor);
                             CloseWallpaper(instance.Monitor);
                             isStarted = await instance.ShowAsync(token);
@@ -309,6 +304,15 @@ namespace VirtualPaper.Cores.WpControl {
                         }
                         break;
                     case WallpaperArrangement.Expand: {
+                            var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId && x.Data.Arrangement == WallpaperArrangement.Expand);
+                            if (runningInstance != null) {
+                                runningInstance.Update(data);
+                                _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
+                                break;
+                            }
+                            runningInstance?.Close();
+
+                            data.Arrangement = WallpaperArrangement.Expand;
                             IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, monitor);
                             CloseAllWallpapers();
                             isStarted = await instance.ShowAsync(token);
@@ -331,6 +335,15 @@ namespace VirtualPaper.Cores.WpControl {
                     case WallpaperArrangement.Duplicate: {
                             CloseAllWallpapers();
                             foreach (var item in _monitorManager.Monitors) {
+                                var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId && x.Data.Arrangement == WallpaperArrangement.Duplicate);
+                                if (runningInstance != null) {
+                                    runningInstance.Update(data);
+                                    _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
+                                    break;
+                                }
+                                runningInstance?.Close();
+
+                                data.Arrangement = WallpaperArrangement.Duplicate;
                                 IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, item);
                                 isStarted = await instance.ShowAsync(token);
 
@@ -819,21 +832,20 @@ namespace VirtualPaper.Cores.WpControl {
             DesktopUtil.RefreshDesktop();
         }
 
-        private void RestoreWallpaper(List<IWallpaperLayout> wallpaperLayout) {
-            CloseAllWallpapers();
-            for (int i = 0; i < wallpaperLayout.Count; i++) {
-                var layout = wallpaperLayout[i];
+        private void Restore(ReadOnlyCollection<IWallpaperLayout> wallpaperLayouts) {
+            //CloseAllWallpapers();
+            for (int i = 0; i < wallpaperLayouts.Count; i++) {
+                var layout = wallpaperLayouts[i];
                 try {
-                    IWpMetadata data = WallpaperUtil.GetWallpaperByFolder(
-                        layout.FolderPath, layout.MonitorContent, layout.RType);
                     var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == layout.MonitorDeviceId);
                     if (monitor == null) {
                         ArcLog.GetLogger<WallpaperControl>().Info($"Screen missing, skipping restoration of {layout.FolderPath} | {layout.MonitorDeviceId}");
                     }
                     else {
+                        IWpMetadata data = WallpaperUtil.GetWallpaperByFolder(layout.FolderPath, monitor.SystemIndex.ToString(), layout.RType);
                         if (data == null || !data.IsAvailable()) {
                             ArcLog.GetLogger<WallpaperControl>().Error($"Skipping restoration of {layout.FolderPath}");
-                            wallpaperLayout[i] = null;
+                            CloseWallpaper(monitor);
                             continue;
                         }
                         ArcLog.GetLogger<WallpaperControl>().Info($"Restoring data: {data.BasicData.FolderPath}");

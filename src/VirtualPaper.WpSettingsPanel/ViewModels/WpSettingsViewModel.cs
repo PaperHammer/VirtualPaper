@@ -107,10 +107,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     break;
                 case WallpaperArrangement.Duplicate:
                 case WallpaperArrangement.Expand: {
-                        _monitors.Add(new Models.Cores.Monitor() {
-                            Content = _userSettingsClient.Settings.WallpaperArrangement.ToString(),
-                            ThumbnailPath = _monitorManagerClient.PrimaryMonitor.ThumbnailPath,
-                        });
+                        var monitor = _monitorManagerClient.PrimaryMonitor.CloneWithPrimaryInfo();
+                        monitor.Content = _userSettingsClient.Settings.WallpaperArrangement.ToString();
+                        _monitors.Add(monitor);
                     }
                     break;
             }
@@ -247,7 +246,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             (WpIdentifyCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
-        // todo
         internal async void Adjust() {
             if (Interlocked.Exchange(ref _canAdjust, 0) != 1) return;
             (WpAdjustCommand as RelayCommand)?.RaiseCanExecuteChanged();

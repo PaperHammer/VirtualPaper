@@ -10,6 +10,11 @@
     <UseWindowsForms>True</UseWindowsForms>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="MSTest.TestAdapter" Version="4.0.2" />
+  </ItemGroup>
+
 	<!--<PropertyGroup>
 		--><!-- Output UI build to Core plugins directory --><!--
 		<OutputPath>..\VirtualPaper\Plugins\FuntionTest\</OutputPath>
@@ -20,7 +25,7 @@
 	</PropertyGroup>-->
 
 	<ItemGroup>
-	  <ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
+	  <ProjectReference Include="..\VirtualPaper.AppSettingsPanel\VirtualPaper.AppSettingsPanel.csproj" />
 	  <ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj" />
 	</ItemGroup>
 

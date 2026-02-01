@@ -233,6 +233,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private void InfoBarVisibilityRestore() {
             CurrentVersionState = VersionState.None;
         }
+
         private void AppUpdater_UpdateChecked(object? sender, AppUpdaterEventArgs e) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
                 MenuUpdate(e.UpdateStatus, e.UpdateDate, e.UpdateVersion);
@@ -281,7 +282,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
 
             if (!string.Equals(storagePath, _userSettingsClient.Settings.WallpaperDir, StringComparison.OrdinalIgnoreCase)) {
-                await WallpaperDirectoryChange(storagePath);
+                await WallpaperDirectoryChangeAsync(storagePath);
             }
         }
 
@@ -290,7 +291,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             await Launcher.LaunchFolderAsync(folder);
         }
 
-        private async Task WallpaperDirectoryChange(string destRootFolderPath) {
+        private async Task WallpaperDirectoryChangeAsync(string destRootFolderPath) {
             string destFolderPath = string.Empty;
             WallpaperDirectoryChangeOngoing = true;
 

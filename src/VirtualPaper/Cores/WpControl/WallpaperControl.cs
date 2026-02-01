@@ -724,6 +724,7 @@ namespace VirtualPaper.Cores.WpControl {
                 _userSettings.Save<List<IWallpaperLayout>>();
             }
         }
+
         public FileProperty GetWpProperty(string filePath, FileType ftype) {
             return WallpaperUtil.GetWpProperty(filePath, ftype);
         }

@@ -11,6 +11,7 @@
     xmlns:models="using:VirtualPaper.Models.Cores.Interfaces"
     xmlns:localViewModel="using:VirtualPaper.WpSettingsPanel.ViewModels"
     xmlns:localUtils="using:VirtualPaper.WpSettingsPanel.Utils"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
@@ -68,7 +69,7 @@
                                     VerticalAlignment="Stretch"
                                     HorizontalAlignment="Stretch">
                                     <StackPanel Orientation="Horizontal"  Spacing="8">
-                                        <Button x:Name="BtnClose"
+                                        <input:ArcButton x:Name="BtnClose"
                                             Height="33"
                                             MinWidth="66"
                                             Margin="10 0 0 0"

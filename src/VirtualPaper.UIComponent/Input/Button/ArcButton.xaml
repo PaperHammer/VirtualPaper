@@ -44,6 +44,7 @@
                                     <VisualState.Setters>
                                         <Setter Target="RootBorder.Background" Value="{ThemeResource ButtonBackgroundDisabled}" />
                                         <Setter Target="RootBorder.BorderBrush" Value="{ThemeResource ButtonBorderBrushDisabled}" />
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource ButtonForegroundDisabled}" />
                                         <Setter Target="Overlay.Opacity" Value="0" />
                                     </VisualState.Setters>
                                 </VisualState>

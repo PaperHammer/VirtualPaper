@@ -65,6 +65,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Update="DraftPanelConfigs\available_draft_template.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
 		<Page Update="Views\ConfigSpace.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>

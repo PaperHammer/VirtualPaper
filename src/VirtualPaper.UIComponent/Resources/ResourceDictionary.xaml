@@ -8,6 +8,7 @@
     <cvs:IsStringConverter x:Key="IsStringConverter"/>
     <cvs:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
     <cvs:VisibilityByValueConverter x:Key="VisibilityByValueConverter"/>
+    <cvs:LocalizeConv x:Key="LocalizeConv"/>
 
     <BitmapImage x:Key="AppIcon" UriSource="ms-appx:///Assets/icon-vp-48.png"/>
     <BitmapImage x:Key="NaviIcon_ThemeLight" UriSource="ms-appx:///Assets/ui_components/Light/theme_light.png"/>

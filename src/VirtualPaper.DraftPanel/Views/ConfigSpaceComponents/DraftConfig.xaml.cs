@@ -19,11 +19,11 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             this.InitializeComponent();
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e) {
+        protected override async void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
             _viewModel._configSpace = e.Parameter as ConfigSpace;
-            _viewModel.InitContent();
+            await _viewModel.InitContentAsync();
             _viewModel.InitConfigSpace();
         }
 
@@ -54,21 +54,6 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             }
         }
 
-        //private void KeyboardAccelerator_Invoked_SearchTemplate(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
-        //    tbSearchName.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
-        //    args.Handled = true;
-        //}
-
-        //private void KeyboardAccelerator_Invoked_InputProjName(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
-        //    tbProjName.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
-        //    args.Handled = true;
-        //}
-
-        //private void KeyboardAccelerator_Invoked_Template(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
-        //    FocusOnFirstItem();
-        //    args.Handled = true;
-        //}
-
         private void FocusOnFirstItem() {
             if (templateListView.Items.Count > 0) {
                 var firstItemContainer = templateListView.ContainerFromIndex(0) as ListViewItem;
@@ -76,6 +61,6 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             }
         }
 
-        private DraftConfigViewModel _viewModel;
+        private readonly DraftConfigViewModel _viewModel;
     }
 }

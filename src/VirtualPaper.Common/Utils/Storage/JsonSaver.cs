@@ -10,7 +10,6 @@ namespace VirtualPaper.Common.Utils.Storage {
             _optionsLoad.Converters.Add(new IntPtrJsonConverter());
         }
 
-        #region system.text.json
         public static T Load<T>(string filePath, JsonSerializerContext context) {
             return LoadAsync<T>(filePath, context).Result;
         }
@@ -62,7 +61,11 @@ namespace VirtualPaper.Common.Utils.Storage {
 
         private static readonly JsonSerializerOptions _optionsLoad = new() {
             AllowTrailingCommas = true,
-            PropertyNameCaseInsensitive = true,            
+            PropertyNameCaseInsensitive = true,
+            ReadCommentHandling = JsonCommentHandling.Skip, // 允许 JSON 文件里写注释
+            Converters = {
+                new JsonStringEnumConverter() // 允许 Enum 读写为字符串
+            }
         };
 
         // ref: https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonignorecondition?view=net-8.0
@@ -71,7 +74,10 @@ namespace VirtualPaper.Common.Utils.Storage {
             // 允许写入空值
             // Property is always serialized and deserialized, regardless of IgnoreNullValues configuration.
             DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+            ReadCommentHandling = JsonCommentHandling.Skip, // 允许 JSON 文件里写注释
+            Converters = {
+                new JsonStringEnumConverter() // 允许 Enum 读写为字符串
+            }
         };
-        #endregion
     }
 }

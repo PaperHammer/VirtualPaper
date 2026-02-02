@@ -1,7 +1,14 @@
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
+using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.Models.DraftPanel;
@@ -10,12 +17,14 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     internal partial class DraftConfigViewModel : ObservableObject {
-        public List<ProjectTemplate> AvailableTemplates { get; set; } = [];
+        public ObservableCollection<ProjectTemplate> AvailableTemplates { get; set; } = [];
 
         private string _projectName;
         public string ProjectName {
             get { return _projectName; }
             set {
+                if (_projectName == value) return;
+
                 _projectName = value;
                 IsNameOk = ComplianceUtil.IsValidName(value);
                 IsNextEnable = IsNameOk && SelectedTemplate != null;
@@ -40,11 +49,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             set { _selectedTemplate = value; OnPropertyChanged(); IsNextEnable = IsNameOk && value != null; }
         }
 
-        public string Project_NewProjectName { get; set; }
-        public string Project_NewProjectName_Placeholder { get; set; }
-        public string Project_NewName_InvalidTip { get; set; }
-        public string Project_TemplateConfig { get; set; }
-        public string Project_SearchTemplate { get; set; }
         public string Project_DeployNewDraft_PreviousStep { get; set; }
         public string Project_DeployNewDraft_NextStep { get; set; }
 
@@ -52,19 +56,28 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             InitText();
         }
 
-        internal void InitContent() {
-            ProjectName = "New_Project";
-            AvailableTemplates = [
-                new() {
-                    ItemImageKey = "DraftPanel_Create_StaticImge",
-                    DescImageKey = "DraftPanel_Create_StaticImge_Desc",
-                    Name = "静态图像",
-                    Desc = "静态图像",
-                    Type = ProjectType.PImage,
-                },
-            ];
+        internal async Task InitContentAsync() {
+            var ctx = ArcPageContextManager.GetContext<Draft>();
+            var loadingCtx = ctx?.LoadingContext;
+            if (loadingCtx == null)
+                return;
 
-            _availableTemplates = [.. AvailableTemplates];
+            await loadingCtx.RunAsync(
+                operation: async token => {
+                    try {
+                        var configData = await JsonSaver.LoadAsync<AvailableDraftTemplate>(_configPath, AvailableDraftTemplateContext.Default);
+                        if (configData != null) {
+                            ProjectName = configData.DefaultProjectName!;
+                            AvailableTemplates.SetRange(configData.Templates!);
+                        }
+
+                        _availableTemplates = [.. AvailableTemplates];
+                    }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<DraftConfigViewModel>().Error(ex);
+                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                    }
+                });
         }
 
         internal void InitConfigSpace() {
@@ -76,11 +89,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private void InitText() {
-            Project_NewProjectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewProjectName));
-            Project_NewProjectName_Placeholder = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewProjectName_Placeholder));
-            Project_NewName_InvalidTip = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewName_InvalidTip));
-            Project_TemplateConfig = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_TemplateConfig));
-            Project_SearchTemplate = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SearchTemplate));
             Project_DeployNewDraft_PreviousStep = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep));
             Project_DeployNewDraft_NextStep = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_NextStep));
         }
@@ -95,5 +103,10 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         internal IEnumerable<ProjectTemplate> _availableTemplates;
         internal ConfigSpace _configSpace;
+        private readonly string _configPath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "DraftPanelConfigs",
+            "available_draft_template.json"
+        );
     }
 }

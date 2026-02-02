@@ -605,10 +605,10 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>打开最近使用的项目(R)</value>
   </data>
   <data name="Project_SearchRecentUsed" xml:space="preserve">
-    <value>搜索最近使用的项目(S)</value>
+    <value>搜索最近使用的项目</value>
   </data>
   <data name="Project_StartUp" xml:space="preserve">
-    <value>开始使用</value>
+    <value>开始</value>
   </data>
   <data name="Project_StartUp_OpenFile" xml:space="preserve">
     <value>打开文件(F)</value>
@@ -641,7 +641,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>创建(N)</value>
   </data>
   <data name="Project_DeployNewDraft_PreviousStep" xml:space="preserve">
-    <value>上一步(B)</value>
+    <value>上一步</value>
   </data>
   <data name="Project_NewDraftName" xml:space="preserve">
     <value>设计稿名称(J)</value>
@@ -665,16 +665,16 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>位置为空或无效（最多 200 个字符）</value>
   </data>
   <data name="Project_DeployNewDraft_NextStep" xml:space="preserve">
-    <value>下一步(N)</value>
+    <value>下一步</value>
   </data>
   <data name="Project_SearchTemplate" xml:space="preserve">
-    <value>搜索项目模板(S)</value>
+    <value>搜索项目模板(</value>
   </data>
   <data name="Project_TemplateConfig" xml:space="preserve">
-    <value>创建新项目(R)</value>
+    <value>创建新项目</value>
   </data>
   <data name="Project_NewProjectName" xml:space="preserve">
-    <value>项目名称(J)</value>
+    <value>项目名称</value>
   </data>
   <data name="Project_NewProjectName_Placeholder" xml:space="preserve">
     <value>输入项目名称</value>
@@ -1042,5 +1042,11 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Add_To_Lib_AddWallpaperDrop" xml:space="preserve">
     <value>添加壁纸</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Name" xml:space="preserve">
+    <value>静态图像</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Desc" xml:space="preserve">
+    <value>标准位图编辑模式。提供像素级绘图工具，适用于绘画、修图及常规图像处理</value>
   </data>
 </root>

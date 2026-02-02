@@ -602,13 +602,13 @@ Author: PaperHammer</value>
     <value>The current file is being used as wallpaper. Please close it and try again.</value>
   </data>
   <data name="Project_RecentUsed" xml:space="preserve">
-    <value>Open a recently used project (R)</value>
+    <value>Open a recently used project</value>
   </data>
   <data name="Project_SearchRecentUsed" xml:space="preserve">
-    <value>Search for recently used items (S)</value>
+    <value>Search for recently used items</value>
   </data>
   <data name="Project_StartUp" xml:space="preserve">
-    <value>Get started</value>
+    <value>Get start</value>
   </data>
   <data name="Project_StartUp_OpenFile" xml:space="preserve">
     <value>Open files (F)</value>
@@ -641,7 +641,7 @@ Author: PaperHammer</value>
     <value>Create (N)</value>
   </data>
   <data name="Project_DeployNewDraft_PreviousStep" xml:space="preserve">
-    <value>Previous (B)</value>
+    <value>Previous</value>
   </data>
   <data name="Project_NewDraftName" xml:space="preserve">
     <value>Design Draft Name (J)</value>
@@ -665,16 +665,16 @@ Author: PaperHammer</value>
     <value>The location is empty or invalid (up to 200 characters).</value>
   </data>
   <data name="Project_DeployNewDraft_NextStep" xml:space="preserve">
-    <value>Next (N)</value>
+    <value>Next</value>
   </data>
   <data name="Project_SearchTemplate" xml:space="preserve">
-    <value>Search for a project template (S)</value>
+    <value>Search for a project template</value>
   </data>
   <data name="Project_TemplateConfig" xml:space="preserve">
-    <value>Create a new project (R)</value>
+    <value>Create a new project</value>
   </data>
   <data name="Project_NewProjectName" xml:space="preserve">
-    <value>Project Name (J)</value>
+    <value>Project Name</value>
   </data>
   <data name="Project_NewProjectName_Placeholder" xml:space="preserve">
     <value>Enter a name for the project</value>
@@ -1034,13 +1034,19 @@ The following words cannot be used as usernames:
   <data name="Add_To_Lib_DragDropFile" xml:space="preserve">
     <value>Drag here to add</value>
   </data>
-  <data name="Add_To_Lib_AddWallpaperDrop" xml:space="preserve">
-    <value>Add Wallpaper</value>
-  </data>
   <data name="Lib_NotAnyMore" xml:space="preserve">
     <value>End of list</value>
   </data>
   <data name="Text_Drop_Files" xml:space="preserve">
     <value>Drop files</value>
+  </data>
+  <data name="Add_To_Lib_AddWallpaperDrop" xml:space="preserve">
+    <value>Add Wallpaper</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Name" xml:space="preserve">
+    <value>Static Image</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Desc" xml:space="preserve">
+    <value>Standard bitmap editing mode. Provides pixel-level tools suitable for drawing, retouching, and general image processing</value>
   </data>
 </root>

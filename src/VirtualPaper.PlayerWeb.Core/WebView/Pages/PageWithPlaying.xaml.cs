@@ -25,7 +25,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class PageWithPlaying : ArcPage, IEffectService {
-        public override ArcPageContext Context { get; }
+        public override ArcPageContext Context { get; set; }
         public override Type PageType => typeof(PageWithPlaying);
         protected override bool IsMultiInstance => true;
 
@@ -38,11 +38,11 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             await base.OnEnterAsync(payload);
             Payload = payload;
             if (payload != null) {
-                payload.TryGet(NaviPayLoadKey.StartArgs.ToString(), out _startArgs);
+                payload.TryGet(NaviPayloadKey.StartArgs.ToString(), out _startArgs);
                 // 预览窗口使用
-                payload.TryGet(NaviPayLoadKey.ArcWindow.ToString(), out _arcWindow);
-                payload.Set(NaviPayLoadKey.IEffectService.ToString(), this);
-                payload.Set(NaviPayLoadKey.AvailableConfigTab.ToString(), DataConfigTab.GeneralEffect | DataConfigTab.GeneralInfo);
+                payload.TryGet(NaviPayloadKey.ArcWindow.ToString(), out _arcWindow);
+                payload.Set(NaviPayloadKey.IEffectService.ToString(), this);
+                payload.Set(NaviPayloadKey.AvailableConfigTab.ToString(), DataConfigTab.GeneralEffect | DataConfigTab.GeneralInfo);
             }
 
             SidePanel.Visibility = _startArgs.IsPreview ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;

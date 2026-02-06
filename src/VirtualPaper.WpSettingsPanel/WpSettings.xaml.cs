@@ -20,7 +20,7 @@ namespace VirtualPaper.WpSettingsPanel {
     /// </summary>
     [KeepAlive]
     public sealed partial class WpSettings : ArcPage {
-        public override ArcPageContext Context { get; }
+        public override ArcPageContext Context { get; set; }
         public override Type PageType => typeof(WpSettings);
 
         public WpSettings() {            

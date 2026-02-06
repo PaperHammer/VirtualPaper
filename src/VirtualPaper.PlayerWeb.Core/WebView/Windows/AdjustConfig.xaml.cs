@@ -40,10 +40,10 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         private void NaviContent_Loaded(object sender, RoutedEventArgs e) {
             try {
                 var payload = new NavigationPayload() {
-                    [NaviPayLoadKey.StartArgs.ToString()] = _startArgs,
-                    [NaviPayLoadKey.IWpBasicData.ToString()] = _wpBasicData,
-                    [NaviPayLoadKey.ApplyService.ToString()] = this,
-                    [NaviPayLoadKey.IEffectService.ToString()] = this,
+                    [NaviPayloadKey.StartArgs.ToString()] = _startArgs,
+                    [NaviPayloadKey.IWpBasicData.ToString()] = _wpBasicData,
+                    [NaviPayloadKey.ApplyService.ToString()] = this,
+                    [NaviPayloadKey.IEffectService.ToString()] = this,
                 };
                 NaviContent.Navigate(typeof(PageOnlyDataConfig), payload);
             }

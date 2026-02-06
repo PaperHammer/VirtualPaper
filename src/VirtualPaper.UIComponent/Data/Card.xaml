@@ -8,19 +8,19 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Border 
-        x:Name="PopupBoder"
-        CornerRadius="5"
-        Padding="50"
-        Width="970"
-        Height="680"
-        Translation="0 0 120"
-        HorizontalAlignment="Center" 
-        VerticalAlignment="Center">
+    <Border x:Name="PART_CardBorder"
+        CornerRadius="{x:Bind CornerRadius, Mode=OneWay}"
+        Padding="{x:Bind Padding, Mode=OneWay}"
+        Background="{x:Bind Background, Mode=OneWay}"
+        BorderBrush="{x:Bind BorderBrush, Mode=OneWay}"
+        BorderThickness="{x:Bind BorderThickness, Mode=OneWay}"
+        HorizontalAlignment="Stretch" 
+        VerticalAlignment="Stretch"
+        Translation="{x:Bind ElevationVector, Mode=OneWay}">
         <Border.Shadow>
             <ThemeShadow />
         </Border.Shadow>
 
-        <ContentPresenter Content="{x:Bind Content, Mode=OneWay}" />
+        <ContentPresenter x:Name="PART_RootContent" Content="{x:Bind RootContent, Mode=OneWay}" />
     </Border>
 </UserControl>

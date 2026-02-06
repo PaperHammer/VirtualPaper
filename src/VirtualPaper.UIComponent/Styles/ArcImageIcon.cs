@@ -1,4 +1,3 @@
-using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -20,18 +19,12 @@ namespace VirtualPaper.UIComponent.Styles {
 
         private void ArcImageIcon_Loaded(object sender, RoutedEventArgs e) {
             UpdateSource();
-            //ArcThemeUtil.OnAppThemeChanged += ThemeHelper_OnAppThemeChanged;
         }
 
         private void ArcImageIcon_Unloaded(object sender, RoutedEventArgs e) {
-            //ArcThemeUtil.OnAppThemeChanged -= ThemeHelper_OnAppThemeChanged;
             Loaded -= ArcImageIcon_Loaded;
             Unloaded -= ArcImageIcon_Unloaded;
         }
-
-        //private void ThemeHelper_OnAppThemeChanged(object? sender, EventArgs e) {
-        //    UpdateSource();
-        //}
 
         private static void OnThemeResourceKeyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is ArcImageIcon icon) {

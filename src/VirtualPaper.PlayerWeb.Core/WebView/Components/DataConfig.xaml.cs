@@ -42,7 +42,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components {
         }
         
         private void BuildTabs() {
-            if (Payload != null && Payload.TryGet(NaviPayLoadKey.AvailableConfigTab.ToString(), out DataConfigTab availableTab)) {
+            if (Payload != null && Payload.TryGet(NaviPayloadKey.AvailableConfigTab.ToString(), out DataConfigTab availableTab)) {
 
                 void TryAdd(DataConfigTab tab, string title) {
                     if (availableTab.HasFlag(tab)) {

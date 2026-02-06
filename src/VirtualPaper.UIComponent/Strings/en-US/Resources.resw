@@ -267,7 +267,7 @@ Scale-down: The size is the same as the one in None or Contain, depending on whi
     <value>Changing the language requires a restart of the UI</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop" xml:space="preserve">
-    <value>UI background texture</value>
+    <value>UI texture</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppSystemBackdropExplain" xml:space="preserve">
     <value>Changing the background texture requires a restart of the UI</value>
@@ -626,7 +626,7 @@ Author: PaperHammer</value>
     <value>Open the local .vpd file</value>
   </data>
   <data name="Project_StartUp_NewVpd" xml:space="preserve">
-    <value>Create a new design draft (N)</value>
+    <value>Create a new design</value>
   </data>
   <data name="Project_StartUp_NewVpd_Desc" xml:space="preserve">
     <value>Select a project template to get started</value>
@@ -1048,5 +1048,11 @@ The following words cannot be used as usernames:
   </data>
   <data name="Draft_Template_StaticImage_Desc" xml:space="preserve">
     <value>Standard bitmap editing mode. Provides pixel-level tools suitable for drawing, retouching, and general image processing</value>
+  </data>
+  <data name="Project_Create_New" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Project_Open" xml:space="preserve">
+    <value>Open</value>
   </data>
 </root>

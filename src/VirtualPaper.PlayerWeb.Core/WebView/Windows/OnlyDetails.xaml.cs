@@ -22,9 +22,9 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         public OnlyDetails(DataConfigTab configTab, IWpBasicData wpBasicData) {
             _configTab = configTab;
             _payload = new NavigationPayload() {
-                [NaviPayLoadKey.StartArgs.ToString()] = _startArgs,
-                [NaviPayLoadKey.AvailableConfigTab.ToString()] = _configTab,
-                [NaviPayLoadKey.IWpBasicData.ToString()] = wpBasicData,
+                [NaviPayloadKey.StartArgs.ToString()] = _startArgs,
+                [NaviPayloadKey.AvailableConfigTab.ToString()] = _configTab,
+                [NaviPayloadKey.IWpBasicData.ToString()] = wpBasicData,
             };
             var arcKey = configTab == DataConfigTab.GeneralInfo ? ArcWindowKey.PlayerWebCoreOnlyDetails : ArcWindowKey.PlayerWebCoreDetailsEdit;
             _windowKey = new ArcWindowManagerKey(arcKey, wpBasicData.FilePath);

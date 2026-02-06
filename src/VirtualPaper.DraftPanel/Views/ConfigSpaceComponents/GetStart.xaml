@@ -16,11 +16,11 @@
     <Page.Resources>
         <MenuFlyout x:Key="MenuFlyoutRecentUsedItem">
             <MenuFlyoutItem 
-                Text="{x:Bind _SIG_Text_RemoveFromList}"
+                Text="{markup:I18n Key=SIG_Text_RemoveFromList}"
                 Command="{x:Bind _viewModel.RemoveFromListCommand}"
                 CommandParameter="{Binding}"/>
             <MenuFlyoutItem 
-                Text="{x:Bind _SIG_Text_CopyPath}" 
+                Text="{markup:I18n Key=SIG_Text_CopyPath}" 
                 Command="{x:Bind _viewModel.CopyPathCommand}"
                 CommandParameter="{Binding}"/>
         </MenuFlyout>
@@ -34,9 +34,7 @@
                                 Text="{x:Bind FileName}"
                                 FontWeight="Bold"
                                 FontSize="14"/>
-                            <TextBlock 
-                                Text="{x:Bind DateTime}"
-                                HorizontalAlignment="Right"/>
+                            <TextBlock Text="{x:Bind DateTime}" HorizontalAlignment="Right"/>
                         </Grid>
 
                         <TextBlock
@@ -49,103 +47,100 @@
         </DataTemplate>
     </Page.Resources>
 
-    <data:Card x:Name="DraftPanelCard">
-        <Grid x:Name="GetStartGrid">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="0.60*"/>
-                <ColumnDefinition Width="0.04*"/>
-                <ColumnDefinition Width="0.36*"/>
-            </Grid.ColumnDefinitions>
+    <Grid x:Name="GetStartGrid">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0.60*"/>
+            <ColumnDefinition Width="0.04*"/>
+            <ColumnDefinition Width="0.36*"/>
+        </Grid.ColumnDefinitions>
 
-            <Grid x:Name="RecentlyUsedGrid">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition/>
-                </Grid.RowDefinitions>
+        <Grid x:Name="RecentlyUsedGrid">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
 
-                <TextBlock Text="{markup:I18n Key=Project_RecentUsed}" FontSize="20"/>
+            <TextBlock Text="{markup:I18n Key=Project_RecentUsed}" FontSize="20"/>
 
-                <TextBox 
-                    Grid.Row="1"
-                    x:Name="tbSearchName"
-                    Margin="0 20 0 0"
-                    Height="30"
-                    Width="340"
-                    PlaceholderText="{markup:I18n Key=Project_SearchRecentUsed}"
-                    FontSize="12"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Center"
-                    TextChanged="OnFilterChanged"/>
+            <TextBox x:Name="tbSearchName"
+                Grid.Row="1"               
+                Margin="0 20 0 0"
+                Height="30"
+                Width="340"
+                PlaceholderText="{markup:I18n Key=Project_SearchRecentUsed}"
+                FontSize="12"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                TextChanged="OnFilterChanged"/>
 
-                <ListView x:Name="lvRecentUsed"
-                    Grid.Row="2"
-                    Margin="0 20 0 0"
-                    ItemsSource="{x:Bind _viewModel.RecentUseds}"
-                    ItemTemplate="{StaticResource RecentUsedItemTemplate}"
-                    SelectionMode="None"
-                    IsItemClickEnabled="True"
-                    ItemClick="RecentUsedsListView_ItemClick"/>
+            <ListView x:Name="lvRecentUsed"
+                Grid.Row="2"
+                Margin="0 20 0 0"
+                ItemsSource="{x:Bind _viewModel.RecentUseds}"
+                ItemTemplate="{StaticResource RecentUsedItemTemplate}"
+                SelectionMode="None"
+                IsItemClickEnabled="True"
+                ItemClick="RecentUsedsListView_ItemClick"/>
+        </Grid>
+
+        <Grid x:Name="StartUseGrid"  Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="{markup:I18n Key=Project_StartUp}" FontSize="20"/>
+
+            <Grid x:Name="gridStartup"
+                Grid.Row="1"
+                Margin="0 20 0 0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="0.1*"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <input:ArcButton x:Name="btnStartupNew"
+                    Content="{markup:I18n Key=Project_Create_New}"
+                    HorizontalAlignment="Stretch"
+                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                    Background="{ThemeResource AccentFillColorTertiaryBrush}"
+                    Click="BtnStartupNew_Click"/>
+
+                <Button x:Name="btnStartupOpen"
+                    Grid.Column="2"
+                    Content="{markup:I18n Key=Project_Open}"
+                    HorizontalAlignment="Stretch"
+                    Click="BtnStartupOpen_Click"/>
             </Grid>
 
-            <Grid x:Name="StartUseGrid"  Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition/>
-                </Grid.RowDefinitions>
-
-                <TextBlock Text="{markup:I18n Key=Project_StartUp}" FontSize="20"/>
-
-                <Grid x:Name="gridStartup"
-                    Grid.Row="1"
-                    Margin="0 20 0 0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition Width="0.1*"/>
-                        <ColumnDefinition/> 
-                    </Grid.ColumnDefinitions>
-
-                    <input:ArcButton x:Name="btnStartupNew"
-                        Content="新建"
-                        HorizontalAlignment="Stretch"
-                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                        Background="{ThemeResource AccentFillColorTertiaryBrush}"
-                        Click="BtnStartupNew_Click"/>
-
-                    <Button x:Name="btnStartupOpen"
-                        Grid.Column="2"
-                        Content="打开"
-                        HorizontalAlignment="Stretch"
-                        Click="BtnStartupOpen_Click"/>
-                </Grid>
-
-                <Grid x:Name="gridDrop"
-                    Grid.Row="2"
-                    AllowDrop="True" 
-                    Drop="GridDrop_Drop" 
-                    DragOver="GridDrop_DragOver"
-                    Margin="2 10 2 0"
-                    Height="300"
-                    VerticalAlignment="Top">
-                    <Rectangle 
-                        StrokeDashArray="4,4" StrokeThickness="2" 
-                        Stroke="{ThemeResource ControlStrongStrokeColorDefaultBrush}" 
-                        Width="auto" Height="auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                    <TextBlock 
-                        Text="{markup:I18n Key=Text_Drop_Files}"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Center"
-                        FontSize="16" 
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    <InfoBar x:Name="RunningAsAdminWarning"
-                        Margin="5"
-                        IsClosable="False"
-                        IsOpen="{x:Bind _viewModel.IsElevated}"
-                        Message="{markup:I18n Key=RunningAsAdminWarning}"
-                        Severity="Warning" />
-                </Grid>
+            <Grid x:Name="gridDrop"
+                Grid.Row="2"
+                AllowDrop="True" 
+                Drop="GridDrop_Drop" 
+                DragOver="GridDrop_DragOver"
+                Margin="2 10 2 0"
+                Height="300"
+                VerticalAlignment="Top">
+                <Rectangle 
+                    StrokeDashArray="4,4" StrokeThickness="2" 
+                    Stroke="{ThemeResource ControlStrongStrokeColorDefaultBrush}" 
+                    Width="auto" Height="auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                <TextBlock 
+                    Text="{markup:I18n Key=Text_Drop_Files}"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    FontSize="16" 
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                <InfoBar x:Name="RunningAsAdminWarning"
+                    Margin="5"
+                    IsClosable="False"
+                    IsOpen="{x:Bind _viewModel.IsElevated}"
+                    Message="{markup:I18n Key=RunningAsAdminWarning}"
+                    Severity="Warning" />
             </Grid>
         </Grid>
-    </data:Card>
+    </Grid>
 </Page>

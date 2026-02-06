@@ -19,7 +19,7 @@ using VirtualPaper.UIComponent.Navigation.TabView;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
-    public partial class WorkSpaceViewModel : ObservableObject {
+    public partial class WorkSpaceViewModel : ObservableObject, IDisposable {
         internal ObservableCollection<ArcTabViewItem> TabViewItems { get; set; } = [];
 
         int _selectedTabIndex = -1;
@@ -118,7 +118,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         #endregion
 
         #region init
-        internal void InitTabViewItems(ToWorkSpace data) {
+        internal void InitTabViewItems(ProjectData data) {
             foreach (var filePath in data.FilePaths) {
                 if (FileUtil.IsValidFilePath(filePath)) {
                     InitRuntimeItemAsync(filePath);
@@ -163,7 +163,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     case ProjectType.PUnknown:
                         break;
                     case ProjectType.PImage:
-                        runtime = new Workloads.Creation.StaticImg.MainPage(ArcPageContextManager.GetContext<Draft>(), Draft.Instance, fileName);
+                        runtime = new Workloads.Creation.StaticImg.MainPage(ArcPageContextManager.GetContext<Draft>(), fileName);
                         AddToWorkSpace(fileName, runtime);
                         break;
                     default:
@@ -185,7 +185,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     IRuntime runtime;
                     switch (projTag.Type) {
                         case ProjectType.PImage:
-                            runtime = new Workloads.Creation.StaticImg.MainPage(ArcPageContextManager.GetContext(typeof(Draft)), Draft.Instance, FileType.FDesign, entryFilePath); // xxx.vpd
+                            runtime = new Workloads.Creation.StaticImg.MainPage(ArcPageContextManager.GetContext(typeof(Draft)), FileType.FDesign, entryFilePath); // xxx.vpd
                             AddToWorkSpace(entryFilePath, runtime);
                             break;
                         default:
@@ -212,6 +212,25 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 },
                 Content = runtime,
             });
+        }
+        #endregion
+
+        #region dispose
+        private bool _isDisposed;
+        protected virtual void Dispose(bool disposing) {
+            if (!_isDisposed) {
+                if (disposing) {
+                    TabViewItems?.Clear();
+                    _middleMenuItems.Clear();
+                    _rt.Clear();
+                }
+                _isDisposed = true;
+            }
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
         #endregion
 

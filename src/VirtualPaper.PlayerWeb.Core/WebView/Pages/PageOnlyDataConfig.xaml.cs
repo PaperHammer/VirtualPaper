@@ -13,7 +13,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class PageOnlyDataConfig : ArcPage {
-        public override ArcPageContext Context { get; }
+        public override ArcPageContext Context { get; set; }
         public override Type PageType => typeof(PageOnlyDataConfig);
         protected override bool IsMultiInstance => true;
 
@@ -26,7 +26,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             await base.OnEnterAsync(payload);
             Payload = payload;
             if (payload != null) {
-                payload.Set(NaviPayLoadKey.AvailableConfigTab.ToString(), DataConfigTab.GeneralEffect | DataConfigTab.GeneralInfo);
+                payload.Set(NaviPayloadKey.AvailableConfigTab.ToString(), DataConfigTab.GeneralEffect | DataConfigTab.GeneralInfo);
             }
         }        
     }

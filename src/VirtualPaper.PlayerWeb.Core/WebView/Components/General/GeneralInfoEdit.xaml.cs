@@ -21,7 +21,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
             if (e.Parameter is NavigationPayload payload &&
-                payload.TryGet(NaviPayLoadKey.IWpBasicData.ToString(), out IWpBasicData wpBasicData)) {                
+                payload.TryGet(NaviPayloadKey.IWpBasicData.ToString(), out IWpBasicData wpBasicData)) {                
                 _viewModel.InitData(wpBasicData);
             }
         }

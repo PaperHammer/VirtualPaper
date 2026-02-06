@@ -2,30 +2,33 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Model;
-using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.Extensions;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     internal partial class DraftConfigViewModel : ObservableObject {
         public ObservableCollection<ProjectTemplate> AvailableTemplates { get; set; } = [];
 
-        private string _projectName;
-        public string ProjectName {
+        private string? _projectName;
+        public string? ProjectName {
             get { return _projectName; }
             set {
                 if (_projectName == value) return;
 
                 _projectName = value;
+                OnPropertyChanged();
                 IsNameOk = ComplianceUtil.IsValidName(value);
                 IsNextEnable = IsNameOk && SelectedTemplate != null;
             }
@@ -43,20 +46,15 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             set { _isNextEnable = value; _configSpace.SetNextStepBtnEnable(value); }
         }
 
-        private ProjectTemplate _selectedTemplate;
-        public ProjectTemplate SelectedTemplate {
+        private ProjectTemplate? _selectedTemplate;
+        public ProjectTemplate? SelectedTemplate {
             get { return _selectedTemplate; }
             set { _selectedTemplate = value; OnPropertyChanged(); IsNextEnable = IsNameOk && value != null; }
         }
 
-        public string Project_DeployNewDraft_PreviousStep { get; set; }
-        public string Project_DeployNewDraft_NextStep { get; set; }
-
-        public DraftConfigViewModel() {
-            InitText();
-        }
-
         internal async Task InitContentAsync() {
+            SelectedTemplate = null;
+
             var ctx = ArcPageContextManager.GetContext<Draft>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
@@ -67,8 +65,10 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     try {
                         var configData = await JsonSaver.LoadAsync<AvailableDraftTemplate>(_configPath, AvailableDraftTemplateContext.Default);
                         if (configData != null) {
-                            ProjectName = configData.DefaultProjectName!;
-                            AvailableTemplates.SetRange(configData.Templates!);
+                            CrossThreadInvoker.InvokeOnUIThread(() => {
+                                ProjectName = configData.DefaultProjectName!;
+                                AvailableTemplates.SetRange(configData.Templates!);
+                            });
                         }
 
                         _availableTemplates = [.. AvailableTemplates];
@@ -81,27 +81,57 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         internal void InitConfigSpace() {
-            _configSpace.SetPreviousStepBtnText(Project_DeployNewDraft_PreviousStep);
-            _configSpace.SetNextStepBtnText(Project_DeployNewDraft_NextStep);
+            _configSpace.SetPreviousStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep)));
+            _configSpace.SetNextStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_NextStep)));
             _configSpace.SetBtnVisible(true);
             _configSpace.BindingPreviousBtnAction(PreviousStepBtnAction);
             _configSpace.BindingNextBtnAction(NextStepBtnAction);
         }
 
-        private void InitText() {
-            Project_DeployNewDraft_PreviousStep = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep));
-            Project_DeployNewDraft_NextStep = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_NextStep));
-        }
-
         private void PreviousStepBtnAction(object sender, RoutedEventArgs e) {
-            _configSpace.ChangePanelState(DraftPanelState.GetStart, null);
+            _configSpace.NavigateByState(DraftPanelState.GetStart);
         }
 
         private void NextStepBtnAction(object sender, RoutedEventArgs e) {
-            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, new ToWorkSpace([ProjectName], ProjectType.PImage));
+            var payloadDatas = new NaviPayloadData[] {
+                new(NaviPayloadKey.Project, new ProjectData([ProjectName], ProjectType.PImage))
+            };
+            _configSpace.NavigateByState(DraftPanelState.WorkSpace, payloadDatas);
         }
 
-        internal IEnumerable<ProjectTemplate> _availableTemplates;
+        #region filter
+        public void ApplyFilter(string keyword) {
+            Filter(keyword);
+        }
+
+        private void Filter(string keyword) {
+            var filtered = _availableTemplates?.Where(template =>
+                template.Name != null && template.Name.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
+            );
+            if (filtered == null) return;
+            Remove_NonMatching(filtered);
+            AddBack_Procs(filtered);
+        }
+
+        private void Remove_NonMatching(IEnumerable<ProjectTemplate> templates) {
+            for (int i = AvailableTemplates.Count - 1; i >= 0; i--) {
+                var item = AvailableTemplates[i];
+                if (!templates.Contains(item)) {
+                    AvailableTemplates.Remove(item);
+                }
+            }
+        }
+
+        private void AddBack_Procs(IEnumerable<ProjectTemplate> templates) {
+            foreach (var item in templates) {
+                if (!AvailableTemplates.Contains(item)) {
+                    AvailableTemplates.Add(item);
+                }
+            }
+        }
+        #endregion
+
+        private IEnumerable<ProjectTemplate>? _availableTemplates;
         internal ConfigSpace _configSpace;
         private readonly string _configPath = Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory,

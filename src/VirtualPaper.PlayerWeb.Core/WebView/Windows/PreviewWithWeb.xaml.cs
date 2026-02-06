@@ -38,10 +38,10 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         private void NaviContent_Loaded(object sender, RoutedEventArgs e) {
             try {
                 var payload = new NavigationPayload() {
-                    [NaviPayLoadKey.StartArgs.ToString()] = _startArgs,
-                    [NaviPayLoadKey.IWpBasicData.ToString()] = _wpBasicData,
-                    [NaviPayLoadKey.ArcWindow.ToString()] = this,
-                    [NaviPayLoadKey.ApplyService.ToString()] = this,
+                    [NaviPayloadKey.StartArgs.ToString()] = _startArgs,
+                    [NaviPayloadKey.IWpBasicData.ToString()] = _wpBasicData,
+                    [NaviPayloadKey.ArcWindow.ToString()] = this,
+                    [NaviPayloadKey.ApplyService.ToString()] = this,
                 };
                 NaviContent.Navigate(typeof(PageWithPlaying), payload);
             }

@@ -31,9 +31,9 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
             if (e.Parameter is NavigationPayload payload) {
-                payload.TryGet(NaviPayLoadKey.IEffectService.ToString(), out _effectService);
-                payload.TryGet(NaviPayLoadKey.StartArgs.ToString(), out _startArgs);
-                payload.TryGet(NaviPayLoadKey.ApplyService.ToString(), out _applyService);
+                payload.TryGet(NaviPayloadKey.IEffectService.ToString(), out _effectService);
+                payload.TryGet(NaviPayloadKey.StartArgs.ToString(), out _startArgs);
+                payload.TryGet(NaviPayloadKey.ApplyService.ToString(), out _applyService);
             }
         }
 

@@ -22,7 +22,7 @@ using Windows.Storage;
 using Windows.System;
 
 namespace VirtualPaper.AppSettingsPanel.ViewModels {
-    public partial class GeneralSettingViewModel : ObservableObject {
+    public partial class GeneralSettingViewModel : ObservableObject, IDisposable {
         public event EventHandler? WallpaperInstallDirChanged;
 
         public bool IsWinStore => Constants.ApplicationType.IsMSIX;
@@ -388,6 +388,25 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 }
             }
         }
+
+        #region dispose
+        private bool _disposed = false;
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing) {
+            if (_disposed) return;
+
+            if (disposing) {
+                _appUpdater.UpdateChecked -= AppUpdater_UpdateChecked;
+                WallpaperInstallDirChanged = null;
+            }
+
+            _disposed = true;
+        }
+        #endregion
 
         private string _sysbdDefault = string.Empty;
         private string _sysbdMica = string.Empty;

@@ -27,14 +27,14 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class LibraryContents : ArcPage {
-        public override ArcPageContext Context { get; }
+        public override ArcPageContext Context { get; set; }
         public override Type PageType => typeof(LibraryContents);
 
         public LibraryContents() {
-            _viewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(ObjectLifetime.Singleton);
-            this.DataContext = _viewModel;
-            Context = new ArcPageContext(this);
             this.InitializeComponent();
+            _viewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>();
+            this.DataContext = _viewModel;
+            Context = new ArcPageContext(this);            
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {

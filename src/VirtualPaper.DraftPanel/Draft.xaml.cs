@@ -2,12 +2,12 @@ using System;
 using System.Linq;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
+using VirtualPaper.UIComponent.Utils.Extensions;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -17,43 +17,34 @@ namespace VirtualPaper.DraftPanel {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     [KeepAlive]
-    public sealed partial class Draft : ArcPage, IDraftPanelBridge {
-        internal static IDraftPanelBridge Instance { get; private set; }
-        public override ArcPageContext Context { get; }
+    public sealed partial class Draft : ArcPage {
+        public override ArcPageContext Context { get; set; }
         public override Type PageType => typeof(Draft);
 
         public Draft() {
             this.InitializeComponent();
             Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);
-            Instance = this;
-            this._currentPanel = DraftPanelState.ConfigSpace;            
         }
-
-        #region bridge
-        public void ChangePanelState(DraftPanelState nextPanel, object? data) {
-            _sharedData = data;
-            NavigetBasedState(nextPanel);
-        }
-
-        public object? GetSharedData() => _sharedData;
-        #endregion
 
         #region navigate
         private void FrameCardComp_Loaded(object sender, RoutedEventArgs e) {
-            NavigetBasedState(_currentPanel);
+            Payload = new NavigationPayload() {
+                [NaviPayloadKey.DraftPage.ToString()] = this,
+            };
+            NavigateByState(DraftPanelState.ConfigSpace);
         }
 
-        private void NavigetBasedState(DraftPanelState nextPanel) {
+        public void NavigateByState(DraftPanelState nextPanel, params NaviPayloadData[] naviPayloadDatas) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
-                _currentPanel = nextPanel;
-
                 Type targetPageType;
-                switch (_currentPanel) {
+                switch (nextPanel) {
                     case DraftPanelState.ConfigSpace:
                         targetPageType = typeof(ConfigSpace);
                         break;
                     case DraftPanelState.WorkSpace:
                         targetPageType = typeof(WorkSpace);
+                        FrameCardComp.BackStack.Clear();
+                        FrameCardComp.ForwardStack.Clear();
                         break;
                     default:
                         return;
@@ -67,7 +58,8 @@ namespace VirtualPaper.DraftPanel {
                         FrameCardComp.GoBack();
                     }
                     else {
-                        FrameCardComp.Navigate(targetPageType, this);
+                        Payload?.AddRange(naviPayloadDatas);
+                        FrameCardComp.Navigate(targetPageType, Payload);
                     }
                 }
             });
@@ -89,8 +81,5 @@ namespace VirtualPaper.DraftPanel {
             return false;
         }
         #endregion
-
-        private DraftPanelState _currentPanel;
-        private object? _sharedData;
     }
 }

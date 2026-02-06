@@ -4,11 +4,9 @@ using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using NLog;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.Draft;
-using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Shader;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Utils;
@@ -26,7 +24,6 @@ namespace Workloads.Creation.StaticImg {
     public sealed partial class MainPage : Page, IRuntime {
         internal static MainPage Instance { get; private set; }
         internal ArcPageContext Context { get; private set; }
-        internal IDraftPanelBridge Bridge { get; }
         internal CanvasDevice SharedDevice { get; }
         internal StaticImgUndoRedoUtil UnReUtil { get; }
         internal ProjectFile ProjectUtil { get; }
@@ -40,11 +37,10 @@ namespace Workloads.Creation.StaticImg {
             private set { lock (_frameTimeLock) _frameTimeMs = value; }
         }
 
-        private MainPage(ArcPageContext context, IDraftPanelBridge bridge) {
+        private MainPage(ArcPageContext context) {
             this.InitializeComponent();
             Instance = this;
             Context = context;
-            Bridge = bridge;
             SharedDevice = CanvasDevice.GetSharedDevice();
             SharedFormat = DirectXPixelFormat.B8G8R8A8UIntNormalized;
             SharedAlphaMode = CanvasAlphaMode.Premultiplied;
@@ -55,7 +51,7 @@ namespace Workloads.Creation.StaticImg {
         /// 打开文件
         /// </summary>
         /// <param name="filePath">类型为 FDeign 或静态图像的文件路径</param>
-        public MainPage(ArcPageContext context, IDraftPanelBridge bridge, FileType rtFileType, string filePath) : this(context, bridge) {
+        public MainPage(ArcPageContext context, FileType rtFileType, string filePath) : this(context) {
             ProjectUtil = ProjectFile.Create(filePath);
             RTFileType = rtFileType;            
         }
@@ -64,7 +60,7 @@ namespace Workloads.Creation.StaticImg {
         /// 新建项目
         /// </summary>
         /// <param name="fileName">项目名</param>
-        public MainPage(ArcPageContext context, IDraftPanelBridge bridge, string fileName) : this(context, bridge) {
+        public MainPage(ArcPageContext context, string fileName) : this(context) {
             ProjectUtil = ProjectFile.Create(fileName);
             RTFileType = FileType.FDesign;
         }

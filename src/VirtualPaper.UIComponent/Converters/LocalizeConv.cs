@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using Microsoft.UI.Xaml.Data;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.UIComponent.Converters {
     public partial class LocalizeConv : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, string language) {
-            if (value is not string key) return null;
+            if (value == null || value is not string key) return null;
 
             if (string.IsNullOrEmpty(key)) return key;
 

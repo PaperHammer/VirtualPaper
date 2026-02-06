@@ -26,7 +26,7 @@ namespace VirtualPaper.Common.Utils {
             return true;
         }
 
-        public static bool IsValidName(string value, int minLen = 1, int maxLen = 30) {
+        public static bool IsValidName(string? value, int minLen = 1, int maxLen = 30) {
             if (string.IsNullOrEmpty(value)) {
                 return false;
             }

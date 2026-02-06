@@ -14,16 +14,4 @@ namespace VirtualPaper.Common.Runtime.PlayerWeb {
         GeneralInfo = 2,
         GeneralInfoEdit = 4,
     }
-
-    public enum NaviPayLoadKey {
-        OnlyDetails,
-        PreviewWithWeb,
-        IEffectService,
-        StartArgs,
-        AvailableConfigTab,
-        IWpBasicData,
-        IIpcObserver,
-        ArcWindow,
-        ApplyService,
-    }
 }

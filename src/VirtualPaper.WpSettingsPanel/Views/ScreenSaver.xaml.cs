@@ -18,7 +18,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class ScreenSaver : ArcPage {
-        public override ArcPageContext Context { get; }
+        public override ArcPageContext Context { get; set; }
         public override Type PageType => typeof(ScreenSaver);
 
         public ScreenSaver() {            

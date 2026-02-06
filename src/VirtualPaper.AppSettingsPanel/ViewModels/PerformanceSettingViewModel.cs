@@ -7,8 +7,8 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.AppSettingsPanel.ViewModels {
     public partial class PerformanceSettingViewModel : ObservableObject {
-        public List<string> PlayStatus { get; set; } = [];
-        public List<string> StatuMechanisms { get; set; } = [];        
+        public List<string>? PlayStatus { get; set; }
+        public List<string>? StatuMechanisms { get; set; }       
 
         private int _selectedFullScreenPlayStatuIndex;
         public int SelectedFullScreenPlayStatuIndex {

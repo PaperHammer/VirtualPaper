@@ -92,22 +92,20 @@
                     Height="200"
                     VerticalAlignment="Stretch"
                     HorizontalAlignment="Stretch"
-                    ResourceKey="{x:Bind _viewModel.SelectedTemplate.DescImageKey, Mode=OneWay}"/>
+                    ResourceKey="{x:Bind _viewModel.SelectedTemplate.DescImageKey, Mode=OneWay, TargetNullValue='', FallbackValue=''}"/>
 
                 <TextBlock
                     Grid.Row="1"
                     Margin="0 10"
                     TextWrapping="WrapWholeWords"
-                    Text="{x:Bind _viewModel.SelectedTemplate.Desc, Mode=OneWay, Converter={StaticResource LocalizeConv}}"/>
+                    Text="{x:Bind _viewModel.SelectedTemplate.Desc, Mode=OneWay, Converter={StaticResource LocalizeConv}, TargetNullValue='', FallbackValue=''}"/>
 
                 <StackPanel
                     Grid.Row="2"
                     Orientation="Vertical"
                     HorizontalAlignment="Left"
                     Spacing="6">
-                    <TextBlock
-                        Text="{markup:I18n Key=Project_NewProjectName}"
-                        FontSize="12"/>
+                    <TextBlock Text="{markup:I18n Key=Project_NewProjectName}" FontSize="12"/>
 
                     <TextBox x:Name="tbProjName"
                         IsSpellCheckEnabled="False"

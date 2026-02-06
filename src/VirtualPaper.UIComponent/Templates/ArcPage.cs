@@ -2,7 +2,6 @@ using System;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Context;
@@ -11,7 +10,7 @@ using VirtualPaper.UIComponent.Utils.Extensions;
 
 namespace VirtualPaper.UIComponent.Templates {
     public abstract class ArcPage : Page {
-        public abstract ArcPageContext Context { get; }
+        public virtual ArcPageContext Context { get; set; }
         public abstract Type PageType { get; }
         /// <summary>
         /// 页面是否保活
@@ -81,6 +80,9 @@ namespace VirtualPaper.UIComponent.Templates {
         /// </summary>
         protected virtual Task OnDestroyAsync(bool force = false) {
             if (force || !KeepAlive) {
+                Context = null;
+                Payload = null;
+                DataContext = null;
                 UnregisterContext();
             }
 

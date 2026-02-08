@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.DraftPanel.Views.ConfigSpaceComponents;
 using VirtualPaper.UIComponent.Context;
@@ -19,7 +20,7 @@ namespace VirtualPaper.DraftPanel.Views {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class ConfigSpace : ArcPage, ICardComponent {
+    public sealed partial class ConfigSpace : ArcPage, ICardComponent, INavigateComponent {
         public override ArcPageContext Context { get; set; }
         public override Type PageType => typeof(ConfigSpace);
 
@@ -42,13 +43,15 @@ namespace VirtualPaper.DraftPanel.Views {
             base.OnNavigatedTo(e);
 
             if (e.Parameter is NavigationPayload payload) {
-                payload.TryGet(NaviPayloadKey.DraftPage.ToString(), out _draftPage);
-                Payload = Payload?.Merge(payload);
+                payload.TryGet(NaviPayloadKey.DraftPage, out _draftPage);
+                Payload = Payload.Merge(payload);
+                Payload?.Set(NaviPayloadKey.ICardComponent, this);
+                Payload?.Set(NaviPayloadKey.INavigateComponent, this);
+                Payload?.Set(NaviPayloadKey.ConfigSpacePage, this);
             }
         }
 
         private void FrameComp_Loaded(object sender, RoutedEventArgs e) {
-            (Payload ??= new NavigationPayload())[NaviPayloadKey.ConfigSpacePage.ToString()] = this;
             NavigateByState(DraftPanelState.GetStart);
         }
 
@@ -82,6 +85,10 @@ namespace VirtualPaper.DraftPanel.Views {
                     }
                 }
             });
+        }
+
+        public NavigationPayload? GetPaylaod() {
+            return Payload;
         }
 
         private bool IsNextPageTarget(Type targetPageType) {

@@ -172,6 +172,10 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
         public void Set(string key, object? value) {
             _data[key] = value;
         }
+        
+        public void Set(NaviPayloadKey key, object? value) {
+            Set(key.ToString(), value);
+        }
 
         public bool TryGet<T>(string key, out T value) {
             if (_data.TryGetValue(key, out var obj) && obj is T t) {
@@ -181,6 +185,10 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
 
             value = default!;
             return false;
+        }
+        
+        public bool TryGet<T>(NaviPayloadKey key, out T value) {
+            return TryGet(key.ToString(), out value);
         }
 
         public T Get<T>(string key) {
@@ -239,8 +247,8 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
             return list.ToArray();
         }
 
-        public static NavigationPayload Merge(this NavigationPayload target, NavigationPayload? source, bool overwrite = true) {
-            if (target is null) return null!;
+        public static NavigationPayload Merge(this NavigationPayload? target, NavigationPayload? source, bool overwrite = true) {                        
+            if (target is null) return source ?? new();
             if (source is null) return target;
 
             foreach (var kvp in source.GetRawData()) {
@@ -272,5 +280,6 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
         DraftPage,
         Project,
         ICardComponent,
+        INavigateComponent,
     }
 }

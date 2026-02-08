@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
@@ -10,27 +9,27 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model.NavParam;
 
 namespace VirtualPaper.DraftPanel.Model {
-    [JsonSerializable(typeof(DraftMetadata))]
+    [JsonSerializable(typeof(ProjectMetaData))]
     [JsonSerializable(typeof(ProjectTag))]
     [JsonSerializable(typeof(List<ProjectTag>))]
-    internal partial class DraftMetadataContext : JsonSerializerContext { }
+    public partial class DraftMetadataContext : JsonSerializerContext { }
 
-    internal class DraftMetadata {
-        public string Name { get; init; } = string.Empty;
-        public Version DraftVersion { get; init; }
-        public List<ProjectTag> ProjectTags { get; init; } = [];
+    public class ProjectMetaData {
+        public string Name { get; } = null!;
+        public string DraftVersion { get; } = null!;
+        public List<ProjectTag> ProjectTags { get; } = null!;
 
         [JsonConstructor]
-        [Obsolete("This constructor is intended for JSON deserialization only. Use the another method instead.")]
-        public DraftMetadata(string name, Version draftVersion, List<ProjectTag> projectTags) {
+        [Obsolete("This constructor is intended for JSON deserialization only. Use the another ctor instead.")]
+        public ProjectMetaData(string name, string draftVersion, List<ProjectTag> projectTags) {
             Name = name;
             DraftVersion = draftVersion;
             ProjectTags = projectTags;
         }
 
-        public DraftMetadata(string draftName, ToDraftConfig data) {
+        public ProjectMetaData(string draftName, ToDraftConfig data) {
             Name = draftName;
-            DraftVersion = Assembly.GetEntryAssembly().GetName().Version;
+            DraftVersion = Constants.CoreField.DraftFileVersion;
             ProjectTags = [
                 new(data.ProjName, data.ProjType),
             ];
@@ -43,8 +42,8 @@ namespace VirtualPaper.DraftPanel.Model {
                 DraftMetadataContext.Default);
         }
 
-        internal static async Task<DraftMetadata> LoadAsync(string filePath) {
-            return await JsonSaver.LoadAsync<DraftMetadata>(filePath, DraftMetadataContext.Default);
+        internal static async Task<ProjectMetaData> LoadAsync(string filePath) {
+            return await JsonSaver.LoadAsync<ProjectMetaData>(filePath, DraftMetadataContext.Default);
         }
     }
 
@@ -61,4 +60,6 @@ namespace VirtualPaper.DraftPanel.Model {
             NameHash = IdentifyUtil.ComputeHash(name);            
         }
     }
+
+    public record PreProjectData(string[] FilePaths, ProjectType ProjType);
 }

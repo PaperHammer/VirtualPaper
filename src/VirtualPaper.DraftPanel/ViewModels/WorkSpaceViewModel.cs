@@ -11,7 +11,6 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.DraftPanel.Model;
-using VirtualPaper.DraftPanel.Model.NavParam;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Navigation;
@@ -118,7 +117,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         #endregion
 
         #region init
-        internal void InitTabViewItems(ProjectData data) {
+        internal void InitTabViewItems(PreProjectData data) {
             foreach (var filePath in data.FilePaths) {
                 if (FileUtil.IsValidFilePath(filePath)) {
                     InitRuntimeItemAsync(filePath);
@@ -178,7 +177,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         private async Task ReadDraftFileAsync(string filePath) {
             try {
-                var draftMd = await DraftMetadata.LoadAsync(filePath);
+                var draftMd = await ProjectMetaData.LoadAsync(filePath);
                 foreach (var projTag in draftMd.ProjectTags) {
                     string entryFilePath = Path.Combine(Path.GetDirectoryName(filePath), projTag.EntryRelativeFilePath);
 

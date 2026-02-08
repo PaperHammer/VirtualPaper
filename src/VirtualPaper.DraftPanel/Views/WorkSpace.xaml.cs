@@ -83,6 +83,6 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         private WorkSpaceViewModel _viewModel;
-        private ProjectData? _project;
+        private PreProjectData? _project;
     }
 }

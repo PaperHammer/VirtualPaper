@@ -12,14 +12,15 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         public DraftConfig() {
             this.InitializeComponent();
             _viewModel = ObjectProvider.GetRequiredService<DraftConfigViewModel>();
-            this.DataContext = _viewModel;            
+            this.DataContext = _viewModel;
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
             if (e.Parameter is NavigationPayload payload) {
-                if (payload.TryGet(NaviPayloadKey.ConfigSpacePage.ToString(), out _viewModel._configSpace)) {
+                if (payload.TryGet(NaviPayloadKey.ICardComponent, out _viewModel._cardComponent) &&
+                    payload.TryGet(NaviPayloadKey.INavigateComponent, out _viewModel._navigateComponent)) {
                     await _viewModel.InitContentAsync();
                     _viewModel.InitConfigSpace();
                 }

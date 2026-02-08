@@ -13,6 +13,7 @@ namespace VirtualPaper.Common {
         public static class Runtime {
             public static nint MainWindowHwnd { get; set; }
         }
+
         public static class CommonPaths {
             /// <summary>
             /// 数据存储根目录
@@ -54,14 +55,14 @@ namespace VirtualPaper.Common {
                 public static string RecentUsedPath => Path.Combine(AppDataDir, "RecentUseds.json");
             }
 
-            public static async Task MigrateAsync() {
-                await MigrateFileAsync(Legacy.AppRulesPath, AppRulesPath);
-                await MigrateFileAsync(Legacy.WallpaperLayoutPath, WallpaperLayoutPath);
-                await MigrateFileAsync(Legacy.UserSettingsPath, UserSettingsPath);
-                await MigrateFileAsync(Legacy.RecentUsedPath, RecentUsedPath);
+            public static void Migrate() {
+                MigrateFile(Legacy.AppRulesPath, AppRulesPath);
+                MigrateFile(Legacy.WallpaperLayoutPath, WallpaperLayoutPath);
+                MigrateFile(Legacy.UserSettingsPath, UserSettingsPath);
+                MigrateFile(Legacy.RecentUsedPath, RecentUsedPath);
             }
 
-            private static async Task MigrateFileAsync(string oldPath, string newPath) {
+            private static void MigrateFile(string oldPath, string newPath) {
                 try {
                     bool oldExists = Path.Exists(oldPath);
                     if (!oldExists) return;
@@ -82,8 +83,8 @@ namespace VirtualPaper.Common {
         }
 
         public static class WorkingDir {
-            public static string Shader => Path.Combine("Plugins", "Shader", "Shaders");
-            public static string ML => Path.Combine("Plugins", "ML", "Models");
+            public static string Shader => Path.Combine(UI, "Shaders");
+            public static string ML => Path.Combine("Models");
             public static string PlayerWeb => Path.Combine("Plugins", "PlayerWeb");
             //public static string PlayerWeb => Path.Combine("Plugins", "PlayerWeb", "win-x64");
             public static string ScrSaver => Path.Combine("Plugins", "ScrSaver");
@@ -101,6 +102,7 @@ namespace VirtualPaper.Common {
         public static class CoreField {
             public static string AppName => "VirtualPaper";
             public static string FileVersion => "18";
+            public static string DraftFileVersion => "D18";
             public static string GrpcPipeServerName => "Grpc_" + PipeServerName;
             public static string PipeServerName => UniqueAppUid + Environment.UserName;
             public static string UniqueAppUid => "Virtual:WALLPAPERSYSTEM";
@@ -386,6 +388,7 @@ namespace VirtualPaper.Common {
             public static string? SIG_Text_RemoveFromList { get; }
             public static string? SIG_Text_CopyPath { get; }
             public static string? RunningAsAdminWarning { get; }
+            public static string? Project_Drops_Contains_Invalid_FIles { get; }
         }
 
         public static class Field {

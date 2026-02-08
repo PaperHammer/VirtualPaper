@@ -11,9 +11,10 @@ using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Model;
-using VirtualPaper.DraftPanel.Views;
+using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
 
@@ -43,7 +44,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private bool _isNextEnable;
         public bool IsNextEnable {
             get { return _isNextEnable; }
-            set { _isNextEnable = value; _configSpace.SetNextStepBtnEnable(value); }
+            set { _isNextEnable = value; _cardComponent.SetNextStepBtnEnable(value); }
         }
 
         private ProjectTemplate? _selectedTemplate;
@@ -81,22 +82,20 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         internal void InitConfigSpace() {
-            _configSpace.SetPreviousStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep)));
-            _configSpace.SetNextStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_NextStep)));
-            _configSpace.SetBtnVisible(true);
-            _configSpace.BindingPreviousBtnAction(PreviousStepBtnAction);
-            _configSpace.BindingNextBtnAction(NextStepBtnAction);
+            _cardComponent.SetPreviousStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep)));
+            _cardComponent.SetNextStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_NextStep)));
+            _cardComponent.SetBtnVisible(true);
+            _cardComponent.BindingPreviousBtnAction(PreviousStepBtnAction);
+            _cardComponent.BindingNextBtnAction(NextStepBtnAction);
         }
 
         private void PreviousStepBtnAction(object sender, RoutedEventArgs e) {
-            _configSpace.NavigateByState(DraftPanelState.GetStart);
+            _navigateComponent.NavigateByState(DraftPanelState.GetStart);
         }
 
         private void NextStepBtnAction(object sender, RoutedEventArgs e) {
-            var payloadDatas = new NaviPayloadData[] {
-                new(NaviPayloadKey.Project, new ProjectData([ProjectName], ProjectType.PImage))
-            };
-            _configSpace.NavigateByState(DraftPanelState.WorkSpace, payloadDatas);
+            _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, new PreProjectData([ProjectName!], ProjectType.PImage));
+            _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
         }
 
         #region filter
@@ -132,7 +131,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         #endregion
 
         private IEnumerable<ProjectTemplate>? _availableTemplates;
-        internal ConfigSpace _configSpace;
+        internal ICardComponent _cardComponent = null!;
+        internal INavigateComponent _navigateComponent = null!;
         private readonly string _configPath = Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory,
             "DraftPanelConfigs",

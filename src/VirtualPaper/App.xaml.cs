@@ -104,7 +104,7 @@ namespace VirtualPaper {
             #endregion
 
             #region pre
-            Constants.CommonPaths.MigrateAsync().Wait();
+            Constants.CommonPaths.Migrate();
             #endregion
 
             #region 初始化核心组件

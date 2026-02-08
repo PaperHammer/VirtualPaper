@@ -139,7 +139,6 @@ namespace VirtualPaper.Common {
 
     public static class FileExtension {
         public const string FE_Design = ".vpd";
-        //public const string FE_Project = ".vproj";
     }
     #endregion
 

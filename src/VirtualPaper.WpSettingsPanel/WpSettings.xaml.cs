@@ -1,9 +1,8 @@
 using System;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
-using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
@@ -18,21 +17,26 @@ namespace VirtualPaper.WpSettingsPanel {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    [KeepAlive]
     public sealed partial class WpSettings : ArcPage {
-        public override ArcPageContext Context { get; set; }
-        public override Type PageType => typeof(WpSettings);
+        public override ArcPageContext ArcContext { get; set; }
+        public override Type ArcType => typeof(WpSettings);
 
-        public WpSettings() {            
-            _viewModel = ObjectProvider.GetRequiredService<WpSettingsViewModel>(ObjectLifetime.Singleton);
-            this.DataContext = _viewModel;
+        public WpSettings() {
+            this.Unloaded += WpSettings_Unloaded;
             this.InitializeComponent();
-            Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);            
+            _viewModel = AppServiceLocator.Services.GetRequiredService<WpSettingsViewModel>();
+            this.DataContext = _viewModel;                   
+            ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);
+        }
+
+        private void WpSettings_Unloaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+            this.DataContext = null;
+            this.Unloaded -= WpSettings_Unloaded;
         }
 
         #region nav
         private void NvLocal_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
-            try {               
+            try {
                 Type pageType = args.SelectedItemContainer.Name switch {
                     "Nav_LibraryContents" => typeof(LibraryContents),
                     "Nav_ScreenSaver" => typeof(ScreenSaver),
@@ -47,12 +51,12 @@ namespace VirtualPaper.WpSettingsPanel {
             }
         }
         #endregion
-      
+
         private void Flyout_Opening(object sender, object e) {
             _viewModel.InitFlyoutData();
         }
 
-        private void OnFilterChanged(object sender, TextChangedEventArgs e) {            
+        private void OnFilterChanged(object sender, TextChangedEventArgs e) {
             if (sender is TextBox tb && tb.Tag is FilterKey fk) {
                 _viewModel.OnFilterChanged(fk, tb.Text);
             }

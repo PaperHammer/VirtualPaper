@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
@@ -136,12 +137,28 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         #endregion
 
         public void RegisterLibraryContents(IFilterable filterable) {
-            if (_filterables.Contains(filterable)) return;
-            _filterables.Add(filterable);
+            // 清理已死亡的引用
+            _filterables.RemoveAll(x => !x.TryGetTarget(out _));
+
+            // 检查是否已存在存活的引用
+            if (_filterables.Any(x => x.TryGetTarget(out var target) && target == filterable)) return;
+
+            // 添加弱引用
+            _filterables.Add(new WeakReference<IFilterable>(filterable));
         }
 
         internal void OnFilterChanged(FilterKey fk, string text) {
-            _filterables.Find(x => x.FilterKeyword == fk)?.ApplyFilter(text);
+            // 遍历并清理死亡引用
+            for (int i = _filterables.Count - 1; i >= 0; i--) {
+                if (_filterables[i].TryGetTarget(out var target)) {
+                    if (target.FilterKeyword == fk) {
+                        target.ApplyFilter(text);
+                    }
+                }
+                else {
+                    _filterables.RemoveAt(i); // 移除已回收的对象
+                }
+            }
         }
 
         private async Task ShowAddToLibDialogAsync() {
@@ -166,7 +183,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
             await dialog.ShowAsync();
 
-            var libViewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(ObjectLifetime.Singleton);
+            var libViewModel = AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>();
             await libViewModel.DropFilesAsync(files);
         }
 
@@ -304,7 +321,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IMonitorManagerClient _monitorManagerClient;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
-        private readonly List<IFilterable> _filterables = [];
+        private readonly List<WeakReference<IFilterable>> _filterables = [];
         private readonly Dictionary<string, ArcWindow> _adjusts = [];
 
         private volatile int _canClose = 1;

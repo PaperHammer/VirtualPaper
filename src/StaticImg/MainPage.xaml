@@ -1,5 +1,5 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Page
+<?xml version="1.0" encoding="utf-8"?>
+<arc:ArcPage
     x:Class="Workloads.Creation.StaticImg.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:lcl_components="using:Workloads.Creation.StaticImg.Views.Components"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
     Loading="Page_Loading"
@@ -14,5 +15,7 @@
     IsEnabled="False"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <lcl_components:InkCanvas x:Name="InkCanvas"/>
-</Page>
+    <arc:ArcPageHost x:Name="MainHost">
+        <lcl_components:InkCanvas x:Name="InkCanvas"/>
+    </arc:ArcPageHost>
+</arc:ArcPage>

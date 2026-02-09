@@ -10,11 +10,7 @@
     mc:Ignorable="d">
 
     <Grid>
-        <Grid x:Name="PART_KeepAliveBuffer" 
-            IsHitTestVisible="False"
-            Background="Transparent"/>
-
-        <Frame x:Name="PART_ContentFrame" Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"/>
+        <Grid x:Name="PART_ContentGrid" Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"/>
 
         <ItemsControl x:Name="PART_InfoBarItemsContaner"
             HorizontalAlignment="Center"

@@ -1,9 +1,8 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.PlayerWeb.Core.ViewModels;
-using VirtualPaper.UIComponent.Utils.Extensions;
+using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

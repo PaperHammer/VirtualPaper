@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -29,7 +30,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
     public sealed partial class GetStart : Page {
         public GetStart() {
             this.InitializeComponent();
-            _viewModel = ObjectProvider.GetRequiredService<GetStartViewModel>();
+            _viewModel = AppServiceLocator.Services.GetRequiredService<GetStartViewModel>();
             this.DataContext = _viewModel;
         }
 

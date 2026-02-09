@@ -38,9 +38,9 @@
                     Grid.Column="1"
                     Orientation="Horizontal"
                     Spacing="6">
-                    <Button
+                    <input:ArcButton
                         Content="{x:Bind _viewModel.PreviousStepBtnText, Mode=OneWay}"
-                        Click="{x:Bind _viewModel.PreviousStep}"
+                        Command="{x:Bind _viewModel.PreviousStepCommand}"
                         Width="100"
                         FontSize="12"/>
 
@@ -48,7 +48,7 @@
                         Content="{x:Bind _viewModel.NextStepBtnText, Mode=OneWay}"
                         IsEnabled="{x:Bind _viewModel.IsNextEnable, Mode=OneWay}"
                         Width="100"
-                        Click="{x:Bind _viewModel.NextStep}"
+                        Command="{x:Bind _viewModel.NextStepCommand}"
                         FontSize="12"
                         Background="{ThemeResource AccentAcrylicBackgroundFillColorDefaultBrush}"/>
                 </StackPanel>

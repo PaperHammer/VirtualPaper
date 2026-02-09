@@ -1,6 +1,6 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.AppSettingsPanel.ViewModels;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -11,10 +11,16 @@ namespace VirtualPaper.AppSettingsPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class GeneralSetting : Page {
-        public GeneralSetting() {                        
-            _viewModel = ObjectProvider.GetRequiredService<GeneralSettingViewModel>(ObjectLifetime.Singleton);
-            this.DataContext = _viewModel;
-            this.InitializeComponent();
+        public GeneralSetting() {
+            this.Unloaded += GeneralSetting_Unloaded;
+            this.InitializeComponent();                   
+            _viewModel = AppServiceLocator.Services.GetRequiredService<GeneralSettingViewModel>();
+            this.DataContext = _viewModel;           
+        }
+
+        private void GeneralSetting_Unloaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+            this.DataContext = null;
+            this.Unloaded -= GeneralSetting_Unloaded;
         }
 
         private readonly GeneralSettingViewModel _viewModel;

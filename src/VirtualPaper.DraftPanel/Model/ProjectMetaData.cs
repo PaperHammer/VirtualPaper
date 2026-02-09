@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
-using VirtualPaper.DraftPanel.Model.NavParam;
 
 namespace VirtualPaper.DraftPanel.Model {
     [JsonSerializable(typeof(ProjectMetaData))]
@@ -27,11 +26,11 @@ namespace VirtualPaper.DraftPanel.Model {
             ProjectTags = projectTags;
         }
 
-        public ProjectMetaData(string draftName, ToDraftConfig data) {
+        public ProjectMetaData(string draftName, PreProjectData preData) {
             Name = draftName;
             DraftVersion = Constants.CoreField.DraftFileVersion;
             ProjectTags = [
-                new(data.ProjName, data.ProjType),
+                new ProjectTag(preData.ProjName, preData.Type),
             ];
         }
 
@@ -53,13 +52,29 @@ namespace VirtualPaper.DraftPanel.Model {
         public string EntryRelativeFilePath { get; set; }
         public int NameHash { get; set; }        
 
-        public ProjectTag(string name, ProjectType type) {
+        public ProjectTag(string? name, ProjectType type) {
+            ArgumentNullException.ThrowIfNull(name);
+
             Name = name;
             Type = type;
             EntryRelativeFilePath = $"{name}/{name}{FileExtension.FE_Design}";
-            NameHash = IdentifyUtil.ComputeHash(name);            
+            NameHash = IdentifyUtil.ComputeHash(name);
         }
     }
 
-    public record PreProjectData(string[] FilePaths, ProjectType ProjType);
+    public record PreProjectData {
+        public string? ProjName { get; }
+        public string[]? FilePaths { get; }
+        public ProjectType Type { get; }
+
+        public PreProjectData(string projName, ProjectType type) {
+            ProjName = projName;
+            Type = type;
+        }
+        
+        public PreProjectData(string[] filePaths, ProjectType type) {
+            FilePaths = filePaths;
+            Type = type;
+        }
+    }
 }

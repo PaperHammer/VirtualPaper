@@ -12,6 +12,7 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.Extensions;
 using VirtualPaper.WpSettingsPanel;
 using WinRT.Interop;
 
@@ -39,7 +40,6 @@ namespace VirtualPaper.UI {
 
         private void InitWindowConst() {
             WindowConsts.ArcWindowInstance = this;
-            //WindowConsts.Dpi = SystemUtil.GetDpi(SystemUtil.GetDisplayArea(this, DisplayAreaFallback.Primary));
             WindowConsts.WindowHandle = WindowNative.GetWindowHandle(this);
         }
 

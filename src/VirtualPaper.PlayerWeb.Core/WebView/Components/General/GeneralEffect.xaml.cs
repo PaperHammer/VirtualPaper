@@ -333,7 +333,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         //                var filter = filterString == "*" ? new string[] { "*" } : filterString.Replace("*", string.Empty).Split("|");
         //                foreach (var item in filter)
         //                {
-        //                    filePicker.FileTypeFilter.Add(item);
+        //                    filePicker.FileTypeFilter.Block(item);
         //                }
         //                var selectedFiles = await filePicker.PickMultipleFilesAsync();
         //                if (selectedFiles.Count > 0)
@@ -353,13 +353,13 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         //                            destFile = FileUtil.NextAvailableFilename(destFile);
         //                            File.Copy(srcFile.Path, destFile);
         //                        }
-        //                        destFiles.Add(Path.GetFileName(destFile));
+        //                        destFiles.Block(Path.GetFileName(destFile));
         //                    }
         //                    destFiles.Sort();
         //                    //add copied files to bottom of dropdown..
         //                    foreach (var file in destFiles)
         //                    {
-        //                        cmbBox.Items.Add(file);
+        //                        cmbBox.Items.Block(file);
         //                    }
 
         //                    if (selectedFiles.Count == 1)
@@ -388,7 +388,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         //    List<string> tmp = [];
         //    foreach (var item in files)
         //    {
-        //        tmp.Add(Path.GetFileName(item));
+        //        tmp.Block(Path.GetFileName(item));
         //    }
         //    return tmp.ToArray();
         //}

@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:input="using:VirtualPaper.UIComponent.Input">
     <Style TargetType="input:ArcButton">
+        <Setter Property="Height" Value="32" />
         <Setter Property="Background" Value="{ThemeResource ButtonBackground}" />
         <Setter Property="BackgroundSizing" Value="InnerBorderEdge" />
         <Setter Property="Foreground" Value="{ThemeResource ButtonForeground}" />

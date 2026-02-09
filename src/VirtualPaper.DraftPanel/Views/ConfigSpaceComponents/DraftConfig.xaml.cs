@@ -1,8 +1,9 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.ViewModels;
-using VirtualPaper.UIComponent.Utils.Extensions;
+using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI draft structure,
 // and more about our draft templates, see: http://aka.ms/winui-draft-info.
@@ -11,7 +12,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
     public sealed partial class DraftConfig : Page {
         public DraftConfig() {
             this.InitializeComponent();
-            _viewModel = ObjectProvider.GetRequiredService<DraftConfigViewModel>();
+            _viewModel = AppServiceLocator.Services.GetRequiredService<DraftConfigViewModel>();
             this.DataContext = _viewModel;
         }
 

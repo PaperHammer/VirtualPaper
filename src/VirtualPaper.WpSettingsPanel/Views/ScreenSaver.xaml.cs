@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models;
 using VirtualPaper.UIComponent.Context;
@@ -18,14 +18,20 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class ScreenSaver : ArcPage {
-        public override ArcPageContext Context { get; set; }
-        public override Type PageType => typeof(ScreenSaver);
+        public override ArcPageContext ArcContext { get; set; }
+        public override Type ArcType => typeof(ScreenSaver);
 
-        public ScreenSaver() {            
-            _viewModel = ObjectProvider.GetRequiredService<ScreenSaverViewModel>(ObjectLifetime.Singleton);
+        public ScreenSaver() {
+            this.Unloaded += ScreenSaver_Unloaded; ;
+            _viewModel = AppServiceLocator.Services.GetRequiredService<ScreenSaverViewModel>();
             this.DataContext = _viewModel;
-            Context = new ArcPageContext(this);
+            ArcContext = new ArcPageContext(this);
             this.InitializeComponent();
+        }
+
+        private void ScreenSaver_Unloaded(object sender, RoutedEventArgs e) {
+            this.DataContext = null;
+            this.Unloaded -= ScreenSaver_Unloaded;
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e) {

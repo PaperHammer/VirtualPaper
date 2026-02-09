@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Numerics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -23,20 +24,26 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class LibraryContents : ArcPage {
-        public override ArcPageContext Context { get; set; }
-        public override Type PageType => typeof(LibraryContents);
+        public override ArcPageContext ArcContext { get; set; }
+        public override Type ArcType => typeof(LibraryContents);
 
         public LibraryContents() {
+            this.Unloaded += LibraryContents_Unloaded;
             this.InitializeComponent();
-            _viewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>();
+            _viewModel = AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>();
             this.DataContext = _viewModel;
-            Context = new ArcPageContext(this);            
+            ArcContext = new ArcPageContext(this);            
         }
 
-        private async void Page_Loaded(object sender, RoutedEventArgs e) {
-            if (!_isColdLaunch) return;
-            _isColdLaunch = false;
+        private void LibraryContents_Unloaded(object sender, RoutedEventArgs e) {
+            this.DataContext = null;
+            if (wallpapersLibView != null) {
+                wallpapersLibView.ItemsSource = null;
+            }
+            this.Unloaded -= LibraryContents_Unloaded;
+        }
 
+        private async void Page_Loaded(object sender, RoutedEventArgs e) {            
             await _viewModel.InitContentAsync();
             _viewModel.RefreshWpTitleForeground();
         }
@@ -155,9 +162,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             visual.StartAnimation(nameof(visual.Scale), hover ? ctx.ScaleToHover : ctx.ScaleToNormal);
         }
 
-        private readonly LibraryContentsViewModel _viewModel;
-        private bool _isColdLaunch = true;
-
         private void WallpaperLibScrollViewer_ViewChanged(ScrollView sender, object args) {
             if (sender == null) return;
 
@@ -171,6 +175,8 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                 }
             }
         }
+
+        private readonly LibraryContentsViewModel _viewModel;
     }
 
     sealed record ScaleAnimationContext(Visual Visual, Vector3KeyFrameAnimation ScaleToNormal, Vector3KeyFrameAnimation ScaleToHover);

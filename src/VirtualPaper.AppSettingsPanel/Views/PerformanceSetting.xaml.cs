@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.Common.Utils.DI;
@@ -10,10 +11,16 @@ namespace VirtualPaper.AppSettingsPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class PerformanceSetting : Page {
-        public PerformanceSetting() {           
-            _viewModel = ObjectProvider.GetRequiredService<PerformanceSettingViewModel>();
-            this.DataContext = _viewModel;
-            this.InitializeComponent();
+        public PerformanceSetting() {
+            this.Unloaded += PerformanceSetting_Unloaded;
+            this.InitializeComponent();         
+            _viewModel = AppServiceLocator.Services.GetRequiredService<PerformanceSettingViewModel>();
+            this.DataContext = _viewModel;            
+        }
+
+        private void PerformanceSetting_Unloaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+            this.DataContext = null;
+            this.Unloaded -= PerformanceSetting_Unloaded;
         }
 
         private readonly PerformanceSettingViewModel _viewModel;

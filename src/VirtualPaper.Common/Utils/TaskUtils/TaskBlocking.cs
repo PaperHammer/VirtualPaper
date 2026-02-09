@@ -1,6 +1,6 @@
 namespace VirtualPaper.Common.Utils.TaskUtils {
     public class TaskBlocking {
-        public IDisposable Add(CancellationToken token) {
+        public IDisposable Block() {
             CancellationTokenRegistration reg = default;
 
             lock (_lockObj) {
@@ -19,7 +19,7 @@ namespace VirtualPaper.Common.Utils.TaskUtils {
             });
         }
 
-        public Task WaitUntilAllReleasedAsync() {
+        public Task WaitAsync() {
             lock (_lockObj) {
                 if (_registrations.Count == 0)
                     return Task.CompletedTask;

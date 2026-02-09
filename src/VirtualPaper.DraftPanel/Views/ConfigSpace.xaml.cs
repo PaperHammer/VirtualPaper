@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
@@ -11,7 +12,7 @@ using VirtualPaper.DraftPanel.Views.ConfigSpaceComponents;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Templates;
-using VirtualPaper.UIComponent.Utils.Extensions;
+using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -21,21 +22,14 @@ namespace VirtualPaper.DraftPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class ConfigSpace : ArcPage, ICardComponent, INavigateComponent {
-        public override ArcPageContext Context { get; set; }
-        public override Type PageType => typeof(ConfigSpace);
+        public override ArcPageContext ArcContext { get; set; }
+        public override Type ArcType => typeof(ConfigSpace);
 
         public ConfigSpace() {
-            this.Unloaded += ConfigSpace_Unloaded;
             this.InitializeComponent();
-            _viewModel = ObjectProvider.GetRequiredService<ConfigSpaceViewModel>();
+            _viewModel = AppServiceLocator.Services.GetRequiredService<ConfigSpaceViewModel>();
             this.DataContext = _viewModel;
-            Context = new ArcPageContext(this);
-        }
-
-        private void ConfigSpace_Unloaded(object sender, RoutedEventArgs e) {
-            this.Unloaded -= ConfigSpace_Unloaded;
-            _viewModel.Dispose();
-            _viewModel = null;
+            ArcContext = new ArcPageContext(this);
         }
 
         #region nav
@@ -125,11 +119,11 @@ namespace VirtualPaper.DraftPanel.Views {
             _viewModel.BtnVisible = isVisible;
         }
 
-        public void BindingPreviousBtnAction(RoutedEventHandler action) {
+        public void BindingPreviousBtnAction(Action action) {
             _viewModel.PreviousStep = action;
         }
 
-        public void BindingNextBtnAction(RoutedEventHandler action) {
+        public void BindingNextBtnAction(Action action) {
             _viewModel.NextStep = action;
         }
         #endregion

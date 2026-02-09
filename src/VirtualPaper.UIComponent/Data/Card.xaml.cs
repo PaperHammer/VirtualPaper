@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -60,7 +61,7 @@ namespace VirtualPaper.UIComponent.Data {
         void SetNextStepBtnText(string text);
         void SetNextStepBtnEnable(bool isEnable);
         void SetBtnVisible(bool isVisible);
-        void BindingPreviousBtnAction(RoutedEventHandler action);
-        void BindingNextBtnAction(RoutedEventHandler action);
+        void BindingPreviousBtnAction(Action action);
+        void BindingNextBtnAction(Action action);
     }
 }

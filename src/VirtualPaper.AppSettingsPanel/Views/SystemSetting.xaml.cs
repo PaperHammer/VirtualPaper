@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.Common.Utils.DI;
@@ -10,10 +11,16 @@ namespace VirtualPaper.AppSettingsPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class SystemSetting : Page {
-        public SystemSetting() {                       
-            _viewModel = ObjectProvider.GetRequiredService<SystemSettingViewModel>();
-            this.DataContext = _viewModel;        
-            this.InitializeComponent(); 
+        public SystemSetting() {
+            this.Unloaded += SystemSetting_Unloaded;
+            this.InitializeComponent();                  
+            _viewModel = AppServiceLocator.Services.GetRequiredService<SystemSettingViewModel>();
+            this.DataContext = _viewModel;             
+        }
+
+        private void SystemSetting_Unloaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+            this.DataContext = null;
+            this.Unloaded -= SystemSetting_Unloaded;
         }
 
         private readonly SystemSettingViewModel _viewModel;

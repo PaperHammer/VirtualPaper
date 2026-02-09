@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.UIComponent.Attributes;
@@ -11,72 +10,86 @@ using VirtualPaper.UIComponent.Templates;
 
 namespace VirtualPaper.UIComponent.Utils.Extensions {
     public static class ArcNavigationContentViewExtension {
-        public static bool ArcNavigate(
+        public static void ArcNavigate(
             this ArcNavigationContentView navView,
-            Grid keepAliveBuffer,
             Type targetPageType,
-            NavigationPayload? parameter = null,
+            NavigationPayload? payload = null,
             ArcNavigationOptions? options = null) {
-            if (!typeof(ArcPage).IsAssignableFrom(targetPageType))
-                throw new InvalidOperationException($"{targetPageType.Name} is not ArcPage.");
+            CrossThreadInvoker.InvokeOnUIThread(() => {
+                if (!typeof(ArcPage).IsAssignableFrom(targetPageType))
+                    throw new InvalidOperationException($"{targetPageType.Name} is not ArcPage");
 
-            ArcPage? oldPage = navView.ContentFrame.Content as ArcPage;
-            ArcPage newPage = TryWakeUpPageFromBuffer(keepAliveBuffer, targetPageType)
-                              ?? ResolvePageInstance(targetPageType);
+                ArcPage? oldPage = GetActivePage(navView.PageMap);
+                ArcPage newPage = GetBackgroundPage(navView.PageMap, targetPageType) ?? ResolvePageInstance(targetPageType);
 
-            bool useAnimation = options != null;
-            if (!useAnimation)
-                return NavigateRootWithoutAnimation(navView, keepAliveBuffer, oldPage, newPage, parameter);
-
-            return NavigateRootWithAnimation(navView, keepAliveBuffer, oldPage, newPage, parameter, options!.Transition);
+                bool useAnimation = options != null;
+                if (!useAnimation) NavigateRootWithoutAnimation(navView, oldPage, newPage, payload);
+                else NavigateRootWithAnimation(navView, oldPage, newPage, payload, options!.Transition);
+            });
         }
 
-        private static bool NavigateRootWithoutAnimation(
+        private static void NavigateRootWithoutAnimation(
             ArcNavigationContentView navView,
-            Grid keepAliveBuffer,
             ArcPage? oldPage,
             ArcPage newPage,
-            NavigationPayload? parameter) {
-            navView.ContentFrame.Content = null;
-            navView.ContentFrame.Content = newPage;
-            newPage.NavigateEnter(parameter);
-
-            if (oldPage != null)
-                MoveToBufferAndExit(navView, keepAliveBuffer, oldPage);
-
-            return true;
+            NavigationPayload? paylaod) {
+            CrossThreadInvoker.InvokeOnUIThread(() => {
+                if (!navView.PageMap.ContainsKey(newPage.ArcType)) {
+                    navView.PageMap[newPage.ArcType] = newPage;
+                    navView.ContentGrid.Children.Add(newPage);
+                }
+                newPage.NavigateEnter(paylaod);
+                
+                HandlePageStatus(navView, oldPage, newPage);
+            });
         }
 
-        private static bool NavigateRootWithAnimation(
+        private static void NavigateRootWithAnimation(
             ArcNavigationContentView navView,
-            Grid keepAliveBuffer,
             ArcPage? oldPage,
             ArcPage newPage,
             NavigationPayload? parameter,
             ArcNavigationTransition transition) {
-            navView.ContentFrame.Content = null;
             newPage.Opacity = 0;
-            navView.ContentFrame.Content = newPage;
+            if (!navView.PageMap.ContainsKey(newPage.ArcType)) {
+                navView.PageMap[newPage.ArcType] = newPage;
+                navView.ContentGrid.Children.Add(newPage);
+            }
             newPage.NavigateEnter(parameter);
-
-            if (oldPage != null)
-                MoveToBufferAndExit(navView, keepAliveBuffer, oldPage);
-
+            
+            HandlePageStatus(navView, oldPage, newPage);
+            
             PlayEnterAnimation(newPage, transition);
-
-            return true;
         }
 
-        private static void MoveToBufferAndExit(ArcNavigationContentView navView, Grid bufferGrid, ArcPage oldPage) {
-            navView.PageBufferMap[oldPage.PageType] = oldPage;
-            bufferGrid.Children.Add(oldPage);
+        private static void HandlePageStatus(ArcNavigationContentView navView, ArcPage? oldPage, ArcPage newPage) {
+            if (oldPage == null) {
+                newPage.SetActiveStatus();
+                return;
+            }
 
-            oldPage.NavigateExit(() => {
-                CrossThreadInvoker.InvokeOnUIThread(() => {
-                    bufferGrid.Children.Remove(oldPage);
-                    navView.PageBufferMap.Remove(oldPage.PageType);
+            if (ReferenceEquals(oldPage, newPage)) {
+                newPage.SetActiveStatus();
+                return;
+            }
+
+            oldPage.NavigateExit(
+                beforeLeave: () => {
+                    // 如果在等待期间 oldPage 被复活（变为 PreActive 或 Active），不能移除
+                    if (oldPage.Status == ArcPageStatus.Active || oldPage.Status == ArcPageStatus.PreActive) {
+                        return;
+                    }
+
+                    navView.PageMap.Remove(oldPage.ArcType);
+                    CrossThreadInvoker.InvokeOnUIThread(() => {
+                        if (navView.ContentGrid.Children.Contains(oldPage)) {
+                            navView.ContentGrid.Children.Remove(oldPage);
+                        }
+                    });
+                },
+                afterDestoried: () => {
+                    newPage.SetActiveStatus();
                 });
-            });
         }
 
         private static void PlayEnterAnimation(UIElement newPage, ArcNavigationTransition transition) {
@@ -115,13 +128,21 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
                    ?? throw new Exception($"Cannot create page {type.Name}");
         }
 
-        private static ArcPage? TryWakeUpPageFromBuffer(Grid bufferGrid, Type targetPageType) {
-            foreach (var child in bufferGrid.Children) {
-                if (child is ArcPage page && page.GetType() == targetPageType) {
-                    if (!page.IsPreLeaved) {
-                        bufferGrid.Children.Remove(page);
-                        return page;
-                    }
+        private static ArcPage? GetActivePage(Dictionary<Type, ArcPage> map) {
+            foreach (var kvp in map) {
+                // 在快速切换时，上一个页面可能还处于 PreActive（动画中），它也应该被视为 oldPage
+                if (kvp.Value.Status == ArcPageStatus.Active || kvp.Value.Status == ArcPageStatus.PreActive) {
+                    return kvp.Value;
+                }
+            }
+
+            return null;
+        }
+
+        private static ArcPage? GetBackgroundPage(Dictionary<Type, ArcPage> map, Type targetPageType) {
+            foreach (var kvp in map) {
+                if (kvp.Value.ArcType == targetPageType && kvp.Value.Status == ArcPageStatus.BackgroundRunning) {
+                    return kvp.Value;
                 }
             }
 
@@ -162,124 +183,5 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
                 EasingFunction = Ease
             };
         }
-    }
-
-    public sealed class NavigationPayload {
-        public object? this[string key] {
-            set => Set(key, value);
-        }
-
-        public void Set(string key, object? value) {
-            _data[key] = value;
-        }
-        
-        public void Set(NaviPayloadKey key, object? value) {
-            Set(key.ToString(), value);
-        }
-
-        public bool TryGet<T>(string key, out T value) {
-            if (_data.TryGetValue(key, out var obj) && obj is T t) {
-                value = t;
-                return true;
-            }
-
-            value = default!;
-            return false;
-        }
-        
-        public bool TryGet<T>(NaviPayloadKey key, out T value) {
-            return TryGet(key.ToString(), out value);
-        }
-
-        public T Get<T>(string key) {
-            if (_data.TryGetValue(key, out var value) && value is T t)
-                return t;
-
-            throw new KeyNotFoundException($"NavigationPayload missing required key '{key}' ({typeof(T).Name})");
-        }
-
-        public bool ContainsKey(string key) {
-            return _data.ContainsKey(key);
-        }
-
-        public bool ContainsKey(NaviPayloadKey key) {
-            return _data.ContainsKey(key.ToString());
-        }
-
-        public IReadOnlyDictionary<string, object?> GetRawData() {
-            return _data;
-        }
-
-        private readonly Dictionary<string, object?> _data = [];
-    }
-
-    public static class NavigationPayloadExtensions {
-        public static NavigationPayload AddRange(this NavigationPayload payload, params NaviPayloadData[] items) {
-            return payload.AddRange(true, items);
-        }
-
-        public static NavigationPayload AddRange(this NavigationPayload payload, bool overwrite, params NaviPayloadData[] items) {
-            if (items is null) return payload;
-
-            foreach (var item in items) {
-                string keyStr = item.Key.ToString();
-                if (!overwrite && payload.ContainsKey(keyStr)) {
-                    continue;
-                }
-                payload.Set(keyStr, item.Value);
-            }
-
-            return payload;
-        }
-
-        public static NaviPayloadData[] ToArray(this NavigationPayload payload) {
-            if (payload == null) return [];
-
-            var list = new List<NaviPayloadData>();
-            var rawData = payload.GetRawData();
-
-            foreach (var kvp in rawData) {
-                if (Enum.TryParse<NaviPayloadKey>(kvp.Key, out var enumKey)) {
-                    list.Add(new NaviPayloadData(enumKey, kvp.Value!));
-                }
-            }
-
-            return list.ToArray();
-        }
-
-        public static NavigationPayload Merge(this NavigationPayload? target, NavigationPayload? source, bool overwrite = true) {                        
-            if (target is null) return source ?? new();
-            if (source is null) return target;
-
-            foreach (var kvp in source.GetRawData()) {
-                if (!overwrite && target.ContainsKey(kvp.Key)) {
-                    continue;
-                }
-                target.Set(kvp.Key, kvp.Value);
-            }
-
-            return target;
-        }
-    }
-
-    public record NaviPayloadData(NaviPayloadKey Key, object Value);
-
-    public enum NaviPayloadKey {
-        OnlyDetails,
-        PreviewWithWeb,
-        IEffectService,
-        StartArgs,
-        AvailableConfigTab,
-        IWpBasicData,
-        IIpcObserver,
-        ArcWindow,
-        ApplyService,
-        ConfigSpacePage,
-        RecentUsedFiles,
-        LocalFiles,
-        DraftPage,
-        Project,
-        ICardComponent,
-        INavigateComponent,
-    }
+    }    
 }

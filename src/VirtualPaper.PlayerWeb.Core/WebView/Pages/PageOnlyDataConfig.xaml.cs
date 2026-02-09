@@ -1,9 +1,8 @@
 using System;
-using System.Threading.Tasks;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
-using VirtualPaper.UIComponent.Utils.Extensions;
+using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -13,21 +12,19 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class PageOnlyDataConfig : ArcPage {
-        public override ArcPageContext Context { get; set; }
-        public override Type PageType => typeof(PageOnlyDataConfig);
+        public override ArcPageContext ArcContext { get; set; }
+        public override Type ArcType => typeof(PageOnlyDataConfig);
         protected override bool IsMultiInstance => true;
 
         public PageOnlyDataConfig() {
             this.InitializeComponent();
-            Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);            
+            ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);            
         }
 
-        protected override async Task OnEnterAsync(NavigationPayload? payload) {
-            await base.OnEnterAsync(payload);
+        protected override void OnEnter(NavigationPayload? payload) {
+            base.OnEnter(payload);
             Payload = payload;
-            if (payload != null) {
-                payload.Set(NaviPayloadKey.AvailableConfigTab.ToString(), DataConfigTab.GeneralEffect | DataConfigTab.GeneralInfo);
-            }
+            payload?.Set(NaviPayloadKey.AvailableConfigTab.ToString(), DataConfigTab.GeneralEffect | DataConfigTab.GeneralInfo);
         }        
     }
 }

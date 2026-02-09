@@ -3,12 +3,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Shader;
 using VirtualPaper.UIComponent.Context;
+using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Graphics.DirectX;
 using Workloads.Creation.StaticImg.Models.SerializableData;
@@ -21,9 +21,12 @@ namespace Workloads.Creation.StaticImg {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainPage : Page, IRuntime {
+    public sealed partial class MainPage : ArcPage, IRuntime {
+        public override ArcPageContext ArcContext { get; set; }
+        public override Type ArcType => typeof(MainPage);
+
         internal static MainPage Instance { get; private set; }
-        internal ArcPageContext Context { get; private set; }
+        //internal ArcPageContext ArcContext { get; private set; }
         internal CanvasDevice SharedDevice { get; }
         internal StaticImgUndoRedoUtil UnReUtil { get; }
         internal ProjectFile ProjectUtil { get; }
@@ -37,10 +40,10 @@ namespace Workloads.Creation.StaticImg {
             private set { lock (_frameTimeLock) _frameTimeMs = value; }
         }
 
-        private MainPage(ArcPageContext context) {
+        private MainPage() {
             this.InitializeComponent();
+            ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);
             Instance = this;
-            Context = context;
             SharedDevice = CanvasDevice.GetSharedDevice();
             SharedFormat = DirectXPixelFormat.B8G8R8A8UIntNormalized;
             SharedAlphaMode = CanvasAlphaMode.Premultiplied;
@@ -51,16 +54,16 @@ namespace Workloads.Creation.StaticImg {
         /// 打开文件
         /// </summary>
         /// <param name="filePath">类型为 FDeign 或静态图像的文件路径</param>
-        public MainPage(ArcPageContext context, FileType rtFileType, string filePath) : this(context) {
+        public MainPage(FileType rtFileType, string filePath) : this() {
             ProjectUtil = ProjectFile.Create(filePath);
-            RTFileType = rtFileType;            
+            RTFileType = rtFileType;
         }
 
         /// <summary>
         /// 新建项目
         /// </summary>
         /// <param name="fileName">项目名</param>
-        public MainPage(ArcPageContext context, string fileName) : this(context) {
+        public MainPage(string fileName) : this() {
             ProjectUtil = ProjectFile.Create(fileName);
             RTFileType = FileType.FDesign;
         }
@@ -69,30 +72,24 @@ namespace Workloads.Creation.StaticImg {
             await ShaderLoader.LoadAllShadersAsync();
         }
 
-        // TODO: 考虑此处 restore
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
-            //this.IsEnabled = false;
+            this.IsEnabled = false;
 
-            //var ctx = ArcPageContextManager.GetContext<MainPage>();
-            //var loading
+            var ctx = ArcPageContextManager.GetContext<MainPage>();
+            var loadingCtx = ctx?.LoadingContext;
+            if (loadingCtx == null)
+                return;
 
-            //Context.LoadingContext?.ShowLoading(false);
+            await loadingCtx.RunAsync(
+                operation: async token => {
+                    await InkCanvas.IsInited.Task;
+                });
+            
+            StartFrameTimeMonitor();
 
-            //await InkCanvas.IsInited.Task;            
-
-            //StartFrameTimeMonitor();
-            //Context.LoadingContext?.HideLoading();
-            //this.IsEnabled = true;
+            this.IsEnabled = true;
         }
 
-        // TODO：切换左侧导航栏时会触发 page_unloaded
-        /*
-         * 方案一：使用 flag 尝试阻止 unloaded（obsolete）
-         * 方案二：使用 flag 尝试再 loaded 时从内存中恢复内容
-         * 
-         * flag：如果触发 exit 则表示无需保留内容，直接 unloaded-dispose；否则表示内容需要保留，下一次需要恢复
-         * 
-         */
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
             StopFrameTimeMonitor();
             SharedDevice.Dispose();
@@ -118,7 +115,6 @@ namespace Workloads.Creation.StaticImg {
                         await Task.Delay(delayMs, _frameTimeCts.Token);
                     }
                     catch (TaskCanceledException) {
-                        // 正常退出
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<MainPage>().Error($"FrameTime monitor error: {ex.Message}");

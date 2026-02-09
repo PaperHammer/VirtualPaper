@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
@@ -19,7 +18,7 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
-    internal partial class DraftConfigViewModel : ObservableObject {
+    public partial class DraftConfigViewModel : ObservableObject {
         public ObservableCollection<ProjectTemplate> AvailableTemplates { get; set; } = [];
 
         private string? _projectName;
@@ -89,12 +88,12 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             _cardComponent.BindingNextBtnAction(NextStepBtnAction);
         }
 
-        private void PreviousStepBtnAction(object sender, RoutedEventArgs e) {
+        private void PreviousStepBtnAction() {
             _navigateComponent.NavigateByState(DraftPanelState.GetStart);
         }
 
-        private void NextStepBtnAction(object sender, RoutedEventArgs e) {
-            _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, new PreProjectData([ProjectName!], ProjectType.PImage));
+        private void NextStepBtnAction() {
+            _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, new PreProjectData(ProjectName!, ProjectType.PImage));
             _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
         }
 

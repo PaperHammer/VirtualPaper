@@ -38,8 +38,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             this.InitializeComponent();
 
             _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
-            _tool = new();
-            _viewModel = new();
+            _tool = new ToolManager();
+            _viewModel = new InkCanvasViewModel();
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e) {
@@ -518,6 +518,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private readonly TaskCompletionSource<bool> _isInited = new();
         private CanvasImageBrush _gridBrush;
         private const int _gridSize = 20;
-        private float _opacity = 1f;
+        //private float _opacity = 1f;
     }
 }

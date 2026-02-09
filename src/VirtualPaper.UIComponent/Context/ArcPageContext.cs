@@ -1,5 +1,4 @@
 using System;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common.Utils.TaskUtils;
 using VirtualPaper.UIComponent.Feedback;
@@ -26,7 +25,7 @@ namespace VirtualPaper.UIComponent.Context {
         /// </summary>
         public bool IsValid => PageInstance != null && (LoadingContext?.IsValid ?? true);
 
-        public TaskBlocking Blocking => _blocking;
+        public TaskBlocking KeepAliveBlocking => _keepAliveBlocking;
 
         public ArcPageContext(Page pageInstance) {
             _pageReference = new WeakReference<Page>(pageInstance);
@@ -38,6 +37,6 @@ namespace VirtualPaper.UIComponent.Context {
 
         private readonly WeakReference<Page> _pageReference;
         private readonly ArcLoadingContext? _loadingContext;
-        private readonly TaskBlocking _blocking = new();
+        private readonly TaskBlocking _keepAliveBlocking = new();
     }
 }

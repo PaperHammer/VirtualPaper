@@ -1,15 +1,15 @@
 using System;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
-using VirtualPaper.UIComponent.Utils.Extensions;
+using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -20,34 +20,27 @@ namespace VirtualPaper.DraftPanel.Views {
     /// </summary>
     [KeepAlive]
     public sealed partial class WorkSpace : ArcPage {
-        public override ArcPageContext Context { get; set; }
-        public override Type PageType => typeof(WorkSpace);
+        public override ArcPageContext ArcContext { get; set; }
+        public override Type ArcType => typeof(WorkSpace);
 
         public WorkSpace() {
-            this.Unloaded += WorkSpace_Unloaded;
             this.InitializeComponent();
-            _viewModel = ObjectProvider.GetRequiredService<WorkSpaceViewModel>(ObjectLifetime.Transient, ObjectLifetime.Singleton);
+            _viewModel = AppServiceLocator.Services.GetRequiredService<WorkSpaceViewModel>();
             this.DataContext = _viewModel;
-            Context = new ArcPageContext(this);
-        }
-
-        private void WorkSpace_Unloaded(object sender, RoutedEventArgs e) {
-            this.Unloaded -= WorkSpace_Unloaded;
-            this._viewModel?.Dispose();
-            this._viewModel = null;
+            ArcContext = new ArcPageContext(this);
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
             if (e.Parameter is NavigationPayload payload) {
-                payload.TryGet(NaviPayloadKey.Project.ToString(), out _project);
+                payload.TryGet(NaviPayloadKey.Project.ToString(), out _preProjectData);
             }
         }
 
         private void TabViewControl_Loaded(object sender, RoutedEventArgs e) {
-            if (_project == null) return;
-            _viewModel.InitTabViewItems(_project);
+            if (_preProjectData == null) return;
+            _viewModel.InitTabViewItems(_preProjectData);
         }
 
         private void TabViewControl_TabItemsChanged(TabView sender, Windows.Foundation.Collections.IVectorChangedEventArgs args) {
@@ -83,6 +76,6 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         private WorkSpaceViewModel _viewModel;
-        private PreProjectData? _project;
+        private PreProjectData? _preProjectData;
     }
 }

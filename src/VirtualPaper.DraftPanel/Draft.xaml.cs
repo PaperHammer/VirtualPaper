@@ -7,7 +7,7 @@ using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
-using VirtualPaper.UIComponent.Utils.Extensions;
+using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -18,12 +18,12 @@ namespace VirtualPaper.DraftPanel {
     /// </summary>
     [KeepAlive]
     public sealed partial class Draft : ArcPage {
-        public override ArcPageContext Context { get; set; }
-        public override Type PageType => typeof(Draft);
+        public override ArcPageContext ArcContext { get; set; }
+        public override Type ArcType => typeof(Draft);
 
         public Draft() {
             this.InitializeComponent();
-            Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);
+            ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);
         }
 
         #region navigate

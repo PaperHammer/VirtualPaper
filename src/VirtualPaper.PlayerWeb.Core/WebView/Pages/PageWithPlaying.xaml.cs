@@ -14,7 +14,7 @@ using VirtualPaper.PlayerWeb.Core.Utils;
 using VirtualPaper.PlayerWeb.Core.Utils.Interfaces;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
-using VirtualPaper.UIComponent.Utils.Extensions;
+using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -25,17 +25,17 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class PageWithPlaying : ArcPage, IEffectService {
-        public override ArcPageContext Context { get; set; }
-        public override Type PageType => typeof(PageWithPlaying);
+        public override ArcPageContext ArcContext { get; set; }
+        public override Type ArcType => typeof(PageWithPlaying);
         protected override bool IsMultiInstance => true;
 
         public PageWithPlaying() {
             this.InitializeComponent();
-            Context = new ArcPageContext(this, this.MainHost.LoadingControlHost);
+            ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);
         }
 
-        protected override async Task OnEnterAsync(NavigationPayload? payload) {
-            await base.OnEnterAsync(payload);
+        protected override void OnEnter(NavigationPayload? payload) {
+            base.OnEnter(payload);
             Payload = payload;
             if (payload != null) {
                 payload.TryGet(NaviPayloadKey.StartArgs.ToString(), out _startArgs);
@@ -54,7 +54,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
 
         private void ArcPage_Loaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
-            var loadingCtx = Context?.LoadingContext;
+            var loadingCtx = ArcContext?.LoadingContext;
             if (loadingCtx == null)
                 return;
 
@@ -86,7 +86,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
 
         private void InputLayer_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
             _isPointerInsidePage = false;
-        }        
+        }
 
         #region effect change from ui
         public void UpdateEffectValue<T>(EffectValueChanged<T> e) {
@@ -173,7 +173,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
 
             string playingFile = GetPlayingFile();
             string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, playingFile).Replace("\\", "/");
-            Webview2.CoreWebView2.Navigate(new Uri(fullPath).AbsoluteUri);            
+            Webview2.CoreWebView2.Navigate(new Uri(fullPath).AbsoluteUri);
         }
 
         private void CoreWebView2_ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e) {
@@ -282,7 +282,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
 
         private void OnUnloaded() {
             Payload = null;
-            CrossThreadInvoker.InvokeOnUIThread(() => {                
+            CrossThreadInvoker.InvokeOnUIThread(() => {
                 Webview2?.Close();
             });
         }

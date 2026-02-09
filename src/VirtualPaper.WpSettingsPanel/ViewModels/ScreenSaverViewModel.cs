@@ -170,12 +170,18 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         public async Task UpdateScrSettginsAsync() {
-            await _userSettingsClient.LoadAsync<ISettings>();
-            CrossThreadInvoker.InvokeOnUIThread(() => {
-                IsScreenSaverOn = _userSettingsClient.Settings.IsScreenSaverOn;
-                IsRunningLock = _userSettingsClient.Settings.IsRunningLock;
-                SeletedEffectIndx = (int)_userSettingsClient.Settings.ScreenSaverEffect;
-            });
+            try {
+                _isLoading = true;
+                await _userSettingsClient.LoadAsync<ISettings>();
+                CrossThreadInvoker.InvokeOnUIThread(() => {
+                    IsScreenSaverOn = _userSettingsClient.Settings.IsScreenSaverOn;
+                    IsRunningLock = _userSettingsClient.Settings.IsRunningLock;
+                    SeletedEffectIndx = (int)_userSettingsClient.Settings.ScreenSaverEffect;
+                });
+            }
+            finally {
+                _isLoading = false;
+            }
         }
 
         private void PreAddToWhiteList() {
@@ -248,5 +254,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private string _effectNone = string.Empty;
         private string _effectBubble = string.Empty;
         internal List<ProcInfo> _whiteListScr = [];
+        private bool _isLoading = false;
     }
 }

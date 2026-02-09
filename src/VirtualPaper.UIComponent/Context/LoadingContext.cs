@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
-using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Feedback;
 
@@ -36,7 +35,7 @@ namespace VirtualPaper.UIComponent.Context {
 
             EnterLoading(showProgress, cts);
 
-            IDisposable blockingHandle = _arcPageContext.Blocking.Add(token);
+            IDisposable blockingHandle = _arcPageContext.KeepAliveBlocking.Block();
 
             await operation(token);
 

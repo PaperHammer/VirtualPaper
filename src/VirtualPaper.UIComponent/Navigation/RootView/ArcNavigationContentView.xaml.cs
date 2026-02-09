@@ -12,8 +12,8 @@ using VirtualPaper.UIComponent.Utils.Extensions;
 
 namespace VirtualPaper.UIComponent.Navigation {
     public sealed partial class ArcNavigationContentView : UserControl {
-        public Dictionary<Type, ArcPage> PageBufferMap { get; } = [];
-        public Frame ContentFrame => PART_ContentFrame;
+        public Dictionary<Type, ArcPage> PageMap { get; } = [];
+        public Grid ContentGrid => PART_ContentGrid;
 
         public ObservableCollection<GlobalMsgInfo> InfobarMessages {
             get => (ObservableCollection<GlobalMsgInfo>)GetValue(InfobarMessagesProperty);
@@ -30,7 +30,7 @@ namespace VirtualPaper.UIComponent.Navigation {
         }
 
         public void Navigate(Type pageType, NavigationPayload? parameter = null, ArcNavigationOptions? options = null) {
-            this.ArcNavigate(PART_KeepAliveBuffer, pageType, parameter, options);
+            this.ArcNavigate(pageType, parameter, options);
         }
     }
 }

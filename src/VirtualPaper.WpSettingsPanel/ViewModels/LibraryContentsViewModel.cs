@@ -86,6 +86,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal async Task InitContentAsync() {
+            if (_isInited) return;
+
             var ctx = ArcPageContextManager.GetContext<WpSettings>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
@@ -107,6 +109,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                             _libraryWallpapers.Add(data);
                             _offset++;
                         }
+
+                        _isInited = true;
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
@@ -604,6 +608,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly Dictionary<string, ArcWindow> _edits = [];
         private readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];
         private List<IWpBasicData> _libraryWallpapers = [];
+        private bool _isInited;
     }
 
     public enum LoadingStatus {

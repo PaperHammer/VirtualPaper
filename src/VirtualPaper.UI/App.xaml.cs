@@ -2,17 +2,22 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
+using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.WpSettingsPanel.Utils;
+using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.Core;
 using WinUIEx;
 
@@ -46,6 +51,11 @@ namespace VirtualPaper.UI {
             }
             #endregion
 
+            #region 初始化核心组件
+            // 依赖注入
+            AppServiceLocator.Services = ConfigureServices();
+            #endregion
+
 #if !DEBUG
             if (!SingleInstanceUtil.IsAppMutexRunning(Constants.CoreField.UniqueAppUid)) {
                 _ = Native.MessageBox(IntPtr.Zero, "Wallpaper core is not running, run VirtualPaper.exe first before opening UI.", "Virtual Paper", 16);
@@ -65,17 +75,37 @@ namespace VirtualPaper.UI {
 
             SetupUnhandledExceptionLogging();
 
-            ConfigureServices();
-            _userSettings = ObjectProvider.GetRequiredService<IUserSettingsClient>(ObjectLifetime.Singleton);
+            _userSettings = AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>();
         }
 
-        private static void ConfigureServices() {
-            ObjectProvider.RegisterRelation<IWallpaperControlClient, WallpaperControlClient>();
-            ObjectProvider.RegisterRelation<IMonitorManagerClient, MonitorManagerClient>();
-            ObjectProvider.RegisterRelation<IUserSettingsClient, UserSettingsClient>();
-            ObjectProvider.RegisterRelation<IAppUpdaterClient, AppUpdaterClient>();
-            ObjectProvider.RegisterRelation<ICommandsClient, CommandsClient>();
-            ObjectProvider.RegisterRelation<IScrCommandsClient, ScrCommandsClient>();
+        private ServiceProvider ConfigureServices() {
+            var provider = new ServiceCollection()
+                .AddSingleton<MainWindow>()
+                
+                .AddSingleton<GeneralSettingViewModel>()
+                .AddTransient<OtherSettingViewModel>()
+                .AddTransient<PerformanceSettingViewModel>()
+                .AddTransient<SystemSettingViewModel>()
+                .AddSingleton<WpSettingsViewModel>()
+                .AddSingleton<ScreenSaverViewModel>()
+                .AddSingleton<LibraryContentsViewModel>()
+                .AddTransient<ConfigSpaceViewModel>()
+                .AddTransient<GetStartViewModel>()
+                .AddTransient<DraftConfigViewModel>()
+                .AddSingleton<WorkSpaceViewModel>()
+
+                .AddSingleton<WallpaperIndexService>()
+
+                .AddSingleton<IUserSettingsClient, UserSettingsClient>()
+                .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
+                .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()
+                .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
+                .AddSingleton<ICommandsClient, CommandsClient>()
+                .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
+
+                .BuildServiceProvider();
+
+            return provider;
         }
 
         /// <summary>
@@ -96,7 +126,7 @@ namespace VirtualPaper.UI {
                 await LanguageUtil.InitializeLocalizerForUnpackaged(_userSettings.Settings.Language);
             }
 
-            var m_window = ObjectProvider.GetRequiredService<MainWindow>();
+            var m_window = AppServiceLocator.Services.GetRequiredService<MainWindow>();
             m_window.Show();
             m_window.Activate();
         }
@@ -124,7 +154,7 @@ namespace VirtualPaper.UI {
         public static void ShutDown() {
             Application.Current.Exit();
             _ = Task.Run(() => {
-                ObjectProvider.Clean();
+                ((ServiceProvider)AppServiceLocator.Services)?.Dispose();
                 ArcLog.GetLogger<App>().Info("UI was closed");
             });
         }

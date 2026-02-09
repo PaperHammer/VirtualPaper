@@ -1,5 +1,5 @@
 using VirtualPaper.Common;
-using VirtualPaper.UIComponent.Utils.Extensions;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.DraftPanel.Model.Interfaces {
     interface INavigateComponent {

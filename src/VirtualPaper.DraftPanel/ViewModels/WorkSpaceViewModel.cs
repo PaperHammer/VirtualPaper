@@ -117,13 +117,21 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         #endregion
 
         #region init
-        internal void InitTabViewItems(PreProjectData data) {
-            foreach (var filePath in data.FilePaths) {
-                if (FileUtil.IsValidFilePath(filePath)) {
-                    InitRuntimeItemAsync(filePath);
-                } else if (FileUtil.IsValidFileName(filePath)) {
-                    InitRuntimeItemAsync(filePath, data.ProjType);
+        internal void InitTabViewItems(PreProjectData predata) {
+            if (predata.FilePaths != null) {
+                foreach (var filePath in predata.FilePaths) {
+                    if (FileUtil.IsValidFilePath(filePath)) {
+                        _ = InitRuntimeItemAsync(filePath);
+                    }
                 }
+                return;
+            }
+
+            if (predata.ProjName != null) {
+                if (FileUtil.IsValidFileName(predata.ProjName)) {
+                    InitRuntimeItem(predata.ProjName, predata.Type);
+                }
+                return;
             }
         }
 
@@ -139,30 +147,27 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     //runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, filePath, rtFileType); // xxx.jpg[etc.]
                     //AddToWorkSpace(filePath, runtime);
                     break;
-                case FileType.FGif:
-                    break;
-                case FileType.FVideo:
-                    break;
+                //case FileType.FGif:
+                //    break;
+                //case FileType.FVideo:
+                //    break;
                 case FileType.FDesign:
                     await ReadDraftFileAsync(filePath); // [folder]/xxx.vpd
                     await _userSettings.UpdateRecetUsedAsync(filePath);
                     break;
-                //case FileType.FProject:
-                //     ReadProjectFile(filePath); // [folder]/xxx.vproj
-                //    break;
                 default:
                     break;
             }
         }
 
-        private void InitRuntimeItemAsync(string fileName, ProjectType projectType) {
+        private void InitRuntimeItem(string fileName, ProjectType type) {
             try {
                 IRuntime runtime;
-                switch (projectType) {
+                switch (type) {
                     case ProjectType.PUnknown:
                         break;
                     case ProjectType.PImage:
-                        runtime = new Workloads.Creation.StaticImg.MainPage(ArcPageContextManager.GetContext<Draft>(), fileName);
+                        runtime = new Workloads.Creation.StaticImg.MainPage(fileName);
                         AddToWorkSpace(fileName, runtime);
                         break;
                     default:
@@ -184,7 +189,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     IRuntime runtime;
                     switch (projTag.Type) {
                         case ProjectType.PImage:
-                            runtime = new Workloads.Creation.StaticImg.MainPage(ArcPageContextManager.GetContext(typeof(Draft)), FileType.FDesign, entryFilePath); // xxx.vpd
+                            runtime = new Workloads.Creation.StaticImg.MainPage(FileType.FDesign, entryFilePath); // xxx.vpd
                             AddToWorkSpace(entryFilePath, runtime);
                             break;
                         default:

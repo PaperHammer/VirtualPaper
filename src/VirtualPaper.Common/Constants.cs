@@ -1,5 +1,5 @@
 namespace VirtualPaper.Common {
-    public static class Constants {
+    public static class Constants {  
 
         //public static string GetMemory(object o) // 获取引用类型的内存地址方法    
         //{

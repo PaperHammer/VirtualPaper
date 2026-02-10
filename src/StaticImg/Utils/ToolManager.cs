@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using BuiltIn.InkSystem.Tool;
+using System.Collections.Generic;
+using Workloads.Creation.StaticImg.Core.Rendering;
 
 namespace Workloads.Creation.StaticImg.Utils {
     class ToolManager {

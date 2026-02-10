@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 using System.Numerics;
-using BuiltIn.Events;
-using BuiltIn.InkSystem.Core.Rendering;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI;
 using Windows.Foundation;
 using Windows.UI;
+using Workloads.Creation.StaticImg.Core.Rendering;
+using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Models.Specific;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {

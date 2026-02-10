@@ -1,11 +1,10 @@
 using System.Numerics;
-using BuiltIn.Events;
-using BuiltIn.InkSystem.Tool;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
 using Microsoft.UI.Input;
+using Workloads.Creation.StaticImg.Events;
 
-namespace BuiltIn.InkSystem.Core.Rendering {
+namespace Workloads.Creation.StaticImg.Core.Rendering {
     /// <summary>
     /// 2D 画布路径绘制器基类
     /// </summary>

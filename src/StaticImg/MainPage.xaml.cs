@@ -11,8 +11,8 @@ using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Graphics.DirectX;
+using Workloads.Creation.StaticImg.InkSystem.Utils;
 using Workloads.Creation.StaticImg.Models.SerializableData;
-using Workloads.Creation.StaticImg.Models.ToolItems.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -22,7 +22,7 @@ namespace Workloads.Creation.StaticImg {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainPage : ArcPage, IRuntime {
-        public override ArcPageContext ArcContext { get; set; }
+        public override ArcPageContext? ArcContext { get; set; }
         public override Type ArcType => typeof(MainPage);
 
         internal static MainPage Instance { get; private set; }
@@ -33,7 +33,7 @@ namespace Workloads.Creation.StaticImg {
         internal FileType RTFileType { get; }
         internal DirectXPixelFormat SharedFormat { get; }
         internal CanvasAlphaMode SharedAlphaMode { get; }
-        internal bool IsExited { get; private set; }
+        //internal bool IsExited { get; private set; }
 
         public double FrameTimeMs {
             get { lock (_frameTimeLock) return _frameTimeMs; }

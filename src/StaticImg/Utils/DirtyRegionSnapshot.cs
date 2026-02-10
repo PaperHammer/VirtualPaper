@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Microsoft.Graphics.Canvas;
 using VirtualPaper.Common.Extensions;
 using Windows.Foundation;
 
-namespace Workloads.Creation.StaticImg.Models.ToolItems.Utils {
+namespace Workloads.Creation.StaticImg.InkSystem.Utils {
     public sealed partial class DirtyRegionSnapshot : IDisposable {
         public Guid LayerId { get; }
         public Rect DirtyRegion { get; private set; }

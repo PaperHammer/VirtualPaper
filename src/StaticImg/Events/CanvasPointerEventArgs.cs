@@ -1,8 +1,8 @@
-﻿using BuiltIn.InkSystem.Core.Services;
+using System;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 
-namespace BuiltIn.Events {
+namespace Workloads.Creation.StaticImg.Events {
     public class CanvasPointerEventArgs(PointerPoint pointer, CanvasRenderTarget renderTarget, PointerPosition pointerPos) : EventArgs {
         public PointerPoint Pointer { get; } = pointer;
         public CanvasRenderTarget RenderTarget { get; } = renderTarget;

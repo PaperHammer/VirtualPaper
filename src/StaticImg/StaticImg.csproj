@@ -28,7 +28,8 @@
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\BuiltIn\BuiltIn.csproj" />
+	  <ProjectReference Include="..\VirtualPaper.Shader\VirtualPaper.Shader.csproj" />
+	  <ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<Page Update="Views\Tools\BottomDataBarControl.xaml">

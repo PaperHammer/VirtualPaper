@@ -1,7 +1,8 @@
-﻿using System.Numerics;
+using System;
+using System.Numerics;
 using MessagePack;
 
-namespace BuiltIn.Models {
+namespace Workloads.Creation.StaticImg.Models {
     /// <summary>
     /// 泛型数值类型的二维点
     /// </summary>

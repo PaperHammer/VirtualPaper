@@ -1,7 +1,7 @@
-﻿using BuiltIn.Events;
-using BuiltIn.InkSystem.Core.Rendering;
-using BuiltIn.InkSystem.Core.Services;
-using BuiltIn.InkSystem.Extensions;
+using Workloads.Creation.StaticImg.Core.Rendering;
+using Workloads.Creation.StaticImg.Core.Utils;
+using Workloads.Creation.StaticImg.Events;
+using Workloads.Creation.StaticImg.Extensions;
 using Workloads.Creation.StaticImg.Models.Specific;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {

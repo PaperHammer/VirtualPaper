@@ -1,11 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using BuiltIn.Events;
-using BuiltIn.InkSystem.Tool;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 using Windows.Foundation;
 using Windows.UI;
+using Workloads.Creation.StaticImg.Core.Rendering;
 using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Models.Specific;
 

@@ -1,6 +1,7 @@
-﻿using Windows.Foundation;
+using System;
+using Windows.Foundation;
 
-namespace BuiltIn.Events {
+namespace Workloads.Creation.StaticImg.Events {
     public class RenderTargetChangedEventArgs(RenderMode mode, Rect region = default) : EventArgs {
         public RenderMode Mode { get; } = mode;
         public Rect Region { get; } = region;

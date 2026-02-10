@@ -1,11 +1,10 @@
-using BuiltIn.InkSystem.Core.Brushes;
-using BuiltIn.InkSystem.Core.Services;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.Geometry;
-using Windows.Foundation;
+using Workloads.Creation.StaticImg.Core.Brushes;
+using Workloads.Creation.StaticImg.Core.Utils;
 
-namespace BuiltIn.InkSystem.Extensions {
+namespace Workloads.Creation.StaticImg.Extensions {
     public sealed partial record BrushStroke : StrokeBase {
         public BrushStroke(BrushGenerateArgs args) : base(args) { }
 

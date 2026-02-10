@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using VirtualPaper.Common.Utils.UndoRedo;
 using Windows.Foundation;
 
-namespace Workloads.Creation.StaticImg.Models.ToolItems.Utils {
+namespace Workloads.Creation.StaticImg.InkSystem.Utils {
     public sealed partial class StaticImgUndoRedoUtil : IDisposable {
         private readonly UndoRedoUtil<IUndoableCommand> _undoRedoCore;
 

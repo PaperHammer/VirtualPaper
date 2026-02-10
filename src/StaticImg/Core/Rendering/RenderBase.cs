@@ -1,12 +1,13 @@
-﻿using BuiltIn.Events;
-using BuiltIn.InkSystem.Core.Brushes;
-using BuiltIn.InkSystem.Core.Services;
+using System;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 using VirtualPaper.UIComponent.Services;
 using Windows.Foundation;
+using Workloads.Creation.StaticImg.Core.Brushes;
+using Workloads.Creation.StaticImg.Core.Utils;
+using Workloads.Creation.StaticImg.Events;
 
-namespace BuiltIn.InkSystem.Tool {
+namespace Workloads.Creation.StaticImg.Core.Rendering {
     public abstract class RenderBase : IUnifiedInputProcessor<CanvasPointerEventArgs> {
         public event EventHandler<CursorChangedEventArgs>? SystemCursorChangeRequested;
         public event EventHandler<RenderTargetChangedEventArgs>? RenderRequest;

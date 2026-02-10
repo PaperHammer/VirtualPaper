@@ -6,7 +6,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using BuiltIn.Events;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.UndoRedo;
@@ -15,6 +14,7 @@ using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
 using Windows.Foundation;
+using Workloads.Creation.StaticImg.Events;
 
 namespace Workloads.Creation.StaticImg.Models.Specific {
     // LayerContext part of InkCanvasData

@@ -1,10 +1,12 @@
-﻿using System.Numerics;
+using System;
+using System.Collections.Generic;
+using System.Numerics;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.UI;
 using Windows.UI;
 
-namespace BuiltIn.InkSystem.Core.Services {
+namespace Workloads.Creation.StaticImg.Core.Utils {
     /// <summary>
     /// 笔刷参数记录类型
     /// </summary>

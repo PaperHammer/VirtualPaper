@@ -1,5 +1,4 @@
-﻿using BuiltIn.Events;
-using BuiltIn.InkSystem.Tool;
+using System;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;
@@ -7,8 +6,9 @@ using Microsoft.UI;
 using Microsoft.UI.Input;
 using Windows.Foundation;
 using Windows.UI;
+using Workloads.Creation.StaticImg.Events;
 
-namespace BuiltIn.InkSystem.Core.Rendering {
+namespace Workloads.Creation.StaticImg.Core.Rendering {
     /// <summary>
     /// 2D 画布区域选择器基类
     /// </summary>

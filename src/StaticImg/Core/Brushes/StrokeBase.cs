@@ -1,12 +1,13 @@
+using System.Collections.Generic;
 using System.Numerics;
-using BuiltIn.InkSystem.Core.Services;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;
 using VirtualPaper.Shader;
 using Windows.Foundation;
+using Workloads.Creation.StaticImg.Core.Utils;
 
-namespace BuiltIn.InkSystem.Core.Brushes {
+namespace Workloads.Creation.StaticImg.Core.Brushes {
     public abstract record StrokeBase {
         public BrushGenerateArgs BrushArgs { get; init; }
         public ICanvasImage? InkImage { get; set; }

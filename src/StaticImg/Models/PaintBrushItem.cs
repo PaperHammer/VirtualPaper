@@ -1,6 +1,6 @@
-﻿using System;
-using BuiltIn.InkSystem.Core.Services;
+using System;
 using Microsoft.UI.Xaml.Shapes;
+using Workloads.Creation.StaticImg.Core.Utils;
 
 namespace Workloads.Creation.StaticImg.Models {
     public class PaintBrushItem : IEquatable<PaintBrushItem> {

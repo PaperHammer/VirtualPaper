@@ -37,7 +37,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
 
         private void NaviContent_Loaded(object sender, RoutedEventArgs e) {
             try {
-                var payload = new NavigationPayload() {
+                var payload = new FrameworkPayload() {
                     [NaviPayloadKey.StartArgs.ToString()] = _startArgs,
                     [NaviPayloadKey.IWpBasicData.ToString()] = _wpBasicData,
                     [NaviPayloadKey.ArcWindow.ToString()] = this,

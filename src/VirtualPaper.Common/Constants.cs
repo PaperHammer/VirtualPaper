@@ -389,6 +389,8 @@ namespace VirtualPaper.Common {
             public static string? SIG_Text_CopyPath { get; }
             public static string? RunningAsAdminWarning { get; }
             public static string? Project_Drops_Contains_Invalid_FIles { get; }
+            public static string? Project_FileSave_Failed { get; }
+            public static string? Project_FileLoad_Failed { get; }
         }
 
         public static class Field {

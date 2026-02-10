@@ -1058,4 +1058,10 @@ The following words cannot be used as usernames:
   <data name="Project_Drops_Contains_Invalid_FIles" xml:space="preserve">
     <value>An unsupported file type was detected and has been automatically ignored</value>
   </data>
+  <data name="Project_FileSave_Failed" xml:space="preserve">
+    <value>Failed to save the file: </value>
+  </data>
+  <data name="Project_FileLoad_Failed" xml:space="preserve">
+    <value>Failed to load the file: </value>
+  </data>
 </root>

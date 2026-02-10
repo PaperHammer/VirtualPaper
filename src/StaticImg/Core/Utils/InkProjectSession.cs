@@ -1,43 +1,58 @@
 using System;
 using Microsoft.Graphics.Canvas;
 using VirtualPaper.Common;
+using Windows.Graphics.DirectX;
 using Workloads.Creation.StaticImg.InkSystem.Utils;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 
 namespace Workloads.Creation.StaticImg.Core.Utils {
-    public class InkProjectSession : IDisposable {
-        public string SessionId { get; } = Guid.NewGuid().ToString();
-
-        // 资源属性
-        public CanvasDevice SharedDevice { get; private set; }
-        public StaticImgUndoRedoUtil UnReUtil { get; private set; }
-        public ProjectFile ProjectUtil { get; private set; }
-        public FileType RTFileType { get; private set; }
-
-        // 事件
+    public partial class InkProjectSession : IDisposable {
         public event EventHandler? SessionDisposed;
+
+        public string SessionId { get; } = Guid.NewGuid().ToString();
+        public DirectXPixelFormat SharedFormat { get; private set; }
+        public CanvasAlphaMode SharedAlphaMode { get; private set; }
+        public CanvasDevice SharedDevice { get; private set; } = null!;
+        public StaticImgUndoRedoUtil UnReUtil { get; private set; } = null!;
+        public StaticImgDesignFileUtil DesignFileUtil { get; private set; }
+        public FileType RTFileType { get; private set; }
 
         public InkProjectSession(string filePath, FileType type) {
             RTFileType = type;
-            ProjectUtil = ProjectFile.Create(filePath);
+            DesignFileUtil = StaticImgDesignFileUtil.Create(filePath);
             Initialize();
         }
 
         public InkProjectSession(string fileName) {
             RTFileType = FileType.FDesign;
-            ProjectUtil = ProjectFile.Create(fileName);
+            DesignFileUtil = StaticImgDesignFileUtil.Create(fileName);
             Initialize();
         }
 
         private void Initialize() {
+            SharedFormat = DirectXPixelFormat.B8G8R8A8UIntNormalized;
+            SharedAlphaMode = CanvasAlphaMode.Premultiplied;
             SharedDevice = CanvasDevice.GetSharedDevice();
             UnReUtil = new StaticImgUndoRedoUtil();
         }
 
-        public void Dispose() {
-            SharedDevice?.Dispose();
-            UnReUtil?.Dispose();
-            SessionDisposed?.Invoke(this, EventArgs.Empty);
+        #region dispose
+        private bool _isDisposed;
+        protected virtual void Dispose(bool disposing) {
+            if (!_isDisposed) {
+                if (disposing) {
+                    SharedDevice?.Dispose();
+                    UnReUtil?.Dispose();
+                    SessionDisposed?.Invoke(this, EventArgs.Empty);
+                }
+                _isDisposed = true;
+            }
         }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

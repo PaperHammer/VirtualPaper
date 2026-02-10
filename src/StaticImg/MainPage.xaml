@@ -10,12 +10,11 @@
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
-    Loading="Page_Loading"
     Unloaded="Page_Unloaded"
     IsEnabled="False"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <arc:ArcPageHost x:Name="MainHost">
-        <lcl_components:InkCanvas x:Name="InkCanvas"/>
+        <lcl_components:InkCanvas x:Name="InkCanvas" Payload="{x:Bind Payload}"/>
     </arc:ArcPageHost>
 </arc:ArcPage>

@@ -37,7 +37,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            if (e.Parameter is NavigationPayload payload) {
+            if (e.Parameter is FrameworkPayload payload) {
                 payload.TryGet(NaviPayloadKey.ICardComponent, out _cardComponent);
                 payload.TryGet(NaviPayloadKey.INavigateComponent, out _navigateComponent);
                 _cardComponent?.SetBtnVisible(false);

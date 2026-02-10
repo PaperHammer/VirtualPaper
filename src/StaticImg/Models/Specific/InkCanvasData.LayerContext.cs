@@ -49,7 +49,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         public LayerInfo AddLayer(string? name = null, bool isBackground = false) {
             var layer = new LayerInfo {
                 Name = name ?? $"Layer {_allLayers.Count + 1}",
-                RenderData = new InkRenderData(CanvasSize, isBackground)
+                RenderData = new InkRenderData(_session, CanvasSize, isBackground)
             };
 
             _allLayers.Add(layer);
@@ -62,7 +62,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             layer.PropertyChanged += OnLayerPropertyChanged;
             UpdateLayerState(layer);
 
-            MainPage.Instance.UnReUtil.RecordCommand(
+            _session.UnReUtil.RecordCommand(
                 new AddLayerCommand(this, layer)
             );
             return layer;
@@ -75,7 +75,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             var layer = new LayerInfo {
                 Name = originalLayer.Name + " Copy",
                 IsVisible = originalLayer.IsVisible,
-                RenderData = originalLayer.RenderData?.Clone() ?? new InkRenderData(CanvasSize)
+                RenderData = originalLayer.RenderData?.Clone() ?? new InkRenderData(_session, CanvasSize)
             };
             _allLayers.Add(layer);
             _layers.Add(layer);
@@ -87,7 +87,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             layer.PropertyChanged += OnLayerPropertyChanged;
             UpdateLayerState(layer);
 
-            MainPage.Instance.UnReUtil.RecordCommand(
+            _session.UnReUtil.RecordCommand(
                 new AddLayerCommand(this, layer)
             );
             return layer;
@@ -104,7 +104,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             UpdateLayerState(layer);
 
             // 记录撤销命令
-            MainPage.Instance.UnReUtil.RecordCommand(
+            _session.UnReUtil.RecordCommand(
                 new DeleteLayerCommand(this, layer)
             );
         }
@@ -118,7 +118,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
             UpdateLayerState(layer, newIndex);
 
-            MainPage.Instance.UnReUtil.RecordCommand(
+            _session.UnReUtil.RecordCommand(
                 new MoveLayerCommand(this, layer, oldIndex, newIndex)
             );
         }
@@ -133,7 +133,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             layer.IsVisible = isVisible;
             UpdateLayerState(layer);
 
-            MainPage.Instance.UnReUtil.RecordCommand(
+            _session.UnReUtil.RecordCommand(
                 new SetVisibilityCommand(this, layer, !isVisible, isVisible)
             );
         }
@@ -153,7 +153,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 if (dialogRes != DialogResult.Primary || !ComplianceUtil.IsValidValueOnlyLength(viewModel.NewName)) return;
                 layer.Name = viewModel.NewName;
 
-                MainPage.Instance.UnReUtil.RecordCommand(
+                _session.UnReUtil.RecordCommand(
                     new SetLayerNameCommand(this, layer, oldName, viewModel.NewName)
                 );
             }

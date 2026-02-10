@@ -1,9 +1,28 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 
 namespace VirtualPaper.Common.Utils.Files {
     public static class FileUtil {
+        // 当前用户的“文档”目录，如 C:\Users\用户名\Documents
+        public static string GetDocumentsDir() {
+            return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        }
+
+        // 当前用户的 AppData\Roaming，如 C:\Users\用户名\AppData\Roaming
+        public static string GetRoamingAppDataDir() {
+            return Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        }
+
+        // 当前用户的 AppData\Local，如 C:\Users\用户名\AppData\Local
+        public static string GetLocalAppDataDir() {
+            return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        }
+
+        // 桌面路径：C:\Users\用户名\Desktop
+        public static string GetDesktopDir() {
+            return Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+        }
+
         /// <summary>
         /// 使用资源管理器打开目标文件夹/文件，若文件存在，则被选中<br>
         /// Does NOT work under desktop bridge!</br>

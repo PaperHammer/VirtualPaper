@@ -36,7 +36,7 @@ namespace VirtualPaper.DraftPanel.Views {
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            if (e.Parameter is NavigationPayload payload) {
+            if (e.Parameter is FrameworkPayload payload) {
                 payload.TryGet(NaviPayloadKey.DraftPage, out _draftPage);
                 Payload = Payload.Merge(payload);
                 Payload?.Set(NaviPayloadKey.ICardComponent, this);
@@ -81,7 +81,7 @@ namespace VirtualPaper.DraftPanel.Views {
             });
         }
 
-        public NavigationPayload? GetPaylaod() {
+        public FrameworkPayload? GetPaylaod() {
             return Payload;
         }
 

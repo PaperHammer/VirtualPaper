@@ -3,16 +3,25 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Security;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.UIComponent;
+using VirtualPaper.UIComponent.Utils;
+using Workloads.Creation.StaticImg.Core.Utils;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
-    // IO part of ProjectFile
-    partial class ProjectFile {
-        public async Task<(FileHeader? fileHeader, BusinessData? businessData, List<Layer>? layers)> LoadAsync() {
-            if (IsFileName || !IsValidFile) {
+    // IO part of StaticImgDesignFileUtil
+    partial class StaticImgDesignFileUtil {
+        public async Task<(FileHeader? fileHeader, BusinessData? businessData, List<Layer>? layers)> LoadAsync(InkProjectSession session) {
+            if (!IsValidFile) {
+                GlobalMessageUtil.ShowError(
+                    ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
+                    message: Constants.I18n.Project_FileLoad_Failed,
+                    key: Constants.I18n.Project_FileLoad_Failed,
+                    isNeedLocalizer: true,
+                    extraMsg: FilePath);
                 return (null, null, null);
             }
 
@@ -38,14 +47,14 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 // Read layers
                 fs.Position = header.LayersOffset;
                 var canvasSize = new ArcSize(header.CanvasWidth, header.CanvasHeight, header.Dpi, RebuildMode.None);
-                var layers = await Layer.DeserializeAsync(fs, header.LayerCount, canvasSize);
+                var layers = await Layer.DeserializeAsync(session, fs, header.LayerCount, canvasSize);
 
                 UpdateCache(header, businessData, layers);
                 return (header, businessData, layers);
 
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<ProjectFile>().Error(ex);
+                ArcLog.GetLogger<StaticImgDesignFileUtil>().Error(ex);
                 return (null, null, null);
             }
             finally {
@@ -61,13 +70,12 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             List<Layer> layers) {
             await _ioLock.WaitAsync();
 
-            if (IsFileName) {
+            if (!IsValidFile) {
                 string? selectedPath = (await WindowsStoragePickers.PickFolderAsync(WindowConsts.WindowHandle))?.Path;
                 if (string.IsNullOrEmpty(selectedPath))
                     return (false, null);
 
                 FilePath = selectedPath;
-                IsFileName = false;
             }
 
             try {
@@ -100,7 +108,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 return (true, FilePath);
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<ProjectFile>().Error(ex);
+                ArcLog.GetLogger<StaticImgDesignFileUtil>().Error(ex);
                 return (false, null);
             }
             finally {
@@ -110,7 +118,13 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
         // 单独保存 BusinessData
         public async Task<bool> SaveBusinessDataAsync(BusinessData business) {
-            if (IsFileName || !IsValidFile) {
+            if (!IsValidFile) {
+                GlobalMessageUtil.ShowError(
+                    ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
+                    message: Constants.I18n.Project_FileSave_Failed,
+                    key: Constants.I18n.Project_FileSave_Failed,
+                    isNeedLocalizer: true,
+                    extraMsg: FilePath);
                 return false;
             }
 
@@ -144,7 +158,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 return true;
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<ProjectFile>().Error(ex);
+                ArcLog.GetLogger<StaticImgDesignFileUtil>().Error(ex);
                 return false;
             }
             finally {
@@ -154,7 +168,13 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
         // 单独保存 Layers
         public async Task<bool> SaveLayersAsync(List<Layer> layers) {
-            if (IsFileName || !IsValidFile) {
+            if (!IsValidFile) {
+                GlobalMessageUtil.ShowError(
+                    ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), 
+                    message: Constants.I18n.Project_FileSave_Failed,
+                    key: Constants.I18n.Project_FileSave_Failed,
+                    isNeedLocalizer: true,
+                    extraMsg: FilePath);
                 return false;
             }
 
@@ -191,7 +211,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 return true;
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<ProjectFile>().Error(ex);
+                ArcLog.GetLogger<StaticImgDesignFileUtil>().Error(ex);
                 return false;
             }
             finally {

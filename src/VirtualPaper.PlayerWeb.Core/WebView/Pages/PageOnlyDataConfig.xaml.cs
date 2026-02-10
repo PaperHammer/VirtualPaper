@@ -21,7 +21,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);            
         }
 
-        protected override void OnEnter(NavigationPayload? payload) {
+        protected override void OnEnter(FrameworkPayload? payload) {
             base.OnEnter(payload);
             Payload = payload;
             payload?.Set(NaviPayloadKey.AvailableConfigTab.ToString(), DataConfigTab.GeneralEffect | DataConfigTab.GeneralInfo);

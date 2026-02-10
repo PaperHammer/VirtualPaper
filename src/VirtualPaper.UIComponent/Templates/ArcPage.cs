@@ -8,7 +8,6 @@ using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.UIComponent.Utils.Extensions;
 
 namespace VirtualPaper.UIComponent.Templates {
     public abstract class ArcPage : Page {
@@ -23,7 +22,8 @@ namespace VirtualPaper.UIComponent.Templates {
         /// 该类型是否会存在多个实例（同类型多实例无法使用 ArcPageContext 管理器）
         /// </summary>
         protected virtual bool IsMultiInstance => false;
-        public NavigationPayload? Payload { get; protected set; }
+        protected ArcPageContextKey ContextKey => GetContextKey();
+        public FrameworkPayload? Payload { get; protected set; }
         public ArcPageStatus Status { get; protected set; }
 
         protected ArcPage() {
@@ -41,7 +41,7 @@ namespace VirtualPaper.UIComponent.Templates {
         }
 
         #region async life-cycle hooks
-        public void NavigateEnter(NavigationPayload? payload) {
+        public void NavigateEnter(FrameworkPayload? payload) {
             Volatile.Write(ref _isPreLeaved, 0);
             OnEnter(payload);
         }
@@ -85,7 +85,7 @@ namespace VirtualPaper.UIComponent.Templates {
         /// <summary>
         /// 页面进入
         /// </summary>
-        protected virtual void OnEnter(NavigationPayload? payload) {
+        protected virtual void OnEnter(FrameworkPayload? payload) {
             if (_exitCts != null) {
                 _exitCts.Cancel();
                 _exitCts.Dispose();
@@ -170,16 +170,6 @@ namespace VirtualPaper.UIComponent.Templates {
             return IsMultiInstance
                 ? new ArcPageContextKey(ArcType, _timeSpan)
                 : new ArcPageContextKey(ArcType);
-        }
-
-        /// <summary>
-        /// 获取多实例对应的上下文（单实例返回 null）。
-        /// </summary>
-        public ArcPageContext? GetContextForMultiInstance() {
-            if (!IsMultiInstance) return null;
-
-            var key = new ArcPageContextKey(ArcType, _timeSpan);
-            return ArcPageContextManager.GetContext(key);
         }
 
         internal void SetActiveStatus() {

@@ -15,11 +15,14 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.UIComponent.Collection;
+using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Input;
+using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Rendering;
+using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.ToolItems;
@@ -31,7 +34,7 @@ using Workloads.Creation.StaticImg.Views.Tools;
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace Workloads.Creation.StaticImg.Views.Components {
-    public sealed partial class InkCanvas : UserControl {
+    public sealed partial class InkCanvas : ArcUserControl {
         public TaskCompletionSource<bool> IsInited => _isInited;
 
         public InkCanvas() {
@@ -39,19 +42,26 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
             _tool = new ToolManager();
-            _viewModel = new InkCanvasViewModel();
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e) {
+            ArcPageContext? context = null;
+            if (Payload != null) {
+                Payload.TryGet(NaviPayloadKey.InkProjectSession, out _session);
+                Payload.TryGet(NaviPayloadKey.ArcPageContext, out context);
+                Consts.InitData(_session);
+            }
+            _viewModel = new InkCanvasViewModel(_session, context);
+
             RegisterTools();
         }
 
         private void RegisterTools() {
-            _tool.RegisterTool(ToolType.PaintBrush, new BrushTool(_viewModel.ConfigData));
-            _tool.RegisterTool(ToolType.Fill, new FillTool(_viewModel.ConfigData));
-            _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.ConfigData));
-            _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.ConfigData));
-            _tool.RegisterTool(ToolType.Crop, new CropTool(_viewModel.ConfigData));
+            _tool.RegisterTool(ToolType.PaintBrush, new BrushTool(_viewModel.Data));
+            _tool.RegisterTool(ToolType.Fill, new FillTool(_viewModel.Data));
+            _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.Data));
+            _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.Data));
+            _tool.RegisterTool(ToolType.Crop, new CropTool(_viewModel.Data));
 
             foreach (var tool in _tool.GetAllTools()) {
                 tool.SystemCursorChangeRequested += (s, e) => {
@@ -70,27 +80,27 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         #region children event
         private void SetupHandlers() {
-            _viewModel.ConfigData.SizeChanged += (s, e) => {
+            _viewModel.Data.SizeChanged += (s, e) => {
                 RebuildComposite();
                 RenderToCompositeTarget(RenderMode.FullRegion);
             };
-            _viewModel.ConfigData.SeletcedToolChanged += (s, e) => {
+            _viewModel.Data.SeletcedToolChanged += (s, e) => {
                 //before
                 HandleSelectionTool_Before();
-                _selectedTool = _tool.GetTool(_viewModel.ConfigData.SelectedToolItem.Type);
+                _selectedTool = _tool.GetTool(_viewModel.Data.SelectedToolItem.Type);
                 //after
 
             };
-            _viewModel.ConfigData.SeletcedLayerChanged += (s, e) => {
+            _viewModel.Data.SeletcedLayerChanged += (s, e) => {
                 HandleLayerChanged();
             };
-            _viewModel.ConfigData.SelectedCropAspectClicked += (s, e) => {
+            _viewModel.Data.SelectedCropAspectClicked += (s, e) => {
                 HandleCropAspectClicked(e);
             };
-            _viewModel.ConfigData.RenderRequest += (s, e) => {
+            _viewModel.Data.RenderRequest += (s, e) => {
                 RenderToCompositeTarget(e.Mode, e.Region);
             };
-            _viewModel.ConfigData.GetFocus += (s, e) => {
+            _viewModel.Data.GetFocus += (s, e) => {
                 this.Focus(FocusState.Programmatic);
             };
         }
@@ -122,19 +132,21 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void RebuildComposite() {
             _compositeTarget = new CanvasRenderTarget(
-                MainPage.Instance.SharedDevice,
-                (float)_viewModel.ConfigData.CanvasSize.Width,
-                (float)_viewModel.ConfigData.CanvasSize.Height,
-                _viewModel.ConfigData.CanvasSize.Dpi,
-                MainPage.Instance.SharedFormat,
-                MainPage.Instance.SharedAlphaMode);
+                _session.SharedDevice,
+                (float)_viewModel.Data.CanvasSize.Width,
+                (float)_viewModel.Data.CanvasSize.Height,
+                _viewModel.Data.CanvasSize.Dpi,
+                _session.SharedFormat,
+                _session.SharedAlphaMode);
         }
         #endregion
 
         #region redner
         private async void RenderCanvas_Loaded(object sender, RoutedEventArgs e) {
             try {
-                await _viewModel.ConfigData.LoadAsync();
+                if (IsInited.Task.IsCompleted) return;
+
+                await _viewModel.LoadAsync();
                 SetupHandlers();
                 FitView();
                 RebuildComposite();
@@ -148,22 +160,24 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void RenderCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
-            if (_compositeTarget != null) {
-                using (args.DrawingSession) {
-                    args.DrawingSession.DrawImage(_compositeTarget);
-                }
+            if (_compositeTarget == null) return;
+
+            using (args.DrawingSession) {
+                args.DrawingSession.DrawImage(_compositeTarget);
             }
         }
 
         internal void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
-            var layers = _viewModel.ConfigData.ActiveLayers;
+            if (_compositeTarget == null) return;
+
+            var layers = _viewModel.Data.ActiveLayers;
             using (var ds = _compositeTarget.CreateDrawingSession()) {
                 ds.Blend = CanvasBlend.Copy;
                 if (mode == RenderMode.FullRegion) {
                     FullRender(layers, ds);
                 }
                 else {
-                    if (region == Rect.Empty) return;                    
+                    if (region == Rect.Empty) return;
                     PartialRender(layers, ds, region);
                 }
             }
@@ -228,7 +242,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             //    // 在 ScrollViewer 和其他支持直接操作的控件上使用键笔划
             //    // 调用启用了动画的 ChangeView 
 
-            _viewModel.ConfigData.CanvasZoom = e.FinalView.ZoomFactor;
+            _viewModel.Data.CanvasZoom = e.FinalView.ZoomFactor;
             //}
         }
 
@@ -242,8 +256,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             double effectiveHeight = availableHeight - (Container.Margin.Top + Container.Margin.Bottom);
 
             // 计算缩放比例
-            double widthRatio = effectiveWidth / _viewModel.ConfigData.CanvasSize.Width;
-            double heightRatio = effectiveHeight / _viewModel.ConfigData.CanvasSize.Height;
+            double widthRatio = effectiveWidth / _viewModel.Data.CanvasSize.Width;
+            double heightRatio = effectiveHeight / _viewModel.Data.CanvasSize.Height;
 
             // 选择较小的比例以确保完全显示
             double zoomFactor = Math.Min(widthRatio, heightRatio);
@@ -256,13 +270,15 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void UpdateScrollViewerZoom(double value) {
-            _viewModel.ConfigData.CanvasZoom = (float)value;
-            Scroll.ChangeView(null, null, _viewModel.ConfigData.CanvasZoom);
+            _viewModel.Data.CanvasZoom = (float)value;
+            Scroll.ChangeView(null, null, _viewModel.Data.CanvasZoom);
         }
 
         private void BottomDataBarControl_ZoomComboBoxSelectionChanged(object sender, SelectionChangedEventArgs e) {
-            var val = double.Parse((e.AddedItems[0] as string).TrimEnd('%')) / 100;
-            UpdateScrollViewerZoom((float)val);
+            if (e.AddedItems[0] is string textValue) {
+                var val = double.Parse(textValue.TrimEnd('%')) / 100;
+                UpdateScrollViewerZoom((float)val);
+            }
         }
 
         private void BottomDataBarControl_ZoomComboBoxTextSubmitted(object sender, ComboBoxTextSubmittedEventArgs e) {
@@ -272,13 +288,13 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void BottomDataBarControl_ZoomInRequest(object sender, RoutedEventArgs e) {
             var newZoomFactor = Math.Max(Consts.MinZoomFactor,
-                Consts.RoundToNearestFive(_viewModel.ConfigData.CanvasZoom) + Consts.GetSubStepSize(_viewModel.ConfigData.CanvasZoom));
+                Consts.RoundToNearestFive(_viewModel.Data.CanvasZoom) + Consts.GetSubStepSize(_viewModel.Data.CanvasZoom));
             UpdateScrollViewerZoom(newZoomFactor);
         }
 
         private void BottomDataBarControl_ZoomOutRequest(object sender, RoutedEventArgs e) {
             var newZoomFactor = Math.Max(Consts.MinZoomFactor,
-                Consts.RoundToNearestFive(_viewModel.ConfigData.CanvasZoom) - Consts.GetSubStepSize(_viewModel.ConfigData.CanvasZoom));
+                Consts.RoundToNearestFive(_viewModel.Data.CanvasZoom) - Consts.GetSubStepSize(_viewModel.Data.CanvasZoom));
             UpdateScrollViewerZoom(newZoomFactor);
         }
 
@@ -292,7 +308,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         #region CanvasSet
         private void CanvasSet_OnValueChanged(object sender, ArcSize e) {
-            _viewModel.ConfigData.CanvasSize = new(e.Width, e.Height, e.Dpi, e.Rebuild);
+            _viewModel.Data.CanvasSize = new(e.Width, e.Height, e.Dpi, e.Rebuild);
         }
 
         private void CanvasOperationBtn_Click(object sender, RoutedEventArgs e) {
@@ -303,10 +319,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 CanvasOperation.FlipVertically => RebuildMode.FlipVertical,
                 _ => RebuildMode.None,
             };
-            _viewModel.ConfigData.CanvasSize = new(
-                _viewModel.ConfigData.CanvasSize.Width,
-                _viewModel.ConfigData.CanvasSize.Height,
-                _viewModel.ConfigData.CanvasSize.Dpi,
+            _viewModel.Data.CanvasSize = new(
+                _viewModel.Data.CanvasSize.Width,
+                _viewModel.Data.CanvasSize.Height,
+                _viewModel.Data.CanvasSize.Dpi,
                 rm);
         }
         #endregion
@@ -369,33 +385,33 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         #region Layer Mangaer
         private void LayerManage_AddLayerRequest(object sender, EventArgs e) {
-            _viewModel.ConfigData.AddLayer();
+            _viewModel.Data.AddLayer();
             RenderToCompositeTarget(RenderMode.FullRegion);
         }
 
         private void LayerManage_CopyLayerRequest(object sender, Guid id) {
-            _viewModel.ConfigData.CopyLayer(id);
+            _viewModel.Data.CopyLayer(id);
             RenderToCompositeTarget(RenderMode.FullRegion);
         }
 
         private async void LayerManage_RenameLayerRequest(object sender, Guid id) {
-            await _viewModel.ConfigData.SetLayerNameAsync(id);
+            await _viewModel.Data.SetLayerNameAsync(id);
         }
 
         private void LayerManage_DeleteLayerRequest(object sender, Guid id) {
-            _viewModel.ConfigData.DeleteLayer(id);
+            _viewModel.Data.DeleteLayer(id);
             RenderToCompositeTarget(RenderMode.FullRegion);
         }
 
         private void LayerManage_MoveLayerRequest(object sender, ItemMoveEventArgs e) {
-            _viewModel.ConfigData.MoveLayer(e.Item as LayerInfo, e.OldIndex, e.NewIndex);
+            _viewModel.Data.MoveLayer(e.Item as LayerInfo, e.OldIndex, e.NewIndex);
             RenderToCompositeTarget(RenderMode.FullRegion);
         }
         #endregion
 
         #region ColorPalette
         private async void ColorPalette_CustomeColorChanged(object sender, ColorChangeEventArgs e) {
-            await _viewModel.ConfigData.UpdateCustomColorsAsync(e);
+            await _viewModel.Data.UpdateCustomColorsAsync(e);
         }
         #endregion
 
@@ -449,39 +465,39 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         internal void OnPointerEntered(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleEntered(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
         }
 
         internal void OnPointerMoved(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
-            _viewModel.ConfigData.UpdatePointerPos(pointerPoint.Position);
+            _viewModel.Data.UpdatePointerPos(pointerPoint.Position);
             HandleToolEvent(tool => tool.HandleMoved(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
         }
 
         internal void OnPointerPressed(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandlePressed(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
         }
 
         internal void OnPointerReleased(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleReleased(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
         }
 
         internal void OnPointerExited(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleExited(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
         }
 
         private void HandleToolEvent(Action<RenderBase> action) {
-            if (_viewModel.ConfigData.SelectedToolItem == null ||
-                _viewModel.ConfigData.SelectedLayer == null ||
-                _viewModel.ConfigData.SelectedLayer.RenderData == null ||
-                _viewModel.ConfigData.SelectedLayer.RenderData.RenderTarget == null) {
+            if (_viewModel.Data.SelectedToolItem == null ||
+                _viewModel.Data.SelectedLayer == null ||
+                _viewModel.Data.SelectedLayer.RenderData == null ||
+                _viewModel.Data.SelectedLayer.RenderData.RenderTarget == null) {
                 GlobalMessageUtil.ShowError(
                     ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                     message: nameof(Constants.I18n.Draft_SI_LayerNotAvailable),
@@ -490,7 +506,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 return;
             }
 
-            if (!_viewModel.ConfigData.SelectedLayer.IsVisible) {
+            if (!_viewModel.Data.SelectedLayer.IsVisible) {
                 GlobalMessageUtil.ShowWarning(
                     ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                     message: nameof(Constants.I18n.Draft_SI_LayerLocked),
@@ -499,7 +515,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 return;
             }
 
-            _selectedTool = _tool.GetTool(_viewModel.ConfigData.SelectedToolItem.Type);
+            _selectedTool = _tool.GetTool(_viewModel.Data.SelectedToolItem.Type);
             if (_selectedTool == null) {
                 // 还原光标
                 this.ProtectedCursor = _originalInputCursor;
@@ -512,12 +528,13 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private RenderBase? _selectedTool;
         private readonly ToolManager _tool;
-        private readonly InkCanvasViewModel _viewModel;
+        private InkCanvasViewModel _viewModel = null!;
         private readonly InputCursor _originalInputCursor;
-        private CanvasRenderTarget _compositeTarget;
+        private CanvasRenderTarget? _compositeTarget;
         private readonly TaskCompletionSource<bool> _isInited = new();
-        private CanvasImageBrush _gridBrush;
+        private CanvasImageBrush? _gridBrush;
         private const int _gridSize = 20;
+        private InkProjectSession _session = null!;
         //private float _opacity = 1f;
     }
 }

@@ -1,14 +1,14 @@
 using System;
-using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common.Utils.TaskUtils;
 using VirtualPaper.UIComponent.Feedback;
+using VirtualPaper.UIComponent.Templates;
 
 namespace VirtualPaper.UIComponent.Context {
     public record ArcPageContext {
         /// <summary>
         /// 页面实例
         /// </summary>
-        public Page? PageInstance => _pageReference.TryGetTarget(out var page) ? page : null;
+        public ArcPage PageInstance => _pageReference.TryGetTarget(out var page) ? page : throw new NullReferenceException();
 
         /// <summary>
         /// 加载上下文（直接暴露供外部调用）
@@ -27,15 +27,19 @@ namespace VirtualPaper.UIComponent.Context {
 
         public TaskBlocking KeepAliveBlocking => _keepAliveBlocking;
 
-        public ArcPageContext(Page pageInstance) {
-            _pageReference = new WeakReference<Page>(pageInstance);
+        public ArcPageContext(ArcPage pageInstance) {
+            _pageReference = new WeakReference<ArcPage>(pageInstance);
         }
 
-        public ArcPageContext(Page pageInstance, Loading loadingControl) : this(pageInstance) {
+        public ArcPageContext(ArcPage pageInstance, Loading loadingControl) : this(pageInstance) {
             _loadingContext = new ArcLoadingContext(this, loadingControl);
         }
 
-        private readonly WeakReference<Page> _pageReference;
+        public T GetPageInstance<T>() where T : ArcPage {
+            return (T)PageInstance;
+        }
+
+        private readonly WeakReference<ArcPage> _pageReference;
         private readonly ArcLoadingContext? _loadingContext;
         private readonly TaskBlocking _keepAliveBlocking = new();
     }

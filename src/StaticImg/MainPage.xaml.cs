@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
@@ -10,9 +9,7 @@ using VirtualPaper.Shader;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
-using Windows.Graphics.DirectX;
-using Workloads.Creation.StaticImg.InkSystem.Utils;
-using Workloads.Creation.StaticImg.Models.SerializableData;
+using Workloads.Creation.StaticImg.Core.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -24,53 +21,33 @@ namespace Workloads.Creation.StaticImg {
     public sealed partial class MainPage : ArcPage, IRuntime {
         public override ArcPageContext? ArcContext { get; set; }
         public override Type ArcType => typeof(MainPage);
-
-        internal static MainPage Instance { get; private set; }
-        //internal ArcPageContext ArcContext { get; private set; }
-        internal CanvasDevice SharedDevice { get; }
-        internal StaticImgUndoRedoUtil UnReUtil { get; }
-        internal ProjectFile ProjectUtil { get; }
-        internal FileType RTFileType { get; }
-        internal DirectXPixelFormat SharedFormat { get; }
-        internal CanvasAlphaMode SharedAlphaMode { get; }
-        //internal bool IsExited { get; private set; }
+        protected override bool IsMultiInstance => true;
+        public InkProjectSession Session { get; private set; }
 
         public double FrameTimeMs {
             get { lock (_frameTimeLock) return _frameTimeMs; }
             private set { lock (_frameTimeLock) _frameTimeMs = value; }
         }
 
-        private MainPage() {
-            this.InitializeComponent();
-            ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);
-            Instance = this;
-            SharedDevice = CanvasDevice.GetSharedDevice();
-            SharedFormat = DirectXPixelFormat.B8G8R8A8UIntNormalized;
-            SharedAlphaMode = CanvasAlphaMode.Premultiplied;
-            UnReUtil = new StaticImgUndoRedoUtil();
-        }
-
         /// <summary>
         /// 打开文件
         /// </summary>
         /// <param name="filePath">类型为 FDeign 或静态图像的文件路径</param>
-        public MainPage(FileType rtFileType, string filePath) : this() {
-            ProjectUtil = ProjectFile.Create(filePath);
-            RTFileType = rtFileType;
+        public MainPage(string file, FileType rtFileType) {
+            this.InitializeComponent();
+            ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);
+            Session = new InkProjectSession(file, rtFileType);
+            Payload = new FrameworkPayload() {
+                [NaviPayloadKey.ArcPageContext] = this.ArcContext,
+                [NaviPayloadKey.InkProjectSession] = this.Session
+            };
         }
 
         /// <summary>
         /// 新建项目
         /// </summary>
         /// <param name="fileName">项目名</param>
-        public MainPage(string fileName) : this() {
-            ProjectUtil = ProjectFile.Create(fileName);
-            RTFileType = FileType.FDesign;
-        }
-
-        private async void Page_Loading(FrameworkElement sender, object args) {
-            await ShaderLoader.LoadAllShadersAsync();
-        }
+        public MainPage(string fileName) : this(fileName, FileType.FDesign) { }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             this.IsEnabled = false;
@@ -82,6 +59,7 @@ namespace Workloads.Creation.StaticImg {
 
             await loadingCtx.RunAsync(
                 operation: async token => {
+                    await ShaderLoader.LoadAllShadersAsync();
                     await InkCanvas.IsInited.Task;
                 });
             
@@ -92,8 +70,7 @@ namespace Workloads.Creation.StaticImg {
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
             StopFrameTimeMonitor();
-            SharedDevice.Dispose();
-            UnReUtil.Dispose();
+            Session.Dispose();
             ShaderLoader.ClearCache();
         }
 
@@ -147,7 +124,7 @@ namespace Workloads.Creation.StaticImg {
 
         public async Task UndoAsync() {
             try {
-                await UnReUtil.UndoAsync();
+                await Session.UnReUtil.UndoAsync();
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
@@ -157,7 +134,7 @@ namespace Workloads.Creation.StaticImg {
 
         public async Task RedoAsync() {
             try {
-                await UnReUtil.RedoAsync();
+                await Session.UnReUtil.RedoAsync();
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
@@ -167,7 +144,7 @@ namespace Workloads.Creation.StaticImg {
         #endregion
 
         private volatile bool _frameTimeRunning = false;
-        private Task _frameTimeTask;
+        private Task? _frameTimeTask;
         private readonly object _frameTimeLock = new();
         private double _frameTimeMs;
         private DateTime _lastFrameTime;

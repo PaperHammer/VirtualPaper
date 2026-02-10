@@ -197,13 +197,13 @@
 //            }
 //        }
 
-//        internal async Task InitDataAsync() {
+//        internal async Task InitData() {
 //            await AddLayerAsync(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_Text_UnnamedLayer)), true);
 //            BasicDataLoaded.TrySetResult(true);
 //            RenderDataLoaded.TrySetResult(true);
 //        }
 
-//        internal async Task SaveBasicAsync() {
+//        internal async Task SaveAsync() {
 //            await JsonSaver.SaveAsync(MainPage.Instance.EntryFilePath, this, InkCanvasConfigDataContext.Default);
 //        }
 
@@ -222,7 +222,7 @@
 //            RenderDataLoaded.TrySetResult(true);
 //        }
 
-//        internal async Task LoadBasicDataAsync() {
+//        internal async Task LoadAsync() {
 //            var tmp = await JsonSaver.LoadAsync<InkCanvasConfigData>(
 //                MainPage.Instance.EntryFilePath, InkCanvasConfigDataContext.Default);
 //            this.Size = tmp.Size;
@@ -296,7 +296,7 @@
 //            data.PropertyChanged -= OnInkDataChanged; // 避免从 redo 中恢复的图层重复订阅事件
 //            data.PropertyChanged += OnInkDataChanged;
 
-//            //await SaveBasicAsync();
+//            //await SaveAsync();
 //        }
 
 //        internal async Task RenameAsync(long itemTag, bool isUndoRedoOperation = false, string undoName = "") {
@@ -306,7 +306,7 @@
 //            // 如果是撤销/重做操作，直接应用修改而不显示对话框
 //            if (isUndoRedoOperation) {
 //                Layers[idx].Name = undoName;
-//                //await SaveBasicAsync();
+//                //await SaveAsync();
 //                return;
 //            }
 
@@ -321,7 +321,7 @@
 //                if (dialogRes != DialogResult.Primary || !ComplianceUtil.IsValidValueOnlyLength(viewModel.NewName)) return;
 //                Layers[idx].Name = viewModel.NewName;
 
-//                //await SaveBasicAsync();
+//                //await SaveAsync();
 
 //                MainPage.Instance.UnReUtil.RecordCommand(
 //                    execute: async () => await RenameAsync(itemTag, true, viewModel.NewName),
@@ -349,7 +349,7 @@
 //            await layer.DeletAsync();
 //            PropertyChanged -= OnInkDataChanged;
 //            Layers.RemoveAt(idx);
-//            //await SaveBasicAsync();
+//            //await SaveAsync();
 
 //            if (!recordUndo) return;
 
@@ -369,7 +369,7 @@
 //        internal async Task UpdateCustomColorsAsync(ColorChangeEventArgs e) {
 //            if (e.OldItem != null) CustomColors.Remove((Color)e.OldItem);
 //            if (e.NewItem != null) CustomColors.Add((Color)e.NewItem);
-//            await SaveBasicAsync();
+//            await SaveAsync();
 //        }
 
 //        internal void UpdateForegroundColor(ColorChangeEventArgs e) {

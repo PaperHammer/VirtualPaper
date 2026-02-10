@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers;
 using System.IO;
 using System.Numerics;
@@ -10,6 +10,7 @@ using VirtualPaper.Common.Utils.Archive;
 using Windows.Foundation;
 using Windows.Graphics.DirectX;
 using Windows.Storage.Streams;
+using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Extensions;
 
 namespace Workloads.Creation.StaticImg.Models {
@@ -19,7 +20,8 @@ namespace Workloads.Creation.StaticImg.Models {
         public Matrix3x2 Transform { get; private set; } = Matrix3x2.Identity;
         public TaskCompletionSource<bool> IsReady => _isReady;
 
-        public InkRenderData(ArcSize arcSize, bool isNeedBackground = false) {
+        public InkRenderData(InkProjectSession session, ArcSize arcSize, bool isNeedBackground = false) {
+            _session = session;
             _arcSize = arcSize;
             IsNeedBackground = isNeedBackground;
             InitializeRenderTarget();
@@ -28,12 +30,12 @@ namespace Workloads.Creation.StaticImg.Models {
         private void InitializeRenderTarget() {
             RenderTarget?.Dispose();
             RenderTarget = new CanvasRenderTarget(
-                MainPage.Instance.SharedDevice,
+                _session.SharedDevice,
                 (float)_arcSize.Width,
                 (float)_arcSize.Height,
                 _arcSize.Dpi,
-                MainPage.Instance.SharedFormat,
-                MainPage.Instance.SharedAlphaMode);
+                _session.SharedFormat,
+                _session.SharedAlphaMode);
             if (IsNeedBackground) InitializeBlankRenderTarget(); // 初始化空白画布
             IsReady.SetResult(true);
         }
@@ -123,7 +125,7 @@ namespace Workloads.Creation.StaticImg.Models {
                 // 加载到渲染目标
                 using var fileStream = File.OpenRead(tempFile);
                 var bitmap = await CanvasBitmap.LoadAsync(
-                    MainPage.Instance.SharedDevice,
+                    _session.SharedDevice,
                     fileStream.AsRandomAccessStream());
 
                 using (var ds = RenderTarget.CreateDrawingSession()) {
@@ -153,7 +155,7 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         internal InkRenderData Clone() {
-            var newRender = new InkRenderData(_arcSize) {
+            var newRender = new InkRenderData(_session, _arcSize) {
                 RenderTarget = this.RenderTarget.Clone()
             };
             newRender.IsReady.SetResult(true);
@@ -189,7 +191,7 @@ namespace Workloads.Creation.StaticImg.Models {
             // 保留旧内容
             if (RenderTarget != null) {
                 _cachedContent = CanvasBitmap.CreateFromBytes(
-                    MainPage.Instance.SharedDevice,
+                    _session.SharedDevice,
                     RenderTarget.GetPixelBytes(),
                     (int)RenderTarget.SizeInPixels.Width,
                     (int)RenderTarget.SizeInPixels.Height,
@@ -201,7 +203,7 @@ namespace Workloads.Creation.StaticImg.Models {
             // 创建新目标
             RenderTarget?.Dispose();
             RenderTarget = new CanvasRenderTarget(
-                MainPage.Instance.SharedDevice,
+                _session.SharedDevice,
                 (float)_arcSize.Width,
                 (float)_arcSize.Height,
                 _arcSize.Dpi,
@@ -223,7 +225,7 @@ namespace Workloads.Creation.StaticImg.Models {
             Size originalSize = default;
             if (RenderTarget != null) {
                 _cachedContent = CanvasBitmap.CreateFromBytes(
-                   MainPage.Instance.SharedDevice,
+                   _session.SharedDevice,
                    RenderTarget.GetPixelBytes(),
                    (int)RenderTarget.SizeInPixels.Width,
                    (int)RenderTarget.SizeInPixels.Height,
@@ -239,7 +241,7 @@ namespace Workloads.Creation.StaticImg.Models {
             // 创建新目标（扩展尺寸）
             RenderTarget?.Dispose();
             RenderTarget = new CanvasRenderTarget(
-                MainPage.Instance.SharedDevice,
+                _session.SharedDevice,
                 (float)_arcSize.Width,
                 (float)_arcSize.Height,
                 _arcSize.Dpi,
@@ -299,7 +301,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private CanvasBitmap GetOriginalContent() {
             return CanvasBitmap.CreateFromBytes(
-                MainPage.Instance.SharedDevice,
+                _session.SharedDevice,
                 RenderTarget.GetPixelBytes(),
                 (int)RenderTarget.SizeInPixels.Width,
                 (int)RenderTarget.SizeInPixels.Height,
@@ -310,7 +312,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private CanvasRenderTarget CreateNewRenderTarget(Size size) {
             return new CanvasRenderTarget(
-                MainPage.Instance.SharedDevice,
+                _session.SharedDevice,
                 (float)size.Width,
                 (float)size.Height,
                 _arcSize.Dpi,
@@ -330,6 +332,7 @@ namespace Workloads.Creation.StaticImg.Models {
             GC.SuppressFinalize(this);
         }
 
+        private readonly InkProjectSession _session;
         private ArcSize _arcSize;
         private CanvasBitmap? _cachedContent;
         private readonly object _lockResize = new();

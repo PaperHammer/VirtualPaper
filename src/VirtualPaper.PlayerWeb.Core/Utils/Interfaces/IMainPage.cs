@@ -5,6 +5,6 @@ namespace VirtualPaper.PlayerWeb.Core.Utils.Interfaces {
     //interface IMainPage {
     //    //StartArgsWeb StartArgs { get; }
     //    //DataConfigTab AvailableConfigTab { get; }
-    //    NavigationPayload? Payload { get; }
+    //    FrameworkPayload? Payload { get; }
     //}
 }

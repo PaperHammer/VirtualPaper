@@ -3,14 +3,14 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
-using VirtualPaper.UIComponent;
+using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace Workloads.Creation.StaticImg.Views.Tools {
-    public sealed partial class CanvasSetControl : UserControl {
+    public sealed partial class CanvasSetControl : ArcUserControl {
         public event EventHandler<RoutedEventArgs> LockAspectRatioChecked;
         public event EventHandler<RoutedEventArgs> LockAspectRatioUnchecked;
         public event EventHandler<RoutedEventArgs> ScaleContentChecked;
@@ -108,7 +108,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
 
             var op = int.TryParse(text, out res) &&
                 res >= 1 &&
-                res <= MAX_CANVAS_SIZE_WITH_DPI;
+                res <= Consts.MAX_CANVAS_SIZE_WITH_DPI;
 
             return op;
         }
@@ -128,7 +128,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
                 message: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
                 key: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
                 isNeedLocalizer: true,
-                extraMsg: MAX_CANVAS_SIZE_WITH_DPI.ToString());
+                extraMsg: Consts.MAX_CANVAS_SIZE_WITH_DPI.ToString());
         }
 
         private void LockAspectRatio_Checked(object sender, RoutedEventArgs e) {
@@ -159,19 +159,16 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         private bool _isLockAspectRatio;
         private bool _isScaleContent;
 
-        private static int MAX_CANVAS_EDGE => MainPage.Instance.SharedDevice.MaximumBitmapSizeInPixels;
-        private static int MAX_CANVAS_SIZE_WITH_DPI => (int)(1.0F * MAX_CANVAS_EDGE / WindowConsts.ArcWindowInstance.Content.XamlRoot.RasterizationScale * 96);
-
-        private readonly string _SIG_CanvasSet_Header = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_Header)); // 画布
-        private readonly string _SIG_CanvasSet_AdjustSize = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_AdjustSize)); // 调整画布大小
-        private readonly string _SIG_CanvasSet_PixelWidth = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_PixelWidth)); // 宽度(像素)
-        private readonly string _SIG_CanvasSet_PixelHeight = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_PixelHeight)); // 高度(像素)
-        private readonly string _SIG_CanvasSet_LockAspectRatio = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_LockAspectRatio)); // 锁定纵横比
-        private readonly string _SIG_CanvasSet_SacleContent = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_SacleContent)); // 同步缩放画布内容
-        private readonly string _SIG_CanvasSet_RotateAndFlip = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateAndFlip)); // 旋转和翻转
-        private readonly string _SIG_CanvasSet_RotateLeftNinety = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateLeftNinety)); // 向左旋转90°
-        private readonly string _SIG_CanvasSet_RotateRightNinety = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateRightNinety)); // 向右旋转90°
-        private readonly string _SIG_CanvasSet_FlipHorizon = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_FlipHorizon)); // 水平翻转
-        private readonly string _SIG_CanvasSet_FlipVertical = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_FlipVertical)); // 垂直翻转
+        //private readonly string _SIG_CanvasSet_Header = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_Header)); // 画布
+        //private readonly string _SIG_CanvasSet_AdjustSize = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_AdjustSize)); // 调整画布大小
+        //private readonly string _SIG_CanvasSet_PixelWidth = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_PixelWidth)); // 宽度(像素)
+        //private readonly string _SIG_CanvasSet_PixelHeight = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_PixelHeight)); // 高度(像素)
+        //private readonly string _SIG_CanvasSet_LockAspectRatio = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_LockAspectRatio)); // 锁定纵横比
+        //private readonly string _SIG_CanvasSet_SacleContent = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_SacleContent)); // 同步缩放画布内容
+        //private readonly string _SIG_CanvasSet_RotateAndFlip = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateAndFlip)); // 旋转和翻转
+        //private readonly string _SIG_CanvasSet_RotateLeftNinety = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateLeftNinety)); // 向左旋转90°
+        //private readonly string _SIG_CanvasSet_RotateRightNinety = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateRightNinety)); // 向右旋转90°
+        //private readonly string _SIG_CanvasSet_FlipHorizon = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_FlipHorizon)); // 水平翻转
+        //private readonly string _SIG_CanvasSet_FlipVertical = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_FlipVertical)); // 垂直翻转
     }
 }

@@ -1058,4 +1058,10 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_Drops_Contains_Invalid_FIles" xml:space="preserve">
     <value>识别到包含不受支持的文件类型，已自动忽略</value>
   </data>
+  <data name="Project_FileSave_Failed" xml:space="preserve">
+    <value>文件保存失败：</value>
+  </data>
+  <data name="Project_FileLoad_Failed" xml:space="preserve">
+    <value>文件加载失败：</value>
+  </data>
 </root>

@@ -30,7 +30,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
-            if (e.Parameter is NavigationPayload payload) {
+            if (e.Parameter is FrameworkPayload payload) {
                 payload.TryGet(NaviPayloadKey.IEffectService.ToString(), out _effectService);
                 payload.TryGet(NaviPayloadKey.StartArgs.ToString(), out _startArgs);
                 payload.TryGet(NaviPayloadKey.ApplyService.ToString(), out _applyService);

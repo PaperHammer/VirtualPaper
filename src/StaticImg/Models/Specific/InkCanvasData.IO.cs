@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Models.Mvvm;
+using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 
 namespace Workloads.Creation.StaticImg.Models.Specific {
     // IO part of InkCanvasData
     public partial class InkCanvasData {
-        public async Task<bool> LoadAsync() {
+        public async Task<bool> LoadAsync(InkProjectSession session) {
             try {
-                var (header, contentAbstract, layers) = await MainPage.Instance.ProjectUtil.LoadAsync();
+                var (header, contentAbstract, layers) = await session.DesignFileUtil.LoadAsync(session);
 
                 if (header.HasValue) {
                     CanvasSize = new ArcSize(header.Value.CanvasWidth, header.Value.CanvasHeight, header.Value.Dpi, RebuildMode.None);
@@ -47,12 +48,12 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 return true;
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<StaticImg.MainPage>().Error($"Load failed: {ex.Message}");
+                ArcLog.GetLogger<MainPage>().Error($"Load failed: {ex.Message}");
                 return false;
             }
         }
 
-        public async Task<bool> SaveAsync() {
+        public async Task<bool> SaveAsync(InkProjectSession session) {
             try {
                 // Prepare business data
                 var businessData = new BusinessData();
@@ -67,7 +68,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 }
 
                 // Save through project utility
-                await MainPage.Instance.ProjectUtil.SaveAsync(
+                await session.DesignFileUtil.SaveAsync(
                     CanvasSize.Width,
                     CanvasSize.Height,
                     CanvasSize.Dpi,
@@ -78,14 +79,14 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 return true;
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<StaticImg.MainPage>().Error($"Save failed: {ex.Message}");
+                ArcLog.GetLogger<MainPage>().Error($"Save failed: {ex.Message}");
                 return false;
             }
         }
 
         // TODO：有差异且触发关闭或退出时做出拦截
-        public bool CheckHasDiff() {
-            return MainPage.Instance.ProjectUtil.HasDiff;
+        public bool CheckHasDiff(StaticImgDesignFileUtil designFileUtil) {
+            return designFileUtil.HasDiff;
         }
     }
 }

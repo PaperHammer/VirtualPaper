@@ -28,7 +28,7 @@ namespace VirtualPaper.DraftPanel {
 
         #region navigate
         private void FrameCardComp_Loaded(object sender, RoutedEventArgs e) {
-            Payload = new NavigationPayload() {
+            Payload = new FrameworkPayload() {
                 [NaviPayloadKey.DraftPage.ToString()] = this,
             };
             NavigateByState(DraftPanelState.ConfigSpace);

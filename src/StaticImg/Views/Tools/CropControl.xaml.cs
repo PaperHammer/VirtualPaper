@@ -31,7 +31,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         }
 
         private void AspectRatio_ItemClick(object sender, ItemClickEventArgs e) {
-            //inkCanvas._viewModel.ConfigData.SeletcedAspectitem = e.ClickedItem as AspectRatioItem;
+            //inkCanvas._viewModel.Data.SeletcedAspectitem = e.ClickedItem as AspectRatioItem;
         }
 
         private void CropCancelBtn_Click(object sender, RoutedEventArgs e) {

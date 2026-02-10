@@ -38,7 +38,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
                 return;
             }
 
-            //inkCanvas._viewModel.ConfigData.EraserSize = parsedValue;
+            //inkCanvas._viewModel.Data.EraserSize = parsedValue;
         }
 
         private void EraserSizeTextBox_LostFocus(object sender, RoutedEventArgs e) {
@@ -61,7 +61,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
                 return;
             }
 
-            //inkCanvas._viewModel.ConfigData.EraserOpacity = parsedValue;
+            //inkCanvas._viewModel.Data.EraserOpacity = parsedValue;
         }
 
         private void EraserOpacityTextBox_LostFocus(object sender, RoutedEventArgs e) {

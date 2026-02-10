@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -6,18 +6,21 @@ using Windows.UI;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
     public class BusinessData {
-        public const int MaxColors = 10;
-        private readonly List<Color> _colors = new(MaxColors);
+        public const int MAX_COLORS = 10;
 
-        public int LayerCount { get; set; }
+        public int LayerCount => _layerCount;
         public IReadOnlyList<Color> Colors => _colors.AsReadOnly();
+
+        public void SetLayerCount(int layerCount) {
+            _layerCount = layerCount; 
+        }
 
         public void SetColors(IEnumerable<Color> colors) {
             _colors.Clear();
 
             ArgumentNullException.ThrowIfNull(colors, nameof(colors));
             foreach (var color in colors) {
-                if (_colors.Count >= MaxColors)
+                if (_colors.Count >= MAX_COLORS)
                     break;
 
                 _colors.Add(color);
@@ -52,7 +55,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             using var reader = new BinaryReader(ms);
 
             int layerCount = reader.ReadInt32();
-            instance.LayerCount = layerCount;
+            instance.SetLayerCount(layerCount);
 
             ushort count = reader.ReadUInt16();
             instance._colors.Capacity = count;            
@@ -72,5 +75,15 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             sizeof(int) // SelectedLayerIndex
             + sizeof(ushort) // Color count
             + (data._colors.Count * Marshal.SizeOf<Color>());
+
+        internal BusinessData Clone() {
+            var data = new BusinessData();
+            data.SetColors(this._colors);
+            data.SetLayerCount(this._layerCount);
+            return data;
+        }
+
+        private readonly List<Color> _colors = new(MAX_COLORS);
+        private int _layerCount;
     }
 }

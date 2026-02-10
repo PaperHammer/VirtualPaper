@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 
 namespace VirtualPaper.UIComponent.Utils {
-    public sealed class NavigationPayload {
+    public sealed class FrameworkPayload {
         public object? this[string key] {
             set => Set(key, value);
         }
@@ -37,7 +37,11 @@ namespace VirtualPaper.UIComponent.Utils {
             if (_data.TryGetValue(key, out var value) && value is T t)
                 return t;
 
-            throw new KeyNotFoundException($"NavigationPayload missing required key '{key}' ({typeof(T).Name})");
+            throw new KeyNotFoundException($"FrameworkPayload missing required key '{key}' ({typeof(T).Name})");
+        }
+        
+        public T Get<T>(NaviPayloadKey key) {
+            return Get<T>(key.ToString());
         }
 
         public bool ContainsKey(string key) {
@@ -56,11 +60,11 @@ namespace VirtualPaper.UIComponent.Utils {
     }
 
     public static class NavigationPayloadExtensions {
-        public static NavigationPayload AddRange(this NavigationPayload payload, params NaviPayloadData[] items) {
+        public static FrameworkPayload AddRange(this FrameworkPayload payload, params NaviPayloadData[] items) {
             return payload.AddRange(true, items);
         }
 
-        public static NavigationPayload AddRange(this NavigationPayload payload, bool overwrite, params NaviPayloadData[] items) {
+        public static FrameworkPayload AddRange(this FrameworkPayload payload, bool overwrite, params NaviPayloadData[] items) {
             if (items is null) return payload;
 
             foreach (var item in items) {
@@ -74,7 +78,7 @@ namespace VirtualPaper.UIComponent.Utils {
             return payload;
         }
 
-        public static NaviPayloadData[] ToArray(this NavigationPayload payload) {
+        public static NaviPayloadData[] ToArray(this FrameworkPayload payload) {
             if (payload == null) return [];
 
             var list = new List<NaviPayloadData>();
@@ -89,7 +93,7 @@ namespace VirtualPaper.UIComponent.Utils {
             return list.ToArray();
         }
 
-        public static NavigationPayload Merge(this NavigationPayload? target, NavigationPayload? source, bool overwrite = true) {
+        public static FrameworkPayload Merge(this FrameworkPayload? target, FrameworkPayload? source, bool overwrite = true) {
             if (target is null) return source ?? new();
             if (source is null) return target;
 
@@ -124,5 +128,7 @@ namespace VirtualPaper.UIComponent.Utils {
         ICardComponent,
         INavigateComponent,
         ServiceProvider,
+        InkProjectSession,
+        ArcPageContext,
     }
 }

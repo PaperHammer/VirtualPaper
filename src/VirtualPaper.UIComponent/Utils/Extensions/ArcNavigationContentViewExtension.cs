@@ -13,7 +13,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
         public static void ArcNavigate(
             this ArcNavigationContentView navView,
             Type targetPageType,
-            NavigationPayload? payload = null,
+            FrameworkPayload? payload = null,
             ArcNavigationOptions? options = null) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
                 if (!typeof(ArcPage).IsAssignableFrom(targetPageType))
@@ -32,7 +32,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
             ArcNavigationContentView navView,
             ArcPage? oldPage,
             ArcPage newPage,
-            NavigationPayload? paylaod) {
+            FrameworkPayload? paylaod) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
                 if (!navView.PageMap.ContainsKey(newPage.ArcType)) {
                     navView.PageMap[newPage.ArcType] = newPage;
@@ -48,7 +48,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
             ArcNavigationContentView navView,
             ArcPage? oldPage,
             ArcPage newPage,
-            NavigationPayload? parameter,
+            FrameworkPayload? parameter,
             ArcNavigationTransition transition) {
             newPage.Opacity = 0;
             if (!navView.PageMap.ContainsKey(newPage.ArcType)) {

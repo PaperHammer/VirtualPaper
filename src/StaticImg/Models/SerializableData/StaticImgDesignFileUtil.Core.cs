@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.MemoryMappedFiles;
@@ -7,40 +7,37 @@ using System.Threading;
 using VirtualPaper.Common.Utils.Files;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
-    // Core part of ProjectFile
-    public partial class ProjectFile : IDisposable {
+    // Core part of StaticImgDesignFileUtil
+    public partial class StaticImgDesignFileUtil {
         public string FilePath { get; private set; }
         public bool IsValidFile => File.Exists(FilePath);
-        public bool IsFileName { get; private set; }
+        //public bool IsFileName { get; private set; }
         public bool HasDiff { get; private set; }
 
-        private ProjectFile(string path, bool isFileName = false) {
+        public BusinessData? BusinessDataCache => _businessDataCache;
+
+        private StaticImgDesignFileUtil(string path, bool isFileName) {
             FilePath = Path.GetFullPath(path);
-            IsFileName = isFileName;
+            //IsFileName = isFileName;
+            // 如果是 FileName 说明是新建文件，并未存储，默认和本地有 diff
+            HasDiff = isFileName;
         }
 
         /// <summary>
         /// 创建ProjectFile 自动区分路径和文件名
         /// </summary>
-        public static ProjectFile Create(string input) {
+        public static StaticImgDesignFileUtil Create(string input) {
             if (string.IsNullOrWhiteSpace(input)) throw new ArgumentException("Input cannot be empty");
 
             if (FileUtil.IsValidFilePath(input)) {
-                return new ProjectFile(input);
+                return new StaticImgDesignFileUtil(input, false);
             }
 
-            if (FileUtil.IsValidFileName(input)) {
-                return new ProjectFile(input, isFileName: true);
+            if (FileUtil.IsValidFileName(input)) {                
+                return new StaticImgDesignFileUtil(Path.Combine(FileUtil.GetDocumentsDir(), input), true);
             }
 
             throw new ArgumentException("Input is neither a valid path nor filename");
-        }
-
-        public void Dispose() {
-            if (_isDisposed) return;
-            GC.SuppressFinalize(this);
-
-            _isDisposed = true;
         }
 
         private static byte[] StructureToBytes<T>(T structure) where T : struct {
@@ -167,9 +164,8 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         }
 
         private FileHeader _headerCache;
-        private BusinessData _businessDataCache;
-        private List<Layer> _layersCache;
+        private BusinessData? _businessDataCache;
+        private List<Layer>? _layersCache;
         private readonly SemaphoreSlim _ioLock = new(1, 1);
-        private bool _isDisposed;
     }
 }

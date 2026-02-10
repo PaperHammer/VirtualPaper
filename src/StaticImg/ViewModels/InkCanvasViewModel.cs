@@ -1,30 +1,29 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
-using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Context;
+using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.Specific;
 
 namespace Workloads.Creation.StaticImg.ViewModels {
-    public partial class InkCanvasViewModel : ObservableObject {
-        private InkCanvasData _configData;
-        public InkCanvasData ConfigData {
-            get { return _configData; }
-            set { _configData = value; }
-        }
+    public partial class InkCanvasViewModel {
+        public InkCanvasData Data { get; }
 
-        public InkCanvasViewModel() {
-            ConfigData = new InkCanvasData();
+        public InkCanvasViewModel(InkProjectSession session, ArcPageContext context) {
+            _session = session;
+            Data = new InkCanvasData(session, context);
         }
 
         internal async Task SaveAsync() {
-            //await ConfigData.SaveBasicAsync();
-            //await ConfigData.SaveRenderDataAsync();
+            await Data.SaveAsync(_session);
         }
 
         internal async Task LoadAsync() {
-            switch (MainPage.Instance.RTFileType) {
+            switch (_session.RTFileType) {
                 case FileType.FImage:
+                    await LoadSttaicImageAsync();
                     break;
                 case FileType.FDesign:
                     await LoadDesignAsync();
@@ -34,15 +33,17 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             }
         }
 
-        internal async Task LoadDesignAsync() {
-            //if (!File.Exists(MainPage.Instance.EntryFilePath)) {
-            //    await ConfigData.InitDataAsync();
-            //    await SaveAsync();
-            //}
-            //else {
-            //    await ConfigData.LoadBasicDataAsync();
-            //    await ConfigData.LoadRenderDataAsync();
-            //}
+        private async Task LoadSttaicImageAsync() {
+            // todo
+        }
+
+        private async Task LoadDesignAsync() {
+            if (!File.Exists(_session.DesignFileUtil.FilePath)) {
+                Data.InitData();
+            }
+            else {
+                await Data.LoadAsync(_session);
+            }
         }
 
         internal readonly List<AspectRatioItem> _aspectRatios = [
@@ -61,5 +62,6 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             new() { Type = ToolType.Crop, ToolName = "裁剪", Glyph = "\uE7A8", },
             new() { Type = ToolType.CanvasSet, ToolName = "画布", Glyph = "\uE9E9", },
         ];
+        private readonly InkProjectSession _session = null!;
     }
 }

@@ -189,7 +189,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     IRuntime runtime;
                     switch (projTag.Type) {
                         case ProjectType.PImage:
-                            runtime = new Workloads.Creation.StaticImg.MainPage(FileType.FDesign, entryFilePath); // xxx.vpd
+                            runtime = new Workloads.Creation.StaticImg.MainPage(entryFilePath, FileType.FDesign); // xxx.vpd
                             AddToWorkSpace(entryFilePath, runtime);
                             break;
                         default:

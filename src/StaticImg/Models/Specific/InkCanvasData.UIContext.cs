@@ -3,9 +3,11 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI;
+using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Input;
+using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Events;
@@ -144,18 +146,20 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
          */
         public int EraserFeather { get; internal set; } = 0;
 
-        //internal async Task InitDataAsync() {
-        //    await AddLayerAsync(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_Text_UnnamedLayer)), true);
-        //    BasicDataLoaded.TrySetResult(true);
-        //    RenderDataLoaded.TrySetResult(true);
-        //}
+        internal void InitData() {
+            AddLayer(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_Text_UnnamedLayer)), true);
+            //BasicDataLoaded.TrySetResult(true);
+            //RenderDataLoaded.TrySetResult(true);
+        }
 
-        //internal async Task SaveBasicAsync() {
-        //    await JsonSaver.SaveAsync(MainPage.Instance.EntryFilePath, this, InkCanvasConfigDataContext.Default);
+        //internal async Task SaveAsync() {
+        //    await _session.DesignFileUtil.SaveBusinessDataAsync();
+        //    //await JsonSaver.SaveAsync(_session.DesignFileUtil.FilePath, this, InkCanvasConfigDataContext.Default);
         //}
 
         //internal async Task SaveRenderDataAsync() {
-        //    await Task.WhenAll(Layers.Select(ink => ink.SaveAsync()));
+        //    await _session.DesignFileUtil.SaveLayersAsync(Layers);
+        //    //await Task.WhenAll(Layers.Select(ink => ink.SaveAsync()));
         //}
 
         //internal async Task LoadRenderDataAsync() {
@@ -170,8 +174,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         //}
 
         //internal async Task LoadBasicDataAsync() {
-        //    var tmp = await JsonSaver.LoadAsync<InkCanvasConfigData>(
-        //        MainPage.Instance.EntryFilePath, InkCanvasConfigDataContext.Default);
+        //    var tmp = await JsonSaver.LoadAsync<InkCanvasConfigData>(_session.DesignFileUtil.FilePath, InkCanvasConfigDataContext.Default);
         //    this.CanvasSize = tmp.CanvasSize;
         //    this.Layers.SetRange(tmp.Layers, (x) => {
         //        x.SetDataFilePath();
@@ -186,7 +189,9 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         internal async Task UpdateCustomColorsAsync(ColorChangeEventArgs e) {
             if (e.OldItem != null) CustomColors.Remove((Color)e.OldItem);
             if (e.NewItem != null) CustomColors.Add((Color)e.NewItem);
-            //await SaveBasicAsync();
+
+            var curBusdata = _session.DesignFileUtil.BusinessDataCache.Clone();
+            await _session.DesignFileUtil.SaveBusinessDataAsync(curBusdata);
         }
 
         internal void UpdateForegroundColor(ColorChangeEventArgs e) {

@@ -29,7 +29,7 @@ namespace VirtualPaper.UIComponent.Navigation {
             this.InitializeComponent();
         }
 
-        public void Navigate(Type pageType, NavigationPayload? parameter = null, ArcNavigationOptions? options = null) {
+        public void Navigate(Type pageType, FrameworkPayload? parameter = null, ArcNavigationOptions? options = null) {
             this.ArcNavigate(pageType, parameter, options);
         }
     }

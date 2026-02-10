@@ -21,7 +21,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
 
         public OnlyDetails(DataConfigTab configTab, IWpBasicData wpBasicData) {
             _configTab = configTab;
-            _payload = new NavigationPayload() {
+            _payload = new FrameworkPayload() {
                 [NaviPayloadKey.StartArgs.ToString()] = _startArgs,
                 [NaviPayloadKey.AvailableConfigTab.ToString()] = _configTab,
                 [NaviPayloadKey.IWpBasicData.ToString()] = wpBasicData,
@@ -45,6 +45,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         private readonly ArcWindowManagerKey _windowKey;
         private readonly StartArgsWeb _startArgs = null!;
         private readonly DataConfigTab _configTab;
-        private readonly NavigationPayload _payload;
+        private readonly FrameworkPayload _payload;
     }
 }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Logging;
+using Workloads.Creation.StaticImg.Core.Utils;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
     public partial class Layer : IDisposable {
@@ -50,11 +51,11 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             return ms.ToArray();
         }
 
-        private static async Task<Layer> DeserializeSignleAsync(byte[] data, ArcSize canvasSize) {
+        private static async Task<Layer> DeserializeSignleAsync(InkProjectSession session, byte[] data, ArcSize canvasSize) {
             using var ms = new MemoryStream(data);
             using var reader = new BinaryReader(ms);
 
-            var renderData = new InkRenderData(canvasSize);
+            var renderData = new InkRenderData(session, canvasSize);
             var isEnable = reader.ReadBoolean();
             var name = Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadUInt16()));            
             var layer = new Layer(name, isEnable, renderData);
@@ -65,7 +66,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             return layer;
         }
 
-        public static async Task<List<Layer>> DeserializeAsync(FileStream fs, int layerCount, ArcSize canvasSize) {            
+        public static async Task<List<Layer>> DeserializeAsync(InkProjectSession session, FileStream fs, int layerCount, ArcSize canvasSize) {            
             using var reader = new BinaryReader(fs, Encoding.UTF8, leaveOpen: true);
 
             var layers = new List<Layer>(layerCount);
@@ -88,7 +89,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                     if (layerData.Length != layerSize)
                         throw new EndOfStreamException("Layer data is incomplete");
 
-                    var layer = await DeserializeSignleAsync(layerData, canvasSize);
+                    var layer = await DeserializeSignleAsync(session, layerData, canvasSize);
                     layers.Add(layer);
                 }
                 catch (Exception ex) when (i < layerCount - 1) {                    

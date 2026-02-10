@@ -14,7 +14,6 @@ namespace VirtualPaper.UIComponent.Utils {
 
         public static void RegisterContext(ArcPageContextKey key, ArcPageContext context) {
             ArgumentNullException.ThrowIfNull(context);
-
             _contexts[key] = context;
         }
 

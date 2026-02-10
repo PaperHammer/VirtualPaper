@@ -19,7 +19,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         protected override async void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            if (e.Parameter is NavigationPayload payload) {
+            if (e.Parameter is FrameworkPayload payload) {
                 if (payload.TryGet(NaviPayloadKey.ICardComponent, out _viewModel._cardComponent) &&
                     payload.TryGet(NaviPayloadKey.INavigateComponent, out _viewModel._navigateComponent)) {
                     await _viewModel.InitContentAsync();

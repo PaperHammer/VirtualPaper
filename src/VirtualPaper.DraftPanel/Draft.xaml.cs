@@ -5,7 +5,6 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.UIComponent.Attributes;
-using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 
@@ -18,12 +17,11 @@ namespace VirtualPaper.DraftPanel {
     /// </summary>
     [KeepAlive]
     public sealed partial class Draft : ArcPage {
-        public override ArcPageContext ArcContext { get; set; }
         public override Type ArcType => typeof(Draft);
 
-        public Draft() {
+        public Draft() {            
             this.InitializeComponent();
-            ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);
+            ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
         }
 
         #region navigate

@@ -39,12 +39,17 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         public InkCanvas() {
             this.InitializeComponent();
-
             _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
             _tool = new ToolManager();
         }
 
-        private void UserControl_Loaded(object sender, RoutedEventArgs e) {
+        protected override void OnPayloadChanged(FrameworkPayload? newPayload, FrameworkPayload? oldPayload) {
+            base.OnPayloadChanged(newPayload, oldPayload);
+
+            if (newPayload == null) {
+                return;
+            }
+
             ArcPageContext? context = null;
             if (Payload != null) {
                 Payload.TryGet(NaviPayloadKey.InkProjectSession, out _session);
@@ -53,6 +58,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
             _viewModel = new InkCanvasViewModel(_session, context);
 
+            //this.Bindings.Update();
+        }
+
+        private void UserControl_Loaded(object sender, RoutedEventArgs e) {
             RegisterTools();
         }
 

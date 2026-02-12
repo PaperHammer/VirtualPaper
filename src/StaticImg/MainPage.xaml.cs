@@ -6,7 +6,6 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Shader;
-using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Core.Utils;
@@ -19,7 +18,6 @@ namespace Workloads.Creation.StaticImg {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainPage : ArcPage, IRuntime {
-        public override ArcPageContext? ArcContext { get; set; }
         public override Type ArcType => typeof(MainPage);
         protected override bool IsMultiInstance => true;
         public InkProjectSession Session { get; private set; }
@@ -33,14 +31,14 @@ namespace Workloads.Creation.StaticImg {
         /// 打开文件
         /// </summary>
         /// <param name="filePath">类型为 FDeign 或静态图像的文件路径</param>
-        public MainPage(string file, FileType rtFileType) {
-            this.InitializeComponent();
-            ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);
+        public MainPage(string file, FileType rtFileType) {            
             Session = new InkProjectSession(file, rtFileType);
             Payload = new FrameworkPayload() {
                 [NaviPayloadKey.ArcPageContext] = this.ArcContext,
                 [NaviPayloadKey.InkProjectSession] = this.Session
             };
+            this.InitializeComponent();
+            ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
         }
 
         /// <summary>
@@ -52,7 +50,7 @@ namespace Workloads.Creation.StaticImg {
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             this.IsEnabled = false;
 
-            var ctx = ArcPageContextManager.GetContext<MainPage>();
+            var ctx = ArcPageContextManager.GetContext(ContextKey);
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -60,7 +58,7 @@ namespace Workloads.Creation.StaticImg {
             await loadingCtx.RunAsync(
                 operation: async token => {
                     await ShaderLoader.LoadAllShadersAsync();
-                    await InkCanvas.IsInited.Task;
+                    await inkCanvas.IsInited.Task;
                 });
             
             StartFrameTimeMonitor();
@@ -113,7 +111,7 @@ namespace Workloads.Creation.StaticImg {
         #region workSpace events
         public async Task SaveAsync() {
             try {
-                await InkCanvas.SaveAsync();
+                await inkCanvas.SaveAsync();
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);

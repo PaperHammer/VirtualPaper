@@ -20,14 +20,14 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             set { SetValue(BrushThicknessProperty, value); }
         }
         public static readonly DependencyProperty BrushThicknessProperty =
-            DependencyProperty.Register(nameof(BrushThickness), typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0));
+            DependencyProperty.Register(nameof(BrushThickness), typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0.0));
 
         public double BrushOpacity {
             get { return (double)GetValue(BrushOpacityProperty); }
             set { SetValue(BrushOpacityProperty, value); }
         }
         public static readonly DependencyProperty BrushOpacityProperty =
-            DependencyProperty.Register(nameof(BrushOpacity), typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0));
+            DependencyProperty.Register(nameof(BrushOpacity), typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0.0));
 
         public PaintBrushControl() {
             this.InitializeComponent();

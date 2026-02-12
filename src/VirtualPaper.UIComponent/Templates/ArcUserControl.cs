@@ -5,10 +5,19 @@ using VirtualPaper.UIComponent.Utils;
 namespace VirtualPaper.UIComponent.Templates {
     public partial class ArcUserControl : UserControl {
         public FrameworkPayload? Payload {
-            get { return (FrameworkPayload?)GetValue(MyPropertyProperty); }
-            set { SetValue(MyPropertyProperty, value); }
+            get { return (FrameworkPayload?)GetValue(PayloadProperty); }
+            set { SetValue(PayloadProperty, value); }
         }
-        public static readonly DependencyProperty MyPropertyProperty =
-            DependencyProperty.Register(nameof(Payload), typeof(FrameworkPayload), typeof(ArcUserControl), new PropertyMetadata(null));
+        public static readonly DependencyProperty PayloadProperty =
+            DependencyProperty.Register(nameof(Payload), typeof(FrameworkPayload), typeof(ArcUserControl), new PropertyMetadata(null, OnPayloadChangedStatic));
+
+        private static void OnPayloadChangedStatic(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            if (d is ArcUserControl control) {
+                control.OnPayloadChanged(e.NewValue as FrameworkPayload, e.OldValue as FrameworkPayload);
+            }
+        }
+
+        protected virtual void OnPayloadChanged(FrameworkPayload? newPayload, FrameworkPayload? oldPayload) {
+        }
     }
 }

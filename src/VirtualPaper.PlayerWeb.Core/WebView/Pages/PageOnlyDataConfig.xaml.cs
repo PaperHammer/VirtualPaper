@@ -1,6 +1,5 @@
 using System;
 using VirtualPaper.Common.Runtime.PlayerWeb;
-using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 
@@ -12,13 +11,12 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class PageOnlyDataConfig : ArcPage {
-        public override ArcPageContext ArcContext { get; set; }
         public override Type ArcType => typeof(PageOnlyDataConfig);
         protected override bool IsMultiInstance => true;
 
         public PageOnlyDataConfig() {
             this.InitializeComponent();
-            ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);            
+            ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
         }
 
         protected override void OnEnter(FrameworkPayload? payload) {

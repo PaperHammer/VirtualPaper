@@ -28,9 +28,8 @@ namespace VirtualPaper.UIComponent.Data {
         internal Vector3 ElevationVector { get; private set; }
 
         public Card() {
-            this.Loaded += Card_Loaded;
             this.InitializeComponent();
-
+            this.Loaded += Card_Loaded;            
             this.CornerRadius = new CornerRadius(8);
             this.Padding = new Thickness(50);
 

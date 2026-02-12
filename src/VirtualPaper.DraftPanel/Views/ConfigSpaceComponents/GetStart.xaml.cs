@@ -16,7 +16,6 @@ using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.UIComponent.Utils.Extensions;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 

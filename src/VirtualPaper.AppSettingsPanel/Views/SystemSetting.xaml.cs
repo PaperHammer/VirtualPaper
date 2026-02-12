@@ -12,8 +12,8 @@ namespace VirtualPaper.AppSettingsPanel.Views {
     /// </summary>
     public sealed partial class SystemSetting : Page {
         public SystemSetting() {
+            this.InitializeComponent();
             this.Unloaded += SystemSetting_Unloaded;
-            this.InitializeComponent();                  
             _viewModel = AppServiceLocator.Services.GetRequiredService<SystemSettingViewModel>();
             this.DataContext = _viewModel;             
         }

@@ -12,10 +12,10 @@ namespace VirtualPaper.AppSettingsPanel.Views {
     /// </summary>
     public sealed partial class GeneralSetting : Page {
         public GeneralSetting() {
+            this.InitializeComponent();
             this.Unloaded += GeneralSetting_Unloaded;
-            this.InitializeComponent();                   
             _viewModel = AppServiceLocator.Services.GetRequiredService<GeneralSettingViewModel>();
-            this.DataContext = _viewModel;           
+            this.DataContext = _viewModel;                    
         }
 
         private void GeneralSetting_Unloaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {

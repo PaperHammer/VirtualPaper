@@ -31,7 +31,8 @@ namespace VirtualPaper.UIComponent.Context {
             _pageReference = new WeakReference<ArcPage>(pageInstance);
         }
 
-        public ArcPageContext(ArcPage pageInstance, Loading loadingControl) : this(pageInstance) {
+        public void AttachLoadingComponent(Loading loadingControl) {
+            if (_loadingContext != null) return;
             _loadingContext = new ArcLoadingContext(this, loadingControl);
         }
 
@@ -40,7 +41,7 @@ namespace VirtualPaper.UIComponent.Context {
         }
 
         private readonly WeakReference<ArcPage> _pageReference;
-        private readonly ArcLoadingContext? _loadingContext;
+        private ArcLoadingContext? _loadingContext;
         private readonly TaskBlocking _keepAliveBlocking = new();
     }
 }

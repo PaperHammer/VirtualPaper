@@ -7,7 +7,6 @@ using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.UIComponent.Attributes;
-using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 
@@ -20,14 +19,12 @@ namespace VirtualPaper.DraftPanel.Views {
     /// </summary>
     [KeepAlive]
     public sealed partial class WorkSpace : ArcPage {
-        public override ArcPageContext ArcContext { get; set; }
         public override Type ArcType => typeof(WorkSpace);
 
         public WorkSpace() {
             this.InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<WorkSpaceViewModel>();
-            this.DataContext = _viewModel;
-            ArcContext = new ArcPageContext(this);
+            this.DataContext = _viewModel;            
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {

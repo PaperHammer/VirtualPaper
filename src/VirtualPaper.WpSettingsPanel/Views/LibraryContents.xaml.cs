@@ -10,7 +10,6 @@ using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
@@ -24,15 +23,13 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class LibraryContents : ArcPage {
-        public override ArcPageContext ArcContext { get; set; }
         public override Type ArcType => typeof(LibraryContents);
 
         public LibraryContents() {
-            this.Unloaded += LibraryContents_Unloaded;
             this.InitializeComponent();
+            this.Unloaded += LibraryContents_Unloaded;            
             _viewModel = AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>();
             this.DataContext = _viewModel;
-            ArcContext = new ArcPageContext(this);            
         }
 
         private void LibraryContents_Unloaded(object sender, RoutedEventArgs e) {

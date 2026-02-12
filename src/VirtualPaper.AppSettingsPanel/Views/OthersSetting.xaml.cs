@@ -12,8 +12,8 @@ namespace VirtualPaper.AppSettingsPanel.Views {
     /// </summary>
     public sealed partial class OthersSetting : Page {
         public OthersSetting() {
+            this.InitializeComponent();
             this.Unloaded += OthersSetting_Unloaded;
-            this.InitializeComponent();                   
             _viewModel = AppServiceLocator.Services.GetRequiredService<OtherSettingViewModel>();
             this.DataContext = _viewModel;            
         }

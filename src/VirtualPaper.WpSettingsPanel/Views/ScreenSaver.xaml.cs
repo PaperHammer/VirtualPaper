@@ -6,7 +6,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models;
-using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 
@@ -18,15 +17,13 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class ScreenSaver : ArcPage {
-        public override ArcPageContext ArcContext { get; set; }
         public override Type ArcType => typeof(ScreenSaver);
 
         public ScreenSaver() {
-            this.Unloaded += ScreenSaver_Unloaded; ;
-            _viewModel = AppServiceLocator.Services.GetRequiredService<ScreenSaverViewModel>();
-            this.DataContext = _viewModel;
-            ArcContext = new ArcPageContext(this);
             this.InitializeComponent();
+            this.Unloaded += ScreenSaver_Unloaded;            
+            _viewModel = AppServiceLocator.Services.GetRequiredService<ScreenSaverViewModel>();
+            this.DataContext = _viewModel;            
         }
 
         private void ScreenSaver_Unloaded(object sender, RoutedEventArgs e) {

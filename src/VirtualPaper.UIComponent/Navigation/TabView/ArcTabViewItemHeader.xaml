@@ -24,10 +24,10 @@
         <Ellipse 
             x:Name="UnsavedDot"
             Grid.Column="1"
-            Width="10" Height="10"
+            Width="6" Height="6"
             HorizontalAlignment="Right"
             VerticalAlignment="Center"
             Fill="{ThemeResource SystemAccentColor}"
-            Visibility="{x:Bind IsUnsaved, Mode=OneWay}"/>
+            Visibility="{x:Bind IsUnsaved, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
     </Grid>
 </UserControl>

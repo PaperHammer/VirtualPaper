@@ -6,7 +6,7 @@
     xmlns:local="using:Workloads.Creation.StaticImg"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:lcl_components="using:Workloads.Creation.StaticImg.Views.Components"
+    xmlns:staticImgComponents="using:Workloads.Creation.StaticImg.Views.Components"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
@@ -15,6 +15,6 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <arc:ArcPageHost x:Name="MainHost">
-        <lcl_components:InkCanvas x:Name="InkCanvas" Payload="{x:Bind Payload}"/>
+        <staticImgComponents:InkCanvas x:Name="inkCanvas" Payload="{x:Bind Payload}"/>
     </arc:ArcPageHost>
 </arc:ArcPage>

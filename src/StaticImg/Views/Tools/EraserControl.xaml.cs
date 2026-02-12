@@ -11,14 +11,14 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             set { SetValue(EraserSizeProperty, value); }
         }
         public static readonly DependencyProperty EraserSizeProperty =
-            DependencyProperty.Register(nameof(EraserSize), typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0));
+            DependencyProperty.Register(nameof(EraserSize), typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0.0));
 
         public double EraserOpacity {
             get { return (double)GetValue(EraserOpacityProperty); }
             set { SetValue(EraserOpacityProperty, value); }
         }
         public static readonly DependencyProperty EraserOpacityProperty =
-            DependencyProperty.Register(nameof(EraserOpacity), typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0));
+            DependencyProperty.Register(nameof(EraserOpacity), typeof(double), typeof(PaintBrushControl), new PropertyMetadata(0.0));
 
         public EraserControl() {
             this.InitializeComponent();
@@ -38,7 +38,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
                 return;
             }
 
-            //inkCanvas._viewModel.Data.EraserSize = parsedValue;
+            //inkCanvas.ViewModel.Data.EraserSize = parsedValue;
         }
 
         private void EraserSizeTextBox_LostFocus(object sender, RoutedEventArgs e) {
@@ -61,7 +61,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
                 return;
             }
 
-            //inkCanvas._viewModel.Data.EraserOpacity = parsedValue;
+            //inkCanvas.ViewModel.Data.EraserOpacity = parsedValue;
         }
 
         private void EraserOpacityTextBox_LostFocus(object sender, RoutedEventArgs e) {

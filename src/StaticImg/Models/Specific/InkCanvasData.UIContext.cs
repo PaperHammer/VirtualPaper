@@ -25,7 +25,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
         public ObservableCollection<Color> CustomColors { get; set; } = [];
 
-        ArcSize _canvasSize = new(1920, 1080, 96, RebuildMode.None); // 像素
+        ArcSize _canvasSize; // 像素
         public ArcSize CanvasSize {
             get => _canvasSize;
             set { _canvasSize = value; ArcSizeChanged(); OnPropertyChanged(); }

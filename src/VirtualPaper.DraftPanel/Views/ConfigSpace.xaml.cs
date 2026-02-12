@@ -9,7 +9,6 @@ using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.DraftPanel.Views.ConfigSpaceComponents;
-using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
@@ -22,14 +21,12 @@ namespace VirtualPaper.DraftPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class ConfigSpace : ArcPage, ICardComponent, INavigateComponent {
-        public override ArcPageContext ArcContext { get; set; }
         public override Type ArcType => typeof(ConfigSpace);
 
         public ConfigSpace() {
             this.InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<ConfigSpaceViewModel>();
-            this.DataContext = _viewModel;
-            ArcContext = new ArcPageContext(this);
+            this.DataContext = _viewModel;            
         }
 
         #region nav

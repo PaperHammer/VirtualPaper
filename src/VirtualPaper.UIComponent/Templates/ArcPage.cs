@@ -11,7 +11,7 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.UIComponent.Templates {
     public abstract class ArcPage : Page {
-        public virtual ArcPageContext? ArcContext { get; set; }
+        public virtual ArcPageContext ArcContext { get; set; }
         public abstract Type ArcType { get; }
         /// <summary>
         /// 页面是否保活（无法阻止 Unloaded）
@@ -27,6 +27,7 @@ namespace VirtualPaper.UIComponent.Templates {
         public ArcPageStatus Status { get; protected set; }
 
         protected ArcPage() {
+            ArcContext = new ArcPageContext(this);
             this.Loaded += ArcPage_Loaded;
             this.Unloaded += ArcPage_Unloaded;
             _keepAlive = new Lazy<bool>(() => ArcType.GetCustomAttribute<KeepAliveAttribute>()?.Value == true);

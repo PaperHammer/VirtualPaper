@@ -18,15 +18,14 @@ namespace VirtualPaper.WpSettingsPanel {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class WpSettings : ArcPage {
-        public override ArcPageContext ArcContext { get; set; }
         public override Type ArcType => typeof(WpSettings);
 
         public WpSettings() {
-            this.Unloaded += WpSettings_Unloaded;
             this.InitializeComponent();
+            this.Unloaded += WpSettings_Unloaded;
             _viewModel = AppServiceLocator.Services.GetRequiredService<WpSettingsViewModel>();
-            this.DataContext = _viewModel;                   
-            ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);
+            this.DataContext = _viewModel;            
+            ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
         }
 
         private void WpSettings_Unloaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {

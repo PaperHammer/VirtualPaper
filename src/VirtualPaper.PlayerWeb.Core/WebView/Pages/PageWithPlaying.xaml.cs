@@ -12,7 +12,6 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.PlayerWeb.Core.Utils;
 using VirtualPaper.PlayerWeb.Core.Utils.Interfaces;
-using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
@@ -25,13 +24,12 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class PageWithPlaying : ArcPage, IEffectService {
-        public override ArcPageContext ArcContext { get; set; }
         public override Type ArcType => typeof(PageWithPlaying);
         protected override bool IsMultiInstance => true;
 
         public PageWithPlaying() {
             this.InitializeComponent();
-            ArcContext = new ArcPageContext(this, this.MainHost.LoadingControlHost);
+            ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
         }
 
         protected override void OnEnter(FrameworkPayload? payload) {

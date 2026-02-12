@@ -12,8 +12,8 @@ namespace VirtualPaper.AppSettingsPanel.Views {
     /// </summary>
     public sealed partial class PerformanceSetting : Page {
         public PerformanceSetting() {
+            this.InitializeComponent();
             this.Unloaded += PerformanceSetting_Unloaded;
-            this.InitializeComponent();         
             _viewModel = AppServiceLocator.Services.GetRequiredService<PerformanceSettingViewModel>();
             this.DataContext = _viewModel;            
         }

@@ -25,7 +25,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
         public ObservableCollection<Color> CustomColors { get; set; } = [];
 
-        ArcSize _canvasSize; // 像素
+        ArcSize _canvasSize = new ArcSize(1920, 1080, 96, RebuildMode.None); // 像素
         public ArcSize CanvasSize {
             get => _canvasSize;
             set { _canvasSize = value; ArcSizeChanged(); OnPropertyChanged(); }
@@ -147,6 +147,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         public int EraserFeather { get; internal set; } = 0;
 
         internal void InitData() {
+            CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {WindowConsts.ArcWindowInstance.Content.XamlRoot.RasterizationScale * 96} DPI)";
             AddLayer(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_Text_UnnamedLayer)), true);
             //BasicDataLoaded.TrySetResult(true);
             //RenderDataLoaded.TrySetResult(true);
@@ -223,7 +224,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 .Where(ink => ink.RenderData != null)
                 .Select(ink => ink.RenderData.ResizeRenderTargetAsync(CanvasSize));
             await Task.WhenAll(tasks);
-            CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {WindowConsts.ArcWindowInstance.Content.XamlRoot.RasterizationScale} DPI)";
+            CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {WindowConsts.ArcWindowInstance.Content.XamlRoot.RasterizationScale * 96} DPI)";
             SizeChanged?.Invoke(this, new LayerSizeChangedEventArgs(CanvasSize));
         }
 

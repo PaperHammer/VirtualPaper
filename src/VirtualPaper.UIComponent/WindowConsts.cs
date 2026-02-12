@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.UIComponent.Templates;
 
 namespace VirtualPaper.UIComponent {

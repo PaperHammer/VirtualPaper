@@ -14,6 +14,7 @@ using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.UIComponent.Collection;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Input;
@@ -57,8 +58,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 Consts.InitData(_session);
             }
             _viewModel = new InkCanvasViewModel(_session, context);
-
-            //this.Bindings.Update();
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e) {
@@ -140,6 +139,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void RebuildComposite() {
+            DebugUtil.DebugOutPut("RebuildComposite triggered");
             _compositeTarget = new CanvasRenderTarget(
                 _session.SharedDevice,
                 (float)_viewModel.Data.CanvasSize.Width,
@@ -177,6 +177,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         internal void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
+            DebugUtil.DebugOutPut("RenderToCompositeTarget triggered");
             if (_compositeTarget == null) return;
 
             var layers = _viewModel.Data.ActiveLayers;

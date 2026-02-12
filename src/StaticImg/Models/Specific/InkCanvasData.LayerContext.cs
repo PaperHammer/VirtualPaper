@@ -30,6 +30,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 return _cachedActiveLayers;
             }
         }
+
         public ObservableCollection<LayerInfo> Layers => _layers;
 
         private LayerInfo _selectedLayer;

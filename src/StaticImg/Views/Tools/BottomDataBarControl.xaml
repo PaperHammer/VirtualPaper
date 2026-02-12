@@ -23,7 +23,6 @@
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center">
                 <ImageIcon
-                    Margin="0 2 0 0"
                     Height="16"
                     Width="16"
                     Source="{ThemeResource DraftPanel_StatusBar_CursorIcon}"/>
@@ -44,7 +43,6 @@
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center">
                 <ImageIcon
-                    Margin="0 2 0 0"
                     Height="16"
                     Width="16"
                     Source="{ThemeResource DraftPanel_StatusBar_BorderIcon}"/>
@@ -65,7 +63,6 @@
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center">
                 <ImageIcon
-                    Margin="0 2 0 0"
                     Height="16"
                     Width="16"
                     Source="{ThemeResource DraftPanel_StatusBar_SizeIcon}"/>

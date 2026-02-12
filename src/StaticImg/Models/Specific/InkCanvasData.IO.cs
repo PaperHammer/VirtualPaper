@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent;
+using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 
@@ -55,6 +58,14 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
         public async Task<bool> SaveAsync(InkProjectSession session) {
             try {
+                if (!session.DesignFileUtil.IsValidFile) {
+                    string? selectedPath = (await WindowsStoragePickers.PickFolderAsync(WindowConsts.WindowHandle))?.Path;                   
+                    if (string.IsNullOrEmpty(selectedPath))
+                        return false;
+
+                    session.DesignFileUtil.SetFilePath(selectedPath);
+                }
+
                 // Prepare business data
                 var businessData = new BusinessData();
                 businessData.SetColors(CustomColors);

@@ -70,14 +70,6 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             List<Layer> layers) {
             await _ioLock.WaitAsync();
 
-            if (!IsValidFile) {
-                string? selectedPath = (await WindowsStoragePickers.PickFolderAsync(WindowConsts.WindowHandle))?.Path;
-                if (string.IsNullOrEmpty(selectedPath))
-                    return (false, null);
-
-                FilePath = selectedPath;
-            }
-
             try {
                 // Serialize data
                 var businessDataBytes = BusinessData.Serialize(business);
@@ -217,6 +209,10 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             finally {
                 _ioLock.Release();
             }
+        }
+
+        internal void SetFilePath(string selectedPath) {
+            FilePath = selectedPath;
         }
     }
 }

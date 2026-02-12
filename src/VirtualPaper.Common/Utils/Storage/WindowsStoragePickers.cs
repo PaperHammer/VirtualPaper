@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -82,8 +82,8 @@ namespace VirtualPaper.Common.Utils.Storage {
         /// <param name="window">The owner window.</param>
         /// <returns>A StorageFolder object representing the selected folder.</returns>
         public static async Task<StorageFolder> PickFolderAsync(nint hwnd) {
-            var picker = new FolderPicker {
-                SuggestedStartLocation = PickerLocationId.HomeGroup,
+            var picker = new FolderPicker {                
+                SuggestedStartLocation = PickerLocationId.HomeGroup,                
             };
 
             SetOwnerWindow(hwnd, picker.As<IInitializeWithWindow>());

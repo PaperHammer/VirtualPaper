@@ -146,9 +146,6 @@ namespace Workloads.Creation.StaticImg.Models {
             using var ds = RenderTarget.CreateDrawingSession();
             if (IsNeedBackground) {
                 ds.Clear(Colors.White);
-                //ds.DrawRectangle(
-                //    new Rect(0, 0, RenderTarget.Size.Width, RenderTarget.Size.Height),
-                //    Colors.Transparent, 1f);
             }
             else {
                 ds.Clear(Colors.Transparent);

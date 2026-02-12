@@ -194,6 +194,13 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         protected void CaptureSelectionContent() {
             if (_selectionRect.IsEmpty) return;
 
+            // 更新选区矩形为整数坐标，避免还原后残留虚影
+            double x = Math.Floor(_selectionRect.X);
+            double y = Math.Floor(_selectionRect.Y);
+            double w = Math.Ceiling(_selectionRect.Width);
+            double h = Math.Ceiling(_selectionRect.Height);
+            _selectionRect = new Rect(x, y, w, h);
+
             //_selectionContent?.Dispose();
             _selectionContent ??= new CanvasRenderTarget(
                 RenderTarget,

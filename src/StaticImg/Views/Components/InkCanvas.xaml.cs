@@ -94,7 +94,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             };
             _viewModel.Data.SeletcedToolChanged += (s, e) => {
                 //before
-                HandleSelectionTool_Before();
+                HandleSelectionToolBefore();
                 _selectedTool = _tool.GetTool(_viewModel.Data.SelectedToolItem.Type);
                 //after
 
@@ -123,7 +123,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             TryRestore();
         }
 
-        private void HandleSelectionTool_Before() {
+        private void HandleSelectionToolBefore() {
             TryRestore();
         }
 
@@ -545,6 +545,5 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private CanvasImageBrush? _gridBrush;
         private const int _gridSize = 20;
         private InkProjectSession _session = null!;
-        //private float _opacity = 1f;
     }
 }

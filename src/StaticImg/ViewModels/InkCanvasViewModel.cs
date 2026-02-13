@@ -1,10 +1,16 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Context;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Models;
+using Workloads.Creation.StaticImg.Models.SerializableData;
 using Workloads.Creation.StaticImg.Models.Specific;
 
 namespace Workloads.Creation.StaticImg.ViewModels {
@@ -13,33 +19,35 @@ namespace Workloads.Creation.StaticImg.ViewModels {
 
         public InkCanvasViewModel(InkProjectSession session, ArcPageContext context) {
             _session = session;
+            _userSettingsClinet = AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>();
             Data = new InkCanvasData(session, context);
         }
 
         internal async Task SaveAsync() {
-            await Data.SaveAsync(_session);
-        }
-
-        internal async Task LoadAsync() {
-            switch (_session.RTFileType) {
-                case FileType.FImage:
-                    await LoadSttaicImageAsync();
-                    break;
-                case FileType.FDesign:
-                    await LoadDesignAsync();
-                    break;
-                default:
-                    break;
+            (var flag, var filePath) = await Data.SaveAsync(_session);
+            if (flag) {
+                await _userSettingsClinet.UpdateRecetUsedAsync(filePath!);
             }
         }
 
-        private async Task LoadSttaicImageAsync() {
-            // todo
-        }
-
-        private async Task LoadDesignAsync() {
+        internal async Task LoadAsync() {
             if (!File.Exists(_session.DesignFileUtil.FilePath)) {
                 Data.InitData();
+
+                // Prepare business data
+                var businessData = new BusinessData();
+                businessData.SetColors(Data.CustomColors);
+                businessData.SetSelectedLayerIndex(Math.Max(0, Data.ActiveLayers.ToList().IndexOf(Data.SelectedLayer)));
+
+                // Prepare layers
+                var layers = new List<Layer>();
+                foreach (var layerInfo in Data.ActiveLayers) {
+                    if (!layerInfo.IsDeleted && layerInfo.RenderData != null) {
+                        layers.Add(new Layer(layerInfo.Name, layerInfo.IsVisible, layerInfo.RenderData));
+                    }
+                }
+
+                await _session.DesignFileUtil.InitCacheAsync(Data.CanvasSize, businessData, layers);
             }
             else {
                 await Data.LoadAsync(_session);
@@ -63,5 +71,6 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             new() { Type = ToolType.CanvasSet, ToolName = "画布", Glyph = "\uE9E9", },
         ];
         private readonly InkProjectSession _session = null!;
+        private readonly IUserSettingsClient _userSettingsClinet;
     }
 }

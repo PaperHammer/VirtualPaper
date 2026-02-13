@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Shader;
@@ -30,9 +29,9 @@ namespace Workloads.Creation.StaticImg {
         /// <summary>
         /// 打开文件
         /// </summary>
-        /// <param name="filePath">类型为 FDeign 或静态图像的文件路径</param>
-        public MainPage(string file, FileType rtFileType) {            
-            Session = new InkProjectSession(file, rtFileType);
+        /// <param name="filePath">类型为 vpd 或静态图像的文件路径</param>
+        public MainPage(string filePath) {            
+            Session = new InkProjectSession(filePath);
             Payload = new FrameworkPayload() {
                 [NaviPayloadKey.ArcPageContext] = this.ArcContext,
                 [NaviPayloadKey.InkProjectSession] = this.Session
@@ -40,12 +39,6 @@ namespace Workloads.Creation.StaticImg {
             this.InitializeComponent();
             ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
         }
-
-        /// <summary>
-        /// 新建项目
-        /// </summary>
-        /// <param name="fileName">项目名</param>
-        public MainPage(string fileName) : this(fileName, FileType.FDesign) { }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             this.IsEnabled = false;

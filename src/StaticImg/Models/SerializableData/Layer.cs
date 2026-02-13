@@ -57,7 +57,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
             var renderData = new InkRenderData(session, canvasSize);
             var isEnable = reader.ReadBoolean();
-            var name = Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadUInt16()));            
+            var name = Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadUInt16()));
             var layer = new Layer(name, isEnable, renderData);
 
             ms.Position = 0; // Reset for InkRenderData

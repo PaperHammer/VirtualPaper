@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows.Input;
 using VirtualPaper.Grpc.Client.Interfaces;
@@ -14,6 +15,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         public ObservableCollection<IRecentUsed> RecentUseds { get; private set; } = [];
         public ICommand? RemoveFromListCommand { get; private set; }
         public ICommand? CopyPathCommand { get; private set; }
+        public ICommand? ShowOnDiskCommand { get; private set; }
         public bool IsElevated { get; }
 
         public GetStartViewModel(IUserSettingsClient userSettingsClient) {
@@ -38,6 +40,12 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     var package = new DataPackage();
                     package.SetText(item.FilePath);
                     Clipboard.SetContent(package);
+                }
+            });
+
+            ShowOnDiskCommand = new RelayCommand<IRecentUsed>(item => {
+                if (item?.FilePath != null) {
+                    Process.Start("Explorer", "/select," + item.FilePath);
                 }
             });
         }

@@ -122,7 +122,7 @@ namespace VirtualPaper.Common {
 
     public enum ProjectType {        
         PUnknown,
-        PImage,
+        P_StaticImage,
     }
 
     public enum ObjectLifetime {

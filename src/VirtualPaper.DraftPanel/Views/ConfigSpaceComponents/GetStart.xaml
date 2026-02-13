@@ -23,6 +23,10 @@
                 Text="{markup:I18n Key=SIG_Text_CopyPath}" 
                 Command="{x:Bind _viewModel.CopyPathCommand}"
                 CommandParameter="{Binding}"/>
+            <MenuFlyoutItem
+                Text="{markup:I18n Key=Text_ShowOnDisk}"
+                Command="{x:Bind _viewModel.ShowOnDiskCommand}"
+                CommandParameter="{Binding}"/>
         </MenuFlyout>
 
         <DataTemplate  x:Key="RecentUsedItemTemplate" x:DataType="draft:RecentUsed">

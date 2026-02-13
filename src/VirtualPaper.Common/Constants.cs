@@ -391,6 +391,8 @@ namespace VirtualPaper.Common {
             public static string? Project_Drops_Contains_Invalid_FIles { get; }
             public static string? Project_FileSave_Failed { get; }
             public static string? Project_FileLoad_Failed { get; }
+            public static string? Project_SI_Text_BackgroundLayer { get; }
+            public static string? Project_FileLoad_FileCorrupted { get; }
         }
 
         public static class Field {

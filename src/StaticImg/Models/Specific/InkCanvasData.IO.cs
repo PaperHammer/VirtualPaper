@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Mvvm;
@@ -34,7 +37,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                             Name = layer.Name ?? string.Empty,
                             IsVisible = layer.IsVisible,
                             RenderData = layer.RenderData
-                        }); 
+                        });
                         _layers.Clear();
                         _layers.AddRange(_allLayers);
                     }
@@ -56,19 +59,26 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             }
         }
 
-        public async Task<bool> SaveAsync(InkProjectSession session) {
+        public async Task<(bool Success, string? FinalPath)> SaveAsync(InkProjectSession session) {
             try {
                 if (!session.DesignFileUtil.IsValidFile) {
-                    string? selectedPath = (await WindowsStoragePickers.PickFolderAsync(WindowConsts.WindowHandle))?.Path;                   
-                    if (string.IsNullOrEmpty(selectedPath))
-                        return false;
+                    var saveFile = await WindowsStoragePickers.PickSaveFileAsync(
+                        WindowConsts.WindowHandle,
+                        Path.GetFileName(session.DesignFileUtil.FilePath),
+                        new Dictionary<string, string[]>() {
+                            ["Virtual Paper Design"] = [FileExtension.FE_Design]
+                        }
+                    );
+                    if (saveFile == null || string.IsNullOrEmpty(saveFile.Path))
+                        return (false, null);
 
-                    session.DesignFileUtil.SetFilePath(selectedPath);
+                    session.DesignFileUtil.SetFilePath(saveFile.Path);
                 }
 
                 // Prepare business data
                 var businessData = new BusinessData();
                 businessData.SetColors(CustomColors);
+                businessData.SetSelectedLayerIndex(Math.Max(0, ActiveLayers.ToList().IndexOf(SelectedLayer)));
 
                 // Prepare layers
                 var layers = new List<Layer>();
@@ -79,19 +89,13 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 }
 
                 // Save through project utility
-                await session.DesignFileUtil.SaveAsync(
-                    CanvasSize.Width,
-                    CanvasSize.Height,
-                    CanvasSize.Dpi,
-                    businessData,
-                    layers
-                );
+                (var flag, var filePath) = await session.DesignFileUtil.SaveAsync(CanvasSize,  businessData, layers);
 
-                return true;
+                return (flag, filePath);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error($"Save failed: {ex.Message}");
-                return false;
+                return (false, null);
             }
         }
 

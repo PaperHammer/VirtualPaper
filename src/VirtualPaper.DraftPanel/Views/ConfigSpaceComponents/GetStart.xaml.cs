@@ -10,6 +10,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Models.DraftPanel;
@@ -61,7 +62,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
                     return;
                 }
 
-                _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, ru.FilePath);
+                _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, new PreProjectData[] { new(ru.FilePath, ProjectType.P_StaticImage) });
                 _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
             }
         }
@@ -82,12 +83,12 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             if (items == null || items.Count < 1) return;
 
             int n = items.Count;
-            string[] filePaths = new string[n];
+            PreProjectData[] datas = new PreProjectData[n];
             for (int i = 0; i < items.Count; i++) {
-                filePaths[i] = items[i].Path;
+                datas[i] = new PreProjectData(items[i].Path, ProjectType.P_StaticImage);
             }
 
-            _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, filePaths);
+            _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, datas);
             _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
         }
 

@@ -8,11 +8,11 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
     public class BusinessData {
         public const int MAX_COLORS = 10;
 
-        public int LayerCount => _layerCount;
+        public int SelectedLayerIndex => _selectedLayerIndex;
         public IReadOnlyList<Color> Colors => _colors.AsReadOnly();
 
-        public void SetLayerCount(int layerCount) {
-            _layerCount = layerCount; 
+        public void SetSelectedLayerIndex(int selectedLayerIndex) {
+            _selectedLayerIndex = selectedLayerIndex; 
         }
 
         public void SetColors(IEnumerable<Color> colors) {
@@ -32,7 +32,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             using var writer = new BinaryWriter(ms);
 
             // 状态
-            writer.Write(data.LayerCount);
+            writer.Write(data.SelectedLayerIndex);
 
             // 颜色
             writer.Write((ushort)data._colors.Count);
@@ -54,8 +54,8 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             using var ms = new MemoryStream(data);
             using var reader = new BinaryReader(ms);
 
-            int layerCount = reader.ReadInt32();
-            instance.SetLayerCount(layerCount);
+            int selectedLayerIndex = reader.ReadInt32();
+            instance.SetSelectedLayerIndex(selectedLayerIndex);
 
             ushort count = reader.ReadUInt16();
             instance._colors.Capacity = count;            
@@ -78,12 +78,12 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
         internal BusinessData Clone() {
             var data = new BusinessData();
-            data.SetColors(this._colors);
-            data.SetLayerCount(this._layerCount);
+            data.SetColors(this.Colors);
+            data.SetSelectedLayerIndex(this.SelectedLayerIndex);
             return data;
         }
 
         private readonly List<Color> _colors = new(MAX_COLORS);
-        private int _layerCount;
+        private int _selectedLayerIndex;
     }
 }

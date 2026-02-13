@@ -6,7 +6,7 @@
       "DescImageKey": "DraftPanel_Create_StaticImge_Desc",
       "Name": "Draft_Template_StaticImage_Name",
       "Desc": "Draft_Template_StaticImage_Desc",
-      "Type": "PImage"
+      "Type": "P_StaticImage"
     }
   ]
 }

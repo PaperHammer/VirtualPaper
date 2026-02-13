@@ -15,7 +15,6 @@ using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.UIComponent.Utils.Extensions;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class DraftConfigViewModel : ObservableObject {
@@ -93,7 +92,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private void NextStepBtnAction() {
-            _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, new PreProjectData(ProjectName!, ProjectType.PImage));
+            _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, new PreProjectData[] { new(ProjectName!, ProjectType.P_StaticImage) });
             _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
         }
 

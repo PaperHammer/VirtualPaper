@@ -15,17 +15,9 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
         public CanvasDevice SharedDevice { get; private set; } = null!;
         public StaticImgUndoRedoUtil UnReUtil { get; private set; } = null!;
         public StaticImgDesignFileUtil DesignFileUtil { get; private set; }
-        public FileType RTFileType { get; private set; }
 
-        public InkProjectSession(string filePath, FileType type) {
-            RTFileType = type;
-            DesignFileUtil = StaticImgDesignFileUtil.Create(filePath);
-            Initialize();
-        }
-
-        public InkProjectSession(string fileName) {
-            RTFileType = FileType.FDesign;
-            DesignFileUtil = StaticImgDesignFileUtil.Create(fileName);
+        public InkProjectSession(string idnetify) {
+            DesignFileUtil = StaticImgDesignFileUtil.Create(idnetify);
             Initialize();
         }
 

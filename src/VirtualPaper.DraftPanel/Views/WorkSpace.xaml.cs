@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -31,13 +32,13 @@ namespace VirtualPaper.DraftPanel.Views {
             base.OnNavigatedTo(e);
 
             if (e.Parameter is FrameworkPayload payload) {
-                payload.TryGet(NaviPayloadKey.Project.ToString(), out _preProjectData);
+                payload.TryGet(NaviPayloadKey.Project.ToString(), out _preProjectDatas);
             }
         }
 
-        private void TabViewControl_Loaded(object sender, RoutedEventArgs e) {
-            if (_preProjectData == null) return;
-            _viewModel.InitTabViewItems(_preProjectData);
+        private async void TabViewControl_Loaded(object sender, RoutedEventArgs e) {
+            if (_preProjectDatas == null) return;
+            await _viewModel.InitTabViewItems(_preProjectDatas);
         }
 
         private void TabViewControl_TabItemsChanged(TabView sender, Windows.Foundation.Collections.IVectorChangedEventArgs args) {
@@ -72,7 +73,7 @@ namespace VirtualPaper.DraftPanel.Views {
             await _viewModel.RedoAsync();
         }
 
-        private WorkSpaceViewModel _viewModel;
-        private PreProjectData? _preProjectData;
+        private readonly WorkSpaceViewModel _viewModel;
+        private PreProjectData[]? _preProjectDatas;
     }
 }

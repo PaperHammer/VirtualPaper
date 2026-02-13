@@ -148,7 +148,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
         internal void InitData() {
             CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {WindowConsts.ArcWindowInstance.Content.XamlRoot.RasterizationScale * 96} DPI)";
-            AddLayer(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_Text_UnnamedLayer)), true);
+            AddLayer(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_Text_BackgroundLayer)), true);
             //BasicDataLoaded.TrySetResult(true);
             //RenderDataLoaded.TrySetResult(true);
         }
@@ -192,6 +192,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             if (e.NewItem != null) CustomColors.Add((Color)e.NewItem);
 
             var curBusdata = _session.DesignFileUtil.BusinessDataCache.Clone();
+            curBusdata.SetColors(CustomColors);
             await _session.DesignFileUtil.SaveBusinessDataAsync(curBusdata);
         }
 

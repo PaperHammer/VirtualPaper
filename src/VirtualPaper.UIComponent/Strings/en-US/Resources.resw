@@ -1064,4 +1064,10 @@ The following words cannot be used as usernames:
   <data name="Project_FileLoad_Failed" xml:space="preserve">
     <value>Failed to load the file: </value>
   </data>
+  <data name="Project_SI_Text_BackgroundLayer" xml:space="preserve">
+    <value>Background</value>
+  </data>
+  <data name="Project_FileLoad_FileCorrupted" xml:space="preserve">
+    <value>The file may be corrupted: </value>
+  </data>
 </root>

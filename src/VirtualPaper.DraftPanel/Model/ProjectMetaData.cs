@@ -30,7 +30,7 @@ namespace VirtualPaper.DraftPanel.Model {
             Name = draftName;
             DraftVersion = Constants.CoreField.DraftFileVersion;
             ProjectTags = [
-                new ProjectTag(preData.ProjName, preData.Type),
+                new ProjectTag(preData.Identity, preData.Type),
             ];
         }
 
@@ -62,19 +62,10 @@ namespace VirtualPaper.DraftPanel.Model {
         }
     }
 
-    public record PreProjectData {
-        public string? ProjName { get; }
-        public string[]? FilePaths { get; }
-        public ProjectType Type { get; }
-
-        public PreProjectData(string projName, ProjectType type) {
-            ProjName = projName;
-            Type = type;
-        }
-        
-        public PreProjectData(string[] filePaths, ProjectType type) {
-            FilePaths = filePaths;
-            Type = type;
-        }
-    }
+    /// <summary>
+    /// 预加载项目数据
+    /// </summary>
+    /// <param name="Identity">项目的标识：可能是绝对文件路径 (e.g. "C:\Work\A.prj")，也可能是新建项目的名称 (e.g. "MyNewProject")</param>
+    /// <param name="Type">项目类型</param>
+    public record PreProjectData(string Identity, ProjectType Type);
 }

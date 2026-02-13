@@ -11,6 +11,7 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         Task LoadAsync<T>();
         void Load<T>();
         Task UpdateRecetUsedAsync(string filePath);
-        Task DeleteRecetUsedAsync(IRecentUsed item);
+        Task UpdateRecetUsedAsync(string[] filePath);
+        Task DeleteRecetUsedAsync(IRecentUsed item);        
     }
 }

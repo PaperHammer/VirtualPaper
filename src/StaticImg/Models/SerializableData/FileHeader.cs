@@ -1,13 +1,15 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.Text;
+using VirtualPaper.Common;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct FileHeader {
-        // 基础标识区 (6字节)
+        // 基础标识区 (10字节)
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public byte[] Magic; // "VPD"标识
+        public byte[] Magic; // "_VPD"标识
         public ushort Version; // 当前版本：1
+        public ProjectType ProjType; // 项目类型
 
         // 画布参数区 (16字节)
         public float CanvasWidth; // 画布宽度（像素）
@@ -30,14 +32,14 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         /// <summary>
         /// 创建新文件头
         /// </summary>
-        public static FileHeader Create(float width, float height, uint dpi, int layerCount,
-            uint contentLength, uint layersLength) {
+        public static FileHeader Create(ArcSize arcSize, int layerCount, uint contentLength, uint layersLength) {
             var header = new FileHeader {
-                Magic = Encoding.ASCII.GetBytes("VPD"),
+                Magic = Encoding.ASCII.GetBytes("_VPD"),
                 Version = 1,
-                CanvasWidth = width,
-                CanvasHeight = height,
-                Dpi = dpi,
+                ProjType = ProjectType.P_StaticImage,
+                CanvasWidth = arcSize.Width,
+                CanvasHeight = arcSize.Height,
+                Dpi = arcSize.Dpi,
                 LayerCount = layerCount,
                 ContentOffset = (uint)Marshal.SizeOf<FileHeader>(),
                 ContentLength = contentLength,
@@ -54,13 +56,13 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         /// 验证文件头有效性
         /// </summary>
         public readonly bool IsValid() {
-            return Encoding.ASCII.GetString(Magic) == "VPD" &&
+            return Encoding.ASCII.GetString(Magic) == "_VPD" &&
                     Version is 1 &&
                     CanvasWidth > 0 &&
                     CanvasHeight > 0 &&
                     Dpi >= 72 &&
                     Dpi <= 1200 &&
-                    LayerCount >= 0 &&
+                    LayerCount > 0 &&
                     ContentOffset >= Marshal.SizeOf<FileHeader>() &&
                     LayersOffset >= ContentOffset + ContentLength;
         }

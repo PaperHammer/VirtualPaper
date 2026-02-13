@@ -4,6 +4,8 @@ using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
@@ -11,30 +13,44 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
     public partial class StaticImgDesignFileUtil {
         public string FilePath { get; private set; }
         public bool IsValidFile => File.Exists(FilePath);
-        //public bool IsFileName { get; private set; }
         public bool HasDiff { get; private set; }
-
-        public BusinessData? BusinessDataCache => _businessDataCache;
+        public FileHeader FileHeaderCache => _headerCache;
+        public BusinessData BusinessDataCache => _businessDataCache;
+        public List<Layer> LayesCache => _layersCache;
 
         private StaticImgDesignFileUtil(string path, bool isFileName) {
             FilePath = Path.GetFullPath(path);
-            //IsFileName = isFileName;
             // 如果是 FileName 说明是新建文件，并未存储，默认和本地有 diff
             HasDiff = isFileName;
+        }
+
+        public async Task InitCacheAsync(
+            ArcSize arcSize,
+            BusinessData business,
+            List<Layer> layers) {
+            var businessDataBytes = BusinessData.Serialize(business);
+            var layersBytes = await Layer.SerializeAsync(layers);
+            var header = FileHeader.Create(
+                arcSize,
+                layers.Count,
+                (uint)businessDataBytes.Length,
+                (uint)layersBytes.Length);
+
+            UpdateCache(header, business, layers);
         }
 
         /// <summary>
         /// 创建ProjectFile 自动区分路径和文件名
         /// </summary>
-        public static StaticImgDesignFileUtil Create(string input) {
-            if (string.IsNullOrWhiteSpace(input)) throw new ArgumentException("Input cannot be empty");
+        public static StaticImgDesignFileUtil Create(string idnetify) {
+            if (string.IsNullOrWhiteSpace(idnetify)) throw new ArgumentException("Input cannot be empty");
 
-            if (FileUtil.IsValidFilePath(input)) {
-                return new StaticImgDesignFileUtil(input, false);
+            if (FileUtil.IsValidFilePath(idnetify)) {
+                return new StaticImgDesignFileUtil(idnetify, false);
             }
 
-            if (FileUtil.IsValidFileName(input)) {                
-                return new StaticImgDesignFileUtil(Path.Combine(FileUtil.GetDocumentsDir(), input), true);
+            if (FileUtil.IsValidFileName(idnetify)) {                
+                return new StaticImgDesignFileUtil(Path.Combine(FileUtil.GetDocumentsDir(), idnetify), true);
             }
 
             throw new ArgumentException("Input is neither a valid path nor filename");
@@ -72,7 +88,8 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             string path,
             FileMode mode,
             int maxRetries = 3,
-            int bufferSize = 8192) {
+            int bufferSize = 8192,
+            bool autoCheckHeaderOnOpenMode = false) {
             FileStream? fs = null;
             Exception? lastError = null;
 
@@ -94,7 +111,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                         GetFileOptions(mode));
 
                     // 验证文件头（仅读取模式）
-                    if (mode == FileMode.Open) {
+                    if (autoCheckHeaderOnOpenMode && mode == FileMode.Open) {
                         var headerBytes = new byte[Marshal.SizeOf<FileHeader>()];
                         fs.Read(headerBytes);
                         var header = BytesToStructure<FileHeader>(headerBytes);
@@ -151,7 +168,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         }
 
         private void UpdateFile(string path) {
-            File.Replace(path, FilePath, null, true);
+            File.Move(path, FilePath, overwrite: true);
         }
 
         private void UpdateCache(FileHeader? header = null, BusinessData? businessData = null, List<Layer>? layers = null) {
@@ -164,8 +181,8 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         }
 
         private FileHeader _headerCache;
-        private BusinessData? _businessDataCache;
-        private List<Layer>? _layersCache;
+        private BusinessData _businessDataCache = null!;
+        private List<Layer> _layersCache = null!;
         private readonly SemaphoreSlim _ioLock = new(1, 1);
     }
 }

@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -10,12 +12,14 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.TabView;
 using VirtualPaper.UIComponent.Utils;
+using Workloads.Creation.StaticImg.Models.SerializableData;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject, IDisposable {
@@ -27,8 +31,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             set { if (_selectedTabIndex == value) return; _selectedTabIndex = value; OnPropertyChanged(); }
         }
 
-        public WorkSpaceViewModel(
-            IUserSettingsClient userSettings) {
+        public WorkSpaceViewModel(IUserSettingsClient userSettings) {
             this._userSettings = userSettings;
         }
 
@@ -117,22 +120,35 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         #endregion
 
         #region init
-        internal void InitTabViewItems(PreProjectData predata) {
-            if (predata.FilePaths != null) {
-                foreach (var filePath in predata.FilePaths) {
-                    if (FileUtil.IsValidFilePath(filePath)) {
-                        _ = InitRuntimeItemAsync(filePath);
+        internal async Task InitTabViewItems(PreProjectData[] predatas) {
+            using var semaphore = new SemaphoreSlim(5);
+
+            var tasks = new List<Task>();
+            foreach (var data in predatas) {
+                bool isFilePath = Path.IsPathRooted(data.Identity) || File.Exists(data.Identity);
+
+                if (isFilePath) {
+                    if (FileUtil.IsValidFilePath(data.Identity)) {
+                        tasks.Add(Task.Run(async () => {
+                            await semaphore.WaitAsync();
+                            try {
+                                await InitRuntimeItemAsync(data.Identity);
+                            }
+                            finally {
+                                semaphore.Release();
+                            }
+                        }));
                     }
                 }
-                return;
+                else {
+                    if (FileUtil.IsValidFileName(data.Identity)) {
+                        InitRuntimeItem(data.Identity, data.Type);
+                    }
+                }
             }
 
-            if (predata.ProjName != null) {
-                if (FileUtil.IsValidFileName(predata.ProjName)) {
-                    InitRuntimeItem(predata.ProjName, predata.Type);
-                }
-                return;
-            }
+            await Task.WhenAll(tasks);
+            await _userSettings.UpdateRecetUsedAsync(_tempRecentUsed.ToArray());
         }
 
         private async Task InitRuntimeItemAsync(string filePath) {
@@ -152,8 +168,10 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 //case FileType.FVideo:
                 //    break;
                 case FileType.FDesign:
-                    await ReadDraftFileAsync(filePath); // [folder]/xxx.vpd
-                    await _userSettings.UpdateRecetUsedAsync(filePath);
+                    var flag = await ReadDesignFileAsync(filePath); // [folder]/xxx.vpd
+                    if (flag) {
+                        _tempRecentUsed.Add(filePath);
+                    }
                     break;
                 default:
                     break;
@@ -164,11 +182,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             try {
                 IRuntime runtime;
                 switch (type) {
-                    case ProjectType.PUnknown:
-                        break;
-                    case ProjectType.PImage:
-                        runtime = new Workloads.Creation.StaticImg.MainPage(fileName);
-                        AddToWorkSpace(fileName, runtime);
+                    case ProjectType.P_StaticImage:
+                        CrossThreadInvoker.InvokeOnUIThread(() => {
+                            runtime = new Workloads.Creation.StaticImg.MainPage(fileName);
+                            AddToWorkSpace(fileName, runtime);
+                        });
                         break;
                     default:
                         break;
@@ -180,27 +198,41 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             }
         }
 
-        private async Task ReadDraftFileAsync(string filePath) {
+        private async Task<bool> ReadDesignFileAsync(string filePath) {
             try {
-                var draftMd = await ProjectMetaData.LoadAsync(filePath);
-                foreach (var projTag in draftMd.ProjectTags) {
-                    string entryFilePath = Path.Combine(Path.GetDirectoryName(filePath), projTag.EntryRelativeFilePath);
-
-                    IRuntime runtime;
-                    switch (projTag.Type) {
-                        case ProjectType.PImage:
-                            runtime = new Workloads.Creation.StaticImg.MainPage(entryFilePath, FileType.FDesign); // xxx.vpd
-                            AddToWorkSpace(entryFilePath, runtime);
-                            break;
-                        default:
-                            break;
-                    }
+                if (!File.Exists(filePath)) {
+                    GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
+                        message: nameof(Constants.I18n.Project_SI_FileNotFound),
+                        isNeedLocalizer: true,
+                        extraMsg: filePath);
+                    return false;
                 }
+
+                var result = await StaticImgDesignFileUtil.GetFileHeaderAsync(filePath);
+                if (result is not FileHeader header) {
+                    return false;
+                }
+
+                IRuntime runtime;
+                switch (header.ProjType) {
+                    case ProjectType.P_StaticImage:
+                        CrossThreadInvoker.InvokeOnUIThread(() => {
+                            runtime = new Workloads.Creation.StaticImg.MainPage(filePath); // xxx.vpd
+                            AddToWorkSpace(filePath, runtime);
+                        });
+                        break;
+                    default:
+                        break;
+                }
+
+                return true;
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WorkSpaceViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
+
+            return false;
         }
 
         private void AddToWorkSpace(string filePath, IRuntime runtime) {
@@ -221,6 +253,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         #region dispose
         private bool _isDisposed;
+
         protected virtual void Dispose(bool disposing) {
             if (!_isDisposed) {
                 if (disposing) {
@@ -241,5 +274,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         internal readonly ObservableCollection<MenuBarItem> _middleMenuItems = [];
         private readonly List<IRuntime> _rt = [];
         private readonly IUserSettingsClient _userSettings;
+        private readonly ConcurrentBag<string> _tempRecentUsed = [];
     }
 }

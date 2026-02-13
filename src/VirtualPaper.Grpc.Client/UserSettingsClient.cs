@@ -199,20 +199,47 @@ namespace VirtualPaper.Grpc.Client {
             _ = await _client.SetRecentUsedsAsync(tmp);
         }
 
-        public async Task UpdateRecetUsedAsync(string filePath) {
-            var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            var existingItem = RecentUseds.FirstOrDefault(r => r.FilePath == filePath);
-            if (existingItem != null) {
-                existingItem.DateTime = now;
+        public async Task UpdateRecetUsedAsync(string filePath) {            
+            lock (_singleLock) {
+                var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                var existingItem = RecentUseds.FirstOrDefault(r => r.FilePath == filePath);
+                if (existingItem != null) {
+                    existingItem.DateTime = now;
+                }
+                else {
+                    var recentUsed = new RecentUsed(
+                        FileFilter.GetRuntimeFileType(Path.GetExtension(filePath)),
+                        Path.GetFileName(filePath),
+                        filePath,
+                        now
+                    );
+                    RecentUseds.Add(recentUsed);
+                }
             }
-            else {
-                var recentUsed = new RecentUsed(
-                    FileFilter.GetRuntimeFileType(Path.GetExtension(filePath)),
-                    Path.GetFileName(filePath),
-                    filePath,
-                    now
-                );
-                RecentUseds.Add(recentUsed);
+            await SetRecentUsedsAsync();
+        }
+        
+        public async Task UpdateRecetUsedAsync(string[] filePaths) {
+            if (filePaths == null || filePaths.Length == 0) return;
+            
+            lock (_listLock) {
+                var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                foreach (var filePath in filePaths) {
+                    var existingItem = RecentUseds.FirstOrDefault(r => r.FilePath == filePath);
+
+                    if (existingItem != null) {
+                        existingItem.DateTime = now;
+                    }
+                    else {
+                        var recentUsed = new RecentUsed(
+                            FileFilter.GetRuntimeFileType(Path.GetExtension(filePath)),
+                            Path.GetFileName(filePath),
+                            filePath,
+                            now
+                        );
+                        RecentUseds.Add(recentUsed);
+                    }
+                }
             }
             await SetRecentUsedsAsync();
         }
@@ -240,5 +267,7 @@ namespace VirtualPaper.Grpc.Client {
         #endregion
 
         private readonly Grpc_UserSettingsService.Grpc_UserSettingsServiceClient _client;
+        private readonly object _listLock = new();
+        private readonly object _singleLock = new();
     }
 }

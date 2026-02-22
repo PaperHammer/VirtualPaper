@@ -11,12 +11,12 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         const int LAYER_MAGIC = 0x4C415952; // "LAYR"的ASCII十六进制表示
 
         public string Name { get; init; } = string.Empty;
-        public bool IsVisible { get; init; } = true;
+        public LayerState State { get; set; }
         public InkRenderData RenderData { get; }
 
-        public Layer(string name, bool isEnable, InkRenderData renderData) {
+        public Layer(string name, LayerState state, InkRenderData renderData) {
             Name = name ?? throw new ArgumentNullException(nameof(name));
-            IsVisible = isEnable;
+            State = state;
             RenderData = renderData ?? throw new ArgumentNullException(nameof(renderData));
         }
 
@@ -24,7 +24,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             using var ms = new MemoryStream();
             using var writer = new BinaryWriter(ms);
 
-            writer.Write(layer.IsVisible);
+            layer.State.Serialize(writer);
 
             var nameBytes = Encoding.UTF8.GetBytes(layer.Name);
             writer.Write((ushort)nameBytes.Length);
@@ -56,11 +56,10 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             using var reader = new BinaryReader(ms);
 
             var renderData = new InkRenderData(session, canvasSize);
-            var isEnable = reader.ReadBoolean();
+            var state = LayerState.Deserialize(reader);
             var name = Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadUInt16()));
-            var layer = new Layer(name, isEnable, renderData);
+            var layer = new Layer(name, state, renderData);
 
-            ms.Position = 0; // Reset for InkRenderData
             await renderData.LoadAsync(ms);
 
             return layer;
@@ -93,11 +92,11 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                     layers.Add(layer);
                 }
                 catch (Exception ex) when (i < layerCount - 1) {                    
-                    ArcLog.GetLogger<StaticImg.MainPage>().Error($"Layer {i} deserialization failed: {ex.Message}");
+                    ArcLog.GetLogger<MainPage>().Error($"Layer {i} deserialization failed: {ex.Message}");
 
                     // 尝试恢复位置到下一个图层起始处
                     if (!TryFindNextLayer(fs, LAYER_MAGIC)) {
-                        ArcLog.GetLogger<StaticImg.MainPage>().Error("Unable to locate the next valid layer, aborting read.");
+                        ArcLog.GetLogger<MainPage>().Error("Unable to locate the next valid layer, aborting read.");
                         break;
                     }
                 }

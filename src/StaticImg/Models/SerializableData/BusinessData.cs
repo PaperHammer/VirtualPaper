@@ -8,12 +8,8 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
     public class BusinessData {
         public const int MAX_COLORS = 10;
 
-        public int SelectedLayerIndex => _selectedLayerIndex;
+        public int SelectedLayerIndex { get; set; }
         public IReadOnlyList<Color> Colors => _colors.AsReadOnly();
-
-        public void SetSelectedLayerIndex(int selectedLayerIndex) {
-            _selectedLayerIndex = selectedLayerIndex; 
-        }
 
         public void SetColors(IEnumerable<Color> colors) {
             _colors.Clear();
@@ -31,10 +27,8 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             using var ms = new MemoryStream(CalculateSerializedSize(data));
             using var writer = new BinaryWriter(ms);
 
-            // 状态
             writer.Write(data.SelectedLayerIndex);
 
-            // 颜色
             writer.Write((ushort)data._colors.Count);
             foreach (ref readonly var color in CollectionsMarshal.AsSpan(data._colors)) {
                 writer.Write(color.R);
@@ -54,11 +48,10 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             using var ms = new MemoryStream(data);
             using var reader = new BinaryReader(ms);
 
-            int selectedLayerIndex = reader.ReadInt32();
-            instance.SetSelectedLayerIndex(selectedLayerIndex);
+            instance.SelectedLayerIndex = reader.ReadInt32();
 
             ushort count = reader.ReadUInt16();
-            instance._colors.Capacity = count;            
+            instance._colors.Capacity = count;
             for (int i = 0; i < count; i++) {
                 instance._colors.Add(new Color {
                     R = reader.ReadByte(),
@@ -79,11 +72,10 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         internal BusinessData Clone() {
             var data = new BusinessData();
             data.SetColors(this.Colors);
-            data.SetSelectedLayerIndex(this.SelectedLayerIndex);
+            data.SelectedLayerIndex = this.SelectedLayerIndex;
             return data;
         }
 
         private readonly List<Color> _colors = new(MAX_COLORS);
-        private int _selectedLayerIndex;
     }
 }

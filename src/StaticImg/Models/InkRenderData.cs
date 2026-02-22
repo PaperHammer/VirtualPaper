@@ -18,16 +18,17 @@ namespace Workloads.Creation.StaticImg.Models {
         public CanvasRenderTarget RenderTarget { get; private set; }
         public bool IsNeedBackground { get; }
         public Matrix3x2 Transform { get; private set; } = Matrix3x2.Identity;
+        public TaskCompletionSource<bool> IsInited => _isInited;
         public TaskCompletionSource<bool> IsReady => _isReady;
 
         public InkRenderData(InkProjectSession session, ArcSize arcSize, bool isNeedBackground = false) {
             _session = session;
             _arcSize = arcSize;
             IsNeedBackground = isNeedBackground;
-            InitializeRenderTarget();
+            Init();
         }
 
-        private void InitializeRenderTarget() {
+        public void Init() {
             RenderTarget?.Dispose();
             RenderTarget = new CanvasRenderTarget(
                 _session.SharedDevice,
@@ -37,7 +38,7 @@ namespace Workloads.Creation.StaticImg.Models {
                 _session.SharedFormat,
                 _session.SharedAlphaMode);
             if (IsNeedBackground) InitializeBlankRenderTarget(); // 初始化空白画布
-            IsReady.SetResult(true);
+            IsInited.SetResult(true);
         }
 
         #region save and load
@@ -46,7 +47,7 @@ namespace Workloads.Creation.StaticImg.Models {
         /// </summary>
         public async Task SaveAsync(
             Stream outputStream,
-            IProgress<double> progress = null,
+            IProgress<double>? progress = null,
             CancellationToken ct = default) {
             using var pngStream = new InMemoryRandomAccessStream();
             await RenderTarget.SaveAsync(pngStream, CanvasBitmapFileFormat.Png);
@@ -133,6 +134,8 @@ namespace Workloads.Creation.StaticImg.Models {
                     ds.DrawImage(bitmap);
                 }
 
+                //var colors = RenderTarget.GetPixelBytes();
+
                 IsReady.SetResult(true);
             }
             finally {
@@ -154,7 +157,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         internal InkRenderData Clone() {
             var newRender = new InkRenderData(_session, _arcSize) {
-                RenderTarget = this.RenderTarget.Clone()
+                RenderTarget = this.RenderTarget.Clone(),
             };
             newRender.IsReady.SetResult(true);
             return newRender;
@@ -335,5 +338,6 @@ namespace Workloads.Creation.StaticImg.Models {
         private CanvasBitmap? _cachedContent;
         private readonly object _lockResize = new();
         private readonly TaskCompletionSource<bool> _isReady = new();
+        private readonly TaskCompletionSource<bool> _isInited = new();
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.Json.Serialization;
 using VirtualPaper.UIComponent;
 using Windows.Foundation;
@@ -212,5 +213,23 @@ namespace Workloads.Creation.StaticImg {
         RotateRight,
         FlipHorizontally,
         FlipVertically,
+    }
+
+    public struct LayerState {
+        public bool IsVisible;
+        public bool IsDeleted;
+        public int ZIndex;
+
+        public void Serialize(BinaryWriter writer) {
+            writer.Write(IsVisible);
+            writer.Write(ZIndex);
+        }
+
+        public static LayerState Deserialize(BinaryReader reader) {
+            return new LayerState {
+                IsVisible = reader.ReadBoolean(),
+                ZIndex = reader.ReadInt32()
+            };
+        }
     }
 }

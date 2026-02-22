@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 
 namespace VirtualPaper.Common.Utils {
     public static partial class ComplianceUtil {
@@ -44,7 +44,7 @@ namespace VirtualPaper.Common.Utils {
             return true;
         }
 
-        public static bool IsValidValueOnlyLength(string value, int minLen = 1, int maxLen = 30) {
+        public static bool IsValidValueOnlyLength(string? value, int minLen = 1, int maxLen = 30) {
             if (string.IsNullOrEmpty(value)) {
                 return false;
             }

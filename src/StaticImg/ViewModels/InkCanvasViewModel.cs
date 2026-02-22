@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Context;
@@ -37,13 +36,17 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 // Prepare business data
                 var businessData = new BusinessData();
                 businessData.SetColors(Data.CustomColors);
-                businessData.SetSelectedLayerIndex(Math.Max(0, Data.ActiveLayers.ToList().IndexOf(Data.SelectedLayer)));
+                businessData.SelectedLayerIndex = Math.Max(0, Data.ActiveLayers.ToList().IndexOf(Data.SelectedLayer));
 
                 // Prepare layers
                 var layers = new List<Layer>();
                 foreach (var layerInfo in Data.ActiveLayers) {
                     if (!layerInfo.IsDeleted && layerInfo.RenderData != null) {
-                        layers.Add(new Layer(layerInfo.Name, layerInfo.IsVisible, layerInfo.RenderData));
+                        var state = new LayerState() {
+                            IsVisible = layerInfo.IsVisible,
+                            ZIndex = layerInfo.ZIndex,
+                        };
+                        layers.Add(new Layer(layerInfo.Name, state, layerInfo.RenderData));
                     }
                 }
 

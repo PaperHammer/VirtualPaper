@@ -206,7 +206,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void PartialRender(IEnumerable<LayerInfo> layers, CanvasDrawingSession ds, Rect region) {
             // 禁用抗锯齿（开启抗锯齿的局部刷新会导致刷新区域边界出现细线）
             // 抗锯齿算法将由各工具自己实现      
-            ds.Antialiasing = CanvasAntialiasing.Aliased;
+            //ds.Antialiasing = CanvasAntialiasing.Aliased;
 
             foreach (var layer in layers.Reverse()) {
                 if (layer.RenderData == null) continue;
@@ -394,7 +394,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         #endregion
 
         #region Layer Mangaer
-        private void LayerManage_AddLayerRequest(object sender, EventArgs e) {
+        private void LayerManage_AddLayerRequest(object sender, Guid id) {
             _viewModel.Data.AddLayer();
             RenderToCompositeTarget(RenderMode.FullRegion);
         }

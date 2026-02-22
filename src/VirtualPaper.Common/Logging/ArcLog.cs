@@ -33,7 +33,7 @@ namespace VirtualPaper.Common.Logging {
 
         [Conditional("DEBUG")]
         private void WriteDebugLine(string level, string? message) {
-            Console.WriteLine($"[{level}] ({_inner.Name}): {message}");
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] [{level}] ({_inner.Name}): {message}");
         }
 
         public void Info(string message) {

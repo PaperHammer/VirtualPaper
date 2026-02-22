@@ -5,21 +5,21 @@ using VirtualPaper.Common;
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct FileHeader {
-        // 基础标识区 (10字节)
+        // 基础标识区 (6字节)
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public byte[] Magic; // "_VPD"标识
         public ushort Version; // 当前版本：1
-        public ProjectType ProjType; // 项目类型
-
+       
         // 画布参数区 (16字节)
+        public ProjectType ProjType; // 项目类型
         public float CanvasWidth; // 画布宽度（像素）
         public float CanvasHeight; // 画布高度（像素）
         public uint Dpi; // 分辨率（DPI）
         public int LayerCount; // 图层数量
 
         // 数据布局区 (16字节)
-        public uint ContentOffset; // 业务数据起始偏移
-        public uint ContentLength; // 业务数据长度
+        public uint BusinessDataOffset; // 业务数据起始偏移
+        public uint BusinessDataLength; // 业务数据长度
         public uint LayersOffset; // 图层数据起始偏移
         public uint LayersLength; // 图层数据长度
 
@@ -41,8 +41,8 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 CanvasHeight = arcSize.Height,
                 Dpi = arcSize.Dpi,
                 LayerCount = layerCount,
-                ContentOffset = (uint)Marshal.SizeOf<FileHeader>(),
-                ContentLength = contentLength,
+                BusinessDataOffset = (uint)Marshal.SizeOf<FileHeader>(),
+                BusinessDataLength = contentLength,
                 LayersOffset = (uint)Marshal.SizeOf<FileHeader>() + contentLength,
                 LayersLength = layersLength,
                 CRC32 = 0,
@@ -57,21 +57,21 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         /// </summary>
         public readonly bool IsValid() {
             return Encoding.ASCII.GetString(Magic) == "_VPD" &&
-                    Version is 1 &&
-                    CanvasWidth > 0 &&
-                    CanvasHeight > 0 &&
-                    Dpi >= 72 &&
-                    Dpi <= 1200 &&
-                    LayerCount > 0 &&
-                    ContentOffset >= Marshal.SizeOf<FileHeader>() &&
-                    LayersOffset >= ContentOffset + ContentLength;
+                Version is 1 &&
+                CanvasWidth > 0 &&
+                CanvasHeight > 0 &&
+                Dpi >= 72 &&
+                Dpi <= 1200 &&
+                LayerCount > 0 &&
+                BusinessDataOffset >= Marshal.SizeOf<FileHeader>() &&
+                LayersOffset >= BusinessDataOffset + BusinessDataLength;
         }
 
         /// <summary>
         /// 获取文件总大小
         /// </summary>
         public readonly long GetTotalFileSize() =>
-            Marshal.SizeOf<FileHeader>() + ContentLength + LayersLength;
+            Marshal.SizeOf<FileHeader>() + BusinessDataLength + LayersLength;
 
         /// <summary>
         /// 设置保留字段标志位

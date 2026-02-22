@@ -1,10 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
-using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Collection;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Models;
@@ -16,7 +15,7 @@ using Workloads.Creation.StaticImg.Views.Components;
 namespace Workloads.Creation.StaticImg.Views.Tools {
     public sealed partial class LayerManageControl : UserControl {
         public event EventHandler<ItemMoveEventArgs> MoveLayerRequest;
-        public event EventHandler AddLayerRequest;
+        public event EventHandler<Guid> AddLayerRequest;
         public event EventHandler<Guid> CopyLayerRequest;
         public event EventHandler<Guid> RenameLayerRequest;
         public event EventHandler<Guid> DeleteLayerRequest;
@@ -47,7 +46,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         }
 
         private void AddLayer_Click(object sender, RoutedEventArgs e) {
-            AddLayerRequest?.Invoke(sender, EventArgs.Empty);
+            AddLayerRequest?.Invoke(sender, _rightTappedItem.ItemTag);
         }
 
         private void CopyLayer_Click(object sender, RoutedEventArgs e) {

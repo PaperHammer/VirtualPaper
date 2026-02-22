@@ -5,7 +5,7 @@ using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Files;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
@@ -128,6 +128,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                     lastError = ex;
                     Thread.Sleep(100 * attempt); // 指数退避
                     fs?.Dispose();
+                    ArcLog.GetLogger<StaticImgDesignFileUtil>().Error(ex);
                 }
             }
 

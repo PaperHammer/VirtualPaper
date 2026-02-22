@@ -17,7 +17,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
     public partial class InkCanvasData {
         public async Task<bool> LoadAsync(InkProjectSession session) {
             try {
-                var (header, contentAbstract, layers) = await session.DesignFileUtil.LoadAsync(session);
+                var (header, businessData, layers) = await session.DesignFileUtil.LoadAsync(session);
 
                 if (header.HasValue) {
                     CanvasSize = new ArcSize(header.Value.CanvasWidth, header.Value.CanvasHeight, header.Value.Dpi, RebuildMode.None);
@@ -25,21 +25,35 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
                 // Update colors
                 CustomColors.Clear();
-                if (contentAbstract?.Colors != null) {
-                    CustomColors.AddRange(contentAbstract.Colors);
+                if (businessData?.Colors != null) {
+                    CustomColors.AddRange(businessData.Colors);
                 }
 
                 // Update layers
                 _allLayers.Clear();
+                _layers.Clear();
                 if (layers != null) {
+                    //foreach (var layer in layers) {
+                    //_allLayers.Add(new LayerInfo {
+                    //    Name = layer.Name ?? string.Empty,
+                    //    IsVisible = layer.State.IsVisible,
+                    //    RenderData = layer.RenderData
+                    //});
+                    //_layers.Clear();
+                    //_layers.AddRange(_allLayers);
+                    //}
+
                     foreach (var layer in layers) {
-                        _allLayers.Add(new LayerInfo {
-                            Name = layer.Name ?? string.Empty,
-                            IsVisible = layer.IsVisible,
-                            RenderData = layer.RenderData
-                        });
-                        _layers.Clear();
-                        _layers.AddRange(_allLayers);
+                        var layerInfo = new LayerInfo {
+                            Name = layer.Name,
+                            RenderData = layer.RenderData.Clone(),
+                            IsVisible = layer.State.IsVisible,
+                            ZIndex = layer.State.ZIndex,
+                        };
+
+                        layerInfo.PropertyChanged += OnLayerPropertyChanged;
+                        _allLayers.Add(layerInfo);
+                        _layers.Add(layerInfo);
                     }
                 }
                 else {
@@ -78,18 +92,22 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 // Prepare business data
                 var businessData = new BusinessData();
                 businessData.SetColors(CustomColors);
-                businessData.SetSelectedLayerIndex(Math.Max(0, ActiveLayers.ToList().IndexOf(SelectedLayer)));
+                businessData.SelectedLayerIndex = Math.Max(0, ActiveLayers.ToList().IndexOf(SelectedLayer));
 
                 // Prepare layers
                 var layers = new List<Layer>();
-                foreach (var layerInfo in ActiveLayers) {
+                foreach (var layerInfo in Layers) {
                     if (!layerInfo.IsDeleted && layerInfo.RenderData != null) {
-                        layers.Add(new Layer(layerInfo.Name, layerInfo.IsVisible, layerInfo.RenderData));
+                        var state = new LayerState() {
+                            IsVisible = layerInfo.IsVisible,
+                            ZIndex = layerInfo.ZIndex,
+                        };
+                        layers.Add(new Layer(layerInfo.Name, state, layerInfo.RenderData));
                     }
                 }
 
                 // Save through project utility
-                (var flag, var filePath) = await session.DesignFileUtil.SaveAsync(CanvasSize,  businessData, layers);
+                (var flag, var filePath) = await session.DesignFileUtil.SaveAsync(CanvasSize, businessData, layers);
 
                 return (flag, filePath);
             }

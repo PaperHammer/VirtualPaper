@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -19,10 +20,11 @@
         <StackPanel
             Spacing="4">
             <TextBlock
-                Text="{x:Bind _viewModel.RenameDialog_Text_BeforeChange}"
+                Text="{markup:I18n Key=RenameDialog_Text_BeforeChange}"
+                FontWeight="Bold"
                 FontSize="12"/>
             <TextBlock
-                Text="{x:Bind _viewModel.OldName, Mode=OneWay}"
+                Text="{x:Bind _viewModel.OldName}"
                 FontSize="12"/>
         </StackPanel>
 
@@ -32,7 +34,8 @@
             HorizontalAlignment="Left"
             Spacing="6">
             <TextBlock
-                Text="{x:Bind _viewModel.RenameDialog_Text_AfterChange}"
+                Text="{markup:I18n Key=RenameDialog_Text_AfterChange}"
+                FontWeight="Bold"
                 FontSize="12"/>
 
             <TextBox
@@ -46,7 +49,7 @@
                 Orientation="Horizontal"
                 Spacing="4"
                 Margin="2 0 0 0"
-                Visibility="{x:Bind _viewModel.IsNameOk, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Reverse}">
+                Visibility="{x:Bind _viewModel.IsNameOk, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}">
                 <FontIcon 
                     FontSize="14"
                     VerticalAlignment="Bottom"
@@ -54,7 +57,7 @@
                     Glyph="&#xE783;" />
 
                 <TextBlock
-                    Text="{x:Bind _viewModel.NewName_InvalidTip}"
+                    Text="{markup:I18n Key=Project_NewName_InvalidTip}"
                     FontSize="12"
                     Foreground="Red"/>
             </StackPanel>

@@ -7,7 +7,7 @@ using VirtualPaper.UIComponent.Utils;
 namespace Workloads.Creation.StaticImg.Models {
     public partial class LayerInfo : ObservableObject {
         public InkRenderData RenderData { get; set; }
-        public Guid Tag => _tag;
+        public Guid Tag => _tag;        
 
         private string _name = string.Empty;
         public string Name {
@@ -27,6 +27,7 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         public bool IsDeleted { get; set; }
+        public int ZIndex { get; set; }
 
         ImageSource _layerThum;
         public ImageSource LayerThum {

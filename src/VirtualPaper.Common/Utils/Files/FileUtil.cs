@@ -3,6 +3,22 @@ using System.Security.Cryptography;
 
 namespace VirtualPaper.Common.Utils.Files {
     public static class FileUtil {
+        public static string GetTempFile(string directory, string extension = "") {
+            if (!Directory.Exists(directory)) {
+                Directory.CreateDirectory(directory);
+            }
+
+            string fileName = Path.GetRandomFileName();
+            if (!string.IsNullOrEmpty(extension)) {
+                fileName = Path.ChangeExtension(fileName, extension);
+            }
+
+            string fullPath = Path.Combine(directory, fileName);
+            using (File.Create(fullPath)) { }
+
+            return fullPath;
+        }
+
         // 当前用户的“文档”目录，如 C:\Users\用户名\Documents
         public static string GetDocumentsDir() {
             return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);

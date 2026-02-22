@@ -8,7 +8,7 @@ namespace VirtualPaper.Common.Utils {
         public static void DebugOutPut(string msg) {
             try {
                 var tag = GetCallerTag();
-                Debug.WriteLine($"[{tag}] {msg}");
+                Debug.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] [{tag}] {msg}");
             }
             catch { }
         }

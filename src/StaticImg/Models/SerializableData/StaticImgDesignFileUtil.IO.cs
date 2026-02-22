@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Security;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Core.Utils;
@@ -37,7 +38,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                     GlobalMessageUtil.ShowWarning(
                         ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                         message: nameof(Constants.I18n.Project_FileLoad_FileCorrupted),
-                        isNeedLocalizer: true, 
+                        isNeedLocalizer: true,
                         extraMsg: filePath);
                     return null;
                 }
@@ -79,8 +80,8 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 var header = BytesToStructure<FileHeader>(headerBytes);
 
                 // Read business data
-                fs.Position = header.ContentOffset;
-                var businessDataBytes = new byte[header.ContentLength];
+                fs.Position = header.BusinessDataOffset;
+                var businessDataBytes = new byte[header.BusinessDataLength];
                 await fs.ReadAsync(businessDataBytes);
                 var businessData = BusinessData.Deserialize(businessDataBytes);
 
@@ -101,17 +102,17 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 _ioLock.Release();
             }
         }
-        
+
         public async Task<(bool Success, string? FinalPath)> SaveAsync(
             ArcSize arcSize,
             BusinessData business,
             List<Layer> layers) {
             await _ioLock.WaitAsync();
-            string? tempPath = Path.GetTempFileName();
+            string tempPath = FileUtil.GetTempFile(Constants.CommonPaths.TempDir);
 
             try {
                 var businessDataBytes = BusinessData.Serialize(business);
-                var layersBytes = await Layer.SerializeAsync(layers); 
+                var layersBytes = await Layer.SerializeAsync(layers);
                 var header = FileHeader.Create(
                     arcSize,
                     layers.Count,
@@ -156,13 +157,13 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             }
 
             await _ioLock.WaitAsync();
-            string? tempPath = Path.GetTempFileName();
+            string tempPath = FileUtil.GetTempFile(Constants.CommonPaths.TempDir);
 
             try {
                 var businessDataBytes = BusinessData.Serialize(business);
                 var header = _headerCache;
-                header.ContentLength = (uint)businessDataBytes.Length;
-                header.LayersOffset = (uint)Marshal.SizeOf<FileHeader>() + header.ContentLength;
+                header.BusinessDataLength = (uint)businessDataBytes.Length;
+                header.LayersOffset = (uint)Marshal.SizeOf<FileHeader>() + header.BusinessDataLength;
 
                 // 重新计算 Header CRC
                 byte[] headerBuffer = StructureToBytes(header);
@@ -212,7 +213,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             }
 
             await _ioLock.WaitAsync();
-            string? tempPath = Path.GetTempFileName();
+            string tempPath = FileUtil.GetTempFile(Constants.CommonPaths.TempDir);
 
             try {
                 var layersBytes = await Layer.SerializeAsync(layers);
@@ -221,7 +222,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 var header = _headerCache;
                 header.LayerCount = layers.Count;
                 header.LayersLength = (uint)layersBytes.Length;
-                header.LayersOffset = (uint)Marshal.SizeOf<FileHeader>() + header.ContentLength;
+                header.LayersOffset = (uint)Marshal.SizeOf<FileHeader>() + header.BusinessDataLength;
 
                 byte[] headerBuffer = StructureToBytes(header);
                 header.CRC32 = CrcUtils.ComputeCrc32(headerBuffer.AsSpan(0, headerBuffer.Length - 4));
@@ -231,12 +232,12 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                     using var fsTemp = CreateFileStream(tempPath, FileMode.Create);
                     await fsTemp.WriteAsync(StructureToBytes(header));
 
-                    if (header.ContentLength > 0) {
+                    if (header.BusinessDataLength > 0) {
                         using var fsSource = CreateFileStream(FilePath, FileMode.Open);
-                        fsSource.Position = _headerCache.ContentOffset; // 使用缓存中的偏移量
+                        fsSource.Position = _headerCache.BusinessDataOffset; // 使用缓存中的偏移量
 
                         // 使用流复制，避免内存问题
-                        await CopyStreamRangeAsync(fsSource, fsTemp, _headerCache.ContentLength);
+                        await CopyStreamRangeAsync(fsSource, fsTemp, _headerCache.BusinessDataLength);
                         //var businessDataBytes = new byte[header.ContentLength];
                         //await fsSource.ReadAsync(businessDataBytes);
                         //await fsTemp.WriteAsync(businessDataBytes);

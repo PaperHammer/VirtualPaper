@@ -15,6 +15,8 @@ using Workloads.Creation.StaticImg.Extensions;
 
 namespace Workloads.Creation.StaticImg.Models {
     public partial class InkRenderData : IDisposable {
+        public event EventHandler ContentChanged;
+
         public CanvasRenderTarget RenderTarget { get; private set; }
         public bool IsNeedBackground { get; }
         public Matrix3x2 Transform { get; private set; } = Matrix3x2.Identity;
@@ -39,6 +41,10 @@ namespace Workloads.Creation.StaticImg.Models {
                 _session.SharedAlphaMode);
             if (IsNeedBackground) InitializeBlankRenderTarget(); // 初始化空白画布
             IsInited.SetResult(true);
+        }
+
+        public void NotifyContentChanged() {
+            ContentChanged?.Invoke(this, EventArgs.Empty);
         }
 
         #region save and load

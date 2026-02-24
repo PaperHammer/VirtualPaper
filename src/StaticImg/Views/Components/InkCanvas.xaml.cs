@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.UI.Xaml;
+using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -182,8 +183,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             var layers = _viewModel.Data.ActiveLayers;
             using (var ds = _compositeTarget.CreateDrawingSession()) {
-                ds.Blend = CanvasBlend.Copy;
                 if (mode == RenderMode.FullRegion) {
+                    ds.Clear(Colors.Transparent);
                     FullRender(layers, ds);
                 }
                 else {
@@ -196,24 +197,42 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void FullRender(IEnumerable<LayerInfo> layers, CanvasDrawingSession ds) {
-            // 逆序遍历
-            foreach (var layer in layers.Reverse()) {
-                if (layer.RenderData == null) continue;
-                ds.DrawImage(layer.RenderData.RenderTarget);
+            //foreach (var layer in layers.Reverse()) {
+            //    if (layer.RenderData == null) continue;
+            //    ds.DrawImage(layer.RenderData.RenderTarget);
+            //}
+            using (var batch = ds.CreateSpriteBatch()) {
+                foreach (var layer in layers.Reverse()) {
+                    if (layer.RenderData?.RenderTarget == null) continue;
+                    // SpriteBatch 在绘制大量纹理时效率更高
+                    batch.Draw(layer.RenderData.RenderTarget, new System.Numerics.Vector2(0, 0));
+                }
             }
         }
 
         private void PartialRender(IEnumerable<LayerInfo> layers, CanvasDrawingSession ds, Rect region) {
-            // 禁用抗锯齿（开启抗锯齿的局部刷新会导致刷新区域边界出现细线）
-            // 抗锯齿算法将由各工具自己实现      
-            //ds.Antialiasing = CanvasAntialiasing.Aliased;
+            //foreach (var layer in layers.Reverse()) {
+            //    if (layer.RenderData == null) continue;
 
-            foreach (var layer in layers.Reverse()) {
-                if (layer.RenderData == null) continue;
+            //    var visibleRect = region.IntersectRect(layer.RenderData.RenderTarget.Bounds);
+            //    if (!visibleRect.IsEmpty) {
+            //        ds.DrawImage(layer.RenderData.RenderTarget, visibleRect, visibleRect);
+            //    }
+            //}
+            using (var layerDs = ds.CreateLayer(1.0f, region)) { // 限制绘制区域提升性能
+                ds.Blend = CanvasBlend.Copy;
+                ds.FillRectangle(region, Colors.Transparent); // 强制抹除旧的合成像素
+                ds.Blend = CanvasBlend.SourceOver; // 切回正常模式进行重新合并
 
-                var visibleRect = region.IntersectRect(layer.RenderData.RenderTarget.Bounds);
-                if (!visibleRect.IsEmpty) {
-                    ds.DrawImage(layer.RenderData.RenderTarget, visibleRect, visibleRect);
+                foreach (var layer in layers.Reverse()) {
+                    if (layer.RenderData?.RenderTarget == null) continue;
+
+                    // 检查图层内容是否与刷新区域有交集
+                    var visibleRect = region.IntersectRect(layer.RenderData.RenderTarget.Bounds);
+                    if (!visibleRect.IsEmpty) {
+                        // 使用源矩形和目标矩形 1:1 绘制
+                        ds.DrawImage(layer.RenderData.RenderTarget, visibleRect, visibleRect);
+                    }
                 }
             }
         }

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Class="Workloads.Creation.StaticImg.Views.Components.LayerItem"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -33,11 +33,11 @@
                 BorderThickness="0.5">
                 <Grid>
                     <Image 
-                        Stretch="Fill"
+                        Stretch="UniformToFill"
                         Source="{StaticResource DraftPanel_Create_StaticImge_LayerThu}"/>
 
                     <Image  
-                        Stretch="Fill"
+                        Stretch="UniformToFill"
                         Source="{x:Bind LayerThum, Mode=OneWay}"/>
                 </Grid>
             </Border>

@@ -1,6 +1,5 @@
 using System;
 using Microsoft.Graphics.Canvas;
-using VirtualPaper.Common;
 using Windows.Graphics.DirectX;
 using Workloads.Creation.StaticImg.InkSystem.Utils;
 using Workloads.Creation.StaticImg.Models.SerializableData;

@@ -15,7 +15,7 @@ using Workloads.Creation.StaticImg.Extensions;
 
 namespace Workloads.Creation.StaticImg.Models {
     public partial class InkRenderData : IDisposable {
-        public event EventHandler ContentChanged;
+        public event EventHandler OnceRenderCompleted;
 
         public CanvasRenderTarget RenderTarget { get; private set; }
         public bool IsNeedBackground { get; }
@@ -27,6 +27,11 @@ namespace Workloads.Creation.StaticImg.Models {
             _session = session;
             _arcSize = arcSize;
             IsNeedBackground = isNeedBackground;
+            IsReady.Task.ContinueWith(t => {
+                if (t.Status == TaskStatus.RanToCompletion && t.Result) {
+                    HandleOnceRenderCompleted();
+                }
+            });
             Init();
         }
 
@@ -43,8 +48,8 @@ namespace Workloads.Creation.StaticImg.Models {
             IsInited.SetResult(true);
         }
 
-        public void NotifyContentChanged() {
-            ContentChanged?.Invoke(this, EventArgs.Empty);
+        public void HandleOnceRenderCompleted() {
+            OnceRenderCompleted?.Invoke(this, EventArgs.Empty);
         }
 
         #region save and load
@@ -165,7 +170,7 @@ namespace Workloads.Creation.StaticImg.Models {
             var newRender = new InkRenderData(_session, _arcSize) {
                 RenderTarget = this.RenderTarget.Clone(),
             };
-            newRender.IsReady.SetResult(true);
+            
             return newRender;
         }
 

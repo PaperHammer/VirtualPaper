@@ -80,6 +80,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 tool.RenderRequest += (s, e) => {
                     RenderToCompositeTarget(e.Mode, e.Region);
                 };
+
+                tool.OnceRenderCompleted += (s, e) => {
+                    OnOnceRenderCompleted();
+                };
             }
         }
 
@@ -177,7 +181,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
         }
 
-        internal void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
+        private void OnOnceRenderCompleted() {
+            _viewModel.Data.SelectedLayer.RenderData.HandleOnceRenderCompleted();
+        }
+
+        private void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
             DebugUtil.DebugOutPut("RenderToCompositeTarget triggered");
             if (_compositeTarget == null) return;
 
@@ -197,10 +205,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void FullRender(IEnumerable<LayerInfo> layers, CanvasDrawingSession ds) {
-            //foreach (var layer in layers.Reverse()) {
-            //    if (layer.RenderData == null) continue;
-            //    ds.DrawImage(layer.RenderData.RenderTarget);
-            //}
             using (var batch = ds.CreateSpriteBatch()) {
                 foreach (var layer in layers.Reverse()) {
                     if (layer.RenderData?.RenderTarget == null) continue;
@@ -211,14 +215,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void PartialRender(IEnumerable<LayerInfo> layers, CanvasDrawingSession ds, Rect region) {
-            //foreach (var layer in layers.Reverse()) {
-            //    if (layer.RenderData == null) continue;
-
-            //    var visibleRect = region.IntersectRect(layer.RenderData.RenderTarget.Bounds);
-            //    if (!visibleRect.IsEmpty) {
-            //        ds.DrawImage(layer.RenderData.RenderTarget, visibleRect, visibleRect);
-            //    }
-            //}
             using (var layerDs = ds.CreateLayer(1.0f, region)) { // 限制绘制区域提升性能
                 ds.Blend = CanvasBlend.Copy;
                 ds.FillRectangle(region, Colors.Transparent); // 强制抹除旧的合成像素

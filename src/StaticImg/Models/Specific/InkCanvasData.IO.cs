@@ -33,15 +33,6 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 _allLayers.Clear();
                 _layers.Clear();
                 if (layers != null) {
-                    //foreach (var layer in layers) {
-                    //_allLayers.Add(new LayerInfo {
-                    //    Name = layer.Name ?? string.Empty,
-                    //    IsVisible = layer.State.IsVisible,
-                    //    RenderData = layer.RenderData
-                    //});
-                    //_layers.Clear();
-                    //_layers.AddRange(_allLayers);
-                    //}
 
                     foreach (var layer in layers) {
                         var layerInfo = new LayerInfo {
@@ -50,7 +41,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                             IsVisible = layer.State.IsVisible,
                             ZIndex = layer.State.ZIndex,
                         };
-
+                        layerInfo.RenderData.IsReady.SetResult(true);
                         layerInfo.PropertyChanged += OnLayerPropertyChanged;
                         _allLayers.Add(layerInfo);
                         _layers.Add(layerInfo);

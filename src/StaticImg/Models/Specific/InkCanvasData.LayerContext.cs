@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.UndoRedo;
@@ -15,7 +14,6 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
 using Windows.Foundation;
 using Workloads.Creation.StaticImg.Events;
-using Workloads.Creation.StaticImg.Models.SerializableData;
 
 namespace Workloads.Creation.StaticImg.Models.Specific {
     // LayerContext part of InkCanvasData
@@ -49,22 +47,16 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
         public LayerInfo AddLayer(string? name = null, bool isBackground = false) {
             var layer = new LayerInfo {
-                Name = name ?? $"Layer {_allLayers.Count + 1}",
+                Name = name ?? $"Layer New {_allLayers.Count + 1}",
                 RenderData = new InkRenderData(_session, CanvasSize, isBackground),
                 IsDeleted = false,
                 IsVisible = true,
                 ZIndex = _allLayers.Count - 1
             };
-
-            //_layerStates[layer.Tag] = new LayerState {
-            //    IsDeleted = false,
-            //    IsVisible = true,
-            //    ZIndex = _allLayers.Count - 1
-            //};
+            layer.RenderData.IsReady.SetResult(true);
             layer.PropertyChanged += OnLayerPropertyChanged;
             _allLayers.Add(layer);
             _layers.Add(layer);
-            //UpdateLayerState(layer);
             OnAnyLayerStateChanged();
 
             _session.UnReUtil.RecordCommand(
@@ -78,20 +70,15 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             if (originalLayer == null || originalLayer.RenderData == null) return null;
 
             var layer = new LayerInfo {
-                Name = originalLayer.Name + " Copy",
+                Name = $"{originalLayer.Name} Copy {_allLayers.Count + 1}",
                 IsVisible = originalLayer.IsVisible,
-                RenderData = originalLayer.RenderData.Clone(),                
+                RenderData = originalLayer.RenderData.Clone(),
             };
+            layer.RenderData.IsReady.SetResult(true);
 
-            //_layerStates[layer.Tag] = new LayerState {
-            //    IsDeleted = false,
-            //    IsVisible = layer.IsVisible,
-            //    ZIndex = _allLayers.Count - 1
-            //};
             layer.PropertyChanged += OnLayerPropertyChanged;
             _allLayers.Add(layer);
             _layers.Add(layer);
-            //UpdateLayerState(layer);
             OnAnyLayerStateChanged();
 
             _session.UnReUtil.RecordCommand(
@@ -103,18 +90,11 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         public void DeleteLayer(Guid layerId) {
             var layer = _allLayers.FirstOrDefault(x => x.Tag == layerId);
             if (layer == null ||
-                //!_layerStates.TryGetValue(layer.Tag, out var state) ||
                 layer.IsDeleted) return;
 
             layer.IsDeleted = true;
-            //layer.State = new LayerState() {
-            //    IsDeleted = true,
-            //    IsVisible = layer.State.IsVisible,
-            //    ZIndex = layer.State.ZIndex
-            //};
             layer.PropertyChanged -= OnLayerPropertyChanged;
             _layers.Remove(layer);
-            //UpdateLayerState(layer);
             OnAnyLayerStateChanged();
 
             // 记录撤销命令
@@ -126,17 +106,10 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         public void MoveLayer(LayerInfo? layer, int oldIndex, int newIndex) {
             if (oldIndex == newIndex
                 || layer == null
-                //|| !_layerStates.TryGetValue(layer.Tag, out var state)
                 || layer.IsDeleted)
                 return;
 
             layer.ZIndex = newIndex;
-            //layer.State = new LayerState() {
-            //    IsDeleted = true,
-            //    IsVisible = layer.State.IsVisible,
-            //    ZIndex = newIndex
-            //};
-            //UpdateLayerState(layer, newIndex);
             OnAnyLayerStateChanged();
 
             _session.UnReUtil.RecordCommand(
@@ -146,16 +119,9 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
         private void SetLayerVisibility(LayerInfo layer, bool isVisible) {
             if (layer == null ||
-                //!_layerStates.TryGetValue(layer.Tag, out var state) ||
                 layer.IsDeleted)
                 return;
 
-            //layer.State = new LayerState() {
-            //    IsDeleted = layer.State.IsDeleted,
-            //    IsVisible = isVisible,
-            //    ZIndex = layer.State.ZIndex
-            //};
-            //UpdateLayerState(layer);
             OnAnyLayerStateChanged();
 
             _session.UnReUtil.RecordCommand(
@@ -188,12 +154,6 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             }
         }
 
-        //public void EnsureActiveLayersUpdated() {
-        //    if (_isActiveLayersDirty) {
-        //        RebuildActiveLayers();
-        //    }
-        //}
-
         #region utils
         private void Render(RenderMode mode, Rect region = default) {
             RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(mode, region));
@@ -206,9 +166,6 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             if (e.PropertyName is nameof(LayerInfo.IsVisible)) {
                 SetLayerVisibility(layer, layer.IsVisible);
             }
-            //else if (e.PropertyName is nameof(LayerInfo.IsDeleted)) {
-            //    DeleteLayer(layer.Tag);
-            //}
         }
 
         private void OnAnyLayerStateChanged() {
@@ -227,28 +184,12 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 .Select(layer => layer);
 
             _activeLayers.AddRange(activeLayers);
-            //_isActiveLayersDirty = false;
             _dirtyStatus = 0;
         }
 
         private void MarkActiveLayersDirty() {
-            //_isActiveLayersDirty = true;
             _dirtyStatus = 1;
         }
-
-        //private void UpdateLayerState(LayerInfo layer, int newZIndex = -1) {
-        //    //ref var state = ref CollectionsMarshal.GetValueRefOrNullRef(_layerStates, layer.Tag);
-        //    //if (!Unsafe.IsNullRef(ref state)) {
-        //    //    state.IsVisible = layer.IsVisible;
-        //    //    state.IsDeleted = layer.IsDeleted;
-        //    //    state.ZIndex = newZIndex >= 0 ? newZIndex : state.ZIndex;
-        //    //    RebuildActiveLayers();
-        //    //    //MarkActiveLayersDirty();
-        //    //    Render(RenderMode.FullRegion);
-        //    //}
-        //    RebuildActiveLayers();
-        //    Render(RenderMode.FullRegion);
-        //}
         #endregion
 
         // 永久存储所有图层（只增不减），方便 undo/redo
@@ -257,9 +198,6 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         private readonly List<LayerInfo> _activeLayers = [];
         // 绑定到 UI 列表
         private readonly ObservableCollection<LayerInfo> _layers = [];
-        //// 图层状态快照（用于脏检查）
-        //private readonly Dictionary<Guid, LayerState> _layerStates = [];
-        //private volatile bool _isActiveLayersDirty = true;
         private volatile int _dirtyStatus = 1; // 1 为脏，0 为干净
 
         #region command
@@ -270,14 +208,12 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
             public override Task ExecuteAsync() {
                 _layer.IsDeleted = false;
-                //Canvas.UpdateLayerState(_layer);
                 Canvas.OnAnyLayerStateChanged();
                 return Task.CompletedTask;
             }
 
             public override Task UndoAsync() {
                 _layer.IsDeleted = true;
-                //Canvas.UpdateLayerState(_layer);
                 Canvas.OnAnyLayerStateChanged();
                 return Task.CompletedTask;
             }
@@ -290,14 +226,12 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
             public override Task ExecuteAsync() {
                 _layer.IsDeleted = true;
-                //Canvas.UpdateLayerState(_layer);
                 Canvas.OnAnyLayerStateChanged();
                 return Task.CompletedTask;
             }
 
             public override Task UndoAsync() {
                 _layer.IsDeleted = false;
-                //Canvas.UpdateLayerState(_layer);
                 Canvas.OnAnyLayerStateChanged();
                 return Task.CompletedTask;
             }
@@ -315,17 +249,13 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
             public override Task ExecuteAsync() {
                 _layer.ZIndex = _toIndex;
-                //Canvas.UpdateLayerState(_layer);
                 Canvas.OnAnyLayerStateChanged();
-                //Canvas.UpdateLayerState(_layer, _toIndex);
                 return Task.CompletedTask;
             }
 
             public override Task UndoAsync() {
                 _layer.ZIndex = _fromIndex;
-                //Canvas.UpdateLayerState(_layer);
                 Canvas.OnAnyLayerStateChanged();
-                //Canvas.UpdateLayerState(_layer, _fromIndex);
                 return Task.CompletedTask;
             }
         }
@@ -346,14 +276,12 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
             public override Task ExecuteAsync() {
                 _layer.IsVisible = _newVisibility;
-                //Canvas.UpdateLayerState(_layer);
                 Canvas.OnAnyLayerStateChanged();
                 return Task.CompletedTask;
             }
 
             public override Task UndoAsync() {
                 _layer.IsVisible = _oldVisibility;
-                //Canvas.UpdateLayerState(_layer);
                 Canvas.OnAnyLayerStateChanged();
                 return Task.CompletedTask;
             }

@@ -11,6 +11,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
     public abstract class RenderBase : IUnifiedInputProcessor<CanvasPointerEventArgs> {
         public event EventHandler<CursorChangedEventArgs>? SystemCursorChangeRequested;
         public event EventHandler<RenderTargetChangedEventArgs>? RenderRequest;
+        public event EventHandler? OnceRenderCompleted;
 
         protected Rect Viewport { get; private set; } = Rect.Empty;
         protected StrokeBase CurrentStroke { get; set; } = null!;
@@ -55,6 +56,10 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
         public virtual void HandleExited(CanvasPointerEventArgs e) {
             SystemCursorChangeRequested?.Invoke(this, new CursorChangedEventArgs(null));
+        }
+
+        protected void OnceRenderEnd() {
+            OnceRenderCompleted?.Invoke(this, EventArgs.Empty);
         }
 
         public void OnCursorChange(InputSystemCursor cursor) {

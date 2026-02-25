@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Microsoft.Graphics.Canvas;
@@ -29,8 +30,6 @@ namespace Workloads.Creation.StaticImg.Core.Brushes {
             BrushArgs = brushArgs;
         }
 
-        //public virtual void InitInkImage() { }
-
         public virtual void InitInkBrush(CanvasDevice device) { }
 
         public virtual void InitPixelsEffect(ShaderType type) {
@@ -54,10 +53,34 @@ namespace Workloads.Creation.StaticImg.Core.Brushes {
                 if (p.Y > maxY) maxY = p.Y;
             }
 
-            // 边界加上笔触厚度范围
-            float half = BrushArgs.Thickness / 2f + 2f; // 适当加2像素冗余
+            // 基础半径
+            float halfStroke = BrushArgs.Thickness / 2f;
 
-            return new Rect(minX - half, minY - half, (maxX - minX) + half * 2, (maxY - minY) + half * 2);
+            // 安全边距 (Padding)
+            // 建议增加到 5.0f 或直接使用 BrushArgs.Thickness (如果存在锐角连接)
+            // 抗锯齿通常需要额外 1px，Miter Join 可能需要更多。
+            float padding = 5.0f;
+
+            // 计算浮点边界
+            float left = minX - halfStroke - padding;
+            float top = minY - halfStroke - padding;
+            float right = maxX + halfStroke + padding;
+            float bottom = maxY + halfStroke + padding;
+
+            // 像素对齐（向外取整）
+            // 左上角向下取整 (Floor)，右下角向上取整 (Ceiling)
+            // 这样保证 Rect 包含所有涉及的子像素
+            double alignedLeft = Math.Floor(left);
+            double alignedTop = Math.Floor(top);
+            double alignedRight = Math.Ceiling(right);
+            double alignedBottom = Math.Ceiling(bottom);
+
+            return new Rect(
+                alignedLeft,
+                alignedTop,
+                alignedRight - alignedLeft, // Width
+                alignedBottom - alignedTop  // Height
+            );
         }
 
         public CanvasGeometry CreateStrokeGeometry(CanvasDevice device) {

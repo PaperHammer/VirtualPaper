@@ -31,6 +31,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 }
 
                 HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                base.RequestOnceRender();
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();

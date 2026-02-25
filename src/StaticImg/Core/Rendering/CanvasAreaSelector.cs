@@ -237,6 +237,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             RenderToTarget();
             _baseContent?.Dispose();
             _baseContent = null;
+            base.RequestOnceRender();
 
             return true;
         }

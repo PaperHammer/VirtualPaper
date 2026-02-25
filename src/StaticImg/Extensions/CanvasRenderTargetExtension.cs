@@ -1,9 +1,8 @@
-﻿using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas;
 
 namespace Workloads.Creation.StaticImg.Extensions {
     public static class CanvasRenderTargetExtension {
         public static CanvasRenderTarget Clone(this CanvasRenderTarget source) {
-            var pixels = source.GetPixelBytes();
             var clone = new CanvasRenderTarget(
                 source.Device,
                 source.SizeInPixels.Width,
@@ -11,7 +10,10 @@ namespace Workloads.Creation.StaticImg.Extensions {
                 source.Dpi,
                 source.Format,
                 source.AlphaMode);
-            clone.SetPixelBytes(pixels);
+
+            // 运行在 GPU 上
+            // GetPixelBytes 运行在 CPU 上
+            clone.CopyPixelsFromBitmap(source);
 
             return clone;
         }   

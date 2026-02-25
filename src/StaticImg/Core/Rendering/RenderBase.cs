@@ -58,7 +58,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             SystemCursorChangeRequested?.Invoke(this, new CursorChangedEventArgs(null));
         }
 
-        protected void OnceRenderEnd() {
+        protected void RequestOnceRender() {
             OnceRenderCompleted?.Invoke(this, EventArgs.Empty);
         }
 

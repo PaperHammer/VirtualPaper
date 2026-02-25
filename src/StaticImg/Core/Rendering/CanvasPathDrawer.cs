@@ -46,7 +46,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             if (!_isDrawing) return;
 
             _isDrawing = false;
-            base.OnceRenderEnd();
+            base.RequestOnceRender();
         }
 
         public override void HandleReleased(CanvasPointerEventArgs e) {

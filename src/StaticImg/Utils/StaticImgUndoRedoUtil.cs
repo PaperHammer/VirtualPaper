@@ -10,6 +10,7 @@ namespace Workloads.Creation.StaticImg.InkSystem.Utils {
 
         public bool CanUndo => _undoRedoCore.CanUndo;
         public bool CanRedo => _undoRedoCore.CanRedo;
+        public bool IsUndoingOrRedoing => _undoRedoCore.IsUndoingOrRedoing;
 
         public StaticImgUndoRedoUtil(int maxStackSize = 20) {
             _undoRedoCore = new UndoRedoUtil<IUndoableCommand>(maxStackSize);
@@ -30,7 +31,7 @@ namespace Workloads.Creation.StaticImg.InkSystem.Utils {
         }
 
         public async Task UndoAsync() => await _undoRedoCore.UndoAsync();
-        public async Task RedoAsync() => await _undoRedoCore.RedoAsync();        
+        public async Task RedoAsync() => await _undoRedoCore.RedoAsync();
 
         public void Dispose() {
             _undoRedoCore.Dispose();
@@ -84,10 +85,14 @@ namespace Workloads.Creation.StaticImg.InkSystem.Utils {
             Description = description;
         }
 
-        public Task ExecuteAsync() =>
-            Task.Run(_snapshot.ApplyCurrent);
+        public Task ExecuteAsync() {
+            _snapshot.ApplyCurrent();
+            return Task.CompletedTask;
+        }
 
-        public Task UndoAsync() =>
-            Task.Run(_snapshot.RestoreOriginal);
+        public Task UndoAsync() {
+            _snapshot.RestoreOriginal();
+            return Task.CompletedTask;
+        }
     }
 }

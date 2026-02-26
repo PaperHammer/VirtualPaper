@@ -45,22 +45,41 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             }
         }
 
-        public LayerInfo AddLayer(string? name = null, bool isBackground = false) {
+        public LayerInfo AddLayer(string? name = null, bool isBackground = false, Guid? layerId = null) {
+            int insertIndex = _layers.Count;
+
+            if (layerId.HasValue) {
+                var targetLayer = _layers.FirstOrDefault(x => x.Tag == layerId.Value);
+                if (targetLayer != null) {
+                    insertIndex = _layers.IndexOf(targetLayer) + 1;
+                }
+            }
+
             var layer = new LayerInfo {
-                Name = name ?? $"Layer New {_allLayers.Count + 1}",
+                Name = name ?? 
+                    $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerName))} " +
+                    $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerNew))} " +
+                    $"{++_newLayerCount}",
                 RenderData = new InkRenderData(_session, CanvasSize, isBackground),
                 IsDeleted = false,
                 IsVisible = true,
-                ZIndex = _allLayers.Count - 1
+                ZIndex = insertIndex,
             };
             layer.RenderData.IsReady.SetResult(true);
             layer.PropertyChanged += OnLayerPropertyChanged;
+
             _allLayers.Add(layer);
-            _layers.Add(layer);
+            if (insertIndex < _layers.Count) {
+                _layers.Insert(insertIndex, layer);
+                RefreshZIndices();
+            }
+            else {
+                _layers.Add(layer);
+            }
             OnAnyLayerStateChanged();
 
             _session.UnReUtil.RecordCommand(
-                new AddLayerCommand(this, layer)
+                new AddLayerCommand(this, layer, insertIndex)
             );
             return layer;
         }
@@ -69,47 +88,53 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             var originalLayer = _allLayers.FirstOrDefault(x => x.Tag == layerId);
             if (originalLayer == null || originalLayer.RenderData == null) return null;
 
+            // 计算插入位置：原图层的正上方 (Index + 1)
+            int insertIndex = _layers.IndexOf(originalLayer) + 1;
             var layer = new LayerInfo {
-                Name = $"{originalLayer.Name} Copy {_allLayers.Count + 1}",
+                Name = $"{originalLayer.Name} {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerCopy))} {++_copyLayerCount}",
                 IsVisible = originalLayer.IsVisible,
                 RenderData = originalLayer.RenderData.Clone(),
+                ZIndex = insertIndex,
             };
             layer.RenderData.IsReady.SetResult(true);
-
             layer.PropertyChanged += OnLayerPropertyChanged;
             _allLayers.Add(layer);
-            _layers.Add(layer);
+            if (insertIndex < _layers.Count) {
+                _layers.Insert(insertIndex, layer);
+            }
+            else {
+                _layers.Add(layer);
+            }
             OnAnyLayerStateChanged();
 
             _session.UnReUtil.RecordCommand(
-                new AddLayerCommand(this, layer)
+                new AddLayerCommand(this, layer, layer.ZIndex)
             );
             return layer;
         }
 
         public void DeleteLayer(Guid layerId) {
-            var layer = _allLayers.FirstOrDefault(x => x.Tag == layerId);
-            if (layer == null ||
-                layer.IsDeleted) return;
+            var layer = _allLayers.FirstOrDefault(x => x.Tag == layerId && !x.IsDeleted);
+            if (layer == null) return;
 
+            int originalIndex = _layers.IndexOf(layer);
             layer.IsDeleted = true;
             layer.PropertyChanged -= OnLayerPropertyChanged;
             _layers.Remove(layer);
             OnAnyLayerStateChanged();
 
-            // 记录撤销命令
             _session.UnReUtil.RecordCommand(
-                new DeleteLayerCommand(this, layer)
+                new DeleteLayerCommand(this, layer, originalIndex) // 传入原本的索引位置，以便撤销时插回原位
             );
         }
 
         public void MoveLayer(LayerInfo? layer, int oldIndex, int newIndex) {
-            if (oldIndex == newIndex
-                || layer == null
-                || layer.IsDeleted)
-                return;
+            if (layer == null || layer.IsDeleted) return;
+            if (oldIndex == newIndex) return;
+            if (oldIndex < 0 || oldIndex >= _layers.Count) return;
+            if (newIndex < 0 || newIndex >= _layers.Count) return;
 
-            layer.ZIndex = newIndex;
+            RefreshZIndices();
             OnAnyLayerStateChanged();
 
             _session.UnReUtil.RecordCommand(
@@ -117,10 +142,9 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             );
         }
 
-        private void SetLayerVisibility(LayerInfo layer, bool isVisible) {
-            if (layer == null ||
-                layer.IsDeleted)
-                return;
+        private void OnLayerVisibilityChanged(LayerInfo layer, bool isVisible) {
+            if (layer == null || layer.IsDeleted) return;
+            if (_session.UnReUtil.IsUndoingOrRedoing) return;
 
             OnAnyLayerStateChanged();
 
@@ -130,7 +154,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         }
 
         public async Task SetLayerNameAsync(Guid layerId) {
-            var layer = _allLayers.FirstOrDefault(x => x.Tag == layerId);
+            var layer = _allLayers.FirstOrDefault(x => x.Tag == layerId && !x.IsDeleted);
             if (layer == null) return;
 
             try {
@@ -141,11 +165,16 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                     LanguageUtil.GetI18n(nameof(Constants.I18n.Dialog_Title_Rename)),
                     LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
                     LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
-                if (dialogRes != DialogResult.Primary || !ComplianceUtil.IsValidValueOnlyLength(viewModel.NewName)) return;
-                layer.Name = viewModel.NewName;
+                if (dialogRes != DialogResult.Primary
+                    || !ComplianceUtil.IsValidValueOnlyLength(viewModel.NewName)
+                    || string.Equals(oldName, viewModel.NewName)) {
+                    return;
+                }
+
+                layer.Name = viewModel.NewName!;
 
                 _session.UnReUtil.RecordCommand(
-                    new SetLayerNameCommand(this, layer, oldName, viewModel.NewName)
+                    new SetLayerNameCommand(this, layer, oldName, viewModel.NewName!)
                 );
             }
             finally {
@@ -155,16 +184,23 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         }
 
         #region utils
+        private void RefreshZIndices() {
+            for (int i = 0; i < _layers.Count; i++) {
+                _layers[i].ZIndex = i;
+            }
+        }
+
         private void Render(RenderMode mode, Rect region = default) {
             RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(mode, region));
         }
 
         private void OnLayerPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-            if (sender is not LayerInfo layer) return;
+            // 如果正在执行 Undo/Redo，不要记录新命令
+            if (_session.UnReUtil.IsUndoingOrRedoing || sender is not LayerInfo layer) return;
 
             // 仅监视影响渲染的状态属性
             if (e.PropertyName is nameof(LayerInfo.IsVisible)) {
-                SetLayerVisibility(layer, layer.IsVisible);
+                OnLayerVisibilityChanged(layer, layer.IsVisible);
             }
         }
 
@@ -199,90 +235,131 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         // 绑定到 UI 列表
         private readonly ObservableCollection<LayerInfo> _layers = [];
         private volatile int _dirtyStatus = 1; // 1 为脏，0 为干净
+        private int _newLayerCount;
+        private int _copyLayerCount;
 
         #region command
         record AddLayerCommand : LayerCommandBase {
-            public AddLayerCommand(InkCanvasData canvas, LayerInfo layer) : base(canvas, layer) {
+            public AddLayerCommand(InkCanvasData canvas, LayerInfo layer, int originalIndex) : base(canvas, layer) {
                 Description = $"Add Layer '{layer.Name}'";
+                _originalIndex = originalIndex;
             }
 
             public override Task ExecuteAsync() {
-                _layer.IsDeleted = false;
+                Layer.IsDeleted = false;
+                Layer.PropertyChanged += Canvas.OnLayerPropertyChanged;
+                if (!Canvas.Layers.Contains(Layer)) {
+                    if (_originalIndex >= 0 && _originalIndex < Canvas.Layers.Count) {
+                        Canvas.Layers.Insert(_originalIndex, Layer);
+                    }
+                    else {
+                        Canvas.Layers.Add(Layer);
+                    }
+                }
                 Canvas.OnAnyLayerStateChanged();
                 return Task.CompletedTask;
             }
 
             public override Task UndoAsync() {
-                _layer.IsDeleted = true;
+                Layer.IsDeleted = true;
+                Layer.PropertyChanged -= Canvas.OnLayerPropertyChanged;
+                Canvas.Layers.Remove(Layer);
                 Canvas.OnAnyLayerStateChanged();
                 return Task.CompletedTask;
             }
+
+            private readonly int _originalIndex;
         }
 
         record DeleteLayerCommand : LayerCommandBase {
-            public DeleteLayerCommand(InkCanvasData canvas, LayerInfo layer) : base(canvas, layer) {
+            public DeleteLayerCommand(InkCanvasData canvas, LayerInfo layer, int originalIndex) : base(canvas, layer) {
                 Description = $"Delete Layer '{layer.Name}'";
+                _originalIndex = originalIndex;
             }
 
             public override Task ExecuteAsync() {
-                _layer.IsDeleted = true;
+                Layer.IsDeleted = true;
+                Layer.PropertyChanged -= Canvas.OnLayerPropertyChanged;
+                Canvas.Layers.Remove(Layer);
                 Canvas.OnAnyLayerStateChanged();
                 return Task.CompletedTask;
             }
 
             public override Task UndoAsync() {
-                _layer.IsDeleted = false;
+                Layer.IsDeleted = false;
+                Layer.PropertyChanged += Canvas.OnLayerPropertyChanged;
+                if (!Canvas.Layers.Contains(Layer)) {
+                    if (_originalIndex >= 0 && _originalIndex <= Canvas.Layers.Count) {
+                        Canvas.Layers.Insert(_originalIndex, Layer);
+                    }
+                    else {
+                        Canvas.Layers.Add(Layer);
+                    }
+                }
                 Canvas.OnAnyLayerStateChanged();
                 return Task.CompletedTask;
             }
+
+            private readonly int _originalIndex;
         }
 
         record MoveLayerCommand : LayerCommandBase {
-            private readonly int _fromIndex;
-            private readonly int _toIndex;
-
-            public MoveLayerCommand(InkCanvasData canvas, LayerInfo layer, int fromIndex, int toIndex) : base(canvas, layer) {
-                _fromIndex = fromIndex;
-                _toIndex = toIndex;
-                Description = $"Move Layer to position {toIndex}";
+            public MoveLayerCommand(InkCanvasData canvas, LayerInfo layer, int oldIndex, int newIndex) : base(canvas, layer) {
+                Description = $"Move Layer \'{layer.Name}\' from {_oldIndex} to {_newIndex}";
+                _oldIndex = oldIndex;
+                _newIndex = newIndex;
             }
 
             public override Task ExecuteAsync() {
-                _layer.ZIndex = _toIndex;
-                Canvas.OnAnyLayerStateChanged();
+                if (IsIndexValid(_oldIndex) && IsIndexValid(_newIndex)) {
+                    Canvas.Layers.Move(_oldIndex, _newIndex);
+                    Canvas.RefreshZIndices();
+                    Canvas.OnAnyLayerStateChanged();
+                }
                 return Task.CompletedTask;
             }
 
             public override Task UndoAsync() {
-                _layer.ZIndex = _fromIndex;
-                Canvas.OnAnyLayerStateChanged();
+                if (IsIndexValid(_oldIndex) && IsIndexValid(_newIndex)) {
+                    Canvas.Layers.Move(_newIndex, _oldIndex);
+                    Canvas.RefreshZIndices();
+                    Canvas.OnAnyLayerStateChanged();
+                }
                 return Task.CompletedTask;
             }
+
+            private bool IsIndexValid(int index) {
+                return index >= 0 && index < Canvas.Layers.Count;
+            }
+
+            private readonly int _oldIndex;
+            private readonly int _newIndex;
         }
 
         record SetVisibilityCommand : LayerCommandBase {
             private readonly bool _oldVisibility;
             private readonly bool _newVisibility;
 
-            public SetVisibilityCommand(
-                InkCanvasData canvas,
-                LayerInfo layer,
-                bool oldVisibility,
-                bool newVisibility) : base(canvas, layer) {
+            public SetVisibilityCommand(InkCanvasData canvas, LayerInfo layer, bool oldVisibility, bool newVisibility) 
+                : base(canvas, layer) {
                 _oldVisibility = oldVisibility;
                 _newVisibility = newVisibility;
                 Description = $"{(newVisibility ? "Show" : "Hide")} Layer";
             }
 
             public override Task ExecuteAsync() {
-                _layer.IsVisible = _newVisibility;
-                Canvas.OnAnyLayerStateChanged();
+                if (Layer.IsVisible != _newVisibility) {
+                    Layer.IsVisible = _newVisibility;
+                    Canvas.OnAnyLayerStateChanged();
+                }
                 return Task.CompletedTask;
             }
 
             public override Task UndoAsync() {
-                _layer.IsVisible = _oldVisibility;
-                Canvas.OnAnyLayerStateChanged();
+                if (Layer.IsVisible != _oldVisibility) {
+                    Layer.IsVisible = _oldVisibility;
+                    Canvas.OnAnyLayerStateChanged();
+                }
                 return Task.CompletedTask;
             }
         }
@@ -301,12 +378,12 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             }
 
             public override Task ExecuteAsync() {
-                _layer.Name = _newName;
+                Layer.Name = _newName;
                 return Task.CompletedTask;
             }
 
             public override Task UndoAsync() {
-                _layer.Name = _oldName;
+                Layer.Name = _oldName;
                 return Task.CompletedTask;
             }
         }
@@ -314,18 +391,17 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
     }
 
     abstract record LayerCommandBase : IUndoableCommand {
-        protected readonly InkCanvasData Canvas;
+        protected InkCanvasData Canvas { get; }
+        protected LayerInfo Layer { get; }
         public string Description { get; protected set; }
 
         protected LayerCommandBase(InkCanvasData canvas, LayerInfo layer, string desc = "") {
             Canvas = canvas;
-            _layer = layer;
+            Layer = layer;
             Description = desc;
         }
 
         public abstract Task ExecuteAsync();
         public abstract Task UndoAsync();
-
-        protected readonly LayerInfo _layer;
     }
 }

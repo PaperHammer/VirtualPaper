@@ -1070,4 +1070,13 @@ The following words cannot be used as usernames:
   <data name="Project_FileLoad_FileCorrupted" xml:space="preserve">
     <value>The file may be corrupted: </value>
   </data>
+  <data name="Project_StaticImg_Text_LayerName" xml:space="preserve">
+    <value>Layer</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerNew" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerCopy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
 </root>

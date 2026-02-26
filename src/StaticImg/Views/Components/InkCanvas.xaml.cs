@@ -410,7 +410,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         #region Layer Mangaer
         private void LayerManage_AddLayerRequest(object sender, Guid id) {
-            _viewModel.Data.AddLayer();
+            _viewModel.Data.AddLayer(layerId: id);
             RenderToCompositeTarget(RenderMode.FullRegion);
         }
 

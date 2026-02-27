@@ -1,10 +1,12 @@
 using System;
 using Microsoft.Graphics.Canvas;
-using Microsoft.UI.Input;
 
 namespace Workloads.Creation.StaticImg.Events {
-    public class CanvasPointerEventArgs(PointerPoint pointer, CanvasRenderTarget renderTarget, PointerPosition pointerPos) : EventArgs {
-        public PointerPoint Pointer { get; } = pointer;
+    public class CanvasPointerEventArgs(
+        Microsoft.UI.Input.PointerPoint pointer,
+        CanvasRenderTarget renderTarget,
+        PointerPosition pointerPos) : EventArgs {
+        public Microsoft.UI.Input.PointerPoint Pointer { get; } = pointer;
         public CanvasRenderTarget RenderTarget { get; } = renderTarget;
         public PointerPosition PointerPos { get; } = pointerPos;
     }

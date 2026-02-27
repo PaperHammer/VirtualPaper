@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
@@ -61,7 +60,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             _viewModel = new InkCanvasViewModel(_session, context);
         }
 
-        private void UserControl_Loaded(object sender, RoutedEventArgs e) {
+        private void ArcUserControl_Loaded(object sender, RoutedEventArgs e) {
             RegisterTools();
         }
 
@@ -144,7 +143,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void RebuildComposite() {
-            DebugUtil.DebugOutPut("RebuildComposite triggered");
+            DebugUtil.Output("RebuildComposite triggered");
             _compositeTarget = new CanvasRenderTarget(
                 _session.SharedDevice,
                 (float)_viewModel.Data.CanvasSize.Width,
@@ -186,7 +185,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
-            DebugUtil.DebugOutPut("RenderToCompositeTarget triggered");
+            DebugUtil.Output("RenderToCompositeTarget triggered");
             if (_compositeTarget == null) return;
 
             var layers = _viewModel.Data.ActiveLayers;
@@ -259,16 +258,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
         #endregion
 
-        #region Scroll 
+        #region Scroll
         private void Scroll_ViewChanging(object sender, ScrollViewerViewChangingEventArgs e) {
-            // 检查是否为用户触发的滚动/缩放
-            //if (e.IsInertial) {
-            //    // 使用鼠标滚轮
-            //    // 在 ScrollViewer 和其他支持直接操作的控件上使用键笔划
-            //    // 调用启用了动画的 ChangeView 
-
             _viewModel.Data.CanvasZoom = e.FinalView.ZoomFactor;
-            //}
         }
 
         private void FitView() {
@@ -291,43 +283,95 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             zoomFactor = Math.Max(Consts.MinZoomFactor, Math.Min(zoomFactor, Consts.MaxZoomFactor));
 
             // 应用缩放
-            UpdateScrollViewerZoom((float)zoomFactor);
+            PerformZoom((float)zoomFactor, null);
         }
 
-        private void UpdateScrollViewerZoom(double value) {
-            _viewModel.Data.CanvasZoom = (float)value;
-            Scroll.ChangeView(null, null, _viewModel.Data.CanvasZoom);
+        /// <summary>
+        /// 通用缩放方法
+        /// </summary>
+        /// <param name="targetZoom">目标缩放比例</param>
+        /// <param name="centerPoint">缩放中心点（相对于 ScrollViewer 视口）。如果为 null，则以当前视口中心为基准。</param>
+        /// <param name="disableAnimation">是否禁用动画（Slider拖动建议禁用，按钮点击建议启用）</param>
+        private void PerformZoom(float targetZoom, Point? centerPoint = null, bool disableAnimation = false) {
+            // 获取当前状态
+            float currentZoom = Scroll.ZoomFactor;
+
+            // 限制缩放范围
+            targetZoom = Math.Clamp(targetZoom, (float)Consts.MinZoomFactor, (float)Consts.MaxZoomFactor);
+
+            // 如果变化极小，直接忽略（避免浮点数抖动）
+            if (Math.Abs(targetZoom - currentZoom) < 0.001f) return;
+
+            // 确定缩放参考中心点 (Viewport 坐标系)
+            double viewportX, viewportY;
+
+            if (centerPoint.HasValue) {
+                // 指定点（如：鼠标位置）
+                viewportX = centerPoint.Value.X;
+                viewportY = centerPoint.Value.Y;
+            }
+            else {
+                // 未指定点 -> 使用视口几何中心
+                viewportX = Scroll.ViewportWidth / 2.0;
+                viewportY = Scroll.ViewportHeight / 2.0;
+            }
+
+            // 计算保持中心点不动的 offset
+            // (当前Offset + 视口中心) / 当前缩放 = 内容绝对坐标
+            // 内容绝对坐标 * 新缩放 - 视口中心 = 新Offset
+
+            double contentX = (Scroll.HorizontalOffset + viewportX) / currentZoom;
+            double contentY = (Scroll.VerticalOffset + viewportY) / currentZoom;
+
+            double newHorizontalOffset = (contentX * targetZoom) - viewportX;
+            double newVerticalOffset = (contentY * targetZoom) - viewportY;
+
+            Scroll.ChangeView(newHorizontalOffset, newVerticalOffset, targetZoom, disableAnimation);
+
+            if (_viewModel?.Data != null) {
+                _viewModel.Data.CanvasZoom = targetZoom;
+            }
+        }
+
+        /// <summary>
+        /// 通用滚动方法
+        /// </summary>
+        /// <param name="deltaX">水平滚动量</param>
+        /// <param name="deltaY">垂直滚动量</param>
+        private void PerformScroll(double deltaX, double deltaY) {
+            double newHorizontalOffset = Scroll.HorizontalOffset + deltaX;
+            double newVerticalOffset = Scroll.VerticalOffset + deltaY;
+
+            Scroll.ChangeView(newHorizontalOffset, newVerticalOffset, null, false);
         }
 
         private void BottomDataBarControl_ZoomComboBoxSelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (e.AddedItems[0] is string textValue) {
                 var val = double.Parse(textValue.TrimEnd('%')) / 100;
-                UpdateScrollViewerZoom((float)val);
+                PerformZoom((float)val);
             }
         }
 
         private void BottomDataBarControl_ZoomComboBoxTextSubmitted(object sender, ComboBoxTextSubmittedEventArgs e) {
             var val = double.Parse(e.Text.TrimEnd('%')) / 100;
-            UpdateScrollViewerZoom((float)val);
+            PerformZoom((float)val);
         }
 
         private void BottomDataBarControl_ZoomInRequest(object sender, RoutedEventArgs e) {
             var newZoomFactor = Math.Max(Consts.MinZoomFactor,
                 Consts.RoundToNearestFive(_viewModel.Data.CanvasZoom) + Consts.GetSubStepSize(_viewModel.Data.CanvasZoom));
-            UpdateScrollViewerZoom(newZoomFactor);
+            PerformZoom((float)newZoomFactor);
         }
 
         private void BottomDataBarControl_ZoomOutRequest(object sender, RoutedEventArgs e) {
             var newZoomFactor = Math.Max(Consts.MinZoomFactor,
                 Consts.RoundToNearestFive(_viewModel.Data.CanvasZoom) - Consts.GetSubStepSize(_viewModel.Data.CanvasZoom));
-            UpdateScrollViewerZoom(newZoomFactor);
+            PerformZoom((float)newZoomFactor);
         }
 
         private void BottomDataBarControl_ZoomSliderValueChanged(object sender, RangeBaseValueChangedEventArgs e) {
-            Debug.WriteLine("-" + e.NewValue);
             var newZoomFactor = Consts.PercentToDeciaml((float)e.NewValue);
-            Debug.WriteLine("--" + newZoomFactor);
-            UpdateScrollViewerZoom(newZoomFactor);
+            PerformZoom((float)newZoomFactor);
         }
         #endregion
 
@@ -488,6 +532,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         internal void OnPointerEntered(PointerRoutedEventArgs e, PointerPosition pointerPos) {
+            _currentPointerId = e.Pointer.PointerId;
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleEntered(
                 new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
@@ -513,6 +558,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         internal void OnPointerExited(PointerRoutedEventArgs e, PointerPosition pointerPos) {
+            _currentPointerId = null;
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleExited(
                 new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
@@ -549,6 +595,33 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             action(_selectedTool);
         }
+
+        private void Container_PointerWheelChanged(object sender, PointerRoutedEventArgs e) {
+            var modifiers = e.KeyModifiers;
+            var properties = e.GetCurrentPoint(Scroll).Properties;
+            double delta = properties.MouseWheelDelta;
+
+            if (delta == 0) return;
+
+            if (modifiers == Windows.System.VirtualKeyModifiers.Control) {
+                float currentZoom = Scroll.ZoomFactor;
+                float zoomMultiplier = (delta > 0) ? 1.1f : 0.9f;
+                float targetZoom = currentZoom * zoomMultiplier;
+
+                var mousePos = e.GetCurrentPoint(Scroll).Position; 
+                PerformZoom(targetZoom, mousePos);
+
+                e.Handled = true;
+                return;
+            }
+
+            if (modifiers == Windows.System.VirtualKeyModifiers.Shift) {
+                PerformScroll(-delta, 0);
+
+                e.Handled = true;
+                return;
+            }
+        }
         #endregion
 
         private RenderBase? _selectedTool;
@@ -560,5 +633,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private CanvasImageBrush? _gridBrush;
         private const int _gridSize = 20;
         private InkProjectSession _session = null!;
+        private uint? _currentPointerId;
     }
 }

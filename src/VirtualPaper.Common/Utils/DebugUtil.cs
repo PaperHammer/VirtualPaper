@@ -5,7 +5,7 @@ using System.Reflection;
 namespace VirtualPaper.Common.Utils {
     public static class DebugUtil {
         [Conditional("DEBUG")]
-        public static void DebugOutPut(string msg) {
+        public static void Output(string msg) {
             try {
                 var tag = GetCallerTag();
                 Debug.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] [{tag}] {msg}");
@@ -16,10 +16,10 @@ namespace VirtualPaper.Common.Utils {
         public static string GetCallerTag() {
             /*
              * SomeMethod()
-                 → DebugUtil.DebugOutPut()
+                 → DebugUtil.Output()
                    → GetCallerTag()
              */
-            // skip DebugOutPut self
+            // skip Output self
             var frame = new StackFrame(2, false);
             var method = frame.GetMethod();
 

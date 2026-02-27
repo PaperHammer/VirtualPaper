@@ -12,7 +12,7 @@
     xmlns:win2d="using:Microsoft.Graphics.Canvas.UI.Xaml"
     mc:Ignorable="d"
     DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}"
-    Loaded="UserControl_Loaded">
+    Loaded="ArcUserControl_Loaded">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -36,7 +36,7 @@
                 Background="{ThemeResource ControlStrokeColorDefaultBrush}"
                 ViewChanging="Scroll_ViewChanging"
                 PointerPressed="Scroll_PointerPressed"
-                PointerMoved="Scroll_PointerMoved"                
+                PointerMoved="Scroll_PointerMoved"
                 PointerReleased="Scroll_PointerReleased"
                 PointerExited="Scroll_PointerExited">
                 <Grid x:Name="Container"
@@ -49,7 +49,8 @@
                     PointerPressed="Container_PointerPressed"
                     PointerMoved="Container_PointerMoved"
                     PointerReleased="Container_PointerReleased"
-                    PointerExited="Container_PointerExited">
+                    PointerExited="Container_PointerExited"
+                    PointerWheelChanged="Container_PointerWheelChanged">
 
                     <!--背景层 -->
                     <win2d:CanvasVirtualControl x:Name="backgroundGrid"

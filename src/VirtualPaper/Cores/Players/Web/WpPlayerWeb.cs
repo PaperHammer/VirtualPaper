@@ -166,7 +166,7 @@ namespace VirtualPaper.Cores.Players.Web {
 
         private void SendMessage(string msg) {
             try {
-                DebugUtil.DebugOutPut($"WpPlayerWeb Send: {msg}");
+                DebugUtil.Output($"WpPlayerWeb Send: {msg}");
                 Proc?.StandardInput.WriteLine(msg);
                 Proc?.StandardInput.Flush();
             }

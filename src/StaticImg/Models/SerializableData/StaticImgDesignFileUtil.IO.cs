@@ -52,7 +52,6 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 return header;
             }
             catch (Exception ex) {
-                // 记录日志 (静态方法中通常没有实例 logger，需通过泛型获取)
                 ArcLog.GetLogger<StaticImgDesignFileUtil>().Error($"GetFileHeaderAsync Failed: {filePath}", ex);
                 return null;
             }
@@ -182,12 +181,6 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                         // 定位到原文件中 Layers 的位置 (使用缓存中的旧 Offset 读取)
                         fsSource.Position = _headerCache.LayersOffset;
                         await CopyStreamRangeAsync(fsSource, fsTemp, _headerCache.LayersLength);
-
-                        //// 复制 Layers 数据段到临时文件
-                        //// 只复制 LayersLength 长度的数据，避免多余读取
-                        //var buffer = new byte[header.LayersLength];
-                        //await fsSource.ReadAsync(buffer);
-                        //await fsTemp.WriteAsync(buffer);
                     }
                 }
 
@@ -238,9 +231,6 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
                         // 使用流复制，避免内存问题
                         await CopyStreamRangeAsync(fsSource, fsTemp, _headerCache.BusinessDataLength);
-                        //var businessDataBytes = new byte[header.ContentLength];
-                        //await fsSource.ReadAsync(businessDataBytes);
-                        //await fsTemp.WriteAsync(businessDataBytes);
                     }
 
                     await fsTemp.WriteAsync(layersBytes);

@@ -49,7 +49,6 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             if (instance == null) return;
 
             double newValue = Consts.DecimalToPercent((float)e.NewValue, 1);
-            Debug.WriteLine(newValue);
             instance.ZoomComboBox.SelectedItem = $"{newValue}%";
             instance._lastCanvasZoomText = $"{newValue}%";
             instance.zoomSlider.Value = newValue;
@@ -77,7 +76,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             else {
                 RestoreZoomDisplay();
             }
-            args.Handled = true; // 关键点：避免 ZoomComboBox_SelectionChanged 二次处理导致数据显示异常
+            args.Handled = true; // 鍏抽敭鐐癸細閬垮厤 ZoomComboBox_SelectionChanged 浜屾澶勭悊瀵艰嚧鏁版嵁鏄剧ず寮傚父
         }
 
         private static bool TryParseZoomInput(string input, out float result) {

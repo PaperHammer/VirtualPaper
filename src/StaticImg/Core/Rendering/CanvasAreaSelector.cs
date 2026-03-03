@@ -292,13 +292,12 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             }
         }
 
-        protected void HandleDeviceLost() {
+        protected new void HandleDeviceLost() {
+            base.HandleDeviceLost();
             _baseContent?.Dispose();
             _baseContent = null;
             _selectionContent?.Dispose();
             _selectionContent = null;
-            RenderTarget?.Dispose();
-            RenderTarget = null;
         }
 
         protected void UpdateSelectionRect(Rect rect) {

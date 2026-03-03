@@ -37,18 +37,18 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         public static readonly DependencyProperty CanvasSizeTextProperty =
             DependencyProperty.Register(nameof(CanvasSizeText), typeof(string), typeof(BottomDataBarControl), new PropertyMetadata(string.Empty));
 
-        public float CanvasZoom {
-            get { return (float)GetValue(CanvasZoomProperty); }
+        public double CanvasZoom {
+            get { return (double)GetValue(CanvasZoomProperty); }
             set { SetValue(CanvasZoomProperty, value); }
         }
         public static readonly DependencyProperty CanvasZoomProperty =
-            DependencyProperty.Register(nameof(CanvasZoom), typeof(float), typeof(BottomDataBarControl), new PropertyMetadata(0, OnCanvasZoomChanged));
+            DependencyProperty.Register(nameof(CanvasZoom), typeof(double), typeof(BottomDataBarControl), new PropertyMetadata(0.0, OnCanvasZoomChanged));
 
         private static void OnCanvasZoomChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var instance = d as BottomDataBarControl;
             if (instance == null) return;
 
-            double newValue = Consts.DecimalToPercent((float)e.NewValue, 1);
+            double newValue = Consts.DecimalToPercent((double)e.NewValue, 1);
             instance.ZoomComboBox.SelectedItem = $"{newValue}%";
             instance._lastCanvasZoomText = $"{newValue}%";
             instance.zoomSlider.Value = newValue;

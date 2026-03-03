@@ -32,6 +32,7 @@
     
     <Style TargetType="Control" BasedOn="{StaticResource DefaultControlStyle}">
         <Setter Property="KeyboardAcceleratorPlacementMode" Value="Hidden"/>
+        <Setter Property="IsTabStop" Value="True"/>
     </Style>
 
     <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">

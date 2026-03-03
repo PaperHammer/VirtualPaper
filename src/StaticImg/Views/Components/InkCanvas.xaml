@@ -26,7 +26,7 @@
                 <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
 
-            <ScrollViewer x:Name="Scroll"
+            <ScrollViewer x:Name="scroll"
                 HorizontalScrollBarVisibility="Auto" 
                 VerticalScrollBarVisibility="Auto"
                 ZoomMode="Enabled"
@@ -39,7 +39,7 @@
                 PointerMoved="Scroll_PointerMoved"
                 PointerReleased="Scroll_PointerReleased"
                 PointerExited="Scroll_PointerExited">
-                <Grid x:Name="Container"
+                <Grid x:Name="container"
                     Margin="80"
                     Background="Transparent"
                     DataContext="{x:Bind _viewModel.Data, Mode=OneWay}"

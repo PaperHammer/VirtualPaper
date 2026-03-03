@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.UI.Input;
 
 namespace VirtualPaper.UIComponent.Services {
@@ -7,7 +7,7 @@ namespace VirtualPaper.UIComponent.Services {
         event EventHandler<CursorChangedEventArgs> SystemCursorChangeRequested;
     }
 
-    public class CursorChangedEventArgs(InputCursor cursor) : EventArgs {
-        public InputCursor Cursor { get; } = cursor;
+    public class CursorChangedEventArgs(InputCursor? cursor) : EventArgs {
+        public InputCursor? Cursor { get; } = cursor;
     }
 }

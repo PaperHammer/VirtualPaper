@@ -258,19 +258,19 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
         #endregion
 
-        #region Scroll
+        #region scroll
         private void Scroll_ViewChanging(object sender, ScrollViewerViewChangingEventArgs e) {
             _viewModel.Data.CanvasZoom = e.FinalView.ZoomFactor;
         }
 
         private void FitView() {
             // 获取可用显示区域
-            double availableWidth = Scroll.ViewportWidth;
-            double availableHeight = Scroll.ViewportHeight;
+            double availableWidth = scroll.ViewportWidth;
+            double availableHeight = scroll.ViewportHeight;
 
             // 考虑边距
-            double effectiveWidth = availableWidth - (Container.Margin.Left + Container.Margin.Right);
-            double effectiveHeight = availableHeight - (Container.Margin.Top + Container.Margin.Bottom);
+            double effectiveWidth = availableWidth - (container.Margin.Left + container.Margin.Right);
+            double effectiveHeight = availableHeight - (container.Margin.Top + container.Margin.Bottom);
 
             // 计算缩放比例
             double widthRatio = effectiveWidth / _viewModel.Data.CanvasSize.Width;
@@ -283,53 +283,48 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             zoomFactor = Math.Max(Consts.MinZoomFactor, Math.Min(zoomFactor, Consts.MaxZoomFactor));
 
             // 应用缩放
-            PerformZoom((float)zoomFactor, null);
+            PerformZoom((float)zoomFactor);
         }
 
+        // todo：按照目标点位缩放；空白区域响应水平滚动
         /// <summary>
         /// 通用缩放方法
         /// </summary>
         /// <param name="targetZoom">目标缩放比例</param>
-        /// <param name="centerPoint">缩放中心点（相对于 ScrollViewer 视口）。如果为 null，则以当前视口中心为基准。</param>
+        /// <param name="contentAnchor">内容坐标系上的锚点（鼠标在 container 上的位置）。如果为 null，则以当前视口中心为基准。</param>
         /// <param name="disableAnimation">是否禁用动画（Slider拖动建议禁用，按钮点击建议启用）</param>
-        private void PerformZoom(float targetZoom, Point? centerPoint = null, bool disableAnimation = false) {
-            // 获取当前状态
-            float currentZoom = Scroll.ZoomFactor;
-
-            // 限制缩放范围
+        private void PerformZoom(float targetZoom, Point? contentAnchor = null, bool disableAnimation = false) {
+            float currentZoom = scroll.ZoomFactor;
             targetZoom = Math.Clamp(targetZoom, (float)Consts.MinZoomFactor, (float)Consts.MaxZoomFactor);
 
-            // 如果变化极小，直接忽略（避免浮点数抖动）
-            if (Math.Abs(targetZoom - currentZoom) < 0.001f) return;
+            if (Math.Abs(targetZoom - currentZoom) < 1e-5) return;
 
-            // 确定缩放参考中心点 (Viewport 坐标系)
-            double viewportX, viewportY;
+            if (contentAnchor.HasValue) {
+                // 先计算原来的锚点在视口中的坐标
+                double oldAnchorViewportX = contentAnchor.Value.X * currentZoom - scroll.HorizontalOffset;
+                double oldAnchorViewportY = contentAnchor.Value.Y * currentZoom - scroll.VerticalOffset;
 
-            if (centerPoint.HasValue) {
-                // 指定点（如：鼠标位置）
-                viewportX = centerPoint.Value.X;
-                viewportY = centerPoint.Value.Y;
+                // 再在新缩放下，保证锚点还在同一个视口坐标
+                double newOffsetX = contentAnchor.Value.X * targetZoom - oldAnchorViewportX;
+                double newOffsetY = contentAnchor.Value.Y * targetZoom - oldAnchorViewportY;
+
+                scroll.ChangeView(newOffsetX, newOffsetY, targetZoom, disableAnimation);
             }
             else {
-                // 未指定点 -> 使用视口几何中心
-                viewportX = Scroll.ViewportWidth / 2.0;
-                viewportY = Scroll.ViewportHeight / 2.0;
-            }
+                double viewportCenterX = scroll.ViewportWidth / 2.0;
+                double viewportCenterY = scroll.ViewportHeight / 2.0;
+                var centerPointInScroll = new Point(viewportCenterX, viewportCenterY);
 
-            // 计算保持中心点不动的 offset
-            // (当前Offset + 视口中心) / 当前缩放 = 内容绝对坐标
-            // 内容绝对坐标 * 新缩放 - 视口中心 = 新Offset
+                var transform = scroll.TransformToVisual(container);
+                Point centerPointInCanvas = transform.TransformPoint(centerPointInScroll);
 
-            double contentX = (Scroll.HorizontalOffset + viewportX) / currentZoom;
-            double contentY = (Scroll.VerticalOffset + viewportY) / currentZoom;
+                double oldAnchorViewportX = centerPointInCanvas.X * currentZoom - scroll.HorizontalOffset;
+                double oldAnchorViewportY = centerPointInCanvas.Y * currentZoom - scroll.VerticalOffset;
 
-            double newHorizontalOffset = (contentX * targetZoom) - viewportX;
-            double newVerticalOffset = (contentY * targetZoom) - viewportY;
+                double newOffsetX = centerPointInCanvas.X * targetZoom - oldAnchorViewportX;
+                double newOffsetY = centerPointInCanvas.Y * targetZoom - oldAnchorViewportY;
 
-            Scroll.ChangeView(newHorizontalOffset, newVerticalOffset, targetZoom, disableAnimation);
-
-            if (_viewModel?.Data != null) {
-                _viewModel.Data.CanvasZoom = targetZoom;
+                scroll.ChangeView(newOffsetX, newOffsetY, targetZoom, disableAnimation);
             }
         }
 
@@ -339,10 +334,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         /// <param name="deltaX">水平滚动量</param>
         /// <param name="deltaY">垂直滚动量</param>
         private void PerformScroll(double deltaX, double deltaY) {
-            double newHorizontalOffset = Scroll.HorizontalOffset + deltaX;
-            double newVerticalOffset = Scroll.VerticalOffset + deltaY;
+            double newHorizontalOffset = scroll.HorizontalOffset + deltaX;
+            double newVerticalOffset = scroll.VerticalOffset + deltaY;
 
-            Scroll.ChangeView(newHorizontalOffset, newVerticalOffset, null, false);
+            scroll.ChangeView(newHorizontalOffset, newVerticalOffset, null, false);
         }
 
         private void BottomDataBarControl_ZoomComboBoxSelectionChanged(object sender, SelectionChangedEventArgs e) {
@@ -496,7 +491,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             OnPointerMoved(e, PointerPosition.InsideContainer);
         }
 
-        private void Scroll_PointerPressed(object sender, PointerRoutedEventArgs e) {
+        private void Scroll_PointerPressed(object sender, PointerRoutedEventArgs e) {            
             OnPointerPressed(e, PointerPosition.InsideContainer);
         }
 
@@ -510,14 +505,17 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void Container_PointerEntered(object sender, PointerRoutedEventArgs e) {
             OnPointerEntered(e, PointerPosition.InsideCanvas);
+            e.Handled = true;
         }
 
+        // move 会先被外层的 scroll 捕获并触发
         private void Container_PointerMoved(object sender, PointerRoutedEventArgs e) {
             OnPointerMoved(e, PointerPosition.InsideCanvas);
             e.Handled = true;
         }
 
         private void Container_PointerPressed(object sender, PointerRoutedEventArgs e) {
+            this.Focus(FocusState.Programmatic); // 确保点击画布时获得焦点，避免任然被其他控件占用
             OnPointerPressed(e, PointerPosition.InsideCanvas);
             e.Handled = true;
         }
@@ -529,10 +527,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void Container_PointerExited(object sender, PointerRoutedEventArgs e) {
             OnPointerExited(e, PointerPosition.InsideContainer);
+            e.Handled = true;
         }
 
         internal void OnPointerEntered(PointerRoutedEventArgs e, PointerPosition pointerPos) {
-            _currentPointerId = e.Pointer.PointerId;
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleEntered(
                 new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
@@ -558,7 +556,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         internal void OnPointerExited(PointerRoutedEventArgs e, PointerPosition pointerPos) {
-            _currentPointerId = null;
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleExited(
                 new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
@@ -598,30 +595,19 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void Container_PointerWheelChanged(object sender, PointerRoutedEventArgs e) {
             var modifiers = e.KeyModifiers;
-            var properties = e.GetCurrentPoint(Scroll).Properties;
+            var pointerPoint = e.GetCurrentPoint(container);
+            var properties = pointerPoint.Properties;
             double delta = properties.MouseWheelDelta;
 
             if (delta == 0) return;
 
-            if (modifiers == Windows.System.VirtualKeyModifiers.Control) {
-                float currentZoom = Scroll.ZoomFactor;
-                float zoomMultiplier = (delta > 0) ? 1.1f : 0.9f;
-                float targetZoom = currentZoom * zoomMultiplier;
-
-                var mousePos = e.GetCurrentPoint(Scroll).Position; 
-                PerformZoom(targetZoom, mousePos);
-
-                e.Handled = true;
-                return;
-            }
-
             if (modifiers == Windows.System.VirtualKeyModifiers.Shift) {
-                PerformScroll(-delta, 0);
-
                 e.Handled = true;
+                PerformScroll(-delta, 0);
                 return;
             }
         }
+
         #endregion
 
         private RenderBase? _selectedTool;
@@ -633,6 +619,5 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private CanvasImageBrush? _gridBrush;
         private const int _gridSize = 20;
         private InkProjectSession _session = null!;
-        private uint? _currentPointerId;
     }
 }

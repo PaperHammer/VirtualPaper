@@ -1079,4 +1079,13 @@ The following words cannot be used as usernames:
   <data name="Project_StaticImg_Text_LayerCopy" xml:space="preserve">
     <value>Copy</value>
   </data>
+  <data name="Project_StaticImg_Text_Tooltip_FitView" xml:space="preserve">
+    <value>Adapt to view size</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_ZoomIn" xml:space="preserve">
+    <value>Zoom In</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_ZoomOut" xml:space="preserve">
+    <value>Zoom Out</value>
+  </data>
 </root>

@@ -31,12 +31,13 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             set { _canvasSize = value; ArcSizeChanged(); OnPropertyChanged(); }
         }
 
-        float _canvasZoom; // 0.2 -- 7.0
-        public float CanvasZoom {
+        double _canvasZoom; // 0.2 -- 7.0
+        public double CanvasZoom {
             get { return _canvasZoom; }
             set {
-                if (Consts.IsDoubleValueEqual(_canvasZoom, value)) return;
-                _canvasZoom = value;
+                var normalizedValue = Math.Round(value, 3);
+                if (Consts.IsDoubleValueEqual(_canvasZoom, normalizedValue)) return;
+                _canvasZoom = normalizedValue;
                 OnPropertyChanged();
             }
         }

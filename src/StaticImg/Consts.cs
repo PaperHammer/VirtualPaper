@@ -18,11 +18,15 @@ namespace Workloads.Creation.StaticImg {
             _maxCanvasdge = maxCanvasdge;
         }
 
+        public static double DecimalToPercent(double value) {
+            return DecimalToPercent(value, 1);
+        }
+        
         public static double DecimalToPercent(float value) {
             return DecimalToPercent(value, 1);
         }
 
-        public static double DecimalToPercent(float value, int digits) {
+        public static double DecimalToPercent(double value, int digits) {
             return Math.Round(value * 100, digits);
         }
 

@@ -2,13 +2,18 @@ using System;
 using Microsoft.Graphics.Canvas;
 
 namespace Workloads.Creation.StaticImg.Events {
-    public class CanvasPointerEventArgs(
-        Microsoft.UI.Input.PointerPoint pointer,
-        CanvasRenderTarget renderTarget,
-        PointerPosition pointerPos) : EventArgs {
-        public Microsoft.UI.Input.PointerPoint Pointer { get; } = pointer;
-        public CanvasRenderTarget RenderTarget { get; } = renderTarget;
-        public PointerPosition PointerPos { get; } = pointerPos;
+    public class CanvasPointerEventArgs : EventArgs {
+        public CanvasPointerEventArgs(Microsoft.UI.Input.PointerPoint pointerPoint, CanvasRenderTarget renderTarget, PointerPosition pointerPos) {
+            Pointer = pointerPoint;
+            Position = pointerPoint.Position;
+            RenderTarget = renderTarget;
+            PointerPos = pointerPos;
+        }
+
+        public Windows.Foundation.Point Position { get; }
+        public Microsoft.UI.Input.PointerPoint Pointer { get; }
+        public CanvasRenderTarget RenderTarget { get; }
+        public PointerPosition PointerPos { get; }
     }
 
     /// <summary>

@@ -3,6 +3,7 @@ using System.Numerics;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
 using Microsoft.UI.Input;
+using VirtualPaper.Common.Extensions;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Workloads.Creation.StaticImg.Events;
@@ -104,14 +105,15 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
             if (w <= 0 || h <= 0) return;
 
-            byte[] originalPixels = SnapshotRenderTarget.GetPixelBytes(x, y, w, h);
-            byte[] currentPixels = RenderTarget.GetPixelBytes(x, y, w, h);
+            byte[] originalPixels = SnapshotRenderTarget.GetPixelBytes(x, y, w, h).CompressPixels();
+            byte[] currentPixels = RenderTarget.GetPixelBytes(x, y, w, h).CompressPixels();
             var command = new RegionPixelSnapshotCommand(
                 LayerId,
                 ViewModel.Data,
                 dirtyRect,
                 originalPixels,
                 currentPixels,
+                true,
                 "Path Drawer",
                 (region) => HandleRender(new RenderTargetChangedEventArgs(RenderMode.PartialRegion, region))
             );

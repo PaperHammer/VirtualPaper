@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
+using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Utils.UndoRedo;
 using VirtualPaper.UIComponent.Services;
 using Windows.Foundation;
@@ -146,12 +147,14 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
                 Rect dirtyRegion,
                 byte[] originalPixels,
                 byte[] currentPixels,
+                bool isCompressed,
                 string description,
                 Action<Rect> requestRenderAction) {
                 _layerId = layerId;
                 _canvasData = canvasData;
                 _dirtyRegion = dirtyRegion;
                 _originalPixels = originalPixels;
+                _isCompressed = isCompressed;
                 _currentPixels = currentPixels;
                 Description = description;
                 _requestRenderAction = requestRenderAction;
@@ -174,6 +177,8 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
                 int h = (int)_dirtyRegion.Height;
 
                 var renderData = _canvasData.Layers.FirstOrDefault(l => l.Tag == _layerId)?.RenderData;
+
+                if (_isCompressed) pixels = pixels.DecompressPixels();
                 renderData?.RenderTarget?.SetPixelBytes(pixels, x, y, w, h);
 
                 _requestRenderAction?.Invoke(_dirtyRegion);
@@ -184,6 +189,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             private readonly InkCanvasData _canvasData;
             private readonly Rect _dirtyRegion;
             private readonly byte[] _originalPixels;
+            private readonly bool _isCompressed;
             private readonly byte[] _currentPixels;
             private readonly Action<Rect> _requestRenderAction;
         }

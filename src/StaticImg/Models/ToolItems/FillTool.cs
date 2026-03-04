@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
+using VirtualPaper.Common.Extensions;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Rendering;
@@ -53,7 +54,10 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             uint targetColor = pixels32[startY * width + startX];
             uint fillColor32 = ColorToBgra32(fillColor);
 
-            if (targetColor == fillColor32) return null;
+            if (targetColor == fillColor32) {
+                fullPixels = null;
+                return null;
+            }
 
             // 执行核心扫描线算法，原地修改 Span，并输出脏区域边界
             ScanlineFill(
@@ -61,16 +65,20 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 targetColor, fillColor32,
                 out int minX, out int minY, out int dirtyWidth, out int dirtyHeight);
 
-            byte[] originalDirtyPixels = target.GetPixelBytes(minX, minY, dirtyWidth, dirtyHeight);
-            byte[] currentDirtyPixels = ExtractModifiedPixels(fullPixels, width, minX, minY, dirtyWidth, dirtyHeight);
-
+            byte[] originalDirtyPixels = target.GetPixelBytes(minX, minY, dirtyWidth, dirtyHeight).CompressPixels();
+            byte[] currentDirtyPixels = ExtractModifiedPixels(fullPixels, width, minX, minY, dirtyWidth, dirtyHeight).CompressPixels();
             var dirtyRect = new Rect(minX, minY, dirtyWidth, dirtyHeight);
+
+            pixels32 = null;
+            fullPixels = null;
+
             return new RegionPixelSnapshotCommand(
                 layerId: LayerId,
                 canvasData: data,
                 dirtyRegion: dirtyRect,
                 originalPixels: originalDirtyPixels,
                 currentPixels: currentDirtyPixels,
+                isCompressed: true,
                 description: "Fill",
                 requestRenderAction: (rect) => HandleRender(new RenderTargetChangedEventArgs(RenderMode.PartialRegion, dirtyRect))
             );

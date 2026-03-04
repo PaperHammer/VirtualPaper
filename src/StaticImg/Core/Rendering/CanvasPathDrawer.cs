@@ -1,15 +1,11 @@
 using System;
-using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
 using Microsoft.UI.Input;
-using VirtualPaper.Common.Utils.UndoRedo;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Workloads.Creation.StaticImg.Events;
-using Workloads.Creation.StaticImg.Models.Specific;
 
 namespace Workloads.Creation.StaticImg.Core.Rendering {
     /// <summary>
@@ -71,13 +67,13 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
             using var geometry = CurrentStroke.CreateStrokeGeometry(RenderTarget!.Device);
             var bounds = CurrentStroke.GetBounds();
-            
+
             // *** TempRenderTarget 重用与增量绘制 ***
             using (var dsTemp = TempRenderTarget.CreateDrawingSession()) {
                 dsTemp.Clear(Colors.Transparent);
                 CurrentStroke.RenderIncrement(dsTemp, geometry);
             }
-            
+
             // *** 合成并绘制到 RenderTarget ***
             using (var mergedImage = CurrentStroke.MergeImages(
                 TempRenderTarget,
@@ -86,7 +82,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             )) {
                 // 将合成结果写入 RenderTarget
                 using (var dsTarget = RenderTarget.CreateDrawingSession()) {
-                    // 注意：因为 MergeImages 返回的 Effect 已经包含了 SnapshotRT 的内容，
+                    // 因为 MergeImages 返回的 Effect 已经包含了 SnapshotRT 的内容，
                     // 所以用 Copy 模式替换 RenderTarget 的内容。
                     dsTarget.Blend = CanvasBlend.Copy;
                     dsTarget.DrawImage(mergedImage);
@@ -110,7 +106,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
             byte[] originalPixels = SnapshotRenderTarget.GetPixelBytes(x, y, w, h);
             byte[] currentPixels = RenderTarget.GetPixelBytes(x, y, w, h);
-            var command = new StrokeSnapshotCommand(
+            var command = new RegionPixelSnapshotCommand(
                 LayerId,
                 ViewModel.Data,
                 dirtyRect,
@@ -138,56 +134,5 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         }
 
         private bool _isDrawing = false;
-
-        record StrokeSnapshotCommand : IUndoableCommand {
-            public string Description { get; }
-
-            public StrokeSnapshotCommand(
-                Guid layerId,
-                InkCanvasData canvasData,
-                Rect dirtyRegion,
-                byte[] originalPixels,
-                byte[] currentPixels,
-                string description,
-                Action<Rect> requestRenderAction) {
-                _layerId = layerId;
-                _canvasData = canvasData;
-                _dirtyRegion = dirtyRegion;
-                _originalPixels = originalPixels;
-                _currentPixels = currentPixels;
-                Description = description;
-                _requestRenderAction = requestRenderAction;
-            }
-
-            public Task ExecuteAsync() {
-                ApplyPixels(_currentPixels);
-                return Task.CompletedTask;
-            }
-
-            public Task UndoAsync() {
-                ApplyPixels(_originalPixels);
-                return Task.CompletedTask;
-            }
-
-            private void ApplyPixels(byte[] pixels) {
-                int x = (int)_dirtyRegion.Left;
-                int y = (int)_dirtyRegion.Top;
-                int w = (int)_dirtyRegion.Width;
-                int h = (int)_dirtyRegion.Height;
-
-                var renderData = _canvasData.Layers.FirstOrDefault(l => l.Tag == _layerId)?.RenderData;
-                renderData?.RenderTarget?.SetPixelBytes(pixels, x, y, w, h);
-
-                _requestRenderAction?.Invoke(_dirtyRegion);
-                renderData?.HandleOnceRenderCompleted();
-            }
-
-            private readonly Guid _layerId;
-            private readonly InkCanvasData _canvasData;
-            private readonly Rect _dirtyRegion;
-            private readonly byte[] _originalPixels;
-            private readonly byte[] _currentPixels;
-            private readonly Action<Rect> _requestRenderAction;
-        }
     }
 }

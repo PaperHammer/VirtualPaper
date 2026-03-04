@@ -18,10 +18,6 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         public event EventHandler? SeletcedToolChanged;
         public event EventHandler<double>? SelectedCropAspectClicked;
         public event EventHandler<LayerSizeChangedEventArgs>? SizeChanged;
-        //public event EventHandler<RenderTargetChangedEventArgs>? RenderRequest;
-
-        //internal TaskCompletionSource<bool> BasicDataLoaded => _basicDataLoaded;
-        //internal TaskCompletionSource<bool> RenderDataLoaded => _renderDataLoaded;
 
         public ObservableCollection<Color> CustomColors { get; set; } = [];
 
@@ -150,43 +146,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         internal void InitData() {
             CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {WindowConsts.ArcWindowInstance.Content.XamlRoot.RasterizationScale * 96} DPI)";
             AddLayer(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_Text_BackgroundLayer)), true);
-            //BasicDataLoaded.TrySetResult(true);
-            //RenderDataLoaded.TrySetResult(true);
         }
-
-        //internal async Task SaveAsync() {
-        //    await _session.DesignFileUtil.SaveBusinessDataAsync();
-        //    //await JsonSaver.SaveAsync(_session.DesignFileUtil.FilePath, this, InkCanvasConfigDataContext.Default);
-        //}
-
-        //internal async Task SaveRenderDataAsync() {
-        //    await _session.DesignFileUtil.SaveLayersAsync(Layers);
-        //    //await Task.WhenAll(Layers.Select(ink => ink.SaveAsync()));
-        //}
-
-        //internal async Task LoadRenderDataAsync() {
-        //    await _isInkDataLoadCompleted.Task;
-        //    var loadTasks = Layers.Select(async ink => {
-        //        ink.RenderData = new(CanvasSize);
-        //        await ink.LoadAsync();
-        //    });
-
-        //    await Task.WhenAll(loadTasks);
-        //    RenderDataLoaded.TrySetResult(true);
-        //}
-
-        //internal async Task LoadBasicDataAsync() {
-        //    var tmp = await JsonSaver.LoadAsync<InkCanvasConfigData>(_session.DesignFileUtil.FilePath, InkCanvasConfigDataContext.Default);
-        //    this.CanvasSize = tmp.CanvasSize;
-        //    this.Layers.SetRange(tmp.Layers, (x) => {
-        //        x.SetDataFilePath();
-        //        x.PropertyChanged += OnInkDataChanged;
-        //    });
-        //    SelectedInkCanvas = this.Layers.FirstOrDefault();
-        //    _isInkDataLoadCompleted.TrySetResult(true);
-        //    this.CustomColors.SetRange(tmp.CustomColors);
-        //    BasicDataLoaded.TrySetResult(true);
-        //}
 
         internal async Task UpdateCustomColorsAsync(ColorChangeEventArgs e) {
             if (e.OldItem != null) CustomColors.Remove((Color)e.OldItem);

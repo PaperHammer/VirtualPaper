@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
 using Windows.Foundation;
@@ -9,7 +10,7 @@ using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Models.Specific;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
-    partial class FillTool(InkCanvasData data) : RenderBase, IDisposable {
+    partial class FillTool(InkCanvasData data) : RenderBase {
         public override void HandlePressed(CanvasPointerEventArgs e) {
             if (e.PointerPos != PointerPosition.InsideCanvas) return;
 
@@ -26,131 +27,148 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                     return;
                 }
 
-                using (var ds = RenderTarget.CreateDrawingSession()) {
-                    FloodFill(_lastClickPoint, _blendedColor, ds);
+                var fillCommand = OptimizedScanlineFill(_lastClickPoint, _blendedColor, RenderTarget);
+                if (fillCommand != null) {
+                    fillCommand.ExecuteAsync();
+                    ViewModel.Session.UnReUtil.RecordCommand(fillCommand);
                 }
-
-                HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-                base.RequestOnceRender();
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();
             }
-        }        
+        }
 
-        public void FloodFill(Point startPoint, Color fillColor, CanvasDrawingSession ds) {
-            if (RenderTarget == null || ds == null) return;
-
-            // 获取像素数据（可能抛出异常）
-            byte[] pixels = RenderTarget.GetPixelBytes();
-            int width = (int)RenderTarget.SizeInPixels.Width;
-            int height = (int)RenderTarget.SizeInPixels.Height;
-
-            // 边界检查（带坐标钳位）
+        /// <summary>
+        /// Span<uint> 内存直读 + 扫描线算法 + 脏区域截取
+        /// </summary>
+        private RegionPixelSnapshotCommand? OptimizedScanlineFill(Point startPoint, Color fillColor, CanvasRenderTarget target) {
+            int width = (int)target.SizeInPixels.Width;
+            int height = (int)target.SizeInPixels.Height;
             int startX = (int)Math.Clamp(startPoint.X, 0, width - 1);
             int startY = (int)Math.Clamp(startPoint.Y, 0, height - 1);
 
-            // 获取目标颜色
-            int startIndex = (startY * width + startX) * 4;
-            Color targetColor = Color.FromArgb(
-                pixels[startIndex + 3],
-                pixels[startIndex + 2],
-                pixels[startIndex + 1],
-                pixels[startIndex]);
+            byte[] fullPixels = target.GetPixelBytes();
+            Span<uint> pixels32 = MemoryMarshal.Cast<byte, uint>(fullPixels.AsSpan());
 
-            // 快速跳过相同颜色
-            if (fillColor.Equals(targetColor)) return;
+            uint targetColor = pixels32[startY * width + startX];
+            uint fillColor32 = ColorToBgra32(fillColor);
 
-            // 创建访问标记数组
-            bool[] visited = new bool[width * height];
-            var stack = new Stack<(int left, int right, int y)>();
+            if (targetColor == fillColor32) return null;
 
-            // 初始扫描线
-            var firstSpan = FindHorizontalSpan(startX, startY, width, pixels, targetColor, visited);
-            stack.Push(firstSpan);
+            // 执行核心扫描线算法，原地修改 Span，并输出脏区域边界
+            ScanlineFill(
+                pixels32, width, height, startX, startY,
+                targetColor, fillColor32,
+                out int minX, out int minY, out int dirtyWidth, out int dirtyHeight);
 
-            // 设置混合模式
-            ds.Blend = CanvasBlend.Copy;
+            byte[] originalDirtyPixels = target.GetPixelBytes(minX, minY, dirtyWidth, dirtyHeight);
+            byte[] currentDirtyPixels = ExtractModifiedPixels(fullPixels, width, minX, minY, dirtyWidth, dirtyHeight);
 
-            // 处理扫描线
+            var dirtyRect = new Rect(minX, minY, dirtyWidth, dirtyHeight);
+            return new RegionPixelSnapshotCommand(
+                layerId: LayerId,
+                canvasData: data,
+                dirtyRegion: dirtyRect,
+                originalPixels: originalDirtyPixels,
+                currentPixels: currentDirtyPixels,
+                description: "Fill",
+                requestRenderAction: (rect) => HandleRender(new RenderTargetChangedEventArgs(RenderMode.PartialRegion, dirtyRect))
+            );
+        }
+
+        /// <summary>
+        /// 扫描线填充
+        /// </summary>
+        private void ScanlineFill(
+            Span<uint> pixels32, int width, int height,
+            int startX, int startY, uint targetColor, uint fillColor32,
+            out int minX, out int minY, out int dirtyWidth, out int dirtyHeight) {
+            // 初始化边界
+            int maxX = startX, maxY = startY;
+            minX = startX; minY = startY;
+
+            // 扫描线栈
+            Stack<(int x, int y)> stack = new Stack<(int, int)>(10000);
+            stack.Push((startX, startY));
+
             while (stack.Count > 0) {
-                var (left, right, y) = stack.Pop();
-                ds.FillRectangle(left, y, right - left + 1, 1, fillColor);
+                var (cx, cy) = stack.Pop();
+                int x = cx;
 
-                ScanAdjacentRow(y - 1, left, right, width, height, pixels, targetColor, visited, stack);
-                ScanAdjacentRow(y + 1, left, right, width, height, pixels, targetColor, visited, stack);
-            }
-        }
+                // 向左寻找边界
+                while (x >= 0 && pixels32[cy * width + x] == targetColor) {
+                    x--;
+                }
+                x++; // 回退到有效起始点
 
-        // 辅助方法：查找水平连续区域
-        private static (int left, int right, int y) FindHorizontalSpan(int x, int y, int width, byte[] pixels, Color targetColor, bool[] visited) {
-            int left = x;
-            while (left > 0 && !visited[y * width + left - 1] && IsPixelMatch(left - 1, y, width, pixels, targetColor))
-                left--;
+                bool scanAbove = false;
+                bool scanBelow = false;
 
-            int right = x;
-            while (right < width - 1 && !visited[y * width + right + 1] && IsPixelMatch(right + 1, y, width, pixels, targetColor))
-                right++;
+                // 向右填充并扫描上下相邻行
+                while (x < width && pixels32[cy * width + x] == targetColor) {
+                    pixels32[cy * width + x] = fillColor32; // 原地修改
 
-            // 标记已访问
-            for (int i = left; i <= right; i++)
-                visited[y * width + i] = true;
+                    // 动态扩大脏区域边界
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (cy < minY) minY = cy;
+                    if (cy > maxY) maxY = cy;
 
-            return (left, right, y);
-        }
+                    // 检查上方行
+                    if (cy > 0) {
+                        bool isTarget = pixels32[(cy - 1) * width + x] == targetColor;
+                        if (!scanAbove && isTarget) {
+                            stack.Push((x, cy - 1));
+                            scanAbove = true;
+                        }
+                        else if (scanAbove && !isTarget) {
+                            scanAbove = false;
+                        }
+                    }
 
-        // 辅助方法：扫描相邻行
-        private static void ScanAdjacentRow(int y, int left, int right, int width, int height, byte[] pixels, Color targetColor, bool[] visited, Stack<(int left, int right, int y)> stack) {
-            if (y < 0 || y >= height) return;
-
-            for (int x = left; x <= right; x++) {
-                if (!visited[y * width + x] && IsPixelMatch(x, y, width, pixels, targetColor)) {
-                    var span = FindHorizontalSpan(x, y, width, pixels, targetColor, visited);
-                    stack.Push(span);
-                    x = span.right; // 跳过已处理区域
+                    // 检查下方行
+                    if (cy < height - 1) {
+                        bool isTarget = pixels32[(cy + 1) * width + x] == targetColor;
+                        if (!scanBelow && isTarget) {
+                            stack.Push((x, cy + 1));
+                            scanBelow = true;
+                        }
+                        else if (scanBelow && !isTarget) {
+                            scanBelow = false;
+                        }
+                    }
+                    x++;
                 }
             }
+
+            // 计算精准的包围盒尺寸
+            dirtyWidth = maxX - minX + 1;
+            dirtyHeight = maxY - minY + 1;
         }
 
-        // 优化后的像素检查（避免重复计算索引）
-        private static bool IsPixelMatch(int x, int y, int width, byte[] pixels, Color targetColor) {
-            int index = (y * width + x) * 4;
-            return index + 3 < pixels.Length &&
-                   Math.Abs(pixels[index + 3] - targetColor.A) < 5 &&
-                   Math.Abs(pixels[index + 2] - targetColor.R) < 5 &&
-                   Math.Abs(pixels[index + 1] - targetColor.G) < 5 &&
-                   Math.Abs(pixels[index] - targetColor.B) < 5;
-        }
+        /// <summary>
+        /// 返回局部修改后的像素块
+        /// </summary>
+        private byte[] ExtractModifiedPixels(byte[] fullPixels, int fullWidth, int dirtyX, int dirtyY, int dirtyWidth, int dirtyHeight) {
+            byte[] currentDirtyPixels = new byte[dirtyWidth * dirtyHeight * 4];
+            int rowBytes = dirtyWidth * 4;
 
-        #region dispose
-        private bool _disposed = false;
-        public void Dispose() {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            for (int row = 0; row < dirtyHeight; row++) {
+                // 全量数组中的起点：(当前行 y 坐标 * 全图宽度 + x 坐标) * 4字节
+                int srcOffset = ((dirtyY + row) * fullWidth + dirtyX) * 4;
+                // 小数组中的起点：当前行 * 小数组宽度字节
+                int dstOffset = row * rowBytes;
 
-        protected virtual void Dispose(bool disposing) {
-            if (_disposed) return;
-
-            if (disposing) {
-                // 释放托管资源
-                ReleaseAllResources();
+                Buffer.BlockCopy(fullPixels, srcOffset, currentDirtyPixels, dstOffset, rowBytes);
             }
 
-            _disposed = true;
+            return currentDirtyPixels;
         }
 
-        private void ReleaseAllResources() {
+        // 辅助方法：将 Color 转换为 Bgra8 格式的 uint
+        private uint ColorToBgra32(Color color) {
+            return (uint)(color.B | (color.G << 8) | (color.R << 16) | (color.A << 24));
         }
-
-        private void SafeDispose<T>(ref T resource) where T : IDisposable {
-            try {
-                resource?.Dispose();
-                resource = default;
-            }
-            catch { }
-        }
-        #endregion
 
         private Color _blendedColor;
         private Point _lastClickPoint;

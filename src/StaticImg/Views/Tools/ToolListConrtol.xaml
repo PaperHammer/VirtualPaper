@@ -24,6 +24,9 @@
                     ResourceKey="{x:Bind ImageSourceKey}" 
                     Width="22" 
                     Height="22"/>
+                <ToolTipService.ToolTip>
+                    <ToolTip Placement="Mouse" Content="{x:Bind ToolName, Converter={StaticResource LocalizeConv}}" Visibility="Visible" />
+                </ToolTipService.ToolTip>
             </Grid>
         </DataTemplate>
 

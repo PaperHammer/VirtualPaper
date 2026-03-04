@@ -6,6 +6,7 @@ using Windows.Foundation;
 using Workloads.Creation.StaticImg.Core.Brushes;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Events;
+using Workloads.Creation.StaticImg.ViewModels;
 
 namespace Workloads.Creation.StaticImg.Core.Rendering {
     public abstract class RenderBase : IUnifiedInputProcessor<CanvasPointerEventArgs> {
@@ -13,13 +14,15 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         public event EventHandler<RenderTargetChangedEventArgs>? RenderRequest;
         public event EventHandler? OnceRenderCompleted;
 
+        public InkCanvasViewModel ViewModel { get; set; } = null!;
+        protected Guid LayerId { get; private set; }
         protected Rect Viewport { get; private set; } = Rect.Empty;
         protected StrokeBase CurrentStroke { get; set; } = null!;
         protected CanvasRenderTarget TempRenderTarget { get; private set; } = null!;
         protected CanvasRenderTarget SnapshotRenderTarget { get; private set; } = null!;
 
-        private CanvasRenderTarget? _renderTarget;
-        protected CanvasRenderTarget? RenderTarget {
+        private CanvasRenderTarget _renderTarget = null!;
+        protected CanvasRenderTarget RenderTarget {
             get => _renderTarget;
             set {
                 if (_renderTarget == value) return;
@@ -44,6 +47,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         public float InteractionThreshold { get; set; } = 2f;
 
         public virtual void HandleEntered(CanvasPointerEventArgs e) {
+            LayerId = e.LayerId;
             RenderTarget = e.RenderTarget;
             SystemCursorChangeRequested?.Invoke(this, new(InputSystemCursor.Create(InputSystemCursorShape.Cross)));
         }

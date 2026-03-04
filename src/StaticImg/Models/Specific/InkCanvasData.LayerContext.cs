@@ -56,7 +56,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             }
 
             var layer = new LayerInfo {
-                Name = name ?? 
+                Name = name ??
                     $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerName))} " +
                     $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerNew))} " +
                     $"{++_newLayerCount}",
@@ -238,7 +238,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         private int _newLayerCount;
         private int _copyLayerCount;
 
-        #region command
+        #region command        
         record AddLayerCommand : LayerCommandBase {
             public AddLayerCommand(InkCanvasData canvas, LayerInfo layer, int originalIndex) : base(canvas, layer) {
                 Description = $"Add Layer '{layer.Name}'";
@@ -340,7 +340,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             private readonly bool _oldVisibility;
             private readonly bool _newVisibility;
 
-            public SetVisibilityCommand(InkCanvasData canvas, LayerInfo layer, bool oldVisibility, bool newVisibility) 
+            public SetVisibilityCommand(InkCanvasData canvas, LayerInfo layer, bool oldVisibility, bool newVisibility)
                 : base(canvas, layer) {
                 _oldVisibility = oldVisibility;
                 _newVisibility = newVisibility;

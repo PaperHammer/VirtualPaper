@@ -20,16 +20,6 @@ namespace Workloads.Creation.StaticImg.InkSystem.Utils {
             _undoRedoCore.Record(command);
         }
 
-        public void RecordDirtyRegion(
-            Guid layerId,
-            CanvasRenderTarget target,
-            Rect dirtyRegion,
-            string description = "") {
-            var snapshot = new DirtyRegionSnapshot(layerId, target, dirtyRegion);
-            var command = new LayerSnapshotCommand(snapshot, description);
-            _undoRedoCore.Record(command);
-        }
-
         public async Task UndoAsync() => await _undoRedoCore.UndoAsync();
         public async Task RedoAsync() => await _undoRedoCore.RedoAsync();
 
@@ -74,25 +64,5 @@ namespace Workloads.Creation.StaticImg.InkSystem.Utils {
 
         public Task ExecuteAsync() => _execute();
         public Task UndoAsync() => _undo();
-    }
-
-    class LayerSnapshotCommand : IUndoableCommand {
-        private readonly DirtyRegionSnapshot _snapshot;
-        public string Description { get; }
-
-        public LayerSnapshotCommand(DirtyRegionSnapshot snapshot, string description) {
-            _snapshot = snapshot;
-            Description = description;
-        }
-
-        public Task ExecuteAsync() {
-            _snapshot.ApplyCurrent();
-            return Task.CompletedTask;
-        }
-
-        public Task UndoAsync() {
-            _snapshot.RestoreOriginal();
-            return Task.CompletedTask;
-        }
     }
 }

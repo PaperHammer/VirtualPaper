@@ -40,8 +40,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         public InkCanvas() {
             this.InitializeComponent();
-            _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
-            _tool = new ToolManager();
+            _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);            
         }
 
         protected override void OnPayloadChanged(FrameworkPayload? newPayload, FrameworkPayload? oldPayload) {
@@ -58,6 +57,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 Consts.InitData(_session);
             }
             _viewModel = new InkCanvasViewModel(_session, context);
+            _tool = new ToolManager(_viewModel);
         }
 
         private void ArcUserControl_Loaded(object sender, RoutedEventArgs e) {
@@ -533,32 +533,32 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         internal void OnPointerEntered(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleEntered(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos, _viewModel.Data.SelectedLayer.Tag)));
         }
 
         internal void OnPointerMoved(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             _viewModel.Data.UpdatePointerPos(pointerPoint.Position);
             HandleToolEvent(tool => tool.HandleMoved(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos, _viewModel.Data.SelectedLayer.Tag)));
         }
 
         internal void OnPointerPressed(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandlePressed(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos, _viewModel.Data.SelectedLayer.Tag)));
         }
 
         internal void OnPointerReleased(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleReleased(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos, _viewModel.Data.SelectedLayer.Tag)));
         }
 
         internal void OnPointerExited(PointerRoutedEventArgs e, PointerPosition pointerPos) {
             var pointerPoint = e.GetCurrentPoint(renderCanvas);
             HandleToolEvent(tool => tool.HandleExited(
-                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos)));
+                new CanvasPointerEventArgs(pointerPoint, _viewModel.Data.SelectedLayer.RenderData.RenderTarget, pointerPos, _viewModel.Data.SelectedLayer.Tag)));
         }
 
         private void HandleToolEvent(Action<RenderBase> action) {
@@ -611,7 +611,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         #endregion
 
         private RenderBase? _selectedTool;
-        private readonly ToolManager _tool;
+        private ToolManager _tool = null!;
         private InkCanvasViewModel _viewModel = null!;
         private readonly InputCursor _originalInputCursor;
         private CanvasRenderTarget? _compositeTarget;

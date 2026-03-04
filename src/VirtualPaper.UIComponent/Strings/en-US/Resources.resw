@@ -1088,4 +1088,22 @@ The following words cannot be used as usernames:
   <data name="Project_StaticImg_Text_Tooltip_ZoomOut" xml:space="preserve">
     <value>Zoom Out</value>
   </data>
+  <data name="Project_StaticImg_ToolName_Selection" xml:space="preserve">
+    <value>Selection</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_PaintBrush" xml:space="preserve">
+    <value>PaintBrush</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Fill" xml:space="preserve">
+    <value>Fill</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Eraser" xml:space="preserve">
+    <value>Eraser</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Crop" xml:space="preserve">
+    <value>Crop</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_CanvasSet" xml:space="preserve">
+    <value>Canvas</value>
+  </data>
 </root>

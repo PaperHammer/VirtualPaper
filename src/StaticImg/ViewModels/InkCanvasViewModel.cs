@@ -15,6 +15,7 @@ using Workloads.Creation.StaticImg.Models.Specific;
 namespace Workloads.Creation.StaticImg.ViewModels {
     public partial class InkCanvasViewModel {
         public InkCanvasData Data { get; }
+        public InkProjectSession Session => _session;
 
         public InkCanvasViewModel(InkProjectSession session, ArcPageContext context) {
             _session = session;
@@ -66,12 +67,12 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             new(displayText : "9:16", borderWidth : 27, borderHeight : 48)
         ];
         internal readonly List<ToolItem> _toolItems = [
-            new() { Type = ToolType.Selection, ToolName = "选择", Glyph = "\uE8B0", },
-            new() { Type = ToolType.PaintBrush, ToolName = "画笔", Glyph = "\uEE56", },
-            new() { Type = ToolType.Fill, ToolName = "填充", ImageSourceKey = "DraftPanel_FuncBar_ColorFill", },
-            new() { Type = ToolType.Eraser, ToolName = "擦除", Glyph = "\uE75C", },
-            new() { Type = ToolType.Crop, ToolName = "裁剪", Glyph = "\uE7A8", },
-            new() { Type = ToolType.CanvasSet, ToolName = "画布", Glyph = "\uE9E9", },
+            new() { Type = ToolType.Selection, ToolName = "Project_StaticImg_ToolName_Selection", Glyph = "\uE8B0", },
+            new() { Type = ToolType.PaintBrush, ToolName = "Project_StaticImg_ToolName_PaintBrush", Glyph = "\uEE56", },
+            new() { Type = ToolType.Fill, ToolName = "Project_StaticImg_ToolName_Fill", ImageSourceKey = "DraftPanel_FuncBar_ColorFill", },
+            new() { Type = ToolType.Eraser, ToolName = "Project_StaticImg_ToolName_Eraser", Glyph = "\uE75C", },
+            new() { Type = ToolType.Crop, ToolName = "Project_StaticImg_ToolName_Crop", Glyph = "\uE7A8", },
+            new() { Type = ToolType.CanvasSet, ToolName = "Project_StaticImg_ToolName_CanvasSet", Glyph = "\uE9E9", },
         ];
         private readonly InkProjectSession _session = null!;
         private readonly IUserSettingsClient _userSettingsClinet;

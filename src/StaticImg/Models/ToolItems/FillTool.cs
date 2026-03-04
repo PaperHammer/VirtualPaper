@@ -30,7 +30,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
 
                 var fillCommand = OptimizedScanlineFill(_lastClickPoint, _blendedColor, RenderTarget);
                 if (fillCommand != null) {
-                    fillCommand.ExecuteAsync();
+                    fillCommand.ExecuteAsync().Wait();
                     ViewModel.Session.UnReUtil.RecordCommand(fillCommand);
                 }
             }

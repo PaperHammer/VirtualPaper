@@ -403,15 +403,15 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void SelectionRequested(SeletionRequest sr) {
             if (_selectedTool is not SelectionTool st) return;
 
-            bool op;
+            object? op;
             switch (sr) {
                 case SeletionRequest.Commit:
                     op = st.CommitSelection();
-                    if (op) RenderToCompositeTarget(RenderMode.FullRegion);
+                    if (op != null) RenderToCompositeTarget(RenderMode.FullRegion);
                     break;
                 case SeletionRequest.Cancel:
                     op = st.RestoreOriginalContent();
-                    if (op) RenderToCompositeTarget(RenderMode.FullRegion);
+                    if (op != null) RenderToCompositeTarget(RenderMode.FullRegion);
                     break;
                 default:
                     break;
@@ -431,15 +431,15 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void CropRequested(CropRequest cr) {
             if (_selectedTool is not CropTool ct) return;
 
-            bool op;
+            object? op;
             switch (cr) {
                 case CropRequest.Commit:
                     op = ct.CommitSelection();
-                    if (op) RenderToCompositeTarget(RenderMode.FullRegion);
+                    if (op != null) RenderToCompositeTarget(RenderMode.FullRegion);
                     break;
                 case CropRequest.Cancel:
                     op = ct.RestoreOriginalContent();
-                    if (op) RenderToCompositeTarget(RenderMode.FullRegion);
+                    if (op != null) RenderToCompositeTarget(RenderMode.FullRegion);
                     break;
                 default:
                     break;

@@ -189,8 +189,5 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {WindowConsts.ArcWindowInstance.Content.XamlRoot.RasterizationScale * 96} DPI)";
             SizeChanged?.Invoke(this, new LayerSizeChangedEventArgs(CanvasSize));
         }
-
-        //private readonly TaskCompletionSource<bool> _isInkDataLoadCompleted = new();
-        //private readonly TaskCompletionSource<bool> _basicDataLoaded = new(), _renderDataLoaded = new();
     }
 }

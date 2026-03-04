@@ -4,6 +4,7 @@ using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI;
 using Microsoft.UI.Input;
+using VirtualPaper.Common.Utils.UndoRedo;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Events;
@@ -17,6 +18,8 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
         public Rect SelectionRect => _selectionRect;
         public SelectionState CurrentState => _currentState;
+
+        protected abstract IUndoableCommand? BuildUndoCommand();
 
         public override void HandlePressed(CanvasPointerEventArgs e) {
             var position = e.Pointer.Position;
@@ -225,21 +228,26 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             }
         }
 
-        public virtual bool CommitSelection() {
-            if (_currentState != SelectionState.Selected || _selectionContent == null) return false;
+        public virtual IUndoableCommand? CommitSelection() {
+            if (_currentState != SelectionState.Selected || _selectionContent == null) return null;
 
-            // 将选区内容合并到基础层
-            using (var ds = _baseContent!.CreateDrawingSession()) {
-                ds.Blend = CanvasBlend.Copy;
-                ds.DrawImage(_selectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
+            //// 将选区内容合并到基础层
+            //using (var ds = _baseContent!.CreateDrawingSession()) {
+            //    ds.Blend = CanvasBlend.Copy;
+            //    ds.DrawImage(_selectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
+            //}
+            var command = BuildUndoCommand();
+            if (command != null) {
+                ViewModel.Session.UnReUtil.RecordCommand(command);
+
+                Reset();
+                RenderToTarget();
+                _baseContent?.Dispose();
+                _baseContent = null;
+                base.RequestOnceRender();
             }
-            Reset();
-            RenderToTarget();
-            _baseContent?.Dispose();
-            _baseContent = null;
-            base.RequestOnceRender();
 
-            return true;
+            return command;
         }
 
         protected virtual void RenderToTarget() {
@@ -309,6 +317,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         private bool _disposed = false;
         public override void Dispose() {
             Dispose(true);
+            base.Dispose();
             GC.SuppressFinalize(this);
         }
 

@@ -1,4 +1,4 @@
-﻿using Windows.Foundation;
+using Windows.Foundation;
 
 namespace VirtualPaper.Common.Extensions {
     public static class RectExtensions {
@@ -26,6 +26,27 @@ namespace VirtualPaper.Common.Extensions {
             double bottom = Math.Max(rect1.Bottom, rect2.Bottom);
 
             return new Rect(left, top, right - left, bottom - top);
+        }
+
+        /// <summary>
+        /// 向外包裹取整（左上角 Floor，右下角 Ceiling）
+        /// 将浮点型 Rect 转换为完全包裹该区域的像素级整型边界
+        /// </summary>
+        /// <returns>返回 (X, Y, Width, Height) 的整型元组</returns>
+        public static Rect RoundOutwardAsInt(this Rect rect) {
+            // 左上角坐标向下取整
+            int x = (int)Math.Floor(rect.X);
+            int y = (int)Math.Floor(rect.Y);
+
+            // 右下角坐标向上取整
+            int right = (int)Math.Ceiling(rect.Right);
+            int bottom = (int)Math.Ceiling(rect.Bottom);
+
+            // 重新计算宽高，并确保不为负数
+            int width = Math.Max(0, right - x);
+            int height = Math.Max(0, bottom - y);
+
+            return new Rect(x, y, width, height);
         }
     }
 }

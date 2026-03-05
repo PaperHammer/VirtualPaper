@@ -4,6 +4,8 @@ using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI;
+using VirtualPaper.Common.Extensions;
+using VirtualPaper.Common.Utils.UndoRedo;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Rendering;
@@ -22,43 +24,51 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             _data.SelectionRect = e;
         }
 
-        public override bool CommitSelection() {
-            if (_currentState != SelectionState.Selected || _selectionContent == null)
-                return false;
+        // 裁剪工具在框选过程中不截取像素，直到 Commit 再处理
+        protected override void CaptureSelectionContent() {
+        }
 
-            // 创建临时绘图目标
-            CanvasRenderTarget? newBaseContent = null;
-            try {
-                newBaseContent = new CanvasRenderTarget(
-                    RenderTarget,
-                    RenderTarget!.SizeInPixels.Width,
-                    RenderTarget.SizeInPixels.Height,
-                    RenderTarget.Dpi,
-                    RenderTarget.Format,
-                    RenderTarget.AlphaMode);
+        public override IUndoableCommand? CommitSelection() {
+            if (_currentState != SelectionState.Selected || _baseContent == null)
+                return null;
 
-                using (var ds = newBaseContent.CreateDrawingSession()) {
-                    ds.DrawImage(_selectionContent,
-                        new Rect(_selectionRect.X, _selectionRect.Y,
-                                _selectionRect.Width, _selectionRect.Height));
-                }
+            var command = BuildUndoCommand();
+            if (command != null) {
+                Reset();
+                command.ExecuteAsync().Wait();
+                ViewModel.Session.UnReUtil.RecordCommand(command);
 
-                // 安全替换基础内容
-                var oldContent = _baseContent;
-                _baseContent = newBaseContent;
-                oldContent?.Dispose();
-
-                // 重置选区状态
-                _currentState = SelectionState.None;
-                SafeDispose(ref _selectionContent);
-                RenderToTarget();
-
-                return true;
+                HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
             }
-            catch {
-                newBaseContent?.Dispose();
-                throw;
-            }
+
+            return command;
+        }
+
+        protected override IUndoableCommand? BuildUndoCommand() {
+            if (_baseContent == null) return null;
+
+            ArcSize originalSize = _data.CanvasSize;
+            Rect cropRect = _selectionRect.RoundOutwardAsInt();
+
+            if (cropRect.Width <= 0 || cropRect.Height <= 0) return null;
+
+            var newSize = new ArcSize((float)cropRect.Width, (float)cropRect.Height, (uint)_baseContent.Dpi, RebuildMode.None);
+
+            byte[] compressedOriginal = _baseContent.GetPixelBytes().CompressPixels();
+            byte[] compressedNew = _baseContent.GetPixelBytes(
+                (int)cropRect.X,
+                (int)cropRect.Y,
+                (int)cropRect.Width,
+                (int)cropRect.Height).CompressPixels();
+
+            return new LayerRebuildCommand(
+                _data,
+                LayerId,
+                originalSize,
+                newSize,
+                compressedOriginal,
+                compressedNew,
+                () => HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion)));
         }
 
         protected override void RenderToTarget() {
@@ -66,30 +76,24 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
 
             try {
                 using (var ds = RenderTarget.CreateDrawingSession()) {
-                    // 完全清空画布
                     ds.Clear(Colors.Transparent);
 
-                    // 只绘制基础内容（提交后就是选区内容+透明背景）
+                    // 只绘制基础内容
                     if (_baseContent != null) {
                         ds.DrawImage(_baseContent);
                     }
 
-                    // 绘制进行中的选区状态
-                    if (_currentState != SelectionState.None) {
-                        // 绘制选区内容（拖拽预览）
-                        if (_selectionContent != null) {
-                            ds.DrawImage(_selectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
-                        }
+                    // 区分 selectiontool，croptool 仅在 commit 时更新选区
 
-                        // 绘制半透明遮罩（选区外区域）
+                    if (_currentState != SelectionState.None) {
+                        // 绘制半透明遮罩（选区外区域变暗）
                         using (var overlayBrush = new CanvasSolidColorBrush(RenderTarget, Color.FromArgb(180, 0, 0, 0))) {
-                            var outer = CanvasGeometry.CreateRectangle(ds,
-                                new Rect(0, 0, RenderTarget.Size.Width, RenderTarget.Size.Height));
+                            var outer = CanvasGeometry.CreateRectangle(ds, new Rect(0, 0, RenderTarget.Size.Width, RenderTarget.Size.Height));
                             var inner = CanvasGeometry.CreateRectangle(ds, _selectionRect);
                             ds.FillGeometry(outer.CombineWith(inner, Matrix3x2.Identity, CanvasGeometryCombine.Exclude), overlayBrush);
                         }
 
-                        // 绘制选择框
+                        // 绘制选择框辅助线
                         using (var borderBrush = new CanvasSolidColorBrush(RenderTarget, _selectionBorderColor)) {
                             ds.DrawRectangle(_selectionRect, borderBrush, _selectionBorderWidth, _selectionStrokeStyle);
                         }
@@ -110,12 +114,25 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             _ratioController.ApplyRatio(ratio);
         }
 
+        public override bool RestoreOriginalContent() {
+            if (_baseContent == null || RenderTarget == null) return false;
+
+            using (var ds = RenderTarget.CreateDrawingSession()) {
+                ds.Blend = CanvasBlend.Copy;
+                ds.DrawImage(_baseContent);
+            }
+            Reset();
+            _baseContent?.Dispose();
+            _baseContent = null;
+            HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+
+            return true;
+        }
+
         private readonly AspectRatioController _ratioController;
         private readonly InkCanvasData _data;
 
-        internal class AspectRatioController(CropTool parent) {
-            private double _currentRatio;
-
+        private class AspectRatioController(CropTool parent) {
             public void ApplyRatio(double ratio) {
                 if (parent.RenderTarget == null || ratio <= 0) return;
                 _currentRatio = ratio;
@@ -132,7 +149,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                     size.Height);
                 parent.UpdateSelectionRect(parent._selectionRect);
                 parent._currentState = SelectionState.Selected;
-                parent.CaptureSelectionContent();
             }
 
             private Size CalculateInitialSize() {
@@ -169,6 +185,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 double scale = Math.Min(maxW / ratio, maxH) / maxH;
                 return new Size(maxH * ratio * scale, maxH * scale);
             }
+            
+            private double _currentRatio;
         }
     }
 }

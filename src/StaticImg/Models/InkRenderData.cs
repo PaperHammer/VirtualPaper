@@ -15,9 +15,9 @@ using Workloads.Creation.StaticImg.Extensions;
 
 namespace Workloads.Creation.StaticImg.Models {
     public partial class InkRenderData : IDisposable {
-        public event EventHandler OnceRenderCompleted;
+        public event EventHandler? OnceRenderCompleted;
 
-        public CanvasRenderTarget RenderTarget { get; private set; }
+        public CanvasRenderTarget RenderTarget { get; private set; } = null!;
         public bool IsNeedBackground { get; }
         public Matrix3x2 Transform { get; private set; } = Matrix3x2.Identity;
         public TaskCompletionSource<bool> IsInited => _isInited;
@@ -172,6 +172,21 @@ namespace Workloads.Creation.StaticImg.Models {
             };
             
             return newRender;
+        }
+
+        public void ResizeAndSetPixels(ArcSize newSize, byte[] pixels) {
+            _arcSize = newSize;
+
+            RenderTarget?.Dispose();
+            RenderTarget = new CanvasRenderTarget(
+                _session.SharedDevice,
+                (float)_arcSize.Width,
+                (float)_arcSize.Height,
+                _arcSize.Dpi,
+                _session.SharedFormat,
+                _session.SharedAlphaMode);
+
+            RenderTarget.SetPixelBytes(pixels);
         }
 
         public async Task ResizeRenderTargetAsync(ArcSize arcSize) {

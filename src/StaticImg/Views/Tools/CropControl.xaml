@@ -15,9 +15,7 @@
                 Width="90" 
                 Height="100" 
                 Margin="6">
-                <StackPanel 
-                    Orientation="Vertical"
-                    Spacing="10">
+                <StackPanel Orientation="Vertical" Spacing="10">
                     <Border 
                         Width="{x:Bind BorderWidth}" 
                         Height="{x:Bind BorderHeight}"
@@ -42,15 +40,12 @@
             <TextBlock Text="裁剪"/>
         </Expander.Header>
         <Expander.Content>
-            <StackPanel 
-                Orientation="Vertical"
-                Spacing="6">
+            <StackPanel Orientation="Vertical" Spacing="6">
 
                 <GridView 
                     SelectionMode="Single"
                     HorizontalAlignment="Stretch"
                     IsItemClickEnabled="True"
-                    ItemClick="AspectRatio_ItemClick"
                     SelectedItem="{x:Bind SeletcedAspect, Mode=TwoWay}"
                     ItemsSource="{x:Bind AspectRatios}"
                     ItemTemplate="{StaticResource AspectRatioTemplate}"

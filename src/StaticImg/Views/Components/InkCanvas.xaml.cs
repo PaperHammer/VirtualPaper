@@ -184,23 +184,25 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             _viewModel.Data.SelectedLayer.RenderData.HandleOnceRenderCompleted();
         }
 
-        private void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
+        private void RenderToCompositeTarget(RenderMode mode, Rect region = default) {            
             DebugUtil.Output("RenderToCompositeTarget triggered");
             if (_compositeTarget == null) return;
 
-            var layers = _viewModel.Data.ActiveLayers;
-            using (var ds = _compositeTarget.CreateDrawingSession()) {
-                if (mode == RenderMode.FullRegion) {
-                    ds.Clear(Colors.Transparent);
-                    FullRender(layers, ds);
+            lock (_compositeTarget) {
+                var layers = _viewModel.Data.ActiveLayers;
+                using (var ds = _compositeTarget.CreateDrawingSession()) {
+                    if (mode == RenderMode.FullRegion) {
+                        ds.Clear(Colors.Transparent);
+                        FullRender(layers, ds);
+                    }
+                    else {
+                        if (region == Rect.Empty) return;
+                        PartialRender(layers, ds, region);
+                    }
                 }
-                else {
-                    if (region == Rect.Empty) return;
-                    PartialRender(layers, ds, region);
-                }
-            }
 
-            renderCanvas.Invalidate();
+                renderCanvas.Invalidate();
+            }
         }
 
         private void FullRender(IEnumerable<LayerInfo> layers, CanvasDrawingSession ds) {
@@ -407,11 +409,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             switch (sr) {
                 case SeletionRequest.Commit:
                     op = st.CommitSelection();
-                    if (op != null) RenderToCompositeTarget(RenderMode.FullRegion);
                     break;
                 case SeletionRequest.Cancel:
                     op = st.RestoreOriginalContent();
-                    if (op != null) RenderToCompositeTarget(RenderMode.FullRegion);
                     break;
                 default:
                     break;
@@ -431,15 +431,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void CropRequested(CropRequest cr) {
             if (_selectedTool is not CropTool ct) return;
 
-            object? op;
             switch (cr) {
                 case CropRequest.Commit:
-                    op = ct.CommitSelection();
-                    if (op != null) RenderToCompositeTarget(RenderMode.FullRegion);
+                    ct.CommitSelection();
                     break;
                 case CropRequest.Cancel:
-                    op = ct.RestoreOriginalContent();
-                    if (op != null) RenderToCompositeTarget(RenderMode.FullRegion);
+                    ct.RestoreOriginalContent();
                     break;
                 default:
                     break;

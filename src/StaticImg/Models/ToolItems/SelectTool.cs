@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Graphics.Canvas;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Utils.UndoRedo;
@@ -18,7 +17,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         protected override IUndoableCommand? BuildUndoCommand() {
-            if (_selectionContent == null || RenderTarget == null || _baseContent == null) return null;
+            if (_selectionContent == null || _baseContent == null) return null;
 
             int w = (int)_originalSelectionRect.Width;
             int h = (int)_originalSelectionRect.Height;

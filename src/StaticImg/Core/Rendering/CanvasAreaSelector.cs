@@ -54,8 +54,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
                 RequestCursorChange(InputSystemCursor.Create(InputSystemCursorShape.Cross));
             }
 
-            if (!e.Pointer.Properties.IsLeftButtonPressed ||
-                _currentState != SelectionState.Selecting) return;
+            if (!e.Pointer.Properties.IsLeftButtonPressed || _currentState != SelectionState.Selecting) return;
 
             var currentPos = new Point(
                 Math.Min(RenderTarget.SizeInPixels.Width, Math.Max(0, e.Pointer.Position.X)),
@@ -136,7 +135,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             }
         }
 
-        public bool RestoreOriginalContent() {
+        public virtual bool RestoreOriginalContent() {
             if (_selectionContent == null) return false;
 
             // 恢复原位置内容
@@ -154,11 +153,12 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             return true;
         }
 
-        private void Reset() {
+        protected void Reset() {
             _selectionContent?.Dispose();
             _selectionContent = null;
             _currentState = SelectionState.None;
             _originalSelectionRect = Rect.Empty;
+            _isDragging = false;
             UpdateSelectionRect(Rect.Empty);
         }
 
@@ -194,7 +194,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             }
         }
 
-        protected void CaptureSelectionContent() {
+        protected virtual void CaptureSelectionContent() {
             if (_selectionRect.IsEmpty) return;
 
             // 更新选区矩形为整数坐标，避免还原后残留虚影
@@ -231,11 +231,6 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         public virtual IUndoableCommand? CommitSelection() {
             if (_currentState != SelectionState.Selected || _selectionContent == null) return null;
 
-            //// 将选区内容合并到基础层
-            //using (var ds = _baseContent!.CreateDrawingSession()) {
-            //    ds.Blend = CanvasBlend.Copy;
-            //    ds.DrawImage(_selectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
-            //}
             var command = BuildUndoCommand();
             if (command != null) {
                 ViewModel.Session.UnReUtil.RecordCommand(command);

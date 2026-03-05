@@ -9,10 +9,10 @@ using Workloads.Creation.StaticImg.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Tools {
     public sealed partial class CropControl : UserControl {
-        public event EventHandler<RoutedEventArgs> CropCancelRequest;
-        public event EventHandler<RoutedEventArgs> CropCommitRequest;
+        public event EventHandler<RoutedEventArgs>? CropCancelRequest;
+        public event EventHandler<RoutedEventArgs>? CropCommitRequest;
 
-        public AspectRatioItem SeletcedAspect {
+        public AspectRatioItem? SeletcedAspect {
             get { return (AspectRatioItem)GetValue(SeletcedAspectProperty); }
             set { SetValue(SeletcedAspectProperty, value); }
         }
@@ -30,18 +30,14 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             this.InitializeComponent();
         }
 
-        private void AspectRatio_ItemClick(object sender, ItemClickEventArgs e) {
-            //inkCanvas.ViewModel.Data.SeletcedAspectitem = e.ClickedItem as AspectRatioItem;
-        }
-
         private void CropCancelBtn_Click(object sender, RoutedEventArgs e) {
-            //inkCanvas.CancelCrop();
             CropCancelRequest?.Invoke(this, e);
+            SeletcedAspect = null;
         }
 
         private void CropCommitBtn_Click(object sender, RoutedEventArgs e) {
-            //inkCanvas.CommitCrop();
             CropCommitRequest?.Invoke(this, e);
+            SeletcedAspect = null;
         }
     }
 

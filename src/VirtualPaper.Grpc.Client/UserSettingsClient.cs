@@ -199,7 +199,7 @@ namespace VirtualPaper.Grpc.Client {
             _ = await _client.SetRecentUsedsAsync(tmp);
         }
 
-        public async Task UpdateRecetUsedAsync(string filePath) {            
+        public async Task UpdateRecentUsedAsync(string filePath) {            
             lock (_singleLock) {
                 var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 var existingItem = RecentUseds.FirstOrDefault(r => r.FilePath == filePath);

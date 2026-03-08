@@ -19,14 +19,14 @@ namespace Workloads.Creation.StaticImg.ViewModels {
 
         public InkCanvasViewModel(InkProjectSession session, ArcPageContext context) {
             _session = session;
-            _userSettingsClinet = AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>();
+            _userSettings = AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>();
             Data = new InkCanvasData(session, context);
         }
 
-        internal async Task SaveAsync() {
-            (var flag, var filePath) = await Data.SaveAsync(_session);
+        internal async Task SaveAsync(bool isEmergency = false) {
+            (var flag, var filePath) = isEmergency ? await Data.SaveAtEmergencyAsync(_session) : await Data.SaveAsync(_session);
             if (flag) {
-                await _userSettingsClinet.UpdateRecetUsedAsync(filePath!);
+                await _userSettings.UpdateRecentUsedAsync(filePath!);
             }
         }
 
@@ -75,6 +75,6 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             new() { Type = ToolType.CanvasSet, ToolName = "Project_StaticImg_ToolName_CanvasSet", Glyph = "\uE9E9", },
         ];
         private readonly InkProjectSession _session = null!;
-        private readonly IUserSettingsClient _userSettingsClinet;
+        private readonly IUserSettingsClient _userSettings;
     }
 }

@@ -6,8 +6,12 @@ using Workloads.Creation.StaticImg.ViewModels;
 namespace Workloads.Creation.StaticImg.Utils {
     class ToolManager {
         public InkCanvasViewModel ViewModel { get; }
+        
+        public ToolManager(InkCanvasViewModel viewModel) {
+            ViewModel = viewModel;
+        }
 
-        internal void RegisterTool(ToolType toolType, RenderBase tool) {
+        public void RegisterTool(ToolType toolType, RenderBase tool) {
             if (_tools.ContainsKey(toolType)) {
                 ArcLog.GetLogger<ToolManager>().Warn($"Tool of type {toolType} is already registered. Skipping registration.");
                 return;
@@ -17,16 +21,18 @@ namespace Workloads.Creation.StaticImg.Utils {
             _tools[toolType] = tool;
         }
 
-        internal RenderBase? GetTool(ToolType toolType) {
+        public RenderBase? GetTool(ToolType toolType) {
             return _tools.TryGetValue(toolType, out var tool) ? tool : null;
         }
 
-        internal IEnumerable<RenderBase> GetAllTools() {
+        public IEnumerable<RenderBase> GetAllTools() {
             return _tools.Values;
         }
 
-        public ToolManager(InkCanvasViewModel viewModel) {
-            ViewModel = viewModel;
+        public void RefreshToolRenderData() {
+            foreach (var tool in GetAllTools()) {
+                tool.OnLayerChanged();
+            }
         }
 
         private readonly Dictionary<ToolType, RenderBase> _tools = [];

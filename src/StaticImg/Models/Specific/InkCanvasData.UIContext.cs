@@ -86,8 +86,8 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             set { if (_seletcedBrush == value) return; _seletcedBrush = value; OnPropertyChanged(); }
         }
 
-        AspectRatioItem _seletcedAspectItem;
-        public AspectRatioItem SeletcedAspectItem {
+        AspectRatioItem? _seletcedAspectItem;
+        public AspectRatioItem? SeletcedAspectItem {
             get { return _seletcedAspectItem; }
             set {
                 if (_seletcedAspectItem == value) return;

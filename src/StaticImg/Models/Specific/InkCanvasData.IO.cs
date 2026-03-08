@@ -64,6 +64,18 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             }
         }
 
+        public async Task<(bool Success, string? FinalPath)> SaveAtEmergencyAsync(InkProjectSession session) {
+            if (!session.DesignFileUtil.IsValidFile) {
+                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string fileName = $"virtualpaperdesign_{timestamp}{FileExtension.FE_Design}";
+                var path = System.IO.Path.Combine(desktopPath, fileName);
+                session.DesignFileUtil.SetFilePath(path);
+            }
+
+            return await SaveAsync(session);
+        }
+
         public async Task<(bool Success, string? FinalPath)> SaveAsync(InkProjectSession session) {
             try {
                 if (!session.DesignFileUtil.IsValidFile) {

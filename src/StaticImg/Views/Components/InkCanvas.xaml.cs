@@ -40,7 +40,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         public InkCanvas() {
             this.InitializeComponent();
-            _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);            
+            _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
         }
 
         protected override void OnPayloadChanged(FrameworkPayload? newPayload, FrameworkPayload? oldPayload) {
@@ -75,15 +75,22 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 tool.SystemCursorChangeRequested += (s, e) => {
                     this.ProtectedCursor = e.Cursor ?? _originalInputCursor;
                 };
-
                 tool.RenderRequest += (s, e) => {
                     RenderToCompositeTarget(e.Mode, e.Region);
                 };
-
                 tool.OnceRenderCompleted += (s, e) => {
                     OnOnceRenderCompleted();
                 };
+                tool.FatalErrorOccurred += (s, e) => {
+                    OnFatalErrorOccurred(s, e);
+                };
             }
+        }
+
+        private async void OnFatalErrorOccurred(object s, Exception e) {
+            ArcLog.GetLogger<InkCanvas>().Fatal(e.Message);
+            GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), message: e.Message);
+            await _viewModel.SaveAsync(true);
         }
 
         internal async Task SaveAsync() {
@@ -124,6 +131,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void HandleLayerChanged() {
+            _tool.RefreshToolRenderData();
             TryRestore();
         }
 
@@ -161,6 +169,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
                 await _viewModel.LoadAsync();
                 SetupHandlers();
+                _tool.RefreshToolRenderData();
                 FitView();
                 RebuildComposite();
                 RenderToCompositeTarget(RenderMode.FullRegion);
@@ -184,7 +193,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             _viewModel.Data.SelectedLayer.RenderData.HandleOnceRenderCompleted();
         }
 
-        private void RenderToCompositeTarget(RenderMode mode, Rect region = default) {            
+        private void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
             DebugUtil.Output("RenderToCompositeTarget triggered");
             if (_compositeTarget == null) return;
 
@@ -437,6 +446,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                     break;
                 case CropRequest.Cancel:
                     ct.RestoreOriginalContent();
+                    _viewModel.Data.SeletcedAspectItem = null;
                     break;
                 default:
                     break;
@@ -488,7 +498,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             OnPointerMoved(e, PointerPosition.InsideContainer);
         }
 
-        private void Scroll_PointerPressed(object sender, PointerRoutedEventArgs e) {            
+        private void Scroll_PointerPressed(object sender, PointerRoutedEventArgs e) {
             OnPointerPressed(e, PointerPosition.InsideContainer);
         }
 

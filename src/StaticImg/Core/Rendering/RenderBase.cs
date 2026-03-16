@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
@@ -7,7 +9,6 @@ using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Utils.UndoRedo;
 using VirtualPaper.UIComponent.Services;
 using Windows.Foundation;
-using Workloads.Creation.StaticImg.Core.Brushes;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Models;
@@ -19,32 +20,24 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         public event EventHandler<CursorChangedEventArgs>? SystemCursorChangeRequested;
         public event EventHandler<RenderTargetChangedEventArgs>? RenderRequest;
         public event EventHandler? OnceRenderCompleted;
+        public event EventHandler<Exception>? FatalErrorOccurred;
 
         public InkCanvasViewModel ViewModel { get; set; } = null!;
         protected Guid LayerId { get; private set; }
         protected Rect Viewport { get; private set; } = Rect.Empty;
-        protected StrokeBase CurrentStroke { get; set; } = null!;
-        protected CanvasRenderTarget TempRenderTarget { get; private set; } = null!;
-        protected CanvasRenderTarget SnapshotRenderTarget { get; private set; } = null!;
-
-        private CanvasRenderTarget _renderTarget = null!;
-        protected CanvasRenderTarget RenderTarget {
-            get => _renderTarget;
-            set {
-                if (_renderTarget == value) return;
-                _renderTarget = value;
-                UpdateViewport();
-                UpdateOtherRenderTarget();
+        protected CanvasRenderTarget RenderTarget => ViewModel.Data.SelectedLayer.RenderData.RenderTarget;
+        public virtual bool IsCanvasReady {
+            get {
+                try {
+                    if (RenderTarget == null) return false;
+                    var testDevice = RenderTarget.Device; // 探测是否被 Dispose
+                    return true;
+                }
+                catch {
+                    return false;
+                }
             }
         }
-
-        public bool IsCanvasReady => RenderTarget != null &&
-            SnapshotRenderTarget != null &&
-            TempRenderTarget != null;
-
-        protected bool IsRenderReady =>
-            IsCanvasReady &&
-            CurrentStroke != null;
 
         //public bool IsInteracting { get; protected set; }
 
@@ -52,9 +45,16 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
         public float InteractionThreshold { get; set; } = 2f;
 
+        internal void OnLayerChanged() {
+            UpdateViewport();
+        }
+
+        protected void ReportFatalError(Exception ex) {
+            FatalErrorOccurred?.Invoke(this, ex);
+        }
+
         public virtual void HandleEntered(CanvasPointerEventArgs e) {
             LayerId = e.LayerId;
-            RenderTarget = e.RenderTarget;
             SystemCursorChangeRequested?.Invoke(this, new(InputSystemCursor.Create(InputSystemCursorShape.Cross)));
         }
 
@@ -88,41 +88,14 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             Viewport = RenderTarget.Bounds;
         }
 
-        private void UpdateOtherRenderTarget() {
-            if (RenderTarget == null) {
-                return;
-            }
-
-            TempRenderTarget?.Dispose();
-            TempRenderTarget = new CanvasRenderTarget(
-                RenderTarget.Device,
-                (float)RenderTarget.Size.Width,
-                (float)RenderTarget.Size.Height,
-                RenderTarget.Dpi,
-                RenderTarget.Format,
-                RenderTarget.AlphaMode);
-
-            SnapshotRenderTarget?.Dispose();
-            SnapshotRenderTarget = new CanvasRenderTarget(
-                RenderTarget.Device,
-                (float)RenderTarget.Size.Width,
-                (float)RenderTarget.Size.Height,
-                RenderTarget.Dpi,
-                RenderTarget.Format,
-                RenderTarget.AlphaMode);
-        }
-
-        public virtual void Dispose() {
-            GC.SuppressFinalize(this);
+        public virtual void Dispose() {            
             SystemCursorChangeRequested = null;
-            RenderTarget?.Dispose();
             RenderRequest = null;
             BrushManager.ClearCache();
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void HandleDeviceLost() {
-            RenderTarget?.Dispose();
-            RenderTarget = null;
         }
 
         protected static bool IsDeviceLost(Exception ex) {
@@ -204,58 +177,74 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         /// modifications to a layer's visual state within the canvas, ensuring that rendering updates are properly
         /// requested after each operation.</remarks>
         protected record LayerRebuildCommand : IUndoableCommand {
-            public string Description { get; } = "Layer Rebuild";
+            public string Description { get; } = "Global Layer Rebuild";
+
+            private readonly InkCanvasData _canvasData;
+            private readonly ArcSize _originalSize;
+            private readonly ArcSize _newSize;
+            private readonly Dictionary<Guid, byte[]> _compressedOriginalPixelsDict;
+            private readonly Dictionary<Guid, byte[]> _compressedNewPixelsDict;
+            private readonly Action _requestRenderAction;
 
             public LayerRebuildCommand(
                 InkCanvasData canvasData,
-                Guid layerId,
                 ArcSize originalSize,
                 ArcSize newSize,
-                byte[] compressedOriginalPixels,
-                byte[] compressedNewPixels,
+                Dictionary<Guid, byte[]> compressedOriginalPixelsDict,
+                Dictionary<Guid, byte[]> compressedNewPixelsDict,
                 Action requestRenderAction) {
+
                 _canvasData = canvasData;
-                _layerId = layerId;
                 _originalSize = originalSize;
                 _newSize = newSize;
-                _compressedOriginalPixels = compressedOriginalPixels;
-                _compressedNewPixels = compressedNewPixels;
+                _compressedOriginalPixelsDict = compressedOriginalPixelsDict;
+                _compressedNewPixelsDict = compressedNewPixelsDict;
                 _requestRenderAction = requestRenderAction;
             }
 
-            public Task ExecuteAsync() {
-                var renderData = _canvasData.Layers.FirstOrDefault(l => l.Tag == _layerId)?.RenderData;
-                if (renderData != null) {
-                    byte[] uncompressedPixels = _compressedNewPixels.DecompressPixels();
-                    renderData.ResizeAndSetPixels(_newSize, uncompressedPixels);
-                    _canvasData.CanvasSize = _newSize;
-                }
-                _requestRenderAction?.Invoke();
-                renderData?.HandleOnceRenderCompleted();
+            public async Task ExecuteAsync() {
+                var uncompressedDict = new ConcurrentDictionary<Guid, byte[]>();
+                await Task.Run(() => {
+                    Parallel.ForEach(_compressedNewPixelsDict, kvp => {
+                        uncompressedDict[kvp.Key] = kvp.Value.DecompressPixels();
+                    });
+                });
 
-                return Task.CompletedTask;
+                foreach (var layer in _canvasData.Layers) {
+                    var renderData = layer.RenderData;
+                    if (renderData == null) continue;
+
+                    if (uncompressedDict.TryGetValue(layer.Tag, out byte[]? uncompressedPixels)) {
+                        renderData.ResizeAndSetPixels(_newSize, uncompressedPixels);
+                        renderData.HandleOnceRenderCompleted();
+                    }
+                }
+
+                _canvasData.CanvasSize = _newSize;
+                _requestRenderAction?.Invoke();
             }
 
-            public Task UndoAsync() {
-                var renderData = _canvasData.Layers.FirstOrDefault(l => l.Tag == _layerId)?.RenderData;
-                if (renderData != null) {
-                    byte[] uncompressedPixels = _compressedOriginalPixels.DecompressPixels();
-                    renderData.ResizeAndSetPixels(_originalSize, uncompressedPixels);
-                    _canvasData.CanvasSize = _originalSize;
+            public async Task UndoAsync() {
+                var uncompressedDict = new ConcurrentDictionary<Guid, byte[]>();
+                await Task.Run(() => {
+                    Parallel.ForEach(_compressedOriginalPixelsDict, kvp => {
+                        uncompressedDict[kvp.Key] = kvp.Value.DecompressPixels();
+                    });
+                });
+
+                foreach (var layer in _canvasData.Layers) {
+                    var renderData = layer.RenderData;
+                    if (renderData == null) continue;
+
+                    if (uncompressedDict.TryGetValue(layer.Tag, out byte[]? uncompressedPixels)) {
+                        renderData.ResizeAndSetPixels(_originalSize, uncompressedPixels);
+                        renderData.HandleOnceRenderCompleted();
+                    }
                 }
+
+                _canvasData.CanvasSize = _originalSize;
                 _requestRenderAction?.Invoke();
-                renderData?.HandleOnceRenderCompleted();
-
-                return Task.CompletedTask;
             }
-
-            private readonly InkCanvasData _canvasData;
-            private readonly Guid _layerId;
-            private readonly ArcSize _originalSize;
-            private readonly ArcSize _newSize;
-            private readonly byte[] _compressedOriginalPixels;
-            private readonly byte[] _compressedNewPixels;
-            private readonly Action _requestRenderAction;
         }
 
         /// <summary>

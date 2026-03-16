@@ -6,6 +6,7 @@ using Microsoft.UI.Input;
 using VirtualPaper.Common.Extensions;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
+using Workloads.Creation.StaticImg.Core.Brushes;
 using Workloads.Creation.StaticImg.Events;
 
 namespace Workloads.Creation.StaticImg.Core.Rendering {
@@ -13,10 +14,63 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
     /// 2D 画布路径绘制器基类
     /// </summary>
     public abstract class CanvasPathDrawer : RenderBase {
+        protected StrokeBase CurrentStroke { get; set; } = null!;
+        protected CanvasRenderTarget TempRenderTarget { get; private set; } = null!;
+        protected CanvasRenderTarget SnapshotRenderTarget { get; private set; } = null!;
+        //protected virtual bool IsRenderReady => IsCanvasReady && CurrentStroke != null;
+        public override bool IsCanvasReady {
+            get {
+                if (!base.IsCanvasReady) return false;
+                try {
+                    if (TempRenderTarget == null || SnapshotRenderTarget == null || CurrentStroke == null) return false;
+                    var test1 = TempRenderTarget.Device;
+                    var test2 = SnapshotRenderTarget.Device;
+                    return true;
+                }
+                catch {
+                    return false;
+                }
+            }
+        }
+
+        protected void EnsurePathBuffersReady() {
+            if (RenderTarget == null) return;
+
+            var size = RenderTarget.Size;
+
+            // 如果缓冲区不存在，或者尺寸/DPI与主画布不一致，则重新创建
+            if (TempRenderTarget == null ||
+                TempRenderTarget.Size != size ||
+                TempRenderTarget.Dpi != RenderTarget.Dpi) {
+                TempRenderTarget?.Dispose();
+                TempRenderTarget = new CanvasRenderTarget(
+                    RenderTarget.Device,
+                    (float)size.Width,
+                    (float)size.Height,
+                    RenderTarget.Dpi,
+                    RenderTarget.Format,
+                    RenderTarget.AlphaMode);
+            }
+
+            if (SnapshotRenderTarget == null ||
+                SnapshotRenderTarget.Size != size ||
+                SnapshotRenderTarget.Dpi != RenderTarget.Dpi) {
+                SnapshotRenderTarget?.Dispose();
+                SnapshotRenderTarget = new CanvasRenderTarget(
+                    RenderTarget.Device,
+                    (float)size.Width,
+                    (float)size.Height,
+                    RenderTarget.Dpi,
+                    RenderTarget.Format,
+                    RenderTarget.AlphaMode);
+            }
+        }
+
         protected virtual void InitDrawState(Vector2 vec) {
             _isDrawing = true;
             CurrentStroke.Points = [];
             CurrentStroke.Points.Add(vec);
+            EnsurePathBuffersReady();
 
             using var ds = SnapshotRenderTarget.CreateDrawingSession();
             ds.Clear(Colors.Transparent);
@@ -26,7 +80,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         protected abstract void InitCurrentStroke(CanvasPointerEventArgs e);
 
         public override void HandlePressed(CanvasPointerEventArgs e) {
-            if (!IsCanvasReady || e.PointerPos != PointerPosition.InsideCanvas) return;
+            if (e.PointerPos != PointerPosition.InsideCanvas) return;
 
             PointerPoint pointerPoint = e.Pointer;
             if (pointerPoint.Properties.IsMiddleButtonPressed) return;
@@ -37,7 +91,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         }
 
         public override void HandleMoved(CanvasPointerEventArgs e) {
-            if (!IsRenderReady || !_isDrawing || e.PointerPos != PointerPosition.InsideCanvas) {
+            if (!IsCanvasReady || !_isDrawing || e.PointerPos != PointerPosition.InsideCanvas) {
                 EndDrawing();
                 return;
             }
@@ -64,33 +118,46 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         }
 
         protected void RenderToTarget() {
-            if (!IsRenderReady || !CurrentStroke.ShouldRender) return;
+            if (!IsCanvasReady || !CurrentStroke.ShouldRender) return;
 
-            using var geometry = CurrentStroke.CreateStrokeGeometry(RenderTarget!.Device);
-            var bounds = CurrentStroke.GetBounds();
+            try {
+                using var geometry = CurrentStroke.CreateStrokeGeometry(RenderTarget!.Device);
+                var bounds = CurrentStroke.GetBounds();
 
-            // *** TempRenderTarget 重用与增量绘制 ***
-            using (var dsTemp = TempRenderTarget.CreateDrawingSession()) {
-                dsTemp.Clear(Colors.Transparent);
-                CurrentStroke.RenderIncrement(dsTemp, geometry);
-            }
-
-            // *** 合成并绘制到 RenderTarget ***
-            using (var mergedImage = CurrentStroke.MergeImages(
-                TempRenderTarget,
-                SnapshotRenderTarget,
-                RenderTarget!.Device
-            )) {
-                // 将合成结果写入 RenderTarget
-                using (var dsTarget = RenderTarget.CreateDrawingSession()) {
-                    // 因为 MergeImages 返回的 Effect 已经包含了 SnapshotRT 的内容，
-                    // 所以用 Copy 模式替换 RenderTarget 的内容。
-                    dsTarget.Blend = CanvasBlend.Copy;
-                    dsTarget.DrawImage(mergedImage);
+                // *** TempRenderTarget 重用与增量绘制 ***
+                using (var dsTemp = TempRenderTarget.CreateDrawingSession()) {
+                    dsTemp.Clear(Colors.Transparent);
+                    CurrentStroke.RenderIncrement(dsTemp, geometry);
                 }
-            }
 
-            HandleRender(new RenderTargetChangedEventArgs(RenderMode.PartialRegion, bounds));
+                // *** 合成并绘制到 RenderTarget ***
+                using (var mergedImage = CurrentStroke.MergeImages(
+                    TempRenderTarget,
+                    SnapshotRenderTarget,
+                    RenderTarget!.Device
+                )) {
+                    // 将合成结果写入 RenderTarget
+                    using (var dsTarget = RenderTarget.CreateDrawingSession()) {
+                        // 因为 MergeImages 返回的 Effect 已经包含了 SnapshotRT 的内容，
+                        // 所以用 Copy 模式替换 RenderTarget 的内容。
+                        dsTarget.Blend = CanvasBlend.Copy;
+                        dsTarget.DrawImage(mergedImage);
+                    }
+                }
+
+                HandleRender(new RenderTargetChangedEventArgs(RenderMode.PartialRegion, bounds));
+            }
+            catch (Exception ex) when (IsDeviceLost(ex)) {
+                HandleDeviceLost();
+            }
+            catch (ObjectDisposedException) {
+                // 渲染目标被意外清理，安全退出本次渲染
+                EndDrawing();
+            }
+            catch (Exception ex) {
+                ReportFatalError(ex);
+                EndDrawing();
+            }
         }
 
         private void CaptureUndoRedoSnapshot() {
@@ -133,6 +200,13 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             bottom = Math.Min((int)maxBounds.Height, bottom);
 
             return new Rect(left, top, right - left, bottom - top);
+        }
+
+        public override void Dispose() {
+            base.Dispose();
+            TempRenderTarget?.Dispose();
+            SnapshotRenderTarget?.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         private bool _isDrawing = false;

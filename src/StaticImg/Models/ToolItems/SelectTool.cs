@@ -17,7 +17,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         protected override IUndoableCommand? BuildUndoCommand() {
-            if (_selectionContent == null || _baseContent == null) return null;
+            if (SelectionContent == null || BaseContent == null) return null;
 
             int w = (int)_originalSelectionRect.Width;
             int h = (int)_originalSelectionRect.Height;
@@ -26,12 +26,12 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             int nx = (int)_selectionRect.X;
             int ny = (int)_selectionRect.Y;
 
-            byte[] selectionPixels = _selectionContent.GetPixelBytes().CompressPixels();
-            byte[] targetOriginalPixels = _baseContent.GetPixelBytes(nx, ny, w, h).CompressPixels();
+            byte[] selectionPixels = SelectionContent.GetPixelBytes().CompressPixels();
+            byte[] targetOriginalPixels = BaseContent.GetPixelBytes(nx, ny, w, h).CompressPixels();
 
-            using (var ds = _baseContent!.CreateDrawingSession()) {
+            using (var ds = BaseContent!.CreateDrawingSession()) {
                 ds.Blend = CanvasBlend.Copy;
-                ds.DrawImage(_selectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
+                ds.DrawImage(SelectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
             }
 
             return new SelectionMoveCommand(

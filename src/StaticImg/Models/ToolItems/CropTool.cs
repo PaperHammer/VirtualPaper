@@ -1,11 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI;
 using VirtualPaper.Common.Extensions;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.UndoRedo;
+using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Rendering;
@@ -29,46 +33,72 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         public override IUndoableCommand? CommitSelection() {
-            if (_currentState != SelectionState.Selected || _baseContent == null)
+            if (_currentState != SelectionState.Selected || BaseContent == null)
                 return null;
 
             var command = BuildUndoCommand();
             if (command != null) {
                 Reset();
-                command.ExecuteAsync().Wait();
-                ViewModel.Session.UnReUtil.RecordCommand(command);
-
-                HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                _ = ExecuteAndRecordCommandAsync(command);
             }
 
             return command;
         }
 
+        private async Task ExecuteAndRecordCommandAsync(IUndoableCommand command) {
+            try {
+                await command.ExecuteAsync();
+                ViewModel.Session.UnReUtil.RecordCommand(command);
+                HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+            }
+            catch (Exception ex) {
+                GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex.Message);
+                ArcLog.GetLogger<CropTool>().Error(ex);
+            }
+        }
+
         protected override IUndoableCommand? BuildUndoCommand() {
-            if (_baseContent == null) return null;
+            if (BaseContent == null) return null;
 
             ArcSize originalSize = _data.CanvasSize;
             Rect cropRect = _selectionRect.RoundOutwardAsInt();
 
             if (cropRect.Width <= 0 || cropRect.Height <= 0) return null;
 
-            var newSize = new ArcSize((float)cropRect.Width, (float)cropRect.Height, (uint)_baseContent.Dpi, RebuildMode.None);
+            var newSize = new ArcSize((float)cropRect.Width, (float)cropRect.Height, (uint)BaseContent.Dpi, RebuildMode.None);
+            var rawPixelDataList = new List<(Guid Tag, byte[] OldPixels, byte[] NewPixels)>();
 
-            byte[] compressedOriginal = _baseContent.GetPixelBytes().CompressPixels();
-            byte[] compressedNew = _baseContent.GetPixelBytes(
-                (int)cropRect.X,
-                (int)cropRect.Y,
-                (int)cropRect.Width,
-                (int)cropRect.Height).CompressPixels();
+            foreach (var layer in ViewModel.Data.Layers) {
+                if (layer.RenderData?.RenderTarget == null) continue;
+
+                var baseRender = layer.Tag == LayerId ? BaseContent : layer.RenderData.RenderTarget;
+                byte[] oldPixels = baseRender.GetPixelBytes();
+                byte[] newPixels = baseRender.GetPixelBytes(
+                    (int)cropRect.X,
+                    (int)cropRect.Y,
+                    (int)cropRect.Width,
+                    (int)cropRect.Height);
+
+                rawPixelDataList.Add((layer.Tag, oldPixels, newPixels));
+            }
+
+            var originalPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
+            var newPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
+            Parallel.ForEach(rawPixelDataList, item => {
+                byte[] compressedOld = item.OldPixels.CompressPixels();
+                byte[] compressedNew = item.NewPixels.CompressPixels();
+
+                originalPixelsDict.TryAdd(item.Tag, compressedOld);
+                newPixelsDict.TryAdd(item.Tag, compressedNew);
+            });
 
             return new LayerRebuildCommand(
-                _data,
-                LayerId,
-                originalSize,
-                newSize,
-                compressedOriginal,
-                compressedNew,
-                () => HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion)));
+                canvasData: ViewModel.Data,
+                originalSize: originalSize,
+                newSize: newSize,
+                compressedOriginalPixelsDict: new Dictionary<Guid, byte[]>(originalPixelsDict),
+                compressedNewPixelsDict: new Dictionary<Guid, byte[]>(newPixelsDict),
+                requestRenderAction: () => HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion)));
         }
 
         protected override void RenderToTarget() {
@@ -79,8 +109,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                     ds.Clear(Colors.Transparent);
 
                     // 只绘制基础内容
-                    if (_baseContent != null) {
-                        ds.DrawImage(_baseContent);
+                    if (BaseContent != null) {
+                        ds.DrawImage(BaseContent);
                     }
 
                     // 区分 selectiontool，croptool 仅在 commit 时更新选区
@@ -108,22 +138,34 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         public void ApplyAspectRatio(double ratio) {
-            RenderTarget = _data.SelectedLayer.RenderData.RenderTarget;
-            RestoreOriginalContent();
-            SaveBaseContent();
+            if (!IsCanvasReady) return;
+
+            //RenderTarget = _data.SelectedLayer.RenderData.RenderTarget;
+            //RestoreOriginalContent();
+            //SaveBaseContent();
+            if (BaseContent == null) {
+                // 如果是从未框选过的初始状态，保存底图快照
+                SaveBaseContent();
+            }
+            else {
+                // 如果已经有底图快照了，只需把当前 RenderTarget 洗干净即可，无需销毁重建 BaseContent
+                using (var ds = RenderTarget.CreateDrawingSession()) {
+                    ds.Blend = CanvasBlend.Copy;
+                    ds.DrawImage(BaseContent);
+                }
+            }
+
             _ratioController.ApplyRatio(ratio);
         }
 
         public override bool RestoreOriginalContent() {
-            if (_baseContent == null || RenderTarget == null) return false;
+            if (SelectionRect.IsEmpty || BaseContent == null || RenderTarget == null) return false;
 
             using (var ds = RenderTarget.CreateDrawingSession()) {
                 ds.Blend = CanvasBlend.Copy;
-                ds.DrawImage(_baseContent);
+                ds.DrawImage(BaseContent);
             }
             Reset();
-            _baseContent?.Dispose();
-            _baseContent = null;
             HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
 
             return true;
@@ -132,28 +174,29 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         private readonly AspectRatioController _ratioController;
         private readonly InkCanvasData _data;
 
-        private class AspectRatioController(CropTool parent) {
+        private class AspectRatioController(CropTool cropTool) {
             public void ApplyRatio(double ratio) {
-                if (parent.RenderTarget == null || ratio <= 0) return;
+                if (cropTool.RenderTarget == null || ratio <= 0) return;
                 _currentRatio = ratio;
                 CreateCenteredCrop();
-                parent.RenderToTarget();
+                cropTool.RenderToTarget();
             }
 
             private void CreateCenteredCrop() {
                 var size = CalculateInitialSize();
-                parent._selectionRect = new Rect(
-                    (parent.RenderTarget!.SizeInPixels.Width - size.Width) / 2,
-                    (parent.RenderTarget.SizeInPixels.Height - size.Height) / 2,
+                var canvas = cropTool.RenderTarget!.Size;
+                cropTool._selectionRect = new Rect(
+                    (canvas.Width - size.Width) / 2,
+                    (canvas.Height - size.Height) / 2,
                     size.Width,
                     size.Height);
-                parent.UpdateSelectionRect(parent._selectionRect);
-                parent._currentState = SelectionState.Selected;
+                cropTool.UpdateSelectionRect(cropTool._selectionRect);
+                cropTool._currentState = SelectionState.Selected;
             }
 
             private Size CalculateInitialSize() {
                 const double maxScale = 0.8;
-                var canvas = parent.RenderTarget!.SizeInPixels;
+                var canvas = cropTool.RenderTarget!.Size;
 
                 // 自由比例模式（使用图片中的默认值）
                 if (_currentRatio == 0)

@@ -16,6 +16,8 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
     public abstract class CanvasAreaSelector : RenderBase {
         public event EventHandler<Rect>? OnSelectRectChanged;
 
+        protected CanvasRenderTarget? BaseContent { get; private set; }
+        protected CanvasRenderTarget? SelectionContent { get; private set; }
         public Rect SelectionRect => _selectionRect;
         public SelectionState CurrentState => _currentState;
 
@@ -136,26 +138,26 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         }
 
         public virtual bool RestoreOriginalContent() {
-            if (_selectionContent == null) return false;
+            if (SelectionContent == null) return false;
 
             // 恢复原位置内容
-            using (var ds = _baseContent!.CreateDrawingSession()) {
+            using (var ds = BaseContent!.CreateDrawingSession()) {
                 ds.Blend = CanvasBlend.Copy; // 覆盖模式
-                ds.DrawImage(_selectionContent,
+                ds.DrawImage(SelectionContent,
                     (float)_originalSelectionRect.X,
                     (float)_originalSelectionRect.Y);
             }
             Reset();
             RenderToTarget();
-            _baseContent?.Dispose();
-            _baseContent = null;
+            //BaseContent?.Dispose();
+            //BaseContent = null;
 
             return true;
         }
 
         protected void Reset() {
-            _selectionContent?.Dispose();
-            _selectionContent = null;
+            SelectionContent?.Dispose();
+            SelectionContent = null;
             _currentState = SelectionState.None;
             _originalSelectionRect = Rect.Empty;
             _isDragging = false;
@@ -179,16 +181,25 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         }
 
         protected void SaveBaseContent() {
-            //_baseContent?.Dispose();
-            _baseContent ??= new CanvasRenderTarget(
-                RenderTarget,
-                RenderTarget.SizeInPixels.Width,
-                RenderTarget.SizeInPixels.Height,
-                RenderTarget.Dpi,
-                RenderTarget.Format,
-                RenderTarget.AlphaMode);
+            if (RenderTarget == null) return;
 
-            using (var ds = _baseContent.CreateDrawingSession()) {
+            var currentWidth = RenderTarget.SizeInPixels.Width;
+            var currentHeight = RenderTarget.SizeInPixels.Height;
+            if (BaseContent == null ||
+                BaseContent.SizeInPixels.Width != currentWidth ||
+                BaseContent.SizeInPixels.Height != currentHeight) {
+
+                BaseContent?.Dispose();
+                BaseContent = new CanvasRenderTarget(
+                    RenderTarget,
+                    currentWidth,
+                    currentHeight,
+                    RenderTarget.Dpi,
+                    RenderTarget.Format,
+                    RenderTarget.AlphaMode);
+            }
+
+            using (var ds = BaseContent.CreateDrawingSession()) {
                 ds.Blend = CanvasBlend.Copy;
                 ds.DrawImage(RenderTarget);
             }
@@ -204,8 +215,8 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             double h = Math.Ceiling(_selectionRect.Height);
             _selectionRect = new Rect(x, y, w, h);
 
-            //_selectionContent?.Dispose();
-            _selectionContent ??= new CanvasRenderTarget(
+            //SelectionContent?.Dispose();
+            SelectionContent ??= new CanvasRenderTarget(
                 RenderTarget,
                 (float)_selectionRect.Width,
                 (float)_selectionRect.Height,
@@ -216,20 +227,20 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             _originalSelectionRect = _selectionRect;
 
             //捕获选区内容
-            using (var ds = _selectionContent.CreateDrawingSession()) {
+            using (var ds = SelectionContent.CreateDrawingSession()) {
                 ds.Blend = CanvasBlend.Copy;
-                ds.DrawImage(_baseContent, _selectionContent.Bounds, _selectionRect);
+                ds.DrawImage(BaseContent, SelectionContent.Bounds, _selectionRect);
             }
 
             //剪切原位置
-            using (var ds = _baseContent!.CreateDrawingSession()) {
+            using (var ds = BaseContent!.CreateDrawingSession()) {
                 ds.Blend = CanvasBlend.Copy;
                 ds.FillRectangle(_selectionRect, Colors.Transparent);
             }
         }
 
         public virtual IUndoableCommand? CommitSelection() {
-            if (_currentState != SelectionState.Selected || _selectionContent == null) return null;
+            if (_currentState != SelectionState.Selected || SelectionContent == null) return null;
 
             var command = BuildUndoCommand();
             if (command != null) {
@@ -237,8 +248,8 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
                 Reset();
                 RenderToTarget();
-                _baseContent?.Dispose();
-                _baseContent = null;
+                //BaseContent?.Dispose();
+                //BaseContent = null;
                 base.RequestOnceRender();
             }
 
@@ -246,20 +257,20 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         }
 
         protected virtual void RenderToTarget() {
-            try {
-                if (RenderTarget == null) return;
+            if (RenderTarget == null) return;
 
-                using (var ds = RenderTarget.CreateDrawingSession()) {
+            try {
+                using (var ds = RenderTarget.CreateDrawingSession()) {  
                     ds.Blend = CanvasBlend.Copy; // 覆盖模式
 
                     // 绘制基准内容
-                    if (_baseContent != null) {
-                        ds.DrawImage(_baseContent);
+                    if (BaseContent != null) {
+                        ds.DrawImage(BaseContent);
                     }
 
                     // 绘制选区内容（自动裁剪到画布边界）
-                    if (_selectionContent != null && _currentState != SelectionState.None) {
-                        ds.DrawImage(_selectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
+                    if (SelectionContent != null && _currentState != SelectionState.None) {
+                        ds.DrawImage(SelectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
                     }
 
                     // 绘制完整的选择框（包括延伸到画布外的部分）
@@ -272,6 +283,13 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();
+            }
+            catch (ObjectDisposedException) {
+                // 处于多线程资源释放的间隙，直接忽略，防止崩溃
+                Reset();
+            }
+            catch (Exception ex) {
+                ReportFatalError(ex);
             }
         }
 
@@ -297,10 +315,10 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
         protected new void HandleDeviceLost() {
             base.HandleDeviceLost();
-            _baseContent?.Dispose();
-            _baseContent = null;
-            _selectionContent?.Dispose();
-            _selectionContent = null;
+            BaseContent?.Dispose();
+            BaseContent = null;
+            SelectionContent?.Dispose();
+            SelectionContent = null;
         }
 
         protected void UpdateSelectionRect(Rect rect) {
@@ -328,12 +346,12 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         }
 
         private void ReleaseAllResources() {
-            SafeDispose(ref _baseContent);
-            SafeDispose(ref _selectionContent);
+            SafeDispose(BaseContent);
+            SafeDispose(SelectionContent);
             // RenderTarget由外部管理，此处不释放
         }
 
-        protected static void SafeDispose<T>(ref T? resource) where T : IDisposable {
+        protected static void SafeDispose<T>(T? resource) where T : IDisposable {
             try {
                 resource?.Dispose();
                 resource = default;
@@ -354,11 +372,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         protected Point _moveStartPoint;
         protected Rect _originalSelectionRect; // 基准层的选区位置（用于还原）
         protected Rect _currentDragStartRect; // 当前拖动开始时的选区位置
-        protected bool _isDragging; // 标记当前是否在拖动
-
-        // 图层缓存
-        protected CanvasRenderTarget? _baseContent; // 基准层
-        protected CanvasRenderTarget? _selectionContent;
+        protected bool _isDragging; // 标记当前是否在拖动        
 
         // 绘制样式
         protected readonly Color _selectionBorderColor = Colors.Black;

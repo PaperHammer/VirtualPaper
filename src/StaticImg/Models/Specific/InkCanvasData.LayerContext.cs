@@ -215,7 +215,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             _activeLayers.Clear();
             _activeLayers.Capacity = Math.Max(_activeLayers.Capacity, _layers.Count);
             var activeLayers = _layers
-                .Where(layer => !layer.IsDeleted && layer.IsVisible)
+                .Where(layer => !layer.IsDeleted && layer.IsVisible && layer.RenderData?.RenderTarget != null)
                 .OrderBy(layer => layer.ZIndex)
                 .Select(layer => layer);
 

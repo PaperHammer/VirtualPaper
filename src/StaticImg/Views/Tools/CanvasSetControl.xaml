@@ -18,9 +18,7 @@
         </Expander.Header>
         <Expander.Content>
             <StackPanel Spacing="10">
-                <TextBlock 
-                    Text="{markup:I18n Key=SIG_CanvasSet_AdjustSize}" 
-                    FontSize="12"/>
+                <TextBlock Text="{markup:I18n Key=SIG_CanvasSet_AdjustSize}" FontSize="12"/>
 
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -34,8 +32,7 @@
                             Text="{markup:I18n Key=SIG_CanvasSet_PixelWidth}" 
                             FontSize="12"
                             VerticalAlignment="Center"/>
-                        <TextBox
-                            x:Name="widthTextBox"
+                        <TextBox x:Name="widthTextBox"
                             InputScope="Digits"
                             LostFocus="OnSizeBoxLostFocus"
                             KeyDown="OnSizeBoxKeyDown"
@@ -43,15 +40,12 @@
                             FontSize="12" />
                     </StackPanel>
 
-                    <StackPanel
-                        Grid.Column="2"
-                        Spacing="4">
+                    <StackPanel Grid.Column="2" Spacing="4">
                         <TextBlock 
                             Text="{markup:I18n Key=SIG_CanvasSet_PixelHeight}" 
                             FontSize="12"
                             VerticalAlignment="Center"/>
-                        <TextBox
-                            x:Name="heightTextBox"
+                        <TextBox x:Name="heightTextBox"
                             InputScope="Digits"
                             LostFocus="OnSizeBoxLostFocus"
                             KeyDown="OnSizeBoxKeyDown"
@@ -60,15 +54,13 @@
                     </StackPanel>
                 </Grid>
 
-                <CheckBox 
-                    x:Name="lockAspectRatio"
+                <CheckBox x:Name="lockAspectRatio"
                     Content="{markup:I18n Key=SIG_CanvasSet_LockAspectRatio}"
                     Checked="LockAspectRatio_Checked"
                     Unchecked="LockAspectRatio_Unchecked"
                     FontSize="12"/>
 
-                <CheckBox 
-                    x:Name="scaleContent"
+                <CheckBox x:Name="scaleContent"
                     Content="{markup:I18n Key=SIG_CanvasSet_SacleContent}"
                     Checked="SacleContent_Checked"
                     Unchecked="SacleContent_Unchecked"
@@ -79,16 +71,13 @@
                         Text="{markup:I18n Key=SIG_CanvasSet_RotateAndFlip}" 
                         FontSize="12"/>
 
-                    <StackPanel
-                        Orientation="Horizontal"
-                        Spacing="4">
-                        <Button 
-                            x:Name="rotateLeft"
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Button x:Name="rotateLeft"
                             Height="45"
                             Width="45"
                             ToolTipService.ToolTip="{markup:I18n Key=SIG_CanvasSet_RotateLeftNinety}"
-                            Tag="{x:Bind root:CanvasOperation.RotateLeft}"
-                            Click="CanvasOperationBtn_Click">
+                            Command="{x:Bind CanvasOperationCommand}"
+                            CommandParameter="{x:Bind root:CanvasOperation.RotateLeft}">
                             <SymbolIcon Symbol="Rotate">
                                 <SymbolIcon.RenderTransform>
                                     <ScaleTransform CenterX="10" ScaleX="-1" ScaleY="1"/>
@@ -96,35 +85,32 @@
                             </SymbolIcon>
                         </Button>
 
-                        <Button 
-                            x:Name="rotateRight"
+                        <Button x:Name="rotateRight"
                             Grid.Column="1" 
                             Height="45"
                             Width="45"
-                            Tag="{x:Bind root:CanvasOperation.RotateRight}"
-                            Click="CanvasOperationBtn_Click"
+                            Command="{x:Bind CanvasOperationCommand}"
+                            CommandParameter="{x:Bind root:CanvasOperation.RotateRight}"
                             ToolTipService.ToolTip="{markup:I18n Key=SIG_CanvasSet_RotateRightNinety}">
                             <SymbolIcon Symbol="Rotate"/>
                         </Button>
 
-                        <Button 
-                            x:Name="flipHorizontally"
+                        <Button x:Name="flipHorizontally"
                             Grid.Column="2" 
                             Height="45"
                             Width="45"
-                            Tag="{x:Bind root:CanvasOperation.FlipHorizontally}"
-                            Click="CanvasOperationBtn_Click"
+                            Command="{x:Bind CanvasOperationCommand}"
+                            CommandParameter="{x:Bind root:CanvasOperation.FlipHorizontally}"
                             ToolTipService.ToolTip="{markup:I18n Key=SIG_CanvasSet_FlipHorizon}">
                             <FontIcon Glyph="&#xEA44;" />
                         </Button>
 
-                        <Button 
-                            x:Name="flipVertically"
+                        <Button x:Name="flipVertically"
                             Grid.Column="3" 
                             Height="45"
                             Width="45"
-                            Tag="{x:Bind root:CanvasOperation.FlipVertically}"
-                            Click="CanvasOperationBtn_Click" 
+                            Command="{x:Bind CanvasOperationCommand}"
+                            CommandParameter="{x:Bind root:CanvasOperation.FlipVertically}"
                             ToolTipService.ToolTip="{markup:I18n Key=SIG_CanvasSet_FlipVertical}">
                             <FontIcon Glyph="&#xEA44;">
                                 <FontIcon.RenderTransform>

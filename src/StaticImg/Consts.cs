@@ -189,7 +189,9 @@ namespace Workloads.Creation.StaticImg {
 
         public static double Area(Size size) => size.Width * size.Height;
 
-        public Size GetSize() => new(Width, Height);        
+        public Size GetSize() => new(Width, Height);
+
+        public Rect ToRect() => new(0, 0, Width, Height);
     }
 
     // TODO

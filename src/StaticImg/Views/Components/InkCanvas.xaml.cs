@@ -132,7 +132,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void HandleLayerChanged() {
-            _tool.RefreshToolRenderData();
+            _tool.RefreshToolRenderData(_viewModel.Data.CanvasSize);
             TryRestore();
         }
 
@@ -160,6 +160,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 _viewModel.Data.CanvasSize.Dpi,
                 _session.SharedFormat,
                 _session.SharedAlphaMode);
+            _tool.RefreshToolRenderData(_viewModel.Data.CanvasSize);
         }
         #endregion
 
@@ -167,13 +168,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private async void RenderCanvas_Loaded(object sender, RoutedEventArgs e) {
             try {
                 if (IsInited.Task.IsCompleted) return;
-
-                await _viewModel.LoadAsync();
-                SetupHandlers();
-                _tool.RefreshToolRenderData();
+                await _viewModel.LoadAsync();                
+                //_tool.RefreshToolRenderData();
                 FitView();
                 RebuildComposite();
                 RenderToCompositeTarget(RenderMode.FullRegion);
+                SetupHandlers();
                 IsInited.TrySetResult(true);
             }
             catch (Exception ex) {
@@ -218,7 +218,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void FullRender(IEnumerable<LayerInfo> layers, CanvasDrawingSession ds) {
             using (var batch = ds.CreateSpriteBatch()) {
                 foreach (var layer in layers.Reverse()) {
-                    if (layer.RenderData?.RenderTarget == null) continue;
                     // SpriteBatch 在绘制大量纹理时效率更高
                     batch.Draw(layer.RenderData.RenderTarget, new System.Numerics.Vector2(0, 0));
                 }
@@ -232,8 +231,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 ds.Blend = CanvasBlend.SourceOver; // 切回正常模式进行重新合并
 
                 foreach (var layer in layers.Reverse()) {
-                    if (layer.RenderData?.RenderTarget == null) continue;
-
                     // 检查图层内容是否与刷新区域有交集
                     var visibleRect = region.IntersectRect(layer.RenderData.RenderTarget.Bounds);
                     if (!visibleRect.IsEmpty) {
@@ -387,15 +384,15 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             _viewModel.Data.CanvasSize = new(e.Width, e.Height, e.Dpi, e.Rebuild);
         }
 
-        private void CanvasOperationBtn_Click(object sender, RoutedEventArgs e) {
-            RebuildMode rm = (CanvasOperation)((Button)sender).Tag switch {
+        private void CanvasOperationBtn_Click(object sender, CanvasOperation e) {
+            RebuildMode rm = e switch {
                 CanvasOperation.RotateLeft => RebuildMode.RotateLeft,
                 CanvasOperation.RotateRight => RebuildMode.RotateRight,
                 CanvasOperation.FlipHorizontally => RebuildMode.FlipHorizontal,
                 CanvasOperation.FlipVertically => RebuildMode.FlipVertical,
                 _ => RebuildMode.None,
             };
-            _viewModel.Data.CanvasSize = new(
+            _viewModel.Data.CanvasSize = new ArcSize(
                 _viewModel.Data.CanvasSize.Width,
                 _viewModel.Data.CanvasSize.Height,
                 _viewModel.Data.CanvasSize.Dpi,

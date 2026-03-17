@@ -45,8 +45,8 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
         public float InteractionThreshold { get; set; } = 2f;
 
-        internal void OnLayerChanged() {
-            UpdateViewport();
+        internal void OnLayerChanged(ArcSize canvasSize) {
+            UpdateViewport(canvasSize);
         }
 
         protected void ReportFatalError(Exception ex) {
@@ -82,10 +82,8 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
         public void RequestCursorChange(InputCursor cursor) { }
 
-        private void UpdateViewport() {
-            if (RenderTarget == null || Viewport == RenderTarget.Bounds) return;
-
-            Viewport = RenderTarget.Bounds;
+        private void UpdateViewport(ArcSize canvasSize) {
+            Viewport = canvasSize.ToRect();
         }
 
         public virtual void Dispose() {            

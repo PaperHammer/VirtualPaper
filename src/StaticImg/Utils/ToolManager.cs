@@ -29,9 +29,9 @@ namespace Workloads.Creation.StaticImg.Utils {
             return _tools.Values;
         }
 
-        public void RefreshToolRenderData() {
+        public void RefreshToolRenderData(ArcSize canvasSize) {
             foreach (var tool in GetAllTools()) {
-                tool.OnLayerChanged();
+                tool.OnLayerChanged(canvasSize);
             }
         }
 

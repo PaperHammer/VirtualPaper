@@ -1,8 +1,10 @@
 using System;
+using System.Windows.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
+using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 
@@ -11,12 +13,12 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace Workloads.Creation.StaticImg.Views.Tools {
     public sealed partial class CanvasSetControl : ArcUserControl {
-        public event EventHandler<RoutedEventArgs> LockAspectRatioChecked;
-        public event EventHandler<RoutedEventArgs> LockAspectRatioUnchecked;
-        public event EventHandler<RoutedEventArgs> ScaleContentChecked;
-        public event EventHandler<RoutedEventArgs> ScaleContentUnchecked;
-        public event EventHandler<RoutedEventArgs> CanvasOperationRequested;
-        public event EventHandler<ArcSize> OnValueChanged;
+        public event EventHandler<RoutedEventArgs>? LockAspectRatioChecked;
+        public event EventHandler<RoutedEventArgs>? LockAspectRatioUnchecked;
+        public event EventHandler<RoutedEventArgs>? ScaleContentChecked;
+        public event EventHandler<RoutedEventArgs>? ScaleContentUnchecked;
+        public event EventHandler<CanvasOperation>? CanvasOperationRequested;
+        public event EventHandler<ArcSize>? OnValueChanged;
 
         public ArcSize Size {
             get { return (ArcSize)GetValue(SizeProperty); }
@@ -39,8 +41,18 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         //public static readonly DependencyProperty PixelHeigthProperty =
         //    DependencyProperty.Register("PixelHeight", typeof(int), typeof(CanvasSetControl), new PropertyMetadata(0));
 
+        public ICommand? CanvasOperationCommand { get; private set; }
+
         public CanvasSetControl() {
             this.InitializeComponent();
+
+            InitCommand();
+        }
+
+        private void InitCommand() {
+            CanvasOperationCommand = new RelayCommand<CanvasOperation>((operation) => {
+                CanvasOperationRequested?.Invoke(this, operation);
+            });
         }
 
         private void OnSizeBoxLostFocus(object sender, RoutedEventArgs e) {
@@ -151,24 +163,8 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             ScaleContentUnchecked?.Invoke(this, e);
         }
 
-        private void CanvasOperationBtn_Click(object sender, RoutedEventArgs e) {
-            CanvasOperationRequested?.Invoke(this, e);
-        }
-
         private bool _isKeyboardExecuted;
         private bool _isLockAspectRatio;
         private bool _isScaleContent;
-
-        //private readonly string _SIG_CanvasSet_Header = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_Header)); // 画布
-        //private readonly string _SIG_CanvasSet_AdjustSize = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_AdjustSize)); // 调整画布大小
-        //private readonly string _SIG_CanvasSet_PixelWidth = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_PixelWidth)); // 宽度(像素)
-        //private readonly string _SIG_CanvasSet_PixelHeight = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_PixelHeight)); // 高度(像素)
-        //private readonly string _SIG_CanvasSet_LockAspectRatio = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_LockAspectRatio)); // 锁定纵横比
-        //private readonly string _SIG_CanvasSet_SacleContent = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_SacleContent)); // 同步缩放画布内容
-        //private readonly string _SIG_CanvasSet_RotateAndFlip = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateAndFlip)); // 旋转和翻转
-        //private readonly string _SIG_CanvasSet_RotateLeftNinety = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateLeftNinety)); // 向左旋转90°
-        //private readonly string _SIG_CanvasSet_RotateRightNinety = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_RotateRightNinety)); // 向右旋转90°
-        //private readonly string _SIG_CanvasSet_FlipHorizon = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_FlipHorizon)); // 水平翻转
-        //private readonly string _SIG_CanvasSet_FlipVertical = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_CanvasSet_FlipVertical)); // 垂直翻转
     }
 }

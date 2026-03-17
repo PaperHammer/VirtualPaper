@@ -49,7 +49,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             try {
                 await command.ExecuteAsync();
                 ViewModel.Session.UnReUtil.RecordCommand(command);
-                HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
             }
             catch (Exception ex) {
                 GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex.Message);
@@ -58,47 +57,52 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         protected override IUndoableCommand? BuildUndoCommand() {
-            if (BaseContent == null) return null;
+            lock (RenderTarget) {
+                if (BaseContent == null) return null;
 
-            ArcSize originalSize = _data.CanvasSize;
-            Rect cropRect = _selectionRect.RoundOutwardAsInt();
+                ArcSize originalSize = _data.CanvasSize;
+                Rect cropRect = _selectionRect.RoundOutwardAsInt().IntersectRect(BaseContent.Bounds);
 
-            if (cropRect.Width <= 0 || cropRect.Height <= 0) return null;
+                if (cropRect.Width <= 0 || cropRect.Height <= 0) return null;
 
-            var newSize = new ArcSize((float)cropRect.Width, (float)cropRect.Height, (uint)BaseContent.Dpi, RebuildMode.None);
-            var rawPixelDataList = new List<(Guid Tag, byte[] OldPixels, byte[] NewPixels)>();
+                var newSize = new ArcSize((float)cropRect.Width, (float)cropRect.Height, (uint)BaseContent.Dpi, RebuildMode.None);
+                var rawPixelDataList = new List<(Guid Tag, byte[] OldPixels, byte[] NewPixels)>();
 
-            foreach (var layer in ViewModel.Data.Layers) {
-                if (layer.RenderData?.RenderTarget == null) continue;
+                foreach (var layer in ViewModel.Data.Layers) {
+                    if (layer.RenderData?.RenderTarget == null) continue;
 
-                var baseRender = layer.Tag == LayerId ? BaseContent : layer.RenderData.RenderTarget;
-                byte[] oldPixels = baseRender.GetPixelBytes();
-                byte[] newPixels = baseRender.GetPixelBytes(
-                    (int)cropRect.X,
-                    (int)cropRect.Y,
-                    (int)cropRect.Width,
-                    (int)cropRect.Height);
+                    var baseRender = layer.Tag == LayerId ? BaseContent : layer.RenderData.RenderTarget;
+                    byte[] oldPixels = baseRender.GetPixelBytes();
+                    byte[] newPixels = baseRender.GetPixelBytes(
+                        (int)cropRect.X,
+                        (int)cropRect.Y,
+                        (int)cropRect.Width,
+                        (int)cropRect.Height);
 
-                rawPixelDataList.Add((layer.Tag, oldPixels, newPixels));
+                    rawPixelDataList.Add((layer.Tag, oldPixels, newPixels));
+                }
+
+                var originalPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
+                var newPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
+                Parallel.ForEach(rawPixelDataList, item => {
+                    byte[] compressedOld = item.OldPixels.CompressPixels();
+                    byte[] compressedNew = item.NewPixels.CompressPixels();
+
+                    originalPixelsDict.TryAdd(item.Tag, compressedOld);
+                    newPixelsDict.TryAdd(item.Tag, compressedNew);
+                });
+
+                return new LayerRebuildCommand(
+                    canvasData: ViewModel.Data,
+                    originalSize: originalSize,
+                    newSize: newSize,
+                    compressedOriginalPixelsDict: new Dictionary<Guid, byte[]>(originalPixelsDict),
+                    compressedNewPixelsDict: new Dictionary<Guid, byte[]>(newPixelsDict),
+                    requestRenderAction: () => {
+                        HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                    }
+                );
             }
-
-            var originalPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
-            var newPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
-            Parallel.ForEach(rawPixelDataList, item => {
-                byte[] compressedOld = item.OldPixels.CompressPixels();
-                byte[] compressedNew = item.NewPixels.CompressPixels();
-
-                originalPixelsDict.TryAdd(item.Tag, compressedOld);
-                newPixelsDict.TryAdd(item.Tag, compressedNew);
-            });
-
-            return new LayerRebuildCommand(
-                canvasData: ViewModel.Data,
-                originalSize: originalSize,
-                newSize: newSize,
-                compressedOriginalPixelsDict: new Dictionary<Guid, byte[]>(originalPixelsDict),
-                compressedNewPixelsDict: new Dictionary<Guid, byte[]>(newPixelsDict),
-                requestRenderAction: () => HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion)));
         }
 
         protected override void RenderToTarget() {
@@ -143,16 +147,23 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             //RenderTarget = _data.SelectedLayer.RenderData.RenderTarget;
             //RestoreOriginalContent();
             //SaveBaseContent();
-            if (BaseContent == null) {
-                // 如果是从未框选过的初始状态，保存底图快照
-                SaveBaseContent();
-            }
-            else {
-                // 如果已经有底图快照了，只需把当前 RenderTarget 洗干净即可，无需销毁重建 BaseContent
-                using (var ds = RenderTarget.CreateDrawingSession()) {
-                    ds.Blend = CanvasBlend.Copy;
-                    ds.DrawImage(BaseContent);
-                }
+            
+            //if (BaseContent == null) {
+            //    // 如果是从未框选过的初始状态，保存底图快照
+            //    SaveBaseContent();
+            //}
+            //else {
+            //    // 如果已经有底图快照了，只需把当前 RenderTarget 洗干净即可，无需销毁重建 BaseContent
+            //    using (var ds = RenderTarget.CreateDrawingSession()) {
+            //        ds.Blend = CanvasBlend.Copy;
+            //        ds.DrawImage(BaseContent);
+            //    }
+            //}
+
+            SaveBaseContent();
+            using (var ds = RenderTarget.CreateDrawingSession()) {
+                ds.Blend = CanvasBlend.Copy;
+                ds.DrawImage(BaseContent);
             }
 
             _ratioController.ApplyRatio(ratio);
@@ -228,7 +239,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 double scale = Math.Min(maxW / ratio, maxH) / maxH;
                 return new Size(maxH * ratio * scale, maxH * scale);
             }
-            
+
             private double _currentRatio;
         }
     }

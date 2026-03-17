@@ -138,7 +138,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         }
 
         public virtual bool RestoreOriginalContent() {
-            if (SelectionContent == null) return false;
+            if (SelectionRect.IsEmpty || SelectionContent == null) return false;
 
             // 恢复原位置内容
             using (var ds = BaseContent!.CreateDrawingSession()) {
@@ -183,24 +183,17 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         protected void SaveBaseContent() {
             if (RenderTarget == null) return;
 
-            var currentWidth = RenderTarget.SizeInPixels.Width;
-            var currentHeight = RenderTarget.SizeInPixels.Height;
-            if (BaseContent == null ||
-                BaseContent.SizeInPixels.Width != currentWidth ||
-                BaseContent.SizeInPixels.Height != currentHeight) {
-
-                BaseContent?.Dispose();
-                BaseContent = new CanvasRenderTarget(
-                    RenderTarget,
-                    currentWidth,
-                    currentHeight,
-                    RenderTarget.Dpi,
-                    RenderTarget.Format,
-                    RenderTarget.AlphaMode);
-            }
+            //BaseContent?.Dispose();
+            BaseContent = new CanvasRenderTarget(
+                RenderTarget,
+                RenderTarget.SizeInPixels.Width,
+                RenderTarget.SizeInPixels.Height,
+                RenderTarget.Dpi,
+                RenderTarget.Format,
+                RenderTarget.AlphaMode);
 
             using (var ds = BaseContent.CreateDrawingSession()) {
-                ds.Blend = CanvasBlend.Copy;
+                ds.Clear(Colors.Transparent);
                 ds.DrawImage(RenderTarget);
             }
         }
@@ -260,7 +253,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             if (RenderTarget == null) return;
 
             try {
-                using (var ds = RenderTarget.CreateDrawingSession()) {  
+                using (var ds = RenderTarget.CreateDrawingSession()) {
                     ds.Blend = CanvasBlend.Copy; // 覆盖模式
 
                     // 绘制基准内容

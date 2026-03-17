@@ -126,6 +126,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void HandleCropAspectClicked(double e) {
             if (_selectedTool is CropTool ct) {
+                ct.RestoreOriginalContent();
                 ct.ApplyAspectRatio(e);
             }
         }

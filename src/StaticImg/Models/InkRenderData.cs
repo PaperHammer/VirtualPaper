@@ -19,7 +19,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         public CanvasRenderTarget RenderTarget { get; private set; } = null!;
         public bool IsNeedBackground { get; }
-        public Matrix3x2 Transform { get; private set; } = Matrix3x2.Identity;
+        //public Matrix3x2 Transform { get; private set; } = Matrix3x2.Identity;
         public TaskCompletionSource<bool> IsInited => _isInited;
         public TaskCompletionSource<bool> IsReady => _isReady;
 
@@ -190,21 +190,20 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         public async Task ResizeRenderTargetAsync(ArcSize arcSize) {
-            _arcSize = arcSize;
             await Task.Run(() => {
                 lock (_lockResize) {
                     switch (arcSize.Rebuild) {
                         case RebuildMode.ResizeExpand:
-                            ResizeRenderTargetWithExpand();
+                            ResizeRenderTargetWithExpand(arcSize);
                             break;
                         case RebuildMode.ResizeScale:
-                            ResizeRenderTargetWithScale();
+                            ResizeRenderTargetWithScale(arcSize);
                             break;
                         case RebuildMode.RotateLeft or RebuildMode.RotateRight:
-                            Rotate(arcSize.Rebuild == RebuildMode.RotateLeft);
+                            Rotate(arcSize);
                             break;
                         case RebuildMode.FlipHorizontal or RebuildMode.FlipVertical:
-                            Flip(arcSize.Rebuild == RebuildMode.FlipHorizontal);
+                            Flip(arcSize);
                             break;
                         case RebuildMode.None:
                         default:
@@ -212,116 +211,195 @@ namespace Workloads.Creation.StaticImg.Models {
                     }
                 }
             });
+            _arcSize = arcSize;
         }
 
-        private void ResizeRenderTargetWithScale() {
-            // 保留旧内容
-            if (RenderTarget != null) {
-                _cachedContent = CanvasBitmap.CreateFromBytes(
-                    _session.SharedDevice,
-                    RenderTarget.GetPixelBytes(),
-                    (int)RenderTarget.SizeInPixels.Width,
-                    (int)RenderTarget.SizeInPixels.Height,
-                    RenderTarget.Format,
-                    RenderTarget.Dpi,
-                    RenderTarget.AlphaMode);
-            }
+        private void ResizeRenderTargetWithScale(ArcSize arcSize) {
+            //// 保留旧内容
+            //if (RenderTarget != null) {
+            //    _cachedContent = CanvasBitmap.CreateFromBytes(
+            //        _session.SharedDevice,
+            //        RenderTarget.GetPixelBytes(),
+            //        (int)RenderTarget.SizeInPixels.Width,
+            //        (int)RenderTarget.SizeInPixels.Height,
+            //        RenderTarget.Format,
+            //        RenderTarget.Dpi,
+            //        RenderTarget.AlphaMode);
+            //}
 
-            // 创建新目标
-            RenderTarget?.Dispose();
+            //// 创建新目标
+            //RenderTarget?.Dispose();
+            //RenderTarget = new CanvasRenderTarget(
+            //    _session.SharedDevice,
+            //    (float)_arcSize.Width,
+            //    (float)_arcSize.Height,
+            //    _arcSize.Dpi,
+            //    DirectXPixelFormat.B8G8R8A8UIntNormalized,
+            //    CanvasAlphaMode.Premultiplied);
+
+            //// 恢复内容
+            //if (_cachedContent != null) {
+            //    using (var ds = RenderTarget.CreateDrawingSession()) {
+            //        ds.Clear(Colors.Transparent);
+            //        var destRect = new Rect(0, 0, _arcSize.Width, _arcSize.Height);
+            //        ds.DrawImage(_cachedContent, destRect);
+            //    }
+            //    _cachedContent.Dispose();
+            //}
+            
+            var oldTarget = RenderTarget;
             RenderTarget = new CanvasRenderTarget(
                 _session.SharedDevice,
-                (float)_arcSize.Width,
-                (float)_arcSize.Height,
-                _arcSize.Dpi,
+                (float)arcSize.Width,
+                (float)arcSize.Height,
+                arcSize.Dpi,
                 DirectXPixelFormat.B8G8R8A8UIntNormalized,
                 CanvasAlphaMode.Premultiplied);
 
-            // 恢复内容
-            if (_cachedContent != null) {
-                using (var ds = RenderTarget.CreateDrawingSession()) {
-                    var destRect = new Rect(0, 0, _arcSize.Width, _arcSize.Height);
-                    ds.DrawImage(_cachedContent, destRect);
-                }
-                _cachedContent.Dispose();
-            }
-        }
-
-        private void ResizeRenderTargetWithExpand() {
-            // 保留原始内容
-            Size originalSize = default;
-            if (RenderTarget != null) {
-                _cachedContent = CanvasBitmap.CreateFromBytes(
-                   _session.SharedDevice,
-                   RenderTarget.GetPixelBytes(),
-                   (int)RenderTarget.SizeInPixels.Width,
-                   (int)RenderTarget.SizeInPixels.Height,
-                   RenderTarget.Format,
-                   RenderTarget.Dpi,
-                   RenderTarget.AlphaMode);
-
-                originalSize = new Size(
-                    _cachedContent.SizeInPixels.Width / _cachedContent.Dpi * 96,
-                    _cachedContent.SizeInPixels.Height / _cachedContent.Dpi * 96);
-            }
-
-            // 创建新目标（扩展尺寸）
-            RenderTarget?.Dispose();
-            RenderTarget = new CanvasRenderTarget(
-                _session.SharedDevice,
-                (float)_arcSize.Width,
-                (float)_arcSize.Height,
-                _arcSize.Dpi,
-                DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                CanvasAlphaMode.Premultiplied);
-
-            // 绘制到新目标
             using (var ds = RenderTarget.CreateDrawingSession()) {
-                //if (IsNeedBackground) {
-                //    ds.Clear(Colors.White);
-                //}
-                // 在左上角绘制原始内容（1:1不缩放）
-                if (_cachedContent != null) {
-                    var contentRect = new Rect(
-                        0, 0,
-                        originalSize.Width,
-                        originalSize.Height);
+                ds.Clear(Colors.Transparent);
 
-                    ds.DrawImage(_cachedContent, contentRect);
+                if (oldTarget != null) {
+                    var destRect = new Rect(0, 0, arcSize.Width, arcSize.Height);
+
+                    // 对于 Scale 操作，使用高质量插值算法，缩放后的图像更清晰
+                    ds.DrawImage(oldTarget, destRect, oldTarget.Bounds, 1.0f, CanvasImageInterpolation.HighQualityCubic);
                 }
             }
 
-            _cachedContent?.Dispose();
-            _cachedContent = null;
+            oldTarget?.Dispose();
         }
 
-        private void Rotate(bool isLeft) {
+        private void ResizeRenderTargetWithExpand(ArcSize arcSize) {
+            //// 保留原始内容
+            //Size originalSize = default;
+            //if (RenderTarget != null) {
+            //    _cachedContent = CanvasBitmap.CreateFromBytes(
+            //       _session.SharedDevice,
+            //       RenderTarget.GetPixelBytes(),
+            //       (int)RenderTarget.SizeInPixels.Width,
+            //       (int)RenderTarget.SizeInPixels.Height,
+            //       RenderTarget.Format,
+            //       RenderTarget.Dpi,
+            //       RenderTarget.AlphaMode);
+
+            //    originalSize = new Size(
+            //        _cachedContent.SizeInPixels.Width / _cachedContent.Dpi * 96,
+            //        _cachedContent.SizeInPixels.Height / _cachedContent.Dpi * 96);
+            //}
+
+            //// 创建新目标（扩展尺寸）
+            //RenderTarget?.Dispose();
+            //RenderTarget = new CanvasRenderTarget(
+            //    _session.SharedDevice,
+            //    (float)_arcSize.Width,
+            //    (float)_arcSize.Height,
+            //    _arcSize.Dpi,
+            //    DirectXPixelFormat.B8G8R8A8UIntNormalized,
+            //    CanvasAlphaMode.Premultiplied);
+
+            //// 绘制到新目标
+            //using (var ds = RenderTarget.CreateDrawingSession()) {
+            //    //if (IsNeedBackground) {
+            //    //    ds.Clear(Colors.White);
+            //    //}
+            //    ds.Clear(Colors.Transparent);
+            //    // 在左上角绘制原始内容（1:1不缩放）
+            //    if (_cachedContent != null) {
+            //        var contentRect = new Rect(
+            //            0, 0,
+            //            originalSize.Width,
+            //            originalSize.Height);
+
+            //        ds.DrawImage(_cachedContent, contentRect);
+            //    }
+            //}
+
+            //_cachedContent?.Dispose();
+            //_cachedContent = null;
+
+            var oldTarget = RenderTarget;
+            RenderTarget = new CanvasRenderTarget(
+                _session.SharedDevice,
+                (float)arcSize.Width,
+                (float)arcSize.Height,
+                arcSize.Dpi,
+                DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                CanvasAlphaMode.Premultiplied);
+
+            using (var ds = RenderTarget.CreateDrawingSession()) {
+                ds.Clear(Colors.Transparent);
+
+                if (oldTarget != null) {
+                    // 废弃原先复杂的 DPI 计算和 contentRect
+                    // Win2D 的 DrawImage(image, x, y) 默认就是 1:1 的 DIPs 映射
+                    // 直接画在 (0,0) 坐标即可，超出的部分会自动被新画布裁剪，不够的部分就是透明背景
+                    ds.DrawImage(oldTarget, 0, 0);
+                }
+            }
+
+            oldTarget?.Dispose();
+        }
+
+        private void Rotate(ArcSize targetArcSize) {
             var original = GetOriginalContent();
-            var newSize = _arcSize.GetSize();
+            var newSize = targetArcSize.GetSize();
             var newTarget = CreateNewRenderTarget(newSize);
             using (var ds = newTarget.CreateDrawingSession()) {
-                var newCenter = new Vector2((float)(newSize.Width / 2f), (float)(newSize.Height / 2f));
-                var translateX = (newSize.Width - original.Size.Width) / 2f; // 平移图像到新画布中心
-                var translateY = (newSize.Height - original.Size.Height) / 2f;
+                ds.Clear(Colors.Transparent);
 
-                // 平移 -> 旋转
-                ds.Transform = Matrix3x2.CreateTranslation((float)translateX, (float)translateY) *
-                    (isLeft ? Matrix3x2.CreateRotation(-(float)(Math.PI / 2), newCenter) :
-                    Matrix3x2.CreateRotation((float)(Math.PI / 2), newCenter));
-                this.Transform = ds.Transform;
+                //var newCenter = new Vector2((float)(newSize.Width / 2f), (float)(newSize.Height / 2f));
+                //var translateX = (newSize.Width - original.Size.Width) / 2f; // 平移图像到新画布中心
+                //var translateY = (newSize.Height - original.Size.Height) / 2f;
+
+                //// 平移 -> 旋转
+                //ds.Transform = Matrix3x2.CreateTranslation((float)translateX, (float)translateY) *
+                //    (isLeft ? Matrix3x2.CreateRotation(-(float)(Math.PI / 2), newCenter) :
+                //    Matrix3x2.CreateRotation((float)(Math.PI / 2), newCenter));
+                //this.Transform = ds.Transform;
+                
+                // 使用标准的 90 度边缘映射矩阵，避免 width/2f 带来的浮点数漂移
+                if (targetArcSize.Rebuild == RebuildMode.RotateLeft) {
+                    // 逆时针 90 度：先绕 (0,0) 旋转 -90度，然后向下平移新画布的高度
+                    ds.Transform = Matrix3x2.CreateRotation(-(float)(Math.PI / 2)) *
+                                   Matrix3x2.CreateTranslation(0, (float)newSize.Height);
+                }
+                else {
+                    // 顺时针 90 度：先绕 (0,0) 旋转 90度，然后向右平移新画布的宽度
+                    ds.Transform = Matrix3x2.CreateRotation((float)(Math.PI / 2)) *
+                                   Matrix3x2.CreateTranslation((float)newSize.Width, 0);
+                }
+                //this.Transform = ds.Transform;
                 ds.DrawImage(original);
             }
             UpdateRenderTarget(newTarget);
         }
 
-        private void Flip(bool isHorizontal) {
+        private void Flip(ArcSize targetArcSize) {
             var original = GetOriginalContent();
-            var newTarget = CreateNewRenderTarget(_arcSize.GetSize());
+            var newTarget = CreateNewRenderTarget(targetArcSize.GetSize());
             using (var ds = newTarget.CreateDrawingSession()) {
-                var center = new Vector2((float)(original.Size.Width / 2f), (float)(original.Size.Height / 2f));
-                ds.Transform = isHorizontal ? Matrix3x2.CreateScale(-1, 1, center) :
-                    Matrix3x2.CreateScale(1, -1, center);
-                ds.DrawImage(original);
+                ds.Clear(Colors.Transparent);
+                //var center = new Vector2((float)(original.Size.Width / 2f), (float)(original.Size.Height / 2f));
+                //ds.Transform = isHorizontal ? Matrix3x2.CreateScale(-1, 1, center) :
+                //    Matrix3x2.CreateScale(1, -1, center);
+                //ds.DrawImage(original);
+
+                float width = (float)Math.Round(original.Size.Width);
+                float height = (float)Math.Round(original.Size.Height);
+
+                // 抛弃带小数点的 Center，使用“原点缩放 + 物理平移”算法
+                if (targetArcSize.Rebuild == RebuildMode.FlipHorizontal) {
+                    // 水平翻转：X轴变为-1（画面跑到左边负数区），然后再向右平移 width 距离拉回来
+                    ds.Transform = Matrix3x2.CreateScale(-1, 1) * Matrix3x2.CreateTranslation(width, 0);
+                }
+                else {
+                    // 垂直翻转：Y轴变为-1（画面跑到上边负数区），然后再向下平移 height 距离拉回来
+                    ds.Transform = Matrix3x2.CreateScale(1, -1) * Matrix3x2.CreateTranslation(0, height);
+                }
+
+                // 设置高质量插值模式，防止极个别情况下的边缘采样溢出
+                ds.DrawImage(original, 0, 0, original.Bounds, 1.0f, CanvasImageInterpolation.NearestNeighbor);
             }
             UpdateRenderTarget(newTarget);
         }
@@ -361,7 +439,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private readonly InkProjectSession _session;
         private ArcSize _arcSize;
-        private CanvasBitmap? _cachedContent;
+        //private CanvasBitmap? _cachedContent;
         private readonly object _lockResize = new();
         private readonly TaskCompletionSource<bool> _isReady = new();
         private readonly TaskCompletionSource<bool> _isInited = new();

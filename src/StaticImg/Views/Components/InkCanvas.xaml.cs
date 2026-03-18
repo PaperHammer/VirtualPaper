@@ -412,13 +412,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void SelectionRequested(SeletionRequest sr) {
             if (_selectedTool is not SelectionTool st) return;
 
-            object? op;
             switch (sr) {
                 case SeletionRequest.Commit:
-                    op = st.CommitSelection();
+                    st.CommitSelection();
                     break;
                 case SeletionRequest.Cancel:
-                    op = st.RestoreOriginalContent();
+                    st.RestoreOriginalContent();
                     break;
                 default:
                     break;

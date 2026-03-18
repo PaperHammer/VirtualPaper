@@ -75,9 +75,11 @@
                         <Button x:Name="rotateLeft"
                             Height="45"
                             Width="45"
-                            ToolTipService.ToolTip="{markup:I18n Key=SIG_CanvasSet_RotateLeftNinety}"
                             Command="{x:Bind CanvasOperationCommand}"
                             CommandParameter="{x:Bind root:CanvasOperation.RotateLeft}">
+                            <ToolTipService.ToolTip>
+                                <ToolTip Placement="Mouse" Content="{markup:I18n Key=SIG_CanvasSet_RotateLeftNinety}" Visibility="Visible" />
+                            </ToolTipService.ToolTip>
                             <SymbolIcon Symbol="Rotate">
                                 <SymbolIcon.RenderTransform>
                                     <ScaleTransform CenterX="10" ScaleX="-1" ScaleY="1"/>
@@ -90,8 +92,10 @@
                             Height="45"
                             Width="45"
                             Command="{x:Bind CanvasOperationCommand}"
-                            CommandParameter="{x:Bind root:CanvasOperation.RotateRight}"
-                            ToolTipService.ToolTip="{markup:I18n Key=SIG_CanvasSet_RotateRightNinety}">
+                            CommandParameter="{x:Bind root:CanvasOperation.RotateRight}">
+                            <ToolTipService.ToolTip>
+                                <ToolTip Placement="Mouse" Content="{markup:I18n Key=SIG_CanvasSet_RotateRightNinety}" Visibility="Visible" />
+                            </ToolTipService.ToolTip>
                             <SymbolIcon Symbol="Rotate"/>
                         </Button>
 
@@ -100,8 +104,10 @@
                             Height="45"
                             Width="45"
                             Command="{x:Bind CanvasOperationCommand}"
-                            CommandParameter="{x:Bind root:CanvasOperation.FlipHorizontally}"
-                            ToolTipService.ToolTip="{markup:I18n Key=SIG_CanvasSet_FlipHorizon}">
+                            CommandParameter="{x:Bind root:CanvasOperation.FlipHorizontally}">
+                            <ToolTipService.ToolTip>
+                                <ToolTip Placement="Mouse" Content="{markup:I18n Key=SIG_CanvasSet_FlipHorizon}" Visibility="Visible" />
+                            </ToolTipService.ToolTip>
                             <FontIcon Glyph="&#xEA44;" />
                         </Button>
 
@@ -110,8 +116,10 @@
                             Height="45"
                             Width="45"
                             Command="{x:Bind CanvasOperationCommand}"
-                            CommandParameter="{x:Bind root:CanvasOperation.FlipVertically}"
-                            ToolTipService.ToolTip="{markup:I18n Key=SIG_CanvasSet_FlipVertical}">
+                            CommandParameter="{x:Bind root:CanvasOperation.FlipVertically}">
+                            <ToolTipService.ToolTip>
+                                <ToolTip Placement="Mouse" Content="{markup:I18n Key=SIG_CanvasSet_FlipVertical}" Visibility="Visible" />
+                            </ToolTipService.ToolTip>
                             <FontIcon Glyph="&#xEA44;">
                                 <FontIcon.RenderTransform>
                                     <RotateTransform CenterX="10" CenterY="10" Angle="90"/>

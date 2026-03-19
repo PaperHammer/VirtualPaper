@@ -13,6 +13,7 @@ using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Rendering;
+using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Models.Specific;
 
@@ -147,7 +148,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             //RenderTarget = _data.SelectedLayer.RenderData.RenderTarget;
             //RestoreOriginalContent();
             //SaveBaseContent();
-            
+
             //if (BaseContent == null) {
             //    // 如果是从未框选过的初始状态，保存底图快照
             //    SaveBaseContent();

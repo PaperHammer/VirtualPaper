@@ -2,6 +2,7 @@ using Microsoft.Graphics.Canvas;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Utils.UndoRedo;
 using Workloads.Creation.StaticImg.Core.Rendering;
+using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Models.Specific;
 

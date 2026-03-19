@@ -1,9 +1,11 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Input;
@@ -11,20 +13,43 @@ using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Events;
+using Workloads.Creation.StaticImg.Models.ToolItems;
 
 namespace Workloads.Creation.StaticImg.Models.Specific {
     //  UIContext part of InkCanvasData
-    public partial class InkCanvasData : ObservableObject {        
+    public partial class InkCanvasData : ObservableObject {
         public event EventHandler? SeletcedToolChanged;
         public event EventHandler<double>? SelectedCropAspectClicked;
         public event EventHandler<LayerSizeChangedEventArgs>? SizeChanged;
 
         public ObservableCollection<Color> CustomColors { get; set; } = [];
 
-        ArcSize _canvasSize = new ArcSize(1920, 1080, 96, RebuildMode.None); // 像素
+        // 0 表示未锁定，1 表示正在处理中
+        private int _canvasSizeLock = 0;
+        ArcSize _canvasSize; // 像素
         public ArcSize CanvasSize {
             get => _canvasSize;
-            set { _canvasSize = value; ArcSizeChanged(); OnPropertyChanged(); }
+            set {
+                // 避免反转、缩放在 undo/redo 下失效
+                bool isForceUpdate = value.Rebuild != RebuildMode.RotateRight || value.Rebuild != RebuildMode.RotateLeft;
+                if ((!isForceUpdate && Equals(_canvasSize, value)) || Interlocked.CompareExchange(ref _canvasSizeLock, 1, 0) != 0) {
+                    return;
+                }
+
+                try {
+                    _canvasSize = value;
+                    UpdateCanvasSizeText();
+                    OnPropertyChanged();
+                    _ = ApplyCanvasSizeChangeAsync(value);
+                }
+                catch (Exception ex) {
+                    GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex.Message);
+                    ArcLog.GetLogger<CropTool>().Error(ex);
+                }
+                finally {
+                    Interlocked.Exchange(ref _canvasSizeLock, 0);
+                }
+            }
         }
 
         double _canvasZoom; // 0.2 -- 7.0
@@ -144,8 +169,15 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         public int EraserFeather { get; internal set; } = 0;
 
         internal void InitData() {
-            CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {WindowConsts.ArcWindowInstance.Content.XamlRoot.RasterizationScale * 96} DPI)";
+            UpdateCanvasSizeText();
             AddLayer(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_Text_BackgroundLayer)), true);
+        }
+
+        private void UpdateCanvasSizeText() {
+            if (CanvasSize != default) {
+                var rasterizationScale = WindowConsts.ArcWindowInstance?.Content?.XamlRoot?.RasterizationScale ?? 1.0;
+                CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {rasterizationScale * 96} DPI)";
+            }
         }
 
         internal async Task UpdateCustomColorsAsync(ColorChangeEventArgs e) {
@@ -181,13 +213,12 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 string.Empty : $"W: {_selectionRect.Width:F0} px, H: {_selectionRect.Height:F0} px";
         }
 
-        private async void ArcSizeChanged() {
+        private async Task ApplyCanvasSizeChangeAsync(ArcSize targetSize) {
             var tasks = _allLayers
                 .Where(ink => ink.RenderData != null)
-                .Select(ink => ink.RenderData.ResizeRenderTargetAsync(CanvasSize));
+                .Select(ink => ink.RenderData.ResizeRenderTargetAsync(targetSize));
             await Task.WhenAll(tasks);
-            CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {WindowConsts.ArcWindowInstance.Content.XamlRoot.RasterizationScale * 96} DPI)";
-            SizeChanged?.Invoke(this, new LayerSizeChangedEventArgs(CanvasSize));
+            SizeChanged?.Invoke(this, new LayerSizeChangedEventArgs(targetSize));
         }
     }
 }

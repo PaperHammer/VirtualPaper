@@ -7,6 +7,7 @@ using VirtualPaper.Common.Extensions;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Workloads.Creation.StaticImg.Core.Brushes;
+using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Events;
 
 namespace Workloads.Creation.StaticImg.Core.Rendering {
@@ -17,7 +18,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         protected StrokeBase CurrentStroke { get; set; } = null!;
         protected CanvasRenderTarget TempRenderTarget { get; private set; } = null!;
         protected CanvasRenderTarget SnapshotRenderTarget { get; private set; } = null!;
-        //protected virtual bool IsRenderReady => IsCanvasReady && CurrentStroke != null;
+
         public override bool IsCanvasReady {
             get {
                 if (!base.IsCanvasReady) return false;

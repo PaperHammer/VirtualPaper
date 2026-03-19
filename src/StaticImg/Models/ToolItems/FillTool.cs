@@ -7,6 +7,7 @@ using VirtualPaper.Common.Extensions;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Rendering;
+using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Models.Specific;
 
@@ -48,7 +49,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             int startX = (int)Math.Clamp(startPoint.X, 0, width - 1);
             int startY = (int)Math.Clamp(startPoint.Y, 0, height - 1);
 
-            byte[] fullPixels = target.GetPixelBytes();
+            byte[]? fullPixels = target.GetPixelBytes();
             Span<uint> pixels32 = MemoryMarshal.Cast<byte, uint>(fullPixels.AsSpan());
 
             uint targetColor = pixels32[startY * width + startX];

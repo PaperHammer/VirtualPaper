@@ -156,10 +156,8 @@ namespace Workloads.Creation.StaticImg {
             uint dpi,
             RebuildMode rebuild) {
             this.Dpi = dpi;
-            (this.Width, this.Height) = rebuild switch {
-                RebuildMode.RotateLeft or RebuildMode.RotateRight => (height, width),
-                _ => (width, height)
-            };
+            this.Width = width;
+            this.Height = height;
             this.Rebuild = rebuild;
             this.Ratio = width / height;
         }
@@ -177,7 +175,7 @@ namespace Workloads.Creation.StaticImg {
         // readonly 关键字在此处意味着这个方法不会修改任何实例的状态（即它不会改变对象的任何字段）。
         // 这有助于编译器优化，并明确地传达了该方法是纯粹基于现有数据进行计算而不改变对象状态的事实。
         public readonly bool Equals(ArcSize other)
-            => Width == other.Width && Height == other.Height && Dpi == other.Dpi;
+            => (Width, Height, Dpi, Ratio, Rebuild) == (other.Width, other.Height, other.Dpi, other.Ratio, other.Rebuild);
 
         public override readonly bool Equals(object? obj) => obj is ArcSize objS && Equals(objS);
 

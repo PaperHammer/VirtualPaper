@@ -83,7 +83,7 @@
                                 Payload="{x:Bind Payload}"
                                 Size="{x:Bind _viewModel.Data.CanvasSize, Mode=OneWay}"
                                 Visibility="{x:Bind _viewModel.Data.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=CanvasSet}"
-                                OnValueChanged="CanvasSet_OnValueChanged"
+                                OnValueCommited="CanvasSet_OnValueCommited"
                                 CanvasOperationRequested="CanvasOperationBtn_Click"/>
                             <staticImgTools:SelectionControl x:Name="Selection"
                                 Visibility="{x:Bind _viewModel.Data.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Selection}"

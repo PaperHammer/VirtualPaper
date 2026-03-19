@@ -23,6 +23,7 @@ using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Rendering;
+using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Models;
@@ -169,7 +170,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             try {
                 if (IsInited.Task.IsCompleted) return;
                 await _viewModel.LoadAsync();                
-                //_tool.RefreshToolRenderData();
                 FitView();
                 RebuildComposite();
                 RenderToCompositeTarget(RenderMode.FullRegion);
@@ -380,23 +380,27 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         #endregion
 
         #region CanvasSet
-        private void CanvasSet_OnValueChanged(object sender, ArcSize e) {
-            _viewModel.Data.CanvasSize = new(e.Width, e.Height, e.Dpi, e.Rebuild);
+        private async void CanvasSet_OnValueCommited(object sender, ArcSize e) {
+            var command = new CanvasTransformCommand(_viewModel.Data, _viewModel.Data.CanvasSize, e);
+            await command.ExecuteAsync();
+            _session.UnReUtil.RecordCommand(command);
         }
 
-        private void CanvasOperationBtn_Click(object sender, CanvasOperation e) {
-            RebuildMode rm = e switch {
-                CanvasOperation.RotateLeft => RebuildMode.RotateLeft,
-                CanvasOperation.RotateRight => RebuildMode.RotateRight,
-                CanvasOperation.FlipHorizontally => RebuildMode.FlipHorizontal,
-                CanvasOperation.FlipVertically => RebuildMode.FlipVertical,
-                _ => RebuildMode.None,
+        private async void CanvasOperationBtn_Click(object sender, CanvasOperation e) {
+            var current = _viewModel.Data.CanvasSize;
+            var (newMode, newWidth, newHeight) = e switch {
+                CanvasOperation.RotateLeft => (RebuildMode.RotateLeft, current.Height, current.Width),
+                CanvasOperation.RotateRight => (RebuildMode.RotateRight, current.Height, current.Width),
+                CanvasOperation.FlipHorizontally => (RebuildMode.FlipHorizontal, current.Width, current.Height),
+                CanvasOperation.FlipVertically => (RebuildMode.FlipVertical, current.Width, current.Height),
+                _ => (RebuildMode.None, 0f, 0f)
             };
-            _viewModel.Data.CanvasSize = new ArcSize(
-                _viewModel.Data.CanvasSize.Width,
-                _viewModel.Data.CanvasSize.Height,
-                _viewModel.Data.CanvasSize.Dpi,
-                rm);
+            if (newMode == RebuildMode.None) return;
+            var newSize = new ArcSize(newWidth, newHeight, current.Dpi, newMode);
+
+            var command = new CanvasTransformCommand(_viewModel.Data, _viewModel.Data.CanvasSize, newSize);
+            await command.ExecuteAsync();
+            _session.UnReUtil.RecordCommand(command);
         }
         #endregion
 

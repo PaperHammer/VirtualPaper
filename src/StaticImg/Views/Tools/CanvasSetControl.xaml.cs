@@ -18,7 +18,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         public event EventHandler<RoutedEventArgs>? ScaleContentChecked;
         public event EventHandler<RoutedEventArgs>? ScaleContentUnchecked;
         public event EventHandler<CanvasOperation>? CanvasOperationRequested;
-        public event EventHandler<ArcSize>? OnValueChanged;
+        public event EventHandler<ArcSize>? OnValueCommited;
 
         public ArcSize Size {
             get { return (ArcSize)GetValue(SizeProperty); }
@@ -26,20 +26,6 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         }
         public static readonly DependencyProperty SizeProperty =
             DependencyProperty.Register(nameof(Size), typeof(ArcSize), typeof(CanvasSetControl), new PropertyMetadata(new ArcSize(1920, 1080, 96, RebuildMode.None)));
-
-        //public int PixelWidth {
-        //    get { return (int)GetValue(PixelWidthProperty); }
-        //    set { SetValue(PixelWidthProperty, value); }
-        //}
-        //public static readonly DependencyProperty PixelWidthProperty =
-        //    DependencyProperty.Register("PixelWidth", typeof(int), typeof(CanvasSetControl), new PropertyMetadata(0));
-
-        //public int PixelHeight {
-        //    get { return (int)GetValue(PixelHeigthProperty); }
-        //    set { SetValue(PixelHeigthProperty, value); }
-        //}
-        //public static readonly DependencyProperty PixelHeigthProperty =
-        //    DependencyProperty.Register("PixelHeight", typeof(int), typeof(CanvasSetControl), new PropertyMetadata(0));
 
         public ICommand? CanvasOperationCommand { get; private set; }
 
@@ -108,7 +94,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             }
 
             var rebuild = _isScaleContent ? RebuildMode.ResizeScale : RebuildMode.ResizeExpand;
-            OnValueChanged?.Invoke(this, new ArcSize(width, height, Size.Dpi, rebuild));
+            OnValueCommited?.Invoke(this, new ArcSize(width, height, Size.Dpi, rebuild));
             CloseSizeIllegalMsg();
         }
 

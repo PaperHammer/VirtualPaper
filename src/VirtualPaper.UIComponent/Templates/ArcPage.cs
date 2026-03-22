@@ -38,7 +38,7 @@ namespace VirtualPaper.UIComponent.Templates {
         }
 
         protected virtual void ArcPage_Unloaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
-            _ = OnDestroyAsync();
+            OnDestroy();
         }
 
         #region async life-cycle hooks
@@ -62,7 +62,7 @@ namespace VirtualPaper.UIComponent.Templates {
                     if (token.IsCancellationRequested) return;
 
                     await OnLeaveAsync();
-                    await OnDestroyAsync();
+                    OnDestroy();
 
                     if (token.IsCancellationRequested) return;
 
@@ -129,14 +129,12 @@ namespace VirtualPaper.UIComponent.Templates {
         /// <summary>
         /// 页面销毁
         /// </summary>
-        protected virtual Task OnDestroyAsync() {
-            Status = ArcPageStatus.Stopped;
-            ArcContext = null;
+        protected virtual void OnDestroy() {
+            Status = ArcPageStatus.Stopped;            
             Payload = null;
             DataContext = null;
             UnregisterContext();
-
-            return Task.CompletedTask;
+            ArcContext = null;
         }
         #endregion
 

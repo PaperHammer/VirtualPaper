@@ -19,7 +19,7 @@ namespace VirtualPaper.DraftPanel {
     public sealed partial class Draft : ArcPage {
         public override Type ArcType => typeof(Draft);
 
-        public Draft() {            
+        public Draft() {
             this.InitializeComponent();
             ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
         }

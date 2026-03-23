@@ -15,7 +15,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         public event EventHandler<Exception>? FatalErrorOccurred;
 
         public InkCanvasViewModel ViewModel { get; set; } = null!;
-        protected Guid LayerId { get; private set; }
+        protected Guid LayerId { get; set; }
         protected Rect Viewport { get; private set; } = Rect.Empty;
         protected CanvasRenderTarget RenderTarget => ViewModel.Data.SelectedLayer.RenderData.RenderTarget;
         public virtual bool IsCanvasReady {

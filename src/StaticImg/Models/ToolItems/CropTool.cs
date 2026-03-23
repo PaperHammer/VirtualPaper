@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.Common.Utils.UndoRedo;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.UI;
@@ -33,20 +31,21 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         protected override void CaptureSelectionContent() {
         }
 
-        public override IUndoableCommand? CommitSelection() {
+        public override LayerRebuildCommand? CommitSelection() {
             if (_currentState != SelectionState.Selected || BaseContent == null)
                 return null;
 
+            LayerId = _data.SelectedLayer.Tag;
             var command = BuildUndoCommand();
             if (command != null) {
                 Reset();
-                _ = ExecuteAndRecordCommandAsync(command);
+                ExecuteAndRecordCommand(command);
             }
 
             return command;
         }
 
-        private async Task ExecuteAndRecordCommandAsync(IUndoableCommand command) {
+        private async void ExecuteAndRecordCommand(LayerRebuildCommand command) {
             try {
                 await command.ExecuteAsync();
                 ViewModel.Session.UnReUtil.RecordCommand(command);
@@ -57,7 +56,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             }
         }
 
-        protected override IUndoableCommand? BuildUndoCommand() {
+        protected override LayerRebuildCommand? BuildUndoCommand() {
             ArcSize originalSize;
             ArcSize newSize;
             var rawPixelDataList = new List<(Guid Tag, byte[] OldPixels, byte[] NewPixels)>();
@@ -89,13 +88,20 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             var originalPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
             var newPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
 
-            Parallel.ForEach(rawPixelDataList, item => {
-                byte[] compressedOld = item.OldPixels.CompressPixels();
-                byte[] compressedNew = item.NewPixels.CompressPixels();
+            //Parallel.ForEach(rawPixelDataList, item => {
+            //    byte[] compressedOld = item.OldPixels.CompressPixels();
+            //    byte[] compressedNew = item.NewPixels.CompressPixels();
 
-                originalPixelsDict.TryAdd(item.Tag, compressedOld);
-                newPixelsDict.TryAdd(item.Tag, compressedNew);
-            });
+            //    originalPixelsDict.TryAdd(item.Tag, compressedOld);
+            //    newPixelsDict.TryAdd(item.Tag, compressedNew);
+            //});
+            foreach (var (Tag, OldPixels, NewPixels) in rawPixelDataList) {
+                byte[] compressedOld = OldPixels.CompressPixels();
+                byte[] compressedNew = NewPixels.CompressPixels();
+
+                originalPixelsDict.TryAdd(Tag, compressedOld);
+                newPixelsDict.TryAdd(Tag, compressedNew);
+            }
 
             return new LayerRebuildCommand(
                 canvasData: ViewModel.Data,

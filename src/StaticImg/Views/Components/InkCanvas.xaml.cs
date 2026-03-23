@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.UI.Xaml;
@@ -27,10 +28,12 @@ using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Models;
+using Workloads.Creation.StaticImg.Models.SerializableData;
 using Workloads.Creation.StaticImg.Models.ToolItems;
 using Workloads.Creation.StaticImg.Utils;
 using Workloads.Creation.StaticImg.ViewModels;
 using Workloads.Creation.StaticImg.Views.Tools;
+using static VirtualPaper.Common.Utils.PInvoke.Native;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -381,26 +384,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         #region CanvasSet
         private async void CanvasSet_OnValueCommited(object sender, ArcSize e) {
-            var command = new CanvasTransformCommand(_viewModel.Data, _viewModel.Data.CanvasSize, e);
-            await command.ExecuteAsync();
-            _session.UnReUtil.RecordCommand(command);
+            await _viewModel.Data.ApplyResizeOrScaleAsync(e);
         }
 
         private async void CanvasOperationBtn_Click(object sender, CanvasOperation e) {
-            var current = _viewModel.Data.CanvasSize;
-            var (newMode, newWidth, newHeight) = e switch {
-                CanvasOperation.RotateLeft => (RebuildMode.RotateLeft, current.Height, current.Width),
-                CanvasOperation.RotateRight => (RebuildMode.RotateRight, current.Height, current.Width),
-                CanvasOperation.FlipHorizontally => (RebuildMode.FlipHorizontal, current.Width, current.Height),
-                CanvasOperation.FlipVertically => (RebuildMode.FlipVertical, current.Width, current.Height),
-                _ => (RebuildMode.None, 0f, 0f)
-            };
-            if (newMode == RebuildMode.None) return;
-            var newSize = new ArcSize(newWidth, newHeight, current.Dpi, newMode);
-
-            var command = new CanvasTransformCommand(_viewModel.Data, _viewModel.Data.CanvasSize, newSize);
-            await command.ExecuteAsync();
-            _session.UnReUtil.RecordCommand(command);
+            await _viewModel.Data.ApplyRotateOrFlipAsync(e);            
         }
         #endregion
 

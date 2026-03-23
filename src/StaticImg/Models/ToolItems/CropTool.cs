@@ -58,16 +58,18 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         protected override IUndoableCommand? BuildUndoCommand() {
-            lock (RenderTarget) {
+            ArcSize originalSize;
+            ArcSize newSize;
+            var rawPixelDataList = new List<(Guid Tag, byte[] OldPixels, byte[] NewPixels)>();
+
+            lock (_data) {
                 if (BaseContent == null) return null;
 
-                ArcSize originalSize = _data.CanvasSize;
+                originalSize = _data.CanvasSize;
                 Rect cropRect = _selectionRect.RoundOutwardAsInt().IntersectRect(BaseContent.Bounds);
 
                 if (cropRect.Width <= 0 || cropRect.Height <= 0) return null;
-
-                var newSize = new ArcSize((float)cropRect.Width, (float)cropRect.Height, (uint)BaseContent.Dpi, RebuildMode.None);
-                var rawPixelDataList = new List<(Guid Tag, byte[] OldPixels, byte[] NewPixels)>();
+                newSize = new ArcSize((float)cropRect.Width, (float)cropRect.Height, (uint)BaseContent.Dpi, RebuildMode.None);
 
                 foreach (var layer in ViewModel.Data.Layers) {
                     if (layer.RenderData?.RenderTarget == null) continue;
@@ -82,28 +84,29 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
 
                     rawPixelDataList.Add((layer.Tag, oldPixels, newPixels));
                 }
-
-                var originalPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
-                var newPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
-                Parallel.ForEach(rawPixelDataList, item => {
-                    byte[] compressedOld = item.OldPixels.CompressPixels();
-                    byte[] compressedNew = item.NewPixels.CompressPixels();
-
-                    originalPixelsDict.TryAdd(item.Tag, compressedOld);
-                    newPixelsDict.TryAdd(item.Tag, compressedNew);
-                });
-
-                return new LayerRebuildCommand(
-                    canvasData: ViewModel.Data,
-                    originalSize: originalSize,
-                    newSize: newSize,
-                    compressedOriginalPixelsDict: new Dictionary<Guid, byte[]>(originalPixelsDict),
-                    compressedNewPixelsDict: new Dictionary<Guid, byte[]>(newPixelsDict),
-                    requestRenderAction: () => {
-                        HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-                    }
-                );
             }
+
+            var originalPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
+            var newPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
+
+            Parallel.ForEach(rawPixelDataList, item => {
+                byte[] compressedOld = item.OldPixels.CompressPixels();
+                byte[] compressedNew = item.NewPixels.CompressPixels();
+
+                originalPixelsDict.TryAdd(item.Tag, compressedOld);
+                newPixelsDict.TryAdd(item.Tag, compressedNew);
+            });
+
+            return new LayerRebuildCommand(
+                canvasData: ViewModel.Data,
+                originalSize: originalSize,
+                newSize: newSize,
+                compressedOriginalPixelsDict: new Dictionary<Guid, byte[]>(originalPixelsDict),
+                compressedNewPixelsDict: new Dictionary<Guid, byte[]>(newPixelsDict),
+                requestRenderAction: () => {
+                    HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                }
+            );
         }
 
         protected override void RenderToTarget() {

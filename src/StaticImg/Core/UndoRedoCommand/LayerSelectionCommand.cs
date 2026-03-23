@@ -16,10 +16,10 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
     /// canvas. The command stores the necessary pixel data and coordinates to perform the move and to restore the
     /// previous state if undone. The move operation is executed asynchronously and triggers a render update for the
     /// affected regions.</remarks>
-    public record SelectionMoveCommand : IUndoableCommand {
-        public string Description { get; } = "Selection";
+    public record LayerSelectionCommand : IUndoableCommand {
+        public string Description { get; } = "Layer Selection";
 
-        public SelectionMoveCommand(
+        public LayerSelectionCommand(
             Guid layerId,
             InkCanvasData canvasData,
             Rect originalRect,

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI;
@@ -12,6 +11,7 @@ using VirtualPaper.UIComponent.Input;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.UI;
+using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Models.ToolItems;
 
@@ -30,9 +30,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         public ArcSize CanvasSize {
             get => _canvasSize;
             set {
-                // 避免反转、缩放在 undo/redo 下失效
-                bool isForceUpdate = value.Rebuild != RebuildMode.RotateRight || value.Rebuild != RebuildMode.RotateLeft;
-                if ((!isForceUpdate && Equals(_canvasSize, value)) || Interlocked.CompareExchange(ref _canvasSizeLock, 1, 0) != 0) {
+                if (Interlocked.CompareExchange(ref _canvasSizeLock, 1, 0) != 0) {
                     return;
                 }
 
@@ -40,7 +38,6 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                     _canvasSize = value;
                     UpdateCanvasSizeText();
                     OnPropertyChanged();
-                    _ = ApplyCanvasSizeChangeAsync(value);
                 }
                 catch (Exception ex) {
                     GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex.Message);
@@ -213,12 +210,67 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 string.Empty : $"W: {_selectionRect.Width:F0} px, H: {_selectionRect.Height:F0} px";
         }
 
-        private async Task ApplyCanvasSizeChangeAsync(ArcSize targetSize) {
-            var tasks = _allLayers
-                .Where(ink => ink.RenderData != null)
-                .Select(ink => ink.RenderData.ResizeRenderTargetAsync(targetSize));
-            await Task.WhenAll(tasks);
-            SizeChanged?.Invoke(this, new LayerSizeChangedEventArgs(targetSize));
+        public async Task ApplyRotateOrFlipAsync(CanvasOperation e) {
+            try {
+                var (newMode, newWidth, newHeight) = e switch {
+                    CanvasOperation.RotateLeft => (RebuildMode.RotateLeft, CanvasSize.Height, CanvasSize.Width),
+                    CanvasOperation.RotateRight => (RebuildMode.RotateRight, CanvasSize.Height, CanvasSize.Width),
+                    CanvasOperation.FlipHorizontally => (RebuildMode.FlipHorizontal, CanvasSize.Width, CanvasSize.Height),
+                    CanvasOperation.FlipVertically => (RebuildMode.FlipVertical, CanvasSize.Width, CanvasSize.Height),
+                    _ => (RebuildMode.None, 0f, 0f)
+                };
+                if (newMode == RebuildMode.None) return;
+                var newSize = new ArcSize(newWidth, newHeight, CanvasSize.Dpi, newMode);
+
+                var command = BuildUndoCommandForLayerTransform(CanvasSize, newSize);
+                if (command != null) {
+                    await command.ExecuteAsync();
+                    _session.UnReUtil.RecordCommand(command);
+                }
+            }
+            catch (Exception ex) {
+                GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex.Message);
+                ArcLog.GetLogger<CropTool>().Error(ex);
+            }
+        }
+
+        public async Task ApplyResizeOrScaleAsync(ArcSize targetSize) {
+            try {
+                var command = BuildUndoCommandForLayerRebuild(CanvasSize, targetSize);
+                if (command != null) {
+                    await command.ExecuteAsync();
+                    _session.UnReUtil.RecordCommand(command);
+                }
+            }
+            catch (Exception ex) {
+                GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex.Message);
+                ArcLog.GetLogger<CropTool>().Error(ex);
+            }
+        }
+
+        private LayerTransformCommand? BuildUndoCommandForLayerTransform(ArcSize originalSize, ArcSize targetSize) {
+            lock (this) {
+                return new LayerTransformCommand(
+                    this,
+                    originalSize,
+                    targetSize,
+                    requestRenderAction: (size) => {
+                        SizeChanged?.Invoke(this, new LayerSizeChangedEventArgs(size));
+                    });
+            }
+        }
+
+        private LayerResizeScaleCommand? BuildUndoCommandForLayerRebuild(ArcSize originalSize, ArcSize targetSize) {
+            lock (this) {
+                return new LayerResizeScaleCommand(
+                    canvasData: this,
+                    originalSize: originalSize,
+                    newSize: targetSize,
+                    requestRenderAction: (size) => {
+                        SizeChanged?.Invoke(this, new LayerSizeChangedEventArgs(size));
+                    }
+                );
+            }
         }
     }
 }

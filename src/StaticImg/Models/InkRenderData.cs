@@ -6,7 +6,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Archive;
+using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.Graphics.DirectX;
 using Windows.Storage.Streams;
@@ -19,13 +21,12 @@ namespace Workloads.Creation.StaticImg.Models {
 
         public CanvasRenderTarget RenderTarget { get; private set; } = null!;
         public bool IsNeedBackground { get; }
-        //public Matrix3x2 Transform { get; private set; } = Matrix3x2.Identity;
         public TaskCompletionSource<bool> IsInited => _isInited;
         public TaskCompletionSource<bool> IsReady => _isReady;
 
         public InkRenderData(InkProjectSession session, ArcSize arcSize, bool isNeedBackground = false) {
             _session = session;
-            _arcSize = arcSize;
+            ResetSize(arcSize);
             IsNeedBackground = isNeedBackground;
             IsReady.Task.ContinueWith(t => {
                 if (t.Status == TaskStatus.RanToCompletion && t.Result) {
@@ -174,8 +175,14 @@ namespace Workloads.Creation.StaticImg.Models {
             return newRender;
         }
 
-        public void ResizeAndSetPixels(ArcSize newSize, byte[] pixels) {
-            _arcSize = newSize;
+        public void ResizeAndSetPixels(ArcSize newSize, byte[]? pixels) {
+            if (pixels == null) {
+                GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), "Resize data is null");
+                ArcLog.GetLogger<InkRenderData>().Error("Resize data is null");
+                return;
+            }
+
+            ResetSize(newSize);
 
             RenderTarget?.Dispose();
             RenderTarget = new CanvasRenderTarget(
@@ -211,6 +218,10 @@ namespace Workloads.Creation.StaticImg.Models {
                     }
                 }
             });
+            ResetSize(arcSize);
+        }
+
+        public void ResetSize(ArcSize arcSize) {
             _arcSize = arcSize;
         }
 
@@ -343,7 +354,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private void Rotate(ArcSize targetArcSize) {
             var original = GetOriginalContent();
-            var newSize = targetArcSize.GetSize();
+            var newSize = targetArcSize.ToSize();
             var newTarget = CreateNewRenderTarget(newSize);
             using (var ds = newTarget.CreateDrawingSession()) {
                 ds.Clear(Colors.Transparent);
@@ -377,7 +388,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private void Flip(ArcSize targetArcSize) {
             var original = GetOriginalContent();
-            var newTarget = CreateNewRenderTarget(targetArcSize.GetSize());
+            var newTarget = CreateNewRenderTarget(targetArcSize.ToSize());
             using (var ds = newTarget.CreateDrawingSession()) {
                 ds.Clear(Colors.Transparent);
                 //var center = new Vector2((float)(original.Size.Width / 2f), (float)(original.Size.Height / 2f));

@@ -187,9 +187,12 @@ namespace Workloads.Creation.StaticImg {
 
         public static double Area(Size size) => size.Width * size.Height;
 
-        public Size GetSize() => new(Width, Height);
-
+        public Size ToSize() => new(Width, Height);
         public Rect ToRect() => new(0, 0, Width, Height);
+        public bool IsRotate() => Rebuild == RebuildMode.RotateLeft || Rebuild == RebuildMode.RotateRight;
+        public bool IsFlip() => Rebuild == RebuildMode.FlipVertical || Rebuild == RebuildMode.FlipHorizontal;
+        public bool IsResizeExpand() => Rebuild == RebuildMode.ResizeExpand;
+        public bool IsResizeScale() => Rebuild == RebuildMode.ResizeScale;
     }
 
     // TODO

@@ -16,14 +16,7 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
     /// modifications to a layer's visual state within the canvas, ensuring that rendering updates are properly
     /// requested after each operation.</remarks>
     public record LayerRebuildCommand : IUndoableCommand {
-        public string Description { get; } = "Global Layer Rebuild";
-
-        private readonly InkCanvasData _canvasData;
-        private readonly ArcSize _originalSize;
-        private readonly ArcSize _newSize;
-        private readonly Dictionary<Guid, byte[]> _compressedOriginalPixelsDict;
-        private readonly Dictionary<Guid, byte[]> _compressedNewPixelsDict;
-        private readonly Action _requestRenderAction;
+        public string Description { get; } = "Layer Rebuild";
 
         public LayerRebuildCommand(
             InkCanvasData canvasData,
@@ -84,5 +77,12 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
             _canvasData.CanvasSize = _originalSize;
             _requestRenderAction?.Invoke();
         }
+
+        private readonly InkCanvasData _canvasData;
+        private readonly ArcSize _originalSize;
+        private readonly ArcSize _newSize;
+        private readonly Dictionary<Guid, byte[]> _compressedOriginalPixelsDict;
+        private readonly Dictionary<Guid, byte[]> _compressedNewPixelsDict;
+        private readonly Action _requestRenderAction;
     }
 }

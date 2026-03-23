@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Utils.UndoRedo;
 using Workloads.Creation.StaticImg.Models.Specific;
@@ -15,15 +16,16 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
     /// (e.g., mapping RotateLeft to RotateRight) to restore the canvas perfectly when undone. 
     /// Execution inherently triggers the reactive resizing and redrawing of underlying Win2D render targets.
     /// </remarks>
-    public record CanvasTransformCommand : IUndoableCommand {
-        public string Description { get; } = "CanvasTransform";
+    public record LayerTransformCommand : IUndoableCommand {
+        public string Description { get; } = "Layer Transform";
 
-        private readonly InkCanvasData _canvasData;
-        private readonly ArcSize _newSize;
-        private readonly ArcSize _oldSize;
-
-        public CanvasTransformCommand(InkCanvasData canvasData, ArcSize oldSize, ArcSize newSize) {
+        public LayerTransformCommand(
+            InkCanvasData canvasData,
+            ArcSize oldSize,
+            ArcSize newSize,
+            Action<ArcSize> requestRenderAction) {
             _canvasData = canvasData;
+            _requestRenderAction = requestRenderAction;
 
             // 去除潜在的误差
             float oldWidth = MathF.Round((float)oldSize.Width);
@@ -57,12 +59,32 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
             _oldSize = new ArcSize(oldWidth, oldHeight, oldSize.Dpi, undoMode);
         }
 
-        public async Task ExecuteAsync() {
-            _canvasData.CanvasSize = _newSize;
+        public Task ExecuteAsync() => ApplyStateAsync(_newSize);
+
+        public Task UndoAsync() => ApplyStateAsync(_oldSize);
+
+        private async Task ApplyStateAsync(ArcSize targetSize) {
+            //foreach (var layer in _canvasData.Layers) {
+            //    var renderData = layer.RenderData;
+            //    if (renderData == null) continue;
+
+            //    await renderData.ResizeRenderTargetAsync(targetSize);
+            //    renderData.HandleOnceRenderCompleted();
+            //}
+            var tasks = _canvasData.Layers
+                .Where(ink => ink.RenderData != null)
+                .Select(async (ink) => {
+                    await ink.RenderData.ResizeRenderTargetAsync(targetSize);
+                    ink.RenderData.HandleOnceRenderCompleted();
+                });
+            await Task.WhenAll(tasks);
+            _canvasData.CanvasSize = targetSize;
+            _requestRenderAction?.Invoke(targetSize);
         }
 
-        public async Task UndoAsync() {
-            _canvasData.CanvasSize = _oldSize;
-        }
+        private readonly InkCanvasData _canvasData;
+        private readonly ArcSize _newSize;
+        private readonly ArcSize _oldSize;
+        private readonly Action<ArcSize> _requestRenderAction;
     }
 }

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Documents;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.UI.Xaml;
@@ -24,16 +23,13 @@ using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Rendering;
-using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Models;
-using Workloads.Creation.StaticImg.Models.SerializableData;
 using Workloads.Creation.StaticImg.Models.ToolItems;
 using Workloads.Creation.StaticImg.Utils;
 using Workloads.Creation.StaticImg.ViewModels;
 using Workloads.Creation.StaticImg.Views.Tools;
-using static VirtualPaper.Common.Utils.PInvoke.Native;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -104,7 +100,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         #region children event
         private void SetupHandlers() {
             _viewModel.Data.SizeChanged += (s, e) => {
-                RebuildComposite();
                 RenderToCompositeTarget(RenderMode.FullRegion);
             };
             _viewModel.Data.SeletcedToolChanged += (s, e) => {
@@ -155,26 +150,39 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
         }
 
-        private void RebuildComposite() {
-            DebugUtil.Output("RebuildComposite triggered");
-            _compositeTarget = new CanvasRenderTarget(
-                _session.SharedDevice,
-                (float)_viewModel.Data.CanvasSize.Width,
-                (float)_viewModel.Data.CanvasSize.Height,
-                _viewModel.Data.CanvasSize.Dpi,
-                _session.SharedFormat,
-                _session.SharedAlphaMode);
-            _tool.RefreshToolRenderData(_viewModel.Data.CanvasSize);
+        private void RebuildCompositeIfNeeded() {
+            float requiredWidth = (float)_viewModel.Data.CanvasSize.Width;
+            float requiredHeight = (float)_viewModel.Data.CanvasSize.Height;
+
+            if (_compositeTarget == null ||
+                _compositeTarget.SizeInPixels.Width < requiredWidth ||
+                _compositeTarget.SizeInPixels.Height < requiredHeight) {
+                DebugUtil.Output("RebuildComposite triggered: Expanding target");
+
+                // 每次多分配 20% 的空间，避免频繁重建
+                float newWidth = Math.Max(requiredWidth * 1.2f, requiredWidth);
+                float newHeight = Math.Max(requiredHeight * 1.2f, requiredHeight);
+
+                _compositeTarget?.Dispose();
+                _compositeTarget = new CanvasRenderTarget(
+                    _session.SharedDevice,
+                    newWidth,
+                    newHeight,
+                    _viewModel.Data.CanvasSize.Dpi,
+                    _session.SharedFormat,
+                    _session.SharedAlphaMode);
+                _tool.RefreshToolRenderData(_viewModel.Data.CanvasSize);
+            }
         }
+
         #endregion
 
         #region redner
         private async void RenderCanvas_Loaded(object sender, RoutedEventArgs e) {
             try {
                 if (IsInited.Task.IsCompleted) return;
-                await _viewModel.LoadAsync();                
+                await _viewModel.LoadAsync();
                 FitView();
-                RebuildComposite();
                 RenderToCompositeTarget(RenderMode.FullRegion);
                 SetupHandlers();
                 IsInited.TrySetResult(true);
@@ -188,8 +196,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void RenderCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
             if (_compositeTarget == null) return;
 
+            var destRect = new Rect(0, 0, _viewModel.Data.CanvasSize.Width, _viewModel.Data.CanvasSize.Height);
+            // 只从 _compositeTarget 的左上角，截取逻辑大小的画面画到屏幕上
+            Rect sourceRect = destRect;
             using (args.DrawingSession) {
-                args.DrawingSession.DrawImage(_compositeTarget);
+                args.DrawingSession.DrawImage(_compositeTarget, destRect, sourceRect);
             }
         }
 
@@ -199,6 +210,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
             DebugUtil.Output("RenderToCompositeTarget triggered");
+            RebuildCompositeIfNeeded();
             if (_compositeTarget == null) return;
 
             lock (_compositeTarget) {
@@ -213,9 +225,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                         PartialRender(layers, ds, region);
                     }
                 }
-
+             
                 renderCanvas.Invalidate();
-            }
+            }           
         }
 
         private void FullRender(IEnumerable<LayerInfo> layers, CanvasDrawingSession ds) {
@@ -388,7 +400,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private async void CanvasOperationBtn_Click(object sender, CanvasOperation e) {
-            await _viewModel.Data.ApplyRotateOrFlipAsync(e);            
+            await _viewModel.Data.ApplyRotateOrFlipAsync(e);
         }
         #endregion
 

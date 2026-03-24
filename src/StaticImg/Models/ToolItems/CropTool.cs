@@ -107,8 +107,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 canvasData: ViewModel.Data,
                 originalSize: originalSize,
                 newSize: newSize,
-                compressedOriginalPixelsDict: new Dictionary<Guid, byte[]>(originalPixelsDict),
-                compressedNewPixelsDict: new Dictionary<Guid, byte[]>(newPixelsDict),
+                compressedOriginalPixels: new Dictionary<Guid, byte[]>(originalPixelsDict),
+                compressedNewPixels: new Dictionary<Guid, byte[]>(newPixelsDict),
                 requestRenderAction: () => {
                     HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
                 }

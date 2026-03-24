@@ -35,77 +35,107 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
                 _isFirstExecution = false;
 
                 var originalPixelsDict = new ConcurrentDictionary<Guid, byte[]>();
-                Parallel.ForEach(_canvasData.Layers, item => {
-                    if (item.RenderData?.RenderTarget != null) {
-                        byte[] compressedOld = item.RenderData.RenderTarget.GetPixelBytes().CompressPixels();
-                        originalPixelsDict.TryAdd(item.Tag, compressedOld);
-                    }
-                });
-                _compressedOriginalPixels = originalPixelsDict.ToDictionary();
+                //Parallel.ForEach(_canvasData.Layers, item => {
+                //    if (item.RenderData?.RenderTarget != null) {
+                //        byte[] compressedOld = item.RenderData.RenderTarget.GetPixelBytes().CompressPixels();
+                //        originalPixelsDict.TryAdd(item.Tag, compressedOld);
+                //    }
+                //});
+                //_compressedOriginalPixels = originalPixelsDict.ToDictionary();
+                //_compressedOriginalPixels = [];
+                //foreach (var layer in _canvasData.Layers) {
+                //    if (layer.RenderData?.RenderTarget != null) {
+                //        byte[] compressedOld = layer.RenderData.RenderTarget.GetPixelBytes().CompressPixels();
+                //        _compressedOriginalPixels.TryAdd(layer.Tag, compressedOld);
+                //    }
+                //}
 
+                //foreach (var layer in _canvasData.Layers) {
+                //    var renderData = layer.RenderData;
+                //    if (renderData == null) continue;
+
+                //    await renderData.ResizeRenderTargetAsync(_newSize);
+                //    renderData.HandleOnceRenderCompleted();
+                //}
                 var tasks = _canvasData.Layers
                     .Where(ink => ink.RenderData != null)
-                    .Select(async (ink) => {
+                    .Select(async ink => {
+                        byte[] compressedOld = ink.RenderData.RenderTarget.GetPixelBytes().CompressPixels();
+                        originalPixelsDict.TryAdd(ink.Tag, compressedOld);
                         await ink.RenderData.ResizeRenderTargetAsync(_newSize);
                         ink.RenderData.HandleOnceRenderCompleted();
                     });
                 await Task.WhenAll(tasks);
+                _compressedOriginalPixels = originalPixelsDict.ToDictionary();
 
                 var newPixelsDict = new ConcurrentDictionary<Guid, byte[]>();
                 Parallel.ForEach(_canvasData.Layers, item => {
                     if (item.RenderData?.RenderTarget != null) {
-                        byte[] compressedOld = item.RenderData.RenderTarget.GetPixelBytes().CompressPixels();
-                        originalPixelsDict.TryAdd(item.Tag, compressedOld);
+                        byte[] compressedNew = item.RenderData.RenderTarget.GetPixelBytes().CompressPixels();
+                        newPixelsDict.TryAdd(item.Tag, compressedNew);
                     }
                 });
                 _compressedNewPixels = newPixelsDict.ToDictionary();
-
-                tasks = _canvasData.Layers
-                    .Where(ink => ink.RenderData != null)
-                    .Select(async (ink) => {
-                        await ink.RenderData.ResizeRenderTargetAsync(_newSize);
-                        ink.RenderData.HandleOnceRenderCompleted();
-                    });
-                await Task.WhenAll(tasks);
-
-                var oldPixels = new List<(Guid Tag, byte[] RawPixels)>();
-                foreach (var layer in _canvasData.Layers) {
-                    if (layer.RenderData?.RenderTarget != null) {
-                        oldPixels.Add((layer.Tag, layer.RenderData.RenderTarget.GetPixelBytes()));
-                    }
-                }
+                //_compressedNewPixels = [];
+                //foreach (var layer in _canvasData.Layers) {
+                //    if (layer.RenderData?.RenderTarget != null) {
+                //        byte[] compressedNew = layer.RenderData.RenderTarget.GetPixelBytes().CompressPixels();
+                //        _compressedNewPixels.TryAdd(layer.Tag, compressedNew);
+                //    }
+                //}
 
                 _canvasData.CanvasSize = _newSize;
                 _requestRenderAction?.Invoke(_newSize);
             }
             else {
-                _canvasData.CanvasSize = _newSize;
-                foreach (var layer in _canvasData.Layers) {
-                    var renderData = layer.RenderData;
-                    if (renderData == null) continue;
+                //foreach (var layer in _canvasData.Layers) {
+                //    var renderData = layer.RenderData;
+                //    if (renderData == null) continue;
 
-                    if (_compressedNewPixels != null && _compressedNewPixels.TryGetValue(layer.Tag, out byte[]? compressedNew)) {
-                        byte[] decompressedPixels = compressedNew.DecompressPixels();
-                        renderData.ResizeAndSetPixels(_newSize, decompressedPixels);
-                        renderData.HandleOnceRenderCompleted();
+                //    if (_compressedNewPixels != null && _compressedNewPixels.TryGetValue(layer.Tag, out byte[]? compressedNew)) {
+                //        renderData.ResizeAndSetPixels(_newSize, compressedNew.DecompressPixels());
+                //        renderData.HandleOnceRenderCompleted();
+                //    }
+                //}
+                if (_compressedNewPixels == null) return;
+                var tasks = _canvasData.Layers
+                .Where(ink => ink.RenderData != null)
+                .Select(async ink => await Task.Run(() => {
+                    if (_compressedNewPixels.TryGetValue(ink.Tag, out byte[]? compressedPixels)) {
+                        byte[] pixels = compressedPixels.DecompressPixels();
+                        ink.RenderData.ResizeAndSetPixels(_newSize, pixels);
+                        ink.RenderData.HandleOnceRenderCompleted();
                     }
-                }
+                }));
+                await Task.WhenAll(tasks);
+
+                _canvasData.CanvasSize = _newSize;
                 _requestRenderAction?.Invoke(_newSize);
             }
         }
 
-        public async Task UndoAsync() {            
-            foreach (var layer in _canvasData.Layers) {
-                var renderData = layer.RenderData;
-                if (renderData == null) continue;
+        public async Task UndoAsync() {
+            //foreach (var layer in _canvasData.Layers) {
+            //    var renderData = layer.RenderData;
+            //    if (renderData == null) continue;
 
-                if (_compressedOriginalPixels != null && _compressedOriginalPixels.TryGetValue(layer.Tag, out byte[]? compressedOld)) {
-                    byte[] decompressedPixels = compressedOld.DecompressPixels();
-                    renderData.ResizeAndSetPixels(_originalSize, decompressedPixels);
-                    renderData.HandleOnceRenderCompleted();
+            //    if (_compressedOriginalPixels != null && _compressedOriginalPixels.TryGetValue(layer.Tag, out byte[]? compressedOld)) {
+            //        renderData.ResizeAndSetPixels(_originalSize, compressedOld.DecompressPixels());
+            //        renderData.HandleOnceRenderCompleted();
+            //    }
+            //}
+            if (_compressedOriginalPixels == null) return;
+            var tasks = _canvasData.Layers
+            .Where(ink => ink.RenderData != null)
+            .Select(async ink => await Task.Run(() => {
+                if (_compressedOriginalPixels.TryGetValue(ink.Tag, out byte[]? compressedPixels)) {
+                    byte[] pixels = compressedPixels.DecompressPixels();
+                    ink.RenderData.ResizeAndSetPixels(_originalSize, pixels);
+                    ink.RenderData.HandleOnceRenderCompleted();
                 }
-            }
-            
+            }));
+            await Task.WhenAll(tasks);
+
             _canvasData.CanvasSize = _originalSize;
             _requestRenderAction?.Invoke(_originalSize);
         }

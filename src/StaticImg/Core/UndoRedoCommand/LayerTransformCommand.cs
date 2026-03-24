@@ -71,13 +71,21 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
             //    await renderData.ResizeRenderTargetAsync(targetSize);
             //    renderData.HandleOnceRenderCompleted();
             //}
+            //var tasks = _canvasData.Layers
+            //    .Where(ink => ink.RenderData != null)
+            //    .Select(async (ink) => {
+            //        await ink.RenderData.ResizeRenderTargetAsync(targetSize);
+            //        ink.RenderData.HandleOnceRenderCompleted();
+            //    });
+            //await Task.WhenAll(tasks);
             var tasks = _canvasData.Layers
-                .Where(ink => ink.RenderData != null)
-                .Select(async (ink) => {
-                    await ink.RenderData.ResizeRenderTargetAsync(targetSize);
-                    ink.RenderData.HandleOnceRenderCompleted();
-                });
+            .Where(ink => ink.RenderData != null)
+            .Select(async ink => {
+                await ink.RenderData.ResizeRenderTargetAsync(targetSize);
+                ink.RenderData.HandleOnceRenderCompleted();
+            });
             await Task.WhenAll(tasks);
+
             _canvasData.CanvasSize = targetSize;
             _requestRenderAction?.Invoke(targetSize);
         }

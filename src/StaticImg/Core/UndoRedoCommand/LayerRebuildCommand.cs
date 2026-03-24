@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Utils.UndoRedo;
@@ -22,57 +22,76 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
             InkCanvasData canvasData,
             ArcSize originalSize,
             ArcSize newSize,
-            Dictionary<Guid, byte[]> compressedOriginalPixelsDict,
-            Dictionary<Guid, byte[]> compressedNewPixelsDict,
+            Dictionary<Guid, byte[]> compressedOriginalPixels,
+            Dictionary<Guid, byte[]> compressedNewPixels,
             Action requestRenderAction) {
 
             _canvasData = canvasData;
             _originalSize = originalSize;
             _newSize = newSize;
-            _compressedOriginalPixelsDict = compressedOriginalPixelsDict;
-            _compressedNewPixelsDict = compressedNewPixelsDict;
+            _compressedOriginalPixels = compressedOriginalPixels;
+            _compressedNewPixels = compressedNewPixels;
             _requestRenderAction = requestRenderAction;
         }
 
         public async Task ExecuteAsync() {
-            var uncompressedDict = new ConcurrentDictionary<Guid, byte[]>();
-            await Task.Run(() => {
-                Parallel.ForEach(_compressedNewPixelsDict, kvp => {
-                    uncompressedDict[kvp.Key] = kvp.Value.DecompressPixels();
-                });
-            });
+            //var uncompressedDict = new ConcurrentDictionary<Guid, byte[]>();
+            //await Task.Run(() => {
+            //    Parallel.ForEach(_compressedNewPixels, kvp => {
+            //        uncompressedDict[kvp.Key] = kvp.Value.DecompressPixels();
+            //    });
+            //});
 
-            foreach (var layer in _canvasData.Layers) {
-                var renderData = layer.RenderData;
-                if (renderData == null) continue;
+            //foreach (var layer in _canvasData.Layers) {
+            //    var renderData = layer.RenderData;
+            //    if (renderData == null) continue;
 
-                if (uncompressedDict.TryGetValue(layer.Tag, out byte[]? uncompressedPixels)) {
-                    renderData.ResizeAndSetPixels(_newSize, uncompressedPixels);
-                    renderData.HandleOnceRenderCompleted();
-                }
-            }
+            //    if (uncompressedDict.TryGetValue(layer.Tag, out byte[]? uncompressedPixels)) {
+            //        renderData.ResizeAndSetPixels(_newSize, uncompressedPixels);
+            //        renderData.HandleOnceRenderCompleted();
+            //    }
+            //}
+
+            var tasks = _canvasData.Layers
+                .Where(ink => ink.RenderData != null)
+                .Select(async ink => await Task.Run(() => {
+                    if (_compressedNewPixels.TryGetValue(ink.Tag, out byte[]? compressedPixels)) {
+                        ink.RenderData.ResizeAndSetPixels(_newSize, compressedPixels.DecompressPixels());
+                        ink.RenderData.HandleOnceRenderCompleted();
+                    }
+                }));
+            await Task.WhenAll(tasks);
 
             _canvasData.CanvasSize = _newSize;
             _requestRenderAction?.Invoke();
         }
 
         public async Task UndoAsync() {
-            var uncompressedDict = new ConcurrentDictionary<Guid, byte[]>();
-            await Task.Run(() => {
-                Parallel.ForEach(_compressedOriginalPixelsDict, kvp => {
-                    uncompressedDict[kvp.Key] = kvp.Value.DecompressPixels();
-                });
-            });
+            var tasks = _canvasData.Layers
+                .Where(ink => ink.RenderData != null)
+                .Select(async ink => await Task.Run(() => {
+                    if (_compressedOriginalPixels.TryGetValue(ink.Tag, out byte[]? compressedPixels)) {
+                        ink.RenderData.ResizeAndSetPixels(_originalSize, compressedPixels.DecompressPixels());
+                        ink.RenderData.HandleOnceRenderCompleted();
+                    }
+                }));
+            await Task.WhenAll(tasks);
+            //var uncompressedDict = new ConcurrentDictionary<Guid, byte[]>();
+            //await Task.Run(() => {
+            //    Parallel.ForEach(_compressedOriginalPixels, kvp => {
+            //        uncompressedDict[kvp.Key] = kvp.Value.DecompressPixels();
+            //    });
+            //});
 
-            foreach (var layer in _canvasData.Layers) {
-                var renderData = layer.RenderData;
-                if (renderData == null) continue;
+            //foreach (var layer in _canvasData.Layers) {
+            //    var renderData = layer.RenderData;
+            //    if (renderData == null) continue;
 
-                if (uncompressedDict.TryGetValue(layer.Tag, out byte[]? uncompressedPixels)) {
-                    renderData.ResizeAndSetPixels(_originalSize, uncompressedPixels);
-                    renderData.HandleOnceRenderCompleted();
-                }
-            }
+            //    if (uncompressedDict.TryGetValue(layer.Tag, out byte[]? pixels)) {
+            //        renderData.ResizeAndSetPixels(_originalSize, pixels);
+            //        renderData.HandleOnceRenderCompleted();
+            //    }
+            //}
 
             _canvasData.CanvasSize = _originalSize;
             _requestRenderAction?.Invoke();
@@ -81,8 +100,8 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
         private readonly InkCanvasData _canvasData;
         private readonly ArcSize _originalSize;
         private readonly ArcSize _newSize;
-        private readonly Dictionary<Guid, byte[]> _compressedOriginalPixelsDict;
-        private readonly Dictionary<Guid, byte[]> _compressedNewPixelsDict;
+        private readonly Dictionary<Guid, byte[]> _compressedOriginalPixels;
+        private readonly Dictionary<Guid, byte[]> _compressedNewPixels;
         private readonly Action _requestRenderAction;
     }
 }

@@ -183,7 +183,6 @@ namespace Workloads.Creation.StaticImg.Models {
             }
 
             ResetSize(newSize);
-
             RenderTarget?.Dispose();
             RenderTarget = new CanvasRenderTarget(
                 _session.SharedDevice,
@@ -192,7 +191,6 @@ namespace Workloads.Creation.StaticImg.Models {
                 _arcSize.Dpi,
                 _session.SharedFormat,
                 _session.SharedAlphaMode);
-
             RenderTarget.SetPixelBytes(pixels);
         }
 

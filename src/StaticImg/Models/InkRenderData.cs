@@ -223,39 +223,7 @@ namespace Workloads.Creation.StaticImg.Models {
             _arcSize = arcSize;
         }
 
-        private void ResizeRenderTargetWithScale(ArcSize arcSize) {
-            //// 保留旧内容
-            //if (RenderTarget != null) {
-            //    _cachedContent = CanvasBitmap.CreateFromBytes(
-            //        _session.SharedDevice,
-            //        RenderTarget.GetPixelBytes(),
-            //        (int)RenderTarget.SizeInPixels.Width,
-            //        (int)RenderTarget.SizeInPixels.Height,
-            //        RenderTarget.Format,
-            //        RenderTarget.Dpi,
-            //        RenderTarget.AlphaMode);
-            //}
-
-            //// 创建新目标
-            //RenderTarget?.Dispose();
-            //RenderTarget = new CanvasRenderTarget(
-            //    _session.SharedDevice,
-            //    (float)_arcSize.Width,
-            //    (float)_arcSize.Height,
-            //    _arcSize.Dpi,
-            //    DirectXPixelFormat.B8G8R8A8UIntNormalized,
-            //    CanvasAlphaMode.Premultiplied);
-
-            //// 恢复内容
-            //if (_cachedContent != null) {
-            //    using (var ds = RenderTarget.CreateDrawingSession()) {
-            //        ds.Clear(Colors.Transparent);
-            //        var destRect = new Rect(0, 0, _arcSize.Width, _arcSize.Height);
-            //        ds.DrawImage(_cachedContent, destRect);
-            //    }
-            //    _cachedContent.Dispose();
-            //}
-            
+        private void ResizeRenderTargetWithScale(ArcSize arcSize) {            
             var oldTarget = RenderTarget;
             RenderTarget = new CanvasRenderTarget(
                 _session.SharedDevice,
@@ -279,54 +247,7 @@ namespace Workloads.Creation.StaticImg.Models {
             oldTarget?.Dispose();
         }
 
-        private void ResizeRenderTargetWithExpand(ArcSize arcSize) {
-            //// 保留原始内容
-            //Size originalSize = default;
-            //if (RenderTarget != null) {
-            //    _cachedContent = CanvasBitmap.CreateFromBytes(
-            //       _session.SharedDevice,
-            //       RenderTarget.GetPixelBytes(),
-            //       (int)RenderTarget.SizeInPixels.Width,
-            //       (int)RenderTarget.SizeInPixels.Height,
-            //       RenderTarget.Format,
-            //       RenderTarget.Dpi,
-            //       RenderTarget.AlphaMode);
-
-            //    originalSize = new Size(
-            //        _cachedContent.SizeInPixels.Width / _cachedContent.Dpi * 96,
-            //        _cachedContent.SizeInPixels.Height / _cachedContent.Dpi * 96);
-            //}
-
-            //// 创建新目标（扩展尺寸）
-            //RenderTarget?.Dispose();
-            //RenderTarget = new CanvasRenderTarget(
-            //    _session.SharedDevice,
-            //    (float)_arcSize.Width,
-            //    (float)_arcSize.Height,
-            //    _arcSize.Dpi,
-            //    DirectXPixelFormat.B8G8R8A8UIntNormalized,
-            //    CanvasAlphaMode.Premultiplied);
-
-            //// 绘制到新目标
-            //using (var ds = RenderTarget.CreateDrawingSession()) {
-            //    //if (IsNeedBackground) {
-            //    //    ds.Clear(Colors.White);
-            //    //}
-            //    ds.Clear(Colors.Transparent);
-            //    // 在左上角绘制原始内容（1:1不缩放）
-            //    if (_cachedContent != null) {
-            //        var contentRect = new Rect(
-            //            0, 0,
-            //            originalSize.Width,
-            //            originalSize.Height);
-
-            //        ds.DrawImage(_cachedContent, contentRect);
-            //    }
-            //}
-
-            //_cachedContent?.Dispose();
-            //_cachedContent = null;
-
+        private void ResizeRenderTargetWithExpand(ArcSize arcSize) {            
             var oldTarget = RenderTarget;
             RenderTarget = new CanvasRenderTarget(
                 _session.SharedDevice,
@@ -357,16 +278,6 @@ namespace Workloads.Creation.StaticImg.Models {
             using (var ds = newTarget.CreateDrawingSession()) {
                 ds.Clear(Colors.Transparent);
 
-                //var newCenter = new Vector2((float)(newSize.Width / 2f), (float)(newSize.Height / 2f));
-                //var translateX = (newSize.Width - original.Size.Width) / 2f; // 平移图像到新画布中心
-                //var translateY = (newSize.Height - original.Size.Height) / 2f;
-
-                //// 平移 -> 旋转
-                //ds.Transform = Matrix3x2.CreateTranslation((float)translateX, (float)translateY) *
-                //    (isLeft ? Matrix3x2.CreateRotation(-(float)(Math.PI / 2), newCenter) :
-                //    Matrix3x2.CreateRotation((float)(Math.PI / 2), newCenter));
-                //this.Transform = ds.Transform;
-                
                 // 使用标准的 90 度边缘映射矩阵，避免 width/2f 带来的浮点数漂移
                 if (targetArcSize.Rebuild == RebuildMode.RotateLeft) {
                     // 逆时针 90 度：先绕 (0,0) 旋转 -90度，然后向下平移新画布的高度
@@ -389,10 +300,6 @@ namespace Workloads.Creation.StaticImg.Models {
             var newTarget = CreateNewRenderTarget(targetArcSize.ToSize());
             using (var ds = newTarget.CreateDrawingSession()) {
                 ds.Clear(Colors.Transparent);
-                //var center = new Vector2((float)(original.Size.Width / 2f), (float)(original.Size.Height / 2f));
-                //ds.Transform = isHorizontal ? Matrix3x2.CreateScale(-1, 1, center) :
-                //    Matrix3x2.CreateScale(1, -1, center);
-                //ds.DrawImage(original);
 
                 float width = (float)Math.Round(original.Size.Width);
                 float height = (float)Math.Round(original.Size.Height);
@@ -448,7 +355,6 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private readonly InkProjectSession _session;
         private ArcSize _arcSize;
-        //private CanvasBitmap? _cachedContent;
         private readonly object _lockResize = new();
         private readonly TaskCompletionSource<bool> _isReady = new();
         private readonly TaskCompletionSource<bool> _isInited = new();

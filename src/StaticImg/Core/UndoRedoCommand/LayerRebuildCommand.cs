@@ -35,23 +35,6 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
         }
 
         public async Task ExecuteAsync() {
-            //var uncompressedDict = new ConcurrentDictionary<Guid, byte[]>();
-            //await Task.Run(() => {
-            //    Parallel.ForEach(_compressedNewPixels, kvp => {
-            //        uncompressedDict[kvp.Key] = kvp.Value.DecompressPixels();
-            //    });
-            //});
-
-            //foreach (var layer in _canvasData.Layers) {
-            //    var renderData = layer.RenderData;
-            //    if (renderData == null) continue;
-
-            //    if (uncompressedDict.TryGetValue(layer.Tag, out byte[]? uncompressedPixels)) {
-            //        renderData.ResizeAndSetPixels(_newSize, uncompressedPixels);
-            //        renderData.HandleOnceRenderCompleted();
-            //    }
-            //}
-
             var tasks = _canvasData.Layers
                 .Where(ink => ink.RenderData != null)
                 .Select(async ink => await Task.Run(() => {
@@ -76,22 +59,6 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
                     }
                 }));
             await Task.WhenAll(tasks);
-            //var uncompressedDict = new ConcurrentDictionary<Guid, byte[]>();
-            //await Task.Run(() => {
-            //    Parallel.ForEach(_compressedOriginalPixels, kvp => {
-            //        uncompressedDict[kvp.Key] = kvp.Value.DecompressPixels();
-            //    });
-            //});
-
-            //foreach (var layer in _canvasData.Layers) {
-            //    var renderData = layer.RenderData;
-            //    if (renderData == null) continue;
-
-            //    if (uncompressedDict.TryGetValue(layer.Tag, out byte[]? pixels)) {
-            //        renderData.ResizeAndSetPixels(_originalSize, pixels);
-            //        renderData.HandleOnceRenderCompleted();
-            //    }
-            //}
 
             _canvasData.CanvasSize = _originalSize;
             _requestRenderAction?.Invoke();

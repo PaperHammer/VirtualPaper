@@ -35,28 +35,6 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
                 _isFirstExecution = false;
 
                 var originalPixelsDict = new ConcurrentDictionary<Guid, byte[]>();
-                //Parallel.ForEach(_canvasData.Layers, item => {
-                //    if (item.RenderData?.RenderTarget != null) {
-                //        byte[] compressedOld = item.RenderData.RenderTarget.GetPixelBytes().CompressPixels();
-                //        originalPixelsDict.TryAdd(item.Tag, compressedOld);
-                //    }
-                //});
-                //_compressedOriginalPixels = originalPixelsDict.ToDictionary();
-                //_compressedOriginalPixels = [];
-                //foreach (var layer in _canvasData.Layers) {
-                //    if (layer.RenderData?.RenderTarget != null) {
-                //        byte[] compressedOld = layer.RenderData.RenderTarget.GetPixelBytes().CompressPixels();
-                //        _compressedOriginalPixels.TryAdd(layer.Tag, compressedOld);
-                //    }
-                //}
-
-                //foreach (var layer in _canvasData.Layers) {
-                //    var renderData = layer.RenderData;
-                //    if (renderData == null) continue;
-
-                //    await renderData.ResizeRenderTargetAsync(_newSize);
-                //    renderData.HandleOnceRenderCompleted();
-                //}
                 var tasks = _canvasData.Layers
                     .Where(ink => ink.RenderData != null)
                     .Select(async ink => {
@@ -76,28 +54,13 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
                     }
                 });
                 _compressedNewPixels = newPixelsDict.ToDictionary();
-                //_compressedNewPixels = [];
-                //foreach (var layer in _canvasData.Layers) {
-                //    if (layer.RenderData?.RenderTarget != null) {
-                //        byte[] compressedNew = layer.RenderData.RenderTarget.GetPixelBytes().CompressPixels();
-                //        _compressedNewPixels.TryAdd(layer.Tag, compressedNew);
-                //    }
-                //}
 
                 _canvasData.CanvasSize = _newSize;
                 _requestRenderAction?.Invoke(_newSize);
             }
             else {
-                //foreach (var layer in _canvasData.Layers) {
-                //    var renderData = layer.RenderData;
-                //    if (renderData == null) continue;
-
-                //    if (_compressedNewPixels != null && _compressedNewPixels.TryGetValue(layer.Tag, out byte[]? compressedNew)) {
-                //        renderData.ResizeAndSetPixels(_newSize, compressedNew.DecompressPixels());
-                //        renderData.HandleOnceRenderCompleted();
-                //    }
-                //}
                 if (_compressedNewPixels == null) return;
+
                 var tasks = _canvasData.Layers
                 .Where(ink => ink.RenderData != null)
                 .Select(async ink => await Task.Run(() => {
@@ -115,16 +78,8 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
         }
 
         public async Task UndoAsync() {
-            //foreach (var layer in _canvasData.Layers) {
-            //    var renderData = layer.RenderData;
-            //    if (renderData == null) continue;
-
-            //    if (_compressedOriginalPixels != null && _compressedOriginalPixels.TryGetValue(layer.Tag, out byte[]? compressedOld)) {
-            //        renderData.ResizeAndSetPixels(_originalSize, compressedOld.DecompressPixels());
-            //        renderData.HandleOnceRenderCompleted();
-            //    }
-            //}
             if (_compressedOriginalPixels == null) return;
+
             var tasks = _canvasData.Layers
             .Where(ink => ink.RenderData != null)
             .Select(async ink => await Task.Run(() => {

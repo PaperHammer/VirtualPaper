@@ -64,20 +64,6 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
         public Task UndoAsync() => ApplyStateAsync(_oldSize);
 
         private async Task ApplyStateAsync(ArcSize targetSize) {
-            //foreach (var layer in _canvasData.Layers) {
-            //    var renderData = layer.RenderData;
-            //    if (renderData == null) continue;
-
-            //    await renderData.ResizeRenderTargetAsync(targetSize);
-            //    renderData.HandleOnceRenderCompleted();
-            //}
-            //var tasks = _canvasData.Layers
-            //    .Where(ink => ink.RenderData != null)
-            //    .Select(async (ink) => {
-            //        await ink.RenderData.ResizeRenderTargetAsync(targetSize);
-            //        ink.RenderData.HandleOnceRenderCompleted();
-            //    });
-            //await Task.WhenAll(tasks);
             var tasks = _canvasData.Layers
             .Where(ink => ink.RenderData != null)
             .Select(async ink => {

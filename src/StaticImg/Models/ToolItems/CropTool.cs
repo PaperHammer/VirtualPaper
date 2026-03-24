@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Geometry;
@@ -88,20 +89,20 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             var originalPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
             var newPixelsDict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, byte[]>();
 
-            //Parallel.ForEach(rawPixelDataList, item => {
-            //    byte[] compressedOld = item.OldPixels.CompressPixels();
-            //    byte[] compressedNew = item.NewPixels.CompressPixels();
+            Parallel.ForEach(rawPixelDataList, item => {
+                byte[] compressedOld = item.OldPixels.CompressPixels();
+                byte[] compressedNew = item.NewPixels.CompressPixels();
 
-            //    originalPixelsDict.TryAdd(item.Tag, compressedOld);
-            //    newPixelsDict.TryAdd(item.Tag, compressedNew);
-            //});
-            foreach (var (Tag, OldPixels, NewPixels) in rawPixelDataList) {
-                byte[] compressedOld = OldPixels.CompressPixels();
-                byte[] compressedNew = NewPixels.CompressPixels();
+                originalPixelsDict.TryAdd(item.Tag, compressedOld);
+                newPixelsDict.TryAdd(item.Tag, compressedNew);
+            });
+            //foreach (var (Tag, OldPixels, NewPixels) in rawPixelDataList) {
+            //    byte[] compressedOld = OldPixels.CompressPixels();
+            //    byte[] compressedNew = NewPixels.CompressPixels();
 
-                originalPixelsDict.TryAdd(Tag, compressedOld);
-                newPixelsDict.TryAdd(Tag, compressedNew);
-            }
+            //    originalPixelsDict.TryAdd(Tag, compressedOld);
+            //    newPixelsDict.TryAdd(Tag, compressedNew);
+            //}
 
             return new LayerRebuildCommand(
                 canvasData: ViewModel.Data,
@@ -153,22 +154,6 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
 
         public void ApplyAspectRatio(double ratio) {
             if (!IsCanvasReady) return;
-
-            //RenderTarget = _data.SelectedLayer.RenderData.RenderTarget;
-            //RestoreOriginalContent();
-            //SaveBaseContent();
-
-            //if (BaseContent == null) {
-            //    // 如果是从未框选过的初始状态，保存底图快照
-            //    SaveBaseContent();
-            //}
-            //else {
-            //    // 如果已经有底图快照了，只需把当前 RenderTarget 洗干净即可，无需销毁重建 BaseContent
-            //    using (var ds = RenderTarget.CreateDrawingSession()) {
-            //        ds.Blend = CanvasBlend.Copy;
-            //        ds.DrawImage(BaseContent);
-            //    }
-            //}
 
             SaveBaseContent();
             using (var ds = RenderTarget.CreateDrawingSession()) {

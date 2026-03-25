@@ -261,6 +261,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
                         ds.DrawImage(BaseContent);
                     }
 
+                    ds.Blend = CanvasBlend.SourceOver;
                     // 绘制选区内容（自动裁剪到画布边界）
                     if (SelectionContent != null && _currentState != SelectionState.None) {
                         ds.DrawImage(SelectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);

@@ -21,6 +21,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             lock (_data) {
                 if (SelectionContent == null || BaseContent == null) return null;
 
+                _originalSelectionRect = _originalSelectionRect.RoundOutwardAsInt();
+                _selectionRect = _selectionRect.RoundOutwardAsInt();
                 int w = (int)_originalSelectionRect.Width;
                 int h = (int)_originalSelectionRect.Height;
                 int ox = (int)_originalSelectionRect.X;
@@ -32,9 +34,11 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 byte[] targetOriginalPixels = BaseContent.GetPixelBytes(nx, ny, w, h).CompressPixels();
 
                 using (var ds = BaseContent!.CreateDrawingSession()) {
-                    ds.Blend = CanvasBlend.Copy;
+                    ds.Blend = CanvasBlend.SourceOver;
                     ds.DrawImage(SelectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
                 }
+
+                byte[] targetNewPixels = BaseContent.GetPixelBytes(nx, ny, w, h).CompressPixels();
 
                 return new LayerSelectionCommand(
                     LayerId,
@@ -43,7 +47,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                     _selectionRect,
                     selectionPixels,
                     targetOriginalPixels,
-                    "Selection Move",
+                    targetNewPixels,
                     (region) => HandleRender(new RenderTargetChangedEventArgs(RenderMode.PartialRegion, region))
                 );
             }

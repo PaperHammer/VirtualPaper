@@ -26,7 +26,7 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
             Rect newRect,
             byte[] compressedSelectionPixels,
             byte[] compressedTargetOriginalPixels,
-            string description,
+            byte[] compressedTargetNewPixels,
             Action<Rect> requestRenderAction
         ) {
             _layerId = layerId;
@@ -41,7 +41,7 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
 
             _compressedSelectionPixels = compressedSelectionPixels;
             _compressedTargetOriginalPixels = compressedTargetOriginalPixels;
-            Description = description;
+            _compressedTargetNewPixels = compressedTargetNewPixels;
             _requestRenderAction = requestRenderAction;
         }
 
@@ -49,7 +49,7 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
             var renderData = GetRenderData();
             if (renderData?.RenderTarget == null) return;
 
-            byte[] selPixels = _compressedSelectionPixels.DecompressPixels();
+            byte[] selPixels = _compressedTargetNewPixels.DecompressPixels();
 
             // 将原区域填为透明
             byte[] transparentPixels = new byte[selPixels.Length];
@@ -87,6 +87,7 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
         private readonly Action<Rect> _requestRenderAction;
         private readonly int _ox, _oy, _nx, _ny, _w, _h; // 坐标尺寸数据
         private readonly byte[] _compressedSelectionPixels; // 被移动的图像内容
-        private readonly byte[] _compressedTargetOriginalPixels; // 目标区域被覆盖前的底图
+        private readonly byte[] _compressedTargetOriginalPixels; // 目标区域被覆盖前的内容
+        private readonly byte[] _compressedTargetNewPixels; // 目标区域被覆盖前的内容
     }
 }

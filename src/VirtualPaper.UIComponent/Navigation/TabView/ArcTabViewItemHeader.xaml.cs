@@ -7,8 +7,6 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace VirtualPaper.UIComponent.Navigation.TabView {
     public sealed partial class ArcTabViewItemHeader : UserControl {
-        public event EventHandler<bool> HasDiffEvent;
-
         public object MainContent {
             get { return (object)GetValue(MainContentProperty); }
             set { SetValue(MainContentProperty, value); }
@@ -35,11 +33,6 @@ namespace VirtualPaper.UIComponent.Navigation.TabView {
 
         public ArcTabViewItemHeader() {
             this.InitializeComponent();
-            HasDiffEvent += ArcTabViewItemHeader_HasDiffEvent;
-        }
-
-        private void ArcTabViewItemHeader_HasDiffEvent(object? sender, bool e) {
-            IsSaved = e;
         }
     }
 }

@@ -237,7 +237,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private void AddToWorkSpace(string filePath, IRuntime runtime, bool isFromFile) {
-            //_rt.Add(runtime);
             runtime.IsSavedChanged += Runtime_IsSavedChanged;
             var header = new ArcTabViewItemHeader() {
                 MainContent = new TextBlock {
@@ -268,9 +267,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         protected virtual void Dispose(bool disposing) {
             if (!_isDisposed) {
                 if (disposing) {
-                    TabViewItems?.Clear();
-                    _middleMenuItems.Clear();
-                    //_rt.Clear();
                     _runtimeHeaderMap.Clear();
                 }
                 _isDisposed = true;
@@ -281,10 +277,37 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
+
+        internal async Task CheckSaveStatusAsync(IRuntime runtime) {
+            var header = _runtimeHeaderMap[runtime];
+
+            if (!header.IsSaved) {
+                var res = await GlobalDialogUtils.ShowDialogAsync(
+                    content: "文件包含未保存的更改。是否在关闭前保存？",
+                    title: "未保存的更改",
+                    primaryBtnText: "保存",
+                    secondaryBtnText: "不保存",
+                    closeBtnText: "取消");
+
+                if (res == DialogResult.Primary) {
+                    bool isSuccess = await runtime.SaveAsync();
+                    if (!isSuccess) return;
+
+                }
+                else if (res == DialogResult.None) {
+                    return;
+                }
+            }
+
+            CloseWorkSpaceTab(runtime);
+        }
+
+        private void CloseWorkSpaceTab(IRuntime runtime) {
+            runtime.IsSavedChanged -= Runtime_IsSavedChanged;
+        }
         #endregion
 
         internal readonly ObservableCollection<MenuBarItem> _middleMenuItems = [];
-        //private readonly List<IRuntime> _rt = [];
         private readonly IUserSettingsClient _userSettings;
         private readonly ConcurrentBag<string> _tempRecentUsed = [];
         private readonly Dictionary<IRuntime, ArcTabViewItemHeader> _runtimeHeaderMap = [];

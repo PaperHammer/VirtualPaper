@@ -115,15 +115,17 @@ namespace Workloads.Creation.StaticImg {
         }
 
         #region workSpace events
-        public async Task SaveAsync() {
+        public async Task<bool> SaveAsync() {
             try {
-                await inkCanvas.SaveAsync();
+                var res = await inkCanvas.SaveAsync();
                 Session.UnReUtil.MarkAsSaved();
+                return res;
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
                 GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
             }
+            return false;
         }
 
 

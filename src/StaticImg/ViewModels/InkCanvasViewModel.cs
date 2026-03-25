@@ -23,11 +23,12 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             Data = new InkCanvasData(session, context);
         }
 
-        internal async Task SaveAsync(bool isEmergency = false) {
+        internal async Task<bool> SaveAsync(bool isEmergency = false) {
             (var flag, var filePath) = isEmergency ? await Data.SaveAtEmergencyAsync(_session) : await Data.SaveAsync(_session);
             if (flag) {
                 await _userSettings.UpdateRecentUsedAsync(filePath!);
             }
+            return flag;
         }
 
         internal async Task LoadAsync() {

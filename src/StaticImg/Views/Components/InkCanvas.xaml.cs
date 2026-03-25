@@ -87,14 +87,14 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
         }
 
-        private async void OnFatalErrorOccurred(object s, Exception e) {
+        private async void OnFatalErrorOccurred(object? s, Exception e) {
             ArcLog.GetLogger<InkCanvas>().Fatal(e.Message);
             GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), message: e.Message);
             await _viewModel.SaveAsync(true);
         }
 
-        internal async Task SaveAsync() {
-            await _viewModel.SaveAsync();
+        internal async Task<bool> SaveAsync() {
+            return await _viewModel.SaveAsync();
         }
 
         #region children event

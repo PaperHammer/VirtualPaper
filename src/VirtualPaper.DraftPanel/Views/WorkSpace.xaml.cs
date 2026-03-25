@@ -1,9 +1,9 @@
 using System;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.ViewModels;
@@ -25,7 +25,7 @@ namespace VirtualPaper.DraftPanel.Views {
         public WorkSpace() {
             this.InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<WorkSpaceViewModel>();
-            this.DataContext = _viewModel;            
+            this.DataContext = _viewModel;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
@@ -49,8 +49,9 @@ namespace VirtualPaper.DraftPanel.Views {
             _viewModel.AddDraftItem();
         }
 
-        private void TabViewControl_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args) {
-
+        private async void TabViewControl_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args) {
+            if (args.Tab.Content is not IRuntime runtime) return;
+            await _viewModel.CheckSaveStatusAsync(runtime);
         }
 
         private async void MFI_Exit_Clicked(object sender, RoutedEventArgs e) {

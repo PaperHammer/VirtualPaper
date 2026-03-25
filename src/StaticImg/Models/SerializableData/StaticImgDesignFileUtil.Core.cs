@@ -13,15 +13,12 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
     public partial class StaticImgDesignFileUtil {
         public string FilePath { get; private set; }
         public bool IsValidFile => File.Exists(FilePath);
-        public bool HasDiff { get; private set; }
         public FileHeader FileHeaderCache => _headerCache;
         public BusinessData BusinessDataCache => _businessDataCache;
         public List<Layer> LayesCache => _layersCache;
 
-        private StaticImgDesignFileUtil(string path, bool isFileName) {
+        private StaticImgDesignFileUtil(string path) {
             FilePath = Path.GetFullPath(path);
-            // 如果是 FileName 说明是新建文件，并未存储，默认和本地有 diff
-            HasDiff = isFileName;
         }
 
         public async Task InitCacheAsync(
@@ -46,11 +43,11 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             if (string.IsNullOrWhiteSpace(idnetify)) throw new ArgumentException("Input cannot be empty");
 
             if (FileUtil.IsValidFilePath(idnetify)) {
-                return new StaticImgDesignFileUtil(idnetify, false);
+                return new StaticImgDesignFileUtil(idnetify);
             }
 
             if (FileUtil.IsValidFileName(idnetify)) {                
-                return new StaticImgDesignFileUtil(Path.Combine(FileUtil.GetDocumentsDir(), idnetify), true);
+                return new StaticImgDesignFileUtil(Path.Combine(FileUtil.GetDocumentsDir(), idnetify));
             }
 
             throw new ArgumentException("Input is neither a valid path nor filename");

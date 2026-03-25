@@ -91,6 +91,34 @@ namespace VirtualPaper.UIComponent.Utils {
             };
         }
         
+        public static async Task<DialogResult> ShowDialogAsync(
+            object content,
+            string title,
+            string primaryBtnText,
+            string secondaryBtnText,
+            string closeBtnText,
+            bool isDefaultPrimary = true) {
+            var dialog = new ContentDialog() {
+                Title = new TextBlock() { Text = title, TextWrapping = TextWrapping.Wrap },
+                Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
+                PrimaryButtonText = primaryBtnText,
+                SecondaryButtonText = secondaryBtnText,
+                CloseButtonText = closeBtnText,
+                DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
+                XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+            };
+
+            var result = await dialog.ShowAsync();
+
+            return result switch {
+                ContentDialogResult.None => DialogResult.None,
+                ContentDialogResult.Primary => DialogResult.Primary,
+                ContentDialogResult.Secondary => DialogResult.Secondary,
+                _ => DialogResult.None,
+            };
+        }
+        
         public static ContentDialog? CreateDialog(
             object content,
             string title,
@@ -140,7 +168,7 @@ namespace VirtualPaper.UIComponent.Utils {
             var dialog = new ContentDialog() {
                 Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
-                SecondaryButtonText = secondaryBtnText,
+                SecondaryButtonText = secondaryBtnText,                
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
                 RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,

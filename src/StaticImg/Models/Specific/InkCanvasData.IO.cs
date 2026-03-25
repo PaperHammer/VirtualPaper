@@ -119,10 +119,5 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 return (false, null);
             }
         }
-
-        // TODO：有差异且触发关闭或退出时做出拦截
-        public bool CheckHasDiff(StaticImgDesignFileUtil designFileUtil) {
-            return designFileUtil.HasDiff;
-        }
     }
 }

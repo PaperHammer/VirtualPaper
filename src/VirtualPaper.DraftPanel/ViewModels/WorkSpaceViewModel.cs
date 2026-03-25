@@ -13,6 +13,7 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.Common.Utils.UndoRedo.Events;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
@@ -185,7 +186,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     case ProjectType.P_StaticImage:
                         CrossThreadInvoker.InvokeOnUIThread(() => {
                             runtime = new Workloads.Creation.StaticImg.MainPage(fileName);
-                            AddToWorkSpace(fileName, runtime);
+                            AddToWorkSpace(fileName, runtime, false);
                         });
                         break;
                     default:
@@ -218,7 +219,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     case ProjectType.P_StaticImage:
                         CrossThreadInvoker.InvokeOnUIThread(() => {
                             runtime = new Workloads.Creation.StaticImg.MainPage(filePath); // xxx.vpd
-                            AddToWorkSpace(filePath, runtime);
+                            AddToWorkSpace(filePath, runtime, true);
                         });
                         break;
                     default:
@@ -235,19 +236,29 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             return false;
         }
 
-        private void AddToWorkSpace(string filePath, IRuntime runtime) {
-            _rt.Add(runtime);
-            TabViewItems.Add(new ArcTabViewItem() {
-                Header = new ArcTabViewItemHeader() {
-                    MainContent = new TextBlock {
-                        Text = Path.GetFileName(filePath),
-                        TextTrimming = TextTrimming.CharacterEllipsis, // 文本超出时显示省略号
-                        MaxWidth = 200
-                    },
-                    IsUnsaved = false,
+        private void AddToWorkSpace(string filePath, IRuntime runtime, bool isFromFile) {
+            //_rt.Add(runtime);
+            runtime.IsSavedChanged += Runtime_IsSavedChanged;
+            var header = new ArcTabViewItemHeader() {
+                MainContent = new TextBlock {
+                    Text = Path.GetFileName(filePath),
+                    TextTrimming = TextTrimming.CharacterEllipsis, // 文本超出时显示省略号
+                    MaxWidth = 200
                 },
+                IsSaved = isFromFile, // 来自文件，则初始化为已保存
+            };
+            _runtimeHeaderMap[runtime] = header;
+
+            TabViewItems.Add(new ArcTabViewItem() {
+                Header = header,
                 Content = runtime,
             });
+        }
+
+        private void Runtime_IsSavedChanged(object? sender, IsSavedChangedEventArgs e) {
+            if (sender is IRuntime runtime && _runtimeHeaderMap.TryGetValue(runtime, out var header)) {
+                header.IsSaved = e.IsSaved;
+            }
         }
         #endregion
 
@@ -259,7 +270,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 if (disposing) {
                     TabViewItems?.Clear();
                     _middleMenuItems.Clear();
-                    _rt.Clear();
+                    //_rt.Clear();
+                    _runtimeHeaderMap.Clear();
                 }
                 _isDisposed = true;
             }
@@ -272,8 +284,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         #endregion
 
         internal readonly ObservableCollection<MenuBarItem> _middleMenuItems = [];
-        private readonly List<IRuntime> _rt = [];
+        //private readonly List<IRuntime> _rt = [];
         private readonly IUserSettingsClient _userSettings;
         private readonly ConcurrentBag<string> _tempRecentUsed = [];
+        private readonly Dictionary<IRuntime, ArcTabViewItemHeader> _runtimeHeaderMap = [];
     }
 }

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.Draft;
+using VirtualPaper.Common.Utils.UndoRedo.Events;
 using VirtualPaper.Shader;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
@@ -17,6 +18,8 @@ namespace Workloads.Creation.StaticImg {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainPage : ArcPage, IRuntime {
+        public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
+
         public override Type ArcType => typeof(MainPage);
         protected override bool IsMultiInstance => true;
         public InkProjectSession Session { get; private set; }
@@ -31,13 +34,23 @@ namespace Workloads.Creation.StaticImg {
         /// </summary>
         /// <param name="filePath">类型为 vpd 或静态图像的文件路径</param>
         public MainPage(string filePath) {            
-            Session = new InkProjectSession(filePath);
+            Session = new InkProjectSession(filePath);            
             Payload = new FrameworkPayload() {
                 [NaviPayloadKey.ArcPageContext] = this.ArcContext,
                 [NaviPayloadKey.InkProjectSession] = this.Session
             };
             this.InitializeComponent();
             ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
+
+            InitEvents();
+        }
+
+        private void InitEvents() {
+            Session.IsSavedChanged += Session_IsSavedChanged;
+        }
+
+        private void Session_IsSavedChanged(object? sender, IsSavedChangedEventArgs e) {
+            IsSavedChanged?.Invoke(this, e);
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
@@ -105,6 +118,7 @@ namespace Workloads.Creation.StaticImg {
         public async Task SaveAsync() {
             try {
                 await inkCanvas.SaveAsync();
+                Session.UnReUtil.MarkAsSaved();
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);

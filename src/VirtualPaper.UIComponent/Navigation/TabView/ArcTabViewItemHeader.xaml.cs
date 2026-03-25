@@ -16,20 +16,20 @@ namespace VirtualPaper.UIComponent.Navigation.TabView {
         public static readonly DependencyProperty MainContentProperty =
             DependencyProperty.Register(nameof(MainContent), typeof(object), typeof(ArcTabViewItemHeader), new PropertyMetadata(null));
 
-        public bool IsUnsaved {
-            get { return (bool)GetValue(IsUnsavedProperty); }
-            set { SetValue(IsUnsavedProperty, value); }
+        public bool IsSaved {
+            get { return (bool)GetValue(IsSavedProperty); }
+            set { SetValue(IsSavedProperty, value); }
         }
-        public static readonly DependencyProperty IsUnsavedProperty =
+        public static readonly DependencyProperty IsSavedProperty =
         DependencyProperty.Register(
-            nameof(IsUnsaved),
+            nameof(IsSaved),
             typeof(bool),
             typeof(ArcTabViewItemHeader),
             new PropertyMetadata(false, OnIsUnsavedChanged));
 
         private static void OnIsUnsavedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is ArcTabViewItemHeader control) {
-                control.IsUnsaved = (bool)e.NewValue;
+                control.IsSaved = (bool)e.NewValue;
             }
         }
 
@@ -39,7 +39,7 @@ namespace VirtualPaper.UIComponent.Navigation.TabView {
         }
 
         private void ArcTabViewItemHeader_HasDiffEvent(object? sender, bool e) {
-            IsUnsaved = e;
+            IsSaved = e;
         }
     }
 }

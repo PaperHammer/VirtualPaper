@@ -1,3 +1,5 @@
+using VirtualPaper.Common.Utils.UndoRedo.Events;
+
 namespace VirtualPaper.Common.Utils.UndoRedo {
     public sealed class UndoRedoUtil<TCommand> : IDisposable where TCommand : IUndoableCommand {
         public event EventHandler<CommandEventArgs>? BeforeExecute;
@@ -6,6 +8,7 @@ namespace VirtualPaper.Common.Utils.UndoRedo {
         public event EventHandler<CommandEventArgs>? AfterUndo;
         public event EventHandler<CommandEventArgs>? BeforeRedo;
         public event EventHandler<CommandEventArgs>? AfterRedo;
+        public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
 
         public class CommandEventArgs : EventArgs {
             public TCommand Command { get; }
@@ -49,6 +52,40 @@ namespace VirtualPaper.Common.Utils.UndoRedo {
             private set { lock (_listLock) _isUndoingOrRedoing = value; }
         }
 
+        public bool IsSaved {
+            get {
+                lock (_listLock) {
+                    // 栈为空的情况：如果保存的时候就是空的，现在也是空的，说明【已保存】(返回 true)
+                    if (_undoStack.Count == 0) return _savedAtEmpty;
+
+                    // 栈不为空的情况：当前栈顶的对象 和 记录的保存对象 是同一个内存地址，说明【已保存】(返回 true)
+                    return object.ReferenceEquals((object?)_undoStack.Last!.Value, (object?)_savedCommand);
+                }
+            }
+        }
+
+        public void MarkAsSaved() {
+            lock (_listLock) {
+                if (_undoStack.Count == 0) {
+                    _savedCommand = default;
+                    _savedAtEmpty = true;
+                }
+                else {
+                    _savedCommand = _undoStack.Last!.Value;
+                    _savedAtEmpty = false;
+                }
+            }
+            CheckSavedStateChanged();
+        }
+
+        private void CheckSavedStateChanged() {
+            bool currentIsSaved = IsSaved;
+            if (currentIsSaved != _lastIsSaved) {
+                _lastIsSaved = currentIsSaved;
+                IsSavedChanged?.Invoke(this, new IsSavedChangedEventArgs(currentIsSaved));
+            }
+        }
+
         public void Record(TCommand command) {
             if (_isDisposed) return; // 容错
 
@@ -60,6 +97,7 @@ namespace VirtualPaper.Common.Utils.UndoRedo {
                 _redoStack.Clear();
             }
             // Record 通常不包含执行逻辑，只是记录结果，不需要触发 Before/AfterExecute
+            CheckSavedStateChanged();
         }
 
         public async Task<bool> UndoAsync() {
@@ -93,13 +131,14 @@ namespace VirtualPaper.Common.Utils.UndoRedo {
                 // 成功后，移动栈（再次获取 List 锁）
                 lock (_listLock) {
                     // 双重检查：理论上有了 _executionLock 不会变，但为了健壮性
-                    if (_undoStack.Last?.Value?.Equals(command) == true) {
+                    if (_undoStack.Last != null && object.ReferenceEquals((object?)_undoStack.Last.Value, (object?)command)) {
                         _undoStack.RemoveLast();
                         _redoStack.AddLast(command);
                     }
                 }
 
                 AfterUndo?.Invoke(this, new CommandEventArgs(command));
+                CheckSavedStateChanged();
                 return true;
             }
             finally {
@@ -130,13 +169,14 @@ namespace VirtualPaper.Common.Utils.UndoRedo {
                 }
 
                 lock (_listLock) {
-                    if (_redoStack.Last?.Value?.Equals(command) == true) {
+                    if (_redoStack.Last != null && object.ReferenceEquals((object?)_redoStack.Last.Value, (object?)command)) {
                         _redoStack.RemoveLast();
                         _undoStack.AddLast(command);
                     }
                 }
 
                 AfterRedo?.Invoke(this, new CommandEventArgs(command));
+                CheckSavedStateChanged();
                 return true;
             }
             finally {
@@ -150,6 +190,7 @@ namespace VirtualPaper.Common.Utils.UndoRedo {
                 _undoStack.Clear();
                 _redoStack.Clear();
             }
+            CheckSavedStateChanged();
         }
 
         public void Dispose() {
@@ -163,13 +204,15 @@ namespace VirtualPaper.Common.Utils.UndoRedo {
 
         // 使用 object 作为轻量级锁，保护 _undoStack 和 _redoStack 的完整性
         private readonly object _listLock = new();
-
         // SemaphoreSlim 作为异步锁，确保 Undo/Redo 操作串行执行
         private readonly SemaphoreSlim _executionLock = new(1, 1);
-
         private readonly LinkedList<TCommand> _undoStack = new();
         private readonly LinkedList<TCommand> _redoStack = new();
         private readonly int? _maxStackSize;
         private bool _isDisposed;
+        private TCommand? _savedCommand = default;
+        private bool _savedAtEmpty = true;
+        private bool _lastIsSaved = true;
+        private readonly object _stateLock = new();
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using Microsoft.Graphics.Canvas;
+using VirtualPaper.Common.Utils.UndoRedo.Events;
 using Windows.Graphics.DirectX;
 using Workloads.Creation.StaticImg.InkSystem.Utils;
 using Workloads.Creation.StaticImg.Models.SerializableData;
@@ -7,6 +8,7 @@ using Workloads.Creation.StaticImg.Models.SerializableData;
 namespace Workloads.Creation.StaticImg.Core.Utils {
     public partial class InkProjectSession : IDisposable {
         public event EventHandler? SessionDisposed;
+        public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
 
         public string SessionId { get; } = Guid.NewGuid().ToString();
         public DirectXPixelFormat SharedFormat { get; private set; }
@@ -25,6 +27,11 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
             SharedAlphaMode = CanvasAlphaMode.Premultiplied;
             SharedDevice = CanvasDevice.GetSharedDevice();
             UnReUtil = new StaticImgUndoRedoUtil();
+            UnReUtil.IsSavedChanged += UnReUtil_IsSavedChanged;
+        }
+
+        private void UnReUtil_IsSavedChanged(object? sender, IsSavedChangedEventArgs e) {
+            IsSavedChanged?.Invoke(this, e);
         }
 
         #region dispose

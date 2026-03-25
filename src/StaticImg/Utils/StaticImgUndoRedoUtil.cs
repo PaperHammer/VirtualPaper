@@ -1,12 +1,11 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.Graphics.Canvas;
 using VirtualPaper.Common.Utils.UndoRedo;
-using Windows.Foundation;
+using VirtualPaper.Common.Utils.UndoRedo.Events;
 
 namespace Workloads.Creation.StaticImg.InkSystem.Utils {
     public sealed partial class StaticImgUndoRedoUtil : IDisposable {
-        private readonly UndoRedoUtil<IUndoableCommand> _undoRedoCore;
+        public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
 
         public bool CanUndo => _undoRedoCore.CanUndo;
         public bool CanRedo => _undoRedoCore.CanRedo;
@@ -14,6 +13,11 @@ namespace Workloads.Creation.StaticImg.InkSystem.Utils {
 
         public StaticImgUndoRedoUtil(int maxStackSize = 20) {
             _undoRedoCore = new UndoRedoUtil<IUndoableCommand>(maxStackSize);
+            _undoRedoCore.IsSavedChanged += UndoRedoCore_IsSavedChanged;
+        }
+
+        private void UndoRedoCore_IsSavedChanged(object? sender, IsSavedChangedEventArgs e) {
+            IsSavedChanged?.Invoke(this, e);
         }
 
         public void RecordCommand(IUndoableCommand command) {
@@ -22,11 +26,14 @@ namespace Workloads.Creation.StaticImg.InkSystem.Utils {
 
         public async Task UndoAsync() => await _undoRedoCore.UndoAsync();
         public async Task RedoAsync() => await _undoRedoCore.RedoAsync();
+        public void MarkAsSaved() => _undoRedoCore.MarkAsSaved();
 
         public void Dispose() {
             _undoRedoCore.Dispose();
             GC.SuppressFinalize(this);
         }
+        
+        private readonly UndoRedoUtil<IUndoableCommand> _undoRedoCore;
     }
 
     class ActionCommand : IUndoableCommand {

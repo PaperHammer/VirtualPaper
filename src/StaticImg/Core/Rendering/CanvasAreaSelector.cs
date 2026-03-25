@@ -254,14 +254,14 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
             try {
                 using (var ds = RenderTarget.CreateDrawingSession()) {
-                    ds.Blend = CanvasBlend.Copy; // 覆盖模式
+                    ds.Clear(Colors.Transparent); // 覆盖模式，避免重影
 
                     // 绘制基准内容
                     if (BaseContent != null) {
                         ds.DrawImage(BaseContent);
                     }
 
-                    ds.Blend = CanvasBlend.SourceOver;
+                    ds.Blend = CanvasBlend.SourceOver; // 避免透明遮盖
                     // 绘制选区内容（自动裁剪到画布边界）
                     if (SelectionContent != null && _currentState != SelectionState.None) {
                         ds.DrawImage(SelectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);

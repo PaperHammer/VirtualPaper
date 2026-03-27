@@ -1106,4 +1106,13 @@ The following words cannot be used as usernames:
   <data name="Project_StaticImg_ToolName_CanvasSet" xml:space="preserve">
     <value>Canvas</value>
   </data>
+  <data name="Project_Unsave_Intercept_Content" xml:space="preserve">
+    <value>has unsaved changes, want to save it?</value>
+  </data>
+  <data name="Project_Unsave_Intercept_Title" xml:space="preserve">
+    <value>Unsaved changes</value>
+  </data>
+  <data name="Text_Unsave" xml:space="preserve">
+    <value>Don‘t save</value>
+  </data>
 </root>

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -8,6 +9,7 @@ using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.UIComponent.Attributes;
+using VirtualPaper.UIComponent.Navigation.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 
@@ -19,7 +21,7 @@ namespace VirtualPaper.DraftPanel.Views {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     [KeepAlive]
-    public sealed partial class WorkSpace : ArcPage {
+    public sealed partial class WorkSpace : ArcPage, IConfirmClose {
         public override Type ArcType => typeof(WorkSpace);
 
         public WorkSpace() {
@@ -34,6 +36,10 @@ namespace VirtualPaper.DraftPanel.Views {
             if (e.Parameter is FrameworkPayload payload) {
                 payload.TryGet(NaviPayloadKey.Project.ToString(), out _preProjectDatas);
             }
+        }
+
+        public async Task<bool> CanCloseAsync() {
+            return await _viewModel.CheckAllSaveStatusAsync();
         }
 
         private async void TabViewControl_Loaded(object sender, RoutedEventArgs e) {

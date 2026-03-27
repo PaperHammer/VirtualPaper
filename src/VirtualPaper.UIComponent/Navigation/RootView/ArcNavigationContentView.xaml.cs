@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using VirtualPaper.UIComponent.Navigation.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
@@ -31,6 +33,25 @@ namespace VirtualPaper.UIComponent.Navigation {
 
         public void Navigate(Type pageType, FrameworkPayload? parameter = null, ArcNavigationOptions? options = null) {
             this.ArcNavigate(pageType, parameter, options);
+        }
+
+        /// <summary>
+        /// 遍历所有存活的页面，检查是否允许关闭
+        /// </summary>
+        public async Task<bool> CheckAllPagesCanCloseAsync() {
+            foreach (var kvp in PageMap) {
+                ArcPage page = kvp.Value;
+
+                if (page is IConfirmClose confirmablePage) {
+                    bool canClose = await confirmablePage.CanCloseAsync();
+
+                    if (!canClose) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
     }
 }

@@ -1,10 +1,12 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.UIComponent.Attributes;
+using VirtualPaper.UIComponent.Navigation.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 
@@ -16,12 +18,24 @@ namespace VirtualPaper.DraftPanel {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     [KeepAlive]
-    public sealed partial class Draft : ArcPage {
+    public sealed partial class Draft : ArcPage, IConfirmClose {
         public override Type ArcType => typeof(Draft);
 
         public Draft() {
             this.InitializeComponent();
             ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
+        }
+
+        public async Task<bool> CanCloseAsync() {
+            if (FrameCardComp.Content is IConfirmClose currentSubPage) {
+                bool canClose = await currentSubPage.CanCloseAsync();
+
+                if (!canClose) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         #region navigate

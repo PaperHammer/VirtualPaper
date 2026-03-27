@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.AppSettingsPanel;
@@ -12,7 +13,6 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.UIComponent.Utils.Extensions;
 using VirtualPaper.WpSettingsPanel;
 using WinRT.Interop;
 
@@ -36,6 +36,31 @@ namespace VirtualPaper.UI {
             _userSettings = userSettings;
             _commandsClient = commandsClient;
             _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
+
+            this.AppWindow.Closing += AppWindow_Closing;
+        }
+
+        private bool _isSafeToClose = false;
+        private int _isCheckingClose = 0;
+        private async void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args) {
+            if (_isSafeToClose) return;
+
+            args.Cancel = true;
+
+            if (Interlocked.CompareExchange(ref _isCheckingClose, 1, 0) != 0) {
+                return; // 锁被占用，忽略后续的重复点击，不再进入执行
+            }
+
+            try {
+                bool canClose = await NaviContent.CheckAllPagesCanCloseAsync();
+                if (canClose) {
+                    _isSafeToClose = true;
+                    this.Close();
+                }
+            }
+            finally {
+                Interlocked.Exchange(ref _isCheckingClose, 0);
+            }
         }
 
         private void InitWindowConst() {

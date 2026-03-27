@@ -302,6 +302,35 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             CloseWorkSpaceTab(runtime);
         }
 
+        internal async Task<bool> CheckAllSaveStatusAsync() {
+            foreach (var kvp in _runtimeHeaderMap) {
+                var runtime = kvp.Key;
+                var header = kvp.Value;
+
+                if (!header.IsSaved) {
+                    var res = await GlobalDialogUtils.ShowDialogAsync(
+                        content: $"\"{(runtime as Workloads.Creation.StaticImg.MainPage)?.Session.DesignFileUtil.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
+                        title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
+                        primaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Save))}",
+                        secondaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Unsave))}",
+                        closeBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel))}"
+                    );
+
+                    if (res == DialogResult.Primary) {
+                        bool isSuccess = await runtime.SaveAsync();
+                        if (!isSuccess) return false;
+                    }
+                    else if (res == DialogResult.None) {
+                        return false;
+                    }
+                }
+
+                CloseWorkSpaceTab(runtime);
+            }
+
+            return true;
+        }
+
         private void CloseWorkSpaceTab(IRuntime runtime) {
             runtime.IsSavedChanged -= Runtime_IsSavedChanged;
         }

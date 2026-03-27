@@ -267,6 +267,8 @@ namespace VirtualPaper.Common {
             public static string Text_Resolution => "Text_Resolution";
             public static string Text_Restore => "Text_Restore";
             public static string Text_SaveAndApply => "Text_SaveAndApply";
+            public static string? Text_Save { get; }
+            public static string? Text_Unsave { get; }
             public static string Text_ShowOnDisk => "Text_ShowOnDisk";
             public static string Text_Type => "Text_Type";
             public static string Text_UpdateConfig => "Text_UpdateConfig";
@@ -396,6 +398,8 @@ namespace VirtualPaper.Common {
             public static string? Project_StaticImg_Text_LayerName { get; }
             public static string? Project_StaticImg_Text_LayerNew { get; }
             public static string? Project_StaticImg_Text_LayerCopy { get; }
+            public static string? Project_Unsave_Intercept_Content { get; }
+            public static string? Project_Unsave_Intercept_Title { get; }
         }
 
         public static class Field {

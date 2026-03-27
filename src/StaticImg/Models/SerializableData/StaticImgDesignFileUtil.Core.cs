@@ -12,6 +12,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
     // Core part of StaticImgDesignFileUtil
     public partial class StaticImgDesignFileUtil {
         public string FilePath { get; private set; }
+        public string FileName => Path.GetFileName(FilePath);
         public bool IsValidFile => File.Exists(FilePath);
         public FileHeader FileHeaderCache => _headerCache;
         public BusinessData BusinessDataCache => _businessDataCache;

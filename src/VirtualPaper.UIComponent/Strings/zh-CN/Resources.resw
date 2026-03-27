@@ -1106,4 +1106,13 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_StaticImg_ToolName_CanvasSet" xml:space="preserve">
     <value>画布</value>
   </data>
+  <data name="Project_Unsave_Intercept_Content" xml:space="preserve">
+    <value>包含未保存的更改，是否保存？</value>
+  </data>
+  <data name="Project_Unsave_Intercept_Title" xml:space="preserve">
+    <value>未保存的更改</value>
+  </data>
+  <data name="Text_Unsave" xml:space="preserve">
+    <value>不保存</value>
+  </data>
 </root>

@@ -60,7 +60,7 @@ namespace VirtualPaper.UIComponent.Data {
         void SetNextStepBtnText(string text);
         void SetNextStepBtnEnable(bool isEnable);
         void SetBtnVisible(bool isVisible);
-        void BindingPreviousBtnAction(Action action);
-        void BindingNextBtnAction(Action action);
+        void BindingPreviousBtnAction(Action? action);
+        void BindingNextBtnAction(Action<object?>? action);
     }
 }

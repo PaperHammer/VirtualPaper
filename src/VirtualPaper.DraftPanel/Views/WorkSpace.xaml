@@ -143,5 +143,18 @@
                 AddTabButtonClick="TabViewControl_AddTabButtonClick"
                 TabCloseRequested="TabViewControl_TabCloseRequested"/>
         </Grid>
+
+        <Grid x:Name="maskGrid" 
+            Grid.RowSpan="2" 
+            Background="#80000000" 
+            Visibility="Collapsed"
+            Tapped="MaskGrid_Tapped">
+
+            <Frame x:Name="overlayFrame" 
+                Width="970" 
+                Height="680"
+                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                Tapped="OverlayFrame_Tapped"/>
+        </Grid>
     </Grid>
 </arc:ArcPage>

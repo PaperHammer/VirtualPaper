@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -22,8 +23,17 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             if (e.Parameter is FrameworkPayload payload) {
                 if (payload.TryGet(NaviPayloadKey.ICardComponent, out _viewModel._cardComponent) &&
                     payload.TryGet(NaviPayloadKey.INavigateComponent, out _viewModel._navigateComponent)) {
+                    var isFromWorkSpace = payload.Get<bool>(NaviPayloadKey.IsFromWorkSpace);
                     await _viewModel.InitContentAsync();
-                    _viewModel.InitConfigSpace();
+                    if (isFromWorkSpace) {
+                        payload.Set(NaviPayloadKey.IsFromWorkSpace, false);
+                        var preBtnAction = payload.Get<Action?>(NaviPayloadKey.DraftConfigPreBtnAction);
+                        var nxtBtnAction = payload.Get<Action<object?>?>(NaviPayloadKey.DraftConfigNxtBtnAction);
+                        _viewModel.InitConfigSpaceFromWorkSpace(preBtnAction, nxtBtnAction);
+                    }
+                    else {
+                        _viewModel.InitConfigSpace();
+                    }
                 }
             }
         }

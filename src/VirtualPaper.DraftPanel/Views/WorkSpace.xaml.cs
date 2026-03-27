@@ -1,13 +1,17 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.ViewModels;
+using VirtualPaper.DraftPanel.Views.ConfigSpaceComponents;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Navigation.Interfaces;
 using VirtualPaper.UIComponent.Templates;
@@ -35,6 +39,7 @@ namespace VirtualPaper.DraftPanel.Views {
 
             if (e.Parameter is FrameworkPayload payload) {
                 payload.TryGet(NaviPayloadKey.Project.ToString(), out _preProjectDatas);
+                Payload = Payload.Merge(payload);
             }
         }
 
@@ -44,16 +49,46 @@ namespace VirtualPaper.DraftPanel.Views {
 
         private async void TabViewControl_Loaded(object sender, RoutedEventArgs e) {
             if (_preProjectDatas == null) return;
-            await _viewModel.InitTabViewItems(_preProjectDatas);
+            await _viewModel.AddNewItemsAsync(_preProjectDatas);
         }
 
         private void TabViewControl_TabItemsChanged(TabView sender, Windows.Foundation.Collections.IVectorChangedEventArgs args) {
             _viewModel.OnTabItemsChanged(sender, args);
         }
 
-        private void TabViewControl_AddTabButtonClick(TabView sender, object args) {
-            _viewModel.AddDraftItem();
+        #region create new
+        public void ShowOverlayPage(Type pageType, object? parameter) {
+            maskGrid.Visibility = Visibility.Visible;
+            overlayFrame.Navigate(pageType, parameter);
         }
+
+        public void HideOverlayPage() {
+            maskGrid.Visibility = Visibility.Collapsed;
+            overlayFrame.Content = null;
+            overlayFrame.BackStack.Clear();
+            overlayFrame.ForwardStack.Clear();
+        }
+
+        private void MaskGrid_Tapped(object sender, TappedRoutedEventArgs e) {
+            HideOverlayPage();
+        }
+
+        private void OverlayFrame_Tapped(object sender, TappedRoutedEventArgs e) {
+            e.Handled = true;
+        }
+
+        private void TabViewControl_AddTabButtonClick(TabView sender, object args) {
+            //_viewModel.AddDraftItem();
+            Payload?.Set(NaviPayloadKey.TargetDraftPanelState, DraftPanelState.DraftConfig);
+            Payload?.Set(NaviPayloadKey.IsFromWorkSpace, true);
+            Payload?.Set(NaviPayloadKey.DraftConfigPreBtnAction, new Action(HideOverlayPage));
+            Payload?.Set(NaviPayloadKey.DraftConfigNxtBtnAction, new Action<object?>(async (targetData) => {
+                await _viewModel.AddNewItemsAsync(targetData as PreProjectData[]);
+                HideOverlayPage();
+            }));
+            ShowOverlayPage(typeof(ConfigSpace), Payload);
+        }
+        #endregion
 
         private async void TabViewControl_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args) {
             if (args.Tab.Content is not IRuntime runtime) return;

@@ -10,6 +10,7 @@
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     mc:Ignorable="d"
+    Unloaded="Page_Unloaded"
     NavigationCacheMode="Enabled">
 
     <data:Card x:Name="ConfigSpaceCard"

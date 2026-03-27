@@ -3,7 +3,7 @@ using System.Windows.Input;
 using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
-    public partial class ConfigSpaceViewModel : ObservableObject {
+    public partial class ConfigSpaceViewModel : ObservableObject, IDisposable {
         private string? _previousStepBtnText;
         public string? PreviousStepBtnText { get => _previousStepBtnText; set { _previousStepBtnText = value; OnPropertyChanged(); } }
 
@@ -19,8 +19,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private Action? previousStep;
         internal Action? PreviousStep { get => previousStep; set => previousStep = value; }
 
-        private Action? nextStep;
-        internal Action? NextStep { get => nextStep; set => nextStep = value; }
+        private Action<object?>? nextStep;
+        internal Action<object?>? NextStep { get => nextStep; set => nextStep = value; }
         public ICommand? PreviousStepCommand { get; private set; }
         public ICommand? NextStepCommand { get; private set; }
 
@@ -33,8 +33,28 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 PreviousStep?.Invoke();
             });
             NextStepCommand = new RelayCommand(() => {
-                NextStep.Invoke();
+                NextStep?.Invoke(null);
             });
         }
+
+        #region dispose
+        private bool _isDisposed;
+        protected virtual void Dispose(bool disposing) {
+            if (!_isDisposed) {
+                if (disposing) {
+                    PreviousStepCommand = null;
+                    NextStep = null;
+                    PreviousStepCommand = null;
+                    NextStepCommand = null;
+                }
+                _isDisposed = true;
+            }
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

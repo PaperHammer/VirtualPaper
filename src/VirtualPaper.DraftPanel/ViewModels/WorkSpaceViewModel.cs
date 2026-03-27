@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
@@ -21,6 +22,7 @@ using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.TabView;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Models.SerializableData;
+using static VirtualPaper.Common.Utils.Archive.ZipUtil;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject, IDisposable {
@@ -90,15 +92,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         #region ui events
-        internal async void AddDraftItem() {
-            //var dialogRes = await _draftPanel.GetDialog().ShowDialogAsync(
-            //    new WallpaperCreateView(wpCreateDialogViewModel),
-            //    LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_CreateType),
-            //    LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
-            //    LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
-            //if (dialogRes != DialogResult.Primary) return;
-        }
-
         internal async Task SaveAsync() => await ExecuteRuntimeCommandAsync(x => x.SaveAsync());
 
         internal async Task SaveAllAsync() => await Task.WhenAll(
@@ -120,57 +113,199 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
         #endregion
 
-        #region init
-        internal async Task InitTabViewItems(PreProjectData[] predatas) {
-            using var semaphore = new SemaphoreSlim(5);
+        #region project
+        //internal async Task InitProjectItems(PreProjectData[] predatas) {
+        //    using var semaphore = new SemaphoreSlim(5);
 
-            var tasks = new List<Task>();
+        //    var tasks = new List<Task>();
+        //    foreach (var data in predatas) {
+        //        bool isFilePath = Path.IsPathRooted(data.Identity) || File.Exists(data.Identity);
+
+        //        if (isFilePath) {
+        //            if (FileUtil.IsValidFilePath(data.Identity)) {
+        //                tasks.Add(Task.Run(async () => {
+        //                    await semaphore.WaitAsync();
+        //                    try {
+        //                        await InitRuntimeItemWithFileAsync(data.Identity);
+        //                    }
+        //                    finally {
+        //                        semaphore.Release();
+        //                    }
+        //                }));
+        //            }
+        //        }
+        //        else {
+        //            if (FileUtil.IsValidFileName(data.Identity)) {
+        //                InitRuntimeItemWithIdentify(data.Identity, data.Type);
+        //            }
+        //        }
+        //    }
+
+        //    await Task.WhenAll(tasks);
+        //    await _userSettings.UpdateRecetUsedAsync(_tempRecentUsed.ToArray());
+        //}
+
+        //internal async Task AddNewItemsAsync(PreProjectData[] predatas) {
+
+        //}
+
+        //private async Task InitRuntimeItemWithFileAsync(string filePath) {
+        //    string extension = Path.GetExtension(filePath);
+        //    FileType rtFileType = FileFilter.GetRuntimeFileType(extension);
+
+        //    //IRuntime runtime;
+        //    switch (rtFileType) {
+        //        case FileType.FUnknown:
+        //            break;
+        //        case FileType.FImage:
+        //            //runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, filePath, rtFileType); // xxx.jpg[etc.]
+        //            //AddToWorkSpace(filePath, runtime);
+        //            break;
+        //        //case FileType.FGif:
+        //        //    break;
+        //        //case FileType.FVideo:
+        //        //    break;
+        //        case FileType.FDesign:
+        //            var flag = await ReadDesignFileAsync(filePath); // [folder]/xxx.vpd
+        //            if (flag) {
+        //                _tempRecentUsed.Add(filePath);
+        //            }
+        //            break;
+        //        default:
+        //            break;
+        //    }
+        //}
+
+        //private void InitRuntimeItemWithIdentify(string fileName, ProjectType type) {
+        //    try {
+        //        IRuntime runtime;
+        //        switch (type) {
+        //            case ProjectType.P_StaticImage:
+        //                CrossThreadInvoker.InvokeOnUIThread(() => {
+        //                    runtime = new Workloads.Creation.StaticImg.MainPage(fileName);
+        //                    AddToWorkSpace(fileName, runtime, false);
+        //                });
+        //                break;
+        //            default:
+        //                break;
+        //        }
+        //    }
+        //    catch (Exception ex) {
+        //        ArcLog.GetLogger<WorkSpaceViewModel>().Error(ex);
+        //        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+        //    }
+        //}
+
+        //private async Task<bool> ReadDesignFileAsync(string filePath) {
+        //    try {
+        //        if (!File.Exists(filePath)) {
+        //            GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
+        //                message: nameof(Constants.I18n.Project_SI_FileNotFound),
+        //                isNeedLocalizer: true,
+        //                extraMsg: filePath);
+        //            return false;
+        //        }
+
+        //        var result = await StaticImgDesignFileUtil.GetFileHeaderAsync(filePath);
+        //        if (result is not FileHeader header) {
+        //            return false;
+        //        }
+
+        //        IRuntime runtime;
+        //        switch (header.ProjType) {
+        //            case ProjectType.P_StaticImage:
+        //                CrossThreadInvoker.InvokeOnUIThread(() => {
+        //                    runtime = new Workloads.Creation.StaticImg.MainPage(filePath); // xxx.vpd
+        //                    AddToWorkSpace(filePath, runtime, true);
+        //                });
+        //                break;
+        //            default:
+        //                break;
+        //        }
+
+        //        return true;
+        //    }
+        //    catch (Exception ex) {
+        //        ArcLog.GetLogger<WorkSpaceViewModel>().Error(ex);
+        //        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+        //    }
+
+        //    return false;
+        //}
+
+        //private void AddToWorkSpace(string filePath, IRuntime runtime, bool isFromFile) {
+        //    runtime.IsSavedChanged += Runtime_IsSavedChanged;
+        //    var header = new ArcTabViewItemHeader() {
+        //        MainContent = new TextBlock {
+        //            Text = Path.GetFileName(filePath),
+        //            TextTrimming = TextTrimming.CharacterEllipsis, // 文本超出时显示省略号
+        //            MaxWidth = 200
+        //        },
+        //        IsSaved = isFromFile, // 来自文件，则初始化为已保存
+        //    };
+        //    _runtimeHeaderMap[runtime] = header;
+
+        //    TabViewItems.Add(new ArcTabViewItem() {
+        //        Header = header,
+        //        Content = runtime,
+        //    });
+        //}
+        internal async Task AddNewItemsAsync(PreProjectData[]? predatas) {
+            if (predatas == null || predatas.Length == 0) return;
+
             foreach (var data in predatas) {
-                bool isFilePath = Path.IsPathRooted(data.Identity) || File.Exists(data.Identity);
+                try {
+                    // 判断是物理路径(打开现有)还是纯名称(新建)
+                    bool isFilePath = Path.IsPathRooted(data.Identity) || File.Exists(data.Identity);
 
-                if (isFilePath) {
-                    if (FileUtil.IsValidFilePath(data.Identity)) {
-                        tasks.Add(Task.Run(async () => {
-                            await semaphore.WaitAsync();
-                            try {
-                                await InitRuntimeItemAsync(data.Identity);
-                            }
-                            finally {
-                                semaphore.Release();
-                            }
-                        }));
+                    if (isFilePath) {
+                        if (!File.Exists(data.Identity)) {
+                            GlobalMessageUtil.ShowError(
+                                ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
+                                message: nameof(Constants.I18n.Project_SI_FileNotFound),
+                                isNeedLocalizer: true,
+                                extraMsg: data.Identity);
+                            continue;
+                        }
+
+                        if (FileUtil.IsValidFilePath(data.Identity)) {
+                            await InitRuntimeItemWithFileAsync(data.Identity);
+                        }
+                    }
+                    else {
+                        if (FileUtil.IsValidFileName(data.Identity)) {
+                            InitRuntimeItemWithIdentify(data.Identity, data.Type);
+                        }
                     }
                 }
-                else {
-                    if (FileUtil.IsValidFileName(data.Identity)) {
-                        InitRuntimeItem(data.Identity, data.Type);
-                    }
+                catch (Exception ex) {
+                    // 单个文件加载失败不影响其他文件
+                    ArcLog.GetLogger<WorkSpaceViewModel>().Error($"Failed to process project item: {data.Identity}", ex);
+                    GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
                 }
             }
 
-            await Task.WhenAll(tasks);
-            await _userSettings.UpdateRecetUsedAsync(_tempRecentUsed.ToArray());
+            if (!_tempRecentUsed.IsEmpty) {
+                await _userSettings.UpdateRecetUsedAsync(_tempRecentUsed.ToArray());
+            }
         }
 
-        private async Task InitRuntimeItemAsync(string filePath) {
+        private async Task InitRuntimeItemWithFileAsync(string filePath) {
             string extension = Path.GetExtension(filePath);
             FileType rtFileType = FileFilter.GetRuntimeFileType(extension);
 
-            //IRuntime runtime;
             switch (rtFileType) {
-                case FileType.FUnknown:
-                    break;
                 case FileType.FImage:
-                    //runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, filePath, rtFileType); // xxx.jpg[etc.]
-                    //AddToWorkSpace(filePath, runtime);
+                    // var runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, filePath, rtFileType);
+                    // AddToWorkSpace(filePath, runtime, true); // true 表示来自现有文件
                     break;
                 //case FileType.FGif:
                 //    break;
                 //case FileType.FVideo:
                 //    break;
                 case FileType.FDesign:
-                    var flag = await ReadDesignFileAsync(filePath); // [folder]/xxx.vpd
-                    if (flag) {
+                    var isSuccess = await ReadDesignFileAsync(filePath);
+                    if (isSuccess && !_tempRecentUsed.Contains(filePath)) {
                         _tempRecentUsed.Add(filePath);
                     }
                     break;
@@ -179,73 +314,53 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             }
         }
 
-        private void InitRuntimeItem(string fileName, ProjectType type) {
-            try {
-                IRuntime runtime;
-                switch (type) {
-                    case ProjectType.P_StaticImage:
-                        CrossThreadInvoker.InvokeOnUIThread(() => {
-                            runtime = new Workloads.Creation.StaticImg.MainPage(fileName);
-                            AddToWorkSpace(fileName, runtime, false);
-                        });
-                        break;
-                    default:
-                        break;
-                }
-            }
-            catch (Exception ex) {
-                ArcLog.GetLogger<WorkSpaceViewModel>().Error(ex);
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+        private void InitRuntimeItemWithIdentify(string fileName, ProjectType type) {
+            switch (type) {
+                case ProjectType.P_StaticImage:
+                    CrossThreadInvoker.InvokeOnUIThread(() => {
+                        var runtime = new Workloads.Creation.StaticImg.MainPage(fileName);
+                        AddToWorkSpace(fileName, runtime, false); // false 表示新建未保存
+                    });
+                    break;
+
+                default:
+                    break;
             }
         }
 
         private async Task<bool> ReadDesignFileAsync(string filePath) {
-            try {
-                if (!File.Exists(filePath)) {
-                    GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
-                        message: nameof(Constants.I18n.Project_SI_FileNotFound),
-                        isNeedLocalizer: true,
-                        extraMsg: filePath);
-                    return false;
-                }
-
-                var result = await StaticImgDesignFileUtil.GetFileHeaderAsync(filePath);
-                if (result is not FileHeader header) {
-                    return false;
-                }
-
-                IRuntime runtime;
-                switch (header.ProjType) {
-                    case ProjectType.P_StaticImage:
-                        CrossThreadInvoker.InvokeOnUIThread(() => {
-                            runtime = new Workloads.Creation.StaticImg.MainPage(filePath); // xxx.vpd
-                            AddToWorkSpace(filePath, runtime, true);
-                        });
-                        break;
-                    default:
-                        break;
-                }
-
-                return true;
-            }
-            catch (Exception ex) {
-                ArcLog.GetLogger<WorkSpaceViewModel>().Error(ex);
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+            var result = await StaticImgDesignFileUtil.GetFileHeaderAsync(filePath);
+            if (result is not FileHeader header) {
+                return false;
             }
 
-            return false;
+            switch (header.ProjType) {
+                case ProjectType.P_StaticImage:
+                    CrossThreadInvoker.InvokeOnUIThread(() => {
+                        var runtime = new Workloads.Creation.StaticImg.MainPage(filePath); // xxx.vpd
+                        AddToWorkSpace(filePath, runtime, true); // true 表示来自现有文件
+                    });
+                    break;
+
+                default:
+                    break;
+            }
+
+            return true;
         }
 
         private void AddToWorkSpace(string filePath, IRuntime runtime, bool isFromFile) {
             runtime.IsSavedChanged += Runtime_IsSavedChanged;
+
             var header = new ArcTabViewItemHeader() {
                 MainContent = new TextBlock {
                     Text = Path.GetFileName(filePath),
                     TextTrimming = TextTrimming.CharacterEllipsis, // 文本超出时显示省略号
                     MaxWidth = 200
                 },
-                IsSaved = isFromFile, // 来自文件，则初始化为已保存
+                IsSaved = isFromFile, // 来自文件则初始化为已保存，新建则为未保存
             };
+
             _runtimeHeaderMap[runtime] = header;
 
             TabViewItems.Add(new ArcTabViewItem() {

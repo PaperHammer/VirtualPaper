@@ -81,17 +81,28 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         internal void InitConfigSpace() {
             _cardComponent.SetPreviousStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep)));
-            _cardComponent.SetNextStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_NextStep)));
+            _cardComponent.SetNextStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm)));
             _cardComponent.SetBtnVisible(true);
             _cardComponent.BindingPreviousBtnAction(PreviousStepBtnAction);
             _cardComponent.BindingNextBtnAction(NextStepBtnAction);
+        }
+
+        internal void InitConfigSpaceFromWorkSpace(Action? preBtnAction, Action<object?>? nxtBtnAction) {
+            _cardComponent.SetPreviousStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel)));
+            _cardComponent.SetNextStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm)));
+            _cardComponent.SetBtnVisible(true);
+            _cardComponent.BindingPreviousBtnAction(preBtnAction);
+            _cardComponent.BindingNextBtnAction((_) => {
+                var preData = new PreProjectData[] { new(ProjectName!, ProjectType.P_StaticImage) };
+                nxtBtnAction?.Invoke(preData);
+            });
         }
 
         private void PreviousStepBtnAction() {
             _navigateComponent.NavigateByState(DraftPanelState.GetStart);
         }
 
-        private void NextStepBtnAction() {
+        private void NextStepBtnAction(object? param) {
             _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, new PreProjectData[] { new(ProjectName!, ProjectType.P_StaticImage) });
             _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
         }

@@ -130,5 +130,9 @@ namespace VirtualPaper.UIComponent.Utils {
         ServiceProvider,
         InkProjectSession,
         ArcPageContext,
+        TargetDraftPanelState,
+        IsFromWorkSpace,
+        DraftConfigPreBtnAction,
+        DraftConfigNxtBtnAction,
     }
 }

@@ -29,12 +29,17 @@ namespace VirtualPaper.DraftPanel.Views {
             this.DataContext = _viewModel;            
         }
 
+        private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            _viewModel.Dispose();
+        }
+
         #region nav
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
             if (e.Parameter is FrameworkPayload payload) {
                 payload.TryGet(NaviPayloadKey.DraftPage, out _draftPage);
+                payload.TryGet(NaviPayloadKey.TargetDraftPanelState, out _targetDraftPanelState);
                 Payload = Payload.Merge(payload);
                 Payload?.Set(NaviPayloadKey.ICardComponent, this);
                 Payload?.Set(NaviPayloadKey.INavigateComponent, this);
@@ -43,7 +48,7 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         private void FrameComp_Loaded(object sender, RoutedEventArgs e) {
-            NavigateByState(DraftPanelState.GetStart);
+            NavigateByState(_targetDraftPanelState);
         }
 
         public void NavigateByState(DraftPanelState nextState, params NaviPayloadData[] naviPayloadDatas) {
@@ -116,16 +121,17 @@ namespace VirtualPaper.DraftPanel.Views {
             _viewModel.BtnVisible = isVisible;
         }
 
-        public void BindingPreviousBtnAction(Action action) {
+        public void BindingPreviousBtnAction(Action? action) {
             _viewModel.PreviousStep = action;
         }
 
-        public void BindingNextBtnAction(Action action) {
+        public void BindingNextBtnAction(Action<object?>? action) {
             _viewModel.NextStep = action;
         }
         #endregion
 
-        private ConfigSpaceViewModel _viewModel;
+        private readonly ConfigSpaceViewModel _viewModel;
         private Draft? _draftPage;
+        private DraftPanelState _targetDraftPanelState;
     }
 }

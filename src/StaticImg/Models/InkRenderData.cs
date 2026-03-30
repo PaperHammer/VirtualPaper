@@ -39,7 +39,7 @@ namespace Workloads.Creation.StaticImg.Models {
         public void Init() {
             RenderTarget?.Dispose();
             RenderTarget = new CanvasRenderTarget(
-                _session.SharedDevice,
+                InkProjectSession.SharedDevice,
                 (float)_arcSize.Width,
                 (float)_arcSize.Height,
                 _arcSize.Dpi,
@@ -138,7 +138,7 @@ namespace Workloads.Creation.StaticImg.Models {
                 // 加载到渲染目标
                 using var fileStream = File.OpenRead(tempFile);
                 var bitmap = await CanvasBitmap.LoadAsync(
-                    _session.SharedDevice,
+                    InkProjectSession.SharedDevice,
                     fileStream.AsRandomAccessStream());
 
                 using (var ds = RenderTarget.CreateDrawingSession()) {
@@ -177,7 +177,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         public void ResizeAndSetPixels(ArcSize newSize, byte[]? pixels) {
             if (pixels == null) {
-                GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), "Resize data is null");
+                GlobalMessageUtil.ShowError("Resize data is null");
                 ArcLog.GetLogger<InkRenderData>().Error("Resize data is null");
                 return;
             }
@@ -185,7 +185,7 @@ namespace Workloads.Creation.StaticImg.Models {
             ResetSize(newSize);
             RenderTarget?.Dispose();
             RenderTarget = new CanvasRenderTarget(
-                _session.SharedDevice,
+                InkProjectSession.SharedDevice,
                 (float)_arcSize.Width,
                 (float)_arcSize.Height,
                 _arcSize.Dpi,
@@ -226,7 +226,7 @@ namespace Workloads.Creation.StaticImg.Models {
         private void ResizeRenderTargetWithScale(ArcSize arcSize) {            
             var oldTarget = RenderTarget;
             RenderTarget = new CanvasRenderTarget(
-                _session.SharedDevice,
+                InkProjectSession.SharedDevice,
                 (float)arcSize.Width,
                 (float)arcSize.Height,
                 arcSize.Dpi,
@@ -250,7 +250,7 @@ namespace Workloads.Creation.StaticImg.Models {
         private void ResizeRenderTargetWithExpand(ArcSize arcSize) {            
             var oldTarget = RenderTarget;
             RenderTarget = new CanvasRenderTarget(
-                _session.SharedDevice,
+                InkProjectSession.SharedDevice,
                 (float)arcSize.Width,
                 (float)arcSize.Height,
                 arcSize.Dpi,
@@ -322,7 +322,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private CanvasBitmap GetOriginalContent() {
             return CanvasBitmap.CreateFromBytes(
-                _session.SharedDevice,
+                InkProjectSession.SharedDevice,
                 RenderTarget.GetPixelBytes(),
                 (int)RenderTarget.SizeInPixels.Width,
                 (int)RenderTarget.SizeInPixels.Height,
@@ -333,7 +333,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private CanvasRenderTarget CreateNewRenderTarget(Size size) {
             return new CanvasRenderTarget(
-                _session.SharedDevice,
+                InkProjectSession.SharedDevice,
                 (float)size.Width,
                 (float)size.Height,
                 _arcSize.Dpi,

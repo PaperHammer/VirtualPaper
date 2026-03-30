@@ -54,16 +54,12 @@
 
                     <!--背景层 -->
                     <win2d:CanvasVirtualControl x:Name="backgroundGrid"
-                        RegionsInvalidated="BackgroundGrid_RegionsInvalidated"
-                        CustomDevice="{x:Bind _session.SharedDevice}"
-                        UseSharedDevice="True"/>
+                        RegionsInvalidated="BackgroundGrid_RegionsInvalidated"/>
 
                     <!--合成层-->
                     <win2d:CanvasControl x:Name="renderCanvas"
                         Loaded="RenderCanvas_Loaded"
-                        Draw="RenderCanvas_Draw"
-                        CustomDevice="{x:Bind _session.SharedDevice}"
-                        UseSharedDevice="True"/>
+                        Draw="RenderCanvas_Draw"/>
                 </Grid>
             </ScrollViewer>
 

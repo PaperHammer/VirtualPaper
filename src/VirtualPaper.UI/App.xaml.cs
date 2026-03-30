@@ -147,8 +147,14 @@ namespace VirtualPaper.UI {
             this.UnhandledException += (s, e) =>
                 LogUnhandledException(e.Exception);
 
-            CoreApplication.UnhandledErrorDetected += (s, e) =>
-                LogUnhandledException(e.UnhandledError);
+            CoreApplication.UnhandledErrorDetected += (s, e) => {
+                try {
+                    e.UnhandledError.Propagate();
+                }
+                catch (Exception ex) {
+                    LogUnhandledException(ex);
+                }
+            };
         }
 
         public static void ShutDown() {

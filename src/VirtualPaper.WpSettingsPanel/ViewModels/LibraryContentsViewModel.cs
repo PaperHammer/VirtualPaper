@@ -114,7 +114,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                        GlobalMessageUtil.ShowException(ex);
                     }
                 });
         }
@@ -141,7 +141,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
@@ -167,7 +167,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
@@ -182,13 +182,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     try {
                         bool isUsing = await IsFileInUseAsync(data);
                         if (isUsing) {
-                            GlobalMessageUtil.ShowInfo(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), message: Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
+                            GlobalMessageUtil.ShowInfo(message: Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
                             return;
                         }
 
                         bool isPreview = IsFileInPreview(data);
                         if (isPreview) {
-                            GlobalMessageUtil.ShowInfo(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), message: Constants.I18n.Text_FileInPreview, isNeedLocalizer: true);
+                            GlobalMessageUtil.ShowInfo(message: Constants.I18n.Text_FileInPreview, isNeedLocalizer: true);
                             return;
                         }
 
@@ -197,11 +197,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         data = DataAssist.GrpcToBasicData(grpc_basicData);
                         UpdateLib(data);
 
-                        GlobalMessageUtil.ShowSuccess(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), message: Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
+                        GlobalMessageUtil.ShowSuccess(message: Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                        GlobalMessageUtil.ShowException(ex);
                     }
                 });
         }
@@ -244,7 +244,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                                 rtype,
                                 token);
                             if (!response.IsFinished) {
-                                GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
+                                GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
                             }
                         };
                         _previews.Add((data.WallpaperUid, rtype), previewWindow);
@@ -254,11 +254,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     catch (Exception ex) when
                         (ex is OperationCanceledException ||
                         (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                        GlobalMessageUtil.ShowCanceled(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)));
+                        GlobalMessageUtil.ShowCanceled();
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                        GlobalMessageUtil.ShowException(ex);
                     }
                 }, cts: ctsPreview);
         }
@@ -285,17 +285,17 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                             rtype,
                             token);
                         if (!response.IsFinished) {
-                            GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
+                            GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
                         }
                     }
                     catch (Exception ex) when
                         (ex is OperationCanceledException ||
                         (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                        GlobalMessageUtil.ShowCanceled(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)));
+                        GlobalMessageUtil.ShowCanceled();
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                        GlobalMessageUtil.ShowException(ex);
                     }
                 }, cts: ctsApply);
         }
@@ -313,18 +313,18 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         if (!data.IsAvailable()) return;
 
                         if (data.FType != FileType.FImage && data.FType != FileType.FGif) {
-                            GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.Dialog_Content_OnlyPictureAndGif, isNeedLocalizer: true);
+                            GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_OnlyPictureAndGif, isNeedLocalizer: true);
                             return;
                         }
 
                         StorageFile storageFile = await StorageFile.GetFileFromPathAsync(data.FilePath);
                         await LockScreen.SetImageFileAsync(storageFile);
 
-                        GlobalMessageUtil.ShowSuccess(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
+                        GlobalMessageUtil.ShowSuccess(Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                        GlobalMessageUtil.ShowException(ex);
                     }
                 }, cts: ctsApplyLockBG);
         }
@@ -340,7 +340,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                 bool isUsing = await IsFileInUseAsync(data);
                 if (isUsing) {
-                    GlobalMessageUtil.ShowInfo(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
+                    GlobalMessageUtil.ShowInfo(Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
                     return;
                 }
 
@@ -351,7 +351,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
@@ -388,7 +388,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                        GlobalMessageUtil.ShowException(ex);
                     }
                 }, cts: ctsImport);
         }
@@ -416,7 +416,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                                 if (grpcData == null) {
                                     GlobalMessageUtil.ShowError(
-                                        ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                                         Constants.I18n.InfobarMsg_ImportErr,
                                         isNeedLocalizer: true,
                                         extraMsg: importValue.FilePath);
@@ -429,7 +428,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                                 }
                                 else {
                                     GlobalMessageUtil.ShowError(
-                                        ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                                         Constants.I18n.InfobarMsg_ImportErr,
                                         isNeedLocalizer: true,
                                         extraMsg: importValue.FilePath);
@@ -437,7 +435,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                             }
                             else {
                                 GlobalMessageUtil.ShowError(
-                                    ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                                     Constants.I18n.Dialog_Content_Import_Failed_Lib,
                                     isNeedLocalizer: true,
                                     extraMsg: importValue.FilePath);
@@ -448,12 +445,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         catch (Exception ex) when (
                             ex is OperationCanceledException ||
                             (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                            GlobalMessageUtil.ShowCanceled(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)));
+                            GlobalMessageUtil.ShowCanceled();
                             return;
                         }
                         catch (Exception ex) {
                             ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                            GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                            GlobalMessageUtil.ShowException(ex);
                         }
                     }
                 }, total: importValues.Count, cts: ctsImport);
@@ -584,7 +581,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                GlobalMessageUtil.ShowException(ex);
             }
             finally {
                 LibLoadingStatus = LoadingStatus.Ready;

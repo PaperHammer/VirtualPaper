@@ -91,7 +91,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                 }
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                GlobalMessageUtil.ShowException(ex);
                 ArcLog.GetLogger<LibraryContents>().Error(ex);
             }
         }

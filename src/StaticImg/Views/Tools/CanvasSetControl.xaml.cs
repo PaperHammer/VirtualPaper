@@ -25,7 +25,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             set { SetValue(SizeProperty, value); }
         }
         public static readonly DependencyProperty SizeProperty =
-            DependencyProperty.Register(nameof(Size), typeof(ArcSize), typeof(CanvasSetControl), new PropertyMetadata(new ArcSize(1920, 1080, 96, RebuildMode.None)));
+            DependencyProperty.Register(nameof(Size), typeof(ArcSize), typeof(CanvasSetControl), new PropertyMetadata(default));
 
         public ICommand? CanvasOperationCommand { get; private set; }
 
@@ -122,7 +122,6 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
 
         private static void ShowSizeIllegalMsg() {
             GlobalMessageUtil.ShowError(
-                ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                 message: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
                 key: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
                 isNeedLocalizer: true,

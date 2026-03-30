@@ -26,7 +26,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
         // 0 表示未锁定，1 表示正在处理中
         private int _canvasSizeLock = 0;
-        ArcSize _canvasSize; // 像素
+        ArcSize _canvasSize = new ArcSize(1920, 1080, 96, RebuildMode.None); // 像素
         public ArcSize CanvasSize {
             get => _canvasSize;
             set {
@@ -40,7 +40,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                     OnPropertyChanged();
                 }
                 catch (Exception ex) {
-                    GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex.Message);
+                    GlobalMessageUtil.ShowError(ex.Message);
                     ArcLog.GetLogger<CropTool>().Error(ex);
                 }
                 finally {
@@ -171,10 +171,8 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         }
 
         private void UpdateCanvasSizeText() {
-            if (CanvasSize != default) {
-                var rasterizationScale = WindowConsts.ArcWindowInstance?.Content?.XamlRoot?.RasterizationScale ?? 1.0;
-                CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {rasterizationScale * 96} DPI)";
-            }
+            var rasterizationScale = WindowConsts.ArcWindowInstance?.Content?.XamlRoot?.RasterizationScale ?? 1.0;
+            CanvasSizeText = $"{CanvasSize.Width:F0} * {CanvasSize.Height:F0} px ({CanvasSize.Dpi} / {rasterizationScale * 96} DPI)";
         }
 
         internal async Task UpdateCustomColorsAsync(ColorChangeEventArgs e) {
@@ -229,7 +227,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 }
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex.Message);
+                GlobalMessageUtil.ShowError(ex.Message);
                 ArcLog.GetLogger<CropTool>().Error(ex);
             }
         }
@@ -243,7 +241,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 }
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex.Message);
+                GlobalMessageUtil.ShowError(ex.Message);
                 ArcLog.GetLogger<CropTool>().Error(ex);
             }
         }

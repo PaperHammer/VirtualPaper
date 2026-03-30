@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
-using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.Utils;
@@ -46,7 +45,7 @@ namespace VirtualPaper.WpSettingsPanel {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WpSettings>().Error(ex);
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex, key: ex.Message);
+                GlobalMessageUtil.ShowException(ex, key: ex.Message);
             }
         }
         #endregion

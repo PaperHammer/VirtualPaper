@@ -109,7 +109,7 @@ namespace VirtualPaper.UI {
                 NaviContent.Navigate(pageType);
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(Key), ex);
+                GlobalMessageUtil.ShowException(ex, arcWindow: ArcWindowManager.GetArcWindow(Key));
                 ArcLog.GetLogger<MainWindow>().Error(ex);
             }
         }

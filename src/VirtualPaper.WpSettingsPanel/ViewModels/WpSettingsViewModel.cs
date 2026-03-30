@@ -204,7 +204,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         var response = await _wpControlClient.RestartAllWallpapersAsync();
                         if (response.IsFinished != true) {
                             GlobalMessageUtil.ShowError(
-                                ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                                 message: nameof(Constants.I18n.Dialog_Content_ApplyError),
                                 isNeedLocalizer: true);
                             // 恢复
@@ -241,7 +240,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
             InitMonitors();
             GlobalMessageUtil.ShowInfo(
-                ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                 message: nameof(Constants.I18n.Dialog_Content_GetMonitorsAsync),
                 key: nameof(Constants.I18n.Dialog_Content_GetMonitorsAsync),
                 isNeedLocalizer: true,
@@ -307,7 +305,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                        GlobalMessageUtil.ShowException(ex);
                     }
                 }, cts: ctsAdjust);
 

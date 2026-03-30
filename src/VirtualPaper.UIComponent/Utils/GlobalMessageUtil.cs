@@ -11,12 +11,13 @@ namespace VirtualPaper.UIComponent.Utils {
     /// 全局消息服务
     /// </summary>
     public static class GlobalMessageUtil {
-        private static void AddMsg(ArcWindow arcWindow, GlobalMsgInfo globalMsgInfo, bool isAllowDuplication = false) {
+        private static void AddMsg(ArcWindow? arcWindow, GlobalMsgInfo globalMsgInfo, bool isAllowDuplication = false) {
+            arcWindow ??= ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main))!;
             ExecuteOnUIThread(() => {
                 // 如果key不为null且不允许重复，检查是否已存在
                 if (globalMsgInfo.Key != null &&
                     !isAllowDuplication &&
-                    GetGlobalMsg(arcWindow, globalMsgInfo.Key) != null)
+                    GetGlobalMsg(globalMsgInfo.Key, arcWindow) != null)
                     return;
 
                 // 如果key为null，生成唯一key（时间戳+随机数）
@@ -27,7 +28,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 globalMsgInfo.PropertyChanged += (sender, args) => {
                     if (args.PropertyName == nameof(GlobalMsgInfo.IsOpen)) {
                         if (sender is GlobalMsgInfo msg && !msg.IsOpen) {
-                            RemoveMsg(arcWindow, msg);
+                            RemoveMsg(msg, arcWindow);
                         }
                     }
                 };
@@ -40,7 +41,7 @@ namespace VirtualPaper.UIComponent.Utils {
             ExecuteOnUIThread(() => {
                 if (key == null) return;
 
-                var msg = GetGlobalMsg(arcWindow, key);
+                var msg = GetGlobalMsg(key, arcWindow);
                 if (msg != null) {
                     msg.IsOpen = false;
                 }
@@ -50,44 +51,44 @@ namespace VirtualPaper.UIComponent.Utils {
         /// <summary>
         /// 显示信息消息
         /// </summary>
-        public static void ShowInfo(ArcWindow arcWindow, string message, string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
+        public static void ShowInfo(string message, ArcWindow? arcWindow = null, string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
             AddMsg(arcWindow, new GlobalMsgInfo(key, isNeedLocalizer, message, extraMsg, InfoBarSeverity.Informational));
         }
 
         /// <summary>
         /// 显示成功消息
         /// </summary>
-        public static void ShowSuccess(ArcWindow arcWindow, string message, string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
+        public static void ShowSuccess(string message, ArcWindow? arcWindow = null, string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
             AddMsg(arcWindow, new GlobalMsgInfo(key, isNeedLocalizer, message, extraMsg, InfoBarSeverity.Success));
         }
 
         /// <summary>
         /// 显示警告消息
         /// </summary>
-        public static void ShowWarning(ArcWindow arcWindow, string message, string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
+        public static void ShowWarning(string message, ArcWindow? arcWindow = null, string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
             AddMsg(arcWindow, new GlobalMsgInfo(key, isNeedLocalizer, message, extraMsg, InfoBarSeverity.Warning));
         }
 
         /// <summary>
         /// 显示错误消息
         /// </summary>
-        public static void ShowError(ArcWindow arcWindow, string message, string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
+        public static void ShowError(string message, ArcWindow? arcWindow = null, string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
             AddMsg(arcWindow, new GlobalMsgInfo(key, isNeedLocalizer, message, extraMsg, InfoBarSeverity.Error));
         }
 
         /// <summary>
         /// 显示异常信息
         /// </summary>
-        public static void ShowException(ArcWindow arcWindow, Exception ex, string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
+        public static void ShowException(Exception ex, ArcWindow? arcWindow = null, string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
             var message = isNeedLocalizer ? LanguageUtil.GetI18n(ex.Message) : ex.Message;
             AddMsg(arcWindow, new GlobalMsgInfo(key, false, message, extraMsg, InfoBarSeverity.Error));
         }
 
-        public static void ShowCanceled(ArcWindow arcWindow) {
+        public static void ShowCanceled(ArcWindow? arcWindow = null) {
             AddMsg(arcWindow, new GlobalMsgInfo(
-                key: Constants.I18n.InfobarMsg_Cancel,
+                key: nameof(Constants.I18n.InfobarMsg_Cancel),
                 isNeedLocalizer: true,
-                msgOri18nKey: Constants.I18n.InfobarMsg_Cancel,
+                msgOri18nKey: nameof(Constants.I18n.InfobarMsg_Cancel),
                 extraMsg: null,
                 infoBarSeverity: InfoBarSeverity.Informational));
         }
@@ -95,7 +96,8 @@ namespace VirtualPaper.UIComponent.Utils {
         /// <summary>
         /// 清除所有消息
         /// </summary>
-        public static void ClearAll(ArcWindow arcWindow) {
+        public static void ClearAll(ArcWindow? arcWindow = null) {
+            arcWindow ??= ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main))!;
             ExecuteOnUIThread(() => {
                 foreach (var msg in arcWindow.InfobarMessages.ToList()) {
                     msg.IsOpen = false;
@@ -109,19 +111,19 @@ namespace VirtualPaper.UIComponent.Utils {
         /// </summary>
         public static bool ContainsKey(ArcWindow arcWindow, string key) {
             if (key == null) return false;
-            return GetGlobalMsg(arcWindow, key) != null;
+            return GetGlobalMsg(key, arcWindow) != null;
         }
 
         /// <summary>
         /// 显示自动关闭的消息
         /// </summary>
-        public static void ShowAutoCloseMessage(ArcWindow arcWindow, string message, InfoBarSeverity severity, int autoCloseDelay = 5000, string? key = null) {
+        public static void ShowAutoCloseMessage(string message, InfoBarSeverity severity, int autoCloseDelay = 5000, string? key = null, ArcWindow? arcWindow = null) {
             var msgInfo = new GlobalMsgInfo(key, false, message, null, severity);
             AddMsg(arcWindow, msgInfo);
 
             System.Threading.Tasks.Task.Delay(autoCloseDelay).ContinueWith(t => {
                 if (msgInfo.Key != null) {
-                    CloseAndRemoveMsg(arcWindow, msgInfo.Key);
+                    CloseAndRemoveMsg(arcWindow ?? ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main))!, msgInfo.Key);
                 }
             }, System.Threading.Tasks.TaskScheduler.Default);
         }
@@ -129,11 +131,11 @@ namespace VirtualPaper.UIComponent.Utils {
         /// <summary>
         /// 更新现有消息内容
         /// </summary>
-        public static void UpdateMessage(ArcWindow arcWindow, string key, string newMessage, bool isNeedLocalizer = false) {
+        public static void UpdateMessage(string key, string newMessage, bool isNeedLocalizer = false, ArcWindow? arcWindow = null) {
             if (key == null) return;
 
             ExecuteOnUIThread(() => {
-                var msg = GetGlobalMsg(arcWindow, key);
+                var msg = GetGlobalMsg(key, arcWindow);
                 if (msg != null) {
                     msg.Message = isNeedLocalizer ? LanguageUtil.GetI18n(newMessage) : newMessage;
                 }
@@ -143,7 +145,7 @@ namespace VirtualPaper.UIComponent.Utils {
         /// <summary>
         /// 批量添加消息
         /// </summary>
-        public static void AddMessages(ArcWindow arcWindow, params (string message, InfoBarSeverity severity, string key)[] messages) {
+        public static void AddMessages(ArcWindow? arcWindow = null, params (string message, InfoBarSeverity severity, string key)[] messages) {
             foreach (var (message, severity, key) in messages) {
                 AddMsg(arcWindow, new GlobalMsgInfo(key, false, message, null, severity));
             }
@@ -152,15 +154,17 @@ namespace VirtualPaper.UIComponent.Utils {
         /// <summary>
         /// 获取指定key的消息（key为null时返回null）
         /// </summary>
-        private static GlobalMsgInfo? GetGlobalMsg(ArcWindow arcWindow, string key) {
+        private static GlobalMsgInfo? GetGlobalMsg(string key, ArcWindow? arcWindow = null) {
             if (key == null) return null;
+            arcWindow ??= ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main))!;
             return arcWindow.InfobarMessages.FirstOrDefault(m => m.Key == key);
         }
 
         /// <summary>
         /// 移除消息
         /// </summary>
-        private static void RemoveMsg(ArcWindow arcWindow, GlobalMsgInfo msg) {
+        private static void RemoveMsg(GlobalMsgInfo msg, ArcWindow? arcWindow = null) {
+            arcWindow ??= ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main))!;
             ExecuteOnUIThread(() => {
                 arcWindow.InfobarMessages.Remove(msg);
             });

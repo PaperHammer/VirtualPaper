@@ -27,7 +27,9 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class GetStart : Page {
+    public sealed partial class GetStart : Page, ICardComponent {
+        public Action? CardUIStateChanged { get; set; }
+
         public GetStart() {
             this.InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<GetStartViewModel>();
@@ -38,9 +40,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             base.OnNavigatedTo(e);
 
             if (e.Parameter is FrameworkPayload payload) {
-                payload.TryGet(NaviPayloadKey.ICardComponent, out _cardComponent);
                 payload.TryGet(NaviPayloadKey.INavigateComponent, out _navigateComponent);
-                _cardComponent?.SetBtnVisible(false);
             }
         }
 
@@ -109,7 +109,6 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
                 }
                 else {
                     GlobalMessageUtil.ShowWarning(
-                        ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                         message: nameof(Constants.I18n.Project_Drops_Contains_Invalid_FIles),
                         isNeedLocalizer: true);
                 }
@@ -121,7 +120,6 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         }
 
         private readonly GetStartViewModel _viewModel;
-        private ICardComponent _cardComponent = null!;
         private INavigateComponent _navigateComponent = null!;
     }
 }

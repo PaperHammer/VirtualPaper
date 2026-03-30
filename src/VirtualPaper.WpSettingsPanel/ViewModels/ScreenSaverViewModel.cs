@@ -203,7 +203,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                GlobalMessageUtil.ShowException(ex);
                 ArcLog.GetLogger<ScreenSaverViewModel>().Error(ex);
             }
         }

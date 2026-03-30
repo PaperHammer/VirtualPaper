@@ -82,8 +82,8 @@ namespace Workloads.Creation.StaticImg {
             return true;
         }
 
-        internal static void InitData(InkProjectSession session) {
-            _maxCanvasdge = session.SharedDevice.MaximumBitmapSizeInPixels;
+        internal static void InitData() {
+            _maxCanvasdge = InkProjectSession.SharedDevice.MaximumBitmapSizeInPixels;
         }
 
         private static readonly float _epsilon = 1e-6f;

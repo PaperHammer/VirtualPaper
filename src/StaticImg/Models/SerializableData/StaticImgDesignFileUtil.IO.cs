@@ -36,7 +36,6 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
                 if (bytesRead < headerSize) {
                     GlobalMessageUtil.ShowWarning(
-                        ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                         message: nameof(Constants.I18n.Project_FileLoad_FileCorrupted),
                         isNeedLocalizer: true,
                         extraMsg: filePath);
@@ -60,7 +59,6 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         public async Task<(FileHeader? fileHeader, BusinessData? businessData, List<Layer>? layers)> LoadAsync(InkProjectSession session) {
             if (!IsValidFile) {
                 GlobalMessageUtil.ShowError(
-                    ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                     message: Constants.I18n.Project_FileLoad_Failed,
                     key: Constants.I18n.Project_FileLoad_Failed,
                     isNeedLocalizer: true,

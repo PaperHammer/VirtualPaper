@@ -52,7 +52,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 ViewModel.Session.UnReUtil.RecordCommand(command);
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex.Message);
+                GlobalMessageUtil.ShowError(ex.Message);
                 ArcLog.GetLogger<CropTool>().Error(ex);
             }
         }

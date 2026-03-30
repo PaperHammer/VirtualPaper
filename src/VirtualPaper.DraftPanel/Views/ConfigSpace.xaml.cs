@@ -20,13 +20,13 @@ namespace VirtualPaper.DraftPanel.Views {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class ConfigSpace : ArcPage, ICardComponent, INavigateComponent {
+    public sealed partial class ConfigSpace : ArcPage, INavigateComponent {
         public override Type ArcType => typeof(ConfigSpace);
 
         public ConfigSpace() {
             this.InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<ConfigSpaceViewModel>();
-            this.DataContext = _viewModel;            
+            this.DataContext = _viewModel;
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
@@ -41,7 +41,6 @@ namespace VirtualPaper.DraftPanel.Views {
                 payload.TryGet(NaviPayloadKey.DraftPage, out _draftPage);
                 payload.TryGet(NaviPayloadKey.TargetDraftPanelState, out _targetDraftPanelState);
                 Payload = Payload.Merge(payload);
-                Payload?.Set(NaviPayloadKey.ICardComponent, this);
                 Payload?.Set(NaviPayloadKey.INavigateComponent, this);
                 Payload?.Set(NaviPayloadKey.ConfigSpacePage, this);
             }
@@ -79,6 +78,13 @@ namespace VirtualPaper.DraftPanel.Views {
                         Payload?.AddRange(naviPayloadDatas);
                         FrameComp.Navigate(targetPageType, Payload);
                     }
+
+                    if (FrameComp.Content is ICardComponent cardComponent) {                        
+                        cardComponent.CardUIStateChanged = () => {
+                            _viewModel.RefreshCardComponentData();
+                        };
+                        _viewModel._cardComponent = cardComponent;
+                    }
                 }
             });
         }
@@ -104,31 +110,6 @@ namespace VirtualPaper.DraftPanel.Views {
         }
         #endregion
 
-        #region bridge
-        public void SetPreviousStepBtnText(string text) {
-            _viewModel.PreviousStepBtnText = text;
-        }
-
-        public void SetNextStepBtnText(string text) {
-            _viewModel.NextStepBtnText = text;
-        }
-
-        public void SetNextStepBtnEnable(bool isEnable) {
-            _viewModel.IsNextEnable = isEnable;
-        }
-
-        public void SetBtnVisible(bool isVisible) {
-            _viewModel.BtnVisible = isVisible;
-        }
-
-        public void BindingPreviousBtnAction(Action? action) {
-            _viewModel.PreviousStep = action;
-        }
-
-        public void BindingNextBtnAction(Action<object?>? action) {
-            _viewModel.NextStep = action;
-        }
-        #endregion
 
         private readonly ConfigSpaceViewModel _viewModel;
         private Draft? _draftPage;

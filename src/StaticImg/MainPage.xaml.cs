@@ -123,7 +123,7 @@ namespace Workloads.Creation.StaticImg {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                GlobalMessageUtil.ShowException(ex);
             }
             return false;
         }
@@ -135,7 +135,7 @@ namespace Workloads.Creation.StaticImg {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
@@ -145,7 +145,7 @@ namespace Workloads.Creation.StaticImg {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
         #endregion

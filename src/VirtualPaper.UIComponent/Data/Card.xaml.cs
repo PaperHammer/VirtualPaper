@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
@@ -29,7 +30,7 @@ namespace VirtualPaper.UIComponent.Data {
 
         public Card() {
             this.InitializeComponent();
-            this.Loaded += Card_Loaded;            
+            this.Loaded += Card_Loaded;
             this.CornerRadius = new CornerRadius(8);
             this.Padding = new Thickness(50);
 
@@ -56,11 +57,12 @@ namespace VirtualPaper.UIComponent.Data {
     }
 
     public interface ICardComponent {
-        void SetPreviousStepBtnText(string text);
-        void SetNextStepBtnText(string text);
-        void SetNextStepBtnEnable(bool isEnable);
-        void SetBtnVisible(bool isVisible);
-        void BindingPreviousBtnAction(Action? action);
-        void BindingNextBtnAction(Action<object?>? action);
+        string PreviousStepBtnText => string.Empty;
+        string NextStepBtnText => string.Empty;
+        bool IsNextEnable => false;
+        bool BtnVisible => false;
+        Func<object?, Task>? PreviousStepAction => null;
+        Func<object?, Task>? NextStepAction => null;
+        Action? CardUIStateChanged { get; set; }
     }
 }

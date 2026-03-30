@@ -33,14 +33,17 @@ namespace VirtualPaper.UIComponent.Utils {
             return TryGet(key.ToString(), out value);
         }
 
-        public T Get<T>(string key) {
+        public T? Get<T>(string key) {
             if (_data.TryGetValue(key, out var value) && value is T t)
                 return t;
 
-            throw new KeyNotFoundException($"FrameworkPayload missing required key '{key}' ({typeof(T).Name})");
+#if DEBUG
+            GlobalMessageUtil.ShowWarning($"[DEBUG] FrameworkPayload missing required key '{key}' ({typeof(T).Name})");
+#endif
+            return default;
         }
         
-        public T Get<T>(NaviPayloadKey key) {
+        public T? Get<T>(NaviPayloadKey key) {
             return Get<T>(key.ToString());
         }
 
@@ -134,5 +137,6 @@ namespace VirtualPaper.UIComponent.Utils {
         IsFromWorkSpace,
         DraftConfigPreBtnAction,
         DraftConfigNxtBtnAction,
+        DraftConfigTCS,
     }
 }

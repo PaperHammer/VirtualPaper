@@ -13,11 +13,11 @@ using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class DraftConfigViewModel : ObservableObject {
+        public Action? CardUIStateChanged { get; set; }
         public ObservableCollection<ProjectTemplate> AvailableTemplates { get; set; } = [];
 
         private string? _projectName;
@@ -42,7 +42,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private bool _isNextEnable;
         public bool IsNextEnable {
             get { return _isNextEnable; }
-            set { _isNextEnable = value; _cardComponent.SetNextStepBtnEnable(value); }
+            set { _isNextEnable = value; CardUIStateChanged?.Invoke(); }
         }
 
         private ProjectTemplate? _selectedTemplate;
@@ -50,6 +50,12 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             get { return _selectedTemplate; }
             set { _selectedTemplate = value; OnPropertyChanged(); IsNextEnable = IsNameOk && value != null; }
         }
+
+        public string PreviousStepBtnText { get; private set; } = string.Empty;
+        public string NextStepBtnText { get; private set; } = string.Empty;
+        public bool BtnVisible { get; private set; } = false;
+        public bool IsFromWorkSpace { get; set; }
+        public TaskCompletionSource<PreProjectData[]?>? DraftConfigTCS { get; set; }
 
         internal async Task InitContentAsync() {
             SelectedTemplate = null;
@@ -74,37 +80,43 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<DraftConfigViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                        GlobalMessageUtil.ShowException(ex);
                     }
                 });
         }
 
-        internal void InitConfigSpace() {
-            _cardComponent.SetPreviousStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep)));
-            _cardComponent.SetNextStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm)));
-            _cardComponent.SetBtnVisible(true);
-            _cardComponent.BindingPreviousBtnAction(PreviousStepBtnAction);
-            _cardComponent.BindingNextBtnAction(NextStepBtnAction);
+        public void UpdateCardComponentUI() {
+            if (IsFromWorkSpace) {
+                PreviousStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel));
+                NextStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm));
+            }
+            else {
+                PreviousStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep));
+                NextStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm));
+            }
+            BtnVisible = true;
+            CardUIStateChanged?.Invoke();
         }
 
-        internal void InitConfigSpaceFromWorkSpace(Action? preBtnAction, Action<object?>? nxtBtnAction) {
-            _cardComponent.SetPreviousStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel)));
-            _cardComponent.SetNextStepBtnText(LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm)));
-            _cardComponent.SetBtnVisible(true);
-            _cardComponent.BindingPreviousBtnAction(preBtnAction);
-            _cardComponent.BindingNextBtnAction((_) => {
-                var preData = new PreProjectData[] { new(ProjectName!, ProjectType.P_StaticImage) };
-                nxtBtnAction?.Invoke(preData);
-            });
+        public async Task OnNextStepClickedAsync() {
+            var preData = new PreProjectData[] { new(ProjectName!, ProjectType.P_StaticImage) };
+            _navigateComponent?.GetPaylaod()?.Set(NaviPayloadKey.Project, preData);
+
+            if (IsFromWorkSpace) {
+                DraftConfigTCS?.TrySetResult(preData);
+            }
+            else {
+                _navigateComponent?.NavigateByState(DraftPanelState.WorkSpace);
+            }
         }
 
-        private void PreviousStepBtnAction() {
-            _navigateComponent.NavigateByState(DraftPanelState.GetStart);
-        }
-
-        private void NextStepBtnAction(object? param) {
-            _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, new PreProjectData[] { new(ProjectName!, ProjectType.P_StaticImage) });
-            _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
+        public async Task OnPreviousStepClickedAsync() {
+            if (IsFromWorkSpace) {
+                DraftConfigTCS?.TrySetResult(null);
+            }
+            else {
+                _navigateComponent?.NavigateByState(DraftPanelState.GetStart);
+            }
         }
 
         #region filter
@@ -140,7 +152,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         #endregion
 
         private IEnumerable<ProjectTemplate>? _availableTemplates;
-        internal ICardComponent _cardComponent = null!;
         internal INavigateComponent _navigateComponent = null!;
         private readonly string _configPath = Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory,

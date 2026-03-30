@@ -131,17 +131,23 @@
         </ContentControl>
 
         <Grid x:Name="contentGrid" Grid.Row="1">
-            <TabView x:Name="tabViewControl"
-                VerticalAlignment="Stretch"
-                HorizontalAlignment="Stretch"
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TabView x:Name="TabViewControl"
                 Loaded="TabViewControl_Loaded"
                 TabWidthMode="SizeToContent"
-                CloseButtonOverlayMode="OnPointerOver"
                 SelectedIndex="{x:Bind _viewModel.SelectedTabIndex, Mode=TwoWay}"
                 TabItemsSource="{x:Bind _viewModel.TabViewItems}"
-                TabItemsChanged="TabViewControl_TabItemsChanged"
+                CloseButtonOverlayMode="OnPointerOver"
+                TabItemsChanged="TabViewControl_TabItemsChanged"   
+                SelectionChanged="TabViewControl_SelectionChanged"
                 AddTabButtonClick="TabViewControl_AddTabButtonClick"
-                TabCloseRequested="TabViewControl_TabCloseRequested"/>
+                TabCloseRequested="TabViewControl_TabCloseRequested" />
+
+            <Grid x:Name="workspaceContentPool" Grid.Row="1" />
         </Grid>
 
         <Grid x:Name="maskGrid" 

@@ -54,7 +54,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             if (Payload != null) {
                 Payload.TryGet(NaviPayloadKey.InkProjectSession, out _session);
                 Payload.TryGet(NaviPayloadKey.ArcPageContext, out context);
-                Consts.InitData(_session);
+                Consts.InitData();
             }
             _viewModel = new InkCanvasViewModel(_session, context);
             _tool = new ToolManager(_viewModel);
@@ -89,7 +89,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private async void OnFatalErrorOccurred(object? s, Exception e) {
             ArcLog.GetLogger<InkCanvas>().Fatal(e.Message);
-            GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), message: e.Message);
+            GlobalMessageUtil.ShowError(message: e.Message);
             await _viewModel.SaveAsync(true);
         }
 
@@ -165,7 +165,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
                 _compositeTarget?.Dispose();
                 _compositeTarget = new CanvasRenderTarget(
-                    _session.SharedDevice,
+                    InkProjectSession.SharedDevice,
                     newWidth,
                     newHeight,
                     _viewModel.Data.CanvasSize.Dpi,
@@ -189,7 +189,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
@@ -575,7 +575,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 _viewModel.Data.SelectedLayer.RenderData == null ||
                 _viewModel.Data.SelectedLayer.RenderData.RenderTarget == null) {
                 GlobalMessageUtil.ShowError(
-                    ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                     message: nameof(Constants.I18n.Draft_SI_LayerNotAvailable),
                     key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable),
                     isNeedLocalizer: true);
@@ -584,7 +583,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             if (!_viewModel.Data.SelectedLayer.IsVisible) {
                 GlobalMessageUtil.ShowWarning(
-                    ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)),
                     message: nameof(Constants.I18n.Draft_SI_LayerLocked),
                     key: nameof(Constants.I18n.Draft_SI_LayerLocked),
                     isNeedLocalizer: true);

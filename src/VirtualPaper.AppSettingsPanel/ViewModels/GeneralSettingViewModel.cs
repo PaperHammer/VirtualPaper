@@ -277,7 +277,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             if (storagePath == null) return;
 
             if (storagePath == Constants.CommonPaths.AppDataDir) {
-                GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.Dialog_Content_WallpaperDirectoryChangePathInvalid, isNeedLocalizer: true);
+                GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_WallpaperDirectoryChangePathInvalid, isNeedLocalizer: true);
                 return;
             }
 
@@ -304,7 +304,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 bool isDirChanged = await WallpaperDirectoryUpdateAsync(
                     [_userSettingsClient.Settings.WallpaperDir], destFolderPath);
                 if (!isDirChanged) {
-                    GlobalMessageUtil.ShowError(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.InfobarMsg_Err, isNeedLocalizer: true);
+                    GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_Err, isNeedLocalizer: true);
                     return;
                 }
                 #endregion
@@ -329,10 +329,10 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             catch (Exception ex) when
                         (ex is OperationCanceledException ||
                         (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                GlobalMessageUtil.ShowCanceled(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)));
+                GlobalMessageUtil.ShowCanceled();
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                GlobalMessageUtil.ShowException(ex);
                 ArcLog.GetLogger<GeneralSettingViewModel>().Error(ex.Message);
                 if (destFolderPath != string.Empty) {
                     FileUtil.EmptyDirectory(destFolderPath);
@@ -359,7 +359,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
             catch (Exception ex) {
                 allOperationsSuccessful = false;
-                GlobalMessageUtil.ShowException(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), ex);
+                GlobalMessageUtil.ShowException(ex);
             }
 
             return allOperationsSuccessful;

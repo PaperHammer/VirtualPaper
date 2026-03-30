@@ -13,9 +13,13 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
         public string SessionId { get; } = Guid.NewGuid().ToString();
         public DirectXPixelFormat SharedFormat { get; private set; }
         public CanvasAlphaMode SharedAlphaMode { get; private set; }
-        public CanvasDevice SharedDevice { get; private set; } = null!;
+        public static CanvasDevice SharedDevice { get; private set; } = null!;
         public StaticImgUndoRedoUtil UnReUtil { get; private set; } = null!;
         public StaticImgDesignFileUtil DesignFileUtil { get; private set; }
+
+        static InkProjectSession() {
+            SharedDevice = CanvasDevice.GetSharedDevice();
+        }
 
         public InkProjectSession(string idnetify) {
             DesignFileUtil = StaticImgDesignFileUtil.Create(idnetify);
@@ -24,8 +28,7 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
 
         private void Initialize() {
             SharedFormat = DirectXPixelFormat.B8G8R8A8UIntNormalized;
-            SharedAlphaMode = CanvasAlphaMode.Premultiplied;
-            SharedDevice = CanvasDevice.GetSharedDevice();
+            SharedAlphaMode = CanvasAlphaMode.Premultiplied;            
             UnReUtil = new StaticImgUndoRedoUtil();
             UnReUtil.IsSavedChanged += UnReUtil_IsSavedChanged;
         }
@@ -39,7 +42,6 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
         protected virtual void Dispose(bool disposing) {
             if (!_isDisposed) {
                 if (disposing) {
-                    SharedDevice?.Dispose();
                     UnReUtil?.Dispose();
                     SessionDisposed?.Invoke(this, EventArgs.Empty);
                 }

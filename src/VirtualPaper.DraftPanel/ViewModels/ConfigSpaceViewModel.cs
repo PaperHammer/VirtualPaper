@@ -1,6 +1,7 @@
 using System;
 using System.Windows.Input;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Data;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class ConfigSpaceViewModel : ObservableObject, IDisposable {
@@ -16,11 +17,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private bool _btnVisible;
         public bool BtnVisible { get => _btnVisible; set { _btnVisible = value; OnPropertyChanged(); } }
 
-        private Action? previousStep;
-        internal Action? PreviousStep { get => previousStep; set => previousStep = value; }
-
-        private Action<object?>? nextStep;
-        internal Action<object?>? NextStep { get => nextStep; set => nextStep = value; }
         public ICommand? PreviousStepCommand { get; private set; }
         public ICommand? NextStepCommand { get; private set; }
 
@@ -29,12 +25,25 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private void InitCommand() {
-            PreviousStepCommand = new RelayCommand(() => {
-                PreviousStep?.Invoke();
+            PreviousStepCommand = new RelayCommand(async () => {
+                if (_cardComponent?.PreviousStepAction is { } action) {
+                    await action(null);
+                }
             });
-            NextStepCommand = new RelayCommand(() => {
-                NextStep?.Invoke(null);
+            NextStepCommand = new RelayCommand(async () => {                
+                if (_cardComponent?.NextStepAction is { } action) {
+                    await action(null);
+                }
             });
+        }
+
+        internal void RefreshCardComponentData() {
+            if (_cardComponent == null) return;
+
+            PreviousStepBtnText = _cardComponent.PreviousStepBtnText;
+            NextStepBtnText = _cardComponent.NextStepBtnText;
+            IsNextEnable = _cardComponent.IsNextEnable;
+            BtnVisible = _cardComponent.BtnVisible;
         }
 
         #region dispose
@@ -43,7 +52,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             if (!_isDisposed) {
                 if (disposing) {
                     PreviousStepCommand = null;
-                    NextStep = null;
                     PreviousStepCommand = null;
                     NextStepCommand = null;
                 }
@@ -56,5 +64,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             GC.SuppressFinalize(this);
         }
         #endregion
+
+        internal ICardComponent? _cardComponent;
     }
 }

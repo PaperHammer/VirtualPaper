@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
@@ -285,7 +286,7 @@ namespace VirtualPaper {
 
                 Application.Current.Dispatcher.Invoke(() => {
                     ApplicationThemeManager.Apply(applicationTheme, updateAccent: false);
-                });
+                });                
             }
             catch (Exception e) {
                 Log.Error(e);
@@ -297,7 +298,7 @@ namespace VirtualPaper {
             if (lang == string.Empty) return;
 
             Application.Current.Dispatcher.Invoke(() => {
-                LanguageManager.Instance.ChangeLanguage(new(lang));
+                LanguageManager.Instance.ChangeLanguage(new CultureInfo(lang));
             });
         }
 

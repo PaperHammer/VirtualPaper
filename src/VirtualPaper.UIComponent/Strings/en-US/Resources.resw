@@ -1115,4 +1115,37 @@ The following words cannot be used as usernames:
   <data name="Text_Unsave" xml:space="preserve">
     <value>Don‘t save</value>
   </data>
+  <data name="Project_StaticImg_MenuBar_Text_File" xml:space="preserve">
+    <value>File(F)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_CreateNew" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_SaveAll" xml:space="preserve">
+    <value>Save all</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Exit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Edit" xml:space="preserve">
+    <value>Edit(E)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Undo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Redo" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Help" xml:space="preserve">
+    <value>Help(H)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Repo" xml:space="preserve">
+    <value>Code repo</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Manual" xml:space="preserve">
+    <value>Manual</value>
+  </data>
 </root>

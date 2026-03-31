@@ -1115,4 +1115,37 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Text_Unsave" xml:space="preserve">
     <value>不保存</value>
   </data>
+  <data name="Project_StaticImg_MenuBar_Text_File" xml:space="preserve">
+    <value>文件(F)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_CreateNew" xml:space="preserve">
+    <value>新建</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_SaveAll" xml:space="preserve">
+    <value>全部保存</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Exit" xml:space="preserve">
+    <value>退出</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Edit" xml:space="preserve">
+    <value>编辑(E)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Undo" xml:space="preserve">
+    <value>撤销</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Redo" xml:space="preserve">
+    <value>重做</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Help" xml:space="preserve">
+    <value>帮助(H)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Repo" xml:space="preserve">
+    <value>项目仓库</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_About" xml:space="preserve">
+    <value>关于</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Manual" xml:space="preserve">
+    <value>手册</value>
+  </data>
 </root>

@@ -9,69 +9,70 @@
     xmlns:cmd="using:VirtualPaper.UIComponent.Command"
     xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
     <Page.Resources>
         <cmd:KeepToLeft x:Key="LeftMenuItems">
-            <MenuBarItem Title="文件(F)"
+            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_File}"
                 KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="F"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem Text="新建">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_CreateNew}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="N"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="添加">
+                <!--<MenuFlyoutItem Text="添加">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="D"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem Text="打开">
+                </MenuFlyoutItem>-->
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_Open}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="O"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="保存" Click="MFI_Save_Clicked">
+                <MenuFlyoutItem Text="{markup:I18n Key=Text_Save}" Click="MFI_Save_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="全部保存" Click="MFI_SaveAll_Clicked">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_SaveAll}" Click="MFI_SaveAll_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control,Shift" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="退出" Click="MFI_Exit_Clicked">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Exit}" Click="MFI_Exit_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="F4"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
             </MenuBarItem>
 
-            <MenuBarItem Title="编辑(E)"
+            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Edit}"
                 KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="E"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem Text="撤销" Click="MFI_Undo_Clicked">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Undo}" Click="MFI_Undo_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="Z"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="重做" Click="MFI_Redo_Clicked">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Redo}" Click="MFI_Redo_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control, Shift" Key="Z"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
 
-                <MenuFlyoutSeparator />
+                <!--<MenuFlyoutSeparator />-->
 
-                <MenuFlyoutItem Text="剪切">
+                <!--<MenuFlyoutItem Text="剪切">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="X"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -85,30 +86,30 @@
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="V"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>
+                </MenuFlyoutItem>-->
             </MenuBarItem>
         </cmd:KeepToLeft>
 
         <cmd:KeepToRight x:Key="RightMenuItems">
-            <MenuBarItem Title="帮助(H)"
+            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Help}"
               KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="H"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem Text="仓库">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Repo}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="None" Key="R"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
 
-                <MenuFlyoutItem Text="手册">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Manual}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="None" Key="M"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
 
-                <MenuFlyoutItem Text="关于">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_About}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="None" Key="A"/>
                     </MenuFlyoutItem.KeyboardAccelerators>

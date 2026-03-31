@@ -95,6 +95,7 @@ namespace VirtualPaper.UIComponent.Templates {
 
             CrossThreadInvoker.InvokeOnUIThread(() => {
                 Status = ArcPageStatus.PreActive;
+                ArcContext.IsActive = true;
                 this.Translation = new System.Numerics.Vector3(0, 0, 0);
                 this.Opacity = 1;
                 this.IsHitTestVisible = true;

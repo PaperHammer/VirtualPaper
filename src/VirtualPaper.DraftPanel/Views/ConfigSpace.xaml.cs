@@ -79,7 +79,7 @@ namespace VirtualPaper.DraftPanel.Views {
                         FrameComp.Navigate(targetPageType, Payload);
                     }
 
-                    if (FrameComp.Content is ICardComponent cardComponent) {                        
+                    if (FrameComp.Content is ICardComponent cardComponent) {
                         cardComponent.CardUIStateChanged = () => {
                             _viewModel.RefreshCardComponentData();
                         };

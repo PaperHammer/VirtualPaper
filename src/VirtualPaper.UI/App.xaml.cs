@@ -133,8 +133,6 @@ namespace VirtualPaper.UI {
 
         private static void LogUnhandledException(Exception exception) => ArcLog.GetLogger<App>().Error(exception);
 
-        private static void LogUnhandledException(UnhandledError exception) => ArcLog.GetLogger<App>().Error(exception);
-
         //Not working ugh..
         //Issue: https://github.com/microsoft/microsoft-ui-xaml/issues/5221
         private void SetupUnhandledExceptionLogging() {

@@ -19,6 +19,7 @@ using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.TabView;
 using VirtualPaper.UIComponent.Utils;
+using Workloads.Creation.StaticImg;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
@@ -242,11 +243,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
             if (!header.IsSaved) {
                 var res = await GlobalDialogUtils.ShowDialogAsync(
-                    content: "文件包含未保存的更改。是否在关闭前保存？",
-                    title: "未保存的更改",
-                    primaryBtnText: "保存",
-                    secondaryBtnText: "不保存",
-                    closeBtnText: "取消");
+                    content: $"{(runtime as MainPage)?.Session.DesignFileUtil.FileName} {Constants.I18n.Project_Unsave_Intercept_Content}",
+                    title: $"{Constants.I18n.Project_Unsave_Intercept_Title}",
+                    primaryBtnText: $"{Constants.I18n.Text_Save}",
+                    secondaryBtnText: $"{Constants.I18n.Text_Unsave}",
+                    closeBtnText: $"{Constants.I18n.Text_Cancel}");
 
                 if (res == DialogResult.Primary) {
                     bool isSuccess = await runtime.SaveAsync();

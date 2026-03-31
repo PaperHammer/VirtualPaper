@@ -1139,9 +1139,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_StaticImg_MenuBar_Text_Help" xml:space="preserve">
     <value>帮助(H)</value>
   </data>
-  <data name="Project_StaticImg_MenuBar_Text_Repo" xml:space="preserve">
-    <value>项目仓库</value>
-  </data>
   <data name="Project_StaticImg_MenuBar_Text_About" xml:space="preserve">
     <value>关于</value>
   </data>

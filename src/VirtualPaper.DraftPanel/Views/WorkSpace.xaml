@@ -15,13 +15,12 @@
 
     <Page.Resources>
         <cmd:KeepToLeft x:Key="LeftMenuItems">
-            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_File}"
-                KeyboardAcceleratorPlacementMode="Hidden">
+            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_File}" KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="F"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_CreateNew}">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_CreateNew}" Click="MFI_CreateNew_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="N"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -31,17 +30,17 @@
                         <KeyboardAccelerator Modifiers="Control" Key="D"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>-->
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_Open}">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_Open}" >
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="O"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="{markup:I18n Key=Text_Save}" Click="MFI_Save_Clicked">
+                <MenuFlyoutItem Text="{markup:I18n Key=Text_Save}" Command="{x:Bind _viewModel.MFI_SaveCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_SaveAll}" Click="MFI_SaveAll_Clicked">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_SaveAll}" Command="{x:Bind _viewModel.MFI_SaveAllCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control,Shift" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -53,18 +52,17 @@
                 </MenuFlyoutItem>
             </MenuBarItem>
 
-            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Edit}"
-                KeyboardAcceleratorPlacementMode="Hidden">
+            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Edit}" KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="E"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Undo}" Click="MFI_Undo_Clicked">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Undo}" Command="{x:Bind _viewModel.MFI_UndoCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="Z"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Redo}" Click="MFI_Redo_Clicked">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Redo}" Command="{x:Bind _viewModel.MFI_RedoCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control, Shift" Key="Z"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -91,25 +89,18 @@
         </cmd:KeepToLeft>
 
         <cmd:KeepToRight x:Key="RightMenuItems">
-            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Help}"
-              KeyboardAcceleratorPlacementMode="Hidden">
+            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Help}" KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="H"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Repo}">
-                    <MenuFlyoutItem.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="None" Key="R"/>
-                    </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>
-
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Manual}">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Manual}" Command="{x:Bind _viewModel.MFI_ManualCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="None" Key="M"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
 
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_About}">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_About}" Command="{x:Bind _viewModel.MFI_AboutCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="None" Key="A"/>
                     </MenuFlyoutItem.KeyboardAccelerators>

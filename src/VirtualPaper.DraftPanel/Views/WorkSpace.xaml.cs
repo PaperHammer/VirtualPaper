@@ -75,8 +75,7 @@ namespace VirtualPaper.DraftPanel.Views {
             }
             else if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems != null) {
                 foreach (ArcTabViewItem oldItem in e.OldItems) {
-                    if (oldItem.Tag is IRuntime runtime &&
-                        _tabToFrame.TryGetValue(oldItem, out var frame)) {
+                    if (_tabToFrame.TryGetValue(oldItem, out var frame)) {
                         workspaceContentPool.Children.Remove(frame);
                         _tabToFrame.Remove(oldItem);
                         frame.Content = null;
@@ -108,6 +107,10 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         private async void TabViewControl_AddTabButtonClick(TabView sender, object args) {
+            await CreateNewAsync();
+        }
+
+        private async Task CreateNewAsync() {
             Payload?.Set(NaviPayloadKey.TargetDraftPanelState, DraftPanelState.DraftConfig);
             Payload?.Set(NaviPayloadKey.IsFromWorkSpace, true);
 
@@ -124,6 +127,10 @@ namespace VirtualPaper.DraftPanel.Views {
                 HideOverlayPage();
                 ArcLog.GetLogger<WorkSpace>().Error(ex);
             }
+        }
+
+        private async void MFI_CreateNew_Clicked(object sender, RoutedEventArgs e) {
+            await CreateNewAsync();
         }
         #endregion
 
@@ -153,22 +160,6 @@ namespace VirtualPaper.DraftPanel.Views {
 
         private async void MFI_Exit_Clicked(object sender, RoutedEventArgs e) {
             await _viewModel.ExitAsync();
-        }
-
-        private async void MFI_Save_Clicked(object sender, RoutedEventArgs e) {
-            await _viewModel.SaveAsync();
-        }
-
-        private async void MFI_SaveAll_Clicked(object sender, RoutedEventArgs e) {
-            await _viewModel.SaveAllAsync();
-        }
-
-        private async void MFI_Undo_Clicked(object sender, RoutedEventArgs e) {
-            await _viewModel.UndoAsync();
-        }
-
-        private async void MFI_Redo_Clicked(object sender, RoutedEventArgs e) {
-            await _viewModel.RedoAsync();
         }
 
         private readonly WorkSpaceViewModel _viewModel;

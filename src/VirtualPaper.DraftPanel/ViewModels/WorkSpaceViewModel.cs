@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
@@ -32,8 +33,39 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             set { if (_selectedTabIndex == value) return; _selectedTabIndex = value; OnPropertyChanged(); }
         }
 
+        public ICommand? MFI_SaveCommand { get; private set; }
+        public ICommand? MFI_SaveAllCommand { get; private set; }
+        public ICommand? MFI_UndoCommand { get; private set; }
+        public ICommand? MFI_RedoCommand { get; private set; }
+        public ICommand? MFI_ManualCommand { get; private set; }
+        public ICommand? MFI_AboutCommand { get; private set; }
+
         public WorkSpaceViewModel(IUserSettingsClient userSettings) {
             this._userSettings = userSettings;
+            InitCommand();
+        }
+
+        private void InitCommand() {
+            MFI_SaveCommand = new RelayCommand(async () => {
+                await SaveAsync();
+            });
+            MFI_SaveAllCommand = new RelayCommand(async () => {
+                await SaveAllAsync();
+            });
+            MFI_UndoCommand = new RelayCommand(async () => {
+                await UndoAsync();
+            });
+            MFI_RedoCommand = new RelayCommand(async () => {
+                await RedoAsync();
+            });
+            MFI_ManualCommand = new RelayCommand(async () => {
+                var uri = new Uri("https://github.com/PaperHammer/VirtualPaper/wiki");
+                await Windows.System.Launcher.LaunchUriAsync(uri);
+            });
+            MFI_AboutCommand = new RelayCommand(async () => {
+                var uri = new Uri("https://github.com/PaperHammer/VirtualPaper");
+                await Windows.System.Launcher.LaunchUriAsync(uri);
+            });
         }
 
         internal void OnTabItemsChanged(TabView sender, Windows.Foundation.Collections.IVectorChangedEventArgs args) {

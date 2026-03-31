@@ -1139,9 +1139,6 @@ The following words cannot be used as usernames:
   <data name="Project_StaticImg_MenuBar_Text_Help" xml:space="preserve">
     <value>Help(H)</value>
   </data>
-  <data name="Project_StaticImg_MenuBar_Text_Repo" xml:space="preserve">
-    <value>Code repo</value>
-  </data>
   <data name="Project_StaticImg_MenuBar_Text_About" xml:space="preserve">
     <value>About</value>
   </data>

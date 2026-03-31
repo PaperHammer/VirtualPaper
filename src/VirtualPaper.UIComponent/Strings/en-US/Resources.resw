@@ -1145,4 +1145,7 @@ The following words cannot be used as usernames:
   <data name="Project_StaticImg_MenuBar_Text_Manual" xml:space="preserve">
     <value>Manual</value>
   </data>
+  <data name="Project_StaticImg_MenuBar_Text_Export" xml:space="preserve">
+    <value>Export</value>
+  </data>
 </root>

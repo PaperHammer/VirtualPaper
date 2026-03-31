@@ -6,5 +6,6 @@ namespace VirtualPaper.Common.Runtime.Draft {
         Task<bool> SaveAsync();
         Task UndoAsync();
         Task RedoAsync();
+        Task ExportAsync();
     }
 }

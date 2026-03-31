@@ -48,6 +48,7 @@ namespace VirtualPaper.DraftPanel.Views {
 
         private void FrameComp_Loaded(object sender, RoutedEventArgs e) {
             NavigateByState(_targetDraftPanelState);
+            Payload?.Set(NaviPayloadKey.TargetDraftPanelState, DraftPanelState.GetStart);
         }
 
         public void NavigateByState(DraftPanelState nextState, params NaviPayloadData[] naviPayloadDatas) {

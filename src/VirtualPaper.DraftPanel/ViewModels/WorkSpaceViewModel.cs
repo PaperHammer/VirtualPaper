@@ -35,6 +35,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         public ICommand? MFI_SaveCommand { get; private set; }
         public ICommand? MFI_SaveAllCommand { get; private set; }
+        public ICommand? MFI_ExportCommand { get; private set; }
+        public ICommand? MFI_ExitCommand { get; private set; }
         public ICommand? MFI_UndoCommand { get; private set; }
         public ICommand? MFI_RedoCommand { get; private set; }
         public ICommand? MFI_ManualCommand { get; private set; }
@@ -51,6 +53,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             });
             MFI_SaveAllCommand = new RelayCommand(async () => {
                 await SaveAllAsync();
+            });
+            MFI_ExportCommand = new RelayCommand(async () => {
+                await ExportAsync();
             });
             MFI_UndoCommand = new RelayCommand(async () => {
                 await UndoAsync();
@@ -69,7 +74,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         internal void OnTabItemsChanged(TabView sender, Windows.Foundation.Collections.IVectorChangedEventArgs args) {
-            // 如果集合为空，则取消选择
             if (TabViewItems.Count == 0) {
                 SelectedTabIndex = -1;
                 return;
@@ -109,18 +113,13 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         #region ui events
-        internal async Task SaveAsync() => await ExecuteRuntimeCommandAsync(x => x.SaveAsync());
+        private async Task SaveAsync() => await ExecuteRuntimeCommandAsync(x => x.SaveAsync());
 
-        internal async Task SaveAllAsync() => await Task.WhenAll(
-            TabViewItems.Select(item => ExecuteRuntimeCommandAsync(x => x.SaveAsync(), item)));
+        private async Task SaveAllAsync() => await Task.WhenAll(TabViewItems.Select(item => ExecuteRuntimeCommandAsync(x => x.SaveAsync(), item)));
 
-        internal async Task ExitAsync() {
-            await SaveAllAsync();
-        }
+        private async Task UndoAsync() => await ExecuteRuntimeCommandAsync(x => x.UndoAsync());
 
-        internal async Task UndoAsync() => await ExecuteRuntimeCommandAsync(x => x.UndoAsync());
-
-        internal async Task RedoAsync() => await ExecuteRuntimeCommandAsync(x => x.RedoAsync());
+        private async Task RedoAsync() => await ExecuteRuntimeCommandAsync(x => x.RedoAsync());
 
         private Task ExecuteRuntimeCommandAsync(Func<IRuntime, Task> command, TabViewItem? specificItem = null) {
             var targetItem = specificItem ?? TabViewItems.ElementAtOrDefault(SelectedTabIndex);
@@ -128,9 +127,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 ? command(runtime)
                 : Task.CompletedTask;
         }
+
+        private async Task ExportAsync() => await ExecuteRuntimeCommandAsync(x => x.ExportAsync());
         #endregion
 
-        #region project        
+        #region project
         internal async Task AddNewItemsAsync(PreProjectData[]? predatas) {
             if (predatas == null || predatas.Length == 0) return;
 
@@ -159,7 +160,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     }
                 }
                 catch (Exception ex) {
-                    // 单个文件加载失败不影响其他文件
                     ArcLog.GetLogger<WorkSpaceViewModel>().Error($"Failed to process project item: {data.Identity}", ex);
                     GlobalMessageUtil.ShowException(ex);
                 }
@@ -260,9 +260,25 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             if (!_isDisposed) {
                 if (disposing) {
                     _runtimeToArcTab.Clear();
+                    TabViewItems.Clear();
+                    _middleMenuItems.Clear();
+                    _tempRecentUsed.Clear();
+                    _runtimeToArcTab.Clear();
+                    ClearCommand();
                 }
                 _isDisposed = true;
             }
+        }
+
+        private void ClearCommand() {
+            MFI_SaveCommand = null;
+            MFI_SaveAllCommand = null;
+            MFI_ExportCommand = null;
+            MFI_ExitCommand = null;
+            MFI_UndoCommand = null;
+            MFI_RedoCommand = null;
+            MFI_ManualCommand = null;
+            MFI_AboutCommand = null;
         }
 
         public void Dispose() {
@@ -270,28 +286,64 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             GC.SuppressFinalize(this);
         }
 
+        internal async IAsyncEnumerable<ArcTabViewItem> HandleExitItemsAsync() {
+            var tabsToClose = TabViewItems.ToList();
+
+            foreach (var tabItem in tabsToClose) {
+                if (tabItem.Tag is not IRuntime runtime) continue;
+
+                bool shouldClose = false;
+                if (_runtimeToArcTab.TryGetValue(runtime, out var value)) {
+                    var header = value.Header;
+
+                    if (!header.IsSaved) {
+                        var res = await GlobalDialogUtils.ShowDialogAsync(
+                            content: $"{(runtime as MainPage)?.Session.DesignFileUtil.FileName} {nameof(Constants.I18n.Project_Unsave_Intercept_Content)}",
+                            title: $"{nameof(Constants.I18n.Project_Unsave_Intercept_Title)}",
+                            primaryBtnText: $"{nameof(Constants.I18n.Text_Save)}",
+                            secondaryBtnText: $"{nameof(Constants.I18n.Text_Unsave)}"
+                        );
+
+                        if (res == DialogResult.Primary) {
+                            shouldClose = await runtime.SaveAsync();
+                        }
+                        else if (res == DialogResult.Secondary) {
+                            shouldClose = true;
+                        }
+                    }
+                }
+
+                if (shouldClose) {
+                    CloseWorkSpaceTab(runtime, tabItem);
+                    yield return tabItem;
+                }
+            }
+        }
+
         internal async Task<bool> CheckSaveStatusAsync(IRuntime runtime) {
+            bool flag = false;
             var header = _runtimeToArcTab[runtime].Header;
 
             if (!header.IsSaved) {
                 var res = await GlobalDialogUtils.ShowDialogAsync(
-                    content: $"{(runtime as MainPage)?.Session.DesignFileUtil.FileName} {Constants.I18n.Project_Unsave_Intercept_Content}",
-                    title: $"{Constants.I18n.Project_Unsave_Intercept_Title}",
-                    primaryBtnText: $"{Constants.I18n.Text_Save}",
-                    secondaryBtnText: $"{Constants.I18n.Text_Unsave}",
-                    closeBtnText: $"{Constants.I18n.Text_Cancel}");
+                    content: $"{(runtime as MainPage)?.Session.DesignFileUtil.FileName} {nameof(Constants.I18n.Project_Unsave_Intercept_Content)}",
+                    title: $"{nameof(Constants.I18n.Project_Unsave_Intercept_Title)}",
+                    primaryBtnText: $"{nameof(Constants.I18n.Text_Save)}",
+                    secondaryBtnText: $"{nameof(Constants.I18n.Text_Unsave)}",
+                    closeBtnText: $"{nameof(Constants.I18n.Text_Cancel)}");
 
                 if (res == DialogResult.Primary) {
-                    bool isSuccess = await runtime.SaveAsync();
-                    return isSuccess;
+                    flag = await runtime.SaveAsync();
                 }
-                else if (res == DialogResult.None) {
-                    return false;
+                else if (res == DialogResult.Secondary) {
+                    flag = true;
                 }
             }
 
-            CloseWorkSpaceTab(runtime);
-            return true;
+            if (flag) {
+                CloseWorkSpaceTab(runtime, _runtimeToArcTab[runtime].Item);
+            }
+            return flag;
         }
 
         internal async Task<bool> CheckAllSaveStatusAsync() {
@@ -317,15 +369,16 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     }
                 }
 
-                CloseWorkSpaceTab(runtime);
+                CloseWorkSpaceTab(runtime, kvp.Value.Item);
             }
 
             return true;
         }
 
-        private void CloseWorkSpaceTab(IRuntime runtime) {
+        private void CloseWorkSpaceTab(IRuntime runtime, ArcTabViewItem item) {
             runtime.IsSavedChanged -= Runtime_IsSavedChanged;
             _runtimeToArcTab.Remove(runtime);
+            TabViewItems.Remove(item);
         }
 
         internal IRuntime? GetSelectedItem() {

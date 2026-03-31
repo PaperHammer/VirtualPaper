@@ -92,7 +92,7 @@ namespace VirtualPaper.UI {
                 .AddTransient<ConfigSpaceViewModel>()
                 .AddTransient<GetStartViewModel>()
                 .AddTransient<DraftConfigViewModel>()
-                .AddSingleton<WorkSpaceViewModel>()
+                .AddTransient<WorkSpaceViewModel>()
 
                 .AddSingleton<WallpaperIndexService>()
 

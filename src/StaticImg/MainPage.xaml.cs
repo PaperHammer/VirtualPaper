@@ -148,6 +148,16 @@ namespace Workloads.Creation.StaticImg {
                 GlobalMessageUtil.ShowException(ex);
             }
         }
+
+        public async Task ExportAsync() {
+            try {
+                // todo
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+            }
+        }
         #endregion
 
         private volatile bool _frameTimeRunning = false;

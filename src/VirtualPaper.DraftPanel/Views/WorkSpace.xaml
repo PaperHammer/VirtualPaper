@@ -11,6 +11,7 @@
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
+    Unloaded="Page_Unloaded"
     NavigationCacheMode="Enabled">
 
     <Page.Resources>
@@ -43,6 +44,11 @@
                 <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_SaveAll}" Command="{x:Bind _viewModel.MFI_SaveAllCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control,Shift" Key="S"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Export}" Command="{x:Bind _viewModel.MFI_ExportCommand}">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control,Shift,Menu" Key="W"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
                 <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Exit}" Click="MFI_Exit_Clicked">

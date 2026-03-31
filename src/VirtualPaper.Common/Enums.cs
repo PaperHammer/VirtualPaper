@@ -154,6 +154,7 @@ namespace VirtualPaper.Common {
         DraftConfig,
         WorkSpace,
         ConfigSpace,
+        ExportConfig,
     }
 
     public enum AccountPanelState {

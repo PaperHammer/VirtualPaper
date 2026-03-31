@@ -46,7 +46,7 @@
                         <KeyboardAccelerator Modifiers="Control,Shift" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Export}" Command="{x:Bind _viewModel.MFI_ExportCommand}">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Export}" Click="MFI_Export_Cliked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control,Shift,Menu" Key="W"/>
                     </MenuFlyoutItem.KeyboardAccelerators>

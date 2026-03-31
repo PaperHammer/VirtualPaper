@@ -19,6 +19,7 @@ using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using Workloads.Creation.StaticImg.Views.Tools;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -59,44 +60,17 @@ namespace VirtualPaper.DraftPanel.Views {
             return await _viewModel.CheckAllSaveStatusAsync();
         }
 
+        #region add and selection
         private async void TabViewControl_Loaded(object sender, RoutedEventArgs e) {
             if (_preProjectDatas == null) return;
             await _viewModel.AddNewItemsAsync(_preProjectDatas);
         }
 
         private void TabViewItems_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
-            //if (e.Action == NotifyCollectionChangedAction.Add && e.NewItems != null) {
-            //    foreach (ArcTabViewItem newItem in e.NewItems) {
-            //        if (newItem.Tag is IRuntime runtime) {
-            //            var frame = new Frame {
-            //                Content = runtime,
-            //                Visibility = Visibility.Collapsed
-            //            };
-            //            _tabToFrame[newItem] = frame;
-            //            workspaceContentPool.Children.Add(frame);
-            //        }
-            //    }
-            //}
-            //else if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems != null) {
-            //    foreach (ArcTabViewItem oldItem in e.OldItems) {
-            //        if (_tabToFrame.TryGetValue(oldItem, out var frame)) {
-            //            workspaceContentPool.Children.Remove(frame);
-            //            _tabToFrame.Remove(oldItem);
-            //            frame.Content = null;
-            //        }
-            //    }
-            //}
             SyncWorkspaceUI();
         }
 
         private void TabViewControl_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            //if (e.RemovedItems.FirstOrDefault() is ArcTabViewItem removedItem && _tabToFrame.TryGetValue(removedItem, out var removedFrame)) {
-            //    removedFrame.Visibility = Visibility.Collapsed;
-            //}
-
-            //if (e.AddedItems.FirstOrDefault() is ArcTabViewItem addedItem && _tabToFrame.TryGetValue(addedItem, out var addedFrame)) {
-            //    addedFrame.Visibility = Visibility.Visible;
-            //}
             SyncWorkspaceUI();
         }
 
@@ -133,8 +107,9 @@ namespace VirtualPaper.DraftPanel.Views {
                 kvp.Value.Visibility = (kvp.Key == selectedItem) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
+        #endregion
 
-        #region create new
+        #region overlay page
         public void ShowOverlayPage(Type pageType, object? parameter) {
             maskGrid.Visibility = Visibility.Visible;
             overlayFrame.Navigate(pageType, parameter);
@@ -154,7 +129,9 @@ namespace VirtualPaper.DraftPanel.Views {
         private void OverlayFrame_Tapped(object sender, TappedRoutedEventArgs e) {
             e.Handled = true;
         }
+        #endregion
 
+        #region create new
         private async void TabViewControl_AddTabButtonClick(TabView sender, object args) {
             await GoToCreateNewAsync();
         }
@@ -183,6 +160,7 @@ namespace VirtualPaper.DraftPanel.Views {
         }
         #endregion
 
+        #region close
         private async void TabViewControl_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args) {
             if (args.Tab is not ArcTabViewItem tabViewItem || tabViewItem.Tag is not IRuntime runtime) return;
             await TryCloseItemAsync(tabViewItem, runtime);
@@ -211,7 +189,33 @@ namespace VirtualPaper.DraftPanel.Views {
                 _tabToFrame.Remove(tabViewItem);
                 frame.Content = null;
             }
+        }        
+        #endregion
+
+        #region export        
+        private async void MFI_Export_Cliked(object sender, RoutedEventArgs e) {
+            await GoToExportAsync();
         }
+
+        private async Task GoToExportAsync() {
+            Payload?.Set(NaviPayloadKey.TargetDraftPanelState, DraftPanelState.ExportConfig);
+            Payload?.Set(NaviPayloadKey.IsFromWorkSpace, true);
+
+            var tcs = new TaskCompletionSource<ExportDataStaticImg>();
+            Payload?.Set(NaviPayloadKey.DraftConfigTCS, tcs);
+            ShowOverlayPage(typeof(ExportPage), Payload);
+
+            try {
+                var result = await tcs.Task;
+                await _viewModel.ExportAsync(result);
+                HideOverlayPage();
+            }
+            catch (Exception ex) {
+                HideOverlayPage();
+                ArcLog.GetLogger<WorkSpace>().Error(ex);
+            }
+        }
+        #endregion
 
         private Draft? _draftPage;
         private readonly WorkSpaceViewModel _viewModel;

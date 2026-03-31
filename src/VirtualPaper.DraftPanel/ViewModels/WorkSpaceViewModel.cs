@@ -20,7 +20,6 @@ using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.TabView;
 using VirtualPaper.UIComponent.Utils;
-using Workloads.Creation.StaticImg;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
@@ -35,7 +34,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         public ICommand? MFI_SaveCommand { get; private set; }
         public ICommand? MFI_SaveAllCommand { get; private set; }
-        public ICommand? MFI_ExportCommand { get; private set; }
+        //public ICommand? MFI_ExportCommand { get; private set; }
         public ICommand? MFI_ExitCommand { get; private set; }
         public ICommand? MFI_UndoCommand { get; private set; }
         public ICommand? MFI_RedoCommand { get; private set; }
@@ -54,9 +53,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             MFI_SaveAllCommand = new RelayCommand(async () => {
                 await SaveAllAsync();
             });
-            MFI_ExportCommand = new RelayCommand(async () => {
-                await ExportAsync();
-            });
+            //MFI_ExportCommand = new RelayCommand(async () => {
+            //    await ExportAsync();
+            //});
             MFI_UndoCommand = new RelayCommand(async () => {
                 await UndoAsync();
             });
@@ -128,7 +127,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 : Task.CompletedTask;
         }
 
-        private async Task ExportAsync() => await ExecuteRuntimeCommandAsync(x => x.ExportAsync());
+        internal async Task ExportAsync(ExportDataStaticImg data) => await ExecuteRuntimeCommandAsync(x => x.ExportAsync(data));
         #endregion
 
         #region project
@@ -273,7 +272,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private void ClearCommand() {
             MFI_SaveCommand = null;
             MFI_SaveAllCommand = null;
-            MFI_ExportCommand = null;
             MFI_ExitCommand = null;
             MFI_UndoCommand = null;
             MFI_RedoCommand = null;
@@ -298,7 +296,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
                     if (!header.IsSaved) {
                         var res = await GlobalDialogUtils.ShowDialogAsync(
-                            content: $"{(runtime as MainPage)?.Session.DesignFileUtil.FileName} {nameof(Constants.I18n.Project_Unsave_Intercept_Content)}",
+                            content: $"{(runtime as Workloads.Creation.StaticImg.MainPage)?.Session.DesignFileUtil.FileName} {nameof(Constants.I18n.Project_Unsave_Intercept_Content)}",
                             title: $"{nameof(Constants.I18n.Project_Unsave_Intercept_Title)}",
                             primaryBtnText: $"{nameof(Constants.I18n.Text_Save)}",
                             secondaryBtnText: $"{nameof(Constants.I18n.Text_Unsave)}"
@@ -326,7 +324,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
             if (!header.IsSaved) {
                 var res = await GlobalDialogUtils.ShowDialogAsync(
-                    content: $"{(runtime as MainPage)?.Session.DesignFileUtil.FileName} {nameof(Constants.I18n.Project_Unsave_Intercept_Content)}",
+                    content: $"{(runtime as Workloads.Creation.StaticImg.MainPage)?.Session.DesignFileUtil.FileName} {nameof(Constants.I18n.Project_Unsave_Intercept_Content)}",
                     title: $"{nameof(Constants.I18n.Project_Unsave_Intercept_Title)}",
                     primaryBtnText: $"{nameof(Constants.I18n.Text_Save)}",
                     secondaryBtnText: $"{nameof(Constants.I18n.Text_Unsave)}",

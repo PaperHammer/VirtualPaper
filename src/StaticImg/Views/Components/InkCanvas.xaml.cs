@@ -14,6 +14,7 @@ using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.UIComponent.Collection;
 using VirtualPaper.UIComponent.Context;
@@ -95,6 +96,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         internal async Task<bool> SaveAsync() {
             return await _viewModel.SaveAsync();
+        }
+
+        internal async Task ExportAsync(ExportDataStaticImg data) {
+            await _viewModel.Data.SelectedLayer.RenderData.ExportAsync(data);
         }
 
         #region children event

@@ -149,9 +149,9 @@ namespace Workloads.Creation.StaticImg {
             }
         }
 
-        public async Task ExportAsync() {
+        public async Task ExportAsync(ExportDataStaticImg data) {
             try {
-                // todo
+                await inkCanvas.ExportAsync(data);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);

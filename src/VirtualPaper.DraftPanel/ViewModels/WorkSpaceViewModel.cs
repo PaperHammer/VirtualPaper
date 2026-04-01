@@ -10,7 +10,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
@@ -21,6 +20,8 @@ using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.TabView;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Models.SerializableData;
+using Workloads.Utils.DraftUtils.Interfaces;
+using Workloads.Utils.DraftUtils.Models;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject, IDisposable {

@@ -139,35 +139,7 @@ namespace VirtualPaper.Common {
     public static class FileExtension {
         public const string FE_Design = ".vpd";
     }
-    #endregion
-
-    #region draft-panel
-    public enum ConfigSpacePanelType {
-        OpenVpd,
-        OpenFile,
-        NewVpd,
-    }
-    
-    public enum DraftPanelState {
-        GetStart,
-        //ProjectConfig,
-        DraftConfig,
-        WorkSpace,
-        ConfigSpace,
-        ExportConfig,
-    }
-
-    public enum AccountPanelState {
-        Login,
-        Register,
-        Passport,
-        UserCenter,
-    }
-    
-    public enum GalleryPanelState {
-        WallpaperLib
-    }
-    #endregion
+    #endregion    
 
     #region common
     public enum VisualStates {

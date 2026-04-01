@@ -11,7 +11,6 @@ using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DraftPanel.Model;
-using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.UIComponent;
@@ -19,6 +18,7 @@ using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Utils;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
+using Workloads.Utils.DraftUtils.Interfaces;
 
 // To learn more about WinUI, the WinUI draft structure,
 // and more about our draft templates, see: http://aka.ms/winui-draft-info.

@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace VirtualPaper.Common.Utils {
     public static partial class ComplianceUtil {
-        public static bool IsValidFolderPath(string path, int minLen = 3, int maxLen = 260) {
+        public static bool IsValidFolderPath(string? path, int minLen = 3, int maxLen = 260) {
             if (string.IsNullOrEmpty(path)) {
                 return false;
             }

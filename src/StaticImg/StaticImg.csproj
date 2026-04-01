@@ -10,6 +10,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<None Remove="MainPage.xaml" />
+		<None Remove="Views\Components\Export.xaml" />
 		<None Remove="Views\Components\InkCanvas.xaml" />
 		<None Remove="Views\Components\LayerItem.xaml" />
 		<None Remove="Views\Tools\BottomDataBarControl.xaml" />
@@ -30,7 +31,12 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
 	  <ProjectReference Include="..\VirtualPaper.Shader\VirtualPaper.Shader.csproj" />
-	  <ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
+	  <ProjectReference Include="..\Workloads.Utils\Workloads.Utils.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Page Update="Views\Components\Export.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 	<ItemGroup>
 		<Page Update="Views\Tools\BottomDataBarControl.xaml">

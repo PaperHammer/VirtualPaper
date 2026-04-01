@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.Archive;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
@@ -15,6 +14,7 @@ using Windows.Graphics.DirectX;
 using Windows.Storage.Streams;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Extensions;
+using Workloads.Utils.DraftUtils.Models;
 
 namespace Workloads.Creation.StaticImg.Models {
     public partial class InkRenderData : IDisposable {

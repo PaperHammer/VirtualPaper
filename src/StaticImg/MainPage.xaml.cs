@@ -3,12 +3,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
 using VirtualPaper.Shader;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Core.Utils;
+using Workloads.Utils.DraftUtils.Interfaces;
+using Workloads.Utils.DraftUtils.Models;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

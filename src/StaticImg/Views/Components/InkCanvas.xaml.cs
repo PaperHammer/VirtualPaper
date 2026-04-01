@@ -14,7 +14,6 @@ using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.UIComponent.Collection;
 using VirtualPaper.UIComponent.Context;
@@ -31,6 +30,7 @@ using Workloads.Creation.StaticImg.Models.ToolItems;
 using Workloads.Creation.StaticImg.Utils;
 using Workloads.Creation.StaticImg.ViewModels;
 using Workloads.Creation.StaticImg.Views.Tools;
+using Workloads.Utils.DraftUtils.Models;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

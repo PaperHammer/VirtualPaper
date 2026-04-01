@@ -10,10 +10,10 @@ using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Model;
-using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
+using Workloads.Utils.DraftUtils.Interfaces;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class DraftConfigViewModel : ObservableObject {

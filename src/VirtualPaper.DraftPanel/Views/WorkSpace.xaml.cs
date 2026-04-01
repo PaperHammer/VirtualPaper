@@ -10,7 +10,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.Common.Runtime.Draft;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.ViewModels;
@@ -20,6 +19,8 @@ using VirtualPaper.UIComponent.Navigation.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Views.Tools;
+using Workloads.Utils.DraftUtils.Interfaces;
+using Workloads.Utils.DraftUtils.Models;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

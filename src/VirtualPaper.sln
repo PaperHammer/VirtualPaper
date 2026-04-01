@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.2.11415.280 d18.0
+VisualStudioVersion = 18.2.11415.280
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtualPaper", "VirtualPaper\VirtualPaper.csproj", "{A118069A-BB34-499B-BF87-652F405C1E29}"
 EndProject
@@ -46,6 +46,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualPaper.PlayerWeb", "VirtualPaper.PlayerWeb\VirtualPaper.PlayerWeb.csproj", "{CAAC63E7-6598-43FC-B56F-322A918B89A1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualPaper.FuntionTest", "VirtualPaper.FuntionTest\VirtualPaper.FuntionTest.csproj", "{07D724A8-FC39-EDB7-7E12-7A94AC903FA2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workloads.Utils", "Workloads.Utils\Workloads.Utils.csproj", "{EA7D0097-68E0-4529-B981-018C939BC060}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -427,6 +429,26 @@ Global
 		{07D724A8-FC39-EDB7-7E12-7A94AC903FA2}.Release|x64.Build.0 = Release|Any CPU
 		{07D724A8-FC39-EDB7-7E12-7A94AC903FA2}.Release|x86.ActiveCfg = Release|Any CPU
 		{07D724A8-FC39-EDB7-7E12-7A94AC903FA2}.Release|x86.Build.0 = Release|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Debug|ARM.Build.0 = Debug|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Debug|x64.Build.0 = Debug|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Debug|x86.Build.0 = Debug|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Release|ARM.ActiveCfg = Release|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Release|ARM.Build.0 = Release|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Release|ARM64.Build.0 = Release|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Release|x64.ActiveCfg = Release|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Release|x64.Build.0 = Release|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Release|x86.ActiveCfg = Release|Any CPU
+		{EA7D0097-68E0-4529-B981-018C939BC060}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -439,9 +461,10 @@ Global
 		{1E39451E-5B60-4D2E-A1E1-9E22D61F579A} = {46DB997B-6F32-40E9-A639-28DE474DB5C1}
 		{2E60E704-2F02-512D-3A0A-FE56A340ED5B} = {D252A1EE-5244-47E0-AE85-94E193E177E2}
 		{CAAC63E7-6598-43FC-B56F-322A918B89A1} = {D252A1EE-5244-47E0-AE85-94E193E177E2}
+		{EA7D0097-68E0-4529-B981-018C939BC060} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		RESX_NeutralResourcesLanguage = zh-CN
 		SolutionGuid = {C0DA4809-0B7F-4C80-8462-DE0981798196}
+		RESX_NeutralResourcesLanguage = zh-CN
 	EndGlobalSection
 EndGlobal

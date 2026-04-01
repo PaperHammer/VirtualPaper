@@ -2,13 +2,13 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Views;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Navigation.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using Workloads.Utils.DraftUtils.Interfaces;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

@@ -20,6 +20,7 @@ using VirtualPaper.WpSettingsPanel.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.Core;
 using WinUIEx;
+using Workloads.Creation.StaticImg.ViewModels;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -93,6 +94,7 @@ namespace VirtualPaper.UI {
                 .AddTransient<GetStartViewModel>()
                 .AddTransient<DraftConfigViewModel>()
                 .AddTransient<WorkSpaceViewModel>()
+                .AddTransient<ExportViewModel>()
 
                 .AddSingleton<WallpaperIndexService>()
 

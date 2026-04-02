@@ -41,7 +41,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             if (e.Parameter is FrameworkPayload payload) {
                 if (payload.TryGet(NaviPayloadKey.INavigateComponent, out _viewModel._navigateComponent)) {
                     _viewModel.DraftConfigTCS = payload.Get<TaskCompletionSource<ExportDataStaticImg?>>(NaviPayloadKey.DraftConfigTCS);
-                    await _viewModel.InitContentAsync();
+                    string fileName = payload.Get<string>(NaviPayloadKey.StaticImgFileName)!;
+                    await _viewModel.InitContentAsync(fileName);
                     _viewModel.UpdateCardComponentUI();
                 }
             }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
@@ -98,8 +99,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             return await _viewModel.SaveAsync();
         }
 
-        internal async Task ExportAsync(ExportDataStaticImg data) {
-            await _viewModel.Data.SelectedLayer.RenderData.ExportAsync(data);
+        internal IAsyncEnumerable<string> ExportAsync(ExportDataStaticImg data, CancellationToken token = default) {
+            return _viewModel.Data.SelectedLayer.RenderData.ExportAsync(data, token);
         }
 
         #region children event

@@ -1,7 +1,9 @@
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
@@ -349,106 +351,99 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         /// <summary>
-        /// 将当前渲染数据导出为常规图片格式
+        /// 将当前渲染数据导出为常规图片格式（支持异步流进度上报）
         /// </summary>
-        /// <param name="data">导出参数数据包，包含路径、名称、格式、比例和精度等</param>
-        public async Task ExportAsync(ExportDataStaticImg data) {
+        /// <param name="data">导出参数数据包</param>
+        /// <param name="cancellationToken">取消令牌</param>
+        public async IAsyncEnumerable<string> ExportAsync(
+            ExportDataStaticImg data,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default) {
             if (RenderTarget == null) {
                 ArcLog.GetLogger<InkRenderData>().Error("RenderTarget is null, cannot export image.");
                 GlobalMessageUtil.ShowError("RenderTarget is null, cannot export image.");
-                return;
+                yield break;
             }
 
-            if (data.ScalePercentage <= 0) {
-                GlobalMessageUtil.ShowError("Scale percentage must be greater than 0.");
-                return;
+            if (data.ScalePercentage == null || data.ScalePercentage.Length == 0) {
+                GlobalMessageUtil.ShowError("No scale percentage selected.");
+                yield break;
             }
 
-            // 根据缩放比例计算目标尺寸
-            float scale = (float)(data.ScalePercentage / 100.0);
-            float targetWidth = (float)(RenderTarget.Size.Width * scale);
-            float targetHeight = (float)(RenderTarget.Size.Height * scale);
-
-            // 创建临时画布用于绘制（如果需要缩放或加背景）
-            using var tempTarget = new CanvasRenderTarget(
-                InkProjectSession.SharedDevice,
-                targetWidth,
-                targetHeight,
-                RenderTarget.Dpi,
-                DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                CanvasAlphaMode.Premultiplied);
-
-            using (var ds = tempTarget.CreateDrawingSession()) {
-                // 传统 Jpeg 不支持透明度，强制填充白色背景，避免透明变成黑色
-                // JpegXR 支持透明通道，保持 Transparent 即可
-                if (data.Format == ExportImageFormat.Jpeg) {
-                    ds.Clear(Colors.White);
-                }
-                else {
-                    ds.Clear(Colors.Transparent);
-                }
-
-                // 如果缩放比例正好是 100%，直接原尺寸绘制
-                if (Math.Abs(scale - 1.0f) < 0.001f) {
-                    ds.DrawImage(RenderTarget, 0, 0);
-                }
-                // 否则执行高质量缩放绘制
-                else {
-                    var destRect = new Rect(0, 0, targetWidth, targetHeight);
-                    ds.DrawImage(RenderTarget, destRect, RenderTarget.Bounds, 1.0f, CanvasImageInterpolation.HighQualityCubic);
+            foreach (var scale in data.ScalePercentage) {
+                if (scale <= 0) {
+                    GlobalMessageUtil.ShowError("All scale percentages must be greater than 0.");
+                    yield break;
                 }
             }
 
             string extension;
             CanvasBitmapFileFormat win2dFormat;
             switch (data.Format) {
-                case ExportImageFormat.Png:
-                    win2dFormat = CanvasBitmapFileFormat.Png;
-                    extension = ".png";
-                    break;
-                case ExportImageFormat.Bmp:
-                    win2dFormat = CanvasBitmapFileFormat.Bmp;
-                    extension = ".bmp";
-                    break;
-                case ExportImageFormat.Jpeg:
-                    win2dFormat = CanvasBitmapFileFormat.Jpeg;
-                    extension = ".jpg";
-                    break;
-                case ExportImageFormat.JpegXR:
-                    win2dFormat = CanvasBitmapFileFormat.JpegXR;
-                    extension = ".jxr";
-                    break;
-                default:
-                    win2dFormat = CanvasBitmapFileFormat.Png;
-                    extension = ".png";
-                    break;
+                case ExportImageFormat.Png: win2dFormat = CanvasBitmapFileFormat.Png; extension = ".png"; break;
+                case ExportImageFormat.Bmp: win2dFormat = CanvasBitmapFileFormat.Bmp; extension = ".bmp"; break;
+                case ExportImageFormat.Jpeg: win2dFormat = CanvasBitmapFileFormat.Jpeg; extension = ".jpg"; break;
+                case ExportImageFormat.JpegXR: win2dFormat = CanvasBitmapFileFormat.JpegXR; extension = ".jxr"; break;
+                default: win2dFormat = CanvasBitmapFileFormat.Png; extension = ".png"; break;
             }
 
             if (!Directory.Exists(data.Path)) {
                 Directory.CreateDirectory(data.Path);
             }
 
-            // 拼接完整的绝对路径
-            string fullPath = Path.Combine(data.Path, $"{data.Name}{extension}");
+            int totalCount = data.ScalePercentage.Length;
+            int currentCount = 0;
 
-            //  开启文件流并使用 Win2D 写入
-            using var fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write);
-            using var ras = fileStream.AsRandomAccessStream();
+            foreach (var scalePct in data.ScalePercentage) {
+                // 每次循环前检查是否被用户取消
+                cancellationToken.ThrowIfCancellationRequested();
 
-            if (win2dFormat == CanvasBitmapFileFormat.Jpeg || win2dFormat == CanvasBitmapFileFormat.JpegXR) {
-                // Win2D 的 quality 参数要求是 0.0f 到 1.0f 之间的浮点数
-                // 默认给 0.9f (90%质量)，以平衡清晰度和体积
-                float quality = data.JpegQuality ?? 0.9f;
-                await tempTarget.SaveAsync(ras, win2dFormat, quality);
+                float scale = (float)(scalePct / 100.0);
+                float targetWidth = (float)(RenderTarget.Size.Width * scale);
+                float targetHeight = (float)(RenderTarget.Size.Height * scale);
+
+                using var tempTarget = new CanvasRenderTarget(
+                    InkProjectSession.SharedDevice, targetWidth, targetHeight,
+                    RenderTarget.Dpi, DirectXPixelFormat.B8G8R8A8UIntNormalized, CanvasAlphaMode.Premultiplied);
+
+                using (var ds = tempTarget.CreateDrawingSession()) {
+                    if (data.Format == ExportImageFormat.Jpeg) ds.Clear(Colors.White);
+                    else ds.Clear(Colors.Transparent);
+
+                    if (Math.Abs(scale - 1.0f) < 0.001f) ds.DrawImage(RenderTarget, 0, 0);
+                    else {
+                        var destRect = new Rect(0, 0, targetWidth, targetHeight);
+                        ds.DrawImage(RenderTarget, destRect, RenderTarget.Bounds, 1.0f, CanvasImageInterpolation.HighQualityCubic);
+                    }
+                }
+
+                string suffix = (data.ScalePercentage.Length == 1 && Math.Abs(scalePct - 100.0) < 0.001)
+                                ? "" : $"@{scale:0.##}x";
+                string fullPath = Path.Combine(data.Path, $"{data.Name}{suffix}{extension}");
+
+                using var fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write);
+                using var ras = fileStream.AsRandomAccessStream();
+
+                if (win2dFormat == CanvasBitmapFileFormat.Jpeg || win2dFormat == CanvasBitmapFileFormat.JpegXR) {
+                    float quality = data.JpegQuality ?? 0.9f;
+                    await tempTarget.SaveAsync(ras, win2dFormat, quality);
+                }
+                else {
+                    await tempTarget.SaveAsync(ras, win2dFormat);
+                }
+
+                await ras.FlushAsync();
+
+                currentCount++;
+
+                // 只有所有项都处理完了，才显示全局成功消息
+                if (currentCount == totalCount) {
+                    if (totalCount == 1) GlobalMessageUtil.ShowSuccess($"Successfully exported static image to: {fullPath}");
+                    else GlobalMessageUtil.ShowSuccess($"Successfully exported {totalCount} static images to: {data.Path}");
+                }
+
+                // 每次完成一张图片导出，就抛出结果
+                yield return fullPath;
             }
-            else {
-                // Png 和 Bmp 走无损保存，不接受 quality 参数
-                await tempTarget.SaveAsync(ras, win2dFormat);
-            }
-
-            await ras.FlushAsync();
-
-            GlobalMessageUtil.ShowSuccess($"Successfully exported static image to: {fullPath}");
         }
 
         public void Dispose() {

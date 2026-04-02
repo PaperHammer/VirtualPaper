@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -8,6 +10,7 @@ using VirtualPaper.Shader;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Core.Utils;
+using Workloads.Creation.StaticImg.Views.Components;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
 
@@ -20,6 +23,7 @@ namespace Workloads.Creation.StaticImg {
     /// </summary>
     public sealed partial class MainPage : ArcPage, IRuntime {
         public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
+        public Type ExportOverlayPageType => typeof(Export);
 
         public override Type ArcType => typeof(MainPage);
         protected override bool IsMultiInstance => true;
@@ -150,15 +154,37 @@ namespace Workloads.Creation.StaticImg {
             }
         }
 
-        public async Task ExportAsync(ExportDataStaticImg data) {
+        public async IAsyncEnumerable<string> ExportAsync(IExportData data, [EnumeratorCancellation] CancellationToken token = default) {
+            IAsyncEnumerable<string>? stream = null;
+
             try {
-                await inkCanvas.ExportAsync(data);
+                if (data is ExportDataStaticImg exportData) {
+                    stream = inkCanvas.ExportAsync(exportData, token);
+                }
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
+                yield break; // 发生异常，直接中断流
+            }
+
+            if (stream != null) {
+                await foreach (var path in stream.WithCancellation(token)) {
+                    yield return path;
+                }
             }
         }
+        //public async Task ExportAsync(IExportData data) {
+        //    try {
+        //        if (data is ExportDataStaticImg exportData) {
+        //            await inkCanvas.ExportAsync(exportData);
+        //        }
+        //    }
+        //    catch (Exception ex) {
+        //        ArcLog.GetLogger<MainPage>().Error(ex);
+        //        GlobalMessageUtil.ShowException(ex);
+        //    }
+        //}
         #endregion
 
         private volatile bool _frameTimeRunning = false;

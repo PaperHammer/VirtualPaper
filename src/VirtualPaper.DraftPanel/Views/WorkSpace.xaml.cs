@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model;
@@ -18,7 +19,7 @@ using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
-using Workloads.Creation.StaticImg.Views.Tools;
+using Workloads.Creation.StaticImg.Views.Components;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
 
@@ -190,7 +191,7 @@ namespace VirtualPaper.DraftPanel.Views {
                 _tabToFrame.Remove(tabViewItem);
                 frame.Content = null;
             }
-        }        
+        }
         #endregion
 
         #region export        
@@ -199,22 +200,48 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         private async Task GoToExportAsync() {
+            var activeRuntime = _viewModel.GetSelectedItem();
+            if (activeRuntime == null) return;
+
+            var exportPageType = activeRuntime.ExportOverlayPageType;
+
             Payload?.Set(NaviPayloadKey.TargetDraftPanelState, DraftPanelState.ExportConfig);
             Payload?.Set(NaviPayloadKey.IsFromWorkSpace, true);
 
-            var tcs = new TaskCompletionSource<ExportDataStaticImg>();
+            var tcs = new TaskCompletionSource<IExportData>();
             Payload?.Set(NaviPayloadKey.DraftConfigTCS, tcs);
-            ShowOverlayPage(typeof(ExportPage), Payload);
+            ShowOverlayPage(exportPageType, Payload);
 
-            try {
-                var result = await tcs.Task;
-                await _viewModel.ExportAsync(result);
-                HideOverlayPage();
-            }
-            catch (Exception ex) {
-                HideOverlayPage();
-                ArcLog.GetLogger<WorkSpace>().Error(ex);
-            }
+            var result = await tcs.Task;
+
+            var ctx = ArcPageContextManager.GetContext<Draft>();
+            var loadingCtx = ctx?.LoadingContext;
+            if (loadingCtx == null)
+                return;
+
+            var ctsExport = new CancellationTokenSource();
+            int finishedCnt = 0;
+            int total = result.Count;
+            await loadingCtx.RunWithProgressAsync(
+                operation: async (token, reportProgress) => {
+                    try {
+                        await foreach (var exportedFilePath in _viewModel.ExportAsync(result, token)) {
+                            reportProgress(++finishedCnt, total);
+                        }
+                    }
+                    catch (Exception ex) when (
+                        ex is OperationCanceledException ||
+                        (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
+                        GlobalMessageUtil.ShowCanceled();
+                        return;
+                    }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<WorkSpace>().Error(ex);
+                        GlobalMessageUtil.ShowException(ex);
+                    }
+                }, total: result.Count, cts: ctsExport);
+
+            HideOverlayPage();
         }
         #endregion
 

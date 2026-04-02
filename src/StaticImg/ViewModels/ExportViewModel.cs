@@ -1,8 +1,14 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
@@ -22,8 +28,8 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         }
 
 
-        private string? _exportName;
-        public string? ExportName {
+        private string _exportName = null!;
+        public string ExportName {
             get { return _exportName; }
             set {
                 if (_exportName == value) return;
@@ -31,7 +37,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 _exportName = value;
                 OnPropertyChanged();
                 IsNameOk = ComplianceUtil.IsValidName(value);
-                IsNextEnable = IsNameOk && IsDirOk;
+                IsNextEnable = IsNameOk && IsPathOk;
             }
         }
 
@@ -41,31 +47,93 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             set { _isNameOk = value; OnPropertyChanged(); }
         }
 
-        private string? _exportDir;
-        public string? ExpotrDir {
-            get { return _exportDir; }
+        private string _exportPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        public string ExportPath {
+            get { return _exportPath; }
             set {
-                if (_exportDir == value) return;
+                if (_exportPath == value) return;
 
-                _exportDir = value;
+                _exportPath = value;
                 OnPropertyChanged();
-                IsDirOk = ComplianceUtil.IsValidFolderPath(value);
-                IsNextEnable = IsNameOk && IsDirOk;
+                IsPathOk = ComplianceUtil.IsValidFolderPath(value);
+                IsNextEnable = IsNameOk && IsPathOk;
             }
         }
 
-        private bool _isDirOk;
-        public bool IsDirOk {
-            get { return _isDirOk; }
-            set { _isDirOk = value; OnPropertyChanged(); }
+        private bool _isPathOk;
+        public bool IsPathOk {
+            get { return _isPathOk; }
+            set { _isPathOk = value; OnPropertyChanged(); }
         }
+
+        private ExportImageFormat _selectedImageFormat = ExportImageFormat.Png;
+        public ExportImageFormat SelectedFormat {
+            get { return _selectedImageFormat; }
+            set {
+                if (value == _selectedImageFormat) return;
+                _selectedImageFormat = value;
+                OnPropertyChanged();
+                IsJpegQualityVisible = (value == ExportImageFormat.Jpeg) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        public ScaleOption[] ScaleOptions { get; } = [
+                new ScaleOption("50%",  0.5,  false ),
+                new ScaleOption (  "100%",  1.0,  true ),
+                new ScaleOption (  "200%",  2.0,  false ),
+                new ScaleOption (  "300%",  3.0,  false )
+            ];
+
+        public ExportImageFormat[] AvailableFormats { get; } = [
+            ExportImageFormat.Png,
+            ExportImageFormat.Bmp,
+            ExportImageFormat.Jpeg,
+            ExportImageFormat.JpegXR,
+        ];
+
+        private ImageSource? _previewImageSource;
+        public ImageSource? PreviewImageSource {
+            get => _previewImageSource;
+            set { _previewImageSource = value; OnPropertyChanged(); }
+        }
+
+        private float _jpegQuality = 90f;
+        public float JpegQuality {
+            get => _jpegQuality;
+            set { _jpegQuality = value; OnPropertyChanged(); }
+        }
+
+        private Visibility _isJpegQualityVisible = Visibility.Collapsed;
+        public Visibility IsJpegQualityVisible {
+            get => _isJpegQualityVisible;
+            set { _isJpegQualityVisible = value; OnPropertyChanged(); }
+        }
+
+        public ICommand? BrowsePathCommand { get; private set; }
 
         public ExportViewModel() {
-
+            InitCommand();
         }
 
-        internal async Task InitContentAsync() {
-            throw new NotImplementedException();
+        private void InitCommand() {
+            BrowsePathCommand = new RelayCommand(async () => {
+                await BrowsePathAsync();
+            });
+        }
+
+        internal async Task InitContentAsync(string defaultName) {
+            ExportName = defaultName;
+        }
+
+        private async Task BrowsePathAsync() {
+            var folderPath = (await WindowsStoragePickers.PickFolderAsync(WindowConsts.WindowHandle))?.Path;
+            if (folderPath == null) return;
+
+            ExportPath = folderPath;
+        }
+
+        public double[] GetSelectedScales() {
+            return ScaleOptions.Where(opt => opt.IsSelected).Select(opt => opt.Value).ToArray();
         }
 
         public void UpdateCardComponentUI() {
@@ -76,7 +144,10 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         }
 
         public async Task OnNextStepClickedAsync() {
-            var exportData = new ExportDataStaticImg(ExportName, ExpotrDir);
+            float? quality = SelectedFormat == ExportImageFormat.Jpeg ? JpegQuality : null;
+            var scales = GetSelectedScales();
+            var count = scales.Length;
+            var exportData = new ExportDataStaticImg(ExportName, ExportPath, SelectedFormat, scales, count, quality);
             DraftConfigTCS?.TrySetResult(exportData);
         }
 

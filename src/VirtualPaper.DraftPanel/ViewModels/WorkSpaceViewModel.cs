@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.UI.Xaml;
@@ -128,7 +130,33 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 : Task.CompletedTask;
         }
 
-        internal async Task ExportAsync(ExportDataStaticImg data) => await ExecuteRuntimeCommandAsync(x => x.ExportAsync(data));
+        private Task<T?> ExecuteRuntimeCommandAsync<T>(Func<IRuntime, Task<T>> command, TabViewItem? specificItem = null) {
+            var targetItem = specificItem ?? TabViewItems.ElementAtOrDefault(SelectedTabIndex);
+            return targetItem?.Tag is IRuntime runtime
+                ? command(runtime)
+                : Task.FromResult<T?>(default);
+        }
+
+        private async IAsyncEnumerable<T> ExecuteRuntimeCommandStreamAsync<T>(
+            Func<IRuntime, IAsyncEnumerable<T>> command,
+            TabViewItem? specificItem = null,
+            [EnumeratorCancellation] CancellationToken token = default) {
+            var targetItem = specificItem ?? TabViewItems.ElementAtOrDefault(SelectedTabIndex);
+
+            // 如果找到了对应的 Runtime，则接管并逐个向外抛出流数据
+            if (targetItem?.Tag is IRuntime runtime) {
+                await foreach (var item in command(runtime).WithCancellation(token)) {
+                    yield return item;
+                }
+            }
+        }
+
+        internal IAsyncEnumerable<string> ExportAsync(IExportData data, CancellationToken token = default) {
+            return ExecuteRuntimeCommandStreamAsync(
+                command: x => x.ExportAsync(data, token),
+                token: token
+            );
+        }
         #endregion
 
         #region project

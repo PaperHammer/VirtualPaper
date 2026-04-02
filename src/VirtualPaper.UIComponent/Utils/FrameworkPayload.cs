@@ -138,5 +138,6 @@ namespace VirtualPaper.UIComponent.Utils {
         DraftConfigPreBtnAction,
         DraftConfigNxtBtnAction,
         DraftConfigTCS,
+        StaticImgFileName,
     }
 }

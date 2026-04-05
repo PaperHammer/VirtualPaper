@@ -121,7 +121,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             });
         }
 
-        internal async Task InitContentAsync(string defaultName) {
+        internal void InitContent(string defaultName) {
             ExportName = defaultName;
         }
 
@@ -149,10 +149,12 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             var count = scales.Length;
             var exportData = new ExportDataStaticImg(ExportName, ExportPath, SelectedFormat, scales, count, quality);
             DraftConfigTCS?.TrySetResult(exportData);
+            await Task.CompletedTask;
         }
 
         public async Task OnPreviousStepClickedAsync() {
             DraftConfigTCS?.TrySetResult(null);
+            await Task.CompletedTask;
         }
 
         internal INavigateComponent _navigateComponent = null!;

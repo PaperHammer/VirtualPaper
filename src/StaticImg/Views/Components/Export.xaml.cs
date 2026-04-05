@@ -35,14 +35,14 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             this.DataContext = _viewModel;
         }
 
-        protected override async void OnNavigatedTo(NavigationEventArgs e) {
+        protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
             if (e.Parameter is FrameworkPayload payload) {
                 if (payload.TryGet(NaviPayloadKey.INavigateComponent, out _viewModel._navigateComponent)) {
                     _viewModel.DraftConfigTCS = payload.Get<TaskCompletionSource<ExportDataStaticImg?>>(NaviPayloadKey.DraftConfigTCS);
                     string fileName = payload.Get<string>(NaviPayloadKey.StaticImgFileName)!;
-                    await _viewModel.InitContentAsync(fileName);
+                    _viewModel.InitContent(fileName);
                     _viewModel.UpdateCardComponentUI();
                 }
             }

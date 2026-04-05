@@ -36,8 +36,8 @@ namespace VirtualPaper.UI {
             _userSettings = userSettings;
             _commandsClient = commandsClient;
             _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
-
             this.AppWindow.Closing += AppWindow_Closing;
+            this.Closed += MainWindow_Closed;
         }
 
         private bool _isSafeToClose = false;
@@ -68,7 +68,7 @@ namespace VirtualPaper.UI {
             WindowConsts.WindowHandle = WindowNative.GetWindowHandle(this);
         }
 
-        private void WindowEx_Closed(object sender, WindowEventArgs args) {
+        private void MainWindow_Closed(object sender, WindowEventArgs args) {
             App.ShutDown();
         }
 

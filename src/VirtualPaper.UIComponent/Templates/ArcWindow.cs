@@ -32,7 +32,7 @@ namespace VirtualPaper.UIComponent.Templates {
             }
 
             this.Activated += ArcWindow_Activated;
-            this.Closed += ArcWindow_Closed;
+            this.AppWindow.Closing += AppWindow_Closing;
         }
 
         private void ArcWindow_Activated(object sender, WindowActivatedEventArgs args) {
@@ -43,9 +43,9 @@ namespace VirtualPaper.UIComponent.Templates {
             ArcWindowTitleBarUtil.UpdateTitleBar(this, ArcThemeUtil.GetFormatMainWindowTheme(), isActive);
         }
 
-        private void ArcWindow_Closed(object sender, WindowEventArgs args) {
+        private void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args) {
             // 点击关闭按钮时，主窗口会卡住几秒，才关闭窗口 todo（优化）
-            this.Hide();
+            //this.Hide();
             // Window.Closed 的触发时机并不保证晚于 Activated/VisibilityChanged
             this.Activated -= ArcWindow_Activated;
             // 避免子窗口的关闭导致 ArcThemeUtil 清理

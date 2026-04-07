@@ -5,6 +5,5 @@ namespace Workloads.Utils.DraftUtils.Interfaces {
     public interface IExportData {
         public string Name { get; }
         public string Path { get; }
-        public int Count { get; }
     }
 }

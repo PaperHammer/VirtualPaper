@@ -21,7 +21,7 @@ namespace Workloads.Creation.StaticImg {
         public static double DecimalToPercent(double value) {
             return DecimalToPercent(value, 1);
         }
-        
+
         public static double DecimalToPercent(float value) {
             return DecimalToPercent(value, 1);
         }
@@ -78,7 +78,7 @@ namespace Workloads.Creation.StaticImg {
             double width = Math.Min(rect1.X + rect1.Width, rect2.X + rect2.Width) - x;
             double height = Math.Min(rect1.Y + rect1.Height, rect2.Y + rect2.Height) - y;
             intersect = new Rect(x, y, width, height);
-            
+
             return true;
         }
 

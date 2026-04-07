@@ -1,17 +1,17 @@
 using System;
-using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
+using Workloads.Utils.DraftUtils.Models;
 
 namespace Workloads.Utils.DraftUtils.Interfaces {
     public interface IRuntime {
         event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
-        Type ExportOverlayPageType { get; }
+        string FileName { get; }
+        string FileNameWithoutEx { get; }
+        string Id { get; }
         Task<bool> SaveAsync();
         Task UndoAsync();
         Task RedoAsync();
-        //Task ExportAsync(IExportData data);
-        IAsyncEnumerable<string> ExportAsync(IExportData data, CancellationToken token = default);
+        Task ExportAsync(ExportImageFormat format);
     }
 }

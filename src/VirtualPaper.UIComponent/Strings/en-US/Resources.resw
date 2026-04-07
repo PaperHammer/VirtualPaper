@@ -1148,4 +1148,16 @@ The following words cannot be used as usernames:
   <data name="Project_StaticImg_MenuBar_Text_Export" xml:space="preserve">
     <value>Export</value>
   </data>
+  <data name="Project_Export_Success" xml:space="preserve">
+    <value>Successfully exported to:</value>
+  </data>
+  <data name="Project_Export_Failed" xml:space="preserve">
+    <value>Failed to export:</value>
+  </data>
+  <data name="Project_Export_PathNotBeNone" xml:space="preserve">
+    <value>The export path cannot be empty</value>
+  </data>
+  <data name="Project_Export_InternalError" xml:space="preserve">
+    <value>Internal error, try restarting the application to resolve it</value>
+  </data>
 </root>

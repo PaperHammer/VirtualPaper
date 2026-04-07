@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -19,7 +17,6 @@ using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
-using Workloads.Creation.StaticImg.Views.Components;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
 
@@ -194,54 +191,28 @@ namespace VirtualPaper.DraftPanel.Views {
         }
         #endregion
 
-        #region export        
-        private async void MFI_Export_Cliked(object sender, RoutedEventArgs e) {
-            await GoToExportAsync();
-        }
+        #region export
+        private async void OnExportMenuItemClick(object sender, RoutedEventArgs e) {
+            if (sender is MenuFlyoutItem menuItem &&
+                menuItem.Tag is string tagStr &&
+                Enum.TryParse<ExportImageFormat>(tagStr, true, out var exportFormat)) {
 
-        private async Task GoToExportAsync() {
-            var activeRuntime = _viewModel.GetSelectedItem();
-            if (activeRuntime == null) return;
+                var ctx = ArcPageContextManager.GetContext<Draft>();
+                var loadingCtx = ctx?.LoadingContext;
+                if (loadingCtx == null)
+                    return;
 
-            var exportPageType = activeRuntime.ExportOverlayPageType;
-
-            Payload?.Set(NaviPayloadKey.TargetDraftPanelState, DraftPanelState.ExportConfig);
-            Payload?.Set(NaviPayloadKey.IsFromWorkSpace, true);
-
-            var tcs = new TaskCompletionSource<IExportData>();
-            Payload?.Set(NaviPayloadKey.DraftConfigTCS, tcs);
-            ShowOverlayPage(exportPageType, Payload);
-
-            var result = await tcs.Task;
-
-            var ctx = ArcPageContextManager.GetContext<Draft>();
-            var loadingCtx = ctx?.LoadingContext;
-            if (loadingCtx == null)
-                return;
-
-            var ctsExport = new CancellationTokenSource();
-            int finishedCnt = 0;
-            int total = result.Count;
-            await loadingCtx.RunWithProgressAsync(
-                operation: async (token, reportProgress) => {
-                    try {
-                        await foreach (var exportedFilePath in _viewModel.ExportAsync(result, token)) {
-                            reportProgress(++finishedCnt, total);
+                await loadingCtx.RunAsync(
+                    operation: async (token) => {
+                        try {
+                            await _viewModel.ExportAsync(exportFormat);
                         }
-                    }
-                    catch (Exception ex) when (
-                        ex is OperationCanceledException ||
-                        (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                        GlobalMessageUtil.ShowCanceled();
-                        return;
-                    }
-                    catch (Exception ex) {
-                        ArcLog.GetLogger<WorkSpace>().Error(ex);
-                        GlobalMessageUtil.ShowException(ex);
-                    }
-                }, total: result.Count, cts: ctsExport);
-
-            HideOverlayPage();
+                        catch (Exception ex) {
+                            ArcLog.GetLogger<WorkSpace>().Error(ex);
+                            GlobalMessageUtil.ShowException(ex);
+                        }
+                    });
+            }
         }
         #endregion
 

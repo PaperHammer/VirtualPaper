@@ -2,7 +2,7 @@ using VirtualPaper.Models.Mvvm;
 using Workloads.Utils.DraftUtils.Interfaces;
 
 namespace Workloads.Utils.DraftUtils.Models {
-    public record ExportDataStaticImg(string Name, string Path, ExportImageFormat Format, double[] ScalePercentage, int Count, float? JpegQuality = null) : IExportData;
+    public record ExportDataStaticImg(string Name, string Path, ExportImageFormat Format) : IExportData;
 
     public enum ExportImageFormat {
         Png,

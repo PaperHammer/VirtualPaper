@@ -37,7 +37,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         public ICommand? MFI_SaveCommand { get; private set; }
         public ICommand? MFI_SaveAllCommand { get; private set; }
-        //public ICommand? MFI_ExportCommand { get; private set; }
         public ICommand? MFI_ExitCommand { get; private set; }
         public ICommand? MFI_UndoCommand { get; private set; }
         public ICommand? MFI_RedoCommand { get; private set; }
@@ -56,9 +55,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             MFI_SaveAllCommand = new RelayCommand(async () => {
                 await SaveAllAsync();
             });
-            //MFI_ExportCommand = new RelayCommand(async () => {
-            //    await ExportAsync();
-            //});
             MFI_UndoCommand = new RelayCommand(async () => {
                 await UndoAsync();
             });
@@ -115,6 +111,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         #region ui events
+        internal async Task ExportAsync(ExportImageFormat format) => await ExecuteRuntimeCommandAsync(x => x.ExportAsync(format));
+        
         private async Task SaveAsync() => await ExecuteRuntimeCommandAsync(x => x.SaveAsync());
 
         private async Task SaveAllAsync() => await Task.WhenAll(TabViewItems.Select(item => ExecuteRuntimeCommandAsync(x => x.SaveAsync(), item)));
@@ -124,38 +122,29 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private async Task RedoAsync() => await ExecuteRuntimeCommandAsync(x => x.RedoAsync());
 
         private Task ExecuteRuntimeCommandAsync(Func<IRuntime, Task> command, TabViewItem? specificItem = null) {
-            var targetItem = specificItem ?? TabViewItems.ElementAtOrDefault(SelectedTabIndex);
-            return targetItem?.Tag is IRuntime runtime
+            var runtime = (specificItem?.Tag as IRuntime) ?? GetSelectedRuntime();
+            return runtime != null
                 ? command(runtime)
                 : Task.CompletedTask;
         }
 
-        private Task<T?> ExecuteRuntimeCommandAsync<T>(Func<IRuntime, Task<T>> command, TabViewItem? specificItem = null) {
-            var targetItem = specificItem ?? TabViewItems.ElementAtOrDefault(SelectedTabIndex);
-            return targetItem?.Tag is IRuntime runtime
-                ? command(runtime)
-                : Task.FromResult<T?>(default);
+        private async Task<T?> ExecuteRuntimeCommandAsync<T>(Func<IRuntime, Task<T>> command, TabViewItem? specificItem = null) {
+            var runtime = (specificItem?.Tag as IRuntime) ?? GetSelectedRuntime();
+            return runtime != null
+                ? await command(runtime)
+                : default;
         }
 
         private async IAsyncEnumerable<T> ExecuteRuntimeCommandStreamAsync<T>(
             Func<IRuntime, IAsyncEnumerable<T>> command,
             TabViewItem? specificItem = null,
             [EnumeratorCancellation] CancellationToken token = default) {
-            var targetItem = specificItem ?? TabViewItems.ElementAtOrDefault(SelectedTabIndex);
-
-            // 如果找到了对应的 Runtime，则接管并逐个向外抛出流数据
-            if (targetItem?.Tag is IRuntime runtime) {
+            var runtime = (specificItem?.Tag as IRuntime) ?? GetSelectedRuntime();
+            if (runtime != null) {
                 await foreach (var item in command(runtime).WithCancellation(token)) {
                     yield return item;
                 }
             }
-        }
-
-        internal IAsyncEnumerable<string> ExportAsync(IExportData data, CancellationToken token = default) {
-            return ExecuteRuntimeCommandStreamAsync(
-                command: x => x.ExportAsync(data, token),
-                token: token
-            );
         }
         #endregion
 
@@ -325,10 +314,10 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
                     if (!header.IsSaved) {
                         var res = await GlobalDialogUtils.ShowDialogAsync(
-                            content: $"{(runtime as Workloads.Creation.StaticImg.MainPage)?.Session.DesignFileUtil.FileName} {nameof(Constants.I18n.Project_Unsave_Intercept_Content)}",
-                            title: $"{nameof(Constants.I18n.Project_Unsave_Intercept_Title)}",
-                            primaryBtnText: $"{nameof(Constants.I18n.Text_Save)}",
-                            secondaryBtnText: $"{nameof(Constants.I18n.Text_Unsave)}"
+                            content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
+                            title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
+                            primaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Save))}",
+                            secondaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Unsave))}"
                         );
 
                         if (res == DialogResult.Primary) {
@@ -353,11 +342,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
             if (!header.IsSaved) {
                 var res = await GlobalDialogUtils.ShowDialogAsync(
-                    content: $"{(runtime as Workloads.Creation.StaticImg.MainPage)?.Session.DesignFileUtil.FileName} {nameof(Constants.I18n.Project_Unsave_Intercept_Content)}",
-                    title: $"{nameof(Constants.I18n.Project_Unsave_Intercept_Title)}",
-                    primaryBtnText: $"{nameof(Constants.I18n.Text_Save)}",
-                    secondaryBtnText: $"{nameof(Constants.I18n.Text_Unsave)}",
-                    closeBtnText: $"{nameof(Constants.I18n.Text_Cancel)}");
+                    content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
+                    title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
+                    primaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Save))}",
+                    secondaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Unsave))}",
+                    closeBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel))}");
 
                 if (res == DialogResult.Primary) {
                     flag = await runtime.SaveAsync();
@@ -380,7 +369,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
                 if (!header.IsSaved) {
                     var res = await GlobalDialogUtils.ShowDialogAsync(
-                        content: $"\"{(runtime as Workloads.Creation.StaticImg.MainPage)?.Session.DesignFileUtil.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
+                        content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
                         title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
                         primaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Save))}",
                         secondaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Unsave))}",
@@ -408,7 +397,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             TabViewItems.Remove(item);
         }
 
-        internal IRuntime? GetSelectedItem() {
+        internal IRuntime? GetSelectedRuntime() {
             if (SelectedTabIndex < 0 || SelectedTabIndex >= TabViewItems.Count) return null;
             return TabViewItems[SelectedTabIndex].Tag as IRuntime;
         }

@@ -46,11 +46,12 @@
                         <KeyboardAccelerator Modifiers="Control,Shift" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Export}" Click="MFI_Export_Cliked">
-                    <MenuFlyoutItem.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Control,Shift,Menu" Key="W"/>
-                    </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>
+                <MenuFlyoutSubItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Export}">
+                    <MenuFlyoutItem Text="PNG" Tag="Png" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem Text="BMP" Tag="Bmp" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem Text="JPEG" Tag="Jpeg" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem Text="JPEG XR" Tag="JpegXR" Click="OnExportMenuItemClick"/>
+                </MenuFlyoutSubItem>
                 <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Exit}" Click="MFI_Exit_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="F4"/>

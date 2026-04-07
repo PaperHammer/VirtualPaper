@@ -1148,4 +1148,16 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_StaticImg_MenuBar_Text_Export" xml:space="preserve">
     <value>导出</value>
   </data>
+  <data name="Project_Export_Success" xml:space="preserve">
+    <value>成功导出：</value>
+  </data>
+  <data name="Project_Export_Failed" xml:space="preserve">
+    <value>导出失败：</value>
+  </data>
+  <data name="Project_Export_PathNotBeNone" xml:space="preserve">
+    <value>导出路径不能为空</value>
+  </data>
+  <data name="Project_Export_InternalError" xml:space="preserve">
+    <value>内部异常，尝试重启应用以解决</value>
+  </data>
 </root>

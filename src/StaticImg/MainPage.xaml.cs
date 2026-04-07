@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
 using VirtualPaper.Shader;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Core.Utils;
-using Workloads.Creation.StaticImg.Views.Components;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
 
@@ -23,8 +23,9 @@ namespace Workloads.Creation.StaticImg {
     /// </summary>
     public sealed partial class MainPage : ArcPage, IRuntime {
         public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
-        public Type ExportOverlayPageType => typeof(Export);
-
+        public string FileName => Session.DesignFileUtil.FileName;
+        public string FileNameWithoutEx => Session.DesignFileUtil.FileNameWithoutEx;
+        public string Id => Session.SessionId;
         public override Type ArcType => typeof(MainPage);
         protected override bool IsMultiInstance => true;
         public InkProjectSession Session { get; private set; }
@@ -38,8 +39,8 @@ namespace Workloads.Creation.StaticImg {
         /// 打开文件
         /// </summary>
         /// <param name="filePath">类型为 vpd 或静态图像的文件路径</param>
-        public MainPage(string filePath) {            
-            Session = new InkProjectSession(filePath);            
+        public MainPage(string filePath) {
+            Session = new InkProjectSession(filePath);
             Payload = new FrameworkPayload() {
                 [NaviPayloadKey.ArcPageContext] = this.ArcContext,
                 [NaviPayloadKey.InkProjectSession] = this.Session
@@ -71,7 +72,7 @@ namespace Workloads.Creation.StaticImg {
                     await ShaderLoader.LoadAllShadersAsync();
                     await inkCanvas.IsInited.Task;
                 });
-            
+
             StartFrameTimeMonitor();
 
             this.IsEnabled = true;
@@ -154,37 +155,32 @@ namespace Workloads.Creation.StaticImg {
             }
         }
 
-        public async IAsyncEnumerable<string> ExportAsync(IExportData data, [EnumeratorCancellation] CancellationToken token = default) {
-            IAsyncEnumerable<string>? stream = null;
+        public async Task ExportAsync(ExportImageFormat format) {
+            Dictionary<string, string[]> fileTypeChoices = format switch {
+                ExportImageFormat.Png => new() { ["PNG Image (*.png)"] = [".png"] },
+                ExportImageFormat.Bmp => new() { ["Bitmap Image (*.bmp)"] = [".bmp"] },
+                ExportImageFormat.Jpeg => new() { ["JPEG Image (*.jpg;*.jpeg)"] = [".jpg", ".jpeg", ".jpe", ".jfif"] },
+                ExportImageFormat.JpegXR => new() { ["JPEG XR Image (*.jxr)"] = [".jxr"] },
+                _ => new() { ["PNG Image (*.png)"] = [".png"] }
+            };
 
-            try {
-                if (data is ExportDataStaticImg exportData) {
-                    stream = inkCanvas.ExportAsync(exportData, token);
-                }
-            }
-            catch (Exception ex) {
-                ArcLog.GetLogger<MainPage>().Error(ex);
-                GlobalMessageUtil.ShowException(ex);
-                yield break; // 发生异常，直接中断流
-            }
+            var saveFile = await WindowsStoragePickers.PickSaveFileAsync(
+                WindowConsts.WindowHandle,
+                Session.DesignFileUtil.FileNameWithoutEx,
+                fileTypeChoices
+            );
 
-            if (stream != null) {
-                await foreach (var path in stream.WithCancellation(token)) {
-                    yield return path;
-                }
-            }
+            if (saveFile == null || string.IsNullOrEmpty(saveFile.Path))
+                return;
+
+            var exportData = new ExportDataStaticImg(
+                Name: saveFile.Name,
+                Path: saveFile.Path,
+                Format: format
+            );
+
+            await inkCanvas.ExportAsync(exportData);
         }
-        //public async Task ExportAsync(IExportData data) {
-        //    try {
-        //        if (data is ExportDataStaticImg exportData) {
-        //            await inkCanvas.ExportAsync(exportData);
-        //        }
-        //    }
-        //    catch (Exception ex) {
-        //        ArcLog.GetLogger<MainPage>().Error(ex);
-        //        GlobalMessageUtil.ShowException(ex);
-        //    }
-        //}
         #endregion
 
         private volatile bool _frameTimeRunning = false;

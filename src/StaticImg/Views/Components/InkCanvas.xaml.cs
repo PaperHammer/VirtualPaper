@@ -26,6 +26,7 @@ using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Rendering;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Events;
+using Workloads.Creation.StaticImg.Extensions;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.ToolItems;
 using Workloads.Creation.StaticImg.Utils;
@@ -99,8 +100,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             return await _viewModel.SaveAsync();
         }
 
-        internal IAsyncEnumerable<string> ExportAsync(ExportDataStaticImg data, CancellationToken token = default) {
-            return _viewModel.Data.SelectedLayer.RenderData.ExportAsync(data, token);
+        internal async Task ExportAsync(ExportDataStaticImg data, CancellationToken token = default) {
+            var size = _viewModel.Data.CanvasSize.ToSize();
+            await _compositeTarget.ExportAsync(size, data, token);
         }
 
         #region children event

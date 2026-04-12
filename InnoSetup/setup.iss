@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define AppId "{{95F4CECE-7C7C-40E1-B485-07DA64D1905F}"
-#define MyAppName "Virtual_Paper"
+#define MyAppName "Virtual Paper"
 #define MyAppVersion "0.4.0.0"
 #define MyAppVersionText "0400"
 #define MyAppPublisher "PaperHammer"

@@ -1,11 +1,13 @@
 # VirtualPaper
 
-[![GitHub release](https://img.shields.io/badge/release-v0.3.0.1-blue)](https://github.com/PaperHammer/VirtualPaper/releases)
+[![GitHub release](https://img.shields.io/badge/release-v0.4.0.0-blue)](https://github.com/PaperHammer/VirtualPaper/releases)
 [![GitHub stars](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2FPaperHammer%2FVirtualPaper&query=stargazers_count&label=Stars&color=pink)](https://github.com/PaperHammer/VirtualPaper/stargazers)
 [![Documentation](https://img.shields.io/badge/Docs-Wiki-green)](https://github.com/PaperHammer/VirtualPaper/wiki)
 [![Issues](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2FPaperHammer%2FVirtualPaper&query=open_issues&label=Issues&color=orange)](https://github.com/PaperHammer/VirtualPaper/issues)
 
 An open-source, free, lightweight wallpaper management software that runs on Windows 10+
+
+<img src="/resources/logos/virtualpaper-logo_4380x712_with_bg_with_round40.png" width="657" height="107"/>
 
 **The required operating environment: .NET 8.0**
 
@@ -19,10 +21,9 @@ An open-source, free, lightweight wallpaper management software that runs on Win
 
 ## About
 
-Wallpaper software based on the [Lively](https://github.com/rocksdanister/lively)
+Based on the [XamlNexus](https://github.com/PaperHammer/XamlNexus) and [Lively](https://github.com/rocksdanister/lively)
 
-<img src="/resources/control_panel_light.png" width="600" height="338"/>
-<img src="/resources/control_panel_dark.png" width="600" height="338"/>
+<img src="/resources/library_contents_light.png" width="600" height="338"/>
 
 ## Features
 
@@ -36,9 +37,21 @@ The following files are supported:
 
 ---
 
+Real-time preview and customize effects
+
+<img src="/resources/preview_light.png" width="600" height="328"/>
+
+---
+
 The 3D parallax effect that follows the mouse.
 
 <img src="/resources/parallax.png" width="400" height="260"/>
+
+---
+
+Efficient and lightweight rendering capabilities. Supports exporting: PNG, BMP, JPEG, JPEG XR
+
+<img src="/resources/creator.png" width="600" height="328"/>
 
 ---
 

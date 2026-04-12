@@ -1,4 +1,4 @@
-﻿namespace VirtualPaper.Grpc.Client.Interfaces {
+namespace VirtualPaper.Grpc.Client.Interfaces {
     public interface ICommandsClient : IDisposable {
         event EventHandler<int>? UIRecieveCmd;
 
@@ -7,7 +7,5 @@
         Task RestartUI();
         Task ShowDebugView();
         Task ShutDown();
-        void SaveRectUI();
-        Task SaveRectUIAsync();
     }
 }

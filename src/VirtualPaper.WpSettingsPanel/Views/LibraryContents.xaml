@@ -11,7 +11,7 @@
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
-    NavigationCacheMode="Required"
+    NavigationCacheMode="Enabled"
     x:Name="rootPage">
 
     <arc:ArcPage.Resources>

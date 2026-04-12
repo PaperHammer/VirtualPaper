@@ -37,14 +37,6 @@ namespace VirtualPaper.Grpc.Client {
             await _client.ShutDownAsync(new Empty());
         }
 
-        public void SaveRectUI() {
-            _client.SaveRectUI(new Empty());
-        }
-
-        public async Task SaveRectUIAsync() {
-            await _client.SaveRectUIAsync(new Empty());
-        }
-
         private async Task SubscribeUIRecievedCmdTaskStream(CancellationToken token) {
             try {
                 using var call = _client.SubscribeUIRecievedCmd(new Empty(), cancellationToken: token);

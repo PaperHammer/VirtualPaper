@@ -12,8 +12,6 @@ using Wpf.Ui.Extensions;
 
 namespace VirtualPaper.ViewModels {
     public class AppUpdaterWindowViewModel : ObservableObject, IWindowParameterReceiver {
-        public static Uri AppIconPath => new Uri("pack://application:,,,/Resources/appicon_96.png");
-
         private string _version = string.Empty;
         public string Version {
             get => _version;

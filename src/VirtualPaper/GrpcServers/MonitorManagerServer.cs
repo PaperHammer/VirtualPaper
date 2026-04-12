@@ -8,7 +8,7 @@ using VirtualPaper.Views;
 using Application = System.Windows.Application;
 
 namespace VirtualPaper.GrpcServers {
-    internal class MonitorManagerServer(
+    public class MonitorManagerServer(
         IMonitorManager monitorManager) : Grpc_MonitorManagerService.Grpc_MonitorManagerServiceBase {
         public override Task<Grpc_GetMonitorsResponse> GetMonitors(Empty _, ServerCallContext context) {
             var resp = new Grpc_GetMonitorsResponse();
@@ -31,7 +31,7 @@ namespace VirtualPaper.GrpcServers {
                         Width = monitor.WorkingArea.Width,
                         Height = monitor.WorkingArea.Height
                     },
-                    ThumbnailPath = monitor.ThumbnailPath,                    
+                    ThumbnailPath = monitor.ThumbnailPath,
                 };
                 resp.Monitors.Add(item);
             }

@@ -13,7 +13,7 @@ using VirtualPaper.Services.Interfaces;
 using static VirtualPaper.Common.Errors;
 
 namespace VirtualPaper.GrpcServers {
-    internal class WallpaperControlServer(
+    public class WallpaperControlServer(
         IWallpaperControl desktopWpControl,
         IMonitorManager monitorManager,
         IUserSettingsService userSetting) : Grpc_WallpaperControlService.Grpc_WallpaperControlServiceBase {

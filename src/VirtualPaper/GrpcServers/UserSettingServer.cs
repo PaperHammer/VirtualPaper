@@ -10,7 +10,7 @@ using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 
 namespace VirtualPaper.GrpcServers {
-    internal class UserSettingServer(
+    public class UserSettingServer(
         IMonitorManager monitorManager,
         IUserSettingsService userSetting,
         IUIRunnerService uiRunner) : Grpc_UserSettingsService.Grpc_UserSettingsServiceBase {

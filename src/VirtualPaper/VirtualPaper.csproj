@@ -8,9 +8,8 @@
 		<UseWindowsForms>True</UseWindowsForms>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<AssemblyVersion>0.3.1.0</AssemblyVersion>
+		<AssemblyVersion>0.4.0.0</AssemblyVersion>
 		<ApplicationIcon>virtualpaper.ico</ApplicationIcon>
-		<PackageIcon>appicon_128.png</PackageIcon>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
@@ -55,12 +54,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Resource Include="Resources\appicon_128.png" />
-		<Resource Include="Resources\appicon_180.png" />
-		<Resource Include="Resources\appicon_96.png" />
-		<Resource Include="Resources\splash.png" />
-		<Resource Include="Resources\Update\bg.png" />
-		<Resource Include="Resources\Update\splashCol.png" />
+		<Resource Include="Resources\appicon_download.png" />
 		<Resource Include="virtualpaper.ico">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Resource>
@@ -79,13 +73,6 @@
 			<Generator>PublicResXFileCodeGenerator</Generator>
 			<LastGenOutput>lang.Designer.cs</LastGenOutput>
 		</EmbeddedResource>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Update="Resources\appicon_128.png">
-	    <Pack>True</Pack>
-	    <PackagePath>\</PackagePath>
-	  </None>
 	</ItemGroup>
 
 </Project>

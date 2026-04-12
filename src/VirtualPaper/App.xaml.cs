@@ -116,11 +116,12 @@ namespace VirtualPaper {
             #endregion
 
             #region 用户配置
+            SplashWindow? spl = null;
             if (UserSettings.Settings.IsUpdated || UserSettings.Settings.IsFirstRun) {
-                SplashWindow? spl = UserSettings.Settings.IsFirstRun ? new(0, 500) : null; spl?.Show();
-                spl?.Close();
+                spl = UserSettings.Settings.IsFirstRun ? new SplashWindow(0, 500) : null;
+                spl?.Show();                
                 UserSettings.Settings.IsFirstRun = false;
-                UserSettings.Save<ISettings>();
+                UserSettings.Save<ISettings>();                
             }
 
             if (UserSettings.Settings.WallpaperDir == string.Empty
@@ -154,6 +155,8 @@ namespace VirtualPaper {
             #endregion
 
             try {
+                spl?.Close();
+
                 //restore wallpaper(s) from previous run.
                 var wpControl = Services.GetRequiredService<IWallpaperControl>();
                 wpControl.RestoreWallpaper();

@@ -27,17 +27,19 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         public LibraryContents() {
             this.InitializeComponent();
-            this.Unloaded += LibraryContents_Unloaded;            
+            this.Loaded += LibraryContents_Loaded;
+            this.Unloaded += LibraryContents_Unloaded;
             _viewModel = AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>();
             this.DataContext = _viewModel;
         }
 
+        private void LibraryContents_Loaded(object sender, RoutedEventArgs e) {
+            this.DataContext = _viewModel;
+        }
+
         private void LibraryContents_Unloaded(object sender, RoutedEventArgs e) {
-            this.DataContext = null;
-            if (wallpapersLibView != null) {
-                wallpapersLibView.ItemsSource = null;
-            }
             this.Unloaded -= LibraryContents_Unloaded;
+            this.DataContext = null;           
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {            

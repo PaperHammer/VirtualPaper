@@ -17,6 +17,7 @@
         Height="600" Width="800"
         ResizeMode="CanMinimize"
         Title="Virtual Paper Updater"
+        Icon="pack://application:,,,/Resources/appicon_download.png"
         ExtendsContentIntoTitleBar="True"
         Closing="FluentWindow_Closing"
         Closed="FluentWindow_Closed"
@@ -38,7 +39,7 @@
             ShowMaximize="False"
             Height="48">
             <ui:TitleBar.Icon>
-                <ui:ImageIcon Source="{Binding AppIconPath}" />
+                <ui:ImageIcon Source="pack://application:,,,/Resources/appicon_download.png" />
             </ui:TitleBar.Icon>
         </ui:TitleBar>
 

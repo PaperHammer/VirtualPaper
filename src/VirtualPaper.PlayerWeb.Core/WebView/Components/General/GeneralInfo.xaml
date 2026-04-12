@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VirtualPaper.PlayerWeb.Core.WebView.Components.General.GeneralInfo"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.PlayerWeb.Core.WebView.Components.General"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    mc:Ignorable="d"
+    NavigationCacheMode="Enabled">
+
+    <Page.Resources>
+        <cvs:VisibilityByValueConverter x:Key="VisibilityByValueConverter"/>
+    </Page.Resources>
+
+    <Grid x:Name="MainGrid"
+        HorizontalAlignment="Stretch"
+        Padding="3 8 0 8">
+        <ScrollViewer Padding="10 8 16 0">
+            <StackPanel Orientation="Vertical" Spacing="10">
+                <TextBlock x:Name="titleText" 
+                    Visibility="{x:Bind _viewModel.IsTitleVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="{x:Bind _viewModel.Title, Mode=OneWay}"/>
+
+                <TextBlock x:Name="descriptionText" 
+                    Visibility="{x:Bind _viewModel.IsDescVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
+                    Style="{StaticResource BodyTextBlockStyle}" 
+                    Text="{x:Bind _viewModel.Desc, Mode=OneWay}" />
+
+                <Grid Visibility="{x:Bind _viewModel.IsTagListVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
+                    <ItemsRepeater ItemsSource="{x:Bind _viewModel.TagList, Mode=OneWay}">
+                        <ItemsRepeater.Layout>
+                            <LinedFlowLayout 
+                                ItemsStretch="Fill" 
+                                LineSpacing="5"
+                                MinItemSpacing="10"/>
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <ItemContainer>
+                                    <StackPanel
+                                        CornerRadius="5"
+                                        Background="{StaticResource SystemControlBackgroundAccentBrush}"                                               
+                                        Padding="8 5"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Stretch">
+                                        <TextBlock                                             
+                                            Text="{x:Bind}"
+                                            HorizontalTextAlignment="Center"/>
+                                    </StackPanel>
+                                </ItemContainer>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </Grid>
+
+                <Grid Visibility="{x:Bind _viewModel.IsAuthorListVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
+                    HorizontalAlignment="Right">
+                    <ItemsView ItemsSource="{x:Bind _viewModel.AuthorList, Mode=OneWay}" SelectionMode="None">
+                        <ItemsView.Layout>
+                            <LinedFlowLayout 
+                                ItemsStretch="Fill" 
+                                LineSpacing="3"
+                                MinItemSpacing="10"/>
+                        </ItemsView.Layout>
+                        <ItemsView.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <ItemContainer>
+                                    <Grid>
+                                        <TextBlock 
+                                            Text="{x:Bind}"
+                                            Style="{StaticResource BodyTextBlockStyle}"
+                                            HorizontalTextAlignment="Center"/>
+                                    </Grid>
+                                </ItemContainer>
+                            </DataTemplate>
+                        </ItemsView.ItemTemplate>
+                    </ItemsView>
+                </Grid>
+
+                <TextBlock x:Name="publishDateText" 
+                    Visibility="{x:Bind _viewModel.IsPublishDateVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
+                    HorizontalAlignment="Right"
+                    Style="{StaticResource BodyTextBlockStyle}" 
+                    Text="{x:Bind _viewModel.PublishDate, Mode=OneWay}"/>
+
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                    <Grid Margin="0 20 0 0" ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="0.2*" />
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="0.8*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border
+                            Height="2"
+                            VerticalAlignment="Center"
+                            Background="{ThemeResource SurfaceStrokeColorDefaultBrush}" />
+
+                        <TextBlock 
+                            Grid.Column="1" 
+                            Text="{markup:I18n Key=Details_Text_FileProperty}"
+                            Style="{StaticResource CaptionTextBlockStyle}" 
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+
+                        <Border Grid.Column="2"
+                            Height="2"
+                            VerticalAlignment="Center"
+                            Background="{ThemeResource SurfaceStrokeColorDefaultBrush}" />
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel Orientation="Vertical" Spacing="10">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock 
+                            Text="{markup:I18n Key=Text_Resolution}"
+                            Style="{StaticResource BodyTextBlockStyle}"/>
+                        <TextBlock
+                            Text="{x:Bind _viewModel.Resolution, Mode=OneWay}"
+                            Style="{StaticResource BodyTextBlockStyle}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock 
+                            Text="{markup:I18n Key=Text_AspectRatio}"
+                            Style="{StaticResource BodyTextBlockStyle}"/>
+                        <TextBlock
+                            Text="{x:Bind _viewModel.AspectRatio, Mode=OneWay}"
+                            Style="{StaticResource BodyTextBlockStyle}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock 
+                            Text="{markup:I18n Key=Text_FileExtension}"
+                            Style="{StaticResource BodyTextBlockStyle}"/>
+                        <TextBlock
+                            Text="{x:Bind _viewModel.FileExtension, Mode=OneWay}"
+                            Style="{StaticResource BodyTextBlockStyle}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock 
+                            Text="{markup:I18n Key=Text_FileSize}"
+                            Style="{StaticResource BodyTextBlockStyle}"/>
+                        <TextBlock
+                            Text="{x:Bind _viewModel.FileSize, Mode=OneWay}"
+                            Style="{StaticResource BodyTextBlockStyle}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock 
+                            Text="{markup:I18n Key=Text_VersionInfo}"
+                            Style="{StaticResource BodyTextBlockStyle}"/>
+                        <TextBlock
+                            Text="{x:Bind _viewModel.VersionInfo, Mode=OneWay}"
+                            Style="{StaticResource BodyTextBlockStyle}" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

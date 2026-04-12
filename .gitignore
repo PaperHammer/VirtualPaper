@@ -380,4 +380,4 @@ FodyWeavers.xsd
 Bundle/
 Plugins/
 Build/
-umls/
+Shaders/*.bin

@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using VirtualPaper.Common;
 
 namespace VirtualPaper.Models.Cores.Interfaces {

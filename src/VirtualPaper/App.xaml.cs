@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
@@ -11,6 +12,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.PlaybackControl;
@@ -27,16 +29,18 @@ using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.GrpcServers;
 using VirtualPaper.lang;
+using VirtualPaper.Models;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils.Theme;
+using VirtualPaper.ViewModels;
 using VirtualPaper.Views;
 using VirtualPaper.Views.WindowsMsg;
+using Wpf.Ui;
 using Wpf.Ui.Appearance;
 using Application = System.Windows.Application;
-using AppTheme = VirtualPaper.Common.AppTheme;
 using MessageBox = System.Windows.MessageBox;
 
 namespace VirtualPaper {
@@ -66,8 +70,10 @@ namespace VirtualPaper {
                 }
             }
             catch (AbandonedMutexException e) {
+#if DEBUG
                 //unexpected app termination.
                 Debug.WriteLine(e.Message);
+#endif
             }
             #endregion
 
@@ -98,6 +104,10 @@ namespace VirtualPaper {
             }
             #endregion
 
+            #region pre
+            Constants.CommonPaths.Migrate();
+            #endregion
+
             #region 初始化核心组件
             // 依赖注入
             _serviceProvider = ConfigureServices();
@@ -105,7 +115,15 @@ namespace VirtualPaper {
             _grpcServer = ConfigureGrpcServer();
             #endregion
 
-            // 用户配置
+            #region 用户配置
+            SplashWindow? spl = null;
+            if (UserSettings.Settings.IsUpdated || UserSettings.Settings.IsFirstRun) {
+                spl = UserSettings.Settings.IsFirstRun ? new SplashWindow(0, 500) : null;
+                spl?.Show();                
+                UserSettings.Settings.IsFirstRun = false;
+                UserSettings.Save<ISettings>();                
+            }
+
             if (UserSettings.Settings.WallpaperDir == string.Empty
                 || !Directory.Exists(UserSettings.Settings.WallpaperDir)) {
                 UserSettings.Settings.WallpaperDir = Path.Combine(Constants.CommonPaths.LibraryDir, Constants.FolderName.WpStoreFolderName);
@@ -115,6 +133,7 @@ namespace VirtualPaper {
             ChangeLanguage(UserSettings.Settings.Language);
 
             UserSettings.Save<ISettings>();
+            #endregion
 
             #region 启动相关后台服务
             try {
@@ -126,19 +145,18 @@ namespace VirtualPaper {
                 Services.GetRequiredService<IPlayback>().Start(_ctsPlayback);
                 // 启动托盘（后台）服务
                 Services.GetRequiredService<MainWindow>().Show();
+                InitMemorySharedContext();
             }
             catch (Exception ex) {
+                Log.Error(ex);
                 MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
                 return;
             }
             #endregion
 
-            if (UserSettings.Settings.IsUpdated || UserSettings.Settings.IsFirstRun) {
-                SplashWindow? spl = UserSettings.Settings.IsFirstRun ? new(0, 500) : null; spl?.Show();
-                spl?.Close();
-            }
-
             try {
+                spl?.Close();
+
                 //restore wallpaper(s) from previous run.
                 var wpControl = Services.GetRequiredService<IWallpaperControl>();
                 wpControl.RestoreWallpaper();
@@ -155,6 +173,7 @@ namespace VirtualPaper {
                 }
             }
             catch (Exception ex) {
+                Log.Error(ex);
                 MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
                 return;
             }
@@ -183,12 +202,21 @@ namespace VirtualPaper {
             #endregion
         }
 
+        private void InitMemorySharedContext() {
+            var context = new SharedContext {
+                BaseDir = AppDomain.CurrentDomain.BaseDirectory,
+            };
+
+            FileShared.Write(context);
+        }
+
         private ServiceProvider ConfigureServices() {
             var provider = new ServiceCollection()
                 .AddSingleton<IWallpaperControl, WallpaperControl>()
                 .AddSingleton<IMonitorManager, MonitorManager>()
                 .AddSingleton<IPlayback, Playback>()
                 .AddSingleton<IScrControl, ScrControl>()
+                .AddSingleton<IContentDialogService, ContentDialogService>()
 
                 .AddSingleton<IWallpaperFactory, WallpaperFactory>()
                 .AddSingleton<IWallpaperConfigFolderFactory, WallpaperConfigFolderFactory>()
@@ -198,6 +226,7 @@ namespace VirtualPaper {
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
+                .AddSingleton<IWindowService, WindowService>()
 
                 .AddSingleton<WallpaperControlServer>()
                 .AddSingleton<MonitorManagerServer>()
@@ -210,6 +239,8 @@ namespace VirtualPaper {
                 .AddSingleton<RawInputMsgWindow>()
                 .AddSingleton<MainWindow>()
                 .AddTransient<DebugLog>()
+                .AddTransient<AppUpdaterWindow>()
+                .AddTransient<AppUpdaterWindowViewModel>()
 
                 .AddTransient<TrayCommand>()
 
@@ -258,7 +289,7 @@ namespace VirtualPaper {
 
                 Application.Current.Dispatcher.Invoke(() => {
                     ApplicationThemeManager.Apply(applicationTheme, updateAccent: false);
-                });
+                });                
             }
             catch (Exception e) {
                 Log.Error(e);
@@ -270,39 +301,33 @@ namespace VirtualPaper {
             if (lang == string.Empty) return;
 
             Application.Current.Dispatcher.Invoke(() => {
-                LanguageManager.Instance.ChangeLanguage(new(lang));
+                LanguageManager.Instance.ChangeLanguage(new CultureInfo(lang));
             });
         }
 
-        private static AppUpdater? updateWindow;
-        public static void AppUpdateDialog(Uri uri, string changelog) {
-            updateNotify = false;
-            if (updateWindow == null) {
-                updateWindow = new AppUpdater(uri, changelog) {
-                    WindowStartupLocation = WindowStartupLocation.CenterScreen
-                };
-                updateWindow.Closed += (s, e) => { updateWindow = null; };
-                updateWindow.Show();
-            }
+        public static void AppUpdateDialog(AppUpdaterEventArgs e) {
+            _updateNotify = false;
+            var windowService = Services.GetRequiredService<IWindowService>();
+            var info = new AppUpdateInfo(e.UpdateUri, e.UpdateSHAUri, e.UpdateVersion.ToString(), e.ChangeLog);
+            windowService.Show<AppUpdaterWindow>(info);
         }
 
-        private static int updateNotifyAmt = 1;
-        private static bool updateNotify = false;
-
+        private static int _updateNotifyAmt = 1;
+        private static bool _updateNotify = false;
         private void AppUpdateChecked(object sender, AppUpdaterEventArgs e) {
             _ = Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new ThreadStart(delegate {
                 if (e.UpdateStatus == AppUpdateStatus.Available) {
-                    if (updateNotifyAmt > 0) {
-                        updateNotifyAmt--;
-                        updateNotify = true;
+                    if (_updateNotifyAmt > 0) {
+                        _updateNotifyAmt--;
+                        _updateNotify = true;
                         new ToastContentBuilder()
                             .AddText(LanguageManager.Instance["Find_New_Verison"])
                             .Show();
                     }
 
                     //If UI program already running then notification is displayed withing the it.
-                    if (!Services.GetRequiredService<IUIRunnerService>().IsVisibleUI && updateNotify) {
-                        AppUpdateDialog(e.UpdateUri, e.ChangeLog);
+                    if (!Services.GetRequiredService<IUIRunnerService>().IsVisibleUI && _updateNotify) {
+                        AppUpdateDialog(e);
                     }
                 }
                 Log.Info($"AppUpdate status: {e.UpdateStatus}");
@@ -312,9 +337,17 @@ namespace VirtualPaper {
         public static void ShutDown() {
             try {
                 _ctsPlayback.Cancel();
+                Jobs?.Close();
+                Jobs?.Dispose();
                 ((ServiceProvider)Services)?.Dispose();
+                ((App)Current)._grpcServer?.Kill();
                 ((App)Current)._grpcServer?.Dispose();
                 ToastNotificationManagerCompat.Uninstall();
+
+                if (UserSettings.Settings.IsUpdated) {
+                    UserSettings.Settings.IsUpdated = false;
+                    UserSettings.Save<ISettings>();
+                }
             }
             catch (InvalidOperationException) { /* not initialised */ }
 

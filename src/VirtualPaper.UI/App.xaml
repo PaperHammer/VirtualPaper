@@ -3,27 +3,56 @@
     x:Class="VirtualPaper.UI.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     xmlns:local="using:VirtualPaper.UI">
 
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <controls:XamlControlsResources>
-                    <controls:XamlControlsResources.MergedDictionaries>
-                        <ResourceDictionary>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" >
+                    <XamlControlsResources.MergedDictionaries>
+                        <!--<ResourceDictionary>
                             <x:Double x:Key="ContentDialogMaxWidth">800</x:Double>
-                        </ResourceDictionary>
-                    </controls:XamlControlsResources.MergedDictionaries>
-                </controls:XamlControlsResources>
+                        </ResourceDictionary>-->
+                    </XamlControlsResources.MergedDictionaries>
+                </XamlControlsResources>
 
-                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/ResouresXaml/ResourceDictionary.xaml" />
+                <!--Controls-->
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Resources/ResourceDictionary.xaml" />
+
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ColorPicker/ArcColorPicker.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ColorPicker/ArcColorSpectrum.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/CheckBox/ArcCheckBox.xaml" />
-                
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ComboBox/ArcComboBox.xaml" />
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/Button/ArcButton.xaml" />
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Navigation/TabView/ArcTabViewItem.xaml" />
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Navigation/RootView/ArcNavigationview.xaml" />
+                <!--Styles-->
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Navigation/RootView/ArcNavigationviewStyle.xaml" />
+
                 <!--Other merged dictionaries here-->
             </ResourceDictionary.MergedDictionaries>
+
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <BitmapImage x:Key="NaviIcon_ThemeAuto" UriSource="ms-appx:///Assets/ui_components/Light/theme_auto.png"/>
+                    <BitmapImage x:Key="DraftPanel_StatusBar_CursorIcon" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_cursor_24_regular.png"/>
+                    <BitmapImage x:Key="DraftPanel_StatusBar_BorderIcon" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_border_24_filled.png"/>
+                    <BitmapImage x:Key="DraftPanel_StatusBar_FitViewIcon" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_resize_small_24_filled.png"/>
+                    <BitmapImage x:Key="DraftPanel_StatusBar_SizeIcon" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_select_object_24_filled.png"/>
+                    <BitmapImage x:Key="DraftPanel_FuncBar_ColorFill" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_color_fill_24_regular.png"/>
+                    <BitmapImage x:Key="DraftPanel_Create_StaticImge" UriSource="ms-appx:///Assets/ui_components/Light/project_create_staticimg_light.png"/>
+                </ResourceDictionary>
+
+                <ResourceDictionary x:Key="Dark">
+                    <BitmapImage x:Key="NaviIcon_ThemeAuto" UriSource="ms-appx:///Assets/ui_components/Dark/theme_auto.png"/>
+                    <BitmapImage x:Key="DraftPanel_StatusBar_CursorIcon" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_cursor_24_regular.png"/>
+                    <BitmapImage x:Key="DraftPanel_StatusBar_BorderIcon" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_border_24_filled.png"/>
+                    <BitmapImage x:Key="DraftPanel_StatusBar_FitViewIcon" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_resize_small_24_filled.png"/>
+                    <BitmapImage x:Key="DraftPanel_StatusBar_SizeIcon" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_select_object_24_filled.png"/>
+                    <BitmapImage x:Key="DraftPanel_FuncBar_ColorFill" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_color_fill_24_regular.png"/>
+                    <BitmapImage x:Key="DraftPanel_Create_StaticImge" UriSource="ms-appx:///Assets/ui_components/Dark/project_create_staticimg_dark.png"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

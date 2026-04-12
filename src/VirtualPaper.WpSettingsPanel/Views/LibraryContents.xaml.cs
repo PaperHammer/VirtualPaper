@@ -1,14 +1,17 @@
 using System;
 using System.Diagnostics;
+using System.Numerics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Navigation;
-using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.UIComponent.Templates;
+using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.DataTransfer;
 
@@ -19,115 +22,161 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class LibraryContents : Page {
+    public sealed partial class LibraryContents : ArcPage {
+        public override Type ArcType => typeof(LibraryContents);
+
         public LibraryContents() {
             this.InitializeComponent();
+            this.Loaded += LibraryContents_Loaded;
+            this.Unloaded += LibraryContents_Unloaded;
+            _viewModel = AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>();
+            this.DataContext = _viewModel;
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e) {
-            base.OnNavigatedTo(e);
-
-            if (this._wpSettingsPanel == null) {
-                this._wpSettingsPanel = e.Parameter as IWpSettingsPanel;
-
-                _viewModel = ObjectProvider.GetRequiredService<LibraryContentsViewModel>(lifetimeForParams: ObjectLifetime.Singleton);
-                this.DataContext = _viewModel;
-            }
+        private void LibraryContents_Loaded(object sender, RoutedEventArgs e) {
+            this.DataContext = _viewModel;
         }
 
-        private async void Page_Loaded(object sender, RoutedEventArgs e) {
+        private void LibraryContents_Unloaded(object sender, RoutedEventArgs e) {
+            this.Unloaded -= LibraryContents_Unloaded;
+            this.DataContext = null;           
+        }
+
+        private async void Page_Loaded(object sender, RoutedEventArgs e) {            
             await _viewModel.InitContentAsync();
+            _viewModel.RefreshWpTitleForeground();
         }
 
         private void Image_ImageFailed(object sender, ExceptionRoutedEventArgs e) {
-            this._wpSettingsPanel.Log(LogType.Error, $"RImage loading failed: {e.ErrorMessage}");
+            // TODO 鍏滃簳鍥剧墖
+            ArcLog.GetLogger<LibraryContents>().Error($"RImage loading failed: {e.ErrorMessage}");
         }
 
-        private void GridView_ItemClick(object sender, ItemClickEventArgs e) {
-            _data = e.ClickedItem as IWpBasicData;
-            LeftClick();
-        }
-
-        private void GridView_RightTapped(object sender, RightTappedRoutedEventArgs e) {
-            var dataContext = ((FrameworkElement)e.OriginalSource).DataContext;
-            _data = dataContext as IWpBasicData;
-            RightClick(sender, e);
-        }
-
-        private async void LeftClick() {
-            if (_data == null) return;
-            await _viewModel.PreviewAsync(_data);
-        }
-
-        private void RightClick(object sender, RightTappedRoutedEventArgs e) {
-            if (_data == null) {
-                // Hide() 方法可能无效是因为 MenuFlyout 是由 ContextFlyout 属性触发
-                // ItemsViewMenu.Hide();
-                wallpapersLibView.ContextFlyout = null;
-            }
-            else {
-                wallpapersLibView.ContextFlyout = ItemsViewMenu;
+        private async void WallpapersLibView_ItemClick(object sender, ItemClickEventArgs e) {
+            if (e.ClickedItem is IWpBasicData data) {
+                await _viewModel.PreviewAsync(data);
             }
         }
 
         private async void ContextMenu_Click(object sender, RoutedEventArgs e) {
-            if (_data == null) return;
-
             try {
-                var selectedMeun = (MenuFlyoutItem)sender;
-                string name = selectedMeun.Name;
+                if (((FrameworkElement)sender).DataContext is not IWpBasicData data)
+                    return;
 
+                var selectedMeun = (MenuFlyoutItem)sender;
+                string? name = selectedMeun.Tag.ToString();
                 switch (name) {
                     case "Details":
-                        await _viewModel.DetailInfoAsync(_data);
+                        _viewModel.ShowDetail(data);
                         break;
                     case "UpdateConfig":
-                        await _viewModel.UpdateAsync(_data);
+                        await _viewModel.UpdateAsync(data);
                         break;
                     case "Edit":
-                        await _viewModel.EditInfoAsync(_data);
+                        _viewModel.ShowEdit(data);
                         break;
                     case "Preview":
-                        await _viewModel.PreviewAsync(_data);
+                        await _viewModel.PreviewAsync(data);
                         break;
                     case "Apply":
-                        await _viewModel.ApplyAsync(_data);
+                        await _viewModel.ApplyAsync(data);
                         break;
                     case "LockBackground":
-                        await _viewModel.ApplyToLockBGAsync(_data);
+                        await _viewModel.ApplyToLockBGAsync(data);
                         break;
                     case "ShowOnDisk":
-                        Process.Start("Explorer", "/select," + _data.FilePath);
+                        Process.Start("Explorer", "/select," + data.FilePath);
                         break;
-                    case "DeleteFromDisk":
-                        await _viewModel.DeleteAsync(_data);
+                    case "RemoveFromLib":
+                        await _viewModel.DeleteAsync(data);
                         break;
                 }
             }
             catch (Exception ex) {
-                this._wpSettingsPanel.GetNotify().ShowExp(ex);
-                this._wpSettingsPanel.Log(LogType.Error, ex);
+                GlobalMessageUtil.ShowException(ex);
+                ArcLog.GetLogger<LibraryContents>().Error(ex);
             }
         }
 
-        private void ItemsView_DragOver(object sender, DragEventArgs e) {
+        private void WallpapersLibView_DragOver(object sender, DragEventArgs e) {
             e.AcceptedOperation = DataPackageOperation.Copy;
         }
 
-        private async void ItemsView_Drop(object sender, DragEventArgs e) {
+        private async void WallpapersLibView_Drop(object sender, DragEventArgs e) {
             if (e.DataView.Contains(StandardDataFormats.StorageItems)) {
                 var items = await e.DataView.GetStorageItemsAsync();
                 await _viewModel.DropFilesAsync(items);
             }
+        }
+
+        private void WallpapersLibView_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
             e.Handled = true;
         }
 
-        private void ItemsViewer_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
-            e.Handled = true;
+        private void GridViewItem_PointerEntered(object sender, PointerRoutedEventArgs e) {
+            AnimateScale(sender, hover: true);
         }
 
-        private IWpSettingsPanel _wpSettingsPanel;
-        private LibraryContentsViewModel _viewModel;
-        private IWpBasicData _data;
+        private void GridViewItem_PointerExited(object sender, PointerRoutedEventArgs e) {
+            AnimateScale(sender, hover: false);
+        }
+
+        private void GridViewItem_PointerCanceled(object sender, PointerRoutedEventArgs e) {
+            AnimateScale(sender, hover: false);
+        }
+
+        private void GridViewItem_Loaded(object sender, RoutedEventArgs e) {
+            if (sender is not Grid root || root.Children.Count == 0)
+                return;
+
+            var presenter = (FrameworkElement)root.Children[0];
+            var visual = ElementCompositionPreview.GetElementVisual(presenter);
+            visual.CenterPoint = new Vector3(
+                (float)presenter.ActualWidth * 0.5f,
+                (float)presenter.ActualHeight * 0.5f,
+                0f);
+            visual.Scale = Vector3.One;
+
+            var compositor = visual.Compositor;
+            var ease = compositor.CreateCubicBezierEasingFunction(
+                new Vector2(0.2f, 0.0f),
+                new Vector2(0.0f, 1.0f));
+
+            Vector3KeyFrameAnimation CreateScaleAnim(float scale) {
+                var anim = compositor.CreateVector3KeyFrameAnimation();
+                anim.Duration = TimeSpan.FromMilliseconds(300);
+                anim.InsertKeyFrame(1f, new Vector3(scale, scale, 1f), ease);
+                return anim;
+            }
+            var context = new ScaleAnimationContext(visual, CreateScaleAnim(1.0f), CreateScaleAnim(0.9f));
+
+            root.Tag = context;
+        }
+
+        private static void AnimateScale(object sender, bool hover) {
+            if (sender is not Grid root || root.Tag is not ScaleAnimationContext ctx)
+                return;
+
+            var visual = ctx.Visual;
+            visual.StartAnimation(nameof(visual.Scale), hover ? ctx.ScaleToHover : ctx.ScaleToNormal);
+        }
+
+        private void WallpaperLibScrollViewer_ViewChanged(ScrollView sender, object args) {
+            if (sender == null) return;
+
+            double verticalOffset = sender.VerticalOffset;
+            double maxVerticalOffset = sender.ScrollableHeight;
+            double threshold = 100;
+
+            if (maxVerticalOffset - verticalOffset <= threshold) {
+                if (_viewModel.LibLoadingStatus != LoadingStatus.Changing) {
+                    _viewModel.LoadMoreAsync();
+                }
+            }
+        }
+
+        private readonly LibraryContentsViewModel _viewModel;
     }
+
+    sealed record ScaleAnimationContext(Visual Visual, Vector3KeyFrameAnimation ScaleToNormal, Vector3KeyFrameAnimation ScaleToHover);
 }

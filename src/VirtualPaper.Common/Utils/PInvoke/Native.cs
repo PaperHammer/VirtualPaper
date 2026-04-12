@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -6,6 +6,27 @@ using System.Text;
 namespace VirtualPaper.Common.Utils.PInvoke {
 #pragma warning disable CA1707, CA1401, CA1712
     public static class Native {
+        public enum GetAncestorFlags {
+            /// <summary>
+            /// Retrieves the parent window. This does not include the owner, as it does with the GetParent function.
+            /// </summary>
+            GetParent = 1,
+            /// <summary>
+            /// Retrieves the root window by walking the chain of parent windows.
+            /// </summary>
+            GetRoot = 2,
+            /// <summary>
+            /// Retrieves the owned root window by walking the chain of parent and owner windows returned by GetParent.
+            /// </summary>
+            GetRootOwner = 3
+        }
+
+        [DllImport("user32.dll", ExactSpelling = true)]
+        public static extern IntPtr GetAncestor(IntPtr hwnd, GetAncestorFlags flags);
+
+        [DllImport("dwmapi.dll")]
+        public static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out int pvAttribute, int cbAttribute);
+
         [StructLayout(LayoutKind.Sequential)]
         public struct WINDOWPLACEMENT {
             public int length;
@@ -25,6 +46,8 @@ namespace VirtualPaper.Common.Utils.PInvoke {
         [DllImport("kernel32.dll")]
         public static extern uint GetLastError();
 
+        public static readonly int HWND_BOTTOM = 1;
+
         public const int HWND_TOP = 0;
         public const int HWND_TOPMOST = -1;
         public const uint SWP_NOACTIVATE = 0x0010;
@@ -32,6 +55,7 @@ namespace VirtualPaper.Common.Utils.PInvoke {
         public const uint SWP_NOSIZE = 0x0001;
         public const uint SWP_SHOWWINDOW = 0x0040;
         public const uint SWP_FRAMECHANGED = 0x0020;
+        public const uint SWP_HIDEWINDOW = 0x0080;
 
         public const int GWL_STYLE = -16;
         public const long WS_POPUP = 0x80000000;
@@ -1422,6 +1446,18 @@ namespace VirtualPaper.Common.Utils.PInvoke {
         [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr", SetLastError = true)]
         public static extern IntPtr SetWindowLongPtr64(HandleRef hWnd, int nIndex, IntPtr dwNewLong);
 
+        public static void SetNotVisible(IntPtr hwnd) {
+            var style = GetWindowLongPtr64(hwnd, GWL_STYLE).ToInt64();
+            style &= ~WS_VISIBLE;
+            SetWindowLongPtr64(hwnd, GWL_STYLE, new IntPtr(style));
+        }
+
+        public static void SetVisible(IntPtr hwnd) {
+            var style = GetWindowLongPtr64(hwnd, GWL_STYLE).ToInt64();
+            style |= WS_VISIBLE;
+            SetWindowLongPtr64(hwnd, GWL_STYLE, new IntPtr(style));
+        }
+
         #endregion
         //ref: https://docs.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.marshal.getlastwin32error?view=netframework-4.8
         //[DllImportAttribute("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -1619,7 +1655,7 @@ namespace VirtualPaper.Common.Utils.PInvoke {
 
         [DllImport("user32.dll", EntryPoint = "SetWindowPos", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool SetWindowPos(IntPtr hwnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
+        public static extern bool SetWindowPos(IntPtr hwnd, int hWndInsertAfter, int x, int y, int cx, int cy, int wFlags);
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetDesktopWindow();
@@ -1638,10 +1674,7 @@ namespace VirtualPaper.Common.Utils.PInvoke {
            int flags);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        public static extern bool SystemParametersInfo(
-     int uAction, int uParam, ref int lpvParam,
-     int flags);
-
+        public static extern bool SystemParametersInfo(int uAction, int uParam, ref int lpvParam, int flags);
 
         public static UInt32 SPIF_SENDWININICHANGE = 0x02;
         public static UInt32 SPI_SETDESKWALLPAPER = 20;

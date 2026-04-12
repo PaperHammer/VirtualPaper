@@ -1,26 +1,35 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Model;
-using VirtualPaper.DraftPanel.Model.Interfaces;
-using VirtualPaper.DraftPanel.Model.NavParam;
-using VirtualPaper.DraftPanel.Views;
+using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
+using Workloads.Utils.DraftUtils.Interfaces;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
-    internal partial class DraftConfigViewModel : ObservableObject {
-        private string _draftName;
-        public string DraftName {
-            get { return _draftName; }
+    public partial class DraftConfigViewModel : ObservableObject {
+        public Action? CardUIStateChanged { get; set; }
+        public ObservableCollection<ProjectTemplate> AvailableTemplates { get; set; } = [];
+
+        private string? _projectName;
+        public string? ProjectName {
+            get { return _projectName; }
             set {
-                _draftName = value;
+                if (_projectName == value) return;
+
+                _projectName = value;
+                OnPropertyChanged();
                 IsNameOk = ComplianceUtil.IsValidName(value);
-                IsNextEnable = IsNameOk && IsFolderPathOk;
+                IsNextEnable = IsNameOk && SelectedTemplate != null;
             }
         }
 
@@ -30,154 +39,124 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             set { _isNameOk = value; OnPropertyChanged(); }
         }
 
-        private string _storageFolderPath;
-        public string StorageFolderPath {
-            get { return _storageFolderPath; }
-            set {
-                _storageFolderPath = value;
-                OnPropertyChanged();
-                IsFolderPathOk = ComplianceUtil.IsValidFolderPath(value);
-                IsNextEnable = IsNameOk && IsFolderPathOk;
-            }
-        }
-
-        private bool _isFolderPathOk;
-        public bool IsFolderPathOk {
-            get { return _isFolderPathOk; }
-            set { _isFolderPathOk = value; OnPropertyChanged(); }
-        }
-
         private bool _isNextEnable;
         public bool IsNextEnable {
             get { return _isNextEnable; }
-            set { _isNextEnable = value; UpdateDeployNewDraftDesc(value); _configSpace.SetNextStepBtnEnable(value); }
+            set { _isNextEnable = value; CardUIStateChanged?.Invoke(); }
         }
 
-        public string Project_DeployNewDraft { get; set; }
-        public string Project_NewDraftName { get; set; }
-        public string Project_NewDraftName_Placeholder { get; set; }
-        public string Project_NewName_InvalidTip { get; set; }
-        public string Project_NewDraftPosition { get; set; }
-        public string Project_NewDraftPosition_BrowserFolder_Tooltip { get; set; }
-        public string Project_NewPosition_InvalidTip { get; set; }
-        public string Project_DeployNewDraft_PreviousStep { get; set; }
-        public string Project_DeployNewDraft_Create { get; set; }
-
-        private string _deployNewDraft_Desc;
-        public string DeployNewDraft_Desc {
-            get { return _deployNewDraft_Desc; }
-            set { _deployNewDraft_Desc = value; OnPropertyChanged(); }
+        private ProjectTemplate? _selectedTemplate;
+        public ProjectTemplate? SelectedTemplate {
+            get { return _selectedTemplate; }
+            set { _selectedTemplate = value; OnPropertyChanged(); IsNextEnable = IsNameOk && value != null; }
         }
 
-        public DraftConfigViewModel() {
-            InitText();
+        public string PreviousStepBtnText { get; private set; } = string.Empty;
+        public string NextStepBtnText { get; private set; } = string.Empty;
+        public bool BtnVisible { get; private set; } = false;
+        public bool IsFromWorkSpace { get; set; }
+        public TaskCompletionSource<PreProjectData[]?>? DraftConfigTCS { get; set; }
+
+        internal async Task InitContentAsync() {
+            SelectedTemplate = null;
+
+            var ctx = ArcPageContextManager.GetContext<Draft>();
+            var loadingCtx = ctx?.LoadingContext;
+            if (loadingCtx == null)
+                return;
+
+            await loadingCtx.RunAsync(
+                operation: async token => {
+                    try {
+                        var configData = await JsonSaver.LoadAsync<AvailableDraftTemplate>(_configPath, AvailableDraftTemplateContext.Default);
+                        if (configData != null) {
+                            CrossThreadInvoker.InvokeOnUIThread(() => {
+                                ProjectName = configData.DefaultProjectName!;
+                                AvailableTemplates.SetRange(configData.Templates!);
+                            });
+                        }
+
+                        _availableTemplates = [.. AvailableTemplates];
+                    }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<DraftConfigViewModel>().Error(ex);
+                        GlobalMessageUtil.ShowException(ex);
+                    }
+                });
         }
 
-        internal void InitContent() {
-            DraftName = "New_Draft";
-            this.StorageFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        public void UpdateCardComponentUI() {
+            if (IsFromWorkSpace) {
+                PreviousStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel));
+                NextStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm));
+            }
+            else {
+                PreviousStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep));
+                NextStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm));
+            }
+            BtnVisible = true;
+            CardUIStateChanged?.Invoke();
         }
 
-        private void InitText() {
-            Project_DeployNewDraft = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft));
-            Project_NewDraftName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewDraftName));
-            Project_NewDraftName_Placeholder = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewDraftName_Placeholder));
-            Project_NewName_InvalidTip = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewName_InvalidTip));
-            Project_NewDraftPosition = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewDraftPosition));
-            Project_NewDraftPosition_BrowserFolder_Tooltip = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewDraftPosition_BrowserFolder_Tooltip));
-            Project_NewPosition_InvalidTip = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewPosition_InvalidTip));
-            Project_DeployNewDraft_PreviousStep = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep));
-            Project_DeployNewDraft_Create = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_Create));
+        public async Task OnNextStepClickedAsync() {
+            var preData = new PreProjectData[] { new(ProjectName!, ProjectType.P_StaticImage) };
+            _navigateComponent?.GetPaylaod()?.Set(NaviPayloadKey.Project, preData);
+
+            if (IsFromWorkSpace) {
+                DraftConfigTCS?.TrySetResult(preData);
+            }
+            else {
+                _navigateComponent?.NavigateByState(DraftPanelState.WorkSpace);
+            }
         }
 
-        internal void InitConfigSpace() {
-            _configSpace.SetPreviousStepBtnText(Project_DeployNewDraft_PreviousStep);
-            _configSpace.SetNextStepBtnText(Project_DeployNewDraft_Create);
-            _configSpace.SetBtnVisible(true);
-            _configSpace.BindingPreviousBtnAction(PreviousStepBtnAction);
-            _configSpace.BindingNextBtnAction(CreateVpdBtnAction);
+        public async Task OnPreviousStepClickedAsync() {
+            if (IsFromWorkSpace) {
+                DraftConfigTCS?.TrySetResult(null);
+            }
+            else {
+                _navigateComponent?.NavigateByState(DraftPanelState.GetStart);
+            }
         }
 
-        private void PreviousStepBtnAction(object sender, RoutedEventArgs e) {
-            _configSpace.ChangePanelState(DraftPanelState.ProjectConfig, null);
+        #region filter
+        public void ApplyFilter(string keyword) {
+            Filter(keyword);
         }
 
-        private async void CreateVpdBtnAction(object sender, RoutedEventArgs e) {
-            string filePath = await CreateNewAsync(); // .vpd filePath
-            if (filePath == string.Empty) return;
-            _configSpace.ChangePanelState(DraftPanelState.WorkSpace, new ToWorkSpace([filePath]));
+        private void Filter(string keyword) {
+            var filtered = _availableTemplates?.Where(template =>
+                template.Name != null && template.Name.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
+            );
+            if (filtered == null) return;
+            Remove_NonMatching(filtered);
+            AddBack_Procs(filtered);
         }
 
-        private void UpdateDeployNewDraftDesc(bool value) {
-            DeployNewDraft_Desc = value ?
-                LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_Desc)) + " " + Path.Combine(StorageFolderPath, DraftName)
-                : string.Empty;
-        }
-
-        internal async void ChangeFolder() {
-            var storageFolder = await WindowsStoragePickers.PickFolderAsync(_configSpace.GetWindowHandle());
-            if (storageFolder == null) return;
-
-            this.StorageFolderPath = storageFolder.Path;
-        }
-
-        /// <summary>
-        /// 创建项目
-        /// </summary>
-        /// <returns>创建的根数据文件路径</returns>
-        /// <remarks>
-        /// 执行完成后，生成的目录结构如下：
-        ///
-        /// <code>
-        /// 
-        /// {draftFolder}
-        /// - {draftName}.vpd   根数据文件 (.vpd)
-        /// - {SharedData.ProjName}  默认项目的目录
-        ///         
-        /// </code>
-        /// 
-        /// </remarks>
-        internal async Task<string> CreateNewAsync() {
-            Draft.Instance.GetNotify().Loading(false, false);
-            string draftFolder = Path.Combine(StorageFolderPath, DraftName);
-            try {
-                #region 创建 vpd 目录
-                if (Directory.Exists(draftFolder)) {
-                    Draft.Instance.GetNotify().ShowMsg(true, nameof(Constants.I18n.DirExsits), InfoBarType.Error);
-                    return string.Empty;
+        private void Remove_NonMatching(IEnumerable<ProjectTemplate> templates) {
+            for (int i = AvailableTemplates.Count - 1; i >= 0; i--) {
+                var item = AvailableTemplates[i];
+                if (!templates.Contains(item)) {
+                    AvailableTemplates.Remove(item);
                 }
-                Directory.CreateDirectory(draftFolder);
-                #endregion
-
-                #region 创建 .vpd 文件
-                var inputData = _configSpace.GetSharedData() as ToDraftConfig;
-                DraftMetadata draftdata = new(DraftName, inputData);
-                await draftdata.SaveAsync(draftFolder);
-                #endregion
-
-                #region 创建 vproj 目录
-                string projFolder = Path.Combine(draftFolder, inputData.ProjName);
-                Directory.CreateDirectory(projFolder);
-                #endregion
-
-                //#region 创建 .vproj 文件
-                //ProjectMetadata projdata = new(inputData.ProjName, inputData.ProjType);
-                //await projdata.SaveBasicAsync(projFolder);
-                //#endregion
             }
-            catch (Exception ex) {
-                Directory.Delete(draftFolder, true);
-                Draft.Instance.GetNotify().ShowExp(ex);
-                Draft.Instance.Log(LogType.Error, ex);
-                return string.Empty;
-            }
-            finally {
-                Draft.Instance.GetNotify().Loaded();
-            }
-
-            return Path.Combine(draftFolder, DraftName + FileExtension.FE_Design); // .vpd filePath
         }
 
-        internal ConfigSpace _configSpace;
+        private void AddBack_Procs(IEnumerable<ProjectTemplate> templates) {
+            foreach (var item in templates) {
+                if (!AvailableTemplates.Contains(item)) {
+                    AvailableTemplates.Add(item);
+                }
+            }
+        }
+        #endregion
+
+        private IEnumerable<ProjectTemplate>? _availableTemplates;
+        internal INavigateComponent _navigateComponent = null!;
+        private readonly string _configPath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "DraftPanelConfigs",
+            "available_draft_template.json"
+        );
     }
 }

@@ -1,142 +1,99 @@
-<winex:WindowEx
+<?xml version="1.0" encoding="utf-8" ?>
+<arc:ArcWindow
     x:Class="VirtualPaper.UI.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:VirtualPaper.UI"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:winex="using:WinUIEx"
-    xmlns:feedback="using:VirtualPaper.UIComponent.Feedback"
-    xmlns:models="using:VirtualPaper.UIComponent.Models"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
+    xmlns:styles="using:VirtualPaper.UIComponent.Styles"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
-    Width="1400"
-    Height="880"
-    MinWidth="300"
-    MinHeight="80"    
-    Closed="WindowEx_Closed"
-    Activated="WindowEx_Activated"
-    TaskBarIcon="virtualpaper.ico"
+    Width="1460" Height="900"
+    MinHeight="648" MinWidth="800"
     Title="Virtual Paper">
 
-    <Grid
-        x:Name="MainGrid">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <arc:ArcWindowHost x:Name="MainHost">
+        <Grid x:Name="MainGrid">
+            <navi:ArcNavigationView x:Name="NavigationViewControl"
+                CompactPaneLength="64"
+                IsBackButtonVisible="Visible"
+                IsBackEnabled="False"
+                IsPaneToggleButtonVisible="False"
+                IsSettingsVisible="False"
+                IsTabStop="False"
+                SelectionChanged="OnNavigationViewSelectionChanged">
+                <navi:ArcNavigationView.MenuItems>
+                    <!--<NavigationViewItem 
+                        Content="{Binding SidebarGallery}"
+                        x:Name="Gallery"
+                        Icon="Library"
+                        IsSelected="True">
+                    </NavigationViewItem>-->
+                    <NavigationViewItem x:Name="Nav_WpSettings" IsSelected="True">
+                        <NavigationViewItem.ContentTemplate>
+                            <DataTemplate x:DataType="local:MainWindow">
+                                <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
+                                    <FontIcon Glyph="&#xE7B8;" FontSize="22" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{markup:I18n Key=SidebarRepository}" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </NavigationViewItem.ContentTemplate>
+                    </NavigationViewItem>
+                    <NavigationViewItem x:Name="Nav_Draft">
+                        <!--TODO：IsSelected = true 时，若直接设置 Content 为 非IconElement or 非String 时会报错 -->
+                        <NavigationViewItem.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
+                                    <FontIcon Glyph="&#xF156;" FontSize="22" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{markup:I18n Key=SidebarProject}" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </NavigationViewItem.ContentTemplate>
+                    </NavigationViewItem>
+                </navi:ArcNavigationView.MenuItems>
 
-        <Grid 
-            x:Name="AppTitleBar" 
-            Height="32">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="LeftPaddingColumn" Width="0" />
-                <ColumnDefinition x:Name="IconColumn" Width="Auto" />
-                <ColumnDefinition x:Name="TitleColumn" Width="Auto" />
-                <ColumnDefinition x:Name="LeftDragColumn" Width="*" />
-                <ColumnDefinition x:Name="RightDragColumn" Width="*" />
-                <ColumnDefinition x:Name="RightPaddingColumn" Width="0" />
-            </Grid.ColumnDefinitions>
+                <navi:ArcNavigationView.PaneFooter>
+                    <StackPanel x:Name="FooterStackPanel" 
+                            Orientation="Vertical"
+                            HorizontalAlignment="Stretch"
+                            Margin="-2 0 0 0">
+                        <Button x:Name="LightAndDarkButton" 
+                            Style="{StaticResource ArcNavigationButtonNormalStyle}"
+                            VerticalAlignment="Center" 
+                            HorizontalContentAlignment="Center"
+                            Width="Auto"
+                            HorizontalAlignment="Stretch"
+                            Click="LightAndDarkButton_Click">
+                            <styles:ArcImageIcon
+                                Width="28"
+                                ResourceKey="{x:Bind PropertyHost.ThemeIconKey, Mode=OneWay}"/>
+                        </Button>
+                    </StackPanel>
+                </navi:ArcNavigationView.PaneFooter>
 
-            <Image
-                x:Name="TitleBarIcon"
-                Grid.Column="1"
-                Width="16"
-                Height="16"
-                Margin="8,0,0,0"
-                VerticalAlignment="Center"
-                Source="ms-appx:///Assets/icon-vp-48.png" />
-            <TextBlock
-                x:Name="TitleTextBlock"
-                Grid.Column="2"
-                Margin="8,0,0,0"
-                VerticalAlignment="Center"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Text="Virtual Paper" />
+                <navi:ArcNavigationView.FooterMenuItems>
+                    <!--<NavigationViewItem x:Name="Nav_Account" 
+                        Content="{Binding SidebarAccount}"
+                        Icon="Contact" />-->
+                    <NavigationViewItem x:Name="Nav_AppSettings">
+                        <NavigationViewItem.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
+                                    <FontIcon Glyph="&#xE713;" FontSize="22" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </NavigationViewItem.ContentTemplate>
+                    </NavigationViewItem>
+                </navi:ArcNavigationView.FooterMenuItems>
+
+                <!--TODO:
+                1. Draft 页导航缓存-->
+
+                <navi:ArcNavigationContentView x:Name="NaviContent" InfobarMessages="{x:Bind InfobarMessages}"/>
+            </navi:ArcNavigationView>
         </Grid>
-
-        <NavigationView
-            x:Name="NavView"
-            Grid.Row="1"
-            PaneDisplayMode="LeftCompact"
-            SelectionChanged="NavView_SelectionChanged"
-            IsSettingsVisible="False"
-            AlwaysShowHeader="False"
-            IsBackEnabled="False"
-            IsBackButtonVisible="Collapsed">
-            <NavigationView.MenuItems>
-                <!--<NavigationViewItem 
-                    Content="{Binding SidebarGallery}"
-                    x:Name="Gallery"
-                    Icon="Library"
-                    IsSelected="True">
-                </NavigationViewItem>-->
-                <NavigationViewItem 
-                    Content="{Binding SidebarWpSettings}" 
-                    x:Name="Nav_WpSettings"
-                    IsSelected="True">
-                    <NavigationViewItem.Icon>
-                        <FontIcon 
-                            Glyph="&#xE91B;"/>
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <!--<NavigationViewItem 
-                    Content="{Binding SidebarProject}" 
-                    x:Name="Nav_Draft"
-                    IsSelected="True" >
-                    <NavigationViewItem.Icon>
-                        <FontIcon 
-                            Glyph="&#xF156;"/>
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>-->
-            </NavigationView.MenuItems>
-
-            <NavigationView.FooterMenuItems>
-                <!--<NavigationViewItem 
-                    Content="{Binding SidebarAccount}" 
-                    x:Name="Nav_Account" 
-                    Icon="Contact" />-->
-                <NavigationViewItem 
-                    Content="{Binding SidebarAppSettings}" 
-                    x:Name="Nav_AppSettings" 
-                    Icon="Setting" />
-            </NavigationView.FooterMenuItems>
-
-            <Grid>
-                <Frame
-                    x:Name="ContentFrame"
-                    Opacity="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ControlOpacity, Mode=OneWay}"
-                    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                    IsEnabled="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ControlIsEnable, Mode=OneWay}"/>
-
-                <ItemsControl 
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Top"
-                    ItemsSource="{x:Bind _viewModel._basicComponentUtil._globalMsgViewModel.InfobarMessages, Mode=OneWay}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="models:GlobalMsgInfo">
-                            <InfoBar
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Top"
-                                IsIconVisible="True"
-                                IsOpen="{x:Bind IsOpen, Mode=TwoWay}"
-                                Severity="{x:Bind Severity}"
-                                Message="{x:Bind Message}"
-                                MaxWidth="900"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <feedback:Loading
-                    CancelEnable="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CancelEnable, Mode=OneWay}"
-                    ProgressbarEnable="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.ProgressbarEnable, Mode=OneWay}"
-                    CtsTokens="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CtsTokens, Mode=OneWay}"
-                    TotalValue="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TotalValue, Mode=OneWay}"
-                    CurValue="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.CurValue, Mode=OneWay}"
-                    TextLoading="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TextLoading, Mode=OneWay}"
-                    TextCancel="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.TextCancel, Mode=OneWay}"
-                    Visibility="{x:Bind _viewModel._basicComponentUtil._loadingViewModel.IsVisiable, Mode=OneWay}"/>
-            </Grid>
-        </NavigationView>
-    </Grid>
-</winex:WindowEx>
+    </arc:ArcWindowHost>
+</arc:ArcWindow>

@@ -1,55 +1,93 @@
-﻿using System.Collections.Generic;
-using VirtualPaper.Common;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Linq;
+using System.Windows.Input;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.UIComponent.Utils;
-using Windows.System;
+using Windows.ApplicationModel.DataTransfer;
+using UAC = UACHelper.UACHelper;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
-    public class GetStartViewModel {
-        public List<Startup> Startups { get; private set; } = [];
-        public ObservableList<IRecentUsed> RecentUseds { get; private set; } = [];
-
-        public string Project_RecentUsed { get; set; }
-        public string Project_SearchRecentUsed { get; set; }
-        public string Project_StartUp { get; set; }
-        public string Project_ContinueWithoutFile { get; set; }
+    public partial class GetStartViewModel {
+        public ObservableCollection<IRecentUsed> RecentUseds { get; private set; } = [];
+        public ICommand? RemoveFromListCommand { get; private set; }
+        public ICommand? CopyPathCommand { get; private set; }
+        public ICommand? ShowOnDiskCommand { get; private set; }
+        public bool IsElevated { get; }
 
         public GetStartViewModel(IUserSettingsClient userSettingsClient) {
+            IsElevated = UAC.IsElevated;
+
             this._userSettingsClient = userSettingsClient;
-            InitText();
-            InitCollection();            
+            InitCollection();
+            InitCommand();
+        }
+
+        private void InitCommand() {
+            RemoveFromListCommand = new RelayCommand<IRecentUsed>(async item => {
+                if (item != null) {
+                    RecentUseds.Remove(item);
+                    _recentUseds?.Remove(item);
+                    await _userSettingsClient.DeleteRecetUsedAsync(item);
+                }
+            });
+
+            CopyPathCommand = new RelayCommand<IRecentUsed>(item => {
+                if (item?.FilePath != null) {
+                    var package = new DataPackage();
+                    package.SetText(item.FilePath);
+                    Clipboard.SetContent(package);
+                }
+            });
+
+            ShowOnDiskCommand = new RelayCommand<IRecentUsed>(item => {
+                if (item?.FilePath != null) {
+                    Process.Start("Explorer", "/select," + item.FilePath);
+                }
+            });
         }
 
         private void InitCollection() {
-            Startups = [
-                new(ConfigSpacePanelType.OpenVpd,
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenVsd),
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenVsd_Desc),
-                    VirtualKey.V),
-                new(ConfigSpacePanelType.OpenFile,
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile),
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_OpenFile_Desc),
-                    VirtualKey.F),
-                new(ConfigSpacePanelType.NewVpd,
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd),
-                    LanguageUtil.GetI18n(Constants.I18n.Project_StartUp_NewVpd_Desc),
-                    VirtualKey.N),
-            ];
             RecentUseds.AddRange(_userSettingsClient.RecentUseds);
-            _recentUsed = [.. RecentUseds];
+            _recentUseds = [.. RecentUseds];
         }
 
-        private void InitText() {
-            Project_RecentUsed = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_RecentUsed));
-            Project_SearchRecentUsed = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SearchRecentUsed));
-            Project_StartUp = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StartUp));
-            Project_ContinueWithoutFile = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_ContinueWithoutFile));
+        #region filter
+        internal void ApplyFilter(string keyword) {
+            FilterByTitle(keyword);
         }
 
-        internal List<IRecentUsed> _recentUsed = [];
+        internal void FilterByTitle(string keyword) {
+            var filtered = _recentUseds?.Where(recentUsed =>
+                recentUsed.FileName != null && recentUsed.FileName.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
+            );
+            if (filtered == null) return;
+            Remove_NonMatching(filtered);
+            AddBack_Procs(filtered);
+        }
+
+        private void Remove_NonMatching(IEnumerable<IRecentUsed> recentuseds) {
+            for (int i = RecentUseds.Count - 1; i >= 0; i--) {
+                var item = RecentUseds[i];
+                if (!recentuseds.Contains(item)) {
+                    RecentUseds.Remove(item);
+                }
+            }
+        }
+
+        private void AddBack_Procs(IEnumerable<IRecentUsed> recentuseds) {
+            foreach (var item in recentuseds) {
+                if (!RecentUseds.Contains(item)) {
+                    RecentUseds.Add(item);
+                }
+            }
+        }
+        #endregion
+
+        private List<IRecentUsed>? _recentUseds;
         private readonly IUserSettingsClient _userSettingsClient;
     }
 }

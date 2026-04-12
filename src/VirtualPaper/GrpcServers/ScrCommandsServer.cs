@@ -1,7 +1,7 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using VirtualPaper.Cores.ScreenSaver;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.ScrCommands;
 
 namespace VirtualPaper.GrpcServers {

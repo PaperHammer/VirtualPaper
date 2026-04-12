@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -11,9 +11,10 @@ namespace VirtualPaper.Common.Utils {
         /// Get hardware information
         /// </summary>
         public static string GetHardwareInfo() {
-            var arch = Environment.Is64BitProcess ? "x86" : "x64";
+            var arch = Environment.Is64BitProcess ? "x64" : "x86";
+            var osArch = Environment.Is64BitOperatingSystem ? "x64" : "x86";
             var container = Constants.ApplicationType.IsMSIX ? "desktop-bridge" : "desktop-native";
-            return $"\nVirtual Paper v{Assembly.GetEntryAssembly().GetName().Version} {arch} {container} {CultureInfo.CurrentUICulture.Name}" +
+            return $"\nVirtual Paper v{Assembly.GetEntryAssembly().GetName().Version} {arch} (OS {osArch}) {container} {CultureInfo.CurrentUICulture.Name}" +
                 $"\n{SystemInfo.GetOSInfo()}\n{SystemInfo.GetCpuInfo()}\n{SystemInfo.GetGpuInfo()}\n";
         }
 

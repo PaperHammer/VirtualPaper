@@ -1,4 +1,4 @@
-﻿using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Common.Utils.PInvoke;
 
 namespace VirtualPaper.Common.Utils.Shell {
     /// <summary>

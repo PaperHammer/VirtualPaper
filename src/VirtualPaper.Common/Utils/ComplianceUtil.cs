@@ -1,8 +1,8 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 
 namespace VirtualPaper.Common.Utils {
     public static partial class ComplianceUtil {
-        public static bool IsValidFolderPath(string path, int minLen = 3, int maxLen = 260) {
+        public static bool IsValidFolderPath(string? path, int minLen = 3, int maxLen = 260) {
             if (string.IsNullOrEmpty(path)) {
                 return false;
             }
@@ -26,7 +26,7 @@ namespace VirtualPaper.Common.Utils {
             return true;
         }
 
-        public static bool IsValidName(string value, int minLen = 1, int maxLen = 30) {
+        public static bool IsValidName(string? value, int minLen = 1, int maxLen = 30) {
             if (string.IsNullOrEmpty(value)) {
                 return false;
             }
@@ -44,7 +44,7 @@ namespace VirtualPaper.Common.Utils {
             return true;
         }
 
-        public static bool IsValidValueOnlyLength(string value, int minLen = 1, int maxLen = 30) {
+        public static bool IsValidValueOnlyLength(string? value, int minLen = 1, int maxLen = 30) {
             if (string.IsNullOrEmpty(value)) {
                 return false;
             }

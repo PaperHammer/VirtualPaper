@@ -61,29 +61,155 @@ namespace VirtualPaper.Properties {
         }
         
         /// <summary>
-        ///   查找类似 提示 的本地化字符串。
+        ///   查找类似 安装 的本地化字符串。
         /// </summary>
-        public static string AppUpdater_Propt {
+        public static string AppUpdater_ActionButtonText_Completed {
             get {
-                return ResourceManager.GetString("AppUpdater_Propt", resourceCulture);
+                return ResourceManager.GetString("AppUpdater_ActionButtonText_Completed", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 错误 的本地化字符串。
+        ///   查找类似 暂停 的本地化字符串。
         /// </summary>
-        public static string AppUpdater_TextError {
+        public static string AppUpdater_ActionButtonText_Downloading {
             get {
-                return ResourceManager.GetString("AppUpdater_TextError", resourceCulture);
+                return ResourceManager.GetString("AppUpdater_ActionButtonText_Downloading", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 关闭窗口将终止下载，是否继续？ 的本地化字符串。
+        ///   查找类似 安装中... 的本地化字符串。
         /// </summary>
-        public static string AppUpdater_Update_DescriptionCancelQuestion {
+        public static string AppUpdater_ActionButtonText_Installing {
             get {
-                return ResourceManager.GetString("AppUpdater_Update_DescriptionCancelQuestion", resourceCulture);
+                return ResourceManager.GetString("AppUpdater_ActionButtonText_Installing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 继续下载 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_ActionButtonText_Paused {
+            get {
+                return ResourceManager.GetString("AppUpdater_ActionButtonText_Paused", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 下载 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_ActionButtonText_Ready {
+            get {
+                return ResourceManager.GetString("AppUpdater_ActionButtonText_Ready", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 剩余时间 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_SpeedText_Ready {
+            get {
+                return ResourceManager.GetString("AppUpdater_SpeedText_Ready", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 下载完成！ 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_StatusText_Completed {
+            get {
+                return ResourceManager.GetString("AppUpdater_StatusText_Completed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 无法访问资源，尝试检查网络后重试 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_StatusText_DownloadFailed {
+            get {
+                return ResourceManager.GetString("AppUpdater_StatusText_DownloadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 正在下载... 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_StatusText_Downloading {
+            get {
+                return ResourceManager.GetString("AppUpdater_StatusText_Downloading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 安装完成！ 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_StatusText_Installed {
+            get {
+                return ResourceManager.GetString("AppUpdater_StatusText_Installed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 正在安装更新... 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_StatusText_Installing {
+            get {
+                return ResourceManager.GetString("AppUpdater_StatusText_Installing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 下载已暂停 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_StatusText_Paused {
+            get {
+                return ResourceManager.GetString("AppUpdater_StatusText_Paused", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 准备下载... 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_StatusText_Ready {
+            get {
+                return ResourceManager.GetString("AppUpdater_StatusText_Ready", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 文件校验失败，请重试下载 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_StatusText_VerifyFailed {
+            get {
+                return ResourceManager.GetString("AppUpdater_StatusText_VerifyFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 校验资源完整性... 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_StatusText_Verifying {
+            get {
+                return ResourceManager.GetString("AppUpdater_StatusText_Verifying", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 尚未完成安装，确定要退出吗？ 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_Update_DescriptionCancelQuestion_ForCompleted {
+            get {
+                return ResourceManager.GetString("AppUpdater_Update_DescriptionCancelQuestion_ForCompleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 当前更新正在下载中，是否确认中断并关闭？ 的本地化字符串。
+        /// </summary>
+        public static string AppUpdater_Update_DescriptionCancelQuestion_ForDownloading {
+            get {
+                return ResourceManager.GetString("AppUpdater_Update_DescriptionCancelQuestion_ForDownloading", resourceCulture);
             }
         }
         
@@ -98,47 +224,65 @@ namespace VirtualPaper.Properties {
         }
         
         /// <summary>
-        ///   查找类似 下载 的本地化字符串。
+        ///   查找类似 正在进行更新 的本地化字符串。
         /// </summary>
-        public static string AppUpdater_Update_Text_BtnDownload {
+        public static string AppUpdater_Update_TitleCancelQuestion {
             get {
-                return ResourceManager.GetString("AppUpdater_Update_Text_BtnDownload", resourceCulture);
+                return ResourceManager.GetString("AppUpdater_Update_TitleCancelQuestion", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 安装 的本地化字符串。
+        ///   查找类似 取消 的本地化字符串。
         /// </summary>
-        public static string AppUpdater_Update_Text_BtnInstall {
+        public static string Common_TextCancel {
             get {
-                return ResourceManager.GetString("AppUpdater_Update_Text_BtnInstall", resourceCulture);
+                return ResourceManager.GetString("Common_TextCancel", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 发现新版本 的本地化字符串。
+        ///   查找类似 关闭 的本地化字符串。
+        /// </summary>
+        public static string Common_TextClose {
+            get {
+                return ResourceManager.GetString("Common_TextClose", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 确认 的本地化字符串。
+        /// </summary>
+        public static string Common_TextConfirm {
+            get {
+                return ResourceManager.GetString("Common_TextConfirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 错误 的本地化字符串。
+        /// </summary>
+        public static string Common_TextError {
+            get {
+                return ResourceManager.GetString("Common_TextError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 重试 的本地化字符串。
+        /// </summary>
+        public static string Common_TextRetry {
+            get {
+                return ResourceManager.GetString("Common_TextRetry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 发现新版本！ 的本地化字符串。
         /// </summary>
         public static string Find_New_Verison {
             get {
                 return ResourceManager.GetString("Find_New_Verison", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 数据加载中，请稍后 的本地化字符串。
-        /// </summary>
-        public static string Preview_DataLoading {
-            get {
-                return ResourceManager.GetString("Preview_DataLoading", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 预览 的本地化字符串。
-        /// </summary>
-        public static string Preview_Title {
-            get {
-                return ResourceManager.GetString("Preview_Title", resourceCulture);
             }
         }
         
@@ -148,15 +292,6 @@ namespace VirtualPaper.Properties {
         public static string Systray_TextCloseAllWallpapers {
             get {
                 return ResourceManager.GetString("Systray_TextCloseAllWallpapers", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 自定义壁纸效果 的本地化字符串。
-        /// </summary>
-        public static string Systray_TextCustomizeWallpaper {
-            get {
-                return ResourceManager.GetString("Systray_TextCustomizeWallpaper", resourceCulture);
             }
         }
         
@@ -251,29 +386,11 @@ namespace VirtualPaper.Properties {
         }
         
         /// <summary>
-        ///   查找类似 错误 的本地化字符串。
-        /// </summary>
-        public static string UIRunnerService_Error {
-            get {
-                return ResourceManager.GetString("UIRunnerService_Error", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   查找类似 发生错误，尝试重启程序以解决问题。若多次发生，请上报错误或联系开发者，并重新下载 的本地化字符串。
         /// </summary>
         public static string UIRunnerService_VirtualPaperExceptionGeneral {
             get {
                 return ResourceManager.GetString("UIRunnerService_VirtualPaperExceptionGeneral", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 更新 的本地化字符串。
-        /// </summary>
-        public static string Update_WindowTitle {
-            get {
-                return ResourceManager.GetString("Update_WindowTitle", resourceCulture);
             }
         }
         
@@ -306,15 +423,6 @@ namespace VirtualPaper.Properties {
         }
         
         /// <summary>
-        ///   查找类似 错误 的本地化字符串。
-        /// </summary>
-        public static string WndProcMsg_TextError {
-            get {
-                return ResourceManager.GetString("WndProcMsg_TextError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   查找类似 Virtual Paper 的本地化字符串。
         /// </summary>
         public static string WndProcMsg_TitleAppName {
@@ -343,15 +451,6 @@ namespace VirtualPaper.Properties {
         public static string WpControl_VirtualPaperExceptionWorkerWSetupFail {
             get {
                 return ResourceManager.GetString("WpControl_VirtualPaperExceptionWorkerWSetupFail", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 目标文件可能已损坏 的本地化字符串。
-        /// </summary>
-        public static string WpUtils_TextFileOpenFailed {
-            get {
-                return ResourceManager.GetString("WpUtils_TextFileOpenFailed", resourceCulture);
             }
         }
     }

@@ -1,19 +1,26 @@
-﻿using System.IO;
+using System.IO;
 using System.Text.Json.Serialization;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.Models.Cores {
     [JsonSerializable(typeof(WpBasicData))]
     [JsonSerializable(typeof(IWpBasicData))]
     public partial class WpBasicDataContext : JsonSerializerContext { }
 
-    public class WpBasicData : IWpBasicData {       
+    public class WpBasicData : ObservableObject, IWpBasicData {
         public string WallpaperUid { get; set; } = string.Empty;
         public ApplicationInfo AppInfo { get; set; } = new();
-        public string Title { get; set; } = string.Empty;
+
+        private string _title = string.Empty;
+        public string Title {
+            get => _title;
+            set { if (_title == value) return; _title = value; OnPropertyChanged(); }
+        }
+
         public string Desc { get; set; } = string.Empty;
         public string Authors { get; set; } = string.Empty;
         public string PublishDate { get; set; } = string.Empty;
@@ -34,7 +41,7 @@ namespace VirtualPaper.Models.Cores {
         }
         public bool IsSingleRType { get; set; } = false;
         public string Partition { get; set; } = string.Empty;
-        public string Tags { get; set; } = string.Empty;
+        public string Tags { get; set; } = string.Empty; // splite with ';'
         public WallpaperStatus Status { get; set; }
 
         public string FolderName { get; set; } = string.Empty;
@@ -46,6 +53,7 @@ namespace VirtualPaper.Models.Cores {
         public string AspectRatio { get; set; } = string.Empty;
         public string FileSize { get; set; } = string.Empty;
         public string FileExtension { get; set; } = string.Empty;
+        public DateTime CreatedTime { get; set; }
 
         public bool IsSubscribed { get; set; } = false;
 
@@ -72,6 +80,7 @@ namespace VirtualPaper.Models.Cores {
                 AspectRatio = this.AspectRatio,
                 FileSize = this.FileSize,
                 FileExtension = this.FileExtension,
+                CreatedTime = this.CreatedTime,
 
                 IsSubscribed = this.IsSubscribed,
             };
@@ -103,6 +112,7 @@ namespace VirtualPaper.Models.Cores {
             this.AspectRatio = source.AspectRatio;
             this.FileSize = source.FileSize;
             this.FileExtension = source.FileExtension;
+            this.CreatedTime = source.CreatedTime;
 
             this.IsSubscribed = source.IsSubscribed;
         }
@@ -113,8 +123,15 @@ namespace VirtualPaper.Models.Cores {
         }
 
         public void Save() {
-            JsonSaver.Store<IWpBasicData>(
-                Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName), 
+            JsonSaver.Save<IWpBasicData>(
+                Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName),
+                this,
+                WpBasicDataContext.Default);
+        }
+
+        public async Task SaveAsync() {
+            await JsonSaver.SaveAsync<IWpBasicData>(
+                Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName),
                 this,
                 WpBasicDataContext.Default);
         }
@@ -163,7 +180,7 @@ namespace VirtualPaper.Models.Cores {
     public enum WallpaperStatus {
         Locked,
         Normal,
-        Auditing,        
+        Auditing,
         Deleted,
     }
 }

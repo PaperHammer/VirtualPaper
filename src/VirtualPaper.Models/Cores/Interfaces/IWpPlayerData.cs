@@ -3,11 +3,8 @@
 namespace VirtualPaper.Models.Cores.Interfaces {
     public interface IWpPlayerData {
         string WallpaperUid { get; set; }
-
-        /// <summary>
-        /// 壁纸运行时类型
-        /// </summary>
         RuntimeType RType { get; set; }
+        WallpaperArrangement Arrangement { get; set; }
         string FilePath { get; set; }
         string DepthFilePath { get; set; }
         string FolderPath { get; set; }

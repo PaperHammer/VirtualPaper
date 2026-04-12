@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using VirtualPaper.Common.Utils;
@@ -10,7 +10,7 @@ using Size = System.Windows.Size;
 namespace VirtualPaper.Utils {
     public class WpfUtil {
         /// <summary>
-        /// makes program window handle child of window ui framework element.
+        /// makes program window _handle child of window ui framework element.
         /// </summary>
         /// <param name="window"></param>
         /// <param name="pgmHandle"></param>
@@ -24,7 +24,7 @@ namespace VirtualPaper.Utils {
                 throw new Exception(LogUtil.GetWin32Error("Failed to set parent (1)"));
             }
 
-            //ScreentoClient is no longer used, this supports windows mirrored mode also, calculate new relative position of window w.r.t parent.
+            //ScreentoClient is no longer used, this supports windows mirrored mode also, calculate new relative position of window w.r.T parent.
             _ = Native.MapWindowPoints(pgmHandle, previewHwnd, ref prct, 2);
             WindowUtil.SetParentSafe(pgmHandle, previewHwnd);
 
@@ -39,7 +39,7 @@ namespace VirtualPaper.Utils {
         /// Get UI Framework element position.
         /// </summary>
         /// <param name="element"></param>
-        /// <param name="relativeToScreen">false: w.r.t application</param>
+        /// <param name="relativeToScreen">false: w.r.T application</param>
         /// <returns></returns>
         public static Rect GetAbsolutePlacement(FrameworkElement element, bool relativeToScreen = false) {
             var absolutePos = element.PointToScreen(new System.Windows.Point(0, 0));

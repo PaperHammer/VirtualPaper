@@ -1,17 +1,16 @@
 using System;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge;
-using VirtualPaper.Common.Utils.Bridge.Base;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.ThreadContext;
-using VirtualPaper.DraftPanel.Model.Interfaces;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.DraftPanel.Views.ConfigSpaceComponents;
 using VirtualPaper.UIComponent.Data;
+using VirtualPaper.UIComponent.Templates;
+using VirtualPaper.UIComponent.Utils;
+using Workloads.Utils.DraftUtils.Interfaces;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -20,42 +19,51 @@ namespace VirtualPaper.DraftPanel.Views {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class ConfigSpace : Page, ICardComponent, IDraftPanelBridge {
+    public sealed partial class ConfigSpace : ArcPage, INavigateComponent {
+        public override Type ArcType => typeof(ConfigSpace);
+
         public ConfigSpace() {
             this.InitializeComponent();
+            _viewModel = AppServiceLocator.Services.GetRequiredService<ConfigSpaceViewModel>();
+            this.DataContext = _viewModel;
+        }
 
-            _currentPanel = DraftPanelState.GetStart;
+        private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            _viewModel.Dispose();
         }
 
         #region nav
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            _viewModel = ObjectProvider.GetRequiredService<ConfigSpaceViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-            this.DataContext = _viewModel;
+            if (e.Parameter is FrameworkPayload payload) {
+                payload.TryGet(NaviPayloadKey.DraftPage, out _draftPage);
+                payload.TryGet(NaviPayloadKey.TargetDraftPanelState, out _targetDraftPanelState);
+                Payload = Payload.Merge(payload);
+                Payload?.Set(NaviPayloadKey.INavigateComponent, this);
+                Payload?.Set(NaviPayloadKey.ConfigSpacePage, this);
+            }
         }
 
         private void FrameComp_Loaded(object sender, RoutedEventArgs e) {
-            NavigetBasedState(_currentPanel);
+            NavigateByState(_targetDraftPanelState);
+            Payload?.Set(NaviPayloadKey.TargetDraftPanelState, DraftPanelState.GetStart);
         }
 
-        internal void NavigetBasedState(DraftPanelState nextState) {
-            CrossThreadInvoker.InvokeOnUiThread(() => {
-                _currentPanel = nextState;
-
+        public void NavigateByState(DraftPanelState nextState, params NaviPayloadData[] naviPayloadDatas) {
+            CrossThreadInvoker.InvokeOnUIThread(() => {
                 Type targetPageType;
-                switch (_currentPanel) {
+                switch (nextState) {
                     case DraftPanelState.GetStart:
                         targetPageType = typeof(GetStart);
-                        break;
-                    case DraftPanelState.ProjectConfig:
-                        targetPageType = typeof(ProjectConfig);
                         break;
                     case DraftPanelState.DraftConfig:
                         targetPageType = typeof(DraftConfig);
                         break;
                     default:
-                        Draft.Instance.ChangePanelState(nextState, _sharedData);
+                        _draftPage?.NavigateByState(nextState, Payload?.ToArray() ?? []);
+                        FrameComp.BackStack.Clear();
+                        FrameComp.ForwardStack.Clear();
                         return;
                 }
 
@@ -67,10 +75,22 @@ namespace VirtualPaper.DraftPanel.Views {
                         FrameComp.GoBack();
                     }
                     else {
-                        FrameComp.Navigate(targetPageType, this);
+                        Payload?.AddRange(naviPayloadDatas);
+                        FrameComp.Navigate(targetPageType, Payload);
+                    }
+
+                    if (FrameComp.Content is ICardComponent cardComponent) {
+                        cardComponent.CardUIStateChanged = () => {
+                            _viewModel.RefreshCardComponentData();
+                        };
+                        _viewModel._cardComponent = cardComponent;
                     }
                 }
             });
+        }
+
+        public FrameworkPayload? GetPaylaod() {
+            return Payload;
         }
 
         private bool IsNextPageTarget(Type targetPageType) {
@@ -90,61 +110,9 @@ namespace VirtualPaper.DraftPanel.Views {
         }
         #endregion
 
-        #region bridge
-        public void SetPreviousStepBtnText(string text) {
-            _viewModel.PreviousStepBtnText = text;
-        }
 
-        public void SetNextStepBtnText(string text) {
-            _viewModel.NextStepBtnText = text;
-        }
-
-        public void SetNextStepBtnEnable(bool isEnable) {
-            _viewModel.IsNextEnable = isEnable;
-        }
-
-        public void SetBtnVisible(bool isVisible) {
-            _viewModel.BtnVisible = isVisible;
-        }
-
-        public void BindingPreviousBtnAction(RoutedEventHandler action) {
-            _viewModel.PreviousStep = action;
-        }
-
-        public void BindingNextBtnAction(RoutedEventHandler action) {
-            _viewModel.NextStep = action;
-        }
-
-        public uint GetHardwareDpi() {
-            return Draft.Instance.GetHardwareDpi();
-        }
-    
-        public void ChangePanelState(DraftPanelState nextPanel, object data) {
-            _sharedData = data;
-            NavigetBasedState(nextPanel);
-        }
-
-        public object GetSharedData() => _sharedData;
-
-        public nint GetWindowHandle() {
-            return Draft.Instance.GetWindowHandle();
-        }
-
-        public void Log(LogType type, object message) {
-            Draft.Instance.Log(type, message);
-        }
-
-        public INoifyBridge GetNotify() {
-            return Draft.Instance.GetNotify();
-        }
-
-        public IDialogService GetDialog() {
-            return Draft.Instance.GetDialog();
-        }
-        #endregion
-
-        private ConfigSpaceViewModel _viewModel;
-        private DraftPanelState _currentPanel;
-        private object _sharedData;
+        private readonly ConfigSpaceViewModel _viewModel;
+        private Draft? _draftPage;
+        private DraftPanelState _targetDraftPanelState;
     }
 }

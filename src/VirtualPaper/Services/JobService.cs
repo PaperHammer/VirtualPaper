@@ -1,9 +1,11 @@
-﻿using System.Diagnostics;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Services {
-    internal class JobService : IJobService {
+    internal partial class JobService : IJobService, IDisposable {
         #region Helper classes
         /// <summary>
         ///  作业对象，主要用于子进程管理。
@@ -20,10 +22,9 @@ namespace VirtualPaper.Services {
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         static extern bool CloseHandle(IntPtr hObject);
-        private IntPtr handle;
-        private bool disposed;
+
         public JobService() {
-            handle = CreateJobObject(IntPtr.Zero, null);
+            _handle = CreateJobObject(IntPtr.Zero, null);
             var info = new JOBOBJECT_BASIC_LIMIT_INFORMATION {
                 LimitFlags = 0x2000
             };
@@ -31,18 +32,42 @@ namespace VirtualPaper.Services {
                 BasicLimitInformation = info
             };
             int length = Marshal.SizeOf(typeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION));
+            //IntPtr extendedInfoPtr = Marshal.AllocHGlobal(length);
+            //Marshal.StructureToPtr(extendedInfo, extendedInfoPtr, false);
+            //if (!SetInformationJobObject(_handle, JobObjectInfoType.ExtendedLimitInformation, extendedInfoPtr, (uint)length))
+            //    throw new Exception(string.Format("Unable to set information.  Error: {0}", Marshal.GetLastWin32Error()));
             IntPtr extendedInfoPtr = Marshal.AllocHGlobal(length);
-            Marshal.StructureToPtr(extendedInfo, extendedInfoPtr, false);
-            if (!SetInformationJobObject(handle, JobObjectInfoType.ExtendedLimitInformation, extendedInfoPtr, (uint)length))
-                throw new Exception(string.Format("Unable to set information.  Error: {0}", Marshal.GetLastWin32Error()));
+            try {
+                Marshal.StructureToPtr(extendedInfo, extendedInfoPtr, false);
+
+                if (!SetInformationJobObject(
+                        _handle,
+                        JobObjectInfoType.ExtendedLimitInformation,
+                        extendedInfoPtr,
+                        (uint)length)) {
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                }
+            }
+            finally {
+                Marshal.FreeHGlobal(extendedInfoPtr);
+            }
+
         }
+
         /// <summary>
         /// 进程加入到作业对象中
         /// </summary>
         /// <param name="processHandle">进程句柄</param>
         /// <returns></returns>
         public bool AddProcess(IntPtr processHandle) {
-            return AssignProcessToJobObject(handle, processHandle);
+            try {
+                return AssignProcessToJobObject(_handle, processHandle);
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<JobService>().Error("Failed to add process to job object.", ex);
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -51,8 +76,16 @@ namespace VirtualPaper.Services {
         /// <param name="processId">进程Id</param>
         /// <returns></returns>
         public bool AddProcess(int processId) {
-            return AddProcess(Process.GetProcessById(processId).Handle);
+            try {
+                return AddProcess(Process.GetProcessById(processId).Handle);
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<JobService>().Error("Failed to add process to job object.", ex);
+            }
+
+            return false;
         }
+
         /// <summary>
         /// 销毁作业对象，手动调用则其拥有的所有进程都会退出
         /// </summary>
@@ -60,20 +93,24 @@ namespace VirtualPaper.Services {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
+
         /// <summary>
         /// 销毁作业对象，手动调用则其拥有的所有进程都会退出
         /// </summary>
         public void Close() {
-            CloseHandle(handle);
-            handle = IntPtr.Zero;
+            CloseHandle(_handle);
+            _handle = IntPtr.Zero;
         }
         private void Dispose(bool disposing) {
-            if (disposed)
+            if (_disposed)
                 return;
             if (disposing) { }
             Close();
-            disposed = true;
+            _disposed = true;
         }
+
+        private IntPtr _handle;
+        private bool _disposed;
     }
 
     [StructLayout(LayoutKind.Sequential)]

@@ -1,0 +1,155 @@
+using System;
+using System.Windows.Input;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using VirtualPaper.Common;
+using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Templates;
+using VirtualPaper.UIComponent.Utils;
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+namespace Workloads.Creation.StaticImg.Views.Tools {
+    public sealed partial class CanvasSetControl : ArcUserControl {
+        public event EventHandler<RoutedEventArgs>? LockAspectRatioChecked;
+        public event EventHandler<RoutedEventArgs>? LockAspectRatioUnchecked;
+        public event EventHandler<RoutedEventArgs>? ScaleContentChecked;
+        public event EventHandler<RoutedEventArgs>? ScaleContentUnchecked;
+        public event EventHandler<CanvasOperation>? CanvasOperationRequested;
+        public event EventHandler<ArcSize>? OnValueCommited;
+
+        public ArcSize Size {
+            get { return (ArcSize)GetValue(SizeProperty); }
+            set { SetValue(SizeProperty, value); }
+        }
+        public static readonly DependencyProperty SizeProperty =
+            DependencyProperty.Register(nameof(Size), typeof(ArcSize), typeof(CanvasSetControl), new PropertyMetadata(default));
+
+        public ICommand? CanvasOperationCommand { get; private set; }
+
+        public CanvasSetControl() {
+            this.InitializeComponent();
+
+            InitCommand();
+        }
+
+        private void InitCommand() {
+            CanvasOperationCommand = new RelayCommand<CanvasOperation>((operation) => {
+                CanvasOperationRequested?.Invoke(this, operation);
+            });
+        }
+
+        private void OnSizeBoxLostFocus(object sender, RoutedEventArgs e) {
+            if (_isKeyboardExecuted) {
+                _isKeyboardExecuted = false;
+                return;
+            }
+            var box = (TextBox)sender;
+            ProcessSizeInput(box);
+        }
+
+        private void OnSizeBoxKeyDown(object sender, KeyRoutedEventArgs e) {
+            if (e.Key == Windows.System.VirtualKey.Enter) {
+                _isKeyboardExecuted = true;
+                ProcessSizeInput((TextBox)sender);
+                e.Handled = true;
+            }
+            else if (e.Key == Windows.System.VirtualKey.Escape) {
+                ResetToOriginalValues();
+                e.Handled = true;
+            }
+        }
+
+        private void ProcessSizeInput(TextBox modifiedBox) {
+            bool isWidthModified = modifiedBox == widthTextBox;
+            bool op1 = ValidateSizeInput(widthTextBox.Text, out int width);
+            bool op2 = ValidateSizeInput(heightTextBox.Text, out int height);
+            bool isValid = op1 && op2;
+
+            if (!isValid) {
+                ShowSizeIllegalMsg();
+                ResetToOriginalValues();
+                return;
+            }
+
+            if (_isLockAspectRatio) {
+                if (isWidthModified) {
+                    isValid = ValidateSizeInput(
+                        (width / Size.Ratio).ToString("F0"),
+                        out height);
+                }
+                else {
+                    isValid = ValidateSizeInput(
+                        (height * Size.Ratio).ToString("F0"),
+                        out width);
+                }
+
+                if (!isValid) {
+                    ResetToOriginalValues();
+                    ShowSizeIllegalMsg();
+                    return;
+                }
+            }
+
+            var rebuild = _isScaleContent ? RebuildMode.ResizeScale : RebuildMode.ResizeExpand;
+            OnValueCommited?.Invoke(this, new ArcSize(width, height, Size.Dpi, rebuild));
+            CloseSizeIllegalMsg();
+        }
+
+        private static bool ValidateSizeInput(string text, out int res) {
+            if (string.IsNullOrEmpty(text)) {
+                res = 0;
+                return false;
+            }
+
+            var op = int.TryParse(text, out res) &&
+                res >= 1 &&
+                res <= Consts.MAX_CANVAS_SIZE_WITH_DPI;
+
+            return op;
+        }
+
+        private void ResetToOriginalValues() {
+            widthTextBox.Text = Size.Width.ToString("F0");
+            heightTextBox.Text = Size.Height.ToString("F0");
+        }
+
+        private static void CloseSizeIllegalMsg() {
+            GlobalMessageUtil.CloseAndRemoveMsg(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal));
+        }
+
+        private static void ShowSizeIllegalMsg() {
+            GlobalMessageUtil.ShowError(
+                message: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
+                key: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
+                isNeedLocalizer: true,
+                extraMsg: Consts.MAX_CANVAS_SIZE_WITH_DPI.ToString());
+        }
+
+        private void LockAspectRatio_Checked(object sender, RoutedEventArgs e) {
+            _isLockAspectRatio = true;
+            LockAspectRatioChecked?.Invoke(this, e);
+        }
+
+        private void LockAspectRatio_Unchecked(object sender, RoutedEventArgs e) {
+            _isLockAspectRatio = false;
+            LockAspectRatioUnchecked?.Invoke(this, e);
+        }
+
+        private void SacleContent_Checked(object sender, RoutedEventArgs e) {
+            _isScaleContent = true;
+            ScaleContentChecked?.Invoke(this, e);
+        }
+
+        private void SacleContent_Unchecked(object sender, RoutedEventArgs e) {
+            _isScaleContent = false;
+            ScaleContentUnchecked?.Invoke(this, e);
+        }
+
+        private bool _isKeyboardExecuted;
+        private bool _isLockAspectRatio;
+        private bool _isScaleContent;
+    }
+}

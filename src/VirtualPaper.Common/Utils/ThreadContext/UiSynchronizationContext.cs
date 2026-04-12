@@ -20,7 +20,7 @@
             _uiSyncContext = syncContext;
         }
 
-        public static void InvokeOnUiThread(Action action, bool synchronous = false) {
+        public static void InvokeOnUIThread(Action action, bool synchronous = false) {
             if (_uiSyncContext == null) {
                 throw new InvalidOperationException("UI synchronization context is not initialized.");
             }

@@ -1,0 +1,193 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.UI.Xaml;
+using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.Common.Utils.UndoRedo.Events;
+using VirtualPaper.Shader;
+using VirtualPaper.UIComponent;
+using VirtualPaper.UIComponent.Templates;
+using VirtualPaper.UIComponent.Utils;
+using Workloads.Creation.StaticImg.Core.Utils;
+using Workloads.Utils.DraftUtils.Interfaces;
+using Workloads.Utils.DraftUtils.Models;
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+namespace Workloads.Creation.StaticImg {
+    /// <summary>
+    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// </summary>
+    public sealed partial class MainPage : ArcPage, IRuntime {
+        public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
+        public string FileName => Session.DesignFileUtil.FileName;
+        public string FileNameWithoutEx => Session.DesignFileUtil.FileNameWithoutEx;
+        public string Id => Session.SessionId;
+        public override Type ArcType => typeof(MainPage);
+        protected override bool IsMultiInstance => true;
+        public InkProjectSession Session { get; private set; }
+
+        public double FrameTimeMs {
+            get { lock (_frameTimeLock) return _frameTimeMs; }
+            private set { lock (_frameTimeLock) _frameTimeMs = value; }
+        }
+
+        /// <summary>
+        /// 打开文件
+        /// </summary>
+        /// <param name="filePath">类型为 vpd 或静态图像的文件路径</param>
+        public MainPage(string filePath) {
+            Session = new InkProjectSession(filePath);
+            Payload = new FrameworkPayload() {
+                [NaviPayloadKey.ArcPageContext] = this.ArcContext,
+                [NaviPayloadKey.InkProjectSession] = this.Session
+            };
+            this.InitializeComponent();
+            ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
+
+            InitEvents();
+        }
+
+        private void InitEvents() {
+            Session.IsSavedChanged += Session_IsSavedChanged;
+        }
+
+        private void Session_IsSavedChanged(object? sender, IsSavedChangedEventArgs e) {
+            IsSavedChanged?.Invoke(this, e);
+        }
+
+        private async void Page_Loaded(object sender, RoutedEventArgs e) {
+            this.IsEnabled = false;
+
+            var ctx = ArcPageContextManager.GetContext(ContextKey);
+            var loadingCtx = ctx?.LoadingContext;
+            if (loadingCtx == null)
+                return;
+
+            await loadingCtx.RunAsync(
+                operation: async token => {
+                    await ShaderLoader.LoadAllShadersAsync();
+                    await inkCanvas.IsInited.Task;
+                });
+
+            StartFrameTimeMonitor();
+
+            this.IsEnabled = true;
+        }
+
+        private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            StopFrameTimeMonitor();
+            Session.Dispose();
+            ShaderLoader.ClearCache();
+        }
+
+        private void StartFrameTimeMonitor() {
+            if (_frameTimeRunning) return;
+
+            _frameTimeRunning = true;
+            _frameTimeTask = Task.Run(async () => {
+                while (_frameTimeRunning && !_frameTimeCts.IsCancellationRequested) {
+                    try {
+                        var now = DateTime.Now;
+                        if (_lastFrameTime != default) {
+                            FrameTimeMs = (now - _lastFrameTime).TotalMilliseconds;
+                        }
+                        _lastFrameTime = now;
+
+                        // 动态调整采样频率（帧时间越长，采样间隔越大）
+                        int delayMs = FrameTimeMs < 16.6 ? 1 : (int)Math.Min(FrameTimeMs / 2, 33);
+                        await Task.Delay(delayMs, _frameTimeCts.Token);
+                    }
+                    catch (TaskCanceledException) {
+                    }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<MainPage>().Error($"FrameTime monitor error: {ex.Message}");
+                    }
+                }
+            }, _frameTimeCts.Token);
+        }
+
+        private void StopFrameTimeMonitor() {
+            _frameTimeRunning = false;
+            _frameTimeCts.Cancel();
+
+            try {
+                _frameTimeTask?.Wait(50); // 等待50ms确保线程退出
+            }
+            catch { /* 忽略线程结束时的异常 */ }
+        }
+
+        #region workSpace events
+        public async Task<bool> SaveAsync() {
+            try {
+                var res = await inkCanvas.SaveAsync();
+                Session.UnReUtil.MarkAsSaved();
+                return res;
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+            }
+            return false;
+        }
+
+
+        public async Task UndoAsync() {
+            try {
+                await Session.UnReUtil.UndoAsync();
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+            }
+        }
+
+        public async Task RedoAsync() {
+            try {
+                await Session.UnReUtil.RedoAsync();
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+            }
+        }
+
+        public async Task ExportAsync(ExportImageFormat format) {
+            Dictionary<string, string[]> fileTypeChoices = format switch {
+                ExportImageFormat.Png => new() { ["PNG Image (*.png)"] = [".png"] },
+                ExportImageFormat.Bmp => new() { ["Bitmap Image (*.bmp)"] = [".bmp"] },
+                ExportImageFormat.Jpeg => new() { ["JPEG Image (*.jpg;*.jpeg)"] = [".jpg", ".jpeg", ".jpe", ".jfif"] },
+                ExportImageFormat.JpegXR => new() { ["JPEG XR Image (*.jxr)"] = [".jxr"] },
+                _ => new() { ["PNG Image (*.png)"] = [".png"] }
+            };
+
+            var saveFile = await WindowsStoragePickers.PickSaveFileAsync(
+                WindowConsts.WindowHandle,
+                Session.DesignFileUtil.FileNameWithoutEx,
+                fileTypeChoices
+            );
+
+            if (saveFile == null || string.IsNullOrEmpty(saveFile.Path))
+                return;
+
+            var exportData = new ExportDataStaticImg(
+                Name: saveFile.Name,
+                Path: saveFile.Path,
+                Format: format
+            );
+
+            await inkCanvas.ExportAsync(exportData);
+        }
+        #endregion
+
+        private volatile bool _frameTimeRunning = false;
+        private Task? _frameTimeTask;
+        private readonly object _frameTimeLock = new();
+        private double _frameTimeMs;
+        private DateTime _lastFrameTime;
+        private readonly CancellationTokenSource _frameTimeCts = new();
+    }
+}

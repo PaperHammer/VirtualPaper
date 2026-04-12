@@ -1,7 +1,8 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
 using GrpcDotNetNamedPipes;
-using NLog;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Commands;
 
@@ -36,14 +37,6 @@ namespace VirtualPaper.Grpc.Client {
             await _client.ShutDownAsync(new Empty());
         }
 
-        public void SaveRectUI() {
-            _client.SaveRectUI(new Empty());
-        }
-
-        public async Task SaveRectUIAsync() {
-            await _client.SaveRectUIAsync(new Empty());
-        }
-
         private async Task SubscribeUIRecievedCmdTaskStream(CancellationToken token) {
             try {
                 using var call = _client.SubscribeUIRecievedCmd(new Empty(), cancellationToken: token);
@@ -59,8 +52,13 @@ namespace VirtualPaper.Grpc.Client {
                     }
                 }
             }
+            catch (Exception ex) when
+                        (ex is OperationCanceledException ||
+                        (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
+                return;
+            }
             catch (Exception e) {
-                _logger.Error(e);
+                ArcLog.GetLogger<CommandsClient>().Error(e);
             }
         }
 
@@ -69,8 +67,20 @@ namespace VirtualPaper.Grpc.Client {
         protected virtual void Dispose(bool disposing) {
             if (!_isDisposed) {
                 if (disposing) {
-                    _ctsUIRecievedCmd?.Cancel();
-                    _uiRecievedCmdTask?.Wait();
+                    UIRecieveCmd = null;
+                    try {
+                        _ctsUIRecievedCmd?.Cancel();
+                        
+                        _uiRecievedCmdTask?.ContinueWith(t => {
+                            if (t.Exception != null)
+                                ArcLog.GetLogger<CommandsClient>().Error(t.Exception);
+                        }, TaskContinuationOptions.NotOnFaulted);
+                    }
+                    catch (AggregateException ex) { ArcLog.GetLogger<CommandsClient>().Error("Task cancelled during Dispose", ex); }
+                    catch (OperationCanceledException) { }
+
+                    _ctsUIRecievedCmd?.Dispose();
+                    _recieveCmdLock?.Dispose();
                 }
 
                 _isDisposed = true;
@@ -87,6 +97,5 @@ namespace VirtualPaper.Grpc.Client {
         private readonly SemaphoreSlim _recieveCmdLock = new(1, 1);
         private readonly CancellationTokenSource _ctsUIRecievedCmd;
         private readonly Task _uiRecievedCmdTask;
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     }
 }

@@ -1,9 +1,44 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 
 namespace VirtualPaper.Common.Utils.Files {
     public static class FileUtil {
+        public static string GetTempFile(string directory, string extension = "") {
+            if (!Directory.Exists(directory)) {
+                Directory.CreateDirectory(directory);
+            }
+
+            string fileName = Path.GetRandomFileName();
+            if (!string.IsNullOrEmpty(extension)) {
+                fileName = Path.ChangeExtension(fileName, extension);
+            }
+
+            string fullPath = Path.Combine(directory, fileName);
+            using (File.Create(fullPath)) { }
+
+            return fullPath;
+        }
+
+        // 当前用户的“文档”目录，如 C:\Users\用户名\Documents
+        public static string GetDocumentsDir() {
+            return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        }
+
+        // 当前用户的 AppData\Roaming，如 C:\Users\用户名\AppData\Roaming
+        public static string GetRoamingAppDataDir() {
+            return Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        }
+
+        // 当前用户的 AppData\Local，如 C:\Users\用户名\AppData\Local
+        public static string GetLocalAppDataDir() {
+            return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        }
+
+        // 桌面路径：C:\Users\用户名\Desktop
+        public static string GetDesktopDir() {
+            return Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+        }
+
         /// <summary>
         /// 使用资源管理器打开目标文件夹/文件，若文件存在，则被选中<br>
         /// Does NOT work under desktop bridge!</br>
@@ -232,6 +267,30 @@ namespace VirtualPaper.Common.Utils.Files {
                              Interlocked.Add(ref totalSize, size);
                          });
             return totalSize;
+        }
+
+        public static bool IsValidFilePath(string path) {
+            try {
+                if (Path.GetInvalidPathChars().Any(path.Contains))
+                    return false;
+
+                string? dir = Path.GetDirectoryName(path);
+                return !string.IsNullOrEmpty(dir) && Directory.Exists(dir);
+            }
+            catch {
+                return false;
+            }
+        }
+
+        public static bool IsValidFileName(string name) {
+            try {
+                return !Path.GetInvalidFileNameChars().Any(name.Contains) &&
+                       name.Length <= 255 &&
+                       !string.IsNullOrWhiteSpace(Path.GetFileNameWithoutExtension(name));
+            }
+            catch {
+                return false;
+            }
         }
 
         //ref: https://stackoverflow.com/questions/14488796/does-net-provide-an-easy-way-convert-bytes-to-kb-mb-gb-etc

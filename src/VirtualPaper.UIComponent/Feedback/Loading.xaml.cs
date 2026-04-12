@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -22,40 +21,27 @@ namespace VirtualPaper.UIComponent.Feedback {
         public static readonly DependencyProperty ProgressbarEnableProperty =
             DependencyProperty.Register(nameof(ProgressbarEnable), typeof(bool), typeof(Loading), new PropertyMetadata(false));
 
-        public CancellationTokenSource[] CtsTokens {
-            get { return (CancellationTokenSource[])GetValue(CtsTokensProperty); }
+        public CancellationTokenSource? CtsToken {
+            get { return (CancellationTokenSource?)GetValue(CtsTokensProperty); }
             set { SetValue(CtsTokensProperty, value); }
         }
         public static readonly DependencyProperty CtsTokensProperty =
-            DependencyProperty.Register(nameof(CtsTokens), typeof(CancellationTokenSource[]), typeof(Loading), new PropertyMetadata(Array.Empty<CancellationTokenSource>()));
+            DependencyProperty.Register(nameof(CtsToken), typeof(CancellationTokenSource), typeof(Loading), new PropertyMetadata(null));
 
         public int TotalValue {
-            get { return (int)GetValue(ImportTotalCntProperty); }
-            set { SetValue(ImportTotalCntProperty, value); }
+            get { return (int)GetValue(TotalValueProperty); }
+            set { SetValue(TotalValueProperty, value); }
         }
-        public static readonly DependencyProperty ImportTotalCntProperty =
+        public static readonly DependencyProperty TotalValueProperty =
             DependencyProperty.Register(nameof(TotalValue), typeof(int), typeof(Loading), new PropertyMetadata(0, InitValue));
 
+        // DependencyProperty 和 属性名一定要前缀相同，否则会不生效
         public int CurValue {
-            get { return (int)GetValue(ImportValueProperty); }
-            set { SetValue(ImportValueProperty, value); }
+            get { return (int)GetValue(CurValueProperty); }
+            set { SetValue(CurValueProperty, value); }
         }
-        public static readonly DependencyProperty ImportValueProperty =
+        public static readonly DependencyProperty CurValueProperty =
             DependencyProperty.Register(nameof(CurValue), typeof(int), typeof(Loading), new PropertyMetadata(0, UpdateValue));
-
-        public string TextLoading {
-            get { return (string)GetValue(TextLoadingProperty); }
-            set { SetValue(TextLoadingProperty, value); }
-        }
-        public static readonly DependencyProperty TextLoadingProperty =
-            DependencyProperty.Register(nameof(TextLoading), typeof(string), typeof(Loading), new PropertyMetadata("Loading..."));
-
-        public string TextCancel {
-            get { return (string)GetValue(TextCancelProperty); }
-            set { SetValue(TextCancelProperty, value); }
-        }
-        public static readonly DependencyProperty TextCancelProperty =
-            DependencyProperty.Register(nameof(TextCancel), typeof(string), typeof(Loading), new PropertyMetadata("Cancel"));
 
         private string ValueString {
             get { return (string)GetValue(ValueStringProperty); }
@@ -69,21 +55,18 @@ namespace VirtualPaper.UIComponent.Feedback {
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e) {
-            if (CtsTokens == null) return;
-
-            foreach (var token in CtsTokens) {
-                token?.Cancel();
-            }
+            CtsToken?.Cancel();
+            this.Visibility = Visibility.Collapsed;
         }
 
         private static void InitValue(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             Loading instance = (Loading)d;
-            instance.ValueString = $"0 / {(int)e.NewValue}";
+            instance.ValueString = $"0 / {e.NewValue}";
         }
 
         private static void UpdateValue(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             Loading instance = (Loading)d;
-            instance.ValueString = $"{(int)e.NewValue} / {instance.TotalValue}";
+            instance.ValueString = $"{e.NewValue} / {instance.TotalValue}";
         }
     }
 }

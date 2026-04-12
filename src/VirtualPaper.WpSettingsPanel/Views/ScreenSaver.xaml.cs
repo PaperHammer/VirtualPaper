@@ -1,16 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.Win32;
-using VirtualPaper.Common;
-using VirtualPaper.Common.Utils;
-using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models;
+using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -20,63 +16,35 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class ScreenSaver : Page, IDisposable {
+    public sealed partial class ScreenSaver : ArcPage {
+        public override Type ArcType => typeof(ScreenSaver);
+
         public ScreenSaver() {
             this.InitializeComponent();
+            this.Unloaded += ScreenSaver_Unloaded;            
+            _viewModel = AppServiceLocator.Services.GetRequiredService<ScreenSaverViewModel>();
+            this.DataContext = _viewModel;            
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e) {
-            base.OnNavigatedTo(e);
-
-            if (this._wpSettingsPanel == null) {
-                this._wpSettingsPanel = e.Parameter as IWpSettingsPanel;
-
-                _viewModel = ObjectProvider.GetRequiredService<ScreenSaverViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-                _viewModel._wpSettingsPanel = this._wpSettingsPanel;
-                this.DataContext = _viewModel;
-            }
-        }
-
-        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e) {
-            base.OnNavigatingFrom(e);
-
-            _viewModel.StopListenForClients();
+        private void ScreenSaver_Unloaded(object sender, RoutedEventArgs e) {
+            this.DataContext = null;
+            this.Unloaded -= ScreenSaver_Unloaded;
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e) {
             _ = _viewModel.ListenForClients();
         }
 
-        private void IsRunningLock_Checked(object sender, RoutedEventArgs e) {
-            _viewModel.IsRunningLock = true;
+        private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            _viewModel.StopListenForClients();
         }
 
-        private void IsRunningLock_Unchecked(object sender, RoutedEventArgs e) {
-            _viewModel.IsRunningLock = false;
-        }
+        
 
         private void RightClickMenuItem_Click(object sender, RoutedEventArgs e) {
             var item = (sender as FrameworkElement).DataContext;
             var procInfo = item as ProcInfo;
             _viewModel.RemoveFromWhiteScr(procInfo);
-        }
-
-        private void AddToWhiteListBtn_Click(object sender, RoutedEventArgs e) {
-            OpenFileDialog openFileDialog = new() {
-                Filter = "Executable Files (*.exe)|*.exe"
-            };
-            bool? result = openFileDialog.ShowDialog();
-
-            if (result == true) {
-                string procPath = openFileDialog.FileName;
-                string procName = Path.GetFileNameWithoutExtension(procPath);
-
-                using System.Drawing.Image img = Win32Util.GetIconByFileName("FILE", procPath).ToBitmap();
-                string iconPath = Path.Combine(Constants.CommonPaths.ExeIconDir, procName) + ".png";
-                img.Save(iconPath);
-
-                _viewModel.AddToWhiteListScr(new ProcInfo(procName, procPath, iconPath));
-            }
         }
 
         // Whenever text changes in any of the filtering text boxes, the following function is called:
@@ -97,7 +65,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         /* These functions go through the current list being displayed (procsFiltered), and remove
-        any items not in the filtered collection (any items that don't belong), or add back any items
+        any items not in the filtered collection (any items that don'T belong), or add back any items
         from the original allProcs list that are now supposed to be displayed (i.e. when backspace is hit). */
         private void Remove_NonMatching(IEnumerable<ProcInfo> procInfos) {
             for (int i = _viewModel.ProcsFiltered.Count - 1; i >= 0; i--) {
@@ -118,26 +86,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             }
         }
 
-        private ScreenSaverViewModel _viewModel;
-        private IWpSettingsPanel _wpSettingsPanel;
-        private bool disposedValue;
-
-        private void Dispose(bool disposing) {
-            if (!disposedValue) {
-                if (disposing) {
-                    // TODO: 释放托管状态(托管对象)
-                }
-
-
-                // TODO: 释放未托管的资源(未托管的对象)并重写终结器
-                // TODO: 将大型字段设置为 null
-                disposedValue = true;
-            }
-        }
-
-        public void Dispose() {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
+        private readonly ScreenSaverViewModel _viewModel;
     }
 }

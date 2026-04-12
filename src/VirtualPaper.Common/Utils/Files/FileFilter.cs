@@ -49,7 +49,7 @@ namespace VirtualPaper.Common.Utils.Files {
             [FileType.FGif] = [".gif", ".apng"],
             [FileType.FVideo] = [".mp4", ".webm"],
             [FileType.FDesign] = [FileExtension.FE_Design],
-            [FileType.FProject] = [FileExtension.FE_Project],
+            //[FileType.FProject] = [FileExtension.FE_Project],
         };
 
         public static string[] AvatarFilter =>

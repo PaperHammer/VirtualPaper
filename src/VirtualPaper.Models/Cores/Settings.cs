@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.IO;
 using System.Text.Json.Serialization;
 using VirtualPaper.Common;
@@ -80,7 +80,7 @@ namespace VirtualPaper.Models.Cores {
 
             WallpaperDir = Path.Combine(Constants.CommonPaths.LibraryDir, Constants.FolderName.WpStoreFolderName);
             WallpaperScaling = WallpaperScaler.fill;
-            ApplicationTheme = AppTheme.Dark;
+            ApplicationTheme = AppTheme.Auto;
             RemoteDesktop = AppWpRunRulesEnum.Pause;
             PowerSaving = AppWpRunRulesEnum.KeepRun;
             IsUpdated = false;

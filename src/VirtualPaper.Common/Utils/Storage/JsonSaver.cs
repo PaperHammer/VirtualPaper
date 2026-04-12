@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using static VirtualPaper.Common.Errors;
@@ -10,12 +10,11 @@ namespace VirtualPaper.Common.Utils.Storage {
             _optionsLoad.Converters.Add(new IntPtrJsonConverter());
         }
 
-        #region system.text.json
         public static T Load<T>(string filePath, JsonSerializerContext context) {
             return LoadAsync<T>(filePath, context).Result;
         }
 
-        public static void Store<T>(string filePath, T data, JsonSerializerContext context) {
+        public static void Save<T>(string filePath, T data, JsonSerializerContext context) {
             SaveAsync(filePath, data, context).Wait();
         }
 
@@ -33,7 +32,7 @@ namespace VirtualPaper.Common.Utils.Storage {
                 return await JsonSerializer.DeserializeAsync<T>(stream, combinedLoadOptions);
             }
             catch (Exception ex) {
-                throw new FileAccessException(filePath, "读取", ex);
+                throw new FileAccessException(filePath, "read json", ex);
             }
         }
 
@@ -56,13 +55,17 @@ namespace VirtualPaper.Common.Utils.Storage {
                 await JsonSerializer.SerializeAsync(stream, data, combinedStoreOptions);
             }
             catch (Exception ex) {
-                throw new FileAccessException(filePath, "写入", ex);
+                throw new FileAccessException(filePath, "read json", ex);
             }
         }
 
         private static readonly JsonSerializerOptions _optionsLoad = new() {
             AllowTrailingCommas = true,
-            PropertyNameCaseInsensitive = true,            
+            PropertyNameCaseInsensitive = true,
+            ReadCommentHandling = JsonCommentHandling.Skip, // 允许 JSON 文件里写注释
+            Converters = {
+                new JsonStringEnumConverter() // 允许 Enum 读写为字符串
+            }
         };
 
         // ref: https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonignorecondition?view=net-8.0
@@ -71,7 +74,10 @@ namespace VirtualPaper.Common.Utils.Storage {
             // 允许写入空值
             // Property is always serialized and deserialized, regardless of IgnoreNullValues configuration.
             DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+            ReadCommentHandling = JsonCommentHandling.Skip, // 允许 JSON 文件里写注释
+            Converters = {
+                new JsonStringEnumConverter() // 允许 Enum 读写为字符串
+            }
         };
-        #endregion
     }
 }

@@ -1,11 +1,11 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.DataAssistor;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -13,30 +13,24 @@ using VirtualPaper.Services.Interfaces;
 using static VirtualPaper.Common.Errors;
 
 namespace VirtualPaper.GrpcServers {
-    internal class WallpaperControlServer(
+    public class WallpaperControlServer(
         IWallpaperControl desktopWpControl,
         IMonitorManager monitorManager,
         IUserSettingsService userSetting) : Grpc_WallpaperControlService.Grpc_WallpaperControlServiceBase {
         #region wallpaper actions
-        public override Task<Empty> CloseAllWallpapers(Empty request, ServerCallContext context) {
+        public override async Task<Empty> CloseAllWallpapers(Empty request, ServerCallContext context) {
             _wpControl.CloseAllWallpapers();
 
-            return Task.FromResult(new Empty());
+            return await Task.FromResult(new Empty());
         }
 
-        public override Task<Empty> CloseWallpaperByMonitor(Grpc_CloseWallpaperByMonitorRequest request, ServerCallContext context) {
+        public override async Task<Empty> CloseWallpaperByMonitor(Grpc_CloseWallpaperByMonitorRequest request, ServerCallContext context) {
             var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
             if (monitor != null) {
                 _wpControl.CloseWallpaper(monitor);
             }
 
-            return Task.FromResult(new Empty());
-        }
-
-        public override Task<Empty> CloseAllPreview(Empty request, ServerCallContext context) {
-            _wpControl.CloseAllPreview();
-
-            return Task.FromResult(new Empty());
+            return await Task.FromResult(new Empty());
         }
 
         public override async Task<Grpc_WpMetaData> GetWallpaper(Grpc_GetWallpaperRequest request, ServerCallContext context) {
@@ -48,32 +42,29 @@ namespace VirtualPaper.GrpcServers {
             return await Task.FromResult(resp);
         }
 
-        public override async Task<Grpc_AdjustWallpaperResponse> AdjustWallpaper(Grpc_AdjustWallpaperRequest request, ServerCallContext context) {
-            string monitorDeviceId = request.MonitorDeviceId;
-            bool isOk = _wpControl.AdjustWallpaper(monitorDeviceId, context.CancellationToken);
-
-            Grpc_AdjustWallpaperResponse response = new() {
-                IsOk = isOk,
-            };
-
-            return await Task.FromResult(response);
-        }
-
-        public override async Task<Grpc_PreviewWallpaperResponse> PreviewWallpaper(Grpc_PreviewWallpaperRequest request, ServerCallContext context) {
+        public override async Task<Grpc_GetPlayerStartArgsResponse> GetPlayerStartArgs(Grpc_GetPlayerStartArgsRequest request, ServerCallContext context) {
             var playingData = DataAssist.GrpcToPlayerData(request.WpPlayerData);
-            bool isOk = await _wpControl.PreviewWallpaperAsync(
-                request.MonitorDeviceId == string.Empty ? _monitorManager.PrimaryMonitor.DeviceId : request.MonitorDeviceId, playingData, context.CancellationToken);
-            Grpc_PreviewWallpaperResponse response = new() {
-                IsOk = isOk,
+            var data = _wpControl.GetPlayerStartArgs(playingData, context.CancellationToken);
+            Grpc_GetPlayerStartArgsResponse response = new() {
+                Data = data,
+            };
+
+            return await Task.FromResult(response);
+        }
+        
+        public override async Task<Grpc_GetPlayerStartArgsInRunningResponse> GetPlayerStartArgsInRunning(Grpc_GetPlayerStartArgsInRunningRequest request, ServerCallContext context) {
+            var data = _wpControl.GetPlayerStartArgsInRunning(request.MonitorId);
+            Grpc_GetPlayerStartArgsInRunningResponse response = new() {
+                Data = data,
             };
 
             return await Task.FromResult(response);
         }
 
-        public override Task<Grpc_RestartWallpaperResponse> RestartAllWallpapers(Empty request, ServerCallContext context) {
+        public override async Task<Grpc_RestartWallpaperResponse> RestartAllWallpapers(Empty request, ServerCallContext context) {
             Grpc_RestartWallpaperResponse response = _wpControl.RestoreWallpaper();
 
-            return Task.FromResult(response);
+            return await Task.FromResult(response);
         }
 
         public override async Task<Grpc_SetWallpaperResponse> SetWallpaper(Grpc_SetWallpaperRequest request, ServerCallContext context) {
@@ -83,7 +74,7 @@ namespace VirtualPaper.GrpcServers {
             Grpc_SetWallpaperResponse response = await _wpControl.SetWallpaperAsync(
                 wpPlayerData,
                 monitor ?? _monitorManager.PrimaryMonitor,
-                context.CancellationToken);
+                token: context.CancellationToken);
 
             return await Task.FromResult(response);
         }
@@ -121,8 +112,7 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override Task<Empty> SendMessageWallpaper(Grpc_WallpaperMessageRequest request, ServerCallContext context) {
-            var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId) ?? _monitorManager.PrimaryMonitor;
-            _wpControl.SendMessageWallpaper(monitor, request.FolderPath, request.Msg);
+            _wpControl.SendMessageWallpaper(request.MonitorId, request.Msg);
 
             return Task.FromResult(new Empty());
         }

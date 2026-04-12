@@ -1,4 +1,4 @@
-﻿using VirtualPaper.Common.Utils.IPC;
+using VirtualPaper.Common.Utils.IPC;
 
 namespace VirtualPaper.Services.Interfaces {
     /// <summary>
@@ -12,7 +12,6 @@ namespace VirtualPaper.Services.Interfaces {
         void ShowUI();
         void CloseUI();
         void RestartUI();
-        void SaveRectUI();
         nint GetUIHwnd();
     }
 }

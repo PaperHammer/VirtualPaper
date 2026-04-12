@@ -1,0 +1,12 @@
+syntax = "proto3";
+package VirtualPaper.Grpc.Service.MonitorManager;
+import "google/protobuf/empty.proto";
+import "Protos/common_models.proto";
+
+service Grpc_MonitorManagerService {
+	rpc GetMonitors (google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_GetMonitorsResponse);
+	rpc GetVirtualScreenBounds (google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_Rectangle);
+	rpc IdentifyMonitors (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc SubscribeMonitorChanged (google.protobuf.Empty) returns (stream google.protobuf.Empty);
+	rpc SubscribeMonitorPropertyChanged (google.protobuf.Empty) returns (stream google.protobuf.Empty);
+}

@@ -1,11 +1,10 @@
-﻿using System.Windows.Threading;
+using System.Windows.Threading;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using VirtualPaper.Common.Events;
 using VirtualPaper.Cores.AppUpdate;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.Update;
-using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.GrpcServers {
     public class AppUpdateServer(
@@ -16,10 +15,10 @@ namespace VirtualPaper.GrpcServers {
             return await Task.FromResult(new Empty());
         }
 
-        public override Task<Empty> StartDownload(Empty _, ServerCallContext context) {            
-            if (_updater.Status == AppUpdateStatus.Available) {
+        public override Task<Empty> StartDownload(Empty _, ServerCallContext context) {
+            if (true || _updater.Status == AppUpdateStatus.Available) {
                 System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(delegate {
-                    App.AppUpdateDialog(_updater.LastCheckUri, _updater.LastCheckChangelog);
+                    App.AppUpdateDialog(new AppUpdaterEventArgs(_updater.Status, _updater.LastCheckVersion, _updater.LastCheckTime, _updater.LastCheckUri, _updater.LastCheckShaUri, _updater.LastCheckChangelog));
                 }));
             }
 
@@ -30,8 +29,9 @@ namespace VirtualPaper.GrpcServers {
             return Task.FromResult(new Grpc_UpdateResponse() {
                 Status = (Grpc_UpdateStatus)((int)_updater.Status),
                 Changelog = _updater.LastCheckChangelog ?? string.Empty,
-                Url = _updater.LastCheckUri?.OriginalString ?? string.Empty,
-                Version = _updater.LastCheckVersion?.ToString() ?? string.Empty,
+                Uri = _updater.LastCheckUri?.OriginalString ?? string.Empty,
+                ShaUri = _updater.LastCheckShaUri?.OriginalString ?? string.Empty,
+                Version = _updater.LastCheckVersion.ToString() ?? string.Empty,
                 Time = Timestamp.FromDateTime(_updater.LastCheckTime.ToUniversalTime()),
             });
         }
@@ -61,11 +61,6 @@ namespace VirtualPaper.GrpcServers {
             }
         }
 
-        private void Download_DownloadStarted(object? sender, DownloadEventArgs e) {
-            _totalSize = e.TotalSize;
-        }
-
         private readonly IAppUpdaterService _updater = updater;
-        private double _totalSize;
     }
 }

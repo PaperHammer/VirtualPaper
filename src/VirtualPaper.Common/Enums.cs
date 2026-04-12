@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
 
 namespace VirtualPaper.Common {
@@ -96,7 +96,6 @@ namespace VirtualPaper.Common {
         FGif,
         FVideo,
         FDesign,
-        FProject,
     }
 
     public enum RuntimeType {
@@ -120,22 +119,9 @@ namespace VirtualPaper.Common {
         ScaleDown
     }
 
-    public enum ProjectType {
-        PImage,
-    }
-
-    public enum InfoBarType {
-        Informational,
-        Warning,
-        Error,
-        Success,
-    }
-
-    public enum LogType {
-        Info,
-        Warn,
-        Error,
-        Trace,
+    public enum ProjectType {        
+        PUnknown,
+        P_StaticImage,
     }
 
     public enum ObjectLifetime {
@@ -147,41 +133,13 @@ namespace VirtualPaper.Common {
     public enum DialogResult {
         None,
         Primary,
-        Seconday
+        Secondary
     }
 
     public static class FileExtension {
         public const string FE_Design = ".vpd";
-        public const string FE_Project = ".vproj";
     }
-    #endregion
-
-    #region draft-panel
-    public enum ConfigSpacePanelType {
-        OpenVpd,
-        OpenFile,
-        NewVpd,
-    }
-    
-    public enum DraftPanelState {
-        GetStart,
-        ProjectConfig,
-        DraftConfig,
-        WorkSpace,
-        ConfigSpace,
-    }
-
-    public enum AccountPanelState {
-        Login,
-        Register,
-        Passport,
-        UserCenter,
-    }
-    
-    public enum GalleryPanelState {
-        WallpaperLib
-    }
-    #endregion
+    #endregion    
 
     #region common
     public enum VisualStates {
@@ -190,6 +148,10 @@ namespace VirtualPaper.Common {
         UnSelected,
         PointerOver,
         DragOver,
+    }
+
+    public enum ProcRun {
+        WarmUp
     }
     #endregion
 
@@ -294,11 +256,16 @@ namespace VirtualPaper.Common {
     public partial class Picture3DCostumizeContext : JsonSerializerContext { }
     public class Picture3DCostumize : UniverseCostumise {
         [JsonPropertyOrder(11)]
+        public Scaling Scaling { get; }
+        
+        [JsonPropertyOrder(12)]
         public Parallax Parallax { get; }
 
         public Picture3DCostumize() {
+            Scaling = new();
             Parallax = new();
 
+            _properties[nameof(Scaling)] = Scaling;
             _properties[nameof(Parallax)] = Parallax;
         }
     }

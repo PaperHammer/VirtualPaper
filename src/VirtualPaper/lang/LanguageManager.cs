@@ -1,4 +1,3 @@
-﻿using System.ComponentModel;
 using System.Globalization;
 using System.Resources;
 using VirtualPaper.Models.Mvvm;

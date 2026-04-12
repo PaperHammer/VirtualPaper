@@ -1,14 +1,14 @@
-﻿using System.Windows.Threading;
+using System.Windows.Threading;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using VirtualPaper.Cores.Monitor;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.MonitorManager;
 using VirtualPaper.Views;
 using Application = System.Windows.Application;
 
 namespace VirtualPaper.GrpcServers {
-    internal class MonitorManagerServer(
+    public class MonitorManagerServer(
         IMonitorManager monitorManager) : Grpc_MonitorManagerService.Grpc_MonitorManagerServiceBase {
         public override Task<Grpc_GetMonitorsResponse> GetMonitors(Empty _, ServerCallContext context) {
             var resp = new Grpc_GetMonitorsResponse();
@@ -16,6 +16,8 @@ namespace VirtualPaper.GrpcServers {
             foreach (var monitor in _monitorManager.Monitors) {
                 var item = new Grpc_MonitorData() {
                     DeviceId = monitor.DeviceId,
+                    Content = monitor.Content,
+                    SystemIndex = monitor.SystemIndex,
                     IsPrimary = monitor.IsPrimary,
                     Bounds = new() {
                         X = monitor.Bounds.X,
@@ -59,7 +61,7 @@ namespace VirtualPaper.GrpcServers {
                     tasks.Add(Task.Run(async () => {
                         await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () => {
                             var monitor = _monitorManager.Monitors[monitorIndex];
-                            IdentifyWindow identifyWindow = new(monitorIndex + 1) {
+                            IdentifyWindow identifyWindow = new(monitor.SystemIndex) {
                                 Owner = App.Current.MainWindow,
                                 Left = monitor.WorkingArea.Left,
                                 Top = monitor.WorkingArea.Top,

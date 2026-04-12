@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Interop;
 using Linearstar.Windows.RawInput;
 using Linearstar.Windows.RawInput.Native;
@@ -110,11 +110,11 @@ namespace VirtualPaper.Views.WindowsMsg {
                 var data = RawInputData.FromHandle(lparam);
 
                 //You can identify the source device using Header.DeviceHandle or just Device.
-                //var sourceDeviceHandle = data.Header.DeviceHandle;
-                //var sourceDevice = data.Device;
+                //var sourceDeviceHandle = _data.Header.DeviceHandle;
+                //var sourceDevice = _data.Device;
 
-                // The data will be an instance of either RawInputMouseData, RawInputKeyboardData, or RawInputHidData.
-                // They contain the raw input data in their properties.
+                // The _data will be an instance of either RawInputMouseData, RawInputKeyboardData, or RawInputHidData.
+                // They contain the raw input _data in their properties.
                 switch (data) {
                     case RawInputMouseData mouse:
                         //RawInput only gives relative mouse movement value.. 
@@ -196,7 +196,7 @@ namespace VirtualPaper.Views.WindowsMsg {
         /// <param name="isPressed">Key is pressed.</param>
         private void ForwardMessageKeyboard(int msg, IntPtr wParam, int scanCode, bool isPressed) {
             try {
-                //Don't forward when not on desktop.
+                //Don'T forward when not on desktop.
                 if (_userSettings.Settings.InputForward == InputForwardMode.mousekeyboard && IsDesktop()) {
                     //Detect active wp based on cursor pos, better way to do this?
                     if (!Native.GetCursorPos(out Native.POINT P))
@@ -212,13 +212,13 @@ namespace VirtualPaper.Views.WindowsMsg {
                                 uint lParam = 1u; //press
                                 lParam |= (uint)scanCode << 16; //oem code
                                 lParam |= 1u << 24; //extended key
-                                lParam |= 0u << 29; //context code; Note: Alt key combos wont't work
+                                lParam |= 0u << 29; //context code; Note: Alt key combos wont'T work
                                 /* Same as:
                                  * lParam = isPressed ? (lParam |= 0u << 30) : (lParam |= 1u << 30); //prev key state
                                  * lParam = isPressed ? (lParam |= 0u << 31) : (lParam |= 1u << 31); //transition state
                                  */
                                 lParam = isPressed ? lParam : (lParam |= 3u << 30);
-                                Native.PostMessageW(wallpaper.Handle, msg, wParam, (UIntPtr)lParam);
+                                Native.PostMessageW(wallpaper.RealPlayerWindowHandle, msg, wParam, (UIntPtr)lParam);
                             }
                         }
                     }
@@ -241,7 +241,7 @@ namespace VirtualPaper.Views.WindowsMsg {
             if (_userSettings.Settings.InputForward == InputForwardMode.off) {
                 return;
             }
-            else if (!IsDesktop()) //Don't forward when not on desktop.
+            else if (!IsDesktop()) //Don'T forward when not on desktop.
             {
                 if (msg != (int)Native.WM.MOUSEMOVE || !_userSettings.Settings.MouseInputMovAlways) {
                     return;
@@ -259,7 +259,7 @@ namespace VirtualPaper.Views.WindowsMsg {
                             uint lParam = Convert.ToUInt32(mouse.Y);
                             lParam <<= 16;
                             lParam |= Convert.ToUInt32(mouse.X);
-                            Native.PostMessageW(wallpaper.Handle, msg, wParam, (UIntPtr)lParam);
+                            Native.PostMessageW(wallpaper.RealPlayerWindowHandle, msg, wParam, (UIntPtr)lParam);
                         }
                     }
                 }
@@ -277,7 +277,7 @@ namespace VirtualPaper.Views.WindowsMsg {
         /// </summary>
         /// <param name="x">Cursor pos x</param>
         /// <param name="y">Cursor pos y</param>
-        /// <param name="monitor">Target monitor device</param>
+        /// <param name="monitor">Target _monitor device</param>
         /// <returns>本地化的游标值</returns>
         private Point CalculateMousePos(int x, int y, IMonitor monitor, WallpaperArrangement arrangement) {
             if (_monitorManager.IsMultiScreen()) {

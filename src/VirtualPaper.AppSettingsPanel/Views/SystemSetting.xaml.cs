@@ -1,9 +1,6 @@
-using Microsoft.UI.Xaml;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.AppSettingsPanel.ViewModels;
-using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge;
 using VirtualPaper.Common.Utils.DI;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -16,29 +13,16 @@ namespace VirtualPaper.AppSettingsPanel.Views {
     public sealed partial class SystemSetting : Page {
         public SystemSetting() {
             this.InitializeComponent();
+            this.Unloaded += SystemSetting_Unloaded;
+            _viewModel = AppServiceLocator.Services.GetRequiredService<SystemSettingViewModel>();
+            this.DataContext = _viewModel;             
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e) {
-            base.OnNavigatedTo(e);
-
-            if (this._appSettingsPanel == null) {
-                this._appSettingsPanel = e.Parameter as IAppSettingsPanel;
-
-                _viewModel = ObjectProvider.GetRequiredService<SystemSettingViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-                _viewModel._appSettingsPanel = this._appSettingsPanel;
-                this.DataContext = _viewModel;
-            }
+        private void SystemSetting_Unloaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+            this.DataContext = null;
+            this.Unloaded -= SystemSetting_Unloaded;
         }
 
-        private void DebugButton_Click(object sender, RoutedEventArgs e) {
-            _viewModel.OpenDebugView();
-        }
-
-        private async void LogButton_Click(object sender, RoutedEventArgs e) {
-            await _viewModel.ExportLogsAsync();
-        }
-
-        private IAppSettingsPanel _appSettingsPanel;
-        private SystemSettingViewModel _viewModel;
+        private readonly SystemSettingViewModel _viewModel;
     }
 }

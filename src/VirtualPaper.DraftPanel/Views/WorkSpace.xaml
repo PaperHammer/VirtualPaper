@@ -1,78 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Page
+<arc:ArcPage
     x:Class="VirtualPaper.DraftPanel.Views.WorkSpace"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:VirtualPaper.DraftPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:container="using:VirtualPaper.UIComponent.Container"
     xmlns:cmd="using:VirtualPaper.UIComponent.Command"
+    xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
+    Unloaded="Page_Unloaded"
     NavigationCacheMode="Enabled">
 
     <Page.Resources>
         <cmd:KeepToLeft x:Key="LeftMenuItems">
-            <MenuBarItem 
-                Title="文件(F)"
-                KeyboardAcceleratorPlacementMode="Hidden">
+            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_File}" KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="F"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem Text="新建">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_CreateNew}" Click="MFI_CreateNew_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="N"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="添加">
+                <!--<MenuFlyoutItem Text="添加">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="D"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem Text="打开">
+                </MenuFlyoutItem>-->
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_Open}" >
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="O"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="保存" Click="MFI_Save_Clicked">
+                <MenuFlyoutItem Text="{markup:I18n Key=Text_Save}" Command="{x:Bind _viewModel.MFI_SaveCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="全部保存" Click="MFI_SaveAll_Clicked">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_SaveAll}" Command="{x:Bind _viewModel.MFI_SaveAllCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control,Shift" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="退出" Click="MFI_Exit_Clicked">
+                <MenuFlyoutSubItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Export}">
+                    <MenuFlyoutItem Text="PNG" Tag="Png" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem Text="BMP" Tag="Bmp" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem Text="JPEG" Tag="Jpeg" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem Text="JPEG XR" Tag="JpegXR" Click="OnExportMenuItemClick"/>
+                </MenuFlyoutSubItem>
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Exit}" Click="MFI_Exit_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="F4"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
             </MenuBarItem>
 
-            <MenuBarItem 
-                Title="编辑(E)"
-                KeyboardAcceleratorPlacementMode="Hidden">
+            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Edit}" KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="E"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem Text="撤销">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Undo}" Command="{x:Bind _viewModel.MFI_UndoCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="Z"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="还原">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Redo}" Command="{x:Bind _viewModel.MFI_RedoCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control, Shift" Key="Z"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
 
-                <MenuFlyoutSeparator />
+                <!--<MenuFlyoutSeparator />-->
 
-                <MenuFlyoutItem Text="剪切">
+                <!--<MenuFlyoutItem Text="剪切">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="X"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -86,19 +91,23 @@
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="V"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>
+                </MenuFlyoutItem>-->
             </MenuBarItem>
         </cmd:KeepToLeft>
 
         <cmd:KeepToRight x:Key="RightMenuItems">
-            <MenuBarItem 
-              Title="帮助(H)"
-              KeyboardAcceleratorPlacementMode="Hidden">
+            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Help}" KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="H"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem Text="关于">
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Manual}" Command="{x:Bind _viewModel.MFI_ManualCommand}">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="None" Key="M"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_About}" Command="{x:Bind _viewModel.MFI_AboutCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="None" Key="A"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -113,53 +122,44 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <ContentControl
-            x:Name="menuContent">
+        <ContentControl x:Name="menuContent">
             <cmd:ObservableMenuBar
                 KeepToLeft="{StaticResource LeftMenuItems}"
                 KeepToRight="{StaticResource RightMenuItems}"
                 MiddleItems="{x:Bind _viewModel._middleMenuItems}"/>
-            <!--<MenuBar>
-                
-
-                <MenuBarItem 
-                Title="图像(I)"
-                KeyboardAcceleratorPlacementMode="Hidden">
-                    <MenuBarItem.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Menu" Key="I"/>
-                    </MenuBarItem.KeyboardAccelerators>
-
-
-                </MenuBarItem>
-
-                <MenuBarItem 
-                Title="图层(L)"
-                KeyboardAcceleratorPlacementMode="Hidden">
-                    <MenuBarItem.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Menu" Key="L"/>
-                    </MenuBarItem.KeyboardAccelerators>
-
-
-                </MenuBarItem>
-
-               
-            </MenuBar>-->
         </ContentControl>
 
-        <Grid
-            x:Name="contentGrid"
-            Grid.Row="1">
-            <TabView
-                x:Name="TabViewControl"
-                VerticalAlignment="Stretch"
-                HorizontalAlignment="Stretch"
+        <Grid x:Name="contentGrid" Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TabView x:Name="TabViewControl"
                 Loaded="TabViewControl_Loaded"
                 TabWidthMode="SizeToContent"
-                CloseButtonOverlayMode="OnPointerOver"
                 SelectedIndex="{x:Bind _viewModel.SelectedTabIndex, Mode=TwoWay}"
-                TabItemsSource="{x:Bind _viewModel.TabViewItems}"               
+                TabItemsSource="{x:Bind _viewModel.TabViewItems}"
+                CloseButtonOverlayMode="OnPointerOver"
+                TabItemsChanged="TabViewControl_TabItemsChanged"   
+                SelectionChanged="TabViewControl_SelectionChanged"
                 AddTabButtonClick="TabViewControl_AddTabButtonClick"
-                TabCloseRequested="TabViewControl_TabCloseRequested"/>
+                TabCloseRequested="TabViewControl_TabCloseRequested" />
+
+            <Grid x:Name="workspaceContentPool" Grid.Row="1" />
+        </Grid>
+
+        <Grid x:Name="maskGrid" 
+            Grid.RowSpan="2" 
+            Background="#80000000" 
+            Visibility="Collapsed"
+            Tapped="MaskGrid_Tapped">
+
+            <Frame x:Name="overlayFrame" 
+                Width="970" 
+                Height="680"
+                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                Tapped="OverlayFrame_Tapped"/>
         </Grid>
     </Grid>
-</Page>
+</arc:ArcPage>

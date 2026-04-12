@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Utils;
@@ -10,7 +10,8 @@ namespace VirtualPaper.Cores.AppUpdate {
 
         public string LastCheckChangelog { get; private set; } = string.Empty;
         public DateTime LastCheckTime { get; private set; } = DateTime.MinValue;
-        public Uri LastCheckUri { get; private set; }
+        public Uri LastCheckUri { get; private set; } = null!;
+        public Uri LastCheckShaUri { get; private set; } = null!;
         public Version LastCheckVersion { get; private set; } = new Version(0, 0, 0, 0);
         public AppUpdateStatus Status { get; private set; } = AppUpdateStatus.Notchecked;
 
@@ -28,13 +29,13 @@ namespace VirtualPaper.Cores.AppUpdate {
 
             try {
                 await Task.Delay(fetchDelay);
-                (Uri, Version, string) data = await GetLatestRelease(Constants.ApplicationType.IsTestBuild);
-                int verCompare = GithubUtil.CompareAssemblyVersion(data.Item2);
+                (Uri exeUri, Uri shaUri, Version verison, string changelog) = await GetLatestRelease(Constants.ApplicationType.IsTestBuild);
+                int verCompare = GithubUtil.CompareAssemblyVersion(verison);
                 if (verCompare > 0) {
                     //update Available.
                     Status = AppUpdateStatus.Available;
                 }
-                else if (verCompare < 0) {
+                else if (verCompare < 0 || exeUri == null || shaUri == null) {
                     //beta release.
                     Status = AppUpdateStatus.Invalid;
                 }
@@ -42,17 +43,18 @@ namespace VirtualPaper.Cores.AppUpdate {
                     //up-to-date.
                     Status = AppUpdateStatus.Uptodate;
                 }
-                LastCheckUri = data.Item1;
-                LastCheckVersion = data.Item2;
-                LastCheckChangelog = data.Item3;
+                LastCheckUri = exeUri;
+                LastCheckShaUri = shaUri;
+                LastCheckVersion = verison;
+                LastCheckChangelog = changelog;
             }
             catch (Exception e) {
-                Debug.WriteLine("Update fetch Error:" + e.ToString());
+                App.Log.Error("Github update fetch failed", e);
                 Status = AppUpdateStatus.Error;
             }
             LastCheckTime = DateTime.Now;
 
-            UpdateChecked?.Invoke(this, new AppUpdaterEventArgs(Status, LastCheckVersion, LastCheckTime, LastCheckUri, LastCheckChangelog));
+            UpdateChecked?.Invoke(this, new AppUpdaterEventArgs(Status, LastCheckVersion, LastCheckTime, LastCheckUri, LastCheckShaUri, LastCheckChangelog));
             return Status;
         }
 
@@ -67,7 +69,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 "virtualpaper_x64_module",
                 gitRelease, repositoryName, userName);
             List<(Uri, Version, string)> res = [];
-            foreach (var url in gitUrls) { 
+            foreach (var url in gitUrls) {
                 Uri uri = new(url);
                 string changelog = gitRelease.Body;
                 res.Add((uri, version, changelog));
@@ -76,7 +78,7 @@ namespace VirtualPaper.Cores.AppUpdate {
             return res;
         }
 
-        public async Task<(Uri, Version, string)> GetLatestRelease(bool isBeta) {
+        public async Task<(Uri exeUri, Uri shaUri, Version version, string changelog)> GetLatestRelease(bool isBeta) {
             var userName = "PaperHammer";
             var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper";
             var gitRelease = await GithubUtil.GetLatestRelease(repositoryName, userName, 0);
@@ -86,10 +88,15 @@ namespace VirtualPaper.Cores.AppUpdate {
             var gitUrl = await GithubUtil.GetAssetUrl(
                 "virtualpaper_setup_x64_full",
                 gitRelease, repositoryName, userName);
-            Uri uri = new(gitUrl);
+            Uri exeUri = new(gitUrl);
             string changelog = gitRelease.Body;
 
-            return (uri, version, changelog);
+            gitUrl = await GithubUtil.GetAssetUrl(
+                "SHA256",
+                gitRelease, repositoryName, userName);
+            Uri shaUri = new(gitUrl);
+
+            return (exeUri, shaUri, version, changelog);
         }
 
         /// <summary>

@@ -1,16 +1,23 @@
-﻿using System;
+using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
-using NLog;
+using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.WpSettingsPanel.Utils;
+using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.Core;
 using WinUIEx;
 
@@ -22,22 +29,45 @@ namespace VirtualPaper.UI {
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
     public partial class App : Application {
-        internal static Logger Log => LogManager.GetCurrentClassLogger();
-
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
         /// </summary>
         public App() {
+            #region 唯一实例检查
+            try {
+                // 保证全局只有一个实例
+                if (!_mutex.WaitOne(TimeSpan.FromSeconds(1), false)) {
+                    ArcLog.GetLogger<App>().Warn("UI has been running.");
+                    Environment.Exit(0);
+                    return;
+                }
+            }
+            catch (AbandonedMutexException e) {
+#if DEBUG
+                //unexpected app termination.
+                Debug.WriteLine(e.Message);
+#endif
+            }
+            #endregion
+
+            #region 初始化核心组件
+            // 依赖注入
+            AppServiceLocator.Services = ConfigureServices();
+            #endregion
+
 #if !DEBUG
-            if (!SingleInstanceUtil.IsAppMutexRunning(Constants.CoreField.UniqueAppUid))
-            {
+            if (!SingleInstanceUtil.IsAppMutexRunning(Constants.CoreField.UniqueAppUid)) {
                 _ = Native.MessageBox(IntPtr.Zero, "Wallpaper core is not running, run VirtualPaper.exe first before opening UI.", "Virtual Paper", 16);
                 //Sad dev noises.. this.Exit() does not work without Window: https://github.com/microsoft/microsoft-ui-xaml/issues/5931
                 Process.GetCurrentProcess().Kill();
-            }
+            }            
+#else
+            VisibilityByValueConverter.DebugEnabled = true;
+            BoolByValueConverter.DebugEnabled = true;
 #endif
-            Log.Info("Starting...");
+
+            ArcLog.GetLogger<App>().Info("Starting UI...");
 
             this.InitializeComponent();
             // ref: https://github.com/microsoft/microsoft-ui-xaml/issues/1146 
@@ -45,18 +75,37 @@ namespace VirtualPaper.UI {
 
             SetupUnhandledExceptionLogging();
 
-            ConfigureServices();
-            _userSettings = ObjectProvider.GetRequiredService<IUserSettingsClient>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-            SetAppTheme(_userSettings.Settings.ApplicationTheme);
+            _userSettings = AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>();
         }
 
-        private static void ConfigureServices() {
-            ObjectProvider.RegisterRelation<IWallpaperControlClient, WallpaperControlClient>();
-            ObjectProvider.RegisterRelation<IMonitorManagerClient, MonitorManagerClient>();
-            ObjectProvider.RegisterRelation<IUserSettingsClient, UserSettingsClient>();
-            ObjectProvider.RegisterRelation<IAppUpdaterClient, AppUpdaterClient>();
-            ObjectProvider.RegisterRelation<ICommandsClient, CommandsClient>();
-            ObjectProvider.RegisterRelation<IScrCommandsClient, ScrCommandsClient>();
+        private ServiceProvider ConfigureServices() {
+            var provider = new ServiceCollection()
+                .AddSingleton<MainWindow>()
+                
+                .AddSingleton<GeneralSettingViewModel>()
+                .AddTransient<OtherSettingViewModel>()
+                .AddTransient<PerformanceSettingViewModel>()
+                .AddTransient<SystemSettingViewModel>()
+                .AddSingleton<WpSettingsViewModel>()
+                .AddSingleton<ScreenSaverViewModel>()
+                .AddSingleton<LibraryContentsViewModel>()
+                .AddTransient<ConfigSpaceViewModel>()
+                .AddTransient<GetStartViewModel>()
+                .AddTransient<DraftConfigViewModel>()
+                .AddTransient<WorkSpaceViewModel>()
+
+                .AddSingleton<WallpaperIndexService>()
+
+                .AddSingleton<IUserSettingsClient, UserSettingsClient>()
+                .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
+                .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()
+                .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
+                .AddSingleton<ICommandsClient, CommandsClient>()
+                .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
+
+                .BuildServiceProvider();
+
+            return provider;
         }
 
         /// <summary>
@@ -67,7 +116,7 @@ namespace VirtualPaper.UI {
             CrossThreadInvoker.Initialize(new UiSynchronizationContext());
 
             // ref: https://github.com/microsoft/WindowsAppSDK/issues/1687
-            //ApplicationLanguages.PrimaryLanguageOverride = _userSettingsClient.Settings.Language;
+            //ApplicationLanguages.PrimaryLanguageOverride = _userSettings.Settings.Language;
 
             // ref: https://github.com/AndrewKeepCoding/WinUI3Localizer
             if (Constants.ApplicationType.IsMSIX) {
@@ -77,29 +126,11 @@ namespace VirtualPaper.UI {
                 await LanguageUtil.InitializeLocalizerForUnpackaged(_userSettings.Settings.Language);
             }
 
-            ObjectProvider.GetRequiredService<MainWindow>(ObjectLifetime.Singleton, ObjectLifetime.Singleton).Show();
-            // 避免文字无法初始化
-            //ObjectProvider.GetRequiredService<TrayCommand>();
-            //Services.GetRequiredService<TrayCommand>();
+            var m_window = AppServiceLocator.Services.GetRequiredService<MainWindow>();
+            m_window.Show();
         }
 
-        //Cannot change runtime.
-        //Issue: https://github.com/microsoft/microsoft-ui-xaml/issues/4474
-        private void SetAppTheme(AppTheme theme) {
-            switch (theme) {
-                case AppTheme.Auto:
-                    //Nothing
-                    break;
-                case AppTheme.Light:
-                    this.RequestedTheme = ApplicationTheme.Light;
-                    break;
-                case AppTheme.Dark:
-                    this.RequestedTheme = ApplicationTheme.Dark;
-                    break;
-            }
-        }
-
-        private static void LogUnhandledException<T>(T exception) => Log.Error(exception);
+        private static void LogUnhandledException(Exception exception) => ArcLog.GetLogger<App>().Error(exception);
 
         //Not working ugh..
         //Issue: https://github.com/microsoft/microsoft-ui-xaml/issues/5221
@@ -113,19 +144,23 @@ namespace VirtualPaper.UI {
             this.UnhandledException += (s, e) =>
                 LogUnhandledException(e.Exception);
 
-            CoreApplication.UnhandledErrorDetected += (s, e) =>
-                LogUnhandledException(e.UnhandledError);
+            CoreApplication.UnhandledErrorDetected += (s, e) => {
+                try {
+                    e.UnhandledError.Propagate();
+                }
+                catch (Exception ex) {
+                    LogUnhandledException(ex);
+                }
+            };
         }
 
         public static void ShutDown() {
-            Task.Run(async () => {
-                await ObjectProvider.GetRequiredService<IWallpaperControlClient>(ObjectLifetime.Singleton, ObjectLifetime.Singleton).CloseAllPreviewAsync();
-
-                ObjectProvider.Clean();
-                Log.Info("UI was closed");
-            });
+            ((ServiceProvider)AppServiceLocator.Services)?.Dispose();
+            ArcLog.GetLogger<App>().Info("UI was closed");
+            Application.Current.Exit();
         }
 
         private readonly IUserSettingsClient _userSettings;
+        private readonly Mutex _mutex = new(false, Constants.CoreField.UniqueAppUIUid);
     }
 }

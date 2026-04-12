@@ -1,7 +1,8 @@
-﻿using VirtualPaper.Common;
+using System.ComponentModel;
+using VirtualPaper.Common;
 
 namespace VirtualPaper.Models.Cores.Interfaces {
-    public interface IWpBasicData : IEquatable<IWpBasicData> {
+    public interface IWpBasicData : IEquatable<IWpBasicData>, INotifyPropertyChanged {
         /// <summary>
         /// 资源唯一标识符
         /// </summary>
@@ -68,13 +69,14 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         string AspectRatio { get; set; }
         string FileSize { get; set; }
         string FileExtension { get; set; }
+        DateTime CreatedTime { get; set; }
 
         /// <summary>
         /// 壁纸文件类型
         /// </summary>
         FileType FType { get; set; }
         /// <summary>
-        /// 标识是否在生成是是否存在多种形式
+        /// 标识是否在生成时是否存在多种形式
         /// </summary>
         bool IsSingleRType { get; set; }
 
@@ -86,6 +88,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         void Read(string filePath);
         Task MoveToAsync(string targetFolderPath);
         void Save();
+        Task SaveAsync();
         IWpBasicData Clone();
         bool IsAvailable();
         void Merge(IWpBasicData oldData);

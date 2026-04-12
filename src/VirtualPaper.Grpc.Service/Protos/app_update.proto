@@ -1,0 +1,11 @@
+syntax = "proto3";
+package VirtualPaper.Grpc.Service.Update;
+import "google/protobuf/empty.proto";
+import "Protos/common_models.proto";
+
+service Grpc_UpdateService {
+	rpc CheckUpdate (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc GetUpdateStatus (google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_UpdateResponse);
+	rpc StartDownload (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc SubscribeUpdateChecked (google.protobuf.Empty) returns (stream google.protobuf.Empty);
+}

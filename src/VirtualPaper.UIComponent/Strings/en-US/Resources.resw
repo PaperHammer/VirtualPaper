@@ -169,8 +169,7 @@ Scale-down: The size is the same as the one in None or Contain, depending on whi
     <value>The file can be updated to accommodate new features, is it updated?</value>
   </data>
   <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
-    <value>Do you delete the file?
-Note: This operation is irreversible！</value>
+    <value>Do you want to delete this file?</value>
   </data>
   <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
     <value>Only the following file types are supported:
@@ -199,13 +198,13 @@ Note: This operation is irreversible！</value>
     <value>Apply</value>
   </data>
   <data name="Text_ApplyToLockBG" xml:space="preserve">
-    <value>Apply to lock screen background</value>
+    <value>Set as lock screen</value>
   </data>
-  <data name="Text_DeleteFromDisk" xml:space="preserve">
-    <value>Remove from disk</value>
+  <data name="Text_RemoveFromLib" xml:space="preserve">
+    <value>Delete</value>
   </data>
   <data name="Text_ShowOnDisk" xml:space="preserve">
-    <value>Open the directory where the file is located</value>
+    <value>Open in explorer</value>
   </data>
   <data name="Text_UpdateConfig" xml:space="preserve">
     <value>Update config</value>
@@ -268,7 +267,7 @@ Note: This operation is irreversible！</value>
     <value>Changing the language requires a restart of the UI</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop" xml:space="preserve">
-    <value>UI background texture</value>
+    <value>UI texture</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppSystemBackdropExplain" xml:space="preserve">
     <value>Changing the background texture requires a restart of the UI</value>
@@ -339,8 +338,8 @@ Note: This operation is irreversible！</value>
   <data name="Settings_General_Version_MsStore" xml:space="preserve">
     <value>Microsoft Store Edition</value>
   </data>
-  <data name="Settings_General_Version_NewVersionDownLoaded" xml:space="preserve">
-    <value>The new version has been downloaded</value>
+  <data name="Settings_General_Version_NewVersionDownLoadedTitle" xml:space="preserve">
+    <value>Download Completed</value>
   </data>
   <data name="Settings_General_Version_Release_Notes" xml:space="preserve">
     <value>Release Notes</value>
@@ -456,7 +455,7 @@ Author: PaperHammer</value>
     <value>Play</value>
   </data>
   <data name="Settings_Perforemance_Text_System" xml:space="preserve">
-    <value>Syatem</value>
+    <value>System</value>
   </data>
   <data name="Settings_System_Developer_Debug" xml:space="preserve">
     <value>Debuger</value>
@@ -469,9 +468,6 @@ Author: PaperHammer</value>
   </data>
   <data name="Settings_System_Developer_LogExplain" xml:space="preserve">
     <value>Create a log protection report</value>
-  </data>
-  <data name="Settings_System_Log" xml:space="preserve">
-    <value>Save</value>
   </data>
   <data name="Settings_System_Text_Debug" xml:space="preserve">
     <value>Open</value>
@@ -491,8 +487,8 @@ Author: PaperHammer</value>
   <data name="SidebarProject" xml:space="preserve">
     <value>Project</value>
   </data>
-  <data name="SidebarWpSettings" xml:space="preserve">
-    <value>Local</value>
+  <data name="SidebarRepository" xml:space="preserve">
+    <value>Repo</value>
   </data>
   <data name="Text_Adjust" xml:space="preserve">
     <value>Adjust</value>
@@ -511,9 +507,6 @@ Author: PaperHammer</value>
   </data>
   <data name="Text_Restore" xml:space="preserve">
     <value>Restore</value>
-  </data>
-  <data name="Text_SaveAndApply" xml:space="preserve">
-    <value>Apply and Save</value>
   </data>
   <data name="Text_WpArrange" xml:space="preserve">
     <value>Wallpaper layout way</value>
@@ -600,22 +593,22 @@ Author: PaperHammer</value>
     <value>Can not set the storage directory to the root of your application data</value>
   </data>
   <data name="Text_VersionInfo" xml:space="preserve">
-    <value>Version Info：</value>
+    <value>Version：</value>
   </data>
   <data name="InfobarMsg_ImportErr" xml:space="preserve">
     <value>The file import error</value>
   </data>
   <data name="Text_FileUsing" xml:space="preserve">
-    <value>The document is in use, please close the source being used</value>
+    <value>The current file is being used as wallpaper. Please close it and try again.</value>
   </data>
   <data name="Project_RecentUsed" xml:space="preserve">
-    <value>Open a recently used project (R)</value>
+    <value>Open a recently used project</value>
   </data>
   <data name="Project_SearchRecentUsed" xml:space="preserve">
-    <value>Search for recently used items (S)</value>
+    <value>Search for recently used items</value>
   </data>
   <data name="Project_StartUp" xml:space="preserve">
-    <value>Get started</value>
+    <value>Get start</value>
   </data>
   <data name="Project_StartUp_OpenFile" xml:space="preserve">
     <value>Open files (F)</value>
@@ -633,7 +626,7 @@ Author: PaperHammer</value>
     <value>Open the local .vpd file</value>
   </data>
   <data name="Project_StartUp_NewVpd" xml:space="preserve">
-    <value>Create a new design draft (N)</value>
+    <value>Create a new design</value>
   </data>
   <data name="Project_StartUp_NewVpd_Desc" xml:space="preserve">
     <value>Select a project template to get started</value>
@@ -648,7 +641,7 @@ Author: PaperHammer</value>
     <value>Create (N)</value>
   </data>
   <data name="Project_DeployNewDraft_PreviousStep" xml:space="preserve">
-    <value>Previous (B)</value>
+    <value>Previous</value>
   </data>
   <data name="Project_NewDraftName" xml:space="preserve">
     <value>Design Draft Name (J)</value>
@@ -672,16 +665,16 @@ Author: PaperHammer</value>
     <value>The location is empty or invalid (up to 200 characters).</value>
   </data>
   <data name="Project_DeployNewDraft_NextStep" xml:space="preserve">
-    <value>Next (N)</value>
+    <value>Next</value>
   </data>
   <data name="Project_SearchTemplate" xml:space="preserve">
-    <value>Search for a project template (S)</value>
+    <value>Search for a project template</value>
   </data>
   <data name="Project_TemplateConfig" xml:space="preserve">
-    <value>Create a new project (R)</value>
+    <value>Create a new project</value>
   </data>
   <data name="Project_NewProjectName" xml:space="preserve">
-    <value>Project Name (J)</value>
+    <value>Project Name</value>
   </data>
   <data name="Project_NewProjectName_Placeholder" xml:space="preserve">
     <value>Enter a name for the project</value>
@@ -719,8 +712,8 @@ Author: PaperHammer</value>
   <data name="Dialog_Title_Rename" xml:space="preserve">
     <value>Rename</value>
   </data>
-  <data name="Project_CannotDelete_RootBackground" xml:space="preserve">
-    <value>The root background layer cannot be deleted</value>
+  <data name="Project_CannotDelete_OnlyCanvas" xml:space="preserve">
+    <value>Unable to delete the only layer</value>
   </data>
   <data name="Project_STI_LayerSaveFailed" xml:space="preserve">
     <value>Layer save failed: </value>
@@ -932,5 +925,266 @@ The following words cannot be used as usernames:
   </data>
   <data name="Server_Authentication_Failed" xml:space="preserve">
     <value>The account authentication fails, please try to log in again</value>
+  </data>
+  <data name="SIG_CanvasSet_Header" xml:space="preserve">
+    <value>Canvas</value>
+  </data>
+  <data name="SIG_CanvasSet_AdjustSize" xml:space="preserve">
+    <value>Resize the canvas</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelWidth" xml:space="preserve">
+    <value>Width (Pixels)</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelHeight" xml:space="preserve">
+    <value>Height (Pixels)</value>
+  </data>
+  <data name="SIG_CanvasSet_LockAspectRatio" xml:space="preserve">
+    <value>Lock the aspect ratio</value>
+  </data>
+  <data name="SIG_CanvasSet_SacleContent" xml:space="preserve">
+    <value>Synchronously zoom the canvas content</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateAndFlip" xml:space="preserve">
+    <value>Rotate and Flip</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateLeftNinety" xml:space="preserve">
+    <value>Rotate 90° to the left</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateRightNinety" xml:space="preserve">
+    <value>Rotate 90° to the right</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipHorizon" xml:space="preserve">
+    <value>Flip horizontally</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipVertical" xml:space="preserve">
+    <value>Flip vertically</value>
+  </data>
+  <data name="Project_SI_Text_Layer" xml:space="preserve">
+    <value>Layer</value>
+  </data>
+  <data name="Project_SI_Text_Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Project_SI_Text_UnnamedLayer" xml:space="preserve">
+    <value>Unnamed layer</value>
+  </data>
+  <data name="Project_SI_FileNotFound" xml:space="preserve">
+    <value>The file does not exist or has been removed. Would you like to delete it from the list?</value>
+  </data>
+  <data name="SIG_Text_RemoveFromList" xml:space="preserve">
+    <value>Remove from the list</value>
+  </data>
+  <data name="SIG_Text_CopyPath" xml:space="preserve">
+    <value>Copy the path</value>
+  </data>
+  <data name="Settings_General_Version_DownloadingTitle" xml:space="preserve">
+    <value>Downloading…</value>
+  </data>
+  <data name="Settings_General_Version_DownloadFailedTitle" xml:space="preserve">
+    <value>Download Failed</value>
+  </data>
+  <data name="Settings_General_Version_DownloadFailedMsg" xml:space="preserve">
+    <value>Unable to download the update. Please check your internet connection and try again.</value>
+  </data>
+  <data name="Settings_General_Version_VerifyFailedTitle" xml:space="preserve">
+    <value>File Verification Failed</value>
+  </data>
+  <data name="Settings_General_Version_VerifyFailedMsg" xml:space="preserve">
+    <value>The downloaded update package may be corrupted. Please try downloading again.</value>
+  </data>
+  <data name="Settings_General_Version_DownLoadedMsg" xml:space="preserve">
+    <value>The update package is ready, click the 'Install' button to start the update.</value>
+  </data>
+  <data name="Text_ApplyAndClose" xml:space="preserve">
+    <value>Apply and Close</value>
+  </data>
+  <data name="Webview_SelBarItem1_GeneralEffect" xml:space="preserve">
+    <value>General Effects</value>
+  </data>
+  <data name="Webview_SelBarItem2_GeneralInfo" xml:space="preserve">
+    <value>Basic Info</value>
+  </data>
+  <data name="Text_FileInPreview" xml:space="preserve">
+    <value>The current file is being previewed, please close it and try again.</value>
+  </data>
+  <data name="Details_Text_FileProperty" xml:space="preserve">
+    <value>File Properties</value>
+  </data>
+  <data name="Webview_SelBarItem3_GeneralInfoEdit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Text_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="RunningAsAdminWarning" xml:space="preserve">
+    <value>Some features may not be available when run as administrator</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles" xml:space="preserve">
+    <value>Select File</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles_Explain" xml:space="preserve">
+    <value>Add supported files to the wallpaper library</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolder" xml:space="preserve">
+    <value>Select Folder</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolderExplain" xml:space="preserve">
+    <value>Add all supported files in the folder to the wallpaper library</value>
+  </data>
+  <data name="Add_To_Lib_DragDropFile" xml:space="preserve">
+    <value>Drag here to add</value>
+  </data>
+  <data name="Lib_NotAnyMore" xml:space="preserve">
+    <value>End of list</value>
+  </data>
+  <data name="Text_Drop_Files" xml:space="preserve">
+    <value>Drop files</value>
+  </data>
+  <data name="Add_To_Lib_AddWallpaperDrop" xml:space="preserve">
+    <value>Add Wallpaper</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Name" xml:space="preserve">
+    <value>Static Image</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Desc" xml:space="preserve">
+    <value>Standard bitmap editing mode. Provides pixel-level tools suitable for drawing, retouching, and general image processing</value>
+  </data>
+  <data name="Project_Create_New" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Project_Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Project_Drops_Contains_Invalid_FIles" xml:space="preserve">
+    <value>An unsupported file type was detected and has been automatically ignored</value>
+  </data>
+  <data name="Project_FileSave_Failed" xml:space="preserve">
+    <value>Failed to save the file: </value>
+  </data>
+  <data name="Project_FileLoad_Failed" xml:space="preserve">
+    <value>Failed to load the file: </value>
+  </data>
+  <data name="Project_SI_Text_BackgroundLayer" xml:space="preserve">
+    <value>Background</value>
+  </data>
+  <data name="Project_FileLoad_FileCorrupted" xml:space="preserve">
+    <value>The file may be corrupted: </value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerName" xml:space="preserve">
+    <value>Layer</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerNew" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerCopy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_FitView" xml:space="preserve">
+    <value>Adapt to view size</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_ZoomIn" xml:space="preserve">
+    <value>Zoom In</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_ZoomOut" xml:space="preserve">
+    <value>Zoom Out</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Selection" xml:space="preserve">
+    <value>Selection</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_PaintBrush" xml:space="preserve">
+    <value>PaintBrush</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Fill" xml:space="preserve">
+    <value>Fill</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Eraser" xml:space="preserve">
+    <value>Eraser</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Crop" xml:space="preserve">
+    <value>Crop</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_CanvasSet" xml:space="preserve">
+    <value>Canvas</value>
+  </data>
+  <data name="Project_Unsave_Intercept_Content" xml:space="preserve">
+    <value>has unsaved changes, want to save it?</value>
+  </data>
+  <data name="Project_Unsave_Intercept_Title" xml:space="preserve">
+    <value>Unsaved changes</value>
+  </data>
+  <data name="Text_Unsave" xml:space="preserve">
+    <value>Don‘t save</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_File" xml:space="preserve">
+    <value>File(F)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_CreateNew" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_SaveAll" xml:space="preserve">
+    <value>Save all</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Exit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Edit" xml:space="preserve">
+    <value>Edit(E)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Undo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Redo" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Help" xml:space="preserve">
+    <value>Help(H)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Manual" xml:space="preserve">
+    <value>Manual</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Export" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="Project_Export_Success" xml:space="preserve">
+    <value>Successfully exported to:</value>
+  </data>
+  <data name="Project_Export_Failed" xml:space="preserve">
+    <value>Failed to export:</value>
+  </data>
+  <data name="Project_Export_PathNotBeNone" xml:space="preserve">
+    <value>The export path cannot be empty</value>
+  </data>
+  <data name="Project_Export_InternalError" xml:space="preserve">
+    <value>Internal error, try restarting the application to resolve it</value>
+  </data>
+  <data name="Project_StaticImg_Text_Palette" xml:space="preserve">
+    <value>Palette</value>
+  </data>
+  <data name="Text_Complete" xml:space="preserve">
+    <value>Complete</value>
+  </data>
+  <data name="Project_StaticImg_Text_Eraser" xml:space="preserve">
+    <value>Eraser</value>
+  </data>
+  <data name="Project_StaticImg_Text_WidthPixel" xml:space="preserve">
+    <value>Width (pixels)</value>
+  </data>
+  <data name="Project_StaticImg_Text_OpacityPercent" xml:space="preserve">
+    <value>Opacity (percentage)</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerSet" xml:space="preserve">
+    <value>Layer Set</value>
+  </data>
+  <data name="Project_StaticImg_Text_Paintbrush" xml:space="preserve">
+    <value>Paintbrush</value>
+  </data>
+  <data name="Project_StaticImg_Text_PaintbrushBox" xml:space="preserve">
+    <value>Paintbrush Box</value>
+  </data>
+  <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
+    <value>Thickness (pixels)</value>
   </data>
 </root>

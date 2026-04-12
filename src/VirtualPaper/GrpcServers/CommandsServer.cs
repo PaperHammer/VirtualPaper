@@ -1,16 +1,16 @@
-﻿using System.Windows.Threading;
+using System.Windows.Threading;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Grpc.Service.Commands;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Views;
 using Application = System.Windows.Application;
 
 namespace VirtualPaper.GrpcServers {
-    internal class CommandsServer(
+    public class CommandsServer(
         IUIRunnerService runner) : Grpc_CommandsService.Grpc_CommandsServiceBase {
         public override Task<Empty> ShowUI(Empty _, ServerCallContext context) {
             _runner.ShowUI();
@@ -44,11 +44,6 @@ namespace VirtualPaper.GrpcServers {
             finally {
                 App.ShutDown();
             }
-        }
-
-        public override Task<Empty> SaveRectUI(Empty _, ServerCallContext context) {
-            _runner.SaveRectUI();
-            return Task.FromResult(new Empty());
         }
 
         public override async Task SubscribeUIRecievedCmd(Empty request, IServerStreamWriter<Grpc_UIRecievedCmd> responseStream, ServerCallContext context) {

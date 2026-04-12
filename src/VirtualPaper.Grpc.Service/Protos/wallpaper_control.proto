@@ -1,0 +1,26 @@
+syntax = "proto3";
+package VirtualPaper.Grpc.Service.WallpaperControl;
+import "google/protobuf/empty.proto";
+import "Protos/common_models.proto";
+
+service Grpc_WallpaperControlService {
+	rpc CloseAllWallpapers(google.protobuf.Empty) returns (google.protobuf.Empty);
+    rpc CloseWallpaperByMonitor(VirtualPaper.Grpc.Service.CommonModels.Grpc_CloseWallpaperByMonitorRequest) returns (google.protobuf.Empty);	
+    rpc CloseAllPreview(google.protobuf.Empty) returns (google.protobuf.Empty);	
+	rpc GetWallpaper(VirtualPaper.Grpc.Service.CommonModels.Grpc_GetWallpaperRequest) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_WpMetaData);
+	rpc GetPlayerStartArgs(VirtualPaper.Grpc.Service.CommonModels.Grpc_GetPlayerStartArgsRequest) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_GetPlayerStartArgsResponse);
+	rpc GetPlayerStartArgsInRunning(VirtualPaper.Grpc.Service.CommonModels.Grpc_GetPlayerStartArgsInRunningRequest) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_GetPlayerStartArgsInRunningResponse);
+	rpc RestartAllWallpapers(google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_RestartWallpaperResponse);
+	rpc SetWallpaper(VirtualPaper.Grpc.Service.CommonModels.Grpc_SetWallpaperRequest) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_SetWallpaperResponse);
+	rpc CreateMetadataBasic(VirtualPaper.Grpc.Service.CommonModels.Grpc_CreateMetadataBasicRequest) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_WpBasicData);
+	rpc CreateMetadataBasicInMem(VirtualPaper.Grpc.Service.CommonModels.Grpc_CreateMetadataBasicRequest) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_WpBasicData);
+	rpc ChangeWallpaperLayoutFolrderPath(VirtualPaper.Grpc.Service.CommonModels.Grpc_ChangePathRequest) returns (google.protobuf.Empty);
+	rpc GetRunMonitorByWallpaper(VirtualPaper.Grpc.Service.CommonModels.Grpc_GetMonitorRequest) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_MonitorData);	
+    rpc SendMessageWallpaper(VirtualPaper.Grpc.Service.CommonModels.Grpc_WallpaperMessageRequest) returns (google.protobuf.Empty);
+    rpc TakeScreenshot(VirtualPaper.Grpc.Service.CommonModels.Grpc_WallpaperScreenshotRequest) returns (google.protobuf.Empty);
+	rpc UpdateBasicData(VirtualPaper.Grpc.Service.CommonModels.Grpc_UpdateBasicDataRequest) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_WpBasicData);
+
+	rpc GetCoreStats(google.protobuf.Empty) returns (VirtualPaper.Grpc.Service.CommonModels.Grpc_GetCoreStatsResponse);
+	rpc SubscribeWallpaperChanged(google.protobuf.Empty) returns (stream google.protobuf.Empty);
+    rpc SubscribeWallpaperError(google.protobuf.Empty) returns (stream VirtualPaper.Grpc.Service.CommonModels.Grpc_WallpaperErrorResponse);
+}

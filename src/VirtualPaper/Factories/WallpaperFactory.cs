@@ -1,4 +1,4 @@
-﻿using VirtualPaper.Common;
+using VirtualPaper.Common;
 using VirtualPaper.Cores;
 using VirtualPaper.Cores.Players.Web;
 using VirtualPaper.Factories.Interfaces;
@@ -6,18 +6,12 @@ using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Factories {
     public class WallpaperFactory : IWallpaperFactory {
-        public IWpPlayer CreatePlayer(
-            IWpPlayerData data,
-            IMonitor monitor,
-            bool isPreview = false) {
+        public IWpPlayer CreatePlayer(IWpPlayerData data, IMonitor? monitor, bool isPreview = false) {
             switch (data.RType) {
                 case RuntimeType.RImage:
                 case RuntimeType.RImage3D:
                 case RuntimeType.RVideo: {
-                        return new PlayerWeb(
-                            data,
-                            monitor,
-                            isPreview);
+                        return new WpPlayerWeb(data, monitor, isPreview);
                     }
 
                     //case WallpaperType.web:
@@ -26,20 +20,20 @@ namespace VirtualPaper.Factories {
                     //    switch (_userSetting.Settings.VideoPlayer)
                     //    {
                     //        case VirtualPaperMediaPlayer.wmf:
-                    //            return new VideoWmfPlayer(data.FilePath, data,
-                    //                monitor, 0, _userSetting.Settings.WallpaperScaling);
+                    //            return new VideoWmfPlayer(_data.FilePath, _data,
+                    //                _monitor, 0, _userSetting.Settings.WallpaperScaling);
                     //        case VirtualPaperMediaPlayer.mpv:
-                    //            return new VideoMpvPlayer(data.FilePath,
-                    //                data,
-                    //                monitor,
-                    //                _wpCustomizeFolderFactory.CreateWpEffectFileUsing(data, monitor, _userSetting.Settings.WallpaperArrangement, _userSetting),
+                    //            return new VideoMpvPlayer(_data.FilePath,
+                    //                _data,
+                    //                _monitor,
+                    //                _wpCustomizeFolderFactory.CreateWpEffectFileUsing(_data, _monitor, _userSetting.Settings.WallpaperArrangement, _userSetting),
                     //                _userSetting.Settings.WallpaperScaling,
                     //                _userSetting.Settings.IsStartHwAccel,
                     //                isPreview);
                     //        case VirtualPaperMediaPlayer.vlc:
-                    //            return new VideoVlcPlayer(data.FilePath,
-                    //                data,
-                    //                monitor,
+                    //            return new VideoVlcPlayer(_data.FilePath,
+                    //                _data,
+                    //                _monitor,
                     //                _userSetting.Settings.WallpaperScaling,
                     //                _userSetting.Settings.IsStartHwAccel);
                     //    }
@@ -48,10 +42,10 @@ namespace VirtualPaper.Factories {
                     //    switch (_userSetting.Settings.GifPlayer)
                     //    {
                     //        case VirtualPaperGifPlayer.mpv:
-                    //            return new VideoMpvPlayer(data.FilePath,
-                    //                           data,
-                    //                           monitor,
-                    //                           _wpCustomizeFolderFactory.CreateWpEffectFileUsing(data, monitor, _userSetting.Settings.WallpaperArrangement, _userSetting),
+                    //            return new VideoMpvPlayer(_data.FilePath,
+                    //                           _data,
+                    //                           _monitor,
+                    //                           _wpCustomizeFolderFactory.CreateWpEffectFileUsing(_data, _monitor, _userSetting.Settings.WallpaperArrangement, _userSetting),
                     //                           _userSetting.Settings.WallpaperScaling,
                     //                           _userSetting.Settings.IsStartHwAccel,
                     //                           isPreview);
@@ -61,17 +55,17 @@ namespace VirtualPaper.Factories {
                     //    switch (_userSetting.Settings.PicturePlayer)
                     //    {
                     //        case VirtualPaperPicturePlayer.winApi:
-                    //            return new PictureWinApi(data.FilePath, data, monitor, _userSetting.Settings.WallpaperArrangement, _userSetting.Settings.WallpaperScaling);
+                    //            return new PictureWinApi(_data.FilePath, _data, _monitor, _userSetting.Settings.WallpaperArrangement, _userSetting.Settings.WallpaperScaling);
                     //        case VirtualPaperPicturePlayer.mpv:
-                    //            return new VideoMpvPlayer(data.FilePath,
-                    //                              data,
-                    //                              monitor,
-                    //                              _wpCustomizeFolderFactory.CreateWpEffectFileUsing(data, monitor, _userSetting.Settings.WallpaperArrangement, _userSetting),
+                    //            return new VideoMpvPlayer(_data.FilePath,
+                    //                              _data,
+                    //                              _monitor,
+                    //                              _wpCustomizeFolderFactory.CreateWpEffectFileUsing(_data, _monitor, _userSetting.Settings.WallpaperArrangement, _userSetting),
                     //                              _userSetting.Settings.WallpaperScaling,
                     //                              _userSetting.Settings.IsStartHwAccel,
                     //                              isPreview);
                     //        case VirtualPaperPicturePlayer.wmf:
-                    //            return new VideoWmfPlayer(data.FilePath, data, monitor, 0, _userSetting.Settings.WallpaperScaling);
+                    //            return new VideoWmfPlayer(_data.FilePath, _data, _monitor, 0, _userSetting.Settings.WallpaperScaling);
                     //    }
                     //    break;
                     //case WallpaperType.app:
@@ -85,31 +79,38 @@ namespace VirtualPaper.Factories {
                     //    }
                     //    else
                     //    {
-                    //        return new ExtPrograms(data.FilePath, data, monitor,
+                    //        return new ExtPrograms(_data.FilePath, _data, _monitor,
                     //          _userSetting.Settings.WallpaperWaitTime);
                     //    }
                     //case WallpaperType.videostream:
                     //    if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "youtube-dl.exe")))
                     //    {
-                    //        return new VideoMpvPlayer(data.FilePath,
-                    //            data,
-                    //            monitor,
-                    //            _wpCustomizeFolderFactory.CreateWpEffectFileUsing(data, monitor, _userSetting.Settings.WallpaperArrangement, _userSetting),
+                    //        return new VideoMpvPlayer(_data.FilePath,
+                    //            _data,
+                    //            _monitor,
+                    //            _wpCustomizeFolderFactory.CreateWpEffectFileUsing(_data, _monitor, _userSetting.Settings.WallpaperArrangement, _userSetting),
                     //            _userSetting.Settings.WallpaperScaling, _userSetting.Settings.IsStartHwAccel,
                     //            isPreview, _userSetting.Settings.StreamQuality);
                     //    }
                     //    else
                     //    {
-                    //        return new WebCefSharpProcess(data.FilePath,
-                    //                data,
-                    //                monitor,
-                    //                _wpCustomizeFolderFactory.CreateWpEffectFileUsing(data, monitor, _userSetting.Settings.WallpaperArrangement, _userSetting),
+                    //        return new WebCefSharpProcess(_data.FilePath,
+                    //                _data,
+                    //                _monitor,
+                    //                _wpCustomizeFolderFactory.CreateWpEffectFileUsing(_data, _monitor, _userSetting.Settings.WallpaperArrangement, _userSetting),
                     //                _userSetting.Settings.WebDebugPort,
                     //                _userSetting.Settings.IsCefDiskCache,
                     //                _userSetting.Settings.AudioVolumeGlobal);
                     //    }
             }
             throw new PluginNotFoundException("Wallpaper player not found.");
+        }
+
+        public string? CreatePlayerStartArgs(IWpPlayerData data, bool isPreview) {
+            return data.RType switch {
+                RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo => new PlayerWebSrartArgs(data, isPreview).ToJson(),
+                _ => null
+            };
         }
 
         #region exceptions

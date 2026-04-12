@@ -1,18 +1,21 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.DraftPanel;
 
 namespace VirtualPaper.Grpc.Client {
     public class UserSettingsClient : IUserSettingsClient {
         public ISettings Settings { get; private set; } = new Settings();
         public List<IApplicationRules> AppRules { get; private set; } = [];
         public List<IWallpaperLayout> WallpaperLayouts { get; private set; } = [];
+        public List<IRecentUsed> RecentUseds { get; private set; } = [];
 
         public UserSettingsClient() {
             _client = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
@@ -21,6 +24,7 @@ namespace VirtualPaper.Grpc.Client {
                 await LoadAsync<ISettings>().ConfigureAwait(false);
                 await LoadAsync<List<IApplicationRules>>().ConfigureAwait(false);
                 await LoadAsync<List<IWallpaperLayout>>().ConfigureAwait(false);
+                await LoadAsync<List<IRecentUsed>>().ConfigureAwait(false);
             }).Wait();
         }
 
@@ -49,6 +53,9 @@ namespace VirtualPaper.Grpc.Client {
             else if (typeof(T) == typeof(List<IWallpaperLayout>)) {
                 WallpaperLayouts = await GetWallpaperLayoutsAsync().ConfigureAwait(false);
             }
+            else if (typeof(T) == typeof(List<IRecentUsed>)) {
+                RecentUseds = await GetRecentUsedsAsync().ConfigureAwait(false);
+            }
             else {
                 throw new InvalidCastException($"ValueType not found: {typeof(T)}");
             }
@@ -60,6 +67,9 @@ namespace VirtualPaper.Grpc.Client {
             }
             else if (typeof(T) == typeof(List<IApplicationRules>)) {
                 SetAppRulesSettings();
+            }
+            else if (typeof(T) == typeof(List<IRecentUsed>)) {
+                SetRecentUseds();
             }
             else {
                 throw new InvalidCastException($"ValueType not found: {typeof(T)}");
@@ -132,6 +142,15 @@ namespace VirtualPaper.Grpc.Client {
             return wpLayouts;
         }
 
+        private async Task<List<IRecentUsed>> GetRecentUsedsAsync() {
+            var wpLayouts = new List<IRecentUsed>();
+            var resp = await _client.GetRecentUsedsAsync(new Empty());
+            foreach (var item in resp.RecentUseds) {
+                wpLayouts.Add(new RecentUsed((FileType)item.FType, item.FileName, item.FilePath, item.DateTime));
+            }
+            return wpLayouts;
+        }
+
         private void SetAppRulesSettings() {
             var tmp = new Grpc_AppRulesSettings();
             foreach (var item in AppRules) {
@@ -154,6 +173,101 @@ namespace VirtualPaper.Grpc.Client {
             _ = await _client.SetAppRulesSettingsAsync(tmp);
         }
         
+        private void SetRecentUseds() {
+            var tmp = new Grpc_RecentUseds();
+            foreach (var item in RecentUseds) {
+                tmp.RecentUseds.Add(new Grpc_RecentUsed {
+                    FType = (Grpc_FileType)item.Type,
+                    FileName = item.FileName,
+                    FilePath = item.FilePath,
+                    DateTime = item.DateTime
+                });
+            }
+            _ = _client.SetRecentUseds(tmp);
+        }
+        
+        private async Task SetRecentUsedsAsync() {
+            var tmp = new Grpc_RecentUseds();
+            foreach (var item in RecentUseds) {
+                tmp.RecentUseds.Add(new Grpc_RecentUsed {
+                    FType = (Grpc_FileType)item.Type,
+                    FileName = item.FileName,
+                    FilePath = item.FilePath,
+                    DateTime = item.DateTime
+                });
+            }
+            _ = await _client.SetRecentUsedsAsync(tmp);
+        }
+
+        public async Task UpdateRecentUsedAsync(string filePath) {            
+            lock (_singleLock) {
+                var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                var existingItem = RecentUseds.FirstOrDefault(r => r.FilePath == filePath);
+                if (existingItem != null) {
+                    existingItem.DateTime = now;
+                }
+                else {
+                    var recentUsed = new RecentUsed(
+                        FileFilter.GetRuntimeFileType(Path.GetExtension(filePath)),
+                        Path.GetFileName(filePath),
+                        filePath,
+                        now
+                    );
+                    RecentUseds.Add(recentUsed);
+                }
+            }
+            await SetRecentUsedsAsync();
+        }
+        
+        public async Task UpdateRecetUsedAsync(string[] filePaths) {
+            if (filePaths == null || filePaths.Length == 0) return;
+            
+            lock (_listLock) {
+                var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                foreach (var filePath in filePaths) {
+                    var existingItem = RecentUseds.FirstOrDefault(r => r.FilePath == filePath);
+
+                    if (existingItem != null) {
+                        existingItem.DateTime = now;
+                    }
+                    else {
+                        var recentUsed = new RecentUsed(
+                            FileFilter.GetRuntimeFileType(Path.GetExtension(filePath)),
+                            Path.GetFileName(filePath),
+                            filePath,
+                            now
+                        );
+                        RecentUseds.Add(recentUsed);
+                    }
+                }
+            }
+            await SetRecentUsedsAsync();
+        }
+
+        public async Task DeleteRecetUsedAsync(IRecentUsed item) {
+            RecentUseds.Remove(item);
+            await SetRecentUsedsAsync();
+        }
+
+        #region Dispose
+        private bool _disposed;
+        protected virtual void Dispose(bool disposing) {
+            if (_disposed) return;
+
+            if (disposing) {
+            }
+
+            _disposed = true;
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+
         private readonly Grpc_UserSettingsService.Grpc_UserSettingsServiceClient _client;
+        private readonly object _listLock = new();
+        private readonly object _singleLock = new();
     }
 }

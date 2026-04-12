@@ -1,55 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Page
+<arc:ArcPage
     x:Class="VirtualPaper.WpSettingsPanel.WpSettings"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:VirtualPaper.WpSettingsPanel"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    xmlns:models="using:VirtualPaper.Models.Cores.Interfaces"
+    xmlns:localViewModel="using:VirtualPaper.WpSettingsPanel.ViewModels"
+    xmlns:localUtils="using:VirtualPaper.WpSettingsPanel.Utils"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
-    <Page.Resources>
-        <cvs:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
-    </Page.Resources>
+    <arc:ArcPageHost x:Name="MainHost">
+        <NavigationView x:Name="NvLocal" 
+            Padding="10 0"
+            PaneDisplayMode="Top"
+            SelectionFollowsFocus="Enabled" 
+            IsBackButtonVisible="Collapsed" 
+            IsSettingsVisible="False"
+            SelectionChanged="NvLocal_SelectionChanged">
+            <NavigationView.MenuItems>
+                <NavigationViewItem x:Name="Nav_LibraryContents"
+                    Content="{markup:I18n Key=WpSettings_NavTitle_LibraryContents}"
+                    IsSelected="True"/>
+                <NavigationViewItem x:Name="Nav_ScreenSaver"
+                    Content="{markup:I18n Key=WpSettings_NavTitle_ScrSettings}"/>
+            </NavigationView.MenuItems>
 
-    <Grid
-        x:Name="GridMain">
-        <ContentControl
-            x:Name="contentControlMain"
-            HorizontalContentAlignment="Stretch"
-            VerticalContentAlignment="Stretch">
-            <NavigationView 
-                x:Name="NvLocal" 
-                Padding="10 0"
-                PaneDisplayMode="Top"
-                SelectionFollowsFocus="Enabled" 
-                IsBackButtonVisible="Collapsed" 
-                IsSettingsVisible="False"
-                SelectionChanged="NvLocal_SelectionChanged">
-                <NavigationView.MenuItems>
-                    <NavigationViewItem 
-                        Content="{Binding WpSettings_NavItem1}" 
-                        x:Name="Nav_LibraryContents" 
-                        IsSelected="True"/>
-                    <NavigationViewItem 
-                        Content="{Binding WpSettings_NavItem2}"
-                        x:Name="Nav_ScreenSaver" />
-                </NavigationView.MenuItems>
+            <NavigationView.PaneFooter>
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <TextBox x:Name="tbSearchName"
+                        Tag="{x:Bind localUtils:FilterKey.LibraryTitle}"
+                        Height="30"
+                        Width="280"
+                        PlaceholderText="Search in local lib by title..."
+                        FontSize="12"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        TextChanged="OnFilterChanged"
+                        IsEnabled="{x:Bind Nav_LibraryContents.IsSelected, Mode=OneWay}"/>
+                    
+                    <Button x:Name="AddToLib"
+                        Padding="12 5 11 5"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Command="{x:Bind _viewModel.AddToLibCommand}">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xF8AA;" FontSize="16"/>
+                    </Button>
 
-                <NavigationView.PaneFooter>
-                    <Button 
-                        Name="ControlCenter"
+                    <Button x:Name="ControlCenter"
                         Padding="12 5 11 5"
                         Background="Transparent"                                
                         BorderThickness="0">
-                        <FontIcon 
-                            FontFamily="Segoe MDL2 Assets" 
-                            Glyph="&#xE7F4;"/>
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE7F4;"/>
                         <Button.Flyout>
-                            <Flyout
-                                Opening="Flyout_Opening">
+                            <Flyout Opening="Flyout_Opening">
                                 <Flyout.FlyoutPresenterStyle>
                                     <Style TargetType="FlyoutPresenter">
                                         <Setter Property="MinWidth" Value="500"></Setter>
@@ -59,53 +68,45 @@
                                     Spacing="8"
                                     VerticalAlignment="Stretch"
                                     HorizontalAlignment="Stretch">
-                                    <StackPanel
-                                        Orientation="Horizontal"
-                                        Spacing="8">
-                                        <Button 
-                                            x:Name="BtnClose"
+                                    <StackPanel Orientation="Horizontal"  Spacing="8">
+                                        <input:ArcButton x:Name="BtnClose"
                                             Height="33"
                                             MinWidth="66"
                                             Margin="10 0 0 0"
-                                            Content="{Binding Text_Close}"
+                                            Content="{markup:I18n Key=Text_Close}"
                                             Background="PaleVioletRed"
-                                            Click="BtnClose_Click"/>
-                                        <Button 
-                                            x:Name="BtnDetect"
+                                            Command="{x:Bind _viewModel.WpCloseCommand}"/>
+                                        <Button x:Name="BtnDetect"
                                             Height="33"
                                             MinWidth="66"
                                             Margin="10 0 0 0"
-                                            Content="{Binding Text_Detect}"
-                                            Click="BtnDetect_Click"/>
-                                        <Button 
-                                            x:Name="BtnIdentify"
+                                            Content="{markup:I18n Key=Text_Detect}"
+                                            Command="{x:Bind _viewModel.WpDetectCommand}"/>
+                                        <Button x:Name="BtnIdentify"
                                             Height="33"
                                             MinWidth="66"
                                             Margin="10 0 0 0"
-                                            Content="{Binding Text_Identify}"
-                                            Click="BtnIdentify_Click"/>
-                                        <Button 
-                                            x:Name="BtnAdjust"
+                                            Content="{markup:I18n Key=Text_Identify}"
+                                            Command="{x:Bind _viewModel.WpIdentifyCommand}"/>
+                                        <Button x:Name="BtnAdjust"
                                             Height="33"
                                             MinWidth="66"
                                             Margin="10 0 0 0"
-                                            Content="{Binding Text_Adjust}"
-                                            Click="BtnAdjust_Click"/>
+                                            Content="{markup:I18n Key=Text_Adjust}"
+                                            Command="{x:Bind _viewModel.WpAdjustCommand}"/>
                                     </StackPanel>
 
                                     <GridView
-                                        HorizontalAlignment="Center"                                            
-                                        ItemsSource="{Binding MonitorThus}"
-                                        SelectedItem="{Binding SelectedMonitor, Mode=TwoWay}">
+                                        HorizontalAlignment="Center"
+                                        ItemsSource="{x:Bind _viewModel.Monitors}"
+                                        SelectedIndex="{x:Bind _viewModel.SelectedMonitorIndex, Mode=TwoWay}">
                                         <GridView.ItemTemplate>
-                                            <DataTemplate>
-                                                <Grid
-                                                    Width="184"
-                                                    Height="120">
+                                            <DataTemplate x:DataType="models:IMonitor">
+                                                <Grid Width="184" Height="120">
                                                     <Image
-                                                        Source="{Binding ThumbnailPath, Converter={StaticResource StringToImageSourceConverter}}"
+                                                        Source="{x:Bind ThumbnailPath, Converter={StaticResource StringToImageSourceConverter}}"
                                                         Stretch="UniformToFill" />
-                                                    <Canvas >
+                                                    <Canvas>
                                                         <Canvas.Background>
                                                             <LinearGradientBrush StartPoint="0,0.4" EndPoint="0,1">
                                                                 <GradientStop Color="Transparent" Offset="0.0"/>
@@ -117,41 +118,35 @@
                                                         <TextBlock
                                                             HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"
-                                                            Text="{Binding Content}" />
+                                                            Text="{x:Bind Content}" />
                                                     </Viewbox>
                                                 </Grid>
                                             </DataTemplate>
                                         </GridView.ItemTemplate>
                                         <GridView.ItemsPanel>
                                             <ItemsPanelTemplate>
-                                                <ItemsWrapGrid 
-                                                    MaximumRowsOrColumns="3" 
-                                                    Orientation="Horizontal" />
+                                                <ItemsWrapGrid MaximumRowsOrColumns="3" Orientation="Horizontal" />
                                             </ItemsPanelTemplate>
                                         </GridView.ItemsPanel>
                                     </GridView>
 
-                                    <StackPanel
-                                        x:Name="WallpaperArrangement"
+                                    <StackPanel x:Name="WallpaperArrangement"
                                         Orientation="Vertical"
                                         Spacing="4">
 
-                                        <TextBlock
-                                            x:Name="WpArrangHeader"
-                                            Text="{Binding Text_WpArrange}"
+                                        <TextBlock x:Name="WpArrangHeader"
+                                            Text="{markup:I18n Key=Text_WpArrange}"
                                             FontWeight="Bold"/>
 
-                                        <Grid                                                
-                                            BorderThickness="1" 
-                                            CornerRadius="5">
+                                        <Grid BorderThickness="1" CornerRadius="5">
                                             <ListBox
                                                 Width="auto"
-                                                ItemsSource="{Binding WpArrangements}"
-                                                SelectedIndex="{Binding SelectedWpArrangementsIndex, Mode=TwoWay}">
+                                                ItemsSource="{x:Bind _viewModel.WpArrangements}"
+                                                SelectedIndex="{x:Bind _viewModel.SelectedWpArrangementsIndex, Mode=TwoWay}">
                                                 <ListBox.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Grid ToolTipService.ToolTip="{Binding Tooltip}">
-                                                            <TextBlock Text="{Binding Method}"/>
+                                                    <DataTemplate x:DataType="localViewModel:WpArrangeDataModel">
+                                                        <Grid ToolTipService.ToolTip="{x:Bind Tooltip}">
+                                                            <TextBlock Text="{x:Bind Method}"/>
                                                         </Grid>
                                                     </DataTemplate>
                                                 </ListBox.ItemTemplate>
@@ -167,13 +162,10 @@
                             </Flyout>
                         </Button.Flyout>
                     </Button>
-                </NavigationView.PaneFooter>
+                </StackPanel>
+            </NavigationView.PaneFooter>
 
-                <Frame 
-                    x:Name="ContentFrame" 
-                    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                    IsNavigationStackEnabled="False"/>
-            </NavigationView>
-        </ContentControl>
-    </Grid>
-</Page>
+            <Frame x:Name="ContentFrame" Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"/>
+        </NavigationView>
+    </arc:ArcPageHost>
+</arc:ArcPage>

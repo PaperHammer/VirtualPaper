@@ -1,0 +1,87 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+		<RootNamespace>VirtualPaper.PlayerWeb.Core</RootNamespace>
+		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<UseWinUI>true</UseWinUI>
+		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+	<ItemGroup>
+	  <Compile Remove="Models\**" />
+	  <Content Remove="Models\**" />
+	  <EmbeddedResource Remove="Models\**" />
+	  <None Remove="Models\**" />
+	  <Page Remove="Models\**" />
+	  <PRIResource Remove="Models\**" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Remove="WebView\Components\General\GeneralEffect.xaml" />
+	  <None Remove="WebView\Components\General\GeneralInfo.xaml" />
+	  <None Remove="WebView\Components\General\GeneralInfoEdit.xaml" />
+	  <None Remove="WebView\Windows\OnlyDetails.xaml" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
+	  <ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Update="PLAYER_Web\3d_depth_map.html">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="PLAYER_Web\default.html">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="PLAYER_Web\js\3d_depth\run.js">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="PLAYER_Web\js\3d_depth\three.module.min.js">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="PLAYER_Web\js\base.js">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="PLAYER_Web\js\default\run.js">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<Page Update="WebView\Components\General\GeneralInfoEdit.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="WebView\Pages\PageOnlyDataConfig.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="WebView\Windows\OnlyDetails.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="WebView\Windows\AdjustConfig.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="WebView\Components\Effects\GeneralInfo.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="WebView\Components\Effects\GeneralEffect.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="WebView\Components\DataConfig.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+	<ItemGroup>
+		<Page Update="WebView\Components\SlidingSidePanel.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="WebView\Page\MainPage.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="WebView\Window\PreviewWithWeb.xaml">
+			<SubType>Designer</SubType>
+		</Page>
+	</ItemGroup>
+
+</Project>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Windows.Input;
 using Microsoft.UI;
@@ -27,7 +28,7 @@ namespace VirtualPaper.UIComponent.Input {
                 nameof(ForegroundColor),
                 typeof(Color),
                 typeof(ArcPalette),
-                new PropertyMetadata(Colors.Black, OnOuterColorChanged));
+                new PropertyMetadata(Colors.Transparent, OnOuterColorChanged));
 
         public Color BackgroundColor {
             get => (Color)GetValue(BackgroundColorProperty);
@@ -38,8 +39,11 @@ namespace VirtualPaper.UIComponent.Input {
                 nameof(BackgroundColor),
                 typeof(Color),
                 typeof(ArcPalette),
-                new PropertyMetadata(Colors.White, OnOuterColorChanged));
+                new PropertyMetadata(Colors.Transparent, OnOuterColorChanged));
 
+        /// <summary>
+        /// 主颜色
+        /// </summary>
         internal SolidColorBrush AColor {
             get => (SolidColorBrush)GetValue(AColorProperty);
             private set { if (AColor == value) return; SetValue(AColorProperty, value); }
@@ -49,8 +53,11 @@ namespace VirtualPaper.UIComponent.Input {
                 nameof(AColor),
                 typeof(SolidColorBrush),
                 typeof(ArcPalette),
-                new PropertyMetadata(new SolidColorBrush(Colors.Black), OnInnerColorChanged));
+                new PropertyMetadata(new SolidColorBrush(Colors.Black)));
 
+        /// <summary>
+        /// 副颜色
+        /// </summary>
         internal SolidColorBrush BColor {
             get => (SolidColorBrush)GetValue(BColorProperty);
             private set { if (BColor == value) return; SetValue(BColorProperty, value); }
@@ -60,20 +67,20 @@ namespace VirtualPaper.UIComponent.Input {
                 nameof(BColor),
                 typeof(SolidColorBrush),
                 typeof(ArcPalette),
-                new PropertyMetadata(new SolidColorBrush(Colors.White), OnInnerColorChanged));
+                new PropertyMetadata(new SolidColorBrush(Colors.White)));
 
-        public ObservableList<Color> InitCustomColors {
-            get { return (ObservableList<Color>)GetValue(InitCustomColorsProperty); }
+        public ObservableCollection<Color> InitCustomColors {
+            get { return (ObservableCollection<Color>)GetValue(InitCustomColorsProperty); }
             set { SetValue(InitCustomColorsProperty, value); }
         }
         public static readonly DependencyProperty InitCustomColorsProperty =
             DependencyProperty.Register(
                 nameof(InitCustomColors),
-                typeof(ObservableList<Color>),
+                typeof(ObservableCollection<Color>),
                 typeof(ArcPalette),
                 new PropertyMetadata(null, OnInitCustomColorsInited));
 
-        private ObservableList<SolidColorBrush> CustomBrushes { get; set; } = [];
+        private ObservableCollection<SolidColorBrush> CustomBrushes { get; set; } = [];
 
         private Selection _curSelection = Selection.A;
         private Selection CurrentSelection {
@@ -85,18 +92,12 @@ namespace VirtualPaper.UIComponent.Input {
             this.InitializeComponent();
             AddToCustomCommand = new RelayCommand(OnAddToCustom);
 
-            InitializeArcColorPicker();
             UpdateOuterColors();
-        }
-
-        private void InitializeArcColorPicker() {
-            // 确保控件已经加载到视觉树中, 避免卡顿
-            arcColorPicker.Visibility = Visibility.Collapsed;
         }
 
         private static void OnOuterColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is ArcPalette instance) {
-                instance.UpdateInnerColors();
+                instance.UpdateVisual();
             }
         }
 
@@ -109,7 +110,7 @@ namespace VirtualPaper.UIComponent.Input {
             if (d is ArcPalette instance) {
                 instance.InitCustomColors.CollectionChanged += instance.InitCustomColors_CollectionChanged;
 
-                var colors = e.NewValue as List<Color>;
+                var colors = e.NewValue as IList<Color>;
                 instance.CustomBrushes.Clear();
                 foreach (var color in colors) {
                     instance.CustomBrushes.Add(new SolidColorBrush(color));
@@ -149,17 +150,9 @@ namespace VirtualPaper.UIComponent.Input {
             UpdateOuterColors();
         }
 
-        private static void OnInnerColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            if (d is ArcPalette palette) {
-                palette.CurrentSelection = palette.ForegroundColor == palette.AColor.Color ? Selection.A : Selection.B;
-            }
-        }
-
         private void UpdateOuterColors() {
             ForegroundColor = CurrentSelection == Selection.A ? AColor.Color : BColor.Color;
             BackgroundColor = CurrentSelection == Selection.A ? BColor.Color : AColor.Color;
-
-            UpdateVisual();
         }
 
         internal void UpdateInnerColors() {
@@ -201,7 +194,7 @@ namespace VirtualPaper.UIComponent.Input {
             _arcColorPickerVisible = !_arcColorPickerVisible;
         }
 
-        private bool _arcColorPickerVisible;
+        private bool _arcColorPickerVisible = true;
     }
 
     public class ColorChangeEventArgs : EventArgs {

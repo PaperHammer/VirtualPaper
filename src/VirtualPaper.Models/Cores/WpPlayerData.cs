@@ -7,6 +7,7 @@ namespace VirtualPaper.Models.Cores {
     public class WpPlayerData : IWpPlayerData {
         public string WallpaperUid { get; set; } = string.Empty;
         public RuntimeType RType { get; set; } = RuntimeType.RUnknown;
+        public WallpaperArrangement Arrangement { get; set; }
         public string FilePath { get; set; } = string.Empty;
         public string DepthFilePath { get; set; } = string.Empty;
         public string FolderPath { get; set; } = string.Empty;

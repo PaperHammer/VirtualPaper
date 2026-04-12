@@ -26,12 +26,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="Protos\monitorManager.proto" />
-    <Protobuf Include="Protos\userSettings.proto" />
-    <Protobuf Include="Protos\wallpaperControl.proto" />
-    <Protobuf Include="Protos\update.proto" />
+    <Protobuf Include="Protos\monitor_manager.proto" />
+    <Protobuf Include="Protos\user_settings.proto" />
+    <Protobuf Include="Protos\wallpaper_control.proto" />
+    <Protobuf Include="Protos\app_update.proto" />
     <Protobuf Include="Protos\commands.proto" />
-    <Protobuf Include="Protos\scrCommands.proto" />
-    <Protobuf Include="Protos\models.proto" />
+    <Protobuf Include="Protos\screen_commands.proto" />
+    <Protobuf Include="Protos\common_models.proto" />
   </ItemGroup>
 </Project>

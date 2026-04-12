@@ -1,5 +1,5 @@
-﻿using VirtualPaper.Common;
-using VirtualPaper.Grpc.Service.Models;
+using VirtualPaper.Common;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Models;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;

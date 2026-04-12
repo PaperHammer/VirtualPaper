@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using VirtualPaper.Common.Utils.PInvoke;

@@ -1,12 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using Microsoft.Win32;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Utils.Bridge;
+using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models;
@@ -16,19 +19,6 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class ScreenSaverViewModel : ObservableObject, IDisposable {
-        public string ScreenSaver_Server { get; set; } = string.Empty;
-        public string ScreenSaver_ServerExplain { get; set; } = string.Empty;
-        public string ScreenSaver_RunningLock { get; set; } = string.Empty;
-        public string ScreenSaver_RunningLockExplain { get; set; } = string.Empty;
-        public string ScreenSaver_WaitingTime { get; set; } = string.Empty;
-        public string ScreenSaver_DynamicEffects { get; set; } = string.Empty;
-        public string ScreenSaver_DynamicEffectsExplain { get; set; } = string.Empty;
-        public string ScreenSaver_WhiteListTitle { get; set; } = string.Empty;
-        public string ScreenSaver_WhiteListExplain { get; set; } = string.Empty;
-        public string ScreenSaver_Add { get; set; } = string.Empty;
-        public string ScreenSaver_SeekFromList { get; set; } = string.Empty;
-        public string Text_Delete { get; set; } = string.Empty;
-
         private string _screenSaverState = string.Empty;
         public string ScreenSaverStatu {
             get => _screenSaverState;
@@ -91,6 +81,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         public List<string> Effects { get; set; } = [];
         public ObservableCollection<ProcInfo> ProcsFiltered { get; set; } = [];
+        public ICommand? AddToWhiteListCommand { get; private set; }
 
         public ScreenSaverViewModel(
             IUserSettingsClient userSettingsClient,
@@ -102,23 +93,18 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             InitText();
             InitCollections();
             InitContent();
+            InitCommand();
+        }
+
+        private void InitCommand() {
+            AddToWhiteListCommand = new RelayCommand<ProcInfo>(procInfo => {
+                PreAddToWhiteList();
+            });
         }
 
         private void InitText() {
-            ScreenSaver_Server = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver_Server);
-            ScreenSaver_ServerExplain = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver_ServerExplain);
-            ScreenSaver_RunningLock = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver_RunningLock);
-            ScreenSaver_RunningLockExplain = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver_RunningLockExplain);
-            ScreenSaver_WaitingTime = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver_WaitingTime);
-            ScreenSaver_DynamicEffects = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver_DynamicEffects);
-            ScreenSaver_DynamicEffectsExplain = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver_DynamicEffectsExplain);
             _effectNone = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver__effectNone);
             _effectBubble = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver__effectBubble);
-            ScreenSaver_WhiteListTitle = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver_WhiteListTitle);
-            ScreenSaver_WhiteListExplain = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver_WhiteListExplain);
-            ScreenSaver_Add = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver_Add);
-            ScreenSaver_SeekFromList = LanguageUtil.GetI18n(Constants.I18n.ScreenSaver_SeekFromList);
-            Text_Delete = LanguageUtil.GetI18n(Constants.I18n.Text_Delete);
         }
 
         private void InitContent() {
@@ -135,7 +121,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal async Task ListenForClients() {
-            _wpSettingsPanel.Log(LogType.Info, "[PipeServer] Pipe Server is running...");
+            ArcLog.GetLogger<ScreenSaverViewModel>().Info("[PipeServer] Pipe Server is running...");
 
             try {
                 await Task.Run(async () => {
@@ -143,8 +129,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         using var server = new NamedPipeServerStream("TRAY_CMD", PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.Asynchronous);
                         await server.WaitForConnectionAsync(_ctsListen.Token);
                         using var reader = new StreamReader(server);
-                        string cmd = await reader.ReadLineAsync(_ctsListen.Token);
-                        _wpSettingsPanel.Log(LogType.Info, $"[PipeServer] Received command: {cmd}");
+                        string? cmd = await reader.ReadLineAsync(_ctsListen.Token);
+                        ArcLog.GetLogger<ScreenSaverViewModel>().Info($"[PipeServer] Received command: {cmd}");
 
                         if (cmd == "UPDATE_SCRSETTINGS") {
                             await UpdateScrSettginsAsync();
@@ -153,10 +139,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 });
             }
             catch (OperationCanceledException) when (_ctsListen.IsCancellationRequested) {
-                _wpSettingsPanel.Log(LogType.Warn, "[PipeServer] Listening was canceled.");
+                ArcLog.GetLogger<ScreenSaverViewModel>().Warn("[PipeServer] Listening was canceled.");
             }
             catch (Exception ex) {
-                _wpSettingsPanel.Log(LogType.Error, $"[PipeServer] An Error occurred while waiting for or processing client connections: ${ex.Message}");
+                ArcLog.GetLogger<ScreenSaverViewModel>().Error($"[PipeServer] An Error occurred while waiting for or processing client connections: ${ex.Message}");
             }
         }
 
@@ -184,15 +170,45 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         public async Task UpdateScrSettginsAsync() {
-            await _userSettingsClient.LoadAsync<ISettings>();
-            CrossThreadInvoker.InvokeOnUiThread(() => {
-                IsScreenSaverOn = _userSettingsClient.Settings.IsScreenSaverOn;
-                IsRunningLock = _userSettingsClient.Settings.IsRunningLock;
-                SeletedEffectIndx = (int)_userSettingsClient.Settings.ScreenSaverEffect;
-            });
+            try {
+                _isLoading = true;
+                await _userSettingsClient.LoadAsync<ISettings>();
+                CrossThreadInvoker.InvokeOnUIThread(() => {
+                    IsScreenSaverOn = _userSettingsClient.Settings.IsScreenSaverOn;
+                    IsRunningLock = _userSettingsClient.Settings.IsRunningLock;
+                    SeletedEffectIndx = (int)_userSettingsClient.Settings.ScreenSaverEffect;
+                });
+            }
+            finally {
+                _isLoading = false;
+            }
         }
 
-        internal async void AddToWhiteListScr(ProcInfo procInfo) {
+        private void PreAddToWhiteList() {
+            try {
+                OpenFileDialog openFileDialog = new() {
+                    Filter = "Executable Files (*.exe)|*.exe"
+                };
+                bool? result = openFileDialog.ShowDialog();
+
+                if (result == true) {
+                    string procPath = openFileDialog.FileName;
+                    string procName = Path.GetFileNameWithoutExtension(procPath);
+
+                    using System.Drawing.Image img = Win32Util.GetIconByFileName("FILE", procPath).ToBitmap();
+                    string iconPath = Path.Combine(Constants.CommonPaths.ExeIconDir, procName) + ".png";
+                    img.Save(iconPath);
+
+                    AddToWhiteListScr(new ProcInfo(procName, procPath, iconPath));
+                }
+            }
+            catch (Exception ex) {
+                GlobalMessageUtil.ShowException(ex);
+                ArcLog.GetLogger<ScreenSaverViewModel>().Error(ex);
+            }
+        }
+
+        private async void AddToWhiteListScr(ProcInfo procInfo) {
             ProcsFiltered.Add(procInfo);
 
             await Task.Run(() => {
@@ -238,6 +254,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private string _effectNone = string.Empty;
         private string _effectBubble = string.Empty;
         internal List<ProcInfo> _whiteListScr = [];
-        internal IWpSettingsPanel _wpSettingsPanel;
+        private bool _isLoading = false;
     }
 }

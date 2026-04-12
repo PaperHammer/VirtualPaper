@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VirtualPaper.PlayerWeb.Core.WebView.Components.General.GeneralEffect"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.PlayerWeb.Core.WebView.Components.General"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    mc:Ignorable="d"
+    NavigationCacheMode="Enabled">
+
+    <Grid x:Name="MainGrid"
+        HorizontalAlignment="Stretch"
+        Loaded="MainGrid_Loaded"
+        Padding="3 8 0 8">
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Padding="10 8 16 0">
+            <StackPanel x:Name="skPanel" Orientation="Vertical" />
+        </ScrollViewer>
+
+        <StackPanel 
+            Grid.Row="1" 
+            HorizontalAlignment="Right" 
+            Orientation="Horizontal"
+            Padding="0 0 16 0">
+            <Button x:Name="btnRestore"
+                HorizontalAlignment="Right"
+                Height="33"
+                Margin="10 0 0 0"
+                Click="RestoretBtn_Click"
+                Content="{markup:I18n Key=Text_Restore}"/>
+
+            <Button x:Name="btnSaveAndApply"
+                Height="33"
+                Margin="10 0 0 0"
+                Click="SaveAndApplyBtn_Click"
+                Content="{markup:I18n Key=Text_ApplyAndClose}"/>
+        </StackPanel>
+    </Grid>
+</Page>

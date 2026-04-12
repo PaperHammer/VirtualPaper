@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<arc:ArcUserControl
+    x:Class="Workloads.Creation.StaticImg.Views.Components.InkCanvas"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:staticImg="using:Workloads.Creation.StaticImg"
+    xmlns:local="using:Workloads.Creation.StaticImg.Views.Components"
+    xmlns:staticImgTools="using:Workloads.Creation.StaticImg.Views.Tools"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:win2d="using:Microsoft.Graphics.Canvas.UI.Xaml"
+    mc:Ignorable="d"
+    DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}"
+    Loaded="ArcUserControl_Loaded">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer x:Name="scroll"
+                HorizontalScrollBarVisibility="Auto" 
+                VerticalScrollBarVisibility="Auto"
+                ZoomMode="Enabled"
+                IsZoomInertiaEnabled="True"
+                MinZoomFactor="{x:Bind staticImg:Consts.MinZoomFactor}"
+                MaxZoomFactor="{x:Bind staticImg:Consts.MaxZoomFactor}"
+                Background="{ThemeResource ControlStrokeColorDefaultBrush}"
+                ViewChanging="Scroll_ViewChanging"
+                PointerPressed="Scroll_PointerPressed"
+                PointerMoved="Scroll_PointerMoved"
+                PointerReleased="Scroll_PointerReleased"
+                PointerExited="Scroll_PointerExited">
+                <Grid x:Name="container"
+                    Margin="80"
+                    Background="Transparent"
+                    DataContext="{x:Bind _viewModel.Data, Mode=OneWay}"
+                    Width="{x:Bind _viewModel.Data.CanvasSize.Width, Mode=OneWay}"
+                    Height="{x:Bind _viewModel.Data.CanvasSize.Height, Mode=OneWay}"
+                    PointerEntered="Container_PointerEntered"
+                    PointerPressed="Container_PointerPressed"
+                    PointerMoved="Container_PointerMoved"
+                    PointerReleased="Container_PointerReleased"
+                    PointerExited="Container_PointerExited"
+                    PointerWheelChanged="Container_PointerWheelChanged">
+
+                    <!--背景层 -->
+                    <win2d:CanvasVirtualControl x:Name="backgroundGrid"
+                        RegionsInvalidated="BackgroundGrid_RegionsInvalidated"/>
+
+                    <!--合成层-->
+                    <win2d:CanvasControl x:Name="renderCanvas"
+                        Loaded="RenderCanvas_Loaded"
+                        Draw="RenderCanvas_Draw"/>
+                </Grid>
+            </ScrollViewer>
+
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Horizontal"
+                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+                <ScrollViewer
+                    Width="350"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Hidden"
+                    HorizontalScrollMode="Disabled"
+                    VerticalScrollMode="Auto">
+                    <StackPanel>
+                        <Grid x:Name="DynamicExpander">
+                            <staticImgTools:CanvasSetControl x:Name="CanvasSet"
+                                Payload="{x:Bind Payload}"
+                                Size="{x:Bind _viewModel.Data.CanvasSize, Mode=OneWay}"
+                                Visibility="{x:Bind _viewModel.Data.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=CanvasSet}"
+                                OnValueCommited="CanvasSet_OnValueCommited"
+                                CanvasOperationRequested="CanvasOperationBtn_Click"/>
+                            <staticImgTools:SelectionControl x:Name="Selection"
+                                Visibility="{x:Bind _viewModel.Data.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Selection}"
+                                SelectCancel="Selection_SelectCancel"
+                                SelectCommit="Selection_SelectCommit"/>
+                            <staticImgTools:PaintBrushControl x:Name="PaintBrush"
+                                SelectedBrush="{x:Bind _viewModel.Data.SelectedBrush, Mode=TwoWay}"
+                                BrushThickness="{x:Bind _viewModel.Data.BrushThickness, Mode=TwoWay}"
+                                BrushOpacity="{x:Bind _viewModel.Data.BrushOpacity, Mode=TwoWay}"
+                                Visibility="{x:Bind _viewModel.Data.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=PaintBrush}"/>
+                            <staticImgTools:EraserControl x:Name="Eraser"
+                                EraserSize="{x:Bind _viewModel.Data.EraserSize, Mode=TwoWay}"
+                                EraserOpacity="{x:Bind _viewModel.Data.EraserOpacity, Mode=TwoWay}"
+                                Visibility="{x:Bind _viewModel.Data.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Eraser}"/>
+                            <staticImgTools:CropControl x:Name="Crop"
+                                SeletcedAspect="{x:Bind _viewModel.Data.SeletcedAspectItem, Mode=TwoWay}"
+                                AspectRatios="{x:Bind _viewModel._aspectRatios}"
+                                Visibility="{x:Bind _viewModel.Data.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Crop}"
+                                CropCancelRequest="Crop_CropCancelRequest"
+                                CropCommitRequest="Crop_CropCommitRequest"/>
+                        </Grid>
+
+                        <staticImgTools:ColorPaletteControl x:Name="ColorPalette"
+                            ForegroundColor="{x:Bind _viewModel.Data.ForegroundColor, Mode=TwoWay}"
+                            BackgroundColor="{x:Bind _viewModel.Data.BackgroundColor, Mode=TwoWay}"
+                            CustomColors="{x:Bind _viewModel.Data.CustomColors, Mode=OneWay}"
+                            CustomeColorChanged="ColorPalette_CustomeColorChanged"/>
+                        <staticImgTools:LayerManageControl x:Name="LayerManager"
+                            IsAllwaysSeletedNewItem="True"
+                            SelectedLayer="{x:Bind _viewModel.Data.SelectedLayer, Mode=TwoWay}"
+                            KeyboardAcceleratorPlacementMode="Hidden"
+                            Layers="{x:Bind _viewModel.Data.Layers}"
+                            AddLayerRequest="LayerManage_AddLayerRequest"
+                            CopyLayerRequest="LayerManage_CopyLayerRequest"
+                            RenameLayerRequest="LayerManage_RenameLayerRequest"
+                            DeleteLayerRequest="LayerManage_DeleteLayerRequest"
+                            MoveLayerRequest="LayerManage_MoveLayerRequest"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Line X1="0" Y1="0" X2="0" Y2="1" Stretch="Fill" 
+                    Stroke="{ThemeResource ControlStrokeColorOnAccentDisabledBrush}"/>
+
+                <staticImgTools:ToolListConrtol x:Name="toolItemListView"
+                    SelectedTool="{x:Bind _viewModel.Data.SelectedToolItem, Mode=TwoWay}"
+                    ToolItems="{x:Bind _viewModel._toolItems}"/>
+            </StackPanel>
+        </Grid>
+
+        <staticImgTools:BottomDataBarControl x:Name="bottomDataBarControl"
+            Grid.Row="1"
+            FitViewRequest="BottomDataBarControl_FitViewRequest"
+            ZoomComboBoxSelectionChanged="BottomDataBarControl_ZoomComboBoxSelectionChanged"
+            ZoomComboBoxTextSubmitted="BottomDataBarControl_ZoomComboBoxTextSubmitted"
+            ZoomInRequest="BottomDataBarControl_ZoomInRequest"
+            ZoomOutRequest="BottomDataBarControl_ZoomOutRequest"
+            ZoomSliderValueChanged="BottomDataBarControl_ZoomSliderValueChanged"
+            PointerPosText="{x:Bind _viewModel.Data.PointerPosText, Mode=OneWay}"
+            SelectionSizeText="{x:Bind _viewModel.Data.SelectionSizeText, Mode=OneWay}"
+            CanvasSizeText="{x:Bind _viewModel.Data.CanvasSizeText, Mode=OneWay}"
+            CanvasZoom="{x:Bind _viewModel.Data.CanvasZoom, Mode=OneWay}"/>
+    </Grid>
+</arc:ArcUserControl>

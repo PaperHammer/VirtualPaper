@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Windows;
 using VirtualPaper.Common.Utils.IPC;
 
@@ -7,6 +7,9 @@ namespace VirtualPaper.ScreenSaver {
     /// Interaction logic for App.xaml
     /// </summary>
     public partial class App : Application {
+        public App() {
+        }
+
         private void Application_Startup(object sender, StartupEventArgs e) {
             this.SessionEnding += (s, a) => {
                 if (a.ReasonSessionEnding == ReasonSessionEnding.Shutdown || a.ReasonSessionEnding == ReasonSessionEnding.Logoff) {

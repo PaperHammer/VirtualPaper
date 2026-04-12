@@ -6,30 +6,19 @@
     xmlns:local="using:VirtualPaper.AppSettingsPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
-    <Page.Resources>
-        <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-    </Page.Resources>
-
     <ScrollView>
-        <StackPanel
-            Margin="15 0 15 15"
-            Orientation="Vertical">
-            <StackPanel
-                x:Name="Version"
-                Orientation="Vertical">
-
-                <TextBlock
-                    x:Name="VersionHeader"
+        <StackPanel Margin="15 0 15 15" Orientation="Vertical">
+            <StackPanel x:Name="Version" Orientation="Vertical">
+                <TextBlock x:Name="VersionHeader"
                     Margin="0 10"
-                    Text="{Binding Text_Version}"   
+                    Text="{markup:I18n Key=Settings_General_Text_Version}"
                     FontWeight="Bold"/>
 
-                <Grid
-                    x:Name="VersionContent"
+                <Grid x:Name="VersionContent"
                     Height="90"
                     Margin="0 5"
                     Padding="20 0"
@@ -40,155 +29,104 @@
                         <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <FontIcon
-                        Grid.Column="0" 
-                        Margin="0 0 20 0"
-                        Glyph="&#xE117;"/>
-                    <Grid
-                        Grid.Column="1"
-                        VerticalAlignment="Center">
+                    <FontIcon Margin="0 0 20 0" Glyph="&#xE117;"/>
+                    
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock 
-                            Grid.Row="0" 
-                            Text="{Binding AppVersionText}" 
-                            FontSize="16"/>
+                        <TextBlock Text="{x:Bind _viewModel.AppVersionText}" FontSize="16"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{Binding Version_LastCheckDate}"/>
+                            Text="{x:Bind _viewModel.Version_LastCheckDate, Mode=OneWay}"/>
                         <HyperlinkButton
                             Grid.Row="2"
-                            Content="{Binding Version_Release_Notes}"
+                            Content="{markup:I18n Key=Settings_General_Version_Release_Notes}"
                             Margin="0"
                             Padding="0"
                             NavigateUri="https://github.com/PaperHammer/VirtualPaper/releases"/>
                     </Grid>
 
-                    <Grid
-                        Grid.Column="2"                            
-                        HorizontalAlignment="Stretch">
+                    <Grid Grid.Column="2" HorizontalAlignment="Stretch">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition/>
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
 
-                        <ProgressRing 
-                            x:Name="UpdateProgressRing"
-                            Grid.Column="0"
-                            IsActive="False"
+                        <ProgressRing x:Name="UpdateProgressRing"
+                            IsActive="{x:Bind _viewModel.IsUpdateRingActive, Mode=OneWay}"
                             Margin="40 0"
                             Background="Transparent"/>
-                        <Button 
-                            x:Name="VersionCheckUpdate"
+                        <Button x:Name="VersionCheckUpdate"
                             Grid.Column="1" 
                             Width="200"
                             HorizontalAlignment="Stretch"
-                            Content="{Binding Version_UpdateCheck}"
-                            IsEnabled="{Binding IsStoped}"
-                            Click="CheckUpdateButton_Click"
-                            Visibility="{Binding IsWinStore, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay, ConverterParameter=Reverse}"/>
+                            Content="{markup:I18n Key=Settings_General_Version_UpdateCheck}"
+                            IsEnabled="{x:Bind _viewModel.IsUpdateBtnEnable, Mode=OneWay}"
+                            Command="{x:Bind _viewModel.CheckUpdateCommand}"
+                            Visibility="{x:Bind _viewModel.IsWinStore, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
                     </Grid>
                 </Grid>
 
-                <InfoBar
-                    x:Name="InfoBarFindNew"
+                <InfoBar x:Name="InfoBarFindNew"
                     IsOpen="True"
                     IsClosable="False"
                     Severity="Informational"
-                    Visibility="{Binding InfoBar_Version_FindNew}"
-                    Title="{Binding Version_FindNew}"
-                    Message="{Binding Version}" >
+                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=FindNew}"
+                    Title="{markup:I18n Key=Settings_General_Version_FindNew}"
+                    Message="{x:Bind _viewModel.Version, Mode=OneWay}" >
                     <InfoBar.Content>
-                        <Grid
-                            Padding="10 0"
-                            Margin="0 0 0 10">
+                        <Grid Padding="10 0" Margin="0 0 0 10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition />
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
 
                             <Button
-                                Grid.Column="0"
-                                Content="{Binding Version_DownloadStart}"
-                                IsEnabled="{Binding IsStoped}"
+                                Content="{markup:I18n Key=Settings_General_Version_DownloadStart}"
+                                IsEnabled="{x:Bind _viewModel.IsUpdateBtnEnable, Mode=OneWay}"
                                 Width="100"
-                                Click="StartDownloadButton_Click"/>
+                                Command="{x:Bind _viewModel.StartDownloadComand}"/>
 
                             <HyperlinkButton
                                 Grid.Column="1"
-                                Content="{Binding Version_SeeNews}"
+                                Content="{markup:I18n Key=Settings_General_Version_SeeNews}"
                                 HorizontalAlignment="Right"
                                 NavigateUri="https://github.com/PaperHammer/VirtualPaper/releases"/>
                         </Grid>
                     </InfoBar.Content>
                 </InfoBar>
 
-                <InfoBar
-                    x:Name="InfoBarNetErr"
-                    Visibility="{Binding InfoBar_Version_UpdateErr}"
+                <InfoBar x:Name="InfoBarNetErr"
+                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=UpdateErr}"
                     IsOpen="True"
                     IsClosable="False"
                     Severity="Error"
-                    Title="{Binding Version_UpdateErr}"/>
+                    Title="{markup:I18n Key=Settings_General_Version_UpdateErr}"/>
 
-                <!--<InfoBar
-                    x:Name="InfoBarFinishDownlaod"
-                    Visibility="{Binding InfoBar_Version_NewVersionDownLoaded}"
+                <InfoBar x:Name="InfoBarUptoNewest"
+                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=UptoNewest}"
                     IsOpen="True"
                     IsClosable="False"
                     Severity="Success"
-                    Title="{Binding Version_NewVersionDownLoaded}"
-                    Message="{Binding Version}" >
-                    <InfoBar.Content>
-                        <Grid
-                            Padding="10 0"
-                            Margin="0 0 0 10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition/>
-                                <ColumnDefinition/>
-                            </Grid.ColumnDefinitions>
-
-                            <Button
-                                Grid.Column="0"
-                                Width="100"
-                                Content="{Binding Version_Install}"/>
-                            <HyperlinkButton
-                                Grid.Column="1"
-                                Content="{Binding Version_SeeNews}"
-                                HorizontalAlignment="Right"
-                                NavigateUri="http://www.microsoft.com"/>
-                        </Grid>
-                    </InfoBar.Content>
-                </InfoBar>-->
-
-                <InfoBar
-                    x:Name="InfoBarUptoNewest"
-                    Visibility="{Binding InfoBar_Version_UptoNewest}"
-                    IsOpen="True"
-                    IsClosable="False"
-                    Severity="Success"
-                    Title="{Binding Version_UptoNewest}" >
+                    Title="{markup:I18n Key=Settings_General_Version_UptoNewest}" >
                 </InfoBar>
             </StackPanel>
 
-            <StackPanel
-                x:Name="AppearanceAndAction"
+            <StackPanel x:Name="AppearanceAndAction"
                 Margin="0 20 0 0"
                 Orientation="Vertical">
 
-                <TextBlock
-                    x:Name="AppearanceAndActionHeader"
+                <TextBlock x:Name="AppearanceAndActionHeader"
                     Margin="0 10"
-                    Text="{Binding Text_AppearanceAndAction}"   
+                    Text="{markup:I18n Key=Settings_General_Text_AppearanceAndAction}"
                     FontWeight="Bold"/>
 
-                <Grid
-                    x:Name="AutoStart"
+                <Grid x:Name="AutoStart"
                     Height="90"
                     Margin="0 5"
                     Padding="20 0"
@@ -199,37 +137,29 @@
                         <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <FontIcon
-                        Grid.Column="0" 
-                        Margin="0 0 20 0"
-                        Glyph="&#xE768;"/>
+                    <FontIcon Margin="0 0 20 0" Glyph="&#xE768;"/>
 
-                    <Grid
-                        Grid.Column="1"
-                        VerticalAlignment="Center">
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock 
-                            Grid.Row="0" 
-                            Text="{Binding AppearanceAndAction_AutoStart}"/>
+                        <TextBlock Text="{markup:I18n Key=Settings_General_AppearanceAndAction_AutoStart}"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{Binding AppearanceAndAction_AutoStatExplain}"/>
+                            Text="{markup:I18n Key=Settings_General_AppearanceAndAction_AutoStatExplain}"/>
                     </Grid>
 
                     <ToggleButton
                         Grid.Column="2"
                         Width="200"
-                        Content="{Binding AutoStartStatu}" 
-                        IsChecked="{Binding IsAutoStart, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        Content="{x:Bind _viewModel.AutoStartStatu, Mode=OneWay}" 
+                        IsChecked="{x:Bind _viewModel.IsAutoStart, Mode=TwoWay}"/>
                 </Grid>
 
-                <Grid
-                    x:Name="Themes"
+                <Grid x:Name="SystemBackdrop"
                     Height="90"
                     Margin="0 5"
                     Padding="20 0"
@@ -240,64 +170,9 @@
                         <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <FontIcon
-                        Grid.Column="0" 
-                        Margin="0 0 20 0"
-                        Glyph="&#xE790;"/>
+                    <FontIcon Margin="0 0 20 0" Glyph="&#xE727;"/>
 
-                    <Grid
-                        Grid.Column="1"
-                        VerticalAlignment="Center">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                        </Grid.RowDefinitions>
-
-                        <TextBlock 
-                            Grid.Row="0" 
-                            Text="{Binding AppearanceAndAction_AppTheme}"/>
-                        <TextBlock 
-                            Grid.Row="1" 
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{Binding AppearanceAndAction_AppThemeExplain}"/>
-                        <HyperlinkButton 
-                            Grid.Row="2" 
-                            Margin="0"
-                            Padding="0"
-                            Content="{Binding AppearanceAndAction_AppThemeHyperlink}"
-                            Click="HyperlinkButton_Click"/>
-                    </Grid>
-
-                    <ComboBox 
-                        x:Name="AppThemeCombo"
-                        Grid.Column="2"
-                        VerticalAlignment="Center"
-                        ItemsSource="{Binding Themes}"
-                        SelectedIndex="{Binding SeletedThemeIndx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        Width="200" />
-                </Grid>
-
-                <Grid
-                    x:Name="SystemBackdrop"
-                    Height="90"
-                    Margin="0 5"
-                    Padding="20 0"
-                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <FontIcon
-                        Grid.Column="0" 
-                        Margin="0 0 20 0"
-                        Glyph="&#xE727;"/>
-
-                    <Grid
-                        Grid.Column="1"
-                        VerticalAlignment="Center">
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
@@ -305,13 +180,11 @@
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock 
-                            Grid.Row="0" 
-                            Text="{Binding AppearanceAndAction_AppSystemBackdrop}"/>
+                        <TextBlock Text="{markup:I18n Key=Settings_General_AppearanceAndAction_AppSystemBackdrop}"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{Binding AppearanceAndAction_AppSystemBackdropExplain}"/>
+                            Text="{markup:I18n Key=Settings_General_AppearanceAndAction_AppSystemBackdropExplain}"/>
                         <StackPanel
                             Grid.Row="2"
                             Margin="0"
@@ -320,28 +193,26 @@
                             <HyperlinkButton 
                                 Margin="0"
                                 Padding="0"
-                                Content="{Binding AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink}"
+                                Content="{markup:I18n Key=Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink}"
                                 NavigateUri="https://learn.microsoft.com/en-us/windows/apps/design/style/mica"/>
                             <HyperlinkButton 
                                 Margin="15 0 0 0"
                                 Padding="0"
-                                Content="{Binding AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink}"
+                                Content="{markup:I18n Key=Settings_General_AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink}"
                                 NavigateUri="https://learn.microsoft.com/en-us/windows/apps/design/style/acrylic"/>
                         </StackPanel>
 
                     </Grid>
 
-                    <ComboBox 
-                        x:Name="AppSystemBackdropCombo"
+                    <ComboBox x:Name="AppSystemBackdropCombo"
                         Grid.Column="2"
                         VerticalAlignment="Center"
-                        ItemsSource="{Binding SystemBackdrops}"
-                        SelectedIndex="{Binding SeletedSystemBackdropIndx, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        ItemsSource="{x:Bind _viewModel.SystemBackdrops}"
+                        SelectedIndex="{x:Bind _viewModel.SeletedSystemBackdropIndx, Mode=TwoWay}"
                         Width="200" />
                 </Grid>
 
-                <Grid
-                    x:Name="Language"
+                <Grid x:Name="Language"
                     Height="90"
                     Margin="0 5"
                     Padding="20 0"
@@ -352,41 +223,32 @@
                         <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <FontIcon
-                        Grid.Column="0" 
-                        Margin="0 0 20 0"
-                        Glyph="&#xF2B7;"/>
+                    <FontIcon Margin="0 0 20 0" Glyph="&#xF2B7;"/>
 
-                    <Grid
-                        Grid.Column="1"
-                        VerticalAlignment="Center">
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock 
-                            Grid.Row="0" 
-                            Text="{Binding AppearanceAndAction_AppLanguage}"/>
+                        <TextBlock Text="{markup:I18n Key=Settings_General_AppearanceAndAction_AppLanguage}"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{Binding AppearanceAndAction_AppLanguageExplain}"/>
+                            Text="{markup:I18n Key=Settings_General_AppearanceAndAction_AppLanguageExplain}"/>
                     </Grid>
 
-                    <ComboBox 
-                        x:Name="AppLanguageCombo"
+                    <ComboBox x:Name="AppLanguageCombo"
                         Grid.Column="2"
                         VerticalAlignment="Center"
-                        ItemsSource="{Binding Languages}"
-                        SelectedItem="{Binding SelectedLanguage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        ItemsSource="{x:Bind _viewModel.Languages}"
+                        SelectedItem="{x:Bind _viewModel.SelectedLanguage, Mode=TwoWay}"
                         DisplayMemberPath="Language"
                         SelectedValuePath="Language"
                         Width="200" />
                 </Grid>
 
-                <Expander
-                    x:Name="FileStorage"
+                <Expander x:Name="FileStorage"
                     Margin="0 5"
                     Padding="20 0"
                     HorizontalAlignment="Stretch"
@@ -399,33 +261,24 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <FontIcon
-                                Grid.Column="0" 
-                                Margin="0 0 20 0"
-                                Glyph="&#xE8B7;"/>
+                            <FontIcon Margin="0 0 20 0" Glyph="&#xE8B7;"/>
 
-                            <Grid
-                                Margin="0 23"
-                                Grid.Column="1">
+                            <Grid Margin="0 23" Grid.Column="1">
                                 <Grid.RowDefinitions>
                                     <RowDefinition/>
                                     <RowDefinition/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock
-                                    Grid.Row="0"
-                                    Text="{Binding AppearanceAndAction_AppFileStorage}"/>
+                                <TextBlock Text="{markup:I18n Key=Settings_General_AppearanceAndAction_AppFileStorage}"/>
                                 <TextBlock
                                     Grid.Row="1"                                        
-                                    Text="{Binding AppearanceAndAction_AppFileStorageExplain}"
+                                    Text="{markup:I18n Key=Settings_General_AppearanceAndAction_AppFileStorageExplain}"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                             </Grid>
                         </Grid>
                     </Expander.Header>
                     <Expander.Content>
-                        <StackPanel
-                            Orientation="Vertical"
-                            Margin="35 0">
+                        <StackPanel Orientation="Vertical" Margin="35 0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="auto"/>
@@ -433,22 +286,19 @@
                                     <ColumnDefinition Width="auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <Button
-                                    x:Name="FileStorageButton"
-                                    Grid.Column="0"
-                                    ToolTipService.ToolTip="{Binding AppearanceAndAction_AppFileStorage_ModifyTooltip}"
-                                    Content="{Binding WallpaperDir}"
-                                    IsEnabled="{Binding IsWallpaperDirectoryChangeEnable}"
+                                <Button x:Name="FileStorageButton"
+                                    ToolTipService.ToolTip="{markup:I18n Key=Settings_General_AppearanceAndAction_AppFileStorage_ModifyTooltip}"
+                                    Content="{x:Bind _viewModel.WallpaperDir, Mode=OneWay}"
+                                    IsEnabled="{x:Bind _viewModel.IsWallpaperDirectoryChangeEnable, Mode=OneWay}"
                                     MaxWidth="700"
                                     HorizontalContentAlignment="Left"
-                                    Click="ChangeFileStorageButton_Click"/>
+                                    Command="{x:Bind _viewModel.ChangeFileStorageCommand}"/>
 
-                                <Button
-                                    x:Name="OpenFileStorageButton"
+                                <Button x:Name="OpenFileStorageButton"
                                     Grid.Column="1"
                                     Margin="10 0"
-                                    ToolTipService.ToolTip="{Binding AppearanceAndAction_AppFileStorage_OpenTooltip}"
-                                    Click="OpenFileStorageButton_Click">
+                                    ToolTipService.ToolTip="{markup:I18n Key=Settings_General_AppearanceAndAction_AppFileStorage_OpenTooltip}"
+                                    Command="{x:Bind _viewModel.OpenFileStorageCommand}">
                                     <Button.Content>
                                         <FontIcon Glyph="&#xE838;" />
                                     </Button.Content>
@@ -458,7 +308,7 @@
                                     Width="20"
                                     Height="20"
                                     Grid.Column="2"
-                                    IsActive="{Binding WallpaperDirectoryChangeOngoing}"/>
+                                    IsActive="{x:Bind _viewModel.WallpaperDirectoryChangeOngoing, Mode=OneWay}"/>
                             </Grid>
                         </StackPanel>
                     </Expander.Content>

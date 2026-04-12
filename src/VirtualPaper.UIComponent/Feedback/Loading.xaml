@@ -6,78 +6,65 @@
     xmlns:local="using:VirtualPaper.UIComponent.Feedback"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
-    x:Name="self"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters"   
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    IsHitTestVisible="True"
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <cvs:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <cvs:VisibilityByValueConverter x:Key="VisibilityByValueConverter"/>
     </UserControl.Resources>
 
-    <StackPanel
-        Orientation="Vertical"
-        VerticalAlignment="Center"
-        HorizontalAlignment="Center">
-        <Grid
-            Margin="20"
-            HorizontalAlignment="Center">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-
-            <ProgressRing 
-                x:Name="progressBar"
-                Grid.Column="0"
-                Margin="0 0 20 0"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                IsActive="True"
-                Height="50"
-                Width="50"
-                Background="Transparent"/>
-
-            <TextBlock
-                x:Name="proTbk"
-                Grid.Column="1"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                FontSize="20"
-                FontWeight="Bold"
-                Text="{Binding TextLoading, ElementName=self}"/>
-        </Grid>
-
-        <Grid
-            Margin="20"
-            HorizontalAlignment="Center"            
-            Visibility="{Binding ProgressbarEnable, Converter={StaticResource BooleanToVisibilityConverter}, ElementName=self}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-
-            <ProgressBar 
-                Grid.Column="0"
-                Margin="0 0 20 0"
-                Width="340"
-                Value="{Binding CurValue, ElementName=self}"
-                Maximum="{Binding TotalValue, ElementName=self}"/>
-
-            <TextBlock
-                Grid.Column="1"
-                FontWeight="Bold"
-                Text="{Binding ValueString, ElementName=self}"/>
-        </Grid>
-
-        <Button
-            x:Name="BtnCancel"
-            Margin="20"
+    <Grid>
+        <Rectangle x:Name="OverlayMask"
+            Fill="{ThemeResource SolidBackgroundFillColorBase}"
+            Opacity="0.7"/>
+        
+        <StackPanel
+            Padding="0 0 18 0"
+            Orientation="Vertical"
             VerticalAlignment="Center"
-            HorizontalAlignment="Center"
-            Width="100" 
-            Height="40"
-            Visibility="{Binding CancelEnable, Converter={StaticResource BooleanToVisibilityConverter}, ElementName=self}"
-            Content="{Binding TextCancel, ElementName=self}"
-            Click="BtnCancel_Click"/>
-    </StackPanel>
+            HorizontalAlignment="Center">
+            <Grid Margin="20" HorizontalAlignment="Center">
+                <ProgressRing x:Name="progressRing"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    IsActive="True"
+                    Height="50"
+                    Width="50"
+                    Background="Transparent"/>
+            </Grid>
+
+            <Grid
+                Margin="20"
+                HorizontalAlignment="Center"            
+                Visibility="{x:Bind ProgressbarEnable, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <ProgressBar 
+                    Margin="0 0 20 0"
+                    Width="340"
+                    Value="{x:Bind CurValue, Mode=OneWay}"
+                    Maximum="{x:Bind TotalValue, Mode=OneWay}"/>
+
+                <TextBlock
+                    Grid.Column="1"
+                    FontWeight="Bold"
+                    Text="{x:Bind ValueString, Mode=OneWay}"/>
+            </Grid>
+
+            <Button x:Name="BtnCancel"                   
+                Margin="20"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                Width="100" 
+                Height="40"
+                Visibility="{x:Bind CancelEnable, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
+                Content="{markup:I18n Key=Text_Cancel}"
+                Click="BtnCancel_Click"/>
+        </StackPanel>
+    </Grid>
 </UserControl>

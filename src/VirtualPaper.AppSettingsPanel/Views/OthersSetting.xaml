@@ -6,59 +6,46 @@
     xmlns:local="using:VirtualPaper.AppSettingsPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
     <ScrollView>
-        <StackPanel
-            Margin="15 0 15 15"
-            Orientation="Vertical">
-
-            <StackPanel
-                x:Name="Abount"
-                Orientation="Vertical">
-
-                <TextBlock
-                    x:Name="AbountHeader"
+        <StackPanel Margin="15 0 15 15" Orientation="Vertical">
+            <StackPanel x:Name="Abount" Orientation="Vertical">
+                <TextBlock x:Name="AbountHeader"
                     Margin="0 10"
-                    Text="{Binding Text_About}"   
+                    Text="{markup:I18n Key=Settings_Others_Text_About}"   
                     FontWeight="Bold"/>
 
-                <Grid
-                    x:Name="Basic"
-                    Margin="0 5">
+                <Grid x:Name="Basic" Margin="0 5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border
-                        Grid.Column="0"
-                        Margin="0 0 10 0"
-                        CornerRadius="20">
+                    <Border Margin="0 0 10 0" CornerRadius="20">
                         <Image
                             Width="120"
                             Height="120"
-                            Source="ms-appx:///Assets/splashCol.png"/>
+                            Source="ms-appx:///Assets/splashCol_1400x1400_with_round40.png"/>
                     </Border>
 
                     <TextBlock 
                         Grid.Column="1"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                         TextWrapping="Wrap"
-                        Text="{Binding About_Basic}"/>
+                        Text="{markup:I18n Key=Settings_Others_About_Basic}"/>
                 </Grid>
             </StackPanel>
 
-            <StackPanel
-                x:Name="More"
+            <StackPanel x:Name="More"
                 Margin="0 20 0 0"
                 Orientation="Vertical">
 
-                <TextBlock
-                    x:Name="MoreHeader"
+                <TextBlock x:Name="MoreHeader"
                     Margin="0 10"
-                    Text="{Binding Text_More}"   
+                    Text="{markup:I18n Key=Settings_Others_Text_More}"   
                     FontWeight="Bold"/>
 
                 <HyperlinkButton
@@ -68,8 +55,7 @@
                     HorizontalContentAlignment="Stretch"
                     NavigateUri="https://github.com/PaperHammer/virtualpaper/wiki">
                     <HyperlinkButton.Content>
-                        <Grid
-                            x:Name="Document"
+                        <Grid x:Name="Document"
                             Height="90"
                             Padding="20 0">
                             <Grid.ColumnDefinitions>
@@ -78,9 +64,7 @@
                                 <ColumnDefinition Width="auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <FontIcon
-                                Grid.Column="0"                                
-                                Glyph="&#xE736;"/>
+                            <FontIcon Glyph="&#xE736;"/>
 
                             <Grid
                                 Grid.Column="1"
@@ -91,18 +75,14 @@
                                     <RowDefinition Height="auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock 
-                                    Grid.Row="0" 
-                                    Text="{Binding More_Document}"/>
+                                <TextBlock Text="{markup:I18n Key=Settings_Others_More_Document}"/>
                                 <TextBlock 
                                     Grid.Row="1" 
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="{Binding More_DocumentExplain}"/>
+                                    Text="{markup:I18n Key=Settings_Others_More_DocumentExplain}"/>
                             </Grid>
 
-                            <FontIcon 
-                                Grid.Column="2"                                
-                                Glyph="&#xE8A7;" />
+                            <FontIcon Grid.Column="2" Glyph="&#xE8A7;" />
                         </Grid>
                     </HyperlinkButton.Content>
                 </HyperlinkButton>
@@ -114,8 +94,7 @@
                     HorizontalContentAlignment="Stretch"
                     NavigateUri="https://github.com/PaperHammer/virtualpaper">
                     <HyperlinkButton.Content>
-                        <Grid
-                            x:Name="SourceCode"
+                        <Grid x:Name="SourceCode"
                             Height="90"
                             Padding="20 0">
                             <Grid.ColumnDefinitions>
@@ -124,9 +103,7 @@
                                 <ColumnDefinition Width="auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <FontIcon
-                                Grid.Column="0"
-                                Glyph="&#xE716;"/>
+                            <FontIcon Glyph="&#xE716;"/>
 
                             <Grid
                                 Grid.Column="1"
@@ -137,18 +114,15 @@
                                     <RowDefinition Height="auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock 
-                                    Grid.Row="0" 
-                                    Text="{Binding More_SourceCode}"/>
+                                <TextBlock Text="{markup:I18n Key=Settings_Others_More_SourceCode}"/>
+                                
                                 <TextBlock 
                                     Grid.Row="1" 
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="{Binding More_SourceCodeExplain}"/>
+                                    Text="{markup:I18n Key=Settings_Others_More_SourceCodeExplain}"/>
                             </Grid>
 
-                            <FontIcon 
-                                Grid.Column="2"
-                                Glyph="&#xE8A7;" />
+                            <FontIcon Grid.Column="2" Glyph="&#xE8A7;" />
                         </Grid>
                     </HyperlinkButton.Content>
                 </HyperlinkButton>
@@ -158,10 +132,9 @@
                     Padding="0"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Stretch"
-                    NavigateUri="{Binding More_RequestFunc_Link}">
+                    NavigateUri="{x:Bind _viewModel.More_RequestFunc_Link}">
                     <HyperlinkButton.Content>
-                        <Grid
-                            x:Name="RequestFunc"
+                        <Grid x:Name="RequestFunc"
                             Height="90"
                             Padding="20 0">
                             <Grid.ColumnDefinitions>
@@ -170,9 +143,7 @@
                                 <ColumnDefinition Width="auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <FontIcon
-                                Grid.Column="0"
-                                Glyph="&#xF4a5;"/>
+                            <FontIcon Glyph="&#xF4a5;"/>
 
                             <Grid
                                 Grid.Column="1"
@@ -183,18 +154,15 @@
                                     <RowDefinition Height="auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock 
-                                    Grid.Row="0" 
-                                    Text="{Binding More_RequestFunc}"/>
+                                <TextBlock Text="{markup:I18n Key=Settings_Others_More_RequestFunc}"/>
+                                
                                 <TextBlock 
                                     Grid.Row="1" 
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="{Binding More_RequestFuncExplain}"/>
+                                    Text="{markup:I18n Key=Settings_Others_More_RequestFuncExplain}"/>
                             </Grid>
 
-                            <FontIcon 
-                                Grid.Column="2"
-                                Glyph="&#xE8A7;" />
+                            <FontIcon Grid.Column="2" Glyph="&#xE8A7;" />
                         </Grid>
                     </HyperlinkButton.Content>
                 </HyperlinkButton>
@@ -206,8 +174,7 @@
                     HorizontalContentAlignment="Stretch"
                     NavigateUri="https://github.com/PaperHammer/virtualpaper/issues">
                     <HyperlinkButton.Content>
-                        <Grid
-                            x:Name="ReportBug"
+                        <Grid x:Name="ReportBug"
                             Height="90"
                             Padding="20 0">
                             <Grid.ColumnDefinitions>
@@ -216,9 +183,7 @@
                                 <ColumnDefinition Width="auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <FontIcon
-                                Grid.Column="0"
-                                Glyph="&#xEBE8;"/>
+                            <FontIcon Glyph="&#xEBE8;"/>
 
                             <Grid
                                 Grid.Column="1"
@@ -229,18 +194,15 @@
                                     <RowDefinition Height="auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock 
-                                    Grid.Row="0" 
-                                    Text="{Binding More_ReportBug}"/>
+                                <TextBlock Text="{markup:I18n Key=Settings_Others_More_ReportBug}"/>
+                                
                                 <TextBlock 
                                     Grid.Row="1" 
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="{Binding More_ReportBugExplain}"/>
+                                    Text="{markup:I18n Key=Settings_Others_More_ReportBugExplain}"/>
                             </Grid>
 
-                            <FontIcon 
-                                Grid.Column="2"
-                                Glyph="&#xE8A7;" />
+                            <FontIcon Grid.Column="2" Glyph="&#xE8A7;" />
                         </Grid>
                     </HyperlinkButton.Content>
                 </HyperlinkButton>

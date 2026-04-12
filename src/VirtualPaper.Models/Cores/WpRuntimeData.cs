@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Text.Json.Serialization;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
@@ -60,7 +60,7 @@ namespace VirtualPaper.Models.Cores {
             if (MonitorContent == string.Empty) {
                 throw new Exception("Save failed");
             }
-            JsonSaver.Store<IWpRuntimeData>(
+            JsonSaver.Save<IWpRuntimeData>(
                 Path.Combine(this.FolderPath, MonitorContent, RType.ToString(), Constants.Field.WpRuntimeDataFileName), 
                 this,
                 WpRuntimeDataContext.Default);

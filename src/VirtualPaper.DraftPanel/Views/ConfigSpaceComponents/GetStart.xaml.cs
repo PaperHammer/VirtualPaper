@@ -1,19 +1,24 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
-using VirtualPaper.DraftPanel.Model.Interfaces;
-using VirtualPaper.DraftPanel.Model.NavParam;
-using VirtualPaper.DraftPanel.Model.StrategyGroup.StartupSTG;
+using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.ViewModels;
-using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.DraftPanel;
+using VirtualPaper.UIComponent;
+using VirtualPaper.UIComponent.Data;
+using VirtualPaper.UIComponent.Utils;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
+using Workloads.Utils.DraftUtils.Interfaces;
 
 // To learn more about WinUI, the WinUI draft structure,
 // and more about our draft templates, see: http://aka.ms/winui-draft-info.
@@ -22,98 +27,99 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class GetStart : Page {
+    public sealed partial class GetStart : Page, ICardComponent {
+        public Action? CardUIStateChanged { get; set; }
+
         public GetStart() {
             this.InitializeComponent();
+            _viewModel = AppServiceLocator.Services.GetRequiredService<GetStartViewModel>();
+            this.DataContext = _viewModel;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
-            this._configSpace ??= e.Parameter as ConfigSpace;
-            _viewModel = ObjectProvider.GetRequiredService<GetStartViewModel>(ObjectLifetime.Singleton, ObjectLifetime.Singleton);
-            this.DataContext = _viewModel;
-
-            this._configSpace.SetBtnVisible(false);
+            if (e.Parameter is FrameworkPayload payload) {
+                payload.TryGet(NaviPayloadKey.INavigateComponent, out _navigateComponent);
+            }
         }
 
         private void OnFilterChanged(object sender, TextChangedEventArgs e) {
-            var filtered = _viewModel._recentUsed.Where(Filter);
-            Remove_NonMatching(filtered);
-            AddBack_Procs(filtered);
+            _viewModel.ApplyFilter(tbSearchName.Text);
         }
 
-        private bool Filter(IRecentUsed recentUsed) {
-            return recentUsed.FileName.Contains(tbSearchName.Text, StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        private void Remove_NonMatching(IEnumerable<IRecentUsed> recentuseds) {
-            for (int i = _viewModel.RecentUseds.Count - 1; i >= 0; i--) {
-                var item = _viewModel.RecentUseds[i];
-                if (!recentuseds.Contains(item)) {
-                    _viewModel.RecentUseds.Remove(item);
-                }
-            }
-        }
-
-        private void AddBack_Procs(IEnumerable<IRecentUsed> recentuseds) {
-            foreach (var item in recentuseds) {
-                if (!_viewModel.RecentUseds.Contains(item)) {
-                    _viewModel.RecentUseds.Add(item);
-                }
-            }
-        }
-
-        private void RecentUsedsListView_ItemClick(object sender, ItemClickEventArgs e) {
+        private async void RecentUsedsListView_ItemClick(object sender, ItemClickEventArgs e) {
             if (e.ClickedItem is RecentUsed ru) {
-                _configSpace.ChangePanelState(DraftPanelState.WorkSpace, new ToWorkSpace([ru.FilePath]));
+                if (!Path.Exists(ru.FilePath)) {
+                    var diaRes = await GlobalDialogUtils.ShowDialogWithoutTitleAsync(
+                        LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_FileNotFound)),
+                        LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm)),
+                        LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel))
+                    );
+                    if (diaRes == DialogResult.Primary) {
+                        _viewModel.RemoveFromListCommand?.Execute(e.ClickedItem);
+                    }
+                    return;
+                }
+
+                _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, new PreProjectData[] { new(ru.FilePath, ProjectType.P_StaticImage) });
+                _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
             }
         }
 
-        private async void StartupItemsView_ItemInvoked(ItemsView sender, ItemsViewItemInvokedEventArgs args) {
-            await HandleStartupAsync(args.InvokedItem as Startup);
+        private void BtnStartupNew_Click(object sender, RoutedEventArgs e) {
+            _navigateComponent?.NavigateByState(DraftPanelState.DraftConfig);
         }
 
-        private async Task HandleStartupAsync(Startup startUp) {
-            foreach (var stg in _strategies) {
-                if (stg.CanHandle(startUp.Type)) {
-                    await stg.HandleAsync(_configSpace);
-                    break;
+        private async void BtnStartupOpen_Click(object sender, RoutedEventArgs e) {
+            var storage = await WindowsStoragePickers.PickFilesAsync(
+                WindowConsts.WindowHandle,
+                [.. FileFilter.FileTypeToExtension[FileType.FImage], .. FileFilter.FileTypeToExtension[FileType.FDesign]],
+                true);
+            OpenLocalFiles(storage);
+        }
+
+        private void OpenLocalFiles(IReadOnlyList<IStorageItem> items) {
+            if (items == null || items.Count < 1) return;
+
+            int n = items.Count;
+            PreProjectData[] datas = new PreProjectData[n];
+            for (int i = 0; i < items.Count; i++) {
+                datas[i] = new PreProjectData(items[i].Path, ProjectType.P_StaticImage);
+            }
+
+            _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, datas);
+            _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
+        }
+
+        private async void GridDrop_Drop(object sender, DragEventArgs e) {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems)) {
+                var items = await e.DataView.GetStorageItemsAsync();
+                var allowedExtensions = FileFilter.FileTypeToExtension[FileType.FImage]
+                    .Concat(FileFilter.FileTypeToExtension[FileType.FDesign]);
+
+                var filteredItems = items
+                    .OfType<IStorageFile>()
+                    .Where(file => allowedExtensions.Contains(file.FileType.ToLower()))
+                    .Cast<IStorageItem>()
+                    .ToList();
+
+                if (filteredItems.Count != 0) {
+                    OpenLocalFiles(filteredItems);
+                }
+                else {
+                    GlobalMessageUtil.ShowWarning(
+                        message: nameof(Constants.I18n.Project_Drops_Contains_Invalid_FIles),
+                        isNeedLocalizer: true);
                 }
             }
         }
 
-        private void KeyboardAccelerator_Invoked_RecentUseds(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
-            FocusOnFirstItem();
-            args.Handled = true;
+        private void GridDrop_DragOver(object sender, DragEventArgs e) {
+            e.AcceptedOperation = DataPackageOperation.Copy;
         }
 
-        private void FocusOnFirstItem() {
-            if (lvRecentUsed.Items.Count > 0) {
-                var firstItemContainer = lvRecentUsed.ContainerFromIndex(0) as ListViewItem;
-                firstItemContainer?.Focus(FocusState.Programmatic);
-            }
-        }
-
-        private void KeyboardAccelerator_Invoked_SearchRecentUsed(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
-            tbSearchName.Focus(FocusState.Programmatic);
-            args.Handled = true;
-        }
-
-        private async void KeyboardAccelerator_Invoked_Startups(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
-            var startup = (ivStartups.ItemsSource as List<Startup>).Find(x => x.ShortCut == args.KeyboardAccelerator.Key);
-            if (startup != null) {
-                await HandleStartupAsync(startup);
-            }
-            args.Handled = true;
-        }
-
-        private GetStartViewModel _viewModel;
-        private ConfigSpace _configSpace;
-        private readonly IStrategy[] _strategies = [
-            new OpenVpd(),
-            new OpenFile(),
-            new NewVpd(),
-        ];
+        private readonly GetStartViewModel _viewModel;
+        private INavigateComponent _navigateComponent = null!;
     }
 }

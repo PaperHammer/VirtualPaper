@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlayerWebDefault</title>
+    <script src="js/base.js"></script>
+    <script src="js/default/run.js"></script>
+</head>
+
+<body>
+    <div class="root" draggable="false"></div>        
+</body>
+
+</html>
+
+<style>
+    body,
+    html {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        perspective: 1000px;
+    }
+
+    .root {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        perspective: 1000px;
+    }
+
+    #content {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        transform-origin: center;
+        transition: transform 0.1s ease-out;
+    }
+
+    .source {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        object-fit: fill;
+    }
+
+    /* 淡入效果 */
+    .fade-in {
+        opacity: 0;
+        animation: fadeIn 0.5s ease-in forwards;
+    }
+
+    @keyframes fadeIn {
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* 淡出效果 */
+    .fade-out {
+        opacity: 1;
+        animation: fadeOut 0.5s ease-out forwards;
+    }
+
+    @keyframes fadeOut {
+        to {
+            opacity: 0;
+        }
+    }
+</style>

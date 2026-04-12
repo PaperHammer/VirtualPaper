@@ -6,11 +6,12 @@
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
 
     <Expander Style="{StaticResource RightExpanderStyle}">
         <Expander.Header>
-            <TextBlock Text="橡皮擦"/>
+            <TextBlock Text="{markup:I18n Key=Project_StaticImg_Text_Eraser}"/>
         </Expander.Header>
         <Expander.Content>
             <StackPanel
@@ -31,7 +32,7 @@
                             <TextBlock 
                                 VerticalAlignment="Center"
                                 FontSize="12"
-                                Text="宽度(像素)"/>
+                                Text="{markup:I18n Key=Project_StaticImg_Text_WidthPixel}"/>
 
                             <TextBox
                                 x:Name="eraserSizeTextBox"
@@ -63,7 +64,7 @@
                         <TextBlock 
                             VerticalAlignment="Center"
                             FontSize="12"
-                            Text="不透明度(百分比)"/>
+                            Text="{markup:I18n Key=Project_StaticImg_Text_OpacityPercent}"/>
 
                         <TextBox
                             x:Name="eraserOpacityTextBox"

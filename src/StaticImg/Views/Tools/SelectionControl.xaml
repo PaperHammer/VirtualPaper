@@ -6,11 +6,12 @@
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
 
     <Expander Style="{StaticResource RightExpanderStyle}">
         <Expander.Header>
-            <TextBlock Text="选择"/>
+            <TextBlock Text="{markup:I18n Key=Project_StaticImg_ToolName_Selection}"/>
         </Expander.Header>
         <Expander.Content>
             <Grid>
@@ -21,14 +22,14 @@
                 </Grid.ColumnDefinitions>
 
                 <Button
-                    Content="取消"
+                    Content="{markup:I18n Key=Text_Cancel}"
                     Height="40"
                     HorizontalAlignment="Stretch"
                     Click="SelectCancelBtn_Click"/>
 
                 <Button 
                     Grid.Column="2"
-                    Content="完成"
+                    Content="{markup:I18n Key=Text_Complete}"
                     Height="40"
                     HorizontalAlignment="Stretch"
                     Click="SelectCommitBtn_Click"/>

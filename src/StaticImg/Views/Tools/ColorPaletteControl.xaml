@@ -7,11 +7,12 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
 
     <Expander Style="{StaticResource RightExpanderStyle}">
         <Expander.Header>
-            <TextBlock Text="调色板"/>
+            <TextBlock Text="{markup:I18n Key=Project_StaticImg_Text_Palette}"/>
         </Expander.Header>
         <Expander.Content>
             <input:ArcPalette                                        

@@ -1160,4 +1160,31 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_Export_InternalError" xml:space="preserve">
     <value>内部异常，尝试重启应用以解决</value>
   </data>
+  <data name="Project_StaticImg_Text_Palette" xml:space="preserve">
+    <value>调色板</value>
+  </data>
+  <data name="Text_Complete" xml:space="preserve">
+    <value>完成</value>
+  </data>
+  <data name="Project_StaticImg_Text_Eraser" xml:space="preserve">
+    <value>橡皮擦</value>
+  </data>
+  <data name="Project_StaticImg_Text_WidthPixel" xml:space="preserve">
+    <value>宽度(像素)</value>
+  </data>
+  <data name="Project_StaticImg_Text_OpacityPercent" xml:space="preserve">
+    <value>不透明度(百分比)</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerSet" xml:space="preserve">
+    <value>图层集</value>
+  </data>
+  <data name="Project_StaticImg_Text_Paintbrush" xml:space="preserve">
+    <value>画笔</value>
+  </data>
+  <data name="Project_StaticImg_Text_PaintbrushBox" xml:space="preserve">
+    <value>画笔箱</value>
+  </data>
+  <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
+    <value>粗细(像素)</value>
+  </data>
 </root>

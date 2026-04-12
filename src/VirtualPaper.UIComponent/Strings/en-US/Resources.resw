@@ -1160,4 +1160,31 @@ The following words cannot be used as usernames:
   <data name="Project_Export_InternalError" xml:space="preserve">
     <value>Internal error, try restarting the application to resolve it</value>
   </data>
+  <data name="Project_StaticImg_Text_Palette" xml:space="preserve">
+    <value>Palette</value>
+  </data>
+  <data name="Text_Complete" xml:space="preserve">
+    <value>Complete</value>
+  </data>
+  <data name="Project_StaticImg_Text_Eraser" xml:space="preserve">
+    <value>Eraser</value>
+  </data>
+  <data name="Project_StaticImg_Text_WidthPixel" xml:space="preserve">
+    <value>Width (pixels)</value>
+  </data>
+  <data name="Project_StaticImg_Text_OpacityPercent" xml:space="preserve">
+    <value>Opacity (percentage)</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerSet" xml:space="preserve">
+    <value>Layer Set</value>
+  </data>
+  <data name="Project_StaticImg_Text_Paintbrush" xml:space="preserve">
+    <value>Paintbrush</value>
+  </data>
+  <data name="Project_StaticImg_Text_PaintbrushBox" xml:space="preserve">
+    <value>Paintbrush Box</value>
+  </data>
+  <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
+    <value>Thickness (pixels)</value>
+  </data>
 </root>

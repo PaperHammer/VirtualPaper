@@ -8,6 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:extension="using:VirtualPaper.UIComponent.Extensions"
     xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -31,7 +32,7 @@
         </DataTemplate>
 
         <extension:XList x:Key="PaintBrushItems">
-            <lcl_models:PaintBrushItem Name="画笔" Type="General" ConfigKey="common_brush_config">
+            <lcl_models:PaintBrushItem Name="{markup:I18n Key=Project_StaticImg_Text_Paintbrush}" Type="General" ConfigKey="common_brush_config">
                 <lcl_models:PaintBrushItem.Example>
                     <Path 
                         x:Name="CommonBrushPath"
@@ -55,7 +56,7 @@
         Loaded="PaintBrushExpander_Loaded"
         Style="{StaticResource RightExpanderStyle}">
         <Expander.Header>
-            <TextBlock Text="画笔箱"/>
+            <TextBlock Text="{markup:I18n Key=Project_StaticImg_Text_PaintbrushBox}"/>
         </Expander.Header>
         <Expander.Content>
             <StackPanel
@@ -93,7 +94,7 @@
                         <TextBlock 
                             VerticalAlignment="Center"
                             FontSize="12"
-                            Text="粗细(像素)"/>
+                            Text="{markup:I18n Key=Project_StaticImg_Text_ThicknessPixel}"/>
 
                         <TextBox
                             x:Name="paintBrushThicknessTextBox"
@@ -121,11 +122,10 @@
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
 
-                        <!--TODO-->
                         <TextBlock 
                             VerticalAlignment="Center"
                             FontSize="12"
-                            Text="不透明度(百分比)"/>
+                            Text="{markup:I18n Key=Project_StaticImg_Text_OpacityPercent}"/>
 
                         <TextBox
                             x:Name="paintBrushOpacityTextBox"

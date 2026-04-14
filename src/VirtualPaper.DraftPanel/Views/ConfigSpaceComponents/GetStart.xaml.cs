@@ -44,6 +44,10 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             }
         }
 
+        private void Page_Loaded(object sender, RoutedEventArgs e) {
+            _viewModel.InitCollection();
+        }
+
         private void OnFilterChanged(object sender, TextChangedEventArgs e) {
             _viewModel.ApplyFilter(tbSearchName.Text);
         }
@@ -74,7 +78,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         private async void BtnStartupOpen_Click(object sender, RoutedEventArgs e) {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[FileType.FImage], .. FileFilter.FileTypeToExtension[FileType.FDesign]],
+                [.. FileFilter.FileTypeToExtension[FileType.FDesign]],
                 true);
             OpenLocalFiles(storage);
         }

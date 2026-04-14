@@ -54,7 +54,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         public string PreviousStepBtnText { get; private set; } = string.Empty;
         public string NextStepBtnText { get; private set; } = string.Empty;
         public bool BtnVisible { get; private set; } = false;
-        public bool IsFromWorkSpace { get; set; }
+        public bool IsFromWorkSpace_AddProj { get; set; }
         public TaskCompletionSource<PreProjectData[]?>? DraftConfigTCS { get; set; }
 
         internal async Task InitContentAsync() {
@@ -86,7 +86,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         public void UpdateCardComponentUI() {
-            if (IsFromWorkSpace) {
+            if (IsFromWorkSpace_AddProj) {
                 PreviousStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel));
                 NextStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm));
             }
@@ -102,7 +102,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             var preData = new PreProjectData[] { new(ProjectName!, ProjectType.P_StaticImage) };
             _navigateComponent?.GetPaylaod()?.Set(NaviPayloadKey.Project, preData);
 
-            if (IsFromWorkSpace) {
+            if (IsFromWorkSpace_AddProj) {
                 DraftConfigTCS?.TrySetResult(preData);
             }
             else {
@@ -111,7 +111,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         public async Task OnPreviousStepClickedAsync() {
-            if (IsFromWorkSpace) {
+            if (IsFromWorkSpace_AddProj) {
                 DraftConfigTCS?.TrySetResult(null);
             }
             else {

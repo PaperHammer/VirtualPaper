@@ -10,6 +10,7 @@
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:draft="using:VirtualPaper.Models.DraftPanel"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
+    Loaded="Page_Loaded"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 

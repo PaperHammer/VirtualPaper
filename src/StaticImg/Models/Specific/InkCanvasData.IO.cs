@@ -79,16 +79,17 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         public async Task<(bool Success, string? FinalPath)> SaveAsync(InkProjectSession session) {
             try {
                 if (!session.DesignFileUtil.IsValidFile) {
+                    var suggestedName = Path.GetFileNameWithoutExtension(session.DesignFileUtil.FilePath);
                     var saveFile = await WindowsStoragePickers.PickSaveFileAsync(
                         WindowConsts.WindowHandle,
-                        Path.GetFileName(session.DesignFileUtil.FilePath),
+                        suggestedName,
                         new Dictionary<string, string[]>() {
                             ["Virtual Paper Design"] = [FileExtension.FE_Design]
                         }
                     );
                     if (saveFile == null || string.IsNullOrEmpty(saveFile.Path))
                         return (false, null);
-
+                    
                     session.DesignFileUtil.SetFilePath(saveFile.Path);
                 }
 
@@ -111,6 +112,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
                 // Save through project utility
                 (var flag, var filePath) = await session.DesignFileUtil.SaveAsync(CanvasSize, businessData, layers);
+                session.UnReUtil.MarkAsSaved();
 
                 return (flag, filePath);
             }

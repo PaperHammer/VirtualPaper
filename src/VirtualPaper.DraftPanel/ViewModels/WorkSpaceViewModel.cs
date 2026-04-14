@@ -24,6 +24,7 @@ using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
+using static VirtualPaper.Common.Constants;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject, IDisposable {
@@ -112,10 +113,19 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         #region ui events
         internal async Task ExportAsync(ExportImageFormat format) => await ExecuteRuntimeCommandAsync(x => x.ExportAsync(format));
-        
-        private async Task SaveAsync() => await ExecuteRuntimeCommandAsync(x => x.SaveAsync());
 
-        private async Task SaveAllAsync() => await Task.WhenAll(TabViewItems.Select(item => ExecuteRuntimeCommandAsync(x => x.SaveAsync(), item)));
+        private async Task SaveAsync() => await ExecuteRuntimeCommandAsync(InternalSaveAsync);
+
+        private void RefreshHeaderAsync(IRuntime runtime) {
+            var header = _runtimeToArcTab[runtime].Header;
+            CrossThreadInvoker.InvokeOnUIThread(async () => {
+                if (header.MainContent is TextBlock tb) {
+                    tb.Text = Path.GetFileName(runtime.FileName);
+                }
+            });
+        }
+
+        private async Task SaveAllAsync() => await Task.WhenAll(TabViewItems.Select(item => ExecuteRuntimeCommandAsync(InternalSaveAsync, item)));
 
         private async Task UndoAsync() => await ExecuteRuntimeCommandAsync(x => x.UndoAsync());
 
@@ -149,6 +159,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         #endregion
 
         #region project
+        private async Task InternalSaveAsync(IRuntime runtime) {
+            await runtime.SaveAsync();
+            RefreshHeaderAsync(runtime);
+        }
+
         internal async Task AddNewItemsAsync(PreProjectData[]? predatas) {
             if (predatas == null || predatas.Length == 0) return;
 
@@ -337,10 +352,13 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         internal async Task<bool> CheckSaveStatusAsync(IRuntime runtime) {
-            bool flag = false;
+            bool flag;
             var header = _runtimeToArcTab[runtime].Header;
 
-            if (!header.IsSaved) {
+            if (header.IsSaved) {
+                flag = true;
+            }
+            else {
                 var res = await GlobalDialogUtils.ShowDialogAsync(
                     content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
                     title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
@@ -353,6 +371,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 }
                 else if (res == DialogResult.Secondary) {
                     flag = true;
+                }
+                else {
+                    flag = false;
                 }
             }
 

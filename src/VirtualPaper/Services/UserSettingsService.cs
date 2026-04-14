@@ -106,7 +106,6 @@ namespace VirtualPaper.Services {
                 JsonSaver.Save(_wallpaperLayoutPath, WallpaperLayouts, WallpaperLayoutContext.Default);
             }
             else if (typeof(T) == typeof(List<IRecentUsed>)) {
-                RecentUseds.Sort((x, y) => y.DateTime.CompareTo(x.DateTime));
                 JsonSaver.Save(_recentUsedPath, RecentUseds, RecentUsedContext.Default);
             }
             else {

@@ -124,7 +124,6 @@ namespace Workloads.Creation.StaticImg {
         public async Task<bool> SaveAsync() {
             try {
                 var res = await inkCanvas.SaveAsync();
-                Session.UnReUtil.MarkAsSaved();
                 return res;
             }
             catch (Exception ex) {

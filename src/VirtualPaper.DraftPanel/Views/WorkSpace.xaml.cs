@@ -137,7 +137,7 @@ namespace VirtualPaper.DraftPanel.Views {
 
         private async Task GoToCreateNewAsync() {
             Payload?.Set(NaviPayloadKey.TargetDraftPanelState, DraftPanelState.DraftConfig);
-            Payload?.Set(NaviPayloadKey.IsFromWorkSpace, true);
+            Payload?.Set(NaviPayloadKey.IsFromWorkSpace_AddProj, true);
 
             var tcs = new TaskCompletionSource<PreProjectData[]?>();
             Payload?.Set(NaviPayloadKey.DraftConfigTCS, tcs);
@@ -151,6 +151,11 @@ namespace VirtualPaper.DraftPanel.Views {
             catch (Exception ex) {
                 HideOverlayPage();
                 ArcLog.GetLogger<WorkSpace>().Error(ex);
+            } finally {
+                // 避免干扰
+                Payload?.Remove(NaviPayloadKey.DraftConfigTCS);
+                Payload?.Remove(NaviPayloadKey.IsFromWorkSpace_AddProj);
+                Payload?.Remove(NaviPayloadKey.DraftConfigTCS);
             }
         }
 

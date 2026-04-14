@@ -59,6 +59,12 @@ namespace VirtualPaper.UIComponent.Utils {
             return _data;
         }
 
+        public void Remove(NaviPayloadKey draftConfigTCS) {
+            if (ContainsKey(draftConfigTCS)) {
+                _data.Remove(draftConfigTCS.ToString());
+            }
+        }
+
         private readonly Dictionary<string, object?> _data = [];
     }
 
@@ -134,7 +140,7 @@ namespace VirtualPaper.UIComponent.Utils {
         InkProjectSession,
         ArcPageContext,
         TargetDraftPanelState,
-        IsFromWorkSpace,
+        IsFromWorkSpace_AddProj,
         DraftConfigPreBtnAction,
         DraftConfigNxtBtnAction,
         DraftConfigTCS,

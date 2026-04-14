@@ -42,7 +42,7 @@ WizardImageFile=Themes\wizard_large.bmp
 LicenseFile=License\LICENSE.txt
 Uninstallable=true
 UninstallDisplayIcon={app}\{#MyAppExeName}
-ArchitecturesInstallIn64BitMode=x64 ia64
+ArchitecturesInstallIn64BitMode=x64compatible
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"; LicenseFile: "License\License.txt";
@@ -53,8 +53,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; Name: "windowsstartup";Description: "{cm:AutoStartProgram,{#MyAppName}}"
 
 [Files]
-Source: "D:\Virtuals\VirtualPaper\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Virtuals\VirtualPaper\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml,*.vshost.*,*.config"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
@@ -71,132 +71,203 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 [Code]
 var
   isAlreadyInstalled: Boolean;
+  UninstallProgressPage: TOutputProgressWizardPage;
 
-// event fired when the uninstall step is changed: https://stackoverflow.com/revisions/12645836/1
-procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
-begin
-  // if we reached the post uninstall step (uninstall succeeded), then...
-  if CurUninstallStep = usPostUninstall then
-  begin
-    // query user to confirm deletion; if user chose "Yes", then...
-    if SuppressibleMsgBox(ExpandConstant('{cm:DeleteEverythigMsgBox}')+ ' ' + ExpandConstant('{localappdata}\{#MyAppName}') + ' ?',
-      mbConfirmation, MB_YESNO, IDNO) = IDYES
-    then
-      // deletion confirmed by user.
-      begin
-        // Delete the directory "C:\Users\<UserName>\AppData\Local\Virtual_Paper" and everything inside it
-        DelTree(ExpandConstant('{localappdata}\{#MyAppName}'), True, True, True);
-      end;
-  end;
-end;
-
-
-//Uninstall previous install: https://stackoverflow.com/questions/2000296/inno-setup-how-to-automatically-uninstall-previous-installed-version
-//note: Inno does not delete files, it just overwrites & keeps the old ones if they have different name..it can get accumulated when program structure change!
+// Read the uninstall string of the previously installed version from the registry.
 function GetUninstallString(): String;
 var
   sUnInstPath: String;
   sUnInstallString: String;
 begin
-  sUnInstPath := ExpandConstant('Software\Microsoft\Windows\CurrentVersion\Uninstall\{#emit SetupSetting("AppId")}_is1');
+  sUnInstPath := ExpandConstant(
+    'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#emit SetupSetting("AppId")}_is1');
   sUnInstallString := '';
   if not RegQueryStringValue(HKLM, sUnInstPath, 'UninstallString', sUnInstallString) then
     RegQueryStringValue(HKCU, sUnInstPath, 'UninstallString', sUnInstallString);
   Result := sUnInstallString;
 end;
 
-
-/////////////////////////////////////////////////////////////////////
+// Returns True if a previous version is already installed.
 function IsUpgrade(): Boolean;
 begin
   Result := (GetUninstallString() <> '');
 end;
 
+// Read the installation directory of the previously installed version from the registry.
+function GetInstallDir(): String;
+var
+  sUnInstPath: String;
+  sInstallLocation: String;
+begin
+  sUnInstPath := ExpandConstant(
+    'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#emit SetupSetting("AppId")}_is1');
+  sInstallLocation := '';
+  if not RegQueryStringValue(HKLM, sUnInstPath, 'InstallLocation', sInstallLocation) then
+    RegQueryStringValue(HKCU, sUnInstPath, 'InstallLocation', sInstallLocation);
+  Result := sInstallLocation;
+end;
 
-/////////////////////////////////////////////////////////////////////
+procedure InitializeWizard();
+var
+  sOldDir: String;
+  sNewDir: String;
+begin
+  if IsUpgrade() then
+  begin
+    sOldDir := GetInstallDir();
+    sNewDir := sOldDir;
+    StringChange(sNewDir, 'Virtual_Paper', 'Virtual Paper');
+    if sNewDir <> sOldDir then
+      WizardForm.DirEdit.Text := sNewDir;
+  end;
+end;
+
+// Silently uninstall the previous version, show a progress page, and
+// remove any leftover files in the old install directory.
+// Return values:
+//   1 - no previous version found (uninstall string is empty)
+//   2 - failed to execute the uninstaller
+//   3 - uninstalled successfully
 function UnInstallOldVersion(): Integer;
 var
   sUnInstallString: String;
+  sInstallDir: String;
   iResultCode: Integer;
 begin
-// Return Values:
-// 1 - uninstall string is empty
-// 2 - error executing the UnInstallString
-// 3 - successfully executed the UnInstallString
-
-  // default return value
   Result := 0;
-  // get the uninstall string of the old app
   sUnInstallString := GetUninstallString();
-  if sUnInstallString <> '' then begin
-    sUnInstallString := RemoveQuotes(sUnInstallString);
-    if Exec(sUnInstallString, '/VERYSILENT /NORESTART /SUPPRESSMSGBOXES','', SW_HIDE, ewWaitUntilTerminated, iResultCode) then
-      begin
-        isAlreadyInstalled := True;
-        Result := 3;
-      end
-    else
-      begin
-      isAlreadyInstalled := True;
-      Result := 2;
-      end
-  end else
+
+  if sUnInstallString = '' then
+  begin
     isAlreadyInstalled := False;
     Result := 1;
+    Exit;
+  end;
+
+  // Save the old install directory before the uninstaller removes registry entries.
+  sInstallDir := GetInstallDir();
+
+  UninstallProgressPage := CreateOutputProgressPage(
+    'Uninstalling previous version',
+    'Please wait while the previous version is being removed...');
+  UninstallProgressPage.Show;
+
+  try
+    UninstallProgressPage.SetText('Running uninstaller...', '');
+    UninstallProgressPage.SetProgress(0, 4);
+
+    sUnInstallString := RemoveQuotes(sUnInstallString);
+
+    if Exec(sUnInstallString,
+            '/VERYSILENT /NORESTART /SUPPRESSMSGBOXES',
+            '', SW_HIDE, ewWaitUntilTerminated, iResultCode) then
+    begin
+      isAlreadyInstalled := True;
+      UninstallProgressPage.SetProgress(2, 4);
+      UninstallProgressPage.SetText('Uninstaller finished.', '');
+
+      // Force-remove leftover files in the old install directory.
+      // User data lives under {localappdata} and is not affected.
+      if (sInstallDir <> '') and DirExists(sInstallDir) then
+      begin
+        UninstallProgressPage.SetText('Cleaning up leftover files...', sInstallDir);
+        UninstallProgressPage.SetProgress(3, 4);
+        DelTree(sInstallDir, True, True, True);
+      end;
+
+      UninstallProgressPage.SetProgress(4, 4);
+      Result := 3;
+    end
+    else
+    begin
+      isAlreadyInstalled := True;
+      UninstallProgressPage.SetText('Uninstaller encountered an error.', '');
+      Result := 2;
+    end;
+
+  finally
+    // Always hide the progress page to prevent the UI from appearing frozen.
+    UninstallProgressPage.Hide;
+  end;
 end;
 
-/////////////////////////////////////////////////////////////////////
+// Trigger the upgrade flow before files are installed.
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-  if (CurStep=ssInstall) then
+  if CurStep = ssInstall then
   begin
-    if (IsUpgrade()) then
-    begin
+    if IsUpgrade() then
       UnInstallOldVersion();
+  end;
+end;
+
+// Returns True when this is a fresh install (no previous version was found).
+// Used to decide whether default wallpapers should be copied.
+function ShouldInstallWallpapers: Boolean;
+begin
+  Result := not isAlreadyInstalled;
+end;
+
+// After a manual uninstall completes, ask the user whether to delete user data.
+// This procedure is NOT called during an upgrade, so user data is always preserved on update.
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+  begin
+    if SuppressibleMsgBox(
+         ExpandConstant('{cm:DeleteEverythigMsgBox}') + ' ' +
+         ExpandConstant('{localappdata}\{#MyAppName}') + ' ?',
+         mbConfirmation, MB_YESNO, IDNO) = IDYES then
+    begin
+      DelTree(ExpandConstant('{localappdata}\{#MyAppName}'), True, True, True);
     end;
   end;
 end;
 
-function ShouldInstallWallpapers: Boolean;
-begin
-    Result := not isAlreadyInstalled;
-end;
-
-//////////////////////////////////////////////////////////////////////
-// Uninstaller promts user whether to close Virtual_Paper if running before proceeding.
+// Before uninstalling, check whether the application is running.
+// If it is, ask the user to confirm closing it before proceeding.
 function InitializeUninstall(): Boolean;
 var
   ErrorCode: Integer;
 begin
-  Result := False;
-  if CheckForMutexes('Virtual:WALLPAPERSYSTEM') and
-     (SuppressibleMsgBox('{cm:ClosingMsgBox}',
-             mbConfirmation, MB_OKCANCEL, IDOK) = IDOK) then
+  if CheckForMutexes('Virtual:WALLPAPERSYSTEM') then
   begin
-    ShellExec('open', 'taskkill.exe', '/f /im {#MyAppExeName}', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
-    Result := True;
+    if SuppressibleMsgBox(ExpandConstant('{cm:ClosingMsgBox}'),
+         mbConfirmation, MB_OKCANCEL, IDOK) = IDOK then
+    begin
+      ShellExec('open', 'taskkill.exe', '/f /im {#MyAppExeName}',
+                '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
+      Result := True;
+    end
+    else
+      Result := False;
   end
+  else
+    // Application is not running; allow uninstall to proceed immediately.
+    Result := True;
 end;
 
-//////////////////////////////////////////////////////////////////////
+// Check whether a specific version of the .NET Desktop Runtime is installed.
 // Credits: https://github.com/domgho/InnoDependencyInstaller
-// NetCoreCheck tool is necessary for detecting if a specific version of .NET Core/.NET 5.0 is installed: https://github.com/dotnet/runtime/issues/36479
-// Source code: https://github.com/dotnet/deployment-tools/tree/master/src/clickonce/native/projects/NetCoreCheck
-// Download netcorecheck.exe: https://go.microsoft.com/fwlink/?linkid=2135256
-// Download netcorecheck_x64.exe: https://go.microsoft.com/fwlink/?linkid=2135504
+// NetCoreCheck tool: https://github.com/dotnet/deployment-tools
 function NetCoreNeedsInstall(version: String): Boolean;
 var
-	netcoreRuntime: String;
-	resultCode: Integer;
+  netcoreRuntime: String;
+  resultCode: Integer;
 begin
-  // Example: 'Microsoft.NETCore.App', 'Microsoft.AspNetCore.App', 'Microsoft.WindowsDesktop.App'
-  netcoreRuntime := 'Microsoft.WindowsDesktop.App'
-	Result := not(Exec(ExpandConstant('{tmp}{\}') + 'netcorecheck.exe', netcoreRuntime + ' ' + version, '', SW_HIDE, ewWaitUntilTerminated, resultCode) and (resultCode = 0));
+  netcoreRuntime := 'Microsoft.WindowsDesktop.App';
+  Result := not (
+    Exec(ExpandConstant('{tmp}\') + 'netcorecheck.exe',
+         netcoreRuntime + ' ' + version,
+         '', SW_HIDE, ewWaitUntilTerminated, resultCode)
+    and (resultCode = 0)
+  );
 end;
 
+// Returns True if the given command-line parameter was NOT passed to the installer.
 function CmdLineParamNotExists(const Value: string): Boolean;
 var
-  I: Integer;  
+  I: Integer;
 begin
   Result := True;
   for I := 1 to ParamCount do
@@ -207,9 +278,9 @@ begin
     end;
 end;
 
+// Returns True when the application should launch automatically after installation.
+// Pass /NOAUTOLAUNCH on the command line to suppress auto-launch.
 function AutoLaunch(): Boolean;
 begin
- Result := CmdLineParamNotExists('/NOAUTOLAUNCH');
+  Result := CmdLineParamNotExists('/NOAUTOLAUNCH');
 end;
-
-

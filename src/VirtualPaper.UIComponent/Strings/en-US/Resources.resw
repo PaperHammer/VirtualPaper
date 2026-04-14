@@ -159,11 +159,12 @@ Scale-down: The size is the same as the one in None or Contain, depending on whi
     <value>Number of monitors available:</value>
   </data>
   <data name="Dialog_Content_Import_Failed_Lib" xml:space="preserve">
-    <value>The file cannot be imported.
-1. Only the following file types are supported:
+    <value>Only the following file types are supported:
     GIF: .gif  .apng
     Still images: .jpg .jpeg .bmp .png
-    Video: .mp4 .webm</value>
+    Video: .mp4 .webm
+
+The file cannot be imported: </value>
   </data>
   <data name="Dialog_Content_Import_NeedUpdate" xml:space="preserve">
     <value>The file can be updated to accommodate new features, is it updated?</value>

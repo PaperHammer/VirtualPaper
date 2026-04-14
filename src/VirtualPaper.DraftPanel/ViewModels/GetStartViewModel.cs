@@ -22,7 +22,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             IsElevated = UAC.IsElevated;
 
             this._userSettingsClient = userSettingsClient;
-            InitCollection();
             InitCommand();
         }
 
@@ -50,7 +49,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             });
         }
 
-        private void InitCollection() {
+        internal void InitCollection() {
+            RecentUseds.Clear();
             RecentUseds.AddRange(_userSettingsClient.RecentUseds);
             _recentUseds = [.. RecentUseds];
         }

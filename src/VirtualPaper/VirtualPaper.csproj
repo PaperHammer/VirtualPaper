@@ -55,6 +55,7 @@
 
 	<ItemGroup>
 		<Resource Include="Resources\appicon_download.png" />
+		<Resource Include="Resources\splash.png" />
 		<Resource Include="virtualpaper.ico">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Resource>

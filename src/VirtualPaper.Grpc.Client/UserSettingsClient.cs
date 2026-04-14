@@ -137,7 +137,7 @@ namespace VirtualPaper.Grpc.Client {
             var wpLayouts = new List<IWallpaperLayout>();
             var resp = await _client.GetWallpaperLayoutsAsync(new Empty());
             foreach (var item in resp.WallpaperLayouts) {
-                wpLayouts.Add(new WallpaperLayout( item.FolderPath, item.MonitorDeviceId,item.MonitorContent, item.RType));
+                wpLayouts.Add(new WallpaperLayout(item.FolderPath, item.MonitorDeviceId, item.MonitorContent, item.RType));
             }
             return wpLayouts;
         }
@@ -172,7 +172,7 @@ namespace VirtualPaper.Grpc.Client {
             }
             _ = await _client.SetAppRulesSettingsAsync(tmp);
         }
-        
+
         private void SetRecentUseds() {
             var tmp = new Grpc_RecentUseds();
             foreach (var item in RecentUseds) {
@@ -185,7 +185,7 @@ namespace VirtualPaper.Grpc.Client {
             }
             _ = _client.SetRecentUseds(tmp);
         }
-        
+
         private async Task SetRecentUsedsAsync() {
             var tmp = new Grpc_RecentUseds();
             foreach (var item in RecentUseds) {
@@ -199,47 +199,30 @@ namespace VirtualPaper.Grpc.Client {
             _ = await _client.SetRecentUsedsAsync(tmp);
         }
 
-        public async Task UpdateRecentUsedAsync(string filePath) {            
-            lock (_singleLock) {
-                var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                var existingItem = RecentUseds.FirstOrDefault(r => r.FilePath == filePath);
-                if (existingItem != null) {
-                    existingItem.DateTime = now;
-                }
-                else {
-                    var recentUsed = new RecentUsed(
-                        FileFilter.GetRuntimeFileType(Path.GetExtension(filePath)),
-                        Path.GetFileName(filePath),
-                        filePath,
-                        now
-                    );
-                    RecentUseds.Add(recentUsed);
-                }
+        public async Task UpdateRecentUsedAsync(string filePath) {
+            var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            var targetItem = RecentUseds.FirstOrDefault(r => r.FilePath == filePath);
+            if (targetItem != null) {
+                RecentUseds.Remove(targetItem);
+                targetItem.DateTime = now;
             }
+            else {
+                targetItem = new RecentUsed(
+                    FileFilter.GetRuntimeFileType(Path.GetExtension(filePath)),
+                    Path.GetFileName(filePath),
+                    filePath,
+                    now
+                );
+            }
+            RecentUseds.Insert(0, targetItem);
             await SetRecentUsedsAsync();
         }
-        
+
         public async Task UpdateRecetUsedAsync(string[] filePaths) {
             if (filePaths == null || filePaths.Length == 0) return;
-            
-            lock (_listLock) {
-                var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                foreach (var filePath in filePaths) {
-                    var existingItem = RecentUseds.FirstOrDefault(r => r.FilePath == filePath);
 
-                    if (existingItem != null) {
-                        existingItem.DateTime = now;
-                    }
-                    else {
-                        var recentUsed = new RecentUsed(
-                            FileFilter.GetRuntimeFileType(Path.GetExtension(filePath)),
-                            Path.GetFileName(filePath),
-                            filePath,
-                            now
-                        );
-                        RecentUseds.Add(recentUsed);
-                    }
-                }
+            foreach (var filePath in filePaths) {
+                await UpdateRecentUsedAsync(filePath);
             }
             await SetRecentUsedsAsync();
         }
@@ -267,7 +250,5 @@ namespace VirtualPaper.Grpc.Client {
         #endregion
 
         private readonly Grpc_UserSettingsService.Grpc_UserSettingsServiceClient _client;
-        private readonly object _listLock = new();
-        private readonly object _singleLock = new();
     }
 }

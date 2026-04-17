@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "VirtualPaper.Launcher (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "VirtualPaper.Launcher (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

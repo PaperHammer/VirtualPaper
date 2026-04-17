@@ -45,7 +45,7 @@ namespace VirtualPaper.UIComponent.Templates {
 
         private void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args) {
             // 点击关闭按钮时，主窗口会卡住几秒，才关闭窗口 todo（优化）
-            //this.Hide();
+            this.Hide();
             // Window.Closed 的触发时机并不保证晚于 Activated/VisibilityChanged
             this.Activated -= ArcWindow_Activated;
             // 避免子窗口的关闭导致 ArcThemeUtil 清理

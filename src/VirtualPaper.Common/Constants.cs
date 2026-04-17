@@ -107,6 +107,7 @@ namespace VirtualPaper.Common {
             public static string PipeServerName => UniqueAppUid + Environment.UserName;
             public static string UniqueAppUid => "Virtual:WALLPAPERSYSTEM";
             public static string UniqueAppUIUid => "Virtual:UI:WALLPAPERSYSTEM";
+            public static string UniqueAppUpdateUid => "Virtual:Update:WALLPAPERSYSTEM";
         }
 
         public static class EnviromentVarKey {

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VirtualPaper.Launcher.View.HomePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.Launcher.View"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:text="using:VirtualPaper.UIComponent.Text"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    Background="{StaticResource SolidBackgroundFillColorSecondary}"
+    mc:Ignorable="d">
+
+    <Grid x:Name="MainGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer x:Name="scroller"
+            Padding="24,16"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0 0 0 10">
+                    <TextBlock Text="✨"
+                        FontSize="22"
+                        FontWeight="SemiBold"
+                        Margin="0,0,10,0"
+                        Foreground="Orange"/>
+                    <TextBlock Text="Virtual Paper"
+                        FontSize="24"
+                        FontWeight="SemiBold"
+                        Margin="0,0,10,0"
+                        VerticalAlignment="Center"
+                        Foreground="{StaticResource TextFillColorPrimaryBrush}"/>
+                    <TextBlock Text="{Binding Version}"
+                        FontSize="24"
+                        FontWeight="SemiBold"
+                        VerticalAlignment="Center"
+                        Foreground="{StaticResource TextFillColorPrimaryBrush}"/>
+                </StackPanel>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                      HorizontalScrollBarVisibility="Disabled"
+                      Margin="24">
+
+                    <text:ArcMarkdownTextBlock x:Name="Changelog" Markdown="{Binding ChangeLog}" />
+                </ScrollViewer>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2"
+            Margin="0 10"
+            Padding="20,12"
+            Width="600"
+            CornerRadius="10"
+            BorderBrush="{StaticResource ControlStrokeColorSecondaryBrush}"
+            Background="{StaticResource ControlFillColorDefaultBrush}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="{Binding StatusText}" FontSize="13"/>
+
+                    <ProgressBar Height="8"
+                        Margin="0,8,0,0"                                 
+                        IsIndeterminate="{Binding IsIndeterminate}"
+                        Foreground="{StaticResource AccentFillColorDefaultBrush}"
+                        Background="{StaticResource ControlStrokeColorSecondaryBrush}"
+                        Value="{Binding Progress}"
+                        Minimum="0" Maximum="100"/>
+
+                    <TextBlock Text="{Binding SpeedText}"
+                        FontSize="12"
+                        Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <input:ArcButton Grid.Column="1"
+                    Content="{Binding ActionButtonText}"
+                    Command="{Binding ActionCommand}"
+                    IsEnabled="{Binding ActionButtonEnable}"
+                    Background="{StaticResource AccentAcrylicBackgroundFillColorDefaultBrush}"
+                    Width="100"
+                    Height="36"
+                    Margin="8,0"
+                    HorizontalAlignment="Right"/>
+            </Grid>
+        </Border>
+
+        <ContentPresenter x:Name="RootContentDialog" Grid.RowSpan="3"/>
+    </Grid>
+</Page>

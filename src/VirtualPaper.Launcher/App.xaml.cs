@@ -45,7 +45,7 @@ namespace VirtualPaper.Launcher {
             }
             #endregion
 
-            ArcLog.GetLogger<App>().Info("Starting Updater...");
+            ArcLog.GetLogger<App>().Info("Starting Launcher...");
 
             #region 初始化核心组件
             AppServiceLocator.Services = ConfigureServices();
@@ -123,7 +123,7 @@ namespace VirtualPaper.Launcher {
 
         public static void ShutDown() {
             ((ServiceProvider)AppServiceLocator.Services)?.Dispose();
-            ArcLog.GetLogger<App>().Info("Updater was closed");
+            ArcLog.GetLogger<App>().Info("Launcher was closed");
             Application.Current.Exit();
         }
 

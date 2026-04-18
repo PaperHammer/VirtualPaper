@@ -14,7 +14,7 @@ namespace VirtualPaper.Launcher {
 
         public MainWindow()
             : base(App.UserSettings.ApplicationTheme, App.UserSettings.SystemBackdrop) {
-            _windowKey = new ArcWindowManagerKey(ArcWindowKey.Updater);
+            _windowKey = new ArcWindowManagerKey(ArcWindowKey.Launcher);
             InitializeComponent();
             base.InitializeWindow();
         }

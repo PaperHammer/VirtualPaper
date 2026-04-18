@@ -10,7 +10,7 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <!-- Other merged dictionaries here -->
 
-                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Resources/ResourceDictionary.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/ResourceDictionary.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/Button/ArcButton.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->

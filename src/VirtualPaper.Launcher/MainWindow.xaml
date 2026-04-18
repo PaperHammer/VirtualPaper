@@ -7,16 +7,16 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
-    xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
+    xmlns:comp="using:VirtualPaper.Launcher.View"
     mc:Ignorable="d"
     Height="600" Width="800"
     IsMaximizable="False"
     IsResizable="False"
     Title="Virtual Paper Launcher">
 
-    <arc:ArcWindowHost x:Name="MainHost">
-        <Grid x:Name="MainGrid">
-            
-        </Grid>
+    <arc:ArcWindowHost x:Name="MainHost" Title="Virtual Paper Launcher">
+        <Frame x:Name="MainFrame">
+            <comp:HomePage/>
+        </Frame>
     </arc:ArcWindowHost>
 </arc:ArcWindow>

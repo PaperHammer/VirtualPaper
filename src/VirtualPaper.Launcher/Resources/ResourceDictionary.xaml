@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters">
+
+    <cvs:BoolByValueConverter x:Key="BoolByValueConverter"/>
+    <cvs:IsStringConverter x:Key="IsStringConverter"/>
+    <cvs:VisibilityByValueConverter x:Key="VisibilityByValueConverter"/>
+    <cvs:LocalizeConv x:Key="LocalizeConv"/>
+
+    <!--<BitmapImage x:Key="AppIcon" UriSource="ms-appx:///Assets/icon-vp-48.png"/>-->
+
+    <Style TargetType="ToolTip">
+        <Setter Property="Visibility" Value="Collapsed"/>
+    </Style>
+
+    <Style TargetType="Control" BasedOn="{StaticResource DefaultControlStyle}">
+        <Setter Property="KeyboardAcceleratorPlacementMode" Value="Hidden"/>
+        <Setter Property="IsTabStop" Value="True"/>
+    </Style>
+
+</ResourceDictionary>

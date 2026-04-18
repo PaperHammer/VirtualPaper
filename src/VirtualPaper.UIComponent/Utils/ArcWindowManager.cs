@@ -85,6 +85,6 @@ namespace VirtualPaper.UIComponent.Utils {
         PlayerWebCoreAdjust,
         PlayerWebCoreOnlyDetails,
         PlayerWebCoreDetailsEdit,
-        Updater,
+        Launcher,
     }
 }

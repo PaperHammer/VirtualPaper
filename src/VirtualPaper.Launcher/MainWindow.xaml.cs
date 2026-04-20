@@ -14,7 +14,7 @@ namespace VirtualPaper.Launcher {
         public override bool IsMainWindow => true;
 
         public MainWindow()
-            : base(App.UserSettings.ApplicationTheme, App.UserSettings.SystemBackdrop) {
+            : base(Common.AppTheme.Dark, App.UserSettings.SystemBackdrop) {
             _windowKey = new ArcWindowManagerKey(ArcWindowKey.Main);
             InitializeComponent();
             base.InitializeWindow();

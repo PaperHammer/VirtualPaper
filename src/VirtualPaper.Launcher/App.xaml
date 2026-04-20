@@ -14,6 +14,16 @@
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/Button/ArcButton.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->
+
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <!-- Light theme resources -->
+                </ResourceDictionary>
+
+                <ResourceDictionary x:Key="Dark">
+                    <!-- Dark theme resources -->
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

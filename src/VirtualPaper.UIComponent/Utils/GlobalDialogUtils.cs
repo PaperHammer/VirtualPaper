@@ -16,7 +16,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = ContentDialogButton.Primary,
                 XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
-                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.RequestedTheme,
             };
 
             await dialog.ShowAsync();
@@ -35,7 +35,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 SecondaryButtonText = secondaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
-                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.RequestedTheme,
             };
 
             var result = await dialog.ShowAsync();
@@ -61,7 +61,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 SecondaryButtonText = secondaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
-                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.RequestedTheme,
             };
 
             return dialog;
@@ -78,7 +78,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
-                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.RequestedTheme,
             };
 
             var result = await dialog.ShowAsync();
@@ -106,7 +106,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 CloseButtonText = closeBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
-                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.RequestedTheme,
             };
 
             var result = await dialog.ShowAsync();
@@ -130,7 +130,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
-                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.RequestedTheme,
             };
 
             return dialog;
@@ -147,7 +147,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 SecondaryButtonText = secondaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
-                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.RequestedTheme,
             };
 
             var result = await dialog.ShowAsync();
@@ -171,7 +171,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 SecondaryButtonText = secondaryBtnText,                
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
-                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.RequestedTheme,
             };
 
             return dialog;
@@ -186,7 +186,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
-                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.RequestedTheme,
             };
 
             var result = await dialog.ShowAsync();
@@ -208,7 +208,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
                 XamlRoot = ArcWindowManager.MainWindow.Content.XamlRoot,
-                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.AppRoot.RequestedTheme,
+                RequestedTheme = ArcWindowManager.MainWindow.ContentHost.RequestedTheme,
             };
 
             return dialog;

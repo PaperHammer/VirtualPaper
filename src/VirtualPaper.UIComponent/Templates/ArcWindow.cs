@@ -63,7 +63,7 @@ namespace VirtualPaper.UIComponent.Templates {
         }
 
         protected void InitializeWindow() {
-            this.ContentHost.AppRoot.Loaded += AppRoot_Loaded;
+            this.ContentHost.AppRoot.Loaded += AppRoot_Loaded;            
 
             if (IsNeedTrack) {
                 ArcWindowManager.TrackWindow(Key, this);
@@ -115,11 +115,11 @@ namespace VirtualPaper.UIComponent.Templates {
             await Task.Delay(600);
 
             this.ContentHost.AppThemeTransitionImage.Visibility = Visibility.Collapsed;
-            this.ContentHost.AppThemeTransitionImage.Source = null;
+            this.ContentHost.AppThemeTransitionImage.Source = null;         
         }
 
         private void UpdateTheme() {
-            ArcThemeUtil.ApplyTheme(this.ContentHost.AppRoot);
+            ArcThemeUtil.ApplyTheme(this.ContentHost);
             ArcWindowManager.UpdateWindowVisualState(this);
         }
         #endregion

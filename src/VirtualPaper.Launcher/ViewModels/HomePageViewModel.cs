@@ -4,8 +4,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Microsoft.UI;
-using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Launcher.Models;
@@ -15,12 +13,6 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.Launcher.ViewModels {
     public partial class HomePageViewModel : ObservableObject {
-        private Brush _btnTextForeground = new SolidColorBrush(Colors.White);
-        public Brush BtnTextForeground {
-            get { return _btnTextForeground; }
-            set { _btnTextForeground = value; OnPropertyChanged(); }
-        }
-
         private string _version = string.Empty;
         public string Version {
             get => _version;
@@ -87,19 +79,6 @@ namespace VirtualPaper.Launcher.ViewModels {
             _downloadService = downloadService;
 
             ActionCommand = new RelayCommand(OnActionCommand);
-            CurrentState = DownloadState.Ready;
-            UpdateUIByState();
-        }
-
-        private void InitEvent() {
-            ArcThemeUtil.AppThemeChanged += (s, e) => {
-                RefreshWpTitleForeground();
-            };
-        }
-
-        internal void RefreshWpTitleForeground() {
-            var color = ArcThemeUtil.GetFormatMainWindowTheme() == AppTheme.Light ? Colors.White : Colors.Black;
-            BtnTextForeground = new SolidColorBrush(color);
         }
 
         public void ReceiveParameter(object? parameter) {

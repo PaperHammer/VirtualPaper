@@ -1,13 +1,26 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
+using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
+using VirtualPaper.Launcher.Models;
+using VirtualPaper.Launcher.Services.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.Launcher.ViewModels {
     public partial class HomePageViewModel : ObservableObject {
+        private Brush _btnTextForeground = new SolidColorBrush(Colors.White);
+        public Brush BtnTextForeground {
+            get { return _btnTextForeground; }
+            set { _btnTextForeground = value; OnPropertyChanged(); }
+        }
+
         private string _version = string.Empty;
         public string Version {
             get => _version;
@@ -70,13 +83,23 @@ namespace VirtualPaper.Launcher.ViewModels {
         }
 
         public HomePageViewModel(
-            IDownloadService downloadService,
-            IContentDialogService contentDialogService) {
-
+            IDownloadService downloadService) {
             _downloadService = downloadService;
-            _contentDialogService = contentDialogService;
 
             ActionCommand = new RelayCommand(OnActionCommand);
+            CurrentState = DownloadState.Ready;
+            UpdateUIByState();
+        }
+
+        private void InitEvent() {
+            ArcThemeUtil.AppThemeChanged += (s, e) => {
+                RefreshWpTitleForeground();
+            };
+        }
+
+        internal void RefreshWpTitleForeground() {
+            var color = ArcThemeUtil.GetFormatMainWindowTheme() == AppTheme.Light ? Colors.White : Colors.Black;
+            BtnTextForeground = new SolidColorBrush(color);
         }
 
         public void ReceiveParameter(object? parameter) {
@@ -99,16 +122,14 @@ namespace VirtualPaper.Launcher.ViewModels {
         }
 
         public async Task<bool> ShowCancelDialogAsync() {
-            var res = await _contentDialogService.ShowSimpleDialogAsync(
-                new SimpleContentDialogCreateOptions() {
-                    Title = LanguageManager.Instance["AppUpdater_Update_TitleCancelQuestion"],
-                    Content = CurrentState == DownloadState.Downloading ? LanguageManager.Instance["AppUpdater_Update_DescriptionCancelQuestion_ForDownloading"] : LanguageManager.Instance["AppUpdater_Update_DescriptionCancelQuestion_ForCompleted"],
-                    PrimaryButtonText = LanguageManager.Instance["Common_TextConfirm"],
-                    CloseButtonText = LanguageManager.Instance["Common_TextCancel"],
-                }
+            var res = await GlobalDialogUtils.ShowDialogAsync(
+                content: CurrentState == DownloadState.Downloading ? LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_Update_DescriptionCancelQuestion_ForDownloading)) : LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_Update_DescriptionCancelQuestion_ForCompleted)),
+                title: LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_Update_TitleCancelQuestion)),
+                primaryBtnText: LanguageUtil.GetI18n(nameof(Consts.I18n.Text_Confirm)),
+                secondaryBtnText: LanguageUtil.GetI18n(nameof(Consts.I18n.Text_Cancel))
             );
 
-            return res == ContentDialogResult.Primary;
+            return res == DialogResult.Primary;
         }
 
         #region Command Handlers
@@ -149,7 +170,7 @@ namespace VirtualPaper.Launcher.ViewModels {
 
                 await foreach (var progress in _downloadService.DownloadAsync(_downloadUri, _savePath, _cts.Token)) {
                     Progress = progress.Percent;
-                    SpeedText = $"{progress.Speed:F2} MB/s | 剩余时间：{progress.Remaining:hh\\:mm\\:ss}";
+                    SpeedText = $"{progress.Speed:F2} MB/s | {LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_SpeedText_Ready))}：{progress.Remaining:hh\\:mm\\:ss}";
                 }
 
                 await VerifyAsync();
@@ -159,7 +180,7 @@ namespace VirtualPaper.Launcher.ViewModels {
                     CurrentState = DownloadState.Paused;
             }
             catch (Exception ex) {
-                App.Log.Error(ex);
+                ArcLog.GetLogger<HomePageViewModel>().Error(ex);
                 CurrentState = DownloadState.DownloadFailed;
             }
         }
@@ -197,15 +218,12 @@ namespace VirtualPaper.Launcher.ViewModels {
                 App.ShutDown();
             }
             catch (Exception ex) {
-                App.Log.Error("Install for silent updating failed", ex);
+                ArcLog.GetLogger<HomePageViewModel>().Error("Install for silent updating failed", ex);
                 CurrentState = DownloadState.Completed;
-                _ = await _contentDialogService.ShowSimpleDialogAsync(
-                    new SimpleContentDialogCreateOptions() {
-                        Title = LanguageManager.Instance["Common_TextError"],
-                        Content = LanguageManager.Instance["AppUpdater_Update_ExceptionAppUpdateFail"],
-                        CloseButtonText = LanguageManager.Instance["Common_TextConfirm"],
-                    }
-                );
+                await GlobalDialogUtils.ShowDialogAsync(
+                    content: LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_Update_ExceptionAppUpdateFail)),
+                    title: LanguageUtil.GetI18n(nameof(Consts.I18n.Text_Error)),
+                    primaryBtnText: LanguageUtil.GetI18n(nameof(Consts.I18n.Text_Confirm)));
             }
         }
         #endregion
@@ -214,52 +232,52 @@ namespace VirtualPaper.Launcher.ViewModels {
         private void UpdateUIByState() {
             switch (CurrentState) {
                 case DownloadState.Ready:
-                    ActionButtonText = LanguageManager.Instance["AppUpdater_ActionButtonText_Ready"];
-                    StatusText = LanguageManager.Instance["AppUpdater_StatusText_Ready"];
-                    SpeedText = $"-- MB/s | {LanguageManager.Instance["AppUpdater_SpeedText_Ready"]}：--:--";
+                    ActionButtonText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_ActionButtonText_Ready));
+                    StatusText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_StatusText_Ready));
+                    SpeedText = $"-- MB/s | {LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_SpeedText_Ready))}：--:--";
                     Progress = 0;
                     break;
 
                 case DownloadState.Downloading:
-                    ActionButtonText = LanguageManager.Instance["AppUpdater_ActionButtonText_Downloading"]; ;
-                    StatusText = LanguageManager.Instance["AppUpdater_StatusText_Downloading"];
+                    ActionButtonText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_ActionButtonText_Downloading)); ;
+                    StatusText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_StatusText_Downloading));
                     break;
 
                 case DownloadState.Paused:
-                    ActionButtonText = LanguageManager.Instance["AppUpdater_ActionButtonText_Paused"];
-                    StatusText = LanguageManager.Instance["AppUpdater_StatusText_Paused"];
+                    ActionButtonText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_ActionButtonText_Paused));
+                    StatusText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_StatusText_Paused));
                     break;
 
                 case DownloadState.Verifying:
-                    StatusText = LanguageManager.Instance["AppUpdater_StatusText_Verifying"];
+                    StatusText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_StatusText_Verifying));
                     SpeedText = string.Empty;
                     break;
 
                 case DownloadState.Completed:
-                    ActionButtonText = LanguageManager.Instance["AppUpdater_ActionButtonText_Completed"];
-                    StatusText = LanguageManager.Instance["AppUpdater_StatusText_Completed"];
+                    ActionButtonText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_ActionButtonText_Completed));
+                    StatusText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_StatusText_Completed));
                     SpeedText = string.Empty;
                     break;
 
                 case DownloadState.DownloadFailed:
-                    ActionButtonText = LanguageManager.Instance["Common_TextRetry"];
-                    StatusText = LanguageManager.Instance["AppUpdater_StatusText_DownloadFailed"];
+                    ActionButtonText = LanguageUtil.GetI18n(nameof(Consts.I18n.Text_Retry));
+                    StatusText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_StatusText_DownloadFailed));
                     break;
 
                 case DownloadState.VerifyFailed:
-                    ActionButtonText = LanguageManager.Instance["Common_TextRetry"];
-                    StatusText = LanguageManager.Instance["AppUpdater_StatusText_VerifyFailed"];
+                    ActionButtonText = LanguageUtil.GetI18n(nameof(Consts.I18n.Text_Retry));
+                    StatusText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_StatusText_VerifyFailed));
                     break;
 
                 case DownloadState.Installing:
-                    ActionButtonText = LanguageManager.Instance["AppUpdater_ActionButtonText_Installing"];
-                    StatusText = LanguageManager.Instance["AppUpdater_StatusText_Installing"];
+                    ActionButtonText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_ActionButtonText_Installing));
+                    StatusText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_StatusText_Installing));
                     SpeedText = string.Empty;
                     break;
 
                 case DownloadState.Installed:
-                    ActionButtonText = LanguageManager.Instance["Common_TextClose"];
-                    StatusText = LanguageManager.Instance["AppUpdater_StatusText_Installed"];
+                    ActionButtonText = LanguageUtil.GetI18n(nameof(Consts.I18n.Text_Close));
+                    StatusText = LanguageUtil.GetI18n(nameof(Consts.I18n.AppUpdater_StatusText_Installed));
                     break;
             }
         }
@@ -281,7 +299,6 @@ namespace VirtualPaper.Launcher.ViewModels {
         }
 
         private readonly IDownloadService _downloadService;
-        private readonly IContentDialogService _contentDialogService;
         private Uri _downloadUri = null!;
         private Uri _shaUri = null!;
         private CancellationTokenSource? _cts;

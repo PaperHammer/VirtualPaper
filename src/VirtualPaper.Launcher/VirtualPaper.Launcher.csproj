@@ -95,15 +95,14 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1721" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260317003" />
+		<PackageReference Include="Downloader" Version="3.0.6" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<Folder Include="Strings\zh-CN\" />
-		<Folder Include="Strings\en-US\" />
-		<Folder Include="Utils\" />
 		<Folder Include="Resources\" />
+		<Folder Include="Utils\" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Page Update="Resources\ResourceDictionary.xaml">

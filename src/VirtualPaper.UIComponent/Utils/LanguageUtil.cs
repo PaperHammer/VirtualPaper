@@ -76,9 +76,9 @@ namespace VirtualPaper.UIComponent.Utils {
         }
 
         // ref: https://github.com/AndrewKeepCoding/WinUI3Localizer
-        public static async Task InitializeLocalizerForUnpackaged(string lang, string? moduleName = null) {
+        public static async Task InitializeLocalizerForUnpackaged(string lang) {
             // Initialize a "Strings" folder in the executables folder.
-            string stringsFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, moduleName ?? Constants.ModuleName.UIComponent, "Strings");
+            string stringsFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.ModuleName.UIComponent, "Strings");
             StorageFolder stringsFolder = await StorageFolder.GetFolderFromPathAsync(stringsFolderPath);
 
             ILocalizer localizer = await new LocalizerBuilder()
@@ -143,5 +143,5 @@ namespace VirtualPaper.UIComponent.Utils {
 
         // 访问频率记录（用于热缓存淘汰）
         private static readonly ConcurrentDictionary<string, long> _accessCounts = new();
-    }  
+    }
 }

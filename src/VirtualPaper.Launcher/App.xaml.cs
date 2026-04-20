@@ -9,6 +9,9 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.Launcher.Services.Download;
+using VirtualPaper.Launcher.Services.Interfaces;
+using VirtualPaper.Launcher.ViewModels;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent.Utils;
@@ -70,6 +73,11 @@ namespace VirtualPaper.Launcher {
             var provider = new ServiceCollection()
                 .AddSingleton<MainWindow>()
 
+                .AddSingleton<HomePageViewModel>()
+
+                .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
+                .AddSingleton<IDownloadService, MultiDownloadService>()
+
                 .BuildServiceProvider();
 
             return provider;
@@ -90,7 +98,7 @@ namespace VirtualPaper.Launcher {
                 await LanguageUtil.InitializeLocalizerForPackaged(_userSettings.Language);
             }
             else {
-                await LanguageUtil.InitializeLocalizerForUnpackaged(_userSettings.Language, Constants.ModuleName.Launcher);
+                await LanguageUtil.InitializeLocalizerForUnpackaged(_userSettings.Language);
             }
 
             _m_window = AppServiceLocator.Services.GetRequiredService<MainWindow>();

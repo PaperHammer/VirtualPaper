@@ -73,14 +73,12 @@
                     Content="{x:Bind _viewModel.ActionButtonText, Mode=OneWay}"
                     Command="{x:Bind _viewModel.ActionCommand, Mode=OneWay}"
                     IsEnabled="{x:Bind _viewModel.ActionButtonEnable, Mode=OneWay}"
-                    Background="{ThemeResource AccentFillColorSelectedTextBackgroundBrush}"
+                    Background="{ThemeResource AccentFillColorTertiaryBrush}"
                     Width="100"
                     Height="36"
                     Margin="8,0"
                     HorizontalAlignment="Right"/>
             </Grid>
         </Border>
-
-        <ContentPresenter x:Name="RootContentDialog" Grid.RowSpan="3"/>
     </Grid>
 </Page>

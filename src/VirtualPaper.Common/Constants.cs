@@ -94,7 +94,6 @@ namespace VirtualPaper.Common {
         }
 
         public static class ModuleName {
-            public static string Launcher => "VirtualPaper.Launcher";
             public static string UIComponent => "VirtualPaper.UIComponent";
             public static string UI => "VirtualPaper.UI.exe";
             public static string ScrSaver => "VirtualPaper.ScreenSaver.exe";

@@ -1188,4 +1188,76 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
     <value>粗细(像素)</value>
   </data>
+  <data name="AppUpdater_ActionButtonText_Completed" xml:space="preserve">
+    <value>安装</value>
+  </data>
+  <data name="AppUpdater_ActionButtonText_Downloading" xml:space="preserve">
+    <value>暂停</value>
+  </data>
+  <data name="AppUpdater_ActionButtonText_Installing" xml:space="preserve">
+    <value>安装中...</value>
+  </data>
+  <data name="AppUpdater_ActionButtonText_Paused" xml:space="preserve">
+    <value>继续下载</value>
+  </data>
+  <data name="AppUpdater_ActionButtonText_Ready" xml:space="preserve">
+    <value>下载</value>
+  </data>
+  <data name="AppUpdater_SpeedText_Ready" xml:space="preserve">
+    <value>剩余时间</value>
+  </data>
+  <data name="AppUpdater_StatusText_Completed" xml:space="preserve">
+    <value>下载完成！</value>
+  </data>
+  <data name="AppUpdater_StatusText_DownloadFailed" xml:space="preserve">
+    <value>无法访问资源，尝试检查网络后重试</value>
+  </data>
+  <data name="AppUpdater_StatusText_Downloading" xml:space="preserve">
+    <value>正在下载...</value>
+  </data>
+  <data name="AppUpdater_StatusText_Installed" xml:space="preserve">
+    <value>安装完成！</value>
+  </data>
+  <data name="AppUpdater_StatusText_Installing" xml:space="preserve">
+    <value>正在安装更新...</value>
+  </data>
+  <data name="AppUpdater_StatusText_Paused" xml:space="preserve">
+    <value>下载已暂停</value>
+  </data>
+  <data name="AppUpdater_StatusText_Ready" xml:space="preserve">
+    <value>准备下载...</value>
+  </data>
+  <data name="AppUpdater_StatusText_VerifyFailed" xml:space="preserve">
+    <value>文件校验失败，请重试下载</value>
+  </data>
+  <data name="AppUpdater_StatusText_Verifying" xml:space="preserve">
+    <value>校验资源完整性...</value>
+  </data>
+  <data name="AppUpdater_Update_DescriptionCancelQuestion_ForCompleted" xml:space="preserve">
+    <value>尚未完成安装，确定要退出吗？</value>
+  </data>
+  <data name="AppUpdater_Update_DescriptionCancelQuestion_ForDownloading" xml:space="preserve">
+    <value>当前更新正在下载中，是否确认中断并关闭？</value>
+  </data>
+  <data name="AppUpdater_Update_ExceptionAppUpdateFail" xml:space="preserve">
+    <value>更新失败；请尝试从以下地址下载安装程序手动更新: https://github.com/PaperHammer/VirtualPaper/releases</value>
+  </data>
+  <data name="AppUpdater_Update_TitleCancelQuestion" xml:space="preserve">
+    <value>正在进行更新</value>
+  </data>
+  <data name="Text_Cancel1" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Text_Close1" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="Text_Confirm1" xml:space="preserve">
+    <value>确认</value>
+  </data>
+  <data name="Text_Error" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="Text_Retry" xml:space="preserve">
+    <value>重试</value>
+  </data>
 </root>

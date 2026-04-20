@@ -1188,4 +1188,77 @@ The following words cannot be used as usernames:
   <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
     <value>Thickness (pixels)</value>
   </data>
+  <data name="AppUpdater_ActionButtonText_Completed" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="AppUpdater_ActionButtonText_Downloading" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="AppUpdater_ActionButtonText_Installing" xml:space="preserve">
+    <value>Installing...</value>
+  </data>
+  <data name="AppUpdater_ActionButtonText_Paused" xml:space="preserve">
+    <value>Resume downloading</value>
+  </data>
+  <data name="AppUpdater_ActionButtonText_Ready" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="AppUpdater_SpeedText_Ready" xml:space="preserve">
+    <value>Remaining time</value>
+  </data>
+  <data name="AppUpdater_StatusText_Completed" xml:space="preserve">
+    <value>Download complete!</value>
+  </data>
+  <data name="AppUpdater_StatusText_DownloadFailed" xml:space="preserve">
+    <value>Unable to access the resource, please check your network and try again.</value>
+  </data>
+  <data name="AppUpdater_StatusText_Downloading" xml:space="preserve">
+    <value>Downloading...</value>
+  </data>
+  <data name="AppUpdater_StatusText_Installed" xml:space="preserve">
+    <value>Installation complete!</value>
+  </data>
+  <data name="AppUpdater_StatusText_Installing" xml:space="preserve">
+    <value>Installing updates...</value>
+  </data>
+  <data name="AppUpdater_StatusText_Paused" xml:space="preserve">
+    <value>Download paused</value>
+  </data>
+  <data name="AppUpdater_StatusText_Ready" xml:space="preserve">
+    <value>Preparing to download...</value>
+  </data>
+  <data name="AppUpdater_StatusText_VerifyFailed" xml:space="preserve">
+    <value>File verification failed, please try downloading again</value>
+  </data>
+  <data name="AppUpdater_StatusText_Verifying" xml:space="preserve">
+    <value>Verifying resource integrity...</value>
+  </data>
+  <data name="AppUpdater_Update_DescriptionCancelQuestion_ForCompleted" xml:space="preserve">
+    <value>The installation is not yet complete. Are you sure you want to exit?</value>
+  </data>
+  <data name="AppUpdater_Update_DescriptionCancelQuestion_ForDownloading" xml:space="preserve">
+    <value>The current update is downloading. Are you sure you want to interrupt and close it?</value>
+  </data>
+  <data name="AppUpdater_Update_ExceptionAppUpdateFail" xml:space="preserve">
+    <value>Update failed; please try downloading the installer manual update from the following address: 
+https://github.com/PaperHammer/VirtualPaper/releases</value>
+  </data>
+  <data name="AppUpdater_Update_TitleCancelQuestion" xml:space="preserve">
+    <value>Updating</value>
+  </data>
+  <data name="Text_Cancel1" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Text_Close1" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Text_Confirm1" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="Text_Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Text_Retry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
 </root>

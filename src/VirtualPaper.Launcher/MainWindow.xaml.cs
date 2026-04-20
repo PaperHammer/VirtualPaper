@@ -11,10 +11,11 @@ namespace VirtualPaper.Launcher {
     public sealed partial class MainWindow : ArcWindow {
         public override ArcWindowHost ContentHost => this.MainHost;
         public override ArcWindowManagerKey Key => _windowKey;
+        public override bool IsMainWindow => true;
 
         public MainWindow()
             : base(App.UserSettings.ApplicationTheme, App.UserSettings.SystemBackdrop) {
-            _windowKey = new ArcWindowManagerKey(ArcWindowKey.Launcher);
+            _windowKey = new ArcWindowManagerKey(ArcWindowKey.Main);
             InitializeComponent();
             base.InitializeWindow();
         }

@@ -20,13 +20,14 @@ namespace VirtualPaper.UIComponent.Templates {
         protected virtual bool IsNeedTrack => true;
         public abstract ArcWindowHost ContentHost { get; }
         public abstract ArcWindowManagerKey Key { get; }
-        protected PropertyHost PropertyHost => _propertyHost;
+        protected PropertyHost? PropertyHost => _propertyHost;
         public ObservableCollection<GlobalMsgInfo> InfobarMessages { get; } = [];
         public bool IsActive => _isActive ?? false;
+        protected virtual string? AssetsIcon => "Assets/virtualpaper.ico";
 
-        public ArcWindow(AppTheme appTheme = AppTheme.Auto, AppSystemBackdrop systemBackdrop = default) {
-            _propertyHost = new();
+        public ArcWindow(AppTheme appTheme = AppTheme.Auto, AppSystemBackdrop systemBackdrop = default) {            
             if (IsMainWindow) {
+                _propertyHost = new();
                 ArcThemeUtil.SetMainWindowAppTheme(appTheme);
                 ArcThemeUtil.SetMainWindowBackdrop(systemBackdrop);
             }
@@ -79,7 +80,7 @@ namespace VirtualPaper.UIComponent.Templates {
         }
 
         private void UpdateThemeIcon() {
-            if (!IsMainWindow) return;
+            if (!IsMainWindow || _propertyHost == null) return;
 
             _propertyHost.ThemeIconKey = ArcThemeUtil.MainWindowAppTheme switch {
                 AppTheme.Light => "NaviIcon_ThemeLight",
@@ -138,7 +139,7 @@ namespace VirtualPaper.UIComponent.Templates {
             if (AppWindowTitleBar.IsCustomizationSupported()) {
                 this.ExtendsContentIntoTitleBar = true;
                 this.SetTitleBar(this.ContentHost.AppTitleBar);
-                this.AppWindow.SetIcon("Assets/virtualpaper.ico");
+                this.AppWindow.SetIcon(AssetsIcon);
                 this.AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Standard;
             }
             else {
@@ -159,7 +160,7 @@ namespace VirtualPaper.UIComponent.Templates {
         private bool _isLoaded;
         private Compositor _compositor = null!;
         private bool? _isActive = null;
-        private readonly PropertyHost _propertyHost;
+        private readonly PropertyHost? _propertyHost;
     }
 
     public partial class PropertyHost : FrameworkElement {

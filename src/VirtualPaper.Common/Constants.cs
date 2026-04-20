@@ -90,9 +90,11 @@ namespace VirtualPaper.Common {
             public static string ScrSaver => Path.Combine("Plugins", "ScrSaver");
             public static string UI => Path.Combine("Plugins", "UI");
             //public static string UI => Path.Combine("Plugins", "UI", "win-x64");
+            public static string Launcher => Path.Combine("Plugins", "Launcher");
         }
 
         public static class ModuleName {
+            public static string Launcher => "VirtualPaper.Launcher";
             public static string UIComponent => "VirtualPaper.UIComponent";
             public static string UI => "VirtualPaper.UI.exe";
             public static string ScrSaver => "VirtualPaper.ScreenSaver.exe";

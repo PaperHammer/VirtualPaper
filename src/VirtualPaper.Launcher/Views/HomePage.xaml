@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="VirtualPaper.Launcher.View.HomePage"
+    x:Class="VirtualPaper.Launcher.Views.HomePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:VirtualPaper.Launcher.View"
+    xmlns:local="using:VirtualPaper.Launcher.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:text="using:VirtualPaper.UIComponent.Text"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
-    Background="{StaticResource SolidBackgroundFillColorSecondary}"
     mc:Ignorable="d">
 
-    <Grid x:Name="MainGrid">
+    <Grid x:Name="MainGrid" Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
@@ -19,6 +18,7 @@
 
         <ScrollViewer x:Name="scroller"
             Padding="24,16"
+            HorizontalScrollBarVisibility="Disabled"
             VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0 0 0 10">
@@ -31,21 +31,14 @@
                         FontSize="24"
                         FontWeight="SemiBold"
                         Margin="0,0,10,0"
-                        VerticalAlignment="Center"
-                        Foreground="{StaticResource TextFillColorPrimaryBrush}"/>
-                    <TextBlock Text="{Binding Version}"
+                        VerticalAlignment="Center"/>
+                    <TextBlock Text="{x:Bind _viewModel.Version, Mode=OneWay}"
                         FontSize="24"
                         FontWeight="SemiBold"
-                        VerticalAlignment="Center"
-                        Foreground="{StaticResource TextFillColorPrimaryBrush}"/>
+                        VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto" 
-                      HorizontalScrollBarVisibility="Disabled"
-                      Margin="24">
-
-                    <text:ArcMarkdownTextBlock x:Name="Changelog" Markdown="{Binding ChangeLog}" />
-                </ScrollViewer>
+                <text:ArcMarkdownTextBlock x:Name="Changelog" Markdown="{x:Bind _viewModel.ChangeLog, Mode=OneWay}" />
             </StackPanel>
         </ScrollViewer>
 
@@ -54,8 +47,7 @@
             Padding="20,12"
             Width="600"
             CornerRadius="10"
-            BorderBrush="{StaticResource ControlStrokeColorSecondaryBrush}"
-            Background="{StaticResource ControlFillColorDefaultBrush}">
+            Background="{ThemeResource CardStrokeColorDefaultBrush}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -63,26 +55,25 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Vertical">
-                    <TextBlock Text="{Binding StatusText}" FontSize="13"/>
+                    <TextBlock Text="{x:Bind _viewModel.StatusText, Mode=OneWay}" FontSize="13"/>
 
                     <ProgressBar Height="8"
                         Margin="0,8,0,0"                                 
-                        IsIndeterminate="{Binding IsIndeterminate}"
-                        Foreground="{StaticResource AccentFillColorDefaultBrush}"
-                        Background="{StaticResource ControlStrokeColorSecondaryBrush}"
-                        Value="{Binding Progress}"
+                        IsIndeterminate="{x:Bind _viewModel.IsIndeterminate, Mode=OneWay}"
+                        Value="{x:Bind _viewModel.Progress, Mode=OneWay}"
+                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                         Minimum="0" Maximum="100"/>
 
-                    <TextBlock Text="{Binding SpeedText}"
+                    <TextBlock Text="{x:Bind _viewModel.SpeedText, Mode=OneWay}"
                         FontSize="12"
                         Margin="0,6,0,0"/>
                 </StackPanel>
 
                 <input:ArcButton Grid.Column="1"
-                    Content="{Binding ActionButtonText}"
-                    Command="{Binding ActionCommand}"
-                    IsEnabled="{Binding ActionButtonEnable}"
-                    Background="{StaticResource AccentAcrylicBackgroundFillColorDefaultBrush}"
+                    Content="{x:Bind _viewModel.ActionButtonText, Mode=OneWay}"
+                    Command="{x:Bind _viewModel.ActionCommand, Mode=OneWay}"
+                    IsEnabled="{x:Bind _viewModel.ActionButtonEnable, Mode=OneWay}"
+                    Background="{ThemeResource AccentFillColorSelectedTextBackgroundBrush}"
                     Width="100"
                     Height="36"
                     Margin="8,0"

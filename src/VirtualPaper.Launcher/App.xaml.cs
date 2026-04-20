@@ -90,7 +90,7 @@ namespace VirtualPaper.Launcher {
                 await LanguageUtil.InitializeLocalizerForPackaged(_userSettings.Language);
             }
             else {
-                await LanguageUtil.InitializeLocalizerForUnpackaged(_userSettings.Language);
+                await LanguageUtil.InitializeLocalizerForUnpackaged(_userSettings.Language, Constants.ModuleName.Launcher);
             }
 
             _m_window = AppServiceLocator.Services.GetRequiredService<MainWindow>();

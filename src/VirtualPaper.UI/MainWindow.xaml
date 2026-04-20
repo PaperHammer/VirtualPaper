@@ -89,9 +89,6 @@
                     </NavigationViewItem>
                 </navi:ArcNavigationView.FooterMenuItems>
 
-                <!--TODO:
-                1. Draft 页导航缓存-->
-
                 <navi:ArcNavigationContentView x:Name="NaviContent" InfobarMessages="{x:Bind InfobarMessages}"/>
             </navi:ArcNavigationView>
         </Grid>

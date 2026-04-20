@@ -17,7 +17,7 @@
 		<OutputPath>bin\$(Configuration)\</OutputPath>
 	</PropertyGroup>
 	<ItemGroup>
-		<None Remove="View\HomePage.xaml" />
+		<None Remove="Views\HomePage.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -100,6 +100,8 @@
 		<ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
 	</ItemGroup>
 	<ItemGroup>
+		<Folder Include="Strings\zh-CN\" />
+		<Folder Include="Strings\en-US\" />
 		<Folder Include="Utils\" />
 		<Folder Include="Resources\" />
 	</ItemGroup>

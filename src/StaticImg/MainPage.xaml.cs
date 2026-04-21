@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
@@ -39,8 +40,8 @@ namespace Workloads.Creation.StaticImg {
         /// 打开文件
         /// </summary>
         /// <param name="filePath">类型为 vpd 或静态图像的文件路径</param>
-        public MainPage(string filePath) {
-            Session = new InkProjectSession(filePath);
+        public MainPage(string filePath, FileType fileType) {
+            Session = new InkProjectSession(filePath, fileType);
             Payload = new FrameworkPayload() {
                 [NaviPayloadKey.ArcPageContext] = this.ArcContext,
                 [NaviPayloadKey.InkProjectSession] = this.Session
@@ -69,8 +70,10 @@ namespace Workloads.Creation.StaticImg {
 
             await loadingCtx.RunAsync(
                 operation: async token => {
-                    await ShaderLoader.LoadAllShadersAsync();
-                    await inkCanvas.IsInited.Task;
+                    await Task.WhenAll(
+                        ShaderLoader.LoadAllShadersAsync(),
+                        inkCanvas.IsInited.Task
+                    );
                 });
 
             StartFrameTimeMonitor();

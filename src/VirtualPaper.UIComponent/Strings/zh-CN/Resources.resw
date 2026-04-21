@@ -1188,4 +1188,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
     <value>粗细(像素)</value>
   </data>
+  <data name="Project_SI_FileTypeMismatch" xml:space="preserve">
+    <value>文件内容异常，无法打开</value>
+  </data>
 </root>

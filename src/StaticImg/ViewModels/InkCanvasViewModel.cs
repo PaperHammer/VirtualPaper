@@ -11,6 +11,7 @@ using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 using Workloads.Creation.StaticImg.Models.Specific;
+using Workloads.Creation.StaticImg.Models.Specific.Strategies;
 
 namespace Workloads.Creation.StaticImg.ViewModels {
     public partial class InkCanvasViewModel {
@@ -24,7 +25,8 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         }
 
         internal async Task<bool> SaveAsync(bool isEmergency = false) {
-            (var flag, var filePath) = isEmergency ? await Data.SaveAtEmergencyAsync(_session) : await Data.SaveAsync(_session);
+            var fileStratedy = InkFileStrategyFactory.GetStrategy(_session.DesignFileUtil.FType);
+            (var flag, var filePath) = isEmergency ? await fileStratedy.SaveAtEmergencyAsync(Data) : await fileStratedy.SaveAsync(Data);
             if (flag) {
                 await _userSettings.UpdateRecentUsedAsync(filePath!);
             }
@@ -55,7 +57,8 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 await _session.DesignFileUtil.InitCacheAsync(Data.CanvasSize, businessData, layers);
             }
             else {
-                await Data.LoadAsync(_session);
+                var fileStratedy = InkFileStrategyFactory.GetStrategy(_session.DesignFileUtil.FType);
+                await fileStratedy.LoadAsync(Data);
             }
         }
 

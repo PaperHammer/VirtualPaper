@@ -1,5 +1,6 @@
 using System;
 using Microsoft.Graphics.Canvas;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
 using Windows.Graphics.DirectX;
 using Workloads.Creation.StaticImg.InkSystem.Utils;
@@ -21,8 +22,8 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
             SharedDevice = CanvasDevice.GetSharedDevice();
         }
 
-        public InkProjectSession(string idnetify) {
-            DesignFileUtil = StaticImgDesignFileUtil.Create(idnetify);
+        public InkProjectSession(string idnetify, FileType fileType) {
+            DesignFileUtil = StaticImgDesignFileUtil.Create(idnetify, fileType);
             Initialize();
         }
 

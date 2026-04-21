@@ -5,6 +5,7 @@ using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Files;
 
@@ -12,6 +13,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
     // Core part of StaticImgDesignFileUtil
     public partial class StaticImgDesignFileUtil {
         public string FilePath { get; private set; }
+        public FileType FType { get; private set; }
         public string FileName => Path.GetFileName(FilePath);
         public string FileNameWithoutEx => Path.GetFileNameWithoutExtension(FilePath);
         public bool IsValidFile => File.Exists(FilePath);
@@ -19,8 +21,9 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         public BusinessData BusinessDataCache => _businessDataCache;
         public List<Layer> LayesCache => _layersCache;
 
-        private StaticImgDesignFileUtil(string path) {
+        private StaticImgDesignFileUtil(string path, FileType fileType) {
             FilePath = Path.GetFullPath(path);
+            FType = fileType;
         }
 
         public async Task InitCacheAsync(
@@ -41,15 +44,15 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         /// <summary>
         /// 创建ProjectFile 自动区分路径和文件名
         /// </summary>
-        public static StaticImgDesignFileUtil Create(string idnetify) {
+        public static StaticImgDesignFileUtil Create(string idnetify, FileType fileType) {
             if (string.IsNullOrWhiteSpace(idnetify)) throw new ArgumentException("Input cannot be empty");
 
             if (FileUtil.IsValidFilePath(idnetify)) {
-                return new StaticImgDesignFileUtil(idnetify);
+                return new StaticImgDesignFileUtil(idnetify, fileType);
             }
 
             if (FileUtil.IsValidFileName(idnetify)) {                
-                return new StaticImgDesignFileUtil(Path.Combine(FileUtil.GetDocumentsDir(), idnetify));
+                return new StaticImgDesignFileUtil(Path.Combine(FileUtil.GetDocumentsDir(), idnetify), fileType);
             }
 
             throw new ArgumentException("Input is neither a valid path nor filename");

@@ -204,19 +204,22 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         private async Task InitRuntimeItemWithFileAsync(string filePath) {
             string extension = Path.GetExtension(filePath);
-            FileType rtFileType = FileFilter.GetRuntimeFileType(extension);
+            FileType fType = FileFilter.GetRuntimeFileType(extension);
 
-            switch (rtFileType) {
+            bool isSuccess;
+            switch (fType) {
                 case FileType.FImage:
-                    // var runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, filePath, rtFileType);
-                    // AddToWorkSpace(filePath, runtime, true); // true 表示来自现有文件
+                    isSuccess = await ReadImgFileAsync(filePath, fType);
+                    if (isSuccess && !_tempRecentUsed.Contains(filePath)) {
+                        _tempRecentUsed.Add(filePath);
+                    }
                     break;
                 //case FileType.FGif:
                 //    break;
                 //case FileType.FVideo:
                 //    break;
                 case FileType.FDesign:
-                    var isSuccess = await ReadDesignFileAsync(filePath);
+                    isSuccess = await ReadDesignFileAsync(filePath);
                     if (isSuccess && !_tempRecentUsed.Contains(filePath)) {
                         _tempRecentUsed.Add(filePath);
                     }
@@ -229,12 +232,23 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private void InitRuntimeItemWithIdentify(string fileName, ProjectType type) {
             switch (type) {
                 case ProjectType.P_StaticImage:
-                    AddToWorkSpace(fileName, false); // false 表示新建未保存
+                    AddToWorkSpace(fileName, FileType.FDesign, false); // false 表示新建未保存
                     break;
 
                 default:
                     break;
             }
+        }
+
+        private async Task<bool> ReadImgFileAsync(string filePath, FileType fType) {
+            var checked_type = FileFilter.GetFileType(filePath);
+            if (checked_type != fType) {
+                GlobalMessageUtil.ShowError(message: nameof(Constants.I18n.Project_SI_FileTypeMismatch), isNeedLocalizer: true, extraMsg: filePath);
+                return false;
+            }
+            AddToWorkSpace(filePath, fType, true);
+
+            return true;
         }
 
         private async Task<bool> ReadDesignFileAsync(string filePath) {
@@ -245,7 +259,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
             switch (header.ProjType) {
                 case ProjectType.P_StaticImage:
-                    AddToWorkSpace(filePath, true); // true 表示来自现有文件
+                    AddToWorkSpace(filePath, FileType.FDesign, true); // true 表示来自现有文件
                     break;
 
                 default:
@@ -255,9 +269,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             return true;
         }
 
-        private void AddToWorkSpace(string file, bool isFromFile) {
+        private void AddToWorkSpace(string file, FileType fileType, bool isFromFile) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
-                var runtime = new Workloads.Creation.StaticImg.MainPage(file);
+                var runtime = new Workloads.Creation.StaticImg.MainPage(file, fileType);
                 runtime.IsSavedChanged += Runtime_IsSavedChanged;
 
                 var header = new ArcTabViewItemHeader() {

@@ -1188,4 +1188,7 @@ The following words cannot be used as usernames:
   <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
     <value>Thickness (pixels)</value>
   </data>
+  <data name="Project_SI_FileTypeMismatch" xml:space="preserve">
+    <value>The file content is abnormal and cannot be opened</value>
+  </data>
 </root>

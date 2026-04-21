@@ -192,6 +192,7 @@ namespace VirtualPaper.Common {
             public static string? Project_Export_Failed { get; }
             public static string? Project_Export_PathNotBeNone { get; }
             public static string? Project_Export_InternalError { get; }
+            public static string? Project_SI_FileTypeMismatch { get; }
         }
 
         public static class Field {

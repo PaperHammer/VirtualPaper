@@ -167,7 +167,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
         internal void InitData() {
             UpdateCanvasSizeText();
-            AddLayer(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_Text_BackgroundLayer)), true);
+            AddLayer(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_Text_BackgroundLayer)), true, needRecord: false);
         }
 
         private void UpdateCanvasSizeText() {

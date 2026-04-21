@@ -212,7 +212,6 @@ namespace VirtualPaper.Common.Utils.UndoRedo {
         private bool _isDisposed;
         private TCommand? _savedCommand = default;
         private bool _savedAtEmpty = true;
-        private bool _lastIsSaved = true;
-        private readonly object _stateLock = new();
+        private bool _lastIsSaved = false;
     }
 }

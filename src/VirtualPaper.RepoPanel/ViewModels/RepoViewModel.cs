@@ -16,13 +16,13 @@ using VirtualPaper.Models.Mvvm;
 using VirtualPaper.PlayerWeb.Core.WebView.Windows;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.WpSettingsPanel.Utils;
-using VirtualPaper.WpSettingsPanel.Views;
+using VirtualPaper.RepoPanel.Utils;
+using VirtualPaper.RepoPanel.Views;
 using Windows.Storage;
 using WinUIEx;
 
-namespace VirtualPaper.WpSettingsPanel.ViewModels {
-    public partial class WpSettingsViewModel : ObservableObject {
+namespace VirtualPaper.RepoPanel.ViewModels {
+    public partial class RepoViewModel : ObservableObject {
         public ObservableCollection<IMonitor> Monitors { get; set; } = [];
         public List<WpArrangeDataModel> WpArrangements { get; set; } = [];
 
@@ -55,7 +55,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public ICommand? WpIdentifyCommand { get; private set; }
         public ICommand? WpAdjustCommand { get; private set; }
 
-        public WpSettingsViewModel(
+        public RepoViewModel(
             IMonitorManagerClient monitorManagerClient,
             IWallpaperControlClient wallpaperControlClient,
             IUserSettingsClient userSettingsClient) {
@@ -136,7 +136,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
         #endregion
 
-        public void RegisterLibraryContents(IFilterable filterable) {
+        public void RegisterChildContents(IFilterable filterable) {
             // 清理已死亡的引用
             _filterables.RemoveAll(x => !x.TryGetTarget(out _));
 
@@ -183,12 +183,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
             await dialog.ShowAsync();
 
-            var libViewModel = AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>();
+            var libViewModel = AppServiceLocator.Services.GetRequiredService<WallpaperContentsViewModel>();
             await libViewModel.DropFilesAsync(files);
         }
 
         internal async void UpdateWpArrange(int tag) {
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<Repo>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null) return;
 
@@ -214,7 +214,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         }
                     }
                     catch (Exception ex) {
-                        ArcLog.GetLogger<WpSettingsViewModel>().Error(ex);
+                        ArcLog.GetLogger<RepoViewModel>().Error(ex);
                     }
                     finally {
                         InitMonitors();
@@ -265,7 +265,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             if (Interlocked.Exchange(ref _canAdjust, 0) != 1) return;
             (WpAdjustCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<Repo>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null) return;
 
@@ -304,7 +304,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         adjustWindow.Activate();
                     }
                     catch (Exception ex) {
-                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                        ArcLog.GetLogger<WallpaperContentsViewModel>().Error(ex);
                         GlobalMessageUtil.ShowException(ex);
                     }
                 }, cts: ctsAdjust);

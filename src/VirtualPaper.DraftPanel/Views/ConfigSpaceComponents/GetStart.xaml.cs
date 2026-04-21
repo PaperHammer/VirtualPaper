@@ -78,7 +78,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         private async void BtnStartupOpen_Click(object sender, RoutedEventArgs e) {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[FileType.FDesign]],
+                [.. FileFilter.WpFileTypeToExtension[WpFileType.FDesign]],
                 true);
             OpenLocalFiles(storage);
         }
@@ -99,8 +99,8 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         private async void GridDrop_Drop(object sender, DragEventArgs e) {
             if (e.DataView.Contains(StandardDataFormats.StorageItems)) {
                 var items = await e.DataView.GetStorageItemsAsync();
-                var allowedExtensions = FileFilter.FileTypeToExtension[FileType.FImage]
-                    .Concat(FileFilter.FileTypeToExtension[FileType.FDesign]);
+                var allowedExtensions = FileFilter.WpFileTypeToExtension[WpFileType.FImage]
+                    .Concat(FileFilter.WpFileTypeToExtension[WpFileType.FDesign]);
 
                 var filteredItems = items
                     .OfType<IStorageFile>()

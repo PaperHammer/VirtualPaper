@@ -115,7 +115,7 @@ namespace VirtualPaper.Cores.WpControl {
             }
         }
 
-        public (string?, RuntimeType?) GetPrimaryWpFilePathRType() {
+        public (string?, WpRuntimeType?) GetPrimaryWpFilePathRType() {
             var playingData = _wallpapers.FirstOrDefault(x => x.Monitor.IsPrimary);
 
             return (playingData?.Data.FilePath, playingData?.Data.RType);
@@ -135,7 +135,7 @@ namespace VirtualPaper.Cores.WpControl {
 
         public string? GetPlayerStartArgs(IWpPlayerData data, CancellationToken token = default) {
             var wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, true, _monitorManager.PrimaryMonitor.Content);
-            DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
+            DataAssist.FromWpRuntimeDataGetWpPlayerData(data, wpRuntimeData);
 
             var startArgs = _wallpaperFactory.CreatePlayerStartArgs(data, true);
 
@@ -224,7 +224,7 @@ namespace VirtualPaper.Cores.WpControl {
             try {
                 ArcLog.GetLogger<WallpaperControl>().Info($"Setting wallpaper: {data.FilePath}");
 
-                if (data.RType == RuntimeType.RUnknown) {
+                if (data.RType == WpRuntimeType.RUnknown) {
                     throw new Exception("rtype error");
                 }
 
@@ -268,7 +268,7 @@ namespace VirtualPaper.Cores.WpControl {
                     else {
                         wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, false, monitor.Content);
                     }
-                    DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
+                    DataAssist.FromWpRuntimeDataGetWpPlayerData(data, wpRuntimeData);
                 }
                 int monitorIdx = _monitorManager.Monitors.FindIndex(x => x.DeviceId == monitor.DeviceId);
 
@@ -440,7 +440,7 @@ namespace VirtualPaper.Cores.WpControl {
         #region data
         public IWpBasicData CreateBasicData(
             string filePath,
-            FileType ftype,
+            WpFileType ftype,
             string? folderName = null,
             bool isAutoSave = true,
             CancellationToken token = default) {
@@ -513,7 +513,7 @@ namespace VirtualPaper.Cores.WpControl {
 
         public IWpBasicData CreateBasicDataInMem(
             string filePath,
-            FileType ftype,
+            WpFileType ftype,
             string? folderName = null,
             bool isAutoSave = true,
             CancellationToken token = default) {
@@ -621,7 +621,7 @@ namespace VirtualPaper.Cores.WpControl {
         public IWpRuntimeData CreateRuntimeData(
             string filePath,
             string folderPath,
-            RuntimeType rtype,
+            WpRuntimeType rtype,
             bool isPreview,
             string monitorContent) {
             WpRuntimeData data = new();
@@ -668,7 +668,7 @@ namespace VirtualPaper.Cores.WpControl {
                        rtype);
                 data.WpEffectFilePathUsing = wpEffectFilePathUsing;
 
-                if (rtype == RuntimeType.RImage3D) {
+                if (rtype == WpRuntimeType.RImage3D) {
                     var output = MiDaS.Run(filePath);
                     string depthFilePath = MiDaS.SaveDepthMap(output.Depth, output.Width, output.Height, output.OriginalWidth, output.OriginalHeight, folderPath);
                     data.DepthFilePath = depthFilePath;
@@ -692,7 +692,7 @@ namespace VirtualPaper.Cores.WpControl {
             string folderPath,
             string folderName,
             string filePath,
-            FileType ftype,
+            WpFileType ftype,
             CancellationToken token = default) {
             IWpBasicData newData = CreateBasicData(filePath, ftype, token: token, folderName: folderName, isAutoSave: false)
                 ?? throw new Exception("Create basic-data error");
@@ -725,7 +725,7 @@ namespace VirtualPaper.Cores.WpControl {
             }
         }
 
-        public FileProperty GetWpProperty(string filePath, FileType ftype) {
+        public FileProperty GetWpProperty(string filePath, WpFileType ftype) {
             return WallpaperUtil.GetWpProperty(filePath, ftype);
         }
 

@@ -32,7 +32,7 @@
                         Icon="Library"
                         IsSelected="True">
                     </NavigationViewItem>-->
-                    <NavigationViewItem x:Name="Nav_WpSettings" IsSelected="True">
+                    <NavigationViewItem x:Name="Nav_Repo" IsSelected="True">
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate x:DataType="local:MainWindow">
                                 <StackPanel Orientation="Vertical" Margin="-10,4,0,4">

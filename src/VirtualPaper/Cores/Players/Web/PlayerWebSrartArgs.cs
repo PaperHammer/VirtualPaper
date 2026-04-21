@@ -13,7 +13,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 FilePath = Data.FilePath,
                 WpBasicDataFilePath = Path.Combine(Data.FolderPath, Constants.Field.WpBasicDataFileName),
 
-                DepthFilePath = Data.RType == RuntimeType.RImage3D
+                DepthFilePath = Data.RType == WpRuntimeType.RImage3D
                     ? Data.DepthFilePath
                     : null,
 

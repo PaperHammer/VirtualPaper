@@ -25,13 +25,13 @@ using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
-using VirtualPaper.WpSettingsPanel.Utils;
+using VirtualPaper.RepoPanel.Utils;
 using Windows.Storage;
 using Windows.System.UserProfile;
 using WinUIEx;
 
-namespace VirtualPaper.WpSettingsPanel.ViewModels {
-    public partial class LibraryContentsViewModel : ObservableObject, IFilterable {
+namespace VirtualPaper.RepoPanel.ViewModels {
+    public partial class WallpaperContentsViewModel : ObservableObject, IFilterable {
         public ObservableCollection<IWpBasicData> LibraryWallpapers { get; private set; } = null!;
 
         private Brush _wpTitleForeground = new SolidColorBrush(Colors.White);
@@ -46,14 +46,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             set { _libLoadingStatus = value; OnPropertyChanged(); }
         }
 
-        public LibraryContentsViewModel(
+        public WallpaperContentsViewModel(
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient,
-            WpSettingsViewModel wpSettingsViewModel,
+            RepoViewModel repoViewModel,
             WallpaperIndexService wallpaperIndexService) {
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
-            _wpSettingsViewModel = wpSettingsViewModel;
+            _repoViewModel = repoViewModel;
             _wallpaperIndexService = wallpaperIndexService;
 
             InitEvent();
@@ -63,7 +63,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         private void InitOthers() {
             _wallpaperIndexService.Initialize(_wallpaperInstallFolders);
-            _wpSettingsViewModel.RegisterLibraryContents(this);
+            _repoViewModel.RegisterChildContents(this);
         }
 
         private void InitEvent() {
@@ -88,7 +88,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         internal async Task InitContentAsync() {
             if (_isInited) return;
 
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<Repo>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -113,7 +113,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         _isInited = true;
                     }
                     catch (Exception ex) {
-                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                        ArcLog.GetLogger<WallpaperContentsViewModel>().Error(ex);
                         GlobalMessageUtil.ShowException(ex);
                     }
                 });
@@ -129,7 +129,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
 
                 var onlyDetailWindow = data.FType switch {
-                    FileType.FImage or FileType.FGif or FileType.FVideo => new OnlyDetails(DataConfigTab.GeneralInfo, data),
+                    WpFileType.FImage or WpFileType.FGif or WpFileType.FVideo => new OnlyDetails(DataConfigTab.GeneralInfo, data),
                     _ => throw new NotImplementedException(),
                 };
                 onlyDetailWindow.Closed += (sender, args) => {
@@ -140,7 +140,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 onlyDetailWindow.Activate();
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                ArcLog.GetLogger<WallpaperContentsViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
             }
         }
@@ -155,7 +155,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
 
                 var editDetailWindow = data.FType switch {
-                    FileType.FImage or FileType.FGif or FileType.FVideo => new OnlyDetails(DataConfigTab.GeneralInfoEdit, data),
+                    WpFileType.FImage or WpFileType.FGif or WpFileType.FVideo => new OnlyDetails(DataConfigTab.GeneralInfoEdit, data),
                     _ => throw new NotImplementedException(),
                 };
                 editDetailWindow.Closed += (sender, args) => {
@@ -166,13 +166,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 editDetailWindow.Activate();
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                ArcLog.GetLogger<WallpaperContentsViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
             }
         }
 
         internal async Task UpdateAsync(IWpBasicData data) {
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<Repo>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -194,20 +194,20 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                         Grpc_WpBasicData grpc_basicData = await _wpControlClient.UpdateBasicDataAsync(data.FolderPath, data.FolderName, data.FilePath, data.FType)
                             ?? throw new Exception("Config update failed.");
-                        data = DataAssist.GrpcToBasicData(grpc_basicData);
+                        data = DataAssist.GrpcToWpBasicData(grpc_basicData);
                         UpdateLib(data);
 
                         GlobalMessageUtil.ShowSuccess(message: Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
                     }
                     catch (Exception ex) {
-                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                        ArcLog.GetLogger<WallpaperContentsViewModel>().Error(ex);
                         GlobalMessageUtil.ShowException(ex);
                     }
                 });
         }
 
         internal async Task PreviewAsync(IWpBasicData data) {
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<Repo>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -220,7 +220,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         await CheckFileUpdateAsync(data);
 
                         var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
-                        if (rtype == RuntimeType.RUnknown) return;
+                        if (rtype == WpRuntimeType.RUnknown) return;
 
                         if (_previews.TryGetValue((data.WallpaperUid, rtype), out var preview)) {
                             preview.Activate();
@@ -229,8 +229,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                         var jsonString = await _wpControlClient.GetPlayerStartArgsAsync(data, rtype, token);
                         var previewWindow = rtype switch {
-                            RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo => new PreviewWithWeb(jsonString),
-                            _ or RuntimeType.RUnknown => throw new NotImplementedException(),
+                            WpRuntimeType.RImage or WpRuntimeType.RImage3D or WpRuntimeType.RVideo => new PreviewWithWeb(jsonString),
+                            _ or WpRuntimeType.RUnknown => throw new NotImplementedException(),
                         };
                         previewWindow.Closed += (sender, args) => {
                             _previews.Remove((data.WallpaperUid, rtype));
@@ -239,7 +239,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                             previewWindow.Close();
 
                             Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
-                                _wpSettingsViewModel.Monitors[_wpSettingsViewModel.SelectedMonitorIndex],
+                                _repoViewModel.Monitors[_repoViewModel.SelectedMonitorIndex],
                                 data,
                                 rtype,
                                 token);
@@ -257,14 +257,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         GlobalMessageUtil.ShowCanceled();
                     }
                     catch (Exception ex) {
-                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                        ArcLog.GetLogger<WallpaperContentsViewModel>().Error(ex);
                         GlobalMessageUtil.ShowException(ex);
                     }
                 }, cts: ctsPreview);
         }
 
         internal async Task ApplyAsync(IWpBasicData data) {
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<Repo>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -277,10 +277,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         await CheckFileUpdateAsync(data);
 
                         var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
-                        if (rtype == RuntimeType.RUnknown) return;
+                        if (rtype == WpRuntimeType.RUnknown) return;
 
                         Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
-                            _wpSettingsViewModel.Monitors[_wpSettingsViewModel.SelectedMonitorIndex],
+                            _repoViewModel.Monitors[_repoViewModel.SelectedMonitorIndex],
                             data,
                             rtype,
                             token);
@@ -294,14 +294,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         GlobalMessageUtil.ShowCanceled();
                     }
                     catch (Exception ex) {
-                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                        ArcLog.GetLogger<WallpaperContentsViewModel>().Error(ex);
                         GlobalMessageUtil.ShowException(ex);
                     }
                 }, cts: ctsApply);
         }
 
         internal async Task ApplyToLockBGAsync(IWpBasicData data) {
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<Repo>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -312,7 +312,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     try {
                         if (!data.IsAvailable()) return;
 
-                        if (data.FType != FileType.FImage && data.FType != FileType.FGif) {
+                        if (data.FType != WpFileType.FImage && data.FType != WpFileType.FGif) {
                             GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_OnlyPictureAndGif, isNeedLocalizer: true);
                             return;
                         }
@@ -323,7 +323,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         GlobalMessageUtil.ShowSuccess(Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
                     }
                     catch (Exception ex) {
-                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                        ArcLog.GetLogger<WallpaperContentsViewModel>().Error(ex);
                         GlobalMessageUtil.ShowException(ex);
                     }
                 }, cts: ctsApplyLockBG);
@@ -350,7 +350,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                ArcLog.GetLogger<WallpaperContentsViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
             }
         }
@@ -374,7 +374,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal async Task DropFilesAsync(IReadOnlyList<IStorageItem> items) {
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<Repo>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -387,14 +387,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         await ImportAsync(importValues);
                     }
                     catch (Exception ex) {
-                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                        ArcLog.GetLogger<WallpaperContentsViewModel>().Error(ex);
                         GlobalMessageUtil.ShowException(ex);
                     }
                 }, cts: ctsImport);
         }
 
         private async Task ImportAsync(List<ImportValue> importValues) {
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            var ctx = ArcPageContextManager.GetContext<Repo>();
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -408,7 +408,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         try {
                             token.ThrowIfCancellationRequested();
 
-                            if (importValue.FType != FileType.FUnknown) {
+                            if (importValue.FType != WpFileType.FUnknown) {
                                 var grpcData = await _wpControlClient.CreateBasicDataAsync(
                                     importValue.FilePath,
                                     importValue.FType,
@@ -416,26 +416,26 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                                 if (grpcData == null) {
                                     GlobalMessageUtil.ShowError(
-                                        Constants.I18n.InfobarMsg_ImportErr,
+                                        nameof(Constants.I18n.InfobarMsg_ImportErr),
                                         isNeedLocalizer: true,
                                         extraMsg: importValue.FilePath);
                                     return;
                                 }
 
-                                var data = DataAssist.GrpcToBasicData(grpcData);
+                                var data = DataAssist.GrpcToWpBasicData(grpcData);
                                 if (data.IsAvailable()) {
                                     UpdateLib(data);
                                 }
                                 else {
                                     GlobalMessageUtil.ShowError(
-                                        Constants.I18n.InfobarMsg_ImportErr,
+                                        nameof(Constants.I18n.InfobarMsg_ImportErr),
                                         isNeedLocalizer: true,
                                         extraMsg: importValue.FilePath);
                                 }
                             }
                             else {
                                 GlobalMessageUtil.ShowError(
-                                    Constants.I18n.Dialog_Content_Import_Failed_Lib,
+                                    nameof(Constants.I18n.Dialog_Content_Import_Failed_For_Wp),
                                     isNeedLocalizer: true,
                                     extraMsg: importValue.FilePath);
                             }
@@ -449,34 +449,34 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                             return;
                         }
                         catch (Exception ex) {
-                            ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                            ArcLog.GetLogger<WallpaperContentsViewModel>().Error(ex);
                             GlobalMessageUtil.ShowException(ex);
                         }
                     }
                 }, total: importValues.Count, cts: ctsImport);
         }
 
-        private async Task<RuntimeType> GetWallpaperRTypeByFTypeAsync(FileType ftype) {
+        private async Task<WpRuntimeType> GetWallpaperRTypeByFTypeAsync(WpFileType ftype) {
             switch (ftype) {
-                case FileType.FImage:
-                case FileType.FGif:
+                case WpFileType.FImage:
+                case WpFileType.FGif:
                     var wpCreateDialogViewModel = new WallpaperCreateViewModel();
                     var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
                         new WallpaperCreateView(wpCreateDialogViewModel),
                         LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_CreateType),
                         LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
                         LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
-                    if (dialogRes != DialogResult.Primary) return RuntimeType.RUnknown;
+                    if (dialogRes != DialogResult.Primary) return WpRuntimeType.RUnknown;
 
                     return wpCreateDialogViewModel.SelectedItem.CreateType switch {
-                        WallpaperCreateType.Img => RuntimeType.RImage,
-                        WallpaperCreateType.DepthImg => RuntimeType.RImage3D,
-                        _ => RuntimeType.RUnknown,
+                        WallpaperCreateType.Img => WpRuntimeType.RImage,
+                        WallpaperCreateType.DepthImg => WpRuntimeType.RImage3D,
+                        _ => WpRuntimeType.RUnknown,
                     };
-                case FileType.FVideo:
-                    return RuntimeType.RVideo;
+                case WpFileType.FVideo:
+                    return WpRuntimeType.RVideo;
                 default:
-                    return RuntimeType.RUnknown;
+                    return WpRuntimeType.RUnknown;
             }
         }
 
@@ -510,7 +510,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                 try {
                     if (item is StorageFile file) {
-                        importRes.Add(new(file.Path, FileFilter.GetFileType(file.Path)));
+                        importRes.Add(new(file.Path, FileFilter.GetWpFileType(file.Path)));
                     }
                     else if (item is StorageFolder folder) {
                         var subItems = await folder.GetItemsAsync();
@@ -580,7 +580,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                ArcLog.GetLogger<WallpaperContentsViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
             }
             finally {
@@ -589,21 +589,21 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
         #endregion
 
-        private struct ImportValue(string filePath, FileType ftype) {
+        private struct ImportValue(string filePath, WpFileType ftype) {
             internal string FilePath { get; set; } = filePath;
-            internal FileType FType { get; set; } = ftype;
+            internal WpFileType FType { get; set; } = ftype;
         }
 
         private int _offset = 0;
         private readonly int _limit = 30;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
-        private readonly WpSettingsViewModel _wpSettingsViewModel;
+        private readonly RepoViewModel _repoViewModel;
         private readonly WallpaperIndexService _wallpaperIndexService;
         private List<string> _wallpaperInstallFolders = [];
         private readonly Dictionary<string, ArcWindow> _details = [];
         private readonly Dictionary<string, ArcWindow> _edits = [];
-        private readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];
+        private readonly Dictionary<(string uid, WpRuntimeType rtype), ArcWindow> _previews = [];
         private List<IWpBasicData> _libraryWallpapers = [];
         private bool _isInited;
     }

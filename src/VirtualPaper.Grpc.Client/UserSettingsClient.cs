@@ -146,7 +146,7 @@ namespace VirtualPaper.Grpc.Client {
             var wpLayouts = new List<IRecentUsed>();
             var resp = await _client.GetRecentUsedsAsync(new Empty());
             foreach (var item in resp.RecentUseds) {
-                wpLayouts.Add(new RecentUsed((FileType)item.FType, item.FileName, item.FilePath, item.DateTime));
+                wpLayouts.Add(new RecentUsed((WpFileType)item.FType, item.FileName, item.FilePath, item.DateTime));
             }
             return wpLayouts;
         }
@@ -208,7 +208,7 @@ namespace VirtualPaper.Grpc.Client {
             }
             else {
                 targetItem = new RecentUsed(
-                    FileFilter.GetRuntimeFileType(Path.GetExtension(filePath)),
+                    FileFilter.GetWpFileTypeWithExt(Path.GetExtension(filePath)),
                     Path.GetFileName(filePath),
                     filePath,
                     now

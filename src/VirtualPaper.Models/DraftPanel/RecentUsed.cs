@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Cores.Interfaces;
 
@@ -10,7 +10,7 @@ namespace VirtualPaper.Models.DraftPanel {
     public partial class RecentUsedContext : JsonSerializerContext { }
 
     public class RecentUsed : IRecentUsed {
-        public FileType Type { get; init; }
+        public WpFileType Type { get; init; }
         [JsonIgnore]
         public string Glyph => GetGlyphByType(Type);
         public string FileName { get; init; } = string.Empty;
@@ -18,17 +18,17 @@ namespace VirtualPaper.Models.DraftPanel {
         public string DateTime { get; set; } = string.Empty;
 
         [JsonConstructor]
-        public RecentUsed(FileType type, string fileName, string filePath, string dateTime) {
+        public RecentUsed(WpFileType type, string fileName, string filePath, string dateTime) {
             Type = type;
             FileName = fileName;
             FilePath = filePath;
             DateTime = dateTime;
         }
 
-        private static string GetGlyphByType(FileType type) {
+        private static string GetGlyphByType(WpFileType type) {
             return type switch {
-                FileType.FDesign => "\uEB3C",
-                FileType.FImage => "\uEC88",
+                WpFileType.FDesign => "\uEB3C",
+                WpFileType.FImage => "\uEC88",
                 _ => string.Empty,
             };
         }

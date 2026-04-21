@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Cores.Interfaces;
 
-namespace VirtualPaper.WpSettingsPanel.Utils {
+namespace VirtualPaper.RepoPanel.Utils {
     public sealed class WallpaperIndexService {
         public TaskCompletionSource<bool> Initialized { get; } = new();
 

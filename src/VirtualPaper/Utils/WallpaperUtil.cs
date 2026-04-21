@@ -44,22 +44,22 @@ namespace VirtualPaper.Utils {
 
         internal static string CreateWpEffectFileTemplate(
             string folderPath,
-            RuntimeType rtype) {
+            WpRuntimeType rtype) {
             string wpEffectFilePathTemplate = Path.Combine(folderPath, Constants.Field.WpEffectFilePathTemplate);
             if (!File.Exists(wpEffectFilePathTemplate)) {
                 File.Create(wpEffectFilePathTemplate).Close();
             }
 
             switch (rtype) {
-                case RuntimeType.RImage:
+                case WpRuntimeType.RImage:
                     PictureAndGifCostumise pictureAndGifCostumize = new();
                     JsonSaver.Save(wpEffectFilePathTemplate, pictureAndGifCostumize, PictureAndGifCostumiseContext.Default);
                     break;
-                case RuntimeType.RImage3D:
+                case WpRuntimeType.RImage3D:
                     Picture3DCostumize picture3DCostumize = new();
                     JsonSaver.Save(wpEffectFilePathTemplate, picture3DCostumize, Picture3DCostumizeContext.Default);
                     break;
-                case RuntimeType.RVideo:
+                case WpRuntimeType.RVideo:
                     VideoCostumize videoCostumize = new();
                     JsonSaver.Save(wpEffectFilePathTemplate, videoCostumize, VideoCostumizeContext.Default);
                     break;
@@ -75,7 +75,7 @@ namespace VirtualPaper.Utils {
             string folderPath,
             string wpEffectFilePathTemplate,
             string monitorContent,
-            RuntimeType rtype) {
+            WpRuntimeType rtype) {
             string filePath = string.Empty;
             if (wpEffectFilePathTemplate != null) {
                 string wpRuntimeDataFolder = Path.Combine(folderPath, monitorContent, rtype.ToString());
@@ -87,7 +87,7 @@ namespace VirtualPaper.Utils {
             return filePath;
         }
 
-        internal static void CreateGif(string filePath, string thuFilePath, FileType ftype, CancellationToken token) {
+        internal static void CreateGif(string filePath, string thuFilePath, WpFileType ftype, CancellationToken token) {
             Mat ResizeTo1080p(Mat img) {
                 Size newSize = new(Math.Min(img.Cols, 960), Math.Min(img.Rows, 600));
                 Mat resizedImg = new();
@@ -96,7 +96,7 @@ namespace VirtualPaper.Utils {
                 return resizedImg;
             }
 
-            if (ftype == FileType.FImage) {
+            if (ftype == WpFileType.FImage) {
                 using var bitmap = new Bitmap(filePath);
                 using var mat = BitmapConverter.ToMat(bitmap);
                 using var resizedMat = ResizeTo1080p(mat);
@@ -104,7 +104,7 @@ namespace VirtualPaper.Utils {
                 resizedBitmap.Save(thuFilePath);
                 return;
             }
-            else if (ftype == FileType.FGif) {
+            else if (ftype == WpFileType.FGif) {
                 using var gifStream = File.OpenRead(filePath);
                 var decoder = new GifBitmapDecoder(gifStream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.Default);
                 var frames = decoder.Frames.Select(f => {
@@ -114,7 +114,7 @@ namespace VirtualPaper.Utils {
                 SaveGifFrames(frames, thuFilePath);
                 return;
             }
-            else if (ftype == FileType.FVideo) {
+            else if (ftype == WpFileType.FVideo) {
                 using var cap = new VideoCapture(filePath);
                 if (!cap.IsOpened()) {
                     throw new Exception("Failed to open video file.");
@@ -174,9 +174,9 @@ namespace VirtualPaper.Utils {
             }
         }
 
-        //internal static void CreateGif(string filePath, string thuFilePath, FileType ftype, CancellationToken token) {
+        //internal static void CreateGif(string filePath, string thuFilePath, WpFileType ftype, CancellationToken token) {
         //    GifBitmapEncoder gEnc = new();
-        //    if (ftype == FileType.FImage) {
+        //    if (ftype == WpFileType.FImage) {
         //        Bitmap bitmap = new(filePath);
         //        var src = Imaging.CreateBitmapSourceFromHBitmap(
         //            bitmap.GetHbitmap(),
@@ -186,7 +186,7 @@ namespace VirtualPaper.Utils {
         //        gEnc.Frames.Add(BitmapFrame.Create(src));
         //        bitmap.Dispose();
         //    }
-        //    else if (ftype == FileType.FVideo || ftype == FileType.FGif) {
+        //    else if (ftype == WpFileType.FVideo || ftype == WpFileType.FGif) {
         //        using var cap = new VideoCapture(filePath);
         //        if (!cap.IsOpened()) {
         //            throw new Exception("An Error occoured");
@@ -233,7 +233,7 @@ namespace VirtualPaper.Utils {
         //    File.WriteAllBytes(thuFilePath, [.. newBytes]);
         //}
 
-        internal static FileProperty GetWpProperty(string filePath, FileType ftype) {
+        internal static FileProperty GetWpProperty(string filePath, WpFileType ftype) {
             FileProperty fileProperty = new() {
                 FileExtension = Path.GetExtension(filePath)
             };
@@ -244,7 +244,7 @@ namespace VirtualPaper.Utils {
             else fileProperty.FileSize = (fileInfo.Length / 1024.0 / 1024.0).ToString("0.00") + " MB";
 
             switch (ftype) {
-                case FileType.FVideo or FileType.FGif: {
+                case WpFileType.FVideo or WpFileType.FGif: {
                         using var capture = new VideoCapture(filePath);
                         if (!capture.IsOpened()) throw new();
 
@@ -260,7 +260,7 @@ namespace VirtualPaper.Utils {
 
                         break;
                     }
-                case FileType.FImage: {
+                case WpFileType.FImage: {
                         using var img = new Mat(filePath);
 
                         Size sz = img.Size();

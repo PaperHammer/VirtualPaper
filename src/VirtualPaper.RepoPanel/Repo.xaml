@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <arc:ArcPage
-    x:Class="VirtualPaper.WpSettingsPanel.WpSettings"
+    x:Class="VirtualPaper.RepoPanel.Repo"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:VirtualPaper.WpSettingsPanel"
+    xmlns:local="using:VirtualPaper.RepoPanel"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:models="using:VirtualPaper.Models.Cores.Interfaces"
-    xmlns:localViewModel="using:VirtualPaper.WpSettingsPanel.ViewModels"
-    xmlns:localUtils="using:VirtualPaper.WpSettingsPanel.Utils"
+    xmlns:localViewModel="using:VirtualPaper.RepoPanel.ViewModels"
+    xmlns:localUtils="using:VirtualPaper.RepoPanel.Utils"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
@@ -24,11 +24,13 @@
             IsSettingsVisible="False"
             SelectionChanged="NvLocal_SelectionChanged">
             <NavigationView.MenuItems>
-                <NavigationViewItem x:Name="Nav_LibraryContents"
-                    Content="{markup:I18n Key=WpSettings_NavTitle_LibraryContents}"
+                <NavigationViewItem x:Name="Nav_WallpaperContents"
+                    Content="{markup:I18n Key=Repo_NavTitle_WallpaperContents}"
                     IsSelected="True"/>
+                <NavigationViewItem x:Name="Nav_DeskPetContents"
+                    Content="{markup:I18n Key=Repo_NavTitle_DeskPetContents}"/>
                 <NavigationViewItem x:Name="Nav_ScreenSaver"
-                    Content="{markup:I18n Key=WpSettings_NavTitle_ScrSettings}"/>
+                    Content="{markup:I18n Key=Repo_NavTitle_ScrSettings}"/>
             </NavigationView.MenuItems>
 
             <NavigationView.PaneFooter>
@@ -42,7 +44,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         TextChanged="OnFilterChanged"
-                        IsEnabled="{x:Bind Nav_LibraryContents.IsSelected, Mode=OneWay}"/>
+                        IsEnabled="{x:Bind Nav_WallpaperContents.IsSelected, Mode=OneWay}"/>
                     
                     <Button x:Name="AddToLib"
                         Padding="12 5 11 5"

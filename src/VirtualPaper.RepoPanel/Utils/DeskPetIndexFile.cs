@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -7,15 +7,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
-using VirtualPaper.Models.Cores;
+using VirtualPaper.Models.RepoPanel;
 
-namespace VirtualPaper.WpSettingsPanel.Utils {
-    public class WallpaperIndexFile {
+namespace VirtualPaper.RepoPanel.Utils {
+    public class DeskPetIndexFile {
         public int Version { get; set; } = 1;
-        public List<WallpaperIndexEntry> Items { get; set; } = new();
+        public List<DeskPetIndexEntry> Items { get; set; } = new();
 
         public async Task RebuildIndexAsync(IEnumerable<string> storeDirs, CancellationToken token = default) {
-            var items = new ConcurrentBag<WallpaperIndexEntry>();
+            var items = new ConcurrentBag<DeskPetIndexEntry>();
 
             var folders = storeDirs
                 .SelectMany(dir => {
@@ -30,15 +30,15 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
             };
 
             await Parallel.ForEachAsync(folders, parallelOptions, async (folder, ct) => {
-                var jsonPath = Path.Combine(folder.FullName, Constants.Field.WpBasicDataFileName);
+                var jsonPath = Path.Combine(folder.FullName, Constants.Field.DpBasicDataFileName);
                 if (!File.Exists(jsonPath)) return;
 
-                var data = await JsonSaver.LoadAsync<WpBasicData>(jsonPath, WpBasicDataContext.Default);
+                var data = await JsonSaver.LoadAsync<DpBasicData>(jsonPath, DpBasicDataContext.Default);
 
                 if (!data.IsAvailable()) return;
 
-                var entry = new WallpaperIndexEntry {
-                    Uid = data.WallpaperUid,
+                var entry = new DeskPetIndexEntry {
+                    Uid = data.Uid,
                     FolderPath = data.FolderPath,
                     JsonPath = jsonPath,
                     CreateTime = data.CreatedTime,

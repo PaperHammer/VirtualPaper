@@ -8,9 +8,9 @@ namespace VirtualPaper.Factories {
     public class WallpaperFactory : IWallpaperFactory {
         public IWpPlayer CreatePlayer(IWpPlayerData data, IMonitor? monitor, bool isPreview = false) {
             switch (data.RType) {
-                case RuntimeType.RImage:
-                case RuntimeType.RImage3D:
-                case RuntimeType.RVideo: {
+                case WpRuntimeType.RImage:
+                case WpRuntimeType.RImage3D:
+                case WpRuntimeType.RVideo: {
                         return new WpPlayerWeb(data, monitor, isPreview);
                     }
 
@@ -108,7 +108,7 @@ namespace VirtualPaper.Factories {
 
         public string? CreatePlayerStartArgs(IWpPlayerData data, bool isPreview) {
             return data.RType switch {
-                RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo => new PlayerWebSrartArgs(data, isPreview).ToJson(),
+                WpRuntimeType.RImage or WpRuntimeType.RImage3D or WpRuntimeType.RVideo => new PlayerWebSrartArgs(data, isPreview).ToJson(),
                 _ => null
             };
         }

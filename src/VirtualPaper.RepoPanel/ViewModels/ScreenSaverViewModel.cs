@@ -17,7 +17,7 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 
-namespace VirtualPaper.WpSettingsPanel.ViewModels {
+namespace VirtualPaper.RepoPanel.ViewModels {
     public partial class ScreenSaverViewModel : ObservableObject, IDisposable {
         private string _screenSaverState = string.Empty;
         public string ScreenSaverStatu {

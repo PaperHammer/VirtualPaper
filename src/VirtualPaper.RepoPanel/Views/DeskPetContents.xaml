@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <arc:ArcPage
-    x:Class="VirtualPaper.WpSettingsPanel.Views.LibraryContents"
+    x:Class="VirtualPaper.RepoPanel.Views.DeskPetContents"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:VirtualPaper.WpSettingsPanel.Views"
+    xmlns:local="using:VirtualPaper.RepoPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:models="using:VirtualPaper.Models.Cores.Interfaces"
+    xmlns:models="using:VirtualPaper.Models.RepoPanel.Interfaces"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
-    NavigationCacheMode="Enabled"
-    x:Name="rootPage">
+    NavigationCacheMode="Enabled">
 
     <arc:ArcPage.Resources>
         <Style x:Key="LibGridViewItemStyle" TargetType="GridViewItem">
@@ -41,14 +40,14 @@
             </Setter>
         </Style>
 
-        <DataTemplate x:Key="WallpaperItemTemplate" x:DataType="models:IWpBasicData">
+        <DataTemplate x:Key="DeskPetItemTemplate" x:DataType="models:IDpBasicData">
             <Grid
                 Width="320"
                 Height="200"
                 CornerRadius="8"
-                ContextFlyout="{StaticResource WallpaperContextFlyout}">
+                ContextFlyout="{StaticResource DeskPetContextFlyout}">
 
-                <Image 
+                <!--<Image 
                     Source="{x:Bind ThumbnailPath}"
                     Stretch="UniformToFill"
                     ImageFailed="Image_ImageFailed"/>
@@ -62,20 +61,20 @@
                         Text="{x:Bind Title, Mode=OneWay}"
                         MaxLines="2"
                         FontSize="16"
-                        Foreground="{Binding DataContext.WpTitleForeground, ElementName=rootPage}"
+                        Foreground="{Binding DataContext.DpTitleForeground, ElementName=rootPage}"
                         TextTrimming="CharacterEllipsis"/>
-                </Border>
+                </Border>-->
             </Grid>
         </DataTemplate>
 
-        <ItemsPanelTemplate x:Key="WallpaperItemsPanel">
+        <ItemsPanelTemplate x:Key="DeskPetItemsPanel">
             <ItemsWrapGrid x:Name="InternalItemsWrapGrid"
                 Orientation="Horizontal" 
                 VerticalAlignment="Top"
                 HorizontalAlignment="Center"/>
         </ItemsPanelTemplate>
 
-        <MenuFlyout x:Key="WallpaperContextFlyout" ShowMode="Transient">
+        <MenuFlyout x:Key="DeskPetContextFlyout" ShowMode="Transient">
             <MenuFlyoutItem
                 Tag="Details"
                 Text="{markup:I18n Key=Text_Details}"
@@ -116,14 +115,6 @@
                     <FontIcon Glyph="&#xE8FB;" />
                 </MenuFlyoutItem.Icon>
             </MenuFlyoutItem>
-            <MenuFlyoutItem 
-                Tag="LockBackground" 
-                Text="{markup:I18n Key=Text_ApplyToLockBG}"
-                Click="ContextMenu_Click" >
-                <MenuFlyoutItem.Icon>
-                    <FontIcon Glyph="&#xEE3F;" />
-                </MenuFlyoutItem.Icon>
-            </MenuFlyoutItem>
             <MenuFlyoutItem
                 Tag="ShowOnDisk"
                 Text="{markup:I18n Key=Text_ShowOnDisk}"
@@ -144,26 +135,26 @@
     </arc:ArcPage.Resources>
 
     <ScrollView Padding="0 0 16 0" Margin="0 0 0 20"
-         ViewChanged="WallpaperLibScrollViewer_ViewChanged">
+        ViewChanged="DeskPetLibScrollViewer_ViewChanged">
         <StackPanel
             Orientation="Vertical"
             Spacing="8">
-            <GridView x:Name="wallpapersLibView"
+            <GridView x:Name="deskPetsLibView"
                 Margin="5 0 5 10"
                 DataContext="{x:Bind _viewModel}"
-                ItemsSource="{x:Bind _viewModel.LibraryWallpapers}"
+                ItemsSource="{x:Bind _viewModel.LibraryDeskPets}"
                 Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                 AllowDrop="True"
-                DragOver="WallpapersLibView_DragOver"
-                Drop="WallpapersLibView_Drop"
+                DragOver="DeskPetsLibView_DragOver"
+                Drop="DeskPetsLibView_Drop"
                 HorizontalAlignment="Stretch"
                 VerticalContentAlignment="Stretch"
-                ItemClick="WallpapersLibView_ItemClick"
+                ItemClick="DeskPetsLibView_ItemClick"
                 IsItemClickEnabled="True"
                 ItemContainerStyle="{StaticResource LibGridViewItemStyle}"
-                ItemTemplate="{StaticResource WallpaperItemTemplate}"
-                ItemsPanel="{StaticResource WallpaperItemsPanel}"                      
-                PreviewKeyDown="WallpapersLibView_PreviewKeyDown">
+                ItemTemplate="{StaticResource DeskPetItemTemplate}"
+                ItemsPanel="{StaticResource DeskPetItemsPanel}"                      
+                PreviewKeyDown="DeskPetsLibView_PreviewKeyDown">
             </GridView>
 
             <Grid HorizontalAlignment="Center">

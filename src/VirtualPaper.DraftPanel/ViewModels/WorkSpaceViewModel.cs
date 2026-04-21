@@ -204,18 +204,18 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         private async Task InitRuntimeItemWithFileAsync(string filePath) {
             string extension = Path.GetExtension(filePath);
-            FileType rtFileType = FileFilter.GetRuntimeFileType(extension);
+            WpFileType rtFileType = FileFilter.GetWpFileTypeWithExt(extension);
 
             switch (rtFileType) {
-                case FileType.FImage:
+                case WpFileType.FImage:
                     // var runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, filePath, rtFileType);
                     // AddToWorkSpace(filePath, runtime, true); // true 表示来自现有文件
                     break;
-                //case FileType.FGif:
+                //case WpFileType.FGif:
                 //    break;
-                //case FileType.FVideo:
+                //case WpFileType.FVideo:
                 //    break;
-                case FileType.FDesign:
+                case WpFileType.FDesign:
                     var isSuccess = await ReadDesignFileAsync(filePath);
                     if (isSuccess && !_tempRecentUsed.Contains(filePath)) {
                         _tempRecentUsed.Add(filePath);

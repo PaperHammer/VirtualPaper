@@ -12,33 +12,33 @@ using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.WpSettingsPanel.ViewModels;
+using VirtualPaper.RepoPanel.ViewModels;
 using Windows.ApplicationModel.DataTransfer;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace VirtualPaper.WpSettingsPanel.Views {
+namespace VirtualPaper.RepoPanel.Views {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class LibraryContents : ArcPage {
-        public override Type ArcType => typeof(LibraryContents);
+    public sealed partial class WallpaperContents : ArcPage {
+        public override Type ArcType => typeof(WallpaperContents);
 
-        public LibraryContents() {
+        public WallpaperContents() {
             this.InitializeComponent();
-            this.Loaded += LibraryContents_Loaded;
-            this.Unloaded += LibraryContents_Unloaded;
-            _viewModel = AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>();
+            this.Loaded += WallpaperContents_Loaded;
+            this.Unloaded += WallpaperContents_Unloaded;
+            _viewModel = AppServiceLocator.Services.GetRequiredService<WallpaperContentsViewModel>();
             this.DataContext = _viewModel;
         }
 
-        private void LibraryContents_Loaded(object sender, RoutedEventArgs e) {
+        private void WallpaperContents_Loaded(object sender, RoutedEventArgs e) {
             this.DataContext = _viewModel;
         }
 
-        private void LibraryContents_Unloaded(object sender, RoutedEventArgs e) {
-            this.Unloaded -= LibraryContents_Unloaded;
+        private void WallpaperContents_Unloaded(object sender, RoutedEventArgs e) {
+            this.Unloaded -= WallpaperContents_Unloaded;
             this.DataContext = null;           
         }
 
@@ -49,7 +49,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private void Image_ImageFailed(object sender, ExceptionRoutedEventArgs e) {
             // TODO 兜底图片
-            ArcLog.GetLogger<LibraryContents>().Error($"RImage loading failed: {e.ErrorMessage}");
+            ArcLog.GetLogger<WallpaperContents>().Error($"RImage loading failed: {e.ErrorMessage}");
         }
 
         private async void WallpapersLibView_ItemClick(object sender, ItemClickEventArgs e) {
@@ -94,7 +94,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             }
             catch (Exception ex) {
                 GlobalMessageUtil.ShowException(ex);
-                ArcLog.GetLogger<LibraryContents>().Error(ex);
+                ArcLog.GetLogger<WallpaperContents>().Error(ex);
             }
         }
 
@@ -175,7 +175,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             }
         }
 
-        private readonly LibraryContentsViewModel _viewModel;
+        private readonly WallpaperContentsViewModel _viewModel;
     }
 
     sealed record ScaleAnimationContext(Visual Visual, Vector3KeyFrameAnimation ScaleToNormal, Vector3KeyFrameAnimation ScaleToHover);

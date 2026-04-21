@@ -37,7 +37,7 @@ namespace VirtualPaper.Cores.WpControl {
         #region wallpaper actions
         void CloseAllWallpapers();
         void CloseWallpaper(IMonitor monitor);
-        (string?, RuntimeType?) GetPrimaryWpFilePathRType();
+        (string?, WpRuntimeType?) GetPrimaryWpFilePathRType();
         IWpMetadata GetWallpaperByFolderPath(string folderPath, string monitorContent, string rtype);
         IWpBasicData GetWpBasicDataByForlderPath(string folderPath);
         string GetPlayerStartArgsInRunning(string monitorId);
@@ -51,17 +51,17 @@ namespace VirtualPaper.Cores.WpControl {
         #endregion
 
         #region data
-        IWpBasicData CreateBasicData(string filePath, FileType ftype, string? folderName = null, bool isAutoSave = true, CancellationToken token = default);
-        IWpBasicData CreateBasicDataInMem(string filePath, FileType ftype, string? folderName = null, bool isAutoSave = true, CancellationToken token = default);
-        IWpRuntimeData CreateRuntimeData(string filePath, string folderPath, RuntimeType rtype, bool isPreview, string monitorContent);
-        Task<IWpBasicData> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype, CancellationToken token = default);
+        IWpBasicData CreateBasicData(string filePath, WpFileType ftype, string? folderName = null, bool isAutoSave = true, CancellationToken token = default);
+        IWpBasicData CreateBasicDataInMem(string filePath, WpFileType ftype, string? folderName = null, bool isAutoSave = true, CancellationToken token = default);
+        IWpRuntimeData CreateRuntimeData(string filePath, string folderPath, WpRuntimeType rtype, bool isPreview, string monitorContent);
+        Task<IWpBasicData> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, WpFileType ftype, CancellationToken token = default);
         #endregion
 
         #region utils
         //nint GetWorkWHwnd();
         //nint GetProgmanHwnd();
         void ChangeWallpaperLayoutFolrderPath(string previousDir, string newDir);
-        FileProperty GetWpProperty(string filePath, FileType ftype);
+        FileProperty GetWpProperty(string filePath, WpFileType ftype);
         Grpc_MonitorData GetRunMonitorByWallpaper(string wpUid);
         #endregion
     }

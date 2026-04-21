@@ -18,7 +18,7 @@ namespace VirtualPaper.Models.Cores {
         public string WpEffectFilePathTemplate { get; set; } = string.Empty;
         public string WpEffectFilePathUsing { get; set; } = string.Empty;
         public string WpEffectFilePathTemporary { get; set; } = string.Empty;
-        public RuntimeType RType { get; set; } = RuntimeType.RUnknown;
+        public WpRuntimeType RType { get; set; } = WpRuntimeType.RUnknown;
 
         public void Read(string filePath) {
             var data = JsonSaver.Load<WpRuntimeData>(filePath, WpRuntimeDataContext.Default);

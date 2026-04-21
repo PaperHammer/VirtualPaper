@@ -1,4 +1,4 @@
-﻿using VirtualPaper.Common;
+using VirtualPaper.Common;
 
 namespace VirtualPaper.Models.Cores.Interfaces {
     public interface IWpRuntimeData {
@@ -13,7 +13,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         string WpEffectFilePathTemplate { get; set; } // 还原到最初
         string WpEffectFilePathUsing { get; set; } // 还原到当前的应用设置
         string WpEffectFilePathTemporary { get; set; } // 实时调整与预览
-        RuntimeType RType { get; set; }
+        WpRuntimeType RType { get; set; }
         void Read(string filePath);
         Task MoveToAsync(string targetFolder);
         void FromTempMoveToInstallPath(string targetFolderPath);

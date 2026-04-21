@@ -296,11 +296,11 @@ namespace VirtualPaper.Views.WindowsMsg {
             return new Point(x, y);
         }
 
-        private static bool IsInputAllowed(RuntimeType category) {
+        private static bool IsInputAllowed(WpRuntimeType category) {
             return category switch {
-                RuntimeType.RImage => false,
-                RuntimeType.RImage3D => false,
-                RuntimeType.RVideo => false,
+                WpRuntimeType.RImage => false,
+                WpRuntimeType.RImage3D => false,
+                WpRuntimeType.RVideo => false,
                 _ => false,
             };
         }

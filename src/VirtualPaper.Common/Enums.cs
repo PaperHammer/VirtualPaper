@@ -89,8 +89,48 @@ namespace VirtualPaper.Common {
     }
     #endregion
 
-    #region type    
-    public enum FileType {
+    #region type
+    public enum DeskPetEngineType {
+        Unknown = 0,
+
+        /// <summary>
+        /// GIF 动图类型 
+        /// (直接使用 WinUI/WPF 自带控件或 Win2D 解析)
+        /// </summary>
+        Gif = 1,
+
+        /// <summary>
+        /// 序列帧 / 精灵图 
+        /// (依赖 Win2D DrawImage 配合定时器渲染)
+        /// </summary>
+        SpriteSheet = 2,
+
+        /// <summary>
+        /// Live2D Cubism 模型 
+        /// (引入 Live2D SDK 的 C# 包装库，或者通过 WebView2 渲染)
+        /// </summary>
+        Live2D = 3,
+
+        /// <summary>
+        /// Spine 2D 骨骼动画 
+        /// (引入 Spine-C# 运行库)
+        /// </summary>
+        Spine = 4,
+
+        /// <summary>
+        /// Web 前端页面驱动 
+        /// (加载本地 index.html，依赖透明的 WebView2 控件)
+        /// </summary>
+        WebHtml = 5,
+
+        /// <summary>
+        /// 包含 Alpha 通道的透明视频 (如 WebM)
+        /// (适用于极度高清且不需要复杂交互的 CG 动画)
+        /// </summary>
+        VideoAlpha = 6
+    }
+
+    public enum WpFileType {
         FUnknown,
         FImage,
         FGif,
@@ -98,7 +138,7 @@ namespace VirtualPaper.Common {
         FDesign,
     }
 
-    public enum RuntimeType {
+    public enum WpRuntimeType {
         RUnknown,
         RImage,
         RImage3D,

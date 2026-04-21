@@ -1,8 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
-		<RootNamespace>VirtualPaper.WpSettingsPanel</RootNamespace>
+		<RootNamespace>VirtualPaper.RepoPanel</RootNamespace>
 		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">win-x86;win-x64;win-arm64</RuntimeIdentifiers>
 		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
 		<UseWinUI>true</UseWinUI>
@@ -11,9 +11,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 	  <None Remove="Views\AddToLib.xaml" />
-	  <None Remove="Views\LibraryContents.xaml" />
 	  <None Remove="Views\ScreenSaver.xaml" />
-	  <None Remove="WpSettings.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -27,13 +25,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Page Update="Views\DeskPetContents.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+
+	<ItemGroup>
 	  <Page Update="Views\AddToLib.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Page Update="Views\LibraryContents.xaml">
+	  <Page Update="Views\WallpaperContents.xaml">
 	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 	    <SubType>Designer</SubType>
 	  </Page>
@@ -41,7 +45,7 @@
 	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 	    <SubType>Designer</SubType>
 	  </Page>
-	  <Page Update="WpSettings.xaml">
+	  <Page Update="Repo.xaml">
 	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 	    <SubType>Designer</SubType>
 	  </Page>

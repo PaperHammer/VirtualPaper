@@ -13,7 +13,7 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.WpSettingsPanel;
+using VirtualPaper.RepoPanel;
 using WinRT.Interop;
 
 namespace VirtualPaper.UI {
@@ -100,7 +100,7 @@ namespace VirtualPaper.UI {
         private void OnNavigationViewSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
             try {
                 Type pageType = args.SelectedItemContainer.Name switch {
-                    "Nav_WpSettings" => typeof(WpSettings),
+                    "Nav_Repo" => typeof(Repo),
                     "Nav_Draft" => typeof(Draft),
                     "Nav_AppSettings" => typeof(AppSettings),
                     _ => throw new NotImplementedException(),

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -10,7 +10,7 @@ using VirtualPaper.UIComponent;
 using Windows.Storage;
 using UAC = UACHelper.UACHelper;
 
-namespace VirtualPaper.WpSettingsPanel.ViewModels {
+namespace VirtualPaper.RepoPanel.ViewModels {
     public class AddToLibViewModel {
         public event EventHandler<IReadOnlyList<IStorageItem>>? OnRequestAddFile;
         public event EventHandler<StorageFolder>? OnRequestAddFolder;
@@ -38,7 +38,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private async Task FileBrowseActionAsync() {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[FileType.FImage], .. FileFilter.FileTypeToExtension[FileType.FDesign]],
+                [.. FileFilter.WpFileTypeToExtension[WpFileType.FImage], .. FileFilter.WpFileTypeToExtension[WpFileType.FDesign]],
                 true);
             if (storage == null || storage.Length < 1) return;
 

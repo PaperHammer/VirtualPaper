@@ -7,7 +7,7 @@ using Monitor = VirtualPaper.Models.Cores.Monitor;
 
 namespace VirtualPaper.DataAssistor {
     public static class DataAssist {        
-        public static Grpc_WpBasicData BasicDataToGrpcData(IWpBasicData source) {
+        public static Grpc_WpBasicData WpBasicDataToGrpcData(IWpBasicData source) {
             Grpc_WpBasicData grpc_WpBasicData = new() {
                 WallpaperUid = source.WallpaperUid,
                 AppInfo = new() {
@@ -40,7 +40,7 @@ namespace VirtualPaper.DataAssistor {
             return grpc_WpBasicData;
         }
 
-        public static Grpc_WpRuntimeData RuntimeDataToGrpcData(IWpRuntimeData source) {
+        public static Grpc_WpRuntimeData WpRuntimeDataToGrpcData(IWpRuntimeData source) {
             Grpc_WpRuntimeData grpc_WpRuntimeData = new() {
                 MonitorContent = source.MonitorContent,
                 FolderPath = source.FolderPath,
@@ -59,7 +59,7 @@ namespace VirtualPaper.DataAssistor {
             return grpc_WpRuntimeData;
         }
 
-        public static Grpc_WpPlayerData MetadataToGrpcPlayingData(IWpBasicData data, RuntimeType rtype) {
+        public static Grpc_WpPlayerData WpMetadataToGrpcPlayingData(IWpBasicData data, WpRuntimeType rtype) {
             Grpc_WpPlayerData grpc_data = new() {
                 WallpaperUid = data.WallpaperUid,
                 RType = (Grpc_RuntimeType)rtype,
@@ -71,7 +71,7 @@ namespace VirtualPaper.DataAssistor {
             return grpc_data;
         }
 
-        public static WpRuntimeData GrpcToRuntimeData(Grpc_WpRuntimeData source) {
+        public static WpRuntimeData GrpcToWpRuntimeData(Grpc_WpRuntimeData source) {
             WpRuntimeData runtimeData = new() {
                 MonitorContent = source.MonitorContent,
                 FolderPath = source.FolderPath,
@@ -84,13 +84,13 @@ namespace VirtualPaper.DataAssistor {
                 WpEffectFilePathTemplate = source.WpEffectFilePathTemplate,
                 WpEffectFilePathTemporary = source.WpEffectFilePathTemporary,
                 WpEffectFilePathUsing = source.WpEffectFilePathUsing,
-                RType = (RuntimeType)source.RType,
+                RType = (WpRuntimeType)source.RType,
             };
 
             return runtimeData;
         }
 
-        public static WpBasicData GrpcToBasicData(Grpc_WpBasicData source) {
+        public static WpBasicData GrpcToWpBasicData(Grpc_WpBasicData source) {
             WpBasicData basicData = new() {
                 WallpaperUid = source.WallpaperUid,
                 AppInfo = new() {
@@ -103,7 +103,7 @@ namespace VirtualPaper.DataAssistor {
                 Authors = source.Authors,
                 PublishDate = source.PublishDate,
                 Rating = source.Rating,
-                FType = (FileType)source.FType,
+                FType = (WpFileType)source.FType,
                 IsSingleRType = source.IsSingleRType,
                 Partition = source.Partition,
                 Tags = source.Tags,
@@ -123,10 +123,10 @@ namespace VirtualPaper.DataAssistor {
             return basicData;
         }
 
-        public static WpPlayerData GrpcToPlayerData(Grpc_WpPlayerData grpc_data) {
+        public static WpPlayerData GrpcToWpPlayerData(Grpc_WpPlayerData grpc_data) {
             WpPlayerData playerData = new() {
                 WallpaperUid = grpc_data.WallpaperUid,
-                RType = (RuntimeType)grpc_data.RType,
+                RType = (WpRuntimeType)grpc_data.RType,
                 FilePath = grpc_data.FilePath,
                 FolderPath = grpc_data.FolderPath,
                 ThumbnailPath = grpc_data.ThumbnailPath,
@@ -181,7 +181,7 @@ namespace VirtualPaper.DataAssistor {
             return grpc_data;
         }
 
-        public static void FromRuntimeDataGetPlayerData(IWpPlayerData data, IWpRuntimeData wpRuntimeData) {
+        public static void FromWpRuntimeDataGetWpPlayerData(IWpPlayerData data, IWpRuntimeData wpRuntimeData) {
             data.WpEffectFilePathTemporary = wpRuntimeData.WpEffectFilePathTemporary;
             data.WpEffectFilePathTemplate = wpRuntimeData.WpEffectFilePathTemplate;
             data.WpEffectFilePathUsing = wpRuntimeData.WpEffectFilePathUsing;

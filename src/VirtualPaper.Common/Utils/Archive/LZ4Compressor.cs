@@ -1,4 +1,3 @@
-﻿using System.Threading.Tasks;
 using K4os.Compression.LZ4;
 
 namespace VirtualPaper.Common.Utils.Archive {

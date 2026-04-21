@@ -63,8 +63,8 @@ namespace VirtualPaper.Grpc.Client {
             return grpc_data;
         }
 
-        public async Task<string> GetPlayerStartArgsAsync(IWpBasicData data, RuntimeType rtype, CancellationToken token) {
-            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
+        public async Task<string> GetPlayerStartArgsAsync(IWpBasicData data, WpRuntimeType rtype, CancellationToken token) {
+            Grpc_WpPlayerData wpPlayerdata = DataAssist.WpMetadataToGrpcPlayingData(data, rtype);
 
             var response = await _client.GetPlayerStartArgsAsync(
                 new Grpc_GetPlayerStartArgsRequest() {
@@ -92,8 +92,8 @@ namespace VirtualPaper.Grpc.Client {
         }
 
         public async Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(
-            IMonitor monitor, IWpBasicData data, RuntimeType rtype, CancellationToken token) {
-            Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
+            IMonitor monitor, IWpBasicData data, WpRuntimeType rtype, CancellationToken token) {
+            Grpc_WpPlayerData wpPlayerdata = DataAssist.WpMetadataToGrpcPlayingData(data, rtype);
 
             var request = new Grpc_SetWallpaperRequest {
                 WpPlayerData = wpPlayerdata,
@@ -109,7 +109,7 @@ namespace VirtualPaper.Grpc.Client {
         #region data
         public async Task<Grpc_WpBasicData?> CreateBasicDataAsync(
             string filePath,
-            FileType ftype,
+            WpFileType ftype,
             CancellationToken token,
             bool isTemp = false) {
             Grpc_WpBasicData grpc_data = await _client.CreateMetadataBasicAsync(
@@ -128,7 +128,7 @@ namespace VirtualPaper.Grpc.Client {
 
         public async Task<Grpc_WpBasicData> CreateBasicDataInMemAsync(
             string filePath,
-            FileType ftype,
+            WpFileType ftype,
             CancellationToken token) {
             Grpc_WpBasicData grpc_data = await _client.CreateMetadataBasicInMemAsync(
                 new Grpc_CreateMetadataBasicRequest() {
@@ -174,7 +174,7 @@ namespace VirtualPaper.Grpc.Client {
             });
         }
 
-        public async Task<Grpc_WpBasicData?> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype) {
+        public async Task<Grpc_WpBasicData?> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, WpFileType ftype) {
             Grpc_WpBasicData? grpc_basicData = await _client.UpdateBasicDataAsync(
                 new Grpc_UpdateBasicDataRequest() {
                     FolderPath = folderPath,

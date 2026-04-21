@@ -57,7 +57,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 string.IsNullOrEmpty(data.WpEffectFilePathUsing) ||
                 string.IsNullOrEmpty(data.WpEffectFilePathTemplate) ||
                 //string.IsNullOrEmpty(data.WpEffectFilePathTemporary) ||
-                data.RType == RuntimeType.RImage3D && string.IsNullOrEmpty(data.DepthFilePath)) {
+                data.RType == WpRuntimeType.RImage3D && string.IsNullOrEmpty(data.DepthFilePath)) {
                 throw new Exception("Some necessary parameters are missing when starting WpPlayerWeb.");
             }
         }
@@ -67,12 +67,12 @@ namespace VirtualPaper.Cores.Players.Web {
         }
 
         public void Pause() {
-            if (Data.RType == RuntimeType.RVideo)
+            if (Data.RType == WpRuntimeType.RVideo)
                 SendMessage(new VirtualPaperSuspendCmd());
         }
 
         public void Play() {
-            if (Data.RType == RuntimeType.RVideo)
+            if (Data.RType == WpRuntimeType.RVideo)
                 SendMessage(new VirtualPaperResumeCmd());
         }
 
@@ -91,7 +91,7 @@ namespace VirtualPaper.Cores.Players.Web {
         public Task ScreenCapture(string filePath) { return Task.FromResult(string.Empty); }
 
         public void SetMute(bool mute) {
-            if (Data.RType == RuntimeType.RVideo)
+            if (Data.RType == WpRuntimeType.RVideo)
                 SendMessage(new VirtualPaperMutedCmd() { IsMuted = mute });
         }
 

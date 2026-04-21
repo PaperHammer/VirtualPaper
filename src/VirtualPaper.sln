@@ -31,7 +31,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualPaper.AppSettingsPan
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Panels", "Panels", "{68A14B74-4C6E-4C7F-B5C9-369862D60276}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualPaper.WpSettingsPanel", "VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj", "{609CEAA8-73C1-4D4F-B594-0B2674350C8C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualPaper.RepoPanel", "VirtualPaper.RepoPanel\VirtualPaper.RepoPanel.csproj", "{609CEAA8-73C1-4D4F-B594-0B2674350C8C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workloads", "Workloads", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
@@ -464,7 +464,7 @@ Global
 		{EA7D0097-68E0-4529-B981-018C939BC060} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {C0DA4809-0B7F-4C80-8462-DE0981798196}
 		RESX_NeutralResourcesLanguage = zh-CN
+		SolutionGuid = {C0DA4809-0B7F-4C80-8462-DE0981798196}
 	EndGlobalSection
 EndGlobal

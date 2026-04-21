@@ -15,16 +15,16 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         Task CloseAllWallpapersAsync();
         Task CloseWallpaperAsync(IMonitor monitor);
         Task<Grpc_WpMetaData> GetWallpaperAsync(string folderPath, string monitorContent, string rtype);
-        Task<string> GetPlayerStartArgsAsync(IWpBasicData data, RuntimeType rtype, CancellationToken token);
+        Task<string> GetPlayerStartArgsAsync(IWpBasicData data, WpRuntimeType rtype, CancellationToken token);
         Task<string> GetPlayerStartArgsByMonitorIdAsync(string monitorId, CancellationToken token);
         Task<Grpc_RestartWallpaperResponse> RestartAllWallpapersAsync();
-        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IMonitor monitor, IWpBasicData metaData, RuntimeType rtype, CancellationToken token);
+        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IMonitor monitor, IWpBasicData metaData, WpRuntimeType rtype, CancellationToken token);
         #endregion
 
         #region data
-        Task<Grpc_WpBasicData?> CreateBasicDataAsync(string sourceFilePath, FileType ftype, CancellationToken token, bool isTemp = false);
+        Task<Grpc_WpBasicData?> CreateBasicDataAsync(string sourceFilePath, WpFileType ftype, CancellationToken token, bool isTemp = false);
         IWpMetadata GetWpMetadataByMonitorThu(string thumbnailPath);
-        Task<Grpc_WpBasicData> CreateBasicDataInMemAsync(string filePath, FileType ftype, CancellationToken token);
+        Task<Grpc_WpBasicData> CreateBasicDataInMemAsync(string filePath, WpFileType ftype, CancellationToken token);
 
         #endregion
 
@@ -33,7 +33,7 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         Task<Grpc_MonitorData?> GetRunMonitorByWallpaperAsync(string wpUid);
         Task SendMessageWallpaperAsync(string deviceId, IpcMessage msg);
         Task TakeScreenshotAsync(string monitorId, string savePath);
-        Task<Grpc_WpBasicData?> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype);
+        Task<Grpc_WpBasicData?> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, WpFileType ftype);
         #endregion
     }
 }

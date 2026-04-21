@@ -36,14 +36,14 @@ namespace VirtualPaper.GrpcServers {
         public override async Task<Grpc_WpMetaData> GetWallpaper(Grpc_GetWallpaperRequest request, ServerCallContext context) {
             Grpc_WpMetaData resp = new();
             IWpMetadata data = _wpControl.GetWallpaperByFolderPath(request.FolderPath, request.MonitorContent, request.RType);
-            resp.WpBasicData = DataAssist.BasicDataToGrpcData(data.BasicData);
-            resp.WpRuntimeData = DataAssist.RuntimeDataToGrpcData(data.RuntimeData);
+            resp.WpBasicData = DataAssist.WpBasicDataToGrpcData(data.BasicData);
+            resp.WpRuntimeData = DataAssist.WpRuntimeDataToGrpcData(data.RuntimeData);
 
             return await Task.FromResult(resp);
         }
 
         public override async Task<Grpc_GetPlayerStartArgsResponse> GetPlayerStartArgs(Grpc_GetPlayerStartArgsRequest request, ServerCallContext context) {
-            var playingData = DataAssist.GrpcToPlayerData(request.WpPlayerData);
+            var playingData = DataAssist.GrpcToWpPlayerData(request.WpPlayerData);
             var data = _wpControl.GetPlayerStartArgs(playingData, context.CancellationToken);
             Grpc_GetPlayerStartArgsResponse response = new() {
                 Data = data,
@@ -68,7 +68,7 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override async Task<Grpc_SetWallpaperResponse> SetWallpaper(Grpc_SetWallpaperRequest request, ServerCallContext context) {
-            WpPlayerData wpPlayerData = DataAssist.GrpcToPlayerData(request.WpPlayerData);
+            WpPlayerData wpPlayerData = DataAssist.GrpcToWpPlayerData(request.WpPlayerData);
             var monitor = _monitorManager.Monitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
 
             Grpc_SetWallpaperResponse response = await _wpControl.SetWallpaperAsync(
@@ -82,17 +82,17 @@ namespace VirtualPaper.GrpcServers {
 
         #region data
         public override async Task<Grpc_WpBasicData> CreateMetadataBasic(Grpc_CreateMetadataBasicRequest request, ServerCallContext context) {
-            var data = _wpControl.CreateBasicData(request.FilePath, (FileType)request.FType, token: context.CancellationToken);
+            var data = _wpControl.CreateBasicData(request.FilePath, (WpFileType)request.FType, token: context.CancellationToken);
 
-            Grpc_WpBasicData grpc_data = DataAssist.BasicDataToGrpcData(data);
+            Grpc_WpBasicData grpc_data = DataAssist.WpBasicDataToGrpcData(data);
 
             return await Task.FromResult(grpc_data);
         }
 
         public override async Task<Grpc_WpBasicData> CreateMetadataBasicInMem(Grpc_CreateMetadataBasicRequest request, ServerCallContext context) {
-            var data = _wpControl.CreateBasicDataInMem(request.FilePath, (FileType)request.FType, token: context.CancellationToken);
+            var data = _wpControl.CreateBasicDataInMem(request.FilePath, (WpFileType)request.FType, token: context.CancellationToken);
 
-            Grpc_WpBasicData grpc_data = DataAssist.BasicDataToGrpcData(data);
+            Grpc_WpBasicData grpc_data = DataAssist.WpBasicDataToGrpcData(data);
 
             return await Task.FromResult(grpc_data);
         }
@@ -142,9 +142,9 @@ namespace VirtualPaper.GrpcServers {
                 request.FolderPath,
                 request.FolderName,
                 request.FilePath,
-                (FileType)request.FType,
+                (WpFileType)request.FType,
                 context.CancellationToken);
-            Grpc_WpBasicData grpc_data = DataAssist.BasicDataToGrpcData(data);
+            Grpc_WpBasicData grpc_data = DataAssist.WpBasicDataToGrpcData(data);
 
             return await Task.FromResult(grpc_data);
         }

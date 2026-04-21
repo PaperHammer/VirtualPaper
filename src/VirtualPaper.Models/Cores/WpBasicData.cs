@@ -13,6 +13,11 @@ namespace VirtualPaper.Models.Cores {
 
     public class WpBasicData : ObservableObject, IWpBasicData {
         public string WallpaperUid { get; set; } = string.Empty;
+        [JsonIgnore]
+        public string Uid {
+            get => WallpaperUid;
+            set => WallpaperUid = value;
+        }
         public ApplicationInfo AppInfo { get; set; } = new();
 
         private string _title = string.Empty;
@@ -26,15 +31,15 @@ namespace VirtualPaper.Models.Cores {
         public string PublishDate { get; set; } = string.Empty;
         public double Rating { get; set; } = -1;
 
-        private FileType _fType;
-        public FileType FType {
+        private WpFileType _fType;
+        public WpFileType FType {
             get => _fType;
             set {
                 _fType = value;
                 this.IsSingleRType =
                      value switch {
-                         FileType.FImage or FileType.FGif => false,
-                         FileType.FVideo => true,
+                         WpFileType.FImage or WpFileType.FGif => false,
+                         WpFileType.FVideo => true,
                          _ => false,
                      };
             }
@@ -60,6 +65,7 @@ namespace VirtualPaper.Models.Cores {
         public IWpBasicData Clone() {
             IWpBasicData data = new WpBasicData() {
                 WallpaperUid = this.WallpaperUid,
+                Uid = this.WallpaperUid,
                 AppInfo = this.AppInfo,
                 Title = this.Title,
                 Desc = this.Desc,
@@ -92,6 +98,7 @@ namespace VirtualPaper.Models.Cores {
             if (source == null) return;
 
             this.WallpaperUid = source.WallpaperUid;
+            this.Uid = source.WallpaperUid;
             this.AppInfo = source.AppInfo;
             this.Title = source.Title;
             this.Desc = source.Desc;
@@ -169,7 +176,7 @@ namespace VirtualPaper.Models.Cores {
         }
 
         public bool IsAvailable() {
-            return this.FType != FileType.FUnknown && this.WallpaperUid != string.Empty && this.AppInfo.AppVersion != string.Empty && this.ThumbnailPath != string.Empty;
+            return this.FType != WpFileType.FUnknown && this.WallpaperUid != string.Empty && this.AppInfo.AppVersion != string.Empty && this.ThumbnailPath != string.Empty;
         }
 
         public bool Equals(IWpBasicData? other) {

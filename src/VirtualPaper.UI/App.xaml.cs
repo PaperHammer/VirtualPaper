@@ -16,8 +16,8 @@ using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.WpSettingsPanel.Utils;
-using VirtualPaper.WpSettingsPanel.ViewModels;
+using VirtualPaper.RepoPanel.Utils;
+using VirtualPaper.RepoPanel.ViewModels;
 using Windows.ApplicationModel.Core;
 using WinUIEx;
 
@@ -86,18 +86,21 @@ namespace VirtualPaper.UI {
                 .AddTransient<OtherSettingViewModel>()
                 .AddTransient<PerformanceSettingViewModel>()
                 .AddTransient<SystemSettingViewModel>()
-                .AddSingleton<WpSettingsViewModel>()
+                .AddSingleton<RepoViewModel>()
                 .AddSingleton<ScreenSaverViewModel>()
-                .AddSingleton<LibraryContentsViewModel>()
+                .AddSingleton<WallpaperContentsViewModel>()
+                .AddSingleton<DeskPetContentsViewModel>()
                 .AddTransient<ConfigSpaceViewModel>()
                 .AddTransient<GetStartViewModel>()
                 .AddTransient<DraftConfigViewModel>()
                 .AddTransient<WorkSpaceViewModel>()
 
                 .AddSingleton<WallpaperIndexService>()
+                .AddSingleton<DeskPetIndexService>()
 
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()
                 .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
+                .AddSingleton<IDeskPetControlClient, DeskPetControlClient>()
                 .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()
                 .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
                 .AddSingleton<ICommandsClient, CommandsClient>()

@@ -32,7 +32,7 @@ namespace VirtualPaper.GrpcServers {
             _userSetting.RecentUseds.Clear();
             foreach (var item in request.RecentUseds) {
                 _userSetting.RecentUseds.Add(new RecentUsed(
-                    (Common.FileType)item.FType,
+                    (Common.WpFileType)item.FType,
                     item.FileName,
                     item.FilePath,
                     item.DateTime));

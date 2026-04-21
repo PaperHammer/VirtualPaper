@@ -121,7 +121,8 @@ namespace VirtualPaper.Common {
         public static class I18n {
             public static string Dialog_Content_ApplyError => "Dialog_Content_ApplyError";
             public static string Dialog_Content_GetMonitorsAsync => "Dialog_Content_GetMonitorsAsync";
-            public static string Dialog_Content_Import_Failed_Lib => "Dialog_Content_Import_Failed_Lib";
+            public static string? Dialog_Content_Import_Failed_For_Wp { get; }
+            public static string? Dialog_Content_Import_Failed_For_Dp { get; }
             public static string Dialog_Content_Import_NeedUpdate => "Dialog_Content_Import_NeedUpdate";
             public static string Dialog_Content_LibraryDelete => "Dialog_Content_LibraryDelete";
             public static string Dialog_Content_OnlyPictureAndGif => "Dialog_Content_OnlyPictureAndGif";
@@ -130,7 +131,7 @@ namespace VirtualPaper.Common {
             public static string Dialog_Title_Prompt => "Dialog_Title_Prompt";
             public static string InfobarMsg_Cancel => "InfobarMsg_Cancel";
             public static string InfobarMsg_Err => "InfobarMsg_Err";
-            public static string InfobarMsg_ImportErr => "InfobarMsg_ImportErr";
+            public static string? InfobarMsg_ImportErr { get; }
             public static string InfobarMsg_Success => "InfobarMsg_Success";
             public static string ScreenSaver__effectBubble => "ScreenSaver__effectBubble";
             public static string ScreenSaver__effectNone => "ScreenSaver__effectNone";
@@ -202,6 +203,8 @@ namespace VirtualPaper.Common {
             public static string WpEffectFilePathTemporary => "wpEffectFilePathTemporary.json";
             public static string WpEffectFilePathUsing => "wpEffectFilePathUsing.json";
             public static string WpRuntimeDataFileName => "wp_metadata_runtime.json";
+
+            public static string DpBasicDataFileName => "dp_metadata_basic.json";
         }
 
         public static class ColorKey {

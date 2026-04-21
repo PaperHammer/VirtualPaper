@@ -158,7 +158,7 @@ Scale-down: The size is the same as the one in None or Contain, depending on whi
   <data name="Dialog_Content_GetMonitorsAsync" xml:space="preserve">
     <value>Number of monitors available:</value>
   </data>
-  <data name="Dialog_Content_Import_Failed_Lib" xml:space="preserve">
+  <data name="Dialog_Content_Import_Failed_For_Wp" xml:space="preserve">
     <value>Only the following file types are supported:
     GIF: .gif  .apng
     Still images: .jpg .jpeg .bmp .png
@@ -563,10 +563,10 @@ Author: PaperHammer</value>
   <data name="WpCreateDialog_CommonWp_Title" xml:space="preserve">
     <value>Ordinary wallpaper</value>
   </data>
-  <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
-    <value>Library contents</value>
+  <data name="Repo_NavTitle_WallpaperContents" xml:space="preserve">
+    <value>Wallpapers</value>
   </data>
-  <data name="WpSettings_NavTitle_ScrSettings" xml:space="preserve">
+  <data name="Repo_NavTitle_ScrSettings" xml:space="preserve">
     <value>Screen saver</value>
   </data>
   <data name="Text_Edit_Desc" xml:space="preserve">
@@ -1187,5 +1187,13 @@ The following words cannot be used as usernames:
   </data>
   <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
     <value>Thickness (pixels)</value>
+  </data>
+  <data name="Repo_NavTitle_DeskPetContents" xml:space="preserve">
+    <value>Desk-Pets</value>
+  </data>
+  <data name="Dialog_Content_Import_Failed_For_Dp" xml:space="preserve">
+    <value>Only the following file types are supported: .zip
+
+The file cannot be imported: </value>
   </data>
 </root>

@@ -3,8 +3,8 @@
 
 #define AppId "{{95F4CECE-7C7C-40E1-B485-07DA64D1905F}"
 #define MyAppName "Virtual Paper"
-#define MyAppVersion "0.4.0.0"
-#define MyAppVersionText "0400"
+#define MyAppVersion "0.4.0.1"
+#define MyAppVersionText "0401"
 #define MyAppPublisher "PaperHammer"
 #define MyAppURL "https://github.com/PaperHammer/VirtualPaper"
 #define MyAppExeName "VirtualPaper.exe"

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -38,7 +38,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private async Task FileBrowseActionAsync() {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[FileType.FImage], .. FileFilter.FileTypeToExtension[FileType.FDesign]],
+                [.. FileFilter.FileTypeToExtension[FileType.FImage], .. FileFilter.FileTypeToExtension[FileType.FGif], .. FileFilter.FileTypeToExtension[FileType.FVideo]],
                 true);
             if (storage == null || storage.Length < 1) return;
 

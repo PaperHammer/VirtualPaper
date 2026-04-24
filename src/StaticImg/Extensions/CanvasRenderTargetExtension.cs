@@ -34,19 +34,19 @@ namespace Workloads.Creation.StaticImg.Extensions {
         /// <param name="renderTarget">Win2D 渲染目标</param>
         /// <param name="data">导出参数数据包</param>
         /// <param name="cancellationToken">取消令牌</param>
-        public static async Task ExportAsync(
+        public static async Task<string?> ExportAsync(
             this CanvasRenderTarget? renderTarget,
-            Windows.Foundation.Size size,
+            Size size,
             ExportDataStaticImg data,
             CancellationToken cancellationToken = default) {
             if (renderTarget == null) {
                 GlobalMessageUtil.ShowError($"{LanguageUtil.GetI18n(Constants.I18n.Project_Export_InternalError)}");                
-                return;
+                return null;
             }            
 
             if (string.IsNullOrWhiteSpace(data.Path)) {
                 GlobalMessageUtil.ShowError($"{LanguageUtil.GetI18n(Constants.I18n.Project_Export_PathNotBeNone)}");
-                return;
+                return null;
             }
 
             try {
@@ -91,11 +91,15 @@ namespace Workloads.Creation.StaticImg.Extensions {
                 await randomAccessStream.FlushAsync().AsTask(cancellationToken);
 
                 GlobalMessageUtil.ShowSuccess($"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Success))} {data.Path}");
+
+                return data.Path;
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowSuccess($"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Failed))}");
+                GlobalMessageUtil.ShowError($"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Failed))}");
                 ArcLog.GetLogger<CanvasRenderTarget>().Error($"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Failed))}", ex);
-            }            
+            }
+
+            return null;
         }
     }
 }

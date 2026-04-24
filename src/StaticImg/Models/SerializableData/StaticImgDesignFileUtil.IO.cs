@@ -57,7 +57,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         }
 
         public async Task<(FileHeader? fileHeader, BusinessData? businessData, List<Layer>? layers)> LoadAsync(InkProjectSession session) {
-            if (!IsValidFile) {
+            if (!IsValidVpdFile) {
                 GlobalMessageUtil.ShowError(
                     message: Constants.I18n.Project_FileLoad_Failed,
                     key: Constants.I18n.Project_FileLoad_Failed,
@@ -149,7 +149,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
         // 单独保存 BusinessData
         public async Task<bool> SaveBusinessDataAsync(BusinessData business) {
-            if (!IsValidFile) {
+            if (!IsValidVpdFile) {
                 return false;
             }
 
@@ -199,7 +199,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
         // 单独保存 Layers
         public async Task<bool> SaveLayersAsync(List<Layer> layers) {
-            if (!IsValidFile) {
+            if (!IsValidVpdFile) {
                 return false;
             }
 

@@ -78,7 +78,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         private async void BtnStartupOpen_Click(object sender, RoutedEventArgs e) {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[FileType.FDesign]],
+                [.. FileFilter.FileTypeToExtension[FileType.FDesign], .. FileFilter.FileTypeToExtension[FileType.FImage]],
                 true);
             OpenLocalFiles(storage);
         }

@@ -41,7 +41,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                             IsVisible = layer.State.IsVisible,
                             ZIndex = layer.State.ZIndex,
                         };
-                        layerInfo.RenderData.IsReady.SetResult(true);
+                        layerInfo.RenderData.IsReady.TrySetResult(true);
                         layerInfo.PropertyChanged += OnLayerPropertyChanged;
                         _allLayers.Add(layerInfo);
                         _layers.Add(layerInfo);
@@ -65,11 +65,11 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         }
 
         public async Task<(bool Success, string? FinalPath)> SaveAtEmergencyAsync(InkProjectSession session) {
-            if (!session.DesignFileUtil.IsValidFile) {
+            if (!session.DesignFileUtil.IsValidVpdFile) {
                 string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                 string fileName = $"virtualpaperdesign_{timestamp}{FileExtension.FE_Design}";
-                var path = System.IO.Path.Combine(desktopPath, fileName);
+                var path = Path.Combine(desktopPath, fileName);
                 session.DesignFileUtil.SetFilePath(path);
             }
 
@@ -78,8 +78,8 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
         public async Task<(bool Success, string? FinalPath)> SaveAsync(InkProjectSession session) {
             try {
-                if (!session.DesignFileUtil.IsValidFile) {
-                    var suggestedName = Path.GetFileNameWithoutExtension(session.DesignFileUtil.FilePath);
+                if (!session.DesignFileUtil.IsValidVpdFile) {
+                    var suggestedName = string.Concat(Path.GetFileNameWithoutExtension(session.DesignFileUtil.FilePath), FileExtension.FE_Design);
                     var saveFile = await WindowsStoragePickers.PickSaveFileAsync(
                         WindowConsts.WindowHandle,
                         suggestedName,
@@ -89,7 +89,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                     );
                     if (saveFile == null || string.IsNullOrEmpty(saveFile.Path))
                         return (false, null);
-                    
+
                     session.DesignFileUtil.SetFilePath(saveFile.Path);
                 }
 
@@ -111,7 +111,8 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 }
 
                 // Save through project utility
-                (var flag, var filePath) = await session.DesignFileUtil.SaveAsync(CanvasSize, businessData, layers);
+                (var flag, var filePath) = await session.DesignFileUtil.SaveAsync(CanvasSize, businessData, layers);                
+                session.DesignFileUtil.IsSaveFromInit = true;
                 session.UnReUtil.MarkAsSaved();
 
                 return (flag, filePath);

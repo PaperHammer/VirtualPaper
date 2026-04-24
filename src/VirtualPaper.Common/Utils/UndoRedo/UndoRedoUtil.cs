@@ -15,8 +15,9 @@ namespace VirtualPaper.Common.Utils.UndoRedo {
             public CommandEventArgs(TCommand command) => Command = command;
         }
 
-        public UndoRedoUtil(int? maxStackSize = null) {
+        public UndoRedoUtil(bool isSaved, int? maxStackSize = null) {
             _maxStackSize = maxStackSize;
+            _lastIsSaved = isSaved;
         }
 
         // 属性访问只需保护内存读取，使用 lock 即可

@@ -1071,9 +1071,6 @@ The following words cannot be used as usernames:
   <data name="Project_FileLoad_FileCorrupted" xml:space="preserve">
     <value>The file may be corrupted: </value>
   </data>
-  <data name="Project_StaticImg_Text_LayerName" xml:space="preserve">
-    <value>Layer</value>
-  </data>
   <data name="Project_StaticImg_Text_LayerNew" xml:space="preserve">
     <value>New</value>
   </data>
@@ -1190,5 +1187,8 @@ The following words cannot be used as usernames:
   </data>
   <data name="Project_SI_FileTypeMismatch" xml:space="preserve">
     <value>The file content is abnormal and cannot be opened</value>
+  </data>
+  <data name="Text_Save_As" xml:space="preserve">
+    <value>Save as</value>
   </data>
 </root>

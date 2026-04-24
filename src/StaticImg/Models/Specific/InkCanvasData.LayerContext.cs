@@ -46,46 +46,6 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             }
         }
 
-        internal async Task<LayerInfo> AddLayerWithDataAsync(string filePath, string? name = null, bool isBackground = false, Guid? layerId = null) {
-            throw new NotImplementedException();
-            //int insertIndex = _layers.Count;
-
-            //if (layerId.HasValue) {
-            //    var targetLayer = _layers.FirstOrDefault(x => x.Tag == layerId.Value);
-            //    if (targetLayer != null) {
-            //        insertIndex = _layers.IndexOf(targetLayer) + 1;
-            //    }
-            //}
-
-            //var layer = new LayerInfo {
-            //    Name = name ??
-            //        $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerName))} " +
-            //        $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerNew))} " +
-            //        $"{++_newLayerCount}",
-            //    RenderData = new InkRenderData(_session, CanvasSize, isBackground),
-            //    IsDeleted = false,
-            //    IsVisible = true,
-            //    ZIndex = insertIndex,
-            //};
-            //layer.RenderData.IsReady.SetResult(true);
-            //layer.PropertyChanged += OnLayerPropertyChanged;
-
-            //_allLayers.Add(layer);
-            //if (insertIndex < _layers.Count) {
-            //    _layers.Insert(insertIndex, layer);
-            //    RefreshZIndices();
-            //}
-            //else {
-            //    _layers.Add(layer);
-            //}
-            //OnAnyLayerStateChanged();
-
-            //_session.UnReUtil.RecordCommand(
-            //    new AddLayerCommand(this, layer, insertIndex)
-            //);
-            //return layer;
-        }
-
         public LayerInfo AddLayer(string? name = null, bool isBackground = false, Guid? layerId = null, bool needRecord = true) {
             int insertIndex = _layers.Count;
 
@@ -98,7 +58,6 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
             var layer = new LayerInfo {
                 Name = name ??
-                    $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerName))} " +
                     $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerNew))} " +
                     $"{++_newLayerCount}",
                 RenderData = new InkRenderData(_session, CanvasSize, isBackground),
@@ -106,7 +65,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 IsVisible = true,
                 ZIndex = insertIndex,
             };
-            layer.RenderData.IsReady.SetResult(true);
+            layer.RenderData.IsReady.TrySetResult(true);
             layer.PropertyChanged += OnLayerPropertyChanged;
 
             _allLayers.Add(layer);
@@ -139,7 +98,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 RenderData = originalLayer.RenderData.Clone(),
                 ZIndex = insertIndex,
             };
-            layer.RenderData.IsReady.SetResult(true);
+            layer.RenderData.IsReady.TrySetResult(true);
             layer.PropertyChanged += OnLayerPropertyChanged;
             _allLayers.Add(layer);
             if (insertIndex < _layers.Count) {

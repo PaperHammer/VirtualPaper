@@ -9,9 +9,11 @@ namespace Workloads.Utils.DraftUtils.Interfaces {
         string FileName { get; }
         string FileNameWithoutEx { get; }
         string Id { get; }
+        bool IsSavedFromInit { get; }
         Task<bool> SaveAsync();
+        Task<string?> SaveAsAsync();
         Task UndoAsync();
         Task RedoAsync();
-        Task ExportAsync(ExportImageFormat format);
+        Task<string?> ExportAsync(ExportImageFormat format);
     }
 }

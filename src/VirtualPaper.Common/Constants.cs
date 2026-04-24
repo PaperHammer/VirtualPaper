@@ -183,7 +183,6 @@ namespace VirtualPaper.Common {
             public static string? Project_FileLoad_Failed { get; }
             public static string? Project_SI_Text_BackgroundLayer { get; }
             public static string? Project_FileLoad_FileCorrupted { get; }
-            public static string? Project_StaticImg_Text_LayerName { get; }
             public static string? Project_StaticImg_Text_LayerNew { get; }
             public static string? Project_StaticImg_Text_LayerCopy { get; }
             public static string? Project_Unsave_Intercept_Content { get; }

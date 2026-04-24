@@ -22,7 +22,8 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         protected override void OnEnter(FrameworkPayload? payload) {
             base.OnEnter(payload);
             Payload = payload;
-            payload?.Set(NaviPayloadKey.AvailableConfigTab.ToString(), DataConfigTab.GeneralEffect | DataConfigTab.GeneralInfo);
+            //var configTab = payload?.Get<DataConfigTab>(NaviPayloadKey.AvailableConfigTab.ToString(), DataConfigTab.GeneralEffect | DataConfigTab.GeneralInfo);
+            //payload?.Set(NaviPayloadKey.AvailableConfigTab.ToString(), DataConfigTab.GeneralEffect | DataConfigTab.GeneralInfo);
         }        
     }
 }

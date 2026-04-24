@@ -1191,4 +1191,34 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Text_Save_As" xml:space="preserve">
     <value>另存为</value>
   </data>
+  <data name="EffectPrefix_Saturation" xml:space="preserve">
+    <value>饱和度</value>
+  </data>
+  <data name="EffectPrefix_Brightness" xml:space="preserve">
+    <value>亮度</value>
+  </data>
+  <data name="EffectPrefix_Contrast" xml:space="preserve">
+    <value>对比度</value>
+  </data>
+  <data name="EffectPrefix_Speed" xml:space="preserve">
+    <value>速度</value>
+  </data>
+  <data name="EffectPrefix_Volume" xml:space="preserve">
+    <value>音量</value>
+  </data>
+  <data name="EffectPrefix_Hue" xml:space="preserve">
+    <value>色调</value>
+  </data>
+  <data name="EffectPrefix_Scale_Way" xml:space="preserve">
+    <value>缩放方式</value>
+  </data>
+  <data name="EffectPrefix_Parallax" xml:space="preserve">
+    <value>视差</value>
+  </data>
+  <data name="EffectPrefix_Time_Perception" xml:space="preserve">
+    <value>时间感知</value>
+  </data>
+  <data name="Effect_Help_TimeAtmospherePerception" xml:space="preserve">
+    <value>根据当前时间与地理位置计算日出日落时刻，在白天/黄昏/夜晚为壁纸额外添加亮度与色调，使桌面氛围与真实光线环境保持同步</value>
+  </data>
 </root>

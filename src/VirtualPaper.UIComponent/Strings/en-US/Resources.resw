@@ -1191,4 +1191,34 @@ The following words cannot be used as usernames:
   <data name="Text_Save_As" xml:space="preserve">
     <value>Save as</value>
   </data>
+  <data name="EffectPrefix_Saturation" xml:space="preserve">
+    <value>Saturation</value>
+  </data>
+  <data name="EffectPrefix_Brightness" xml:space="preserve">
+    <value>Brightness</value>
+  </data>
+  <data name="EffectPrefix_Contrast" xml:space="preserve">
+    <value>Contrast</value>
+  </data>
+  <data name="EffectPrefix_Speed" xml:space="preserve">
+    <value>Speed</value>
+  </data>
+  <data name="EffectPrefix_Volume" xml:space="preserve">
+    <value>Volume</value>
+  </data>
+  <data name="EffectPrefix_Hue" xml:space="preserve">
+    <value>Hue</value>
+  </data>
+  <data name="EffectPrefix_Scale_Way" xml:space="preserve">
+    <value>Scale Way</value>
+  </data>
+  <data name="EffectPrefix_Parallax" xml:space="preserve">
+    <value>Parallax</value>
+  </data>
+  <data name="EffectPrefix_Time_Perception" xml:space="preserve">
+    <value>Time Perception</value>
+  </data>
+  <data name="Effect_Help_TimeAtmospherePerception" xml:space="preserve">
+    <value>Calculates sunrise and sunset times based on your current location, then applies adaptive brightness and color tone overlays to your wallpaper across day, dusk, and night phases — keeping your desktop in harmony with the natural light around you</value>
+  </data>
 </root>

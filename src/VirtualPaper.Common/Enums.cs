@@ -85,7 +85,7 @@ namespace VirtualPaper.Common {
         /// 同一壁纸跨越多个显示器
         /// </summary>
         [Description("Expand Across All Display(s)")]
-        Expand,        
+        Expand,
     }
     #endregion
 
@@ -119,7 +119,7 @@ namespace VirtualPaper.Common {
         ScaleDown
     }
 
-    public enum ProjectType {        
+    public enum ProjectType {
         PUnknown,
         P_StaticImage,
     }
@@ -169,24 +169,27 @@ namespace VirtualPaper.Common {
         [JsonPropertyOrder(4)]
         public Contrast Contrast { get; }
 
+        [JsonPropertyOrder(5)]
+        public TimePerception TimeAtmoPerception { get; }
 
         public UniverseCostumise() {
             Saturation = new();
             Hue = new();
             Brightness = new();
             Contrast = new();
+            TimeAtmoPerception = new();
 
-            _properties = new Dictionary<string, dynamic>
-            {
+            _properties = new Dictionary<string, dynamic> {
                 { nameof(Saturation), Saturation },
                 { nameof(Hue), Hue },
                 { nameof(Brightness), Brightness },
                 { nameof(Contrast), Contrast },
+                { nameof(TimeAtmoPerception), TimeAtmoPerception },
             };
         }
 
         public void ModifyPropertyValue<T>(string propertyName, T value) {
-            if (_properties.TryGetValue(propertyName, out dynamic property)) {
+            if (_properties.TryGetValue(propertyName, out dynamic? property)) {
                 if (typeof(T) == typeof(bool)) {
                     property.Value = value;
                 }
@@ -208,11 +211,10 @@ namespace VirtualPaper.Common {
     [JsonSerializable(typeof(PictureAndGifCostumise))]
     public partial class PictureAndGifCostumiseContext : JsonSerializerContext { }
     public class PictureAndGifCostumise : UniverseCostumise {
-
-        [JsonPropertyOrder(5)]
+        [JsonPropertyOrder(6)]
         public Scaling Scaling { get; }
 
-        [JsonPropertyOrder(6)]
+        [JsonPropertyOrder(7)]
         public Parallax Parallax { get; }
 
         public PictureAndGifCostumise() {
@@ -227,16 +229,16 @@ namespace VirtualPaper.Common {
     [JsonSerializable(typeof(VideoCostumize))]
     public partial class VideoCostumizeContext : JsonSerializerContext { }
     public class VideoCostumize : UniverseCostumise {
-        [JsonPropertyOrder(7)]
+        [JsonPropertyOrder(8)]
         public Speed Speed { get; }
 
-        [JsonPropertyOrder(8)]
+        [JsonPropertyOrder(9)]
         public Volume Volume { get; }
 
-        [JsonPropertyOrder(9)]
+        [JsonPropertyOrder(10)]
         public Scaling Scaling { get; }
 
-        [JsonPropertyOrder(10)]
+        [JsonPropertyOrder(11)]
         public Parallax Parallax { get; }
 
         public VideoCostumize() {
@@ -255,10 +257,10 @@ namespace VirtualPaper.Common {
     [JsonSerializable(typeof(Picture3DCostumize))]
     public partial class Picture3DCostumizeContext : JsonSerializerContext { }
     public class Picture3DCostumize : UniverseCostumise {
-        [JsonPropertyOrder(11)]
-        public Scaling Scaling { get; }
-        
         [JsonPropertyOrder(12)]
+        public Scaling Scaling { get; }
+
+        [JsonPropertyOrder(13)]
         public Parallax Parallax { get; }
 
         public Picture3DCostumize() {
@@ -270,74 +272,122 @@ namespace VirtualPaper.Common {
         }
     }
 
-    public class Saturation {
-        public string Type { get; init; } = "Slider";
-        public string Text { get; init; } = "Saturation";
+    //public class Saturation {
+    //    public string Type { get; init; } = "Slider";
+    //    public string Text { get; init; } = "Saturation";
 
-        private double val = 1;
-        public double Value {
-            get => val;
-            set => val = (value < 0 || value > 10) ? 1 : value;
-        }
+    //    private double val = 1;
+    //    public double Value {
+    //        get => val;
+    //        set => val = (value < 0 || value > 10) ? 1 : value;
+    //    }
 
-        public double Max { get; init; } = 10;
-        public double Min { get; init; } = 0;
+    //    public double Max { get; init; } = 10;
+    //    public double Min { get; init; } = 0;
+    //    public double Step { get; init; } = 0.1;
+    //}
+
+    //public class Hue {
+    //    public string Type { get; init; } = "Slider";
+    //    public string Text { get; init; } = "Hue";
+
+    //    private double val = 0;
+    //    public double Value {
+    //        get => val;
+    //        set => val = Math.Min(359, Math.Max(0, value));
+    //    }
+
+    //    public double Max { get; init; } = 359;
+    //    public double Min { get; init; } = 0;
+    //    public int Step { get; init; } = 1;
+    //}
+
+    //public class Brightness {
+    //    public string Type { get; init; } = "Slider";
+    //    public string Text { get; init; } = "Brightness";
+
+    //    private double val = 1;
+    //    public double Value {
+    //        get => val;
+    //        set => val = (value < 0 || value > 2) ? 1 : value;
+    //    }
+
+    //    public double Max { get; init; } = 2;
+    //    public double Min { get; init; } = 0;
+    //    public double Step { get; init; } = 0.1;
+    //}
+
+    //public class Contrast {
+    //    public string Type { get; init; } = "Slider";
+    //    public string Text { get; init; } = "Contrast";
+
+    //    private double val = 1;
+    //    public double Value {
+    //        get => val;
+    //        set => val = (value < 0 || value > 10) ? 1 : value;
+    //    }
+
+    //    public double Max { get; init; } = 10;
+    //    public double Min { get; init; } = 0;
+    //    public double Step { get; init; } = 0.1;
+    //}
+
+    public class Saturation : SliderProperty<double> {
+        public override string Text { get; } = "Saturation";
+        public override double Max { get; } = 10;
+        public override double Min { get; } = 0;
+        public override double DefaultValue { get; } = 1;
         public double Step { get; init; } = 0.1;
     }
 
-    public class Hue {
-        public string Type { get; init; } = "Slider";
-        public string Text { get; init; } = "Hue";
+    public class Brightness : SliderProperty<double> {
+        public override string Text { get; } = "Brightness";
+        public override double Max { get; } = 2;
+        public override double Min { get; } = 0;
+        public override double DefaultValue { get; } = 1;
+        public double Step { get; init; } = 0.1;
+    }
 
-        private double val = 0;
-        public double Value {
-            get => val;
-            set => val = Math.Min(359, Math.Max(0, value));
-        }
+    public class Contrast : SliderProperty<double> {
+        public override string Text { get; } = "Contrast";
+        public override double Max { get; } = 10;
+        public override double Min { get; } = 0;
+        public override double DefaultValue { get; } = 1;
+        public double Step { get; init; } = 0.1;
+    }
 
-        public double Max { get; init; } = 359;
-        public double Min { get; init; } = 0;
+    public class Speed : SliderProperty<double> {
+        public override string Text { get; } = "Speed";
+        public override double Max { get; } = 5;
+        public override double Min { get; } = 0.25;
+        public override double DefaultValue { get; } = 1;
+        public double Step { get; init; } = 0.05;
+    }
+
+    public class Volume : SliderProperty<double> {
+        public override string Text { get; } = "Volume";
+        public override double Max { get; } = 1;
+        public override double Min { get; } = 0;
+        public override double DefaultValue { get; } = 0.8;
+        public double Step { get; init; } = 0.1;
+    }
+
+    public class Hue : SliderProperty<int> {
+        public override string Text { get; } = "Hue";
+        public override int Max { get; } = 359;
+        public override int Min { get; } = 0;
+        public override int DefaultValue { get; } = 0;
         public int Step { get; init; } = 1;
-    }
-
-    public class Brightness {
-        public string Type { get; init; } = "Slider";
-        public string Text { get; init; } = "Brightness";
-
-        private double val = 1;
-        public double Value {
-            get => val;
-            set => val = (value < 0 || value > 2) ? 1 : value;
-        }
-
-        public double Max { get; init; } = 2;
-        public double Min { get; init; } = 0;
-        public double Step { get; init; } = 0.1;
-    }
-
-    public class Contrast {
-        public string Type { get; init; } = "Slider";
-        public string Text { get; init; } = "Contrast";
-
-        private double val = 1;
-        public double Value {
-            get => val;
-            set => val = (value < 0 || value > 10) ? 1 : value;
-        }
-
-        public double Max { get; init; } = 10;
-        public double Min { get; init; } = 0;
-        public double Step { get; init; } = 0.1;
     }
 
     public class Scaling {
         public string Type { get; init; } = "Dropdown";
-        public string Text { get; init; } = "Scale Way";
+        public string Text { get; init; } = "Scale_Way";
 
         private int val = 0;
         public int Value {
             get => val;
-            set => val = Math.Min(4, Math.Max(0, value));
+            set => val = Math.Clamp(value, 0, 4);
         }
 
         public List<string> Items { get; init; } = ["Fill", "Contain", "Cover", "None", "Scale-Down"];
@@ -351,34 +401,59 @@ namespace VirtualPaper.Common {
         public string Help { get; init; } = "Effect_Help_Parallax";
     }
 
-    public class Speed {
-        public string Type { get; init; } = "Slider";
-        public string Text { get; init; } = "Speed";
+    //public class Speed {
+    //    public string Type { get; init; } = "Slider";
+    //    public string Text { get; init; } = "Speed";
 
-        private double val = 1;
-        public double Value {
-            get => val;
-            set => val = (value < 0.25 || value > 5) ? 1 : value;
-        }
+    //    private double val = 1;
+    //    public double Value {
+    //        get => val;
+    //        set => val = (value < 0.25 || value > 5) ? 1 : value;
+    //    }
 
-        public double Max { get; init; } = 5;
-        public double Min { get; init; } = 0.25;
-        public double Step { get; init; } = 0.05;
+    //    public double Max { get; init; } = 5;
+    //    public double Min { get; init; } = 0.25;
+    //    public double Step { get; init; } = 0.05;
+    //}
+
+    //public class Volume {
+    //    public string Type { get; init; } = "Slider";
+    //    public string Text { get; init; } = "Volume";
+
+    //    private double val = 0.8;
+    //    public double Value {
+    //        get => val;
+    //        set => val = (value < 0 || value > 1) ? 0.8 : value;
+    //    }
+
+    //    public double Max { get; init; } = 1;
+    //    public double Min { get; init; } = 0;
+    //    public double Step { get; init; } = 0.01;
+    //}
+
+    public class TimePerception {
+        public string Type { get; init; } = "CheckBox";
+        public string Text { get; init; } = "Time_Perception";
+        public bool Value { get; set; } = false;
+        public string Help { get; init; } = "Effect_Help_TimeAtmospherePerception";
     }
 
-    public class Volume {
+    public abstract class SliderProperty<T> where T : IComparable<T> {
         public string Type { get; init; } = "Slider";
-        public string Text { get; init; } = "Volume";
+        public abstract string Text { get; }
+        public abstract T Max { get; }
+        public abstract T Min { get; }
+        public abstract T DefaultValue { get; }
 
-        private double val = 0.8;
-        public double Value {
-            get => val;
-            set => val = (value < 0 || value > 1) ? 0.8 : value;
+        private T _val;
+        public T Value {
+            get => _val;
+            set => _val = (value.CompareTo(Min) < 0 || value.CompareTo(Max) > 0)
+                ? DefaultValue
+                : value;
         }
 
-        public double Max { get; init; } = 1;
-        public double Min { get; init; } = 0;
-        public double Step { get; init; } = 0.01;
+        protected SliderProperty() => _val = DefaultValue;
     }
     #endregion
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -40,14 +41,17 @@ namespace VirtualPaper.PlayerWeb.Core.Utils {
             Task.Run(async () => {
                 try {
                     while (!_cts.IsCancellationRequested) {
-                        if (!_stateScripts.IsEmpty) {
-                            foreach (var kv in _stateScripts) {
-                                Dispatch(kv.Value);
-                            }
-                            _stateScripts.Clear();
-                        }
-
                         await Task.Delay(StateInterval, _cts.Token);
+
+                        if (_stateScripts.IsEmpty) continue;
+
+                        // 快照后清空，避免遍历期间新数据被误删
+                        var snapshot = _stateScripts.ToArray();
+                        _stateScripts.Clear();
+
+                        foreach (var kv in snapshot) {
+                            await DispatchAsync(kv.Value);
+                        }
                     }
                 }
                 catch (OperationCanceledException) { }
@@ -59,7 +63,7 @@ namespace VirtualPaper.PlayerWeb.Core.Utils {
                 try {
                     while (!_cts.IsCancellationRequested) {
                         if (_eventQueue.TryDequeue(out var script)) {
-                            Dispatch(script);
+                            await DispatchAsync(script);
                         }
                         else {
                             await Task.Delay(EventIdleDelay, _cts.Token);
@@ -70,8 +74,8 @@ namespace VirtualPaper.PlayerWeb.Core.Utils {
             });
         }
 
-        private void Dispatch(string script) {
-            CrossThreadInvoker.InvokeOnUIThread(async () => {
+        private Task DispatchAsync(string script) {
+            return CrossThreadInvoker.InvokeOnUIThreadAsync(async () => {
                 try {
                     await EnsureCoreAsync();
                     await _webView.ExecuteScriptAsync(script);
@@ -82,20 +86,51 @@ namespace VirtualPaper.PlayerWeb.Core.Utils {
             });
         }
 
+        //private void Dispatch(string script) {
+        //    CrossThreadInvoker.InvokeOnUIThread(async () => {
+        //        try {
+        //            await EnsureCoreAsync();
+        //            await _webView.ExecuteScriptAsync(script);
+        //        }
+        //        catch (Exception ex) {
+        //            ArcLog.GetLogger<WebViewScriptExecutor>().Error(ex);
+        //        }
+        //    });
+        //}
+
+        private readonly SemaphoreSlim _coreInitLock = new(1, 1);
+
         private async Task EnsureCoreAsync() {
             if (_coreReady) return;
 
-            if (_webView.CoreWebView2 == null) {
-                await _webView.EnsureCoreWebView2Async();
+            await _coreInitLock.WaitAsync();
+            try {
+                if (_coreReady) return; // double-check
+                if (_webView.CoreWebView2 == null) {
+                    await _webView.EnsureCoreWebView2Async();
+                }
+                _coreReady = true;
             }
-
-            _coreReady = true;
+            finally {
+                _coreInitLock.Release();
+            }
         }
+
+        //private async Task EnsureCoreAsync() {
+        //    if (_coreReady) return;
+
+        //    if (_webView.CoreWebView2 == null) {
+        //        await _webView.EnsureCoreWebView2Async();
+        //    }
+
+        //    _coreReady = true;
+        //}
 
         private static string BuildScript(string functionName, object?[] parameters) {
             var sb = new StringBuilder();
             sb.Append(functionName).Append('(');
 
+            var filtered = parameters.Where(p => p != null).ToArray();
             for (int i = 0; i < parameters.Length; i++) {
                 if (parameters[i] == null) continue;
                 sb.Append(JsonSerializer.Serialize(parameters[i]));

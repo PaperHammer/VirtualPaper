@@ -1,5 +1,5 @@
 namespace VirtualPaper.Common.Runtime.PlayerWeb {
-    public static class Fileds {
+    public static class Fields {
         public static string ApplyFilter { get; } = "applyFilter";
         public static string Play { get; } = "play";
         public static string PlaybackChanged { get; } = "playbackChanged";
@@ -9,5 +9,6 @@ namespace VirtualPaper.Common.Runtime.PlayerWeb {
         public static string MouseOut { get; } = "mouseOut";
         public static string ResourceLoad { get; } = "resourceLoad";
         public static string UpdateDimensions { get; } = "updateDimensions";
+        public static string TimePerception { get; } = "TimePerception";
     }
 }

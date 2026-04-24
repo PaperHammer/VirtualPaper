@@ -11,8 +11,8 @@ namespace Workloads.Creation.StaticImg.InkSystem.Utils {
         public bool CanRedo => _undoRedoCore.CanRedo;
         public bool IsUndoingOrRedoing => _undoRedoCore.IsUndoingOrRedoing;
 
-        public StaticImgUndoRedoUtil(int maxStackSize = 20) {
-            _undoRedoCore = new UndoRedoUtil<IUndoableCommand>(maxStackSize);
+        public StaticImgUndoRedoUtil(bool isSaved, int maxStackSize = 20) {
+            _undoRedoCore = new UndoRedoUtil<IUndoableCommand>(isSaved, maxStackSize);
             _undoRedoCore.IsSavedChanged += UndoRedoCore_IsSavedChanged;
         }
 

@@ -46,7 +46,7 @@ namespace Workloads.Creation.StaticImg.Models {
                 _session.SharedFormat,
                 _session.SharedAlphaMode);
             if (IsNeedBackground) InitializeBlankRenderTarget(); // 初始化空白画布
-            IsInited.SetResult(true);
+            IsInited.TrySetResult(true);
         }
 
         public void HandleOnceRenderCompleted() {
@@ -145,10 +145,6 @@ namespace Workloads.Creation.StaticImg.Models {
                     ds.Clear(Colors.Transparent);
                     ds.DrawImage(bitmap);
                 }
-
-                //var colors = RenderTarget.GetPixelBytes();
-
-                IsReady.SetResult(true);
             }
             finally {
                 if (File.Exists(tempFile))

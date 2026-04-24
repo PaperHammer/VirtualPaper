@@ -100,9 +100,13 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             return await _viewModel.SaveAsync();
         }
 
-        internal async Task ExportAsync(ExportDataStaticImg data, CancellationToken token = default) {
+        internal async Task UpdateRecentUsedAsync(string filePath) {
+            await _viewModel.UpdateRecentUsedAsync(filePath);
+        }
+
+        internal async Task<string?> ExportAsync(ExportDataStaticImg data, CancellationToken token = default) {
             var size = _viewModel.Data.CanvasSize.ToSize();
-            await _compositeTarget.ExportAsync(size, data, token);
+            return await _compositeTarget.ExportAsync(size, data, token);
         }
 
         #region children event

@@ -26,12 +26,7 @@
                         <KeyboardAccelerator Modifiers="Control" Key="N"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <!--<MenuFlyoutItem Text="添加">
-                    <MenuFlyoutItem.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Control" Key="D"/>
-                    </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>-->
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_Open}" >
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_Open}" Command="{x:Bind _viewModel.MFI_OpenCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="O"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -41,6 +36,7 @@
                         <KeyboardAccelerator Modifiers="Control" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
+                <MenuFlyoutItem Text="{markup:I18n Key=Text_Save_As}" Command="{x:Bind _viewModel.MFI_SaveAsCommand}"/>
                 <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_SaveAll}" Command="{x:Bind _viewModel.MFI_SaveAllCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control,Shift" Key="S"/>

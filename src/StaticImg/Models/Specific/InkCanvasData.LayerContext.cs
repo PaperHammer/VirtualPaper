@@ -30,6 +30,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         }
 
         public ObservableCollection<LayerInfo> Layers => _layers;
+        public List<LayerInfo> AllLayers => _allLayers;
 
         private LayerInfo _selectedLayer;
         public LayerInfo SelectedLayer {
@@ -45,7 +46,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             }
         }
 
-        public LayerInfo AddLayer(string? name = null, bool isBackground = false, Guid? layerId = null) {
+        public LayerInfo AddLayer(string? name = null, bool isBackground = false, Guid? layerId = null, bool needRecord = true) {
             int insertIndex = _layers.Count;
 
             if (layerId.HasValue) {
@@ -57,7 +58,6 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
             var layer = new LayerInfo {
                 Name = name ??
-                    $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerName))} " +
                     $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerNew))} " +
                     $"{++_newLayerCount}",
                 RenderData = new InkRenderData(_session, CanvasSize, isBackground),
@@ -65,7 +65,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 IsVisible = true,
                 ZIndex = insertIndex,
             };
-            layer.RenderData.IsReady.SetResult(true);
+            layer.RenderData.IsReady.TrySetResult(true);
             layer.PropertyChanged += OnLayerPropertyChanged;
 
             _allLayers.Add(layer);
@@ -78,9 +78,11 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             }
             OnAnyLayerStateChanged();
 
-            _session.UnReUtil.RecordCommand(
-                new AddLayerCommand(this, layer, insertIndex)
-            );
+            if (needRecord) {
+                _session.UnReUtil.RecordCommand(
+                    new AddLayerCommand(this, layer, insertIndex)
+                );
+            }
             return layer;
         }
 
@@ -96,7 +98,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 RenderData = originalLayer.RenderData.Clone(),
                 ZIndex = insertIndex,
             };
-            layer.RenderData.IsReady.SetResult(true);
+            layer.RenderData.IsReady.TrySetResult(true);
             layer.PropertyChanged += OnLayerPropertyChanged;
             _allLayers.Add(layer);
             if (insertIndex < _layers.Count) {
@@ -194,7 +196,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             RenderRequest?.Invoke(this, new RenderTargetChangedEventArgs(mode, region));
         }
 
-        private void OnLayerPropertyChanged(object? sender, PropertyChangedEventArgs e) {
+        internal void OnLayerPropertyChanged(object? sender, PropertyChangedEventArgs e) {
             // 如果正在执行 Undo/Redo，不要记录新命令
             if (_session.UnReUtil.IsUndoingOrRedoing || sender is not LayerInfo layer) return;
 

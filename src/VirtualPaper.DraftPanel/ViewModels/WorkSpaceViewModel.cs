@@ -13,18 +13,20 @@ using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.TabView;
 using VirtualPaper.UIComponent.Utils;
+using Windows.Storage;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
-using static VirtualPaper.Common.Constants;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject, IDisposable {
@@ -36,7 +38,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             set { if (_selectedTabIndex == value) return; _selectedTabIndex = value; OnPropertyChanged(); }
         }
 
+        public ICommand? MFI_OpenCommand { get; private set; }
         public ICommand? MFI_SaveCommand { get; private set; }
+        public ICommand? MFI_SaveAsCommand { get; private set; }
         public ICommand? MFI_SaveAllCommand { get; private set; }
         public ICommand? MFI_ExitCommand { get; private set; }
         public ICommand? MFI_UndoCommand { get; private set; }
@@ -50,8 +54,14 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private void InitCommand() {
+            MFI_OpenCommand = new RelayCommand(async () => {
+                await OpenAsync();
+            });
             MFI_SaveCommand = new RelayCommand(async () => {
                 await SaveAsync();
+            });
+            MFI_SaveAsCommand = new RelayCommand(async () => {
+                await SaveAsAsync();
             });
             MFI_SaveAllCommand = new RelayCommand(async () => {
                 await SaveAllAsync();
@@ -112,9 +122,28 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         #region ui events
-        internal async Task ExportAsync(ExportImageFormat format) => await ExecuteRuntimeCommandAsync(x => x.ExportAsync(format));
+        private async Task OpenAsync() {
+            var storage = await WindowsStoragePickers.PickFilesAsync(
+                 WindowConsts.WindowHandle,
+                 [.. FileFilter.FileTypeToExtension[FileType.FDesign], .. FileFilter.FileTypeToExtension[FileType.FImage]],
+                 true);
+            await OpenLocalFilesAsync(storage);
+        }
 
+        private async Task OpenLocalFilesAsync(StorageFile[]? items) {
+            if (items == null || items.Length < 1) return;
+
+            int n = items.Length;
+            PreProjectData[] datas = new PreProjectData[n];
+            for (int i = 0; i < n; i++) {
+                datas[i] = new PreProjectData(items[i].Path, ProjectType.P_StaticImage);
+            }
+            await AddNewItemsAsync(datas);
+        }
+
+        internal async Task ExportAsync(ExportImageFormat format) => await ExecuteRuntimeCommandAsync(x => x.ExportAsync(format));
         private async Task SaveAsync() => await ExecuteRuntimeCommandAsync(InternalSaveAsync);
+        private async Task SaveAsAsync() => await ExecuteRuntimeCommandAsync(InternalSaveAsAsync);
 
         private void RefreshHeaderAsync(IRuntime runtime) {
             var header = _runtimeToArcTab[runtime].Header;
@@ -163,6 +192,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             await runtime.SaveAsync();
             RefreshHeaderAsync(runtime);
         }
+        
+        private async Task InternalSaveAsAsync(IRuntime runtime) {
+            await runtime.SaveAsAsync();
+            RefreshHeaderAsync(runtime);
+        }
 
         internal async Task AddNewItemsAsync(PreProjectData[]? predatas) {
             if (predatas == null || predatas.Length == 0) return;
@@ -204,19 +238,22 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         private async Task InitRuntimeItemWithFileAsync(string filePath) {
             string extension = Path.GetExtension(filePath);
-            FileType rtFileType = FileFilter.GetRuntimeFileType(extension);
+            FileType fType = FileFilter.GetRuntimeFileType(extension);
 
-            switch (rtFileType) {
+            bool isSuccess;
+            switch (fType) {
                 case FileType.FImage:
-                    // var runtime = new Workloads.Creation.StaticImg.MainPage(Draft.Instance, filePath, rtFileType);
-                    // AddToWorkSpace(filePath, runtime, true); // true 表示来自现有文件
+                    isSuccess = await ReadImgFileAsync(filePath, fType);
+                    if (isSuccess && !_tempRecentUsed.Contains(filePath)) {
+                        _tempRecentUsed.Add(filePath);
+                    }
                     break;
                 //case FileType.FGif:
                 //    break;
                 //case FileType.FVideo:
                 //    break;
                 case FileType.FDesign:
-                    var isSuccess = await ReadDesignFileAsync(filePath);
+                    isSuccess = await ReadDesignFileAsync(filePath);
                     if (isSuccess && !_tempRecentUsed.Contains(filePath)) {
                         _tempRecentUsed.Add(filePath);
                     }
@@ -229,12 +266,23 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private void InitRuntimeItemWithIdentify(string fileName, ProjectType type) {
             switch (type) {
                 case ProjectType.P_StaticImage:
-                    AddToWorkSpace(fileName, false); // false 表示新建未保存
+                    AddToWorkSpace(fileName, FileType.FDesign);
                     break;
 
                 default:
                     break;
             }
+        }
+
+        private async Task<bool> ReadImgFileAsync(string filePath, FileType fType) {
+            var checked_type = FileFilter.GetFileType(filePath);
+            if (checked_type != fType) {
+                GlobalMessageUtil.ShowError(message: nameof(Constants.I18n.Project_SI_FileTypeMismatch), isNeedLocalizer: true, extraMsg: filePath);
+                return false;
+            }
+            AddToWorkSpace(filePath, fType);
+
+            return true;
         }
 
         private async Task<bool> ReadDesignFileAsync(string filePath) {
@@ -245,7 +293,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
             switch (header.ProjType) {
                 case ProjectType.P_StaticImage:
-                    AddToWorkSpace(filePath, true); // true 表示来自现有文件
+                    AddToWorkSpace(filePath, FileType.FDesign);
                     break;
 
                 default:
@@ -255,9 +303,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             return true;
         }
 
-        private void AddToWorkSpace(string file, bool isFromFile) {
+        private void AddToWorkSpace(string file, FileType fileType) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
-                var runtime = new Workloads.Creation.StaticImg.MainPage(file);
+                var runtime = new Workloads.Creation.StaticImg.MainPage(file, fileType);
                 runtime.IsSavedChanged += Runtime_IsSavedChanged;
 
                 var header = new ArcTabViewItemHeader() {
@@ -266,7 +314,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                         TextTrimming = TextTrimming.CharacterEllipsis, // 文本超出时显示省略号
                         MaxWidth = 200
                     },
-                    IsSaved = isFromFile, // 来自文件则初始化为已保存，新建则为未保存
+                    IsSaved = runtime.IsSavedFromInit,
                 };
 
                 var tabItem = new ArcTabViewItem() {
@@ -280,7 +328,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         private void Runtime_IsSavedChanged(object? sender, IsSavedChangedEventArgs e) {
             if (sender is IRuntime runtime && _runtimeToArcTab.TryGetValue(runtime, out var value)) {
-                value.Header.IsSaved = e.IsSaved;
+                value.Header.IsSaved = e.IsSaved && runtime.IsSavedFromInit;
             }
         }
         #endregion

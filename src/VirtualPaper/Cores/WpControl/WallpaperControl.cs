@@ -843,7 +843,7 @@ namespace VirtualPaper.Cores.WpControl {
                         ArcLog.GetLogger<WallpaperControl>().Info($"Screen missing, skipping restoration of {layout.FolderPath} | {layout.MonitorDeviceId}");
                     }
                     else {
-                        IWpMetadata data = WallpaperUtil.GetWallpaperByFolder(layout.FolderPath, monitor.SystemIndex.ToString(), layout.RType);
+                        IWpMetadata data = WallpaperUtil.GetWallpaperByFolder(layout.FolderPath, layout.MonitorContent, layout.RType);
                         if (data == null || !data.IsAvailable()) {
                             ArcLog.GetLogger<WallpaperControl>().Error($"Skipping restoration of {layout.FolderPath}");
                             CloseWallpaper(monitor);

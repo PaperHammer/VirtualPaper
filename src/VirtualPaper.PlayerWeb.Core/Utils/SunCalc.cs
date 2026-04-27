@@ -6,22 +6,26 @@ namespace VirtualPaper.PlayerWeb.Core.Utils {
         /// 计算指定日期、经纬度的日出日落时间（UTC）
         /// </summary>
         public static (DateTime sunrise, DateTime sunset) Calculate(DateTime date, double latitude, double longitude) {
-            int dayOfYear = date.DayOfYear;
+            var utcDate = date.Kind == DateTimeKind.Utc
+                ? date.Date
+                : date.ToUniversalTime().Date;
+
+            int dayOfYear = utcDate.DayOfYear;
             double longitudeHour = longitude / 15.0;
 
             // 日出
             double tRise = dayOfYear + (6.0 - longitudeHour) / 24.0;
             double sunriseMeanAnomaly = (0.9856 * tRise) - 3.289;
-            double sunriseUtc = ComputeUtcTime(tRise, sunriseMeanAnomaly, latitude, longitude, isSunrise: true);
+            double sunriseUtcHour = ComputeUtcTime(tRise, sunriseMeanAnomaly, latitude, longitude, isSunrise: true);
 
             // 日落
             double tSet = dayOfYear + (18.0 - longitudeHour) / 24.0;
             double sunsetMeanAnomaly = (0.9856 * tSet) - 3.289;
-            double sunsetUtc = ComputeUtcTime(tSet, sunsetMeanAnomaly, latitude, longitude, isSunrise: false);
+            double sunsetUtcHour = ComputeUtcTime(tSet, sunsetMeanAnomaly, latitude, longitude, isSunrise: false);
 
-            var baseDate = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0, DateTimeKind.Utc);
-            var sunrise = baseDate.AddHours(sunriseUtc);
-            var sunset = baseDate.AddHours(sunsetUtc);
+            var baseDate = new DateTime(utcDate.Year, utcDate.Month, utcDate.Day, 0, 0, 0, DateTimeKind.Utc);
+            var sunrise = baseDate.AddHours(sunriseUtcHour);
+            var sunset = baseDate.AddHours(sunsetUtcHour);
 
             return (sunrise, sunset);
         }

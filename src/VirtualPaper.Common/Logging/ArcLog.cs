@@ -3,13 +3,6 @@ using System.Diagnostics;
 using NLog;
 using Windows.ApplicationModel.Core;
 
-/*
- * todo
- * 时间感知	日出日落自动切换壁纸亮度/色调
- * AI 生成壁纸	接入 Stable Diffusion / ComfyUI，本地生成动态壁纸
- * AI 实时风格化	对摄像头画面实时风格迁移作为壁纸
- */
-
 namespace VirtualPaper.Common.Logging {
     /// <summary>
     /// 统一日志入口：支持程序集自动识别、调试输出、缓存

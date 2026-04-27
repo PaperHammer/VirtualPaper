@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -204,23 +205,22 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
 
         private async Task SendTimePerceptionConfigAsync() {
-            // 获取坐标
             var (latitude, longitude) = await Win32Util.GetSystemLocationAsync();
+            var (sunriseLocal, sunsetLocal) = SunCalc.Calculate(DateTime.UtcNow.Date, latitude, longitude);
 
-            var (sunrise, sunset) = SunCalc.Calculate(DateTime.UtcNow, latitude, longitude);
-
-            // 转为本地时间的毫秒时间戳
-            long sunriseMs = new DateTimeOffset(sunrise.ToLocalTime()).ToUnixTimeMilliseconds();
-            long sunsetMs = new DateTimeOffset(sunset.ToLocalTime()).ToUnixTimeMilliseconds();
+            DebugUtil.Output($"sunriseLocal: {sunriseLocal:HH:mm}");
+            DebugUtil.Output($"sunriseLocal: {sunsetLocal:HH:mm}");
 
             var config = new {
                 enabled = true,
-                sunrise = sunriseMs,
-                sunset = sunsetMs,
+                sunrise = sunriseLocal.ToString("HH:mm"),
+                sunset = sunsetLocal.ToString("HH:mm"),
                 transitionMinutes = 30,
                 phases = new {
                     night = new { brightness = -0.3, hue = 220, saturate = -0.2 },
-                    day = new { brightness = 0.0, hue = 0, saturate = 0.0 }
+                    dawn = new { brightness = 0.1, hue = 30, saturate = 0.3 },
+                    day = new { brightness = 0.0, hue = 0, saturate = 0.0 },
+                    dusk = new { brightness = -0.1, hue = 20, saturate = 0.2 },
                 }
             };
 

@@ -51,17 +51,16 @@ function applyFilter() {
     const contentDiv = document.getElementById('content');
 
     if (contentDiv && element) {
-        // 叠加 TimePerception 偏移
-        const finalSaturate = Math.max(0, saturate + tpSaturateOffset);
-        const finalHueRotate = (hueRotate + tpHueOffset) % 360;
-        const finalBrightness = Math.max(0, brightness + tpBrightnessOffset);
+        const finalSaturate = clamp(saturate + tpSaturateOffset, 0.0, 3.0);
+        const finalBrightness = clamp(brightness + tpBrightnessOffset, 0.1, 2.0);
+        const finalHueRotate = ((hueRotate + clamp(tpHueOffset, -30, 30)) % 360 + 360) % 360;
         const finalContrast = contrast;
 
-        var filter = templateFilter;
-        filter = filter.replace(new RegExp('s#', 'g'), finalSaturate);
-        filter = filter.replace(new RegExp('d#', 'g'), finalHueRotate);
-        filter = filter.replace(new RegExp('b#', 'g'), finalBrightness);
-        filter = filter.replace(new RegExp('c#', 'g'), finalContrast);
+        let filter = templateFilter;
+        filter = filter.replace(/s#/g, finalSaturate.toFixed(3));
+        filter = filter.replace(/d#/g, Math.round(finalHueRotate));
+        filter = filter.replace(/b#/g, finalBrightness.toFixed(3));
+        filter = filter.replace(/c#/g, finalContrast);
 
         contentDiv.style.filter = filter.trim();
         element.style.objectFit = newFit;
@@ -74,6 +73,10 @@ function applyFilter() {
     }
 
     return "applyFilter success";
+}
+
+function clamp(val, min, max) {
+    return Math.min(Math.max(val, min), max);
 }
 
 function objectFitChanged(value) {
@@ -148,14 +151,30 @@ function runTimePerception(val) {
     tpIntervalId = setInterval(tickTimePerception, 60 * 1000);
 }
 
+/**
+ * 把 "HH:mm" 解析成指定时间戳当天对应的本地时间戳（ms）
+ * @param {string} hhmm  - "HH:mm" 格式
+ * @param {number} baseMs - 基准时间戳（默认 Date.now()，模拟时自动跟随）
+ */
+function todayTimeFromHHMM(hhmm, baseMs = Date.now()) {
+    const [h, m] = hhmm.split(':').map(Number);
+    const d = new Date(baseMs);   // ← 用 baseMs 构造，而不是 new Date()
+    d.setHours(h, m, 0, 0);
+    return d.getTime();
+}
+
 function tickTimePerception() {
     if (!tpConfig) return;
 
-    const now = Date.now();
+    const now = Date.now(); // 本地时间戳，和下面构造的时间戳单位一致
     const { sunrise, sunset, phases, transitionMinutes } = tpConfig;
     const transitionMs = (transitionMinutes ?? 30) * 60 * 1000;
 
-    const target = calcPhaseTarget(now, sunrise, sunset, phases, transitionMs);
+    // 每次 tick 都重新构造今天的日出日落时间戳
+    const sunriseMs = todayTimeFromHHMM(sunrise, now);
+    const sunsetMs = todayTimeFromHHMM(sunset, now);
+
+    const target = calcPhaseTarget(now, sunriseMs, sunsetMs, phases, transitionMs);
 
     tpBrightnessOffset = target.brightness;
     tpHueOffset = target.hue;
@@ -174,26 +193,30 @@ function calcPhaseTarget(now, sunrise, sunset, phases, transitionMs) {
     const duskStart = sunset - transitionMs;
     const duskEnd = sunset + transitionMs;
 
+    // 防止过渡区域重叠（transitionMinutes 设置过大时）
+    const safeDawnEnd = Math.min(dawnEnd, (dawnStart + duskEnd) / 2);
+    const safeDuskStart = Math.max(duskStart, (dawnStart + duskEnd) / 2);
+
     // 纯夜晚
     if (now < dawnStart || now >= duskEnd) {
         return phases.night;
     }
     // dawn 过渡：night → day
-    if (now >= dawnStart && now < dawnEnd) {
-        const t = (now - dawnStart) / (dawnEnd - dawnStart);
+    if (now >= dawnStart && now < safeDawnEnd) {
+        const t = (now - dawnStart) / (safeDawnEnd - dawnStart);
         return lerpPhase(phases.night, phases.day, easeInOut(t));
     }
     // 纯白天
-    if (now >= dawnEnd && now < duskStart) {
+    if (now >= safeDawnEnd && now < safeDuskStart) {
         return phases.day;
     }
     // dusk 过渡：day → night
-    if (now >= duskStart && now < duskEnd) {
-        const t = (now - duskStart) / (duskEnd - duskStart);
+    if (now >= safeDuskStart && now < duskEnd) {
+        const t = (now - safeDuskStart) / (duskEnd - safeDuskStart);
         return lerpPhase(phases.day, phases.night, easeInOut(t));
     }
 
-    return phases.day;
+    return phases.night; // 兜底改为 night 更安全（走到这里说明时间异常）
 }
 
 function lerpPhase(a, b, t) {

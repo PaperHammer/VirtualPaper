@@ -33,20 +33,13 @@
 	</ItemGroup>
 
 	<Target Name="CopyToVirtualPaper" AfterTargets="Build">
-		<Copy SourceFiles="$(ProjectDir)DepthEstimate\ai_models\model-small.onnx" 
-			  DestinationFolder="$(SolutionDir)VirtualPaper\Plugins\ML\DepthEstimate\ai_models" 
-			  SkipUnchangedFiles="true" />
+		<Copy SourceFiles="$(ProjectDir)DepthEstimate\ai_models\model-small.onnx" DestinationFolder="$(SolutionDir)VirtualPaper\Plugins\ML\DepthEstimate\ai_models" SkipUnchangedFiles="true" />
 	</Target>
 
 	<ItemGroup>
 		<Folder Include="StyleTransfer\env\python\" />
 		<Folder Include="StyleTransfer\env\packages\" />
-		<Folder Include="StyleTransfer\Protos\" />
 		<Folder Include="StyleTransfer\Service\" />
 		<Folder Include="StyleTransfer\ai_models\" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Protobuf Include="StyleTransfer\Protos\style_transfer.proto" />
 	</ItemGroup>
 </Project>

@@ -25,7 +25,7 @@ if _version_not_supported:
     )
 
 
-class StyleTransferStub(object):
+class Grpc_StyleTransferServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -35,18 +35,18 @@ class StyleTransferStub(object):
             channel: A grpc.Channel.
         """
         self.StylizeWithProgress = channel.unary_stream(
-                '/VirtualPaper.ML.StyleTransfer.StyleTransfer/StylizeWithProgress',
+                '/VirtualPaper.Grpc.Service.StyleTransfer.Grpc_StyleTransferService/StylizeWithProgress',
                 request_serializer=style__transfer__pb2.StyleRequest.SerializeToString,
                 response_deserializer=style__transfer__pb2.ProgressEvent.FromString,
                 _registered_method=True)
         self.GetCapability = channel.unary_unary(
-                '/VirtualPaper.ML.StyleTransfer.StyleTransfer/GetCapability',
+                '/VirtualPaper.Grpc.Service.StyleTransfer.Grpc_StyleTransferService/GetCapability',
                 request_serializer=style__transfer__pb2.Empty.SerializeToString,
                 response_deserializer=style__transfer__pb2.CapabilityResponse.FromString,
                 _registered_method=True)
 
 
-class StyleTransferServicer(object):
+class Grpc_StyleTransferServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def StylizeWithProgress(self, request, context):
@@ -62,7 +62,7 @@ class StyleTransferServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_StyleTransferServicer_to_server(servicer, server):
+def add_Grpc_StyleTransferServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'StylizeWithProgress': grpc.unary_stream_rpc_method_handler(
                     servicer.StylizeWithProgress,
@@ -76,13 +76,13 @@ def add_StyleTransferServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'VirtualPaper.ML.StyleTransfer.StyleTransfer', rpc_method_handlers)
+            'VirtualPaper.Grpc.Service.StyleTransfer.Grpc_StyleTransferService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('VirtualPaper.ML.StyleTransfer.StyleTransfer', rpc_method_handlers)
+    server.add_registered_method_handlers('VirtualPaper.Grpc.Service.StyleTransfer.Grpc_StyleTransferService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class StyleTransfer(object):
+class Grpc_StyleTransferService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -99,7 +99,7 @@ class StyleTransfer(object):
         return grpc.experimental.unary_stream(
             request,
             target,
-            '/VirtualPaper.ML.StyleTransfer.StyleTransfer/StylizeWithProgress',
+            '/VirtualPaper.Grpc.Service.StyleTransfer.Grpc_StyleTransferService/StylizeWithProgress',
             style__transfer__pb2.StyleRequest.SerializeToString,
             style__transfer__pb2.ProgressEvent.FromString,
             options,
@@ -126,7 +126,7 @@ class StyleTransfer(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/VirtualPaper.ML.StyleTransfer.StyleTransfer/GetCapability',
+            '/VirtualPaper.Grpc.Service.StyleTransfer.Grpc_StyleTransferService/GetCapability',
             style__transfer__pb2.Empty.SerializeToString,
             style__transfer__pb2.CapabilityResponse.FromString,
             options,

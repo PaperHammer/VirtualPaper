@@ -1,8 +1,7 @@
 syntax = "proto3";
+package VirtualPaper.Grpc.Service.StyleTransfer;
 
-package VirtualPaper.ML.StyleTransfer;
-
-service StyleTransfer {
+service Grpc_StyleTransferService {
   rpc StylizeWithProgress (StyleRequest) returns (stream ProgressEvent);
   rpc GetCapability (Empty) returns (CapabilityResponse);
 }

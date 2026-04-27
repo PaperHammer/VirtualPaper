@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
@@ -8,9 +8,9 @@ using VirtualPaper.ML.DepthEstimate.Models;
 namespace VirtualPaper.ML.DepthEstimate {
     public partial class MiDaS : IDisposable {
         static MiDaS() {
-            _modelPath = Path.Combine(
+            _modelPath = Path.Combine(  
                 AppDomain.CurrentDomain.BaseDirectory,
-                Constants.WorkingDir.ML,
+                Constants.WorkingDir.ML_DepthEstimate_AI_Models,
                 Utils.Fileds.ModelName);
             LoadModel(_modelPath);
         }

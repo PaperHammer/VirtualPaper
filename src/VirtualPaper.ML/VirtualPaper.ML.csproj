@@ -14,15 +14,39 @@
 		<PackageReference Include="OpenCvSharp4.Extensions" Version="4.10.0.20241108" />
 		<PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20241108" />
 		<PackageReference Include="OpenCvSharp4.Windows" Version="4.10.0.20241108" />
+		<PackageReference Include="Google.Protobuf" Version="3.26.1" />
+		<PackageReference Include="Grpc.Core" Version="2.46.6" />
+		<PackageReference Include="Grpc.Core.Api" Version="2.62.0" />
+		<PackageReference Include="Grpc.Net.Client" Version="2.62.0" />
+		<PackageReference Include="Grpc.Net.ClientFactory" Version="2.32.0" />
+		<PackageReference Include="Grpc.Tools" Version="2.62.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="System.Buffers" Version="4.5.1" />
+		<PackageReference Include="System.Memory" Version="4.5.5" />
+		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
+		<ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
+	</ItemGroup>
+
+	<Target Name="CopyToVirtualPaper" AfterTargets="Build">
+		<Copy SourceFiles="$(ProjectDir)DepthEstimate\ai_models\model-small.onnx" 
+			  DestinationFolder="$(SolutionDir)VirtualPaper\Plugins\ML\DepthEstimate\ai_models" 
+			  SkipUnchangedFiles="true" />
+	</Target>
+
+	<ItemGroup>
+		<Folder Include="StyleTransfer\env\python\" />
+		<Folder Include="StyleTransfer\env\packages\" />
+		<Folder Include="StyleTransfer\Protos\" />
+		<Folder Include="StyleTransfer\Service\" />
+		<Folder Include="StyleTransfer\ai_models\" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="Models\model-small.onnx">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
+		<Protobuf Include="StyleTransfer\Protos\style_transfer.proto" />
 	</ItemGroup>
 </Project>

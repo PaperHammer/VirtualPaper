@@ -1,0 +1,7 @@
+cd VirtualPaper\src\VirtualPaper.ML\StyleTransfer
+
+# Create a virtual environment
+.\evn\python\python.exe -m pip install -r requirements.txt --target .\env\packages
+
+# Generate Python code from the .proto file
+.\env\python\python.exe -m grpc_tools.protoc -I.\Protos --python_out=.\Service --grpc_python_out=.\Service .\Protos\style_transfer.proto

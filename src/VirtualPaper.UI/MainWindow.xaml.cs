@@ -15,6 +15,7 @@ using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel;
 using WinRT.Interop;
+using WinUIEx;
 
 namespace VirtualPaper.UI {
     /// <summary>
@@ -55,6 +56,7 @@ namespace VirtualPaper.UI {
                 bool canClose = await NaviContent.CheckAllPagesCanCloseAsync();
                 if (canClose) {
                     _isSafeToClose = true;
+                    this.Hide(); // todo 优化：当前点击关闭会卡住一段时间
                     this.Close();
                 }
             }

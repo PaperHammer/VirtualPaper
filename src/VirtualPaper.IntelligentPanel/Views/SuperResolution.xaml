@@ -6,9 +6,12 @@
     xmlns:local="using:VirtualPaper.IntelligentPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local_comp="using:VirtualPaper.IntelligentPanel.Views.SuperResolutionComp"
     mc:Ignorable="d">
 
     <Grid>
-
+        <Frame>
+            <local_comp:Introduction/>
+        </Frame>
     </Grid>
 </Page>

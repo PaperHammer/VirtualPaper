@@ -12,7 +12,11 @@
 	<ItemGroup>
 	  <None Remove="Intelligent.xaml" />
 	  <None Remove="Views\StyleTranfer.xaml" />
+	  <None Remove="Views\StyleTransferComp\Introduction.xaml" />
+	  <None Remove="Views\StyleTransferComp\TaskList.xaml" />
 	  <None Remove="Views\SuperResolution.xaml" />
+	  <None Remove="Views\SuperResolutionComp\Introduction.xaml" />
+	  <None Remove="Views\SuperResolutionComp\TaskList.xaml" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
@@ -20,6 +24,11 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Page Update="Views\StyleTransferComp\TaskList.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 	<ItemGroup>
 	  <Page Update="Intelligent.xaml">
@@ -33,6 +42,24 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Page Update="Views\StyleTranfer.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+	<ItemGroup>
+	  <Page Update="Views\StyleTransferComp\Introduction.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Views\Comp\" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Page Update="Views\SuperResolutionComp\Introduction.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+	<ItemGroup>
+	  <Page Update="Views\SuperResolutionComp\TaskList.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>

@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Page
-    x:Class="VirtualPaper.IntelligentPanel.Views.StyleTranfer"
+<UserControl
+    x:Class="VirtualPaper.IntelligentPanel.Views.StyleTransferComp.TaskList"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:VirtualPaper.IntelligentPanel.Views"
+    xmlns:local="using:VirtualPaper.IntelligentPanel.Views.StyleTransferComp"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:local_comp="using:VirtualPaper.IntelligentPanel.Views.StyleTransferComp"
     mc:Ignorable="d">
 
     <Grid>
-        <Frame>
-            <local_comp:Introduction/>
-        </Frame>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        
+        
     </Grid>
-</Page>
+</UserControl>

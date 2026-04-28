@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="VirtualPaper.IntelligentPanel.Views.SuperResolutionComp.Introduction"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.IntelligentPanel.Views.SuperResolutionComp"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    mc:Ignorable="d">
+
+    <Grid x:Name="introductionGrid" 
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="16"/>
+            <ColumnDefinition Width="auto"/>
+        </Grid.ColumnDefinitions>
+
+        <Border
+            Width="480"
+            Height="270"
+            CornerRadius="12"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            VerticalAlignment="Center">
+            <!--todo-->
+            <TextBlock 
+                Text="GIF"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                FontSize="14"/>
+        </Border>
+
+        <StackPanel
+            Grid.Column="2"
+            MaxWidth="400"
+            Spacing="12">
+
+            <TextBlock 
+                Text="{markup:I18n Key=Intelligent_SR_Title}"
+                FontSize="28"
+                FontWeight="SemiBold"
+                TextWrapping="Wrap"/>
+
+            <TextBlock 
+                Text="{markup:I18n Key=Intelligent_SR_Desc}"
+                FontSize="14"
+                LineHeight="24"
+                TextWrapping="Wrap"/>
+
+            <TextBlock 
+                Text="{markup:I18n Key=Intelligent_SR_Warning}"
+                FontSize="14"
+                LineHeight="24"
+                Foreground="Gray"
+                TextWrapping="Wrap"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

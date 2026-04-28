@@ -1230,4 +1230,22 @@ The following words cannot be used as usernames:
   <data name="Intelligent_SelBarItem2_SuperResolution" xml:space="preserve">
     <value>HD enhance</value>
   </data>
+  <data name="Intelligent_Intro_Title" xml:space="preserve">
+    <value>Image style transfer</value>
+  </data>
+  <data name="Intelligent_Intro_Desc" xml:space="preserve">
+    <value>Image style transfer uses AI to apply the artistic style of one image onto another. Upload a content image and a style reference image — AI extracts the color, brushstroke, and texture of the style image and fuses them into the content image, producing a new stylized result.</value>
+  </data>
+  <data name="Intelligent_Intro_Warning" xml:space="preserve">
+    <value>Note: Due to local model constraints, input images are compressed before processing and restored via super-resolution afterward. The output may have slightly reduced quality compared to the original.</value>
+  </data>
+  <data name="Intelligent_SR_Title" xml:space="preserve">
+    <value>High-definition restoration</value>
+  </data>
+  <data name="Intelligent_SR_Desc" xml:space="preserve">
+    <value>Using AI to restore and upscale low-quality images. Upload an image — AI automatically sharpens details, reduces noise, and increases resolution, producing a clearer, higher-quality result.</value>
+  </data>
+  <data name="Intelligent_SR_Warning" xml:space="preserve">
+    <value>Note: During super-resolution processing, the model details, which may differ slightly from the original image.</value>
+  </data>
 </root>

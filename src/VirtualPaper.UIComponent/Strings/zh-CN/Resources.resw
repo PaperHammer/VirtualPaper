@@ -1230,4 +1230,22 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Intelligent_SelBarItem2_SuperResolution" xml:space="preserve">
     <value>高清修复</value>
   </data>
+  <data name="Intelligent_Intro_Title" xml:space="preserve">
+    <value>图像风格迁移</value>
+  </data>
+  <data name="Intelligent_Intro_Desc" xml:space="preserve">
+    <value>图像风格迁移基于 AI 深度学习技术，将一张图像的艺术风格迁移到另一张图像之上。上传内容图与风格参考图，AI 自动提取风格图的色彩、笔触与纹理特征，并将其融合到内容图的构图与结构中，生成一张兼具原始内容与目标风格的全新图像。</value>
+  </data>
+  <data name="Intelligent_Intro_Warning" xml:space="preserve">
+    <value>注意：由于本地轻量化模型限制，输入图像将在处理前中会进行压缩，并在生成后通过超分模型恢复至原始尺寸。因此，生成图像相比原图可能存在一定的精度损失。</value>
+  </data>
+  <data name="Intelligent_SR_Title" xml:space="preserve">
+    <value>高清修复</value>
+  </data>
+  <data name="Intelligent_SR_Desc" xml:space="preserve">
+    <value>利用 AI 技术对低质量图像进行还原与增强。上传图片后，AI 自动锐化细节、降低噪点并提升分辨率，生成更清晰、更高质量的图像。</value>
+  </data>
+  <data name="Intelligent_SR_Warning" xml:space="preserve">
+    <value>注意：超分模型在提升分辨率的过程中，可能会对部分细节进行重建或补全，部分细节可能与原图存在一定差异。</value>
+  </data>
 </root>

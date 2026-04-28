@@ -1224,4 +1224,10 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="SidebarIntelligent" xml:space="preserve">
     <value>智能</value>
   </data>
+  <data name="Intelligent_SelBarItem1_StyleTranfer" xml:space="preserve">
+    <value>风格化</value>
+  </data>
+  <data name="Intelligent_SelBarItem2_SuperResolution" xml:space="preserve">
+    <value>高清修复</value>
+  </data>
 </root>

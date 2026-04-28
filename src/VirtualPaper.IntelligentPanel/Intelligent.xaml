@@ -11,6 +11,19 @@
     mc:Ignorable="d">
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
+        <SelectorBar x:Name="SelBar"
+            SelectionChanged="SelectorBar_SelectionChanged"
+            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+            HorizontalAlignment="Stretch">
+            <SelectorBarItem Text="{markup:I18n Key=Intelligent_SelBarItem1_StyleTranfer}" Tag="StyleTranferView" IsSelected="True"/>
+            <SelectorBarItem Text="{markup:I18n Key=Intelligent_SelBarItem2_SuperResolution}" Tag="SuperResolutionView"/>
+        </SelectorBar>
+
+        <Frame x:Name="ContentFrame" Grid.Row="1"/>
     </Grid>
 </arc:ArcPage>

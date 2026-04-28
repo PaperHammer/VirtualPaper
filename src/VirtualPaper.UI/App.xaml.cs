@@ -103,6 +103,7 @@ namespace VirtualPaper.UI {
                 .AddSingleton<ICommandsClient, CommandsClient>()
                 .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
                 .AddSingleton<IStyleTransferClient, StyleTransferClient>()
+                .AddSingleton<ISuperResolutionClient, SuperResolutionClient>()
 
                 .BuildServiceProvider();
 

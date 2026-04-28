@@ -1,0 +1,7 @@
+syntax = "proto3";
+package VirtualPaper.Grpc.Service.SuperResolution;
+import "google/protobuf/empty.proto";
+import "Protos/common_models.proto";
+
+service Grpc_SuperResolutionService {
+}

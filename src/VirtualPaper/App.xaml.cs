@@ -25,6 +25,7 @@ using VirtualPaper.Grpc.Service.Commands;
 using VirtualPaper.Grpc.Service.MonitorManager;
 using VirtualPaper.Grpc.Service.ScrCommands;
 using VirtualPaper.Grpc.Service.StyleTransfer;
+using VirtualPaper.Grpc.Service.SuperResolution;
 using VirtualPaper.Grpc.Service.Update;
 using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Grpc.Service.WallpaperControl;
@@ -235,6 +236,8 @@ namespace VirtualPaper {
                 .AddSingleton<AppUpdateServer>()
                 .AddSingleton<CommandsServer>()
                 .AddSingleton<ScrCommandsServer>()
+                .AddSingleton<StyleTransferServer>()
+                .AddSingleton<SuperResolutionServer>()
 
                 .AddSingleton<WndProcMsgWindow>()
                 .AddSingleton<RawInputMsgWindow>()
@@ -260,6 +263,7 @@ namespace VirtualPaper {
             Grpc_CommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<CommandsServer>());
             Grpc_ScrCommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<ScrCommandsServer>());
             Grpc_StyleTransferService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<StyleTransferServer>());
+            Grpc_SuperResolutionService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<SuperResolutionServer>());
             server.Start();
 
             return server;

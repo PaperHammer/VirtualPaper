@@ -33,5 +33,7 @@
     <Protobuf Include="Protos\commands.proto" />
     <Protobuf Include="Protos\screen_commands.proto" />
     <Protobuf Include="Protos\common_models.proto" />
+    <Protobuf Include="Protos\style_transfer.proto" />
+    <Protobuf Include="Protos\super_resolution.proto" />
   </ItemGroup>
 </Project>

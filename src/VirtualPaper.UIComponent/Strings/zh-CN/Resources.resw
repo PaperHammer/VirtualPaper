@@ -1071,9 +1071,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_FileLoad_FileCorrupted" xml:space="preserve">
     <value>文件可能损毁：</value>
   </data>
-  <data name="Project_StaticImg_Text_LayerName" xml:space="preserve">
-    <value>图层</value>
-  </data>
   <data name="Project_StaticImg_Text_LayerNew" xml:space="preserve">
     <value>新建</value>
   </data>
@@ -1187,5 +1184,11 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
     <value>粗细(像素)</value>
+  </data>
+  <data name="Project_SI_FileTypeMismatch" xml:space="preserve">
+    <value>文件内容异常，无法打开</value>
+  </data>
+  <data name="Text_Save_As" xml:space="preserve">
+    <value>另存为</value>
   </data>
 </root>

@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
@@ -35,12 +37,14 @@ namespace Workloads.Creation.StaticImg {
             private set { lock (_frameTimeLock) _frameTimeMs = value; }
         }
 
+        public bool IsSavedFromInit => Session.DesignFileUtil.IsSaveFromInit;
+
         /// <summary>
         /// 打开文件
         /// </summary>
         /// <param name="filePath">类型为 vpd 或静态图像的文件路径</param>
-        public MainPage(string filePath) {
-            Session = new InkProjectSession(filePath);
+        public MainPage(string filePath, FileType fileType) {
+            Session = new InkProjectSession(filePath, fileType);
             Payload = new FrameworkPayload() {
                 [NaviPayloadKey.ArcPageContext] = this.ArcContext,
                 [NaviPayloadKey.InkProjectSession] = this.Session
@@ -69,8 +73,10 @@ namespace Workloads.Creation.StaticImg {
 
             await loadingCtx.RunAsync(
                 operation: async token => {
-                    await ShaderLoader.LoadAllShadersAsync();
-                    await inkCanvas.IsInited.Task;
+                    await Task.WhenAll(
+                        ShaderLoader.LoadAllShadersAsync(),
+                        inkCanvas.IsInited.Task
+                    );
                 });
 
             StartFrameTimeMonitor();
@@ -132,7 +138,24 @@ namespace Workloads.Creation.StaticImg {
             }
             return false;
         }
+        
+        public async Task<string?> SaveAsAsync() {
+            try {
+                var format = Session.DesignFileUtil.ExportFormatDefult;
+                var path = await ExportAsync(format);
+                if (path != null) { 
+                    Session.DesignFileUtil.SetFilePath(path);
+                    await inkCanvas.UpdateRecentUsedAsync(path);
+                }
 
+                return path;
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+            }
+            return null;
+        }
 
         public async Task UndoAsync() {
             try {
@@ -154,23 +177,31 @@ namespace Workloads.Creation.StaticImg {
             }
         }
 
-        public async Task ExportAsync(ExportImageFormat format) {
+        public async Task<string?> ExportAsync(ExportImageFormat format) {
             Dictionary<string, string[]> fileTypeChoices = format switch {
-                ExportImageFormat.Png => new() { ["PNG Image (*.png)"] = [".png"] },
-                ExportImageFormat.Bmp => new() { ["Bitmap Image (*.bmp)"] = [".bmp"] },
-                ExportImageFormat.Jpeg => new() { ["JPEG Image (*.jpg;*.jpeg)"] = [".jpg", ".jpeg", ".jpe", ".jfif"] },
-                ExportImageFormat.JpegXR => new() { ["JPEG XR Image (*.jxr)"] = [".jxr"] },
-                _ => new() { ["PNG Image (*.png)"] = [".png"] }
+                ExportImageFormat.Png => new() { ["PNG (*.png)"] = [".png"] },
+                ExportImageFormat.Bmp => new() { ["Bitmap (*.bmp)"] = [".bmp"] },
+                ExportImageFormat.Jpeg => new() { ["JPEG (*.jpg;*.jpeg)"] = [".jpg", ".jpeg", ".jpe", ".jfif"] },
+                ExportImageFormat.JpegXR => new() { ["JPEG XR (*.jxr)"] = [".jxr"] },
+                _ => new() { ["PNG (*.png)"] = [".png"] }
+            };
+
+            var targetExt = format switch {
+                ExportImageFormat.Png => ".png",
+                ExportImageFormat.Bmp => ".bmp",
+                ExportImageFormat.Jpeg => ".jpg",
+                ExportImageFormat.JpegXR => ".jxr",
+                _ => ".png"
             };
 
             var saveFile = await WindowsStoragePickers.PickSaveFileAsync(
                 WindowConsts.WindowHandle,
-                Session.DesignFileUtil.FileNameWithoutEx,
+                string.Concat(Session.DesignFileUtil.FileNameWithoutEx, targetExt),
                 fileTypeChoices
             );
 
             if (saveFile == null || string.IsNullOrEmpty(saveFile.Path))
-                return;
+                return null;
 
             var exportData = new ExportDataStaticImg(
                 Name: saveFile.Name,
@@ -178,7 +209,7 @@ namespace Workloads.Creation.StaticImg {
                 Format: format
             );
 
-            await inkCanvas.ExportAsync(exportData);
+            return await inkCanvas.ExportAsync(exportData);
         }
         #endregion
 

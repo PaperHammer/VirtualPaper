@@ -5,22 +5,42 @@ using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Files;
+using Workloads.Utils.DraftUtils.Models;
 
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
     // Core part of StaticImgDesignFileUtil
     public partial class StaticImgDesignFileUtil {
         public string FilePath { get; private set; }
+        public FileType FType { get; private set; }
+        public string Ext => Path.GetExtension(FilePath);
         public string FileName => Path.GetFileName(FilePath);
         public string FileNameWithoutEx => Path.GetFileNameWithoutExtension(FilePath);
-        public bool IsValidFile => File.Exists(FilePath);
+        public ExportImageFormat ExportFormatDefult { get; private set; }
+        public bool IsValidVpdFile => File.Exists(FilePath) && Ext == FileExtension.FE_Design;
         public FileHeader FileHeaderCache => _headerCache;
         public BusinessData BusinessDataCache => _businessDataCache;
         public List<Layer> LayesCache => _layersCache;
+        public bool IsSaveFromInit { get; internal set; } // 标记当撤销栈为空时，是否已经被保存（.vpd 为 true， 其余为 false）。在保存一次后，永久为 true
 
-        private StaticImgDesignFileUtil(string path) {
+        private StaticImgDesignFileUtil(string path, FileType fileType) {
             FilePath = Path.GetFullPath(path);
+            IsSaveFromInit = IsValidVpdFile;
+            ExportFormatDefult = GetExportFormat(Path.GetExtension(FilePath));
+            FType = fileType;
+        }
+
+        private static ExportImageFormat GetExportFormat(string ext) {
+            var format = ext switch {
+                ".png" => ExportImageFormat.Png,
+                ".bmp" => ExportImageFormat.Bmp,
+                ".jpg" or ".jpeg" => ExportImageFormat.Jpeg,
+                ".jxr" => ExportImageFormat.JpegXR,
+                _ => ExportImageFormat.Png
+            };
+            return format;
         }
 
         public async Task InitCacheAsync(
@@ -41,15 +61,15 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         /// <summary>
         /// 创建ProjectFile 自动区分路径和文件名
         /// </summary>
-        public static StaticImgDesignFileUtil Create(string idnetify) {
+        public static StaticImgDesignFileUtil Create(string idnetify, FileType fileType) {
             if (string.IsNullOrWhiteSpace(idnetify)) throw new ArgumentException("Input cannot be empty");
 
             if (FileUtil.IsValidFilePath(idnetify)) {
-                return new StaticImgDesignFileUtil(idnetify);
+                return new StaticImgDesignFileUtil(idnetify, fileType);
             }
 
             if (FileUtil.IsValidFileName(idnetify)) {                
-                return new StaticImgDesignFileUtil(Path.Combine(FileUtil.GetDocumentsDir(), idnetify));
+                return new StaticImgDesignFileUtil(Path.Combine(FileUtil.GetDocumentsDir(), idnetify), fileType);
             }
 
             throw new ArgumentException("Input is neither a valid path nor filename");

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.UI.Dispatching;
 
@@ -16,7 +16,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
             // 尝试立即执行（如果已经在正确的线程上）
             if (queue.HasThreadAccess) {
                 try {
-                    action().ContinueWith(t => tcs.SetResult(true));
+                    action().ContinueWith(t => tcs.TrySetResult(true));
                 }
                 catch (Exception ex) {
                     tcs.SetException(ex);
@@ -26,7 +26,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
                 // 否则排队等待执行
                 queue.TryEnqueue(() => {
                     try {
-                        action().ContinueWith(t => tcs.SetResult(true));
+                        action().ContinueWith(t => tcs.TrySetResult(true));
                     }
                     catch (Exception ex) {
                         tcs.SetException(ex);

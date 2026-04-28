@@ -381,3 +381,4 @@ Bundle/
 Plugins/
 Build/
 Shaders/*.bin
+InnoSetup/Output/

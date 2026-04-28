@@ -4,9 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Graphics.Canvas;
+using Microsoft.UI;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Context;
+using Windows.Foundation;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.SerializableData;
@@ -31,8 +35,17 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             return flag;
         }
 
+        internal async Task UpdateRecentUsedAsync(string filePath) {
+            if (!string.IsNullOrEmpty(filePath)) {
+                await _userSettings.UpdateRecentUsedAsync(filePath);
+            }
+        }
+
         internal async Task LoadAsync() {
-            if (!File.Exists(_session.DesignFileUtil.FilePath)) {
+            string inputPath = _session.DesignFileUtil.FilePath;
+            if (Path.GetExtension(inputPath) == FileExtension.FE_Design) {
+                await Data.LoadAsync(_session);
+            } else {
                 Data.InitData();
 
                 // Prepare business data
@@ -53,10 +66,27 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 }
 
                 await _session.DesignFileUtil.InitCacheAsync(Data.CanvasSize, businessData, layers);
+
+                if (File.Exists(inputPath)) {
+                    await SetRenderDataAsync(inputPath, Data.SelectedLayer);
+                }
             }
-            else {
-                await Data.LoadAsync(_session);
+        }
+
+        private async Task SetRenderDataAsync(string filePath, LayerInfo layerInfo) {
+            var renderTarget = layerInfo.RenderData.RenderTarget;
+            var device = renderTarget.Device;
+            var bitmap = await CanvasBitmap.LoadAsync(device, filePath);
+            using (var ds = renderTarget.CreateDrawingSession()) {
+                ds.Clear(Colors.Transparent);
+                ds.DrawImage(
+                    bitmap,
+                    new Rect(0, 0, renderTarget.SizeInPixels.Width, renderTarget.SizeInPixels.Height),
+                    new Rect(0, 0, bitmap.SizeInPixels.Width, bitmap.SizeInPixels.Height),
+                    1.0f,
+                    CanvasImageInterpolation.HighQualityCubic);
             }
+            layerInfo.RenderData.HandleOnceRenderCompleted();
         }
 
         internal readonly List<AspectRatioItem> _aspectRatios = [

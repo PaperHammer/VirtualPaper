@@ -33,13 +33,14 @@
 	</ItemGroup>
 
 	<Target Name="CopyToVirtualPaper" AfterTargets="Build">
-		<Copy SourceFiles="$(ProjectDir)DepthEstimate\ai_models\model-small.onnx" DestinationFolder="$(SolutionDir)VirtualPaper\Plugins\ML\DepthEstimate\ai_models" SkipUnchangedFiles="true" />
-	</Target>
+		<ItemGroup>
+			<DepthModels Include="$(ProjectDir)DepthEstimate\ai_models\**\*" />
+			<StyleModels Include="$(ProjectDir)StyleTransfer\ai_models\**\*" />
+			<SRModels Include="$(ProjectDir)SuperResolution\ai_models\**\*" />
+		</ItemGroup>
 
-	<ItemGroup>
-		<Folder Include="StyleTransfer\env\python\" />
-		<Folder Include="StyleTransfer\env\packages\" />
-		<Folder Include="StyleTransfer\Service\" />
-		<Folder Include="StyleTransfer\ai_models\" />
-	</ItemGroup>
+		<Copy SourceFiles="@(DepthModels)" DestinationFolder="$(SolutionDir)VirtualPaper\Plugins\ML\DepthEstimate\ai_models\%(RecursiveDir)" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="@(StyleModels)" DestinationFolder="$(SolutionDir)VirtualPaper\Plugins\ML\StyleTransfer\ai_models\%(RecursiveDir)" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="@(SRModels)" DestinationFolder="$(SolutionDir)VirtualPaper\Plugins\ML\SuperResolution\ai_models\%(RecursiveDir)" SkipUnchangedFiles="true" />
+	</Target>
 </Project>

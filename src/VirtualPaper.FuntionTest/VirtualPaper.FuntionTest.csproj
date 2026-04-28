@@ -20,4 +20,73 @@
 	  <ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="MLTest\T_StyleTransfer\data\output\" />
+	  <Folder Include="MLTest\T_SuperResolution\input\" />
+	  <Folder Include="MLTest\T_SuperResolution\output\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="MLTest\T_StyleTransfer\data\content\chicago.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\content\cornell.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\content\flowers.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\content\golden_gate.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\content\img0_1920x1200.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\content\img30.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\content\modern.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\content\newyork.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\content\sailboat.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\style\asheville.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\style\brushstrokes.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\style\contrast_of_forms.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\style\img29.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\style\impronte_d_artista.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\style\la_muse.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\style\mondrian.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\style\picasso_seated_nude_hr.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\style\scene_de_rue.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\style\the_resevoir_at_poitiers.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="MLTest\T_StyleTransfer\data\style\trial.jpg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
 </Project>

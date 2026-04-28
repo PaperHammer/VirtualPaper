@@ -1,9 +1,0 @@
-grpcio
-Pillow
-numpy
-torch
-torchvision
-diffusers
-transformers
-accelerate
-grpcio-tools

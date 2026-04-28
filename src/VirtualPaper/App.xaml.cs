@@ -24,6 +24,7 @@ using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Grpc.Service.Commands;
 using VirtualPaper.Grpc.Service.MonitorManager;
 using VirtualPaper.Grpc.Service.ScrCommands;
+using VirtualPaper.Grpc.Service.StyleTransfer;
 using VirtualPaper.Grpc.Service.Update;
 using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Grpc.Service.WallpaperControl;
@@ -258,6 +259,7 @@ namespace VirtualPaper {
             Grpc_UpdateService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<AppUpdateServer>());
             Grpc_CommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<CommandsServer>());
             Grpc_ScrCommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<ScrCommandsServer>());
+            Grpc_StyleTransferService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<StyleTransferServer>());
             server.Start();
 
             return server;

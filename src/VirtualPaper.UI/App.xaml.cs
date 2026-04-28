@@ -102,6 +102,7 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
                 .AddSingleton<ICommandsClient, CommandsClient>()
                 .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
+                .AddSingleton<IStyleTransferClient, StyleTransferClient>()
 
                 .BuildServiceProvider();
 

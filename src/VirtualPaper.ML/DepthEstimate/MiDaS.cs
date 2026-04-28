@@ -11,7 +11,7 @@ namespace VirtualPaper.ML.DepthEstimate {
             _modelPath = Path.Combine(  
                 AppDomain.CurrentDomain.BaseDirectory,
                 Constants.WorkingDir.ML_DepthEstimate_AI_Models,
-                Utils.Fileds.ModelName);
+                Utils.Fields.ModelName);
             LoadModel(_modelPath);
         }
 
@@ -63,7 +63,7 @@ namespace VirtualPaper.ML.DepthEstimate {
             int originalWidth,
             int originalHeight,
             string outputFolder) {
-            string outputFilePath = Path.Combine(outputFolder, Utils.Fileds.OutputFileName);
+            string outputFilePath = Path.Combine(outputFolder, Utils.Fields.OutputFileName);
 
             using Mat depthMap = new(height, width, MatType.CV_8UC1); // 使用 CV_8UC1 代表 1 个 8 位通道
                                                                       // 将归一化后的深度数据复制到 Mat 中
@@ -109,9 +109,11 @@ namespace VirtualPaper.ML.DepthEstimate {
             return normalisedOutput;
         }
 
-        private static void LoadModel(string modelPath) {
+        public static void LoadModel(string modelPath) {
             _session?.Dispose();
-            _session = new InferenceSession(modelPath);
+            var options = new SessionOptions();
+            // options.AppendExecutionProvider_CUDA(); 
+            _session = new InferenceSession(modelPath, options);            
             Debug.WriteLine($"Model version: {_session.ModelMetadata.Version}");
 
             _modelName = _session.InputMetadata.Keys.First();
@@ -149,7 +151,7 @@ namespace VirtualPaper.ML.DepthEstimate {
 
         private static InferenceSession? _session; // 执行模型推理
         private static string _modelName = string.Empty;
-        private static string _modelPath = string.Empty;
+        private readonly static string _modelPath = string.Empty;
         private static int _targetWidth, _targetHeight;
     }
 }

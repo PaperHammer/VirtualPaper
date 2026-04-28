@@ -41,6 +41,7 @@
                     <BitmapImage x:Key="DraftPanel_StatusBar_SizeIcon" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_select_object_24_filled.png"/>
                     <BitmapImage x:Key="DraftPanel_FuncBar_ColorFill" UriSource="ms-appx:///Assets/staticImg/Light/ic_fluent_color_fill_24_regular.png"/>
                     <BitmapImage x:Key="DraftPanel_Create_StaticImge" UriSource="ms-appx:///Assets/ui_components/Light/project_create_staticimg_light.png"/>
+                    <BitmapImage x:Key="IntelligentPanel_Sider" UriSource="ms-appx:///Assets/ui_components/Light/intelligent_light.png"/>
                 </ResourceDictionary>
 
                 <ResourceDictionary x:Key="Dark">
@@ -50,7 +51,7 @@
                     <BitmapImage x:Key="DraftPanel_StatusBar_FitViewIcon" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_resize_small_24_filled.png"/>
                     <BitmapImage x:Key="DraftPanel_StatusBar_SizeIcon" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_select_object_24_filled.png"/>
                     <BitmapImage x:Key="DraftPanel_FuncBar_ColorFill" UriSource="ms-appx:///Assets/staticImg/Dark/ic_fluent_color_fill_24_regular.png"/>
-                    <BitmapImage x:Key="DraftPanel_Create_StaticImge" UriSource="ms-appx:///Assets/ui_components/Dark/project_create_staticimg_dark.png"/>
+                    <BitmapImage x:Key="IntelligentPanel_Sider" UriSource="ms-appx:///Assets/ui_components/Dark/intelligent_dark.png"/>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>

@@ -78,8 +78,10 @@
 		<None Remove="Assets\staticImg\Light\ic_fluent_resize_small_24_filled.png" />
 		<None Remove="Assets\staticImg\Light\ic_fluent_select_object_24_filled.png" />
 		<None Remove="Assets\staticImg\Light\project_create_staticimg_light.png" />
+		<None Remove="Assets\ui_components\Dark\intelligent_dark.png" />
 		<None Remove="Assets\ui_components\icons8-image-96.png" />
 		<None Remove="Assets\ui_components\icons8-picture-94.png" />
+		<None Remove="Assets\ui_components\Light\intelligent_light.png" />
 		<None Remove="Assets\ui_components\Light\theme_light.png" />
 		<None Remove="Assets\ui_components\project-create-static-image-desc.png" />
 		<None Remove="Nlog.config" />
@@ -163,6 +165,9 @@
 		<Content Update="Assets\ui_components\icons8-picture-94.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<Content Update="Assets\ui_components\Light\intelligent_light.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 		<Content Update="Assets\ui_components\Light\theme_auto.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -196,6 +201,12 @@
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper.AppSettingsPanel\VirtualPaper.AppSettingsPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.DraftPanel\VirtualPaper.DraftPanel.csproj" />
+		<ProjectReference Include="..\VirtualPaper.IntelligentPanel\VirtualPaper.IntelligentPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Update="Assets\ui_components\Dark\intelligent_dark.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
 	</ItemGroup>
 </Project>

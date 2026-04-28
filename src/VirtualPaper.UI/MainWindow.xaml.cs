@@ -9,6 +9,7 @@ using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.IntelligentPanel;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
@@ -105,6 +106,7 @@ namespace VirtualPaper.UI {
                     "Nav_WpSettings" => typeof(WpSettings),
                     "Nav_Draft" => typeof(Draft),
                     "Nav_AppSettings" => typeof(AppSettings),
+                    "Nav_Intelligent" => typeof(Intelligent),
                     _ => throw new NotImplementedException(),
                 };
 

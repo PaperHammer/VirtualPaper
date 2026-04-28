@@ -1221,4 +1221,7 @@ The following words cannot be used as usernames:
   <data name="Effect_Help_TimeAtmospherePerception" xml:space="preserve">
     <value>Calculates sunrise and sunset times based on your current location, then applies adaptive brightness and color tone overlays to your wallpaper across day, dusk, and night phases — keeping your desktop in harmony with the natural light around you</value>
   </data>
+  <data name="SidebarIntelligent" xml:space="preserve">
+    <value>Intelli</value>
+  </data>
 </root>

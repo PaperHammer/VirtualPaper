@@ -1221,4 +1221,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Effect_Help_TimeAtmospherePerception" xml:space="preserve">
     <value>根据当前时间与地理位置计算日出日落时刻，在白天/黄昏/夜晚为壁纸额外添加亮度与色调，使桌面氛围与真实光线环境保持同步</value>
   </data>
+  <data name="SidebarIntelligent" xml:space="preserve">
+    <value>智能</value>
+  </data>
 </root>

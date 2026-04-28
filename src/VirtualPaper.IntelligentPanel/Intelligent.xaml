@@ -8,22 +8,49 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
     mc:Ignorable="d">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-        <SelectorBar x:Name="SelBar"
-            SelectionChanged="SelectorBar_SelectionChanged"
-            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-            HorizontalAlignment="Stretch">
-            <SelectorBarItem Text="{markup:I18n Key=Intelligent_SelBarItem1_StyleTranfer}" Tag="StyleTranferView" IsSelected="True"/>
-            <SelectorBarItem Text="{markup:I18n Key=Intelligent_SelBarItem2_SuperResolution}" Tag="SuperResolutionView"/>
-        </SelectorBar>
+            <SelectorBar x:Name="SelBar"
+                SelectionChanged="SelectorBar_SelectionChanged"
+                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                HorizontalAlignment="Stretch">
+                <SelectorBarItem Text="{markup:I18n Key=Intelligent_SelBarItem1_StyleTranfer}" Tag="StyleTranferView" IsSelected="True"/>
+                <SelectorBarItem Text="{markup:I18n Key=Intelligent_SelBarItem2_SuperResolution}" Tag="SuperResolutionView"/>
+            </SelectorBar>
 
-        <Frame x:Name="ContentFrame" Grid.Row="1"/>
+            <Frame x:Name="ContentFrame" Grid.Row="1"/>
+        </Grid>
+
+        <input:ArcButton x:Name="addTaskButton"
+            Width="56"
+            Height="56"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Margin="0,0,24,24"
+            CornerRadius="28"
+            Background="LightBlue"
+            Click="AddTaskButton_Click">
+            <FontIcon Glyph="&#xF8AA;" />
+        </input:ArcButton>
+
+        <Grid x:Name="maskGrid" 
+            Background="#80000000" 
+            Visibility="Collapsed"
+            Tapped="MaskGrid_Tapped">
+
+            <Frame x:Name="overlayFrame" 
+                Width="970" 
+                Height="680"
+                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                Tapped="OverlayFrame_Tapped"/>
+        </Grid>
     </Grid>
 </arc:ArcPage>

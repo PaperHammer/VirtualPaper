@@ -16,9 +16,9 @@ using Windows.Foundation.Collections;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace VirtualPaper.IntelligentPanel.Views.SuperResolutionComp {
-    public sealed partial class TaskList : UserControl {
-        public TaskList() {
+namespace VirtualPaper.IntelligentPanel.Views.Comp {
+    public sealed partial class AddTaskView : UserControl {
+        public AddTaskView() {
             InitializeComponent();
         }
     }

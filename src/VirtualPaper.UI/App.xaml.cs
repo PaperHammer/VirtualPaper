@@ -14,6 +14,7 @@ using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.Utils;
@@ -89,10 +90,13 @@ namespace VirtualPaper.UI {
                 .AddSingleton<WpSettingsViewModel>()
                 .AddSingleton<ScreenSaverViewModel>()
                 .AddSingleton<LibraryContentsViewModel>()
+                .AddSingleton<StyleTranferViewModel>()
+                .AddSingleton<SuperResolutionViewModel>()
                 .AddTransient<ConfigSpaceViewModel>()
                 .AddTransient<GetStartViewModel>()
                 .AddTransient<DraftConfigViewModel>()
                 .AddTransient<WorkSpaceViewModel>()
+                .AddTransient<IntelligentViewModel>()
 
                 .AddSingleton<WallpaperIndexService>()
 

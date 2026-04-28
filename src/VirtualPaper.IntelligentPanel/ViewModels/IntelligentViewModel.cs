@@ -1,10 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using VirtualPaper.IntelligentPanel.Utils.Interfaces;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
     public class IntelligentViewModel {
+        public IIntelligentPage? SelectedIntelliPage { get; internal set; }
+
+        public IntelligentViewModel() {
+        }
+
+        internal void AddTask() {
+            SelectedIntelliPage?.AddTask();
+        }
     }
 }

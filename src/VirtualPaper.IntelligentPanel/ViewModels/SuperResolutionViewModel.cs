@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
-    public partial class StyleTranferViewModel : ObservableObject {
+    public partial class SuperResolutionViewModel : ObservableObject {
         private readonly ObservableCollection<object> Tasks = [];
 
         private bool _hasTasks;
@@ -17,7 +17,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
         }
 
-        public StyleTranferViewModel() {
+        public SuperResolutionViewModel() {
             InitEvent();
         }
 

@@ -6,12 +6,15 @@
     xmlns:local="using:VirtualPaper.IntelligentPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:local_comp="using:VirtualPaper.IntelligentPanel.Views.SuperResolutionComp"
+    xmlns:local_self_comp="using:VirtualPaper.IntelligentPanel.Views.SuperResolutionComp"
+    xmlns:local_comp="using:VirtualPaper.IntelligentPanel.Views.Comp"
     mc:Ignorable="d">
 
     <Grid>
-        <Frame>
-            <local_comp:Introduction/>
-        </Frame>
+        <local_self_comp:Introduction
+            Visibility="{x:Bind _viewModel.HasTasks, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
+
+        <local_comp:TasksView
+            Visibility="{x:Bind _viewModel.HasTasks, Mode=OneWay}"/>
     </Grid>
 </Page>

@@ -5,6 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
-    public class SuperTransferViewModel {
+    public class TaskListViewModel {
     }
 }

@@ -13,6 +13,7 @@ using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.PlaybackControl;
@@ -34,6 +35,8 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
+using VirtualPaper.Utils.Interfcaes;
+using VirtualPaper.Utils.Services;
 using VirtualPaper.Utils.Theme;
 using VirtualPaper.ViewModels;
 using VirtualPaper.Views;
@@ -49,7 +52,7 @@ namespace VirtualPaper {
     /// </summary>
     public partial class App : Application {
         internal static Logger Log => _log;
-        internal static JobService Jobs => Services.GetRequiredService<JobService>();
+        internal static IJobService Jobs => Services.GetRequiredService<IJobService>();
         internal static IUserSettingsService UserSettings => Services.GetRequiredService<IUserSettingsService>();
 
         public static IServiceProvider Services {
@@ -77,6 +80,7 @@ namespace VirtualPaper {
             }
             #endregion
 
+            Constants.IsNormalRun = true;
             SetupUnhandledExceptionLogging(); // 初始化异常处理机制
             Log.Info(LogUtil.GetHardwareInfo()); // 记录硬件信息
 
@@ -119,9 +123,9 @@ namespace VirtualPaper {
             SplashWindow? spl = null;
             if (UserSettings.Settings.IsUpdated || UserSettings.Settings.IsFirstRun) {
                 spl = UserSettings.Settings.IsFirstRun ? new SplashWindow(0, 500) : null;
-                spl?.Show();                
+                spl?.Show();
                 UserSettings.Settings.IsFirstRun = false;
-                UserSettings.Save<ISettings>();                
+                UserSettings.Save<ISettings>();
             }
 
             if (UserSettings.Settings.WallpaperDir == string.Empty
@@ -221,12 +225,20 @@ namespace VirtualPaper {
                 .AddSingleton<IWallpaperFactory, WallpaperFactory>()
                 .AddSingleton<IWallpaperConfigFolderFactory, WallpaperConfigFolderFactory>()
 
-                .AddSingleton<JobService>()
+                .AddSingleton<IJobService, JobService>()
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
                 .AddSingleton<IWindowService, WindowService>()
+                .AddSingleton<INativeService, NativeService>()
+                .AddSingleton<IJsonSaver, JsonSaverWrapper>()
+                .AddSingleton<IStoragePicker, StoragePickerWrapper>()
+                .AddTransient<IDispatcherTimer, DispatcherTimerAdapter>()
+                .AddTransient<IProcessLauncher, ProcessLauncher>()
+                .AddTransient<IPowerService, PowerService>()
+                .AddTransient<IGithubReleaseClient, GithubReleaseClient>()
+                .AddTransient<IVersionComparer, AssemblyVersionComparer>()
 
                 .AddSingleton<WallpaperControlServer>()
                 .AddSingleton<MonitorManagerServer>()
@@ -289,7 +301,7 @@ namespace VirtualPaper {
 
                 Application.Current.Dispatcher.Invoke(() => {
                     ApplicationThemeManager.Apply(applicationTheme, updateAccent: false);
-                });                
+                });
             }
             catch (Exception e) {
                 Log.Error(e);

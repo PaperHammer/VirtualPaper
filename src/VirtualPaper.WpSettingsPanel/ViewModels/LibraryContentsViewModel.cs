@@ -34,9 +34,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class LibraryContentsViewModel : ObservableObject, IFilterable {
         public ObservableCollection<IWpBasicData> LibraryWallpapers { get; private set; } = null!;
 
-        private Brush _wpTitleForeground = new SolidColorBrush(Colors.White);
-        public Brush WpTitleForeground {
-            get { return _wpTitleForeground; }
+        //private Brush _wpTitleForeground = new SolidColorBrush(Colors.White);
+        //public Brush WpTitleForeground {
+        //    get { return _wpTitleForeground; }
+        //    set { _wpTitleForeground = value; OnPropertyChanged(); }
+        //}
+        private byte[] _wpTitleForeground = [255, 255, 255, 255];
+        public byte[] WpTitleForeground {
+            get => _wpTitleForeground;
             set { _wpTitleForeground = value; OnPropertyChanged(); }
         }
 
@@ -73,8 +78,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal void RefreshWpTitleForeground() {
-            var color = ArcThemeUtil.GetFormatMainWindowTheme() == AppTheme.Light ? Colors.White : Colors.Black;
-            WpTitleForeground = new SolidColorBrush(color);
+            WpTitleForeground = ArcThemeUtil.GetFormatMainWindowTheme() == AppTheme.Light
+                ? [255, 255, 255, 255]   // White: A=255, R=255, G=255, B=255
+                : [255, 0, 0, 0];        // Black: A=255, R=0, G=0, B=0
         }
 
         private void InitColletions() {
@@ -537,7 +543,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             FilterByTitle(keyword);
         }
 
-        internal void FilterByTitle(string keyword) {
+        public void FilterByTitle(string keyword) {
             var filtered = _libraryWallpapers.Where(basicData =>
                 basicData.Title != null && basicData.Title.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
             );

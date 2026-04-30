@@ -1,9 +1,5 @@
-﻿using VirtualPaper.Models.Cores.Interfaces;
-
-namespace VirtualPaper.Cores.ScreenSaver
-{
-    public interface IScrControl : IDisposable
-    {
+namespace VirtualPaper.Cores.ScreenSaver {
+    public interface IScrControl : IDisposable {
         bool IsRunning { get; }
         void AddToWhiteList(string procName);
         void ChangeLockStatu(bool isLock);

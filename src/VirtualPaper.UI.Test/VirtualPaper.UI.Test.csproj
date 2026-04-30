@@ -1,0 +1,21 @@
+﻿<Project Sdk="MSTest.Sdk/4.0.2">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<UseVSTest>true</UseVSTest>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Moq" Version="4.20.72" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\VirtualPaper.AppSettingsPanel\VirtualPaper.AppSettingsPanel.csproj" />
+		<ProjectReference Include="..\VirtualPaper.DraftPanel\VirtualPaper.DraftPanel.csproj" />
+		<ProjectReference Include="..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj" />
+	</ItemGroup>
+
+</Project>

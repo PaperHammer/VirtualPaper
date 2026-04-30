@@ -1,62 +1,67 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using System.Windows.Threading;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Services.Interfaces;
+using VirtualPaper.Utils.Interfcaes;
 using VirtualPaper.Views.WindowsMsg;
 
 namespace VirtualPaper.Cores.ScreenSaver {
     public partial class ScrControl : IScrControl {
-        public Process? Proc { get; private set; }
+        //public Process? Proc { get; private set; }
         public bool IsRunning { get; private set; } = false;
 
         public ScrControl(
             IUserSettingsService userSettingsService,
             IWallpaperControl wpControl,
-            RawInputMsgWindow msgWindow) {
+            IRawInputMsg msgWindow,
+            IDispatcherTimer dispatcherTimer,
+            INativeService nativeService,
+            IProcessLauncher processLauncher,
+            IJobService jobService) {
             _userSettingsService = userSettingsService;
             _msgWindow = msgWindow;
             _wpControl = wpControl;
+            _nativeService = nativeService;
+            _processLauncher = processLauncher;
+            _jobService = jobService;
 
             _msgWindow.MouseMoveRaw += MsgWindow_MouseMoveRaw;
             _msgWindow.MouseDownRaw += MsgWindow_MouseDownRaw;
             _msgWindow.MouseUpRaw += MsgWindow_MouseUpRaw;
             _msgWindow.KeyboardClickRaw += MsgWindow_KeyboardClickRaw;
 
-            _dispatcherTimer = new();
+            _dispatcherTimer = dispatcherTimer;
 
             foreach (var proc in userSettingsService.Settings.WhiteListScr) {
                 _scrWhiteListProcState[proc.ProcName] = false;
             }
         }
 
-        public void ChangeLockStatu(bool isLock) {
-            _isRunningLock = isLock;
-        }
-
-        public void Stop() {
-            StopTimeTask();
-        }
-
         public void Start() {
+            if (_isTiming || IsRunning) return;
+
             try {
-                if (_isTiming || IsRunning) {
-                    return;
-                }
-
                 _isRunningLock = _userSettingsService.Settings.IsRunningLock;
-
                 StartTimerTask();
             }
             catch (Exception ex) {
-                App.Log.Error("ScreenSaver started Error..." + ex.Message);
+                ArcLog.GetLogger<ScrControl>().Error("ScreenSaver started Error: " + ex.Message);
             }
+        }
+
+        public void Stop() {
+            StopTimerTask();
+        }
+
+        public void ChangeLockStatu(bool isLock) {
+            _isRunningLock = isLock;
         }
 
         public void AddToWhiteList(string procName) {
@@ -64,20 +69,16 @@ namespace VirtualPaper.Cores.ScreenSaver {
         }
 
         public void RemoveFromWhiteList(string procName) {
-            if (_scrWhiteListProcState.ContainsKey(procName))
-                _scrWhiteListProcState.Remove(procName, out _);
+            _scrWhiteListProcState.Remove(procName, out _);
         }
 
-        private void ResetTimer(string callback) {
-            StopTimeTask();
-            if (IsRunning) {
-                StopProc();
-            }
-            if (_userSettingsService.Settings.IsScreenSaverOn) {
-                StartTimerTask();
-            }
-        }
+        // -------------------------------------------------------------------------
+        // Timer
+        // -------------------------------------------------------------------------
 
+        /// <summary>
+        /// 启动倒计时，倒计时结束后触发屏保启动
+        /// </summary>
         private void StartTimerTask() {
             _dispatcherTimer.Interval = TimeSpan.FromMinutes(_userSettingsService.Settings.WaitingTime);
             _dispatcherTimer.Tick += DispatcherTimer_Tick;
@@ -85,128 +86,200 @@ namespace VirtualPaper.Cores.ScreenSaver {
             _isTiming = true;
         }
 
-        private void StopTimeTask() {
+        /// <summary>
+        /// 停止倒计时
+        /// </summary>
+        private void StopTimerTask() {
             _dispatcherTimer.Tick -= DispatcherTimer_Tick;
             _dispatcherTimer.Stop();
             _isTiming = false;
         }
 
-        private void StopProc() {
-            lock (_objStop) {
-                if (_isStopping) return;
-                _isStopping = true;
+        /// <summary>
+        /// 重置计时器：停止当前计时（若进程在运行则一并停止），再重新开始计时。
+        /// 由用户输入、白名单检测等场景触发。
+        /// </summary>
+        private void ResetTimer(string reason) {
+            ArcLog.GetLogger<ScrControl>().Info($"ResetTimer: {reason}");
 
-                SendMessage(new VirtualPaperCloseCmd());
-                App.Log.Info("ScreenSaver was stoppped.");
-                if (_isRunningLock) {
-                    Native.LockWorkStation();
-                }
+            StopTimerTask();
+
+            if (IsRunning) {
+                StopProc();
+                // 计时器重启由 Proc_Exited → RestartTimerAfterExit 完成
+                return;
+            }
+
+            // 进程未运行，直接重启计时器
+            if (_userSettingsService.Settings.IsScreenSaverOn) {
+                StartTimerTask();
             }
         }
 
-        private void DispatcherTimer_Tick(object? sender, EventArgs e) {
-            try {
-                StopTimeTask();
+        // -------------------------------------------------------------------------
+        // Process: Start
+        // -------------------------------------------------------------------------
 
-                var tup = _wpControl.GetPrimaryWpFilePathRType();
-                string? filePath = tup.Item1;
-                string? rtype = tup.Item2.ToString();
-                if (filePath == null || rtype == null) {
-                    ResetTimer("Primary wallpaper was none.");
+        private void DispatcherTimer_Tick(object? sender, EventArgs e) {
+            // 计时结束，先停掉计时器再启动屏保
+            StopTimerTask();
+
+            try {
+                // 检查壁纸
+                var (filePath, runtimeType) = _wpControl.GetPrimaryWpFilePathRType();
+                if (filePath == null) {
+                    ArcLog.GetLogger<ScrControl>().Info("Primary wallpaper was none, reset timer.");
+                    RestartTimer();
                     return;
                 }
 
-                if (Native.SHQueryUserNotificationState(out Native.QUERY_USER_NOTIFICATION_STATE state) == 0) {
+                // 检查系统通知状态（全屏/演示/忙碌时不启动屏保）
+                if (_nativeService.SHQueryUserNotificationState(out var state) == 0) {
                     switch (state) {
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_NOT_PRESENT:
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_BUSY:
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_RUNNING_D3D_FULL_SCREEN:
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_PRESENTATION_MODE:
-                            ResetTimer("The foreground whitelist event is active");
+                            ArcLog.GetLogger<ScrControl>().Info($"System notification state [{state}], reset timer.");
+                            RestartTimer();
                             return;
                     }
                 }
 
-                var hwnd = Native.GetForegroundWindow();
-                _ = Native.GetWindowThreadProcessId(hwnd, out int processId);
-                string procName = Process.GetProcessById(processId).ProcessName;
-
+                // 检查白名单
+                var hwnd = _nativeService.GetForegroundWindow();
+                _nativeService.GetWindowThreadProcessId(hwnd, out int processId);
+                string procName = _nativeService.GetProcessNameById(processId);
                 if (_scrWhiteListProcState.ContainsKey(procName)) {
-                    ResetTimer("The foreground whitelisting program is active");
+                    ArcLog.GetLogger<ScrControl>().Info($"Whitelisted process [{procName}] is active, reset timer.");
+                    RestartTimer();
                     return;
                 }
 
-                lock (_objStart) {
-                    if (_isStarting || IsRunning) return;
-                    _isStarting = true;
+                // 启动屏保进程
+                LaunchProc(filePath, runtimeType.ToString());
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<ScrControl>().Error("ScreenSaver runtime Error: " + ex.Message);
+                // 启动失败，清理并重新计时
+                CleanupProc();
+                RestartTimer();
+            }
+        }
 
-                    InitScr(filePath, rtype);
+        private void LaunchProc(string filePath, string rtype) {
+            lock (_objStart) {
+                if (_isStarting || IsRunning) return;
+                _isStarting = true;
+            }
 
-                    if (Proc == null) {
-                        App.Log.Error("Run ScreenSaver failed...");
-                        return;
-                    }
+            var startInfo = BuildStartInfo(filePath, rtype);
 
-                    Proc.Exited += Proc_Exited;
-                    Proc.OutputDataReceived += Proc_OutputDataReceived;
-                    Proc.Start();
-                    App.Jobs.AddProcess(Proc.Id);
-                    Proc.BeginOutputReadLine();
+            _processLauncher.Exited += Proc_Exited;
+            _processLauncher.OutputDataReceived += Proc_OutputDataReceived;
+            _processLauncher.Launch(startInfo);
+            _jobService.AddProcess(_processLauncher.ProcessId);
+            _processLauncher.BeginOutputReadLine();
 
-                    App.Log.Info("ScreenSaver is started.");
+            ArcLog.GetLogger<ScrControl>().Info("ScreenSaver launched.");
+        }
+
+        // -------------------------------------------------------------------------
+        // Process: Stop
+        // -------------------------------------------------------------------------
+
+        /// <summary>
+        /// 主动停止屏保进程：发送关闭消息，进程退出后由 Proc_Exited 完成清理和重启计时。
+        /// </summary>
+        private void StopProc() {
+            lock (_objStop) {
+                if (_isStopping) return;
+                _isStopping = true;
+            }
+
+            ArcLog.GetLogger<ScrControl>().Info("Requesting ScreenSaver stop...");
+            SendMessage(new VirtualPaperCloseCmd());
+
+            if (_isRunningLock) {
+                _nativeService.LockWorkStation();
+            }
+        }
+
+        /// <summary>
+        /// 进程退出事件：清理资源，并根据配置决定是否重启计时器。
+        /// 无论是主动 Stop 还是意外退出，都走这里。
+        /// </summary>
+        private void Proc_Exited(object? sender, EventArgs e) {
+            _processLauncher.OutputDataReceived -= Proc_OutputDataReceived;
+            _processLauncher.Exited -= Proc_Exited;
+
+            CleanupProc();
+            RestartTimerAfterExit();
+        }
+
+        /// <summary>
+        /// 清理进程资源，重置运行状态。
+        /// </summary>
+        private void CleanupProc() {
+            try {
+                _processLauncher.Kill();
+                _processLauncher.Dispose();
+                ArcLog.GetLogger<ScrControl>().Info("ScreenSaver process cleaned up.");
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<ScrControl>().Error("CleanupProc Error: " + ex.Message);
+            }
+            finally {
+                IsRunning = false;
+                _isStarting = false;
+                _isStopping = false;
+            }
+        }
+
+        // -------------------------------------------------------------------------
+        // Timer Restart Helpers
+        // -------------------------------------------------------------------------
+
+        /// <summary>
+        /// 进程退出后重启计时器（用于 Proc_Exited 场景）。
+        /// </summary>
+        private void RestartTimerAfterExit() {
+            if (_userSettingsService.Settings.IsScreenSaverOn) {
+                StartTimerTask();
+            }
+        }
+
+        /// <summary>
+        /// 直接重启计时器（用于 Tick 内部检查未通过的场景）。
+        /// </summary>
+        private void RestartTimer() {
+            if (_userSettingsService.Settings.IsScreenSaverOn) {
+                StartTimerTask();
+            }
+        }
+
+        // -------------------------------------------------------------------------
+        // IPC
+        // -------------------------------------------------------------------------
+
+        private void Proc_OutputDataReceived(object? sender, ProcessOutputEventArgs e) {
+            if (string.IsNullOrEmpty(e.Data)) return;
+
+            ArcLog.GetLogger<ScrControl>().Info($"ScreenSaver: {e.Data}");
+
+            if (IsRunning) return;
+
+            try {
+                var obj = JsonSerializer.Deserialize(e.Data, IpcMessageContext.Default.IpcMessage)
+                          ?? throw new Exception("null msg received");
+
+                if (obj.Type == MessageType.msg_wploaded) {
+                    IsRunning = true;
+                    _isStarting = false;
                 }
             }
             catch (Exception ex) {
-                App.Log.Error("ScreenSaver runtime Error..." + ex.Message);
-                Terminate();
-            }
-        }
-
-        private void InitScr(string filePath, string ftype) {
-            if (filePath == null || ftype == null) return;
-
-            string workingDir = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                Constants.WorkingDir.ScrSaver);
-
-            StringBuilder cmdArgs = new();
-            cmdArgs.Append($" --file-path {filePath}");
-            cmdArgs.Append($" --wallpaper-type {ftype}");
-            cmdArgs.Append($" --effect {_userSettingsService.Settings.ScreenSaverEffect.ToString()}");
-
-            ProcessStartInfo start = new() {
-                FileName = Path.Combine(
-                    workingDir,
-                    Constants.ModuleName.ScrSaver),
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                WorkingDirectory = workingDir,
-                Arguments = cmdArgs.ToString(),
-            };
-
-            Process _process = new() {
-                EnableRaisingEvents = true,
-                StartInfo = start,
-            };
-
-            Proc = _process;
-        }
-
-        private void Terminate() {
-            try {
-                StopTimeTask();
-                if (Proc != null) {
-                    Proc.Kill();
-                    Proc.Dispose();
-                    App.Log.Info("Proc was Killed");
-                }
-            }
-            catch { }
-            finally {
-                IsRunning = false;
-                _isStopping = false;
+                ArcLog.GetLogger<ScrControl>().Error($"IpcMessage parse Error: {ex.Message}");
             }
         }
 
@@ -216,69 +289,66 @@ namespace VirtualPaper.Cores.ScreenSaver {
 
         private void SendMessage(string msg) {
             try {
-                Proc?.StandardInput.WriteLine(msg);
+                _processLauncher.WriteStdin(msg);
             }
             catch (Exception e) {
-                App.Log.Error($"Stdin write fail: {e.Message}");
+                ArcLog.GetLogger<ScrControl>().Error($"Stdin write fail: {e.Message}");
             }
         }
 
-        private void Proc_OutputDataReceived(object sender, DataReceivedEventArgs e) {
-            if (!string.IsNullOrEmpty(e.Data)) {
-                App.Log.Info($"ScreenSaver: {e.Data}");
-                if (!IsRunning) {
-                    IpcMessage obj;
-                    try {
-                        obj = JsonSerializer.Deserialize(e.Data, IpcMessageContext.Default.IpcMessage) ?? throw new("null msg recieved");
-                    }
-                    catch (Exception ex) {
-                        App.Log.Error($"Ipcmessage parse Error: {ex.Message}");
-                        return;
-                    }
+        // -------------------------------------------------------------------------
+        // Raw Input → ResetTimer
+        // -------------------------------------------------------------------------
 
-                    if (obj.Type == MessageType.msg_wploaded) {
-                        IsRunning = true;
-                        _isStarting = false;
-                    }
-                }
-            }
-        }
+        private void MsgWindow_KeyboardClickRaw(object? sender, KeyboardClickRawArgs e)
+            => ResetTimer($"Keyboard clicked: {e.Key}");
 
-        private void Proc_Exited(object? sender, EventArgs e) {
-            if (Proc != null) {
-                Proc.OutputDataReceived -= Proc_OutputDataReceived;
-            }
-            Terminate();
-        }
+        private void MsgWindow_MouseUpRaw(object? sender, MouseClickRawArgs e)
+            => ResetTimer($"Mouse up: {e.X},{e.Y} {e.Button}");
 
-        #region raw input
-        private void MsgWindow_KeyboardClickRaw(object? sender, KeyboardClickRawArgs e) {
-            ResetTimer($"Keyboard was Clicked at : {e.Key}");
-        }
+        private void MsgWindow_MouseDownRaw(object? sender, MouseClickRawArgs e)
+            => ResetTimer($"Mouse down: {e.X},{e.Y} {e.Button}");
 
-        private void MsgWindow_MouseUpRaw(object? sender, MouseClickRawArgs e) {
-            ResetTimer($"Mouse was uped at: {e.X} {e.Y} by {e.Button}");
-        }
+        private void MsgWindow_MouseMoveRaw(object? sender, MouseRawArgs e)
+            => ResetTimer($"Mouse move: {e.X},{e.Y}");
 
-        private void MsgWindow_MouseDownRaw(object? sender, MouseClickRawArgs e) {
-            ResetTimer($"Mouse was downed at: {e.X} {e.Y} by {e.Button}");
-        }
+        // -------------------------------------------------------------------------
+        // Helpers
+        // -------------------------------------------------------------------------
 
-        private void MsgWindow_MouseMoveRaw(object? sender, MouseRawArgs e) {
-            ResetTimer($"Mouse was moved at: {e.X} {e.Y}");
+        private ProcessStartInfo BuildStartInfo(string filePath, string ftype) {
+            string workingDir = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                Constants.WorkingDir.ScrSaver);
+
+            var cmdArgs = new StringBuilder()
+                .Append($" --file-path {filePath}")
+                .Append($" --wallpaper-type {ftype}")
+                .Append($" --effect {_userSettingsService.Settings.ScreenSaverEffect}");
+
+            return new ProcessStartInfo {
+                FileName = Path.Combine(workingDir, Constants.ModuleName.ScrSaver),
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                WorkingDirectory = workingDir,
+                Arguments = cmdArgs.ToString(),
+            };
         }
-        #endregion
 
         #region dispose
         private bool _isDisposed;
+
         protected virtual void Dispose(bool disposing) {
-            if (!_isDisposed) {
-                _msgWindow.MouseMoveRaw -= MsgWindow_MouseMoveRaw;
-                _msgWindow.MouseDownRaw -= MsgWindow_MouseDownRaw;
-                _msgWindow.MouseUpRaw -= MsgWindow_MouseUpRaw;
-                _msgWindow.KeyboardClickRaw -= MsgWindow_KeyboardClickRaw;
-                _isDisposed = true;
-            }
+            if (_isDisposed) return;
+
+            _msgWindow.MouseMoveRaw -= MsgWindow_MouseMoveRaw;
+            _msgWindow.MouseDownRaw -= MsgWindow_MouseDownRaw;
+            _msgWindow.MouseUpRaw -= MsgWindow_MouseUpRaw;
+            _msgWindow.KeyboardClickRaw -= MsgWindow_KeyboardClickRaw;
+
+            _isDisposed = true;
         }
 
         public void Dispose() {
@@ -287,13 +357,16 @@ namespace VirtualPaper.Cores.ScreenSaver {
         }
         #endregion
 
+        private readonly IProcessLauncher _processLauncher;
+        private readonly IJobService _jobService;
         private readonly IUserSettingsService _userSettingsService;
-        private readonly RawInputMsgWindow _msgWindow;
+        private readonly IRawInputMsg _msgWindow;
         private readonly IWallpaperControl _wpControl;
-        private readonly DispatcherTimer _dispatcherTimer;
-        private readonly ConcurrentDictionary<string, bool> _scrWhiteListProcState = [];
-        private readonly static object _objStop = new();
-        private readonly static object _objStart = new();
+        private readonly INativeService _nativeService;
+        private readonly IDispatcherTimer _dispatcherTimer;
+        private readonly ConcurrentDictionary<string, bool> _scrWhiteListProcState = new(StringComparer.OrdinalIgnoreCase);
+        private readonly object _objStop = new();
+        private readonly object _objStart = new();
         private bool _isRunningLock = false;
         private bool _isStopping = false;
         private bool _isStarting = false;

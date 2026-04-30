@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace VirtualPaper.Common.Utils.Files {
     /// <summary>
@@ -20,7 +20,13 @@ namespace VirtualPaper.Common.Utils.Files {
             foreach (var entry in _fileHeaderMap) {
                 if (headerHex.Contains(entry.Key, StringComparison.OrdinalIgnoreCase)
                     && FileTypeToExtension[entry.Value].Contains(extension.ToLower())) {
-                    return entry.Value;
+                    // 魔术头→后缀映射
+                    if (_headerToExtensions.TryGetValue(entry.Key, out var validExtensions)
+                        && validExtensions.Contains(extension)) {
+                        return entry.Value;
+                    }
+                    // 魔术头命中但后缀不合法
+                    return FileType.FUnknown;
                 }
             }
 
@@ -55,8 +61,7 @@ namespace VirtualPaper.Common.Utils.Files {
         public static string[] AvatarFilter =>
             [".jpg", ".bmp", ".png", ".jpe", ".gif", ".tif", ".tiff", ".heic", ".heif", ".heics", ".heifs", ".avif", ".avifs"];
 
-        private static readonly Dictionary<string, FileType> _fileHeaderMap = new()
-        {
+        private static readonly Dictionary<string, FileType> _fileHeaderMap = new() {
             {"FFD8FF", FileType.FImage}, // .jpg .jpeg
             {"424D", FileType.FImage}, // .bmp
             {"89504E470D0A1A0A", FileType.FImage}, // .png
@@ -69,6 +74,21 @@ namespace VirtualPaper.Common.Utils.Files {
 
             {"66747970", FileType.FVideo}, // .mp4
             {"1A45DFA3", FileType.FVideo}, // .webm
+        };
+
+        private static readonly Dictionary<string, string[]> _headerToExtensions = new() {
+            // PNG
+            ["89504E470D0A1A0A"] = [".png", ".apng"],
+            // JPEG
+            ["FFD8FF"] = [".jpg", ".jpeg"],
+            // BMP
+            ["424D"] = [".bmp"],
+            // GIF
+            ["474946383961"] = [".gif"],
+            ["474946383761"] = [".gif"],
+            // WEBP (RIFF....WEBP)
+            ["52494646"] = [".webp", ".mp4", ".webm"], // RIFF 容器需要进一步判断，按需细化
+                                                       // SVG 是文本格式，无魔术头，跳过
         };
     }
 }

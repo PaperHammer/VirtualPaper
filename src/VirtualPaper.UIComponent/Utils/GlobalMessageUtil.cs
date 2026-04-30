@@ -33,7 +33,9 @@ namespace VirtualPaper.UIComponent.Utils {
                     }
                 };
 
-                arcWindow.InfobarMessages.Add(globalMsgInfo);
+                if (Constants.IsNormalRun) {
+                    arcWindow.InfobarMessages.Add(globalMsgInfo);
+                }
             });
         }
 

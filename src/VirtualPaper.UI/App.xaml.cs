@@ -10,12 +10,15 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.Adapter;
+using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 using VirtualPaper.WpSettingsPanel.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.Core;
@@ -50,6 +53,8 @@ namespace VirtualPaper.UI {
 #endif
             }
             #endregion
+
+            Constants.IsNormalRun = true;
 
             #region 初始化核心组件
             // 依赖注入
@@ -102,6 +107,9 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
                 .AddSingleton<ICommandsClient, CommandsClient>()
                 .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
+                .AddSingleton<IGlobalDialogService, GlobalDialogService>()
+                .AddSingleton<IStoragePicker, StoragePickerWrapper>()
+                .AddSingleton<IJsonSaver, JsonSaverWrapper>()
 
                 .BuildServiceProvider();
 

@@ -198,7 +198,7 @@ namespace VirtualPaper {
             deBubble.Tag = "Off";
         }
 
-        private void UpdateSettings() {
+        private async void UpdateSettings() {
             _userSettingsService.Settings.IsScreenSaverOn = srcsaver.Tag.ToString() == "On";
             _userSettingsService.Settings.IsRunningLock = lockScr.Tag.ToString() == "On";
             _userSettingsService.Settings.ScreenSaverEffect
@@ -206,7 +206,7 @@ namespace VirtualPaper {
             _userSettingsService.Save<ISettings>();
 
             var pipeClient = App.Services.GetRequiredService<TrayCommand>();
-            pipeClient.SendMsgToUI("UPDATE_SCRSETTINGS");
+            await pipeClient.SendMsgToUIAsync("UPDATE_SCRSETTINGS");
         }
 
         private readonly IUIRunnerService _uiRunnerService;

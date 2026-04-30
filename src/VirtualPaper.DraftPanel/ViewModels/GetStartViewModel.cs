@@ -49,18 +49,18 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             });
         }
 
-        internal void InitCollection() {
+        public void InitCollection() {
             RecentUseds.Clear();
             RecentUseds.AddRange(_userSettingsClient.RecentUseds);
             _recentUseds = [.. RecentUseds];
         }
 
         #region filter
-        internal void ApplyFilter(string keyword) {
+        public void ApplyFilter(string keyword) {
             FilterByTitle(keyword);
         }
 
-        internal void FilterByTitle(string keyword) {
+        public void FilterByTitle(string keyword) {
             var filtered = _recentUseds?.Where(recentUsed =>
                 recentUsed.FileName != null && recentUsed.FileName.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
             );

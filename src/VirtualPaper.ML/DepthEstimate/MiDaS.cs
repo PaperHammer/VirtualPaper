@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
@@ -12,7 +12,9 @@ namespace VirtualPaper.ML.DepthEstimate {
                 AppDomain.CurrentDomain.BaseDirectory,
                 Constants.WorkingDir.ML,
                 Utils.Fileds.ModelName);
-            LoadModel(_modelPath);
+
+            if (File.Exists(_modelPath))
+                LoadModel(_modelPath);
         }
 
         public static ModelOutput Run(string imagePath) {

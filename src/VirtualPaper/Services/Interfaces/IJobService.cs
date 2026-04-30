@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace VirtualPaper.Services.Interfaces {
-    internal interface IJobService {
+    public interface IJobService {
+        bool AddProcess(IntPtr processHandle);
+        bool AddProcess(int processId);
+        void Close();
+        void Dispose();
     }
 }

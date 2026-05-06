@@ -214,15 +214,6 @@ jobs:
         merge-multiple: true
         path: TestResults/
 
-    - name: Publish Test Results
-      uses: dorny/test-reporter@v1
-      if: always()
-      with:
-        name: All .NET Tests
-        path: "TestResults/**/*.trx"
-        reporter: dotnet-trx
-        fail-on-error: false
-
     - name: Upload combined test results
       uses: actions/upload-artifact@v4
       if: always()

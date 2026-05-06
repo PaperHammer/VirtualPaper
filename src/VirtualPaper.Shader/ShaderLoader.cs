@@ -111,18 +111,28 @@ namespace VirtualPaper.Shader {
                                .Cast<ShaderType>()
                                .Where(t => t != ShaderType.None);
 
+            var failedTypes = new ConcurrentBag<(ShaderType type, Exception ex)>();
             var loadingTasks = allTypes.Select(type =>
                 LoadShaderInternalAsync(type).ContinueWith(t => {
                     if (t.IsCompletedSuccessfully) {
                         _shaderCache[type] = t.Result;
                     }
                     else if (t.IsFaulted) {
-                        ArcLog.GetLogger<ShaderLoader>().Error(t.Exception);
+                        var ex = t.Exception!.InnerException ?? t.Exception;
+                        ArcLog.GetLogger<ShaderLoader>().Error(ex);
+                        failedTypes.Add((type, ex));
                     }
                 }, TaskScheduler.Default)
             );
 
             await Task.WhenAll(loadingTasks);
+
+            if (!failedTypes.IsEmpty) {
+                throw new AggregateException(
+                    $"Failed to load {failedTypes.Count} shader(s): " +
+                    string.Join(", ", failedTypes.Select(f => f.type)),
+                    failedTypes.Select(f => f.ex));
+            }
         }
 
         private static async Task<byte[]> LoadShaderInternalAsync(ShaderType type) {
@@ -175,7 +185,12 @@ namespace VirtualPaper.Shader {
                 throw new ArgumentException(
                     $"No shader file name mapped for ShaderType: {type}", nameof(type));
 
-            return Path.Combine(_baseDir, Constants.WorkingDir.Shader, fileName);
+            if (Constants.IsTestMode) {
+                return Path.Combine(_baseDir, "Shaders", fileName);
+            }
+            else {
+                return Path.Combine(_baseDir, Constants.WorkingDir.Shader, fileName);
+            }
         }
 
         private static readonly ConcurrentDictionary<ShaderType, byte[]> _shaderCache = new();

@@ -12,4 +12,12 @@
 	  <ProjectReference Include="..\VirtualPaper.Shader\VirtualPaper.Shader.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<Content Include="..\VirtualPaper.Shader\Shaders\**\*.*"
+				 Link="Shaders\%(RecursiveDir)%(Filename)%(Extension)"
+				 CopyToOutputDirectory="PreserveNewest" />
+		<Content Include="..\VirtualPaper.Shader\Tools\**\*.*"
+				 Link="Tools\%(RecursiveDir)%(Filename)%(Extension)"
+				 CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
 </Project>

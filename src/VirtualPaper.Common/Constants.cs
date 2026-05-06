@@ -25,6 +25,10 @@ namespace VirtualPaper.Common {
                 IsTestMode
                     ? TestRootDir
                     : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VirtualPaper");
+            public static string LocalApplicationData =>
+                IsTestMode
+                    ? TestRootDir
+                    : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
             /// <summary>
             /// 数据存储根目录

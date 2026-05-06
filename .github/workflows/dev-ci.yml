@@ -45,8 +45,16 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build-output
-        path: src/
-        retention-days: 1
+        retention-days: 7
+        path: |
+          src/**/*.csproj
+          src/**/*.props
+          src/**/*.targets
+          src/**/bin/Release/
+          src/**/*.sln
+          !src/**/obj/
+          !src/**/*.pdb
+        include-hidden-files: false
 
   test-core:
     name: Core Tests

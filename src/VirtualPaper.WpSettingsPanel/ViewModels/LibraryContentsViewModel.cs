@@ -614,7 +614,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private List<IWpBasicData> _libraryWallpapers = [];
         private bool _isInited;
 
-#if DEBUG
         /// <summary>仅供单元测试使用</summary>
         public void TestPopulate(IEnumerable<IWpBasicData> items) {
             foreach (var item in items) {
@@ -622,7 +621,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 LibraryWallpapers.Add(item);
             }
         }
-#endif
     }
 
     public enum LoadingStatus {

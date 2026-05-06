@@ -1,0 +1,127 @@
+name: Main Branch Protection
+
+# 当创建或更新针对 main 分支的 PR 时触发
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  check-source-branch:
+    name: Check Source Branch
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Validate source branch
+      run: |
+        SOURCE_BRANCH="${{ github.head_ref }}"
+        echo "Source branch: $SOURCE_BRANCH"
+        echo "Target branch: ${{ github.base_ref }}"
+        
+        if [ "$SOURCE_BRANCH" != "dev" ]; then
+          echo "❌ Error: Only dev branch is allowed to merge into main branch."
+          echo "Current source branch: $SOURCE_BRANCH"
+          echo ""
+          echo "Please follow the correct workflow:"
+          echo "1. Merge your feature branch into dev first"
+          echo "2. Ensure tests pass on dev branch"
+          echo "3. Then create PR from dev to main"
+          exit 1
+        else
+          echo "✅ Source branch validation passed: dev → main"
+        fi
+
+    - name: Add PR comment
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { context, github } = require('@actions/github');
+          const sourceBranch = context.payload.pull_request.head.ref;
+          
+          let comment;
+          
+          if (sourceBranch === 'dev') {
+            comment = `## ✅ Branch Validation Passed
+            
+**Source Branch**: \`${sourceBranch}\` → **Target Branch**: \`main\`
+
+✅ This PR follows the correct workflow: \`dev\` → \`main\`
+
+**Next Steps:**
+- Ensure all tests pass on the dev branch
+- Request code review
+- Merge when ready
+
+---
+*This check ensures only dev branch can merge into main.*`;
+          } else {
+            comment = `## ❌ Invalid Source Branch
+
+**Source Branch**: \`${sourceBranch}\` → **Target Branch**: \`main\`
+
+❌ **Error**: Only \`dev\` branch is allowed to merge into \`main\` branch.
+
+**Correct Workflow:**
+1. 🔀 Merge your feature branch into \`dev\` first
+2. ✅ Ensure tests pass on \`dev\` branch  
+3. 📝 Create PR from \`dev\` to \`main\`
+
+**Please close this PR and follow the correct workflow.**
+
+---
+*This check ensures code quality and proper release flow.*`;
+          }
+          
+          // 查找是否已有评论
+          const comments = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.payload.pull_request.number
+          });
+          
+          const existingComment = comments.data.find(comment => 
+            comment.body.includes('Branch Validation') || comment.body.includes('Invalid Source Branch')
+          );
+          
+          if (existingComment) {
+            // 更新现有评论
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: comment
+            });
+          } else {
+            // 创建新评论
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: comment
+            });
+          }
+
+    # 为非dev分支创建失败的状态检查
+    - name: Create status check
+      if: always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { context, github } = require('@actions/github');
+          const sourceBranch = context.payload.pull_request.head.ref;
+          
+          const state = sourceBranch === 'dev' ? 'success' : 'failure';
+          const description = sourceBranch === 'dev' 
+            ? 'Source branch validation passed ✅'
+            : 'Only dev branch allowed to merge to main ❌';
+          
+          await github.rest.repos.createCommitStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            sha: context.payload.pull_request.head.sha,
+            state: state,
+            target_url: `${context.payload.repository.html_url}/actions/runs/${context.runId}`,
+            description: description,
+            context: 'branch-protection/source-validation'
+          });

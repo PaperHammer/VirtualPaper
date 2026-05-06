@@ -23,8 +23,6 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
-          6.0.x
-          7.0.x
           8.0.x
 
     - name: Restore dependencies
@@ -57,8 +55,6 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
-          6.0.x
-          7.0.x
           8.0.x
 
     - name: Download build artifacts
@@ -93,8 +89,6 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
-          6.0.x
-          7.0.x
           8.0.x
 
     - name: Download build artifacts
@@ -129,8 +123,6 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
-          6.0.x
-          7.0.x
           8.0.x
 
     - name: Download build artifacts
@@ -165,8 +157,6 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
-          6.0.x
-          7.0.x
           8.0.x
 
     - name: Download build artifacts
@@ -195,6 +185,9 @@ jobs:
     if: always()
     
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Download all test results
       uses: actions/download-artifact@v4
       with:
@@ -226,10 +219,10 @@ jobs:
       uses: actions/github-script@v7
       with:
         script: |
-          const { context, github } = require('@actions/github');
+          const github = require('@actions/github');
+          const context = require('@actions/core');
           
           // 检查所有测试job的状态
-          const jobs = ['build', 'test-core', 'test-ui', 'test-ml', 'test-shader'];
           const jobStatuses = {
             'build': '${{ needs.build.result }}',
             'test-core': '${{ needs.test-core.result }}',
@@ -258,12 +251,12 @@ jobs:
           
           console.log('Final state:', state, description);
           
-          await github.rest.repos.createCommitStatus({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            sha: context.sha,
+          await github.getOctokit(process.env.GITHUB_TOKEN).rest.repos.createCommitStatus({
+            owner: process.env.GITHUB_REPOSITORY.split('/')[0],
+            repo: process.env.GITHUB_REPOSITORY.split('/')[1],
+            sha: process.env.GITHUB_SHA,
             state: state,
-            target_url: context.payload.repository.html_url + '/actions/runs/' + context.runId,
+            target_url: process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID,
             description: description,
             context: 'ci/dev-tests'
           });

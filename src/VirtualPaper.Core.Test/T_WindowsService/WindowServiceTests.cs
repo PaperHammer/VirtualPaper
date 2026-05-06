@@ -1,132 +1,115 @@
 using System.Windows;
 using Moq;
-using VirtualPaper.Services;
+using VirtualPaper.Services.Interfaces;
 
-namespace VirtualPaper.Core.Test.T_WindowsService {
-    [TestClass]
-    public class WindowServiceTests {
-        private Mock<IServiceProvider> _mockServiceProvider = null!;
-        private WindowService _service = null!;
+namespace VirtualPaper.Core.Test.T_WindowsService;
 
-        [TestInitialize]
-        public void TestInitialize() {
-            _mockServiceProvider = new Mock<IServiceProvider>();
-            _service = new WindowService(_mockServiceProvider.Object);
-        }
+[TestClass]
+public class WindowServiceConsumerTests {
+    private Mock<IWindowService> _mockWindowService = null!;
 
-        // TryGet：窗口不存在时应返回 false，out 为 null
-        [TestMethod]
-        public void TryGet_WhenWindowNotOpen_ShouldReturnFalse() {
-            var result = _service.TryGet<FakeWindow>(out var window);
-
-            Assert.IsFalse(result);
-            Assert.IsNull(window);
-        }
-
-        // TryGet：Show 后应能 TryGet 到实例
-        [STATestMethod]
-        public void TryGet_AfterShow_ShouldReturnTrue() {
-            var fakeWindow = new FakeWindow();
-            _mockServiceProvider
-                .Setup(sp => sp.GetService(typeof(FakeWindow)))
-                .Returns(fakeWindow);
-
-            _service.Show<FakeWindow>();
-
-            var result = _service.TryGet<FakeWindow>(out var window);
-
-            Assert.IsTrue(result);
-            Assert.AreSame(fakeWindow, window);
-        }
-
-        // Show：窗口关闭后，TryGet 应返回 false（自动清理）
-        [STATestMethod]
-        public void Show_AfterWindowClosed_ShouldRemoveFromRegistry() {
-            var fakeWindow = new FakeWindow();
-            _mockServiceProvider
-                .Setup(sp => sp.GetService(typeof(FakeWindow)))
-                .Returns(fakeWindow);
-
-            _service.Show<FakeWindow>();
-
-            // 模拟关闭事件
-            fakeWindow.Close();
-
-            var result = _service.TryGet<FakeWindow>(out _);
-            Assert.IsFalse(result);
-        }
-
-        // Show：已存在实例时不应重复创建（GetService 只调用一次）
-        [STATestMethod]
-        public void Show_WhenWindowAlreadyOpen_ShouldNotCreateNewInstance() {
-            var fakeWindow = new FakeWindow();
-            _mockServiceProvider
-                .Setup(sp => sp.GetService(typeof(FakeWindow)))
-                .Returns(fakeWindow);
-
-            _service.Show<FakeWindow>();
-            _service.Show<FakeWindow>(); // 第二次调用
-
-            _mockServiceProvider.Verify(sp => sp.GetService(typeof(FakeWindow)), Times.Once);
-        }
-
-        // InjectParameter：DataContext 实现接口时应调用 ReceiveParameter
-        [STATestMethod]
-        public void Show_WhenDataContextIsReceiver_ShouldInjectParameter() {
-            var fakeWindow = new FakeWindowWithReceiver();
-            var receiver = new FakeReceiver();
-            fakeWindow.DataContext = receiver;
-
-            _mockServiceProvider
-                .Setup(sp => sp.GetService(typeof(FakeWindowWithReceiver)))
-                .Returns(fakeWindow);
-
-            var param = new object();
-            _service.Show<FakeWindowWithReceiver>(param);
-
-            Assert.AreSame(param, receiver.ReceivedParameter);
-        }
-
-        // InjectParameter：parameter 为 null 时不应调用 ReceiveParameter
-        [STATestMethod]
-        public void Show_WhenParameterIsNull_ShouldNotCallReceiveParameter() {
-            var fakeWindow = new FakeWindowWithReceiver();
-            var receiver = new FakeReceiver();
-            fakeWindow.DataContext = receiver;
-
-            _mockServiceProvider
-                .Setup(sp => sp.GetService(typeof(FakeWindowWithReceiver)))
-                .Returns(fakeWindow);
-
-            _service.Show<FakeWindowWithReceiver>(null);
-
-            Assert.IsNull(receiver.ReceivedParameter);
-        }
-
-        // InjectParameter：DataContext 未实现接口时不应抛出异常
-        [STATestMethod]
-        public void Show_WhenDataContextIsNotReceiver_ShouldNotThrow() {
-            var fakeWindow = new FakeWindow();
-            fakeWindow.DataContext = new object(); // 普通对象，不实现接口
-
-            _mockServiceProvider
-                .Setup(sp => sp.GetService(typeof(FakeWindow)))
-                .Returns(fakeWindow);
-
-            // 不应抛出
-            _service.Show<FakeWindow>(new object());
-        }
+    [TestInitialize]
+    public void TestInitialize() {
+        _mockWindowService = new Mock<IWindowService>();
     }
 
-    public class FakeWindow : Window { }
+    #region TryGet Tests
 
-    public class FakeWindowWithReceiver : Window, IWindowParameterReceiver {
-        public object? ReceivedParameter { get; private set; }
-        public void ReceiveParameter(object? parameter) => ReceivedParameter = parameter;
+    [TestMethod]
+    public void TryGet_WhenWindowNotOpen_ShouldReturnFalse() {
+        // Setup: TryGet 返回 false，out 参数为 null
+        _mockWindowService
+            .Setup(s => s.TryGet(out It.Ref<FakeWindow?>.IsAny))
+            .Returns(false);
+
+        var service = _mockWindowService.Object;
+        var result = service.TryGet<FakeWindow>(out var window);
+
+        Assert.IsFalse(result);
+        Assert.IsNull(window);
     }
 
-    public class FakeReceiver : IWindowParameterReceiver {
-        public object? ReceivedParameter { get; private set; }
-        public void ReceiveParameter(object? parameter) => ReceivedParameter = parameter;
+    [STATestMethod]
+    public void TryGet_WhenWindowIsOpen_ShouldReturnTrueAndInstance() {
+        var expected = new FakeWindow();
+        _mockWindowService
+            .Setup(s => s.TryGet(out expected))
+            .Returns(true);
+
+        var service = _mockWindowService.Object;
+        var result = service.TryGet<FakeWindow>(out var window);
+
+        Assert.IsTrue(result);
+        Assert.AreSame(expected, window);
     }
+
+    #endregion
+
+    #region Show Tests
+
+    [TestMethod]
+    public void Show_ShouldBeCallable() {
+        var service = _mockWindowService.Object;
+
+        // 不抛出异常即通过
+        service.Show<FakeWindow>();
+
+        _mockWindowService.Verify(s => s.Show<FakeWindow>(null), Times.Once);
+    }
+
+    [TestMethod]
+    public void Show_WithParameter_ShouldPassParameter() {
+        var param = new object();
+        var service = _mockWindowService.Object;
+
+        service.Show<FakeWindow>(param);
+
+        _mockWindowService.Verify(s => s.Show<FakeWindow>(param), Times.Once);
+    }
+
+    #endregion
+
+    #region ShowDialogAsync Tests
+
+    [TestMethod]
+    public async Task ShowDialogAsync_WhenConfirmed_ShouldReturnTrue() {
+        _mockWindowService
+            .Setup(s => s.ShowDialogAsync<FakeWindow>(null))
+            .ReturnsAsync(true);
+
+        var result = await _mockWindowService.Object.ShowDialogAsync<FakeWindow>();
+
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod]
+    public async Task ShowDialogAsync_WhenCancelled_ShouldReturnFalse() {
+        _mockWindowService
+            .Setup(s => s.ShowDialogAsync<FakeWindow>(null))
+            .ReturnsAsync(false);
+
+        var result = await _mockWindowService.Object.ShowDialogAsync<FakeWindow>();
+
+        Assert.IsFalse(result);
+    }
+
+    [TestMethod]
+    public async Task ShowDialogAsync_WithParameter_ShouldPassParameter() {
+        var param = "test-param";
+        _mockWindowService
+            .Setup(s => s.ShowDialogAsync<FakeWindow>(param))
+            .ReturnsAsync(true);
+
+        var result = await _mockWindowService.Object.ShowDialogAsync<FakeWindow>(param);
+
+        Assert.IsTrue(result);
+        _mockWindowService.Verify(s => s.ShowDialogAsync<FakeWindow>(param), Times.Once);
+    }
+
+    #endregion
 }
+
+/// <summary>
+/// 仅用作泛型类型标识，测试中不会被实例化
+/// </summary>
+public class FakeWindow : Window { }

@@ -14,10 +14,10 @@
 
 	<ItemGroup>
 		<Content Include="Shaders\GeometryAlphaEraseEffect.bin">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Include="Shaders\GeometryAlphaEraseEffect.hlsl">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
 

@@ -24,17 +24,23 @@ jobs:
         echo "Source branch: $SOURCE_BRANCH"
         echo "Target branch: ${{ github.base_ref }}"
         
-        if [ "$SOURCE_BRANCH" != "dev" ]; then
-          echo "❌ Error: Only dev branch is allowed to merge into main branch."
+        if [ "$SOURCE_BRANCH" != "dev" ] && [ "$SOURCE_BRANCH" != "bugfix" ]; then
+          echo "❌ Error: Only dev and bugfix branches are allowed to merge into main branch."
           echo "Current source branch: $SOURCE_BRANCH"
           echo ""
           echo "Please follow the correct workflow:"
+          echo "For features/enhancements:"
           echo "1. Merge your feature branch into dev first"
           echo "2. Ensure tests pass on dev branch"
           echo "3. Then create PR from dev to main"
+          echo ""
+          echo "For urgent bugfixes:"
+          echo "1. Create bugfix branch from main"
+          echo "2. Make necessary fixes"
+          echo "3. Create PR from bugfix to main"
           exit 1
         else
-          echo "✅ Source branch validation passed: dev → main"
+          echo "✅ Source branch validation passed: $SOURCE_BRANCH → main"
         fi
 
     - name: Add PR comment
@@ -46,24 +52,29 @@ jobs:
           
           let body;
           
-          if (sourceBranch === 'dev') {
+          if (sourceBranch === 'dev' || sourceBranch === 'bugfix') {
             body = '## ✅ Branch Validation Passed\n\n' +
               '**Source Branch**: `' + sourceBranch + '` → **Target Branch**: `main`\n\n' +
-              '✅ This PR follows the correct workflow: `dev` → `main`\n\n' +
+              '✅ This PR follows the correct workflow: `' + sourceBranch + '` → `main`\n\n' +
               '**Next Steps:**\n' +
-              '- Ensure all tests pass on the dev branch\n' +
+              '- Ensure all tests pass on the ' + sourceBranch + ' branch\n' +
               '- Request code review\n' +
               '- Merge when ready\n\n' +
               '---\n' +
-              '*This check ensures only dev branch can merge into main.*';
+              '*This check ensures only dev and bugfix branches can merge into main.*';
           } else {
             body = '## ❌ Invalid Source Branch\n\n' +
               '**Source Branch**: `' + sourceBranch + '` → **Target Branch**: `main`\n\n' +
-              '❌ **Error**: Only `dev` branch is allowed to merge into `main` branch.\n\n' +
-              '**Correct Workflow:**\n' +
+              '❌ **Error**: Only `dev` and `bugfix` branches are allowed to merge into `main` branch.\n\n' +
+              '**Correct Workflow:**\n\n' +
+              '**For Features/Enhancements:**\n' +
               '1. 🔀 Merge your feature branch into `dev` first\n' +
               '2. ✅ Ensure tests pass on `dev` branch\n' +
               '3. 📝 Create PR from `dev` to `main`\n\n' +
+              '**For Urgent Bugfixes:**\n' +
+              '1. 🐛 Create `bugfix` branch from `main`\n' +
+              '2. 🔧 Make necessary fixes\n' +
+              '3. 📝 Create PR from `bugfix` to `main`\n\n' +
               '**Please close this PR and follow the correct workflow.**\n\n' +
               '---\n' +
               '*This check ensures code quality and proper release flow.*';
@@ -102,10 +113,10 @@ jobs:
         script: |
           const sourceBranch = context.payload.pull_request.head.ref;
           
-          const state = sourceBranch === 'dev' ? 'success' : 'failure';
-          const description = sourceBranch === 'dev' 
+          const state = (sourceBranch === 'dev' || sourceBranch === 'bugfix') ? 'success' : 'failure';
+          const description = (sourceBranch === 'dev' || sourceBranch === 'bugfix')
             ? 'Source branch validation passed ✅'
-            : 'Only dev branch allowed to merge to main ❌';
+            : 'Only dev and bugfix branches allowed to merge to main ❌';
           
           await github.rest.repos.createCommitStatus({
             owner: context.repo.owner,

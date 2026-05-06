@@ -1,6 +1,5 @@
 name: Dev Branch CI
 
-# 当代码推送到 dev 分支时触发
 on:
   push:
     branches:
@@ -9,8 +8,13 @@ on:
     branches:
       - dev
 
+permissions:
+  contents: read
+  statuses: write
+  checks: write
+  pull-requests: write
+
 jobs:
-  # 环境准备和构建
   build:
     name: Build Solution
     runs-on: windows-latest
@@ -22,8 +26,14 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: |
-          8.0.x
+        dotnet-version: 8.0.x
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
 
     - name: Restore dependencies
       run: dotnet restore src/VirtualPaper.sln
@@ -31,41 +41,40 @@ jobs:
     - name: Build solution
       run: dotnet build src/VirtualPaper.sln --configuration Release --no-restore
 
-    # 缓存构建结果供后续测试使用
-    - name: Upload build artifacts
+    - name: Upload build output
       uses: actions/upload-artifact@v4
       with:
-        name: build-artifacts
-        path: |
-          src/*/bin/
-          src/*/obj/
+        name: build-output
+        path: src/
         retention-days: 1
 
-  # Core 测试
   test-core:
     name: Core Tests
     runs-on: windows-latest
     needs: build
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: |
-          8.0.x
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-artifacts
-        path: src/
+        dotnet-version: 8.0.x
 
     - name: Run Core Tests
-      run: dotnet test src/VirtualPaper.Core.Test/VirtualPaper.Core.Test.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults/Core
-      continue-on-error: false
+      run: dotnet test src/VirtualPaper.Core.Test/VirtualPaper.Core.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=core-tests.trx" --results-directory TestResults/Core
+      shell: pwsh
 
     - name: Upload Core test results
       uses: actions/upload-artifact@v4
@@ -75,31 +84,33 @@ jobs:
         path: TestResults/Core/
         retention-days: 7
 
-  # UI 测试
   test-ui:
     name: UI Tests
     runs-on: windows-latest
     needs: build
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: |
-          8.0.x
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-artifacts
-        path: src/
+        dotnet-version: 8.0.x
 
     - name: Run UI Tests
-      run: dotnet test src/VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults/UI
-      continue-on-error: false
+      run: dotnet test src/VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=ui-tests.trx" --results-directory TestResults/UI
+      shell: pwsh
 
     - name: Upload UI test results
       uses: actions/upload-artifact@v4
@@ -109,31 +120,33 @@ jobs:
         path: TestResults/UI/
         retention-days: 7
 
-  # ML 测试
   test-ml:
     name: ML Tests
     runs-on: windows-latest
     needs: build
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: |
-          8.0.x
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-artifacts
-        path: src/
+        dotnet-version: 8.0.x
 
     - name: Run ML Tests
-      run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults/ML
-      continue-on-error: false
+      run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=ml-tests.trx" --results-directory TestResults/ML
+      shell: pwsh
 
     - name: Upload ML test results
       uses: actions/upload-artifact@v4
@@ -143,31 +156,33 @@ jobs:
         path: TestResults/ML/
         retention-days: 7
 
-  # Shader 测试
   test-shader:
     name: Shader Tests
     runs-on: windows-latest
     needs: build
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: |
-          8.0.x
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-artifacts
-        path: src/
+        dotnet-version: 8.0.x
 
     - name: Run Shader Tests
-      run: dotnet test src/VirtualPaper.Shader.Test/VirtualPaper.Shader.Test.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults/Shader
-      continue-on-error: false
+      run: dotnet test src/VirtualPaper.Shader.Test/VirtualPaper.Shader.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=shader-tests.trx" --results-directory TestResults/Shader
+      shell: pwsh
 
     - name: Upload Shader test results
       uses: actions/upload-artifact@v4
@@ -177,7 +192,6 @@ jobs:
         path: TestResults/Shader/
         retention-days: 7
 
-  # 汇总测试结果和状态检查
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
@@ -185,9 +199,6 @@ jobs:
     if: always()
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
     - name: Download all test results
       uses: actions/download-artifact@v4
       with:
@@ -195,16 +206,15 @@ jobs:
         merge-multiple: true
         path: TestResults/
 
-    # 发布合并的测试结果
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
       if: always()
       with:
         name: All .NET Tests
-        path: TestResults/**/*.trx
+        path: "TestResults/**/*.trx"
         reporter: dotnet-trx
+        fail-on-error: false
 
-    # 上传合并的测试结果
     - name: Upload combined test results
       uses: actions/upload-artifact@v4
       if: always()
@@ -213,50 +223,30 @@ jobs:
         path: TestResults/
         retention-days: 30
 
-    # 创建状态检查，用于后续PR验证
+    - name: Set test status
+      if: always()
+      run: |
+        if [ "${{ needs.build.result }}" = "success" ] && [ "${{ needs.test-core.result }}" = "success" ] && [ "${{ needs.test-ui.result }}" = "success" ] && [ "${{ needs.test-ml.result }}" = "success" ] && [ "${{ needs.test-shader.result }}" = "success" ]; then
+          echo "TEST_STATUS=success" >> $GITHUB_ENV
+          echo "TEST_DESCRIPTION=All tests passed ✅" >> $GITHUB_ENV
+        else
+          echo "TEST_STATUS=failure" >> $GITHUB_ENV
+          echo "TEST_DESCRIPTION=Some tests failed ❌" >> $GITHUB_ENV
+        fi
+
     - name: Create Status Check
       if: always()
       uses: actions/github-script@v7
       with:
         script: |
-          const github = require('@actions/github');
-          const context = require('@actions/core');
-          
-          // 检查所有测试job的状态
-          const jobStatuses = {
-            'build': '${{ needs.build.result }}',
-            'test-core': '${{ needs.test-core.result }}',
-            'test-ui': '${{ needs.test-ui.result }}',
-            'test-ml': '${{ needs.test-ml.result }}',
-            'test-shader': '${{ needs.test-shader.result }}'
-          };
-          
-          console.log('Job statuses:', jobStatuses);
-          
-          // 判断整体状态
-          const allSuccess = Object.values(jobStatuses).every(status => status === 'success');
-          const hasFailed = Object.values(jobStatuses).some(status => status === 'failure');
-          
-          let state, description;
-          if (allSuccess) {
-            state = 'success';
-            description = 'All tests passed ✅';
-          } else if (hasFailed) {
-            state = 'failure';
-            description = 'Some tests failed ❌';
-          } else {
-            state = 'pending';
-            description = 'Tests in progress ⏳';
-          }
-          
-          console.log('Final state:', state, description);
-          
-          await github.getOctokit(process.env.GITHUB_TOKEN).rest.repos.createCommitStatus({
-            owner: process.env.GITHUB_REPOSITORY.split('/')[0],
-            repo: process.env.GITHUB_REPOSITORY.split('/')[1],
-            sha: process.env.GITHUB_SHA,
+          const state = process.env.TEST_STATUS || 'failure';
+          const description = process.env.TEST_DESCRIPTION || 'Tests failed';
+          await github.rest.repos.createCommitStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            sha: context.sha,
             state: state,
-            target_url: process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID,
+            target_url: `${context.payload.repository.html_url}/actions/runs/${context.runId}`,
             description: description,
             context: 'ci/dev-tests'
           });

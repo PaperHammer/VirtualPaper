@@ -1,11 +1,16 @@
 name: Main Branch Protection
 
-# 当创建或更新针对 main 分支的 PR 时触发
 on:
   pull_request:
     branches:
       - main
     types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  statuses: write
+  pull-requests: write
+  issues: write
 
 jobs:
   check-source-branch:
@@ -33,16 +38,16 @@ jobs:
         fi
 
     - name: Add PR comment
+      if: always()
       uses: actions/github-script@v7
       with:
         script: |
-          const { context, github } = require('@actions/github');
           const sourceBranch = context.payload.pull_request.head.ref;
           
-          let comment;
+          let body;
           
           if (sourceBranch === 'dev') {
-            comment = '## ✅ Branch Validation Passed\n\n' +
+            body = '## ✅ Branch Validation Passed\n\n' +
               '**Source Branch**: `' + sourceBranch + '` → **Target Branch**: `main`\n\n' +
               '✅ This PR follows the correct workflow: `dev` → `main`\n\n' +
               '**Next Steps:**\n' +
@@ -52,7 +57,7 @@ jobs:
               '---\n' +
               '*This check ensures only dev branch can merge into main.*';
           } else {
-            comment = '## ❌ Invalid Source Branch\n\n' +
+            body = '## ❌ Invalid Source Branch\n\n' +
               '**Source Branch**: `' + sourceBranch + '` → **Target Branch**: `main`\n\n' +
               '❌ **Error**: Only `dev` branch is allowed to merge into `main` branch.\n\n' +
               '**Correct Workflow:**\n' +
@@ -64,42 +69,37 @@ jobs:
               '*This check ensures code quality and proper release flow.*';
           }
           
-          // 查找是否已有评论
           const comments = await github.rest.issues.listComments({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: context.payload.pull_request.number
           });
           
-          const existingComment = comments.data.find(comment => 
-            comment.body.includes('Branch Validation') || comment.body.includes('Invalid Source Branch')
+          const existingComment = comments.data.find(c => 
+            c.body.includes('Branch Validation') || c.body.includes('Invalid Source Branch')
           );
           
           if (existingComment) {
-            // 更新现有评论
             await github.rest.issues.updateComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               comment_id: existingComment.id,
-              body: comment
+              body: body
             });
           } else {
-            // 创建新评论
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
-              body: comment
+              body: body
             });
           }
 
-    # 为非dev分支创建失败的状态检查
     - name: Create status check
       if: always()
       uses: actions/github-script@v7
       with:
         script: |
-          const { context, github } = require('@actions/github');
           const sourceBranch = context.payload.pull_request.head.ref;
           
           const state = sourceBranch === 'dev' ? 'success' : 'failure';

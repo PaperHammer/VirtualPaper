@@ -62,10 +62,10 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
         [TestMethod]
         public void GetFileType_WebpWithValidHeader_ReturnsFImage() {
-            // RIFF????WEBP：52494646 + 4字节大小 + 57455250
+            // RIFF????WEBP：52494646 + 4字节大小 + 57454250
             var header = new byte[48];
             var riff = Hex("52494646");
-            var webp = Hex("57455250");
+            var webp = Hex("57454250");  // "WEBP"
             Array.Copy(riff, 0, header, 0, 4);
             Array.Copy(webp, 0, header, 8, 4);
             var path = CreateFile("test.webp", header);
@@ -75,9 +75,16 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         // ── FGif ──────────────────────────────────────────────────────
 
         [TestMethod]
-        public void GetFileType_GifWithValidHeader_ReturnsFGif() {
+        public void GetFileType_Gif89aWithValidHeader_ReturnsFGif() {
             // 474946383961 = "GIF89a"
             var path = CreateFile("test.gif", Hex("474946383961 00 00"));
+            Assert.AreEqual(FileType.FGif, FileFilter.GetFileType(path));
+        }
+
+        [TestMethod]
+        public void GetFileType_Gif87aWithValidHeader_ReturnsFGif() {
+            // 474946383761 = "GIF87a"
+            var path = CreateFile("test.gif", Hex("474946383761 00 00"));
             Assert.AreEqual(FileType.FGif, FileFilter.GetFileType(path));
         }
 
@@ -124,6 +131,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         [TestMethod]
         public void GetFileType_ValidExtensionButWrongHeader_ReturnsFUnknown() {
             // .jpg 后缀但写入 PNG 魔数，头部与后缀不匹配
+            // PNG 签名 "89504E470D0A1A0A" 不包含 "FFD8FF"，
+            // 且 _signatures 中 PNG 条目的 ValidExtensions 不含 ".jpg"
             var path = CreateFile("test.jpg", PngHeaderOnly());
             Assert.AreEqual(FileType.FUnknown, FileFilter.GetFileType(path));
         }
@@ -138,6 +147,34 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         public void GetFileType_EmptyFile_ReturnsFUnknown() {
             var path = Path.Combine(_testDir, "empty.jpg");
             File.WriteAllBytes(path, []);
+            Assert.AreEqual(FileType.FUnknown, FileFilter.GetFileType(path));
+        }
+
+        [TestMethod]
+        public void GetFileType_FileSmallerThan48Bytes_HandlesGracefully() {
+            // 只有 8 字节的有效 PNG 签名
+            var path = Path.Combine(_testDir, "small.png");
+            File.WriteAllBytes(path, Hex("89504E47 0D0A1A0A"));
+            var result = FileFilter.GetFileType(path);
+            Assert.AreEqual(FileType.FImage, result);
+        }
+
+        [TestMethod]
+        public void GetFileType_WebpExtensionButNotRiffWebp_ReturnsFUnknown() {
+            // .webp 后缀但头部不是 RIFF...WEBP 格式
+            var path = CreateFile("test.webp", Hex("00 00 00 00 00 00 00 00"));
+            Assert.AreEqual(FileType.FUnknown, FileFilter.GetFileType(path));
+        }
+
+        [TestMethod]
+        public void GetFileType_RiffButNotWebp_ReturnsFUnknown() {
+            // RIFF 头但偏移 8 处不是 WEBP（例如 AVI: "AVI "）
+            var header = new byte[48];
+            var riff = Hex("52494646");
+            var avi = Hex("41564920");  // "AVI "
+            Array.Copy(riff, 0, header, 0, 4);
+            Array.Copy(avi, 0, header, 8, 4);
+            var path = CreateFile("test.webp", header);
             Assert.AreEqual(FileType.FUnknown, FileFilter.GetFileType(path));
         }
 
@@ -169,7 +206,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
         /// <summary>
         /// 标准 PNG 头（不含 acTL），对应普通 .png 文件。
-        /// 89504E470D0A1A0A + IHDR chunk
+        /// 89504E470D0A1A0A + IHDR chunk 标识
         /// </summary>
         private static byte[] PngHeaderOnly() {
             // 8字节PNG签名 + IHDR chunk（不含acTL）
@@ -177,19 +214,30 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         }
 
         /// <summary>
-        /// APNG 头：PNG 签名 + 头部前 48 字节内嵌入 "acTL" 字符串。
+        /// 简化的 APNG 头：PNG 签名 + 前 48 字节内嵌入 "acTL" ASCII 字符串。
         /// GetFileType 用 ASCII 解码后检查 headerText.Contains("acTL")。
+        /// 注意：真实 APNG 中 acTL chunk 的位置在 IHDR 之后，这里为测试简化处理。
         /// </summary>
         private static byte[] ApngHeader() {
             var header = new byte[48];
 
-            // PNG 签名
+            // PNG 签名（8 字节）
             var sig = Hex("89504E470D0A1A0A");
             Array.Copy(sig, 0, header, 0, 8);
 
-            // 在偏移 8 后写入 "acTL"（ASCII）
+            // 模拟 IHDR chunk length + type（8字节）
+            var ihdrLen = Hex("0000000D");  // IHDR 长度 = 13
+            var ihdrType = Hex("49484452"); // "IHDR"
+            Array.Copy(ihdrLen, 0, header, 8, 4);
+            Array.Copy(ihdrType, 0, header, 12, 4);
+
+            // 在偏移 29 处写入 acTL（模拟 acTL chunk type）
+            // IHDR chunk: 4(len) + 4(type) + 13(data) + 4(crc) = 25 字节
+            // 所以 acTL chunk 从偏移 8 + 25 = 33 开始
+            var acTLLen = Hex("00000008");  // acTL 数据长度
             var acTL = System.Text.Encoding.ASCII.GetBytes("acTL");
-            Array.Copy(acTL, 0, header, 8, 4);
+            Array.Copy(acTLLen, 0, header, 33, 4);
+            Array.Copy(acTL, 0, header, 37, 4);
 
             return header;
         }

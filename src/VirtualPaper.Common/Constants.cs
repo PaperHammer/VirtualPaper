@@ -13,7 +13,7 @@ namespace VirtualPaper.Common {
         /// <summary>
         /// 避免在测试环境中使用真实的 AppData 目录，防止污染用户数据
         /// </summary>
-        public static bool IsNormalRun { get; set; } = false;
+        public static bool IsTestMode { get; set; } = false;
 
         public static class Runtime {
             public static nint MainWindowHwnd { get; set; }
@@ -22,9 +22,9 @@ namespace VirtualPaper.Common {
         public static class CommonPaths {
             public static string TestRootDir { get; set; } = Path.Combine(Path.GetTempPath(), $"VirtualPaper_Test_{Guid.NewGuid():N}");
             private static string RootDir =>
-                IsNormalRun
-                    ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VirtualPaper")
-                    : TestRootDir;
+                IsTestMode
+                    ? TestRootDir
+                    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VirtualPaper");
 
             /// <summary>
             /// 数据存储根目录

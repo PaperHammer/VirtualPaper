@@ -63,7 +63,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         public void FilterByTitle(string keyword) {
             var filtered = _recentUseds?.Where(recentUsed =>
                 recentUsed.FileName != null && recentUsed.FileName.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
-            );
+            ).ToList();
             if (filtered == null) return;
             Remove_NonMatching(filtered);
             AddBack_Procs(filtered);

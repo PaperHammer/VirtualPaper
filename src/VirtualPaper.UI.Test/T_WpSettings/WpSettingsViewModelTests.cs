@@ -241,7 +241,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         public async Task Detect_WhenCalled_CallsInitMonitors() {
             _settings.Object.WallpaperArrangement = WallpaperArrangement.Per;
             var m0 = MakeMonitor(0);
-            _monitorManagerClient.Setup(m => m.Monitors.ToArray()).Returns(new[] { m0.Object });
+            _monitorManagerClient.Setup(m => m.Monitors).Returns(new List<IMonitor> { m0.Object }.AsReadOnly());
             _vm = new WpSettingsViewModel(
                 _monitorManagerClient.Object,
                 _wpControlClient.Object,
@@ -260,9 +260,9 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _vm = CreateVm();
 
             int monitorManagerCallCount = 0;
-            _monitorManagerClient.Setup(m => m.Monitors.ToArray())
+            _monitorManagerClient.Setup(m => m.Monitors)
                 .Callback(() => monitorManagerCallCount++)
-                .Returns(new[] { _primaryMonitor.Object });
+                .Returns(new List<IMonitor> { _primaryMonitor.Object }.AsReadOnly());
 
             _vm.Detect();
             _vm.Detect(); // 第二次应该被 Interlocked 拦截
@@ -291,7 +291,9 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _settings.Object.WallpaperArrangement = WallpaperArrangement.Per;
             var monitor = MakeMonitor(0);
             monitor.SetupProperty(m => m.ThumbnailPath, "some/path");
-            _monitorManagerClient.Setup(m => m.Monitors.ToArray()).Returns(new[] { monitor.Object });
+            _monitorManagerClient
+                .Setup(m => m.Monitors)
+                .Returns(new List<IMonitor> { monitor.Object }.AsReadOnly());
             _vm = new WpSettingsViewModel(
                 _monitorManagerClient.Object,
                 _wpControlClient.Object,
@@ -311,7 +313,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _settings.Object.WallpaperArrangement = WallpaperArrangement.Per;
             var monitor = MakeMonitor(0);
             monitor.SetupProperty(m => m.ThumbnailPath, "some/path");
-            _monitorManagerClient.Setup(m => m.Monitors.ToArray()).Returns(new[] { monitor.Object });
+            _monitorManagerClient.Setup(m => m.Monitors).Returns(new List<IMonitor> { monitor.Object }.AsReadOnly());
             _vm = new WpSettingsViewModel(
                 _monitorManagerClient.Object,
                 _wpControlClient.Object,

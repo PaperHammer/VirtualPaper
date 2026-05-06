@@ -1,4 +1,5 @@
 using Moq;
+using NLog.Config;
 using VirtualPaper.Common;
 using VirtualPaper.Core.Test.Infrastructure;
 using VirtualPaper.Cores.Monitor;
@@ -12,6 +13,7 @@ using MockFactory = VirtualPaper.Core.Test.Infrastructure.MockFactory;
 namespace VirtualPaper.Core.Test.T_WallpaperControl {
     [TestClass]
     [TestCategory("Backend")]
+    [DoNotParallelize]
     public class WallpaperControl_SetWallpaperTests {
         private WallpaperControl _sut = null!;
         private Mock<IMonitorManager> _monitorMgr = null!;
@@ -29,6 +31,11 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             _sut = new WallpaperControl(
                 _settings.Object, _monitorMgr.Object,
                 _factory.Object, desktop.Object, jobService.Object);
+        }
+
+        [TestCleanup]
+        public void Cleanup() {
+            _sut.CloseAllWallpapers();
         }
 
         [TestMethod]
@@ -95,10 +102,12 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
                     .Returns(player.Object);
 
             // Set the first wallpaper
-            await _sut.SetWallpaperAsync(data1, monitor);
+            var r1 = await _sut.SetWallpaperAsync(data1, monitor);
+            Assert.IsTrue(r1.IsFinished, "first step failed: data1 was not set successfully");
 
             // Act: set a second wallpaper on the same monitor
-            await _sut.SetWallpaperAsync(data2, monitor);
+            var r2 = await _sut.SetWallpaperAsync(data2, monitor);
+            Assert.IsTrue(r2.IsFinished, "second step failed: data2 was not set successfully");
 
             // Assert
             player.Verify(p => p.Update(data2), Times.Once, "Should call Update to refresh the wallpaper");
@@ -133,7 +142,11 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             // Arrange: 3 monitors
             _settings = MockFactory.CreateUserSettings(WallpaperArrangement.Duplicate);
             _monitorMgr = MockFactory.CreateMonitorManager(3);
-            RebuildSut();
+            var desktop = MockFactory.CreateDesktopService();
+            var jobService = new Mock<IJobService>();
+            _sut = new WallpaperControl(
+                _settings.Object, _monitorMgr.Object,
+                _factory.Object, desktop.Object, jobService.Object);
 
             var data = TestDataBuilder.CreateValidPlayerData().Object;
             foreach (var m in _monitorMgr.Object.Monitors) {
@@ -149,14 +162,6 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             _factory.Verify(
                 f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), It.IsAny<IMonitor>()),
                 Times.Exactly(3), "Duplicate mode should create a Player for each monitor");
-        }
-
-        private void RebuildSut() {
-            var desktop = MockFactory.CreateDesktopService();
-            var jobService = new Mock<IJobService>();
-            _sut = new WallpaperControl(
-                _settings.Object, _monitorMgr.Object,
-                _factory.Object, desktop.Object, jobService.Object);
         }
     }
 }

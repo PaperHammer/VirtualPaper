@@ -26,6 +26,7 @@ using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
 using VirtualPaper.WpSettingsPanel.Utils;
+using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
 using Windows.Storage;
 using Windows.System.UserProfile;
 using WinUIEx;
@@ -55,7 +56,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient,
             WpSettingsViewModel wpSettingsViewModel,
-            WallpaperIndexService wallpaperIndexService) {
+            IWallpaperIndexService wallpaperIndexService) {
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
             _wpSettingsViewModel = wpSettingsViewModel;
@@ -361,13 +362,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        private void HandleDelete(IWpBasicData data) {
+        public void HandleDelete(IWpBasicData data) {
             LibraryWallpapers.Remove(data);
             _libraryWallpapers.Remove(data);
             _wallpaperIndexService.Remove(data);
         }
 
-        private void UpdateLib(IWpBasicData data) {
+        public void UpdateLib(IWpBasicData data) {
             if (_wallpaperIndexService.TryGetValue(data.WallpaperUid, out int idx)) {
                 LibraryWallpapers[idx] = data;
                 _libraryWallpapers[idx] = data;
@@ -498,12 +499,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        private async Task<bool> IsFileInUseAsync(IWpBasicData data) {
+        public async Task<bool> IsFileInUseAsync(IWpBasicData data) {
             await _userSettingsClient.LoadAsync<List<IWallpaperLayout>>();
             return _userSettingsClient.WallpaperLayouts.Any(wl => wl.FolderPath == data.FolderPath);
         }
 
-        private bool IsFileInPreview(IWpBasicData data) {
+        public bool IsFileInPreview(IWpBasicData data) {
             return _previews.Keys.Any(k => k.uid == data.WallpaperUid);
         }
 
@@ -546,7 +547,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public void FilterByTitle(string keyword) {
             var filtered = _libraryWallpapers.Where(basicData =>
                 basicData.Title != null && basicData.Title.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
-            );
+            ).ToList();
             Remove_NonMatching(filtered);
             AddBack_Procs(filtered);
         }
@@ -605,13 +606,23 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly WpSettingsViewModel _wpSettingsViewModel;
-        private readonly WallpaperIndexService _wallpaperIndexService;
+        private readonly IWallpaperIndexService _wallpaperIndexService;
         private List<string> _wallpaperInstallFolders = [];
         private readonly Dictionary<string, ArcWindow> _details = [];
         private readonly Dictionary<string, ArcWindow> _edits = [];
         private readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];
         private List<IWpBasicData> _libraryWallpapers = [];
         private bool _isInited;
+
+#if DEBUG
+        /// <summary>仅供单元测试使用</summary>
+        public void TestPopulate(IEnumerable<IWpBasicData> items) {
+            foreach (var item in items) {
+                _libraryWallpapers.Add(item);
+                LibraryWallpapers.Add(item);
+            }
+        }
+#endif
     }
 
     public enum LoadingStatus {

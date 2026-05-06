@@ -8,5 +8,7 @@ namespace VirtualPaper.Utils.Interfcaes {
         event EventHandler<MouseClickRawArgs>? MouseDownRaw;
         event EventHandler<MouseClickRawArgs>? MouseUpRaw;
         event EventHandler<KeyboardClickRawArgs>? KeyboardClickRaw;
+
+        void Show();
     }
 }

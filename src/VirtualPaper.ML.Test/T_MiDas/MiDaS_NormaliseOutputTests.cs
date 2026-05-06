@@ -48,8 +48,7 @@ namespace VirtualPaper.ML.Test.T_MiDas {
             float[] input = [1f, 1f, 1f, 1f];
 
             // 仅验证不抛异常，具体值取决于 depthRange = 0 的处理方式
-            float[] result = null!;
-            var act = () => result = InvokeNormalise(input);
+            float[] act() => _ = InvokeNormalise(input);
 
             act(); // 不抛即通过；如需断言可根据实现补充
         }

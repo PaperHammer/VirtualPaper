@@ -11,6 +11,7 @@ using MockFactory = VirtualPaper.Core.Test.Infrastructure.MockFactory;
 namespace VirtualPaper.Core.Test.T_WallpaperControl {
     [TestClass]
     [TestCategory("Backend")]
+    [DoNotParallelize]
     public class WallpaperControl_LayoutTests {
         private WallpaperControl _sut = null!;
         private Mock<IUserSettingsService> _settings = null!;

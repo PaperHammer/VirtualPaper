@@ -4,7 +4,6 @@ using VirtualPaper.Cores;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Factories.Interfaces;
-using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 using MockFactory = VirtualPaper.Core.Test.Infrastructure.MockFactory;
@@ -12,6 +11,7 @@ using MockFactory = VirtualPaper.Core.Test.Infrastructure.MockFactory;
 namespace VirtualPaper.Core.Test.T_WallpaperControl {
     [TestClass]
     [TestCategory("Backend")]
+    [DoNotParallelize]
     public class WallpaperControl_CloseTests {
         private WallpaperControl _sut = null!;
         private Mock<IMonitorManager> _monitorMgr = null!;

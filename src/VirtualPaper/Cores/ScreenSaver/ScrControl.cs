@@ -100,8 +100,6 @@ namespace VirtualPaper.Cores.ScreenSaver {
         /// 由用户输入、白名单检测等场景触发。
         /// </summary>
         private void ResetTimer(string reason) {
-            ArcLog.GetLogger<ScrControl>().Info($"ResetTimer: {reason}");
-
             StopTimerTask();
 
             if (IsRunning) {

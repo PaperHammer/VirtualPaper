@@ -20,6 +20,7 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Adapter;
 using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 using VirtualPaper.WpSettingsPanel.Utils;
+using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.Core;
 using WinUIEx;
@@ -53,8 +54,6 @@ namespace VirtualPaper.UI {
 #endif
             }
             #endregion
-
-            Constants.IsNormalRun = true;
 
             #region 初始化核心组件
             // 依赖注入
@@ -99,8 +98,7 @@ namespace VirtualPaper.UI {
                 .AddTransient<DraftConfigViewModel>()
                 .AddTransient<WorkSpaceViewModel>()
 
-                .AddSingleton<WallpaperIndexService>()
-
+                .AddSingleton<IWallpaperIndexService, WallpaperIndexService>()
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()
                 .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
                 .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()

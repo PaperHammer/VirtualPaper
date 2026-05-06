@@ -233,13 +233,13 @@ namespace VirtualPaper.Cores.WpControl {
                 IsFinished = true
             };
 
-            if (monitor == null) {
-                response.IsFinished = false;
-                return response;
-            }
-
             try {
                 ArcLog.GetLogger<WallpaperControl>().Info($"Setting wallpaper: {data.FilePath}");
+
+                if (monitor == null) {
+                    response.IsFinished = false;
+                    return response;
+                }
 
                 if (data.RType == RuntimeType.RUnknown) {
                     response.IsFinished = false;
@@ -247,7 +247,7 @@ namespace VirtualPaper.Cores.WpControl {
                 }
 
                 #region pre-check
-                if (_workerW == nint.Zero) {
+                if (!Constants.IsTestMode && _workerW == nint.Zero) {
                     ArcLog.GetLogger<WallpaperControl>().Error("WorkerW is not found");
                     response.IsFinished = false;
 
@@ -403,28 +403,28 @@ namespace VirtualPaper.Cores.WpControl {
             return response;
         }
 
-        private void UpdateWallpaper(IWpPlayer instance) {
-            var monitorDeviceId = instance.Monitor.DeviceId;
-            foreach (var item in _monitorManager.Monitors) {
-                if (item.DeviceId == monitorDeviceId) {
-                    continue;
-                }
+        //private void UpdateWallpaper(IWpPlayer instance) {
+        //    var monitorDeviceId = instance.Monitor.DeviceId;
+        //    foreach (var item in _monitorManager.Monitors) {
+        //        if (item.DeviceId == monitorDeviceId) {
+        //            continue;
+        //        }
 
-                var targetInstance = _wallpapers.FirstOrDefault(x => x.Monitor.DeviceId == item.DeviceId);
-                if (targetInstance == null) {
-                    SetWallpaperAsync(instance.Data, _monitorManager.PrimaryMonitor);
-                }
-                else {
-                    targetInstance?.SendMessage(new VirtualPaperUpdateCmd() {
-                        FilePath = instance.Data.FilePath,
-                        RType = instance.Data.RType.ToString(),
-                        WpEffectFilePathTemplate = instance.Data.WpEffectFilePathTemplate,
-                        WpEffectFilePathTemporary = instance.Data.WpEffectFilePathTemporary,
-                        WpEffectFilePathUsing = instance.Data.WpEffectFilePathUsing,
-                    });
-                }
-            }
-        }
+        //        var targetInstance = _wallpapers.FirstOrDefault(x => x.Monitor.DeviceId == item.DeviceId);
+        //        if (targetInstance == null) {
+        //            SetWallpaperAsync(instance.Data, _monitorManager.PrimaryMonitor);
+        //        }
+        //        else {
+        //            targetInstance?.SendMessage(new VirtualPaperUpdateCmd() {
+        //                FilePath = instance.Data.FilePath,
+        //                RType = instance.Data.RType.ToString(),
+        //                WpEffectFilePathTemplate = instance.Data.WpEffectFilePathTemplate,
+        //                WpEffectFilePathTemporary = instance.Data.WpEffectFilePathTemporary,
+        //                WpEffectFilePathUsing = instance.Data.WpEffectFilePathUsing,
+        //            });
+        //        }
+        //    }
+        //}
 
         public void SeekWallpaper(IWpPlayerData playerData, float seek, PlaybackPosType type) {
             _wallpapers.ForEach(x => {
@@ -1007,6 +1007,7 @@ namespace VirtualPaper.Cores.WpControl {
             if (!_isDisposed) {
                 if (disposing) {
                     WallpaperChanged -= SetupDesktop_WallpaperChanged;
+                    _semaphoreSlimWallpaperLoadingLock.Dispose();
                     try {
                         CloseAllWallpapers();
                         DesktopUtil.RefreshDesktop();
@@ -1026,9 +1027,9 @@ namespace VirtualPaper.Cores.WpControl {
         #endregion
 
         private readonly WindowEventHook? _workerWHook;
-        private static readonly List<IWpPlayer> _wallpapers = [];
-        private static nint _workerW;
-        private static readonly SemaphoreSlim _semaphoreSlimWallpaperLoadingLock = new(1, 1);
+        private readonly List<IWpPlayer> _wallpapers = [];
+        private nint _workerW;
+        private readonly SemaphoreSlim _semaphoreSlimWallpaperLoadingLock = new(1, 1);
         private readonly IUserSettingsService _userSettings;
         private readonly IWallpaperFactory _wallpaperFactory;
         private readonly IMonitorManager _monitorManager;

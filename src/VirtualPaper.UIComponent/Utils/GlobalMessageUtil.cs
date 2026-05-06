@@ -33,7 +33,7 @@ namespace VirtualPaper.UIComponent.Utils {
                     }
                 };
 
-                if (Constants.IsNormalRun) {
+                if (!Constants.IsTestMode) {
                     arcWindow.InfobarMessages.Add(globalMsgInfo);
                 }
             });

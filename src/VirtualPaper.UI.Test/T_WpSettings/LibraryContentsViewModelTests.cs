@@ -2,11 +2,12 @@ using Moq;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
-using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.Test.Utils;
 using VirtualPaper.WpSettingsPanel.Utils;
+using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 
 namespace VirtualPaper.UI.Test.T_WpSettings {
@@ -14,7 +15,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
     public class LibraryContentsViewModelTests {
         private Mock<IUserSettingsClient> _userSettingsClient = null!;
         private Mock<IWallpaperControlClient> _wpControlClient = null!;
-        private Mock<WallpaperIndexService> _wallpaperIndexService = null!;
+        private Mock<IWallpaperIndexService> _wallpaperIndexService = null!;
         private Mock<IMonitorManagerClient> _monitorManagerClient = null!;
         private Mock<ISettings> _settings = null!;
         private LibraryContentsViewModel _vm = null!;
@@ -26,9 +27,9 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             CrossThreadInvoker.Initialize(new T_UiSynchronizationContext());
             _userSettingsClient = new Mock<IUserSettingsClient>();
             _wpControlClient = new Mock<IWallpaperControlClient>();
-            _wallpaperIndexService = new Mock<WallpaperIndexService>();
+            _wallpaperIndexService = new Mock<IWallpaperIndexService>();
             _settings = new Mock<ISettings>();
-            
+
             _settings.SetupProperty(s => s.WallpaperDir, @"C:\Wallpapers");
             _userSettingsClient.Setup(u => u.Settings).Returns(_settings.Object);
             
@@ -149,7 +150,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             var item = MakeWpData("uid-1", "Galaxy");
             PopulateLibrary(item);
 
-            InvokeHandleDelete(item);
+            _vm.HandleDelete(item);
 
             Assert.HasCount(0, _vm.LibraryWallpapers);
         }
@@ -159,7 +160,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             var item = MakeWpData("uid-1", "Galaxy");
             PopulateLibrary(item);
 
-            InvokeHandleDelete(item);
+            _vm.HandleDelete(item);
 
             _wallpaperIndexService.Verify(s => s.Remove(item), Times.Once);
         }
@@ -169,7 +170,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             var item = MakeWpData("uid-99", "Ghost");
 
             // 不 populate，直接删除
-            InvokeHandleDelete(item);
+            _vm.HandleDelete(item);
 
             _wallpaperIndexService.Verify(s => s.Remove(item), Times.Once);
         }
@@ -186,7 +187,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
                 .Returns((string _, ref int idx) => { idx = 0; return true; });
 
             var updated = MakeWpData("uid-1", "New Title");
-            InvokeUpdateLib(updated);
+            _vm.UpdateLib(updated);
 
             Assert.AreEqual("New Title", _vm.LibraryWallpapers[0].Title);
             _wallpaperIndexService.Verify(s => s.Update(updated), Times.Once);
@@ -199,7 +200,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
                 .Returns((string _, ref int idx) => { idx = -1; return false; });
 
             var newItem = MakeWpData("uid-new", "Brand New");
-            InvokeUpdateLib(newItem);
+            _vm.UpdateLib(newItem);
 
             Assert.HasCount(1, _vm.LibraryWallpapers);
             Assert.AreSame(newItem, _vm.LibraryWallpapers[0]);
@@ -212,7 +213,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         public void IsFileInPreview_WhenNotInPreview_ReturnsFalse() {
             var data = MakeWpData("uid-1", "Test");
 
-            var result = InvokeIsFileInPreview(data);
+            var result = _vm.IsFileInPreview(data);
 
             Assert.IsFalse(result);
         }
@@ -229,7 +230,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _userSettingsClient.Setup(u => u.WallpaperLayouts)
                 .Returns(new List<IWallpaperLayout> { layout });
 
-            var result = await InvokeIsFileInUseAsync(data);
+            var result = await _vm.IsFileInUseAsync(data);
 
             Assert.IsTrue(result);
         }
@@ -244,7 +245,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _userSettingsClient.Setup(u => u.WallpaperLayouts)
                 .Returns(new List<IWallpaperLayout> { layout });
 
-            var result = await InvokeIsFileInUseAsync(data);
+            var result = await _vm.IsFileInUseAsync(data);
 
             Assert.IsFalse(result);
         }
@@ -267,59 +268,23 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
         /// <summary>将数据同时写入 LibraryWallpapers 和内部 _libraryWallpapers</summary>
         private void PopulateLibrary(params IWpBasicData[] items) {
-            // 通过反射访问私有字段 _libraryWallpapers
-            var privateList = (List<IWpBasicData>)typeof(LibraryContentsViewModel)
-                .GetField("_libraryWallpapers",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-                .GetValue(_vm)!;
-
-            foreach (var item in items) {
-                _vm.LibraryWallpapers.Add(item);
-                privateList.Add(item);
-            }
+            _vm.TestPopulate(items);
         }
 
-        private void InvokeHandleDelete(IWpBasicData data) {
-            typeof(LibraryContentsViewModel)
-                .GetMethod("HandleDelete",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-                .Invoke(_vm, new object[] { data });
-        }
-
-        private void InvokeUpdateLib(IWpBasicData data) {
-            typeof(LibraryContentsViewModel)
-                .GetMethod("UpdateLib",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-                .Invoke(_vm, new object[] { data });
-        }
-
-        private bool InvokeIsFileInPreview(IWpBasicData data) {
-            return (bool)typeof(LibraryContentsViewModel)
-                .GetMethod("IsFileInPreview",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-                .Invoke(_vm, new object[] { data })!;
-        }
-
-        private async Task<bool> InvokeIsFileInUseAsync(IWpBasicData data) {
-            var task = (Task<bool>)typeof(LibraryContentsViewModel)
-                .GetMethod("IsFileInUseAsync",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-                .Invoke(_vm, new object[] { data })!;
-            return await task;
-        }
-
-        private static IWpBasicData MakeWpData(
+        private static WpBasicData MakeWpData(
             string uid,
             string title,
             string folderPath = @"C:\Wallpapers\default",
             FileType ftype = FileType.FImage) {
-            var mock = new Mock<IWpBasicData>();
-            mock.Setup(d => d.WallpaperUid).Returns(uid);
-            mock.Setup(d => d.Title).Returns(title);
-            mock.Setup(d => d.FolderPath).Returns(folderPath);
-            mock.Setup(d => d.FType).Returns(ftype);
-            mock.Setup(d => d.IsAvailable()).Returns(true);
-            return mock.Object;
+            return new WpBasicData {
+                WallpaperUid = uid,
+                Title = title,
+                FolderPath = folderPath,
+                FilePath = $"C:\\Wallpapers\\{uid}\\file.png",
+                ThumbnailPath = $"C:\\Wallpapers\\{uid}\\thumb.png",
+                AppInfo = new ApplicationInfo { AppVersion = "1.0" },
+                FType = ftype,
+            };
         }
 
         private static IWallpaperLayout MakeWallpaperLayout(string folderPath) {

@@ -80,7 +80,6 @@ namespace VirtualPaper {
             }
             #endregion
 
-            Constants.IsNormalRun = true;
             SetupUnhandledExceptionLogging(); // 初始化异常处理机制
             Log.Info(LogUtil.GetHardwareInfo()); // 记录硬件信息
 
@@ -144,7 +143,7 @@ namespace VirtualPaper {
                 // 启动针对从 Windows 发出的到该窗口的消息监听服务
                 Services.GetRequiredService<WndProcMsgWindow>().Show();
                 // 启动针对从外部设备发出的到该窗口的消息监听服务
-                Services.GetRequiredService<RawInputMsgWindow>().Show();
+                Services.GetRequiredService<IRawInputMsg>().Show();
                 // 启动壁纸行为/状态监听服务
                 Services.GetRequiredService<IPlayback>().Start(_ctsPlayback);
                 // 启动托盘（后台）服务
@@ -226,6 +225,7 @@ namespace VirtualPaper {
                 .AddSingleton<IWallpaperConfigFolderFactory, WallpaperConfigFolderFactory>()
 
                 .AddSingleton<IJobService, JobService>()
+                .AddSingleton<IRawInputMsg, RawInputMsgWindow>()
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
@@ -248,7 +248,6 @@ namespace VirtualPaper {
                 .AddSingleton<ScrCommandsServer>()
 
                 .AddSingleton<WndProcMsgWindow>()
-                .AddSingleton<RawInputMsgWindow>()
                 .AddSingleton<MainWindow>()
                 .AddTransient<DebugLog>()
                 .AddTransient<AppUpdaterWindow>()

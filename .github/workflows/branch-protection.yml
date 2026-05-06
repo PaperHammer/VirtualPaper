@@ -42,35 +42,26 @@ jobs:
           let comment;
           
           if (sourceBranch === 'dev') {
-            comment = `## ✅ Branch Validation Passed
-            
-**Source Branch**: \`${sourceBranch}\` → **Target Branch**: \`main\`
-
-✅ This PR follows the correct workflow: \`dev\` → \`main\`
-
-**Next Steps:**
-- Ensure all tests pass on the dev branch
-- Request code review
-- Merge when ready
-
----
-*This check ensures only dev branch can merge into main.*`;
+            comment = '## ✅ Branch Validation Passed\n\n' +
+              '**Source Branch**: `' + sourceBranch + '` → **Target Branch**: `main`\n\n' +
+              '✅ This PR follows the correct workflow: `dev` → `main`\n\n' +
+              '**Next Steps:**\n' +
+              '- Ensure all tests pass on the dev branch\n' +
+              '- Request code review\n' +
+              '- Merge when ready\n\n' +
+              '---\n' +
+              '*This check ensures only dev branch can merge into main.*';
           } else {
-            comment = `## ❌ Invalid Source Branch
-
-**Source Branch**: \`${sourceBranch}\` → **Target Branch**: \`main\`
-
-❌ **Error**: Only \`dev\` branch is allowed to merge into \`main\` branch.
-
-**Correct Workflow:**
-1. 🔀 Merge your feature branch into \`dev\` first
-2. ✅ Ensure tests pass on \`dev\` branch  
-3. 📝 Create PR from \`dev\` to \`main\`
-
-**Please close this PR and follow the correct workflow.**
-
----
-*This check ensures code quality and proper release flow.*`;
+            comment = '## ❌ Invalid Source Branch\n\n' +
+              '**Source Branch**: `' + sourceBranch + '` → **Target Branch**: `main`\n\n' +
+              '❌ **Error**: Only `dev` branch is allowed to merge into `main` branch.\n\n' +
+              '**Correct Workflow:**\n' +
+              '1. 🔀 Merge your feature branch into `dev` first\n' +
+              '2. ✅ Ensure tests pass on `dev` branch\n' +
+              '3. 📝 Create PR from `dev` to `main`\n\n' +
+              '**Please close this PR and follow the correct workflow.**\n\n' +
+              '---\n' +
+              '*This check ensures code quality and proper release flow.*';
           }
           
           // 查找是否已有评论
@@ -121,7 +112,7 @@ jobs:
             repo: context.repo.repo,
             sha: context.payload.pull_request.head.sha,
             state: state,
-            target_url: `${context.payload.repository.html_url}/actions/runs/${context.runId}`,
+            target_url: context.payload.repository.html_url + '/actions/runs/' + context.runId,
             description: description,
             context: 'branch-protection/source-validation'
           });

@@ -10,8 +10,9 @@ on:
       - dev
 
 jobs:
-  run-tests:
-    name: Run All Tests
+  # 环境准备和构建
+  build:
+    name: Build Solution
     runs-on: windows-latest
     
     steps:
@@ -22,6 +23,8 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
+          6.0.x
+          7.0.x
           8.0.x
 
     - name: Restore dependencies
@@ -30,42 +33,192 @@ jobs:
     - name: Build solution
       run: dotnet build src/VirtualPaper.sln --configuration Release --no-restore
 
-    # 运行第一个测试项目：VirtualPaper.Core.Test
+    # 缓存构建结果供后续测试使用
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          src/*/bin/
+          src/*/obj/
+        retention-days: 1
+
+  # Core 测试
+  test-core:
+    name: Core Tests
+    runs-on: windows-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-artifacts
+        path: src/
+
     - name: Run Core Tests
-      run: dotnet test src/VirtualPaper.Core.Test/VirtualPaper.Core.Test.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults
+      run: dotnet test src/VirtualPaper.Core.Test/VirtualPaper.Core.Test.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults/Core
       continue-on-error: false
 
-    # 运行第二个测试项目：VirtualPaper.UI.Test  
+    - name: Upload Core test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-core
+        path: TestResults/Core/
+        retention-days: 7
+
+  # UI 测试
+  test-ui:
+    name: UI Tests
+    runs-on: windows-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-artifacts
+        path: src/
+
     - name: Run UI Tests
-      run: dotnet test src/VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults
+      run: dotnet test src/VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults/UI
       continue-on-error: false
 
-    # 运行第三个测试项目：VirtualPaper.ML.Test
+    - name: Upload UI test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-ui
+        path: TestResults/UI/
+        retention-days: 7
+
+  # ML 测试
+  test-ml:
+    name: ML Tests
+    runs-on: windows-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-artifacts
+        path: src/
+
     - name: Run ML Tests
-      run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults
+      run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults/ML
       continue-on-error: false
 
-    # 运行第四个测试项目：VirtualPaper.Shader.Test
+    - name: Upload ML test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-ml
+        path: TestResults/ML/
+        retention-days: 7
+
+  # Shader 测试
+  test-shader:
+    name: Shader Tests
+    runs-on: windows-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-artifacts
+        path: src/
+
     - name: Run Shader Tests
-      run: dotnet test src/VirtualPaper.Shader.Test/VirtualPaper.Shader.Test.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults
+      run: dotnet test src/VirtualPaper.Shader.Test/VirtualPaper.Shader.Test.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults/Shader
       continue-on-error: false
 
-    # 发布测试结果
+    - name: Upload Shader test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-shader
+        path: TestResults/Shader/
+        retention-days: 7
+
+  # 汇总测试结果和状态检查
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [build, test-core, test-ui, test-ml, test-shader]
+    if: always()
+    
+    steps:
+    - name: Download all test results
+      uses: actions/download-artifact@v4
+      with:
+        pattern: test-results-*
+        merge-multiple: true
+        path: TestResults/
+
+    # 发布合并的测试结果
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
       if: always()
       with:
-        name: .NET Tests
-        path: TestResults/*.trx
+        name: All .NET Tests
+        path: TestResults/**/*.trx
         reporter: dotnet-trx
 
-    # 上传测试结果作为工件
-    - name: Upload test results
+    # 上传合并的测试结果
+    - name: Upload combined test results
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: test-results-${{ github.sha }}
+        name: test-results-combined-${{ github.sha }}
         path: TestResults/
+        retention-days: 30
 
     # 创建状态检查，用于后续PR验证
     - name: Create Status Check
@@ -74,17 +227,43 @@ jobs:
       with:
         script: |
           const { context, github } = require('@actions/github');
-          const state = '${{ job.status }}' === 'success' ? 'success' : 'failure';
-          const description = state === 'success' 
-            ? 'All tests passed ✅' 
-            : 'Some tests failed ❌';
+          
+          // 检查所有测试job的状态
+          const jobs = ['build', 'test-core', 'test-ui', 'test-ml', 'test-shader'];
+          const jobStatuses = {
+            'build': '${{ needs.build.result }}',
+            'test-core': '${{ needs.test-core.result }}',
+            'test-ui': '${{ needs.test-ui.result }}',
+            'test-ml': '${{ needs.test-ml.result }}',
+            'test-shader': '${{ needs.test-shader.result }}'
+          };
+          
+          console.log('Job statuses:', jobStatuses);
+          
+          // 判断整体状态
+          const allSuccess = Object.values(jobStatuses).every(status => status === 'success');
+          const hasFailed = Object.values(jobStatuses).some(status => status === 'failure');
+          
+          let state, description;
+          if (allSuccess) {
+            state = 'success';
+            description = 'All tests passed ✅';
+          } else if (hasFailed) {
+            state = 'failure';
+            description = 'Some tests failed ❌';
+          } else {
+            state = 'pending';
+            description = 'Tests in progress ⏳';
+          }
+          
+          console.log('Final state:', state, description);
           
           await github.rest.repos.createCommitStatus({
             owner: context.repo.owner,
             repo: context.repo.repo,
             sha: context.sha,
             state: state,
-            target_url: `${context.payload.repository.html_url}/actions/runs/${context.runId}`,
+            target_url: context.payload.repository.html_url + '/actions/runs/' + context.runId,
             description: description,
             context: 'ci/dev-tests'
           });

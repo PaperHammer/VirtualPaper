@@ -46,15 +46,7 @@ jobs:
       with:
         name: build-output
         retention-days: 7
-        path: |
-          src/**/*.csproj
-          src/**/*.props
-          src/**/*.targets
-          src/**/bin/Release/
-          src/**/*.sln
-          !src/**/obj/
-          !src/**/*.pdb
-        include-hidden-files: false
+        path: src/
 
   test-core:
     name: Core Tests
@@ -82,6 +74,15 @@ jobs:
 
     - name: Run Core Tests
       run: dotnet test src/VirtualPaper.Core.Test/VirtualPaper.Core.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=core-tests.trx" --results-directory TestResults/Core
+      shell: pwsh
+
+    - name: Verify test results exist
+      run: |
+        if (!(Test-Path "TestResults/Core/core-tests.trx")) {
+          Write-Error "Test result file not found! Tests may not have run."
+          exit 1
+        }
+        Write-Host "Test results file found ✅"
       shell: pwsh
 
     - name: Upload Core test results
@@ -120,6 +121,15 @@ jobs:
       run: dotnet test src/VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=ui-tests.trx" --results-directory TestResults/UI
       shell: pwsh
 
+    - name: Verify test results exist
+      run: |
+        if (!(Test-Path "TestResults/UI/ui-tests.trx")) {
+          Write-Error "Test result file not found! Tests may not have run."
+          exit 1
+        }
+        Write-Host "Test results file found ✅"
+      shell: pwsh
+
     - name: Upload UI test results
       uses: actions/upload-artifact@v4
       if: always()
@@ -154,6 +164,15 @@ jobs:
 
     - name: Run ML Tests
       run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=ml-tests.trx" --results-directory TestResults/ML
+      shell: pwsh
+
+    - name: Verify test results exist
+      run: |
+        if (!(Test-Path "TestResults/ML/ml-tests.trx")) {
+          Write-Error "Test result file not found! Tests may not have run."
+          exit 1
+        }
+        Write-Host "Test results file found ✅"
       shell: pwsh
 
     - name: Upload ML test results
@@ -192,6 +211,15 @@ jobs:
       run: dotnet test src/VirtualPaper.Shader.Test/VirtualPaper.Shader.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=shader-tests.trx" --results-directory TestResults/Shader
       shell: pwsh
 
+    - name: Verify test results exist
+      run: |
+        if (!(Test-Path "TestResults/Shader/shader-tests.trx")) {
+          Write-Error "Test result file not found! Tests may not have run."
+          exit 1
+        }
+        Write-Host "Test results file found ✅"
+      shell: pwsh
+
     - name: Upload Shader test results
       uses: actions/upload-artifact@v4
       if: always()
@@ -214,6 +242,32 @@ jobs:
         merge-multiple: true
         path: TestResults/
 
+    - name: Verify all test results
+      run: |
+        echo "=== Checking test result files ==="
+        EXPECTED_FILES=("core-tests.trx" "ui-tests.trx" "ml-tests.trx" "shader-tests.trx")
+        MISSING=0
+        
+        for file in "${EXPECTED_FILES[@]}"; do
+          FOUND=$(find TestResults/ -name "$file" 2>/dev/null)
+          if [ -z "$FOUND" ]; then
+            echo "❌ MISSING: $file"
+            MISSING=$((MISSING + 1))
+          else
+            echo "✅ Found: $FOUND"
+          fi
+        done
+        
+        if [ $MISSING -gt 0 ]; then
+          echo ""
+          echo "ERROR: $MISSING test result file(s) missing!"
+          echo "TEST_RESULTS_VALID=false" >> $GITHUB_ENV
+        else
+          echo ""
+          echo "All test result files present ✅"
+          echo "TEST_RESULTS_VALID=true" >> $GITHUB_ENV
+        fi
+
     - name: Upload combined test results
       uses: actions/upload-artifact@v4
       if: always()
@@ -225,12 +279,17 @@ jobs:
     - name: Set test status
       if: always()
       run: |
-        if [ "${{ needs.build.result }}" = "success" ] && [ "${{ needs.test-core.result }}" = "success" ] && [ "${{ needs.test-ui.result }}" = "success" ] && [ "${{ needs.test-ml.result }}" = "success" ] && [ "${{ needs.test-shader.result }}" = "success" ]; then
+        if [ "${{ needs.build.result }}" = "success" ] && \
+           [ "${{ needs.test-core.result }}" = "success" ] && \
+           [ "${{ needs.test-ui.result }}" = "success" ] && \
+           [ "${{ needs.test-ml.result }}" = "success" ] && \
+           [ "${{ needs.test-shader.result }}" = "success" ] && \
+           [ "${{ env.TEST_RESULTS_VALID }}" = "true" ]; then
           echo "TEST_STATUS=success" >> $GITHUB_ENV
           echo "TEST_DESCRIPTION=All tests passed ✅" >> $GITHUB_ENV
         else
           echo "TEST_STATUS=failure" >> $GITHUB_ENV
-          echo "TEST_DESCRIPTION=Some tests failed ❌" >> $GITHUB_ENV
+          echo "TEST_DESCRIPTION=Some tests failed or results missing ❌" >> $GITHUB_ENV
         fi
 
     - name: Create Status Check

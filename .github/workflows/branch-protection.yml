@@ -6,6 +6,10 @@ on:
       - main
     types: [opened, synchronize, reopened, edited]
 
+concurrency:
+  group: main-protection-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   statuses: write
@@ -16,14 +20,14 @@ jobs:
   check-source-branch:
     name: Check Source Branch
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Validate source branch
       run: |
         SOURCE_BRANCH="${{ github.head_ref }}"
         echo "Source branch: $SOURCE_BRANCH"
         echo "Target branch: ${{ github.base_ref }}"
-        
+
         if [ "$SOURCE_BRANCH" != "dev" ] && [ "$SOURCE_BRANCH" != "bugfix" ]; then
           echo "❌ Error: Only dev and bugfix branches are allowed to merge into main branch."
           echo "Current source branch: $SOURCE_BRANCH"
@@ -49,9 +53,9 @@ jobs:
       with:
         script: |
           const sourceBranch = context.payload.pull_request.head.ref;
-          
+
           let body;
-          
+
           if (sourceBranch === 'dev' || sourceBranch === 'bugfix') {
             body = '## ✅ Branch Validation Passed\n\n' +
               '**Source Branch**: `' + sourceBranch + '` → **Target Branch**: `main`\n\n' +
@@ -79,17 +83,17 @@ jobs:
               '---\n' +
               '*This check ensures code quality and proper release flow.*';
           }
-          
+
           const comments = await github.rest.issues.listComments({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: context.payload.pull_request.number
           });
-          
-          const existingComment = comments.data.find(c => 
+
+          const existingComment = comments.data.find(c =>
             c.body.includes('Branch Validation') || c.body.includes('Invalid Source Branch')
           );
-          
+
           if (existingComment) {
             await github.rest.issues.updateComment({
               owner: context.repo.owner,
@@ -112,12 +116,12 @@ jobs:
       with:
         script: |
           const sourceBranch = context.payload.pull_request.head.ref;
-          
+
           const state = (sourceBranch === 'dev' || sourceBranch === 'bugfix') ? 'success' : 'failure';
           const description = (sourceBranch === 'dev' || sourceBranch === 'bugfix')
             ? 'Source branch validation passed ✅'
             : 'Only dev and bugfix branches allowed to merge to main ❌';
-          
+
           await github.rest.repos.createCommitStatus({
             owner: context.repo.owner,
             repo: context.repo.repo,

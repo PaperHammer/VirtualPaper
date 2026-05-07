@@ -18,8 +18,8 @@ namespace VirtualPaper.IntelligentPanel.Views {
             this.DataContext = _viewModel;
         }
 
-        public void AddTask() {
-            _viewModel.AddTask();
+        public void AddTask(string[]? paths) {
+            _viewModel.AddTask(paths);
         }
 
         private readonly SuperResolutionViewModel _viewModel;

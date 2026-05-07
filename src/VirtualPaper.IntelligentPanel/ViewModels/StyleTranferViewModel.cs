@@ -4,7 +4,7 @@ using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
     public partial class StyleTranferViewModel : ObservableObject {
-        private readonly ObservableCollection<object> Tasks = [];
+        private readonly ObservableCollection<object> Tasks = [];        
 
         private bool _hasTasks;
         public bool HasTasks {
@@ -27,7 +27,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             };
         }
 
-        internal void AddTask() {
+        internal void AddTask(string[]? paths) {
             throw new NotImplementedException();
         }
     }

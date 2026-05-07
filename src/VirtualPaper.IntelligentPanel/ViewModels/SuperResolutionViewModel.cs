@@ -27,7 +27,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             };
         }
 
-        internal void AddTask() {
+        internal void AddTask(string[]? paths) {
             throw new NotImplementedException();
         }
     }

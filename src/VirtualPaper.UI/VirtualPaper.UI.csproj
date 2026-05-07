@@ -62,6 +62,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Content Remove="assets\intelligent\preset_styles\README.md" />
+	  <Content Remove="Assets\intelligent\preset_styles\_origin.png" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<None Remove="Assets\icon-vp-48.png" />
 		<None Remove="Assets\LockScreenLogo.scale-200.png" />
 		<None Remove="Assets\splashCol_1400x1400_with_round40.png" />
@@ -113,6 +118,66 @@
 	<ItemGroup>
 		<Content Update="Assets\icon-vp-48.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\anime.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\anime.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\cartoon.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\cartoon.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\colored_pencil.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\gongbi.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\gongbi.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\colored_pencil.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\ink_wash.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\ink_wash.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\oil_painting.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\outline_drawing.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\pencil.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\ukiyo-e.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\watercolor.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\watercolor.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\oil_painting.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\ukiyo-e.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\outline_drawing.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\preset_styles\pencil.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Assets\splashCol_1400x1400_with_round40.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

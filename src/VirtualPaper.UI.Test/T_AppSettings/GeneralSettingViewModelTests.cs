@@ -23,7 +23,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
 
         [TestInitialize]
         public void Setup() {
-            CrossThreadInvoker.Initialize(new T_UiSynchronizationContext());
+            CrossThreadInvoker.Initialize(new TUiSynchronizationContext());
 
             _appUpdater = new Mock<IAppUpdaterClient>();
             _userSettingsClient = new Mock<IUserSettingsClient>();

@@ -86,7 +86,7 @@ namespace VirtualPaper.UI {
         private ServiceProvider ConfigureServices() {
             var provider = new ServiceCollection()
                 .AddSingleton<MainWindow>()
-                
+
                 .AddSingleton<GeneralSettingViewModel>()
                 .AddTransient<OtherSettingViewModel>()
                 .AddTransient<PerformanceSettingViewModel>()
@@ -96,11 +96,13 @@ namespace VirtualPaper.UI {
                 .AddSingleton<LibraryContentsViewModel>()
                 .AddSingleton<StyleTranferViewModel>()
                 .AddSingleton<SuperResolutionViewModel>()
-                .AddTransient<ConfigSpaceViewModel>()
+                .AddTransient<DraftPanel.ViewModels.ConfigSpaceViewModel>()
+                .AddTransient<IntelligentPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<GetStartViewModel>()
                 .AddTransient<DraftConfigViewModel>()
                 .AddTransient<WorkSpaceViewModel>()
                 .AddTransient<IntelligentViewModel>()
+                .AddTransient<StyleTransferAddTaskViewModel>()
 
                 .AddSingleton<IWallpaperIndexService, WallpaperIndexService>()
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()

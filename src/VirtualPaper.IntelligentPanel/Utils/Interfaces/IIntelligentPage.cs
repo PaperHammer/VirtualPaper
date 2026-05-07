@@ -1,5 +1,5 @@
 namespace VirtualPaper.IntelligentPanel.Utils.Interfaces {
     public interface IIntelligentPage {
-        void AddTask();
+        void AddTask(string[]? paths);
     }
 }

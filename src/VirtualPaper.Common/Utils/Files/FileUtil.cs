@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
+using Windows.Storage;
 
 namespace VirtualPaper.Common.Utils.Files {
     public static class FileUtil {
@@ -290,6 +291,28 @@ namespace VirtualPaper.Common.Utils.Files {
             }
             catch {
                 return false;
+            }
+        }
+
+        public static string GetFileSize(string filePath) {
+            try {
+                FileInfo fi = new(filePath);
+                return SizeSuffix(fi.Length);
+            }
+            catch {
+                return "0 bytes";
+            }
+        }
+
+        public static async Task<string> GetAppxFileSizeAsync(string msAppxPath) {
+            try {
+                var uri = new Uri(msAppxPath);
+                var file = await StorageFile.GetFileFromApplicationUriAsync(uri);
+                var properties = await file.GetBasicPropertiesAsync();
+                return SizeSuffix((long)properties.Size);
+            }
+            catch {
+                return "0 bytes";
             }
         }
 

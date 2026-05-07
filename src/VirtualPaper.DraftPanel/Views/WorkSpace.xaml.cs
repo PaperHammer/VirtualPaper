@@ -112,7 +112,7 @@ namespace VirtualPaper.DraftPanel.Views {
         #region overlay page
         public void ShowOverlayPage(Type pageType, object? parameter) {
             maskGrid.Visibility = Visibility.Visible;
-            overlayFrame.Navigate(pageType, parameter); //todo nullexception
+            overlayFrame.Navigate(pageType, parameter);
         }
 
         public async void HideOverlayPage() {
@@ -156,7 +156,6 @@ namespace VirtualPaper.DraftPanel.Views {
                 // 避免干扰
                 Payload?.Remove(NaviPayloadKey.DraftConfigTCS);
                 Payload?.Remove(NaviPayloadKey.IsFromWorkSpace_AddProj);
-                Payload?.Remove(NaviPayloadKey.DraftConfigTCS);
             }
         }
 

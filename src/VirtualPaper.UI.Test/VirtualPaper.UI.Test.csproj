@@ -19,4 +19,8 @@
 		<ProjectReference Include="..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="T_Intelligent\" />
+	</ItemGroup>
+
 </Project>

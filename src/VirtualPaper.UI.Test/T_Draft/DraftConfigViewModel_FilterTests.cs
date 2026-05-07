@@ -12,7 +12,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
 
         [TestInitialize]
         public void Setup() {
-            CrossThreadInvoker.Initialize(new T_UiSynchronizationContext());
+            CrossThreadInvoker.Initialize(new TUiSynchronizationContext());
             _vm = new DraftConfigViewModel();
 
             var templates = new List<ProjectTemplate> {

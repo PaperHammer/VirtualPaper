@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <UserControl
-    x:Class="VirtualPaper.IntelligentPanel.Views.StyleTransferComp.Introduction"
+    x:Class="VirtualPaper.IntelligentPanel.Views.SuperResolutionComp.SuperResolutionIntroduction"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:VirtualPaper.IntelligentPanel.Views.StyleTransferComp"
+    xmlns:local="using:VirtualPaper.IntelligentPanel.Views.SuperResolutionComp"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
@@ -41,19 +41,19 @@
             Spacing="12">
 
             <TextBlock 
-                Text="{markup:I18n Key=Intelligent_Intro_Title}"
+                Text="{markup:I18n Key=Intelligent_SR_Title}"
                 FontSize="28"
                 FontWeight="SemiBold"
                 TextWrapping="Wrap"/>
 
             <TextBlock 
-                Text="{markup:I18n Key=Intelligent_Intro_Desc}"
+                Text="{markup:I18n Key=Intelligent_SR_Desc}"
                 FontSize="14"
                 LineHeight="24"
                 TextWrapping="Wrap"/>
-            
+
             <TextBlock 
-                Text="{markup:I18n Key=Intelligent_Intro_Warning}"
+                Text="{markup:I18n Key=Intelligent_SR_Warning}"
                 FontSize="14"
                 LineHeight="24"
                 Foreground="Gray"

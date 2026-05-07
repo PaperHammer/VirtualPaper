@@ -1,7 +1,7 @@
 using System.Reflection;
 using VirtualPaper.ML.DepthEstimate;
 
-namespace VirtualPaper.ML.Test.T_MiDas {
+namespace VirtualPaper.ML.Test.T_DepthEstimate {
     // ====================================================================
     //  辅助：生成测试用图片（不依赖任何外部资源）
     // ====================================================================
@@ -31,7 +31,7 @@ namespace VirtualPaper.ML.Test.T_MiDas {
     // ====================================================================
     [TestClass]
     [TestCategory("Unit")]
-    public class MiDaS_NormaliseOutputTests {
+    public class DepthEstimate_NormaliseOutputTests {
 
         private static float[] InvokeNormalise(float[] data) {
             var method = typeof(MiDaS).GetMethod(
@@ -60,7 +60,7 @@ namespace VirtualPaper.ML.Test.T_MiDas {
 
             var result = InvokeNormalise(input);
 
-            Assert.AreEqual(3, result.Length);
+            Assert.HasCount(3, result);
             Assert.AreEqual(0f, result[0], 1e-5f, "min should map to 0");
             Assert.AreEqual(0.5f, result[1], 1e-5f, "mid should map to 0.5");
             Assert.AreEqual(1f, result[2], 1e-5f, "max should map to 1");
@@ -96,7 +96,7 @@ namespace VirtualPaper.ML.Test.T_MiDas {
         public void NormaliseOutput_SingleElement_DoesNotThrow() {
             float[] input = [42f];
 
-            var act = () => InvokeNormalise(input);
+            float[] act() => InvokeNormalise(input);
 
             act(); // 不抛即通过
         }
@@ -108,7 +108,7 @@ namespace VirtualPaper.ML.Test.T_MiDas {
 
             var result = InvokeNormalise(input);
 
-            Assert.AreEqual(input.Length, result.Length);
+            Assert.HasCount(input.Length, result);
         }
     }
 
@@ -269,9 +269,9 @@ namespace VirtualPaper.ML.Test.T_MiDas {
         public void Run_ValidImage_DepthArrayLengthIsCorrect() {
             var result = MiDaS.Run(_testImagePath);
 
-            Assert.AreEqual(
+            Assert.HasCount(
                 result.Width * result.Height,
-                result.Depth.Length,
+                result.Depth,
                 "Depth array length should equal Width * Height");
         }
 

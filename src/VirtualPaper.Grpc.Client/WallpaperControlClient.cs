@@ -142,7 +142,7 @@ namespace VirtualPaper.Grpc.Client {
         #endregion
 
         #region utils
-        public async Task ChangeWallpaperLayoutFolrderPathAsync(string previousDir, string newDir) {
+        public async Task ChangeWallpaperLayoutFolderPathAsync(string previousDir, string newDir) {
             Grpc_ChangePathRequest request = new() {
                 PreviousDir = previousDir,
                 NewDir = newDir,

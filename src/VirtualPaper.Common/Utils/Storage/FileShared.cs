@@ -1,11 +1,10 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 
 namespace VirtualPaper.Common.Utils.Storage {
     public static class FileShared {
         private static readonly string SharedFilePath =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                         Constants.CoreField.AppName, "shared_data.json");
+            Path.Combine(Constants.CommonPaths.LocalApplicationData, Constants.CoreField.AppName, "shared_data.json");
 
         private const string MutexName = "Global\\VirtualPaper_FileShared";
 

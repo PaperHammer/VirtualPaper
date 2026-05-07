@@ -10,6 +10,7 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Grpc.Client;
@@ -17,7 +18,10 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.Adapter;
+using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 using VirtualPaper.WpSettingsPanel.Utils;
+using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.Core;
 using WinUIEx;
@@ -98,8 +102,7 @@ namespace VirtualPaper.UI {
                 .AddTransient<WorkSpaceViewModel>()
                 .AddTransient<IntelligentViewModel>()
 
-                .AddSingleton<WallpaperIndexService>()
-
+                .AddSingleton<IWallpaperIndexService, WallpaperIndexService>()
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()
                 .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
                 .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()
@@ -108,6 +111,9 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
                 .AddSingleton<IStyleTransferClient, StyleTransferClient>()
                 .AddSingleton<ISuperResolutionClient, SuperResolutionClient>()
+                .AddSingleton<IGlobalDialogService, GlobalDialogService>()
+                .AddSingleton<IStoragePicker, StoragePickerWrapper>()
+                .AddSingleton<IJsonSaver, JsonSaverWrapper>()
 
                 .BuildServiceProvider();
 

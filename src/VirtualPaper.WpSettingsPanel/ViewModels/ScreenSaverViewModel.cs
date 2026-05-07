@@ -146,7 +146,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        internal void StopListenForClients() {
+        public void StopListenForClients() {
             _ctsListen?.Cancel();
         }
 
@@ -253,7 +253,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IScrCommandsClient _scrCommandsClient;
         private string _effectNone = string.Empty;
         private string _effectBubble = string.Empty;
-        internal List<ProcInfo> _whiteListScr = [];
+        public List<ProcInfo> _whiteListScr = [];
         private bool _isLoading = false;
     }
 }

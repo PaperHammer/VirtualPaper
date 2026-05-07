@@ -12,7 +12,9 @@ namespace VirtualPaper.ML.DepthEstimate {
                 AppDomain.CurrentDomain.BaseDirectory,
                 Constants.WorkingDir.ML_DepthEstimate_AI_Models,
                 Utils.Fields.ModelName);
-            LoadModel(_modelPath);
+
+            if (File.Exists(_modelPath))
+                LoadModel(_modelPath);
         }
 
         public static ModelOutput Run(string imagePath) {

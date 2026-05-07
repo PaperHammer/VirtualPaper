@@ -1,7 +1,6 @@
-using System.Diagnostics;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Events;
-using VirtualPaper.Common.Utils;
+using VirtualPaper.Utils.Interfcaes;
 using Timer = System.Timers.Timer;
 
 namespace VirtualPaper.Cores.AppUpdate {
@@ -15,7 +14,12 @@ namespace VirtualPaper.Cores.AppUpdate {
         public Version LastCheckVersion { get; private set; } = new Version(0, 0, 0, 0);
         public AppUpdateStatus Status { get; private set; } = AppUpdateStatus.Notchecked;
 
-        public GithubUpdaterService() {
+        public GithubUpdaterService(
+            IGithubReleaseClient githubReleaseClient,
+            IVersionComparer versionComparer) {
+            _githubReleaseClient = githubReleaseClient;
+            _versionComparer = versionComparer;
+
             _retryTimer.Elapsed += RetryTimer_Elapsed;
             //giving the retry delay is not reliable since it will reset if system sleeps/suspends.
             _retryTimer.Interval = 5 * 60 * 1000;
@@ -29,8 +33,8 @@ namespace VirtualPaper.Cores.AppUpdate {
 
             try {
                 await Task.Delay(fetchDelay);
-                (Uri exeUri, Uri shaUri, Version verison, string changelog) = await GetLatestRelease(Constants.ApplicationType.IsTestBuild);
-                int verCompare = GithubUtil.CompareAssemblyVersion(verison);
+                (Uri exeUri, Uri shaUri, Version verison, string changelog) = await _githubReleaseClient.GetLatestRelease(Constants.ApplicationType.IsTestBuild);
+                int verCompare = _versionComparer.CompareAssemblyVersion(verison);
                 if (verCompare > 0) {
                     //update Available.
                     Status = AppUpdateStatus.Available;
@@ -58,46 +62,46 @@ namespace VirtualPaper.Cores.AppUpdate {
             return Status;
         }
 
-        private async Task<List<(Uri, Version, string)>> GetModulesLatestRelease(bool isBeta) {
-            var userName = "PaperHammer";
-            var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper";
-            var gitRelease = await GithubUtil.GetLatestRelease(repositoryName, userName, 0);
-            Version version = GithubUtil.GetVersion(gitRelease);
+        //private async Task<List<(Uri, Version, string)>> GetModulesLatestRelease(bool isBeta) {
+        //    var userName = "PaperHammer";
+        //    var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper";
+        //    var gitRelease = await GithubUtil.GetLatestRelease(repositoryName, userName, 0);
+        //    Version version = GithubUtil.GetVersion(gitRelease);
 
-            //download asset format: virtualpaper_x64_module_YYY_vXXXX.dll, YYY - module-name, XXXX - 4 digit version no.
-            var gitUrls = await GithubUtil.GetAllAssetUrl(
-                "virtualpaper_x64_module",
-                gitRelease, repositoryName, userName);
-            List<(Uri, Version, string)> res = [];
-            foreach (var url in gitUrls) {
-                Uri uri = new(url);
-                string changelog = gitRelease.Body;
-                res.Add((uri, version, changelog));
-            }
+        //    //download asset format: virtualpaper_x64_module_YYY_vXXXX.dll, YYY - module-name, XXXX - 4 digit version no.
+        //    var gitUrls = await GithubUtil.GetAllAssetUrl(
+        //        "virtualpaper_x64_module",
+        //        gitRelease, repositoryName, userName);
+        //    List<(Uri, Version, string)> res = [];
+        //    foreach (var url in gitUrls) {
+        //        Uri uri = new(url);
+        //        string changelog = gitRelease.Body;
+        //        res.Add((uri, version, changelog));
+        //    }
 
-            return res;
-        }
+        //    return res;
+        //}
 
-        public async Task<(Uri exeUri, Uri shaUri, Version version, string changelog)> GetLatestRelease(bool isBeta) {
-            var userName = "PaperHammer";
-            var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper";
-            var gitRelease = await GithubUtil.GetLatestRelease(repositoryName, userName, 0);
-            Version version = GithubUtil.GetVersion(gitRelease);
+        //public async Task<(Uri exeUri, Uri shaUri, Version version, string changelog)> GetLatestRelease(bool isBeta) {
+        //    var userName = "PaperHammer";
+        //    var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper";
+        //    var gitRelease = await GithubUtil.GetLatestRelease(repositoryName, userName, 0);
+        //    Version version = GithubUtil.GetVersion(gitRelease);
 
-            //download asset format: virtualpaper_setup_x64_full_vXXXX.exe, XXXX - 4 digit version no.
-            var gitUrl = await GithubUtil.GetAssetUrl(
-                "virtualpaper_setup_x64_full",
-                gitRelease, repositoryName, userName);
-            Uri exeUri = new(gitUrl);
-            string changelog = gitRelease.Body;
+        //    //download asset format: virtualpaper_setup_x64_full_vXXXX.exe, XXXX - 4 digit version no.
+        //    var gitUrl = await GithubUtil.GetAssetUrl(
+        //        "virtualpaper_setup_x64_full",
+        //        gitRelease, repositoryName, userName);
+        //    Uri exeUri = new(gitUrl);
+        //    string changelog = gitRelease.Body;
 
-            gitUrl = await GithubUtil.GetAssetUrl(
-                "SHA256",
-                gitRelease, repositoryName, userName);
-            Uri shaUri = new(gitUrl);
+        //    gitUrl = await GithubUtil.GetAssetUrl(
+        //        "SHA256",
+        //        gitRelease, repositoryName, userName);
+        //    Uri shaUri = new(gitUrl);
 
-            return (exeUri, shaUri, version, changelog);
-        }
+        //    return (exeUri, shaUri, version, changelog);
+        //}
 
         /// <summary>
         /// Check for updates periodically.
@@ -126,5 +130,7 @@ namespace VirtualPaper.Cores.AppUpdate {
         private readonly int _fetchDelayError = 30 * 60 * 1000; //30min
         private readonly int _fetchDelayRepeat = 12 * 60 * 60 * 1000; //12hr
         private readonly Timer _retryTimer = new();
+        private readonly IGithubReleaseClient _githubReleaseClient;
+        private readonly IVersionComparer _versionComparer;
     }
 }

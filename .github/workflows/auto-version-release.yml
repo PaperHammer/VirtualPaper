@@ -1,0 +1,314 @@
+name: Auto Version & Release on Main Merge
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: release-main-${{ github.sha }}
+  cancel-in-progress: false  # 发布流程不要取消，确保每次合并都完整执行
+
+permissions:
+  contents: write
+  statuses: write
+
+jobs:
+  auto-version-and-release:
+    runs-on: windows-latest
+    # 跳过由 GitHub Action 自身提交的版本号更新（[skip ci]）
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+    - name: Checkout with full history
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install Inno Setup
+      run: |
+        Invoke-WebRequest -Uri "https://jrsoftware.org/download.php/is.exe" -OutFile "innosetup.exe"
+        Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
+      shell: powershell
+
+    - name: Determine source branch and version increment
+      id: branch_info
+      shell: powershell
+      run: |
+        # 获取最近的commit信息来判断来源分支
+        $commitMessage = git log -1 --pretty=format:"%s"
+        $mergeInfo = git log -1 --pretty=format:"%B"
+
+        Write-Host "Commit message: $commitMessage"
+        Write-Host "Merge info: $mergeInfo"
+
+        # 判断是从哪个分支合并过来的
+        $sourceBranch = "unknown"
+        $incrementType = "patch"  # 默认第4位+1
+
+        if ($mergeInfo -match "Merge.*dev.*into.*main" -or $commitMessage -match "dev") {
+            $sourceBranch = "dev"
+            $incrementType = "minor"  # 第3位+1
+            Write-Host "Detected merge from dev branch - incrementing minor version"
+        }
+        elseif ($mergeInfo -match "Merge.*bugfix.*into.*main" -or $commitMessage -match "bugfix") {
+            $sourceBranch = "bugfix"
+            $incrementType = "patch"  # 第4位+1
+            Write-Host "Detected merge from bugfix branch - incrementing patch version"
+        }
+        else {
+            # 尝试从最近的两个commits中找到merge信息
+            $lastTwoCommits = git log -2 --oneline
+            Write-Host "Last two commits: $lastTwoCommits"
+
+            if ($lastTwoCommits -match "dev") {
+                $sourceBranch = "dev"
+                $incrementType = "minor"
+            }
+            elseif ($lastTwoCommits -match "bugfix") {
+                $sourceBranch = "bugfix"
+                $incrementType = "patch"
+            }
+        }
+
+        Write-Output "source_branch=$sourceBranch" >> $env:GITHUB_OUTPUT
+        Write-Output "increment_type=$incrementType" >> $env:GITHUB_OUTPUT
+
+        Write-Host "Source branch: $sourceBranch"
+        Write-Host "Increment type: $incrementType"
+
+    - name: Get and update version
+      id: version
+      shell: powershell
+      run: |
+        # 读取 csproj 文件中的版本号
+        $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
+        $content = Get-Content $csprojPath -Raw
+        $versionMatch = [regex]::Match($content, '<AssemblyVersion>(\d+)\.(\d+)\.(\d+)\.(\d+)</AssemblyVersion>')
+
+        if (-not $versionMatch.Success) {
+            Write-Error "Could not parse version from csproj file"
+            exit 1
+        }
+
+        $major = [int]$versionMatch.Groups[1].Value
+        $minor = [int]$versionMatch.Groups[2].Value
+        $build = [int]$versionMatch.Groups[3].Value
+        $revision = [int]$versionMatch.Groups[4].Value
+
+        $currentVersion = "$major.$minor.$build.$revision"
+        Write-Host "Current version: $currentVersion"
+
+        # 根据分支类型更新版本号
+        $incrementType = "${{ steps.branch_info.outputs.increment_type }}"
+        if ($incrementType -eq "minor") {
+            $build = $build + 1
+            $revision = 0  # 重置第4位
+            Write-Host "Incrementing build version (3rd position)"
+        } else {
+            $revision = $revision + 1
+            Write-Host "Incrementing revision version (4th position)"
+        }
+
+        $newVersion = "$major.$minor.$build.$revision"
+        $newVersionText = "$major$minor$build$revision"
+
+        Write-Host "New version: $newVersion"
+        Write-Host "New version text: $newVersionText"
+
+        # 输出到 GITHUB_OUTPUT
+        Write-Output "current_version=$currentVersion" >> $env:GITHUB_OUTPUT
+        Write-Output "new_version=$newVersion" >> $env:GITHUB_OUTPUT
+        Write-Output "new_version_text=$newVersionText" >> $env:GITHUB_OUTPUT
+        Write-Output "major=$major" >> $env:GITHUB_OUTPUT
+        Write-Output "minor=$minor" >> $env:GITHUB_OUTPUT
+        Write-Output "build=$build" >> $env:GITHUB_OUTPUT
+        Write-Output "revision=$revision" >> $env:GITHUB_OUTPUT
+
+    - name: Update version in csproj
+      shell: powershell
+      run: |
+        $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
+        $content = Get-Content $csprojPath -Raw
+        $newVersion = "${{ steps.version.outputs.new_version }}"
+
+        $newContent = $content -replace '<AssemblyVersion>\d+\.\d+\.\d+\.\d+</AssemblyVersion>', "<AssemblyVersion>$newVersion</AssemblyVersion>"
+        Set-Content $csprojPath -Value $newContent -NoNewline
+
+        Write-Host "Updated csproj version to: $newVersion"
+
+    - name: Update version in InnoSetup script
+      shell: powershell
+      run: |
+        $setupPath = "InnoSetup/setup.iss"
+        $content = Get-Content $setupPath -Raw
+        $newVersion = "${{ steps.version.outputs.new_version }}"
+        $newVersionText = "${{ steps.version.outputs.new_version_text }}"
+
+        # 更新版本号
+        $newContent = $content -replace '#define MyAppVersion "[\d\.]+"', "#define MyAppVersion `"$newVersion`""
+        $newContent = $newContent -replace '#define MyAppVersionText "[\d]+"', "#define MyAppVersionText `"$newVersionText`""
+
+        Set-Content $setupPath -Value $newContent -NoNewline
+
+        Write-Host "Updated InnoSetup version to: $newVersion"
+        Write-Host "Updated InnoSetup version text to: $newVersionText"
+
+    - name: Build Release
+      run: |
+        dotnet restore
+        dotnet build --configuration Release --no-restore
+
+    - name: Create installer with InnoSetup
+      id: build_installer
+      shell: powershell
+      run: |
+        $isccPath = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+        if (-not (Test-Path $isccPath)) {
+            $isccPath = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+        }
+
+        if (-not (Test-Path $isccPath)) {
+            Write-Error "Inno Setup compiler not found!"
+            exit 1
+        }
+
+        Write-Host "Using ISCC at: $isccPath"
+
+        # 编译安装程序
+        & "$isccPath" "InnoSetup\setup.iss"
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "InnoSetup compilation failed!"
+            exit 1
+        }
+
+        # 查找生成的安装程序
+        $outputDir = "InnoSetup\Output"
+        $installerFiles = Get-ChildItem -Path $outputDir -Filter "*.exe" -ErrorAction SilentlyContinue
+
+        if ($installerFiles.Count -eq 0) {
+            Write-Error "No installer found in output directory!"
+            exit 1
+        }
+
+        $installerPath = $installerFiles[0].FullName
+        Write-Host "Installer created: $installerPath"
+
+        # 输出安装程序信息
+        Write-Output "installer_path=$installerPath" >> $env:GITHUB_OUTPUT
+        Write-Output "installer_name=$($installerFiles[0].Name)" >> $env:GITHUB_OUTPUT
+
+    - name: Configure Git and commit version changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss
+        git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }} [skip ci]"
+        git push origin main
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.version.outputs.new_version }}
+        release_name: VirtualPaper v${{ steps.version.outputs.new_version }}
+        body: |
+          🚀 **VirtualPaper v${{ steps.version.outputs.new_version }}** 自动发布
+
+          ## 📋 版本信息
+          - **版本号**: ${{ steps.version.outputs.current_version }} → ${{ steps.version.outputs.new_version }}
+          - **来源分支**: ${{ steps.branch_info.outputs.source_branch }}
+          - **更新类型**: ${{ steps.branch_info.outputs.increment_type == 'minor' && '功能更新 (第3位版本号+1)' || '修复更新 (第4位版本号+1)' }}
+
+          ## 📥 下载
+          请下载下方的安装程序文件进行安装
+
+          ## 🔄 分支同步
+          - ✅ 版本号已同步到源分支
+          - ✅ bugfix 分支已强制更新为最新版本
+
+          ---
+          *此版本由 GitHub Actions 自动构建和发布*
+        draft: false
+        prerelease: false
+
+    - name: Upload installer to release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ steps.build_installer.outputs.installer_path }}
+        asset_name: ${{ steps.build_installer.outputs.installer_name }}
+        asset_content_type: application/octet-stream
+
+    - name: Sync version back to source branch
+      shell: powershell
+      run: |
+        $sourceBranch = "${{ steps.branch_info.outputs.source_branch }}"
+
+        if ($sourceBranch -eq "dev" -or $sourceBranch -eq "bugfix") {
+            Write-Host "Syncing version back to $sourceBranch branch..."
+
+            # 切换到源分支
+            git fetch origin $sourceBranch
+            git checkout $sourceBranch
+
+            # 合并版本更新
+            git merge main --no-edit
+            git push origin $sourceBranch
+
+            Write-Host "Version synced to $sourceBranch branch"
+        } else {
+            Write-Host "Unknown source branch: $sourceBranch, skipping sync"
+        }
+
+    - name: Force update bugfix branch
+      shell: powershell
+      run: |
+        git checkout main
+        git branch -D bugfix 2>$null
+        git push origin --delete bugfix 2>$null
+        git checkout -b bugfix
+        git push --force-with-lease origin bugfix
+        Write-Host "✅ bugfix branch forcefully updated with latest main"
+
+    - name: Summary
+      shell: powershell
+      run: |
+        Write-Host ""
+        Write-Host "🎉 ================= 发布完成 =================" -ForegroundColor Green
+        Write-Host "📦 项目: VirtualPaper" -ForegroundColor Cyan
+        Write-Host "🔢 版本: ${{ steps.version.outputs.current_version }} → ${{ steps.version.outputs.new_version }}" -ForegroundColor Yellow
+        Write-Host "🌿 来源: ${{ steps.branch_info.outputs.source_branch }} → main" -ForegroundColor Magenta
+        Write-Host "📋 类型: ${{ steps.branch_info.outputs.increment_type == 'minor' && '功能更新' || '修复更新' }}" -ForegroundColor Blue
+        Write-Host "📥 安装包: ${{ steps.build_installer.outputs.installer_name }}" -ForegroundColor White
+        Write-Host "🔗 Release: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.new_version }}" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "✅ 版本号已同步到 ${{ steps.branch_info.outputs.source_branch }} 分支"
+        Write-Host "✅ bugfix 分支已强制更新为最新版本"
+        Write-Host "✅ GitHub Release 已创建"
+        Write-Host "✅ 安装包已上传"
+        Write-Host "============================================" -ForegroundColor Green
+
+    - name: Notify on failure
+      if: failure()
+      shell: powershell
+      run: |
+        Write-Host ""
+        Write-Host "❌ ================ 发布失败 ================" -ForegroundColor Red
+        Write-Host "🔍 请检查以下可能的问题:" -ForegroundColor Yellow
+        Write-Host "  - .NET 8.0 构建是否成功"
+        Write-Host "  - InnoSetup 脚本是否正确"
+        Write-Host "  - 版本号格式是否正确"
+        Write-Host "  - GitHub Token 权限是否足够"
+        Write-Host "==========================================" -ForegroundColor Red

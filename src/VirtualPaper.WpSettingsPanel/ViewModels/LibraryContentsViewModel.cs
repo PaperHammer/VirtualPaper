@@ -26,6 +26,7 @@ using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
 using VirtualPaper.WpSettingsPanel.Utils;
+using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
 using Windows.Storage;
 using Windows.System.UserProfile;
 using WinUIEx;
@@ -34,9 +35,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class LibraryContentsViewModel : ObservableObject, IFilterable {
         public ObservableCollection<IWpBasicData> LibraryWallpapers { get; private set; } = null!;
 
-        private Brush _wpTitleForeground = new SolidColorBrush(Colors.White);
-        public Brush WpTitleForeground {
-            get { return _wpTitleForeground; }
+        //private Brush _wpTitleForeground = new SolidColorBrush(Colors.White);
+        //public Brush WpTitleForeground {
+        //    get { return _wpTitleForeground; }
+        //    set { _wpTitleForeground = value; OnPropertyChanged(); }
+        //}
+        private byte[] _wpTitleForeground = [255, 255, 255, 255];
+        public byte[] WpTitleForeground {
+            get => _wpTitleForeground;
             set { _wpTitleForeground = value; OnPropertyChanged(); }
         }
 
@@ -50,7 +56,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient,
             WpSettingsViewModel wpSettingsViewModel,
-            WallpaperIndexService wallpaperIndexService) {
+            IWallpaperIndexService wallpaperIndexService) {
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
             _wpSettingsViewModel = wpSettingsViewModel;
@@ -73,8 +79,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal void RefreshWpTitleForeground() {
-            var color = ArcThemeUtil.GetFormatMainWindowTheme() == AppTheme.Light ? Colors.White : Colors.Black;
-            WpTitleForeground = new SolidColorBrush(color);
+            WpTitleForeground = ArcThemeUtil.GetFormatMainWindowTheme() == AppTheme.Light
+                ? [255, 255, 255, 255]   // White: A=255, R=255, G=255, B=255
+                : [255, 0, 0, 0];        // Black: A=255, R=0, G=0, B=0
         }
 
         private void InitColletions() {
@@ -355,13 +362,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        private void HandleDelete(IWpBasicData data) {
+        public void HandleDelete(IWpBasicData data) {
             LibraryWallpapers.Remove(data);
             _libraryWallpapers.Remove(data);
             _wallpaperIndexService.Remove(data);
         }
 
-        private void UpdateLib(IWpBasicData data) {
+        public void UpdateLib(IWpBasicData data) {
             if (_wallpaperIndexService.TryGetValue(data.WallpaperUid, out int idx)) {
                 LibraryWallpapers[idx] = data;
                 _libraryWallpapers[idx] = data;
@@ -492,12 +499,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        private async Task<bool> IsFileInUseAsync(IWpBasicData data) {
+        public async Task<bool> IsFileInUseAsync(IWpBasicData data) {
             await _userSettingsClient.LoadAsync<List<IWallpaperLayout>>();
             return _userSettingsClient.WallpaperLayouts.Any(wl => wl.FolderPath == data.FolderPath);
         }
 
-        private bool IsFileInPreview(IWpBasicData data) {
+        public bool IsFileInPreview(IWpBasicData data) {
             return _previews.Keys.Any(k => k.uid == data.WallpaperUid);
         }
 
@@ -537,10 +544,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             FilterByTitle(keyword);
         }
 
-        internal void FilterByTitle(string keyword) {
+        public void FilterByTitle(string keyword) {
             var filtered = _libraryWallpapers.Where(basicData =>
                 basicData.Title != null && basicData.Title.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
-            );
+            ).ToList();
             Remove_NonMatching(filtered);
             AddBack_Procs(filtered);
         }
@@ -599,13 +606,21 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly WpSettingsViewModel _wpSettingsViewModel;
-        private readonly WallpaperIndexService _wallpaperIndexService;
+        private readonly IWallpaperIndexService _wallpaperIndexService;
         private List<string> _wallpaperInstallFolders = [];
         private readonly Dictionary<string, ArcWindow> _details = [];
         private readonly Dictionary<string, ArcWindow> _edits = [];
         private readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];
         private List<IWpBasicData> _libraryWallpapers = [];
         private bool _isInited;
+
+        /// <summary>仅供单元测试使用</summary>
+        public void TestPopulate(IEnumerable<IWpBasicData> items) {
+            foreach (var item in items) {
+                _libraryWallpapers.Add(item);
+                LibraryWallpapers.Add(item);
+            }
+        }
     }
 
     public enum LoadingStatus {

@@ -62,7 +62,7 @@
                         Text="{x:Bind Title, Mode=OneWay}"
                         MaxLines="2"
                         FontSize="16"
-                        Foreground="{Binding DataContext.WpTitleForeground, ElementName=rootPage}"
+                        Foreground="{Binding DataContext.WpTitleForeground, ElementName=rootPage, Converter={StaticResource ByteArrayToBrushConverter}}"
                         TextTrimming="CharacterEllipsis"/>
                 </Border>
             </Grid>

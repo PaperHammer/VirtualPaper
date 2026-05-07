@@ -15,6 +15,7 @@ using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.Interfaces;
+using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Utils.DraftUtils.Interfaces;
@@ -187,9 +188,9 @@ namespace VirtualPaper.DraftPanel.Views {
             _draftPage?.NavigateByState(DraftPanelState.ConfigSpace);
         }
 
-        private void CleanUpTabUI(ArcTabViewItem tabViewItem) {
-            if (_tabToFrame.TryGetValue(tabViewItem, out var frame)) {
-                workspaceContentPool.Children.Remove(tabViewItem);
+        private void CleanUpTabUI(IArcTabViewItem tabViewItem) {
+            if (_tabToFrame.TryGetValue(tabViewItem, out var frame) && tabViewItem is ArcTabViewItem arcTab) {
+                workspaceContentPool.Children.Remove(arcTab);
                 _tabToFrame.Remove(tabViewItem);
                 frame.Content = null;
             }
@@ -224,6 +225,6 @@ namespace VirtualPaper.DraftPanel.Views {
         private Draft? _draftPage;
         private readonly WorkSpaceViewModel _viewModel;
         private PreProjectData[]? _preProjectDatas;
-        private readonly Dictionary<ArcTabViewItem, Frame> _tabToFrame = [];
+        private readonly Dictionary<IArcTabViewItem, Frame> _tabToFrame = [];
     }
 }

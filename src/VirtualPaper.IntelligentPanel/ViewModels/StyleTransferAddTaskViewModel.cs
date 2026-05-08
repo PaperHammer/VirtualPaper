@@ -21,24 +21,6 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             set { _sourceFileExt = value; OnPropertyChanged(); }
         }
 
-        //private bool _isStyleImageLoaded;
-        //public bool IsStyleImageLoaded {
-        //    get { return _isStyleImageLoaded; }
-        //    set { _isStyleImageLoaded = value; OnPropertyChanged(); }
-        //}
-
-        //private string? _styleFileSize;
-        //public string? StyleFileSize {
-        //    get { return _styleFileSize; }
-        //    set { _styleFileSize = value; OnPropertyChanged(); }
-        //}
-
-        //private string? _styleFileExt;
-        //public string? StyleFileExt {
-        //    get { return _styleFileExt; }
-        //    set { _styleFileExt = value; OnPropertyChanged(); }
-        //}
-
         private string? _estimatedTimeText;
         public string? EstimatedTimeText {
             get { return _estimatedTimeText; }
@@ -130,16 +112,15 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                     FileSize = "955 KB",
                     FileExt = ".jpg",
                 },
-                // 最后一项：自定义
                 new StyleOptionItem {
                     Name = "自定义",
                     IsCustom = true,
                 },
             ];
 
-            SelectedStyle = StyleOptions[0];
+            SelectedStyle = StyleOptions[^1];
         }
-
+        
         internal StyleOptionItem[] StyleOptions = null!;
     }
 }

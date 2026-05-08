@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.IntelligentPanel.Utils.Interfaces;
@@ -43,6 +44,30 @@ namespace VirtualPaper.IntelligentPanel {
             };
             _viewModel = AppServiceLocator.Services.GetRequiredService<IntelligentViewModel>();
             this.DataContext = _viewModel;
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e) {
+            base.OnNavigatedFrom(e);
+            CleanupResources();
+        }
+
+        private void CleanupResources() {
+            // 清理 ContentFrame
+            if (ContentFrame.Content is FrameworkElement content) {
+                content.DataContext = null;
+            }
+
+            // 清理 overlayFrame
+            if (overlayFrame.Content is FrameworkElement overlayContent) {
+                overlayContent.DataContext = null;
+            }
+
+            // 清理 TaskCompletionSource
+            _viewModel._intelligentTCS?.TrySetCanceled();
+            _viewModel._intelligentTCS = null;
+
+            // 清理页面引用
+            _viewModel.SelectedIntelliPage = null;
         }
 
         private void SelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs _) {
@@ -86,9 +111,17 @@ namespace VirtualPaper.IntelligentPanel {
         }
 
         public async void HideOverlayPage() {
+            // 清理页面数据上下文
+            if (overlayFrame.Content is FrameworkElement element) {
+                element.DataContext = null;
+            }
+
+            // 清理 Frame
             overlayFrame.Content = null;
+            overlayFrame.DataContext = null;
             overlayFrame.BackStack.Clear();
             overlayFrame.ForwardStack.Clear();
+
             maskGrid.Visibility = Visibility.Collapsed;
         }
 

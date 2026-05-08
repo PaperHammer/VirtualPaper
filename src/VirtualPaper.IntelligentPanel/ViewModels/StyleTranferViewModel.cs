@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
@@ -22,13 +23,25 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         }
 
         private void InitEvent() {
-            Tasks.CollectionChanged += (s, e) => {
-                HasTasks = Tasks.Count > 0;
-            };
+            Tasks.CollectionChanged += OnTasksCollectionChanged;
+
         }
 
         internal void AddTask(string[]? paths) {
             throw new NotImplementedException();
+        }
+
+        private void OnTasksCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
+            HasTasks = Tasks.Count > 0;
+        }
+
+        private bool _disposed;
+        public void Dispose() {
+            if (_disposed) return;
+
+            Tasks.CollectionChanged -= OnTasksCollectionChanged;
+            Tasks.Clear();
+            _disposed = true;
         }
     }
 }

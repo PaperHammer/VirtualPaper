@@ -17,6 +17,11 @@ namespace VirtualPaper.IntelligentPanel.Views.StyleTransferComp {
             this.DataContext = _viewModel;
         }
 
+        private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            CleanupImageResources();
+            CleanupBindings();
+        }
+
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
         }
@@ -31,6 +36,24 @@ namespace VirtualPaper.IntelligentPanel.Views.StyleTransferComp {
 
         private void StyleGridView_ItemClick(object sender, ItemClickEventArgs e) {
 
+        }
+
+        private void CleanupImageResources() {
+            if (sourceImage != null) {
+                sourceImage.Source = null;
+            }
+            if (stylePreviewImage != null) {
+                stylePreviewImage.Source = null;
+            }
+        }
+
+        private void CleanupBindings() {
+            this.DataContext = null;
+
+            if (styleGridView != null) {
+                styleGridView.ItemsSource = null;
+                //styleGridView.SelectedItem = null;
+            }
         }
 
         private readonly StyleTransferAddTaskViewModel _viewModel;

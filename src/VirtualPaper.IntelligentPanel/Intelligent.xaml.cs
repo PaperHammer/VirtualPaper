@@ -97,10 +97,8 @@ namespace VirtualPaper.IntelligentPanel {
                 _viewModel.UpdateCardComponentUI();
                 var result = await _viewModel._intelligentTCS.Task;
                 _viewModel.AddTask(result);
-                HideOverlayPage();
             }
             catch (Exception ex) {
-                HideOverlayPage();
                 ArcLog.GetLogger<Intelligent>().Error(ex);
             }
         }

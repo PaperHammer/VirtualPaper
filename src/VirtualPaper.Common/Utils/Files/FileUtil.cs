@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
+using Windows.Graphics.Imaging;
 using Windows.Storage;
 
 namespace VirtualPaper.Common.Utils.Files {
@@ -314,6 +315,13 @@ namespace VirtualPaper.Common.Utils.Files {
             catch {
                 return "0 bytes";
             }
+        }
+
+        public static async Task<(uint Width, uint Height)> GetImageResolutionAsync(string filePath) {
+            var file = await StorageFile.GetFileFromPathAsync(filePath);
+            using var stream = await file.OpenReadAsync();
+            var decoder = await BitmapDecoder.CreateAsync(stream);
+            return (decoder.PixelWidth, decoder.PixelHeight);
         }
 
         //ref: https://stackoverflow.com/questions/14488796/does-net-provide-an-easy-way-convert-bytes-to-kb-mb-gb-etc

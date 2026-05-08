@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -5,6 +6,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.IntelligentPanel.ViewModels;
+using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -24,26 +26,26 @@ namespace VirtualPaper.IntelligentPanel.Views.StyleTransferComp {
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
+
+            if (e.Parameter is FrameworkPayload payload) {
+                payload.TryGet(NaviPayloadKey.ICardComponent, out _viewModel._cardComponent);
+            }
         }
 
-        private void SourceImageBorder_Tapped(object sender, TappedRoutedEventArgs e) {
-
+        private async void SourceImageBorder_Tapped(object sender, TappedRoutedEventArgs e) {
+            await _viewModel.SelectSourceImageAsync();
         }
 
-        private void StyleImageBorder_Tapped(object sender, TappedRoutedEventArgs e) {
-
-        }
-
-        private void StyleGridView_ItemClick(object sender, ItemClickEventArgs e) {
-
+        private async void StyleImageBorder_Tapped(object sender, TappedRoutedEventArgs e) {
+            await _viewModel.SelectStyleImageAsync();
         }
 
         private void CleanupImageResources() {
             if (sourceImage != null) {
                 sourceImage.Source = null;
             }
-            if (stylePreviewImage != null) {
-                stylePreviewImage.Source = null;
+            if (styleImage != null) {
+                styleImage.Source = null;
             }
         }
 

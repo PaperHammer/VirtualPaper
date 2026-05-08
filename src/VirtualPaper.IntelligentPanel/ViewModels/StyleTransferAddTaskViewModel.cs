@@ -1,12 +1,18 @@
+using System.IO;
+using System.Threading.Tasks;
+using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent;
+using VirtualPaper.UIComponent.Data;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
     public partial class StyleTransferAddTaskViewModel : ObservableObject {
-        private bool _isSourceImageLoaded;
-        public bool IsSourceImageLoaded {
-            get { return _isSourceImageLoaded; }
-            set { _isSourceImageLoaded = value; OnPropertyChanged(); }
+        private string? _sourceFilePath;
+        public string? SourceFilePath {
+            get { return _sourceFilePath; }
+            set { _sourceFilePath = value; OnPropertyChanged(); }
         }
 
         private string? _sourceFileSize;
@@ -21,6 +27,12 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             set { _sourceFileExt = value; OnPropertyChanged(); }
         }
 
+        private string? _sourceFileResolution;
+        public string? SourceFileResolution {
+            get { return _sourceFileResolution; }
+            set { _sourceFileResolution = value; OnPropertyChanged(); }
+        }
+
         private string? _estimatedTimeText;
         public string? EstimatedTimeText {
             get { return _estimatedTimeText; }
@@ -31,7 +43,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         public StyleOptionItem SelectedStyle {
             get { return _selectedStyle; }
             set {
-                if (_selectedStyle == value) return;
+                if (value == null || _selectedStyle == value) return;
                 _selectedStyle = value; OnPropertyChanged();
             }
         }
@@ -120,7 +132,34 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
             SelectedStyle = StyleOptions[^1];
         }
-        
+
+        internal async Task SelectStyleImageAsync() {
+            var storage = await WindowsStoragePickers.PickFilesAsync(
+                WindowConsts.WindowHandle,
+                [.. FileFilter.FileTypeToExtension[Common.FileType.FImage]]);
+            if (storage == null || storage.Length < 1) return;
+
+            string filePath = storage[0].Path;
+            StyleOptions[^1].ImagePath = filePath;
+            StyleOptions[^1].FileSize = FileUtil.GetFileSize(filePath);
+            StyleOptions[^1].FileExt = Path.GetExtension(filePath)?.ToLower();
+        }
+
+        internal async Task SelectSourceImageAsync() {
+            var storage = await WindowsStoragePickers.PickFilesAsync(
+                WindowConsts.WindowHandle,
+                [.. FileFilter.FileTypeToExtension[Common.FileType.FImage]]);
+            if (storage == null || storage.Length < 1) return;
+
+            string filePath = storage[0].Path;
+            SourceFilePath = filePath;
+            SourceFileSize = FileUtil.GetFileSize(filePath);
+            SourceFileExt = Path.GetExtension(filePath)?.ToLower();
+            (var width, var height) = await FileUtil.GetImageResolutionAsync(filePath);
+            SourceFileResolution = $"{width} x {height}";
+        }
+
         internal StyleOptionItem[] StyleOptions = null!;
+        internal ICardComponent? _cardComponent;
     }
 }

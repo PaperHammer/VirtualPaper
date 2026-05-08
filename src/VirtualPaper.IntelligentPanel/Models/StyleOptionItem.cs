@@ -1,12 +1,33 @@
 using System;
+using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.IntelligentPanel.Models {
-    public class StyleOptionItem : IEquatable<StyleOptionItem> {
-        public string? Name { get; set; }
+    public class StyleOptionItem : ObservableObject, IEquatable<StyleOptionItem> {
+        private string? _name;
+        public string? Name {
+            get => _name;
+            set { _name = value; OnPropertyChanged(); }
+        }
+
         public string? ThumbnailResourceKey { get; set; }
-        public string? ImagePath { get; set; }
-        public string? FileSize { get; internal set; }
-        public string? FileExt { get; internal set; }
+
+        private string? _imagePath;
+        public string? ImagePath {
+            get => _imagePath;
+            set { _imagePath = value; OnPropertyChanged(); }
+        }
+
+        private string? _fileSize;
+        public string? FileSize {
+            get => _fileSize;
+            set { _fileSize = value; OnPropertyChanged(); }
+        }
+
+        private string? _fileExt;
+        public string? FileExt {
+            get => _fileExt;
+            set { _fileExt = value; OnPropertyChanged(); }
+        }
         public bool IsCustom { get; internal set; }
 
         public bool Equals(StyleOptionItem? other) {

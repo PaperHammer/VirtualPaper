@@ -183,28 +183,28 @@
                                             <DataTemplate x:DataType="lcl_models:StyleOptionItem">
                                                 <StackPanel Spacing="6" Width="160">
                                                     <Border
-                                Width="160" Height="160"
-                                CornerRadius="8"
-                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                                                        Width="160" Height="160"
+                                                        CornerRadius="8"
+                                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
                                                         <Grid>
                                                             <Image 
-                                        Source="{x:Bind ThumbnailResourceKey, Converter={StaticResource ResourceKeyToImageConverter}}" 
-                                        Stretch="UniformToFill"/>
+                                                                Source="{x:Bind ThumbnailResourceKey, Converter={StaticResource ResourceKeyToImageConverter}}" 
+                                                                Stretch="UniformToFill"/>
 
                                                             <FontIcon 
-                                        Glyph="&#xE710;"
-                                        FontSize="24"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                        Visibility="{x:Bind IsCustom, Converter={StaticResource VisibilityByValueConverter}}"/>
+                                                                Glyph="&#xE710;"
+                                                                FontSize="24"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                                Visibility="{x:Bind IsCustom, Converter={StaticResource VisibilityByValueConverter}}"/>
                                                         </Grid>
                                                     </Border>
                                                     <TextBlock 
-                                Text="{x:Bind Name}"
-                                FontSize="12"
-                                HorizontalAlignment="Center"
-                                TextTrimming="CharacterEllipsis"/>
+                                                        Text="{x:Bind Name}"
+                                                        FontSize="12"
+                                                        HorizontalAlignment="Center"
+                                                        TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </GridView.ItemTemplate>
@@ -228,8 +228,7 @@
                         <StackPanel 
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            Spacing="6"
-                            Visibility="{x:Bind _viewModel.IsStyleImageLoaded, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}">
+                            Spacing="6">
                             <FontIcon 
                                 Glyph="&#xE8B3;"
                                 FontSize="28"
@@ -243,8 +242,8 @@
                         </StackPanel>
 
                         <Image x:Name="stylePreviewImage"
-                            Stretch="Uniform"
-                            Visibility="{x:Bind _viewModel.IsStyleImageLoaded, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"/>
+                            Stretch="UniformToFill"
+                            Source="{x:Bind _viewModel.SelectedStyle.ThumbnailResourceKey, Mode=OneWay, Converter={StaticResource ResourceKeyToImageConverter}}" />
 
                         <Border 
                             HorizontalAlignment="Left"
@@ -253,11 +252,10 @@
                             Padding="8,4"
                             CornerRadius="4"
                             Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
-                            Visibility="{x:Bind _viewModel.IsStyleImageLoaded, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
+                            Visibility="{x:Bind _viewModel.SelectedStyle.ImagePath, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}">
                             <TextBlock 
                                 Text="{x:Bind _viewModel.SelectedStyle.Name, Mode=OneWay}"
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                                FontSize="14"/>
                         </Border>
                     </Grid>
                 </Border>
@@ -266,18 +264,18 @@
                     Orientation="Horizontal"
                     HorizontalAlignment="Center"
                     Spacing="16"
-                    Visibility="{x:Bind _viewModel.IsStyleImageLoaded, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
+                    Visibility="{x:Bind _viewModel.SelectedStyle.ImagePath, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon Glyph="&#xEB05;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                         <TextBlock 
-                            Text="{x:Bind _viewModel.StyleFileSize, Mode=OneWay}" 
+                            Text="{x:Bind _viewModel.SelectedStyle.FileSize, Mode=OneWay}" 
                             FontSize="14"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon Glyph="&#xE8A5;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                         <TextBlock 
-                            Text="{x:Bind _viewModel.StyleFileExt, Mode=OneWay}" 
+                            Text="{x:Bind _viewModel.SelectedStyle.FileExt, Mode=OneWay}" 
                             FontSize="14"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </StackPanel>

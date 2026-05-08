@@ -21,23 +21,23 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             set { _sourceFileExt = value; OnPropertyChanged(); }
         }
 
-        private bool _isStyleImageLoaded;
-        public bool IsStyleImageLoaded {
-            get { return _isStyleImageLoaded; }
-            set { _isStyleImageLoaded = value; OnPropertyChanged(); }
-        }
+        //private bool _isStyleImageLoaded;
+        //public bool IsStyleImageLoaded {
+        //    get { return _isStyleImageLoaded; }
+        //    set { _isStyleImageLoaded = value; OnPropertyChanged(); }
+        //}
 
-        private string? _styleFileSize;
-        public string? StyleFileSize {
-            get { return _styleFileSize; }
-            set { _styleFileSize = value; OnPropertyChanged(); }
-        }
+        //private string? _styleFileSize;
+        //public string? StyleFileSize {
+        //    get { return _styleFileSize; }
+        //    set { _styleFileSize = value; OnPropertyChanged(); }
+        //}
 
-        private string? _styleFileExt;
-        public string? StyleFileExt {
-            get { return _styleFileExt; }
-            set { _styleFileExt = value; OnPropertyChanged(); }
-        }
+        //private string? _styleFileExt;
+        //public string? StyleFileExt {
+        //    get { return _styleFileExt; }
+        //    set { _styleFileExt = value; OnPropertyChanged(); }
+        //}
 
         private string? _estimatedTimeText;
         public string? EstimatedTimeText {
@@ -48,7 +48,10 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         private StyleOptionItem _selectedStyle = null!;
         public StyleOptionItem SelectedStyle {
             get { return _selectedStyle; }
-            set { _selectedStyle = value; OnPropertyChanged(); }
+            set {
+                if (_selectedStyle == value) return;
+                _selectedStyle = value; OnPropertyChanged();
+            }
         }
 
         public StyleTransferAddTaskViewModel() {

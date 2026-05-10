@@ -61,7 +61,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
             _dialogService.Verify(
                 d => d.ShowDialogAsync(
                     It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true),
                 Times.Never);
         }
 
@@ -75,7 +75,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
             _dialogService
                 .Setup(d => d.ShowDialogAsync(
                     It.IsAny<object>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>()))
+                    It.IsAny<string>(), It.IsAny<string>(), true))
                 .ReturnsAsync(DialogResult.Primary);
 
             var yielded = await CollectAsync(_vm.HandleExitItemsAsync());
@@ -94,7 +94,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
             _dialogService
                 .Setup(d => d.ShowDialogAsync(
                     It.IsAny<object>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>()))
+                    It.IsAny<string>(), It.IsAny<string>(), true))
                 .ReturnsAsync(DialogResult.Primary);
 
             var yielded = await CollectAsync(_vm.HandleExitItemsAsync());
@@ -111,7 +111,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
             _dialogService
                 .Setup(d => d.ShowDialogAsync(
                     It.IsAny<object>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>()))
+                    It.IsAny<string>(), It.IsAny<string>(), true))
                 .ReturnsAsync(DialogResult.Secondary);
 
             var yielded = await CollectAsync(_vm.HandleExitItemsAsync());
@@ -128,7 +128,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
             _dialogService
                 .Setup(d => d.ShowDialogAsync(
                     It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true))
                 .ReturnsAsync(DialogResult.None);
 
             var yielded = await CollectAsync(_vm.HandleExitItemsAsync());
@@ -147,7 +147,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
             _dialogService
                 .Setup(d => d.ShowDialogAsync(
                     It.IsAny<object>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>()))
+                    It.IsAny<string>(), It.IsAny<string>(), true))
                 .ReturnsAsync(DialogResult.Primary);
 
             var yielded = await CollectAsync(_vm.HandleExitItemsAsync());

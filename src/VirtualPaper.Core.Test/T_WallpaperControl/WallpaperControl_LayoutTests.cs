@@ -41,7 +41,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             var monitor = _monitorMgr.Object.PrimaryMonitor;
             var data = TestDataBuilder.CreateValidPlayerData().Object;
             var player = TestDataBuilder.CreateWpPlayer(data, monitor);
-            _factory.Setup(f => f.CreatePlayer(data, monitor)).Returns(player.Object);
+            _factory.Setup(f => f.CreatePlayer(data, monitor, false)).Returns(player.Object);
 
             // Act
             await _sut.SetWallpaperAsync(data, monitor);
@@ -58,7 +58,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             // Arrange: add a wallpaper first
             var monitor = _monitorMgr.Object.PrimaryMonitor;
             var data = TestDataBuilder.CreateValidPlayerData().Object;
-            _factory.Setup(f => f.CreatePlayer(data, monitor))
+            _factory.Setup(f => f.CreatePlayer(data, monitor, false))
                     .Returns(TestDataBuilder.CreateWpPlayer(data, monitor).Object);
             await _sut.SetWallpaperAsync(data, monitor);
 
@@ -81,7 +81,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
 
             var monitor = _monitorMgr.Object.PrimaryMonitor;
             var data = TestDataBuilder.CreateValidPlayerData().Object;
-            _factory.Setup(f => f.CreatePlayer(data, monitor))
+            _factory.Setup(f => f.CreatePlayer(data, monitor, false))
                     .Returns(TestDataBuilder.CreateWpPlayer(data, monitor).Object);
 
             // Act

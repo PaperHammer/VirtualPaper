@@ -50,7 +50,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             // Assert
             Assert.IsFalse(result.IsFinished, "Should return failure when monitor is null");
             _factory.Verify(
-                f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), It.IsAny<IMonitor>()),
+                f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), It.IsAny<IMonitor>(), false),
                 Times.Never, "Player should not be created");
         }
 
@@ -98,7 +98,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             var data2 = TestDataBuilder.CreateValidPlayerData(wpId: "wp_002").Object;
 
             var player = TestDataBuilder.CreateWpPlayer(data1, monitor);
-            _factory.Setup(f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), monitor))
+            _factory.Setup(f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), monitor, false))
                     .Returns(player.Object);
 
             // Set the first wallpaper
@@ -112,7 +112,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             // Assert
             player.Verify(p => p.Update(data2), Times.Once, "Should call Update to refresh the wallpaper");
             _factory.Verify(
-                f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), monitor),
+                f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), monitor, false),
                 Times.Once, "Player should not be recreated");
         }
 
@@ -126,7 +126,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             _sut.WallpaperChanged += (_, _) => changed = true;
 
             var player = TestDataBuilder.CreateWpPlayer(data, monitor);
-            _factory.Setup(f => f.CreatePlayer(data, monitor)).Returns(player.Object);
+            _factory.Setup(f => f.CreatePlayer(data, monitor, false)).Returns(player.Object);
 
             // Act
             var result = await _sut.SetWallpaperAsync(data, monitor);
@@ -151,7 +151,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             var data = TestDataBuilder.CreateValidPlayerData().Object;
             foreach (var m in _monitorMgr.Object.Monitors) {
                 var p = TestDataBuilder.CreateWpPlayer(data, m);
-                _factory.Setup(f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), m))
+                _factory.Setup(f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), m, false))
                         .Returns(p.Object);
             }
 
@@ -160,7 +160,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
 
             // Assert
             _factory.Verify(
-                f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), It.IsAny<IMonitor>()),
+                f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), It.IsAny<IMonitor>(), false),
                 Times.Exactly(3), "Duplicate mode should create a Player for each monitor");
         }
     }

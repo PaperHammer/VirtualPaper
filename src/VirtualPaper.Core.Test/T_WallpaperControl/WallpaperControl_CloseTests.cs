@@ -101,7 +101,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
         private async Task<Mock<IWpPlayer>> AddRunningWallpaper(IMonitor monitor) {
             var data = TestDataBuilder.CreateValidPlayerData().Object;
             var player = TestDataBuilder.CreateWpPlayer(data, monitor);
-            _factory.Setup(f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), monitor))
+            _factory.Setup(f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), monitor, false))
                     .Returns(player.Object);
             await _sut.SetWallpaperAsync(data, monitor);
             return player;

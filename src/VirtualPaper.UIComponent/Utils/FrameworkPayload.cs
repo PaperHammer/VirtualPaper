@@ -146,5 +146,6 @@ namespace VirtualPaper.UIComponent.Utils {
         DraftConfigTCS,
         StaticImgFileName,
         SelectedIntelliPageIdx,
+        IntelligentCTS,
     }
 }

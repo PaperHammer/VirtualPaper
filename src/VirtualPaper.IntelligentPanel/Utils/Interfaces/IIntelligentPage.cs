@@ -1,5 +1,7 @@
+using VirtualPaper.IntelligentPanel.Models;
+
 namespace VirtualPaper.IntelligentPanel.Utils.Interfaces {
     public interface IIntelligentPage {
-        void AddTask(string[]? paths);
+        bool AddTask(IIntelliData data);
     }
 }

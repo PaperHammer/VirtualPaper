@@ -8,11 +8,11 @@ using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.Utils.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.IntelligentPanel.Views;
 using VirtualPaper.IntelligentPanel.Views.Comp;
-using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 
@@ -23,24 +23,13 @@ namespace VirtualPaper.IntelligentPanel {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class Intelligent : ArcPage, ICardComponent {
+    public sealed partial class Intelligent : ArcPage {
         public override Type ArcType => typeof(Intelligent);
-        public Action? CardUIStateChanged {
-            get => _viewModel.CardUIStateChanged;
-            set => _viewModel.CardUIStateChanged = value;
-        }
-        public string PreviousStepBtnText => _viewModel.PreviousStepBtnText;
-        public string NextStepBtnText => _viewModel.NextStepBtnText;
-        public bool BtnVisible => _viewModel.BtnVisible;
-        public bool IsNextEnable => _viewModel.IsNextEnable;
-        public Func<object?, Task>? PreviousStepAction => async (_) => await _viewModel.OnPreviousStepClickedAsync();
-        public Func<object?, Task>? NextStepAction => async (_) => await _viewModel.OnNextStepClickedAsync();
 
         public Intelligent() {
             InitializeComponent();
             Payload = new FrameworkPayload() {
                 [NaviPayloadKey.ArcPageContext] = this.ArcContext,
-                [NaviPayloadKey.ICardComponent] = this,
             };
             _viewModel = AppServiceLocator.Services.GetRequiredService<IntelligentViewModel>();
             this.DataContext = _viewModel;
@@ -61,10 +50,6 @@ namespace VirtualPaper.IntelligentPanel {
             if (overlayFrame.Content is FrameworkElement overlayContent) {
                 overlayContent.DataContext = null;
             }
-
-            // 清理 TaskCompletionSource
-            _viewModel._intelligentTCS?.TrySetCanceled();
-            _viewModel._intelligentTCS = null;
 
             // 清理页面引用
             _viewModel.SelectedIntelliPage = null;
@@ -90,12 +75,12 @@ namespace VirtualPaper.IntelligentPanel {
 
         #region overlay page
         private async void AddTaskButton_Click(object sender, RoutedEventArgs e) {
-            _viewModel._intelligentTCS = new TaskCompletionSource<string[]?>();
+            var intelligentTCS = new TaskCompletionSource<IIntelliData?>();
+            Payload?.Set(NaviPayloadKey.IntelligentCTS, intelligentTCS);
             ShowOverlayPage(typeof(ConfigSpace), Payload);
 
             try {
-                _viewModel.UpdateCardComponentUI();
-                var result = await _viewModel._intelligentTCS.Task;
+                var result = await intelligentTCS.Task;
                 _viewModel.AddTask(result);
             }
             catch (Exception ex) {
@@ -108,7 +93,7 @@ namespace VirtualPaper.IntelligentPanel {
             overlayFrame.Navigate(pageType, parameter);
         }
 
-        public async void HideOverlayPage() {
+        public void HideOverlayPage() {
             // 清理页面数据上下文
             if (overlayFrame.Content is FrameworkElement element) {
                 element.DataContext = null;

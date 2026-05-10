@@ -1,11 +1,15 @@
-using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.IO;
+using VirtualPaper.Common;
+using VirtualPaper.IntelligentPanel.Models;
+using VirtualPaper.ML.StyleTransfer;
+using VirtualPaper.ML.SuperResolution;
 using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
     public partial class StyleTranferViewModel : ObservableObject {
-        private readonly ObservableCollection<object> Tasks = [];        
+        private readonly ObservableCollection<StyleTransferOutput> Tasks = [];
 
         private bool _hasTasks;
         public bool HasTasks {
@@ -24,11 +28,19 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
         private void InitEvent() {
             Tasks.CollectionChanged += OnTasksCollectionChanged;
-
         }
 
-        internal void AddTask(string[]? paths) {
-            throw new NotImplementedException();
+        internal bool AddTask(StyleTransferInput input) {
+            if (input == null || string.IsNullOrEmpty(input.SourceFilePath) || string.IsNullOrEmpty(input.StyleFilePath)) return false;
+
+            string tmpOutPath_style = Path.Combine(Constants.CommonPaths.TempDir, Path.GetRandomFileName(), Path.GetExtension(input.SourceFilePath));
+            string tmpOutPath_realeargan = Path.Combine(Constants.CommonPaths.TempDir, Path.GetRandomFileName(), Path.GetExtension(input.SourceFilePath));
+            Tasks.Add(new StyleTransferOutput(input.SourceFilePath, input.StyleFilePath));
+
+            AdaIn.TransferStyle(input.SourceFilePath, input.StyleFilePath, tmpOutPath_style);
+            Realesrgan.Upscale(tmpOutPath_style, tmpOutPath_realeargan, input.Width, input.Height);
+
+            return true;
         }
 
         private void OnTasksCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {

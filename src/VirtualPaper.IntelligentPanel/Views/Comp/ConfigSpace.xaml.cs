@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.IntelligentPanel.ViewModels;
+using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 
@@ -28,11 +29,6 @@ namespace VirtualPaper.IntelligentPanel.Views.Comp {
 
             if (e.Parameter is FrameworkPayload payload) {
                 payload.TryGet(NaviPayloadKey.SelectedIntelliPageIdx, out _selectedPageIdx);
-                if (payload.TryGet(NaviPayloadKey.ICardComponent, out _viewModel._cardComponent)) {
-                    _viewModel._cardComponent!.CardUIStateChanged = () => {
-                        _viewModel.RefreshCardComponentData();
-                    };
-                }
                 Payload = Payload.Merge(payload);
             }
         }
@@ -48,6 +44,13 @@ namespace VirtualPaper.IntelligentPanel.Views.Comp {
                 _ => throw new NotImplementedException(),
             };
             FrameComp.Navigate(targetTaskPageType, Payload);
+
+            if (FrameComp.Content is ICardComponent cardComponent) {
+                cardComponent.CardUIStateChanged = () => {
+                    _viewModel.RefreshCardComponentData();
+                };
+                _viewModel._cardComponent = cardComponent;
+            }
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) {

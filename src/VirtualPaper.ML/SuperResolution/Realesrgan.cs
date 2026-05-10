@@ -3,6 +3,7 @@ using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.ML.Realesrgan;
 
 namespace VirtualPaper.ML.SuperResolution {
@@ -12,9 +13,11 @@ namespace VirtualPaper.ML.SuperResolution {
                 AppDomain.CurrentDomain.BaseDirectory,
                 Constants.WorkingDir.ML_SuperResolution_AI_Models,
                 Utils.Fields.ModelName);
-            _modelPath = @"D:\repos\VirtualPaper\src\VirtualPaper\Plugins\ML\SuperResolution\ai_models\realesrgan_x4plus_dynamic.onnx";
 
-            LoadModel(_modelPath);
+            if (File.Exists(_modelPath)) {
+                ArcLog.GetLogger<Realesrgan>().Error("model file not found");
+                LoadModel(_modelPath);
+            }
         }
 
         public static void LoadModel(string modelPath) {
@@ -31,7 +34,7 @@ namespace VirtualPaper.ML.SuperResolution {
         /// <param name="inputImagePath">输入图片路径 (AdaIn风格化后的小图)</param>
         /// <param name="outputImagePath">保存路径</param>
         /// <param name="exactTargetSize">需要还原到的精确尺寸 (原图尺寸)</param>
-        public void Upscale(string inputImagePath, string outputImagePath, Size exactTargetSize) {
+        public static void Upscale(string inputImagePath, string outputImagePath, uint width, uint height) {
             if (_session == null) throw new InvalidOperationException("ONNX Session is not initialized.");
 
             using Mat image = Cv2.ImRead(inputImagePath, ImreadModes.Color);
@@ -61,7 +64,8 @@ namespace VirtualPaper.ML.SuperResolution {
 
             // 精确缩放：由于模型是固定 4 倍放大，放大后的尺寸可能比我们真正需要的尺寸大或小
             // 所以我们需要 Resize 回到业务逻辑传入的确切原图尺寸
-            using Mat finalImage = new Mat();
+            var exactTargetSize = new Size(width, height);
+            using var finalImage = new Mat();
             Cv2.Resize(srImage, finalImage, exactTargetSize, 0, 0, InterpolationFlags.Area);
 
             finalImage.ImWrite(outputImagePath);
@@ -69,7 +73,7 @@ namespace VirtualPaper.ML.SuperResolution {
 
         #region 张量与 OpenCV 图像的转换
 
-        private DenseTensor<float> ImageToTensor(Mat img) {
+        private static DenseTensor<float> ImageToTensor(Mat img) {
             var tensor = new DenseTensor<float>(new[] { 1, 3, img.Height, img.Width });
             var indexer = img.GetGenericIndexer<Vec3b>();
 
@@ -85,7 +89,7 @@ namespace VirtualPaper.ML.SuperResolution {
             return tensor;
         }
 
-        private Mat TensorToImage(Tensor<float> tensor) {
+        private static Mat TensorToImage(Tensor<float> tensor) {
             int height = tensor.Dimensions[2];
             int width = tensor.Dimensions[3];
 

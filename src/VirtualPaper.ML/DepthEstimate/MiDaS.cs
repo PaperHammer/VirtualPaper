@@ -3,18 +3,21 @@ using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.ML.DepthEstimate.Models;
 
 namespace VirtualPaper.ML.DepthEstimate {
     public partial class MiDaS : IDisposable {
         static MiDaS() {
-            _modelPath = Path.Combine(  
+            _modelPath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
                 Constants.WorkingDir.ML_DepthEstimate_AI_Models,
                 Utils.Fields.ModelName);
 
-            if (File.Exists(_modelPath))
+            if (File.Exists(_modelPath)) {
+                ArcLog.GetLogger<MiDaS>().Error("model file not found");
                 LoadModel(_modelPath);
+            }
         }
 
         public static ModelOutput Run(string imagePath) {
@@ -115,7 +118,7 @@ namespace VirtualPaper.ML.DepthEstimate {
             _session?.Dispose();
             var options = new SessionOptions();
             // options.AppendExecutionProvider_CUDA(); 
-            _session = new InferenceSession(modelPath, options);            
+            _session = new InferenceSession(modelPath, options);
             Debug.WriteLine($"Model version: {_session.ModelMetadata.Version}");
 
             _modelName = _session.InputMetadata.Keys.First();

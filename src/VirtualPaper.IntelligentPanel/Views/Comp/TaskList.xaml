@@ -9,6 +9,100 @@
     mc:Ignorable="d">
 
     <Grid>
+        <ListView 
+            x:Name="TaskListView"
+            ItemsSource="{Binding Tasks}"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            VerticalAlignment="Stretch">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Margin" Value="0,0,0,8"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid 
+                        Background="{ThemeResource CardBackgroundFillColorDefault}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="12,10"
+                        Margin="12,0,12,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
+                        <!-- 左边图标区（示意图片/文档图标） -->
+                        <FontIcon 
+                            Grid.RowSpan="3"
+                            Grid.Column="0"
+                            Glyph="&#xE8A5;"  
+                            FontSize="32"
+                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                            Margin="0,0,16,0"
+                            VerticalAlignment="Center"/>
+
+                            <!-- 原始图片信息 -->
+                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="原图：" 
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                       Style="{StaticResource CaptionTextBlockStyle}"/>
+                                <TextBlock Text="{Binding SourceFilePath, Converter={StaticResource FileNameConverter}}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+
+                            <!-- 风格图片信息 -->
+                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
+                                <TextBlock Text="风格：" 
+                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                       Style="{StaticResource CaptionTextBlockStyle}"/>
+                                <TextBlock Text="{Binding StyleFilePath, Converter={StaticResource FileNameConverter}}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+
+                            <!-- 状态行：显示处理状态 + 进度环（处理中时） -->
+                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                                <ProgressRing 
+                                Width="16" 
+                                Height="16" 
+                                IsActive="{Binding IsProcessing}"
+                                Visibility="{Binding IsProcessing, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                <TextBlock 
+                                Text="{Binding Status, Converter={StaticResource StatusTextConverter}}"
+                                Foreground="{Binding Status, Converter={StaticResource StatusBrushConverter}}"
+                                Style="{StaticResource BodyTextBlockStyle}"/>
+                            </StackPanel>
+
+                            <!-- 右侧操作按钮区 -->
+                            <StackPanel Grid.RowSpan="3" Grid.Column="2" VerticalAlignment="Center" Spacing="8">
+                                <!-- 只有状态为 Completed 时显示查看按钮 -->
+                                <Button 
+                                Content="预览"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Visibility="{Binding IsCompleted, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Command="{Binding ViewResultCommand}"
+                                Padding="8,4"/>
+                                <!-- 删除任务按钮 -->
+                                <Button 
+                                ToolTipService.ToolTip="删除任务"
+                                Style="{StaticResource IconButtonStyle}"
+                                Command="{Binding RemoveTaskCommand}">
+                                    <FontIcon Glyph="&#xE74D;" FontSize="14"/>
+                                </Button>
+                            </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
     </Grid>
 </UserControl>

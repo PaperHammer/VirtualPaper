@@ -16,6 +16,7 @@
             Visibility="{x:Bind _viewModel.HasTasks, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
 
         <local_comp:TasksView
+            Tasks="{x:Bind _viewModel.Tasks}"
             Visibility="{x:Bind _viewModel.HasTasks, Mode=OneWay}"/>
     </Grid>
 </arc:ArcPage>

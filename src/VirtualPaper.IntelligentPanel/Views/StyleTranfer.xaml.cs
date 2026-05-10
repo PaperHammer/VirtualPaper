@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.Utils.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.UIComponent.Templates;
@@ -21,8 +22,12 @@ namespace VirtualPaper.IntelligentPanel.Views {
             this.DataContext = _viewModel;
         }
 
-        public void AddTask(string[]? paths) {
-            _viewModel.AddTask(paths);
+        public bool AddTask(IIntelliData data) {
+            if (data is StyleTransferInput input) {
+                return _viewModel.AddTask(input);
+            }
+
+            return false;
         }
 
         private readonly StyleTranferViewModel _viewModel;

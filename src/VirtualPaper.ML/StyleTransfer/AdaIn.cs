@@ -3,6 +3,7 @@ using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 
 namespace VirtualPaper.ML.StyleTransfer {
     public class AdaIn : IDisposable {
@@ -11,9 +12,11 @@ namespace VirtualPaper.ML.StyleTransfer {
                 AppDomain.CurrentDomain.BaseDirectory,
                 Constants.WorkingDir.ML_StyleTransfer_AI_Models,
                 Utils.Fields.ModelName);
-            _modelPath = @"D:\repos\VirtualPaper\src\VirtualPaper\Plugins\ML\StyleTransfer\ai_models\adain_style_transfer.onnx";
 
-            LoadModel(_modelPath);
+            if (File.Exists(_modelPath)) {
+                ArcLog.GetLogger<AdaIn>().Error("model file not found");
+                LoadModel(_modelPath);
+            }
         }
 
         public static void LoadModel(string modelPath) {
@@ -24,7 +27,7 @@ namespace VirtualPaper.ML.StyleTransfer {
             Debug.WriteLine($"Model version: {_session.ModelMetadata.Version}");
         }
 
-        public void TransferStyle(string contentImagePath, string styleImagePath, string outputImagePath, float alpha = 1.0f, int contentSize = 512, int styleSize = 512) {
+        public static void TransferStyle(string contentImagePath, string styleImagePath, string outputImagePath, float alpha = 1.0f, int contentSize = 512, int styleSize = 512) {
             if (_session == null) throw new InvalidOperationException("ONNX Session is not initialized.");
 
             // 预处理：加载并缩放图像 (注意使用 using 释放底层非托管内存)
@@ -36,11 +39,10 @@ namespace VirtualPaper.ML.StyleTransfer {
             DenseTensor<float> styleTensor = ImageToTensor(styleImage);
 
             // 准备 Alpha 控制变量 (Shape: [1])
-            DenseTensor<float> alphaTensor = new DenseTensor<float>(new float[] { alpha }, new int[] { 1 });
+            var alphaTensor = new DenseTensor<float>(new float[] { alpha }, new int[] { 1 });
 
             // 构造输入
-            var inputs = new List<NamedOnnxValue>
-            {
+            var inputs = new List<NamedOnnxValue> {
                 NamedOnnxValue.CreateFromTensor("content", contentTensor),
                 NamedOnnxValue.CreateFromTensor("style", styleTensor),
                 NamedOnnxValue.CreateFromTensor("alpha", alphaTensor)
@@ -59,7 +61,7 @@ namespace VirtualPaper.ML.StyleTransfer {
 
         #region OpenCV 图像预处理与后处理
 
-        private Mat LoadAndResizeImage(string imagePath, int targetSize) {
+        private static Mat LoadAndResizeImage(string imagePath, int targetSize) {
             // 读取图像 (OpenCV 默认是 BGR)
             Mat image = Cv2.ImRead(imagePath, ImreadModes.Color);
 
@@ -91,7 +93,7 @@ namespace VirtualPaper.ML.StyleTransfer {
             return image;
         }
 
-        private DenseTensor<float> ImageToTensor(Mat img) {
+        private static DenseTensor<float> ImageToTensor(Mat img) {
             var tensor = new DenseTensor<float>(new[] { 1, 3, img.Height, img.Width });
 
             // 使用 Indexer 高效遍历 OpenCV 矩阵
@@ -110,7 +112,7 @@ namespace VirtualPaper.ML.StyleTransfer {
             return tensor;
         }
 
-        private Mat TensorToImage(Tensor<float> tensor) {
+        private static Mat TensorToImage(Tensor<float> tensor) {
             int height = tensor.Dimensions[2];
             int width = tensor.Dimensions[3];
 

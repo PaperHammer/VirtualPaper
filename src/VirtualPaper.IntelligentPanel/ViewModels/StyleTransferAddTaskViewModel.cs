@@ -1,18 +1,54 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
-using VirtualPaper.UIComponent.Data;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
     public partial class StyleTransferAddTaskViewModel : ObservableObject {
+        internal TaskCompletionSource<StyleTransferInput?>? IntelligentCTS { get; set; }
+
+        #region card_component
+        public Action? CardUIStateChanged { get; set; }
+        public string PreviousStepBtnText { get; private set; } = string.Empty;
+        public string NextStepBtnText { get; private set; } = string.Empty;
+        public bool BtnVisible { get; private set; } = false;
+
+        private bool _isNextEnable;
+        public bool IsNextEnable {
+            get { return _isNextEnable; }
+            set { _isNextEnable = value; CardUIStateChanged?.Invoke(); }
+        }
+
+        public void UpdateCardComponentUI() {
+            PreviousStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel));
+            NextStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm));
+
+            BtnVisible = true;
+            CardUIStateChanged?.Invoke();
+        }
+
+        public async Task OnNextStepClickedAsync() {
+            if (string.IsNullOrEmpty(SourceFilePath) || string.IsNullOrEmpty(SelectedStyle.ImagePath)) return;
+
+            var input = new StyleTransferInput(SourceFilePath, SelectedStyle.ImagePath, _sourceFileWidth, _sourceFileHeight);
+            IntelligentCTS?.TrySetResult(input);
+        }
+
+        public async Task OnPreviousStepClickedAsync() {
+            IntelligentCTS?.TrySetResult(null);
+        }
+        #endregion
+
         private string? _sourceFilePath;
         public string? SourceFilePath {
             get { return _sourceFilePath; }
-            set { _sourceFilePath = value; OnPropertyChanged(); }
+            set { _sourceFilePath = value; OnPropertyChanged(); IsNextEnable = value != null && SelectedStyle != null && SelectedStyle.ImagePath != null; }
         }
 
         private string? _sourceFileSize;
@@ -45,6 +81,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             set {
                 if (value == null || _selectedStyle == value) return;
                 _selectedStyle = value; OnPropertyChanged();
+                IsNextEnable = SelectedStyle != null && SelectedStyle.ImagePath != null;
             }
         }
 
@@ -155,11 +192,11 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             SourceFilePath = filePath;
             SourceFileSize = FileUtil.GetFileSize(filePath);
             SourceFileExt = Path.GetExtension(filePath)?.ToLower();
-            (var width, var height) = await FileUtil.GetImageResolutionAsync(filePath);
-            SourceFileResolution = $"{width} x {height}";
+            (_sourceFileWidth, _sourceFileHeight) = await FileUtil.GetImageResolutionAsync(filePath);
+            SourceFileResolution = $"{_sourceFileWidth} x {_sourceFileHeight}";
         }
 
         internal StyleOptionItem[] StyleOptions = null!;
-        internal ICardComponent? _cardComponent;
+        private uint _sourceFileWidth, _sourceFileHeight;
     }
 }

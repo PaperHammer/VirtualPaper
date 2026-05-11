@@ -67,7 +67,7 @@
                                                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                                                 </Border>
                                                 <TextBlock
-                                                    Text="{Binding SourcePath}"
+                                                    Text="{x:Bind SourceFilePath}"
                                                     FontSize="14"
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                     TextTrimming="CharacterEllipsis"
@@ -85,7 +85,7 @@
                                                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                                                 </Border>
                                                 <TextBlock
-                                                    Text="{Binding StylePath}"
+                                                    Text="{x:Bind StyleFilePath}"
                                                     FontSize="14"
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                     TextTrimming="CharacterEllipsis"
@@ -189,13 +189,141 @@
                                 <Grid
                                     Padding="16,12"
                                     MinHeight="120">
-                                    <!-- TODO: 展开后显示原图、风格图、结果图的大图预览 -->
-                                    <TextBlock
-                                        Text="图片预览区域（待实现）"
-                                        FontSize="13"
-                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"/>
+                                    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel HorizontalAlignment="Center" Spacing="6">
+
+                                            <TextBlock 
+                                                Text="原图"
+                                                FontSize="16"
+                                                FontWeight="SemiBold"
+                                                HorizontalAlignment="Center"/>
+
+                                            <Grid>
+                                                <Rectangle
+                                                    RadiusX="14"
+                                                    RadiusY="14"
+                                                    Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                                                    StrokeThickness="1.5"
+                                                    StrokeDashArray="4 3"
+                                                    Fill="Transparent"/>
+
+                                                <Border x:Name="sourceImageBorder"
+                                                    Width="400"
+                                                    Height="250"
+                                                    Margin="10"
+                                                    CornerRadius="10"
+                                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                    BorderThickness="1">
+                                                    <Image x:Name="sourceImage"
+                                                        Stretch="UniformToFill"
+                                                        Source="{x:Bind SourceFilePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
+                                                </Border>
+                                            </Grid>
+
+                                            <StackPanel 
+                                                Orientation="Horizontal"
+                                                HorizontalAlignment="Center"
+                                                Spacing="16">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <FontIcon Glyph="&#xE809;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                    <TextBlock 
+                                                        Text="{x:Bind Resolution}" 
+                                                        FontSize="14"
+                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <FontIcon Glyph="&#xEB05;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                    <TextBlock 
+                                                        Text="{x:Bind SourceFileSize, Mode=OneWay}" 
+                                                        FontSize="14"
+                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <FontIcon Glyph="&#xE8A5;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                    <TextBlock 
+                                                        Text="{x:Bind SourceFileExt, Mode=OneWay}" 
+                                                        FontSize="14" 
+                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <StackPanel 
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Center"
+                                            Spacing="6">
+
+                                            <Grid HorizontalAlignment="Stretch">
+                                                <TextBlock 
+                                                    Text="风格图"
+                                                    FontSize="16"
+                                                    FontWeight="SemiBold"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"/>
+                                            </Grid>
+
+                                            <Grid>
+                                                <Rectangle
+                                                    RadiusX="14"
+                                                    RadiusY="14"
+                                                    Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                                                    StrokeThickness="1.5"
+                                                    StrokeDashArray="4 3"
+                                                    Fill="Transparent"/>
+
+                                                <Border x:Name="styleImageBorder"
+                                                    Width="300"
+                                                    Height="250"
+                                                    Margin="10"
+                                                    CornerRadius="10"
+                                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                    BorderThickness="1">
+                                                    <Image x:Name="styleImage"
+                                                        Stretch="UniformToFill"
+                                                        Source="{x:Bind StyleImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
+                                                </Border>
+                                            </Grid>
+
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <StackPanel 
+                                                    Orientation="Horizontal"
+                                                    HorizontalAlignment="Center"
+                                                    Spacing="16">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <FontIcon Glyph="&#xE790;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                        <TextBlock 
+                                                            Text="{x:Bind StyleName, TargetNullValue=自定义, Mode=OneWay}" 
+                                                            FontSize="14"
+                                                            MaxWidth="120"
+                                                            TextTrimming="CharacterEllipsis"
+                                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <FontIcon Glyph="&#xEB05;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                        <TextBlock 
+                                                            Text="{x:Bind StyleFileSize, Mode=OneWay}" 
+                                                            FontSize="14"
+                                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <FontIcon Glyph="&#xE8A5;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                        <TextBlock 
+                                                            Text="{x:Bind StyleFileExt, Mode=OneWay}" 
+                                                            FontSize="14" 
+                                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Grid>
                                 </Grid>
                             </Expander.Content>
                         </Expander>

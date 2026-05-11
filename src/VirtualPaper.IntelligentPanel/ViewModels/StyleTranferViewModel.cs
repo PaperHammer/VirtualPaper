@@ -9,7 +9,7 @@ using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
     public partial class StyleTranferViewModel : ObservableObject {
-        public ObservableCollection<StyleTransferOutput> Tasks { get; } = [];
+        public ObservableCollection<StyleTransferData> Tasks { get; } = [];
 
         private bool _hasTasks;
         public bool HasTasks {
@@ -25,21 +25,33 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         public StyleTranferViewModel() {
             InitEvent();
 
-            Tasks.Add(new StyleTransferOutput(@"C:\Windows\Web\Wallpaper\Windows\img0.jpg", @"C:\Windows\Web\Wallpaper\Windows\img19.jpg"));
-            Tasks.Add(new StyleTransferOutput(@"C:\Windows\Web\Wallpaper\Windows\img0.jpg", @"C:\Windows\Web\Wallpaper\Windows\img19.jpg"));
-            Tasks.Add(new StyleTransferOutput(@"C:\Windows\Web\Wallpaper\Windows\img0.jpg", @"C:\Windows\Web\Wallpaper\Windows\img19.jpg"));
+            Tasks.Add(new StyleTransferData(
+                @"C:\Windows\Web\Wallpaper\Windows\img0.jpg", "9.5 MB", ".jpg", 3840, 2160,
+                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg"));
+            Tasks.Add(new StyleTransferData(
+                @"C:\Windows\Web\Wallpaper\Windows\img0.jpg", "9.5 MB", ".jpg", 3840, 2160,
+                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg"));
+            Tasks.Add(new StyleTransferData(
+                @"C:\Windows\Web\Wallpaper\Windows\img0.jpg", "9.5 MB", ".jpg", 3840, 2160,
+                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg"));
+            Tasks.Add(new StyleTransferData(
+                @"C:\Windows\Web\Wallpaper\Windows\img0.jpg", "9.5 MB", ".jpg", 3840, 2160,
+                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg"));
+            Tasks.Add(new StyleTransferData(
+                @"C:\Windows\Web\Wallpaper\Windows\img0.jpg", "9.5 MB", ".jpg", 3840, 2160,
+                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg"));
         }
 
         private void InitEvent() {
             Tasks.CollectionChanged += OnTasksCollectionChanged;
         }
 
-        internal bool AddTask(StyleTransferInput data) {
+        internal bool AddTask(StyleTransferData data) {
             if (data == null || string.IsNullOrEmpty(data.SourceFilePath) || string.IsNullOrEmpty(data.StyleFilePath)) return false;
 
             string tmpOutPath_style = Path.Combine(Constants.CommonPaths.TempDir, Path.GetRandomFileName(), Path.GetExtension(data.SourceFilePath));
             string tmpOutPath_realeargan = Path.Combine(Constants.CommonPaths.TempDir, Path.GetRandomFileName(), Path.GetExtension(data.SourceFilePath));
-            Tasks.Add(new StyleTransferOutput(data.SourceFilePath, data.StyleFilePath));
+            Tasks.Add(data);
 
             //AdaIn.TransferStyle(data.SourceFilePath, data.StyleFilePath, tmpOutPath_style);
             //Realesrgan.Upscale(tmpOutPath_style, tmpOutPath_realeargan, data.Width, data.Height);

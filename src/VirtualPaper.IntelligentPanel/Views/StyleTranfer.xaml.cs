@@ -23,7 +23,7 @@ namespace VirtualPaper.IntelligentPanel.Views {
         }
 
         public bool AddTask(IIntelliData data) {
-            if (data is StyleTransferInput input) {
+            if (data is StyleTransferData input) {
                 return _viewModel.AddTask(input);
             }
 

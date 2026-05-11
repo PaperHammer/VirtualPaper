@@ -27,7 +27,7 @@
             </ListView.ItemContainerStyle>
 
             <ListView.ItemTemplate>
-                <DataTemplate x:DataType="lcl_models:StyleTransferOutput">
+                <DataTemplate x:DataType="lcl_models:StyleTransferData">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
@@ -233,7 +233,7 @@
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                                     <FontIcon Glyph="&#xE809;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                                     <TextBlock 
-                                                        Text="{x:Bind Resolution}" 
+                                                        Text="{x:Bind SourceResolution}" 
                                                         FontSize="14"
                                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                                 </StackPanel>
@@ -288,7 +288,7 @@
                                                     BorderThickness="1">
                                                     <Image x:Name="styleImage"
                                                         Stretch="UniformToFill"
-                                                        Source="{x:Bind StyleImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
+                                                        Source="{x:Bind StyleFilePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
                                                 </Border>
                                             </Grid>
 

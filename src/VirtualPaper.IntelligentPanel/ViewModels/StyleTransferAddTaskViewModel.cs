@@ -37,7 +37,9 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         public async Task OnNextStepClickedAsync() {
             if (string.IsNullOrEmpty(SourceFilePath) || string.IsNullOrEmpty(SelectedStyle.ImagePath)) return;
 
-            var input = new StyleTransferInput(SourceFilePath, SelectedStyle.ImagePath, _sourceFileWidth, _sourceFileHeight);
+            var input = new StyleTransferData(
+                SourceFilePath, SourceFileSize!, SourceFileExt!, _sourceFileWidth, _sourceFileHeight, 
+                SelectedStyle.ImagePath, SelectedStyle.Name, SelectedStyle.FileSize ?? string.Empty, SelectedStyle.FileExt ?? string.Empty);
             IntelligentCTS?.TrySetResult(input);
         }
 
@@ -195,7 +197,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             SourceFileSize = FileUtil.GetFileSize(filePath);
             SourceFileExt = Path.GetExtension(filePath)?.ToLower();
             (_sourceFileWidth, _sourceFileHeight) = await FileUtil.GetImageResolutionAsync(filePath);
-            SourceFileResolution = $"{_sourceFileWidth} x {_sourceFileHeight}";
+            SourceFileResolution = $"{_sourceFileWidth} * {_sourceFileHeight}";
         }
 
         internal void Clean() {

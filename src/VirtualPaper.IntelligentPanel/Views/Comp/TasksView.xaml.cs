@@ -8,12 +8,12 @@ using VirtualPaper.IntelligentPanel.Models;
 
 namespace VirtualPaper.IntelligentPanel.Views.Comp {
     public sealed partial class TasksView : UserControl {
-        public ObservableCollection<StyleTransferOutput> Tasks {
-            get { return (ObservableCollection<StyleTransferOutput>)GetValue(TasksProperty); }
+        public ObservableCollection<StyleTransferData> Tasks {
+            get { return (ObservableCollection<StyleTransferData>)GetValue(TasksProperty); }
             set { SetValue(TasksProperty, value); }
         }
         public static readonly DependencyProperty TasksProperty =
-            DependencyProperty.Register(nameof(Tasks), typeof(ObservableCollection<StyleTransferOutput>), typeof(TasksView), new PropertyMetadata(null));
+            DependencyProperty.Register(nameof(Tasks), typeof(ObservableCollection<StyleTransferData>), typeof(TasksView), new PropertyMetadata(null));
 
         public TasksView() {
             InitializeComponent();

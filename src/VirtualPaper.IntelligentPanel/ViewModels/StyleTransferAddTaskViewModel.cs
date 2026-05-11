@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.IntelligentPanel.Models;
@@ -11,7 +12,7 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
     public partial class StyleTransferAddTaskViewModel : ObservableObject {
-        internal TaskCompletionSource<IIntelliData?>? IntelligentCTS { get; set; }
+        internal ResettableCompletionSource<IIntelliData?>? IntelligentCTS { get; set; }
 
         #region card_component
         public Action? CardUIStateChanged { get; set; }
@@ -195,6 +196,16 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             SourceFileExt = Path.GetExtension(filePath)?.ToLower();
             (_sourceFileWidth, _sourceFileHeight) = await FileUtil.GetImageResolutionAsync(filePath);
             SourceFileResolution = $"{_sourceFileWidth} x {_sourceFileHeight}";
+        }
+
+        internal void Clean() {
+            IntelligentCTS?.Reset();
+            SourceFilePath = null;
+            SourceFileSize = null;
+            SourceFileExt = null;
+            SourceFileResolution = null;
+            EstimatedTimeText = null;            
+            IsNextEnable = false;
         }
 
         internal StyleOptionItem[] StyleOptions = null!;

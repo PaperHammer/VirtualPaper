@@ -4,8 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.IntelligentPanel.Models;
+using VirtualPaper.IntelligentPanel.Utils.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Templates;
@@ -15,7 +17,7 @@ using VirtualPaper.UIComponent.Utils;
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace VirtualPaper.IntelligentPanel.Views.StyleTransferComp {
-    public sealed partial class StyleTransferAddTask : ArcPage, ICardComponent {
+    public sealed partial class StyleTransferAddTask : ArcPage, ICardComponent, IIntelligentAddTask {
         public override Type ArcType => typeof(StyleTransferAddTask);
         public Action? CardUIStateChanged {
             get => _viewModel.CardUIStateChanged;
@@ -37,13 +39,14 @@ namespace VirtualPaper.IntelligentPanel.Views.StyleTransferComp {
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
             CleanupImageResources();
             CleanupBindings();
+            CleanViewModel();
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
             base.OnNavigatedTo(e);
 
             if (e.Parameter is FrameworkPayload payload) {
-                _viewModel.IntelligentCTS = payload.Get<TaskCompletionSource<IIntelliData?>>(NaviPayloadKey.IntelligentCTS);
+                _viewModel.IntelligentCTS = payload.Get<ResettableCompletionSource<IIntelliData?>>(NaviPayloadKey.IntelligentCTS);
             }
         }
 
@@ -73,8 +76,17 @@ namespace VirtualPaper.IntelligentPanel.Views.StyleTransferComp {
             }
         }
 
+        private void CleanViewModel() {
+            _viewModel.Clean();
+        }
+
         public void UpdateCardComponentUI() {
             _viewModel.UpdateCardComponentUI();
+        }
+
+        public void ClearAddTask() {
+            CleanViewModel();
+            UpdateCardComponentUI();
         }
 
         private readonly StyleTransferAddTaskViewModel _viewModel;

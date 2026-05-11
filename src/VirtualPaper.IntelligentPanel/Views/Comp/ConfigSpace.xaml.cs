@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.IntelligentPanel.Utils.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Templates;
@@ -15,7 +16,7 @@ namespace VirtualPaper.IntelligentPanel.Views.Comp {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class ConfigSpace : ArcPage {
+    public sealed partial class ConfigSpace : ArcPage, IIntelligentAddTask {
         public override Type ArcType => typeof(ConfigSpace);
 
         public ConfigSpace() {
@@ -58,6 +59,12 @@ namespace VirtualPaper.IntelligentPanel.Views.Comp {
             FrameComp.Content = null;
             FrameComp.DataContext = null;
             _viewModel.Dispose();
+        }
+
+        public void ClearAddTask() {
+            if (FrameComp.Content is IIntelligentAddTask iat) {
+                iat.ClearAddTask();
+            }
         }
 
         private readonly ConfigSpaceViewModel _viewModel;

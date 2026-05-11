@@ -1,5 +1,6 @@
 using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.Utils.Interfaces;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
     public class IntelligentViewModel {
@@ -11,7 +12,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         internal bool AddTask(IIntelliData? data) {
             if (SelectedIntelliPage == null || data == null) return false;
 
-            bool res = SelectedIntelliPage.AddTask(data);
+            bool res = SelectedIntelliPage.AddTask(data);            
             
             return res;
         }

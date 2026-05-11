@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.Utils.Interfaces;
@@ -75,13 +76,26 @@ namespace VirtualPaper.IntelligentPanel {
 
         #region overlay page
         private async void AddTaskButton_Click(object sender, RoutedEventArgs e) {
-            var intelligentTCS = new TaskCompletionSource<IIntelliData?>();
+            var intelligentTCS = new ResettableCompletionSource<IIntelliData?>();
             Payload?.Set(NaviPayloadKey.IntelligentCTS, intelligentTCS);
             ShowOverlayPage(typeof(ConfigSpace), Payload);
 
             try {
-                var result = await intelligentTCS.Task;
-                _viewModel.AddTask(result);
+                while (true) {
+                    var result = await intelligentTCS.Task;
+                    if (result == null)
+                        break;
+
+                    var res = _viewModel.AddTask(result);
+                    if (res) {
+                        GlobalMessageUtil.ShowAutoCloseMessage("任务已提交", InfoBarSeverity.Success, autoCloseDelay: 3000);
+
+                        if (overlayFrame.Content is IIntelligentAddTask ida) {
+                            ida.ClearAddTask();
+                        }
+                        intelligentTCS.Reset();
+                    }
+                }
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<Intelligent>().Error(ex);
@@ -104,6 +118,7 @@ namespace VirtualPaper.IntelligentPanel {
             overlayFrame.DataContext = null;
             overlayFrame.BackStack.Clear();
             overlayFrame.ForwardStack.Clear();
+            Payload?.Remove(NaviPayloadKey.IntelligentCTS);
 
             maskGrid.Visibility = Visibility.Collapsed;
         }

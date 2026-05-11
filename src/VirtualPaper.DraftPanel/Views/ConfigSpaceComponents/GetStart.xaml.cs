@@ -123,6 +123,9 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             e.AcceptedOperation = DataPackageOperation.Copy;
         }
 
+        public void UpdateCardComponentUI() {
+        }
+
         private readonly GetStartViewModel _viewModel;
         private INavigateComponent _navigateComponent = null!;
     }

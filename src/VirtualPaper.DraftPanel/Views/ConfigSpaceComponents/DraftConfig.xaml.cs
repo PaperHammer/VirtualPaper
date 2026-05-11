@@ -38,14 +38,17 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
                 if (payload.TryGet(NaviPayloadKey.INavigateComponent, out _viewModel._navigateComponent)) {
                     _viewModel.IsFromWorkSpace_AddProj = payload.Get<bool>(NaviPayloadKey.IsFromWorkSpace_AddProj);
                     _viewModel.DraftConfigTCS = payload.Get<TaskCompletionSource<PreProjectData[]?>>(NaviPayloadKey.DraftConfigTCS);
-                    await _viewModel.InitContentAsync(); 
-                    _viewModel.UpdateCardComponentUI();
+                    await _viewModel.InitContentAsync();
                 }
             }
         }
 
         private void OnFilterChanged(object sender, TextChangedEventArgs e) {
             _viewModel.ApplyFilter(tbSearchName.Text);
+        }
+
+        public void UpdateCardComponentUI() {
+            _viewModel.UpdateCardComponentUI();
         }
 
         private readonly DraftConfigViewModel _viewModel;

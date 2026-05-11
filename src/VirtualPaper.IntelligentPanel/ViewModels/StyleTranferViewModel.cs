@@ -9,7 +9,7 @@ using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
     public partial class StyleTranferViewModel : ObservableObject {
-        private readonly ObservableCollection<StyleTransferOutput> Tasks = [];
+        public ObservableCollection<StyleTransferOutput> Tasks { get; } = [];
 
         private bool _hasTasks;
         public bool HasTasks {
@@ -30,15 +30,15 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             Tasks.CollectionChanged += OnTasksCollectionChanged;
         }
 
-        internal bool AddTask(StyleTransferInput input) {
-            if (input == null || string.IsNullOrEmpty(input.SourceFilePath) || string.IsNullOrEmpty(input.StyleFilePath)) return false;
+        internal bool AddTask(StyleTransferInput data) {
+            if (data == null || string.IsNullOrEmpty(data.SourceFilePath) || string.IsNullOrEmpty(data.StyleFilePath)) return false;
 
-            string tmpOutPath_style = Path.Combine(Constants.CommonPaths.TempDir, Path.GetRandomFileName(), Path.GetExtension(input.SourceFilePath));
-            string tmpOutPath_realeargan = Path.Combine(Constants.CommonPaths.TempDir, Path.GetRandomFileName(), Path.GetExtension(input.SourceFilePath));
-            Tasks.Add(new StyleTransferOutput(input.SourceFilePath, input.StyleFilePath));
+            string tmpOutPath_style = Path.Combine(Constants.CommonPaths.TempDir, Path.GetRandomFileName(), Path.GetExtension(data.SourceFilePath));
+            string tmpOutPath_realeargan = Path.Combine(Constants.CommonPaths.TempDir, Path.GetRandomFileName(), Path.GetExtension(data.SourceFilePath));
+            Tasks.Add(new StyleTransferOutput(data.SourceFilePath, data.StyleFilePath));
 
-            AdaIn.TransferStyle(input.SourceFilePath, input.StyleFilePath, tmpOutPath_style);
-            Realesrgan.Upscale(tmpOutPath_style, tmpOutPath_realeargan, input.Width, input.Height);
+            //AdaIn.TransferStyle(data.SourceFilePath, data.StyleFilePath, tmpOutPath_style);
+            //Realesrgan.Upscale(tmpOutPath_style, tmpOutPath_realeargan, data.Width, data.Height);
 
             return true;
         }

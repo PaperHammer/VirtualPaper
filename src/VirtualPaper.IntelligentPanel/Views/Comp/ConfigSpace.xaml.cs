@@ -50,6 +50,7 @@ namespace VirtualPaper.IntelligentPanel.Views.Comp {
                     _viewModel.RefreshCardComponentData();
                 };
                 _viewModel._cardComponent = cardComponent;
+                cardComponent.UpdateCardComponentUI();
             }
         }
 

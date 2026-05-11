@@ -11,7 +11,7 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
     public partial class StyleTransferAddTaskViewModel : ObservableObject {
-        internal TaskCompletionSource<StyleTransferInput?>? IntelligentCTS { get; set; }
+        internal TaskCompletionSource<IIntelliData?>? IntelligentCTS { get; set; }
 
         #region card_component
         public Action? CardUIStateChanged { get; set; }
@@ -173,19 +173,20 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         internal async Task SelectStyleImageAsync() {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[Common.FileType.FImage]]);
+                [.. FileFilter.FileTypeToExtension[FileType.FImage]]);
             if (storage == null || storage.Length < 1) return;
 
             string filePath = storage[0].Path;
             StyleOptions[^1].ImagePath = filePath;
             StyleOptions[^1].FileSize = FileUtil.GetFileSize(filePath);
             StyleOptions[^1].FileExt = Path.GetExtension(filePath)?.ToLower();
+            IsNextEnable = SelectedStyle != null && SelectedStyle.ImagePath != null;
         }
 
         internal async Task SelectSourceImageAsync() {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[Common.FileType.FImage]]);
+                [.. FileFilter.FileTypeToExtension[FileType.FImage]]);
             if (storage == null || storage.Length < 1) return;
 
             string filePath = storage[0].Path;

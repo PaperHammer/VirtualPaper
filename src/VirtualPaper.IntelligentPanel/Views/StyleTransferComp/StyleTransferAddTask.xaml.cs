@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.UIComponent.Data;
 using VirtualPaper.UIComponent.Templates;
@@ -42,8 +43,7 @@ namespace VirtualPaper.IntelligentPanel.Views.StyleTransferComp {
             base.OnNavigatedTo(e);
 
             if (e.Parameter is FrameworkPayload payload) {
-                _viewModel.IntelligentCTS = payload.Get<TaskCompletionSource<string[]?>>(NaviPayloadKey.IntelligentCTS);
-                _viewModel.UpdateCardComponentUI();
+                _viewModel.IntelligentCTS = payload.Get<TaskCompletionSource<IIntelliData?>>(NaviPayloadKey.IntelligentCTS);
             }
         }
 
@@ -71,6 +71,10 @@ namespace VirtualPaper.IntelligentPanel.Views.StyleTransferComp {
                 styleGridView.ItemsSource = null;
                 //styleGridView.SelectedItem = null;
             }
+        }
+
+        public void UpdateCardComponentUI() {
+            _viewModel.UpdateCardComponentUI();
         }
 
         private readonly StyleTransferAddTaskViewModel _viewModel;

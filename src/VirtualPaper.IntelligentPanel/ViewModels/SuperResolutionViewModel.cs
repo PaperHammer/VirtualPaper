@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
@@ -27,7 +28,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             };
         }
 
-        internal void AddTask(string[]? paths) {
+        internal bool AddTask(SuperResolutionInput data) {
             throw new NotImplementedException();
         }
     }

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.Utils.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
 
@@ -18,8 +19,12 @@ namespace VirtualPaper.IntelligentPanel.Views {
             this.DataContext = _viewModel;
         }
 
-        public void AddTask(string[]? paths) {
-            _viewModel.AddTask(paths);
+        public bool AddTask(IIntelliData data) {
+            if (data is SuperResolutionInput input) {
+                return _viewModel.AddTask(input);
+            }
+
+            return false;
         }
 
         private readonly SuperResolutionViewModel _viewModel;

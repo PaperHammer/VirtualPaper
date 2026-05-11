@@ -12,7 +12,6 @@
 	<ItemGroup>
 	  <None Remove="Intelligent.xaml" />
 	  <None Remove="Views\Comp\ConfigSpace.xaml" />
-	  <None Remove="Views\Comp\TaskList.xaml" />
 	  <None Remove="Views\Comp\TasksView.xaml" />
 	  <None Remove="Views\StyleTranfer.xaml" />
 	  <None Remove="Views\SuperResolution.xaml" />
@@ -67,11 +66,6 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Page Update="Views\SuperResolutionComp\SuperResolutionIntroduction.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Page>
-	</ItemGroup>
-	<ItemGroup>
-	  <Page Update="Views\Comp\TaskList.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>

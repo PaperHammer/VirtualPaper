@@ -6,9 +6,202 @@
     xmlns:local="using:VirtualPaper.IntelligentPanel.Views.Comp"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:lcl_models="using:VirtualPaper.IntelligentPanel.Models"
     mc:Ignorable="d">
 
-    <Grid>
+    <Grid Margin="12">
+        <ListView
+            x:Name="TaskListView"
+            ItemsSource="{x:Bind Tasks}"
+            SelectionMode="None"
+            IsItemClickEnabled="False"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            ScrollViewer.VerticalScrollBarVisibility="Auto">
 
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Margin" Value="0,0,0,8"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="lcl_models:StyleTransferOutput">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Expander
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            Padding="20 0"
+                            Background="{ThemeResource CardBackgroundFillColorDefault}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                            BorderThickness="1">
+
+                            <Expander.Header>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <Grid Padding="0 18">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel VerticalAlignment="Center" Spacing="4">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Border
+                                                    CornerRadius="4"
+                                                    Padding="8,3">
+                                                    <TextBlock
+                                                        Text="原图"
+                                                        FontSize="14"
+                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                                </Border>
+                                                <TextBlock
+                                                    Text="{Binding SourcePath}"
+                                                    FontSize="14"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    MaxLines="1"
+                                                    VerticalAlignment="Center"/>
+                                            </StackPanel>
+
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Border
+                                                    CornerRadius="4"
+                                                    Padding="8,3">
+                                                    <TextBlock
+                                                        Text="风格"
+                                                        FontSize="14"
+                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                                </Border>
+                                                <TextBlock
+                                                    Text="{Binding StylePath}"
+                                                    FontSize="14"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    MaxLines="1"
+                                                    VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Margin="20,0,16,0"
+                                            Spacing="2">
+                                            <TextBlock
+                                                Text="{Binding StatusText}"
+                                                FontSize="14"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock
+                                                Text="{Binding ElapsedTime}"
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                Visibility="{Binding IsProcessing, Converter={StaticResource VisibilityByValueConverter}}"/>
+                                        </StackPanel>
+
+                                        <StackPanel
+                                            Grid.Column="2"
+                                            Orientation="Horizontal"
+                                            Spacing="6"
+                                            VerticalAlignment="Center">
+
+                                            <Button
+                                                ToolTipService.ToolTip="预览结果"
+                                                Command="{Binding PreviewCommand}"
+                                                IsEnabled="{Binding IsCompleted}"
+                                                Padding="12,8"
+                                                Background="Transparent"
+                                                BorderThickness="1"
+                                                CornerRadius="4">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <FontIcon Glyph="&#xE8FF;" FontSize="14"/>
+                                                    <TextBlock Text="预览" FontSize="14"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button
+                                                ToolTipService.ToolTip="入库为壁纸"
+                                                Command="{Binding ImportCommand}"
+                                                IsEnabled="{Binding IsCompleted}"
+                                                Padding="12,8"
+                                                Background="Transparent"
+                                                BorderThickness="1"
+                                                CornerRadius="4">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <FontIcon Glyph="&#xE8B7;" FontSize="14"/>
+                                                    <TextBlock Text="入库" FontSize="14"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button
+                                                ToolTipService.ToolTip="保存到本地"
+                                                Command="{Binding SaveCommand}"
+                                                IsEnabled="{Binding IsCompleted}"
+                                                Padding="12,8"
+                                                Background="Transparent"
+                                                BorderThickness="1"
+                                                CornerRadius="4">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <FontIcon Glyph="&#xE74E;" FontSize="14"/>
+                                                    <TextBlock Text="保存" FontSize="14"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button
+                                                ToolTipService.ToolTip="删除任务"
+                                                Command="{Binding RemoveTaskCommand}"
+                                                Padding="12,8"
+                                                CornerRadius="4"
+                                                BorderThickness="1"
+                                                BorderBrush="#FFE0B0B0"
+                                                Background="#20FF4D6A"
+                                                Foreground="#FFD13438">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <FontIcon Glyph="&#xE74D;" FontSize="14" Foreground="#FFD13438"/>
+                                                    <TextBlock Text="删除" FontSize="14" Foreground="#FFD13438"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                    
+                                    <ProgressBar
+                                        Grid.Row="1"
+                                        IsIndeterminate="True"
+                                        Height="3"
+                                        Width="310"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Bottom"/>
+                                </Grid>
+                            </Expander.Header>
+
+                            <Expander.Content>
+                                <Grid
+                                    Padding="16,12"
+                                    MinHeight="120">
+                                    <!-- TODO: 展开后显示原图、风格图、结果图的大图预览 -->
+                                    <TextBlock
+                                        Text="图片预览区域（待实现）"
+                                        FontSize="13"
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                                </Grid>
+                            </Expander.Content>
+                        </Expander>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
     </Grid>
 </UserControl>

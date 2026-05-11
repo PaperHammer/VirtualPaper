@@ -24,6 +24,10 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
         public StyleTranferViewModel() {
             InitEvent();
+
+            Tasks.Add(new StyleTransferOutput(@"C:\Windows\Web\Wallpaper\Windows\img0.jpg", @"C:\Windows\Web\Wallpaper\Windows\img19.jpg"));
+            Tasks.Add(new StyleTransferOutput(@"C:\Windows\Web\Wallpaper\Windows\img0.jpg", @"C:\Windows\Web\Wallpaper\Windows\img19.jpg"));
+            Tasks.Add(new StyleTransferOutput(@"C:\Windows\Web\Wallpaper\Windows\img0.jpg", @"C:\Windows\Web\Wallpaper\Windows\img19.jpg"));
         }
 
         private void InitEvent() {

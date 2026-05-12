@@ -11,12 +11,16 @@ namespace VirtualPaper.ML.SuperResolution {
         static Realesrgan() {
             _modelPath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
+                "..",
+                "..",
                 Constants.WorkingDir.ML_SuperResolution_AI_Models,
                 Utils.Fields.ModelName);
 
             if (File.Exists(_modelPath)) {
-                ArcLog.GetLogger<Realesrgan>().Error("model file not found");
                 LoadModel(_modelPath);
+            }
+            else {
+                ArcLog.GetLogger<Realesrgan>().Error("model file not found");
             }
         }
 
@@ -37,14 +41,15 @@ namespace VirtualPaper.ML.SuperResolution {
         public static void Upscale(string inputImagePath, string outputImagePath, uint width, uint height) {
             if (_session == null) throw new InvalidOperationException("ONNX Session is not initialized.");
 
-            using Mat image = Cv2.ImRead(inputImagePath, ImreadModes.Color);
-            if (image.Empty()) throw new Exception($"Can not read image: {inputImagePath}");
+            DenseTensor<float> inputTensor;
 
-            // OpenCV 默认 BGR，必须转换为 RGB 对齐 AI 模型
-            Cv2.CvtColor(image, image, ColorConversionCodes.BGR2RGB);
-
-            // 转为张量 (1, 3, H, W) 并归一化 0~1
-            DenseTensor<float> inputTensor = ImageToTensor(image);
+            using (Mat image = Cv2.ImRead(inputImagePath, ImreadModes.Color)) {
+                if (image.Empty()) throw new Exception($"Can not read image: {inputImagePath}");
+                // 就地转换改为新 Mat，避免 OpenCV 内部重分配残留
+                using Mat rgbImage = new Mat();
+                Cv2.CvtColor(image, rgbImage, ColorConversionCodes.BGR2RGB);
+                inputTensor = ImageToTensor(rgbImage);
+            } // image、rgbImage 在此释放
 
             // 构造输入，注意 Real-ESRGAN 的输入节点名称一般为 "input" 或 "x"
             // 如果报错 "Invalid Feed Name"，请使用 Netron 查看模型并修改此处的 "input"

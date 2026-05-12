@@ -50,7 +50,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper.DataAssistor\VirtualPaper.DataAssistor.csproj" />
-		<ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

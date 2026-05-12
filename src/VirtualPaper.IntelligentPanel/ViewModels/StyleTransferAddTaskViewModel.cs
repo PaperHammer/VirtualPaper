@@ -37,9 +37,10 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         public async Task OnNextStepClickedAsync() {
             if (string.IsNullOrEmpty(SourceFilePath) || string.IsNullOrEmpty(SelectedStyle.ImagePath)) return;
 
+            string imgFilePath = SelectedStyle.IsCustom ? SelectedStyle.ImagePath! : (await FileUtil.GetAppxFileAsync(SelectedStyle.ImagePath!))?.Path ?? throw new FileNotFoundException("Appx file not found.");
             var input = new StyleTransferData(
-                SourceFilePath, SourceFileSize!, SourceFileExt!, _sourceFileWidth, _sourceFileHeight, 
-                SelectedStyle.ImagePath, SelectedStyle.Name, SelectedStyle.FileSize ?? string.Empty, SelectedStyle.FileExt ?? string.Empty, EstimatedTimeText);
+                SourceFilePath, SourceFileSize!, SourceFileExt!, _sourceFileWidth, _sourceFileHeight,
+                imgFilePath, SelectedStyle.Name, SelectedStyle.FileSize ?? string.Empty, SelectedStyle.FileExt ?? string.Empty);
             IntelligentCTS?.TrySetResult(input);
         }
 
@@ -70,12 +71,6 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         public string? SourceFileResolution {
             get { return _sourceFileResolution; }
             set { _sourceFileResolution = value; OnPropertyChanged(); }
-        }
-
-        private string? _estimatedTimeText;
-        public string? EstimatedTimeText {
-            get { return _estimatedTimeText; }
-            set { _estimatedTimeText = value; OnPropertyChanged(); }
         }
 
         private StyleOptionItem _selectedStyle = null!;
@@ -205,8 +200,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             SourceFilePath = null;
             SourceFileSize = null;
             SourceFileExt = null;
-            SourceFileResolution = null;
-            EstimatedTimeText = null;            
+            SourceFileResolution = null;      
             IsNextEnable = false;
         }
 

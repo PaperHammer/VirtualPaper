@@ -27,7 +27,7 @@
             </ListView.ItemContainerStyle>
 
             <ListView.ItemTemplate>
-                <DataTemplate x:DataType="lcl_models:StyleTransferData">
+                <DataTemplate x:DataType="lcl_models:StyleTransferTaskItem">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
@@ -101,25 +101,8 @@
                                             Spacing="2">
                                             <StackPanel Spacing="2" Orientation="Horizontal">
                                                 <TextBlock
-                                                    Text="耗时: "
-                                                    FontSize="12"
-                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
-                                                <TextBlock
-                                                    Text="{x:Bind EstimatedTime}"
-                                                    FontSize="12"
-                                                    VerticalAlignment="Center"
-                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
-                                            </StackPanel>
-                                            <StackPanel Spacing="2" Orientation="Horizontal">
-                                                <TextBlock
-                                                    Text="预计用时: "
-                                                    FontSize="12"
-                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
-                                                <TextBlock
-                                                    Text="{x:Bind EstimatedTime}"
-                                                    FontSize="12"
-                                                    VerticalAlignment="Center"
-                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                                    Text="{x:Bind StatusText, Mode=OneWay}"
+                                                    FontSize="14"/>
                                             </StackPanel>
                                         </StackPanel>
 
@@ -190,7 +173,10 @@
                                     
                                     <ProgressBar
                                         Grid.Row="1"
-                                        IsIndeterminate="True"
+                                        IsIndeterminate="{x:Bind IsIndeterminate, Mode=OneWay}"
+                                        ShowError="{x:Bind IsShowError, Mode=OneWay}"
+                                        Value="100"
+                                        Foreground="{x:Bind ForegroundColor, Converter={StaticResource ByteArrayToBrushConverter}}"
                                         Height="3"
                                         Width="310"
                                         HorizontalAlignment="Right"
@@ -367,7 +353,7 @@
                                                 BorderThickness="1">
                                                 <Image x:Name="resultImage"
                                                     Stretch="UniformToFill"
-                                                    Source="{x:Bind SourceFilePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
+                                                    Source="{x:Bind ResultFilePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
                                             </Border>
                                         </Grid>
 

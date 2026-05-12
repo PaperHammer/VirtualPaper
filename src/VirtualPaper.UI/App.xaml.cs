@@ -16,6 +16,8 @@ using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
+using VirtualPaper.ML.DepthEstimate;
+using VirtualPaper.ML.DepthEstimate.Interfaces;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Adapter;
@@ -116,6 +118,8 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IGlobalDialogService, GlobalDialogService>()
                 .AddSingleton<IStoragePicker, StoragePickerWrapper>()
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()
+
+                .AddSingleton<IDepthEstimate, MiDaS>()
 
                 .BuildServiceProvider();
 

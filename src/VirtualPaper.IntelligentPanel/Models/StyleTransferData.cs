@@ -1,7 +1,7 @@
 using System;
 
 namespace VirtualPaper.IntelligentPanel.Models {
-    public record StyleTransferData : IIntelliData {
+    public partial record StyleTransferData : IIntelliData {
         public Guid Id { get; }
         public string SourceFilePath { get; }
         public string SourceResolution => $"{Width} * {Height}";
@@ -16,14 +16,11 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public string? ResultFilePath { get; private set; }
 
         public uint Width { get; }
-        public uint Height { get; }
-
-        public string EstimatedTime { get; }
+        public uint Height { get; }        
 
         public StyleTransferData(
             string sourcePath, string sourceFileSize, string sourceFileExt, uint width, uint height,
-            string styleImagePath, string? styleName, string styleFileSize, string styleFileExt,
-            string estimatedTime) {
+            string styleImagePath, string? styleName, string styleFileSize, string styleFileExt) {
             Id = Guid.NewGuid();
             SourceFilePath = sourcePath;
             Width = width;
@@ -34,7 +31,10 @@ namespace VirtualPaper.IntelligentPanel.Models {
             StyleName = styleName;
             StyleFileSize = styleFileSize;
             StyleFileExt = styleFileExt;
-            EstimatedTime = estimatedTime;
+        }
+
+        public void SetResult(string resultPath) {
+            ResultFilePath = resultPath;
         }
     }
 }

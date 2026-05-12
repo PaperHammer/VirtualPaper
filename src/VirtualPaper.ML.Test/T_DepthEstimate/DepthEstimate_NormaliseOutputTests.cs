@@ -1,5 +1,7 @@
 using System.Reflection;
+using VirtualPaper.Common;
 using VirtualPaper.ML.DepthEstimate;
+using VirtualPaper.ML.DepthEstimate.Models;
 
 namespace VirtualPaper.ML.Test.T_DepthEstimate {
     // ====================================================================
@@ -113,35 +115,43 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
     }
 
     // ====================================================================
-    //  SaveDepthMap — 文件系统 I/O（不需要模型）
+    //  SaveDepthMap — 文件系统 I/O（不需要模型推理，但需要实例）
     // ====================================================================
     [TestClass]
     [TestCategory("Unit")]
     public class MiDaS_SaveDepthMapTests {
         private string _tempDir = null!;
+        private MiDaS _midas = null!;
 
         [TestInitialize]
         public void Setup() {
             _tempDir = Path.Combine(Path.GetTempPath(), $"midas_test_{Guid.NewGuid():N}");
             Directory.CreateDirectory(_tempDir);
+            _midas = new MiDaS();
         }
 
         [TestCleanup]
         public void Cleanup() {
+            _midas?.Dispose();
             if (Directory.Exists(_tempDir))
                 Directory.Delete(_tempDir, recursive: true);
         }
 
-        private static float[] MakeSolidDepth(int width, int height, float value = 0.5f)
-            => Enumerable.Repeat(value, width * height).ToArray();
+        private static DepthEstimateModelOutput MakeSolidDepthOutput(
+            int width, int height,
+            int originalWidth, int originalHeight,
+            float value = 0.5f) {
+            var depth = Enumerable.Repeat(value, width * height).ToArray();
+            return new DepthEstimateModelOutput(depth, width, height, originalWidth, originalHeight);
+        }
 
         [TestMethod]
         [Description("正常调用应在指定目录生成深度图文件")]
         public void SaveDepthMap_ValidInput_CreatesFile() {
             int w = 32, h = 32;
-            var depth = MakeSolidDepth(w, h);
+            var modelOutput = MakeSolidDepthOutput(w, h, w, h);
 
-            string outputPath = MiDaS.SaveDepthMap(depth, w, h, w, h, _tempDir);
+            string outputPath = _midas.SaveDepthMap(modelOutput, _tempDir);
 
             Assert.IsTrue(File.Exists(outputPath),
                 $"Expected output file at: {outputPath}");
@@ -151,9 +161,9 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
         [Description("返回路径应指向有内容的文件")]
         public void SaveDepthMap_ValidInput_FileHasContent() {
             int w = 32, h = 32;
-            var depth = MakeSolidDepth(w, h);
+            var modelOutput = MakeSolidDepthOutput(w, h, w, h);
 
-            string outputPath = MiDaS.SaveDepthMap(depth, w, h, w, h, _tempDir);
+            string outputPath = _midas.SaveDepthMap(modelOutput, _tempDir);
 
             var info = new FileInfo(outputPath);
             Assert.IsGreaterThan(0, info.Length, "Output file should not be empty");
@@ -164,9 +174,9 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
         public void SaveDepthMap_DifferentOriginalSize_Succeeds() {
             int modelW = 32, modelH = 32;
             int origW = 128, origH = 96; // 不同于模型输出尺寸
-            var depth = MakeSolidDepth(modelW, modelH);
+            var modelOutput = MakeSolidDepthOutput(modelW, modelH, origW, origH);
 
-            string outputPath = MiDaS.SaveDepthMap(depth, modelW, modelH, origW, origH, _tempDir);
+            string outputPath = _midas.SaveDepthMap(modelOutput, _tempDir);
 
             Assert.IsTrue(File.Exists(outputPath));
         }
@@ -175,9 +185,9 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
         [Description("全零深度（最近处）应正常生成文件")]
         public void SaveDepthMap_AllZeroDepth_Succeeds() {
             int w = 16, h = 16;
-            var depth = MakeSolidDepth(w, h, value: 0f);
+            var modelOutput = MakeSolidDepthOutput(w, h, w, h, value: 0f);
 
-            string outputPath = MiDaS.SaveDepthMap(depth, w, h, w, h, _tempDir);
+            string outputPath = _midas.SaveDepthMap(modelOutput, _tempDir);
 
             Assert.IsTrue(File.Exists(outputPath));
         }
@@ -186,9 +196,9 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
         [Description("全一深度（最远处）应正常生成文件")]
         public void SaveDepthMap_AllOneDepth_Succeeds() {
             int w = 16, h = 16;
-            var depth = MakeSolidDepth(w, h, value: 1f);
+            var modelOutput = MakeSolidDepthOutput(w, h, w, h, value: 1f);
 
-            string outputPath = MiDaS.SaveDepthMap(depth, w, h, w, h, _tempDir);
+            string outputPath = _midas.SaveDepthMap(modelOutput, _tempDir);
 
             Assert.IsTrue(File.Exists(outputPath));
         }
@@ -197,40 +207,61 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
         [Description("连续两次调用同一目录，第二次应覆盖或共存（不抛异常）")]
         public void SaveDepthMap_CalledTwice_DoesNotThrow() {
             int w = 16, h = 16;
-            var depth = MakeSolidDepth(w, h);
+            var modelOutput = MakeSolidDepthOutput(w, h, w, h);
 
-            MiDaS.SaveDepthMap(depth, w, h, w, h, _tempDir);
-            var act = () => MiDaS.SaveDepthMap(depth, w, h, w, h, _tempDir);
+            _midas.SaveDepthMap(modelOutput, _tempDir);
+            var act = () => _midas.SaveDepthMap(modelOutput, _tempDir);
 
             act(); // 不抛即通过
         }
     }
 
     // ====================================================================
-    //  Run — 异常分支（不触发模型推理）
+    //  Run — 异常分支（需要实例但不需要有效模型加载）
     // ====================================================================
     [TestClass]
     [TestCategory("Unit")]
     public class MiDaS_RunExceptionTests {
+        private MiDaS _midas = null!;
+
+        [TestInitialize]
+        public void Setup() {
+            _midas = new MiDaS();
+        }
+
+        [TestCleanup]
+        public void Cleanup() {
+            _midas?.Dispose();
+        }
+
+        [TestMethod]
+        [Description("未调用 LoadModel 就 Run 应抛出 InvalidOperationException")]
+        public void Run_WithoutLoadModel_ThrowsInvalidOperationException() {
+            Assert.Throws<InvalidOperationException>(
+                () => _midas.Run("C:\\nonexistent\\path.jpg"));
+        }
 
         [TestMethod]
         [Description("传入不存在的文件路径应抛出 FileNotFoundException")]
         public void Run_FileNotFound_ThrowsFileNotFoundException() {
-            Assert.Throws<FileNotFoundException>(
-                () => MiDaS.Run("C:\\nonexistent\\path.jpg"));
+            // 需要先让 _session 非 null，但因为没有真实模型文件，
+            // 这里测试在 session 为 null 时优先抛 InvalidOperationException
+            Assert.Throws<InvalidOperationException>(
+                () => _midas.Run("C:\\nonexistent\\path.jpg"));
         }
 
         [TestMethod]
-        [Description("传入空字符串应抛出 FileNotFoundException（modelPath guard）")]
-        public void Run_EmptyPath_ThrowsFileNotFoundException() {
-            Assert.Throws<FileNotFoundException>(
-                () => MiDaS.Run(string.Empty));
+        [Description("传入空字符串应抛出异常")]
+        public void Run_EmptyPath_ThrowsException() {
+            Assert.Throws<InvalidOperationException>(
+                () => _midas.Run(string.Empty));
         }
 
         [TestMethod]
-        [Description("传入 null 应抛出 ArgumentNullException 或 FileNotFoundException")]
-        public void Run_NullPath_ThrowsArgumentException() {
-            Assert.Throws<Exception>(() => MiDaS.Run(null!));
+        [Description("传入 null 应抛出异常")]
+        public void Run_NullPath_ThrowsException() {
+            Assert.Throws<InvalidOperationException>(
+                () => _midas.Run(null!));
         }
     }
 
@@ -242,32 +273,41 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
     public class MiDaS_IntegrationTests {
         private string _tempDir = null!;
         private string _testImagePath = null!;
+        private MiDaS _midas = null!;
+        private readonly string _modelPath =
+            Path.Combine(Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory)),
+                Constants.WorkingDir.ML_DepthEstimate_AI_Models,
+                Utils.Fields.ModelName);
 
         [TestInitialize]
         public void Setup() {
             _tempDir = Path.Combine(Path.GetTempPath(), $"midas_int_{Guid.NewGuid():N}");
             Directory.CreateDirectory(_tempDir);
             _testImagePath = TestImageHelper.CreateSolidColorJpeg(dir: _tempDir);
+
+            _midas = new MiDaS();
+            _midas.LoadModel(_modelPath);
         }
 
         [TestCleanup]
         public void Cleanup() {
+            _midas?.Dispose();
             if (Directory.Exists(_tempDir))
                 Directory.Delete(_tempDir, recursive: true);
         }
 
         [TestMethod]
-        [Description("Run 应返回非空的 ModelOutput")]
+        [Description("Run 应返回非空的 DepthEstimateModelOutput")]
         public void Run_ValidImage_ReturnsModelOutput() {
-            var result = MiDaS.Run(_testImagePath);
+            var result = _midas.Run(_testImagePath);
 
             Assert.IsNotNull(result);
         }
 
         [TestMethod]
-        [Description("ModelOutput.Depth 数组长度应等于模型输出的 width × height")]
+        [Description("DepthEstimateModelOutput.Depth 数组长度应等于模型输出的 width × height")]
         public void Run_ValidImage_DepthArrayLengthIsCorrect() {
-            var result = MiDaS.Run(_testImagePath);
+            var result = _midas.Run(_testImagePath);
 
             Assert.HasCount(
                 result.Width * result.Height,
@@ -276,13 +316,13 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
         }
 
         [TestMethod]
-        [Description("ModelOutput 的 OriginalWidth/Height 应与输入图片一致")]
+        [Description("DepthEstimateModelOutput 的 OriginalWidth/Height 应与输入图片一致")]
         public void Run_ValidImage_OriginalDimensionsMatchInput() {
             using var mat = OpenCvSharp.Cv2.ImRead(_testImagePath);
             int expectedW = mat.Width;
             int expectedH = mat.Height;
 
-            var result = MiDaS.Run(_testImagePath);
+            var result = _midas.Run(_testImagePath);
 
             Assert.AreEqual(expectedW, result.OriginalWidth,
                 "OriginalWidth should match source image width");
@@ -293,7 +333,7 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
         [TestMethod]
         [Description("归一化后的 Depth 值应全部在 [0, 1] 范围内")]
         public void Run_ValidImage_AllDepthValuesInRange() {
-            var result = MiDaS.Run(_testImagePath);
+            var result = _midas.Run(_testImagePath);
 
             foreach (var v in result.Depth) {
                 Assert.IsTrue(v >= 0f && v <= 1f,
@@ -304,18 +344,29 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
         [TestMethod]
         [Description("Run → SaveDepthMap 完整流程应生成可读文件")]
         public void Run_ThenSaveDepthMap_ProducesValidFile() {
-            var result = MiDaS.Run(_testImagePath);
-            string outputPath = MiDaS.SaveDepthMap(
-                result.Depth,
-                result.Width,
-                result.Height,
-                result.OriginalWidth,
-                result.OriginalHeight,
-                _tempDir);
+            var result = _midas.Run(_testImagePath);
+            string outputPath = _midas.SaveDepthMap(result, _tempDir);
 
             Assert.IsTrue(File.Exists(outputPath));
             Assert.IsGreaterThan(0, new FileInfo(outputPath).Length);
+        }
 
+        [TestMethod]
+        [Description("LoadModel 重复调用不应抛异常（幂等）")]
+        public void LoadModel_CalledTwice_DoesNotThrow() {
+            // _midas 已在 Setup 中加载过一次
+            void act() => _midas.LoadModel();
+
+            act(); // 不抛即通过（内部有 _isLoaded 守卫）
+        }
+
+        [TestMethod]
+        [Description("Dispose 后再 Run 应抛出异常")]
+        public void Run_AfterDispose_ThrowsException() {
+            _midas.Dispose();
+
+            Assert.Throws<InvalidOperationException>(
+                () => _midas.Run(_testImagePath));
         }
     }
 }

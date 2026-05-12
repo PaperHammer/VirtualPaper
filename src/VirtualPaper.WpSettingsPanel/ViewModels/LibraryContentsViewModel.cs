@@ -7,16 +7,19 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.CommonModels;
+using VirtualPaper.ML.DepthEstimate.Interfaces;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
@@ -229,12 +232,17 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                         if (rtype == RuntimeType.RUnknown) return;
 
+                        string? depthFilePath = null;
+                        if (rtype == RuntimeType.RImage3D) {
+                            depthFilePath = SetDepthPath(data);
+                        }
+
                         if (_previews.TryGetValue((data.WallpaperUid, rtype), out var preview)) {
                             preview.Activate();
                             return;
                         }
 
-                        var jsonString = await _wpControlClient.GetPlayerStartArgsAsync(data, rtype, token);
+                        var jsonString = await _wpControlClient.GetPlayerStartArgsAsync(data, rtype, depthFilePath, token);
                         var previewWindow = rtype switch {
                             RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo => new PreviewWithWeb(jsonString),
                             _ or RuntimeType.RUnknown => throw new NotImplementedException(),
@@ -247,8 +255,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                             Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
                                 _wpSettingsViewModel.Monitors[_wpSettingsViewModel.SelectedMonitorIndex],
-                                data,
+                                data,                                
                                 rtype,
+                                depthFilePath,
                                 token);
                             if (!response.IsFinished) {
                                 GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
@@ -286,10 +295,16 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                         if (rtype == RuntimeType.RUnknown) return;
 
+                        string? depthFilePath = null;
+                        if (rtype == RuntimeType.RImage3D) {
+                            depthFilePath = SetDepthPath(data);
+                        }
+
                         Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
                             _wpSettingsViewModel.Monitors[_wpSettingsViewModel.SelectedMonitorIndex],
                             data,
                             rtype,
+                            depthFilePath,
                             token);
                         if (!response.IsFinished) {
                             GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
@@ -305,6 +320,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         GlobalMessageUtil.ShowException(ex);
                     }
                 }, cts: ctsApply);
+        }
+
+        private string? SetDepthPath(IWpBasicData data) {
+            var midas = AppServiceLocator.Services.GetRequiredService<IDepthEstimate>();
+            midas.LoadModel();
+            var output = midas.Run(data.FilePath);
+            string depthFilePath = midas.SaveDepthMap(output, data.FolderPath);
+            return depthFilePath;
         }
 
         internal async Task ApplyToLockBGAsync(IWpBasicData data) {
@@ -595,6 +618,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
         #endregion
+
+        
 
         private struct ImportValue(string filePath, FileType ftype) {
             internal string FilePath { get; set; } = filePath;

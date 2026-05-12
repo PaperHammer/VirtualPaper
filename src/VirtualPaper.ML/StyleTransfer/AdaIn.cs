@@ -6,16 +6,20 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 
 namespace VirtualPaper.ML.StyleTransfer {
-    public class AdaIn : IDisposable {
+    public class AdaIn {
         static AdaIn() {
             _modelPath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
+                "..",
+                "..",
                 Constants.WorkingDir.ML_StyleTransfer_AI_Models,
                 Utils.Fields.ModelName);
 
             if (File.Exists(_modelPath)) {
-                ArcLog.GetLogger<AdaIn>().Error("model file not found");
                 LoadModel(_modelPath);
+            }
+            else {
+                ArcLog.GetLogger<AdaIn>().Error("model file not found");
             }
         }
 
@@ -57,6 +61,12 @@ namespace VirtualPaper.ML.StyleTransfer {
             // 后处理：将 Tensor 转换回 OpenCV Mat 并保存
             using Mat resultImage = TensorToImage(outputTensor);
             resultImage.ImWrite(outputImagePath);
+
+            contentTensor = null!;
+            styleTensor = null!;
+            alphaTensor = null!;
+            GC.Collect(2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+            GC.WaitForPendingFinalizers();
         }
 
         #region OpenCV 图像预处理与后处理
@@ -138,24 +148,6 @@ namespace VirtualPaper.ML.StyleTransfer {
             }
 
             return image;
-        }
-        #endregion
-
-        #region dispose
-        private bool _isDisposed;
-        protected virtual void Dispose(bool disposing) {
-            if (!_isDisposed) {
-                if (disposing) {
-                    _session?.Dispose();
-                    _session = null;
-                }
-                _isDisposed = true;
-            }
-        }
-
-        public void Dispose() {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
         #endregion
 

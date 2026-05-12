@@ -305,10 +305,27 @@ namespace VirtualPaper.Common.Utils.Files {
             }
         }
 
-        public static async Task<string> GetAppxFileSizeAsync(string msAppxPath) {
+        public static async Task<StorageFile?> GetAppxFileAsync(string msAppxPath) {
             try {
                 var uri = new Uri(msAppxPath);
-                var file = await StorageFile.GetFileFromApplicationUriAsync(uri);
+                string relativePath = uri.AbsolutePath.TrimStart('/');
+
+                string filePath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    relativePath.Replace('/', Path.DirectorySeparatorChar));
+                var sf = await StorageFile.GetFileFromPathAsync(filePath);
+                //var file = await StorageFile.GetFileFromApplicationUriAsync(uri); //todo?
+                return sf;
+            }
+            catch {
+                return null;
+            }
+        }
+
+        public static async Task<string> GetAppxFileSizeAsync(string msAppxPath) {
+            try {
+                var file = await GetAppxFileAsync(msAppxPath);
+                if (file == null) return "0 bytes";
                 var properties = await file.GetBasicPropertiesAsync();
                 return SizeSuffix((long)properties.Size);
             }
@@ -325,8 +342,7 @@ namespace VirtualPaper.Common.Utils.Files {
         }
 
         //ref: https://stackoverflow.com/questions/14488796/does-net-provide-an-easy-way-convert-bytes-to-kb-mb-gb-etc
-        static readonly string[] SizeSuffixes =
-                           ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+        static readonly string[] SizeSuffixes = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
         public static string SizeSuffix(long value, int decimalPlaces = 1) {
             ArgumentOutOfRangeException.ThrowIfNegative(decimalPlaces);
             if (value < 0) { return "-" + SizeSuffix(-value, decimalPlaces); }

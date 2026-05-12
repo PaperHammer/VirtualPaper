@@ -341,21 +341,5 @@
                 </StackPanel>
             </StackPanel>
         </Grid>
-
-        <StackPanel 
-            Grid.Row="1"
-            Margin="0 0 0 24"
-            Orientation="Horizontal" 
-            Spacing="8"
-            VerticalAlignment="Center"
-            HorizontalAlignment="Right"
-            Visibility="{x:Bind _viewModel.EstimatedTimeText, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}">
-            <FontIcon Glyph="&#xE823;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-            <TextBlock 
-                Text="{x:Bind _viewModel.EstimatedTimeText, Mode=OneWay}"
-                FontSize="13"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                VerticalAlignment="Center"/>
-        </StackPanel>
     </Grid>
 </arc:ArcPage>

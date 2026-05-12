@@ -1,37 +1,47 @@
-using System.Diagnostics;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.ML.DepthEstimate.Interfaces;
 using VirtualPaper.ML.DepthEstimate.Models;
 
 namespace VirtualPaper.ML.DepthEstimate {
-    public partial class MiDaS : IDisposable {
-        static MiDaS() {
-            _modelPath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
+    public partial class MiDaS : IDepthEstimate {
+        public string ModelPath { get; private set; } = null!;
+
+        public MiDaS() { }
+
+        public void LoadModel(string? path = null) {
+            if (_isLoaded) {
+                ArcLog.GetLogger<MiDaS>().Info("Model already loaded, skipping.");
+                return;
+            }
+
+            ModelPath = path ?? Path.Combine(
+                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..")),
                 Constants.WorkingDir.ML_DepthEstimate_AI_Models,
                 Utils.Fields.ModelName);
 
-            if (File.Exists(_modelPath)) {
-                ArcLog.GetLogger<MiDaS>().Error("model file not found");
-                LoadModel(_modelPath);
-            }
+            _session?.Dispose();
+            _session = new InferenceSession(ModelPath);
+            ArcLog.GetLogger<MiDaS>().Info($"Model version: {_session.ModelMetadata.Version}");
+
+            _modelName = _session.InputMetadata.Keys.First();
+            _targetWidth = _session.InputMetadata[_modelName].Dimensions[2];
+            _targetHeight = _session.InputMetadata[_modelName].Dimensions[3];
+            _isLoaded = true;
         }
 
-        public static ModelOutput Run(string imagePath) {
-            if (string.IsNullOrEmpty(_modelPath))
-                throw new FileNotFoundException("ONNX file not provided");
-
-            if (!File.Exists(imagePath))
-                throw new FileNotFoundException(imagePath);
+        public DepthEstimateModelOutput Run(string imagePath) {
+            if (_session == null) throw new InvalidOperationException("ONNX Session is not initialized.");
+            if (string.IsNullOrEmpty(ModelPath)) throw new FileNotFoundException("ONNX file not provided");
+            if (!File.Exists(imagePath)) throw new FileNotFoundException(imagePath);
 
             using var image = new Mat(imagePath, ImreadModes.AnyColor);
-            if (image.Empty())
-                throw new ArgumentException("Failed to load the image.");
+            if (image.Empty()) throw new ArgumentException("Failed to load the image.");
 
-            var inputModel = new ModelInput(imagePath, image.Width, image.Height);
+            var inputModel = new DepthEstimateModelInput(imagePath, image.Width, image.Height);
             // Resize the image
             Cv2.Resize(image, image, new Size(_targetWidth, _targetHeight), (double)InterpolationFlags.Linear);
 
@@ -58,35 +68,38 @@ namespace VirtualPaper.ML.DepthEstimate {
             var outputModel = results[0].AsEnumerable<float>().ToArray();
             var normalisedOutput = NormaliseOutput(outputModel);
 
-            return new ModelOutput(normalisedOutput, _targetWidth, _targetHeight, inputModel.Width, inputModel.Height);
+            return new DepthEstimateModelOutput(normalisedOutput, _targetWidth, _targetHeight, inputModel.Width, inputModel.Height);
         }
 
-        public static string SaveDepthMap(
-            float[] normalisedOutput,
-            int width,
-            int height,
-            int originalWidth,
-            int originalHeight,
-            string outputFolder) {
+        private static float[] NormaliseOutput(float[] data) {
+            var depthMax = data.Max();
+            var depthMin = data.Min();
+            var depthRange = depthMax - depthMin;
+
+            var normalisedOutput = data.Select(d => (d - depthMin) / depthRange)
+                .Select(n => ((1f - n) * 0f + n * 1f)).ToArray();
+            return normalisedOutput;
+        }
+
+        public string SaveDepthMap(DepthEstimateModelOutput modelOutput, string outputFolder) {
             string outputFilePath = Path.Combine(outputFolder, Utils.Fields.OutputFileName);
 
-            using Mat depthMap = new(height, width, MatType.CV_8UC1); // 使用 CV_8UC1 代表 1 个 8 位通道
-                                                                      // 将归一化后的深度数据复制到 Mat 中
-            for (int i = 0; i < normalisedOutput.Length; i++) {
+            using Mat depthMap = new(modelOutput.Height, modelOutput.Width, MatType.CV_8UC1); // 使用 CV_8UC1 代表 1 个 8 位通道
+                                                                                              // 将归一化后的深度数据复制到 Mat 中
+            for (int i = 0; i < modelOutput.Depth.Length; i++) {
                 // 计算像素位置
-                int x = i % width;
-                int y = i / width;
+                int x = i % modelOutput.Width;
+                int y = i / modelOutput.Width;
 
                 // 将归一化的浮点数值映射到 0-255 的整数范围
-                byte value = (byte)(normalisedOutput[i] * 255);
-
+                byte value = (byte)(modelOutput.Depth[i] * 255);
                 // 设置每个通道的值
                 depthMap.At<Vec3b>(y, x)[0] = value; // B
                 depthMap.At<Vec3b>(y, x)[1] = value; // G
                 depthMap.At<Vec3b>(y, x)[2] = value; // R
             }
 
-            Cv2.Resize(depthMap, depthMap, new Size(originalWidth, originalHeight), (double)InterpolationFlags.Linear);
+            Cv2.Resize(depthMap, depthMap, new Size(modelOutput.OriginalWidth, modelOutput.OriginalHeight), (double)InterpolationFlags.Linear);
 
             //// Optionally display the depth map
             //using (Window win = new("Depth Map"))
@@ -103,35 +116,14 @@ namespace VirtualPaper.ML.DepthEstimate {
             return outputFilePath;
         }
 
-        private static float[] NormaliseOutput(float[] data) {
-            var depthMax = data.Max();
-            var depthMin = data.Min();
-            var depthRange = depthMax - depthMin;
-
-            var normalisedOutput = data.Select(d => (d - depthMin) / depthRange)
-                .Select(n => ((1f - n) * 0f + n * 1f)).ToArray();
-
-            return normalisedOutput;
-        }
-
-        public static void LoadModel(string modelPath) {
-            _session?.Dispose();
-            var options = new SessionOptions();
-            // options.AppendExecutionProvider_CUDA(); 
-            _session = new InferenceSession(modelPath, options);
-            Debug.WriteLine($"Model version: {_session.ModelMetadata.Version}");
-
-            _modelName = _session.InputMetadata.Keys.First();
-            _targetWidth = _session.InputMetadata[_modelName].Dimensions[2];
-            _targetHeight = _session.InputMetadata[_modelName].Dimensions[3];
-        }
-
         #region
         private bool _isDisposed;
         protected virtual void Dispose(bool disposing) {
             if (!_isDisposed) {
                 if (disposing) {
                     _session?.Dispose();
+                    _session = null;
+                    _isLoaded = false;
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
@@ -154,9 +146,9 @@ namespace VirtualPaper.ML.DepthEstimate {
         }
         #endregion
 
-        private static InferenceSession? _session; // 执行模型推理
-        private static string _modelName = string.Empty;
-        private readonly static string _modelPath = string.Empty;
-        private static int _targetWidth, _targetHeight;
+        private InferenceSession? _session; // 执行模型推理
+        private string _modelName = string.Empty;
+        private int _targetWidth, _targetHeight;
+        private volatile bool _isLoaded;
     }
 }

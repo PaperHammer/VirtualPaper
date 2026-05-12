@@ -32,6 +32,11 @@
 		<ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="SuperResolution\Models\" />
+	  <Folder Include="SuperResolution\Interfaces\" />
+	</ItemGroup>
+
 	<Target Name="CopyToVirtualPaper" AfterTargets="Build">
 		<ItemGroup>
 			<DepthModels Include="$(ProjectDir)DepthEstimate\ai_models\**\*" />

@@ -27,19 +27,19 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
             Tasks.Add(new StyleTransferData(
                 @"C:\Windows\Web\Wallpaper\Windows\img0.jpg", "9.5 MB", ".jpg", 3840, 2160,
-                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg"));
+                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg", "09:48"));
             Tasks.Add(new StyleTransferData(
                 @"C:\Windows\Web\Wallpaper\Windows\img0.jpg", "9.5 MB", ".jpg", 3840, 2160,
-                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg"));
+                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg", "09:48"));
             Tasks.Add(new StyleTransferData(
                 @"C:\Windows\Web\Wallpaper\Windows\img0.jpg", "9.5 MB", ".jpg", 3840, 2160,
-                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg"));
+                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg", "09:48"));
             Tasks.Add(new StyleTransferData(
                 @"C:\Windows\Web\Wallpaper\Windows\img0.jpg", "9.5 MB", ".jpg", 3840, 2160,
-                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg"));
+                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg", "09:48"));
             Tasks.Add(new StyleTransferData(
                 @"C:\Windows\Web\Wallpaper\Windows\img0.jpg", "9.5 MB", ".jpg", 3840, 2160,
-                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg"));
+                 @"C:\Windows\Web\Wallpaper\Windows\img19.jpg", null, "458 KB", ".jpg", "09:48"));
         }
 
         private void InitEvent() {

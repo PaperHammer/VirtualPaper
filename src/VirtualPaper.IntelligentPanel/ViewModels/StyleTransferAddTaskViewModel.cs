@@ -39,7 +39,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
             var input = new StyleTransferData(
                 SourceFilePath, SourceFileSize!, SourceFileExt!, _sourceFileWidth, _sourceFileHeight, 
-                SelectedStyle.ImagePath, SelectedStyle.Name, SelectedStyle.FileSize ?? string.Empty, SelectedStyle.FileExt ?? string.Empty);
+                SelectedStyle.ImagePath, SelectedStyle.Name, SelectedStyle.FileSize ?? string.Empty, SelectedStyle.FileExt ?? string.Empty, EstimatedTimeText);
             IntelligentCTS?.TrySetResult(input);
         }
 

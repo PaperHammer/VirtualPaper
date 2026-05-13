@@ -18,6 +18,10 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.ML.DepthEstimate;
 using VirtualPaper.ML.DepthEstimate.Interfaces;
+using VirtualPaper.ML.StyleTransfer;
+using VirtualPaper.ML.StyleTransfer.Interfaces;
+using VirtualPaper.ML.SuperResolution;
+using VirtualPaper.ML.SuperResolution.Interfaces;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Adapter;
@@ -120,6 +124,8 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()
 
                 .AddSingleton<IDepthEstimate, MiDaS>()
+                .AddSingleton<IStyleTransfer, AdaIn>()
+                .AddSingleton<ISuperResolution, Realesrgan>()
 
                 .BuildServiceProvider();
 

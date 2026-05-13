@@ -1,10 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace VirtualPaper.ML.StyleTransfer.Interfaces {
-    public interface IStyleTransfer {
+    public interface IStyleTransfer : IDisposable {
+        string ModelPath { get; }
+        
+        void LoadModel(string? path = null);
+        string RunAndSave(
+            string contentImagePath,
+            string styleImagePath,
+            string outputFilePath,
+            float alpha = 1.0f,
+            int contentSize = 512,
+            int styleSize = 512);
     }
 }

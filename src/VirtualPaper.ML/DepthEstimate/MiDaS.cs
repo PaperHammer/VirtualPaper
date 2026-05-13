@@ -24,7 +24,10 @@ namespace VirtualPaper.ML.DepthEstimate {
                 Utils.Fields.ModelName);
 
             _session?.Dispose();
-            _session = new InferenceSession(ModelPath);
+            using var options = new SessionOptions();
+            options.EnableCpuMemArena = false;
+            options.EnableMemoryPattern = false;
+            _session = new InferenceSession(ModelPath, options);
             ArcLog.GetLogger<MiDaS>().Info($"Model version: {_session.ModelMetadata.Version}");
 
             _modelName = _session.InputMetadata.Keys.First();

@@ -5,12 +5,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.IntelligentPanel.Models;
-using VirtualPaper.ML.StyleTransfer;
-using VirtualPaper.ML.SuperResolution;
+using VirtualPaper.ML.StyleTransfer.Interfaces;
+using VirtualPaper.ML.SuperResolution.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 
@@ -74,8 +76,20 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 string tmpOutPath_realesrgan = Path.Combine(tempDir, $"upscaled{ext}");
 
                 await Task.Run(() => {
-                    AdaIn.TransferStyle(data.SourceFilePath, data.StyleFilePath, tmpOutPath_style);
-                    Realesrgan.Upscale(tmpOutPath_style, tmpOutPath_realesrgan, data.Width, data.Height);
+                    var adain = AppServiceLocator.Services.GetRequiredService<IStyleTransfer>();
+                    adain.LoadModel();
+                    adain.RunAndSave(
+                        data.SourceFilePath,
+                        data.StyleFilePath,
+                        tmpOutPath_style);
+
+                    var superResolution = AppServiceLocator.Services.GetRequiredService<ISuperResolution>();
+                    superResolution.LoadModel();
+                    superResolution.RunAndSave(
+                        tmpOutPath_style,
+                        tmpOutPath_realesrgan,
+                        (uint)data.Width,
+                        (uint)data.Height);
                 });
 
                 stopwatch.Stop();
@@ -101,7 +115,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
         private void RemoveTask(StyleTransferTaskItem taskItem) {
             Tasks.Remove(taskItem);
-             if (taskItem.Data.ResultFilePath != null) _ = FileUtil.TryDeleteFileAsync(taskItem.Data.ResultFilePath);
+            if (taskItem.Data.ResultFilePath != null) _ = FileUtil.TryDeleteFileAsync(taskItem.Data.ResultFilePath);
         }
 
         private void PreviewResult(StyleTransferTaskItem taskItem) {

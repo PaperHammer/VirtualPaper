@@ -1,157 +1,244 @@
-using System.Diagnostics;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.ML.StyleTransfer.Interfaces;
 
 namespace VirtualPaper.ML.StyleTransfer {
-    public class AdaIn {
-        static AdaIn() {
-            _modelPath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "..",
-                "..",
+    public class AdaIn : IStyleTransfer {
+        public string ModelPath { get; private set; } = null!;
+
+        public AdaIn() { }
+
+        public void LoadModel(string? path = null) {
+            if (_isLoaded) {
+                ArcLog.GetLogger<AdaIn>().Info("Model already loaded, skipping.");
+                return;
+            }
+
+            ModelPath = path ?? Path.Combine(
+                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..")),
                 Constants.WorkingDir.ML_StyleTransfer_AI_Models,
                 Utils.Fields.ModelName);
 
-            if (File.Exists(_modelPath)) {
-                LoadModel(_modelPath);
-            }
-            else {
-                ArcLog.GetLogger<AdaIn>().Error("model file not found");
-            }
-        }
+            if (!File.Exists(ModelPath))
+                throw new FileNotFoundException($"Model file not found: {ModelPath}");
 
-        public static void LoadModel(string modelPath) {
             _session?.Dispose();
-            var options = new SessionOptions();
-            // options.AppendExecutionProvider_CUDA(); 
-            _session = new InferenceSession(modelPath, options);
-            Debug.WriteLine($"Model version: {_session.ModelMetadata.Version}");
-        }
+            using var options = new SessionOptions();
+            options.EnableCpuMemArena = false;
+            options.EnableMemoryPattern = false;
+            // options.AppendExecutionProvider_CUDA();
+            _session = new InferenceSession(ModelPath, options);
+            ArcLog.GetLogger<AdaIn>().Info($"Model version: {_session.ModelMetadata.Version}");
 
-        public static void TransferStyle(string contentImagePath, string styleImagePath, string outputImagePath, float alpha = 1.0f, int contentSize = 512, int styleSize = 512) {
+            _isLoaded = true;
+        }        
+
+        /// <summary>
+        /// 如果仍然需要分步调用的接口
+        /// </summary>
+        public string RunAndSave(
+            string contentImagePath,
+            string styleImagePath,
+            string outputFilePath,
+            float alpha = 1.0f,
+            int contentSize = 512,
+            int styleSize = 512) {
+
             if (_session == null) throw new InvalidOperationException("ONNX Session is not initialized.");
+            if (string.IsNullOrEmpty(ModelPath)) throw new FileNotFoundException("ONNX file not provided.");
+            if (!File.Exists(contentImagePath)) throw new FileNotFoundException($"Content image not found: {contentImagePath}");
+            if (!File.Exists(styleImagePath)) throw new FileNotFoundException($"Style image not found: {styleImagePath}");
 
-            // 预处理：加载并缩放图像 (注意使用 using 释放底层非托管内存)
-            using Mat contentImage = LoadAndResizeImage(contentImagePath, contentSize);
-            using Mat styleImage = LoadAndResizeImage(styleImagePath, styleSize);
+            int originalWidth, originalHeight;
 
-            // 转换为 Tensor
-            DenseTensor<float> contentTensor = ImageToTensor(contentImage);
-            DenseTensor<float> styleTensor = ImageToTensor(styleImage);
+            using var contentImage = LoadAndResizeImage(contentImagePath, contentSize);
+            using var styleImage = LoadAndResizeImage(styleImagePath, styleSize);
 
-            // 准备 Alpha 控制变量 (Shape: [1])
-            var alphaTensor = new DenseTensor<float>(new float[] { alpha }, new int[] { 1 });
+            originalWidth = contentImage.Width;
+            originalHeight = contentImage.Height;
 
-            // 构造输入
-            var inputs = new List<NamedOnnxValue> {
-                NamedOnnxValue.CreateFromTensor("content", contentTensor),
-                NamedOnnxValue.CreateFromTensor("style", styleTensor),
-                NamedOnnxValue.CreateFromTensor("alpha", alphaTensor)
-            };
+            int contentPixels = contentImage.Height * contentImage.Width * 3;
+            int stylePixels = styleImage.Height * styleImage.Width * 3;
 
-            // 执行推理
-            using IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = _session.Run(inputs);
+            float[] contentBuffer = System.Buffers.ArrayPool<float>.Shared.Rent(contentPixels);
+            float[] styleBuffer = System.Buffers.ArrayPool<float>.Shared.Rent(stylePixels);
 
-            // 获取输出结果
-            var outputTensor = results.First().AsTensor<float>();
+            try {
+                var contentTensor = ImageToTensor(contentImage, contentBuffer);
+                var styleTensor = ImageToTensor(styleImage, styleBuffer);
+                var alphaTensor = new DenseTensor<float>(new float[] { alpha }, new int[] { 1 });
 
-            // 后处理：将 Tensor 转换回 OpenCV Mat 并保存
-            using Mat resultImage = TensorToImage(outputTensor);
-            resultImage.ImWrite(outputImagePath);
+                var inputs = new List<NamedOnnxValue> {
+                    NamedOnnxValue.CreateFromTensor("content", contentTensor),
+                    NamedOnnxValue.CreateFromTensor("style", styleTensor),
+                    NamedOnnxValue.CreateFromTensor("alpha", alphaTensor)
+                };
 
-            contentTensor = null!;
-            styleTensor = null!;
-            alphaTensor = null!;
-            GC.Collect(2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
-            GC.WaitForPendingFinalizers();
+                using var results = _session.Run(inputs);
+                var outputTensor = results[0].AsTensor<float>();
+
+                int outHeight = outputTensor.Dimensions[2];
+                int outWidth = outputTensor.Dimensions[3];
+
+                string result = TensorToImageAndSave(
+                    outputTensor, outWidth, outHeight,
+                    originalWidth, originalHeight,
+                    outputFilePath);
+
+                return result;
+            }
+            finally {
+                System.Buffers.ArrayPool<float>.Shared.Return(contentBuffer, clearArray: false);
+                System.Buffers.ArrayPool<float>.Shared.Return(styleBuffer, clearArray: false);
+            }
         }
 
-        #region OpenCV 图像预处理与后处理
+        #region OpenCV Image Processing
 
         private static Mat LoadAndResizeImage(string imagePath, int targetSize) {
-            // 读取图像 (OpenCV 默认是 BGR)
-            Mat image = Cv2.ImRead(imagePath, ImreadModes.Color);
+            var image = Cv2.ImRead(imagePath, ImreadModes.Color);
+            if (image.Empty()) {
+                image.Dispose();
+                throw new ArgumentException($"Failed to load image: {imagePath}");
+            }
 
-            // 转换为 RGB (对齐 PyTorch 的颜色通道)
             Cv2.CvtColor(image, image, ColorConversionCodes.BGR2RGB);
 
-            // 等比缩放 (最短边缩放至 targetSize)
-            if (targetSize > 0) {
-                int w = image.Width;
-                int h = image.Height;
-                int newW, newH;
+            if (targetSize <= 0)
+                return image;
 
-                if (w < h) {
-                    newW = targetSize;
-                    newH = (int)(h * ((float)targetSize / w));
-                }
-                else {
-                    newH = targetSize;
-                    newW = (int)(w * ((float)targetSize / h));
-                }
+            int w = image.Width;
+            int h = image.Height;
+            int newW, newH;
 
-                Mat resizedImage = new Mat();
-                // 使用双线性插值
-                Cv2.Resize(image, resizedImage, new Size(newW, newH), 0, 0, InterpolationFlags.Linear);
-                image.Dispose(); // 释放原图内存
-                return resizedImage;
+            if (w < h) {
+                newW = targetSize;
+                newH = (int)(h * ((float)targetSize / w));
+            }
+            else {
+                newH = targetSize;
+                newW = (int)(w * ((float)targetSize / h));
             }
 
-            return image;
+            using var original = image;
+            var resized = new Mat();
+            Cv2.Resize(original, resized, new Size(newW, newH), 0, 0, InterpolationFlags.Linear);
+            return resized;
         }
 
-        private static DenseTensor<float> ImageToTensor(Mat img) {
-            var tensor = new DenseTensor<float>(new[] { 1, 3, img.Height, img.Width });
+        private static DenseTensor<float> ImageToTensor(Mat image, float[] buffer) {
+            int height = image.Height;
+            int width = image.Width;
+            int channelSize = height * width;
 
-            // 使用 Indexer 高效遍历 OpenCV 矩阵
-            var indexer = img.GetGenericIndexer<Vec3b>();
+            unsafe {
+                byte* ptr = (byte*)image.Data;
+                int stride = (int)image.Step();
 
-            for (int y = 0; y < img.Height; y++) {
-                for (int x = 0; x < img.Width; x++) {
-                    Vec3b color = indexer[y, x];
-                    // 因为前面转过 RGB，所以 Item0=R, Item1=G, Item2=B
-                    tensor[0, 0, y, x] = color.Item0 / 255.0f; // R
-                    tensor[0, 1, y, x] = color.Item1 / 255.0f; // G
-                    tensor[0, 2, y, x] = color.Item2 / 255.0f; // B
-                }
-            }
-
-            return tensor;
-        }
-
-        private static Mat TensorToImage(Tensor<float> tensor) {
-            int height = tensor.Dimensions[2];
-            int width = tensor.Dimensions[3];
-
-            // 创建一个 8位 3通道 的 OpenCV 矩阵
-            Mat image = new Mat(height, width, MatType.CV_8UC3);
-            var indexer = image.GetGenericIndexer<Vec3b>();
-
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    // 裁剪并放大到 0~255
-                    float r = Math.Clamp(tensor[0, 0, y, x], 0.0f, 1.0f);
-                    float g = Math.Clamp(tensor[0, 1, y, x], 0.0f, 1.0f);
-                    float b = Math.Clamp(tensor[0, 2, y, x], 0.0f, 1.0f);
-
-                    // OpenCV 在保存图片时，默认认为内存里的是 BGR 数据。
-                    // 所以我们写入的时候，强行按照 B, G, R 的顺序装载 (Item0=B, Item1=G, Item2=R)
-                    indexer[y, x] = new Vec3b(
-                        (byte)(b * 255.0f),
-                        (byte)(g * 255.0f),
-                        (byte)(r * 255.0f)
-                    );
+                for (int y = 0; y < height; y++) {
+                    byte* row = ptr + y * stride;
+                    for (int x = 0; x < width; x++) {
+                        int pixelIdx = y * width + x;
+                        buffer[pixelIdx] = row[x * 3] / 255f;                    // R
+                        buffer[channelSize + pixelIdx] = row[x * 3 + 1] / 255f;  // G
+                        buffer[2 * channelSize + pixelIdx] = row[x * 3 + 2] / 255f; // B
+                    }
                 }
             }
 
-            return image;
+            var memory = new Memory<float>(buffer, 0, channelSize * 3);
+            return new DenseTensor<float>(memory, new int[] { 1, 3, height, width });
         }
+
+        private static string TensorToImageAndSave(
+            Tensor<float> outputTensor,
+            int outWidth, int outHeight,
+            int originalWidth, int originalHeight,
+            string outputFilePath) {
+
+            using var image = new Mat(outHeight, outWidth, MatType.CV_8UC3);
+            int channelSize = outHeight * outWidth;
+
+            unsafe {
+                byte* ptr = (byte*)image.Data;
+                int stride = (int)image.Step();
+
+                for (int y = 0; y < outHeight; y++) {
+                    byte* row = ptr + y * stride;
+                    for (int x = 0; x < outWidth; x++) {
+                        int idx = y * outWidth + x;
+
+                        float r = Math.Clamp(outputTensor.GetValue(idx), 0f, 1f);
+                        float g = Math.Clamp(outputTensor.GetValue(channelSize + idx), 0f, 1f);
+                        float b = Math.Clamp(outputTensor.GetValue(2 * channelSize + idx), 0f, 1f);
+
+                        // BGR order for OpenCV
+                        row[x * 3] = (byte)(b * 255f);
+                        row[x * 3 + 1] = (byte)(g * 255f);
+                        row[x * 3 + 2] = (byte)(r * 255f);
+                    }
+                }
+            }
+
+            // 还原到原始尺寸
+            using var resized = new Mat();
+            Cv2.Resize(image, resized,
+                new Size(originalWidth, originalHeight),
+                0, 0, InterpolationFlags.Linear);
+
+            string? dir = Path.GetDirectoryName(outputFilePath);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
+            string extension = Path.GetExtension(outputFilePath);
+            WriteImage(resized, outputFilePath, extension);
+
+            return outputFilePath;
+        }
+
+        private static void WriteImage(Mat image, string path, string extension) {
+            var ext = extension.ToLowerInvariant();
+            switch (ext) {
+                case ".jpg":
+                case ".jpeg":
+                    image.ImWrite(path, new ImageEncodingParam(ImwriteFlags.JpegQuality, 95));
+                    break;
+                case ".webp":
+                    image.ImWrite(path, new ImageEncodingParam(ImwriteFlags.WebPQuality, 95));
+                    break;
+                default:
+                    image.ImWrite(path);
+                    break;
+            }
+        }
+
         #endregion
 
-        private static InferenceSession? _session;
-        private readonly static string _modelPath = string.Empty;
+        #region IDisposable
+
+        private bool _isDisposed;
+
+        protected virtual void Dispose(bool disposing) {
+            if (!_isDisposed) {
+                if (disposing) {
+                    _session?.Dispose();
+                    _session = null;
+                    _isLoaded = false;
+                }
+                _isDisposed = true;
+            }
+        }
+
+        public void Dispose() {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
+
+        private InferenceSession? _session;
+        private volatile bool _isLoaded;
     }
 }

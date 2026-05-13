@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
@@ -9,10 +10,12 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.ML.StyleTransfer.Interfaces;
 using VirtualPaper.ML.SuperResolution.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
@@ -44,7 +47,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             var taskItem = new StyleTransferTaskItem(data);
             taskItem.RemoveCommand = new RelayCommand(() => RemoveTask(taskItem));
             taskItem.PreviewCommand = new RelayCommand(() => PreviewResult(taskItem), () => taskItem.IsCompleted);
-            taskItem.SaveCommand = new RelayCommand(() => SaveResult(taskItem), () => taskItem.IsCompleted);
+            taskItem.SaveCommand = new RelayCommand(async () => await SaveResultAsync(taskItem), () => taskItem.IsCompleted);
             taskItem.ImportCommand = new RelayCommand(() => ImportResult(taskItem), () => taskItem.IsCompleted);
 
             Tasks.Add(taskItem);
@@ -170,8 +173,19 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             // TODO: 打开预览窗口
         }
 
-        private void SaveResult(StyleTransferTaskItem taskItem) {
-            // TODO: 保存到用户选择的路径
+        private async Task SaveResultAsync(StyleTransferTaskItem taskItem) {
+            var saveFile = await WindowsStoragePickers.PickSaveFileAsync(
+                WindowConsts.WindowHandle,
+                taskItem.SourceFilePath,
+                new Dictionary<string, string[]>() {
+                    [taskItem.SourceFileExt[..1].ToUpper()] = [taskItem.SourceFileExt]
+                }
+            );
+
+            if (saveFile == null || string.IsNullOrEmpty(saveFile.Path))
+                return;
+
+            GlobalMessageUtil.ShowSuccess($"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Success))} {saveFile.Path}");
         }
 
         private void ImportResult(StyleTransferTaskItem taskItem) {

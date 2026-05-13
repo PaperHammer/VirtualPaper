@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using VirtualPaper.Models.Mvvm;
@@ -12,8 +13,11 @@ namespace VirtualPaper.IntelligentPanel.Models {
         /// 底层数据
         /// </summary>
         public StyleTransferData Data { get; }
-
         public Guid Id => Data.Id;
+        /// <summary>
+        /// 用于取消此任务的令牌源
+        /// </summary>
+        public CancellationTokenSource Cts { get; } = new();
 
         #region data
         public string SourceFilePath => Data.SourceFilePath;

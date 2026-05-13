@@ -1,7 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,20 +54,28 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         }
 
         private async Task ProcessTaskAsync(StyleTransferTaskItem taskItem) {
+            var ct = taskItem.Cts.Token;
+            string? tempDir = null;
+
             taskItem.Status = TaskStatus.WaitingToRun;
-            taskItem.IsIndeterminate = false;
-            taskItem.IsShowError = false;
 
-            await _concurrencyGate.WaitAsync();
-
-            var stopwatch = Stopwatch.StartNew();
             try {
+                // ── 等待信号量（排队阶段，可取消）──
+                await _concurrencyGate.WaitAsync(ct);
+            }
+            catch (OperationCanceledException) {
+                // 还没拿到信号量就被取消了（排队中删除），无需 Release
+                CleanupAfterCancel(taskItem, tempDir);
+                return;
+            }
+
+            try {
+                ct.ThrowIfCancellationRequested();
+
                 taskItem.Status = TaskStatus.Running;
-                taskItem.IsIndeterminate = true;
 
                 var data = taskItem.Data;
-
-                string tempDir = Path.Combine(Constants.CommonPaths.TempDir, Path.GetRandomFileName());
+                tempDir = Path.Combine(Constants.CommonPaths.TempDir, Path.GetRandomFileName());
                 Directory.CreateDirectory(tempDir);
 
                 string ext = Path.GetExtension(data.SourceFilePath);
@@ -76,36 +83,46 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 string tmpOutPath_realesrgan = Path.Combine(tempDir, $"upscaled{ext}");
 
                 await Task.Run(() => {
+                    ct.ThrowIfCancellationRequested();
+
                     var adain = AppServiceLocator.Services.GetRequiredService<IStyleTransfer>();
                     adain.LoadModel();
+
+                    ct.ThrowIfCancellationRequested();
+
                     adain.RunAndSave(
                         data.SourceFilePath,
                         data.StyleFilePath,
                         tmpOutPath_style);
 
+                    ct.ThrowIfCancellationRequested();
+
                     var superResolution = AppServiceLocator.Services.GetRequiredService<ISuperResolution>();
                     superResolution.LoadModel();
+
+                    ct.ThrowIfCancellationRequested();
+
                     superResolution.RunAndSave(
                         tmpOutPath_style,
                         tmpOutPath_realesrgan,
                         (uint)data.Width,
                         (uint)data.Height);
-                });
+                }, ct);
 
-                stopwatch.Stop();
+                ct.ThrowIfCancellationRequested();
+
                 await data.SetResultAsync(tmpOutPath_realesrgan);
                 taskItem.NotifyResultChanged();
-                taskItem.IsIndeterminate = false;
                 taskItem.Status = TaskStatus.RanToCompletion;
 
                 _ = FileUtil.TryDeleteFileAsync(tmpOutPath_style);
             }
+            catch (OperationCanceledException) {
+                CleanupAfterCancel(taskItem, tempDir);
+            }
             catch (Exception ex) {
-                stopwatch.Stop();
                 ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
-                taskItem.IsIndeterminate = false;
-                taskItem.IsShowError = true;
                 taskItem.Status = TaskStatus.Faulted;
             }
             finally {
@@ -113,9 +130,40 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
         }
 
+        /// <summary>
+        /// 任务被取消后的清理工作
+        /// </summary>
+        private static void CleanupAfterCancel(StyleTransferTaskItem taskItem, string? tempDir) {
+            if (tempDir != null) {
+                try {
+                    if (Directory.Exists(tempDir)) {
+                        Directory.Delete(tempDir, recursive: true);
+                    }
+                }
+                catch {
+                    // 清理失败不影响主流程
+                }
+            }
+
+            // 清理结果文件
+            if (taskItem.Data.ResultFilePath != null) {
+                _ = FileUtil.TryDeleteFileAsync(taskItem.Data.ResultFilePath);
+            }
+        }
+
         private void RemoveTask(StyleTransferTaskItem taskItem) {
+            // 发出取消信号（如果任务还在运行或排队）
+            if (!taskItem.Cts.IsCancellationRequested) {
+                taskItem.Cts.Cancel();
+            }
+            taskItem.Cts.Dispose();
+
             Tasks.Remove(taskItem);
-            if (taskItem.Data.ResultFilePath != null) _ = FileUtil.TryDeleteFileAsync(taskItem.Data.ResultFilePath);
+
+            // 对于已完成的任务，结果文件也需要清理
+            if (taskItem.IsCompleted && taskItem.Data.ResultFilePath != null) {
+                _ = FileUtil.TryDeleteFileAsync(taskItem.Data.ResultFilePath);
+            }
         }
 
         private void PreviewResult(StyleTransferTaskItem taskItem) {
@@ -144,7 +192,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         }
 
         /// <summary>
-        /// 最多同时执行 3 个任务
+        /// 最多同时执行 3 个任务，避免占用过多的 CPU 与 内存
         /// </summary>
         private readonly SemaphoreSlim _concurrencyGate = new(MaxConcurrency, MaxConcurrency);
         private const int MaxConcurrency = 3;

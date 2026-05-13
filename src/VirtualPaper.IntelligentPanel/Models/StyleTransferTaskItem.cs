@@ -27,6 +27,9 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public string StyleFileExt => Data.StyleFileExt;
 
         public string? ResultFilePath => Data.ResultFilePath;
+        public string? ResultResolution => Data.ResultResolution;
+        public string? ResultFileSize => Data.ResultFileSize;
+        public string? ResultFileExt => Data.ResultFileExt;
         #endregion
 
         #region task status
@@ -42,7 +45,8 @@ namespace VirtualPaper.IntelligentPanel.Models {
                 OnPropertyChanged(nameof(IsProcessing));
                 OnPropertyChanged(nameof(IsCompleted));
                 OnPropertyChanged(nameof(IsFailed));
-                OnPropertyChanged(nameof(IsCanceled));
+
+                UpdateProgressBarState();
             }
         }
 
@@ -51,7 +55,6 @@ namespace VirtualPaper.IntelligentPanel.Models {
             TaskStatus.WaitingToRun => "排队中",
             TaskStatus.Running => "处理中...",
             TaskStatus.RanToCompletion => "已完成",
-            TaskStatus.Canceled => "已取消",
             TaskStatus.Faulted => "失败",
             _ => "未知"
         };
@@ -60,10 +63,9 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public bool IsProcessing => Status == TaskStatus.Running;
         public bool IsCompleted => Status == TaskStatus.RanToCompletion;
         public bool IsFailed => Status == TaskStatus.Faulted;
-        public bool IsCanceled => Status == TaskStatus.Canceled;
         #endregion
 
-        #region progressBar
+        #region progressBar & status color
         private bool _isIndeterminate;
         public bool IsIndeterminate {
             get => _isIndeterminate;
@@ -82,16 +84,20 @@ namespace VirtualPaper.IntelligentPanel.Models {
             set { if (_progress == value) return; _progress = value; OnPropertyChanged(); }
         }
 
-        private byte[] _foregroundColor = _defaultColor;
-        public byte[] ForegroundColor {
-            get => _foregroundColor;
-            set { if (_foregroundColor == value) return; _foregroundColor = value; OnPropertyChanged(); }
+        /// <summary>
+        /// 统一的状态颜色，同时用于状态文字和进度条前景
+        /// ARGB 字节数组，由转换器转为 SolidColorBrush
+        /// </summary>
+        private byte[] _statusColor = _blueColor;
+        public byte[] StatusColor {
+            get => _statusColor;
+            set { if (_statusColor == value) return; _statusColor = value; OnPropertyChanged(); }
         }
 
         // ARGB 格式
-        private static readonly byte[] _defaultColor = [];               // 空 = 使用 ProgressBar 默认主题色
-        private static readonly byte[] _greenColor = [255, 14, 161, 19]; // #FF0EA113
-        private static readonly byte[] _redColor = [255, 209, 52, 56];   // #FFD13438
+        private static readonly byte[] _blueColor = [255, 0, 120, 212];     // #FF0078D4 - 默认/运行中
+        private static readonly byte[] _greenColor = [255, 14, 161, 19];    // #FF0EA113 - 已完成
+        private static readonly byte[] _redColor = [255, 209, 52, 56];      // #FFD13438 - 失败
         #endregion
 
         #region commands
@@ -99,7 +105,6 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public ICommand? ImportCommand { get; set; }
         public ICommand? SaveCommand { get; set; }
         public ICommand? RemoveCommand { get; set; }
-        public ICommand? CancelCommand { get; set; }
         #endregion
 
         public StyleTransferTaskItem(StyleTransferData data) {
@@ -107,10 +112,48 @@ namespace VirtualPaper.IntelligentPanel.Models {
         }
 
         /// <summary>
+        /// 根据任务状态自动更新 ProgressBar 和颜色
+        /// </summary>
+        private void UpdateProgressBarState() {
+            switch (Status) {
+                case TaskStatus.Running:
+                    IsIndeterminate = true;
+                    IsShowError = false;
+                    Progress = 0;
+                    StatusColor = _blueColor;
+                    break;
+
+                case TaskStatus.RanToCompletion:
+                    IsIndeterminate = false;
+                    IsShowError = false;
+                    Progress = 100;
+                    StatusColor = _greenColor;
+                    break;
+
+                case TaskStatus.Faulted:
+                    IsIndeterminate = false;
+                    IsShowError = true;
+                    Progress = 100;
+                    StatusColor = _redColor;
+                    break;
+
+                default: // Created, WaitingToRun
+                    IsIndeterminate = false;
+                    IsShowError = false;
+                    Progress = 0;
+                    StatusColor = _blueColor;
+                    break;
+            }
+        }
+
+        /// <summary>
         /// 数据完成后刷新 UI 绑定
         /// </summary>
         public void NotifyResultChanged() {
             OnPropertyChanged(nameof(ResultFilePath));
+            OnPropertyChanged(nameof(ResultResolution));
+            OnPropertyChanged(nameof(ResultFileSize));
+            OnPropertyChanged(nameof(ResultFileExt));
         }
     }
 }

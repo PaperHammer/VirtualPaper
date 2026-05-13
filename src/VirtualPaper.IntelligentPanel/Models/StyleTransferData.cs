@@ -1,4 +1,7 @@
 using System;
+using System.IO;
+using System.Threading.Tasks;
+using VirtualPaper.Common.Utils.Files;
 
 namespace VirtualPaper.IntelligentPanel.Models {
     public partial record StyleTransferData : IIntelliData {
@@ -14,6 +17,9 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public string StyleFileExt { get; }
 
         public string? ResultFilePath { get; private set; }
+        public string? ResultResolution { get; private set; }
+        public string? ResultFileSize { get; private set; }
+        public string? ResultFileExt { get; private set; }
 
         public uint Width { get; }
         public uint Height { get; }        
@@ -33,8 +39,12 @@ namespace VirtualPaper.IntelligentPanel.Models {
             StyleFileExt = styleFileExt;
         }
 
-        public void SetResult(string resultPath) {
+        public async Task SetResultAsync(string resultPath) {
             ResultFilePath = resultPath;
+            ResultFileExt = Path.GetExtension(resultPath);
+            ResultFileSize = FileUtil.GetFileSize(resultPath);
+            (var width, var height) = await FileUtil.GetImageResolutionAsync(resultPath);
+            ResultResolution = $"{width} * {height}";
         }
     }
 }

@@ -100,7 +100,7 @@ namespace VirtualPaper.UI {
                 .AddSingleton<WpSettingsViewModel>()
                 .AddSingleton<ScreenSaverViewModel>()
                 .AddSingleton<LibraryContentsViewModel>()
-                .AddTransient<StyleTranferViewModel>()
+                .AddSingleton<StyleTranferViewModel>()
                 .AddSingleton<SuperResolutionViewModel>()
                 .AddTransient<DraftPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<IntelligentPanel.ViewModels.ConfigSpaceViewModel>()

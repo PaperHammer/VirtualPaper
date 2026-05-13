@@ -93,7 +93,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 });
 
                 stopwatch.Stop();
-                data.SetResult(tmpOutPath_realesrgan);
+                await data.SetResultAsync(tmpOutPath_realesrgan);
                 taskItem.NotifyResultChanged();
                 taskItem.IsIndeterminate = false;
                 taskItem.Status = TaskStatus.RanToCompletion;

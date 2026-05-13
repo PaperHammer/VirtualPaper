@@ -46,7 +46,7 @@ namespace VirtualPaper.ML.DepthEstimate {
             Cv2.Resize(image, image, new Size(_targetWidth, _targetHeight), (double)InterpolationFlags.Linear);
 
             // Convert BGR to RGB and normalize
-            var rgbImage = new Mat();
+            using var rgbImage = new Mat();
             Cv2.CvtColor(image, rgbImage, ColorConversionCodes.BGR2RGB);
 
             var dt = new DenseTensor<float>([1, 3, _targetHeight, _targetWidth]);
@@ -93,10 +93,11 @@ namespace VirtualPaper.ML.DepthEstimate {
 
                 // 将归一化的浮点数值映射到 0-255 的整数范围
                 byte value = (byte)(modelOutput.Depth[i] * 255);
-                // 设置每个通道的值
-                depthMap.At<Vec3b>(y, x)[0] = value; // B
-                depthMap.At<Vec3b>(y, x)[1] = value; // G
-                depthMap.At<Vec3b>(y, x)[2] = value; // R
+                //// 设置每个通道的值
+                //depthMap.At<Vec3b>(y, x)[0] = value; // B
+                //depthMap.At<Vec3b>(y, x)[1] = value; // G
+                //depthMap.At<Vec3b>(y, x)[2] = value; // R
+                depthMap.Set(y, x, value);
             }
 
             Cv2.Resize(depthMap, depthMap, new Size(modelOutput.OriginalWidth, modelOutput.OriginalHeight), (double)InterpolationFlags.Linear);

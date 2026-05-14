@@ -7,6 +7,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:lcl_models="using:VirtualPaper.IntelligentPanel.Models"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
     mc:Ignorable="d">
 
     <Grid Margin="12">
@@ -57,15 +59,12 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <StackPanel VerticalAlignment="Center" Spacing="4">
+                                        <StackPanel VerticalAlignment="Center" Spacing="8">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Border
-                                                    CornerRadius="4"
-                                                    Padding="8,3">
-                                                    <TextBlock
-                                                        Text="原图"
-                                                        FontSize="14"/>
-                                                </Border>
+                                                <TextBlock 
+                                                    Text="{markup:I18n Key=Intelligent_Task_Scr_Img}" 
+                                                    FontSize="14" 
+                                                    Width="100"/>
                                                 <TextBlock
                                                     Text="{x:Bind SourceFilePath}"
                                                     FontSize="14"
@@ -76,13 +75,10 @@
                                             </StackPanel>
 
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Border
-                                                    CornerRadius="4"
-                                                    Padding="8,3">
-                                                    <TextBlock
-                                                        Text="风格"
-                                                        FontSize="14"/>
-                                                </Border>
+                                                <TextBlock
+                                                    Text="{markup:I18n Key=Intelligent_Task_Style}"
+                                                    FontSize="14"
+                                                    Width="100"/>
                                                 <TextBlock
                                                     Text="{x:Bind StyleName}"
                                                     FontSize="14"
@@ -113,55 +109,33 @@
                                             Spacing="6"
                                             VerticalAlignment="Center">
 
-                                            <Button
-                                                Command="{x:Bind PreviewCommand}"
-                                                Padding="12,8"
-                                                Background="Transparent"
-                                                BorderThickness="1"
-                                                CornerRadius="4">
+                                            <input:ArcButton Command="{x:Bind PreviewCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <FontIcon Glyph="&#xE8FF;" FontSize="14"/>
-                                                    <TextBlock Text="预览" FontSize="14"/>
+                                                    <TextBlock Text="{markup:I18n Key=Text_Preview}" FontSize="14"/>
                                                 </StackPanel>
-                                            </Button>
+                                            </input:ArcButton>
 
-                                            <Button
-                                                Command="{x:Bind ImportCommand}"
-                                                Padding="12,8"
-                                                Background="Transparent"
-                                                BorderThickness="1"
-                                                CornerRadius="4">
+                                            <input:ArcButton Command="{x:Bind ImportCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <FontIcon Glyph="&#xE8B7;" FontSize="14"/>
-                                                    <TextBlock Text="入库" FontSize="14"/>
+                                                    <TextBlock Text="{markup:I18n Key=Text_ImportLib}" FontSize="14"/>
                                                 </StackPanel>
-                                            </Button>
+                                            </input:ArcButton>
 
-                                            <Button
-                                                Command="{x:Bind SaveCommand}"
-                                                Padding="12,8"
-                                                Background="Transparent"
-                                                BorderThickness="1"
-                                                CornerRadius="4">
+                                            <input:ArcButton Command="{x:Bind SaveCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <FontIcon Glyph="&#xE74E;" FontSize="14"/>
-                                                    <TextBlock Text="保存" FontSize="14"/>
+                                                    <TextBlock Text="{markup:I18n Key=Text_Save}" FontSize="14"/>
                                                 </StackPanel>
-                                            </Button>
+                                            </input:ArcButton>
 
-                                            <Button
+                                            <input:ArcButton
                                                 Command="{x:Bind RemoveCommand}"
-                                                Padding="12,8"
-                                                CornerRadius="4"
-                                                BorderThickness="1"
                                                 BorderBrush="#FFE0B0B0"
                                                 Background="#20FF4D6A"
                                                 Foreground="#FFD13438">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <FontIcon Glyph="&#xE74D;" FontSize="14" Foreground="#FFD13438"/>
-                                                    <TextBlock Text="删除" FontSize="14" Foreground="#FFD13438"/>
+                                                    <TextBlock Text="{markup:I18n Key=Text_Delete}" FontSize="14" Foreground="#FFD13438"/>
                                                 </StackPanel>
-                                            </Button>
+                                            </input:ArcButton>
                                         </StackPanel>
                                     </Grid>
 
@@ -193,7 +167,7 @@
                                         <StackPanel HorizontalAlignment="Center" Spacing="6">
 
                                             <TextBlock 
-                                                Text="原图"
+                                                Text="{markup:I18n Key=Intelligent_Task_Scr_Img}"
                                                 FontSize="16"
                                                 FontWeight="SemiBold"
                                                 HorizontalAlignment="Center"/>
@@ -257,7 +231,7 @@
 
                                             <Grid HorizontalAlignment="Stretch">
                                                 <TextBlock 
-                                                    Text="风格图"
+                                                    Text="{markup:I18n Key=Intelligent_Style_Img}"
                                                     FontSize="16"
                                                     FontWeight="SemiBold"
                                                     HorizontalAlignment="Center"
@@ -295,7 +269,7 @@
                                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                                         <FontIcon Glyph="&#xE790;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                                         <TextBlock 
-                                                            Text="{x:Bind StyleName, TargetNullValue=自定义, Mode=OneWay}" 
+                                                            Text="{x:Bind StyleName, TargetNullValue={markup:I18n Key=Intelligent_Task_Style_Img_Import}, Mode=OneWay}" 
                                                             FontSize="14"
                                                             MaxWidth="120"
                                                             TextTrimming="CharacterEllipsis"
@@ -323,7 +297,7 @@
                                     <StackPanel HorizontalAlignment="Center" Spacing="6">
 
                                         <TextBlock 
-                                            Text="合成结果"
+                                            Text="{markup:I18n Key=Text_Synthesis_Result}"
                                             FontSize="16"
                                             FontWeight="SemiBold"
                                             HorizontalAlignment="Center"/>

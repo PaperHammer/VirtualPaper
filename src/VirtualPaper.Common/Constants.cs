@@ -215,6 +215,25 @@ namespace VirtualPaper.Common {
             public static string? Project_Export_InternalError { get; }
             public static string? Project_SI_FileTypeMismatch { get; }
             public static string? EffectPrefix_ { get; set; }
+            public static string? Intelligent_AddTask { get; }
+            public static string? Intelligent_Style_Type_Custom { get; }
+            public static string? Intelligent_Style_Type_Anime { get; }
+            public static string? Intelligent_Style_Type_Cartoon { get; }
+            public static string? Intelligent_Style_Type_Gongbi { get; }
+            public static string? Intelligent_Style_Type_Pencil { get; }
+            public static string? Intelligent_Style_Type_Watercolor { get; }
+            public static string? Intelligent_Style_Type_InkWash { get; }
+            public static string? Intelligent_Style_Type_OilPainting { get; }
+            public static string? Intelligent_Style_Type_ColoredPencil { get; }
+            public static string? Intelligent_Style_Type_OutlineDrawing { get; }
+            public static string? Intelligent_Style_Type_Ukiyoe { get; }
+            public static string? Text_Task_Status_Completed { get; }
+            public static string? Text_Task_Status_Queue { get; }
+            public static string? Text_Task_Status_Processing { get; }
+            public static string? Text_Task_Status_Failed { get; }
+            public static string? Text_Task_Status_Unknown { get; }
+            public static string? Text_File_Not_Available { get; }
+            public static string? Add_To_Lib_Success { get; }
         }
 
         public static class Field {

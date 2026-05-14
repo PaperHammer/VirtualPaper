@@ -1,11 +1,11 @@
 using System;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
@@ -84,12 +84,14 @@ namespace VirtualPaper.IntelligentPanel {
             try {
                 while (true) {
                     var result = await intelligentTCS.Task;
-                    if (result == null)
+                    if (result == null) {
+                        HideOverlayPage();
                         break;
-
+                    }
+                    
                     var res = _viewModel.AddTask(result);
                     if (res) {
-                        GlobalMessageUtil.ShowAutoCloseMessage("任务已提交", InfoBarSeverity.Success, autoCloseDelay: 3000);
+                        GlobalMessageUtil.ShowAutoCloseMessage(LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_AddTask)), InfoBarSeverity.Success, autoCloseDelay: 3000);
 
                         if (overlayFrame.Content is IIntelligentAddTask ida) {
                             ida.ClearAddTask();

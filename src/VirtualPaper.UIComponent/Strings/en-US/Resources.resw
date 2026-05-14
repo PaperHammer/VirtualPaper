@@ -1248,4 +1248,94 @@ The following words cannot be used as usernames:
   <data name="Intelligent_SR_Warning" xml:space="preserve">
     <value>Note: During super-resolution processing, the model details, which may differ slightly from the original image.</value>
   </data>
+  <data name="Intelligent_AddTask" xml:space="preserve">
+    <value>Task has been submitted</value>
+  </data>
+  <data name="Intelligent_Task_Scr_Img" xml:space="preserve">
+    <value>Original image</value>
+  </data>
+  <data name="Intelligent_Task_Scr_Img_Import" xml:space="preserve">
+    <value>Click or drag to import the original image</value>
+  </data>
+  <data name="Intelligent_Style_Img" xml:space="preserve">
+    <value>Style image</value>
+  </data>
+  <data name="Intelligent_Style_Lib" xml:space="preserve">
+    <value>Style Library</value>
+  </data>
+  <data name="Intelligent_Style_Inner_Select" xml:space="preserve">
+    <value>Select built-in style</value>
+  </data>
+  <data name="Intelligent_Style_Type_Custom" xml:space="preserve">
+    <value>Custom</value>
+  </data>
+  <data name="Intelligent_Task_Style_Img_Import" xml:space="preserve">
+    <value>Click or select from the style library</value>
+  </data>
+  <data name="Intelligent_Style_Img_Desc" xml:space="preserve">
+    <value>The style image is only used for local sampling, and around 1MB is recommended. The output resolution depends on the original image.</value>
+  </data>
+  <data name="Intelligent_Style_Type_Anime" xml:space="preserve">
+    <value>Anime</value>
+  </data>
+  <data name="Intelligent_Style_Type_Cartoon" xml:space="preserve">
+    <value>Cartoon</value>
+  </data>
+  <data name="Intelligent_Style_Type_Gongbi" xml:space="preserve">
+    <value>Gongbi</value>
+  </data>
+  <data name="Intelligent_Style_Type_Pencil" xml:space="preserve">
+    <value>Pencil</value>
+  </data>
+  <data name="Intelligent_Style_Type_Watercolor" xml:space="preserve">
+    <value>Water color</value>
+  </data>
+  <data name="Intelligent_Style_Type_InkWash" xml:space="preserve">
+    <value>Ink wash</value>
+  </data>
+  <data name="Intelligent_Style_Type_OilPainting" xml:space="preserve">
+    <value>Oil painting</value>
+  </data>
+  <data name="Intelligent_Style_Type_ColoredPencil" xml:space="preserve">
+    <value>Color pencil</value>
+  </data>
+  <data name="Intelligent_Style_Type_OutlineDrawing" xml:space="preserve">
+    <value>Outline drawing</value>
+  </data>
+  <data name="Intelligent_Style_Type_Ukiyoe" xml:space="preserve">
+    <value>Ukiyoe</value>
+  </data>
+  <data name="Intelligent_Task_Style" xml:space="preserve">
+    <value>Style</value>
+  </data>
+  <data name="Text_ImportLib" xml:space="preserve">
+    <value>Import to lib</value>
+  </data>
+  <data name="Text_Synthesis_Result" xml:space="preserve">
+    <value>Synthesis result</value>
+  </data>
+  <data name="Text_Task_Status_Created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="Text_Task_Status_Queue" xml:space="preserve">
+    <value>In line...</value>
+  </data>
+  <data name="Text_Task_Status_Processing" xml:space="preserve">
+    <value>Processing...</value>
+  </data>
+  <data name="Text_Task_Status_Completed" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="Text_Task_Status_Filed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="Text_Task_Status_Unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Text_File_Not_Available" xml:space="preserve">
+    <value>The source file is inaccessible or has been deleted</value>
+  </data>
+  <data name="Add_To_Lib_Success" xml:space="preserve">
+    <value>Successfully imported local library</value>
+  </data>
 </root>

@@ -1248,4 +1248,94 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Intelligent_SR_Warning" xml:space="preserve">
     <value>注意：超分模型在提升分辨率的过程中，可能会对部分细节进行重建或补全，部分细节可能与原图存在一定差异。</value>
   </data>
+  <data name="Intelligent_AddTask" xml:space="preserve">
+    <value>任务已提交</value>
+  </data>
+  <data name="Intelligent_Task_Scr_Img" xml:space="preserve">
+    <value>原图</value>
+  </data>
+  <data name="Intelligent_Task_Scr_Img_Import" xml:space="preserve">
+    <value>点击或拖拽导入原图</value>
+  </data>
+  <data name="Intelligent_Style_Img" xml:space="preserve">
+    <value>风格图</value>
+  </data>
+  <data name="Intelligent_Style_Lib" xml:space="preserve">
+    <value>风格库</value>
+  </data>
+  <data name="Intelligent_Style_Inner_Select" xml:space="preserve">
+    <value>选择内置风格</value>
+  </data>
+  <data name="Intelligent_Style_Type_Custom" xml:space="preserve">
+    <value>自定义</value>
+  </data>
+  <data name="Intelligent_Task_Style_Img_Import" xml:space="preserve">
+    <value>点击或从风格库选择</value>
+  </data>
+  <data name="Intelligent_Style_Img_Desc" xml:space="preserve">
+    <value>风格图仅用于局部采样，建议 1MB 左右即可。输出分辨率取决于原图。</value>
+  </data>
+  <data name="Intelligent_Style_Type_Anime" xml:space="preserve">
+    <value>动漫</value>
+  </data>
+  <data name="Intelligent_Style_Type_Cartoon" xml:space="preserve">
+    <value>卡通</value>
+  </data>
+  <data name="Intelligent_Style_Type_Gongbi" xml:space="preserve">
+    <value>工笔</value>
+  </data>
+  <data name="Intelligent_Style_Type_Pencil" xml:space="preserve">
+    <value>铅笔</value>
+  </data>
+  <data name="Intelligent_Style_Type_Watercolor" xml:space="preserve">
+    <value>水彩</value>
+  </data>
+  <data name="Intelligent_Style_Type_InkWash" xml:space="preserve">
+    <value>水墨</value>
+  </data>
+  <data name="Intelligent_Style_Type_OilPainting" xml:space="preserve">
+    <value>油画</value>
+  </data>
+  <data name="Intelligent_Style_Type_ColoredPencil" xml:space="preserve">
+    <value>彩铅</value>
+  </data>
+  <data name="Intelligent_Style_Type_OutlineDrawing" xml:space="preserve">
+    <value>白描</value>
+  </data>
+  <data name="Intelligent_Style_Type_Ukiyoe" xml:space="preserve">
+    <value>浮世绘</value>
+  </data>
+  <data name="Intelligent_Task_Style" xml:space="preserve">
+    <value>风格</value>
+  </data>
+  <data name="Text_ImportLib" xml:space="preserve">
+    <value>入库</value>
+  </data>
+  <data name="Text_Synthesis_Result" xml:space="preserve">
+    <value>合成结果</value>
+  </data>
+  <data name="Text_Task_Status_Created" xml:space="preserve">
+    <value>已创建</value>
+  </data>
+  <data name="Text_Task_Status_Queue" xml:space="preserve">
+    <value>排队中...</value>
+  </data>
+  <data name="Text_Task_Status_Processing" xml:space="preserve">
+    <value>处理中...</value>
+  </data>
+  <data name="Text_Task_Status_Completed" xml:space="preserve">
+    <value>已完成</value>
+  </data>
+  <data name="Text_Task_Status_Filed" xml:space="preserve">
+    <value>失败</value>
+  </data>
+  <data name="Text_Task_Status_Unknown" xml:space="preserve">
+    <value>未知</value>
+  </data>
+  <data name="Text_File_Not_Available" xml:space="preserve">
+    <value>源文件无法访问或已被删除</value>
+  </data>
+  <data name="Add_To_Lib_Success" xml:space="preserve">
+    <value>成功导入本地库</value>
+  </data>
 </root>

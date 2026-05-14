@@ -9,6 +9,7 @@
     xmlns:lcl_models="using:VirtualPaper.IntelligentPanel.Models"
     xmlns:uicomp_utils="using:VirtualPaper.UIComponent.Utils"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     Unloaded="Page_Unloaded">
 
@@ -30,7 +31,7 @@
             <StackPanel HorizontalAlignment="Center" Spacing="6">
 
                 <TextBlock 
-                    Text="原图"
+                    Text="{markup:I18n Key=Intelligent_Task_Scr_Img}"
                     FontSize="16"
                     FontWeight="SemiBold"
                     HorizontalAlignment="Center"/>
@@ -67,7 +68,7 @@
                                     HorizontalAlignment="Center"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                                 <TextBlock 
-                                    Text="点击或拖拽导入原图"
+                                    Text="{markup:I18n Key=Intelligent_Task_Scr_Img_Import}"
                                     HorizontalAlignment="Center"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     FontSize="14"/>
@@ -137,7 +138,7 @@
 
                 <Grid HorizontalAlignment="Stretch">
                     <TextBlock 
-                        Text="风格图"
+                        Text="{markup:I18n Key=Intelligent_Style_Img}"
                         FontSize="16"
                         FontWeight="SemiBold"
                         HorizontalAlignment="Center"
@@ -151,9 +152,9 @@
                         Background="Transparent"
                         BorderThickness="0">
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <FontIcon Glyph="&#xE71D;" FontSize="13" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                            <FontIcon Glyph="&#xE71D;" FontSize="13" VerticalAlignment="Bottom" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
                             <TextBlock 
-                                Text="风格库" 
+                                Text="{markup:I18n Key=Intelligent_Style_Lib}" 
                                 FontSize="13"
                                 Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
                         </StackPanel>
@@ -173,7 +174,7 @@
 
                                 <StackPanel Spacing="12" MinWidth="560">
                                     <TextBlock 
-                                        Text="选择内置风格"
+                                        Text="{markup:I18n Key=Intelligent_Style_Inner_Select}"
                                         FontSize="14"
                                         FontWeight="SemiBold"
                                         VerticalAlignment="Center"/>
@@ -220,7 +221,7 @@
                                                                     FontSize="24"
                                                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                                                                 <TextBlock 
-                                                                    Text="自定义"
+                                                                    Text="{markup:I18n Key=Intelligent_Style_Type_Custom}"
                                                                     FontSize="12"
                                                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                                                     HorizontalAlignment="Center"/>
@@ -281,7 +282,7 @@
                                     HorizontalAlignment="Center"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                                 <TextBlock 
-                                    Text="点击或从风格库选择"
+                                    Text="{markup:I18n Key=Intelligent_Task_Style_Img_Import}"
                                     HorizontalAlignment="Center"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     FontSize="14"/>
@@ -302,7 +303,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <FontIcon Glyph="&#xE790;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                             <TextBlock 
-                                Text="{x:Bind _viewModel.SelectedStyle.Name, TargetNullValue=自定义, Mode=OneWay}" 
+                                Text="{x:Bind _viewModel.SelectedStyle.Name, TargetNullValue={markup:I18n Key=Intelligent_Task_Style_Img_Import}, Mode=OneWay}" 
                                 FontSize="14"
                                 MaxWidth="120"
                                 TextTrimming="CharacterEllipsis"
@@ -333,7 +334,7 @@
                         VerticalAlignment="Top"
                         Margin="0,2,0,0"/>
                         <TextBlock 
-                        Text="风格图仅用于局部采样，建议 1MB 左右即可。输出分辨率取决于原图。"
+                        Text="{markup:I18n Key=Intelligent_Style_Img_Desc}"
                         FontSize="12"
                         TextWrapping="Wrap"
                         MaxWidth="260"/>

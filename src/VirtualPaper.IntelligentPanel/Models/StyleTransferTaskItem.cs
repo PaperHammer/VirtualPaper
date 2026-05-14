@@ -2,7 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using VirtualPaper.Common;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.IntelligentPanel.Models {
     /// <summary>
@@ -50,12 +52,12 @@ namespace VirtualPaper.IntelligentPanel.Models {
         }
 
         public string StatusText => Status switch {
-            TaskStatus.Created => "已创建",
-            TaskStatus.WaitingToRun => "排队中",
-            TaskStatus.Running => "处理中...",
-            TaskStatus.RanToCompletion => "已完成",
-            TaskStatus.Faulted => "失败",
-            _ => "未知"
+            TaskStatus.Created => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Completed)),
+            TaskStatus.WaitingToRun => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Queue)),
+            TaskStatus.Running => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Processing)),
+            TaskStatus.RanToCompletion => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Completed)),
+            TaskStatus.Faulted => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Failed)),
+            _ => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Unknown))
         };
 
         public bool IsPending => Status is TaskStatus.Created or TaskStatus.WaitingToRun;

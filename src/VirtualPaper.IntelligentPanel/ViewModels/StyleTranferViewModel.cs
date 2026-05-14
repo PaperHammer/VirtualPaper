@@ -172,7 +172,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
         private async void PreviewResult(StyleTransferTaskItem taskItem) {
             if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) {
-                GlobalMessageUtil.ShowError("源文件无法访问或已被删除", isNeedLocalizer: false);
+                GlobalMessageUtil.ShowError(nameof(Constants.I18n.Text_File_Not_Available), isNeedLocalizer: true);
                 return;
             }
 
@@ -181,13 +181,15 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 PanelContracts.WpSettings.Action_PreviewFile,
                 new PreviewFileArgs(taskItem.Data.ResultFilePath, ArcPageContextManager.GetContext<Intelligent>()));
 
-            if (!found)
-                GlobalMessageUtil.ShowError("WpSettings panel is not available.", isNeedLocalizer: false);
+            if (!found) {
+                GlobalMessageUtil.ShowError("Panel is not available.", isNeedLocalizer: false);
+                ArcLog.GetLogger<StyleTranferViewModel>().Error("WpSettings panel is not available for previewing file.");
+            }
         }
 
         private async Task SaveResultAsync(StyleTransferTaskItem taskItem) {
             if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) {
-                GlobalMessageUtil.ShowError("源文件无法访问或已被删除", isNeedLocalizer: false);
+                GlobalMessageUtil.ShowError(nameof(Constants.I18n.Text_File_Not_Available), isNeedLocalizer: true);
                 return;
             }
 
@@ -215,7 +217,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
         private async void ImportResult(StyleTransferTaskItem taskItem) {
             if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) {
-                GlobalMessageUtil.ShowError("源文件无法访问或已被删除", isNeedLocalizer: false);
+                GlobalMessageUtil.ShowError(nameof(Constants.I18n.Text_File_Not_Available), isNeedLocalizer: true);
                 return;
             }
 
@@ -225,12 +227,13 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 taskItem.Data.ResultFilePath);
 
             if (!found) {
-                GlobalMessageUtil.ShowError("WpSettings panel is not available.", isNeedLocalizer: false);
+                GlobalMessageUtil.ShowError("Panel is not available.", isNeedLocalizer: false);
+                ArcLog.GetLogger<StyleTranferViewModel>().Error("WpSettings panel is not available for previewing file.");
                 return;
             }
 
             if (success)
-                GlobalMessageUtil.ShowSuccess(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Success)));
+                GlobalMessageUtil.ShowSuccess(LanguageUtil.GetI18n(nameof(Constants.I18n.Add_To_Lib_Success)));
             else
                 GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true);
         }

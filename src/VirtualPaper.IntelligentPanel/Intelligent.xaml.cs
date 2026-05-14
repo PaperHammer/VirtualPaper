@@ -34,6 +34,7 @@ namespace VirtualPaper.IntelligentPanel {
             };
             _viewModel = AppServiceLocator.Services.GetRequiredService<IntelligentViewModel>();
             this.DataContext = _viewModel;
+            ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e) {

@@ -133,6 +133,13 @@ namespace VirtualPaper.UI {
         }
 
         /// <summary>
+        /// 预实例化各 Panel 中负责注册 PanelMessageCenter Action 的 Singleton ViewModel，确保其他 Panel 调用时 Action 已就绪
+        /// </summary>
+        private void PrewarmPanelRegisters() {
+            AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>();
+        }
+
+        /// <summary>
         /// Invoked when the application is launched.
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
@@ -149,6 +156,8 @@ namespace VirtualPaper.UI {
             else {
                 await LanguageUtil.InitializeLocalizerForUnpackaged(_userSettings.Settings.Language);
             }
+
+            PrewarmPanelRegisters();
 
             var m_window = AppServiceLocator.Services.GetRequiredService<MainWindow>();
             m_window.Show();

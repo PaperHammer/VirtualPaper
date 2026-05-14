@@ -54,7 +54,8 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private async void WallpapersLibView_ItemClick(object sender, ItemClickEventArgs e) {
             if (e.ClickedItem is IWpBasicData data) {
-                await _viewModel.PreviewAsync(data);
+                var ctx = ArcPageContextManager.GetContext<WpSettings>();
+                await _viewModel.PreviewAsync(data, ctx);
             }
         }
 
@@ -76,7 +77,8 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                         _viewModel.ShowEdit(data);
                         break;
                     case "Preview":
-                        await _viewModel.PreviewAsync(data);
+                        var ctx = ArcPageContextManager.GetContext<WpSettings>();
+                        await _viewModel.PreviewAsync(data, ctx);
                         break;
                     case "Apply":
                         await _viewModel.ApplyAsync(data);

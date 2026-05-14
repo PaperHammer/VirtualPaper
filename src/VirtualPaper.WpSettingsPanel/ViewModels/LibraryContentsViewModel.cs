@@ -22,9 +22,11 @@ using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.PlayerWeb.Core.WebView.Windows;
+using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.PanelBus.WpSettingsArgs;
 using VirtualPaper.UIComponent.ViewModels;
 using VirtualPaper.WpSettingsPanel.Utils;
 using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
@@ -210,8 +212,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 });
         }
 
-        internal async Task PreviewAsync(IWpBasicData data) {
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+        internal async Task PreviewAsync(IWpBasicData data, ArcPageContext? ctx) {
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -560,7 +561,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             return [.. importRes];
         }
 
-        private void RegisterPanelActions() {
+        public void RegisterPanelActions() {
             // ── Action：入库 ──────────────────────────────────────────────
             PanelMessageCenter.RegisterAction<string, bool>(
                 PanelContracts.WpSettings.Id,
@@ -586,21 +587,21 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 });
 
             // ── Action：预览（无需入库，直接打开预览窗口）────────────────
-            PanelMessageCenter.RegisterAction<string, bool>(
+            PanelMessageCenter.RegisterAction<PreviewFileArgs, bool>(
                 PanelContracts.WpSettings.Id,
                 PanelContracts.WpSettings.Action_PreviewFile,
-                async (filePath) => {
+                async (args) => {
                     try {
-                        var ftype = FileFilter.GetFileType(filePath);
+                        var ftype = FileFilter.GetFileType(args.FilePath);
                         if (ftype == FileType.FUnknown) return false;
 
-                        var grpcData = await _wpControlClient.CreateBasicDataAsync(filePath, ftype, CancellationToken.None);
+                        var grpcData = await _wpControlClient.CreateBasicDataAsync(args.FilePath, ftype, CancellationToken.None);
                         if (grpcData == null) return false;
 
                         var data = DataAssist.GrpcToBasicData(grpcData);
                         if (!data.IsAvailable()) return false;
 
-                        await PreviewAsync(data);
+                        await PreviewAsync(data, args.Ctx);
                         return true;
                     }
                     catch (Exception ex) {

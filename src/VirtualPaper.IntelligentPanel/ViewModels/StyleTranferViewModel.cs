@@ -17,6 +17,7 @@ using VirtualPaper.ML.SuperResolution.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.PanelBus.WpSettingsArgs;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
     public partial class StyleTranferViewModel : ObservableObject {
@@ -170,19 +171,25 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         }
 
         private async void PreviewResult(StyleTransferTaskItem taskItem) {
-            if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) return;
+            if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) {
+                GlobalMessageUtil.ShowError("源文件无法访问或已被删除", isNeedLocalizer: false);
+                return;
+            }
 
-            var (found, _) = await PanelMessageCenter.TryInvokeAsync<string, bool>(
+            var (found, _) = await PanelMessageCenter.TryInvokeAsync<PreviewFileArgs, bool>(
                 PanelContracts.WpSettings.Id,
                 PanelContracts.WpSettings.Action_PreviewFile,
-                taskItem.Data.ResultFilePath);
+                new PreviewFileArgs(taskItem.Data.ResultFilePath, ArcPageContextManager.GetContext<Intelligent>()));
 
             if (!found)
                 GlobalMessageUtil.ShowError("WpSettings panel is not available.", isNeedLocalizer: false);
         }
 
         private async Task SaveResultAsync(StyleTransferTaskItem taskItem) {
-            if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) return;
+            if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) {
+                GlobalMessageUtil.ShowError("源文件无法访问或已被删除", isNeedLocalizer: false);
+                return;
+            }
 
             var suggestFilename = Path.GetFileName(taskItem.SourceFilePath);
             var saveFile = await WindowsStoragePickers.PickSaveFileAsync(
@@ -207,7 +214,10 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         }
 
         private async void ImportResult(StyleTransferTaskItem taskItem) {
-            if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) return;
+            if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) {
+                GlobalMessageUtil.ShowError("源文件无法访问或已被删除", isNeedLocalizer: false);
+                return;
+            }
 
             var (found, success) = await PanelMessageCenter.TryInvokeAsync<string, bool>(
                 PanelContracts.WpSettings.Id,

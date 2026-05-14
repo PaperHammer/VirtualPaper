@@ -1228,7 +1228,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>风格化</value>
   </data>
   <data name="Intelligent_SelBarItem2_SuperResolution" xml:space="preserve">
-    <value>高清修复</value>
+    <value>图像增强</value>
   </data>
   <data name="Intelligent_Intro_Title" xml:space="preserve">
     <value>图像风格迁移</value>
@@ -1256,9 +1256,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Intelligent_Task_Scr_Img_Import" xml:space="preserve">
     <value>点击或拖拽导入原图</value>
-  </data>
-  <data name="Intelligent_Style_Img" xml:space="preserve">
-    <value>风格图</value>
   </data>
   <data name="Intelligent_Style_Lib" xml:space="preserve">
     <value>风格库</value>
@@ -1311,14 +1308,14 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Text_ImportLib" xml:space="preserve">
     <value>入库</value>
   </data>
-  <data name="Text_Synthesis_Result" xml:space="preserve">
-    <value>合成结果</value>
+  <data name="Text_Result" xml:space="preserve">
+    <value>结果</value>
   </data>
   <data name="Text_Task_Status_Created" xml:space="preserve">
     <value>已创建</value>
   </data>
   <data name="Text_Task_Status_Queue" xml:space="preserve">
-    <value>排队中...</value>
+    <value>等待中...</value>
   </data>
   <data name="Text_Task_Status_Processing" xml:space="preserve">
     <value>处理中...</value>
@@ -1337,5 +1334,29 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Add_To_Lib_Success" xml:space="preserve">
     <value>成功导入本地库</value>
+  </data>
+  <data name="Intelligent_Enhance_Mode" xml:space="preserve">
+    <value>模式</value>
+  </data>
+  <data name="Intelligent_Enhance_QualityRestore" xml:space="preserve">
+    <value>画质修复</value>
+  </data>
+  <data name="Intelligent_Enhance_QualityRestore_Desc" xml:space="preserve">
+    <value>保持原始分辨率，去除模糊/噪点/压缩伪影</value>
+  </data>
+  <data name="Intelligent_Enhance_SuperResolution" xml:space="preserve">
+    <value>超分放大</value>
+  </data>
+  <data name="Intelligent_Enhance_SuperResolution_Desc" xml:space="preserve">
+    <value>提升图片分辨率，补充高频细节</value>
+  </data>
+  <data name="Intelligent_Enhance_Magnification" xml:space="preserve">
+    <value>放大倍率</value>
+  </data>
+  <data name="Intelligent_Enhance_Output" xml:space="preserve">
+    <value>输出分辨率：</value>
+  </data>
+  <data name="Intelligent_Enhance_Tip" xml:space="preserve">
+    <value>画质修复适用于分辨率够但画质差的图片；超分放大适用于分辨率不足的图片</value>
   </data>
 </root>

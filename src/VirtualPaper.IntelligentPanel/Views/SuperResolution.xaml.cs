@@ -20,7 +20,7 @@ namespace VirtualPaper.IntelligentPanel.Views {
         }
 
         public bool AddTask(IIntelliData data) {
-            if (data is SuperResolutionInput input) {
+            if (data is SuperResolutionData input) {
                 return _viewModel.AddTask(input);
             }
 

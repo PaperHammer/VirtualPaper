@@ -22,7 +22,7 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public string? ResultFileExt { get; private set; }
 
         public uint Width { get; }
-        public uint Height { get; }        
+        public uint Height { get; }
 
         public StyleTransferData(
             string sourcePath, string sourceFileSize, string sourceFileExt, uint width, uint height,

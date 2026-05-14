@@ -234,6 +234,8 @@ namespace VirtualPaper.Common {
             public static string? Text_Task_Status_Unknown { get; }
             public static string? Text_File_Not_Available { get; }
             public static string? Add_To_Lib_Success { get; }
+            public static string? Intelligent_Enhance_QualityRestore { get; }
+            public static string? Intelligent_Enhance_SuperResolution { get; }
         }
 
         public static class Field {

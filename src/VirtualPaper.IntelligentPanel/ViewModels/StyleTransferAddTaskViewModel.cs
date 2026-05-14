@@ -79,7 +79,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             set {
                 if (value == null || _selectedStyle == value) return;
                 _selectedStyle = value; OnPropertyChanged();
-                IsNextEnable = SelectedStyle != null && SelectedStyle.ImagePath != null;
+                IsNextEnable = SourceFilePath != null && SelectedStyle != null && SelectedStyle.ImagePath != null;
             }
         }
 

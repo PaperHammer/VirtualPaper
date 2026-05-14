@@ -12,9 +12,9 @@
 	<ItemGroup>
 	  <None Remove="Intelligent.xaml" />
 	  <None Remove="Views\Comp\ConfigSpace.xaml" />
-	  <None Remove="Views\Comp\TasksView.xaml" />
 	  <None Remove="Views\StyleTranfer.xaml" />
 	  <None Remove="Views\SuperResolution.xaml" />
+	  <None Remove="Views\SuperResolutionComp\SuperResolutionTasksView.xaml" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
@@ -23,6 +23,11 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj" />
 	  <ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Page Update="Views\SuperResolutionComp\SuperResolutionTasksView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 	<ItemGroup>
 	  <Page Update="Views\SuperResolutionComp\SuperResolutionAddTask.xaml">
@@ -36,11 +41,6 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Page Update="Views\Comp\ConfigSpace.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Page>
-	</ItemGroup>
-	<ItemGroup>
-	  <Page Update="Views\Comp\TasksView.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>

@@ -1228,7 +1228,7 @@ The following words cannot be used as usernames:
     <value>Stylize</value>
   </data>
   <data name="Intelligent_SelBarItem2_SuperResolution" xml:space="preserve">
-    <value>HD enhance</value>
+    <value>Image Enhancement</value>
   </data>
   <data name="Intelligent_Intro_Title" xml:space="preserve">
     <value>Image style transfer</value>
@@ -1252,13 +1252,10 @@ The following words cannot be used as usernames:
     <value>Task has been submitted</value>
   </data>
   <data name="Intelligent_Task_Scr_Img" xml:space="preserve">
-    <value>Original image</value>
+    <value>Original</value>
   </data>
   <data name="Intelligent_Task_Scr_Img_Import" xml:space="preserve">
     <value>Click or drag to import the original image</value>
-  </data>
-  <data name="Intelligent_Style_Img" xml:space="preserve">
-    <value>Style image</value>
   </data>
   <data name="Intelligent_Style_Lib" xml:space="preserve">
     <value>Style Library</value>
@@ -1311,14 +1308,14 @@ The following words cannot be used as usernames:
   <data name="Text_ImportLib" xml:space="preserve">
     <value>Import to lib</value>
   </data>
-  <data name="Text_Synthesis_Result" xml:space="preserve">
-    <value>Synthesis result</value>
+  <data name="Text_Result" xml:space="preserve">
+    <value>Result</value>
   </data>
   <data name="Text_Task_Status_Created" xml:space="preserve">
     <value>Created</value>
   </data>
   <data name="Text_Task_Status_Queue" xml:space="preserve">
-    <value>In line...</value>
+    <value>Waiting...</value>
   </data>
   <data name="Text_Task_Status_Processing" xml:space="preserve">
     <value>Processing...</value>
@@ -1337,5 +1334,29 @@ The following words cannot be used as usernames:
   </data>
   <data name="Add_To_Lib_Success" xml:space="preserve">
     <value>Successfully imported local library</value>
+  </data>
+  <data name="Intelligent_Enhance_Mode" xml:space="preserve">
+    <value>Mode</value>
+  </data>
+  <data name="Intelligent_Enhance_QualityRestore" xml:space="preserve">
+    <value>Quality Restore</value>
+  </data>
+  <data name="Intelligent_Enhance_QualityRestore_Desc" xml:space="preserve">
+    <value>Keep original resolution, remove blur/noise/compression artifacts</value>
+  </data>
+  <data name="Intelligent_Enhance_SuperResolution" xml:space="preserve">
+    <value>Super Resolution</value>
+  </data>
+  <data name="Intelligent_Enhance_SuperResolution_Desc" xml:space="preserve">
+    <value>Upscale image resolution with enhanced high-frequency details</value>
+  </data>
+  <data name="Intelligent_Enhance_Magnification" xml:space="preserve">
+    <value>Scale Factor</value>
+  </data>
+  <data name="Intelligent_Enhance_Output" xml:space="preserve">
+    <value>Output Resolution: </value>
+  </data>
+  <data name="Intelligent_Enhance_Tip" xml:space="preserve">
+    <value>Quality Restore is for images with sufficient resolution but poor quality; Super Resolution is for images with insufficient resolution</value>
   </data>
 </root>

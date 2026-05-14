@@ -15,332 +15,326 @@
 
     <Grid x:Name="addTaskGrid"
         HorizontalAlignment="Center"
-        VerticalAlignment="Stretch">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        VerticalAlignment="Center">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
 
-        <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+        <StackPanel HorizontalAlignment="Center" Spacing="6">
 
-            <StackPanel HorizontalAlignment="Center" Spacing="6">
+            <TextBlock 
+                Text="{markup:I18n Key=Intelligent_Task_Scr_Img}"
+                FontSize="16"
+                FontWeight="SemiBold"
+                HorizontalAlignment="Center"/>
 
-                <TextBlock 
-                    Text="{markup:I18n Key=Intelligent_Task_Scr_Img}"
-                    FontSize="16"
-                    FontWeight="SemiBold"
-                    HorizontalAlignment="Center"/>
+            <Grid>
+                <Rectangle
+                    RadiusX="14"
+                    RadiusY="14"
+                    Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                    StrokeThickness="1.5"
+                    StrokeDashArray="4 3"
+                    Fill="Transparent"/>
 
-                <Grid>
-                    <Rectangle
-                        RadiusX="14"
-                        RadiusY="14"
-                        Stroke="{ThemeResource AccentFillColorDefaultBrush}"
-                        StrokeThickness="1.5"
-                        StrokeDashArray="4 3"
-                        Fill="Transparent"/>
-
-                    <Border x:Name="sourceImageBorder"
-                        Width="400"
-                        Height="250"
-                        Margin="10"
-                        CornerRadius="10"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        AllowDrop="True"
-                        uicomp_utils:CursorUtil.CursorShape="Hand"
-                        Tapped="SourceImageBorder_Tapped">
-                        <Grid>
-                            <StackPanel 
+                <Border x:Name="sourceImageBorder"
+                    Width="400"
+                    Height="250"
+                    Margin="10"
+                    CornerRadius="10"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    AllowDrop="True"
+                    uicomp_utils:CursorUtil.CursorShape="Hand"
+                    Tapped="SourceImageBorder_Tapped">
+                    <Grid>
+                        <StackPanel 
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="6"
+                            Visibility="{x:Bind _viewModel.SourceFilePath, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}">
+                            <FontIcon 
+                                Glyph="&#xE8B9;"
+                                FontSize="28"
                                 HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Spacing="6"
-                                Visibility="{x:Bind _viewModel.SourceFilePath, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}">
-                                <FontIcon 
-                                    Glyph="&#xE8B9;"
-                                    FontSize="28"
-                                    HorizontalAlignment="Center"
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
-                                <TextBlock 
-                                    Text="{markup:I18n Key=Intelligent_Task_Scr_Img_Import}"
-                                    HorizontalAlignment="Center"
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    FontSize="14"/>
-                            </StackPanel>
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                            <TextBlock 
+                                Text="{markup:I18n Key=Intelligent_Task_Scr_Img_Import}"
+                                HorizontalAlignment="Center"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                FontSize="14"/>
+                        </StackPanel>
 
-                            <Image x:Name="sourceImage"
-                                Stretch="UniformToFill"
-                                Source="{x:Bind _viewModel.SourceFilePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
-                        </Grid>
-                    </Border>
-                </Grid>
-
-                <StackPanel 
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Center"
-                    Spacing="16"
-                    Visibility="{x:Bind _viewModel.SourceFilePath, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon Glyph="&#xE809;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                        <TextBlock 
-                            Text="{x:Bind _viewModel.SourceFileResolution, Mode=OneWay}" 
-                            FontSize="14"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon Glyph="&#xEB05;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                        <TextBlock 
-                            Text="{x:Bind _viewModel.SourceFileSize, Mode=OneWay}" 
-                            FontSize="14"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon Glyph="&#xE8A5;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                        <TextBlock 
-                            Text="{x:Bind _viewModel.SourceFileExt, Mode=OneWay}" 
-                            FontSize="14" 
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    </StackPanel>
-                </StackPanel>
-            </StackPanel>
-
-            <Grid 
-                Grid.Column="1"
-                VerticalAlignment="Center"
-                Margin="20 -40 20 0">
-                <Border 
-                    Width="44"
-                    Height="44"
-                    CornerRadius="22"
-                    Background="{ThemeResource AccentFillColorDefaultBrush}"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-                    <FontIcon 
-                        Glyph="&#xE710;"
-                        FontSize="16"
-                        Foreground="White"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"/>
+                        <Image x:Name="sourceImage"
+                            Stretch="UniformToFill"
+                            Source="{x:Bind _viewModel.SourceFilePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
+                    </Grid>
                 </Border>
             </Grid>
 
             <StackPanel 
-                Grid.Column="2"
-                VerticalAlignment="Center"
+                Orientation="Horizontal"
                 HorizontalAlignment="Center"
-                Spacing="6">
-
-                <Grid HorizontalAlignment="Stretch">
+                Spacing="16"
+                Visibility="{x:Bind _viewModel.SourceFilePath, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE809;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock 
-                        Text="{markup:I18n Key=Intelligent_Style_Img}"
-                        FontSize="16"
-                        FontWeight="SemiBold"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"/>
-
-                    <Button x:Name="styleGalleryButton"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Padding="8,4"
-                        CornerRadius="6"
-                        Background="Transparent"
-                        BorderThickness="0">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <FontIcon Glyph="&#xE71D;" FontSize="13" VerticalAlignment="Bottom" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-                            <TextBlock 
-                                Text="{markup:I18n Key=Intelligent_Style_Lib}" 
-                                FontSize="13"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-                        </StackPanel>
-
-                        <Button.Flyout>
-                            <Flyout x:Name="styleGalleryFlyout" Placement="BottomEdgeAlignedRight">
-                                <Flyout.FlyoutPresenterStyle>
-                                    <Style TargetType="FlyoutPresenter">
-                                        <Setter Property="MinWidth" Value="600"/>
-                                        <Setter Property="MaxWidth" Value="620"/>
-                                        <Setter Property="Padding" Value="16"/>
-                                        <Setter Property="CornerRadius" Value="8"/>
-                                        <Setter Property="ScrollViewer.HorizontalScrollMode" Value="Disabled"/>
-                                        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
-                                    </Style>
-                                </Flyout.FlyoutPresenterStyle>
-
-                                <StackPanel Spacing="12" MinWidth="560">
-                                    <TextBlock 
-                                        Text="{markup:I18n Key=Intelligent_Style_Inner_Select}"
-                                        FontSize="14"
-                                        FontWeight="SemiBold"
-                                        VerticalAlignment="Center"/>
-
-                                    <GridView x:Name="styleGridView"
-                                        ItemsSource="{x:Bind _viewModel.StyleOptions, Mode=OneWay}"
-                                        SelectedItem="{x:Bind _viewModel.SelectedStyle, Mode=TwoWay}"                                        
-                                        SelectionMode="Single"
-                                        IsItemClickEnabled="True"
-                                        MaxHeight="480"
-                                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                        ScrollViewer.HorizontalScrollMode="Disabled"
-                                        ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                        ScrollViewer.VerticalScrollMode="Enabled">
-                                        <GridView.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <ItemsWrapGrid 
-                                                    Orientation="Horizontal" 
-                                                    MaximumRowsOrColumns="3"
-                                                    ItemWidth="184"
-                                                    ItemHeight="210"/>
-                                            </ItemsPanelTemplate>
-                                        </GridView.ItemsPanel>
-                                        <GridView.ItemTemplate>
-                                            <DataTemplate x:DataType="lcl_models:StyleOptionItem">
-                                                <Grid Margin="4" Width="168" Height="196">
-                                                    <Border
-                                                        CornerRadius="8"
-                                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                                        BorderThickness="1">
-                                                        <Grid>
-                                                            <Image 
-                                                                Stretch="UniformToFill"
-                                                                Source="{x:Bind ThumbnailResourceKey, Mode=OneWay, Converter={StaticResource ResourceKeyToImageConverter}}"/>
-
-                                                            <StackPanel 
-                                                                HorizontalAlignment="Center"
-                                                                VerticalAlignment="Center"
-                                                                Spacing="6"
-                                                                Visibility="{x:Bind IsCustom}">
-                                                                <FontIcon 
-                                                                    Glyph="&#xE710;"
-                                                                    FontSize="24"
-                                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
-                                                                <TextBlock 
-                                                                    Text="{markup:I18n Key=Intelligent_Style_Type_Custom}"
-                                                                    FontSize="12"
-                                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                                                    HorizontalAlignment="Center"/>
-                                                            </StackPanel>
-                                                        </Grid>
-                                                    </Border>
-
-                                                    <Border
-                                                        VerticalAlignment="Bottom"
-                                                        HorizontalAlignment="Stretch"
-                                                        Padding="8,4"
-                                                        CornerRadius="0,0,8,8"
-                                                        Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}">
-                                                        <TextBlock 
-                                                            Text="{x:Bind Name, Mode=OneWay}"
-                                                            FontSize="12"
-                                                            HorizontalAlignment="Center"/>
-                                                    </Border>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </GridView.ItemTemplate>
-                                    </GridView>
-                                </StackPanel>
-                            </Flyout>
-                        </Button.Flyout>
-                    </Button>
-                </Grid>
-
-                <Grid>
-                    <Rectangle
-                        RadiusX="14"
-                        RadiusY="14"
-                        Stroke="{ThemeResource AccentFillColorDefaultBrush}"
-                        StrokeThickness="1.5"
-                        StrokeDashArray="4 3"
-                        Fill="Transparent"/>
-
-                    <Border x:Name="styleImageBorder"
-                        Width="300"
-                        Height="250"
-                        Margin="10"
-                        CornerRadius="10"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        AllowDrop="True"
-                        uicomp_utils:CursorUtil.CursorShape="Hand"
-                        Tapped="StyleImageBorder_Tapped">
-                        <Grid>
-                            <StackPanel 
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Spacing="6"
-                                Visibility="{x:Bind _viewModel.SelectedStyle.ImagePath, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}">
-                                <FontIcon 
-                                    Glyph="&#xE8B3;"
-                                    FontSize="28"
-                                    HorizontalAlignment="Center"
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
-                                <TextBlock 
-                                    Text="{markup:I18n Key=Intelligent_Task_Style_Img_Import}"
-                                    HorizontalAlignment="Center"
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    FontSize="14"/>
-                            </StackPanel>
-
-                            <Image x:Name="styleImage"
-                                Stretch="UniformToFill"
-                                Source="{x:Bind _viewModel.SelectedStyle.ImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
-                        </Grid>
-                    </Border>
-                </Grid>
-
-                <StackPanel HorizontalAlignment="Center">
-                    <StackPanel 
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Center"
-                        Spacing="16">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <FontIcon Glyph="&#xE790;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                            <TextBlock 
-                                Text="{x:Bind _viewModel.SelectedStyle.Name, TargetNullValue={markup:I18n Key=Intelligent_Task_Style_Img_Import}, Mode=OneWay}" 
-                                FontSize="14"
-                                MaxWidth="120"
-                                TextTrimming="CharacterEllipsis"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="6"
-                            Visibility="{x:Bind _viewModel.SelectedStyle.FileSize, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}">
-                            <FontIcon Glyph="&#xEB05;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                            <TextBlock 
-                                Text="{x:Bind _viewModel.SelectedStyle.FileSize, Mode=OneWay}" 
-                                FontSize="14"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="6"
-                            Visibility="{x:Bind _viewModel.SelectedStyle.FileExt, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}">
-                            <FontIcon Glyph="&#xE8A5;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                            <TextBlock 
-                                Text="{x:Bind _viewModel.SelectedStyle.FileExt, Mode=OneWay}" 
-                                FontSize="14" 
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                        </StackPanel>
-                    </StackPanel>
-
-                    <StackPanel Padding="10,8" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Stretch">
-                        <FontIcon 
-                        Glyph="&#xE946;"
-                        FontSize="13"
-                        VerticalAlignment="Top"
-                        Margin="0,2,0,0"/>
-                        <TextBlock 
-                        Text="{markup:I18n Key=Intelligent_Style_Img_Desc}"
-                        FontSize="12"
-                        TextWrapping="Wrap"
-                        MaxWidth="260"/>
-                    </StackPanel>
+                        Text="{x:Bind _viewModel.SourceFileResolution, Mode=OneWay}" 
+                        FontSize="14"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xEB05;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock 
+                        Text="{x:Bind _viewModel.SourceFileSize, Mode=OneWay}" 
+                        FontSize="14"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE8A5;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock 
+                        Text="{x:Bind _viewModel.SourceFileExt, Mode=OneWay}" 
+                        FontSize="14" 
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </StackPanel>
             </StackPanel>
+        </StackPanel>
+
+        <Grid 
+            Grid.Column="1"
+            VerticalAlignment="Center"
+            Margin="20 -40 20 0">
+            <Border 
+                Width="44"
+                Height="44"
+                CornerRadius="22"
+                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+                <FontIcon 
+                    Glyph="&#xE710;"
+                    FontSize="16"
+                    Foreground="White"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"/>
+            </Border>
         </Grid>
+
+        <StackPanel 
+            Grid.Column="2"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Center"
+            Spacing="6">
+
+            <Grid HorizontalAlignment="Stretch">
+                <TextBlock 
+                    Text="{markup:I18n Key=Intelligent_Task_Style}"
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"/>
+
+                <Button x:Name="styleGalleryButton"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Padding="8,4"
+                    CornerRadius="6"
+                    Background="Transparent"
+                    uicomp_utils:CursorUtil.CursorShape="Hand"
+                    BorderThickness="0">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <FontIcon Glyph="&#xE71D;" FontSize="13" VerticalAlignment="Bottom" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                        <TextBlock 
+                            Text="{markup:I18n Key=Intelligent_Style_Lib}" 
+                            FontSize="13"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                    </StackPanel>
+
+                    <Button.Flyout>
+                        <Flyout x:Name="styleGalleryFlyout" Placement="BottomEdgeAlignedRight">
+                            <Flyout.FlyoutPresenterStyle>
+                                <Style TargetType="FlyoutPresenter">
+                                    <Setter Property="MinWidth" Value="600"/>
+                                    <Setter Property="MaxWidth" Value="620"/>
+                                    <Setter Property="Padding" Value="16"/>
+                                    <Setter Property="CornerRadius" Value="8"/>
+                                    <Setter Property="ScrollViewer.HorizontalScrollMode" Value="Disabled"/>
+                                    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+                                </Style>
+                            </Flyout.FlyoutPresenterStyle>
+
+                            <StackPanel Spacing="12" MinWidth="560">
+                                <TextBlock 
+                                    Text="{markup:I18n Key=Intelligent_Style_Inner_Select}"
+                                    FontSize="14"
+                                    FontWeight="SemiBold"
+                                    VerticalAlignment="Center"/>
+
+                                <GridView x:Name="styleGridView"
+                                    ItemsSource="{x:Bind _viewModel.StyleOptions, Mode=OneWay}"
+                                    SelectedItem="{x:Bind _viewModel.SelectedStyle, Mode=TwoWay}"                                        
+                                    SelectionMode="Single"
+                                    IsItemClickEnabled="True"
+                                    MaxHeight="480"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                    ScrollViewer.HorizontalScrollMode="Disabled"
+                                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                    ScrollViewer.VerticalScrollMode="Enabled">
+                                    <GridView.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <ItemsWrapGrid 
+                                                Orientation="Horizontal" 
+                                                MaximumRowsOrColumns="3"
+                                                ItemWidth="184"
+                                                ItemHeight="210"/>
+                                        </ItemsPanelTemplate>
+                                    </GridView.ItemsPanel>
+                                    <GridView.ItemTemplate>
+                                        <DataTemplate x:DataType="lcl_models:StyleOptionItem">
+                                            <Grid Margin="4" Width="168" Height="196">
+                                                <Border
+                                                    CornerRadius="8"
+                                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                    BorderThickness="1">
+                                                    <Grid>
+                                                        <Image 
+                                                            Stretch="UniformToFill"
+                                                            Source="{x:Bind ThumbnailResourceKey, Mode=OneWay, Converter={StaticResource ResourceKeyToImageConverter}}"/>
+
+                                                        <StackPanel 
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center"
+                                                            Spacing="6"
+                                                            Visibility="{x:Bind IsCustom}">
+                                                            <FontIcon 
+                                                                Glyph="&#xE710;"
+                                                                FontSize="24"
+                                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                                            <TextBlock 
+                                                                Text="{markup:I18n Key=Intelligent_Style_Type_Custom}"
+                                                                FontSize="12"
+                                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                                HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+
+                                                <Border
+                                                    VerticalAlignment="Bottom"
+                                                    HorizontalAlignment="Stretch"
+                                                    Padding="8,4"
+                                                    CornerRadius="0,0,8,8"
+                                                    Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}">
+                                                    <TextBlock 
+                                                        Text="{x:Bind Name, Mode=OneWay}"
+                                                        FontSize="12"
+                                                        HorizontalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </GridView.ItemTemplate>
+                                </GridView>
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+            </Grid>
+
+            <Grid>
+                <Rectangle
+                    RadiusX="14"
+                    RadiusY="14"
+                    Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                    StrokeThickness="1.5"
+                    StrokeDashArray="4 3"
+                    Fill="Transparent"/>
+
+                <Border x:Name="styleImageBorder"
+                    Width="300"
+                    Height="250"
+                    Margin="10"
+                    CornerRadius="10"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    AllowDrop="True"
+                    uicomp_utils:CursorUtil.CursorShape="Hand"
+                    Tapped="StyleImageBorder_Tapped">
+                    <Grid>
+                        <StackPanel 
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="6"
+                            Visibility="{x:Bind _viewModel.SelectedStyle.ImagePath, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}">
+                            <FontIcon 
+                                Glyph="&#xE8B3;"
+                                FontSize="28"
+                                HorizontalAlignment="Center"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                            <TextBlock 
+                                Text="{markup:I18n Key=Intelligent_Task_Style_Img_Import}"
+                                HorizontalAlignment="Center"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                FontSize="14"/>
+                        </StackPanel>
+
+                        <Image x:Name="styleImage"
+                            Stretch="UniformToFill"
+                            Source="{x:Bind _viewModel.SelectedStyle.ImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <StackPanel HorizontalAlignment="Center">
+                <StackPanel 
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <FontIcon Glyph="&#xE790;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <TextBlock 
+                            Text="{x:Bind _viewModel.SelectedStyle.Name, TargetNullValue={markup:I18n Key=Intelligent_Task_Style_Img_Import}, Mode=OneWay}" 
+                            FontSize="14"
+                            MaxWidth="120"
+                            TextTrimming="CharacterEllipsis"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="6"
+                        Visibility="{x:Bind _viewModel.SelectedStyle.FileSize, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}">
+                        <FontIcon Glyph="&#xEB05;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <TextBlock 
+                            Text="{x:Bind _viewModel.SelectedStyle.FileSize, Mode=OneWay}" 
+                            FontSize="14"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="6"
+                        Visibility="{x:Bind _viewModel.SelectedStyle.FileExt, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}">
+                        <FontIcon Glyph="&#xE8A5;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <TextBlock 
+                            Text="{x:Bind _viewModel.SelectedStyle.FileExt, Mode=OneWay}" 
+                            FontSize="14" 
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Padding="10,8" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Stretch">
+                    <FontIcon 
+                    Glyph="&#xE946;"
+                    FontSize="13"
+                    VerticalAlignment="Top"
+                    Margin="0,2,0,0"/>
+                    <TextBlock 
+                    Text="{markup:I18n Key=Intelligent_Style_Img_Desc}"
+                    FontSize="12"
+                    TextWrapping="Wrap"
+                    MaxWidth="260"/>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </arc:ArcPage>

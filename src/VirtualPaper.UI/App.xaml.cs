@@ -109,6 +109,7 @@ namespace VirtualPaper.UI {
                 .AddTransient<WorkSpaceViewModel>()
                 .AddTransient<IntelligentViewModel>()
                 .AddTransient<StyleTransferAddTaskViewModel>()
+                .AddTransient<SuperResolutionAddTaskViewModel>()
 
                 .AddSingleton<IWallpaperIndexService, WallpaperIndexService>()
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()

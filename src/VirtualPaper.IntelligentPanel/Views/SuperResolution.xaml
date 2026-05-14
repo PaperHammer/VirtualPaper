@@ -7,14 +7,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:local_self_comp="using:VirtualPaper.IntelligentPanel.Views.SuperResolutionComp"
-    xmlns:local_comp="using:VirtualPaper.IntelligentPanel.Views.Comp"
     mc:Ignorable="d">
 
     <Grid>
         <local_self_comp:SuperResolutionIntroduction
             Visibility="{x:Bind _viewModel.HasTasks, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
 
-        <local_comp:TasksView
+        <local_self_comp:SuperResolutionTasksView
+            Tasks="{x:Bind _viewModel.Tasks}"
             Visibility="{x:Bind _viewModel.HasTasks, Mode=OneWay}"/>
     </Grid>
 </Page>

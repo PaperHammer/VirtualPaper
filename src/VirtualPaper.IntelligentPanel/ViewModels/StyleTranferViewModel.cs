@@ -111,11 +111,14 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                         tmpOutPath_realesrgan,
                         (uint)data.Width,
                         (uint)data.Height);
+
+                    ct.ThrowIfCancellationRequested();
+
+                    data.SetResultAsync(tmpOutPath_realesrgan).Wait();
                 }, ct);
 
                 ct.ThrowIfCancellationRequested();
 
-                await data.SetResultAsync(tmpOutPath_realesrgan);
                 taskItem.NotifyResultChanged();
                 taskItem.Status = TaskStatus.RanToCompletion;
 
@@ -252,9 +255,9 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         }
 
         /// <summary>
-        /// 最多同时执行 3 个任务，避免占用过多的 CPU 与 内存
+        /// 最多同时执行 2 个任务，避免占用过多的 CPU 与 内存
         /// </summary>
         private readonly SemaphoreSlim _concurrencyGate = new(MaxConcurrency, MaxConcurrency);
-        private const int MaxConcurrency = 3;
+        private const int MaxConcurrency = 2;
     }
 }

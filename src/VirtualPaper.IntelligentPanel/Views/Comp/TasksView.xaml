@@ -15,6 +15,7 @@
             ItemsSource="{x:Bind Tasks}"
             SelectionMode="None"
             IsItemClickEnabled="False"
+            Padding="0 0 16 0"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
             ScrollViewer.VerticalScrollBarVisibility="Auto">
 
@@ -63,8 +64,7 @@
                                                     Padding="8,3">
                                                     <TextBlock
                                                         Text="原图"
-                                                        FontSize="14"
-                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                                        FontSize="14"/>
                                                 </Border>
                                                 <TextBlock
                                                     Text="{x:Bind SourceFilePath}"
@@ -81,11 +81,10 @@
                                                     Padding="8,3">
                                                     <TextBlock
                                                         Text="风格"
-                                                        FontSize="14"
-                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                                        FontSize="14"/>
                                                 </Border>
                                                 <TextBlock
-                                                    Text="{x:Bind StyleFilePath}"
+                                                    Text="{x:Bind StyleName}"
                                                     FontSize="14"
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                     TextTrimming="CharacterEllipsis"
@@ -116,7 +115,6 @@
 
                                             <Button
                                                 Command="{x:Bind PreviewCommand}"
-                                                IsEnabled="{x:Bind IsCompleted, Mode=OneWay}"
                                                 Padding="12,8"
                                                 Background="Transparent"
                                                 BorderThickness="1"
@@ -129,7 +127,6 @@
 
                                             <Button
                                                 Command="{x:Bind ImportCommand}"
-                                                IsEnabled="{x:Bind IsCompleted, Mode=OneWay}"
                                                 Padding="12,8"
                                                 Background="Transparent"
                                                 BorderThickness="1"
@@ -142,7 +139,6 @@
 
                                             <Button
                                                 Command="{x:Bind SaveCommand}"
-                                                IsEnabled="{x:Bind IsCompleted, Mode=OneWay}"
                                                 Padding="12,8"
                                                 Background="Transparent"
                                                 BorderThickness="1"

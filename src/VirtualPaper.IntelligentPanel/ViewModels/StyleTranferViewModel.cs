@@ -169,14 +169,25 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
         }
 
-        private void PreviewResult(StyleTransferTaskItem taskItem) {
-            // TODO: 打开预览窗口
+        private async void PreviewResult(StyleTransferTaskItem taskItem) {
+            if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) return;
+
+            var (found, _) = await PanelMessageCenter.TryInvokeAsync<string, bool>(
+                PanelContracts.WpSettings.Id,
+                PanelContracts.WpSettings.Action_PreviewFile,
+                taskItem.Data.ResultFilePath);
+
+            if (!found)
+                GlobalMessageUtil.ShowError("WpSettings panel is not available.", isNeedLocalizer: false);
         }
 
         private async Task SaveResultAsync(StyleTransferTaskItem taskItem) {
+            if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) return;
+
+            var suggestFilename = Path.GetFileName(taskItem.SourceFilePath);
             var saveFile = await WindowsStoragePickers.PickSaveFileAsync(
                 WindowConsts.WindowHandle,
-                taskItem.SourceFilePath,
+                suggestFilename,
                 new Dictionary<string, string[]>() {
                     [taskItem.SourceFileExt[..1].ToUpper()] = [taskItem.SourceFileExt]
                 }
@@ -185,11 +196,33 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             if (saveFile == null || string.IsNullOrEmpty(saveFile.Path))
                 return;
 
-            GlobalMessageUtil.ShowSuccess($"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Success))} {saveFile.Path}");
+            try {
+                await Task.Run(() => File.Copy(taskItem.Data.ResultFilePath, saveFile.Path, overwrite: true));
+                GlobalMessageUtil.ShowSuccess($"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Success))} {saveFile.Path}");
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+            }
         }
 
-        private void ImportResult(StyleTransferTaskItem taskItem) {
-            // TODO: 入库为壁纸
+        private async void ImportResult(StyleTransferTaskItem taskItem) {
+            if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) return;
+
+            var (found, success) = await PanelMessageCenter.TryInvokeAsync<string, bool>(
+                PanelContracts.WpSettings.Id,
+                PanelContracts.WpSettings.Action_ImportWallpaper,
+                taskItem.Data.ResultFilePath);
+
+            if (!found) {
+                GlobalMessageUtil.ShowError("WpSettings panel is not available.", isNeedLocalizer: false);
+                return;
+            }
+
+            if (success)
+                GlobalMessageUtil.ShowSuccess(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Success)));
+            else
+                GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true);
         }
 
         private void OnTasksCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {

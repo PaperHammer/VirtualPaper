@@ -8,8 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI;
-using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
@@ -38,11 +36,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class LibraryContentsViewModel : ObservableObject, IFilterable {
         public ObservableCollection<IWpBasicData> LibraryWallpapers { get; private set; } = null!;
 
-        //private Brush _wpTitleForeground = new SolidColorBrush(Colors.White);
-        //public Brush WpTitleForeground {
-        //    get { return _wpTitleForeground; }
-        //    set { _wpTitleForeground = value; OnPropertyChanged(); }
-        //}
         private byte[] _wpTitleForeground = [255, 255, 255, 255];
         public byte[] WpTitleForeground {
             get => _wpTitleForeground;
@@ -73,6 +66,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private void InitOthers() {
             _wallpaperIndexService.Initialize(_wallpaperInstallFolders);
             _wpSettingsViewModel.RegisterLibraryContents(this);
+            RegisterPanelActions();
         }
 
         private void InitEvent() {
@@ -401,6 +395,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 _libraryWallpapers.Insert(0, data);
             }
             _wallpaperIndexService.Update(data);
+
+            // 广播"壁纸已入库"事件，供其他 Panel 订阅（如刷新预览、更新计数等）
+            PanelMessageCenter.Publish(
+                PanelContracts.WpSettings.Id,
+                PanelContracts.WpSettings.Event_WallpaperImported,
+                data.FolderPath);
         }
 
         internal async Task DropFilesAsync(IReadOnlyList<IStorageItem> items) {
@@ -558,6 +558,56 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             await Task.WhenAll(tasks);
 
             return [.. importRes];
+        }
+
+        private void RegisterPanelActions() {
+            // ── Action：入库 ──────────────────────────────────────────────
+            PanelMessageCenter.RegisterAction<string, bool>(
+                PanelContracts.WpSettings.Id,
+                PanelContracts.WpSettings.Action_ImportWallpaper,
+                async (filePath) => {
+                    try {
+                        var ftype = FileFilter.GetFileType(filePath);
+                        if (ftype == FileType.FUnknown) return false;
+
+                        var grpcData = await _wpControlClient.CreateBasicDataAsync(filePath, ftype, CancellationToken.None);
+                        if (grpcData == null) return false;
+
+                        var data = DataAssist.GrpcToBasicData(grpcData);
+                        if (!data.IsAvailable()) return false;
+
+                        UpdateLib(data);
+                        return true;
+                    }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                        return false;
+                    }
+                });
+
+            // ── Action：预览（无需入库，直接打开预览窗口）────────────────
+            PanelMessageCenter.RegisterAction<string, bool>(
+                PanelContracts.WpSettings.Id,
+                PanelContracts.WpSettings.Action_PreviewFile,
+                async (filePath) => {
+                    try {
+                        var ftype = FileFilter.GetFileType(filePath);
+                        if (ftype == FileType.FUnknown) return false;
+
+                        var grpcData = await _wpControlClient.CreateBasicDataAsync(filePath, ftype, CancellationToken.None);
+                        if (grpcData == null) return false;
+
+                        var data = DataAssist.GrpcToBasicData(grpcData);
+                        if (!data.IsAvailable()) return false;
+
+                        await PreviewAsync(data);
+                        return true;
+                    }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                        return false;
+                    }
+                });
         }
 
         #region filter

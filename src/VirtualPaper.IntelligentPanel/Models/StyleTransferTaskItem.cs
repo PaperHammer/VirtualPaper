@@ -9,21 +9,15 @@ namespace VirtualPaper.IntelligentPanel.Models {
     /// 风格迁移任务的 UI 表示层，包装 StyleTransferData 并提供绑定属性
     /// </summary>
     public partial class StyleTransferTaskItem : ObservableObject {
-        /// <summary>
-        /// 底层数据
-        /// </summary>
         public StyleTransferData Data { get; }
         public Guid Id => Data.Id;
-        /// <summary>
-        /// 用于取消此任务的令牌源
-        /// </summary>
         public CancellationTokenSource Cts { get; } = new();
 
         #region data
         public string SourceFilePath => Data.SourceFilePath;
         public string SourceFileSize => Data.SourceFileSize;
         public string SourceFileExt => Data.SourceFileExt;
-        public string SourceResolution => $"{Data.Width} × {Data.Height}";
+        public string SourceResolution => $"{Data.Width} * {Data.Height}";
 
         public string StyleFilePath => Data.StyleFilePath;
         public string? StyleName => Data.StyleName;
@@ -51,6 +45,7 @@ namespace VirtualPaper.IntelligentPanel.Models {
                 OnPropertyChanged(nameof(IsFailed));
 
                 UpdateProgressBarState();
+                NotifyCommandsCanExecuteChanged();
             }
         }
 
@@ -115,9 +110,12 @@ namespace VirtualPaper.IntelligentPanel.Models {
             Data = data ?? throw new ArgumentNullException(nameof(data));
         }
 
-        /// <summary>
-        /// 根据任务状态自动更新 ProgressBar 和颜色
-        /// </summary>
+        private void NotifyCommandsCanExecuteChanged() {
+            (PreviewCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (ImportCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
         private void UpdateProgressBarState() {
             switch (Status) {
                 case TaskStatus.Running:

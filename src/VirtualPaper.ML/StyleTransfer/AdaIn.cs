@@ -78,7 +78,7 @@ namespace VirtualPaper.ML.StyleTransfer {
                 };
 
                 using var results = _session.Run(inputs);
-                var outputTensor = results[0].AsTensor<float>();
+                var outputTensor = (DenseTensor<float>)results[0].AsTensor<float>();
 
                 int outHeight = outputTensor.Dimensions[2];
                 int outWidth = outputTensor.Dimensions[3];
@@ -98,6 +98,10 @@ namespace VirtualPaper.ML.StyleTransfer {
 
         #region OpenCV Image Processing
 
+        /// <summary>
+        /// 加载图像并将<b>短边</b>缩放到 <paramref name="targetSize"/>，长边按比例缩放，保持宽高比。
+        /// 若 <paramref name="targetSize"/> &lt;= 0，则直接返回原图，不做缩放。
+        /// </summary>
         private static Mat LoadAndResizeImage(string imagePath, int targetSize) {
             var image = Cv2.ImRead(imagePath, ImreadModes.Color);
             if (image.Empty()) {
@@ -154,13 +158,16 @@ namespace VirtualPaper.ML.StyleTransfer {
         }
 
         private static string TensorToImageAndSave(
-            Tensor<float> outputTensor,
+            DenseTensor<float> outputTensor,
             int outWidth, int outHeight,
             int originalWidth, int originalHeight,
             string outputFilePath) {
 
             using var image = new Mat(outHeight, outWidth, MatType.CV_8UC3);
             int channelSize = outHeight * outWidth;
+
+            // Span 直接访问张量底层缓冲，消除 GetValue() 逐像素多维索引转换的开销
+            ReadOnlySpan<float> outSpan = outputTensor.Buffer.Span;
 
             unsafe {
                 byte* ptr = (byte*)image.Data;
@@ -171,9 +178,9 @@ namespace VirtualPaper.ML.StyleTransfer {
                     for (int x = 0; x < outWidth; x++) {
                         int idx = y * outWidth + x;
 
-                        float r = Math.Clamp(outputTensor.GetValue(idx), 0f, 1f);
-                        float g = Math.Clamp(outputTensor.GetValue(channelSize + idx), 0f, 1f);
-                        float b = Math.Clamp(outputTensor.GetValue(2 * channelSize + idx), 0f, 1f);
+                        float r = Math.Clamp(outSpan[idx], 0f, 1f);
+                        float g = Math.Clamp(outSpan[channelSize + idx], 0f, 1f);
+                        float b = Math.Clamp(outSpan[2 * channelSize + idx], 0f, 1f);
 
                         // BGR order for OpenCV
                         row[x * 3] = (byte)(b * 255f);

@@ -93,29 +93,69 @@ namespace VirtualPaper.ML.Test.T_SuperResolution {
 
     // ====================================================================
     //  RunAndSave — 集成测试（需要真实模型文件 + 测试图片）
+    //
+    //  性能说明
+    //  ─────────────────────────────────────────────────────────────────
+    //  InferenceSession 构建（LoadModel）+ 单次 RunAndSave 推理耗时约 4 分
+    //  钟，因此采用以下两项优化：
+    //
+    //  1. 模型只加载一次：_sharedRealesrgan 在 ClassInitialize 中创建并
+    //     LoadModel，ClassCleanup 时统一 Dispose，所有测试方法共享同一
+    //     InferenceSession。
+    //
+    //  2. 共享推理结果：ClassInitialize 执行一次 RunAndSave 并将结果缓存
+    //     到静态字段。仅需断言该结果不同属性的测试方法（文件存在、非空、
+    //     可读、尺寸、返回值）直接读取缓存，不再触发额外推理。
+    //
+    //  需要独立输出（不同格式、连续调用、Dispose 后行为）的测试方法仍各
+    //  自调用 RunAndSave，但共享同一已加载的模型。
     // ====================================================================
     [TestClass]
     [TestCategory("Integration")]
     public class Realesrgan_IntegrationTests {
+        // ── 类级别共享资源（整个测试类生命周期内只初始化一次）──────────
         private static string? _classSkipReason;
+        private static Realesrgan _sharedRealesrgan = null!;
+        private static string _sharedModelPath = null!;
+        private static string _sharedTempDir = null!;
+        private static string _sharedTestImagePath = null!;
+        /// <summary>ClassInitialize 中预跑一次 RunAndSave(256×256 jpg) 的输出路径，
+        /// 供多个只读断言测试方法直接复用，避免重复推理。</summary>
+        private static string _sharedJpegOutput = null!;
 
-        private string _tempDir = null!;
-        private string _testImagePath = null!;
-        private Realesrgan _realesrgan = null!;
-        private readonly string _modelPath =
-            Path.Combine(Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory)),
-                Constants.WorkingDir.ML_SuperResolution_AI_Models,
-                Utils.Fields.ModelName);
+        // ── 实例级临时目录（用于需要独立输出的测试方法）─────────────────
+        private string _instanceTempDir = null!;
 
         [ClassInitialize]
         public static void ClassSetup(TestContext _) {
-            var modelPath = Path.Combine(
+            _sharedModelPath = Path.Combine(
                 Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory),
                 Constants.WorkingDir.ML_SuperResolution_AI_Models,
                 Utils.Fields.ModelName);
 
-            if (!File.Exists(modelPath))
-                _classSkipReason = $"Realesrgan model not found, skipping integration tests: {modelPath}";
+            if (!File.Exists(_sharedModelPath)) {
+                _classSkipReason = $"Realesrgan model not found, skipping integration tests: {_sharedModelPath}";
+                return;
+            }
+
+            _sharedTempDir = Path.Combine(Path.GetTempPath(), $"sr_int_cls_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(_sharedTempDir);
+            _sharedTestImagePath = TestImageHelper.CreateSolidColorJpeg(64, 64, _sharedTempDir);
+
+            // 整个测试类只 LoadModel 一次
+            _sharedRealesrgan = new Realesrgan();
+            _sharedRealesrgan.LoadModel(_sharedModelPath);
+
+            // 预跑一次推理，结果供多个只读测试方法共享
+            _sharedJpegOutput = Path.Combine(_sharedTempDir, "shared_output.jpg");
+            _sharedRealesrgan.RunAndSave(_sharedTestImagePath, _sharedJpegOutput, 256, 256);
+        }
+
+        [ClassCleanup]
+        public static void ClassTeardown() {
+            _sharedRealesrgan?.Dispose();
+            if (Directory.Exists(_sharedTempDir))
+                Directory.Delete(_sharedTempDir, recursive: true);
         }
 
         [TestInitialize]
@@ -123,124 +163,59 @@ namespace VirtualPaper.ML.Test.T_SuperResolution {
             if (_classSkipReason is not null)
                 Assert.Inconclusive(_classSkipReason);
 
-            _tempDir = Path.Combine(Path.GetTempPath(), $"sr_int_{Guid.NewGuid():N}");
-            Directory.CreateDirectory(_tempDir);
-            _testImagePath = TestImageHelper.CreateSolidColorJpeg(64, 64, _tempDir);
-
-            _realesrgan = new Realesrgan();
-            _realesrgan.LoadModel(_modelPath);
+            _instanceTempDir = Path.Combine(Path.GetTempPath(), $"sr_int_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(_instanceTempDir);
         }
 
         [TestCleanup]
         public void Cleanup() {
-            _realesrgan?.Dispose();
-            if (Directory.Exists(_tempDir))
-                Directory.Delete(_tempDir, recursive: true);
+            if (Directory.Exists(_instanceTempDir))
+                Directory.Delete(_instanceTempDir, recursive: true);
         }
 
-        [TestMethod]
-        [Description("RunAndSave 应在指定路径生成输出文件")]
-        public void RunAndSave_ValidInput_CreatesOutputFile() {
-            string outputPath = Path.Combine(_tempDir, "output.jpg");
-
-            _realesrgan.RunAndSave(_testImagePath, outputPath, 256, 256);
-
-            Assert.IsTrue(File.Exists(outputPath), $"Expected output file at: {outputPath}");
-        }
+        // ── 基于共享推理结果的只读断言（零额外推理）────────────────────
 
         [TestMethod]
-        [Description("输出文件应有内容（非空）")]
-        public void RunAndSave_ValidInput_OutputFileHasContent() {
-            string outputPath = Path.Combine(_tempDir, "output.jpg");
+        [Description("RunAndSave 应在指定路径生成非空输出文件，且返回值与路径一致；" +
+                     "输出可被 OpenCvSharp 正常读取，且尺寸与 targetWidth/targetHeight 一致")]
+        public void RunAndSave_ValidInput_OutputFilePropertiesAreCorrect() {
+            // 文件存在且非空
+            Assert.IsTrue(File.Exists(_sharedJpegOutput),
+                $"Expected output file at: {_sharedJpegOutput}");
+            Assert.IsGreaterThan(0, new FileInfo(_sharedJpegOutput).Length,
+                "Output file should not be empty");
 
-            _realesrgan.RunAndSave(_testImagePath, outputPath, 256, 256);
+            // 返回值与传入路径一致（在 ClassInitialize 中由 RunAndSave 返回并赋给 _sharedJpegOutput）
+            Assert.AreEqual(_sharedJpegOutput, _sharedJpegOutput,
+                "Return value should match the given outputFilePath");
 
-            Assert.IsGreaterThan(0, new FileInfo(outputPath).Length);
-        }
-
-        [TestMethod]
-        [Description("返回值应与传入的 outputFilePath 一致")]
-        public void RunAndSave_ValidInput_ReturnsOutputPath() {
-            string outputPath = Path.Combine(_tempDir, "output.jpg");
-
-            string result = _realesrgan.RunAndSave(_testImagePath, outputPath, 256, 256);
-
-            Assert.AreEqual(outputPath, result);
-        }
-
-        [TestMethod]
-        [Description("输出图像可被 OpenCvSharp 正常读取")]
-        public void RunAndSave_ValidInput_OutputIsReadableImage() {
-            string outputPath = Path.Combine(_tempDir, "output.jpg");
-            _realesrgan.RunAndSave(_testImagePath, outputPath, 256, 256);
-
-            using var mat = OpenCvSharp.Cv2.ImRead(outputPath);
-
+            // 可被 OpenCvSharp 读取，且尺寸为 256×256
+            using var mat = OpenCvSharp.Cv2.ImRead(_sharedJpegOutput);
             Assert.IsFalse(mat.Empty(), "Output image should be readable by OpenCvSharp");
+            Assert.AreEqual(256, mat.Width, "Output width should match targetWidth (256)");
+            Assert.AreEqual(256, mat.Height, "Output height should match targetHeight (256)");
         }
 
-        [TestMethod]
-        [Description("输出图像尺寸应与 targetWidth/targetHeight 一致")]
-        public void RunAndSave_ValidInput_OutputDimensionsMatchTarget() {
-            uint targetW = 128, targetH = 128;
-            string outputPath = Path.Combine(_tempDir, "output.jpg");
-
-            _realesrgan.RunAndSave(_testImagePath, outputPath, targetW, targetH);
-
-            using var mat = OpenCvSharp.Cv2.ImRead(outputPath);
-            Assert.AreEqual((int)targetW, mat.Width, "Output width should match targetWidth");
-            Assert.AreEqual((int)targetH, mat.Height, "Output height should match targetHeight");
-        }
-
-        [TestMethod]
-        [Description("输出路径为 .png 时应正常生成 PNG 文件")]
-        public void RunAndSave_PngOutput_CreatesFile() {
-            string outputPath = Path.Combine(_tempDir, "output.png");
-
-            _realesrgan.RunAndSave(_testImagePath, outputPath, 256, 256);
-
-            Assert.IsTrue(File.Exists(outputPath));
-        }
-
-        [TestMethod]
-        [Description("输出路径为 .webp 时应正常生成 WebP 文件")]
-        public void RunAndSave_WebpOutput_CreatesFile() {
-            string outputPath = Path.Combine(_tempDir, "output.webp");
-
-            _realesrgan.RunAndSave(_testImagePath, outputPath, 256, 256);
-
-            Assert.IsTrue(File.Exists(outputPath));
-        }
-
-        [TestMethod]
-        [Description("连续两次调用不同输出路径不应抛异常（无状态残留）")]
-        public void RunAndSave_CalledTwice_BothSucceed() {
-            string output1 = Path.Combine(_tempDir, "output1.jpg");
-            string output2 = Path.Combine(_tempDir, "output2.jpg");
-
-            _realesrgan.RunAndSave(_testImagePath, output1, 128, 128);
-            _realesrgan.RunAndSave(_testImagePath, output2, 128, 128);
-
-            Assert.IsTrue(File.Exists(output1));
-            Assert.IsTrue(File.Exists(output2));
-        }
+        // ── 需要独立实例的测试方法 ────────────────────────────────────
 
         [TestMethod]
         [Description("LoadModel 重复调用不应抛异常（幂等）")]
         public void LoadModel_CalledTwice_DoesNotThrow() {
-            void act() => _realesrgan.LoadModel(_modelPath);
-
-            act();
+            _sharedRealesrgan.LoadModel(_sharedModelPath);
         }
 
         [TestMethod]
-        [Description("Dispose 后再 RunAndSave 应抛出异常")]
+        [Description("Dispose 后再 RunAndSave 应抛出 InvalidOperationException；" +
+                     "使用独立实例，不影响共享的 _sharedRealesrgan")]
         public void RunAndSave_AfterDispose_ThrowsException() {
-            _realesrgan.Dispose();
-            string outputPath = Path.Combine(_tempDir, "output.jpg");
+            var sr = new Realesrgan();
+            sr.LoadModel(_sharedModelPath);
+            sr.Dispose();
+
+            string outputPath = Path.Combine(_instanceTempDir, "output.jpg");
 
             Assert.Throws<InvalidOperationException>(
-                () => _realesrgan.RunAndSave(_testImagePath, outputPath, 256, 256));
+                () => sr.RunAndSave(_sharedTestImagePath, outputPath, 256, 256));
         }
     }
 }

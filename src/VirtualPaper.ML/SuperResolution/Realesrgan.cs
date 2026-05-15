@@ -206,7 +206,7 @@ namespace VirtualPaper.ML.SuperResolution {
                         int dstY = (tile.SyClamped + (tile.Sy < 0 ? 0 : TileOverlap)) * scaleY;
 
                         // 将有效区域写入 outputImage
-                        // 各 Tile 的 [dstX, dstX+validW) × [dstY, dstY+validH) 互不重叠，无需加锁
+                        // 各 Tile 的 [dstX, dstX+validW) * [dstY, dstY+validH) 互不重叠，无需加锁
                         unsafe {
                             byte* dstPtr = (byte*)outputImage!.Data;
                             int dstStride = (int)outputImage.Step();

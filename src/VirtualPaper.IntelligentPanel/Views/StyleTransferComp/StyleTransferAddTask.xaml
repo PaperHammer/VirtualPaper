@@ -147,7 +147,7 @@
                     uicomp_utils:CursorUtil.CursorShape="Hand"
                     BorderThickness="0">
                     <StackPanel Orientation="Horizontal" Spacing="4">
-                        <FontIcon Glyph="&#xE71D;" FontSize="13" VerticalAlignment="Bottom" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                        <FontIcon Glyph="&#xE71D;" FontSize="13" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
                         <TextBlock 
                             Text="{markup:I18n Key=Intelligent_Style_Lib}" 
                             FontSize="13"

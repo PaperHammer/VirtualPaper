@@ -305,7 +305,7 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
         }
 
         [TestMethod]
-        [Description("DepthEstimateModelOutput.Depth 数组长度应等于模型输出的 width × height")]
+        [Description("DepthEstimateModelOutput.Depth 数组长度应等于模型输出的 width * height")]
         public void Run_ValidImage_DepthArrayLengthIsCorrect() {
             var result = _midas.Run(_testImagePath);
 

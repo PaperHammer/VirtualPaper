@@ -1228,25 +1228,27 @@ The following words cannot be used as usernames:
     <value>Stylize</value>
   </data>
   <data name="Intelligent_SelBarItem2_SuperResolution" xml:space="preserve">
-    <value>Image Enhancement</value>
+    <value>Enhance</value>
   </data>
   <data name="Intelligent_Intro_Title" xml:space="preserve">
     <value>Image style transfer</value>
   </data>
   <data name="Intelligent_Intro_Desc" xml:space="preserve">
-    <value>Image style transfer uses AI to apply the artistic style of one image onto another. Upload a content image and a style reference image — AI extracts the color, brushstroke, and texture of the style image and fuses them into the content image, producing a new stylized result.</value>
+    <value>Applies the artistic style of one image onto another using an AI model. Upload a content image and a style reference — automatically blends the two and produces a new image that captures both the original content and the target style.</value>
   </data>
   <data name="Intelligent_Intro_Warning" xml:space="preserve">
-    <value>Note: Due to local model constraints, input images are compressed before processing and restored via super-resolution afterward. The output may have slightly reduced quality compared to the original.</value>
+    <value>Note: As a local lightweight model, input images are compressed before processing and restored afterward, which may result in some loss of detail in the output.</value>
   </data>
   <data name="Intelligent_SR_Title" xml:space="preserve">
-    <value>High-definition restoration</value>
+    <value>Image Enhancement</value>
   </data>
   <data name="Intelligent_SR_Desc" xml:space="preserve">
-    <value>Using AI to restore and upscale low-quality images. Upload an image — AI automatically sharpens details, reduces noise, and increases resolution, producing a clearer, higher-quality result.</value>
+    <value>Enhances your images using AI super-resolution.
+- Clarity Restoration: recovers detail and sharpens blurry or low-quality images
+- Lossless Upscaling: increases resolution while preserving the original details</value>
   </data>
   <data name="Intelligent_SR_Warning" xml:space="preserve">
-    <value>Note: During super-resolution processing, the model details, which may differ slightly from the original image.</value>
+    <value>Note: The model reconstructs details during processing, so some differences from the original are expected. Processing may take a while due to the local lightweight model.</value>
   </data>
   <data name="Intelligent_AddTask" xml:space="preserve">
     <value>Task has been submitted</value>

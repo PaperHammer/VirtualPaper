@@ -197,12 +197,12 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
 
             if (IsQualityRestoreMode) {
-                OutputResolutionText = $"{_sourceFileWidth} × {_sourceFileHeight}（原始）";
+                OutputResolutionText = $"{_sourceFileWidth} * {_sourceFileHeight}";
             }
             else {
                 uint w = _sourceFileWidth * (uint)SelectedMagnification;
                 uint h = _sourceFileHeight * (uint)SelectedMagnification;
-                OutputResolutionText = $"{w} × {h}";
+                OutputResolutionText = $"{w} * {h}";
             }
         }
         #endregion
@@ -236,7 +236,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             var (width, height) = await FileUtil.GetImageResolutionAsync(filePath);
             _sourceFileWidth = width;
             _sourceFileHeight = height;
-            SourceFileResolution = $"{width} × {height}";
+            SourceFileResolution = $"{width} * {height}";
 
             UpdateOutputResolutionText();
             UpdateNextEnable();

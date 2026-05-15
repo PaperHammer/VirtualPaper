@@ -97,7 +97,8 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                     adain.RunAndSave(
                         data.SourceFilePath,
                         data.StyleFilePath,
-                        tmpOutPath_style);
+                        tmpOutPath_style,
+                        ct: ct);
 
                     ct.ThrowIfCancellationRequested();
 
@@ -110,7 +111,8 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                         tmpOutPath_style,
                         tmpOutPath_realesrgan,
                         (uint)data.Width,
-                        (uint)data.Height);
+                        (uint)data.Height,
+                        ct);
 
                     ct.ThrowIfCancellationRequested();
 
@@ -126,6 +128,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
             catch (OperationCanceledException) {
                 CleanupAfterCancel(taskItem, tempDir);
+                GlobalMessageUtil.ShowCanceled();
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);

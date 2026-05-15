@@ -38,6 +38,7 @@ namespace VirtualPaper.ML.SuperResolution {
             ArcLog.GetLogger<Realesrgan>().Info($"Real-ESRGAN Model version: {_session.ModelMetadata.Version}");
 
             _inputName = _session.InputMetadata.Keys.First();
+            _outputNames = _session.OutputMetadata.Keys.ToList();
             _isLoaded = true;
         }
 
@@ -46,14 +47,17 @@ namespace VirtualPaper.ML.SuperResolution {
         /// <list type="bullet">
         ///   <item>Tile 分块：固定 <see cref="TileSize"/>×<see cref="TileSize"/> 输入，内存恒定，ONNX 执行计划复用。</item>
         ///   <item>并行推理：最多 <see cref="MaxParallelTiles"/> 块同时调用 <c>Session.Run()</c>（线程安全）。</item>
-        ///   <item>无锁写回：各 Tile 目标区域互不重叠，可并发写入 outputImage。</item>
+        ///   <item>立即取消：通过 <see cref="RunOptions.Terminate"/> 在下一个算子边界中止正在推理的 Tile。</item>
         /// </list>
         /// </summary>
         public string RunAndSave(
             string inputImagePath,
             string outputFilePath,
             uint targetWidth,
-            uint targetHeight) {
+            uint targetHeight,
+            CancellationToken ct = default) {
+
+            ct.ThrowIfCancellationRequested();
 
             if (_session == null) throw new InvalidOperationException("ONNX Session is not initialized.");
             if (!File.Exists(inputImagePath)) throw new FileNotFoundException($"Input image not found: {inputImagePath}");
@@ -90,13 +94,29 @@ namespace VirtualPaper.ML.SuperResolution {
             int fixedTilePixels = TileSize * TileSize * 3;
             int fixedChannelSize = TileSize * TileSize;
 
-            // outputImage 跨线程懒初始化：所有 Tile 推理 shape 相同，任何一块完成即可确定整图尺寸，
-            // 用 Interlocked.CompareExchange 保证只初始化一次，竞争失败方直接 Dispose 候选对象。
+            // ── 调用级局部状态（与单例实例字段完全隔离）────────────────────────
+            // outputImage：本次调用的输出 Mat，跨并行 Tile 懒初始化
             Mat? outputImage = null;
 
+            // RunOptions：本次调用独享，不能跨调用复用。
+            // CT 触发时通过 Terminate = true 通知所有正在执行的 Run() 在下一个算子边界中止。
+            using var runOptions = new RunOptions();
+            using var ctRegistration = ct.Register(() => runOptions.Terminate = true);
+
+            // ─────────────────────────────────────────────────────────────────
+            // 取消策略：catch 里不手动 throw OCE，完全依赖 ParallelOptions.CancellationToken。
+            // 原因：ParallelOptions.CancellationToken = ct 会在 CT 取消后让 Parallel.ForEach
+            // 自动抛出一次 OperationCanceledException；若 catch 里也 throw，会产生双重/多重
+            // OCE，在调试器中触发多次断点并污染日志。
+            // 各 Tile 静默 return 即可——CT 取消后框架不再调度新 Tile，所有 Tile 退出后
+            // Parallel.ForEach 统一以 OperationCanceledException 通知外层。
+            // ─────────────────────────────────────────────────────────────────
             Parallel.ForEach(
                 tileInfos,
-                new ParallelOptions { MaxDegreeOfParallelism = MaxParallelTiles },
+                new ParallelOptions {
+                    MaxDegreeOfParallelism = MaxParallelTiles,
+                    CancellationToken = ct   // CT 取消后阻止新 Tile 启动，并统一抛 OCE
+                },
                 // 每个工作线程独享一块 ArrayPool 缓冲，避免并发写入同一 buffer
                 () => ArrayPool<float>.Shared.Rent(fixedTilePixels),
                 (tile, _, localBuffer) => {
@@ -141,78 +161,88 @@ namespace VirtualPaper.ML.SuperResolution {
                     }
 
                     // 推理（InferenceSession.Run 线程安全，可并发调用）
-                    // 所有 Tile 输入均为 [1, 3, TileSize, TileSize]，ONNX 复用执行计划
+                    // 传入本次调用独享的 runOptions：CT 触发时 Terminate=true 会中止 Run()
                     var memory = new Memory<float>(localBuffer, 0, fixedTilePixels);
                     var inputTensor = new DenseTensor<float>(memory, [1, 3, TileSize, TileSize]);
                     var inputs = new List<NamedOnnxValue>(1) {
                         NamedOnnxValue.CreateFromTensor(_inputName, inputTensor)
                     };
 
-                    using var results = _session.Run(inputs);
-                    var outTensor = (DenseTensor<float>)results[0].AsTensor<float>();
-                    ReadOnlySpan<float> outSpan = outTensor.Buffer.Span;
+                    try {
+                        using var results = _session.Run(inputs, _outputNames, runOptions);
 
-                    int upW = outTensor.Dimensions[3]; // = TileSize * scaleX
-                    int upH = outTensor.Dimensions[2]; // = TileSize * scaleY
-                    int upChannelSize = upW * upH;
-                    int scaleX = upW / TileSize;
-                    int scaleY = upH / TileSize;
+                        var outTensor = (DenseTensor<float>)results[0].AsTensor<float>();
+                        ReadOnlySpan<float> outSpan = outTensor.Buffer.Span;
 
-                    // outputImage 懒分配（任意一块推理完成后即可确定整图尺寸）
-                    if (outputImage == null) {
-                        var candidate = new Mat(imgHeight * scaleY, imgWidth * scaleX, MatType.CV_8UC3);
-                        if (Interlocked.CompareExchange(ref outputImage, candidate, null) != null)
-                            candidate.Dispose(); // 其他线程已抢先分配，放弃本候选
-                    }
+                        int upW = outTensor.Dimensions[3]; // = TileSize * scaleX
+                        int upH = outTensor.Dimensions[2]; // = TileSize * scaleY
+                        int upChannelSize = upW * upH;
+                        int scaleX = upW / TileSize;
+                        int scaleY = upH / TileSize;
 
-                    // 计算有效区域（剥离 overlap 边缘，以实际内容宽高为上界排除填充区）
-                    int contentW = tileW * scaleX;
-                    int contentH = tileH * scaleY;
+                        // outputImage 懒分配（任意一块推理完成后即可确定整图尺寸）
+                        if (outputImage == null) {
+                            var candidate = new Mat(imgHeight * scaleY, imgWidth * scaleX, MatType.CV_8UC3);
+                            if (Interlocked.CompareExchange(ref outputImage, candidate, null) != null)
+                                candidate.Dispose(); // 其他线程已抢先分配，放弃本候选
+                        }
 
-                    int leftStrip = (tile.Sx < 0 ? 0 : TileOverlap) * scaleX;
-                    int topStrip = (tile.Sy < 0 ? 0 : TileOverlap) * scaleY;
-                    int rightStrip = (tile.ExClamped == imgWidth ? 0 : TileOverlap) * scaleX;
-                    int bottomStrip = (tile.EyClamped == imgHeight ? 0 : TileOverlap) * scaleY;
+                        // 计算有效区域（剥离 overlap 边缘，以实际内容宽高为上界排除填充区）
+                        int contentW = tileW * scaleX;
+                        int contentH = tileH * scaleY;
 
-                    int validX = leftStrip;
-                    int validY = topStrip;
-                    int validW = contentW - leftStrip - rightStrip;
-                    int validH = contentH - topStrip - bottomStrip;
+                        int leftStrip = (tile.Sx < 0 ? 0 : TileOverlap) * scaleX;
+                        int topStrip = (tile.Sy < 0 ? 0 : TileOverlap) * scaleY;
+                        int rightStrip = (tile.ExClamped == imgWidth ? 0 : TileOverlap) * scaleX;
+                        int bottomStrip = (tile.EyClamped == imgHeight ? 0 : TileOverlap) * scaleY;
 
-                    // 有效区域在完整输出图中的起始坐标
-                    int dstX = (tile.SxClamped + (tile.Sx < 0 ? 0 : TileOverlap)) * scaleX;
-                    int dstY = (tile.SyClamped + (tile.Sy < 0 ? 0 : TileOverlap)) * scaleY;
+                        int validX = leftStrip;
+                        int validY = topStrip;
+                        int validW = contentW - leftStrip - rightStrip;
+                        int validH = contentH - topStrip - bottomStrip;
 
-                    // 将有效区域写入 outputImage
-                    // 各 Tile 的 [dstX, dstX+validW) × [dstY, dstY+validH) 互不重叠，无需加锁
-                    unsafe {
-                        byte* dstPtr = (byte*)outputImage!.Data;
-                        int dstStride = (int)outputImage.Step();
+                        // 有效区域在完整输出图中的起始坐标
+                        int dstX = (tile.SxClamped + (tile.Sx < 0 ? 0 : TileOverlap)) * scaleX;
+                        int dstY = (tile.SyClamped + (tile.Sy < 0 ? 0 : TileOverlap)) * scaleY;
 
-                        for (int y = 0; y < validH; y++) {
-                            byte* dstRow = dstPtr + (dstY + y) * dstStride;
-                            int srcY = validY + y;
+                        // 将有效区域写入 outputImage
+                        // 各 Tile 的 [dstX, dstX+validW) × [dstY, dstY+validH) 互不重叠，无需加锁
+                        unsafe {
+                            byte* dstPtr = (byte*)outputImage!.Data;
+                            int dstStride = (int)outputImage.Step();
 
-                            for (int x = 0; x < validW; x++) {
-                                int idx = srcY * upW + (validX + x);
+                            for (int y = 0; y < validH; y++) {
+                                byte* dstRow = dstPtr + (dstY + y) * dstStride;
+                                int srcY = validY + y;
 
-                                byte r = (byte)(Math.Clamp(outSpan[idx], 0f, 1f) * 255f);
-                                byte g = (byte)(Math.Clamp(outSpan[upChannelSize + idx], 0f, 1f) * 255f);
-                                byte b = (byte)(Math.Clamp(outSpan[2 * upChannelSize + idx], 0f, 1f) * 255f);
+                                for (int x = 0; x < validW; x++) {
+                                    int idx = srcY * upW + (validX + x);
 
-                                // OpenCV Mat 存储为 BGR
-                                dstRow[(dstX + x) * 3] = b;
-                                dstRow[(dstX + x) * 3 + 1] = g;
-                                dstRow[(dstX + x) * 3 + 2] = r;
+                                    byte r = (byte)(Math.Clamp(outSpan[idx], 0f, 1f) * 255f);
+                                    byte g = (byte)(Math.Clamp(outSpan[upChannelSize + idx], 0f, 1f) * 255f);
+                                    byte b = (byte)(Math.Clamp(outSpan[2 * upChannelSize + idx], 0f, 1f) * 255f);
+
+                                    // OpenCV Mat 存储为 BGR
+                                    dstRow[(dstX + x) * 3] = b;
+                                    dstRow[(dstX + x) * 3 + 1] = g;
+                                    dstRow[(dstX + x) * 3 + 2] = r;
+                                }
                             }
                         }
+                    }
+                    catch (OnnxRuntimeException) when (ct.IsCancellationRequested) {
+                        // runOptions.Terminate 触发了 ONNX 中断；静默返回，
+                        // 由 ParallelOptions.CancellationToken 机制统一发出一次 OperationCanceledException，
+                        // 避免手动 throw 与框架内部 throw 叠加产生多次 OCE。
                     }
 
                     return localBuffer;
                 },
-
+                // 线程结束时归还独享 buffer 到 ArrayPool
                 localBuffer => ArrayPool<float>.Shared.Return(localBuffer, clearArray: false)
             );
+
+            ct.ThrowIfCancellationRequested();
 
             if (outputImage == null)
                 throw new InvalidOperationException("No tiles were processed; output image was never initialized.");
@@ -267,6 +297,7 @@ namespace VirtualPaper.ML.SuperResolution {
 
         #endregion
 
+        // ── 配置常量（只读，无状态）──────────────────────────────────────────
         /// <summary>每个 Tile 的输入尺寸（像素）。越小内存越低，但 Tile 数量越多。</summary>
         private const int TileSize = 512;
         /// <summary>Tile 边缘 overlap 宽度（输入像素）。防止拼接处产生明显接缝。</summary>
@@ -278,6 +309,7 @@ namespace VirtualPaper.ML.SuperResolution {
         /// </summary>
         private const int MaxParallelTiles = 2;
 
+        // ── 辅助结构（值类型，无状态）────────────────────────────────────────
         private readonly struct TileInfo(
             int sx, int sy,
             int sxClamped, int syClamped,
@@ -290,8 +322,12 @@ namespace VirtualPaper.ML.SuperResolution {
             public readonly int EyClamped = eyClamped;
         }
 
+        // ── 单例实例字段（仅 LoadModel 写入，之后只读）──────────────────────
+        // 所有 RunAndSave 调用的可变状态（outputImage、runOptions 等）均为方法内局部变量，
+        // 确保并发或串行的多次调用之间完全隔离，不存在数据污染风险。
         private InferenceSession? _session;
         private string _inputName = string.Empty;
+        private IReadOnlyList<string> _outputNames = [];
         private volatile bool _isLoaded;
     }
 }

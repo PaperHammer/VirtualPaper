@@ -9,6 +9,7 @@ namespace VirtualPaper.ML.StyleTransfer.Interfaces {
             string outputFilePath,
             float alpha = 1.0f,
             int contentSize = 512,
-            int styleSize = 512);
+            int styleSize = 512,
+            CancellationToken ct = default);
     }
 }

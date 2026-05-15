@@ -1,3 +1,4 @@
+using System.Buffers;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
@@ -33,66 +34,81 @@ namespace VirtualPaper.ML.StyleTransfer {
             _session = new InferenceSession(ModelPath, options);
             ArcLog.GetLogger<AdaIn>().Info($"Model version: {_session.ModelMetadata.Version}");
 
+            _outputNames = _session.OutputMetadata.Keys.ToList();
             _isLoaded = true;
-        }        
+        }
 
-        /// <summary>
-        /// 如果仍然需要分步调用的接口
-        /// </summary>
         public string RunAndSave(
             string contentImagePath,
             string styleImagePath,
             string outputFilePath,
             float alpha = 1.0f,
             int contentSize = 512,
-            int styleSize = 512) {
+            int styleSize = 512,
+            CancellationToken ct = default) {
+
+            ct.ThrowIfCancellationRequested();
 
             if (_session == null) throw new InvalidOperationException("ONNX Session is not initialized.");
             if (string.IsNullOrEmpty(ModelPath)) throw new FileNotFoundException("ONNX file not provided.");
             if (!File.Exists(contentImagePath)) throw new FileNotFoundException($"Content image not found: {contentImagePath}");
             if (!File.Exists(styleImagePath)) throw new FileNotFoundException($"Style image not found: {styleImagePath}");
 
-            int originalWidth, originalHeight;
+            ct.ThrowIfCancellationRequested();
 
             using var contentImage = LoadAndResizeImage(contentImagePath, contentSize);
             using var styleImage = LoadAndResizeImage(styleImagePath, styleSize);
 
-            originalWidth = contentImage.Width;
-            originalHeight = contentImage.Height;
+            int originalWidth = contentImage.Width;
+            int originalHeight = contentImage.Height;
 
             int contentPixels = contentImage.Height * contentImage.Width * 3;
             int stylePixels = styleImage.Height * styleImage.Width * 3;
 
-            float[] contentBuffer = System.Buffers.ArrayPool<float>.Shared.Rent(contentPixels);
-            float[] styleBuffer = System.Buffers.ArrayPool<float>.Shared.Rent(stylePixels);
+            float[] contentBuffer = ArrayPool<float>.Shared.Rent(contentPixels);
+            float[] styleBuffer = ArrayPool<float>.Shared.Rent(stylePixels);
 
             try {
+                ct.ThrowIfCancellationRequested();
+
                 var contentTensor = ImageToTensor(contentImage, contentBuffer);
                 var styleTensor = ImageToTensor(styleImage, styleBuffer);
                 var alphaTensor = new DenseTensor<float>(new float[] { alpha }, new int[] { 1 });
 
                 var inputs = new List<NamedOnnxValue> {
                     NamedOnnxValue.CreateFromTensor("content", contentTensor),
-                    NamedOnnxValue.CreateFromTensor("style", styleTensor),
-                    NamedOnnxValue.CreateFromTensor("alpha", alphaTensor)
+                    NamedOnnxValue.CreateFromTensor("style",   styleTensor),
+                    NamedOnnxValue.CreateFromTensor("alpha",   alphaTensor)
                 };
 
-                using var results = _session.Run(inputs);
-                var outputTensor = (DenseTensor<float>)results[0].AsTensor<float>();
+                // RunOptions 与 CT 绑定：CT 取消时通过 Terminate = true 在下一个算子边界中止推理，
+                // 使外部能立即感知取消而无需等待整个模型执行完毕。
+                // 注：AdaIn 是单次串行 Run()，无 Parallel.ForEach 兜底，
+                //     catch 里需直接 throw OperationCanceledException。
+                using var runOptions = new RunOptions();
+                using var ctRegistration = ct.Register(() => runOptions.Terminate = true);
 
-                int outHeight = outputTensor.Dimensions[2];
-                int outWidth = outputTensor.Dimensions[3];
+                try {
+                    using var results = _session.Run(inputs, _outputNames, runOptions);
+                    var outputTensor = (DenseTensor<float>)results[0].AsTensor<float>();
 
-                string result = TensorToImageAndSave(
-                    outputTensor, outWidth, outHeight,
-                    originalWidth, originalHeight,
-                    outputFilePath);
+                    int outHeight = outputTensor.Dimensions[2];
+                    int outWidth = outputTensor.Dimensions[3];
 
-                return result;
+                    return TensorToImageAndSave(
+                        outputTensor, outWidth, outHeight,
+                        originalWidth, originalHeight,
+                        outputFilePath);
+                }
+                catch (OnnxRuntimeException) when (ct.IsCancellationRequested) {
+                    // RunOptions.Terminate 触发的 ONNX 中断，转换为标准取消异常向外传播
+                    ct.ThrowIfCancellationRequested();
+                    throw; // unreachable，仅为满足编译器返回值静态检查
+                }
             }
             finally {
-                System.Buffers.ArrayPool<float>.Shared.Return(contentBuffer, clearArray: false);
-                System.Buffers.ArrayPool<float>.Shared.Return(styleBuffer, clearArray: false);
+                ArrayPool<float>.Shared.Return(contentBuffer, clearArray: false);
+                ArrayPool<float>.Shared.Return(styleBuffer, clearArray: false);
             }
         }
 
@@ -146,8 +162,8 @@ namespace VirtualPaper.ML.StyleTransfer {
                     byte* row = ptr + y * stride;
                     for (int x = 0; x < width; x++) {
                         int pixelIdx = y * width + x;
-                        buffer[pixelIdx] = row[x * 3] / 255f;                    // R
-                        buffer[channelSize + pixelIdx] = row[x * 3 + 1] / 255f;  // G
+                        buffer[pixelIdx] = row[x * 3] / 255f; // R
+                        buffer[channelSize + pixelIdx] = row[x * 3 + 1] / 255f; // G
                         buffer[2 * channelSize + pixelIdx] = row[x * 3 + 2] / 255f; // B
                     }
                 }
@@ -206,8 +222,7 @@ namespace VirtualPaper.ML.StyleTransfer {
         }
 
         private static void WriteImage(Mat image, string path, string extension) {
-            var ext = extension.ToLowerInvariant();
-            switch (ext) {
+            switch (extension.ToLowerInvariant()) {
                 case ".jpg":
                 case ".jpeg":
                     image.ImWrite(path, new ImageEncodingParam(ImwriteFlags.JpegQuality, 95));
@@ -245,7 +260,9 @@ namespace VirtualPaper.ML.StyleTransfer {
 
         #endregion
 
+        // 单例实例字段，仅 LoadModel 写入，之后只读
         private InferenceSession? _session;
+        private IReadOnlyList<string> _outputNames = [];
         private volatile bool _isLoaded;
     }
 }

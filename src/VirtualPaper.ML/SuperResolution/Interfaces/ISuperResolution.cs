@@ -7,6 +7,7 @@ namespace VirtualPaper.ML.SuperResolution.Interfaces {
             string inputImagePath,
             string outputFilePath,
             uint targetWidth,
-            uint targetHeight);
+            uint targetHeight,
+            CancellationToken ct = default);
     }
 }

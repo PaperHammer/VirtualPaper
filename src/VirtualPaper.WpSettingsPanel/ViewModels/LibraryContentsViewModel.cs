@@ -385,7 +385,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             LibraryWallpapers.Remove(data);
             _libraryWallpapers.Remove(data);
             _wallpaperIndexService.Remove(data);
+            ItemDeleted?.Invoke(this, EventArgs.Empty);
         }
+
+        /// <summary>删除条目后触发，通知 View 层检查是否需要补充加载更多数据</summary>
+        public event EventHandler? ItemDeleted;
 
         public void UpdateLib(IWpBasicData data) {
             if (_wallpaperIndexService.TryGetValue(data.WallpaperUid, out int idx)) {

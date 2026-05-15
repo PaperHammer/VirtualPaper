@@ -1,32 +1,9 @@
 using System.Reflection;
 using VirtualPaper.Common;
 using VirtualPaper.ML.StyleTransfer;
+using VirtualPaper.ML.Test.Infrastructure;
 
 namespace VirtualPaper.ML.Test.T_StyleTransfer {
-    // ====================================================================
-    //  辅助：生成测试用图片（不依赖任何外部资源）
-    // ====================================================================
-    internal static class TestImageHelper {
-        /// <summary>
-        /// 使用 OpenCvSharp 在临时目录生成一张纯色 JPEG，返回路径。
-        /// </summary>
-        public static string CreateSolidColorJpeg(
-            int width = 64,
-            int height = 64,
-            string? dir = null) {
-            dir ??= Path.GetTempPath();
-            string path = Path.Combine(dir, $"test_{Guid.NewGuid():N}.jpg");
-
-            using var mat = new OpenCvSharp.Mat(
-                height, width,
-                OpenCvSharp.MatType.CV_8UC3,
-                new OpenCvSharp.Scalar(128, 64, 32)); // BGR
-            mat.SaveImage(path);
-
-            return path;
-        }
-    }
-
     // ====================================================================
     //  LoadAndResizeImage — 反射访问私有静态方法
     // ====================================================================
@@ -191,6 +168,8 @@ namespace VirtualPaper.ML.Test.T_StyleTransfer {
     [TestClass]
     [TestCategory("Integration")]
     public class AdaIn_IntegrationTests {
+        private static string? _classSkipReason;
+
         private string _tempDir = null!;
         private string _contentImagePath = null!;
         private string _styleImagePath = null!;
@@ -200,8 +179,22 @@ namespace VirtualPaper.ML.Test.T_StyleTransfer {
                 Constants.WorkingDir.ML_StyleTransfer_AI_Models,
                 Utils.Fields.ModelName);
 
+        [ClassInitialize]
+        public static void ClassSetup(TestContext _) {
+            var modelPath = Path.Combine(
+                Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory),
+                Constants.WorkingDir.ML_StyleTransfer_AI_Models,
+                Utils.Fields.ModelName);
+
+            if (!File.Exists(modelPath))
+                _classSkipReason = $"AdaIn model not found, skipping integration tests: {modelPath}";
+        }
+
         [TestInitialize]
         public void Setup() {
+            if (_classSkipReason is not null)
+                Assert.Inconclusive(_classSkipReason);
+
             _tempDir = Path.Combine(Path.GetTempPath(), $"adain_int_{Guid.NewGuid():N}");
             Directory.CreateDirectory(_tempDir);
             _contentImagePath = TestImageHelper.CreateSolidColorJpeg(128, 128, _tempDir);

@@ -322,6 +322,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             midas.LoadModel();
             var output = midas.Run(data.FilePath);
             string depthFilePath = midas.SaveDepthMap(output, data.FolderPath);
+            midas.Dispose();
             return depthFilePath;
         }
 

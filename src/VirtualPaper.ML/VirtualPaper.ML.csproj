@@ -32,6 +32,12 @@
 		<ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>VirtualPaper.ML.Test</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+
 	<Target Name="CopyToVirtualPaper" AfterTargets="Build">
 		<ItemGroup>
 			<DepthModels Include="$(ProjectDir)DepthEstimate\ai_models\**\*" />

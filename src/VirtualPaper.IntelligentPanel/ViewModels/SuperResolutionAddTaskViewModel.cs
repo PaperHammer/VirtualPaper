@@ -105,6 +105,15 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
         private uint _sourceFileWidth;
         private uint _sourceFileHeight;
+
+        /// <summary>
+        /// 供测试注入图片宽高，绕过文件选择器。
+        /// 注入后需调用 <see cref="SourceFilePath"/> setter 以触发 OutputResolutionText / IsNextEnable 更新。
+        /// </summary>
+        internal void SetSourceSize(uint width, uint height) {
+            _sourceFileWidth = width;
+            _sourceFileHeight = height;
+        }
         #endregion
 
         #region enhance mode

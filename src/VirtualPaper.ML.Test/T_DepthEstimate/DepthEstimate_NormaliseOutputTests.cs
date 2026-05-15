@@ -2,32 +2,9 @@ using System.Reflection;
 using VirtualPaper.Common;
 using VirtualPaper.ML.DepthEstimate;
 using VirtualPaper.ML.DepthEstimate.Models;
+using VirtualPaper.ML.Test.Infrastructure;
 
 namespace VirtualPaper.ML.Test.T_DepthEstimate {
-    // ====================================================================
-    //  辅助：生成测试用图片（不依赖任何外部资源）
-    // ====================================================================
-    internal static class TestImageHelper {
-        /// <summary>
-        /// 使用 OpenCvSharp 在临时目录生成一张纯色 JPEG，返回路径。
-        /// </summary>
-        public static string CreateSolidColorJpeg(
-            int width = 64,
-            int height = 64,
-            string? dir = null) {
-            dir ??= Path.GetTempPath();
-            string path = Path.Combine(dir, $"test_{Guid.NewGuid():N}.jpg");
-
-            using var mat = new OpenCvSharp.Mat(
-                height, width,
-                OpenCvSharp.MatType.CV_8UC3,
-                new OpenCvSharp.Scalar(128, 64, 32)); // BGR
-            mat.SaveImage(path);
-
-            return path;
-        }
-    }
-
     // ====================================================================
     //  NormaliseOutput — 纯数学逻辑（反射访问私有静态方法）
     // ====================================================================
@@ -210,7 +187,7 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
             var modelOutput = MakeSolidDepthOutput(w, h, w, h);
 
             _midas.SaveDepthMap(modelOutput, _tempDir);
-            var act = () => _midas.SaveDepthMap(modelOutput, _tempDir);
+            string act() => _midas.SaveDepthMap(modelOutput, _tempDir);
 
             act(); // 不抛即通过
         }
@@ -271,6 +248,8 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
     [TestClass]
     [TestCategory("Integration")]
     public class MiDaS_IntegrationTests {
+        private static string? _classSkipReason;
+
         private string _tempDir = null!;
         private string _testImagePath = null!;
         private MiDaS _midas = null!;
@@ -279,8 +258,22 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
                 Constants.WorkingDir.ML_DepthEstimate_AI_Models,
                 Utils.Fields.ModelName);
 
+        [ClassInitialize]
+        public static void ClassSetup(TestContext _) {
+            var modelPath = Path.Combine(
+                Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory),
+                Constants.WorkingDir.ML_DepthEstimate_AI_Models,
+                Utils.Fields.ModelName);
+
+            if (!File.Exists(modelPath))
+                _classSkipReason = $"MiDaS model not found, skipping integration tests: {modelPath}";
+        }
+
         [TestInitialize]
         public void Setup() {
+            if (_classSkipReason is not null)
+                Assert.Inconclusive(_classSkipReason);
+
             _tempDir = Path.Combine(Path.GetTempPath(), $"midas_int_{Guid.NewGuid():N}");
             Directory.CreateDirectory(_tempDir);
             _testImagePath = TestImageHelper.CreateSolidColorJpeg(dir: _tempDir);

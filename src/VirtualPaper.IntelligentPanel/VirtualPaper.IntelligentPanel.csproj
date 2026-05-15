@@ -10,6 +10,11 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>VirtualPaper.UI.Test</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+	<ItemGroup>
 	  <None Remove="Intelligent.xaml" />
 	  <None Remove="Views\Comp\ConfigSpace.xaml" />
 	  <None Remove="Views\StyleTranfer.xaml" />

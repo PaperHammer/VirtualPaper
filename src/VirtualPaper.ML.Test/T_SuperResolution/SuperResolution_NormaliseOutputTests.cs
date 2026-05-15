@@ -1,31 +1,8 @@
 using VirtualPaper.Common;
 using VirtualPaper.ML.SuperResolution;
+using VirtualPaper.ML.Test.Infrastructure;
 
 namespace VirtualPaper.ML.Test.T_SuperResolution {
-    // ====================================================================
-    //  辅助：生成测试用图片（不依赖任何外部资源）
-    // ====================================================================
-    internal static class TestImageHelper {
-        /// <summary>
-        /// 使用 OpenCvSharp 在临时目录生成一张纯色 JPEG，返回路径。
-        /// </summary>
-        public static string CreateSolidColorJpeg(
-            int width = 64,
-            int height = 64,
-            string? dir = null) {
-            dir ??= Path.GetTempPath();
-            string path = Path.Combine(dir, $"test_{Guid.NewGuid():N}.jpg");
-
-            using var mat = new OpenCvSharp.Mat(
-                height, width,
-                OpenCvSharp.MatType.CV_8UC3,
-                new OpenCvSharp.Scalar(128, 64, 32)); // BGR
-            mat.SaveImage(path);
-
-            return path;
-        }
-    }
-
     // ====================================================================
     //  RunAndSave — 异常分支（不需要真实模型）
     // ====================================================================
@@ -120,6 +97,8 @@ namespace VirtualPaper.ML.Test.T_SuperResolution {
     [TestClass]
     [TestCategory("Integration")]
     public class Realesrgan_IntegrationTests {
+        private static string? _classSkipReason;
+
         private string _tempDir = null!;
         private string _testImagePath = null!;
         private Realesrgan _realesrgan = null!;
@@ -128,8 +107,22 @@ namespace VirtualPaper.ML.Test.T_SuperResolution {
                 Constants.WorkingDir.ML_SuperResolution_AI_Models,
                 Utils.Fields.ModelName);
 
+        [ClassInitialize]
+        public static void ClassSetup(TestContext _) {
+            var modelPath = Path.Combine(
+                Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory),
+                Constants.WorkingDir.ML_SuperResolution_AI_Models,
+                Utils.Fields.ModelName);
+
+            if (!File.Exists(modelPath))
+                _classSkipReason = $"Realesrgan model not found, skipping integration tests: {modelPath}";
+        }
+
         [TestInitialize]
         public void Setup() {
+            if (_classSkipReason is not null)
+                Assert.Inconclusive(_classSkipReason);
+
             _tempDir = Path.Combine(Path.GetTempPath(), $"sr_int_{Guid.NewGuid():N}");
             Directory.CreateDirectory(_tempDir);
             _testImagePath = TestImageHelper.CreateSolidColorJpeg(64, 64, _tempDir);

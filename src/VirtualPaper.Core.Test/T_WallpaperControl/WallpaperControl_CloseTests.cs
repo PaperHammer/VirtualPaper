@@ -17,6 +17,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
         private Mock<IMonitorManager> _monitorMgr = null!;
         private Mock<IWallpaperFactory> _factory = null!;
         private Mock<IUserSettingsService> _settings = null!;
+        private readonly List<string> _tempFiles = [];
 
         [TestInitialize]
         public void Setup() {
@@ -29,6 +30,11 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             _sut = new WallpaperControl(
                 _settings.Object, _monitorMgr.Object,
                 _factory.Object, desktop.Object, jobService.Object);
+        }
+
+        [TestCleanup]
+        public void Cleanup() {
+            TestDataBuilder.CleanupTempFiles(_tempFiles);
         }
 
         [TestMethod]
@@ -70,13 +76,8 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
         [TestMethod]
         [Description("CloseWallpaper should return safely without throwing when passed null")]
         public void CloseWallpaper_WithNullMonitor_ShouldNotThrow() {
-            // Act & Assert
-            try {
-                _sut.CloseWallpaper(null);
-            }
-            catch (Exception ex) {
-                Assert.Fail($"No exception should be thrown, but got: {ex.GetType().Name}: {ex.Message}");
-            }
+            // Act — MSTest 捕获到任何未处理异常会自动让测试失败
+            _sut.CloseWallpaper(null);
         }
 
         [TestMethod]
@@ -99,7 +100,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
 
         // Helper: simulate adding a running wallpaper
         private async Task<Mock<IWpPlayer>> AddRunningWallpaper(IMonitor monitor) {
-            var data = TestDataBuilder.CreateValidPlayerData().Object;
+            var data = TestDataBuilder.CreateValidPlayerData(_tempFiles).Object;
             var player = TestDataBuilder.CreateWpPlayer(data, monitor);
             _factory.Setup(f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), monitor, false))
                     .Returns(player.Object);

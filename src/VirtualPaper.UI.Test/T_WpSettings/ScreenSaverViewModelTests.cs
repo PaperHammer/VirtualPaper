@@ -1,8 +1,10 @@
 using Moq;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.UI.Test.Utils;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 
@@ -16,6 +18,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
         [TestInitialize]
         public void Setup() {
+            CrossThreadInvoker.Initialize(new TUiSynchronizationContext());
             _userSettingsClient = new Mock<IUserSettingsClient>();
             _scrCommandsClient = new Mock<IScrCommandsClient>();
             _settings = new Mock<ISettings>();
@@ -181,38 +184,38 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         // ── AddToWhiteListScr ─────────────────────────────────────────
 
         [TestMethod]
-        public async Task AddToWhiteListScr_AddsToProcsFiltered() {
+        public void AddToWhiteListScr_AddsToProcsFiltered() {
             var proc = new ProcInfo("notepad", @"C:\Windows\notepad.exe", "icon.png");
 
-            await InvokeAddToWhiteListScrAsync(proc);
+            _vm.AddToWhiteListScr(proc);
 
             Assert.HasCount(1, _vm.ProcsFiltered);
             Assert.AreSame(proc, _vm.ProcsFiltered[0]);
         }
 
         [TestMethod]
-        public async Task AddToWhiteListScr_AddsToInternalWhiteList() {
+        public void AddToWhiteListScr_AddsToInternalWhiteList() {
             var proc = new ProcInfo("notepad", @"C:\Windows\notepad.exe", "icon.png");
 
-            await InvokeAddToWhiteListScrAsync(proc);
+            _vm.AddToWhiteListScr(proc);
 
             Assert.Contains(proc, _vm._whiteListScr);
         }
 
         [TestMethod]
-        public async Task AddToWhiteListScr_CallsScrCommandsAddToWhiteList() {
+        public void AddToWhiteListScr_CallsScrCommandsAddToWhiteList() {
             var proc = new ProcInfo("notepad", @"C:\Windows\notepad.exe", "icon.png");
 
-            await InvokeAddToWhiteListScrAsync(proc);
+            _vm.AddToWhiteListScr(proc);
 
             _scrCommandsClient.Verify(s => s.AddToWhiteList("notepad"), Times.Once);
         }
 
         [TestMethod]
-        public async Task AddToWhiteListScr_CallsUserSettingsSave() {
+        public void AddToWhiteListScr_CallsUserSettingsSave() {
             var proc = new ProcInfo("notepad", @"C:\Windows\notepad.exe", "icon.png");
 
-            await InvokeAddToWhiteListScrAsync(proc);
+            _vm.AddToWhiteListScr(proc);
 
             _userSettingsClient.Verify(u => u.Save<ISettings>(), Times.Once);
         }
@@ -220,43 +223,43 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         // ── RemoveFromWhiteScr ────────────────────────────────────────
 
         [TestMethod]
-        public async Task RemoveFromWhiteScr_RemovesFromProcsFiltered() {
+        public void RemoveFromWhiteScr_RemovesFromProcsFiltered() {
             var proc = new ProcInfo("notepad", @"C:\Windows\notepad.exe", "icon.png");
-            await InvokeAddToWhiteListScrAsync(proc);
+            _vm.AddToWhiteListScr(proc);
 
-            await InvokeRemoveFromWhiteScrAsync(proc);
+            _vm.RemoveFromWhiteScr(proc);
 
             Assert.HasCount(0, _vm.ProcsFiltered);
         }
 
         [TestMethod]
-        public async Task RemoveFromWhiteScr_RemovesFromInternalWhiteList() {
+        public void RemoveFromWhiteScr_RemovesFromInternalWhiteList() {
             var proc = new ProcInfo("notepad", @"C:\Windows\notepad.exe", "icon.png");
-            await InvokeAddToWhiteListScrAsync(proc);
+            _vm.AddToWhiteListScr(proc);
 
-            await InvokeRemoveFromWhiteScrAsync(proc);
+            _vm.RemoveFromWhiteScr(proc);
 
             Assert.DoesNotContain(proc, _vm._whiteListScr);
         }
 
         [TestMethod]
-        public async Task RemoveFromWhiteScr_CallsScrCommandsRemoveFromWhiteList() {
+        public void RemoveFromWhiteScr_CallsScrCommandsRemoveFromWhiteList() {
             var proc = new ProcInfo("notepad", @"C:\Windows\notepad.exe", "icon.png");
-            await InvokeAddToWhiteListScrAsync(proc);
+            _vm.AddToWhiteListScr(proc);
             _scrCommandsClient.Invocations.Clear();
 
-            await InvokeRemoveFromWhiteScrAsync(proc);
+            _vm.RemoveFromWhiteScr(proc);
 
             _scrCommandsClient.Verify(s => s.RemoveFromWhiteList("notepad"), Times.Once);
         }
 
         [TestMethod]
-        public async Task RemoveFromWhiteScr_CallsUserSettingsSave() {
+        public void RemoveFromWhiteScr_CallsUserSettingsSave() {
             var proc = new ProcInfo("notepad", @"C:\Windows\notepad.exe", "icon.png");
-            await InvokeAddToWhiteListScrAsync(proc);
+            _vm.AddToWhiteListScr(proc);
             _userSettingsClient.Invocations.Clear();
 
-            await InvokeRemoveFromWhiteScrAsync(proc);
+            _vm.RemoveFromWhiteScr(proc);
 
             _userSettingsClient.Verify(u => u.Save<ISettings>(), Times.Once);
         }
@@ -327,28 +330,28 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             Assert.HasCount(2, _vm.Effects);
         }
 
-        // ── 辅助方法 ──────────────────────────────────────────────────
+        //// ── 辅助方法 ──────────────────────────────────────────────────
 
-        /// <summary>通过反射调用 private async void AddToWhiteListScr</summary>
-        private async Task InvokeAddToWhiteListScrAsync(ProcInfo proc) {
-            var method = typeof(ScreenSaverViewModel)
-                .GetMethod("AddToWhiteListScr",
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance);
-            Assert.IsNotNull(method, "AddToWhiteListScr 方法未找到");
-            method.Invoke(_vm, new object[] { proc });
-            await Task.Delay(50); // async void，等待 Task.Run 完成
-        }
+        ///// <summary>通过反射调用 private async void AddToWhiteListScr</summary>
+        //private async Task InvokeAddToWhiteListScrAsync(ProcInfo proc) {
+        //    var method = typeof(ScreenSaverViewModel)
+        //        .GetMethod("AddToWhiteListScr",
+        //            System.Reflection.BindingFlags.NonPublic |
+        //            System.Reflection.BindingFlags.Instance);
+        //    Assert.IsNotNull(method, "AddToWhiteListScr 方法未找到");
+        //    method.Invoke(_vm, new object[] { proc });
+        //    await Task.Delay(50); // async void，等待 Task.Run 完成
+        //}
 
-        /// <summary>通过反射调用 internal async void RemoveFromWhiteScr</summary>
-        private async Task InvokeRemoveFromWhiteScrAsync(ProcInfo proc) {
-            var method = typeof(ScreenSaverViewModel)
-                .GetMethod("RemoveFromWhiteScr",
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance);
-            Assert.IsNotNull(method, "RemoveFromWhiteScr 方法未找到");
-            method.Invoke(_vm, new object[] { proc });
-            await Task.Delay(50); // async void，等待 Task.Run 完成
-        }
+        ///// <summary>通过反射调用 internal async void RemoveFromWhiteScr</summary>
+        //private async Task InvokeRemoveFromWhiteScrAsync(ProcInfo proc) {
+        //    var method = typeof(ScreenSaverViewModel)
+        //        .GetMethod("RemoveFromWhiteScr",
+        //            System.Reflection.BindingFlags.NonPublic |
+        //            System.Reflection.BindingFlags.Instance);
+        //    Assert.IsNotNull(method, "RemoveFromWhiteScr 方法未找到");
+        //    method.Invoke(_vm, new object[] { proc });
+        //    await Task.Delay(50); // async void，等待 Task.Run 完成
+        //}
     }
 }

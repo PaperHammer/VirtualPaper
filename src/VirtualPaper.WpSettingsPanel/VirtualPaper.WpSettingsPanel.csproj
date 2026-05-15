@@ -23,7 +23,14 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
+	  <ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj" />
 	  <ProjectReference Include="..\VirtualPaper.PlayerWeb.Core\VirtualPaper.PlayerWeb.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>VirtualPaper.UI.Test</_Parameter1>
+		</AssemblyAttribute>
 	</ItemGroup>
 
 	<ItemGroup>

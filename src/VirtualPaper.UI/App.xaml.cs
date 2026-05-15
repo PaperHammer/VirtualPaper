@@ -15,6 +15,13 @@ using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.IntelligentPanel.ViewModels;
+using VirtualPaper.ML.DepthEstimate;
+using VirtualPaper.ML.DepthEstimate.Interfaces;
+using VirtualPaper.ML.StyleTransfer;
+using VirtualPaper.ML.StyleTransfer.Interfaces;
+using VirtualPaper.ML.SuperResolution;
+using VirtualPaper.ML.SuperResolution.Interfaces;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Adapter;
@@ -85,7 +92,7 @@ namespace VirtualPaper.UI {
         private ServiceProvider ConfigureServices() {
             var provider = new ServiceCollection()
                 .AddSingleton<MainWindow>()
-                
+
                 .AddSingleton<GeneralSettingViewModel>()
                 .AddTransient<OtherSettingViewModel>()
                 .AddTransient<PerformanceSettingViewModel>()
@@ -93,10 +100,16 @@ namespace VirtualPaper.UI {
                 .AddSingleton<WpSettingsViewModel>()
                 .AddSingleton<ScreenSaverViewModel>()
                 .AddSingleton<LibraryContentsViewModel>()
-                .AddTransient<ConfigSpaceViewModel>()
+                .AddSingleton<StyleTranferViewModel>()
+                .AddSingleton<SuperResolutionViewModel>()
+                .AddTransient<DraftPanel.ViewModels.ConfigSpaceViewModel>()
+                .AddTransient<IntelligentPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<GetStartViewModel>()
                 .AddTransient<DraftConfigViewModel>()
                 .AddTransient<WorkSpaceViewModel>()
+                .AddTransient<IntelligentViewModel>()
+                .AddTransient<StyleTransferAddTaskViewModel>()
+                .AddTransient<SuperResolutionAddTaskViewModel>()
 
                 .AddSingleton<IWallpaperIndexService, WallpaperIndexService>()
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()
@@ -105,13 +118,26 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
                 .AddSingleton<ICommandsClient, CommandsClient>()
                 .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
+                .AddSingleton<IStyleTransferClient, StyleTransferClient>()
+                .AddSingleton<ISuperResolutionClient, SuperResolutionClient>()
                 .AddSingleton<IGlobalDialogService, GlobalDialogService>()
                 .AddSingleton<IStoragePicker, StoragePickerWrapper>()
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()
 
+                .AddSingleton<IDepthEstimate, MiDaS>()
+                .AddSingleton<IStyleTransfer, AdaIn>()
+                .AddSingleton<ISuperResolution, Realesrgan>()
+
                 .BuildServiceProvider();
 
             return provider;
+        }
+
+        /// <summary>
+        /// 预实例化各 Panel 中负责注册 PanelMessageCenter Action 的 Singleton ViewModel，确保其他 Panel 调用时 Action 已就绪
+        /// </summary>
+        private void PrewarmPanelRegisters() {
+            AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>();
         }
 
         /// <summary>
@@ -131,6 +157,8 @@ namespace VirtualPaper.UI {
             else {
                 await LanguageUtil.InitializeLocalizerForUnpackaged(_userSettings.Settings.Language);
             }
+
+            PrewarmPanelRegisters();
 
             var m_window = AppServiceLocator.Services.GetRequiredService<MainWindow>();
             m_window.Show();

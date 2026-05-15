@@ -1,4 +1,4 @@
-name: Auto Version & Release on Main Merge
+name: Auto Version & Build on Main Merge
 
 on:
   push:
@@ -6,15 +6,15 @@ on:
       - main
 
 concurrency:
-  group: release-main-${{ github.sha }}
-  cancel-in-progress: false  # 发布流程不要取消，确保每次合并都完整执行
+  group: release-main
+  cancel-in-progress: false  # 同一时间只允许一个构建，确保版本号不发生竞争
 
 permissions:
   contents: write
   statuses: write
 
 jobs:
-  auto-version-and-release:
+  auto-version-and-build:
     runs-on: windows-latest
     # 跳过由 GitHub Action 自身提交的版本号更新（[skip ci]）
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
@@ -25,6 +25,37 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
+
+    - name: Record original branch SHAs
+      id: original_shas
+      shell: powershell
+      run: |
+        # 记录 main 当前 HEAD
+        $mainSha = git rev-parse HEAD
+        Write-Output "main_sha=$mainSha" >> $env:GITHUB_OUTPUT
+        Write-Host "main SHA: $mainSha"
+
+        # 尝试记录 dev 分支 HEAD
+        git fetch origin dev 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            $devSha = git rev-parse origin/dev
+            Write-Output "dev_sha=$devSha" >> $env:GITHUB_OUTPUT
+            Write-Host "dev SHA: $devSha"
+        } else {
+            Write-Output "dev_sha=" >> $env:GITHUB_OUTPUT
+            Write-Host "dev branch not found"
+        }
+
+        # 尝试记录 bugfix 分支 HEAD
+        git fetch origin bugfix 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            $bugfixSha = git rev-parse origin/bugfix
+            Write-Output "bugfix_sha=$bugfixSha" >> $env:GITHUB_OUTPUT
+            Write-Host "bugfix SHA: $bugfixSha"
+        } else {
+            Write-Output "bugfix_sha=" >> $env:GITHUB_OUTPUT
+            Write-Host "bugfix branch not found"
+        }
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -160,6 +191,21 @@ jobs:
         Write-Host "Updated InnoSetup version to: $newVersion"
         Write-Host "Updated InnoSetup version text to: $newVersionText"
 
+    - name: Update version badge in README
+      shell: powershell
+      run: |
+        $readmePath = "README.md"
+        $content = Get-Content $readmePath -Raw
+        $newVersion = "${{ steps.version.outputs.new_version }}"
+
+        # 匹配并替换 shields.io badge 中的版本号，例如：
+        # [![GitHub release](https://img.shields.io/badge/release-v0.4.0.1-blue)]
+        $newContent = $content -replace '(img\.shields\.io/badge/release-v)[\d\.]+(-blue)', "`${1}$newVersion`$2"
+
+        Set-Content $readmePath -Value $newContent -NoNewline
+
+        Write-Host "Updated README badge version to: $newVersion"
+
     - name: Build Release
       run: |
         dotnet restore
@@ -209,47 +255,16 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss
-        git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }} [skip ci]"
+        git add src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
+        git commit -m "[Github CI] chore: bump version to ${{ steps.version.outputs.new_version }} [skip ci]"
         git push origin main
 
-    - name: Create GitHub Release
-      uses: actions/create-release@v1
-      id: create_release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload installer as artifact
+      uses: actions/upload-artifact@v4
       with:
-        tag_name: v${{ steps.version.outputs.new_version }}
-        release_name: VirtualPaper v${{ steps.version.outputs.new_version }}
-        body: |
-          🚀 **VirtualPaper v${{ steps.version.outputs.new_version }}** 自动发布
-
-          ## 📋 版本信息
-          - **版本号**: ${{ steps.version.outputs.current_version }} → ${{ steps.version.outputs.new_version }}
-          - **来源分支**: ${{ steps.branch_info.outputs.source_branch }}
-          - **更新类型**: ${{ steps.branch_info.outputs.increment_type == 'minor' && '功能更新 (第3位版本号+1)' || '修复更新 (第4位版本号+1)' }}
-
-          ## 📥 下载
-          请下载下方的安装程序文件进行安装
-
-          ## 🔄 分支同步
-          - ✅ 版本号已同步到源分支
-          - ✅ bugfix 分支已强制更新为最新版本
-
-          ---
-          *此版本由 GitHub Actions 自动构建和发布*
-        draft: false
-        prerelease: false
-
-    - name: Upload installer to release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ steps.build_installer.outputs.installer_path }}
-        asset_name: ${{ steps.build_installer.outputs.installer_name }}
-        asset_content_type: application/octet-stream
+        name: VirtualPaper-installer-v${{ steps.version.outputs.new_version }}
+        path: ${{ steps.build_installer.outputs.installer_path }}
+        retention-days: 30
 
     - name: Sync version back to source branch
       shell: powershell
@@ -259,12 +274,11 @@ jobs:
         if ($sourceBranch -eq "dev" -or $sourceBranch -eq "bugfix") {
             Write-Host "Syncing version back to $sourceBranch branch..."
 
-            # 切换到源分支
-            git fetch origin $sourceBranch
-            git checkout $sourceBranch
+            # 切换到源分支（明确基于远端 ref 建立本地分支，避免 checkout 找不到路径）
+            git checkout -B $sourceBranch origin/$sourceBranch
 
-            # 合并版本更新
-            git merge main --no-edit
+            # 合并版本更新（--ff-only 确保只做快进合并，避免产生多余 merge commit）
+            git merge main --ff-only
             git push origin $sourceBranch
 
             Write-Host "Version synced to $sourceBranch branch"
@@ -272,40 +286,82 @@ jobs:
             Write-Host "Unknown source branch: $sourceBranch, skipping sync"
         }
 
-    - name: Force update bugfix branch
-      shell: powershell
-      run: |
-        git checkout main
-        git branch -D bugfix 2>$null
-        git push origin --delete bugfix 2>$null
-        git checkout -b bugfix
-        git push --force-with-lease origin bugfix
-        Write-Host "✅ bugfix branch forcefully updated with latest main"
-
     - name: Summary
       shell: powershell
       run: |
         Write-Host ""
-        Write-Host "🎉 ================= 发布完成 =================" -ForegroundColor Green
+        Write-Host "🎉 ================= 构建完成 =================" -ForegroundColor Green
         Write-Host "📦 项目: VirtualPaper" -ForegroundColor Cyan
         Write-Host "🔢 版本: ${{ steps.version.outputs.current_version }} → ${{ steps.version.outputs.new_version }}" -ForegroundColor Yellow
         Write-Host "🌿 来源: ${{ steps.branch_info.outputs.source_branch }} → main" -ForegroundColor Magenta
         Write-Host "📋 类型: ${{ steps.branch_info.outputs.increment_type == 'minor' && '功能更新' || '修复更新' }}" -ForegroundColor Blue
         Write-Host "📥 安装包: ${{ steps.build_installer.outputs.installer_name }}" -ForegroundColor White
-        Write-Host "🔗 Release: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.new_version }}" -ForegroundColor Green
         Write-Host ""
+        Write-Host "✅ 版本号已更新并提交到 main 分支"
         Write-Host "✅ 版本号已同步到 ${{ steps.branch_info.outputs.source_branch }} 分支"
-        Write-Host "✅ bugfix 分支已强制更新为最新版本"
-        Write-Host "✅ GitHub Release 已创建"
-        Write-Host "✅ 安装包已上传"
+        Write-Host "✅ 安装包已上传为 Artifact"
         Write-Host "============================================" -ForegroundColor Green
 
-    - name: Notify on failure
+    - name: Rollback on failure
       if: failure()
       shell: powershell
       run: |
         Write-Host ""
-        Write-Host "❌ ================ 发布失败 ================" -ForegroundColor Red
+        Write-Host "⚠️ 检测到流程失败，开始执行回滚..." -ForegroundColor Yellow
+
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+        # 拉取最新远端状态
+        git fetch origin 2>$null
+
+        $mainSha     = "${{ steps.original_shas.outputs.main_sha }}"
+        $devSha      = "${{ steps.original_shas.outputs.dev_sha }}"
+        $bugfixSha   = "${{ steps.original_shas.outputs.bugfix_sha }}"
+        $sourceBranch = "${{ steps.branch_info.outputs.source_branch }}"
+
+        # --- 回滚 main ---
+        if ($mainSha) {
+            $currentMain = git rev-parse origin/main 2>$null
+            if ($currentMain -and $currentMain -ne $mainSha) {
+                Write-Host "↩️  回滚 main: $currentMain → $mainSha" -ForegroundColor Cyan
+                git checkout -B main origin/main
+                git reset --hard $mainSha
+                git push --force origin main
+                Write-Host "✅ main 已回滚" -ForegroundColor Green
+            } else {
+                Write-Host "ℹ️  main 无需回滚（未发生变更）"
+            }
+        }
+
+        # --- 回滚源分支（dev / bugfix）---
+        if ($sourceBranch -eq "dev" -and $devSha) {
+            $currentDev = git rev-parse origin/dev 2>$null
+            if ($currentDev -and $currentDev -ne $devSha) {
+                Write-Host "↩️  回滚 dev: $currentDev → $devSha" -ForegroundColor Cyan
+                git checkout -B dev origin/dev
+                git reset --hard $devSha
+                git push --force origin dev
+                Write-Host "✅ dev 已回滚" -ForegroundColor Green
+            } else {
+                Write-Host "ℹ️  dev 无需回滚（未发生变更）"
+            }
+        }
+        elseif ($sourceBranch -eq "bugfix" -and $bugfixSha) {
+            $currentBugfix = git rev-parse origin/bugfix 2>$null
+            if ($currentBugfix -and $currentBugfix -ne $bugfixSha) {
+                Write-Host "↩️  回滚 bugfix: $currentBugfix → $bugfixSha" -ForegroundColor Cyan
+                git checkout -B bugfix origin/bugfix
+                git reset --hard $bugfixSha
+                git push --force origin bugfix
+                Write-Host "✅ bugfix 已回滚" -ForegroundColor Green
+            } else {
+                Write-Host "ℹ️  bugfix 无需回滚（未发生变更）"
+            }
+        }
+
+        Write-Host ""
+        Write-Host "❌ ================ 构建失败 ================" -ForegroundColor Red
         Write-Host "🔍 请检查以下可能的问题:" -ForegroundColor Yellow
         Write-Host "  - .NET 8.0 构建是否成功"
         Write-Host "  - InnoSetup 脚本是否正确"

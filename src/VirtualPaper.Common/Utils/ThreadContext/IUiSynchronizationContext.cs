@@ -1,7 +1,9 @@
-﻿namespace VirtualPaper.Common.Utils.ThreadContext {
+namespace VirtualPaper.Common.Utils.ThreadContext {
     public abstract class IUiSynchronizationContext {
         public SynchronizationContext? Current { get; protected set; }
         public abstract void Post(Action action);
         public abstract  void Send(Action action);
+        public abstract Task PostAsync(Func<Task> asyncAction);
+        public abstract Task<T> PostAsync<T>(Func<Task<T>> asyncAction);
     }
 }

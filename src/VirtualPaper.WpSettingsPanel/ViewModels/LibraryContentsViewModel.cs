@@ -7,23 +7,26 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
-using Microsoft.UI;
-using Microsoft.UI.Xaml.Media;
+using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.CommonModels;
+using VirtualPaper.ML.DepthEstimate.Interfaces;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.PlayerWeb.Core.WebView.Windows;
+using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.PanelBus.WpSettingsArgs;
 using VirtualPaper.UIComponent.ViewModels;
 using VirtualPaper.WpSettingsPanel.Utils;
 using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
@@ -35,11 +38,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class LibraryContentsViewModel : ObservableObject, IFilterable {
         public ObservableCollection<IWpBasicData> LibraryWallpapers { get; private set; } = null!;
 
-        //private Brush _wpTitleForeground = new SolidColorBrush(Colors.White);
-        //public Brush WpTitleForeground {
-        //    get { return _wpTitleForeground; }
-        //    set { _wpTitleForeground = value; OnPropertyChanged(); }
-        //}
         private byte[] _wpTitleForeground = [255, 255, 255, 255];
         public byte[] WpTitleForeground {
             get => _wpTitleForeground;
@@ -70,6 +68,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private void InitOthers() {
             _wallpaperIndexService.Initialize(_wallpaperInstallFolders);
             _wpSettingsViewModel.RegisterLibraryContents(this);
+            RegisterPanelActions();
         }
 
         private void InitEvent() {
@@ -213,8 +212,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 });
         }
 
-        internal async Task PreviewAsync(IWpBasicData data) {
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+        internal async Task PreviewAsync(IWpBasicData data, ArcPageContext? ctx) {
             var loadingCtx = ctx?.LoadingContext;
             if (loadingCtx == null)
                 return;
@@ -229,12 +227,17 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                         if (rtype == RuntimeType.RUnknown) return;
 
+                        string? depthFilePath = null;
+                        if (rtype == RuntimeType.RImage3D) {
+                            depthFilePath = SetDepthPath(data);
+                        }
+
                         if (_previews.TryGetValue((data.WallpaperUid, rtype), out var preview)) {
                             preview.Activate();
                             return;
                         }
 
-                        var jsonString = await _wpControlClient.GetPlayerStartArgsAsync(data, rtype, token);
+                        var jsonString = await _wpControlClient.GetPlayerStartArgsAsync(data, rtype, depthFilePath, token);
                         var previewWindow = rtype switch {
                             RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo => new PreviewWithWeb(jsonString),
                             _ or RuntimeType.RUnknown => throw new NotImplementedException(),
@@ -247,8 +250,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                             Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
                                 _wpSettingsViewModel.Monitors[_wpSettingsViewModel.SelectedMonitorIndex],
-                                data,
+                                data,                                
                                 rtype,
+                                depthFilePath,
                                 token);
                             if (!response.IsFinished) {
                                 GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
@@ -286,10 +290,16 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                         if (rtype == RuntimeType.RUnknown) return;
 
+                        string? depthFilePath = null;
+                        if (rtype == RuntimeType.RImage3D) {
+                            depthFilePath = SetDepthPath(data);
+                        }
+
                         Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
                             _wpSettingsViewModel.Monitors[_wpSettingsViewModel.SelectedMonitorIndex],
                             data,
                             rtype,
+                            depthFilePath,
                             token);
                         if (!response.IsFinished) {
                             GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
@@ -305,6 +315,15 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         GlobalMessageUtil.ShowException(ex);
                     }
                 }, cts: ctsApply);
+        }
+
+        private string? SetDepthPath(IWpBasicData data) {
+            var midas = AppServiceLocator.Services.GetRequiredService<IDepthEstimate>();
+            midas.LoadModel();
+            var output = midas.Run(data.FilePath);
+            string depthFilePath = midas.SaveDepthMap(output, data.FolderPath);
+            midas.Dispose();
+            return depthFilePath;
         }
 
         internal async Task ApplyToLockBGAsync(IWpBasicData data) {
@@ -378,6 +397,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 _libraryWallpapers.Insert(0, data);
             }
             _wallpaperIndexService.Update(data);
+
+            // 广播"壁纸已入库"事件，供其他 Panel 订阅（如刷新预览、更新计数等）
+            PanelMessageCenter.Publish(
+                PanelContracts.WpSettings.Id,
+                PanelContracts.WpSettings.Event_WallpaperImported,
+                data.FolderPath);
         }
 
         internal async Task DropFilesAsync(IReadOnlyList<IStorageItem> items) {
@@ -537,6 +562,56 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             return [.. importRes];
         }
 
+        public void RegisterPanelActions() {
+            // ── Action：入库 ──────────────────────────────────────────────
+            PanelMessageCenter.RegisterAction<string, bool>(
+                PanelContracts.WpSettings.Id,
+                PanelContracts.WpSettings.Action_ImportWallpaper,
+                async (filePath) => {
+                    try {
+                        var ftype = FileFilter.GetFileType(filePath);
+                        if (ftype == FileType.FUnknown) return false;
+
+                        var grpcData = await _wpControlClient.CreateBasicDataAsync(filePath, ftype, CancellationToken.None);
+                        if (grpcData == null) return false;
+
+                        var data = DataAssist.GrpcToBasicData(grpcData);
+                        if (!data.IsAvailable()) return false;
+
+                        UpdateLib(data);
+                        return true;
+                    }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                        return false;
+                    }
+                });
+
+            // ── Action：预览（无需入库，直接打开预览窗口）────────────────
+            PanelMessageCenter.RegisterAction<PreviewFileArgs, bool>(
+                PanelContracts.WpSettings.Id,
+                PanelContracts.WpSettings.Action_PreviewFile,
+                async (args) => {
+                    try {
+                        var ftype = FileFilter.GetFileType(args.FilePath);
+                        if (ftype == FileType.FUnknown) return false;
+
+                        var grpcData = await _wpControlClient.CreateBasicDataAsync(args.FilePath, ftype, CancellationToken.None);
+                        if (grpcData == null) return false;
+
+                        var data = DataAssist.GrpcToBasicData(grpcData);
+                        if (!data.IsAvailable()) return false;
+
+                        await PreviewAsync(data, args.Ctx);
+                        return true;
+                    }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                        return false;
+                    }
+                });
+        }
+
         #region filter
         public FilterKey FilterKeyword { get; set; } = FilterKey.LibraryTitle;
 
@@ -595,6 +670,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
         #endregion
+
+        
 
         private struct ImportValue(string filePath, FileType ftype) {
             internal string FilePath { get; set; } = filePath;

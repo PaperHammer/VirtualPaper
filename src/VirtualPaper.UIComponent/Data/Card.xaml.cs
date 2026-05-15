@@ -64,5 +64,7 @@ namespace VirtualPaper.UIComponent.Data {
         Func<object?, Task>? PreviousStepAction => null;
         Func<object?, Task>? NextStepAction => null;
         Action? CardUIStateChanged { get; set; }
+
+        void UpdateCardComponentUI();
     }
 }

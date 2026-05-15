@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<arc:ArcPage
+    x:Class="VirtualPaper.IntelligentPanel.Intelligent"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.IntelligentPanel"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    mc:Ignorable="d">
+
+    <arc:ArcPageHost x:Name="MainHost">
+        <Grid>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <SelectorBar x:Name="SelBar"
+                    SelectionChanged="SelectorBar_SelectionChanged"
+                    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                    HorizontalAlignment="Stretch">
+                    <SelectorBarItem Text="{markup:I18n Key=Intelligent_SelBarItem1_StyleTranfer}" Tag="StyleTranferView" IsSelected="True"/>
+                    <SelectorBarItem Text="{markup:I18n Key=Intelligent_SelBarItem2_SuperResolution}" Tag="SuperResolutionView"/>
+                </SelectorBar>
+
+                <Frame x:Name="ContentFrame" Grid.Row="1"/>
+            </Grid>
+
+            <input:ArcButton x:Name="addTaskButton"
+                Width="56"
+                Height="56"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Margin="0,0,24,24"
+                CornerRadius="28"
+                Background="LightBlue"
+                Click="AddTaskButton_Click">
+                <FontIcon Glyph="&#xF8AA;" />
+            </input:ArcButton>
+
+            <Grid x:Name="maskGrid" 
+                Background="#80000000" 
+                Visibility="Collapsed"
+                Tapped="MaskGrid_Tapped">
+
+                <Frame x:Name="overlayFrame" 
+                    Width="970" 
+                    Height="680"
+                    CornerRadius="12"
+                    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                    Tapped="OverlayFrame_Tapped"/>
+            </Grid>
+        </Grid>
+    </arc:ArcPageHost>
+</arc:ArcPage>

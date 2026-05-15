@@ -130,6 +130,7 @@ namespace VirtualPaper.DataAssistor {
                 FilePath = grpc_data.FilePath,
                 FolderPath = grpc_data.FolderPath,
                 ThumbnailPath = grpc_data.ThumbnailPath,
+                DepthFilePath = grpc_data.DepthFilePath,
             };
 
             return playerData;

@@ -53,7 +53,7 @@ namespace VirtualPaper.Cores.WpControl {
         #region data
         IWpBasicData CreateBasicData(string filePath, FileType ftype, string? folderName = null, bool isAutoSave = true, CancellationToken token = default);
         IWpBasicData CreateBasicDataInMem(string filePath, FileType ftype, string? folderName = null, bool isAutoSave = true, CancellationToken token = default);
-        IWpRuntimeData CreateRuntimeData(string filePath, string folderPath, RuntimeType rtype, bool isPreview, string monitorContent);
+        IWpRuntimeData CreateRuntimeData(string filePath, string folderPath, RuntimeType rtype, string? depthFilePath, bool isPreview, string monitorContent);
         Task<IWpBasicData> UpdateBasicDataAsync(string folderPath, string folderName, string filePath, FileType ftype, CancellationToken token = default);
         #endregion
 

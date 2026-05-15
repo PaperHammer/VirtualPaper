@@ -16,14 +16,12 @@ using VirtualPaper.DataAssistor;
 using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.lang;
-using VirtualPaper.ML.DepthEstimate;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 using VirtualPaper.Utils.Interfcaes;
 using WinEventHook;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 using static VirtualPaper.Common.Errors;
 
 namespace VirtualPaper.Cores.WpControl {
@@ -151,7 +149,7 @@ namespace VirtualPaper.Cores.WpControl {
         }
 
         public string? GetPlayerStartArgs(IWpPlayerData data, CancellationToken token = default) {
-            var wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, true, _monitorManager.PrimaryMonitor.Content);
+            var wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, data.DepthFilePath, true, _monitorManager.PrimaryMonitor.Content);
             DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
 
             var startArgs = _wallpaperFactory.CreatePlayerStartArgs(data, true);
@@ -282,7 +280,7 @@ namespace VirtualPaper.Cores.WpControl {
                         wpRuntimeData = GetTempRuntimeData(data, monitor.Content);
                     }
                     else {
-                        wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, false, monitor.Content);
+                        wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, data.DepthFilePath, false, monitor.Content);
                     }
                     DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
                 }
@@ -638,6 +636,7 @@ namespace VirtualPaper.Cores.WpControl {
             string filePath,
             string folderPath,
             RuntimeType rtype,
+            string? depthFilePath,
             bool isPreview,
             string monitorContent) {
             WpRuntimeData data = new();
@@ -685,9 +684,7 @@ namespace VirtualPaper.Cores.WpControl {
                 data.WpEffectFilePathUsing = wpEffectFilePathUsing;
 
                 if (rtype == RuntimeType.RImage3D) {
-                    var output = MiDaS.Run(filePath);
-                    string depthFilePath = MiDaS.SaveDepthMap(output.Depth, output.Width, output.Height, output.OriginalWidth, output.OriginalHeight, folderPath);
-                    data.DepthFilePath = depthFilePath;
+                    data.DepthFilePath = depthFilePath!;
                 }
 
                 data.Save();
@@ -859,7 +856,7 @@ namespace VirtualPaper.Cores.WpControl {
                         ArcLog.GetLogger<WallpaperControl>().Info($"Screen missing, skipping restoration of {layout.FolderPath} | {layout.MonitorDeviceId}");
                     }
                     else {
-                        IWpMetadata data = WallpaperUtil.GetWallpaperByFolder(layout.FolderPath, monitor.SystemIndex.ToString(), layout.RType);
+                        IWpMetadata data = WallpaperUtil.GetWallpaperByFolder(layout.FolderPath, layout.MonitorContent, layout.RType);
                         if (data == null || !data.IsAvailable()) {
                             ArcLog.GetLogger<WallpaperControl>().Error($"Skipping restoration of {layout.FolderPath}");
                             CloseWallpaper(monitor);

@@ -23,7 +23,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
 
         [TestInitialize]
         public void Setup() {
-            CrossThreadInvoker.Initialize(new T_UiSynchronizationContext());
+            CrossThreadInvoker.Initialize(new TUiSynchronizationContext());
 
             _appUpdater = new Mock<IAppUpdaterClient>();
             _userSettingsClient = new Mock<IUserSettingsClient>();
@@ -194,7 +194,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                     .ReturnsAsync(new Grpc_RestartWallpaperResponse { IsFinished = true });
 
                 // ── 执行 ────────────────────────────────────────────────
-                await InvokeWallpaperDirectoryChangeAsync(_vm, destRoot);
+                await _vm.WallpaperDirectoryChangeAsync(destRoot);
 
                 // ── 断言 ────────────────────────────────────────────────
                 Assert.AreEqual(expectedWallpaperDir, _vm.WallpaperDir);   // ← 修正点
@@ -212,7 +212,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                 .Setup(w => w.RestartAllWallpapersAsync())
                 .ThrowsAsync(new RpcException(new Status(StatusCode.Cancelled, "")));
 
-            await InvokeWallpaperDirectoryChangeAsync(_vm, @"D:\NewPath");
+            await _vm.WallpaperDirectoryChangeAsync(@"D:\NewPath");
 
             Assert.IsFalse(_vm.WallpaperDirectoryChangeOngoing);
         }
@@ -223,7 +223,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                 .Setup(w => w.RestartAllWallpapersAsync())
                 .ThrowsAsync(new Exception("unexpected"));
 
-            await InvokeWallpaperDirectoryChangeAsync(_vm, @"D:\NewPath");
+            await _vm.WallpaperDirectoryChangeAsync(@"D:\NewPath");
 
             Assert.IsFalse(_vm.WallpaperDirectoryChangeOngoing);
         }
@@ -264,7 +264,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                 WpBasicDataContext.Default);
 
             var results = new List<WpLibData>();
-            await foreach (var item in InvokeGetWpBasicData([tempDir])) {
+            await foreach (var item in GeneralSettingViewModel.GetWpBasicDataByInstallFoldersAsync([tempDir])) {
                 results.Add(item);
             }
 
@@ -279,47 +279,13 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                 Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString())).FullName;
 
             var results = new List<WpLibData>();
-            await foreach (var item in InvokeGetWpBasicData([tempDir])) {
+            await foreach (var item in GeneralSettingViewModel.GetWpBasicDataByInstallFoldersAsync([tempDir])) {
                 results.Add(item);
             }
 
             Assert.HasCount(0, results);
 
             Directory.Delete(tempDir, true);
-        }
-
-        // ── 辅助方法 ─────────────────────────────────────────────────
-
-        /// <summary>
-        /// 通过反射调用 internal WallpaperDirectoryChangeAsync
-        /// （推荐改为 internal + InternalsVisibleTo 替代反射）
-        /// </summary>
-        private static async Task InvokeWallpaperDirectoryChangeAsync(
-            GeneralSettingViewModel vm, string newPath) {
-            var method = typeof(GeneralSettingViewModel)
-                .GetMethod("WallpaperDirectoryChangeAsync",
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance);
-
-            Assert.IsNotNull(method, "WallpaperDirectoryChangeAsync 方法未找到，请确认方法名或改为 internal");
-
-            var task = (Task)method.Invoke(vm, [newPath])!;
-            await task;
-        }
-
-        private static async IAsyncEnumerable<WpLibData> InvokeGetWpBasicData(
-            IEnumerable<string> folders) {
-            var method = typeof(GeneralSettingViewModel)
-                .GetMethod("GetWpBasicDataByInstallFoldersAsync",
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Static);
-
-            Assert.IsNotNull(method, "GetWpBasicDataByInstallFoldersAsync 方法未找到");
-
-            var result = (IAsyncEnumerable<WpLibData>)method.Invoke(null, [folders.ToList()])!;
-            await foreach (var item in result) {
-                yield return item;
-            }
         }
     }
 }

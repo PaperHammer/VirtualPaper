@@ -19,6 +19,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
         private Mock<IMonitorManager> _monitorMgr = null!;
         private Mock<IWallpaperFactory> _factory = null!;
         private Mock<IUserSettingsService> _settings = null!;
+        private readonly List<string> _tempFiles = [];
 
         [TestInitialize]
         public void Setup() {
@@ -36,13 +37,14 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
         [TestCleanup]
         public void Cleanup() {
             _sut.CloseAllWallpapers();
+            TestDataBuilder.CleanupTempFiles(_tempFiles);
         }
 
         [TestMethod]
         [Description("SetWallpaperAsync should return failure immediately when monitor is null")]
         public async Task SetWallpaperAsync_WithNullMonitor_ShouldReturnFailure() {
             // Arrange
-            var data = TestDataBuilder.CreateValidPlayerData().Object;
+            var data = TestDataBuilder.CreateValidPlayerData(_tempFiles).Object;
 
             // Act
             var result = await _sut.SetWallpaperAsync(data, monitor: null);
@@ -50,7 +52,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             // Assert
             Assert.IsFalse(result.IsFinished, "Should return failure when monitor is null");
             _factory.Verify(
-                f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), It.IsAny<IMonitor>()),
+                f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), It.IsAny<IMonitor>(), false),
                 Times.Never, "Player should not be created");
         }
 
@@ -58,7 +60,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
         [Description("Should fire WallpaperError event and return failure when the file does not exist")]
         public async Task SetWallpaperAsync_WhenFileMissing_ShouldFireErrorEvent() {
             // Arrange
-            var data = TestDataBuilder.CreateValidPlayerData().Object;
+            var data = TestDataBuilder.CreateValidPlayerData(_tempFiles).Object;
             Mock.Get(data).Setup(d => d.FilePath).Returns("C:\\not_exist.jpg");
             Exception? capturedError = null;
             _sut.WallpaperError += (s, e) => capturedError = e;
@@ -76,7 +78,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
         [Description("Should throw an exception and fire WallpaperError when RType is Unknown")]
         public async Task SetWallpaperAsync_WithUnknownRType_ShouldFireError() {
             // Arrange
-            var data = TestDataBuilder.CreateValidPlayerData(
+            var data = TestDataBuilder.CreateValidPlayerData(_tempFiles,
                 rtype: RuntimeType.RUnknown).Object;
             Exception? capturedError = null;
             _sut.WallpaperError += (_, e) => capturedError = e;
@@ -94,11 +96,11 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
         public async Task SetWallpaperAsync_PerMode_SameMontior_ShouldUpdate_NotRecreate() {
             // Arrange
             var monitor = _monitorMgr.Object.PrimaryMonitor;
-            var data1 = TestDataBuilder.CreateValidPlayerData(wpId: "wp_001").Object;
-            var data2 = TestDataBuilder.CreateValidPlayerData(wpId: "wp_002").Object;
+            var data1 = TestDataBuilder.CreateValidPlayerData(_tempFiles, wpId: "wp_001").Object;
+            var data2 = TestDataBuilder.CreateValidPlayerData(_tempFiles, wpId: "wp_002").Object;
 
             var player = TestDataBuilder.CreateWpPlayer(data1, monitor);
-            _factory.Setup(f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), monitor))
+            _factory.Setup(f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), monitor, false))
                     .Returns(player.Object);
 
             // Set the first wallpaper
@@ -112,7 +114,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             // Assert
             player.Verify(p => p.Update(data2), Times.Once, "Should call Update to refresh the wallpaper");
             _factory.Verify(
-                f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), monitor),
+                f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), monitor, false),
                 Times.Once, "Player should not be recreated");
         }
 
@@ -121,12 +123,12 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
         public async Task SetWallpaperAsync_OnSuccess_ShouldFireChangedEvent() {
             // Arrange
             var monitor = _monitorMgr.Object.PrimaryMonitor;
-            var data = TestDataBuilder.CreateValidPlayerData().Object;
+            var data = TestDataBuilder.CreateValidPlayerData(_tempFiles).Object;
             bool changed = false;
             _sut.WallpaperChanged += (_, _) => changed = true;
 
             var player = TestDataBuilder.CreateWpPlayer(data, monitor);
-            _factory.Setup(f => f.CreatePlayer(data, monitor)).Returns(player.Object);
+            _factory.Setup(f => f.CreatePlayer(data, monitor, false)).Returns(player.Object);
 
             // Act
             var result = await _sut.SetWallpaperAsync(data, monitor);
@@ -148,10 +150,10 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
                 _settings.Object, _monitorMgr.Object,
                 _factory.Object, desktop.Object, jobService.Object);
 
-            var data = TestDataBuilder.CreateValidPlayerData().Object;
+            var data = TestDataBuilder.CreateValidPlayerData(_tempFiles).Object;
             foreach (var m in _monitorMgr.Object.Monitors) {
                 var p = TestDataBuilder.CreateWpPlayer(data, m);
-                _factory.Setup(f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), m))
+                _factory.Setup(f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), m, false))
                         .Returns(p.Object);
             }
 
@@ -160,7 +162,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
 
             // Assert
             _factory.Verify(
-                f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), It.IsAny<IMonitor>()),
+                f => f.CreatePlayer(It.IsAny<IWpPlayerData>(), It.IsAny<IMonitor>(), false),
                 Times.Exactly(3), "Duplicate mode should create a Player for each monitor");
         }
     }

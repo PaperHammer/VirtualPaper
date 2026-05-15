@@ -24,7 +24,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
         [TestInitialize]
         public void Setup() {
-            CrossThreadInvoker.Initialize(new T_UiSynchronizationContext());
+            CrossThreadInvoker.Initialize(new TUiSynchronizationContext());
             _userSettingsClient = new Mock<IUserSettingsClient>();
             _wpControlClient = new Mock<IWallpaperControlClient>();
             _wallpaperIndexService = new Mock<IWallpaperIndexService>();

@@ -215,8 +215,8 @@ namespace VirtualPaper.PlayerWeb {
                         HandleCloseCommand();
                         break;
                     case MessageType.cmd_apply:
-                        _scriptExecutor?.EnqueueEvent(Fileds.ApplyFilter);
-                        _scriptExecutor?.EnqueueEvent(Fileds.Play);
+                        _scriptExecutor?.EnqueueEvent(Fields.ApplyFilter);
+                        _scriptExecutor?.EnqueueEvent(Fields.Play);
                         break;
                     case MessageType.cmd_reload:
                         CrossThreadInvoker.InvokeOnUIThread(() => {
@@ -280,7 +280,7 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         public void UpdateEffectValueNumber<T>(EffectValueChanged<T> e) where T : struct {
-            _scriptExecutor?.EnqueueEvent(Fileds.PropertyListener, e.PropertyName, e.Value);
+            _scriptExecutor?.EnqueueEvent(Fields.PropertyListener, e.PropertyName, e.Value);
         }
 
         public void UpdateEffectValue(EffectValueChanged<bool> e) {
@@ -305,12 +305,12 @@ namespace VirtualPaper.PlayerWeb {
             else {
                 ResumeRenderingSubProcess();
             }
-            _scriptExecutor?.EnqueueEvent(Fileds.PlaybackChanged, pause);
+            _scriptExecutor?.EnqueueEvent(Fields.PlaybackChanged, pause);
             _isPaused = pause;
         }
 
         private void HandleMuteCommand(VirtualPaperMutedCmd muted) {
-            _scriptExecutor?.EnqueueEvent(Fileds.AudioMuteChanged, muted.IsMuted);
+            _scriptExecutor?.EnqueueEvent(Fields.AudioMuteChanged, muted.IsMuted);
         }
 
         private void HandleUpdateCommand(VirtualPaperUpdateCmd update) {            
@@ -332,17 +332,17 @@ namespace VirtualPaper.PlayerWeb {
                 case "RImage":
                 case "RVideo":
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, _startArgs.RuntimeType, GetWallpaperVirtualPath(_startArgs.FilePath));
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, GetWallpaperVirtualPath(_startArgs.FilePath));
                     break;
                 case "RImage3D":
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, GetWallpaperVirtualPath(_startArgs.FilePath), GetWallpaperRootVirtualPath(Path.GetFileNameWithoutExtension(_startArgs.FilePath), _startArgs.DepthFilePath));
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, GetWallpaperVirtualPath(_startArgs.FilePath), GetWallpaperRootVirtualPath(Path.GetFileNameWithoutExtension(_startArgs.FilePath), _startArgs.DepthFilePath));
                     break;
                 default:
                     break;
             }
             LoadWpEffect(_startArgs.WpEffectFilePathUsing);
-            _scriptExecutor?.EnqueueEvent(Fileds.Play);
+            _scriptExecutor?.EnqueueEvent(Fields.Play);
         }
 
         /// <summary>
@@ -390,7 +390,7 @@ namespace VirtualPaper.PlayerWeb {
                             uiElementType.Equals("Dropdown", StringComparison.OrdinalIgnoreCase) ||
                             uiElementType.Equals("Color", StringComparison.OrdinalIgnoreCase) ||
                             uiElementType.Equals("Textbox", StringComparison.OrdinalIgnoreCase)) {
-                            _scriptExecutor?.EnqueueEvent(Fileds.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
+                            _scriptExecutor?.EnqueueEvent(Fields.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
                         }
                         else if (uiElementType.Equals("Checkbox", StringComparison.OrdinalIgnoreCase)) {
                             ExecuteCheckBoxSet(item.Name, bool.Parse(item.Value.GetProperty("Value").ToString()));
@@ -416,7 +416,7 @@ namespace VirtualPaper.PlayerWeb {
         private void UpdateRectToWebview() {
             if (_webView2 == null || _webView2.CoreWebView2 == null) return;
 
-            _scriptExecutor?.EnqueueEvent(Fileds.UpdateDimensions, _windowRc.Right - _windowRc.Left, _windowRc.Bottom - _windowRc.Top);
+            _scriptExecutor?.EnqueueEvent(Fields.UpdateDimensions, _windowRc.Right - _windowRc.Left, _windowRc.Bottom - _windowRc.Top);
         }
         #endregion
 
@@ -441,7 +441,7 @@ namespace VirtualPaper.PlayerWeb {
                             if (inside) {
                                 _scriptExecutor?.EnqueueState(
                                     key: "MouseMove",
-                                    functionName: Fileds.MouseMove,
+                                    functionName: Fields.MouseMove,
                                     mouseX, mouseY
                                 );
                                 lastX = mouseX;
@@ -450,7 +450,7 @@ namespace VirtualPaper.PlayerWeb {
                             else if (lastInside) {
                                 _scriptExecutor?.EnqueueState(
                                     key: "MouseOut",
-                                    functionName: Fileds.MouseOut
+                                    functionName: Fields.MouseOut
                                 );
                             }
 
@@ -459,7 +459,7 @@ namespace VirtualPaper.PlayerWeb {
                         else {
                             _scriptExecutor?.EnqueueState(
                                 key: "MouseOut",
-                                functionName: Fileds.MouseOut
+                                functionName: Fields.MouseOut
                             );
                         }
                     }
@@ -475,7 +475,7 @@ namespace VirtualPaper.PlayerWeb {
             if (Interlocked.CompareExchange(ref _isParallaxRunning, 0, 1) == 0) return;
             _scriptExecutor?.EnqueueState(
                 key: "MouseOut",
-                functionName: Fileds.MouseOut
+                functionName: Fields.MouseOut
             );
         }
 

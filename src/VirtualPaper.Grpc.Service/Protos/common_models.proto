@@ -299,6 +299,7 @@ message Grpc_WpPlayerData {
 	string folder_path = 3;
 	string file_path = 4;
 	string thumbnail_path = 5;
+	string depth_file_path = 6;
 }
 
 message Grpc_WpMetaData {

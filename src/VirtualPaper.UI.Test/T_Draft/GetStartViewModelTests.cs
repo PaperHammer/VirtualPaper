@@ -13,7 +13,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
 
         [TestInitialize]
         public void Setup() {
-            CrossThreadInvoker.Initialize(new T_UiSynchronizationContext());
+            CrossThreadInvoker.Initialize(new TUiSynchronizationContext());
             _userSettingsClient = new Mock<IUserSettingsClient>();
             _userSettingsClient.Setup(u => u.RecentUseds)
                 .Returns(new List<IRecentUsed>());

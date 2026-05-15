@@ -208,27 +208,23 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        private async void AddToWhiteListScr(ProcInfo procInfo) {
+        internal void AddToWhiteListScr(ProcInfo procInfo) {
             ProcsFiltered.Add(procInfo);
 
-            await Task.Run(() => {
-                _whiteListScr.Add(procInfo);
-                _scrCommandsClient.AddToWhiteList(procInfo.ProcName);
-                _userSettingsClient.Settings.WhiteListScr.Add(procInfo);
-                _userSettingsClient.Save<ISettings>();
-            });
+            _whiteListScr.Add(procInfo);
+            _scrCommandsClient.AddToWhiteList(procInfo.ProcName);
+            _userSettingsClient.Settings.WhiteListScr.Add(procInfo);
+            _userSettingsClient.Save<ISettings>();
         }
 
-        internal async void RemoveFromWhiteScr(ProcInfo procInfo) {
+        internal void RemoveFromWhiteScr(ProcInfo procInfo) {
             ProcsFiltered.Remove(procInfo);
 
-            await Task.Run(() => {
-                _whiteListScr.Remove(procInfo);
-                _scrCommandsClient.RemoveFromWhiteList(procInfo.ProcName);
-                _userSettingsClient.Settings.WhiteListScr.Remove(procInfo);
-                if (File.Exists(procInfo.IconPath)) File.Delete(procInfo.IconPath);
-                _userSettingsClient.Save<ISettings>();
-            });
+            _whiteListScr.Remove(procInfo);
+            _scrCommandsClient.RemoveFromWhiteList(procInfo.ProcName);
+            _userSettingsClient.Settings.WhiteListScr.Remove(procInfo);
+            if (File.Exists(procInfo.IconPath)) File.Delete(procInfo.IconPath);
+            _userSettingsClient.Save<ISettings>();
         }
 
         #region Dispose

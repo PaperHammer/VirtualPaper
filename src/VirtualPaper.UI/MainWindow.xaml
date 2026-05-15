@@ -32,7 +32,7 @@
                         Icon="Library"
                         IsSelected="True">
                     </NavigationViewItem>-->
-                    <NavigationViewItem x:Name="Nav_WpSettings" IsSelected="True">
+                    <NavigationViewItem x:Name="Nav_WpSettings">
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate x:DataType="local:MainWindow">
                                 <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
@@ -49,6 +49,19 @@
                                 <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
                                     <FontIcon Glyph="&#xF156;" FontSize="22" HorizontalAlignment="Center"/>
                                     <TextBlock Text="{markup:I18n Key=SidebarProject}" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </NavigationViewItem.ContentTemplate>
+                    </NavigationViewItem>
+                    <NavigationViewItem x:Name="Nav_Intelligent" IsSelected="True">
+                        <NavigationViewItem.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
+                                    <ImageIcon
+                                        Height="24"
+                                        Width="24"
+                                        Source="{ThemeResource IntelligentPanel_Sider}"/>
+                                    <TextBlock Text="{markup:I18n Key=SidebarIntelligent}" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
                                 </StackPanel>
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>

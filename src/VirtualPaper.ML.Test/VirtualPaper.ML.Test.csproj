@@ -12,4 +12,22 @@
 		<ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<Content Include="..\VirtualPaper.ML\DepthEstimate\ai_models\**" Link="Plugins\ML\DepthEstimate\ai_models\%(RecursiveDir)%(Filename)%(Extension)">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="..\VirtualPaper.ML\StyleTransfer\ai_models\**" Link="Plugins\ML\StyleTransfer\ai_models\%(RecursiveDir)%(Filename)%(Extension)">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="..\VirtualPaper.ML\SuperResolution\ai_models\**" Link="Plugins\ML\SuperResolution\ai_models\%(RecursiveDir)%(Filename)%(Extension)">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	
 </Project>

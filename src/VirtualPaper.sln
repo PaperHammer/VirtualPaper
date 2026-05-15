@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.2.11415.280
@@ -46,6 +46,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualPaper.PlayerWeb", "VirtualPaper.PlayerWeb\VirtualPaper.PlayerWeb.csproj", "{CAAC63E7-6598-43FC-B56F-322A918B89A1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workloads.Utils", "Workloads.Utils\Workloads.Utils.csproj", "{EA7D0097-68E0-4529-B981-018C939BC060}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualPaper.IntelligentPanel", "VirtualPaper.IntelligentPanel\VirtualPaper.IntelligentPanel.csproj", "{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{C9E354C8-7B8A-43D2-82E9-4D7653F54906}"
 EndProject
@@ -517,6 +519,26 @@ Global
 		{6643885C-DF9A-43C1-8104-F7ECBF70A3C8}.Release|x64.Build.0 = Release|Any CPU
 		{6643885C-DF9A-43C1-8104-F7ECBF70A3C8}.Release|x86.ActiveCfg = Release|Any CPU
 		{6643885C-DF9A-43C1-8104-F7ECBF70A3C8}.Release|x86.Build.0 = Release|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Debug|ARM.Build.0 = Debug|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Debug|x64.Build.0 = Debug|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Debug|x86.Build.0 = Debug|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Release|ARM.ActiveCfg = Release|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Release|ARM.Build.0 = Release|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Release|ARM64.Build.0 = Release|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Release|x64.ActiveCfg = Release|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Release|x64.Build.0 = Release|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Release|x86.ActiveCfg = Release|Any CPU
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -534,6 +556,7 @@ Global
 		{02E4B24D-1CC1-4FAC-8E7F-AA6A9F2817F6} = {C9E354C8-7B8A-43D2-82E9-4D7653F54906}
 		{68E40740-CB2B-4F34-BAFB-25AD79BDC1D1} = {C9E354C8-7B8A-43D2-82E9-4D7653F54906}
 		{6643885C-DF9A-43C1-8104-F7ECBF70A3C8} = {C9E354C8-7B8A-43D2-82E9-4D7653F54906}
+		{CC5C07CA-254B-4C9D-B995-2BCF7BC77A89} = {68A14B74-4C6E-4C7F-B5C9-369862D60276}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		RESX_NeutralResourcesLanguage = zh-CN

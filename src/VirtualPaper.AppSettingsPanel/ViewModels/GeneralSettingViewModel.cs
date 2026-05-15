@@ -291,7 +291,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             await Launcher.LaunchFolderAsync(folder);
         }
 
-        private async Task WallpaperDirectoryChangeAsync(string destRootFolderPath) {
+        internal async Task WallpaperDirectoryChangeAsync(string destRootFolderPath) {
             string destFolderPath = string.Empty;
             WallpaperDirectoryChangeOngoing = true;
 
@@ -365,7 +365,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             return allOperationsSuccessful;
         }
 
-        private static async IAsyncEnumerable<WpLibData> GetWpBasicDataByInstallFoldersAsync(List<string> folderPaths) {
+        internal static async IAsyncEnumerable<WpLibData> GetWpBasicDataByInstallFoldersAsync(List<string> folderPaths) {
             int idx = 0;
             foreach (string storeDir in folderPaths) {
                 DirectoryInfo root = new(storeDir);

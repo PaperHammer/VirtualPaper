@@ -116,9 +116,15 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         public async void HideOverlayPage() {
+            if (overlayFrame.Content is FrameworkElement element) {
+                element.DataContext = null;
+            }
+
             overlayFrame.Content = null;
+            overlayFrame.DataContext = null;
             overlayFrame.BackStack.Clear();
             overlayFrame.ForwardStack.Clear();
+
             maskGrid.Visibility = Visibility.Collapsed;
         }
 
@@ -156,7 +162,6 @@ namespace VirtualPaper.DraftPanel.Views {
                 // 避免干扰
                 Payload?.Remove(NaviPayloadKey.DraftConfigTCS);
                 Payload?.Remove(NaviPayloadKey.IsFromWorkSpace_AddProj);
-                Payload?.Remove(NaviPayloadKey.DraftConfigTCS);
             }
         }
 

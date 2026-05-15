@@ -4,7 +4,6 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.ML.Realesrgan;
 using VirtualPaper.ML.SuperResolution.Interfaces;
 
 namespace VirtualPaper.ML.SuperResolution {
@@ -331,3 +330,9 @@ namespace VirtualPaper.ML.SuperResolution {
         private volatile bool _isLoaded;
     }
 }
+
+/*
+ * 超分辨率模式下文件体积的预期
+ *  QualityRestore 模式（倍率 = 1）：分辨率不变，体积可能比原始 更小（去噪后压缩率更高）
+ *  SuperResolution 模式（2x / 4x）：分辨率放大，体积通常会 更大，但如果原图本身噪点很多，偶尔也可能接近原图大小
+ */

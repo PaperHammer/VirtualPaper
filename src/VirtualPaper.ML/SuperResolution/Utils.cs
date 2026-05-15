@@ -1,4 +1,4 @@
-namespace VirtualPaper.ML.Realesrgan {
+namespace VirtualPaper.ML.SuperResolution {
     public static class Utils {
         public static class Fields {
             public static string ModelName { get; } = "realesrgan_x4plus_dynamic.onnx";

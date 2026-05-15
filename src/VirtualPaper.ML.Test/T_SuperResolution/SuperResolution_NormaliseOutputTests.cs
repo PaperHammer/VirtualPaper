@@ -1,5 +1,4 @@
 using VirtualPaper.Common;
-using VirtualPaper.ML.Realesrgan;
 using VirtualPaper.ML.SuperResolution;
 
 namespace VirtualPaper.ML.Test.T_SuperResolution {

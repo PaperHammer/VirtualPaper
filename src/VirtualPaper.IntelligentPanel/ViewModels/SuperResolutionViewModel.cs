@@ -239,9 +239,9 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         }
 
         /// <summary>
-        /// 最多同时执行 1 个任务，避免占用过多的 CPU 与 内存（超分模型过于占内存了）
+        /// 最多同时执行 2 个任务，避免占用过多的 CPU 与 内存（超分模型过于占内存了）
         /// </summary>
         private readonly SemaphoreSlim _concurrencyGate = new(MaxConcurrency, MaxConcurrency);
-        private const int MaxConcurrency = 1;
+        private const int MaxConcurrency = 2;
     }
 }

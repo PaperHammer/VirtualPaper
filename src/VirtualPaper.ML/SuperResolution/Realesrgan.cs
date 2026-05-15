@@ -31,6 +31,9 @@ namespace VirtualPaper.ML.SuperResolution {
             using var options = new SessionOptions();
             options.EnableCpuMemArena = false;
             options.EnableMemoryPattern = false;
+            // 将每个 Run() 的 intra-op 线程数按并行 Tile 数等比分配：
+            // MaxParallelTiles 个 Tile 同时推理时，合计仍恰好占满全部 CPU 核心，不互相争抢。
+            options.IntraOpNumThreads = Math.Max(1, Environment.ProcessorCount / MaxParallelTiles);
             _session = new InferenceSession(ModelPath, options);
             ArcLog.GetLogger<Realesrgan>().Info($"Real-ESRGAN Model version: {_session.ModelMetadata.Version}");
 
@@ -40,9 +43,11 @@ namespace VirtualPaper.ML.SuperResolution {
 
         /// <summary>
         /// 对输入图像进行超分辨率放大并保存到指定路径。
-        /// 使用 Tile 分块策略：将大图切成固定大小的小块逐块推理，
-        /// 内存占用由 <see cref="TileSize"/> 决定，不会随原图尺寸平方级增长。
-        /// 输出张量写回使用 Span 直接访问，消除逐像素 GetValue 的索引转换开销。
+        /// <list type="bullet">
+        ///   <item>Tile 分块：固定 <see cref="TileSize"/>×<see cref="TileSize"/> 输入，内存恒定，ONNX 执行计划复用。</item>
+        ///   <item>并行推理：最多 <see cref="MaxParallelTiles"/> 块同时调用 <c>Session.Run()</c>（线程安全）。</item>
+        ///   <item>无锁写回：各 Tile 目标区域互不重叠，可并发写入 outputImage。</item>
+        /// </list>
         /// </summary>
         public string RunAndSave(
             string inputImagePath,
@@ -60,130 +65,154 @@ namespace VirtualPaper.ML.SuperResolution {
             // 转 RGB 后推理，最终写回时再转 BGR
             Cv2.CvtColor(image, image, ColorConversionCodes.BGR2RGB);
 
-            int imgWidth  = image.Width;
+            int imgWidth = image.Width;
             int imgHeight = image.Height;
 
-            // Tile 分块推理
-            // step = 每块"有效"覆盖宽度（去掉两侧 overlap）
-            int step      = TileSize - 2 * TileOverlap;
-            int numTilesX = (imgWidth  + step - 1) / step;
+            int step = TileSize - 2 * TileOverlap;
+            int numTilesX = (imgWidth + step - 1) / step;
             int numTilesY = (imgHeight + step - 1) / step;
 
-            // 预分配最大可能 Tile 的 float 缓冲（ArrayPool 复用，避免 GC 压力）
-            int maxTilePixels = TileSize * TileSize * 3;
-            float[] tileBuffer = ArrayPool<float>.Shared.Rent(maxTilePixels);
+            // 预计算全部 Tile 坐标，避免在并行 lambda 中重复推导
+            var tileInfos = new TileInfo[numTilesX * numTilesY];
+            for (int ty = 0; ty < numTilesY; ty++) {
+                for (int tx = 0; tx < numTilesX; tx++) {
+                    int sx = tx * step - TileOverlap;
+                    int sy = ty * step - TileOverlap;
+                    tileInfos[ty * numTilesX + tx] = new TileInfo(
+                        sx, sy,
+                        Math.Max(0, sx),
+                        Math.Max(0, sy),
+                        Math.Min(imgWidth, sx + TileSize),
+                        Math.Min(imgHeight, sy + TileSize));
+                }
+            }
 
-            // outputImage 懒初始化：第一块推理后，从实际输出维度推算放大倍数，再分配整图
+            int fixedTilePixels = TileSize * TileSize * 3;
+            int fixedChannelSize = TileSize * TileSize;
+
+            // outputImage 跨线程懒初始化：所有 Tile 推理 shape 相同，任何一块完成即可确定整图尺寸，
+            // 用 Interlocked.CompareExchange 保证只初始化一次，竞争失败方直接 Dispose 候选对象。
             Mat? outputImage = null;
 
-            try {
-                for (int ty = 0; ty < numTilesY; ty++) {
-                    for (int tx = 0; tx < numTilesX; tx++) {
-                        // 计算本块在原图中的采样区域（含 overlap，边缘自动裁剪）
-                        int sx = tx * step - TileOverlap;
-                        int sy = ty * step - TileOverlap;
+            Parallel.ForEach(
+                tileInfos,
+                new ParallelOptions { MaxDegreeOfParallelism = MaxParallelTiles },
+                // 每个工作线程独享一块 ArrayPool 缓冲，避免并发写入同一 buffer
+                () => ArrayPool<float>.Shared.Rent(fixedTilePixels),
+                (tile, _, localBuffer) => {
+                    int tileW = tile.ExClamped - tile.SxClamped;
+                    int tileH = tile.EyClamped - tile.SyClamped;
 
-                        int sxClamped = Math.Max(0, sx);
-                        int syClamped = Math.Max(0, sy);
-                        int exClamped = Math.Min(imgWidth,  sx + TileSize);
-                        int eyClamped = Math.Min(imgHeight, sy + TileSize);
+                    // 提取 Tile 并填充 TileSize×TileSize 的 float 张量缓冲
+                    var roi = new Rect(tile.SxClamped, tile.SyClamped, tileW, tileH);
+                    using var tileMat = new Mat(image, roi);
 
-                        int tileW = exClamped - sxClamped;
-                        int tileH = eyClamped - syClamped;
-                        int tileChannelSize  = tileW * tileH;
-                        int tilePixelCount   = tileChannelSize * 3;
+                    unsafe {
+                        byte* ptr = (byte*)tileMat.Data;
+                        int stride = (int)tileMat.Step();
 
-                        // 提取 Tile 并填充 float 张量缓冲
-                        var roi = new Rect(sxClamped, syClamped, tileW, tileH);
-                        using var tileMat = new Mat(image, roi);
-
-                        unsafe {
-                            byte* ptr    = (byte*)tileMat.Data;
-                            int   stride = (int)tileMat.Step();
-
-                            for (int y = 0; y < tileH; y++) {
+                        if (tileW == TileSize && tileH == TileSize) {
+                            // 内部 Tile：尺寸恰好 TileSize×TileSize，无需边缘填充，走快速路径
+                            for (int y = 0; y < TileSize; y++) {
                                 byte* row = ptr + y * stride;
-                                for (int x = 0; x < tileW; x++) {
-                                    int pixIdx = y * tileW + x;
-                                    tileBuffer[pixIdx]                        = row[x * 3]     / 255f; // R
-                                    tileBuffer[tileChannelSize + pixIdx]      = row[x * 3 + 1] / 255f; // G
-                                    tileBuffer[2 * tileChannelSize + pixIdx]  = row[x * 3 + 2] / 255f; // B
+                                for (int x = 0; x < TileSize; x++) {
+                                    int pixIdx = y * TileSize + x;
+                                    localBuffer[pixIdx] = row[x * 3] / 255f; // R
+                                    localBuffer[fixedChannelSize + pixIdx] = row[x * 3 + 1] / 255f; // G
+                                    localBuffer[2 * fixedChannelSize + pixIdx] = row[x * 3 + 2] / 255f; // B
                                 }
                             }
                         }
-
-                        // 推理
-                        // ArrayPool 返回的缓冲区容量可能大于 tilePixelCount（边缘 Tile 较小时尤为如此），
-                        // 多余部分是上一块的残余数据；Memory<float> 精确切片到 tilePixelCount，
-                        // 模型只读取有效范围，不会受到残余数据污染，安全。
-                        var memory      = new Memory<float>(tileBuffer, 0, tilePixelCount);
-                        var inputTensor = new DenseTensor<float>(memory, [1, 3, tileH, tileW]);
-                        var inputs      = new List<NamedOnnxValue> {
-                            NamedOnnxValue.CreateFromTensor(_inputName, inputTensor)
-                        };
-
-                        using var results = _session.Run(inputs);
-
-                        // Span 直接访问输出张量，避免 GetValue 逐像素索引转换
-                        var outTensor      = (DenseTensor<float>)results[0].AsTensor<float>();
-                        ReadOnlySpan<float> outSpan = outTensor.Buffer.Span;
-
-                        int upW           = outTensor.Dimensions[3];
-                        int upH           = outTensor.Dimensions[2];
-                        int upChannelSize = upW * upH;
-
-                        // 从实际推理结果推算模型放大倍数，与任何硬编码常量解耦
-                        int scaleX = upW / tileW;
-                        int scaleY = upH / tileH;
-
-                        // 首块推理完毕后才知道真实放大倍数，此时懒分配整图输出缓冲
-                        outputImage ??= new Mat(imgHeight * scaleY, imgWidth * scaleX, MatType.CV_8UC3);
-
-                        // 计算有效区域（剥离 overlap 边缘）
-                        // 图像左/上边缘的第一块不需要剥离左/上 overlap
-                        int leftStrip   = (sx  <  0          ? 0 : TileOverlap) * scaleX;
-                        int topStrip    = (sy  <  0          ? 0 : TileOverlap) * scaleY;
-                        int rightStrip  = (exClamped == imgWidth  ? 0 : TileOverlap) * scaleX;
-                        int bottomStrip = (eyClamped == imgHeight ? 0 : TileOverlap) * scaleY;
-
-                        int validX = leftStrip;
-                        int validY = topStrip;
-                        int validW = upW - leftStrip  - rightStrip;
-                        int validH = upH - topStrip   - bottomStrip;
-
-                        // 有效区域在完整输出图中的起始坐标
-                        int dstX = (sxClamped + (sx < 0 ? 0 : TileOverlap)) * scaleX;
-                        int dstY = (syClamped + (sy < 0 ? 0 : TileOverlap)) * scaleY;
-
-                        // 将有效区域写入输出图
-                        unsafe {
-                            byte* dstPtr    = (byte*)outputImage.Data;
-                            int   dstStride = (int)outputImage.Step();
-
-                            for (int y = 0; y < validH; y++) {
-                                byte* dstRow = dstPtr + (dstY + y) * dstStride;
-                                int   srcY   = validY + y;
-
-                                for (int x = 0; x < validW; x++) {
-                                    int idx = srcY * upW + (validX + x);
-
-                                    byte r = (byte)(Math.Clamp(outSpan[idx],                     0f, 1f) * 255f);
-                                    byte g = (byte)(Math.Clamp(outSpan[upChannelSize   + idx],   0f, 1f) * 255f);
-                                    byte b = (byte)(Math.Clamp(outSpan[2 * upChannelSize + idx], 0f, 1f) * 255f);
-
-                                    // OpenCV Mat 存储为 BGR
-                                    dstRow[(dstX + x) * 3]     = b;
-                                    dstRow[(dstX + x) * 3 + 1] = g;
-                                    dstRow[(dstX + x) * 3 + 2] = r;
+                        else {
+                            // 边缘 Tile：不足 TileSize 的部分用边缘像素填充（edge replication），
+                            // 避免零填充在超分输出中产生黑色伪影
+                            for (int y = 0; y < TileSize; y++) {
+                                int srcY = Math.Min(y, tileH - 1);
+                                byte* row = ptr + srcY * stride;
+                                for (int x = 0; x < TileSize; x++) {
+                                    int srcX = Math.Min(x, tileW - 1);
+                                    int pixIdx = y * TileSize + x;
+                                    localBuffer[pixIdx] = row[srcX * 3] / 255f; // R
+                                    localBuffer[fixedChannelSize + pixIdx] = row[srcX * 3 + 1] / 255f; // G
+                                    localBuffer[2 * fixedChannelSize + pixIdx] = row[srcX * 3 + 2] / 255f; // B
                                 }
                             }
                         }
                     }
-                }
-            }
-            finally {
-                ArrayPool<float>.Shared.Return(tileBuffer, clearArray: false);
-            }
+
+                    // 推理（InferenceSession.Run 线程安全，可并发调用）
+                    // 所有 Tile 输入均为 [1, 3, TileSize, TileSize]，ONNX 复用执行计划
+                    var memory = new Memory<float>(localBuffer, 0, fixedTilePixels);
+                    var inputTensor = new DenseTensor<float>(memory, [1, 3, TileSize, TileSize]);
+                    var inputs = new List<NamedOnnxValue>(1) {
+                        NamedOnnxValue.CreateFromTensor(_inputName, inputTensor)
+                    };
+
+                    using var results = _session.Run(inputs);
+                    var outTensor = (DenseTensor<float>)results[0].AsTensor<float>();
+                    ReadOnlySpan<float> outSpan = outTensor.Buffer.Span;
+
+                    int upW = outTensor.Dimensions[3]; // = TileSize * scaleX
+                    int upH = outTensor.Dimensions[2]; // = TileSize * scaleY
+                    int upChannelSize = upW * upH;
+                    int scaleX = upW / TileSize;
+                    int scaleY = upH / TileSize;
+
+                    // outputImage 懒分配（任意一块推理完成后即可确定整图尺寸）
+                    if (outputImage == null) {
+                        var candidate = new Mat(imgHeight * scaleY, imgWidth * scaleX, MatType.CV_8UC3);
+                        if (Interlocked.CompareExchange(ref outputImage, candidate, null) != null)
+                            candidate.Dispose(); // 其他线程已抢先分配，放弃本候选
+                    }
+
+                    // 计算有效区域（剥离 overlap 边缘，以实际内容宽高为上界排除填充区）
+                    int contentW = tileW * scaleX;
+                    int contentH = tileH * scaleY;
+
+                    int leftStrip = (tile.Sx < 0 ? 0 : TileOverlap) * scaleX;
+                    int topStrip = (tile.Sy < 0 ? 0 : TileOverlap) * scaleY;
+                    int rightStrip = (tile.ExClamped == imgWidth ? 0 : TileOverlap) * scaleX;
+                    int bottomStrip = (tile.EyClamped == imgHeight ? 0 : TileOverlap) * scaleY;
+
+                    int validX = leftStrip;
+                    int validY = topStrip;
+                    int validW = contentW - leftStrip - rightStrip;
+                    int validH = contentH - topStrip - bottomStrip;
+
+                    // 有效区域在完整输出图中的起始坐标
+                    int dstX = (tile.SxClamped + (tile.Sx < 0 ? 0 : TileOverlap)) * scaleX;
+                    int dstY = (tile.SyClamped + (tile.Sy < 0 ? 0 : TileOverlap)) * scaleY;
+
+                    // 将有效区域写入 outputImage
+                    // 各 Tile 的 [dstX, dstX+validW) × [dstY, dstY+validH) 互不重叠，无需加锁
+                    unsafe {
+                        byte* dstPtr = (byte*)outputImage!.Data;
+                        int dstStride = (int)outputImage.Step();
+
+                        for (int y = 0; y < validH; y++) {
+                            byte* dstRow = dstPtr + (dstY + y) * dstStride;
+                            int srcY = validY + y;
+
+                            for (int x = 0; x < validW; x++) {
+                                int idx = srcY * upW + (validX + x);
+
+                                byte r = (byte)(Math.Clamp(outSpan[idx], 0f, 1f) * 255f);
+                                byte g = (byte)(Math.Clamp(outSpan[upChannelSize + idx], 0f, 1f) * 255f);
+                                byte b = (byte)(Math.Clamp(outSpan[2 * upChannelSize + idx], 0f, 1f) * 255f);
+
+                                // OpenCV Mat 存储为 BGR
+                                dstRow[(dstX + x) * 3] = b;
+                                dstRow[(dstX + x) * 3 + 1] = g;
+                                dstRow[(dstX + x) * 3 + 2] = r;
+                            }
+                        }
+                    }
+
+                    return localBuffer;
+                },
+
+                localBuffer => ArrayPool<float>.Shared.Return(localBuffer, clearArray: false)
+            );
 
             if (outputImage == null)
                 throw new InvalidOperationException("No tiles were processed; output image was never initialized.");
@@ -193,8 +222,6 @@ namespace VirtualPaper.ML.SuperResolution {
 
             string extension = Path.GetExtension(outputFilePath).ToLowerInvariant();
 
-            // 用显式 using 块包裹 outputImage，Resize 完成后立即释放大尺寸中间 Mat，
-            // 避免 "using var _" 写法导致生命周期延续到方法末尾，造成内存多占用。
             using (outputImage) {
                 using var finalImage = new Mat();
                 Cv2.Resize(outputImage, finalImage,
@@ -226,7 +253,7 @@ namespace VirtualPaper.ML.SuperResolution {
             if (!_isDisposed) {
                 if (disposing) {
                     _session?.Dispose();
-                    _session  = null;
+                    _session = null;
                     _isLoaded = false;
                 }
                 _isDisposed = true;
@@ -241,9 +268,27 @@ namespace VirtualPaper.ML.SuperResolution {
         #endregion
 
         /// <summary>每个 Tile 的输入尺寸（像素）。越小内存越低，但 Tile 数量越多。</summary>
-        private const int TileSize    = 512;
+        private const int TileSize = 512;
         /// <summary>Tile 边缘 overlap 宽度（输入像素）。防止拼接处产生明显接缝。</summary>
         private const int TileOverlap = 16;
+        /// <summary>
+        /// 最大并行 Tile 数。ONNX intra-op 线程按 ProcessorCount / MaxParallelTiles 分配，
+        /// 使得所有并行 Tile 合计恰好占满全部 CPU 核心。
+        /// 若遇到内存压力，可调低此值。
+        /// </summary>
+        private const int MaxParallelTiles = 2;
+
+        private readonly struct TileInfo(
+            int sx, int sy,
+            int sxClamped, int syClamped,
+            int exClamped, int eyClamped) {
+            public readonly int Sx = sx;
+            public readonly int Sy = sy;
+            public readonly int SxClamped = sxClamped;
+            public readonly int SyClamped = syClamped;
+            public readonly int ExClamped = exClamped;
+            public readonly int EyClamped = eyClamped;
+        }
 
         private InferenceSession? _session;
         private string _inputName = string.Empty;

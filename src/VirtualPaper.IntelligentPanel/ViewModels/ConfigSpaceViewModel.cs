@@ -2,9 +2,12 @@ using System;
 using System.Windows.Input;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Data;
+using UAC = UACHelper.UACHelper;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
     public partial class ConfigSpaceViewModel : ObservableObject, IDisposable {
+        public bool IsElevated { get; }
+
         private string? _previousStepBtnText;
         public string? PreviousStepBtnText { get => _previousStepBtnText; set { _previousStepBtnText = value; OnPropertyChanged(); } }
 
@@ -21,6 +24,8 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         public ICommand? NextStepCommand { get; private set; }
 
         public ConfigSpaceViewModel() {
+            IsElevated = UAC.IsElevated;
+
             InitCommand();
         }
 

@@ -9,6 +9,7 @@
     xmlns:data="using:VirtualPaper.UIComponent.Data"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     Unloaded="Page_Unloaded"
     NavigationCacheMode="Enabled">
@@ -53,6 +54,14 @@
                         Background="{ThemeResource AccentAcrylicBackgroundFillColorDefaultBrush}"/>
                 </StackPanel>
             </Grid>
+
+            <InfoBar x:Name="RunningAsAdminWarning"
+                Grid.RowSpan="2"
+                Margin="5"
+                IsClosable="False"
+                IsOpen="{x:Bind _viewModel.IsElevated}"
+                Message="{markup:I18n Key=RunningAsAdminWarning}"
+                Severity="Warning" />
         </Grid>
     </data:Card>
 </arc:ArcPage>

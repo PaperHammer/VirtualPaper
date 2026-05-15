@@ -16,6 +16,19 @@ using WebView = Microsoft.Web.WebView2.WinForms.WebView2;
 
 namespace VirtualPaper.PlayerWeb {
     public partial class Form1 : Form {
+        protected override CreateParams CreateParams {
+            get {
+                CreateParams cp = base.CreateParams;
+                // WS_EX_TOOLWINDOW: 从 Alt+Tab 切换器中隐藏窗口
+                // 同时移除 WS_EX_APPWINDOW 防止其强制出现在任务栏/Alt+Tab 中
+                const int WS_EX_TOOLWINDOW = 0x00000080;
+                const int WS_EX_APPWINDOW = 0x00040000;
+                cp.ExStyle |= WS_EX_TOOLWINDOW;
+                cp.ExStyle &= ~WS_EX_APPWINDOW;
+                return cp;
+            }
+        }
+
         public Form1(StartArgsWeb args) {
             InitializeComponent();
 

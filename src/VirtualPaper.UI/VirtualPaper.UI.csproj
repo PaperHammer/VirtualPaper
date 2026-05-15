@@ -67,7 +67,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Remove="Assets\icon-vp-48.png" />
+		<None Remove="Assets\icon-vp-512.png" />
 		<None Remove="Assets\LockScreenLogo.scale-200.png" />
 		<None Remove="Assets\splashCol_1400x1400_with_round40.png" />
 		<None Remove="Assets\SplashScreen.scale-200.png" />
@@ -116,8 +116,8 @@
 		<ProjectCapability Include="Msix" />
 	</ItemGroup>
 	<ItemGroup>
-		<Content Update="Assets\icon-vp-48.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		<Content Update="Assets\icon-vp-512.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 
 		<Content Update="Assets\intelligent\preset_styles\anime.jpg">
@@ -202,8 +202,8 @@
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Assets\virtualpaper.ico">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
 	</ItemGroup>
 
 	<!-- 
@@ -223,6 +223,6 @@
 	<ItemGroup>
 	  <Content Update="Assets\ui_components\Dark\intelligent_dark.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
+	  </Content>	  
 	</ItemGroup>
 </Project>

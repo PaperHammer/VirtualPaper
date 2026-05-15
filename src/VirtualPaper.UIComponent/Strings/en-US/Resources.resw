@@ -1359,4 +1359,7 @@ The following words cannot be used as usernames:
   <data name="Intelligent_Enhance_Tip" xml:space="preserve">
     <value>Quality Restore is for images with sufficient resolution but poor quality; Super Resolution is for images with insufficient resolution</value>
   </data>
+  <data name="Text_Error_InvalidFile" xml:space="preserve">
+    <value>The file may be corrupted and cannot be used</value>
+  </data>
 </root>

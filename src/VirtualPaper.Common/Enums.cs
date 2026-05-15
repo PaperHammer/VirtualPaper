@@ -96,6 +96,7 @@ namespace VirtualPaper.Common {
         FGif,
         FVideo,
         FDesign,
+        FimageAI,
     }
 
     public enum RuntimeType {

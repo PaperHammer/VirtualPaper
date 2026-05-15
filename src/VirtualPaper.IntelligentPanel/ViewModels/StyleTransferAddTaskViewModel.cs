@@ -171,7 +171,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         internal async Task SelectStyleImageAsync() {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[FileType.FImage]]);
+                [.. FileFilter.FileTypeToExtension[FileType.FimageAI]]);
             if (storage == null || storage.Length < 1) return;
 
             string filePath = storage[0].Path;
@@ -184,10 +184,16 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         internal async Task SelectSourceImageAsync() {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[FileType.FImage]]);
+                [.. FileFilter.FileTypeToExtension[FileType.FimageAI]]);
             if (storage == null || storage.Length < 1) return;
 
             string filePath = storage[0].Path;
+
+            if (FileFilter.GetFileTypeFroImageAI(filePath) != FileType.FimageAI) {
+                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Error_InvalidFile)));
+                return;
+            }
+
             SourceFilePath = filePath;
             SourceFileSize = FileUtil.GetFileSize(filePath);
             SourceFileExt = Path.GetExtension(filePath)?.ToLower();

@@ -1359,4 +1359,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Intelligent_Enhance_Tip" xml:space="preserve">
     <value>画质修复适用于分辨率够但画质差的图片；超分放大适用于分辨率不足的图片</value>
   </data>
+  <data name="Text_Error_InvalidFile" xml:space="preserve">
+    <value>文件可能已经损坏，无法读取</value>
+  </data>
 </root>

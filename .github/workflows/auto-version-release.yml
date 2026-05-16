@@ -32,32 +32,17 @@ jobs:
       id: original_shas
       shell: powershell
       run: |
-        # 记录 main 当前 HEAD
         $mainSha = git rev-parse HEAD
         Write-Output "main_sha=$mainSha" >> $env:GITHUB_OUTPUT
         Write-Host "main SHA: $mainSha"
 
-        # 尝试记录 dev 分支 HEAD
-        git fetch origin dev 2>&1 | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            $devSha = git rev-parse origin/dev
-            Write-Output "dev_sha=$devSha" >> $env:GITHUB_OUTPUT
-            Write-Host "dev SHA: $devSha"
-        } else {
-            Write-Output "dev_sha=" >> $env:GITHUB_OUTPUT
-            Write-Host "dev branch not found"
-        }
+        $devSha = git rev-parse origin/dev
+        Write-Output "dev_sha=$devSha" >> $env:GITHUB_OUTPUT
+        Write-Host "dev SHA: $devSha"
 
-        # 尝试记录 bugfix 分支 HEAD
-        git fetch origin bugfix 2>&1 | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            $bugfixSha = git rev-parse origin/bugfix
-            Write-Output "bugfix_sha=$bugfixSha" >> $env:GITHUB_OUTPUT
-            Write-Host "bugfix SHA: $bugfixSha"
-        } else {
-            Write-Output "bugfix_sha=" >> $env:GITHUB_OUTPUT
-            Write-Host "bugfix branch not found"
-        }
+        $bugfixSha = git rev-parse origin/bugfix
+        Write-Output "bugfix_sha=$bugfixSha" >> $env:GITHUB_OUTPUT
+        Write-Host "bugfix SHA: $bugfixSha"
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4

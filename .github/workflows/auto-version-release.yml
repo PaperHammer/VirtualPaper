@@ -45,8 +45,6 @@ jobs:
       id: shas
       shell: powershell
       run: |
-        # checkout 已使用 fetch-depth: 0，所有远端分支引用已存在，无需再 fetch
-        # 分支若不存在则直接报错终止
         $mainSha = git rev-parse HEAD
         Write-Output "main_sha=$mainSha" >> $env:GITHUB_OUTPUT
         Write-Host "main SHA: $mainSha"
@@ -337,8 +335,15 @@ jobs:
             Write-Host "Syncing version back to $sourceBranch..."
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
+
+            # 必须先 fetch，确保 origin/main 拿到 publish job 刚推送的最新 commit
+            $ErrorActionPreference = 'Continue'
+            git fetch origin main 2>&1 | Out-Null
+            $ErrorActionPreference = 'Stop'
+
             git checkout -B $sourceBranch origin/$sourceBranch
-            git merge main --ff-only
+            # 用 origin/main 而不是 local main，避免本地引用未更新导致分支分叉
+            git merge origin/main --ff-only
             git push origin $sourceBranch
             Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version synced to $sourceBranch"
         } else {

@@ -1,4 +1,5 @@
 name: Auto Version & Build on Main Merge
+run-name: "[Auto] Pre-publish v? | ${{ github.event.pull_request.head.ref }} -> main | ${{ github.event.pull_request.title }}"
 
 on:
   pull_request:
@@ -200,7 +201,15 @@ jobs:
         name: build-release-output
         path: src/
 
+    - name: Cache Inno Setup 6.7.1
+      id: cache-innosetup
+      uses: actions/cache@v4
+      with:
+        path: C:\Program Files (x86)\Inno Setup 6
+        key: innosetup-6.7.1-${{ runner.os }}
+
     - name: Install Inno Setup 6.7.1
+      if: steps.cache-innosetup.outputs.cache-hit != 'true'
       shell: powershell
       run: |
         # 固定版本 6.7.1，避免新版本破坏脚本兼容性
@@ -208,7 +217,8 @@ jobs:
         $tag     = $version -replace '\.', '_'
         $url     = "https://github.com/jrsoftware/issrc/releases/download/is-$tag/innosetup-$version.exe"
         Write-Host "Downloading Inno Setup $version..."
-        Invoke-WebRequest -Uri $url -OutFile "innosetup.exe"
+        # 使用 curl.exe 避免 PowerShell 5.x Invoke-WebRequest 进度条导致的下载卡死问题
+        curl.exe -L --silent --show-error -o "innosetup.exe" $url
         Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
         Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Inno Setup $version installed"
 

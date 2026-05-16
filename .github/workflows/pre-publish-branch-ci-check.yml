@@ -1,5 +1,5 @@
 name: Pre-publish Branch CI Check
-run-name: "[Auto] CI-check | ${{ github.ref_name }} | ${{ github.event.head_commit.message || github.event.pull_request.title }}"
+run-name: "[Auto] CI Check | ${{ github.ref_name }} | ${{ github.event.head_commit.message || github.event.pull_request.title }}"
 
 on:
   push:

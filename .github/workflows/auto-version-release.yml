@@ -1,5 +1,5 @@
 name: Auto Version & Build on Main Merge
-run-name: "[Auto] Pre-publish v? | ${{ github.event.pull_request.head.ref }} -> main | ${{ github.event.pull_request.title }}"
+run-name: "[Auto] Pre-publish | ${{ github.event.pull_request.head.ref }} -> main | ${{ github.event.pull_request.title }}"
 
 on:
   pull_request:

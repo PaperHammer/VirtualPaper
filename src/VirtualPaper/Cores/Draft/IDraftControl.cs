@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VirtualPaper.Services.Interfaces {
-    internal interface IJobService {
+namespace VirtualPaper.Cores.Draft {
+    public interface IDraftControl {
     }
 }

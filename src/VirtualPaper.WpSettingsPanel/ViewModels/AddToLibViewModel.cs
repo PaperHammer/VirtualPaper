@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
-using VirtualPaper.Common.Utils.Storage.Adapter;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
 using Windows.Storage;
@@ -13,15 +13,14 @@ using UAC = UACHelper.UACHelper;
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public class AddToLibViewModel {
         public event EventHandler<IReadOnlyList<IStorageItem>>? OnRequestAddFile;
-        public event EventHandler<IStorageFolder>? OnRequestAddFolder;
+        public event EventHandler<StorageFolder>? OnRequestAddFolder;
 
         public ICommand? HandleAddFilesCommand;
         public ICommand? HandleAddFoldersCommand;
 
         public bool IsElevated { get; }
 
-        public AddToLibViewModel(IStoragePicker storagePicker) {
-            _storagePicker = storagePicker;
+        public AddToLibViewModel() {
             IsElevated = UAC.IsElevated;
 
             InitCommand();
@@ -37,7 +36,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         private async Task FileBrowseActionAsync() {
-            var storage = await _storagePicker.PickFilesAsync(
+            var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
                 [.. FileFilter.FileTypeToExtension[FileType.FImage], .. FileFilter.FileTypeToExtension[FileType.FGif], .. FileFilter.FileTypeToExtension[FileType.FVideo]],
                 true);
@@ -47,15 +46,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
                 
         private async Task FolderBrowseActionAsync() {
-            var storage = await _storagePicker.PickFolderAsync(WindowConsts.WindowHandle);
+            var storage = await WindowsStoragePickers.PickFolderAsync(WindowConsts.WindowHandle);
             if (storage == null) return;
 
             AddWallpaperFolder(storage);
         }
 
-        public void AddWallpaperFiles(IReadOnlyList<IStorageItem> filePaths) => OnRequestAddFile?.Invoke(this, filePaths);
-        public void AddWallpaperFolder(IStorageFolder storageFolder) => OnRequestAddFolder?.Invoke(this, storageFolder);
-
-        private readonly IStoragePicker _storagePicker;
+        internal void AddWallpaperFiles(IReadOnlyList<IStorageItem> filePaths) => OnRequestAddFile?.Invoke(this, filePaths);
+        internal void AddWallpaperFolder(StorageFolder storageFolder) => OnRequestAddFolder?.Invoke(this, storageFolder);
     }
 }

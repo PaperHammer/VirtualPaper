@@ -15,7 +15,6 @@ using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.Interfaces;
-using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Utils.DraftUtils.Interfaces;
@@ -116,15 +115,9 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         public async void HideOverlayPage() {
-            if (overlayFrame.Content is FrameworkElement element) {
-                element.DataContext = null;
-            }
-
             overlayFrame.Content = null;
-            overlayFrame.DataContext = null;
             overlayFrame.BackStack.Clear();
             overlayFrame.ForwardStack.Clear();
-
             maskGrid.Visibility = Visibility.Collapsed;
         }
 
@@ -162,6 +155,7 @@ namespace VirtualPaper.DraftPanel.Views {
                 // 避免干扰
                 Payload?.Remove(NaviPayloadKey.DraftConfigTCS);
                 Payload?.Remove(NaviPayloadKey.IsFromWorkSpace_AddProj);
+                Payload?.Remove(NaviPayloadKey.DraftConfigTCS);
             }
         }
 
@@ -193,9 +187,9 @@ namespace VirtualPaper.DraftPanel.Views {
             _draftPage?.NavigateByState(DraftPanelState.ConfigSpace);
         }
 
-        private void CleanUpTabUI(IArcTabViewItem tabViewItem) {
-            if (_tabToFrame.TryGetValue(tabViewItem, out var frame) && tabViewItem is ArcTabViewItem arcTab) {
-                workspaceContentPool.Children.Remove(arcTab);
+        private void CleanUpTabUI(ArcTabViewItem tabViewItem) {
+            if (_tabToFrame.TryGetValue(tabViewItem, out var frame)) {
+                workspaceContentPool.Children.Remove(tabViewItem);
                 _tabToFrame.Remove(tabViewItem);
                 frame.Content = null;
             }
@@ -230,6 +224,6 @@ namespace VirtualPaper.DraftPanel.Views {
         private Draft? _draftPage;
         private readonly WorkSpaceViewModel _viewModel;
         private PreProjectData[]? _preProjectDatas;
-        private readonly Dictionary<IArcTabViewItem, Frame> _tabToFrame = [];
+        private readonly Dictionary<ArcTabViewItem, Frame> _tabToFrame = [];
     }
 }

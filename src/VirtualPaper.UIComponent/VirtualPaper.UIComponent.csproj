@@ -76,6 +76,7 @@
 	<ItemGroup>
 		<Folder Include="Input\ColorPicker\" />
 		<Folder Include="Input\Palette\" />
+		<Folder Include="Resources\" />
 	</ItemGroup>
 
 	<ItemGroup>

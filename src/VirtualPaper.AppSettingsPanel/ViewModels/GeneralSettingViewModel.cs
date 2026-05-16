@@ -242,9 +242,9 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
         private void MenuUpdate(AppUpdateStatus status, DateTime date, Version version) {
             Version = $"v{version}";
-//#if DEBUG
-//            CurrentVersionState = VersionState.FindNew;
-//#else
+#if DEBUG
+            CurrentVersionState = VersionState.FindNew;
+#else
             switch (status) {
                 case AppUpdateStatus.Uptodate:
                     CurrentVersionState = VersionState.UptoNewest;
@@ -259,7 +259,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 default:
                     break;
             }
-//#endif
+#endif
             Version_LastCheckDate = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_LastCheckDate);
             Version_LastCheckDate += status == AppUpdateStatus.Notchecked ? "" : $" {date}";
         }
@@ -291,7 +291,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             await Launcher.LaunchFolderAsync(folder);
         }
 
-        internal async Task WallpaperDirectoryChangeAsync(string destRootFolderPath) {
+        private async Task WallpaperDirectoryChangeAsync(string destRootFolderPath) {
             string destFolderPath = string.Empty;
             WallpaperDirectoryChangeOngoing = true;
 
@@ -315,7 +315,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 UpdateSettingsConfigFile();
                 WallpaperInstallDirChanged?.Invoke(this, EventArgs.Empty);
                 WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
-                await _wpControlClient.ChangeWallpaperLayoutFolderPathAsync(previousDirFolderPath, destFolderPath);
+                await _wpControlClient.ChangeWallpaperLayoutFolrderPathAsync(previousDirFolderPath, destFolderPath);
                 var response = await _wpControlClient.RestartAllWallpapersAsync();
                 if (!response.IsFinished) {
                     throw new Exception("Restart all wallpapers failed");
@@ -365,7 +365,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             return allOperationsSuccessful;
         }
 
-        internal static async IAsyncEnumerable<WpLibData> GetWpBasicDataByInstallFoldersAsync(List<string> folderPaths) {
+        private static async IAsyncEnumerable<WpLibData> GetWpBasicDataByInstallFoldersAsync(List<string> folderPaths) {
             int idx = 0;
             foreach (string storeDir in folderPaths) {
                 DirectoryInfo root = new(storeDir);

@@ -14,7 +14,7 @@
 
 	<ItemGroup>
 		<Content Include="Shaders\GeometryAlphaEraseEffect.bin">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 		<Content Include="Shaders\GeometryAlphaEraseEffect.hlsl">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>

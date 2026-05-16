@@ -1,7 +1,6 @@
-using Microsoft.UI.Xaml.Controls;
-using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
+﻿using Microsoft.UI.Xaml.Controls;
 
 namespace VirtualPaper.UIComponent.Navigation {
-    public partial class ArcTabViewItem : TabViewItem, IArcTabViewItem {       
+    public partial class ArcTabViewItem : TabViewItem {       
     }
 }

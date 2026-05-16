@@ -8,7 +8,6 @@ using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
-using VirtualPaper.Utils.Interfcaes;
 using Point = System.Drawing.Point;
 
 namespace VirtualPaper.Views.WindowsMsg {
@@ -16,7 +15,7 @@ namespace VirtualPaper.Views.WindowsMsg {
     /// 使用 DirectX RawInput 进行鼠标输入检索并响应到壁纸
     /// ref: https://docs.microsoft.com/en-us/windows/win32/inputdev/raw-input
     /// </summary>
-    public partial class RawInputMsgWindow : Window, IRawInputMsg {
+    public partial class RawInputMsgWindow : Window {
         #region setup               
         public InputForwardMode InputMode { get; private set; }
         public event EventHandler<MouseRawArgs>? MouseMoveRaw;

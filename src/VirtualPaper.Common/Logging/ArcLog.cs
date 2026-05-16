@@ -3,13 +3,6 @@ using System.Diagnostics;
 using NLog;
 using Windows.ApplicationModel.Core;
 
-/*
- * todo
- * 分组循环播放
- * AI 生成壁纸	接入 Stable Diffusion / ComfyUI，本地生成动态壁纸
- * AI 静态图片动态化
- */
-
 namespace VirtualPaper.Common.Logging {
     /// <summary>
     /// 统一日志入口：支持程序集自动识别、调试输出、缓存

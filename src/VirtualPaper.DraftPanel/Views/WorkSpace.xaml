@@ -154,7 +154,6 @@
             <Frame x:Name="overlayFrame" 
                 Width="970" 
                 Height="680"
-                CornerRadius="12"
                 Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
                 Tapped="OverlayFrame_Tapped"/>
         </Grid>

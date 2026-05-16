@@ -12,8 +12,6 @@ namespace VirtualPaper.UIComponent.Utils {
     /// </summary>
     public static class GlobalMessageUtil {
         private static void AddMsg(ArcWindow? arcWindow, GlobalMsgInfo globalMsgInfo, bool isAllowDuplication = false) {
-            if (Constants.IsTestMode) return;
-
             arcWindow ??= ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main))!;
             ExecuteOnUIThread(() => {
                 // 如果key不为null且不允许重复，检查是否已存在
@@ -35,15 +33,11 @@ namespace VirtualPaper.UIComponent.Utils {
                     }
                 };
 
-                if (!Constants.IsTestMode) {
-                    arcWindow.InfobarMessages.Add(globalMsgInfo);
-                }
+                arcWindow.InfobarMessages.Add(globalMsgInfo);
             });
         }
 
         public static void CloseAndRemoveMsg(ArcWindow arcWindow, string key) {
-            if (Constants.IsTestMode) return;
-
             ExecuteOnUIThread(() => {
                 if (key == null) return;
 
@@ -103,8 +97,6 @@ namespace VirtualPaper.UIComponent.Utils {
         /// 清除所有消息
         /// </summary>
         public static void ClearAll(ArcWindow? arcWindow = null) {
-            if (Constants.IsTestMode) return;
-
             arcWindow ??= ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main))!;
             ExecuteOnUIThread(() => {
                 foreach (var msg in arcWindow.InfobarMessages.ToList()) {
@@ -118,7 +110,7 @@ namespace VirtualPaper.UIComponent.Utils {
         /// 检查是否存在指定key的消息
         /// </summary>
         public static bool ContainsKey(ArcWindow arcWindow, string key) {
-            if (key == null || Constants.IsTestMode) return false;
+            if (key == null) return false;
             return GetGlobalMsg(key, arcWindow) != null;
         }
 
@@ -126,8 +118,6 @@ namespace VirtualPaper.UIComponent.Utils {
         /// 显示自动关闭的消息
         /// </summary>
         public static void ShowAutoCloseMessage(string message, InfoBarSeverity severity, int autoCloseDelay = 5000, string? key = null, ArcWindow? arcWindow = null) {
-            if (Constants.IsTestMode) return;
-
             var msgInfo = new GlobalMsgInfo(key, false, message, null, severity);
             AddMsg(arcWindow, msgInfo);
 
@@ -142,7 +132,7 @@ namespace VirtualPaper.UIComponent.Utils {
         /// 更新现有消息内容
         /// </summary>
         public static void UpdateMessage(string key, string newMessage, bool isNeedLocalizer = false, ArcWindow? arcWindow = null) {
-            if (key == null || Constants.IsTestMode) return;
+            if (key == null) return;
 
             ExecuteOnUIThread(() => {
                 var msg = GetGlobalMsg(key, arcWindow);
@@ -156,8 +146,6 @@ namespace VirtualPaper.UIComponent.Utils {
         /// 批量添加消息
         /// </summary>
         public static void AddMessages(ArcWindow? arcWindow = null, params (string message, InfoBarSeverity severity, string key)[] messages) {
-            if (Constants.IsTestMode) return;
-
             foreach (var (message, severity, key) in messages) {
                 AddMsg(arcWindow, new GlobalMsgInfo(key, false, message, null, severity));
             }
@@ -167,7 +155,7 @@ namespace VirtualPaper.UIComponent.Utils {
         /// 获取指定key的消息（key为null时返回null）
         /// </summary>
         private static GlobalMsgInfo? GetGlobalMsg(string key, ArcWindow? arcWindow = null) {
-            if (key == null || Constants.IsTestMode) return null;
+            if (key == null) return null;
             arcWindow ??= ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main))!;
             return arcWindow.InfobarMessages.FirstOrDefault(m => m.Key == key);
         }
@@ -176,8 +164,6 @@ namespace VirtualPaper.UIComponent.Utils {
         /// 移除消息
         /// </summary>
         private static void RemoveMsg(GlobalMsgInfo msg, ArcWindow? arcWindow = null) {
-            if (Constants.IsTestMode) return;
-
             arcWindow ??= ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main))!;
             ExecuteOnUIThread(() => {
                 arcWindow.InfobarMessages.Remove(msg);

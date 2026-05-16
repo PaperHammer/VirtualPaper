@@ -1,7 +1,6 @@
 using System.Reflection;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Logging;
-using VirtualPaper.Common.Utils.Storage.Adapter;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -17,10 +16,7 @@ namespace VirtualPaper.Services {
         public List<IRecentUsed> RecentUseds { get; private set; } = [];
 
         public UserSettingsService(
-            IMonitorManager moitorManager,
-            IJsonSaver jsonSaver) {
-            _jsonSaver = jsonSaver;
-
+            IMonitorManager moitorManager) {
             Load<ISettings>();
             Load<List<IApplicationRules>>();
             Load<List<IWallpaperLayout>>();
@@ -46,27 +42,27 @@ namespace VirtualPaper.Services {
                 _ = WindowsAutoStart.SetAutoStart(Settings.IsAutoStart);
             }
             catch (Exception e) {
-                ArcLog.GetLogger<UserSettingsService>().Error(e);
+                App.Log.Error(e);
             }
         }
 
         public void Load<T>() {
             if (typeof(T) == typeof(ISettings)) {
                 try {
-                    Settings = _jsonSaver.Load<Settings>(_settingsPath, SettingsContext.Default);
+                    Settings = JsonSaver.Load<Settings>(_settingsPath, SettingsContext.Default);
                 }
                 catch (Exception e) {
-                    ArcLog.GetLogger<UserSettingsService>().Error(e);
+                    App.Log.Error(e);
                     Settings = new Settings();
                     Save<ISettings>();
                 }
             }
             else if (typeof(T) == typeof(List<IApplicationRules>)) {
                 try {
-                    AppRules = new List<IApplicationRules>(_jsonSaver.Load<List<ApplicationRules>>(_appRulesPath, ApplicationRulesContext.Default));
+                    AppRules = new List<IApplicationRules>(JsonSaver.Load<List<ApplicationRules>>(_appRulesPath, ApplicationRulesContext.Default));
                 }
                 catch (Exception e) {
-                    ArcLog.GetLogger<UserSettingsService>().Error(e.ToString());
+                    App.Log.Error(e.ToString());
                     AppRules =
                     [
                         new ApplicationRules(Constants.CoreField.AppName, AppWpRunRulesEnum.KeepRun)
@@ -76,20 +72,20 @@ namespace VirtualPaper.Services {
             }
             else if (typeof(T) == typeof(List<IWallpaperLayout>)) {
                 try {
-                    WallpaperLayouts = new List<IWallpaperLayout>(_jsonSaver.Load<List<WallpaperLayout>>(_wallpaperLayoutPath, WallpaperLayoutContext.Default));
+                    WallpaperLayouts = new List<IWallpaperLayout>(JsonSaver.Load<List<WallpaperLayout>>(_wallpaperLayoutPath, WallpaperLayoutContext.Default));
                 }
                 catch (Exception e) {
-                    ArcLog.GetLogger<UserSettingsService>().Error(e.ToString());
+                    App.Log.Error(e.ToString());
                     WallpaperLayouts = [];
                     Save<List<IWallpaperLayout>>();
                 }
             }
             else if (typeof(T) == typeof(List<IRecentUsed>)) {
                 try {
-                    RecentUseds = new List<IRecentUsed>(_jsonSaver.Load<List<RecentUsed>>(_recentUsedPath, RecentUsedContext.Default));
+                    RecentUseds = new List<IRecentUsed>(JsonSaver.Load<List<RecentUsed>>(_recentUsedPath, RecentUsedContext.Default));
                 }
                 catch (Exception e) {
-                    ArcLog.GetLogger<UserSettingsService>().Error(e.ToString());
+                    App.Log.Error(e.ToString());
                     RecentUseds = [];
                     Save<List<IRecentUsed>>();
                 }
@@ -101,16 +97,16 @@ namespace VirtualPaper.Services {
 
         public void Save<T>() {
             if (typeof(T) == typeof(ISettings)) {
-                _jsonSaver.Save(_settingsPath, Settings, SettingsContext.Default);
+                JsonSaver.Save(_settingsPath, Settings, SettingsContext.Default);
             }
             else if (typeof(T) == typeof(List<IApplicationRules>)) {
-                _jsonSaver.Save(_appRulesPath, AppRules, ApplicationRulesContext.Default);
+                JsonSaver.Save(_appRulesPath, AppRules, ApplicationRulesContext.Default);
             }
             else if (typeof(T) == typeof(List<IWallpaperLayout>)) {
-                _jsonSaver.Save(_wallpaperLayoutPath, WallpaperLayouts, WallpaperLayoutContext.Default);
+                JsonSaver.Save(_wallpaperLayoutPath, WallpaperLayouts, WallpaperLayoutContext.Default);
             }
             else if (typeof(T) == typeof(List<IRecentUsed>)) {
-                _jsonSaver.Save(_recentUsedPath, RecentUseds, RecentUsedContext.Default);
+                JsonSaver.Save(_recentUsedPath, RecentUseds, RecentUsedContext.Default);
             }
             else {
                 throw new InvalidCastException($"ValueType not found: {typeof(T)}");
@@ -121,6 +117,5 @@ namespace VirtualPaper.Services {
         private readonly string _appRulesPath = Constants.CommonPaths.AppRulesPath;
         private readonly string _wallpaperLayoutPath = Constants.CommonPaths.WallpaperLayoutPath;
         private readonly string _recentUsedPath = Constants.CommonPaths.RecentUsedPath;
-        private readonly IJsonSaver _jsonSaver;
     }
 }

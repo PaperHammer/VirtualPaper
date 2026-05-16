@@ -274,7 +274,6 @@ message Grpc_WpBasicData {
 	string file_extension = 19;
 
 	bool is_subscribed = 20;
-	Grpc_WallpaperStatus status = 21;
 }
 
 message Grpc_WpRuntimeData {
@@ -391,14 +390,6 @@ enum Grpc_FileType {
 	f_picture = 1;
 	f_gif = 2;
 	f_video = 3;
-}
-
-enum Grpc_WallpaperStatus {
-	g_none = 0;
-	g_normal = 1;
-	g_auditing = 2;
-	g_locked = 3;
-	g_deleted = 4;
 }
 
 enum Grpc_RuntimeType {

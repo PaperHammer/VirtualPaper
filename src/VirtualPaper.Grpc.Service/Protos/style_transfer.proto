@@ -1,7 +1,0 @@
-syntax = "proto3";
-package VirtualPaper.Grpc.Service.StyleTransfer;
-import "google/protobuf/empty.proto";
-import "Protos/common_models.proto";
-
-service Grpc_StyleTransferService {
-}

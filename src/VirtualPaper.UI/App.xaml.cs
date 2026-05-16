@@ -118,8 +118,6 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
                 .AddSingleton<ICommandsClient, CommandsClient>()
                 .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
-                .AddSingleton<IStyleTransferClient, StyleTransferClient>()
-                .AddSingleton<ISuperResolutionClient, SuperResolutionClient>()
                 .AddSingleton<IGlobalDialogService, GlobalDialogService>()
                 .AddSingleton<IStoragePicker, StoragePickerWrapper>()
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()

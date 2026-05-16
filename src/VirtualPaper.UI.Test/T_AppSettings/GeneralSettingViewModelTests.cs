@@ -256,7 +256,6 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
 
                 // ── 可选描述字段 ──────────────────────────────────────
                 Title = "Test Wallpaper",
-                Status = WallpaperStatus.Normal,
             };
             await JsonSaver.SaveAsync(
                 Path.Combine(subDir.FullName, Constants.Field.WpBasicDataFileName),

@@ -16,10 +16,23 @@ permissions:
   statuses: write
 
 jobs:
-  auto-version-and-build:
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 1: 准备阶段 - 记录 SHA、确定分支、计算新版本号
+  # ─────────────────────────────────────────────────────────────
+  prepare:
+    name: Prepare - Calculate Version & Record SHAs
     runs-on: windows-latest
-    # 仅在 PR 被合并时运行（关闭但未合并不触发）
     if: github.event.pull_request.merged == true
+    outputs:
+      source_branch:   ${{ steps.branch_info.outputs.source_branch }}
+      increment_type:  ${{ steps.branch_info.outputs.increment_type }}
+      current_version: ${{ steps.version.outputs.current_version }}
+      new_version:     ${{ steps.version.outputs.new_version }}
+      new_version_text: ${{ steps.version.outputs.new_version_text }}
+      main_sha:        ${{ steps.shas.outputs.main_sha }}
+      dev_sha:         ${{ steps.shas.outputs.dev_sha }}
+      bugfix_sha:      ${{ steps.shas.outputs.bugfix_sha }}
 
     steps:
     - name: Checkout with full history
@@ -29,9 +42,11 @@ jobs:
         fetch-depth: 0
 
     - name: Record original branch SHAs
-      id: original_shas
+      id: shas
       shell: powershell
       run: |
+        # checkout 已使用 fetch-depth: 0，所有远端分支引用已存在，无需再 fetch
+        # 分支若不存在则直接报错终止
         $mainSha = git rev-parse HEAD
         Write-Output "main_sha=$mainSha" >> $env:GITHUB_OUTPUT
         Write-Host "main SHA: $mainSha"
@@ -44,52 +59,34 @@ jobs:
         Write-Output "bugfix_sha=$bugfixSha" >> $env:GITHUB_OUTPUT
         Write-Host "bugfix SHA: $bugfixSha"
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
-
-    - name: Install Inno Setup
-      run: |
-        Invoke-WebRequest -Uri "https://jrsoftware.org/download.php/is.exe" -OutFile "innosetup.exe"
-        Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
-      shell: powershell
-
     - name: Determine source branch and version increment
       id: branch_info
       shell: powershell
       env:
         PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
       run: |
-        # 直接从 PR 事件上下文获取来源分支，通过 env 传入避免脚本注入
-        $sourceBranch = $env:PR_HEAD_REF
-        $incrementType = "patch"  # 默认第4位+1
+        $sourceBranch  = $env:PR_HEAD_REF
+        $incrementType = "patch"
 
         if ($sourceBranch -eq "dev") {
-            $incrementType = "minor"  # 第3位+1
+            $incrementType = "minor"
             Write-Host "Source branch: dev - incrementing minor version"
-        }
-        elseif ($sourceBranch -eq "bugfix") {
-            $incrementType = "patch"  # 第4位+1
+        } elseif ($sourceBranch -eq "bugfix") {
+            $incrementType = "patch"
             Write-Host "Source branch: bugfix - incrementing patch version"
-        }
-        else {
+        } else {
             Write-Host "Unknown source branch: $sourceBranch - defaulting to patch"
         }
 
-        Write-Output "source_branch=$sourceBranch" >> $env:GITHUB_OUTPUT
-        Write-Output "increment_type=$incrementType" >> $env:GITHUB_OUTPUT
+        Write-Output "source_branch=$sourceBranch"   >> $env:GITHUB_OUTPUT
+        Write-Output "increment_type=$incrementType"  >> $env:GITHUB_OUTPUT
 
-        Write-Host "Source branch: $sourceBranch"
-        Write-Host "Increment type: $incrementType"
-
-    - name: Get and update version
+    - name: Calculate new version
       id: version
       shell: powershell
       run: |
-        # 读取 csproj 文件中的版本号
-        $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
-        $content = Get-Content $csprojPath -Raw
+        $csprojPath   = "src/VirtualPaper/VirtualPaper.csproj"
+        $content      = Get-Content $csprojPath -Raw
         $versionMatch = [regex]::Match($content, '<AssemblyVersion>(\d+)\.(\d+)\.(\d+)\.(\d+)</AssemblyVersion>')
 
         if (-not $versionMatch.Success) {
@@ -97,90 +94,127 @@ jobs:
             exit 1
         }
 
-        $major = [int]$versionMatch.Groups[1].Value
-        $minor = [int]$versionMatch.Groups[2].Value
-        $build = [int]$versionMatch.Groups[3].Value
+        $major    = [int]$versionMatch.Groups[1].Value
+        $minor    = [int]$versionMatch.Groups[2].Value
+        $build    = [int]$versionMatch.Groups[3].Value
         $revision = [int]$versionMatch.Groups[4].Value
 
         $currentVersion = "$major.$minor.$build.$revision"
-        Write-Host "Current version: $currentVersion"
 
-        # 根据分支类型更新版本号
         $incrementType = "${{ steps.branch_info.outputs.increment_type }}"
         if ($incrementType -eq "minor") {
-            $build = $build + 1
-            $revision = 0  # 重置第4位
-            Write-Host "Incrementing build version (3rd position)"
+            $build    = $build + 1
+            $revision = 0
         } else {
             $revision = $revision + 1
-            Write-Host "Incrementing revision version (4th position)"
         }
 
-        $newVersion = "$major.$minor.$build.$revision"
+        $newVersion     = "$major.$minor.$build.$revision"
         $newVersionText = "$major$minor$build$revision"
 
-        Write-Host "New version: $newVersion"
-        Write-Host "New version text: $newVersionText"
+        Write-Host "Version: $currentVersion -> $newVersion"
 
-        # 输出到 GITHUB_OUTPUT
-        Write-Output "current_version=$currentVersion" >> $env:GITHUB_OUTPUT
-        Write-Output "new_version=$newVersion" >> $env:GITHUB_OUTPUT
-        Write-Output "new_version_text=$newVersionText" >> $env:GITHUB_OUTPUT
-        Write-Output "major=$major" >> $env:GITHUB_OUTPUT
-        Write-Output "minor=$minor" >> $env:GITHUB_OUTPUT
-        Write-Output "build=$build" >> $env:GITHUB_OUTPUT
-        Write-Output "revision=$revision" >> $env:GITHUB_OUTPUT
+        Write-Output "current_version=$currentVersion"  >> $env:GITHUB_OUTPUT
+        Write-Output "new_version=$newVersion"           >> $env:GITHUB_OUTPUT
+        Write-Output "new_version_text=$newVersionText"  >> $env:GITHUB_OUTPUT
 
-    - name: Update version in csproj
+  # ─────────────────────────────────────────────────────────────
+  # Job 2: 编译 .NET Release
+  # ─────────────────────────────────────────────────────────────
+  build:
+    name: Build .NET Release
+    runs-on: windows-latest
+    needs: prepare
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Patch AssemblyVersion in csproj (local only, not committed)
       shell: powershell
       run: |
         $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
-        $content = Get-Content $csprojPath -Raw
-        $newVersion = "${{ steps.version.outputs.new_version }}"
-
+        $content    = Get-Content $csprojPath -Raw
+        $newVersion = "${{ needs.prepare.outputs.new_version }}"
         $newContent = $content -replace '<AssemblyVersion>\d+\.\d+\.\d+\.\d+</AssemblyVersion>', "<AssemblyVersion>$newVersion</AssemblyVersion>"
         Set-Content $csprojPath -Value $newContent -NoNewline
+        Write-Host "Patched AssemblyVersion to $newVersion (build-time only)"
 
-        Write-Host "Updated csproj version to: $newVersion"
-
-    - name: Update version in InnoSetup script
-      shell: powershell
-      run: |
-        $setupPath = "InnoSetup/setup.iss"
-        $content = Get-Content $setupPath -Raw
-        $newVersion = "${{ steps.version.outputs.new_version }}"
-        $newVersionText = "${{ steps.version.outputs.new_version_text }}"
-
-        # 更新版本号
-        $newContent = $content -replace '#define MyAppVersion "[\d\.]+"', "#define MyAppVersion `"$newVersion`""
-        $newContent = $newContent -replace '#define MyAppVersionText "[\d]+"', "#define MyAppVersionText `"$newVersionText`""
-
-        Set-Content $setupPath -Value $newContent -NoNewline
-
-        Write-Host "Updated InnoSetup version to: $newVersion"
-        Write-Host "Updated InnoSetup version text to: $newVersionText"
-
-    - name: Update version badge in README
-      shell: powershell
-      run: |
-        $readmePath = "README.md"
-        $content = Get-Content $readmePath -Raw
-        $newVersion = "${{ steps.version.outputs.new_version }}"
-
-        # 匹配并替换 shields.io badge 中的版本号，例如：
-        # [![GitHub release](https://img.shields.io/badge/release-v0.4.0.1-blue)]
-        $newContent = $content -replace '(img\.shields\.io/badge/release-v)[\d\.]+(-blue)', "`${1}$newVersion`$2"
-
-        Set-Content $readmePath -Value $newContent -NoNewline
-
-        Write-Host "Updated README badge version to: $newVersion"
+    - name: Restore dependencies
+      run: dotnet restore src/VirtualPaper.sln
 
     - name: Build Release
-      run: |
-        dotnet restore src/VirtualPaper.sln
-        dotnet build src/VirtualPaper.sln --configuration Release --no-restore
+      run: dotnet build src/VirtualPaper.sln --configuration Release --no-restore
 
-    - name: Create installer with InnoSetup
+    - name: Upload build output
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-release-output
+        path: src/
+        retention-days: 1
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 3: 制作安装包（依赖 build 完成）
+  # ─────────────────────────────────────────────────────────────
+  package:
+    name: Create Installer
+    runs-on: windows-latest
+    needs: [prepare, build]
+    outputs:
+      installer_name: ${{ steps.build_installer.outputs.installer_name }}
+      installer_path: ${{ steps.build_installer.outputs.installer_path }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-release-output
+        path: src/
+
+    - name: Install Inno Setup 6.7.1
+      shell: powershell
+      run: |
+        # 固定版本 6.7.1，避免新版本破坏脚本兼容性
+        $version = "6.7.1"
+        $tag     = $version -replace '\.', '_'
+        $url     = "https://github.com/jrsoftware/issrc/releases/download/is-$tag/innosetup-$version.exe"
+        Write-Host "Downloading Inno Setup $version..."
+        Invoke-WebRequest -Uri $url -OutFile "innosetup.exe"
+        Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Inno Setup $version installed"
+
+    - name: Patch version in InnoSetup script (local only, not committed)
+      shell: powershell
+      run: |
+        $setupPath      = "InnoSetup/setup.iss"
+        $content        = Get-Content $setupPath -Raw
+        $newVersion     = "${{ needs.prepare.outputs.new_version }}"
+        $newVersionText = "${{ needs.prepare.outputs.new_version_text }}"
+        $newContent = $content -replace '#define MyAppVersion "[\d\.]+"',     "#define MyAppVersion `"$newVersion`""
+        $newContent = $newContent -replace '#define MyAppVersionText "[\d]+"', "#define MyAppVersionText `"$newVersionText`""
+        Set-Content $setupPath -Value $newContent -NoNewline
+        Write-Host "Patched InnoSetup version to $newVersion (build-time only)"
+
+    - name: Create installer
       id: build_installer
       shell: powershell
       run: |
@@ -188,15 +222,12 @@ jobs:
         if (-not (Test-Path $isccPath)) {
             $isccPath = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
         }
-
         if (-not (Test-Path $isccPath)) {
             Write-Error "Inno Setup compiler not found!"
             exit 1
         }
 
         Write-Host "Using ISCC at: $isccPath"
-
-        # 编译安装程序
         & "$isccPath" "InnoSetup\setup.iss"
 
         if ($LASTEXITCODE -ne 0) {
@@ -204,8 +235,7 @@ jobs:
             exit 1
         }
 
-        # 查找生成的安装程序
-        $outputDir = "InnoSetup\Output"
+        $outputDir      = "InnoSetup\Output"
         $installerFiles = Get-ChildItem -Path $outputDir -Filter "*.exe" -ErrorAction SilentlyContinue
 
         if ($installerFiles.Count -eq 0) {
@@ -214,66 +244,152 @@ jobs:
         }
 
         $installerPath = $installerFiles[0].FullName
-        Write-Host "Installer created: $installerPath"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Installer created: $installerPath"
 
-        # 输出安装程序信息
         Write-Output "installer_path=$installerPath" >> $env:GITHUB_OUTPUT
         Write-Output "installer_name=$($installerFiles[0].Name)" >> $env:GITHUB_OUTPUT
 
-    - name: Configure Git and commit version changes
+    - name: Upload installer as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: VirtualPaper-installer-v${{ needs.prepare.outputs.new_version }}
+        path: ${{ steps.build_installer.outputs.installer_path }}
+        retention-days: 30
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 4: 提交版本号变更到 main（安装包制作成功后才提交）
+  # ─────────────────────────────────────────────────────────────
+  publish:
+    name: Commit Version to Main
+    runs-on: windows-latest
+    needs: [prepare, package]
+
+    steps:
+    - name: Checkout main with full history
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Update version in csproj
+      shell: powershell
+      run: |
+        $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
+        $content    = Get-Content $csprojPath -Raw
+        $newVersion = "${{ needs.prepare.outputs.new_version }}"
+        $newContent = $content -replace '<AssemblyVersion>\d+\.\d+\.\d+\.\d+</AssemblyVersion>', "<AssemblyVersion>$newVersion</AssemblyVersion>"
+        Set-Content $csprojPath -Value $newContent -NoNewline
+        Write-Host "Updated csproj version to: $newVersion"
+
+    - name: Update version in InnoSetup script
+      shell: powershell
+      run: |
+        $setupPath      = "InnoSetup/setup.iss"
+        $content        = Get-Content $setupPath -Raw
+        $newVersion     = "${{ needs.prepare.outputs.new_version }}"
+        $newVersionText = "${{ needs.prepare.outputs.new_version_text }}"
+        $newContent = $content -replace '#define MyAppVersion "[\d\.]+"',     "#define MyAppVersion `"$newVersion`""
+        $newContent = $newContent -replace '#define MyAppVersionText "[\d]+"', "#define MyAppVersionText `"$newVersionText`""
+        Set-Content $setupPath -Value $newContent -NoNewline
+        Write-Host "Updated InnoSetup version to: $newVersion"
+
+    - name: Update version badge in README
+      shell: powershell
+      run: |
+        $readmePath = "README.md"
+        $content    = Get-Content $readmePath -Raw
+        $newVersion = "${{ needs.prepare.outputs.new_version }}"
+        $newContent = $content -replace '(img\.shields\.io/badge/release-v)[\d\.]+(-blue)', "`${1}$newVersion`$2"
+        Set-Content $readmePath -Value $newContent -NoNewline
+        Write-Host "Updated README badge version to: $newVersion"
+
+    - name: Commit and push to main
       shell: powershell
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
-        git commit -m "[Github CI] chore: bump version to ${{ steps.version.outputs.new_version }} [skip ci]"
+        git commit -m "[Github CI] chore: bump version to ${{ needs.prepare.outputs.new_version }} [skip ci]"
         git push origin main
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version ${{ needs.prepare.outputs.new_version }} committed to main"
 
-    - name: Upload installer as artifact
-      uses: actions/upload-artifact@v4
+  # ─────────────────────────────────────────────────────────────
+  # Job 5: 将版本号同步回源分支（dev / bugfix）
+  # ─────────────────────────────────────────────────────────────
+  sync:
+    name: Sync Version to Source Branch
+    runs-on: windows-latest
+    needs: [prepare, publish]
+
+    steps:
+    - name: Checkout with full history
+      uses: actions/checkout@v4
       with:
-        name: VirtualPaper-installer-v${{ steps.version.outputs.new_version }}
-        path: ${{ steps.build_installer.outputs.installer_path }}
-        retention-days: 30
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
 
-    - name: Sync version back to source branch
+    - name: Sync to source branch
       shell: powershell
       run: |
-        $sourceBranch = "${{ steps.branch_info.outputs.source_branch }}"
+        $sourceBranch = "${{ needs.prepare.outputs.source_branch }}"
 
         if ($sourceBranch -eq "dev" -or $sourceBranch -eq "bugfix") {
-            Write-Host "Syncing version back to $sourceBranch branch..."
-
-            # 切换到源分支（明确基于远端 ref 建立本地分支，避免 checkout 找不到路径）
+            Write-Host "Syncing version back to $sourceBranch..."
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
             git checkout -B $sourceBranch origin/$sourceBranch
-
-            # 合并版本更新（--ff-only 确保只做快进合并，避免产生多余 merge commit）
             git merge main --ff-only
             git push origin $sourceBranch
-
-            Write-Host "Version synced to $sourceBranch branch"
+            Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version synced to $sourceBranch"
         } else {
             Write-Host "Unknown source branch: $sourceBranch, skipping sync"
         }
 
-    - name: Summary
-      shell: powershell
-      run: |
-        Write-Host ""
-        Write-Host "================= Build Complete =================" -ForegroundColor Green
-        Write-Host "Project : VirtualPaper"
-        Write-Host "Version : ${{ steps.version.outputs.current_version }} -> ${{ steps.version.outputs.new_version }}" -ForegroundColor Cyan
-        Write-Host "Source  : ${{ steps.branch_info.outputs.source_branch }} -> main"
-        Write-Host "Type    : ${{ steps.branch_info.outputs.increment_type == 'minor' && 'Feature Update' || 'Bugfix Update' }}"
-        Write-Host "Package : ${{ steps.build_installer.outputs.installer_name }}" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version updated and committed to main"
-        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version synced to ${{ steps.branch_info.outputs.source_branch }}"
-        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Installer uploaded as Artifact"
-        Write-Host "============================================" -ForegroundColor Green
+  # ─────────────────────────────────────────────────────────────
+  # Job 6: 汇总输出（始终执行）
+  # ─────────────────────────────────────────────────────────────
+  summary:
+    name: Summary
+    runs-on: ubuntu-latest
+    needs: [prepare, build, package, publish, sync]
+    if: always() && needs.prepare.result == 'success'
 
-    - name: Rollback on failure
-      if: failure()
+    steps:
+    - name: Print summary
+      run: |
+        INCREMENT="${{ needs.prepare.outputs.increment_type }}"
+        if [ "$INCREMENT" = "minor" ]; then TYPE="Feature Update"; else TYPE="Bugfix Update"; fi
+
+        echo ""
+        echo -e "\033[0;32m================= Build Complete =================\033[0m"
+        echo    "Project : VirtualPaper"
+        echo -e "\033[0;36mVersion : ${{ needs.prepare.outputs.current_version }} -> ${{ needs.prepare.outputs.new_version }}\033[0m"
+        echo    "Source  : ${{ needs.prepare.outputs.source_branch }} -> main"
+        echo    "Type    : $TYPE"
+        echo -e "\033[0;36mPackage : ${{ needs.package.outputs.installer_name }}\033[0m"
+        echo ""
+        echo -e "\033[0;32m[OK]\033[0m Version updated and committed to main"
+        echo -e "\033[0;32m[OK]\033[0m Version synced to ${{ needs.prepare.outputs.source_branch }}"
+        echo -e "\033[0;32m[OK]\033[0m Installer uploaded as Artifact"
+        echo -e "\033[0;32m==========================================\033[0m"
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 7: 失败回滚（任意 job 失败时执行）
+  # ─────────────────────────────────────────────────────────────
+  rollback:
+    name: Rollback on Failure
+    runs-on: windows-latest
+    needs: [prepare, build, package, publish, sync]
+    if: always() && failure() && needs.prepare.result == 'success'
+
+    steps:
+    - name: Checkout with full history
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Rollback changes
       shell: powershell
       run: |
         Write-Host ""
@@ -282,17 +398,21 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
 
-        # 拉取最新远端状态
+        # 拉取最新远端状态（用 Continue 避免进度信息触发 NativeCommandError）
+        $ErrorActionPreference = 'Continue'
         git fetch origin 2>&1 | Out-Null
+        $ErrorActionPreference = 'Stop'
 
-        $mainSha     = "${{ steps.original_shas.outputs.main_sha }}"
-        $devSha      = "${{ steps.original_shas.outputs.dev_sha }}"
-        $bugfixSha   = "${{ steps.original_shas.outputs.bugfix_sha }}"
-        $sourceBranch = "${{ steps.branch_info.outputs.source_branch }}"
+        $mainSha      = "${{ needs.prepare.outputs.main_sha }}"
+        $devSha       = "${{ needs.prepare.outputs.dev_sha }}"
+        $bugfixSha    = "${{ needs.prepare.outputs.bugfix_sha }}"
+        $sourceBranch = "${{ needs.prepare.outputs.source_branch }}"
 
         # --- 回滚 main ---
         if ($mainSha) {
+            $ErrorActionPreference = 'Continue'
             $currentMain = git rev-parse origin/main 2>&1
+            $ErrorActionPreference = 'Stop'
             if ($LASTEXITCODE -eq 0 -and $currentMain -ne $mainSha) {
                 Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " main: $currentMain -> $mainSha"
                 git checkout -B main origin/main
@@ -308,25 +428,26 @@ jobs:
 
         # --- 回滚源分支（dev / bugfix）---
         if ($sourceBranch -eq "dev" -and $devSha) {
+            $ErrorActionPreference = 'Continue'
             $currentDev = git rev-parse origin/dev 2>&1
+            $ErrorActionPreference = 'Stop'
             if ($LASTEXITCODE -eq 0 -and $currentDev -ne $devSha) {
                 Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " dev: $currentDev -> $devSha"
                 git checkout -B dev origin/dev
                 git reset --hard $devSha
-                # dev/bugfix 不加空 commit，避免分支分叉导致下次 --ff-only sync 失败
                 git push --force origin dev
                 Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " dev rolled back"
             } else {
                 Write-Host "[SKIP] dev: no changes detected, rollback not needed"
             }
-        }
-        elseif ($sourceBranch -eq "bugfix" -and $bugfixSha) {
+        } elseif ($sourceBranch -eq "bugfix" -and $bugfixSha) {
+            $ErrorActionPreference = 'Continue'
             $currentBugfix = git rev-parse origin/bugfix 2>&1
+            $ErrorActionPreference = 'Stop'
             if ($LASTEXITCODE -eq 0 -and $currentBugfix -ne $bugfixSha) {
                 Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " bugfix: $currentBugfix -> $bugfixSha"
                 git checkout -B bugfix origin/bugfix
                 git reset --hard $bugfixSha
-                # dev/bugfix 不加空 commit，避免分支分叉导致下次 --ff-only sync 失败
                 git push --force origin bugfix
                 Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " bugfix rolled back"
             } else {

@@ -31,7 +31,7 @@ jobs:
     - name: Record original branch SHAs
       id: original_shas
       shell: powershell
-      run: |        
+      run: |
         $mainSha = git rev-parse HEAD
         Write-Output "main_sha=$mainSha" >> $env:GITHUB_OUTPUT
         Write-Host "main SHA: $mainSha"

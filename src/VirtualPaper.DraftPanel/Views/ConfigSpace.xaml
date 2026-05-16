@@ -17,7 +17,6 @@
         Width="970" 
         Height="680"
         Padding="50"
-        CornerRadius="12"
         Elevation="64"
         HorizontalAlignment="Center"
         VerticalAlignment="Center">

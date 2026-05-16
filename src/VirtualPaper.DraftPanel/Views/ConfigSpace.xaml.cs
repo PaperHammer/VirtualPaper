@@ -110,7 +110,6 @@ namespace VirtualPaper.DraftPanel.Views {
         }
         #endregion
 
-
         private readonly ConfigSpaceViewModel _viewModel;
         private Draft? _draftPage;
         private DraftPanelState _targetDraftPanelState;

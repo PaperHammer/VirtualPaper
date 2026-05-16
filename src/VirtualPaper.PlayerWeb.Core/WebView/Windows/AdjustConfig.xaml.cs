@@ -42,6 +42,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
                 var payload = new FrameworkPayload() {
                     [NaviPayloadKey.StartArgs.ToString()] = _startArgs,
                     [NaviPayloadKey.IWpBasicData.ToString()] = _wpBasicData,
+                    [NaviPayloadKey.AvailableConfigTab.ToString()] = DataConfigTab.GeneralEffect | DataConfigTab.GeneralInfo,
                     [NaviPayloadKey.ApplyService.ToString()] = this,
                     [NaviPayloadKey.IEffectService.ToString()] = this,
                 };

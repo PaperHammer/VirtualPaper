@@ -1,5 +1,4 @@
 using System.Windows;
-using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Services {
@@ -8,59 +7,68 @@ namespace VirtualPaper.Services {
             _serviceProvider = serviceProvider;
         }
 
-        public void Show<TWindow>(object? parameter = null) where TWindow : Window {
-            var windowType = typeof(TWindow);
-
-            // 若已存在实例，则激活
-            if (_openWindows.TryGetValue(windowType, out var existingWindow)) {
-                if (existingWindow.WindowState == WindowState.Minimized)
-                    existingWindow.WindowState = WindowState.Normal;
-                existingWindow.Activate();
+        public void Show<TWindow>(object? parameter = null) where TWindow : class {
+            if (_openWindows.TryGetValue(typeof(TWindow), out var existing)) {
+                existing.Activate();
                 return;
             }
 
-            var window = _serviceProvider.GetRequiredService<TWindow>();
-
-            // 尝试注入参数
+            var window = CreateWindow<TWindow>();
             InjectParameter(window, parameter);
 
-            // 监听关闭事件自动清理
-            window.Closed += (_, _) => _openWindows.Remove(windowType);
-
-            _openWindows[windowType] = window;
+            window.Closed += (_, _) => _openWindows.Remove(typeof(TWindow));
+            _openWindows[typeof(TWindow)] = window;
             window.Show();
-            window.Activate();
         }
 
-        public async Task<bool?> ShowDialogAsync<TWindow>(object? parameter = null) where TWindow : Window {
-            var window = _serviceProvider.GetRequiredService<TWindow>();
+        public Task<bool?> ShowDialogAsync<TWindow>(object? parameter = null) where TWindow : class {
+            var tcs = new TaskCompletionSource<bool?>();
 
+            var window = CreateWindow<TWindow>();
             InjectParameter(window, parameter);
-            return await Task.FromResult(window.ShowDialog());
+
+            window.Closed += (_, _) =>
+            {
+                _openWindows.Remove(typeof(TWindow));
+                tcs.TrySetResult(window.DialogResult);
+            };
+
+            _openWindows[typeof(TWindow)] = window;
+            window.ShowDialog();
+
+            return tcs.Task;
         }
 
-        public bool TryGet<TWindow>(out TWindow? window) where TWindow : Window {
-            if (_openWindows.TryGetValue(typeof(TWindow), out var existing)) {
-                window = existing as TWindow;
+        public bool TryGet<TWindow>(out TWindow? window) where TWindow : class {
+            if (_openWindows.TryGetValue(typeof(TWindow), out var w) && w is TWindow typed) {
+                window = typed;
                 return true;
             }
-
             window = null;
             return false;
         }
 
-        private void InjectParameter(Window window, object? parameter) {
-            if (parameter == null)
-                return;
+        public void Close<TWindow>() where TWindow : class {
+            if (_openWindows.TryGetValue(typeof(TWindow), out var window)) {
+                window.Close();
+                // Closed 事件会自动从字典中移除
+            }
+        }
 
-            if (window.DataContext is IWindowParameterReceiver receiver) {
+        private Window CreateWindow<TWindow>() where TWindow : class {
+            var window = _serviceProvider.GetService(typeof(TWindow)) as Window
+                ?? throw new InvalidOperationException(
+                    $"Type {typeof(TWindow).Name} is not registered or is not a Window.");
+            return window;
+        }
+
+        private static void InjectParameter(Window window, object? parameter) {
+            if (parameter != null && window.DataContext is IWindowParameterReceiver receiver) {
                 receiver.ReceiveParameter(parameter);
             }
         }
 
         private readonly IServiceProvider _serviceProvider;
-
-        // 当前打开的窗口引用
         private readonly Dictionary<Type, Window> _openWindows = [];
     }
 

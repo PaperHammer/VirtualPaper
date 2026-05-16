@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
-    xmlns:models="using:VirtualPaper.Models.Cores.Interfaces"
+    xmlns:models="using:VirtualPaper.Models.Cores"
     xmlns:localViewModel="using:VirtualPaper.WpSettingsPanel.ViewModels"
     xmlns:localUtils="using:VirtualPaper.WpSettingsPanel.Utils"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
@@ -101,10 +101,10 @@
                                         ItemsSource="{x:Bind _viewModel.Monitors}"
                                         SelectedIndex="{x:Bind _viewModel.SelectedMonitorIndex, Mode=TwoWay}">
                                         <GridView.ItemTemplate>
-                                            <DataTemplate x:DataType="models:IMonitor">
+                                            <DataTemplate x:DataType="models:Monitor">
                                                 <Grid Width="184" Height="120">
                                                     <Image
-                                                        Source="{x:Bind ThumbnailPath, Converter={StaticResource StringToImageSourceConverter}}"
+                                                        Source="{x:Bind ThumbnailPath, Converter={StaticResource StringToImageSourceConverter}, Mode=OneWay}"
                                                         Stretch="UniformToFill" />
                                                     <Canvas>
                                                         <Canvas.Background>

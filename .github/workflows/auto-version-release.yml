@@ -1,5 +1,5 @@
 name: Auto Version & Build on Main Merge
-run-name: "[Auto] Pre-publish v? | ${{ github.event.pull_request.head.ref }} -> main | ${{ github.event.pull_request.title }}"
+run-name: "[Auto] Pre-publish | ${{ github.event.pull_request.head.ref }} -> main | ${{ github.event.pull_request.title }}"
 
 on:
   pull_request:
@@ -186,8 +186,8 @@ jobs:
     runs-on: windows-latest
     needs: [prepare, build]
     outputs:
-      installer_name: ${{ steps.build_installer.outputs.installer_name }}
-      installer_path: ${{ steps.build_installer.outputs.installer_path }}
+      installer_name: ${{ steps.installer_info.outputs.installer_name }}
+      installer_path: ${{ steps.installer_info.outputs.installer_path }}
 
     steps:
     - name: Checkout code
@@ -201,26 +201,11 @@ jobs:
         name: build-release-output
         path: src/
 
-    - name: Cache Inno Setup 6.7.1
-      id: cache-innosetup
-      uses: actions/cache@v4
-      with:
-        path: C:\Program Files (x86)\Inno Setup 6
-        key: innosetup-6.7.1-${{ runner.os }}
-
     - name: Install Inno Setup 6.7.1
-      if: steps.cache-innosetup.outputs.cache-hit != 'true'
-      shell: powershell
-      run: |
-        # 固定版本 6.7.1，避免新版本破坏脚本兼容性
-        $version = "6.7.1"
-        $tag     = $version -replace '\.', '_'
-        $url     = "https://github.com/jrsoftware/issrc/releases/download/is-$tag/innosetup-$version.exe"
-        Write-Host "Downloading Inno Setup $version..."
-        # 使用 curl.exe 避免 PowerShell 5.x Invoke-WebRequest 进度条导致的下载卡死问题
-        curl.exe -L --silent --show-error -o "innosetup.exe" $url
-        Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
-        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Inno Setup $version installed"
+      uses: Minionguyjpro/Inno-Setup-Action@v1.2.4
+      with:
+        version: 6.7.1
+        options: /VERYSILENT
 
     - name: Patch version in InnoSetup script (local only, not committed)
       shell: powershell
@@ -234,38 +219,25 @@ jobs:
         Set-Content $setupPath -Value $newContent -NoNewline
         Write-Host "Patched InnoSetup version to $newVersion (build-time only)"
 
-    - name: Create installer
+    - name: Compile installer
       id: build_installer
+      uses: Minionguyjpro/Inno-Setup-Action@v1.2.4
+      with:
+        path: InnoSetup/setup.iss
+        options: /O+
+
+    - name: Record installer info
+      id: installer_info
       shell: powershell
       run: |
-        $isccPath = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-        if (-not (Test-Path $isccPath)) {
-            $isccPath = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
-        }
-        if (-not (Test-Path $isccPath)) {
-            Write-Error "Inno Setup compiler not found!"
-            exit 1
-        }
-
-        Write-Host "Using ISCC at: $isccPath"
-        & "$isccPath" "InnoSetup\setup.iss"
-
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "InnoSetup compilation failed!"
-            exit 1
-        }
-
         $outputDir      = "InnoSetup\Output"
         $installerFiles = Get-ChildItem -Path $outputDir -Filter "*.exe" -ErrorAction SilentlyContinue
-
         if ($installerFiles.Count -eq 0) {
             Write-Error "No installer found in output directory!"
             exit 1
         }
-
         $installerPath = $installerFiles[0].FullName
-        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Installer created: $installerPath"
-
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Installer: $installerPath"
         Write-Output "installer_path=$installerPath" >> $env:GITHUB_OUTPUT
         Write-Output "installer_name=$($installerFiles[0].Name)" >> $env:GITHUB_OUTPUT
 
@@ -273,7 +245,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: VirtualPaper-installer-v${{ needs.prepare.outputs.new_version }}
-        path: ${{ steps.build_installer.outputs.installer_path }}
+        path: ${{ steps.installer_info.outputs.installer_path }}
         retention-days: 30
 
   # ─────────────────────────────────────────────────────────────
@@ -379,7 +351,13 @@ jobs:
     name: Summary
     runs-on: ubuntu-latest
     needs: [prepare, build, package, publish, sync]
-    if: always() && needs.prepare.result == 'success'
+    if: >-
+      !cancelled() &&
+      needs.prepare.result == 'success' &&
+      needs.build.result == 'success' &&
+      needs.package.result == 'success' &&
+      needs.publish.result == 'success' &&
+      needs.sync.result == 'success'
 
     steps:
     - name: Print summary

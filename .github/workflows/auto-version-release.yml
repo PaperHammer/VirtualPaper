@@ -33,6 +33,7 @@ jobs:
       main_sha:        ${{ steps.shas.outputs.main_sha }}
       dev_sha:         ${{ steps.shas.outputs.dev_sha }}
       bugfix_sha:      ${{ steps.shas.outputs.bugfix_sha }}
+      release_sha:     ${{ steps.shas.outputs.release_sha }}
 
     steps:
     - name: Checkout with full history
@@ -57,6 +58,10 @@ jobs:
         Write-Output "bugfix_sha=$bugfixSha" >> $env:GITHUB_OUTPUT
         Write-Host "bugfix SHA: $bugfixSha"
 
+        $releaseSha = git rev-parse origin/release
+        Write-Output "release_sha=$releaseSha" >> $env:GITHUB_OUTPUT
+        Write-Host "release SHA: $releaseSha"
+
     - name: Determine source branch and version increment
       id: branch_info
       shell: powershell
@@ -66,9 +71,12 @@ jobs:
         $sourceBranch  = $env:PR_HEAD_REF
         $incrementType = "patch"
 
-        if ($sourceBranch -eq "dev") {
+        if ($sourceBranch -eq "release") {
+            $incrementType = "feature"
+            Write-Host "Source branch: release - incrementing minor version (feature update)"
+        } elseif ($sourceBranch -eq "dev") {
             $incrementType = "minor"
-            Write-Host "Source branch: dev - incrementing minor version"
+            Write-Host "Source branch: dev - incrementing build version (daily update)"
         } elseif ($sourceBranch -eq "bugfix") {
             $incrementType = "patch"
             Write-Host "Source branch: bugfix - incrementing patch version"
@@ -100,11 +108,15 @@ jobs:
         $currentVersion = "$major.$minor.$build.$revision"
 
         $incrementType = "${{ steps.branch_info.outputs.increment_type }}"
-        if ($incrementType -eq "minor") {
-            $build    = $build + 1
-            $revision = 0
+        if ($incrementType -eq "feature") {
+            $minor    = $minor + 1      # 第2位 +1
+            $build    = 0               # 第3位 清零
+            $revision = 0               # 第4位 清零
+        } elseif ($incrementType -eq "minor") {
+            $build    = $build + 1      # 第3位 +1
+            $revision = 0               # 第4位 清零
         } else {
-            $revision = $revision + 1
+            $revision = $revision + 1   # 第4位 +1
         }
 
         $newVersion     = "$major.$minor.$build.$revision"
@@ -331,7 +343,7 @@ jobs:
       run: |
         $sourceBranch = "${{ needs.prepare.outputs.source_branch }}"
 
-        if ($sourceBranch -eq "dev" -or $sourceBranch -eq "bugfix") {
+        if ($sourceBranch -eq "dev" -or $sourceBranch -eq "bugfix" -or $sourceBranch -eq "release") {
             Write-Host "Syncing version back to $sourceBranch..."
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
@@ -363,7 +375,9 @@ jobs:
     - name: Print summary
       run: |
         INCREMENT="${{ needs.prepare.outputs.increment_type }}"
-        if [ "$INCREMENT" = "minor" ]; then TYPE="Feature Update"; else TYPE="Bugfix Update"; fi
+        if [ "$INCREMENT" = "feature" ]; then TYPE="Major Feature Update"
+        elif [ "$INCREMENT" = "minor" ]; then TYPE="Daily Update"
+        else TYPE="Bugfix Update"; fi
 
         echo ""
         echo -e "\033[0;32m================= Build Complete =================\033[0m"
@@ -411,6 +425,7 @@ jobs:
         $mainSha      = "${{ needs.prepare.outputs.main_sha }}"
         $devSha       = "${{ needs.prepare.outputs.dev_sha }}"
         $bugfixSha    = "${{ needs.prepare.outputs.bugfix_sha }}"
+        $releaseSha   = "${{ needs.prepare.outputs.release_sha }}"
         $sourceBranch = "${{ needs.prepare.outputs.source_branch }}"
 
         # --- 回滚 main ---
@@ -457,6 +472,19 @@ jobs:
                 Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " bugfix rolled back"
             } else {
                 Write-Host "[SKIP] bugfix: no changes detected, rollback not needed"
+            }
+        } elseif ($sourceBranch -eq "release" -and $releaseSha) {
+            $ErrorActionPreference = 'Continue'
+            $currentRelease = git rev-parse origin/release 2>&1
+            $ErrorActionPreference = 'Stop'
+            if ($LASTEXITCODE -eq 0 -and $currentRelease -ne $releaseSha) {
+                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " release: $currentRelease -> $releaseSha"
+                git checkout -B release origin/release
+                git reset --hard $releaseSha
+                git push --force origin release
+                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " release rolled back"
+            } else {
+                Write-Host "[SKIP] release: no changes detected, rollback not needed"
             }
         }
 

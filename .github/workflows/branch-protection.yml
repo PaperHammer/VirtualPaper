@@ -1,4 +1,5 @@
 name: Main Branch Protection
+run-name: "[Auto] PR Check | ${{ github.head_ref }} -> main"
 
 on:
   pull_request:

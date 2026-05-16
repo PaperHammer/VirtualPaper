@@ -35,25 +35,11 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private void LibraryContents_Loaded(object sender, RoutedEventArgs e) {
             this.DataContext = _viewModel;
-            _viewModel.ItemDeleted += ViewModel_ItemDeleted;
         }
 
         private void LibraryContents_Unloaded(object sender, RoutedEventArgs e) {
             this.Unloaded -= LibraryContents_Unloaded;
-            _viewModel.ItemDeleted -= ViewModel_ItemDeleted;
             this.DataContext = null;           
-        }
-
-        private void ViewModel_ItemDeleted(object? sender, EventArgs e) {
-            if (wallpaperLibScrollViewer == null) return;
-
-            // ScrollableHeight = 内容总高度 - 视口高度
-            // 若剩余可滚动距离 <= threshold，说明内容不够多，需要补充加载
-            if (wallpaperLibScrollViewer.ScrollableHeight <= _scrollThreshold) {
-                if (_viewModel.LibLoadingStatus != LoadingStatus.Changing) {
-                    _viewModel.LoadMoreAsync();
-                }
-            }
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {            
@@ -68,8 +54,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private async void WallpapersLibView_ItemClick(object sender, ItemClickEventArgs e) {
             if (e.ClickedItem is IWpBasicData data) {
-                var ctx = ArcPageContextManager.GetContext<WpSettings>();
-                await _viewModel.PreviewAsync(data, ctx);
+                await _viewModel.PreviewAsync(data);
             }
         }
 
@@ -91,8 +76,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                         _viewModel.ShowEdit(data);
                         break;
                     case "Preview":
-                        var ctx = ArcPageContextManager.GetContext<WpSettings>();
-                        await _viewModel.PreviewAsync(data, ctx);
+                        await _viewModel.PreviewAsync(data);
                         break;
                     case "Apply":
                         await _viewModel.ApplyAsync(data);
@@ -147,25 +131,10 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
             var presenter = (FrameworkElement)root.Children[0];
             var visual = ElementCompositionPreview.GetElementVisual(presenter);
-
-            // Loaded 时新加载的 item 布局尚未完成，ActualWidth/Height 可能为 0
-            // 用 SizeChanged 保证尺寸确定后再更新 CenterPoint
-            presenter.SizeChanged += (s, _) => {
-                var fe = (FrameworkElement)s;
-                visual.CenterPoint = new Vector3(
-                    (float)fe.ActualWidth * 0.5f,
-                    (float)fe.ActualHeight * 0.5f,
-                    0f);
-            };
-
-            // 初始加载时尺寸已知，直接设置；新加载 item 尺寸为 0 时跳过，等 SizeChanged
-            if (presenter.ActualWidth > 0 && presenter.ActualHeight > 0) {
-                visual.CenterPoint = new Vector3(
-                    (float)presenter.ActualWidth * 0.5f,
-                    (float)presenter.ActualHeight * 0.5f,
-                    0f);
-            }
-
+            visual.CenterPoint = new Vector3(
+                (float)presenter.ActualWidth * 0.5f,
+                (float)presenter.ActualHeight * 0.5f,
+                0f);
             visual.Scale = Vector3.One;
 
             var compositor = visual.Compositor;
@@ -197,8 +166,9 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
             double verticalOffset = sender.VerticalOffset;
             double maxVerticalOffset = sender.ScrollableHeight;
+            double threshold = 100;
 
-            if (maxVerticalOffset - verticalOffset <= _scrollThreshold) {
+            if (maxVerticalOffset - verticalOffset <= threshold) {
                 if (_viewModel.LibLoadingStatus != LoadingStatus.Changing) {
                     _viewModel.LoadMoreAsync();
                 }
@@ -206,7 +176,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private readonly LibraryContentsViewModel _viewModel;
-        private const double _scrollThreshold = 200;
     }
 
     sealed record ScaleAnimationContext(Visual Visual, Vector3KeyFrameAnimation ScaleToNormal, Vector3KeyFrameAnimation ScaleToHover);

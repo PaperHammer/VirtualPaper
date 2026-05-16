@@ -34,7 +34,7 @@ namespace VirtualPaper.DataAssistor {
                 AspectRatio = source.AspectRatio,
                 FileSize = source.FileSize,
                 FileExtension = source.FileExtension,
-                
+
             };
 
             return grpc_WpBasicData;
@@ -117,6 +117,7 @@ namespace VirtualPaper.DataAssistor {
                 AspectRatio = source.AspectRatio,
                 FileSize = source.FileSize,
                 FileExtension = source.FileExtension,
+                Status = (WallpaperStatus)source.Status,
             };
 
             return basicData;
@@ -129,7 +130,6 @@ namespace VirtualPaper.DataAssistor {
                 FilePath = grpc_data.FilePath,
                 FolderPath = grpc_data.FolderPath,
                 ThumbnailPath = grpc_data.ThumbnailPath,
-                DepthFilePath = grpc_data.DepthFilePath,
             };
 
             return playerData;
@@ -170,10 +170,10 @@ namespace VirtualPaper.DataAssistor {
                     Height = monitor.Bounds.Height,
                 },
                 WorkingArea = new() {
-                    X = monitor.WorkingArea.X,
-                    Y = monitor.WorkingArea.Y,
-                    Width = monitor.WorkingArea.Width,
-                    Height = monitor.WorkingArea.Height,
+                    X = monitor.Bounds.X,
+                    Y = monitor.Bounds.Y,
+                    Width = monitor.Bounds.Width,
+                    Height = monitor.Bounds.Height,
                 },
                 ThumbnailPath = monitor.ThumbnailPath
             };
@@ -220,8 +220,7 @@ namespace VirtualPaper.DataAssistor {
                         Y = settings.SelectedMonitor.Bounds.Y,
                         Width = settings.SelectedMonitor.Bounds.Width,
                         Height = settings.SelectedMonitor.Bounds.Height
-                    },
-                    Content = settings.SelectedMonitor.Content,
+                    }
                 },
                 IsAudioOnlyOnDesktop = settings.IsAudioOnlyOnDesktop,
                 StatuMechanism = (Grpc_StatuMechanismEnum)settings.StatuMechanism,

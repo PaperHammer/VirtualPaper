@@ -146,7 +146,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        public void StopListenForClients() {
+        internal void StopListenForClients() {
             _ctsListen?.Cancel();
         }
 
@@ -208,23 +208,27 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        internal void AddToWhiteListScr(ProcInfo procInfo) {
+        private async void AddToWhiteListScr(ProcInfo procInfo) {
             ProcsFiltered.Add(procInfo);
 
-            _whiteListScr.Add(procInfo);
-            _scrCommandsClient.AddToWhiteList(procInfo.ProcName);
-            _userSettingsClient.Settings.WhiteListScr.Add(procInfo);
-            _userSettingsClient.Save<ISettings>();
+            await Task.Run(() => {
+                _whiteListScr.Add(procInfo);
+                _scrCommandsClient.AddToWhiteList(procInfo.ProcName);
+                _userSettingsClient.Settings.WhiteListScr.Add(procInfo);
+                _userSettingsClient.Save<ISettings>();
+            });
         }
 
-        internal void RemoveFromWhiteScr(ProcInfo procInfo) {
+        internal async void RemoveFromWhiteScr(ProcInfo procInfo) {
             ProcsFiltered.Remove(procInfo);
 
-            _whiteListScr.Remove(procInfo);
-            _scrCommandsClient.RemoveFromWhiteList(procInfo.ProcName);
-            _userSettingsClient.Settings.WhiteListScr.Remove(procInfo);
-            if (File.Exists(procInfo.IconPath)) File.Delete(procInfo.IconPath);
-            _userSettingsClient.Save<ISettings>();
+            await Task.Run(() => {
+                _whiteListScr.Remove(procInfo);
+                _scrCommandsClient.RemoveFromWhiteList(procInfo.ProcName);
+                _userSettingsClient.Settings.WhiteListScr.Remove(procInfo);
+                if (File.Exists(procInfo.IconPath)) File.Delete(procInfo.IconPath);
+                _userSettingsClient.Save<ISettings>();
+            });
         }
 
         #region Dispose
@@ -249,7 +253,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IScrCommandsClient _scrCommandsClient;
         private string _effectNone = string.Empty;
         private string _effectBubble = string.Empty;
-        public List<ProcInfo> _whiteListScr = [];
+        internal List<ProcInfo> _whiteListScr = [];
         private bool _isLoading = false;
     }
 }

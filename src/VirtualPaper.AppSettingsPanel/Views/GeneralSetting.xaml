@@ -263,7 +263,7 @@
 
                             <FontIcon Margin="0 0 20 0" Glyph="&#xE8B7;"/>
 
-                            <Grid Margin="0 25" Grid.Column="1">
+                            <Grid Margin="0 23" Grid.Column="1">
                                 <Grid.RowDefinitions>
                                     <RowDefinition/>
                                     <RowDefinition/>

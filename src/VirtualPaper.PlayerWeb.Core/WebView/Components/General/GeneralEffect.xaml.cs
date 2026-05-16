@@ -7,7 +7,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Navigation;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Events.EffectValue;
 using VirtualPaper.Common.Events.EffectValue.Base;
 using VirtualPaper.Common.Runtime.PlayerWeb;
@@ -110,12 +109,12 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                     if (_controls.TryGetValue(item.Key, out UIElement value)) {
                         chk = value as CheckBox;
                         chk.IsChecked = (bool)item.Value["Value"];
-                        chk.Content = LanguageUtil.GetI18n(string.Concat(nameof(Constants.I18n.EffectPrefix_), item.Value["Text"].ToString()));
+                        chk.Content = item.Value["Text"].ToString();
                     }
                     else {
                         chk = new CheckBox {
                             Name = item.Key,
-                            Content = LanguageUtil.GetI18n(string.Concat(nameof(Constants.I18n.EffectPrefix_), item.Value["Text"].ToString())),
+                            Content = item.Value["Text"].ToString(),
                             IsChecked = (bool)item.Value["Value"],
                             HorizontalAlignment = HorizontalAlignment.Left,
                             MinWidth = MIN_WIDTH,
@@ -187,7 +186,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                     !uiElementType.Equals("Checkbox", StringComparison.OrdinalIgnoreCase) &&
                     !uiElementType.Equals("Label", StringComparison.OrdinalIgnoreCase)) {
 
-                    var title = LanguageUtil.GetI18n(string.Concat(nameof(Constants.I18n.EffectPrefix_), textJsonNode.ToString()));
+                    var title = textJsonNode.ToString();
                     TextBlock tb;
                     if (uiElementType.Equals("Slider", StringComparison.OrdinalIgnoreCase)) {
                         tb = SetSliderExtra(item, title);

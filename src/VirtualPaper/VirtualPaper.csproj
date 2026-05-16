@@ -50,13 +50,14 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper.DataAssistor\VirtualPaper.DataAssistor.csproj" />
+		<ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Resource Include="Resources\appicon_download.png" />
 		<Resource Include="Resources\splash.png" />
 		<Resource Include="virtualpaper.ico">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Resource>
 	</ItemGroup>
 

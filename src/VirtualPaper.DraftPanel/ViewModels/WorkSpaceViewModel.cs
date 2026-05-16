@@ -22,9 +22,7 @@ using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.TabView;
-using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 using Windows.Storage;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 using Workloads.Utils.DraftUtils.Interfaces;
@@ -32,7 +30,7 @@ using Workloads.Utils.DraftUtils.Models;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject, IDisposable {
-        public ObservableCollection<IArcTabViewItem> TabViewItems { get; set; } = [];
+        public ObservableCollection<ArcTabViewItem> TabViewItems { get; set; } = [];
 
         int _selectedTabIndex = -1;
         public int SelectedTabIndex {
@@ -50,9 +48,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         public ICommand? MFI_ManualCommand { get; private set; }
         public ICommand? MFI_AboutCommand { get; private set; }
 
-        public WorkSpaceViewModel(IUserSettingsClient userSettings, IGlobalDialogService globalDialogService) {
+        public WorkSpaceViewModel(IUserSettingsClient userSettings) {
             this._userSettings = userSettings;
-            this._globalDialogService = globalDialogService;
             InitCommand();
         }
 
@@ -85,7 +82,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             });
         }
 
-        public void OnTabItemsChanged(TabView sender, Windows.Foundation.Collections.IVectorChangedEventArgs args) {
+        internal void OnTabItemsChanged(TabView sender, Windows.Foundation.Collections.IVectorChangedEventArgs args) {
             if (TabViewItems.Count == 0) {
                 SelectedTabIndex = -1;
                 return;
@@ -163,14 +160,14 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         private async Task RedoAsync() => await ExecuteRuntimeCommandAsync(x => x.RedoAsync());
 
-        private Task ExecuteRuntimeCommandAsync(Func<IRuntime, Task> command, IArcTabViewItem? specificItem = null) {
+        private Task ExecuteRuntimeCommandAsync(Func<IRuntime, Task> command, TabViewItem? specificItem = null) {
             var runtime = (specificItem?.Tag as IRuntime) ?? GetSelectedRuntime();
             return runtime != null
                 ? command(runtime)
                 : Task.CompletedTask;
         }
 
-        private async Task<T?> ExecuteRuntimeCommandAsync<T>(Func<IRuntime, Task<T>> command, IArcTabViewItem? specificItem = null) {
+        private async Task<T?> ExecuteRuntimeCommandAsync<T>(Func<IRuntime, Task<T>> command, TabViewItem? specificItem = null) {
             var runtime = (specificItem?.Tag as IRuntime) ?? GetSelectedRuntime();
             return runtime != null
                 ? await command(runtime)
@@ -368,7 +365,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             GC.SuppressFinalize(this);
         }
 
-        public async IAsyncEnumerable<IArcTabViewItem> HandleExitItemsAsync() {
+        internal async IAsyncEnumerable<ArcTabViewItem> HandleExitItemsAsync() {
             var tabsToClose = TabViewItems.ToList();
 
             foreach (var tabItem in tabsToClose) {
@@ -379,7 +376,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     var header = value.Header;
 
                     if (!header.IsSaved) {
-                        var res = await _globalDialogService.ShowDialogAsync(
+                        var res = await GlobalDialogUtils.ShowDialogAsync(
                             content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
                             title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
                             primaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Save))}",
@@ -402,7 +399,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             }
         }
 
-        public async Task<bool> CheckSaveStatusAsync(IRuntime runtime) {
+        internal async Task<bool> CheckSaveStatusAsync(IRuntime runtime) {
             bool flag;
             var header = _runtimeToArcTab[runtime].Header;
 
@@ -410,7 +407,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 flag = true;
             }
             else {
-                var res = await _globalDialogService.ShowDialogAsync(
+                var res = await GlobalDialogUtils.ShowDialogAsync(
                     content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
                     title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
                     primaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Save))}",
@@ -434,13 +431,13 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             return flag;
         }
 
-        public async Task<bool> CheckAllSaveStatusAsync() {
+        internal async Task<bool> CheckAllSaveStatusAsync() {
             foreach (var kvp in _runtimeToArcTab) {
                 var runtime = kvp.Key;
                 var header = kvp.Value.Header;
 
                 if (!header.IsSaved) {
-                    var res = await _globalDialogService.ShowDialogAsync(
+                    var res = await GlobalDialogUtils.ShowDialogAsync(
                         content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
                         title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
                         primaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Save))}",
@@ -463,13 +460,13 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             return true;
         }
 
-        private void CloseWorkSpaceTab(IRuntime runtime, IArcTabViewItem item) {
+        private void CloseWorkSpaceTab(IRuntime runtime, ArcTabViewItem item) {
             runtime.IsSavedChanged -= Runtime_IsSavedChanged;
             _runtimeToArcTab.Remove(runtime);
             TabViewItems.Remove(item);
         }
 
-        public IRuntime? GetSelectedRuntime() {
+        internal IRuntime? GetSelectedRuntime() {
             if (SelectedTabIndex < 0 || SelectedTabIndex >= TabViewItems.Count) return null;
             return TabViewItems[SelectedTabIndex].Tag as IRuntime;
         }
@@ -477,8 +474,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         internal readonly ObservableCollection<MenuBarItem> _middleMenuItems = [];
         private readonly IUserSettingsClient _userSettings;
-        private readonly IGlobalDialogService _globalDialogService;
         private readonly ConcurrentBag<string> _tempRecentUsed = [];
-        private readonly Dictionary<IRuntime, (IArcTabViewItemHeader Header, IArcTabViewItem Item)> _runtimeToArcTab = [];
+        private readonly Dictionary<IRuntime, (ArcTabViewItemHeader Header, ArcTabViewItem Item)> _runtimeToArcTab = [];
     }
 }

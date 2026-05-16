@@ -62,12 +62,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Content Remove="assets\intelligent\preset_styles\README.md" />
-	  <Content Remove="Assets\intelligent\preset_styles\_origin.png" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Remove="Assets\icon-vp-512.png" />
+		<None Remove="Assets\icon-vp-48.png" />
 		<None Remove="Assets\LockScreenLogo.scale-200.png" />
 		<None Remove="Assets\splashCol_1400x1400_with_round40.png" />
 		<None Remove="Assets\SplashScreen.scale-200.png" />
@@ -83,10 +78,8 @@
 		<None Remove="Assets\staticImg\Light\ic_fluent_resize_small_24_filled.png" />
 		<None Remove="Assets\staticImg\Light\ic_fluent_select_object_24_filled.png" />
 		<None Remove="Assets\staticImg\Light\project_create_staticimg_light.png" />
-		<None Remove="Assets\ui_components\Dark\intelligent_dark.png" />
 		<None Remove="Assets\ui_components\icons8-image-96.png" />
 		<None Remove="Assets\ui_components\icons8-picture-94.png" />
-		<None Remove="Assets\ui_components\Light\intelligent_light.png" />
 		<None Remove="Assets\ui_components\Light\theme_light.png" />
 		<None Remove="Assets\ui_components\project-create-static-image-desc.png" />
 		<None Remove="Nlog.config" />
@@ -116,41 +109,30 @@
 		<ProjectCapability Include="Msix" />
 	</ItemGroup>
 	<ItemGroup>
-		<Content Update="Assets\icon-vp-512.png">
+		<Content Update="Assets\icon-vp-48.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\splashCol_1400x1400_with_round40.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-
-		<Content Update="Assets\intelligent\preset_styles\anime.jpg">
+		<Content Update="Assets\staticImg\Dark\ic_fluent_border_24_filled.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Update="Assets\intelligent\preset_styles\cartoon.jpg">
+		<Content Update="Assets\staticImg\Dark\ic_fluent_color_fill_24_regular.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Update="Assets\intelligent\preset_styles\colored_pencil.jpg">
+		<Content Update="Assets\staticImg\Dark\ic_fluent_cursor_24_regular.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Update="Assets\intelligent\preset_styles\gongbi.jpg">
+		<Content Update="Assets\staticImg\Dark\ic_fluent_resize_small_24_filled.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Update="Assets\intelligent\preset_styles\ink_wash.jpg">
+		<Content Update="Assets\staticImg\Dark\ic_fluent_select_object_24_filled.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Update="Assets\intelligent\preset_styles\oil_painting.jpg">
+		<Content Update="Assets\ui_components\Dark\project_create_staticimg_dark.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Update="Assets\intelligent\preset_styles\outline_drawing.jpg">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		<Content Update="Assets\intelligent\preset_styles\pencil.jpg">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		<Content Update="Assets\intelligent\preset_styles\ukiyo-e.jpg">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		<Content Update="Assets\intelligent\preset_styles\watercolor.jpg">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		
 		<Content Update="Assets\staticImg\layer_thu_grid.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -181,9 +163,6 @@
 		<Content Update="Assets\ui_components\icons8-picture-94.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Update="Assets\ui_components\Light\intelligent_light.png">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
 		<Content Update="Assets\ui_components\Light\theme_auto.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -202,8 +181,8 @@
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Assets\virtualpaper.ico">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 
 	<!-- 
@@ -217,12 +196,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper.AppSettingsPanel\VirtualPaper.AppSettingsPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.DraftPanel\VirtualPaper.DraftPanel.csproj" />
-		<ProjectReference Include="..\VirtualPaper.IntelligentPanel\VirtualPaper.IntelligentPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj" />
-	</ItemGroup>
-	<ItemGroup>
-	  <Content Update="Assets\ui_components\Dark\intelligent_dark.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>	  
 	</ItemGroup>
 </Project>

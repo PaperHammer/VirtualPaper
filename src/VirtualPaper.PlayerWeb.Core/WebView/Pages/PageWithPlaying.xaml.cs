@@ -1,7 +1,5 @@
 using System;
-using System.Diagnostics;
 using System.IO;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Controls;
@@ -10,7 +8,6 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Events.EffectValue.Base;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
-using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.PlayerWeb.Core.Utils;
@@ -94,7 +91,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             switch (e.Value) {
                 case double:
                 case int:
-                    _scriptExecutor?.EnqueueEvent(Fields.PropertyListener, e.PropertyName, e.Value);
+                    _scriptExecutor?.EnqueueEvent(Fileds.PropertyListener, e.PropertyName, e.Value);
                     break;
                 case bool b:
                     ExecuteCheckBoxSet(e.PropertyName, b);
@@ -124,7 +121,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                         if ((_arcWindow?.IsActive ?? false) && _isPointerInsidePage) {
                             _scriptExecutor?.EnqueueState(
                                 key: "MouseMove",
-                                functionName: Fields.MouseMove,
+                                functionName: Fileds.MouseMove,
                                 x, y
                             );
                             lastX = x;
@@ -133,7 +130,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                         else if (lastInside) {
                             _scriptExecutor?.EnqueueState(
                                 key: "MouseOut",
-                                functionName: Fields.MouseOut
+                                functionName: Fileds.MouseOut
                             );
                         }
 
@@ -150,7 +147,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             if (Interlocked.CompareExchange(ref _isParallaxRunning, 0, 1) == 0) return;
             _scriptExecutor?.EnqueueState(
                 key: "MouseOut",
-                functionName: Fields.MouseOut
+                functionName: Fileds.MouseOut
             );
         }
 
@@ -162,73 +159,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                 StopParallax();
             }
         }
-        #endregion
-
-        #region time perception
-        private void RunTimePerception(bool isTimePerceptionOn) {
-            // 先停止旧任务
-            _tpCts?.Cancel();
-            _tpCts?.Dispose();
-            _tpCts = null;
-
-            if (isTimePerceptionOn) {
-                _tpCts = new CancellationTokenSource();
-                _ = TimePerceptionLoopAsync(_tpCts.Token);
-            }
-            else {
-                // 通知 JS 关闭
-                var payload = JsonSerializer.Serialize(new { enabled = false });
-                _scriptExecutor?.EnqueueEvent(Fields.PropertyListener, Fields.TimePerception, payload);
-            }
-        }
-
-        /// <summary>
-        /// 每天重新计算日出日落，下发参数给 JS
-        /// </summary>
-        private async Task TimePerceptionLoopAsync(CancellationToken ct) {
-            while (!ct.IsCancellationRequested) {
-                // 计算今日参数并下发
-                await SendTimePerceptionConfigAsync();
-
-                // 等到次日 00:01 再重新计算
-                var now = DateTime.Now;
-                var nextMidnight = now.Date.AddDays(1).AddMinutes(1);
-                var delay = nextMidnight - now;
-
-                try {
-                    await Task.Delay(delay, ct);
-                }
-                catch (TaskCanceledException) {
-                    break;
-                }
-            }
-        }
-
-        private async Task SendTimePerceptionConfigAsync() {
-            var (latitude, longitude) = await Win32Util.GetSystemLocationAsync();
-            var (sunriseLocal, sunsetLocal) = SunCalc.Calculate(DateTime.UtcNow.Date, latitude, longitude);
-
-            DebugUtil.Output($"sunriseLocal: {sunriseLocal:HH:mm}");
-            DebugUtil.Output($"sunriseLocal: {sunsetLocal:HH:mm}");
-
-            var config = new {
-                enabled = true,
-                sunrise = sunriseLocal.ToString("HH:mm"),
-                sunset = sunsetLocal.ToString("HH:mm"),
-                transitionMinutes = 30,
-                phases = new {
-                    night = new { brightness = -0.3, hue = 220, saturate = -0.2 },
-                    dawn = new { brightness = 0.1, hue = 30, saturate = 0.3 },
-                    day = new { brightness = 0.0, hue = 0, saturate = 0.0 },
-                    dusk = new { brightness = -0.1, hue = 20, saturate = 0.2 },
-                }
-            };
-
-            var payload = JsonSerializer.Serialize(config);
-            _scriptExecutor?.EnqueueEvent(Fields.PropertyListener, Fields.TimePerception, payload);
-        }
-
-        private CancellationTokenSource? _tpCts;
         #endregion
 
         #region webview2 event
@@ -268,17 +198,17 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                 case "RImage":
                 case "RVideo":
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+                    _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
                     break;
                 case "RImage3D":
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
+                    _scriptExecutor?.EnqueueEvent(Fileds.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
                     break;
                 default:
                     break;
             }
             LoadWpEffect(_startArgs.WpEffectFilePathUsing);
-            _scriptExecutor?.EnqueueEvent(Fields.Play);
+            _scriptExecutor?.EnqueueEvent(Fileds.Play);
 
 #if DEBUG
             Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
@@ -311,7 +241,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         private void UpdateRectToWebview() {
             if (Webview2 == null || Webview2.CoreWebView2 == null) return;
 
-            _scriptExecutor?.EnqueueEvent(Fields.UpdateDimensions, _pageRegion.Right - _pageRegion.Left, _pageRegion.Bottom - _pageRegion.Top);
+            _scriptExecutor?.EnqueueEvent(Fileds.UpdateDimensions, _pageRegion.Right - _pageRegion.Left, _pageRegion.Bottom - _pageRegion.Top);
         }
 
         private void LoadWpEffect(string? wpEffectFilePath) {
@@ -325,7 +255,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                             uiElementType.Equals("Dropdown", StringComparison.OrdinalIgnoreCase) ||
                             uiElementType.Equals("Color", StringComparison.OrdinalIgnoreCase) ||
                             uiElementType.Equals("Textbox", StringComparison.OrdinalIgnoreCase)) {
-                            _scriptExecutor?.EnqueueEvent(Fields.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
+                            _scriptExecutor?.EnqueueEvent(Fileds.PropertyListener, item.Name, item.Value.GetProperty("Value").ToString());
                         }
                         else if (uiElementType.Equals("Checkbox", StringComparison.OrdinalIgnoreCase)) {
                             ExecuteCheckBoxSet(item.Name, bool.Parse(item.Value.GetProperty("Value").ToString()));
@@ -342,9 +272,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             switch (propertyName) {
                 case "Parallax":
                     RunParallax(val);
-                    break;
-                case "TimeAtmoPerception":
-                    RunTimePerception(val);
                     break;
                 default:
                     break;

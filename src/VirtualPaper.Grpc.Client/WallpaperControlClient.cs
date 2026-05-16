@@ -63,9 +63,8 @@ namespace VirtualPaper.Grpc.Client {
             return grpc_data;
         }
 
-        public async Task<string> GetPlayerStartArgsAsync(IWpBasicData data, RuntimeType rtype, string? depthFilePath, CancellationToken token) {
+        public async Task<string> GetPlayerStartArgsAsync(IWpBasicData data, RuntimeType rtype, CancellationToken token) {
             Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
-            wpPlayerdata.DepthFilePath = depthFilePath ?? string.Empty;
 
             var response = await _client.GetPlayerStartArgsAsync(
                 new Grpc_GetPlayerStartArgsRequest() {
@@ -93,9 +92,8 @@ namespace VirtualPaper.Grpc.Client {
         }
 
         public async Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(
-            IMonitor monitor, IWpBasicData data, RuntimeType rtype, string? depthFilePath, CancellationToken token) {
+            IMonitor monitor, IWpBasicData data, RuntimeType rtype, CancellationToken token) {
             Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
-            wpPlayerdata.DepthFilePath = depthFilePath ?? string.Empty;
 
             var request = new Grpc_SetWallpaperRequest {
                 WpPlayerData = wpPlayerdata,
@@ -144,7 +142,7 @@ namespace VirtualPaper.Grpc.Client {
         #endregion
 
         #region utils
-        public async Task ChangeWallpaperLayoutFolderPathAsync(string previousDir, string newDir) {
+        public async Task ChangeWallpaperLayoutFolrderPathAsync(string previousDir, string newDir) {
             Grpc_ChangePathRequest request = new() {
                 PreviousDir = previousDir,
                 NewDir = newDir,

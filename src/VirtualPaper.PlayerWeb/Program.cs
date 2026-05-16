@@ -19,7 +19,7 @@ namespace VirtualPaper.PlayerWeb {
 
             SetupUnhandledExceptionLogging();
 
-            //string msg = "{\"isDebug\":true,\"isPreview\":false,\"filePath\":\"C:\\\\Users\\\\liurui18\\\\AppData\\\\Local\\\\VirtualPaper\\\\Library\\\\wallpapers\\\\4spe4u2n.4q1\\\\4spe4u2n.4q1.jpg\",\"depthFilePath\":null,\"wpBasicDataFilePath\":\"C:\\\\Users\\\\liurui18\\\\AppData\\\\Local\\\\VirtualPaper\\\\Library\\\\wallpapers\\\\4spe4u2n.4q1\\\\wp_metadata_basic.json\",\"wpEffectFilePathUsing\":\"C:\\\\Users\\\\liurui18\\\\AppData\\\\Local\\\\VirtualPaper\\\\Library\\\\wallpapers\\\\4spe4u2n.4q1\\\\1\\\\RImage\\\\wpEffectFilePathUsing.json\",\"wpEffectFilePathTemporary\":\"C:\\\\Users\\\\liurui18\\\\AppData\\\\Local\\\\VirtualPaper\\\\Library\\\\wallpapers\\\\4spe4u2n.4q1\\\\1\\\\RImage\\\\wpEffectFilePathTemporary.json\",\"wpEffectFilePathTemplate\":\"C:\\\\Users\\\\liurui18\\\\AppData\\\\Local\\\\VirtualPaper\\\\Library\\\\wallpapers\\\\4spe4u2n.4q1\\\\wpEffectFilePathTemplate.json\",\"runtimeType\":\"RImage\",\"systemBackdrop\":0,\"applicationTheme\":2,\"language\":\"en-US\"}";
+            //string _args = "{\"isDebug\":true,\"isPreview\":false,\"filePath\":\"C:\\\\Users\\\\liurui18\\\\AppData\\\\Local\\\\VirtualPaper\\\\Library\\\\wallpapers\\\\vhxkeafp.4o5\\\\vhxkeafp.4o5.jpg\",\"depthFilePath\":null,\"wpBasicDataFilePath\":\"C:\\\\Users\\\\liurui18\\\\AppData\\\\Local\\\\VirtualPaper\\\\Library\\\\wallpapers\\\\vhxkeafp.4o5\\\\wp_metadata_basic.json\",\"wpEffectFilePathUsing\":\"C:\\\\Users\\\\liurui18\\\\AppData\\\\Local\\\\VirtualPaper\\\\Library\\\\wallpapers\\\\vhxkeafp.4o5\\\\2\\\\RImage\\\\wpEffectFilePathUsing.json\",\"wpEffectFilePathTemporary\":\"C:\\\\Users\\\\liurui18\\\\AppData\\\\Local\\\\VirtualPaper\\\\Library\\\\wallpapers\\\\vhxkeafp.4o5\\\\2\\\\RImage\\\\wpEffectFilePathTemporary.json\",\"wpEffectFilePathTemplate\":\"C:\\\\Users\\\\liurui18\\\\AppData\\\\Local\\\\VirtualPaper\\\\Library\\\\wallpapers\\\\vhxkeafp.4o5\\\\wpEffectFilePathTemplate.json\",\"runtimeType\":\"RImage\",\"systemBackdrop\":0,\"applicationTheme\":2,\"language\":\"en-US\"}";
 
             string? msg;
             using (var reader = new StreamReader(Console.OpenStandardInput())) {
@@ -29,7 +29,11 @@ namespace VirtualPaper.PlayerWeb {
                 throw new NoNullAllowedException($"The argument for {nameof(msg)} is null. Please check the command msg arguments.");
             }
 
-            _startArgs = JsonSerializer.Deserialize<StartArgsWeb>(msg) ?? throw new NoNullAllowedException($"The argument for {nameof(StartArgsWeb)} is null. Please check the command msg arguments.");
+            _startArgs = JsonSerializer.Deserialize<StartArgsWeb>(msg);
+            if (_startArgs == null) {
+                throw new NoNullAllowedException($"The argument for {nameof(StartArgsWeb)} is null. Please check the command msg arguments.");
+            }
+
             ApplicationConfiguration.Initialize();
             Application.Run(new Form1(_startArgs));
         }

@@ -13,7 +13,6 @@ using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
-using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.PlaybackControl;
@@ -35,8 +34,6 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
-using VirtualPaper.Utils.Interfcaes;
-using VirtualPaper.Utils.Services;
 using VirtualPaper.Utils.Theme;
 using VirtualPaper.ViewModels;
 using VirtualPaper.Views;
@@ -52,7 +49,7 @@ namespace VirtualPaper {
     /// </summary>
     public partial class App : Application {
         internal static Logger Log => _log;
-        internal static IJobService Jobs => Services.GetRequiredService<IJobService>();
+        internal static JobService Jobs => Services.GetRequiredService<JobService>();
         internal static IUserSettingsService UserSettings => Services.GetRequiredService<IUserSettingsService>();
 
         public static IServiceProvider Services {
@@ -122,9 +119,9 @@ namespace VirtualPaper {
             SplashWindow? spl = null;
             if (UserSettings.Settings.IsUpdated || UserSettings.Settings.IsFirstRun) {
                 spl = UserSettings.Settings.IsFirstRun ? new SplashWindow(0, 500) : null;
-                spl?.Show();
+                spl?.Show();                
                 UserSettings.Settings.IsFirstRun = false;
-                UserSettings.Save<ISettings>();
+                UserSettings.Save<ISettings>();                
             }
 
             if (UserSettings.Settings.WallpaperDir == string.Empty
@@ -143,7 +140,7 @@ namespace VirtualPaper {
                 // 启动针对从 Windows 发出的到该窗口的消息监听服务
                 Services.GetRequiredService<WndProcMsgWindow>().Show();
                 // 启动针对从外部设备发出的到该窗口的消息监听服务
-                Services.GetRequiredService<IRawInputMsg>().Show();
+                Services.GetRequiredService<RawInputMsgWindow>().Show();
                 // 启动壁纸行为/状态监听服务
                 Services.GetRequiredService<IPlayback>().Start(_ctsPlayback);
                 // 启动托盘（后台）服务
@@ -224,21 +221,12 @@ namespace VirtualPaper {
                 .AddSingleton<IWallpaperFactory, WallpaperFactory>()
                 .AddSingleton<IWallpaperConfigFolderFactory, WallpaperConfigFolderFactory>()
 
-                .AddSingleton<IJobService, JobService>()
-                .AddSingleton<IRawInputMsg, RawInputMsgWindow>()
+                .AddSingleton<JobService>()
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
                 .AddSingleton<IWindowService, WindowService>()
-                .AddSingleton<INativeService, NativeService>()
-                .AddSingleton<IJsonSaver, JsonSaverWrapper>()
-                .AddSingleton<IStoragePicker, StoragePickerWrapper>()
-                .AddTransient<IDispatcherTimer, DispatcherTimerAdapter>()
-                .AddTransient<IProcessLauncher, ProcessLauncher>()
-                .AddTransient<IPowerService, PowerService>()
-                .AddTransient<IGithubReleaseClient, GithubReleaseClient>()
-                .AddTransient<IVersionComparer, AssemblyVersionComparer>()
 
                 .AddSingleton<WallpaperControlServer>()
                 .AddSingleton<MonitorManagerServer>()
@@ -248,6 +236,7 @@ namespace VirtualPaper {
                 .AddSingleton<ScrCommandsServer>()
 
                 .AddSingleton<WndProcMsgWindow>()
+                .AddSingleton<RawInputMsgWindow>()
                 .AddSingleton<MainWindow>()
                 .AddTransient<DebugLog>()
                 .AddTransient<AppUpdaterWindow>()
@@ -300,7 +289,7 @@ namespace VirtualPaper {
 
                 Application.Current.Dispatcher.Invoke(() => {
                     ApplicationThemeManager.Apply(applicationTheme, updateAccent: false);
-                });
+                });                
             }
             catch (Exception e) {
                 Log.Error(e);

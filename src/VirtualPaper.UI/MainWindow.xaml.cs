@@ -9,14 +9,12 @@ using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel;
 using VirtualPaper.Grpc.Client.Interfaces;
-using VirtualPaper.IntelligentPanel;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel;
 using WinRT.Interop;
-using WinUIEx;
 
 namespace VirtualPaper.UI {
     /// <summary>
@@ -57,7 +55,6 @@ namespace VirtualPaper.UI {
                 bool canClose = await NaviContent.CheckAllPagesCanCloseAsync();
                 if (canClose) {
                     _isSafeToClose = true;
-                    this.Hide(); // todo 优化：当前点击关闭会卡住一段时间
                     this.Close();
                 }
             }
@@ -106,7 +103,6 @@ namespace VirtualPaper.UI {
                     "Nav_WpSettings" => typeof(WpSettings),
                     "Nav_Draft" => typeof(Draft),
                     "Nav_AppSettings" => typeof(AppSettings),
-                    "Nav_Intelligent" => typeof(Intelligent),
                     _ => throw new NotImplementedException(),
                 };
 

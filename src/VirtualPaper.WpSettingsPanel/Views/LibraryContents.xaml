@@ -62,7 +62,7 @@
                         Text="{x:Bind Title, Mode=OneWay}"
                         MaxLines="2"
                         FontSize="16"
-                        Foreground="{Binding DataContext.WpTitleForeground, ElementName=rootPage, Converter={StaticResource ByteArrayToBrushConverter}}"
+                        Foreground="{Binding DataContext.WpTitleForeground, ElementName=rootPage}"
                         TextTrimming="CharacterEllipsis"/>
                 </Border>
             </Grid>
@@ -143,8 +143,7 @@
         </MenuFlyout>
     </arc:ArcPage.Resources>
 
-    <ScrollView x:Name="wallpaperLibScrollViewer"
-         Padding="0 0 16 0" Margin="0 0 0 20"
+    <ScrollView Padding="0 0 16 0" Margin="0 0 0 20"
          ViewChanged="WallpaperLibScrollViewer_ViewChanged">
         <StackPanel
             Orientation="Vertical"
@@ -163,7 +162,7 @@
                 IsItemClickEnabled="True"
                 ItemContainerStyle="{StaticResource LibGridViewItemStyle}"
                 ItemTemplate="{StaticResource WallpaperItemTemplate}"
-                ItemsPanel="{StaticResource WallpaperItemsPanel}"
+                ItemsPanel="{StaticResource WallpaperItemsPanel}"                      
                 PreviewKeyDown="WallpapersLibView_PreviewKeyDown">
             </GridView>
 

@@ -1,9 +1,11 @@
 name: Auto Version & Build on Main Merge
 
 on:
-  push:
+  pull_request:
     branches:
       - main
+    types:
+      - closed
 
 concurrency:
   group: release-main
@@ -16,8 +18,8 @@ permissions:
 jobs:
   auto-version-and-build:
     runs-on: windows-latest
-    # 跳过由 GitHub Action 自身提交的版本号更新（[skip ci]）
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    # 仅在 PR 被合并时运行（关闭但未合并不触发）
+    if: github.event.pull_request.merged == true
 
     steps:
     - name: Checkout with full history
@@ -36,7 +38,7 @@ jobs:
         Write-Host "main SHA: $mainSha"
 
         # 尝试记录 dev 分支 HEAD
-        git fetch origin dev 2>$null
+        git fetch origin dev 2>&1 | Out-Null
         if ($LASTEXITCODE -eq 0) {
             $devSha = git rev-parse origin/dev
             Write-Output "dev_sha=$devSha" >> $env:GITHUB_OUTPUT
@@ -47,7 +49,7 @@ jobs:
         }
 
         # 尝试记录 bugfix 分支 HEAD
-        git fetch origin bugfix 2>$null
+        git fetch origin bugfix 2>&1 | Out-Null
         if ($LASTEXITCODE -eq 0) {
             $bugfixSha = git rev-parse origin/bugfix
             Write-Output "bugfix_sha=$bugfixSha" >> $env:GITHUB_OUTPUT
@@ -71,41 +73,23 @@ jobs:
     - name: Determine source branch and version increment
       id: branch_info
       shell: powershell
+      env:
+        PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
       run: |
-        # 获取最近的commit信息来判断来源分支
-        $commitMessage = git log -1 --pretty=format:"%s"
-        $mergeInfo = git log -1 --pretty=format:"%B"
-
-        Write-Host "Commit message: $commitMessage"
-        Write-Host "Merge info: $mergeInfo"
-
-        # 判断是从哪个分支合并过来的
-        $sourceBranch = "unknown"
+        # 直接从 PR 事件上下文获取来源分支，通过 env 传入避免脚本注入
+        $sourceBranch = $env:PR_HEAD_REF
         $incrementType = "patch"  # 默认第4位+1
 
-        if ($mergeInfo -match "Merge.*dev.*into.*main" -or $commitMessage -match "dev") {
-            $sourceBranch = "dev"
+        if ($sourceBranch -eq "dev") {
             $incrementType = "minor"  # 第3位+1
-            Write-Host "Detected merge from dev branch - incrementing minor version"
+            Write-Host "Source branch: dev - incrementing minor version"
         }
-        elseif ($mergeInfo -match "Merge.*bugfix.*into.*main" -or $commitMessage -match "bugfix") {
-            $sourceBranch = "bugfix"
+        elseif ($sourceBranch -eq "bugfix") {
             $incrementType = "patch"  # 第4位+1
-            Write-Host "Detected merge from bugfix branch - incrementing patch version"
+            Write-Host "Source branch: bugfix - incrementing patch version"
         }
         else {
-            # 尝试从最近的两个commits中找到merge信息
-            $lastTwoCommits = git log -2 --oneline
-            Write-Host "Last two commits: $lastTwoCommits"
-
-            if ($lastTwoCommits -match "dev") {
-                $sourceBranch = "dev"
-                $incrementType = "minor"
-            }
-            elseif ($lastTwoCommits -match "bugfix") {
-                $sourceBranch = "bugfix"
-                $incrementType = "patch"
-            }
+            Write-Host "Unknown source branch: $sourceBranch - defaulting to patch"
         }
 
         Write-Output "source_branch=$sourceBranch" >> $env:GITHUB_OUTPUT
@@ -208,8 +192,8 @@ jobs:
 
     - name: Build Release
       run: |
-        dotnet restore
-        dotnet build --configuration Release --no-restore
+        dotnet restore src/VirtualPaper.sln
+        dotnet build src/VirtualPaper.sln --configuration Release --no-restore
 
     - name: Create installer with InnoSetup
       id: build_installer
@@ -252,6 +236,7 @@ jobs:
         Write-Output "installer_name=$($installerFiles[0].Name)" >> $env:GITHUB_OUTPUT
 
     - name: Configure Git and commit version changes
+      shell: powershell
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
@@ -290,16 +275,16 @@ jobs:
       shell: powershell
       run: |
         Write-Host ""
-        Write-Host "🎉 ================= 构建完成 =================" -ForegroundColor Green
-        Write-Host "📦 项目: VirtualPaper" -ForegroundColor Cyan
-        Write-Host "🔢 版本: ${{ steps.version.outputs.current_version }} → ${{ steps.version.outputs.new_version }}" -ForegroundColor Yellow
-        Write-Host "🌿 来源: ${{ steps.branch_info.outputs.source_branch }} → main" -ForegroundColor Magenta
-        Write-Host "📋 类型: ${{ steps.branch_info.outputs.increment_type == 'minor' && '功能更新' || '修复更新' }}" -ForegroundColor Blue
-        Write-Host "📥 安装包: ${{ steps.build_installer.outputs.installer_name }}" -ForegroundColor White
+        Write-Host "================= Build Complete =================" -ForegroundColor Green
+        Write-Host "Project : VirtualPaper"
+        Write-Host "Version : ${{ steps.version.outputs.current_version }} -> ${{ steps.version.outputs.new_version }}" -ForegroundColor Cyan
+        Write-Host "Source  : ${{ steps.branch_info.outputs.source_branch }} -> main"
+        Write-Host "Type    : ${{ steps.branch_info.outputs.increment_type == 'minor' && 'Feature Update' || 'Bugfix Update' }}"
+        Write-Host "Package : ${{ steps.build_installer.outputs.installer_name }}" -ForegroundColor Cyan
         Write-Host ""
-        Write-Host "✅ 版本号已更新并提交到 main 分支"
-        Write-Host "✅ 版本号已同步到 ${{ steps.branch_info.outputs.source_branch }} 分支"
-        Write-Host "✅ 安装包已上传为 Artifact"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version updated and committed to main"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version synced to ${{ steps.branch_info.outputs.source_branch }}"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Installer uploaded as Artifact"
         Write-Host "============================================" -ForegroundColor Green
 
     - name: Rollback on failure
@@ -307,13 +292,13 @@ jobs:
       shell: powershell
       run: |
         Write-Host ""
-        Write-Host "⚠️ 检测到流程失败，开始执行回滚..." -ForegroundColor Yellow
+        Write-Host "[WARN]" -ForegroundColor Yellow -NoNewline; Write-Host " Pipeline failure detected, starting rollback..."
 
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
 
         # 拉取最新远端状态
-        git fetch origin 2>$null
+        git fetch origin 2>&1 | Out-Null
 
         $mainSha     = "${{ steps.original_shas.outputs.main_sha }}"
         $devSha      = "${{ steps.original_shas.outputs.dev_sha }}"
@@ -322,49 +307,53 @@ jobs:
 
         # --- 回滚 main ---
         if ($mainSha) {
-            $currentMain = git rev-parse origin/main 2>$null
-            if ($currentMain -and $currentMain -ne $mainSha) {
-                Write-Host "↩️  回滚 main: $currentMain → $mainSha" -ForegroundColor Cyan
+            $currentMain = git rev-parse origin/main 2>&1
+            if ($LASTEXITCODE -eq 0 -and $currentMain -ne $mainSha) {
+                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " main: $currentMain -> $mainSha"
                 git checkout -B main origin/main
                 git reset --hard $mainSha
+                # 追加空 commit，防止 force push 后再次触发本 workflow
+                git commit --allow-empty -m "[Github CI] rollback: reverted version bump [skip ci]"
                 git push --force origin main
-                Write-Host "✅ main 已回滚" -ForegroundColor Green
+                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " main rolled back"
             } else {
-                Write-Host "ℹ️  main 无需回滚（未发生变更）"
+                Write-Host "[SKIP] main: no changes detected, rollback not needed"
             }
         }
 
         # --- 回滚源分支（dev / bugfix）---
         if ($sourceBranch -eq "dev" -and $devSha) {
-            $currentDev = git rev-parse origin/dev 2>$null
-            if ($currentDev -and $currentDev -ne $devSha) {
-                Write-Host "↩️  回滚 dev: $currentDev → $devSha" -ForegroundColor Cyan
+            $currentDev = git rev-parse origin/dev 2>&1
+            if ($LASTEXITCODE -eq 0 -and $currentDev -ne $devSha) {
+                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " dev: $currentDev -> $devSha"
                 git checkout -B dev origin/dev
                 git reset --hard $devSha
+                # dev/bugfix 不加空 commit，避免分支分叉导致下次 --ff-only sync 失败
                 git push --force origin dev
-                Write-Host "✅ dev 已回滚" -ForegroundColor Green
+                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " dev rolled back"
             } else {
-                Write-Host "ℹ️  dev 无需回滚（未发生变更）"
+                Write-Host "[SKIP] dev: no changes detected, rollback not needed"
             }
         }
         elseif ($sourceBranch -eq "bugfix" -and $bugfixSha) {
-            $currentBugfix = git rev-parse origin/bugfix 2>$null
-            if ($currentBugfix -and $currentBugfix -ne $bugfixSha) {
-                Write-Host "↩️  回滚 bugfix: $currentBugfix → $bugfixSha" -ForegroundColor Cyan
+            $currentBugfix = git rev-parse origin/bugfix 2>&1
+            if ($LASTEXITCODE -eq 0 -and $currentBugfix -ne $bugfixSha) {
+                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " bugfix: $currentBugfix -> $bugfixSha"
                 git checkout -B bugfix origin/bugfix
                 git reset --hard $bugfixSha
+                # dev/bugfix 不加空 commit，避免分支分叉导致下次 --ff-only sync 失败
                 git push --force origin bugfix
-                Write-Host "✅ bugfix 已回滚" -ForegroundColor Green
+                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " bugfix rolled back"
             } else {
-                Write-Host "ℹ️  bugfix 无需回滚（未发生变更）"
+                Write-Host "[SKIP] bugfix: no changes detected, rollback not needed"
             }
         }
 
         Write-Host ""
-        Write-Host "❌ ================ 构建失败 ================" -ForegroundColor Red
-        Write-Host "🔍 请检查以下可能的问题:" -ForegroundColor Yellow
-        Write-Host "  - .NET 8.0 构建是否成功"
-        Write-Host "  - InnoSetup 脚本是否正确"
-        Write-Host "  - 版本号格式是否正确"
-        Write-Host "  - GitHub Token 权限是否足够"
+        Write-Host "================ Build Failed ================" -ForegroundColor Red
+        Write-Host "[ERROR]" -ForegroundColor Red -NoNewline; Write-Host " Please check the following:"
+        Write-Host "  - .NET 8.0 build result"
+        Write-Host "  - InnoSetup script correctness"
+        Write-Host "  - Version format validity"
+        Write-Host "  - GitHub Token permissions"
         Write-Host "==========================================" -ForegroundColor Red

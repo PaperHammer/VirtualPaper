@@ -22,6 +22,10 @@ jobs:
   build:
     name: Build Solution
     runs-on: windows-latest
+    # push 事件：跳过版本号自动提交；pull_request 事件：始终运行
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip ci]'))
     
     steps:
     - name: Checkout code
@@ -86,7 +90,7 @@ jobs:
           Write-Error "Test result file not found! Tests may not have run."
           exit 1
         }
-        Write-Host "Test results file found ✅"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Test results file found"
       shell: pwsh
 
     - name: Upload Core test results
@@ -131,7 +135,7 @@ jobs:
           Write-Error "Test result file not found! Tests may not have run."
           exit 1
         }
-        Write-Host "Test results file found ✅"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Test results file found"
       shell: pwsh
 
     - name: Upload UI test results
@@ -176,7 +180,7 @@ jobs:
           Write-Error "Test result file not found! Tests may not have run."
           exit 1
         }
-        Write-Host "Test results file found ✅"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Test results file found"
       shell: pwsh
 
     - name: Upload ML test results
@@ -221,7 +225,7 @@ jobs:
           Write-Error "Test result file not found! Tests may not have run."
           exit 1
         }
-        Write-Host "Test results file found ✅"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Test results file found"
       shell: pwsh
 
     - name: Upload Shader test results
@@ -236,7 +240,11 @@ jobs:
     name: Test Summary
     runs-on: ubuntu-latest
     needs: [build, test-core, test-ui, test-ml, test-shader]
-    if: always()
+    # build 被 skip（[skip ci]）或任意 job 被 cancel 时，整条链跳过
+    if: |
+      always() &&
+      needs.build.result != 'skipped' &&
+      !contains(needs.*.result, 'cancelled')
     
     steps:
     - name: Download all test results
@@ -255,20 +263,20 @@ jobs:
         for file in "${EXPECTED_FILES[@]}"; do
           FOUND=$(find TestResults/ -name "$file" 2>/dev/null)
           if [ -z "$FOUND" ]; then
-            echo "❌ MISSING: $file"
+            echo -e "\033[0;31m[MISSING]\033[0m $file"
             MISSING=$((MISSING + 1))
           else
-            echo "✅ Found: $FOUND"
+            echo -e "\033[0;32m[FOUND]\033[0m $FOUND"
           fi
         done
         
         if [ $MISSING -gt 0 ]; then
           echo ""
-          echo "ERROR: $MISSING test result file(s) missing!"
+          echo -e "\033[0;31m[ERROR]\033[0m $MISSING test result file(s) missing!"
           echo "TEST_RESULTS_VALID=false" >> $GITHUB_ENV
         else
           echo ""
-          echo "All test result files present ✅"
+          echo -e "\033[0;32m[OK]\033[0m All test result files present"
           echo "TEST_RESULTS_VALID=true" >> $GITHUB_ENV
         fi
 
@@ -290,10 +298,10 @@ jobs:
            [ "${{ needs.test-shader.result }}" = "success" ] && \
            [ "${{ env.TEST_RESULTS_VALID }}" = "true" ]; then
           echo "TEST_STATUS=success" >> $GITHUB_ENV
-          echo "TEST_DESCRIPTION=All tests passed ✅" >> $GITHUB_ENV
+          echo "TEST_DESCRIPTION=All tests passed [OK]" >> $GITHUB_ENV
         else
           echo "TEST_STATUS=failure" >> $GITHUB_ENV
-          echo "TEST_DESCRIPTION=Some tests failed or results missing ❌" >> $GITHUB_ENV
+          echo "TEST_DESCRIPTION=Some tests failed or results missing [FAILED]" >> $GITHUB_ENV
         fi
 
     - name: Create Status Check

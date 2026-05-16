@@ -1,9 +1,7 @@
 using System.Diagnostics;
-using System.Text;
-using System.Windows.Threading;
 using Microsoft.Win32;
-using OpenCvSharp.Internal;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Hardware;
 using VirtualPaper.Common.Utils.PInvoke;
@@ -12,7 +10,7 @@ using VirtualPaper.Cores.ScreenSaver;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
-using Windows.Devices.Display.Core;
+using VirtualPaper.Utils.Interfcaes;
 
 namespace VirtualPaper.Cores.PlaybackControl {
     /// <summary>
@@ -31,11 +29,13 @@ namespace VirtualPaper.Cores.PlaybackControl {
             IUserSettingsService userSettings,
             IWallpaperControl wpControl,
             IScrControl scrControl,
-            IMonitorManager monitoeManger) {
+            IMonitorManager monitoeManger,
+            IPowerService powerService) {
             _userSettings = userSettings;
             _wpControl = wpControl;
             _scrControl = scrControl;
             _monitorManger = monitoeManger;
+            _powerService = powerService;
 
             Initialize();
             _timer = new(TimeSpan.FromMilliseconds(Math.Max(_userSettings.Settings.ProcessTimerInterval, 500)));
@@ -49,10 +49,10 @@ namespace VirtualPaper.Cores.PlaybackControl {
                 }
             }
             catch (OperationCanceledException) {
-                App.Log.Info("Playback stoppped");
+                ArcLog.GetLogger<Playback>().Info("Playback stoppped");
             }
             catch (Exception ex) {
-                App.Log.Error("Playback runtime Error: ", ex);
+                ArcLog.GetLogger<Playback>().Error("Playback runtime Error: ", ex);
             }
         }
 
@@ -65,7 +65,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
 
             _isLockScreen = IsSystemLocked();
             if (_isLockScreen) {
-                App.Log.Info("Lockscreen Session already started!");
+                ArcLog.GetLogger<Playback>().Info("Lockscreen Session already started!");
             }
             SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
         }
@@ -74,19 +74,19 @@ namespace VirtualPaper.Cores.PlaybackControl {
         private void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e) {
             if (e.Reason == SessionSwitchReason.RemoteConnect) {
                 _isRemoteSession = true;
-                App.Log.Info("Remote Desktop Session started!");
+                ArcLog.GetLogger<Playback>().Info("Remote Desktop Session started!");
             }
             else if (e.Reason == SessionSwitchReason.RemoteDisconnect) {
                 _isRemoteSession = false;
-                App.Log.Info("Remote Desktop Session ended!");
+                ArcLog.GetLogger<Playback>().Info("Remote Desktop Session ended!");
             }
             else if (e.Reason == SessionSwitchReason.SessionLock) {
                 _isLockScreen = true;
-                App.Log.Info("Lockscreen Session started!");
+                ArcLog.GetLogger<Playback>().Info("Lockscreen Session started!");
             }
             else if (e.Reason == SessionSwitchReason.SessionUnlock) {
                 _isLockScreen = false;
-                App.Log.Info("Lockscreen Session ended!");
+                ArcLog.GetLogger<Playback>().Info("Lockscreen Session ended!");
             }
         }
 
@@ -103,19 +103,19 @@ namespace VirtualPaper.Cores.PlaybackControl {
                     (_isRemoteSession && _userSettings.Settings.RemoteDesktop == AppWpRunRulesEnum.Silence)) {
                     ChangeWpState(AppWpRunRulesEnum.Silence);
                 }
-                else if (PowerUtil.GetACPowerStatus() == PowerUtil.ACLineStatus.Offline &&
+                else if (_powerService.GetACPowerStatus() == PowerUtil.ACLineStatus.Offline &&
                     _userSettings.Settings.BatteryPoweredn == AppWpRunRulesEnum.Pause) {
                     ChangeWpState(AppWpRunRulesEnum.Pause);
                 }
-                else if (PowerUtil.GetACPowerStatus() == PowerUtil.ACLineStatus.Offline &&
+                else if (_powerService.GetACPowerStatus() == PowerUtil.ACLineStatus.Offline &&
                     _userSettings.Settings.BatteryPoweredn == AppWpRunRulesEnum.Silence) {
                     ChangeWpState(AppWpRunRulesEnum.Silence);
                 }
-                else if (PowerUtil.GetBatterySaverStatus() == PowerUtil.SystemStatusFlag.On &&
+                else if (_powerService.GetBatterySaverStatus() == PowerUtil.SystemStatusFlag.On &&
                     _userSettings.Settings.PowerSaving == AppWpRunRulesEnum.Pause) {
                     ChangeWpState(AppWpRunRulesEnum.Pause);
                 }
-                else if (PowerUtil.GetBatterySaverStatus() == PowerUtil.SystemStatusFlag.On &&
+                else if (_powerService.GetBatterySaverStatus() == PowerUtil.SystemStatusFlag.On &&
                     _userSettings.Settings.PowerSaving == AppWpRunRulesEnum.Silence) {
                     ChangeWpState(AppWpRunRulesEnum.Silence);
                 }
@@ -169,7 +169,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
                 }
             }
             catch (Exception ex) {
-                App.Log.Error("Playback Changes for AppRules Error: ", ex);
+                ArcLog.GetLogger<Playback>().Error("Playback Changes for AppRules Error: ", ex);
                 //failed to get process info.. maybe remote process; resume playback.
                 ChangeWpState(AppWpRunRulesEnum.KeepRun);
                 return;
@@ -268,7 +268,7 @@ namespace VirtualPaper.Cores.PlaybackControl {
                 #endregion
             }
             catch (Exception ex) {
-                App.Log.Error("Playback Changes for Focus Error: ", ex);
+                ArcLog.GetLogger<Playback>().Error("Playback Changes for Focus Error: ", ex);
             }
             #endregion
         }
@@ -495,5 +495,10 @@ namespace VirtualPaper.Cores.PlaybackControl {
         private readonly IWallpaperControl _wpControl;
         private readonly IMonitorManager _monitorManger;
         private readonly IScrControl _scrControl;
+        private readonly IPowerService _powerService;
+
+        public void InvokeRunPlayback() => RunPlayback();
+        public void SimulateLockScreen(bool value) => _isLockScreen = value;
+        public void SimulateRemoteSession(bool value) => _isRemoteSession = value;
     }
 }

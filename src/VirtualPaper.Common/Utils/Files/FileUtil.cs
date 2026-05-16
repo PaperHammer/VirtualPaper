@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
+using Windows.Graphics.Imaging;
+using Windows.Storage;
 
 namespace VirtualPaper.Common.Utils.Files {
     public static class FileUtil {
@@ -293,9 +295,54 @@ namespace VirtualPaper.Common.Utils.Files {
             }
         }
 
+        public static string GetFileSize(string filePath) {
+            try {
+                FileInfo fi = new(filePath);
+                return SizeSuffix(fi.Length);
+            }
+            catch {
+                return "0 bytes";
+            }
+        }
+
+        public static async Task<StorageFile?> GetAppxFileAsync(string msAppxPath) {
+            try {
+                var uri = new Uri(msAppxPath);
+                string relativePath = uri.AbsolutePath.TrimStart('/');
+
+                string filePath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    relativePath.Replace('/', Path.DirectorySeparatorChar));
+                var sf = await StorageFile.GetFileFromPathAsync(filePath);
+                //var file = await StorageFile.GetFileFromApplicationUriAsync(uri); //todo?
+                return sf;
+            }
+            catch {
+                return null;
+            }
+        }
+
+        public static async Task<string> GetAppxFileSizeAsync(string msAppxPath) {
+            try {
+                var file = await GetAppxFileAsync(msAppxPath);
+                if (file == null) return "0 bytes";
+                var properties = await file.GetBasicPropertiesAsync();
+                return SizeSuffix((long)properties.Size);
+            }
+            catch {
+                return "0 bytes";
+            }
+        }
+
+        public static async Task<(uint Width, uint Height)> GetImageResolutionAsync(string filePath) {
+            var file = await StorageFile.GetFileFromPathAsync(filePath);
+            using var stream = await file.OpenReadAsync();
+            var decoder = await BitmapDecoder.CreateAsync(stream);
+            return (decoder.PixelWidth, decoder.PixelHeight);
+        }
+
         //ref: https://stackoverflow.com/questions/14488796/does-net-provide-an-easy-way-convert-bytes-to-kb-mb-gb-etc
-        static readonly string[] SizeSuffixes =
-                           ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+        static readonly string[] SizeSuffixes = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
         public static string SizeSuffix(long value, int decimalPlaces = 1) {
             ArgumentOutOfRangeException.ThrowIfNegative(decimalPlaces);
             if (value < 0) { return "-" + SizeSuffix(-value, decimalPlaces); }

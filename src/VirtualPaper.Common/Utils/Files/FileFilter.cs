@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace VirtualPaper.Common.Utils.Files {
     /// <summary>
@@ -6,29 +6,89 @@ namespace VirtualPaper.Common.Utils.Files {
     /// </summary>
     public class FileFilter {
         public static FileType GetFileType(string filePath) {
-            if (!File.Exists(filePath)) {
+            if (!TryReadHeader(filePath, out string extension, out string headerHex, out byte[] headerBytes, out int bytesRead)) {
                 return FileType.FUnknown;
             }
 
-            string extension = Path.GetExtension(filePath);
-            using FileStream fs = new(filePath, FileMode.Open, FileAccess.Read);
-            byte[] headerBytes = new byte[48];
-            fs.Read(headerBytes, 0, 48);
+            // WebP 特殊处理：RIFF 容器 + WEBP 标识
+            if (headerHex.StartsWith("52494646", StringComparison.OrdinalIgnoreCase)
+                && bytesRead >= 12
+                && headerHex.Length >= 24
+                && headerHex.Substring(16, 8) == "57454250"
+                && extension == ".webp") {
+                return FileType.FImage;
+            }
 
-            string headerHex = BitConverter.ToString(headerBytes).Replace("-", "").ToUpper();
+            // 通用签名匹配
+            foreach (var sig in _signatures) {
+                bool matched = sig.MustStartWith
+                    ? headerHex.StartsWith(sig.MagicHex, StringComparison.OrdinalIgnoreCase)
+                    : headerHex.Contains(sig.MagicHex, StringComparison.OrdinalIgnoreCase);
 
-            foreach (var entry in _fileHeaderMap) {
-                if (headerHex.Contains(entry.Key, StringComparison.OrdinalIgnoreCase)
-                    && FileTypeToExtension[entry.Value].Contains(extension.ToLower())) {
-                    return entry.Value;
+                if (matched && sig.ValidExtensions.Contains(extension)) {
+                    return sig.Type;
                 }
             }
 
+            // APNG 特殊处理：PNG 签名 + acTL chunk
             if (extension == ".apng"
                 && headerHex.StartsWith("89504E470D0A1A0A", StringComparison.OrdinalIgnoreCase)) {
-                string headerText = Encoding.ASCII.GetString(headerBytes);
+                string headerText = Encoding.ASCII.GetString(headerBytes, 0, bytesRead);
                 if (headerText.Contains("acTL")) {
-                    return FileType.FGif; // .apng
+                    return FileType.FGif;
+                }
+            }
+
+            return FileType.FUnknown;
+        }
+
+        /// <summary>
+        /// 在 <see cref="GetFileType"/> 基础上进行更精细的分类：
+        /// 对 AI 模型支持的光栅图像格式（jpg / jpeg / bmp / png / webp）做魔术头校验，
+        /// 验证通过则返回 <see cref="FileType.FimageAI"/>；其余格式回落到 <see cref="GetFileType"/> 的结果。
+        /// </summary>
+        public static FileType GetFileTypeFroImageAI(string filePath) {
+            if (!TryReadHeader(filePath, out string extension, out string headerHex, out byte[] headerBytes, out int bytesRead)) {
+                return FileType.FUnknown;
+            }
+
+            // WebP 特殊处理 → FimageAI
+            if (headerHex.StartsWith("52494646", StringComparison.OrdinalIgnoreCase)
+                && bytesRead >= 12
+                && headerHex.Length >= 24
+                && headerHex.Substring(16, 8) == "57454250"
+                && extension == ".webp") {
+                return FileType.FimageAI;
+            }
+
+            // 优先匹配 AI 签名
+            foreach (var sig in _signaturesAI) {
+                bool matched = sig.MustStartWith
+                    ? headerHex.StartsWith(sig.MagicHex, StringComparison.OrdinalIgnoreCase)
+                    : headerHex.Contains(sig.MagicHex, StringComparison.OrdinalIgnoreCase);
+
+                if (matched && sig.ValidExtensions.Contains(extension)) {
+                    return sig.Type;
+                }
+            }
+
+            // 回落到通用签名（FGif / FVideo / FImage(svg) 等）
+            foreach (var sig in _signatures) {
+                bool matched = sig.MustStartWith
+                    ? headerHex.StartsWith(sig.MagicHex, StringComparison.OrdinalIgnoreCase)
+                    : headerHex.Contains(sig.MagicHex, StringComparison.OrdinalIgnoreCase);
+
+                if (matched && sig.ValidExtensions.Contains(extension)) {
+                    return sig.Type;
+                }
+            }
+
+            // APNG 特殊处理
+            if (extension == ".apng"
+                && headerHex.StartsWith("89504E470D0A1A0A", StringComparison.OrdinalIgnoreCase)) {
+                string headerText = Encoding.ASCII.GetString(headerBytes, 0, bytesRead);
+                if (headerText.Contains("acTL")) {
+                    return FileType.FGif;
                 }
             }
 
@@ -49,26 +109,81 @@ namespace VirtualPaper.Common.Utils.Files {
             [FileType.FGif] = [".gif", ".apng"],
             [FileType.FVideo] = [".mp4", ".webm"],
             [FileType.FDesign] = [FileExtension.FE_Design],
-            //[FileType.FProject] = [FileExtension.FE_Project],
+            [FileType.FimageAI] = FImageAIExts,
         };
+
+        /// <summary>
+        /// AI 模型（超分辨率、风格迁移等）支持处理的光栅图像格式。
+        /// 不含 <c>.svg</c>：OpenCV <c>ImRead</c> 无法解析矢量格式。
+        /// </summary>
+        public static string[] FImageAIExts => [".jpg", ".jpeg", ".png", ".bmp", ".webp"];
 
         public static string[] AvatarFilter =>
             [".jpg", ".bmp", ".png", ".jpe", ".gif", ".tif", ".tiff", ".heic", ".heif", ".heics", ".heifs", ".avif", ".avifs"];
 
-        private static readonly Dictionary<string, FileType> _fileHeaderMap = new()
-        {
-            {"FFD8FF", FileType.FImage}, // .jpg .jpeg
-            {"424D", FileType.FImage}, // .bmp
-            {"89504E470D0A1A0A", FileType.FImage}, // .png
-            {"3C737667", FileType.FImage}, // .svg
-            {"3C3F786D", FileType.FImage}, // .svg
-            {"52494646", FileType.FImage}, // .webp
+        /// <summary>
+        /// 读取文件头部字节，失败（文件不存在或过短）时返回 false。
+        /// </summary>
+        private static bool TryReadHeader(
+            string filePath,
+            out string extension,
+            out string headerHex,
+            out byte[] headerBytes,
+            out int bytesRead) {
 
-            {"474946383961", FileType.FGif}, // .gif
-            {"acTL", FileType.FGif}, // .anpg
+            extension = string.Empty;
+            headerHex = string.Empty;
+            headerBytes = [];
+            bytesRead = 0;
 
-            {"66747970", FileType.FVideo}, // .mp4
-            {"1A45DFA3", FileType.FVideo}, // .webm
-        };
+            if (!File.Exists(filePath)) return false;
+
+            extension = Path.GetExtension(filePath).ToLower();
+            headerBytes = new byte[48];
+
+            using (FileStream fs = new(filePath, FileMode.Open, FileAccess.Read)) {
+                bytesRead = fs.Read(headerBytes, 0, 48);
+            }
+
+            if (bytesRead < 4) return false;
+
+            headerHex = BitConverter.ToString(headerBytes, 0, bytesRead)
+                                    .Replace("-", "").ToUpper();
+            return true;
+        }
+
+        private record FileSignature(
+            string MagicHex,
+            FileType Type,
+            string[] ValidExtensions,
+            bool MustStartWith = false
+        );
+
+        private static readonly FileSignature[] _signatures = [
+            // Image
+            new("FFD8FF",           FileType.FImage, [".jpg", ".jpeg"],  MustStartWith: true),
+            new("424D",             FileType.FImage, [".bmp"],           MustStartWith: true),
+            new("89504E470D0A1A0A", FileType.FImage, [".png"],           MustStartWith: true),
+            new("3C737667",         FileType.FImage, [".svg"],           MustStartWith: true),  // <svg
+            new("3C3F786D",         FileType.FImage, [".svg"],           MustStartWith: true),  // <?xm
+
+            // GIF
+            new("474946383961",     FileType.FGif,   [".gif"],           MustStartWith: true),  // GIF89a
+            new("474946383761",     FileType.FGif,   [".gif"],           MustStartWith: true),  // GIF87a
+
+            // Video
+            new("66747970",         FileType.FVideo, [".mp4"],           MustStartWith: false), // ftyp 在偏移 4
+            new("1A45DFA3",         FileType.FVideo, [".webm"],          MustStartWith: true),  // EBML
+        ];
+
+        /// <summary>
+        /// AI 场景专用签名：与 <see cref="_signatures"/> 中的光栅图像条目对应，
+        /// 但类型为 <see cref="FileType.FimageAI"/>，不含 svg 等矢量格式。
+        /// </summary>
+        private static readonly FileSignature[] _signaturesAI = [
+            new("FFD8FF",           FileType.FimageAI, [".jpg", ".jpeg"],  MustStartWith: true),
+            new("424D",             FileType.FimageAI, [".bmp"],           MustStartWith: true),
+            new("89504E470D0A1A0A", FileType.FimageAI, [".png"],           MustStartWith: true),
+        ];
     }
 }

@@ -1,0 +1,359 @@
+name: Auto Version & Build on Main Merge
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false  # 同一时间只允许一个构建，确保版本号不发生竞争
+
+permissions:
+  contents: write
+  statuses: write
+
+jobs:
+  auto-version-and-build:
+    runs-on: windows-latest
+    # 仅在 PR 被合并时运行（关闭但未合并不触发）
+    if: github.event.pull_request.merged == true
+
+    steps:
+    - name: Checkout with full history
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Record original branch SHAs
+      id: original_shas
+      shell: powershell
+      run: |
+        # 记录 main 当前 HEAD
+        $mainSha = git rev-parse HEAD
+        Write-Output "main_sha=$mainSha" >> $env:GITHUB_OUTPUT
+        Write-Host "main SHA: $mainSha"
+
+        # 尝试记录 dev 分支 HEAD
+        git fetch origin dev 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            $devSha = git rev-parse origin/dev
+            Write-Output "dev_sha=$devSha" >> $env:GITHUB_OUTPUT
+            Write-Host "dev SHA: $devSha"
+        } else {
+            Write-Output "dev_sha=" >> $env:GITHUB_OUTPUT
+            Write-Host "dev branch not found"
+        }
+
+        # 尝试记录 bugfix 分支 HEAD
+        git fetch origin bugfix 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            $bugfixSha = git rev-parse origin/bugfix
+            Write-Output "bugfix_sha=$bugfixSha" >> $env:GITHUB_OUTPUT
+            Write-Host "bugfix SHA: $bugfixSha"
+        } else {
+            Write-Output "bugfix_sha=" >> $env:GITHUB_OUTPUT
+            Write-Host "bugfix branch not found"
+        }
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install Inno Setup
+      run: |
+        Invoke-WebRequest -Uri "https://jrsoftware.org/download.php/is.exe" -OutFile "innosetup.exe"
+        Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
+      shell: powershell
+
+    - name: Determine source branch and version increment
+      id: branch_info
+      shell: powershell
+      env:
+        PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      run: |
+        # 直接从 PR 事件上下文获取来源分支，通过 env 传入避免脚本注入
+        $sourceBranch = $env:PR_HEAD_REF
+        $incrementType = "patch"  # 默认第4位+1
+
+        if ($sourceBranch -eq "dev") {
+            $incrementType = "minor"  # 第3位+1
+            Write-Host "Source branch: dev - incrementing minor version"
+        }
+        elseif ($sourceBranch -eq "bugfix") {
+            $incrementType = "patch"  # 第4位+1
+            Write-Host "Source branch: bugfix - incrementing patch version"
+        }
+        else {
+            Write-Host "Unknown source branch: $sourceBranch - defaulting to patch"
+        }
+
+        Write-Output "source_branch=$sourceBranch" >> $env:GITHUB_OUTPUT
+        Write-Output "increment_type=$incrementType" >> $env:GITHUB_OUTPUT
+
+        Write-Host "Source branch: $sourceBranch"
+        Write-Host "Increment type: $incrementType"
+
+    - name: Get and update version
+      id: version
+      shell: powershell
+      run: |
+        # 读取 csproj 文件中的版本号
+        $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
+        $content = Get-Content $csprojPath -Raw
+        $versionMatch = [regex]::Match($content, '<AssemblyVersion>(\d+)\.(\d+)\.(\d+)\.(\d+)</AssemblyVersion>')
+
+        if (-not $versionMatch.Success) {
+            Write-Error "Could not parse version from csproj file"
+            exit 1
+        }
+
+        $major = [int]$versionMatch.Groups[1].Value
+        $minor = [int]$versionMatch.Groups[2].Value
+        $build = [int]$versionMatch.Groups[3].Value
+        $revision = [int]$versionMatch.Groups[4].Value
+
+        $currentVersion = "$major.$minor.$build.$revision"
+        Write-Host "Current version: $currentVersion"
+
+        # 根据分支类型更新版本号
+        $incrementType = "${{ steps.branch_info.outputs.increment_type }}"
+        if ($incrementType -eq "minor") {
+            $build = $build + 1
+            $revision = 0  # 重置第4位
+            Write-Host "Incrementing build version (3rd position)"
+        } else {
+            $revision = $revision + 1
+            Write-Host "Incrementing revision version (4th position)"
+        }
+
+        $newVersion = "$major.$minor.$build.$revision"
+        $newVersionText = "$major$minor$build$revision"
+
+        Write-Host "New version: $newVersion"
+        Write-Host "New version text: $newVersionText"
+
+        # 输出到 GITHUB_OUTPUT
+        Write-Output "current_version=$currentVersion" >> $env:GITHUB_OUTPUT
+        Write-Output "new_version=$newVersion" >> $env:GITHUB_OUTPUT
+        Write-Output "new_version_text=$newVersionText" >> $env:GITHUB_OUTPUT
+        Write-Output "major=$major" >> $env:GITHUB_OUTPUT
+        Write-Output "minor=$minor" >> $env:GITHUB_OUTPUT
+        Write-Output "build=$build" >> $env:GITHUB_OUTPUT
+        Write-Output "revision=$revision" >> $env:GITHUB_OUTPUT
+
+    - name: Update version in csproj
+      shell: powershell
+      run: |
+        $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
+        $content = Get-Content $csprojPath -Raw
+        $newVersion = "${{ steps.version.outputs.new_version }}"
+
+        $newContent = $content -replace '<AssemblyVersion>\d+\.\d+\.\d+\.\d+</AssemblyVersion>', "<AssemblyVersion>$newVersion</AssemblyVersion>"
+        Set-Content $csprojPath -Value $newContent -NoNewline
+
+        Write-Host "Updated csproj version to: $newVersion"
+
+    - name: Update version in InnoSetup script
+      shell: powershell
+      run: |
+        $setupPath = "InnoSetup/setup.iss"
+        $content = Get-Content $setupPath -Raw
+        $newVersion = "${{ steps.version.outputs.new_version }}"
+        $newVersionText = "${{ steps.version.outputs.new_version_text }}"
+
+        # 更新版本号
+        $newContent = $content -replace '#define MyAppVersion "[\d\.]+"', "#define MyAppVersion `"$newVersion`""
+        $newContent = $newContent -replace '#define MyAppVersionText "[\d]+"', "#define MyAppVersionText `"$newVersionText`""
+
+        Set-Content $setupPath -Value $newContent -NoNewline
+
+        Write-Host "Updated InnoSetup version to: $newVersion"
+        Write-Host "Updated InnoSetup version text to: $newVersionText"
+
+    - name: Update version badge in README
+      shell: powershell
+      run: |
+        $readmePath = "README.md"
+        $content = Get-Content $readmePath -Raw
+        $newVersion = "${{ steps.version.outputs.new_version }}"
+
+        # 匹配并替换 shields.io badge 中的版本号，例如：
+        # [![GitHub release](https://img.shields.io/badge/release-v0.4.0.1-blue)]
+        $newContent = $content -replace '(img\.shields\.io/badge/release-v)[\d\.]+(-blue)', "`${1}$newVersion`$2"
+
+        Set-Content $readmePath -Value $newContent -NoNewline
+
+        Write-Host "Updated README badge version to: $newVersion"
+
+    - name: Build Release
+      run: |
+        dotnet restore src/VirtualPaper.sln
+        dotnet build src/VirtualPaper.sln --configuration Release --no-restore
+
+    - name: Create installer with InnoSetup
+      id: build_installer
+      shell: powershell
+      run: |
+        $isccPath = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+        if (-not (Test-Path $isccPath)) {
+            $isccPath = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+        }
+
+        if (-not (Test-Path $isccPath)) {
+            Write-Error "Inno Setup compiler not found!"
+            exit 1
+        }
+
+        Write-Host "Using ISCC at: $isccPath"
+
+        # 编译安装程序
+        & "$isccPath" "InnoSetup\setup.iss"
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "InnoSetup compilation failed!"
+            exit 1
+        }
+
+        # 查找生成的安装程序
+        $outputDir = "InnoSetup\Output"
+        $installerFiles = Get-ChildItem -Path $outputDir -Filter "*.exe" -ErrorAction SilentlyContinue
+
+        if ($installerFiles.Count -eq 0) {
+            Write-Error "No installer found in output directory!"
+            exit 1
+        }
+
+        $installerPath = $installerFiles[0].FullName
+        Write-Host "Installer created: $installerPath"
+
+        # 输出安装程序信息
+        Write-Output "installer_path=$installerPath" >> $env:GITHUB_OUTPUT
+        Write-Output "installer_name=$($installerFiles[0].Name)" >> $env:GITHUB_OUTPUT
+
+    - name: Configure Git and commit version changes
+      shell: powershell
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
+        git commit -m "[Github CI] chore: bump version to ${{ steps.version.outputs.new_version }} [skip ci]"
+        git push origin main
+
+    - name: Upload installer as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: VirtualPaper-installer-v${{ steps.version.outputs.new_version }}
+        path: ${{ steps.build_installer.outputs.installer_path }}
+        retention-days: 30
+
+    - name: Sync version back to source branch
+      shell: powershell
+      run: |
+        $sourceBranch = "${{ steps.branch_info.outputs.source_branch }}"
+
+        if ($sourceBranch -eq "dev" -or $sourceBranch -eq "bugfix") {
+            Write-Host "Syncing version back to $sourceBranch branch..."
+
+            # 切换到源分支（明确基于远端 ref 建立本地分支，避免 checkout 找不到路径）
+            git checkout -B $sourceBranch origin/$sourceBranch
+
+            # 合并版本更新（--ff-only 确保只做快进合并，避免产生多余 merge commit）
+            git merge main --ff-only
+            git push origin $sourceBranch
+
+            Write-Host "Version synced to $sourceBranch branch"
+        } else {
+            Write-Host "Unknown source branch: $sourceBranch, skipping sync"
+        }
+
+    - name: Summary
+      shell: powershell
+      run: |
+        Write-Host ""
+        Write-Host "================= Build Complete =================" -ForegroundColor Green
+        Write-Host "Project : VirtualPaper"
+        Write-Host "Version : ${{ steps.version.outputs.current_version }} -> ${{ steps.version.outputs.new_version }}" -ForegroundColor Cyan
+        Write-Host "Source  : ${{ steps.branch_info.outputs.source_branch }} -> main"
+        Write-Host "Type    : ${{ steps.branch_info.outputs.increment_type == 'minor' && 'Feature Update' || 'Bugfix Update' }}"
+        Write-Host "Package : ${{ steps.build_installer.outputs.installer_name }}" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version updated and committed to main"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version synced to ${{ steps.branch_info.outputs.source_branch }}"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Installer uploaded as Artifact"
+        Write-Host "============================================" -ForegroundColor Green
+
+    - name: Rollback on failure
+      if: failure()
+      shell: powershell
+      run: |
+        Write-Host ""
+        Write-Host "[WARN]" -ForegroundColor Yellow -NoNewline; Write-Host " Pipeline failure detected, starting rollback..."
+
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+        # 拉取最新远端状态
+        git fetch origin 2>&1 | Out-Null
+
+        $mainSha     = "${{ steps.original_shas.outputs.main_sha }}"
+        $devSha      = "${{ steps.original_shas.outputs.dev_sha }}"
+        $bugfixSha   = "${{ steps.original_shas.outputs.bugfix_sha }}"
+        $sourceBranch = "${{ steps.branch_info.outputs.source_branch }}"
+
+        # --- 回滚 main ---
+        if ($mainSha) {
+            $currentMain = git rev-parse origin/main 2>&1
+            if ($LASTEXITCODE -eq 0 -and $currentMain -ne $mainSha) {
+                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " main: $currentMain -> $mainSha"
+                git checkout -B main origin/main
+                git reset --hard $mainSha
+                # 追加空 commit，防止 force push 后再次触发本 workflow
+                git commit --allow-empty -m "[Github CI] rollback: reverted version bump [skip ci]"
+                git push --force origin main
+                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " main rolled back"
+            } else {
+                Write-Host "[SKIP] main: no changes detected, rollback not needed"
+            }
+        }
+
+        # --- 回滚源分支（dev / bugfix）---
+        if ($sourceBranch -eq "dev" -and $devSha) {
+            $currentDev = git rev-parse origin/dev 2>&1
+            if ($LASTEXITCODE -eq 0 -and $currentDev -ne $devSha) {
+                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " dev: $currentDev -> $devSha"
+                git checkout -B dev origin/dev
+                git reset --hard $devSha
+                # dev/bugfix 不加空 commit，避免分支分叉导致下次 --ff-only sync 失败
+                git push --force origin dev
+                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " dev rolled back"
+            } else {
+                Write-Host "[SKIP] dev: no changes detected, rollback not needed"
+            }
+        }
+        elseif ($sourceBranch -eq "bugfix" -and $bugfixSha) {
+            $currentBugfix = git rev-parse origin/bugfix 2>&1
+            if ($LASTEXITCODE -eq 0 -and $currentBugfix -ne $bugfixSha) {
+                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " bugfix: $currentBugfix -> $bugfixSha"
+                git checkout -B bugfix origin/bugfix
+                git reset --hard $bugfixSha
+                # dev/bugfix 不加空 commit，避免分支分叉导致下次 --ff-only sync 失败
+                git push --force origin bugfix
+                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " bugfix rolled back"
+            } else {
+                Write-Host "[SKIP] bugfix: no changes detected, rollback not needed"
+            }
+        }
+
+        Write-Host ""
+        Write-Host "================ Build Failed ================" -ForegroundColor Red
+        Write-Host "[ERROR]" -ForegroundColor Red -NoNewline; Write-Host " Please check the following:"
+        Write-Host "  - .NET 8.0 build result"
+        Write-Host "  - InnoSetup script correctness"
+        Write-Host "  - Version format validity"
+        Write-Host "  - GitHub Token permissions"
+        Write-Host "==========================================" -ForegroundColor Red

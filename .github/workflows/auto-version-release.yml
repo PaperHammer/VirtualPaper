@@ -24,7 +24,9 @@ jobs:
   prepare:
     name: Prepare - Calculate Version & Record SHAs
     runs-on: windows-latest
-    if: github.event.pull_request.merged == true
+    if: |
+      github.event.pull_request.merged == true &&
+      !contains(github.event.pull_request.title, '[skip ci]')
     outputs:
       source_branch: ${{ steps.branch_info.outputs.source_branch }}
       increment_type: ${{ steps.branch_info.outputs.increment_type }}
@@ -544,7 +546,9 @@ jobs:
         Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version ${{ needs.prepare.outputs.new_version }} committed to main"
 
   # ─────────────────────────────────────────────────────────────
-  # Job 6: 将版本号同步到 pre-publish branches
+  # Job 6: 将 main 同步到 pre-publish branches
+  #   策略1: git merge main -X theirs（全量合并，冲突以 main 为准）
+  #   策略2: checkout -- <version-files>（fallback，仅同步版本文件）
   # ─────────────────────────────────────────────────────────────
   sync:
     name: Sync Version to Pre-publish Branches
@@ -558,7 +562,7 @@ jobs:
         token: ${{ secrets.RELEASE_PAT }}
         fetch-depth: 0
 
-    - name: Sync version files to pre-publish branches
+    - name: Sync main -> pre-publish branches (merge preferred, fallback file sync)
       shell: powershell
       run: |
         $newVersion = "${{ needs.prepare.outputs.new_version }}"
@@ -573,24 +577,42 @@ jobs:
 
         foreach ($branch in @("release", "dev", "bugfix")) {
             Write-Host ""
-            Write-Host "--- Syncing version to $branch ---"
+            Write-Host "--- Syncing main -> $branch ---"
 
             git checkout -B $branch origin/$branch
 
-            # 直接从 origin/main 取版本相关文件，无需 merge，不产生冲突
-            git checkout origin/main -- src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
-            Write-Host "  [OK] version files pulled from origin/main"
+            # 策略 1：尝试将 main 全量合并到当前分支
+            #   -X theirs: 冲突时自动以 main 为准，无需人工介入
+            $mergeOutput = git merge origin/main --no-edit -X theirs 2>&1
+            $mergeExit = $LASTEXITCODE
 
-            git add src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
-
-            # 若无变更则跳过 commit（分支本来就在最新版本时）
-            $status = git status --porcelain
-            if ($status) {
-                git commit -m "[Github CI] chore: sync version $newVersion from main [skip ci]"
+            if ($mergeExit -eq 0) {
+                # 合并成功（含自动解决的冲突）或 Already up to date
+                if ($mergeOutput -match 'Already up to date') {
+                    Write-Host "[SKIP] $branch already up to date with main"
+                    continue
+                }
+                Write-Host "  [OK] main merged into $branch (conflicts auto-resolved with -X theirs)"
                 git push origin $branch
-                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version $newVersion synced to $branch"
-            } else {
-                Write-Host "[SKIP] $branch already at version $newVersion"
+                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " $branch fully synced with main"
+            }
+            else {
+                # 策略 2（fallback）：merge 无法自动解决 → 放弃，仅同步版本文件
+                Write-Host "  [WARN]" -ForegroundColor Yellow -NoNewline; Write-Host " merge has unresolvable conflicts, fallback to file-only sync"
+                git merge --abort
+
+                git checkout origin/main -- src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
+                Write-Host "  [OK] version files pulled from origin/main"
+
+                git add src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
+                $status = git status --porcelain
+                if ($status) {
+                    git commit -m "[Github CI] chore: sync version $newVersion (fallback) [skip ci]"
+                    git push origin $branch
+                    Write-Host "[WARN]" -ForegroundColor Yellow -NoNewline; Write-Host " $branch version files synced (full merge skipped due to unresolvable conflicts)"
+                } else {
+                    Write-Host "[SKIP] $branch already at version $newVersion"
+                }
             }
         }
 
@@ -696,51 +718,30 @@ jobs:
         git fetch origin 2>&1 | Out-Null
         $ErrorActionPreference = 'Stop'
 
-        $mainSha = "${{ needs.prepare.outputs.main_sha }}"
-        $devSha = "${{ needs.prepare.outputs.dev_sha }}"
-        $bugfixSha = "${{ needs.prepare.outputs.bugfix_sha }}"
-        $releaseSha = "${{ needs.prepare.outputs.release_sha }}"
-
-        # --- 回滚 main ---
-        if ($mainSha) {
-            $ErrorActionPreference = 'Continue'
-            $currentMain = git rev-parse origin/main 2>&1
-            $ErrorActionPreference = 'Stop'
-            if ($LASTEXITCODE -eq 0 -and $currentMain -ne $mainSha) {
-                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " main: reverting version bump commit"
-                git checkout -B main origin/main
-                git revert HEAD --no-commit
-                git commit -m "[Github CI] rollback: revert version bump [skip ci]"
-                git push origin main
-                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " main rolled back"
-            } else {
-                Write-Host "[SKIP] main: no changes detected, rollback not needed"
-            }
+        # 使用 reset --hard 而非 revert，因为 sync 可能产生 merge commit，
+        # revert merge commit 需要 -m 指定主线，直接 reset 更可靠
+        $shaMap = @{
+            "main"    = "${{ needs.prepare.outputs.main_sha }}"
+            "release" = "${{ needs.prepare.outputs.release_sha }}"
+            "dev"     = "${{ needs.prepare.outputs.dev_sha }}"
+            "bugfix"  = "${{ needs.prepare.outputs.bugfix_sha }}"
         }
 
-        # --- 回滚 pre-publish branches (release / dev / bugfix) ---
-        $branchShaMap = @{
-            "release" = $releaseSha
-            "dev"     = $devSha
-            "bugfix"  = $bugfixSha
-        }
-
-        foreach ($b in $branchShaMap.Keys) {
-            $targetSha = $branchShaMap[$b]
+        foreach ($branch in $shaMap.Keys) {
+            $targetSha = $shaMap[$branch]
             if (-not $targetSha) { continue }
 
             $ErrorActionPreference = 'Continue'
-            $currentSha = git rev-parse origin/$b 2>&1
+            $currentSha = git rev-parse origin/$branch 2>&1
             $ErrorActionPreference = 'Stop'
+
             if ($LASTEXITCODE -eq 0 -and $currentSha -ne $targetSha) {
-                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " ${b}: reverting version sync commit"
-                git checkout -B $b origin/$b
-                git revert HEAD --no-commit
-                git commit -m "[Github CI] rollback: revert version sync [skip ci]"
-                git push origin $b
-                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " $b rolled back"
+                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " ${branch}: resetting to $($targetSha.Substring(0,7))"
+                git checkout -B $branch $targetSha
+                git push --force-with-lease origin $branch
+                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " $branch reset to pre-CI state"
             } else {
-                Write-Host "[SKIP] ${b}: no changes detected, rollback not needed"
+                Write-Host "[SKIP] ${branch}: no changes detected, rollback not needed"
             }
         }
 

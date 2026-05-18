@@ -30,6 +30,11 @@
     <BitmapImage x:Key="PresetStyles_ColoredPencil" UriSource="ms-appx:///Assets/intelligent/preset_styles/colored_pencil.jpg"/>
     <BitmapImage x:Key="PresetStyles_OutlineDrawing" UriSource="ms-appx:///Assets/intelligent/preset_styles/outline_drawing.jpg"/>
     <BitmapImage x:Key="PresetStyles_Ukiyoe" UriSource="ms-appx:///Assets/intelligent/preset_styles/ukiyo-e.jpg"/>
+    
+    <BitmapImage x:Key="Intelli_Demo_StyleTransfer_Origin" UriSource="ms-appx:///Assets/intelligent/demo/style_transfer/origin.jpg"/>
+    <BitmapImage x:Key="Intelli_Demo_StyleTransfer_Result" UriSource="ms-appx:///Assets/intelligent/demo/style_transfer/result.jpg"/>
+    <BitmapImage x:Key="Intelli_Demo_SuperResolution_Origin" UriSource="ms-appx:///Assets/intelligent/demo/super_resolution/origin.jpg"/>
+    <BitmapImage x:Key="Intelli_Demo_SuperResolution_Result" UriSource="ms-appx:///Assets/intelligent/demo/super_resolution/result.jpg"/>
 
     <Style x:Key="RightExpanderStyle" TargetType="Expander">
         <Setter Property="HorizontalAlignment" Value="Stretch"/>

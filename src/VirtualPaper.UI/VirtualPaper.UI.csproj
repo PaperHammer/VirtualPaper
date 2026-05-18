@@ -68,6 +68,10 @@
 
 	<ItemGroup>
 		<None Remove="Assets\icon-vp-512.png" />
+		<None Remove="Assets\intelligent\demo\style_transfer\origin.jpg" />
+		<None Remove="Assets\intelligent\demo\style_transfer\result.jpg" />
+		<None Remove="Assets\intelligent\demo\super_resolution\origin.jpg" />
+		<None Remove="Assets\intelligent\demo\super_resolution\result.jpg" />
 		<None Remove="Assets\LockScreenLogo.scale-200.png" />
 		<None Remove="Assets\splashCol_1400x1400_with_round40.png" />
 		<None Remove="Assets\SplashScreen.scale-200.png" />
@@ -117,6 +121,18 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Content Update="Assets\icon-vp-512.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\demo\style_transfer\origin.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\demo\style_transfer\result.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\demo\super_resolution\origin.jpg">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\intelligent\demo\super_resolution\result.jpg">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 

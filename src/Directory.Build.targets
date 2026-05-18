@@ -1,0 +1,9 @@
+<Project>
+
+  <Target Name="CleanBinFolders" AfterTargets="Clean">
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\bin"
+               Condition="Exists('$(MSBuildProjectDirectory)\bin')" />
+    <Message Text="[Clean] Removed bin\ for $(MSBuildProjectName)" Importance="normal" />
+  </Target>
+
+</Project>

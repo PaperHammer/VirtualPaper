@@ -17,11 +17,88 @@
 		<Folder Include="Plugins\" />
 	</ItemGroup>
 
+	<!-- Prevent WPF SDK from treating any file under Plugins\ as part of this project.
+	     Without this, .xaml files copied there by plugin builds (e.g. VirtualPaper.WpSettingsPanel)
+	     are picked up by the WinFX glob on the second Rebuild and cause BG1002 / BG1003 errors. -->
 	<ItemGroup>
-		<Content Include="Plugins\**">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
+		<Page                   Remove="Plugins\**" />
+		<ApplicationDefinition  Remove="Plugins\**" />
+		<Resource               Remove="Plugins\**" />
+		<Compile                Remove="Plugins\**" />
+		<Content                Remove="Plugins\**" />
+		<None                   Remove="Plugins\**" />
+		<EmbeddedResource       Remove="Plugins\**" />
 	</ItemGroup>
+
+	<!-- ===================================================================
+	     插件构建顺序声明
+	     使用 ReferenceOutputAssembly=false + Private=false 的 ProjectReference，
+	     仅向 MSBuild / VS 声明"必须先构建插件"，不引用任何输出程序集，
+	     也不会把插件的 dll/exe 复制到本项目的输出目录。
+	     VS "重新生成解决方案" 和命令行 msbuild 均遵守此依赖顺序。
+	     =================================================================== -->
+	<ItemGroup>
+		<!-- VirtualPaper.UI 是 WinUI 3 / Windows App SDK 项目，必须以 x64 构建 -->
+		<ProjectReference Include="..\VirtualPaper.UI\VirtualPaper.UI.csproj"
+		                  ReferenceOutputAssembly="false"
+		                  SkipGetTargetFrameworkProperties="true"
+		                  Private="false"
+		                  AdditionalProperties="Platform=x64" />
+		<ProjectReference Include="..\VirtualPaper.ScreenSaver\VirtualPaper.ScreenSaver.csproj"
+		                  ReferenceOutputAssembly="false"
+		                  SkipGetTargetFrameworkProperties="true"
+		                  Private="false" />
+		<ProjectReference Include="..\VirtualPaper.PlayerWeb\VirtualPaper.PlayerWeb.csproj"
+		                  ReferenceOutputAssembly="false"
+		                  SkipGetTargetFrameworkProperties="true"
+		                  Private="false" />
+		<ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj"
+		                  ReferenceOutputAssembly="false"
+		                  SkipGetTargetFrameworkProperties="true"
+		                  Private="false" />
+	</ItemGroup>
+
+	<!-- Plugins 目录内容在运行时动态复制，不使用静态 Content glob -->
+	<!-- 原因：<Content Include="Plugins\**"> 在项目评估阶段展开，早于插件项目构建，会导致漏文件 -->
+	<!-- AfterTargets="Build" 确保在主项目编译完成、输出目录已创建之后再执行复制 -->
+	<Target Name="CopyPluginsToOutput" AfterTargets="Build">
+		<ItemGroup>
+			<_PluginFiles Include="$(MSBuildProjectDirectory)\Plugins\**\*"
+			              Exclude="$(MSBuildProjectDirectory)\Plugins\**\*.pdb;
+			                       $(MSBuildProjectDirectory)\Plugins\**\*.xml" />
+		</ItemGroup>
+		<Copy SourceFiles="@(_PluginFiles)"
+		      DestinationFiles="@(_PluginFiles->'$(OutDir)Plugins\%(RecursiveDir)%(Filename)%(Extension)')"
+		      SkipUnchangedFiles="true"
+		      OverwriteReadOnlyFiles="true" />
+		<Message Text="[Copy] Plugins → $(OutDir)Plugins\" Importance="normal" />
+	</Target>
+
+	<!-- 构建完成后校验：确认各插件 exe 已复制到输出目录的 Plugins 子目录中 -->
+	<!-- AfterTargets="CopyPluginsToOutput" 保证在复制完成后才做存在性检查 -->
+	<Target Name="VerifyPluginExes" AfterTargets="CopyPluginsToOutput">
+		<PropertyGroup>
+			<_PluginOutDir>$(OutDir)Plugins\</_PluginOutDir>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<_ExpectedPluginExe Include="$(_PluginOutDir)UI\VirtualPaper.UI.exe" />
+			<_ExpectedPluginExe Include="$(_PluginOutDir)PlayerWeb\VirtualPaper.PlayerWeb.exe" />
+			<_ExpectedPluginExe Include="$(_PluginOutDir)ScrSaver\VirtualPaper.ScreenSaver.exe" />
+		</ItemGroup>
+
+		<Error
+			Condition="!Exists('$(_PluginOutDir)UI\VirtualPaper.UI.exe')"
+			Text="[PluginCheck] Missing plugin exe: $(_PluginOutDir)UI\VirtualPaper.UI.exe" />
+		<Error
+			Condition="!Exists('$(_PluginOutDir)PlayerWeb\VirtualPaper.PlayerWeb.exe')"
+			Text="[PluginCheck] Missing plugin exe: $(_PluginOutDir)PlayerWeb\VirtualPaper.PlayerWeb.exe" />
+		<Error
+			Condition="!Exists('$(_PluginOutDir)ScrSaver\VirtualPaper.ScreenSaver.exe')"
+			Text="[PluginCheck] Missing plugin exe: $(_PluginOutDir)ScrSaver\VirtualPaper.ScreenSaver.exe" />
+
+		<Message Text="[PluginCheck] All plugin exes are present: UI / PlayerWeb / ScrSaver" Importance="high" />
+	</Target>
 
 	<ItemGroup>
 		<Content Include="Nlog.config">

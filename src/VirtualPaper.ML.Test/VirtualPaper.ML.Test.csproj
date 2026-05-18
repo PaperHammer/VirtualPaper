@@ -7,6 +7,13 @@
 		<Nullable>enable</Nullable>
 		<UseVSTest>true</UseVSTest>
 	</PropertyGroup>
+	
+	<!-- Ensure VirtualPaper.ML finishes building before this test project compiles.
+	     Mirrors the BuildPluginsFirst pattern used in VirtualPaper.csproj. -->
+	<Target Name="BuildDependenciesFirst" BeforeTargets="Build">
+		<MSBuild Projects="..\VirtualPaper.ML\VirtualPaper.ML.csproj"
+		         Properties="Configuration=$(Configuration)" />
+	</Target>
 
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj" />

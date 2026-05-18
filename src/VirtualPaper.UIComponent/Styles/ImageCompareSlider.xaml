@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="VirtualPaper.UIComponent.Styles.ImageCompareSlider"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    SizeChanged="OnSizeChanged">
+
+    <Grid x:Name="RootGrid">
+        <Image x:Name="BeforeImage"
+               Source="{x:Bind BeforeImageSourceKey, Converter={StaticResource ResourceKeyToImageConverter}}"
+               Stretch="UniformToFill"
+               HorizontalAlignment="Stretch"
+               VerticalAlignment="Stretch"/>
+
+        <Image x:Name="AfterImage"
+               Source="{x:Bind AfterImageSourceKey, Converter={StaticResource ResourceKeyToImageConverter}}"
+               Stretch="UniformToFill"
+               HorizontalAlignment="Stretch"
+               VerticalAlignment="Stretch"/>
+
+        <!-- 
+            分割线容器：
+            - Width 设为把手直径（28），确保子元素不被裁切
+            - 线条和把手都在内部居中
+            - 整体通过 Composition Offset.X 平移
+        -->
+        <Grid x:Name="DividerPanel"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Stretch"
+              Width="28"
+              IsHitTestVisible="False">
+
+            <!-- 主线条：居中的 3px 竖线 -->
+            <Rectangle HorizontalAlignment="Center"
+                       VerticalAlignment="Stretch"
+                       Width="3"
+                       RadiusX="1.5"
+                       RadiusY="1.5"
+                       Fill="{ThemeResource SolidBackgroundFillColorBaseBrush}"/>
+
+            <!-- 中心圆形把手 -->
+            <Grid HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  Width="28"
+                  Height="28">
+
+                <Ellipse Fill="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                         Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                         StrokeThickness="1"/>
+
+                <FontIcon Glyph="&#xE784;"
+                          FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                          FontSize="12"
+                          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"/>
+            </Grid>
+        </Grid>
+
+        <Rectangle x:Name="InteractionLayer"
+                   Fill="Transparent"
+                   PointerPressed="OnPointerPressed"
+                   PointerMoved="OnPointerMoved"
+                   PointerReleased="OnPointerReleased"
+                   PointerCanceled="OnPointerReleased"
+                   PointerCaptureLost="OnPointerCaptureLost"/>
+    </Grid>
+</UserControl>

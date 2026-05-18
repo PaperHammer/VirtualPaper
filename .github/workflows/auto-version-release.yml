@@ -1,4 +1,5 @@
-name: Auto Version & Build on Main Merge
+name: Auto Sync and Publish
+run-name: "[Auto] Publish | ${{ github.event.pull_request.head.ref }} -> main | ${{ github.event.pull_request.title }}"
 
 on:
   pull_request:
@@ -25,14 +26,18 @@ jobs:
     runs-on: windows-latest
     if: github.event.pull_request.merged == true
     outputs:
-      source_branch:   ${{ steps.branch_info.outputs.source_branch }}
-      increment_type:  ${{ steps.branch_info.outputs.increment_type }}
+      source_branch: ${{ steps.branch_info.outputs.source_branch }}
+      increment_type: ${{ steps.branch_info.outputs.increment_type }}
       current_version: ${{ steps.version.outputs.current_version }}
-      new_version:     ${{ steps.version.outputs.new_version }}
+      new_version: ${{ steps.version.outputs.new_version }}
       new_version_text: ${{ steps.version.outputs.new_version_text }}
-      main_sha:        ${{ steps.shas.outputs.main_sha }}
-      dev_sha:         ${{ steps.shas.outputs.dev_sha }}
-      bugfix_sha:      ${{ steps.shas.outputs.bugfix_sha }}
+      current_version_text: ${{ steps.version.outputs.current_version_text }}
+      main_sha: ${{ steps.shas.outputs.main_sha }}
+      dev_sha: ${{ steps.shas.outputs.dev_sha }}
+      bugfix_sha: ${{ steps.shas.outputs.bugfix_sha }}
+      release_sha: ${{ steps.shas.outputs.release_sha }}
+      pr_title: ${{ steps.pr_info.outputs.pr_title }}
+      pr_body: ${{ steps.pr_info.outputs.pr_body }}
 
     steps:
     - name: Checkout with full history
@@ -57,18 +62,25 @@ jobs:
         Write-Output "bugfix_sha=$bugfixSha" >> $env:GITHUB_OUTPUT
         Write-Host "bugfix SHA: $bugfixSha"
 
+        $releaseSha = git rev-parse origin/release
+        Write-Output "release_sha=$releaseSha" >> $env:GITHUB_OUTPUT
+        Write-Host "release SHA: $releaseSha"
+
     - name: Determine source branch and version increment
       id: branch_info
       shell: powershell
       env:
         PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
       run: |
-        $sourceBranch  = $env:PR_HEAD_REF
+        $sourceBranch = $env:PR_HEAD_REF
         $incrementType = "patch"
 
-        if ($sourceBranch -eq "dev") {
+        if ($sourceBranch -eq "release") {
+            $incrementType = "feature"
+            Write-Host "Source branch: release - incrementing minor version (feature update)"
+        } elseif ($sourceBranch -eq "dev") {
             $incrementType = "minor"
-            Write-Host "Source branch: dev - incrementing minor version"
+            Write-Host "Source branch: dev - incrementing build version (daily update)"
         } elseif ($sourceBranch -eq "bugfix") {
             $incrementType = "patch"
             Write-Host "Source branch: bugfix - incrementing patch version"
@@ -76,15 +88,15 @@ jobs:
             Write-Host "Unknown source branch: $sourceBranch - defaulting to patch"
         }
 
-        Write-Output "source_branch=$sourceBranch"   >> $env:GITHUB_OUTPUT
-        Write-Output "increment_type=$incrementType"  >> $env:GITHUB_OUTPUT
+        Write-Output "source_branch=$sourceBranch" >> $env:GITHUB_OUTPUT
+        Write-Output "increment_type=$incrementType" >> $env:GITHUB_OUTPUT
 
     - name: Calculate new version
       id: version
       shell: powershell
       run: |
-        $csprojPath   = "src/VirtualPaper/VirtualPaper.csproj"
-        $content      = Get-Content $csprojPath -Raw
+        $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
+        $content = Get-Content $csprojPath -Raw
         $versionMatch = [regex]::Match($content, '<AssemblyVersion>(\d+)\.(\d+)\.(\d+)\.(\d+)</AssemblyVersion>')
 
         if (-not $versionMatch.Success) {
@@ -92,29 +104,56 @@ jobs:
             exit 1
         }
 
-        $major    = [int]$versionMatch.Groups[1].Value
-        $minor    = [int]$versionMatch.Groups[2].Value
-        $build    = [int]$versionMatch.Groups[3].Value
+        $major = [int]$versionMatch.Groups[1].Value
+        $minor = [int]$versionMatch.Groups[2].Value
+        $build = [int]$versionMatch.Groups[3].Value
         $revision = [int]$versionMatch.Groups[4].Value
 
         $currentVersion = "$major.$minor.$build.$revision"
 
         $incrementType = "${{ steps.branch_info.outputs.increment_type }}"
-        if ($incrementType -eq "minor") {
-            $build    = $build + 1
-            $revision = 0
+        if ($incrementType -eq "feature") {
+            $minor = $minor + 1      # 第2位 +1
+            $build = 0               # 第3位 清零
+            $revision = 0            # 第4位 清零
+        } elseif ($incrementType -eq "minor") {
+            $build = $build + 1      # 第3位 +1
+            $revision = 0            # 第4位 清零
         } else {
-            $revision = $revision + 1
+            $revision = $revision + 1  # 第4位 +1
         }
 
-        $newVersion     = "$major.$minor.$build.$revision"
+        $newVersion = "$major.$minor.$build.$revision"
         $newVersionText = "$major$minor$build$revision"
 
         Write-Host "Version: $currentVersion -> $newVersion"
 
-        Write-Output "current_version=$currentVersion"  >> $env:GITHUB_OUTPUT
-        Write-Output "new_version=$newVersion"           >> $env:GITHUB_OUTPUT
-        Write-Output "new_version_text=$newVersionText"  >> $env:GITHUB_OUTPUT
+        Write-Output "current_version=$currentVersion" >> $env:GITHUB_OUTPUT
+        Write-Output "new_version=$newVersion" >> $env:GITHUB_OUTPUT
+        Write-Output "new_version_text=$newVersionText" >> $env:GITHUB_OUTPUT
+
+    - name: Capture PR title and body
+      id: pr_info
+      shell: powershell
+      env:
+        PR_TITLE: ${{ github.event.pull_request.title }}
+        PR_BODY: ${{ github.event.pull_request.body }}
+      run: |
+        # PowerShell 5.1 的 >> 和 Out-File -Encoding utf8 均会写入 UTF-16 LE 或带 BOM 的 UTF-8
+        # $GITHUB_OUTPUT 必须是无 BOM 的 UTF-8，使用 .NET API 显式指定
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+
+        # PR title（单行）
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "pr_title=$env:PR_TITLE`n", $utf8NoBom)
+        Write-Host "PR title: $env:PR_TITLE"
+
+        # PR body（多行，heredoc delimiter 格式，完整保留换行和特殊字符）
+        $delimiter = [System.Guid]::NewGuid().ToString("N")
+        $body = $env:PR_BODY -replace "`r`n", "`n"   # 统一为 LF，避免 CRLF 写入 GITHUB_OUTPUT
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "pr_body<<$delimiter`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "$body`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "$delimiter`n", $utf8NoBom)
+        Write-Host "PR body captured ($($body.Length) chars)"
 
   # ─────────────────────────────────────────────────────────────
   # Job 2: 编译 .NET Release
@@ -146,17 +185,17 @@ jobs:
       shell: powershell
       run: |
         $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
-        $content    = Get-Content $csprojPath -Raw
+        $content = Get-Content $csprojPath -Raw
         $newVersion = "${{ needs.prepare.outputs.new_version }}"
         $newContent = $content -replace '<AssemblyVersion>\d+\.\d+\.\d+\.\d+</AssemblyVersion>', "<AssemblyVersion>$newVersion</AssemblyVersion>"
         Set-Content $csprojPath -Value $newContent -NoNewline
         Write-Host "Patched AssemblyVersion to $newVersion (build-time only)"
 
-    - name: Restore dependencies
-      run: dotnet restore src/VirtualPaper.sln
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
 
-    - name: Build Release
-      run: dotnet build src/VirtualPaper.sln --configuration Release --no-restore
+    - name: Rebuild solution
+      run: msbuild src/VirtualPaper.sln /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU" /restore /m
 
     - name: Upload build output
       uses: actions/upload-artifact@v4
@@ -173,8 +212,8 @@ jobs:
     runs-on: windows-latest
     needs: [prepare, build]
     outputs:
-      installer_name: ${{ steps.build_installer.outputs.installer_name }}
-      installer_path: ${{ steps.build_installer.outputs.installer_path }}
+      installer_name: ${{ steps.installer_info.outputs.installer_name }}
+      installer_path: ${{ steps.installer_info.outputs.installer_path }}
 
     steps:
     - name: Checkout code
@@ -190,90 +229,283 @@ jobs:
 
     - name: Install Inno Setup 6.7.1
       shell: powershell
-      run: |
-        # 固定版本 6.7.1，避免新版本破坏脚本兼容性
-        $version = "6.7.1"
-        $tag     = $version -replace '\.', '_'
-        $url     = "https://github.com/jrsoftware/issrc/releases/download/is-$tag/innosetup-$version.exe"
-        Write-Host "Downloading Inno Setup $version..."
-        Invoke-WebRequest -Uri $url -OutFile "innosetup.exe"
-        Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
-        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Inno Setup $version installed"
+      run: choco install innosetup --version=6.7.1 --no-progress -y
 
     - name: Patch version in InnoSetup script (local only, not committed)
       shell: powershell
       run: |
-        $setupPath      = "InnoSetup/setup.iss"
-        $content        = Get-Content $setupPath -Raw
-        $newVersion     = "${{ needs.prepare.outputs.new_version }}"
+        $setupPath = "InnoSetup/setup.iss"
+        $content = Get-Content $setupPath -Raw
+        $newVersion = "${{ needs.prepare.outputs.new_version }}"
         $newVersionText = "${{ needs.prepare.outputs.new_version_text }}"
-        $newContent = $content -replace '#define MyAppVersion "[\d\.]+"',     "#define MyAppVersion `"$newVersion`""
+        $newContent = $content -replace '#define MyAppVersion "[\d\.]+"', "#define MyAppVersion `"$newVersion`""
         $newContent = $newContent -replace '#define MyAppVersionText "[\d]+"', "#define MyAppVersionText `"$newVersionText`""
         Set-Content $setupPath -Value $newContent -NoNewline
         Write-Host "Patched InnoSetup version to $newVersion (build-time only)"
 
-    - name: Create installer
+    - name: Download InnoDependencyInstaller
+      shell: powershell
+      run: |
+        $url = "https://raw.githubusercontent.com/DomGries/InnoDependencyInstaller/master/CodeDependencies.iss"
+        $dest = "InnoSetup\CodeDependencies.iss"
+        Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " CodeDependencies.iss downloaded"
+
+    - name: Compile installer
       id: build_installer
       shell: powershell
       run: |
-        $isccPath = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-        if (-not (Test-Path $isccPath)) {
-            $isccPath = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
-        }
-        if (-not (Test-Path $isccPath)) {
-            Write-Error "Inno Setup compiler not found!"
+        $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+        if (-not (Test-Path $iscc)) {
+            Write-Error "ISCC.exe not found at: $iscc"
             exit 1
         }
-
-        Write-Host "Using ISCC at: $isccPath"
-        & "$isccPath" "InnoSetup\setup.iss"
-
+        & $iscc "InnoSetup\setup.iss" /O+
         if ($LASTEXITCODE -ne 0) {
-            Write-Error "InnoSetup compilation failed!"
+            Write-Error "Inno Setup compilation failed (exit code $LASTEXITCODE)"
             exit 1
         }
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Installer compiled successfully"
 
-        $outputDir      = "InnoSetup\Output"
+    - name: Record installer info
+      id: installer_info
+      shell: powershell
+      run: |
+        $outputDir = "InnoSetup\Output"
         $installerFiles = Get-ChildItem -Path $outputDir -Filter "*.exe" -ErrorAction SilentlyContinue
-
         if ($installerFiles.Count -eq 0) {
             Write-Error "No installer found in output directory!"
             exit 1
         }
-
         $installerPath = $installerFiles[0].FullName
-        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Installer created: $installerPath"
-
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Installer: $installerPath"
         Write-Output "installer_path=$installerPath" >> $env:GITHUB_OUTPUT
         Write-Output "installer_name=$($installerFiles[0].Name)" >> $env:GITHUB_OUTPUT
 
-    - name: Upload installer as artifact
+    - name: Generate SHA256 for installer
+      shell: powershell
+      run: |
+        $hash = (Get-FileHash -Path "${{ steps.installer_info.outputs.installer_path }}" -Algorithm SHA256).Hash.ToLower()
+        Set-Content -Path "${{ github.workspace }}\InnoSetup\Output\SHA256.txt" -Value $hash
+
+    - name: Upload installer and SHA256 as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: VirtualPaper-installer-v${{ needs.prepare.outputs.new_version }}
-        path: ${{ steps.build_installer.outputs.installer_path }}
+        name: VirtualPaper-Installer-v${{ needs.prepare.outputs.new_version }}
+        path: |
+          ${{ steps.installer_info.outputs.installer_path }}
+          InnoSetup/Output/SHA256.txt
         retention-days: 30
 
   # ─────────────────────────────────────────────────────────────
-  # Job 4: 提交版本号变更到 main（安装包制作成功后才提交）
+  # Job 4: 安装包冒烟测试（静默安装 + 启动验证）
+  #   阶段 1 - 等待 VirtualPaper.exe 自动拉起 UI（最多 10s）
+  #   阶段 2 - 兜底：若未自动拉起则手动启动 UI
+  #   阶段 3 - 再次尝试启动 UI，断言全局只有 1 个 UI 进程（单例守卫）
+  #   阶段 4 - 验证 UI 无法在主进程未启动的情况下独立运行（应弹出错误 MessageBox 并阻塞）
   # ─────────────────────────────────────────────────────────────
-  publish:
-    name: Commit Version to Main
+  smoke_test:
+    name: Smoke Test Installer
     runs-on: windows-latest
     needs: [prepare, package]
+
+    steps:
+    - name: Setup .NET (app runtime dependency)
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Download installer artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: VirtualPaper-Installer-v${{ needs.prepare.outputs.new_version }}
+        path: dist/
+
+    - name: Silent install
+      id: install
+      shell: powershell
+      run: |
+        $installer = Get-ChildItem "dist\" -Filter "*.exe" | Select-Object -First 1
+        if (-not $installer) {
+            Write-Error "No installer found in dist\"
+            exit 1
+        }
+        $installDir = "C:\VirtualPaperSmokeTest"
+        Write-Host "Installer : $($installer.FullName)"
+        Write-Host "Target dir: $installDir"
+        $proc = Start-Process -FilePath $installer.FullName `
+            -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /DIR=`"$installDir`"" `
+            -Wait -PassThru
+        if ($proc.ExitCode -ne 0) {
+            Write-Error "Installer failed with exit code $($proc.ExitCode)"
+            exit 1
+        }
+        Write-Output "install_dir=$installDir" >> $env:GITHUB_OUTPUT
+        Write-Host "[OK] Installation completed"
+
+    - name: Verify key files exist
+      shell: powershell
+      run: |
+        $base = "${{ steps.install.outputs.install_dir }}"
+        $required = @(
+            "$base\VirtualPaper.exe",
+            "$base\Plugins\UI\VirtualPaper.UI.exe"
+        )
+        $failed = $false
+        foreach ($f in $required) {
+            if (Test-Path $f) {
+                Write-Host "[OK]      $f"
+            } else {
+                Write-Host "[MISSING] $f" -ForegroundColor Red
+                $failed = $true
+            }
+        }
+        if ($failed) {
+            Write-Error "Required files missing after installation"
+            exit 1
+        }
+
+    - name: Launch and verify UI process
+      shell: powershell
+      run: |
+        $installDir = "${{ steps.install.outputs.install_dir }}"
+        $mainExe = "$installDir\VirtualPaper.exe"
+        $uiExe = "$installDir\Plugins\UI\VirtualPaper.UI.exe"
+
+        # ── 阶段 1：启动主程序，等待其自动拉起 UI（最多 10s）──────────────
+        Write-Host "Launching: $mainExe"
+        $main = Start-Process -FilePath $mainExe -PassThru -ErrorAction Stop
+
+        $uiProc = $null
+        $autoWait = 10
+        for ($i = 1; $i -le $autoWait; $i++) {
+            Start-Sleep -Seconds 1
+            $main.Refresh()
+            if ($main.HasExited) {
+                Write-Error "VirtualPaper.exe exited unexpectedly after ${i}s (exit code: $($main.ExitCode))"
+                exit 1
+            }
+            $uiProc = Get-Process -Name "VirtualPaper.UI" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($uiProc) {
+                Write-Host "[OK] VirtualPaper.UI auto-started after ${i}s (PID: $($uiProc.Id))"
+                break
+            }
+            Write-Host "  [wait] ${i}s - waiting for VirtualPaper.UI to be auto-spawned..."
+        }
+
+        # ── 阶段 2：兜底 - 若未自动拉起则手动启动 UI ──────────────────────
+        if (-not $uiProc) {
+            Write-Host "[FALLBACK] UI not auto-spawned after ${autoWait}s, launching manually: $uiExe"
+            Start-Process -FilePath $uiExe -ErrorAction Stop
+            Start-Sleep -Seconds 5
+            $uiProc = Get-Process -Name "VirtualPaper.UI" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $uiProc) {
+                Write-Error "VirtualPaper.UI.exe failed to start even when launched manually"
+                taskkill /F /T /PID $main.Id 2>$null
+                exit 1
+            }
+            Write-Host "[OK] VirtualPaper.UI started via fallback (PID: $($uiProc.Id))"
+        }
+
+        # ── 阶段 3：单例守卫验证 - 再次启动 UI，期望仍只有 1 个进程 ────────
+        Write-Host "Verifying singleton: launching VirtualPaper.UI again..."
+        Start-Process -FilePath $uiExe -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 3
+
+        $uiProcs = @(Get-Process -Name "VirtualPaper.UI" -ErrorAction SilentlyContinue)
+        if ($uiProcs.Count -ne 1) {
+            Write-Error "Singleton check FAILED: expected 1 VirtualPaper.UI process, found $($uiProcs.Count)"
+            taskkill /F /T /PID $main.Id 2>$null
+            Get-Process -Name "VirtualPaper.UI" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            exit 1
+        }
+        Write-Host "[OK] Singleton check passed: only 1 VirtualPaper.UI process (PID: $($uiProcs[0].Id))"
+
+        # ── 清理 ───────────────────────────────────────────────────────────
+        taskkill /F /T /PID $main.Id 2>$null
+        Get-Process -Name "VirtualPaper.UI" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        Write-Host "[OK] Smoke test passed"
+
+    - name: Verify UI cannot start without main process
+      shell: powershell
+      run: |
+        $installDir = "${{ steps.install.outputs.install_dir }}"
+        $uiExe = "$installDir\Plugins\UI\VirtualPaper.UI.exe"
+
+        # 前置清理：确保主进程与 UI 进程均未运行（强杀残留）
+        @("VirtualPaper", "VirtualPaper.UI") | ForEach-Object {
+            $procs = Get-Process -Name $_ -ErrorAction SilentlyContinue
+            if ($procs) {
+                Write-Host "[CLEANUP] Killing residual process: $_"
+                $procs | Stop-Process -Force -ErrorAction SilentlyContinue
+            }
+        }
+        Start-Sleep -Seconds 1
+
+        # ── 直接启动 UI（不启动主进程）──────────────────────────────────────
+        Write-Host "Launching VirtualPaper.UI.exe without main process..."
+        $uiProc = Start-Process -FilePath $uiExe -PassThru -ErrorAction Stop
+
+        # 等待足够时间让 MessageBox 弹出
+        Start-Sleep -Seconds 3
+
+        # ── 断言：进程应仍在运行（被 MessageBox 阻塞，未正常退出）────────────
+        $uiProc.Refresh()
+        if ($uiProc.HasExited) {
+            Write-Error "VirtualPaper.UI exited on its own - expected it to be blocked by a MessageBox"
+            exit 1
+        }
+
+        # ── 进一步断言：确认是 MessageBox（#32770）而非 UI 正常启动 ──────────
+        # 通过 UIAutomation 枚举该进程的顶层窗口并读取 Win32 ClassName
+        # MessageBox 的 ClassName 固定为 #32770，无需注入 C# 代码
+        Add-Type -AssemblyName UIAutomationClient
+        Add-Type -AssemblyName UIAutomationTypes
+
+        $desktop = [System.Windows.Automation.AutomationElement]::RootElement
+        $pidCond = New-Object System.Windows.Automation.PropertyCondition(
+            [System.Windows.Automation.AutomationElement]::ProcessIdProperty,
+            $uiProc.Id)
+        $wins = $desktop.FindAll([System.Windows.Automation.TreeScope]::Children, $pidCond)
+        $classes = @($wins | ForEach-Object { $_.Current.ClassName })
+        Write-Host "  Visible window classes: $($classes -join ', ')"
+
+        if (-not ($classes -contains '#32770')) {
+            Write-Error "Expected a MessageBox (#32770) but none found - UI may have started normally, guard logic broken"
+            Stop-Process -Id $uiProc.Id -Force -ErrorAction SilentlyContinue
+            exit 1
+        }
+        Write-Host "[OK] VirtualPaper.UI is blocked by a MessageBox (#32770) as expected (PID: $($uiProc.Id))"
+
+        # ── 清理：强杀被阻塞的 UI 进程 ──────────────────────────────────────
+        Stop-Process -Id $uiProc.Id -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 1
+        $uiProc.Refresh()
+        if (-not $uiProc.HasExited) {
+            taskkill /F /PID $uiProc.Id 2>$null
+        }
+        Write-Host "[OK] Standalone-UI guard test passed"
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 5: 将版本号递增变更提交到 main（冒烟测试通过后才提交）
+  # ─────────────────────────────────────────────────────────────
+  bump:
+    name: Bump Version to main
+    runs-on: windows-latest
+    needs: [prepare, package, smoke_test]
 
     steps:
     - name: Checkout main with full history
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.RELEASE_PAT }}
         fetch-depth: 0
 
     - name: Update version in csproj
       shell: powershell
       run: |
         $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
-        $content    = Get-Content $csprojPath -Raw
+        $content = Get-Content $csprojPath -Raw
         $newVersion = "${{ needs.prepare.outputs.new_version }}"
         $newContent = $content -replace '<AssemblyVersion>\d+\.\d+\.\d+\.\d+</AssemblyVersion>', "<AssemblyVersion>$newVersion</AssemblyVersion>"
         Set-Content $csprojPath -Value $newContent -NoNewline
@@ -282,11 +514,11 @@ jobs:
     - name: Update version in InnoSetup script
       shell: powershell
       run: |
-        $setupPath      = "InnoSetup/setup.iss"
-        $content        = Get-Content $setupPath -Raw
-        $newVersion     = "${{ needs.prepare.outputs.new_version }}"
+        $setupPath = "InnoSetup/setup.iss"
+        $content = Get-Content $setupPath -Raw
+        $newVersion = "${{ needs.prepare.outputs.new_version }}"
         $newVersionText = "${{ needs.prepare.outputs.new_version_text }}"
-        $newContent = $content -replace '#define MyAppVersion "[\d\.]+"',     "#define MyAppVersion `"$newVersion`""
+        $newContent = $content -replace '#define MyAppVersion "[\d\.]+"', "#define MyAppVersion `"$newVersion`""
         $newContent = $newContent -replace '#define MyAppVersionText "[\d]+"', "#define MyAppVersionText `"$newVersionText`""
         Set-Content $setupPath -Value $newContent -NoNewline
         Write-Host "Updated InnoSetup version to: $newVersion"
@@ -295,7 +527,7 @@ jobs:
       shell: powershell
       run: |
         $readmePath = "README.md"
-        $content    = Get-Content $readmePath -Raw
+        $content = Get-Content $readmePath -Raw
         $newVersion = "${{ needs.prepare.outputs.new_version }}"
         $newContent = $content -replace '(img\.shields\.io/badge/release-v)[\d\.]+(-blue)', "`${1}$newVersion`$2"
         Set-Content $readmePath -Value $newContent -NoNewline
@@ -312,58 +544,79 @@ jobs:
         Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version ${{ needs.prepare.outputs.new_version }} committed to main"
 
   # ─────────────────────────────────────────────────────────────
-  # Job 5: 将版本号同步回源分支（dev / bugfix）
+  # Job 6: 将版本号同步到 pre-publish branches
   # ─────────────────────────────────────────────────────────────
   sync:
-    name: Sync Version to Source Branch
+    name: Sync Version to Pre-publish Branches
     runs-on: windows-latest
-    needs: [prepare, publish]
+    needs: [prepare, bump]
 
     steps:
     - name: Checkout with full history
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.RELEASE_PAT }}
         fetch-depth: 0
 
-    - name: Sync to source branch
+    - name: Sync version files to pre-publish branches
       shell: powershell
       run: |
-        $sourceBranch = "${{ needs.prepare.outputs.source_branch }}"
+        $newVersion = "${{ needs.prepare.outputs.new_version }}"
 
-        if ($sourceBranch -eq "dev" -or $sourceBranch -eq "bugfix") {
-            Write-Host "Syncing version back to $sourceBranch..."
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
 
-            # 必须先 fetch，确保 origin/main 拿到 publish job 刚推送的最新 commit
-            $ErrorActionPreference = 'Continue'
-            git fetch origin main 2>&1 | Out-Null
-            $ErrorActionPreference = 'Stop'
+        # 确保拿到 bump job 刚推送的最新 main
+        $ErrorActionPreference = 'Continue'
+        git fetch origin 2>&1 | Out-Null
+        $ErrorActionPreference = 'Stop'
 
-            git checkout -B $sourceBranch origin/$sourceBranch
-            # 用 origin/main 而不是 local main，避免本地引用未更新导致分支分叉
-            git merge origin/main --ff-only
-            git push origin $sourceBranch
-            Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version synced to $sourceBranch"
-        } else {
-            Write-Host "Unknown source branch: $sourceBranch, skipping sync"
+        foreach ($branch in @("release", "dev", "bugfix")) {
+            Write-Host ""
+            Write-Host "--- Syncing version to $branch ---"
+
+            git checkout -B $branch origin/$branch
+
+            # 直接从 origin/main 取版本相关文件，无需 merge，不产生冲突
+            git checkout origin/main -- src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
+            Write-Host "  [OK] version files pulled from origin/main"
+
+            git add src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
+
+            # 若无变更则跳过 commit（分支本来就在最新版本时）
+            $status = git status --porcelain
+            if ($status) {
+                git commit -m "[Github CI] chore: sync version $newVersion from main [skip ci]"
+                git push origin $branch
+                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Version $newVersion synced to $branch"
+            } else {
+                Write-Host "[SKIP] $branch already at version $newVersion"
+            }
         }
 
   # ─────────────────────────────────────────────────────────────
-  # Job 6: 汇总输出（始终执行）
+  # Job 7: 汇总输出（始终执行）
   # ─────────────────────────────────────────────────────────────
   summary:
     name: Summary
     runs-on: ubuntu-latest
-    needs: [prepare, build, package, publish, sync]
-    if: always() && needs.prepare.result == 'success'
+    needs: [prepare, build, package, smoke_test, bump, sync]
+    if: >-
+      !cancelled() &&
+      needs.prepare.result == 'success' &&
+      needs.build.result == 'success' &&
+      needs.package.result == 'success' &&
+      needs.smoke_test.result == 'success' &&
+      needs.bump.result == 'success' &&
+      needs.sync.result == 'success'
 
     steps:
     - name: Print summary
       run: |
         INCREMENT="${{ needs.prepare.outputs.increment_type }}"
-        if [ "$INCREMENT" = "minor" ]; then TYPE="Feature Update"; else TYPE="Bugfix Update"; fi
+        if [ "$INCREMENT" = "feature" ]; then TYPE="Major Feature Update"
+        elif [ "$INCREMENT" = "minor" ]; then TYPE="Daily Update"
+        else TYPE="Bugfix Update"; fi
 
         echo ""
         echo -e "\033[0;32m================= Build Complete =================\033[0m"
@@ -374,24 +627,60 @@ jobs:
         echo -e "\033[0;36mPackage : ${{ needs.package.outputs.installer_name }}\033[0m"
         echo ""
         echo -e "\033[0;32m[OK]\033[0m Version updated and committed to main"
-        echo -e "\033[0;32m[OK]\033[0m Version synced to ${{ needs.prepare.outputs.source_branch }}"
+        echo -e "\033[0;32m[OK]\033[0m Version synced to pre-publish branches (release / dev / bugfix)"
         echo -e "\033[0;32m[OK]\033[0m Installer uploaded as Artifact"
+        echo -e "\033[0;32m[OK]\033[0m Smoke test passed (install + launch + singleton)"
+        echo -e "\033[0;32m[OK]\033[0m Draft GitHub Release will be created: v${{ needs.prepare.outputs.new_version }}"
         echo -e "\033[0;32m==========================================\033[0m"
 
   # ─────────────────────────────────────────────────────────────
-  # Job 7: 失败回滚（任意 job 失败时执行）
+  # Job 8: 创建草稿 GitHub Release（所有步骤均成功后执行）
+  #   - 等待 summary 通过，即代表全流程无任何错误
+  #   - 以 PR body 作为 Release 正文
+  #   - Tag / Release 标题均为 "v版本号"
+  #   - 将 Installer exe 作为 Release 附件上传
+  #   - 创建为草稿（draft），需人工验证后手动点击发布
+  # ─────────────────────────────────────────────────────────────
+  release:
+    name: Create Draft GitHub Release
+    runs-on: ubuntu-latest
+    needs: [prepare, package, summary]
+    if: needs.summary.result == 'success'
+
+    steps:
+    - name: Download installer artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: VirtualPaper-Installer-v${{ needs.prepare.outputs.new_version }}
+        path: dist/
+
+    - name: Create Draft Release & Tag
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ needs.prepare.outputs.new_version }}
+        name: v${{ needs.prepare.outputs.new_version }}
+        body: ${{ needs.prepare.outputs.pr_body }}
+        files: |
+          dist/*.exe
+          dist/SHA256.txt
+        draft: true        # 草稿状态，不对外公开，等待人工验证后发布
+        make_latest: false  # 草稿阶段不标记为最新，发布时再生效
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 9: 失败回滚（任意 job 失败时执行）
   # ─────────────────────────────────────────────────────────────
   rollback:
     name: Rollback on Failure
     runs-on: windows-latest
-    needs: [prepare, build, package, publish, sync]
+    needs: [prepare, build, package, smoke_test, bump, sync]
     if: always() && failure() && needs.prepare.result == 'success'
 
     steps:
     - name: Checkout with full history
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.RELEASE_PAT }}
         fetch-depth: 0
 
     - name: Rollback changes
@@ -403,15 +692,14 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
 
-        # 拉取最新远端状态（用 Continue 避免进度信息触发 NativeCommandError）
         $ErrorActionPreference = 'Continue'
         git fetch origin 2>&1 | Out-Null
         $ErrorActionPreference = 'Stop'
 
-        $mainSha      = "${{ needs.prepare.outputs.main_sha }}"
-        $devSha       = "${{ needs.prepare.outputs.dev_sha }}"
-        $bugfixSha    = "${{ needs.prepare.outputs.bugfix_sha }}"
-        $sourceBranch = "${{ needs.prepare.outputs.source_branch }}"
+        $mainSha = "${{ needs.prepare.outputs.main_sha }}"
+        $devSha = "${{ needs.prepare.outputs.dev_sha }}"
+        $bugfixSha = "${{ needs.prepare.outputs.bugfix_sha }}"
+        $releaseSha = "${{ needs.prepare.outputs.release_sha }}"
 
         # --- 回滚 main ---
         if ($mainSha) {
@@ -419,44 +707,40 @@ jobs:
             $currentMain = git rev-parse origin/main 2>&1
             $ErrorActionPreference = 'Stop'
             if ($LASTEXITCODE -eq 0 -and $currentMain -ne $mainSha) {
-                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " main: $currentMain -> $mainSha"
+                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " main: reverting version bump commit"
                 git checkout -B main origin/main
-                git reset --hard $mainSha
-                # 追加空 commit，防止 force push 后再次触发本 workflow
-                git commit --allow-empty -m "[Github CI] rollback: reverted version bump [skip ci]"
-                git push --force origin main
+                git revert HEAD --no-commit
+                git commit -m "[Github CI] rollback: revert version bump [skip ci]"
+                git push origin main
                 Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " main rolled back"
             } else {
                 Write-Host "[SKIP] main: no changes detected, rollback not needed"
             }
         }
 
-        # --- 回滚源分支（dev / bugfix）---
-        if ($sourceBranch -eq "dev" -and $devSha) {
+        # --- 回滚 pre-publish branches (release / dev / bugfix) ---
+        $branchShaMap = @{
+            "release" = $releaseSha
+            "dev"     = $devSha
+            "bugfix"  = $bugfixSha
+        }
+
+        foreach ($b in $branchShaMap.Keys) {
+            $targetSha = $branchShaMap[$b]
+            if (-not $targetSha) { continue }
+
             $ErrorActionPreference = 'Continue'
-            $currentDev = git rev-parse origin/dev 2>&1
+            $currentSha = git rev-parse origin/$b 2>&1
             $ErrorActionPreference = 'Stop'
-            if ($LASTEXITCODE -eq 0 -and $currentDev -ne $devSha) {
-                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " dev: $currentDev -> $devSha"
-                git checkout -B dev origin/dev
-                git reset --hard $devSha
-                git push --force origin dev
-                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " dev rolled back"
+            if ($LASTEXITCODE -eq 0 -and $currentSha -ne $targetSha) {
+                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " ${b}: reverting version sync commit"
+                git checkout -B $b origin/$b
+                git revert HEAD --no-commit
+                git commit -m "[Github CI] rollback: revert version sync [skip ci]"
+                git push origin $b
+                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " $b rolled back"
             } else {
-                Write-Host "[SKIP] dev: no changes detected, rollback not needed"
-            }
-        } elseif ($sourceBranch -eq "bugfix" -and $bugfixSha) {
-            $ErrorActionPreference = 'Continue'
-            $currentBugfix = git rev-parse origin/bugfix 2>&1
-            $ErrorActionPreference = 'Stop'
-            if ($LASTEXITCODE -eq 0 -and $currentBugfix -ne $bugfixSha) {
-                Write-Host "[ROLLBACK]" -ForegroundColor Cyan -NoNewline; Write-Host " bugfix: $currentBugfix -> $bugfixSha"
-                git checkout -B bugfix origin/bugfix
-                git reset --hard $bugfixSha
-                git push --force origin bugfix
-                Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " bugfix rolled back"
-            } else {
-                Write-Host "[SKIP] bugfix: no changes detected, rollback not needed"
+                Write-Host "[SKIP] ${b}: no changes detected, rollback not needed"
             }
         }
 

@@ -12,7 +12,7 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
 
         private static readonly Uri FakeUri = new("https://fake/setup.exe");
         private static readonly Uri FakeShaUri = new("https://fake/SHA256.txt");
-        private static readonly Version FakeVersion = new(1, 2, 3, 4);
+        private static readonly Version FakeVersion = new(0, 0, 0, 0);
         private const string FakeChangelog = "- bug fix";
 
         [TestInitialize]

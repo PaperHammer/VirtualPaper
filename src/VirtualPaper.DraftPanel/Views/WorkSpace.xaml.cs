@@ -104,7 +104,7 @@ namespace VirtualPaper.DraftPanel.Views {
             // 根据当前的选中项，控制可见性
             var selectedItem = TabViewControl.SelectedItem as ArcTabViewItem;
             foreach (var kvp in _tabToFrame) {
-                kvp.Value.Visibility = (kvp.Key == selectedItem) ? Visibility.Visible : Visibility.Collapsed;
+                kvp.Value.Visibility = (kvp.Key as ArcTabViewItem == selectedItem) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
         #endregion

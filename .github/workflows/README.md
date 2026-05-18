@@ -1,108 +1,128 @@
-# GitHub Actions CI/CD 配置说明
+# CI/CD 工作流说明
 
-## 概述
+## 文件总览
 
-为VirtualPaper项目配置了完整的CI/CD流程，包含两个工作流文件：
+| 文件 | 触发时机 | 职责 |
+|---|---|---|
+| `pre-publish-branch-ci-check.yml` | push / PR → dev · release · bugfix | 构建 + 单元测试 |
+| `branch-protection.yml` | PR → main | 校验源分支合法性 |
+| `auto-version-release.yml` | PR 合并到 main | 版本递增 · 打包 · 冒烟测试 · 发布 |
 
-- **dev-ci.yml**: 当代码推送到dev分支时自动运行4个测试项目，并创建状态检查
-- **branch-protection.yml**: 确保只有dev分支可以合并到main分支
+---
 
-## 工作流程
-
-### 1. Dev分支持续集成 (dev-ci.yml)
-
-**触发条件：**
-- 推送到dev分支
-- 创建针对dev分支的PR
-
-**执行步骤：**
-1. 设置.NET环境（8.0.x）
-2. 恢复项目依赖
-3. 构建解决方案
-4. 按顺序运行4个测试项目：
-   - VirtualPaper.Core.Test
-   - VirtualPaper.UI.Test
-   - VirtualPaper.ML.Test
-   - VirtualPaper.Shader.Test
-5. 发布测试结果报告
-6. 创建commit状态检查（context: `ci/dev-tests`）
-
-### 2. 分支保护检查 (branch-protection.yml)
-
-**触发条件：**
-- 创建针对main分支的PR
-- 更新针对main分支的PR
-
-**检查逻辑：**
-1. 验证源分支是否为dev
-2. 如果不是dev分支，创建失败状态并阻止合并
-3. 在PR中添加友好的提示评论
-
-## 分支保护规则设置
-
-为确保只有测试通过的代码才能合并到main分支，需要在GitHub仓库中设置分支保护规则：
-
-### 设置步骤：
-
-1. 进入GitHub仓库 → Settings → Branches
-2. 为main分支添加或编辑保护规则：
+## 整体流程
 
 ```
-分支名称模式: main
-
-☑️ Require a pull request before merging
-    ☑️ Require approvals: 1
-    ☑️ Dismiss stale reviews when new commits are pushed
-
-☑️ Require status checks to pass before merging
-    ☑️ Require branches to be up to date before merging
-    添加必需的状态检查：
-    - ci/dev-tests
-    - branch-protection/source-validation
-
-☑️ Include administrators
+ feature/* ──►  dev  ──┐
+                        │  CI 通过后创建 PR → main
+ release   ──────────── ┤
+                        │
+ bugfix    ──────────── ┘
+                        │
+                        ▼
+                       main  ──►  自动构建打包  ──►  草稿 Release
+                                                         │
+                                                    人工验证后发布
 ```
 
-## 工作原理
+---
 
-1. **开发阶段**: 
-   - Feature分支合并到dev时，自动运行测试
-   - 只有dev分支可以创建到main的PR
-2. **发布阶段**: 
-   - 创建dev→main的PR时，检查两个状态：
-     - `ci/dev-tests`: dev分支最新commit的测试结果
-     - `branch-protection/source-validation`: 源分支验证结果
-3. **合并控制**: 
-   - 只有两个状态都为success时，PR才能被合并
+## 工作流一：Pre-publish CI
 
+> **文件：** `pre-publish-branch-ci-check.yml`
+> **触发：** push 或 PR 到 `dev` / `release` / `bugfix`
 
-## 使用流程
+对预发布分支进行持续集成，确保代码在合并到 main 之前质量达标。
 
-### 日常开发：
-1. Feature分支 → dev分支（触发测试）
-2. 查看dev分支commit旁的测试状态
+**执行内容：**
+1. 构建整个解决方案（Release 配置）
+2. 并行运行 4 项单元测试：Core · UI · ML · Shader
+3. 汇总测试结果，写入 commit status `ci-check/pre-publish-tests`
 
-### 发布流程：
-1. 创建dev → main的PR
-2. 系统自动检查：
-   - 源分支是否为dev（`branch-protection/source-validation`）
-   - dev分支最新commit的测试结果（`ci/dev-tests`）
-3. 两个检查都通过时才能合并
+该 status 是合并到 main 的**必需检查项**之一。
 
-## 错误处理
+---
 
-### 如果从非dev分支创建PR到main：
-- ❌ 工作流会失败并创建失败状态
-- 📝 PR中会显示友好的错误说明
-- 🔒 PR会被阻止合并
+## 工作流二：分支保护
 
-### 如果dev分支测试失败：
-- ❌ `ci/dev-tests`状态为failure
-- 🔒 PR会被阻止合并
-- 🛠️ 需要修复测试问题后重新推送到dev
+> **文件：** `branch-protection.yml`
+> **触发：** 创建 / 更新 PR → `main`
 
-## 注意事项
+只允许 `dev`、`release`、`bugfix` 三个分支向 main 发起 PR，其他分支一律拦截。
 
-- 确保dev分支有最新的测试结果
-- 分支保护规则中需要添加两个状态检查
-- 只有dev分支可以合并到main分支
+| 源分支 | 版本变化 | 说明 |
+|---|---|---|
+| `release` | Minor +1 | 0.4.x.x → 0.5.0.0 |
+| `dev` | Build +1 | 0.5.2.x → 0.5.3.0 |
+| `bugfix` | Revision +1 | 0.5.3.0 → 0.5.3.1 |
+
+---
+
+## 工作流三：自动发布
+
+> **文件：** `auto-version-release.yml`
+> **触发：** PR 成功合并到 `main`
+
+### 执行流程
+
+```
+prepare
+  │  计算新版本号，记录各分支 SHA，捕获 PR 标题和正文
+  ▼
+build
+  │  MSBuild Release 构建，产物上传为 Artifact
+  ▼
+package
+  │  InnoSetup 编译安装包，上传为 Artifact（保留 30 天）
+  ▼
+smoke_test                              ← 失败则终止并回滚
+  │  静默安装 → 启动主程序 → 等待 UI 被拉起（最多 20s）
+  │  若未自动拉起：兜底手动启动 UI
+  │  再次尝试启动 UI → 断言只有 1 个 UI 进程（单例验证）
+  ▼
+bump
+  │  更新 csproj / InnoSetup / README badge 版本号并提交到 main
+  ▼
+sync
+  │  将版本文件同步到 release / dev / bugfix 分支
+  ▼
+summary
+  │  打印构建摘要
+  ▼
+release（草稿）
+     创建 Draft GitHub Release
+     - Tag 和标题：v{版本号}
+     - 正文：本次 PR 的描述
+     - 附件：安装包 exe
+     - 状态：草稿，不公开，等待人工验证后发布
+```
+
+> 任意步骤失败时，`rollback` job 自动触发，对 main 及三个预发布分支执行 `git revert`。
+
+---
+
+## 发版操作步骤
+
+```
+1. 在 dev / release / bugfix 分支完成开发
+2. 确认 CI 全绿（ci-check/pre-publish-tests）
+3. 创建 PR → main，等待审核通过并合并
+4. CI 自动完成：构建 → 打包 → 冒烟测试 → 提交版本号 → 创建草稿 Release
+5. 在 GitHub Releases 页面下载草稿附件，本地安装验证
+6. 确认无误后点击 Edit → Publish release 正式发布
+```
+
+---
+
+## 分支保护规则（需手动配置）
+
+> Settings → Branches → Add branch protection rule → `main`
+
+```
+☑ Require a pull request before merging
+☑ Require status checks to pass before merging
+    必需检查：
+    - ci-check/pre-publish-tests
+    - Check Source Branch
+☑ Include administrators
+```

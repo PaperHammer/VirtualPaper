@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    xmlns:styles="using:VirtualPaper.UIComponent.Styles"
     mc:Ignorable="d">
 
     <Grid x:Name="introductionGrid" 
@@ -18,22 +19,15 @@
             <ColumnDefinition Width="auto"/>
         </Grid.ColumnDefinitions>
 
-        <Border
+        <styles:ImageCompareSlider
             Width="480"
             Height="270"
             CornerRadius="12"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            VerticalAlignment="Center">
-            <!--todo-->
-            <TextBlock 
-                Text="GIF"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                FontSize="14"/>
-        </Border>
+            BeforeImageSourceKey="{x:Bind _intelli_Demo_SuperResolution_Origin}"
+            AfterImageSourceKey="{x:Bind _intelli_Demo_SuperResolution_Result}"
+            AutoAnimate="True"
+            AnimationDuration="0:0:2.5"
+            PauseDuration="0:0:1"/>
 
         <StackPanel
             Grid.Column="2"

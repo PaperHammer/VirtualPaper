@@ -75,10 +75,14 @@ jobs:
         Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " main: version $version reverted"
 
         # ─────────────────────────────────────────────────────────
-        # Step 2: 在预发布分支上恢复 bump 前的版本文件
-        #   无论 sync 是 merge 还是 fallback file-sync，统一用
-        #   bump 前的 main 中的版本文件覆盖，确保版本号一致。
-        #   不 revert 完整的 merge（保留 main 同步过来的代码）。
+        # Step 2: 在预发布分支上创建一个 revert commit，回滚到 pre-bump 状态
+        #   做法：用 `git read-tree --reset -u` 将工作树和 index 重置为
+        #   pre-bump main 的内容快照，但 HEAD 保持不变；再 commit & push。
+        #   效果：
+        #     - 分支内容与 pre-bump main 完全一致（含版本文件等所有文件）
+        #     - 完整保留历史（sync merge / bump commit 都仍在 git log 中）
+        #     - 多一条清晰的 revert commit，可追溯何时回滚到了哪个版本
+        #     - 普通 push 即可，无需 force push
         # ─────────────────────────────────────────────────────────
         if ($scope -eq 'main only') {
             Write-Host ""
@@ -92,19 +96,18 @@ jobs:
 
                 git checkout -B $branch origin/$branch
 
-                # 从 bump 前的 main 中提取版本文件，恢复到旧版本号
-                git checkout $preBumpSha -- src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
-                Write-Host "  [OK] version files restored from pre-bump main ($($preBumpSha.Substring(0,7)))"
-
-                git add src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
+                # 将 index 和工作树重置为 pre-bump main 的内容快照（HEAD 不动）
+                # 这样后续 commit 就是一条"内容 = pre-bump"的 revert commit
+                git read-tree --reset -u $preBumpSha
 
                 $status = git status --porcelain
                 if ($status) {
-                    git commit -m "[Github CI] rollback: restore version files before $version [skip ci]"
+                    git commit -m "[Github CI] revert: rollback to state before v$version [skip ci]"
                     git push origin $branch
-                    Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " $branch: version files rolled back"
+                    Write-Host "[OK]" -ForegroundColor Green -NoNewline
+                    Write-Host " ${branch}: revert commit created (content matches pre-bump main $($preBumpSha.Substring(0,7)), history preserved)"
                 } else {
-                    Write-Host "[SKIP] $branch: version files unchanged"
+                    Write-Host "[SKIP] ${branch}: already matches pre-bump main, nothing to revert"
                 }
             }
         }

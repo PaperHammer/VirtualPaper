@@ -1,0 +1,115 @@
+name: Manual Rollback
+run-name: "Manual Rollback v${{ inputs.version }} | by @${{ github.actor }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number to roll back to (for example, 0.5.0.0)'
+        required: true
+        type: string
+      scope:
+        description: 'Rollback Scope'
+        required: true
+        type: choice
+        options:
+          - 'all (main + release + dev + bugfix)'
+          - 'main only'
+        default: 'all (main + release + dev + bugfix)'
+
+permissions:
+  contents: write
+
+jobs:
+  rollback:
+    name: Rollback v${{ inputs.version }}
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout with full history
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.RELEASE_PAT }}
+        fetch-depth: 0
+
+    - name: Execute rollback
+      shell: powershell
+      run: |
+        $version = "${{ inputs.version }}"
+        $scope = "${{ inputs.scope }}"
+
+        Write-Host "========================================"
+        Write-Host "Manual Rollback: version $version"
+        Write-Host "Scope: $scope"
+        Write-Host "Triggered by: ${{ github.actor }}"
+        Write-Host "========================================"
+
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+        $ErrorActionPreference = 'Continue'
+        git fetch origin 2>&1 | Out-Null
+        $ErrorActionPreference = 'Stop'
+
+        # ─────────────────────────────────────────────────────────
+        # Step 1: 在 main 上找到并 revert 版本递增 commit
+        # ─────────────────────────────────────────────────────────
+        Write-Host ""
+        Write-Host "--- [1/2] Rolling back main ---"
+
+        git checkout -B main origin/main
+
+        $bumpCommit = git log origin/main --oneline --grep="bump version to $version" --format="%H" -1
+        if (-not $bumpCommit) {
+            Write-Error "No bump commit found for version '$version' on main. Please verify the version number."
+            exit 1
+        }
+
+        # 记录 bump commit 的父 commit（即 bump 之前的 main，用于恢复版本文件）
+        $preBumpSha = git rev-parse "$bumpCommit~1"
+        Write-Host "  Bump commit   : $($bumpCommit.Substring(0,7))"
+        Write-Host "  Pre-bump SHA  : $($preBumpSha.Substring(0,7))"
+
+        git revert $bumpCommit --no-edit
+        git push origin main
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " main: version $version reverted"
+
+        # ─────────────────────────────────────────────────────────
+        # Step 2: 在预发布分支上恢复 bump 前的版本文件
+        #   无论 sync 是 merge 还是 fallback file-sync，统一用
+        #   bump 前的 main 中的版本文件覆盖，确保版本号一致。
+        #   不 revert 完整的 merge（保留 main 同步过来的代码）。
+        # ─────────────────────────────────────────────────────────
+        if ($scope -eq 'main only') {
+            Write-Host ""
+            Write-Host "[SKIP] Pre-publish branches: scope is 'main only'"
+        } else {
+            $prePublishBranches = @("release", "dev", "bugfix")
+
+            foreach ($branch in $prePublishBranches) {
+                Write-Host ""
+                Write-Host "--- [2/2] Rolling back $branch ---"
+
+                git checkout -B $branch origin/$branch
+
+                # 从 bump 前的 main 中提取版本文件，恢复到旧版本号
+                git checkout $preBumpSha -- src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
+                Write-Host "  [OK] version files restored from pre-bump main ($($preBumpSha.Substring(0,7)))"
+
+                git add src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
+
+                $status = git status --porcelain
+                if ($status) {
+                    git commit -m "[Github CI] rollback: restore version files before $version [skip ci]"
+                    git push origin $branch
+                    Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " $branch: version files rolled back"
+                } else {
+                    Write-Host "[SKIP] $branch: version files unchanged"
+                }
+            }
+        }
+
+        Write-Host ""
+        Write-Host "========================================"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Rollback v$version completed"
+        Write-Host "========================================"

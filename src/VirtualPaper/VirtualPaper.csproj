@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
@@ -8,7 +8,7 @@
 		<UseWindowsForms>True</UseWindowsForms>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<AssemblyVersion>0.4.0.1</AssemblyVersion>
+		<AssemblyVersion>0.5.0.0</AssemblyVersion>
 		<ApplicationIcon>virtualpaper.ico</ApplicationIcon>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
@@ -31,14 +31,14 @@
 	</ItemGroup>
 
 	<!-- ===================================================================
-	     插件构建顺序声明
-	     使用 ReferenceOutputAssembly=false + Private=false 的 ProjectReference，
-	     仅向 MSBuild / VS 声明"必须先构建插件"，不引用任何输出程序集，
-	     也不会把插件的 dll/exe 复制到本项目的输出目录。
-	     VS "重新生成解决方案" 和命令行 msbuild 均遵守此依赖顺序。
+	     ????????
+	     ?? ReferenceOutputAssembly=false + Private=false ? ProjectReference,
+	     ?? MSBuild / VS ??"???????",??????????,
+	     ??????? dll/exe ????????????
+	     VS "????????" ???? msbuild ?????????
 	     =================================================================== -->
 	<ItemGroup>
-		<!-- VirtualPaper.UI 是 WinUI 3 / Windows App SDK 项目，必须以 x64 构建 -->
+		<!-- VirtualPaper.UI ? WinUI 3 / Windows App SDK ??,??? x64 ?? -->
 		<ProjectReference Include="..\VirtualPaper.UI\VirtualPaper.UI.csproj"
 		                  ReferenceOutputAssembly="false"
 		                  SkipGetTargetFrameworkProperties="true"
@@ -58,9 +58,9 @@
 		                  Private="false" />
 	</ItemGroup>
 
-	<!-- Plugins 目录内容在运行时动态复制，不使用静态 Content glob -->
-	<!-- 原因：<Content Include="Plugins\**"> 在项目评估阶段展开，早于插件项目构建，会导致漏文件 -->
-	<!-- AfterTargets="Build" 确保在主项目编译完成、输出目录已创建之后再执行复制 -->
+	<!-- Plugins ????????????,????? Content glob -->
+	<!-- ??:<Content Include="Plugins\**"> ?????????,????????,?????? -->
+	<!-- AfterTargets="Build" ????????????????????????? -->
 	<Target Name="CopyPluginsToOutput" AfterTargets="Build">
 		<ItemGroup>
 			<_PluginFiles Include="$(MSBuildProjectDirectory)\Plugins\**\*"
@@ -71,11 +71,11 @@
 		      DestinationFiles="@(_PluginFiles->'$(OutDir)Plugins\%(RecursiveDir)%(Filename)%(Extension)')"
 		      SkipUnchangedFiles="true"
 		      OverwriteReadOnlyFiles="true" />
-		<Message Text="[Copy] Plugins → $(OutDir)Plugins\" Importance="normal" />
+		<Message Text="[Copy] Plugins ? $(OutDir)Plugins\" Importance="normal" />
 	</Target>
 
-	<!-- 构建完成后校验：确认各插件 exe 已复制到输出目录的 Plugins 子目录中 -->
-	<!-- AfterTargets="CopyPluginsToOutput" 保证在复制完成后才做存在性检查 -->
+	<!-- ???????:????? exe ????????? Plugins ???? -->
+	<!-- AfterTargets="CopyPluginsToOutput" ??????????????? -->
 	<Target Name="VerifyPluginExes" AfterTargets="CopyPluginsToOutput">
 		<PropertyGroup>
 			<_PluginOutDir>$(OutDir)Plugins\</_PluginOutDir>

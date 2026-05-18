@@ -27,10 +27,13 @@ jobs:
   build:
     name: Build Solution
     runs-on: windows-latest
-    # push 事件：跳过版本号自动提交；pull_request 事件：始终运行
+    # push 事件：跳过含 [skip ci] 的 commit
+    # pull_request 事件：跳过标题或正文含 [skip ci] 的 PR
     if: |
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip ci]'))
+      (github.event_name == 'pull_request' &&
+       !contains(github.event.pull_request.title, '[skip ci]')) ||
+      (github.event_name == 'push' &&
+       !contains(github.event.head_commit.message, '[skip ci]'))
     
     steps:
     - name: Checkout code

@@ -9,6 +9,19 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
+	<!-- Ensure all direct dependencies (and their transitive deps) finish building
+	     before this test project's compiler runs, to avoid CS0006 missing ref assembly
+	     errors during a parallel solution Rebuild. Mirrors the BuildPluginsFirst pattern
+	     used in VirtualPaper.csproj. -->
+	<Target Name="BuildDependenciesFirst" BeforeTargets="Build">
+		<MSBuild Projects="..\VirtualPaper.AppSettingsPanel\VirtualPaper.AppSettingsPanel.csproj;
+		                   ..\VirtualPaper.DraftPanel\VirtualPaper.DraftPanel.csproj;
+		                   ..\VirtualPaper.IntelligentPanel\VirtualPaper.IntelligentPanel.csproj;
+		                   ..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj"
+		         Properties="Configuration=$(Configuration)"
+		         BuildInParallel="true" />
+	</Target>
+
 	<ItemGroup>
 		<PackageReference Include="Moq" Version="4.20.72" />
 	</ItemGroup>

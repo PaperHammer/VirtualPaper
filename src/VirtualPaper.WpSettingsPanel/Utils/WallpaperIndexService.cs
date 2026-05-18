@@ -1,13 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
 
 namespace VirtualPaper.WpSettingsPanel.Utils {
-    public sealed class WallpaperIndexService {
+    public class WallpaperIndexService : IWallpaperIndexService {
         public TaskCompletionSource<bool> Initialized { get; } = new();
 
         public async void Initialize(IEnumerable<string> wallpaperInstallDir) {

@@ -1,0 +1,42 @@
+name: Main Branch Protection
+run-name: "[Auto] PR Check | ${{ github.head_ref }} -> main"
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened, edited]
+
+concurrency:
+  group: main-protection-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check-source-branch:
+    name: Check Source Branch
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Validate source branch
+      env:
+        SOURCE_BRANCH: ${{ github.head_ref }}
+        BASE_BRANCH: ${{ github.base_ref }}
+      run: |
+        echo "Source branch: $SOURCE_BRANCH"
+        echo "Target branch: $BASE_BRANCH"
+
+        if [ "$SOURCE_BRANCH" = "release" ] || [ "$SOURCE_BRANCH" = "dev" ] || [ "$SOURCE_BRANCH" = "bugfix" ]; then
+          echo -e "\033[0;32m[OK]\033[0m Source branch validation passed: $SOURCE_BRANCH -> main"
+        else
+          echo -e "\033[0;31m[ERROR]\033[0m Only release, dev and bugfix branches are allowed to merge into main."
+          echo "Current source branch: $SOURCE_BRANCH"
+          echo ""
+          echo "Correct workflow:"
+          echo "  release -> main : Major feature update (minor version +1)"
+          echo "  dev     -> main : Daily update (build version +1)"
+          echo "  bugfix  -> main : Urgent bugfix (patch version +1)"
+          exit 1
+        fi

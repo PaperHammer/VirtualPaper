@@ -1,5 +1,5 @@
 namespace VirtualPaper.Common {
-    public static class Constants {  
+    public static class Constants {
 
         //public static string GetMemory(object o) // 获取引用类型的内存地址方法    
         //{
@@ -10,15 +10,31 @@ namespace VirtualPaper.Common {
         //    return "0x" + addr.ToString("X");
         //}
 
+        /// <summary>
+        /// 避免在测试环境中使用真实的 AppData 目录，防止污染用户数据
+        /// </summary>
+        public static bool IsTestMode { get; set; } = false;
+
         public static class Runtime {
             public static nint MainWindowHwnd { get; set; }
         }
 
         public static class CommonPaths {
+            public static string TestRootDir { get; set; } = Path.Combine(Path.GetTempPath(), $"VirtualPaper_Test_{Guid.NewGuid():N}");
+            private static string RootDir =>
+                IsTestMode
+                    ? TestRootDir
+                    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VirtualPaper");
+            public static string LocalApplicationData =>
+                IsTestMode
+                    ? TestRootDir
+                    : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
             /// <summary>
             /// 数据存储根目录
             /// </summary>
-            public static string AppDataDir => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VirtualPaper");
+            public static string AppDataDir => RootDir;
+            //public static string AppDataDir => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VirtualPaper");
             public static string CommonDataDir => Path.Combine(AppDataDir, "data");
 
             /// <summary>
@@ -84,7 +100,13 @@ namespace VirtualPaper.Common {
 
         public static class WorkingDir {
             public static string Shader => Path.Combine(UI, "Shaders");
-            public static string ML => Path.Combine("Models");
+            public static string ML => Path.Combine("Plugins", "ML");
+            public static string ML_DepthEstimate => Path.Combine(ML, "DepthEstimate");
+            public static string ML_DepthEstimate_AI_Models => Path.Combine(ML_DepthEstimate, "ai_models");
+            public static string ML_StyleTransfer => Path.Combine(ML, "StyleTransfer");
+            public static string ML_StyleTransfer_AI_Models => Path.Combine(ML_StyleTransfer, "ai_models");
+            public static string ML_SuperResolution => Path.Combine(ML, "SuperResolution");
+            public static string ML_SuperResolution_AI_Models => Path.Combine(ML_SuperResolution, "ai_models");
             public static string PlayerWeb => Path.Combine("Plugins", "PlayerWeb");
             //public static string PlayerWeb => Path.Combine("Plugins", "PlayerWeb", "win-x64");
             public static string ScrSaver => Path.Combine("Plugins", "ScrSaver");
@@ -192,6 +214,29 @@ namespace VirtualPaper.Common {
             public static string? Project_Export_PathNotBeNone { get; }
             public static string? Project_Export_InternalError { get; }
             public static string? Project_SI_FileTypeMismatch { get; }
+            public static string? EffectPrefix_ { get; set; }
+            public static string? Intelligent_AddTask { get; }
+            public static string? Intelligent_Style_Type_Custom { get; }
+            public static string? Intelligent_Style_Type_Anime { get; }
+            public static string? Intelligent_Style_Type_Cartoon { get; }
+            public static string? Intelligent_Style_Type_Gongbi { get; }
+            public static string? Intelligent_Style_Type_Pencil { get; }
+            public static string? Intelligent_Style_Type_Watercolor { get; }
+            public static string? Intelligent_Style_Type_InkWash { get; }
+            public static string? Intelligent_Style_Type_OilPainting { get; }
+            public static string? Intelligent_Style_Type_ColoredPencil { get; }
+            public static string? Intelligent_Style_Type_OutlineDrawing { get; }
+            public static string? Intelligent_Style_Type_Ukiyoe { get; }
+            public static string? Text_Task_Status_Completed { get; }
+            public static string? Text_Task_Status_Queue { get; }
+            public static string? Text_Task_Status_Processing { get; }
+            public static string? Text_Task_Status_Failed { get; }
+            public static string? Text_Task_Status_Unknown { get; }
+            public static string? Text_File_Not_Available { get; }
+            public static string? Add_To_Lib_Success { get; }
+            public static string? Intelligent_Enhance_QualityRestore { get; }
+            public static string? Intelligent_Enhance_SuperResolution { get; }
+            public static object Text_Error_InvalidFile { get; set; }
         }
 
         public static class Field {

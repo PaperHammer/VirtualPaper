@@ -1,0 +1,328 @@
+name: Pre-publish Branch CI Check
+run-name: "[Auto] CI Check | ${{ github.ref_name }} | ${{ github.event.head_commit.message || github.event.pull_request.title }}"
+
+on:
+  push:
+    branches:
+      - dev
+      - release
+      - bugfix
+  pull_request:
+    branches:
+      - dev
+      - release
+      - bugfix
+
+concurrency:
+  group: pre-publish-branch-ci-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  statuses: write
+  checks: write
+  pull-requests: write
+
+jobs:
+  build:
+    name: Build Solution
+    runs-on: windows-latest
+    # push 事件：跳过版本号自动提交；pull_request 事件：始终运行
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip ci]'))
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Restore dependencies
+      run: dotnet restore src/VirtualPaper.sln
+
+    - name: Build solution
+      run: dotnet build src/VirtualPaper.sln --configuration Release --no-restore
+
+    - name: Upload build output
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-output
+        retention-days: 7
+        path: src/
+
+  test-core:
+    name: Core Tests
+    runs-on: windows-latest
+    needs: build
+    
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Run Core Tests
+      run: dotnet test src/VirtualPaper.Core.Test/VirtualPaper.Core.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=core-tests.trx" --results-directory TestResults/Core
+      shell: pwsh
+
+    - name: Verify test results exist
+      run: |
+        if (!(Test-Path "TestResults/Core/core-tests.trx")) {
+          Write-Error "Test result file not found! Tests may not have run."
+          exit 1
+        }
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Test results file found"
+      shell: pwsh
+
+    - name: Upload Core test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-core
+        path: TestResults/Core/
+        retention-days: 7
+
+  test-ui:
+    name: UI Tests
+    runs-on: windows-latest
+    needs: build
+    
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Run UI Tests
+      run: dotnet test src/VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=ui-tests.trx" --results-directory TestResults/UI
+      shell: pwsh
+
+    - name: Verify test results exist
+      run: |
+        if (!(Test-Path "TestResults/UI/ui-tests.trx")) {
+          Write-Error "Test result file not found! Tests may not have run."
+          exit 1
+        }
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Test results file found"
+      shell: pwsh
+
+    - name: Upload UI test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-ui
+        path: TestResults/UI/
+        retention-days: 7
+
+  test-ml:
+    name: ML Tests
+    runs-on: windows-latest
+    needs: build
+    
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Run ML Tests
+      run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=ml-tests.trx" --results-directory TestResults/ML
+      shell: pwsh
+
+    - name: Verify test results exist
+      run: |
+        if (!(Test-Path "TestResults/ML/ml-tests.trx")) {
+          Write-Error "Test result file not found! Tests may not have run."
+          exit 1
+        }
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Test results file found"
+      shell: pwsh
+
+    - name: Upload ML test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-ml
+        path: TestResults/ML/
+        retention-days: 7
+
+  test-shader:
+    name: Shader Tests
+    runs-on: windows-latest
+    needs: build
+    
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Run Shader Tests
+      run: dotnet test src/VirtualPaper.Shader.Test/VirtualPaper.Shader.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=shader-tests.trx" --results-directory TestResults/Shader
+      shell: pwsh
+
+    - name: Verify test results exist
+      run: |
+        if (!(Test-Path "TestResults/Shader/shader-tests.trx")) {
+          Write-Error "Test result file not found! Tests may not have run."
+          exit 1
+        }
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Test results file found"
+      shell: pwsh
+
+    - name: Upload Shader test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-shader
+        path: TestResults/Shader/
+        retention-days: 7
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [build, test-core, test-ui, test-ml, test-shader]
+    # build 被 skip（[skip ci]）或任意 job 被 cancel 时，整条链跳过
+    if: |
+      always() &&
+      needs.build.result != 'skipped' &&
+      !contains(needs.*.result, 'cancelled')
+    
+    steps:
+    - name: Download all test results
+      uses: actions/download-artifact@v4
+      with:
+        pattern: test-results-*
+        merge-multiple: true
+        path: TestResults/
+
+    - name: Verify all test results
+      run: |
+        echo "=== Checking test result files ==="
+        EXPECTED_FILES=("core-tests.trx" "ui-tests.trx" "ml-tests.trx" "shader-tests.trx")
+        MISSING=0
+        
+        for file in "${EXPECTED_FILES[@]}"; do
+          FOUND=$(find TestResults/ -name "$file" 2>/dev/null)
+          if [ -z "$FOUND" ]; then
+            echo -e "\033[0;31m[MISSING]\033[0m $file"
+            MISSING=$((MISSING + 1))
+          else
+            echo -e "\033[0;32m[FOUND]\033[0m $FOUND"
+          fi
+        done
+        
+        if [ $MISSING -gt 0 ]; then
+          echo ""
+          echo -e "\033[0;31m[ERROR]\033[0m $MISSING test result file(s) missing!"
+          echo "TEST_RESULTS_VALID=false" >> $GITHUB_ENV
+        else
+          echo ""
+          echo -e "\033[0;32m[OK]\033[0m All test result files present"
+          echo "TEST_RESULTS_VALID=true" >> $GITHUB_ENV
+        fi
+
+    - name: Upload combined test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-combined-${{ github.sha }}
+        path: TestResults/
+        retention-days: 30
+
+    - name: Set test status
+      if: always()
+      run: |
+        if [ "${{ needs.build.result }}" = "success" ] && \
+           [ "${{ needs.test-core.result }}" = "success" ] && \
+           [ "${{ needs.test-ui.result }}" = "success" ] && \
+           [ "${{ needs.test-ml.result }}" = "success" ] && \
+           [ "${{ needs.test-shader.result }}" = "success" ] && \
+           [ "${{ env.TEST_RESULTS_VALID }}" = "true" ]; then
+          echo "TEST_STATUS=success" >> $GITHUB_ENV
+          echo "TEST_DESCRIPTION=All tests passed [OK]" >> $GITHUB_ENV
+        else
+          echo "TEST_STATUS=failure" >> $GITHUB_ENV
+          echo "TEST_DESCRIPTION=Some tests failed or results missing [FAILED]" >> $GITHUB_ENV
+        fi
+
+    - name: Create Status Check
+      if: always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const branch = context.ref.replace('refs/heads/', '') || context.payload.pull_request?.head?.ref || 'unknown';
+          const state = process.env.TEST_STATUS || 'failure';
+          const description = process.env.TEST_DESCRIPTION || 'Tests failed';
+          await github.rest.repos.createCommitStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            sha: context.sha,
+            state: state,
+            target_url: `${context.payload.repository.html_url}/actions/runs/${context.runId}`,
+            description: `[${branch}] ${description}`,
+            context: 'ci-check/pre-publish-tests'
+          });

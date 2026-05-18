@@ -10,6 +10,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.IPC;
+using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
@@ -58,17 +59,19 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public WpSettingsViewModel(
             IMonitorManagerClient monitorManagerClient,
             IWallpaperControlClient wallpaperControlClient,
-            IUserSettingsClient userSettingsClient) {
+            IUserSettingsClient userSettingsClient,
+            IStoragePicker storagePicker) {
             _monitorManagerClient = monitorManagerClient;
             _wpControlClient = wallpaperControlClient;
             _userSettingsClient = userSettingsClient;
+            _storagePicker = storagePicker;
 
             InitMonitors();
             InitCommand();
         }
 
         #region Init
-        internal void InitFlyoutData() {
+        public void InitFlyoutData() {
             InitWpArrangments();
             InitMonitors(); // 打开该页面不会触发绑定值修改，需要手动调用更新
         }
@@ -147,7 +150,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             _filterables.Add(new WeakReference<IFilterable>(filterable));
         }
 
-        internal void OnFilterChanged(FilterKey fk, string text) {
+        public void OnFilterChanged(FilterKey fk, string text) {
             // 遍历并清理死亡引用
             for (int i = _filterables.Count - 1; i >= 0; i--) {
                 if (_filterables[i].TryGetTarget(out var target)) {
@@ -164,7 +167,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private async Task ShowAddToLibDialogAsync() {
             IReadOnlyList<IStorageItem> files = [];
 
-            var addToLibViewModel = new AddToLibViewModel();
+            var addToLibViewModel = new AddToLibViewModel(_storagePicker);
             var dialog = GlobalDialogUtils.CreateDialogWithoutTitle(
                 new AddToLib(addToLibViewModel),
                 LanguageUtil.GetI18n(Constants.I18n.Text_Confirm));
@@ -223,7 +226,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         #region Buttons Command
-        internal async void Close() {
+        public async void Close() {
             if (Interlocked.Exchange(ref _canClose, 0) != 1) return;
             (WpCloseCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
@@ -234,7 +237,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             (WpCloseCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
-        internal async void Detect() {
+        public async void Detect() {
             if (Interlocked.Exchange(ref _canDetect, 0) != 1) return;
             (WpDetectCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
@@ -250,7 +253,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             (WpDetectCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
-        internal async void Identify() {
+        public async void Identify() {
             if (Interlocked.Exchange(ref _canIdentify, 0) != 1) return;
             (WpIdentifyCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
@@ -309,7 +312,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     }
                 }, cts: ctsAdjust);
 
-
             Interlocked.Exchange(ref _canAdjust, 1);
             (WpAdjustCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
@@ -319,6 +321,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IMonitorManagerClient _monitorManagerClient;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly IUserSettingsClient _userSettingsClient;
+        private readonly IStoragePicker _storagePicker;
         private readonly List<WeakReference<IFilterable>> _filterables = [];
         private readonly Dictionary<string, ArcWindow> _adjusts = [];
 

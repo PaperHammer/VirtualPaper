@@ -1,9 +1,42 @@
-﻿using System.Drawing;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
+using Windows.Devices.Geolocation;
 
 namespace VirtualPaper.Common.Utils {
     public class Win32Util {
+        public static async Task<(double lat, double lon)> GetSystemLocationAsync() {
+            var geolocator = new Geolocator {
+                DesiredAccuracy = PositionAccuracy.Default
+            };
+
+            // 请求权限
+            var accessStatus = await Geolocator.RequestAccessAsync();
+            switch (accessStatus) {
+                case GeolocationAccessStatus.Allowed:
+                    break;
+                case GeolocationAccessStatus.Denied:
+                    // 用户拒绝或系统定位关闭，回退默认值
+                    return (39.9042, 116.4074); // 北京
+                default:
+                    return (39.9042, 116.4074);
+            }
+
+            try {
+                var position = await geolocator.GetGeopositionAsync(
+                    maximumAge: TimeSpan.FromMinutes(10),  // 接受 10 分钟内的缓存
+                    timeout: TimeSpan.FromSeconds(10)
+                );
+
+                double lat = position.Coordinate.Point.Position.Latitude;
+                double lon = position.Coordinate.Point.Position.Longitude;
+                return (lat, lon);
+            }
+            catch {
+                return (39.9042, 116.4074);
+            }
+        }
+
         /// <summary>
         /// 通过文件名称获取文件图标
         /// </summary>

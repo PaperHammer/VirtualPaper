@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="VirtualPaper.IntelligentPanel.Views.StyleTransferComp.StyleTransferIntroduction"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.IntelligentPanel.Views.StyleTransferComp"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Storyboard x:Name="demoCrossfadeStoryboard"
+                    RepeatBehavior="Forever">
+            <!-- 停 1s → 淡入 0.5s → 停 2s → 淡出 0.5s → 停 1s，总循环 5s -->
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="resultImage"
+                                           Storyboard.TargetProperty="Opacity">
+                <LinearDoubleKeyFrame KeyTime="0:0:1"   Value="0"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:1.5" Value="1"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:3.5" Value="1"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:4"   Value="0"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:5"   Value="0"/>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="originImage"
+                                           Storyboard.TargetProperty="Opacity">
+                <LinearDoubleKeyFrame KeyTime="0:0:1"   Value="1"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:1.5" Value="0"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:3.5" Value="0"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:4"   Value="1"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:5"   Value="1"/>
+            </DoubleAnimationUsingKeyFrames>
+        </Storyboard>
+    </UserControl.Resources>
+
+    <Grid x:Name="introductionGrid" 
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="16"/>
+            <ColumnDefinition Width="auto"/>
+        </Grid.ColumnDefinitions>
+
+        <Border
+            Width="480"
+            Height="270"
+            CornerRadius="12"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            VerticalAlignment="Center">
+            <Grid>
+                <Image x:Name="originImage"
+                       Source="{x:Bind _intelli_Demo_StyleTransfer_Origin, Converter={StaticResource ResourceKeyToImageConverter}}"
+                       Stretch="UniformToFill"
+                       Opacity="1"/>
+
+                <Image x:Name="resultImage"
+                       Source="{x:Bind _intelli_Demo_StyleTransfer_Result, Converter={StaticResource ResourceKeyToImageConverter}}"
+                       Stretch="UniformToFill"
+                       Opacity="0"/>
+            </Grid>
+        </Border>
+
+        <StackPanel
+            Grid.Column="2"
+            MaxWidth="400"
+            Spacing="12">
+
+            <TextBlock 
+                Text="{markup:I18n Key=Intelligent_Intro_Title}"
+                FontSize="28"
+                FontWeight="SemiBold"
+                TextWrapping="Wrap"/>
+
+            <TextBlock 
+                Text="{markup:I18n Key=Intelligent_Intro_Desc}"
+                FontSize="14"
+                LineHeight="24"
+                TextWrapping="Wrap"/>
+
+            <TextBlock 
+                Text="{markup:I18n Key=Intelligent_Intro_Warning}"
+                FontSize="14"
+                LineHeight="24"
+                Foreground="Gray"
+                TextWrapping="Wrap"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

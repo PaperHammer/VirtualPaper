@@ -274,6 +274,11 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                     UpdateRectToWebview();
                     _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
                     break;
+                case "RWeb":
+                    Webview2.IsHitTestVisible = true;
+                    UpdateRectToWebview();
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+                    break;
                 default:
                     break;
             }
@@ -304,6 +309,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                 "RImage" => PlayingFileWeb.PlayerWeb,
                 "RImage3D" => PlayingFileWeb.PlayerWeb3D,
                 "RVideo" => PlayingFileWeb.PlayerWeb,
+                "RWeb" => PlayingFileWeb.PlayerWeb,   // RWeb 同样用 default.html 作为宿主页
                 _ => throw new ArgumentException(nameof(_startArgs.RuntimeType)),
             };
         }

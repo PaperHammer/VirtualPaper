@@ -10,5 +10,10 @@ namespace VirtualPaper.Common.Runtime.PlayerWeb {
         public static string ResourceLoad { get; } = "resourceLoad";
         public static string UpdateDimensions { get; } = "updateDimensions";
         public static string TimePerception { get; } = "TimePerception";
+
+        // RWeb 平台 API：对应 window.wallpaper 对象的内部方法
+        public static string WpApiSetPaused { get; } = "window.wallpaper.__setPaused";
+        public static string WpApiApplyProperties { get; } = "window.wallpaper.__applyProperties";
+        public static string WpApiMouseMove { get; } = "window.wallpaper.__mouseMove";
     }
 }

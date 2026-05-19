@@ -390,6 +390,7 @@ enum Grpc_FileType {
 	f_picture = 1;
 	f_gif = 2;
 	f_video = 3;
+	f_web_zip = 4;
 }
 
 enum Grpc_RuntimeType {
@@ -397,6 +398,7 @@ enum Grpc_RuntimeType {
 	r_image = 1;
 	r_image3d = 2;
 	r_video = 3;
+	r_web = 4;
 }
 
 enum Grpc_ScreensaverState {

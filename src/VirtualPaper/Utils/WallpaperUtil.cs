@@ -8,6 +8,7 @@ using OpenCvSharp.Extensions;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.Models;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using Size = OpenCvSharp.Size;
@@ -51,7 +52,7 @@ namespace VirtualPaper.Utils {
             }
 
             switch (rtype) {
-                case RuntimeType.RImage:
+                case RuntimeType.RImage:                
                     PictureAndGifCostumise pictureAndGifCostumize = new();
                     JsonSaver.Save(wpEffectFilePathTemplate, pictureAndGifCostumize, PictureAndGifCostumiseContext.Default);
                     break;
@@ -62,6 +63,10 @@ namespace VirtualPaper.Utils {
                 case RuntimeType.RVideo:
                     VideoCostumize videoCostumize = new();
                     JsonSaver.Save(wpEffectFilePathTemplate, videoCostumize, VideoCostumizeContext.Default);
+                    break;
+                case RuntimeType.RWeb:
+                    WebCostumize webCostumize = new();
+                    JsonSaver.Save(wpEffectFilePathTemplate, webCostumize, WebCostumizeContext.Default);
                     break;
                 default:
                     break;
@@ -293,5 +298,72 @@ namespace VirtualPaper.Utils {
 
         // Add NETSCAPE2.0 Application Extension for looping.
         private readonly static byte[] _applicationExtension = [33, 255, 11, 78, 69, 84, 83, 67, 65, 80, 69, 50, 46, 48, 3, 1, 0, 0, 0];
+
+        #region web zip
+        /// <summary>
+        /// 解压 zip 并从 project.json 构建 WpBasicData 元数据。
+        /// </summary>
+        /// <param name="zipPath">zip 文件路径</param>
+        /// <param name="folderPath">目标解压目录（已创建）</param>
+        /// <param name="folderName">库文件夹名（用于缩略图命名）</param>
+        /// <param name="data">待填充的 WpBasicData 实例</param>
+        internal static void BuildBasicDataFromWebZip(
+            string zipPath,
+            string folderPath,
+            string folderName,
+            WpBasicData data) {
+
+            // 解压 zip 到目标目录
+            System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, folderPath, overwriteFiles: true);
+
+            // 读 project.json
+            string projectJsonPath = Path.Combine(folderPath, "project.json");
+            if (!File.Exists(projectJsonPath))
+                throw new FileNotFoundException("zip 包内缺少 project.json", projectJsonPath);
+
+            var project = JsonSaver.Load<WpWebProjectData>(
+                projectJsonPath,
+                WpWebProjectDataContext.Default);
+
+            // HTML 入口文件路径
+            string entryRelative = NormalizeRelativePath(project.File);
+            string entryAbsolute = Path.Combine(folderPath, entryRelative);
+            if (!File.Exists(entryAbsolute))
+                throw new FileNotFoundException($"project.json 中指定的 HTML 入口不存在：{project.File}", entryAbsolute);
+
+            data.FilePath = entryAbsolute;
+
+            // 缩略图：复制 preview 到库规范命名
+            string thumbnailPath = Path.Combine(folderPath, folderName + Constants.Field.ThumGifSuff);
+            string previewRelative = NormalizeRelativePath(project.Preview);
+            string previewAbsolute = Path.Combine(folderPath, previewRelative);
+            if (File.Exists(previewAbsolute)) {
+                File.Copy(previewAbsolute, thumbnailPath, overwrite: true);
+            }
+            // 找不到预览图则不设置，UI 层显示默认占位图
+            data.ThumbnailPath = File.Exists(thumbnailPath) ? thumbnailPath : string.Empty;
+
+            // 文件元数据
+            var zipInfo = new FileInfo(zipPath);
+            double sizeMb = zipInfo.Length / 1024.0 / 1024.0;
+            data.FileSize = sizeMb >= 0.01 ? $"{sizeMb:0.00} MB" : $"{zipInfo.Length / 1024.0:0.00} KB";
+            data.FileExtension = ".zip";
+            data.Resolution = "Web";
+            data.AspectRatio = "-";
+
+            // 元数据字段
+            data.Title = string.IsNullOrWhiteSpace(project.Title)
+                           ? Path.GetFileNameWithoutExtension(zipPath)
+                           : project.Title;
+            data.Desc = project.Desc;
+            data.Authors = project.Authors;
+            data.Tags = project.Tags;
+        }
+
+        private static string NormalizeRelativePath(string? raw) {
+            if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+            return raw.Replace('\\', '/').TrimStart('/');
+        }
+        #endregion
     }
 }

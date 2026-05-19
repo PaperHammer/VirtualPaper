@@ -135,7 +135,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
 
                 var onlyDetailWindow = data.FType switch {
-                    FileType.FImage or FileType.FGif or FileType.FVideo => new OnlyDetails(DataConfigTab.GeneralInfo, data),
+                    FileType.FImage or FileType.FGif or FileType.FVideo or FileType.FWebZip => new OnlyDetails(DataConfigTab.GeneralInfo, data),
                     _ => throw new NotImplementedException(),
                 };
                 onlyDetailWindow.Closed += (sender, args) => {
@@ -239,7 +239,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                         var jsonString = await _wpControlClient.GetPlayerStartArgsAsync(data, rtype, depthFilePath, token);
                         var previewWindow = rtype switch {
-                            RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo => new PreviewWithWeb(jsonString),
+                            RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo or RuntimeType.RWeb => new PreviewWithWeb(jsonString),
                             _ or RuntimeType.RUnknown => throw new NotImplementedException(),
                         };
                         previewWindow.Closed += (sender, args) => {
@@ -511,6 +511,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     };
                 case FileType.FVideo:
                     return RuntimeType.RVideo;
+                case FileType.FWebZip:
+                    return RuntimeType.RWeb;
                 default:
                     return RuntimeType.RUnknown;
             }

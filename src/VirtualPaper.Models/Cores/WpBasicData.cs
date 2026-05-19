@@ -30,11 +30,12 @@ namespace VirtualPaper.Models.Cores {
         public FileType FType {
             get => _fType;
             set {
-                _fType = value;
+                _fType = Enum.IsDefined(value) ? value : FileType.FUnknown;
                 this.IsSingleRType =
-                     value switch {
+                     _fType switch {
                          FileType.FImage or FileType.FGif => false,
                          FileType.FVideo => true,
+                         FileType.FWebZip => true,
                          _ => false,
                      };
             }

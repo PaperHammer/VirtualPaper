@@ -20,6 +20,7 @@ using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
+using VirtualPaper.Utils.BasicDataBuilders;
 using VirtualPaper.Utils.Interfcaes;
 using WinEventHook;
 using static VirtualPaper.Common.Errors;
@@ -477,33 +478,14 @@ namespace VirtualPaper.Cores.WpControl {
                 folderPath = Path.Combine(_userSettings.Settings.WallpaperDir, folderName);
                 data.FolderPath = folderPath;
 
-                // 创建壁纸存储路径与自定义配置文件路径,将原壁纸复制到 folder 下                
+                // 委托给对应 FileType 的 Builder 完成类型特定的构建
                 Directory.CreateDirectory(folderPath);
-                string destFilePath = Path.Combine(folderPath, folderName + Path.GetExtension(filePath));
-                if (filePath != destFilePath) {
-                    File.Copy(filePath, destFilePath, true);
-                }
-                data.FilePath = destFilePath;
+                _builderRegistry.Get(ftype).Build(filePath, folderPath, folderName, data, token);
 
-                #region 创建展示缩略图
-                string thumbnailPath = Path.Combine(folderPath, folderName + Constants.Field.ThumGifSuff);
-                WallpaperUtil.CreateGif(filePath, thumbnailPath, ftype, token);
-                data.ThumbnailPath = thumbnailPath;
-                #endregion
-
-                #region 文件元数据
-                var fileProperty = WallpaperUtil.GetWpProperty(filePath, ftype);
-                data.Resolution = fileProperty.Resolution;
-                data.AspectRatio = fileProperty.AspectRatio;
-                data.FileSize = fileProperty.FileSize;
-                data.FileExtension = fileProperty.FileExtension;
                 data.CreatedTime = DateTime.UtcNow;
-
-                string basicDatafilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
                 if (isAutoSave) {
                     data.Save();
                 }
-                #endregion
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested) {
                 if (Directory.Exists(folderPath)) {
@@ -1032,5 +1014,10 @@ namespace VirtualPaper.Cores.WpControl {
         private readonly IMonitorManager _monitorManager;
         private readonly INativeService _nativeService;
         private readonly IJobService _jobService;
+        private readonly WpBasicDataBuilderRegistry _builderRegistry = new WpBasicDataBuilderRegistry()
+            .Register(FileType.FImage,  new ImageBasicDataBuilder())
+            .Register(FileType.FGif,    new ImageBasicDataBuilder())
+            .Register(FileType.FVideo,  new VideoBasicDataBuilder())
+            .Register(FileType.FWebZip, new WebZipBasicDataBuilder());
     }
 }

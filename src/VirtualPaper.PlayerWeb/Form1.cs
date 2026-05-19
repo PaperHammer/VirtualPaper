@@ -182,6 +182,19 @@ namespace VirtualPaper.PlayerWeb {
             return $"https://{CoreWebView2Extensions.WallpaperHost}/{Path.GetFileNameWithoutExtension(fileName)}/{fileName}";
         }
 
+        // RWeb: filePath = {wallpapers}/{wpId}/index.html
+        // WallpaperHost → {wallpapers}/
+        // 结果: https://wallpaper.localhost/{wpId}/index.html
+        // iframe 内部的相对引用（js/css/图片）会自动基于此 URL 解析，整个目录可访问
+        string GetWallpaperVirtualPathForWeb(string? filePath) {
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentNullException(nameof(filePath));
+
+            var wpFolder = Path.GetFileName(Path.GetDirectoryName(filePath));
+            var htmlFile = Path.GetFileName(filePath);
+            return $"https://{CoreWebView2Extensions.WallpaperHost}/{wpFolder}/{htmlFile}";
+        }
+
         string GetWallpaperRootVirtualPath(string? fileName, string? filePath) {
             if (string.IsNullOrEmpty(fileName) || string.IsNullOrEmpty(filePath))
                 throw new ArgumentNullException(nameof(filePath));
@@ -351,6 +364,10 @@ namespace VirtualPaper.PlayerWeb {
                     UpdateRectToWebview();
                     _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, GetWallpaperVirtualPath(_startArgs.FilePath), GetWallpaperRootVirtualPath(Path.GetFileNameWithoutExtension(_startArgs.FilePath), _startArgs.DepthFilePath));
                     break;
+                case "RWeb":
+                    UpdateRectToWebview();
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, GetWallpaperVirtualPathForWeb(_startArgs.FilePath));
+                    break;
                 default:
                     break;
             }
@@ -388,6 +405,7 @@ namespace VirtualPaper.PlayerWeb {
                 "RImage" => PlayingFileWeb.PlayerWeb,
                 "RImage3D" => PlayingFileWeb.PlayerWeb3D,
                 "RVideo" => PlayingFileWeb.PlayerWeb,
+                "RWeb" => PlayingFileWeb.PlayerWeb,
                 _ => throw new ArgumentException(nameof(_startArgs.RuntimeType)),
             };
         }
@@ -499,6 +517,53 @@ namespace VirtualPaper.PlayerWeb {
             else {
                 StopParallax();
             }
+        }
+
+        /// <summary>
+        /// RWeb 专用鼠标追踪：将鼠标坐标实时推送给 window.wallpaper.__mouseMove。
+        /// 壁纸作者按需监听 onMouseMove，不监听则无任何开销影响。
+        /// 复用 _isParallaxRunning 锁，与 StopParallax 共享停止信号。
+        /// </summary>
+        private void StartWebMouseTracking() {
+            if (Interlocked.CompareExchange(ref _isParallaxRunning, 1, 0) == 1) return;
+
+            Task.Run(() => {
+                try {
+                    bool lastInside = false;
+
+                    while (_isParallaxRunning == 1) {
+                        if (_isFocusOnDesk) {
+                            var pos = RawInput.GetMousePos();
+                            int mouseX = pos.X, mouseY = pos.Y;
+
+                            bool inside = _windowRc.Left <= mouseX && mouseX <= _windowRc.Right &&
+                                          _windowRc.Top  <= mouseY && mouseY <= _windowRc.Bottom;
+
+                            if (inside) {
+                                _scriptExecutor?.EnqueueState(
+                                    key: "MouseMove",
+                                    functionName: Fields.WpApiMouseMove,
+                                    mouseX, mouseY
+                                );
+                            }
+                            else if (lastInside) {
+                                // 鼠标离开窗口，通知壁纸
+                                _scriptExecutor?.EnqueueState(
+                                    key: "MouseMove",
+                                    functionName: Fields.WpApiMouseMove,
+                                    -1, -1
+                                );
+                            }
+
+                            lastInside = inside;
+                        }
+                    }
+                }
+                catch (Exception ex) when (ex is OperationCanceledException) { }
+                catch (Exception e) {
+                    ArcLog.GetLogger<Form1>().Error("[WebMouseTracking] Loop error", e);
+                }
+            });
         }
         #endregion
 

@@ -110,6 +110,7 @@ namespace VirtualPaper.Common.Utils.Files {
             [FileType.FVideo] = [".mp4", ".webm"],
             [FileType.FDesign] = [FileExtension.FE_Design],
             [FileType.FimageAI] = FImageAIExts,
+            [FileType.FWebZip] = [".zip", ".rar", ".7z"],
         };
 
         /// <summary>
@@ -174,6 +175,14 @@ namespace VirtualPaper.Common.Utils.Files {
             // Video
             new("66747970",         FileType.FVideo, [".mp4"],           MustStartWith: false), // ftyp 在偏移 4
             new("1A45DFA3",         FileType.FVideo, [".webm"],          MustStartWith: true),  // EBML
+
+            // Archive (FWebZip)
+            new("504B0304",         FileType.FWebZip, [".zip"],           MustStartWith: true),  // ZIP local file header
+            new("504B0506",         FileType.FWebZip, [".zip"],           MustStartWith: true),  // ZIP empty archive (end of central directory)
+            new("504B0708",         FileType.FWebZip, [".zip"],           MustStartWith: true),  // ZIP spanned archive
+            new("526172211A07",     FileType.FWebZip, [".rar"],           MustStartWith: true),  // RAR4 (Rar!\x1a\x07)
+            new("526172211A070100", FileType.FWebZip, [".rar"],           MustStartWith: true),  // RAR5
+            new("377ABCAF271C",     FileType.FWebZip, [".7z"],            MustStartWith: true),  // 7z (7z\xbc\xaf\x27\x1c)
         ];
 
         /// <summary>

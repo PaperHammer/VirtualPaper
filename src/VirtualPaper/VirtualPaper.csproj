@@ -21,13 +21,13 @@
 	     Without this, .xaml files copied there by plugin builds (e.g. VirtualPaper.WpSettingsPanel)
 	     are picked up by the WinFX glob on the second Rebuild and cause BG1002 / BG1003 errors. -->
 	<ItemGroup>
-		<Page                   Remove="Plugins\**" />
-		<ApplicationDefinition  Remove="Plugins\**" />
-		<Resource               Remove="Plugins\**" />
-		<Compile                Remove="Plugins\**" />
-		<Content                Remove="Plugins\**" />
-		<None                   Remove="Plugins\**" />
-		<EmbeddedResource       Remove="Plugins\**" />
+		<Page Remove="Plugins\**" />
+		<ApplicationDefinition Remove="Plugins\**" />
+		<Resource Remove="Plugins\**" />
+		<Compile Remove="Plugins\**" />
+		<Content Remove="Plugins\**" />
+		<None Remove="Plugins\**" />
+		<EmbeddedResource Remove="Plugins\**" />
 	</ItemGroup>
 
 	<!-- ===================================================================
@@ -39,23 +39,10 @@
 	     =================================================================== -->
 	<ItemGroup>
 		<!-- VirtualPaper.UI ? WinUI 3 / Windows App SDK ??,??? x64 ?? -->
-		<ProjectReference Include="..\VirtualPaper.UI\VirtualPaper.UI.csproj"
-		                  ReferenceOutputAssembly="false"
-		                  SkipGetTargetFrameworkProperties="true"
-		                  Private="false"
-		                  AdditionalProperties="Platform=x64" />
-		<ProjectReference Include="..\VirtualPaper.ScreenSaver\VirtualPaper.ScreenSaver.csproj"
-		                  ReferenceOutputAssembly="false"
-		                  SkipGetTargetFrameworkProperties="true"
-		                  Private="false" />
-		<ProjectReference Include="..\VirtualPaper.PlayerWeb\VirtualPaper.PlayerWeb.csproj"
-		                  ReferenceOutputAssembly="false"
-		                  SkipGetTargetFrameworkProperties="true"
-		                  Private="false" />
-		<ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj"
-		                  ReferenceOutputAssembly="false"
-		                  SkipGetTargetFrameworkProperties="true"
-		                  Private="false" />
+		<ProjectReference Include="..\VirtualPaper.UI\VirtualPaper.UI.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" Private="false" AdditionalProperties="Platform=x64" />
+		<ProjectReference Include="..\VirtualPaper.ScreenSaver\VirtualPaper.ScreenSaver.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" Private="false" />
+		<ProjectReference Include="..\VirtualPaper.PlayerWeb\VirtualPaper.PlayerWeb.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" Private="false" />
+		<ProjectReference Include="..\VirtualPaper.ML\VirtualPaper.ML.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" Private="false" />
 	</ItemGroup>
 
 	<!-- Plugins ????????????,????? Content glob -->
@@ -63,14 +50,9 @@
 	<!-- AfterTargets="Build" ????????????????????????? -->
 	<Target Name="CopyPluginsToOutput" AfterTargets="Build">
 		<ItemGroup>
-			<_PluginFiles Include="$(MSBuildProjectDirectory)\Plugins\**\*"
-			              Exclude="$(MSBuildProjectDirectory)\Plugins\**\*.pdb;
-			                       $(MSBuildProjectDirectory)\Plugins\**\*.xml" />
+			<_PluginFiles Include="$(MSBuildProjectDirectory)\Plugins\**\*" Exclude="$(MSBuildProjectDirectory)\Plugins\**\*.pdb;&#xD;&#xA;			                       $(MSBuildProjectDirectory)\Plugins\**\*.xml" />
 		</ItemGroup>
-		<Copy SourceFiles="@(_PluginFiles)"
-		      DestinationFiles="@(_PluginFiles->'$(OutDir)Plugins\%(RecursiveDir)%(Filename)%(Extension)')"
-		      SkipUnchangedFiles="true"
-		      OverwriteReadOnlyFiles="true" />
+		<Copy SourceFiles="@(_PluginFiles)" DestinationFiles="@(_PluginFiles->'$(OutDir)Plugins\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" />
 		<Message Text="[Copy] Plugins ? $(OutDir)Plugins\" Importance="normal" />
 	</Target>
 
@@ -87,15 +69,9 @@
 			<_ExpectedPluginExe Include="$(_PluginOutDir)ScrSaver\VirtualPaper.ScreenSaver.exe" />
 		</ItemGroup>
 
-		<Error
-			Condition="!Exists('$(_PluginOutDir)UI\VirtualPaper.UI.exe')"
-			Text="[PluginCheck] Missing plugin exe: $(_PluginOutDir)UI\VirtualPaper.UI.exe" />
-		<Error
-			Condition="!Exists('$(_PluginOutDir)PlayerWeb\VirtualPaper.PlayerWeb.exe')"
-			Text="[PluginCheck] Missing plugin exe: $(_PluginOutDir)PlayerWeb\VirtualPaper.PlayerWeb.exe" />
-		<Error
-			Condition="!Exists('$(_PluginOutDir)ScrSaver\VirtualPaper.ScreenSaver.exe')"
-			Text="[PluginCheck] Missing plugin exe: $(_PluginOutDir)ScrSaver\VirtualPaper.ScreenSaver.exe" />
+		<Error Condition="!Exists('$(_PluginOutDir)UI\VirtualPaper.UI.exe')" Text="[PluginCheck] Missing plugin exe: $(_PluginOutDir)UI\VirtualPaper.UI.exe" />
+		<Error Condition="!Exists('$(_PluginOutDir)PlayerWeb\VirtualPaper.PlayerWeb.exe')" Text="[PluginCheck] Missing plugin exe: $(_PluginOutDir)PlayerWeb\VirtualPaper.PlayerWeb.exe" />
+		<Error Condition="!Exists('$(_PluginOutDir)ScrSaver\VirtualPaper.ScreenSaver.exe')" Text="[PluginCheck] Missing plugin exe: $(_PluginOutDir)ScrSaver\VirtualPaper.ScreenSaver.exe" />
 
 		<Message Text="[PluginCheck] All plugin exes are present: UI / PlayerWeb / ScrSaver" Importance="high" />
 	</Target>
@@ -119,6 +95,7 @@
 		<PackageReference Include="OpenCvSharp4.Windows" Version="4.10.0.20241108" />
 		<PackageReference Include="RawInput.Sharp" Version="0.1.3" />
 		<PackageReference Include="Sentinel.NLogViewer" Version="2.0.1" />
+		<PackageReference Include="SharpCompress" Version="0.38.0" />
 		<PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
 		<PackageReference Include="WinEventHook" Version="0.3.6" />
 		<PackageReference Include="WPF-UI" Version="4.0.0" />

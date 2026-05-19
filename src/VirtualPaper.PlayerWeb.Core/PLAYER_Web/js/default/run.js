@@ -31,6 +31,15 @@ function resourceLoad(wallpaperType, filePath) {
                     </video>
                 </div>`;
             break;
+        case 'RWeb':
+            newElement = `
+                <div id="content" class="fade-in" draggable="false">
+                    <iframe class="source rweb-frame" src="${filePath}"
+                            frameborder="0" scrolling="no"
+                            allowtransparency="true">
+                    </iframe>
+                </div>`;
+            break;
         default:
             return;
     }

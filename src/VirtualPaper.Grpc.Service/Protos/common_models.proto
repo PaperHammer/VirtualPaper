@@ -172,6 +172,7 @@ message Grpc_ModifyPreviewRequest {
 message Grpc_SetWallpaperRequest {
 	Grpc_WpPlayerData wp_player_data = 1;
 	string monitor_id = 2;
+	bool is_from_preview = 3;
 }
 
 message Grpc_UpdateWpRequest {
@@ -299,6 +300,9 @@ message Grpc_WpPlayerData {
 	string file_path = 4;
 	string thumbnail_path = 5;
 	string depth_file_path = 6;
+	string wp_effect_file_path_template = 7;
+	string wp_effect_file_path_temporary = 8;
+	string wp_effect_file_path_using = 9;
 }
 
 message Grpc_WpMetaData {

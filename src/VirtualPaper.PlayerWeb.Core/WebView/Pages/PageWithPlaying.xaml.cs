@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -11,6 +10,7 @@ using VirtualPaper.Common.Events.EffectValue.Base;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils;
+using VirtualPaper.Common.Utils.Players;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.PlayerWeb.Core.Utils;
@@ -108,50 +108,57 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         #endregion
 
         #region parallax        
+        //private void StartParallax() {
+        //    if (Interlocked.CompareExchange(ref _isParallaxRunning, 1, 0) == 1) return;
+
+        //    Task.Run(async () => {
+        //        try {
+        //            int lastX = int.MinValue;
+        //            int lastY = int.MinValue;
+        //            bool lastInside = false;
+
+        //            while (_isParallaxRunning == 1) {
+        //                int x = (int)_mousePos.X;
+        //                int y = (int)_mousePos.Y;
+
+        //                if ((_arcWindow?.IsActive ?? false) && _isPointerInsidePage) {
+        //                    _scriptExecutor?.EnqueueState(
+        //                        key: "MouseMove",
+        //                        functionName: Fields.MouseMove,
+        //                        x, y
+        //                    );
+        //                    lastX = x;
+        //                    lastY = y;
+        //                }
+        //                else if (lastInside) {
+        //                    _scriptExecutor?.EnqueueState(
+        //                        key: "MouseOut",
+        //                        functionName: Fields.MouseOut
+        //                    );
+        //                }
+
+        //                lastInside = _isPointerInsidePage;
+        //            }
+        //        }
+        //        catch (Exception e) {
+        //            ArcLog.GetLogger<PageWithPlaying>().Error("[Parallax] Loop error", e);
+        //        }
+        //    });
+        //}
+
+        //private void StopParallax() {
+        //    if (Interlocked.CompareExchange(ref _isParallaxRunning, 0, 1) == 0) return;
+        //    _scriptExecutor?.EnqueueState(
+        //        key: "MouseOut",
+        //        functionName: Fields.MouseOut
+        //    );
+        //}
         private void StartParallax() {
-            if (Interlocked.CompareExchange(ref _isParallaxRunning, 1, 0) == 1) return;
-
-            Task.Run(async () => {
-                try {
-                    int lastX = int.MinValue;
-                    int lastY = int.MinValue;
-                    bool lastInside = false;
-
-                    while (_isParallaxRunning == 1) {
-                        int x = (int)_mousePos.X;
-                        int y = (int)_mousePos.Y;
-
-                        if ((_arcWindow?.IsActive ?? false) && _isPointerInsidePage) {
-                            _scriptExecutor?.EnqueueState(
-                                key: "MouseMove",
-                                functionName: Fields.MouseMove,
-                                x, y
-                            );
-                            lastX = x;
-                            lastY = y;
-                        }
-                        else if (lastInside) {
-                            _scriptExecutor?.EnqueueState(
-                                key: "MouseOut",
-                                functionName: Fields.MouseOut
-                            );
-                        }
-
-                        lastInside = _isPointerInsidePage;
-                    }
-                }
-                catch (Exception e) {
-                    ArcLog.GetLogger<PageWithPlaying>().Error("[Parallax] Loop error", e);
-                }
-            });
+            _scriptExecutor?.EnqueueEvent(Fields.StartParallax);
         }
 
         private void StopParallax() {
-            if (Interlocked.CompareExchange(ref _isParallaxRunning, 0, 1) == 0) return;
-            _scriptExecutor?.EnqueueState(
-                key: "MouseOut",
-                functionName: Fields.MouseOut
-            );
+            _scriptExecutor?.EnqueueEvent(Fields.StopParallax);
         }
 
         private void RunParallax(bool isParallaxOn) {
@@ -178,7 +185,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             else {
                 // 通知 JS 关闭
                 var payload = JsonSerializer.Serialize(new { enabled = false });
-                _scriptExecutor?.EnqueueEvent(Fields.PropertyListener, Fields.TimePerception, payload);
+                _scriptExecutor?.EnqueueEvent(Fields.TimePerception, payload);
             }
         }
 
@@ -208,8 +215,8 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             var (latitude, longitude) = await Win32Util.GetSystemLocationAsync();
             var (sunriseLocal, sunsetLocal) = SunCalc.Calculate(DateTime.UtcNow.Date, latitude, longitude);
 
-            DebugUtil.Output($"sunriseLocal: {sunriseLocal:HH:mm}");
-            DebugUtil.Output($"sunriseLocal: {sunsetLocal:HH:mm}");
+            //DebugUtil.Output($"sunriseLocal: {sunriseLocal:HH:mm}");
+            //DebugUtil.Output($"sunriseLocal: {sunsetLocal:HH:mm}");
 
             var config = new {
                 enabled = true,
@@ -225,7 +232,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             };
 
             var payload = JsonSerializer.Serialize(config);
-            _scriptExecutor?.EnqueueEvent(Fields.PropertyListener, Fields.TimePerception, payload);
+            _scriptExecutor?.EnqueueEvent(Fields.TimePerception, payload);
         }
 
         private CancellationTokenSource? _tpCts;
@@ -266,18 +273,19 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
 
             switch (_startArgs.RuntimeType) {
                 case "RImage":
+                case "RWeb":
+                    Webview2.IsHitTestVisible = true;
+                    UpdateRectToWebview();
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+                    break;
                 case "RVideo":
                     UpdateRectToWebview();
                     _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
                     break;
                 case "RImage3D":
-                    UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
-                    break;
-                case "RWeb":
                     Webview2.IsHitTestVisible = true;
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
                     break;
                 default:
                     break;

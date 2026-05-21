@@ -1373,7 +1373,8 @@ namespace VirtualPaper.Common.Utils.PInvoke {
             /// <summary>
             /// A top-level window is being replaced. The window exists when the system calls this hook.
             /// </summary>
-            HSHELL_WINDOWREPLACED = 13
+            HSHELL_WINDOWREPLACED = 13,
+            APP_MOUSEENTER = 32769
         }
 
         #endregion

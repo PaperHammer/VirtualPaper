@@ -1,7 +1,8 @@
-﻿const scale = 1.05; // 缩放系数
+const scale = 1.05; // 缩放系数
 let centerX;
 let centerY;
 let parallaxBackground;
+let parallaxEnabled = false;
 let volume = 0.8;
 let speed = 1.0;
 let muted = false;
@@ -47,13 +48,12 @@ function resourceLoad(wallpaperType, filePath) {
     if (newElement) {
         // 动态插入新内容后立即移除旧内容，以减少闪烁
         element.insertAdjacentHTML('beforeend', newElement);
-        parallaxBackground = document.getElementById('content');
+        parallaxBackground = element.lastElementChild;
 
         if (oldContent) {
+            oldContent.removeAttribute('id'); 
             oldContent.setAttribute('class', 'fade-out');
-            setTimeout(() => {
-                oldContent.remove();
-            }, 300);
+            setTimeout(() => { oldContent.remove(); }, 300);
         }
     }
 
@@ -101,22 +101,46 @@ function audioMuteChanged(isMuted) {
     }
 }
 
-function mouseMove(x, y) {
-    // 计算鼠标与中心点的相对位置百分比
-    const relX = (x - centerX) / centerX;
-    const relY = (y - centerY) / centerY;
+// function mouseMove(x, y) {
+//     // 计算鼠标与中心点的相对位置百分比
+//     const relX = (x - centerX) / centerX;
+//     const relY = (y - centerY) / centerY;
 
-    const rotateX = relY * 2; // X轴旋转角度，根据Y轴偏移量调整
-    const rotateY = relX * 2; // Y轴旋转角度，根据X轴偏移量调整
+//     const rotateX = relY * 2; // X轴旋转角度，根据Y轴偏移量调整
+//     const rotateY = relX * 2; // Y轴旋转角度，根据X轴偏移量调整
 
-    parallaxBackground.style.transform = `scale(${scale}) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-}
+//     parallaxBackground.style.transform = `scale(${scale}) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+// }
 
-function mouseOut() {
-    parallaxBackground.style.transform = 'scale(1) rotateX(0deg) rotateY(0deg)';
-}
+// function mouseOut() {
+//     parallaxBackground.style.transform = 'scale(1) rotateX(0deg) rotateY(0deg)';
+// }
 
 function updateDimensions(width, height) {
     centerX = width / 2;
     centerY = height / 2;
 }
+
+function startParallax() {
+    parallaxEnabled = true;
+}
+
+function stopParallax() {
+    parallaxEnabled = false;
+    if (parallaxBackground) {
+        parallaxBackground.style.transform = 'scale(1) rotateX(0deg) rotateY(0deg)';
+    }
+}
+
+document.addEventListener('mousemove', (e) => {
+    if (!parallaxEnabled || !parallaxBackground) return;
+    const relX = (e.clientX - centerX) / centerX;
+    const relY = (e.clientY - centerY) / centerY;
+    parallaxBackground.style.transform =
+        `scale(${scale}) rotateX(${relY * 2}deg) rotateY(${relX * 2}deg)`;
+});
+
+document.addEventListener('mouseleave', () => {
+    if (!parallaxEnabled || !parallaxBackground) return;
+    parallaxBackground.style.transform = 'scale(1) rotateX(0deg) rotateY(0deg)';
+});

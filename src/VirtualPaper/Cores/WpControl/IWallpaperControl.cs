@@ -44,7 +44,7 @@ namespace VirtualPaper.Cores.WpControl {
         string? GetPlayerStartArgs(IWpPlayerData wpPlayingData, CancellationToken toke = default);
         Task ResetWallpaperAsync();
         Grpc_RestartWallpaperResponse RestoreWallpaper();
-        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, bool fromPreview = false, CancellationToken token = default);
+        Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, bool isFromPreview = false, CancellationToken token = default);
         void SeekWallpaper(IWpPlayerData data, float seek, PlaybackPosType type);
         void SeekWallpaper(IMonitor monitor, float seek, PlaybackPosType type);
         void SendMessageWallpaper(string deviceId, string ipcMsg);

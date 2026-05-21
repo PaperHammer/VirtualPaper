@@ -1,4 +1,4 @@
-﻿import * as THREE from './three.module.min.js';
+import * as THREE from './three.module.min.js';
 
 // --- 全局变量 ---
 let width = window.innerWidth;
@@ -15,6 +15,7 @@ function resourceLoad3D(imgFilePath, depthFilePath) {
     const root = document.querySelector('.root');
     const oldContent = document.getElementById('content');
     if (oldContent) {
+        oldContent.removeAttribute('id'); 
         oldContent.setAttribute('class', 'fade-out');
         setTimeout(() => { oldContent.remove(); }, 500);
     }
@@ -200,13 +201,14 @@ window.addEventListener('resize', () => {
     resizeContent();
 });
 
-function mouseMove3D(x, y) {
-    // 归一化鼠标坐标 (-1 到 1)
-    mouse.x = (x / window.innerWidth) * 2 - 1;
-    mouse.y = -(y / window.innerHeight) * 2 + 1; // WebGL Y轴通常向上，DOM Y轴向下，建议反转
+let parallaxEnabled = false;
+
+function startParallax() {
+    parallaxEnabled = true;
 }
 
-function mouseOut3D() {
+function stopParallax() {
+    parallaxEnabled = false;
     mouse.x = 0;
     mouse.y = 0;
 }
@@ -216,8 +218,21 @@ function updateDimensions3D(w, h) {
     height = h;
 }
 
+document.addEventListener('mousemove', (e) => {
+    if (!parallaxEnabled) return;
+    // 归一化鼠标坐标 (-1 到 1)
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1; // WebGL Y轴向上，DOM Y轴向下，反转
+});
+
+document.addEventListener('mouseleave', () => {
+    if (!parallaxEnabled) return;
+    mouse.x = 0;
+    mouse.y = 0;
+});
+
 window.resourceLoad = resourceLoad3D;
 window.updateDimensions = updateDimensions3D;
-window.mouseMove = mouseMove3D;
-window.mouseOut = mouseOut3D;
+window.startParallax = startParallax;
+window.stopParallax = stopParallax;
 window.updateFit3D = updateFit3D;

@@ -6,5 +6,8 @@ namespace VirtualPaper.PlayerWeb.Core.Interfaces {
     }
 
     public class ApplyEventArgs : EventArgs {
+        public string? WpEffectFilePathUsing { get; internal set; }
+        public string? WpEffectFilePathTemplate { get; internal set; }
+        public string? WpEffectFilePathTemporary { get; internal set; }
     }
 }

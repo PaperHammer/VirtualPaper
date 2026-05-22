@@ -35,6 +35,24 @@ namespace VirtualPaper.Core.Test.Infrastructure {
             return mock;
         }
 
+        /// <summary>
+        /// 创建一个带有完整 effect 路径的合法 IWpPlayerData Mock，用于测试 isFromPreview=true 分支。
+        /// WpEffectFilePathUsing 为非空（已有应用配置），其余 effect 路径同样指向真实临时文件。
+        /// </summary>
+        public static Mock<IWpPlayerData> CreateValidPlayerDataWithEffectPaths(
+            List<string> tempFilesToCleanup,
+            RuntimeType rtype = RuntimeType.RImage,
+            string wpId = "wp_preview_001") {
+            var mock = CreateValidPlayerData(tempFilesToCleanup, rtype, wpId);
+            var effectUsing    = CreateTempFile(tempFilesToCleanup);
+            var effectTemplate = CreateTempFile(tempFilesToCleanup);
+            var effectTemp     = CreateTempFile(tempFilesToCleanup);
+            mock.Setup(d => d.WpEffectFilePathUsing).Returns(effectUsing);
+            mock.Setup(d => d.WpEffectFilePathTemplate).Returns(effectTemplate);
+            mock.Setup(d => d.WpEffectFilePathTemporary).Returns(effectTemp);
+            return mock;
+        }
+
         public static Mock<IWpPlayer> CreateWpPlayer(
             IWpPlayerData data,
             IMonitor monitor,

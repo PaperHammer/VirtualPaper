@@ -238,6 +238,10 @@ namespace VirtualPaper.Cores.PlaybackControl {
                         ChangeWpState(AppWpRunRulesEnum.KeepRun);
                         ChangeParralaxState(AppParallaxRulesEnum.KeepRun);
                     }
+
+                    // 视差的开/停粒度不需要按屏幕区分，_isParallaxOnFromMouse 已经负责了"鼠标在不在"这层粒度
+                    // IPC 的职责只是全局告诉所有 Player "现在有应用获得焦点，禁止视差"
+
                     // 说明在其他焦点应用程序上
                     else if (_userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand) {
                         // 跨越多屏                            
@@ -248,17 +252,17 @@ namespace VirtualPaper.Cores.PlaybackControl {
                         {
                             ChangeWpState(_userSettings.Settings.AppFocus);
                         }
-                        ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
+                        ChangeParralaxState(AppParallaxRulesEnum.Pause);
                     }
                     else if (Native.IsZoomed(fHandle) || IsZoomedCustom(fHandle)) {
                         //maximised window or window covering whole screen.
                         ChangeWpState(_userSettings.Settings.AppFullscreen, focusedScreen);
-                        ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
+                        ChangeParralaxState(AppParallaxRulesEnum.Pause);
                     }
                     else {
                         //window is just in focus, not covering screen.
                         ChangeWpState(_userSettings.Settings.AppFocus, focusedScreen);
-                        ChangeParralaxState(AppParallaxRulesEnum.Pause, focusedScreen);
+                        ChangeParralaxState(AppParallaxRulesEnum.Pause);
                     }
 
                     if (!isDesktop && _userSettings.Settings.IsAudioOnlyOnDesktop) {

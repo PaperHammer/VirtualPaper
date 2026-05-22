@@ -1,0 +1,87 @@
+using System.Drawing;
+using VirtualPaper.Common.Utils.PInvoke;
+
+namespace VirtualPaper.Common.Utils {
+    public static class InputUtil {
+        static readonly IntPtr MK_LBUTTON = (IntPtr)0x0001;
+        static readonly IntPtr MK_RBUTTON = (IntPtr)0x0002;
+        static readonly IntPtr MK_MOVE = (IntPtr)0x0020;
+
+        public static bool IsMouseButtonsSwapped { get; } =
+            Native.GetSystemMetrics((int)Native.SystemMetric.SM_SWAPBUTTON) != 0;
+
+        public static void MouseLeftButtonDown(IntPtr hwnd, int x, int y) =>
+            ForwardMessageMouse(hwnd, x, y, (int)Native.WM.LBUTTONDOWN, MK_LBUTTON);
+
+        public static void MouseLeftButtonUp(IntPtr hwnd, int x, int y) =>
+            ForwardMessageMouse(hwnd, x, y, (int)Native.WM.LBUTTONUP, MK_LBUTTON);
+
+        public static void MouseRightButtonDown(IntPtr hwnd, int x, int y) =>
+            ForwardMessageMouse(hwnd, x, y, (int)Native.WM.RBUTTONDOWN, MK_RBUTTON);
+
+        public static void MouseRightButtonUp(IntPtr hwnd, int x, int y) =>
+            ForwardMessageMouse(hwnd, x, y, (int)Native.WM.RBUTTONUP, MK_RBUTTON);
+
+        public static void MouseMove(IntPtr hwnd, int x, int y) =>
+            ForwardMessageMouse(hwnd, x, y, (int)Native.WM.MOUSEMOVE, MK_MOVE);
+
+        /// <summary>
+        /// Forward mouse input to the active/inactive window.
+        /// </summary>
+        /// <param name="hwnd">Target window handle</param>
+        /// <param name="x">Cursor pos x</param>
+        /// <param name="y">Cursor pos y</param>
+        /// <param name="msg">mouse message</param>
+        /// <param name="wParam">additional msg parameter</param>
+        public static void ForwardMessageMouse(IntPtr hwnd, int x, int y, int msg, IntPtr wParam) {
+            // The low-order word specifies the x-coordinate of the cursor, the high-order word specifies the y-coordinate of the cursor.
+            // Ref: https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-mousemove
+            uint lParam = Convert.ToUInt32(y);
+            lParam <<= 16;
+            lParam |= Convert.ToUInt32(x);
+            Native.PostMessageW(hwnd, msg, wParam, (UIntPtr)lParam);
+        }
+
+        /// <summary>
+        /// Forward key input to the active/inactive window.
+        /// </summary>
+        /// <param name="hwnd">Target window handle</param>
+        /// <param name="msg">key press msg</param>
+        /// <param name="wParam">Virtual-Key code</param>
+        /// <param name="scanCode">OEM code of the key</param>
+        /// <param name="isPressed">Key is pressed</param>
+        public static void ForwardMessageKeyboard(IntPtr hwnd, int msg, IntPtr wParam, int scanCode, bool isPressed) {
+            //Ref:
+            // https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keydown
+            // https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keyup
+            uint lParam = 1u; //press
+            lParam |= (uint)scanCode << 16; //oem code
+            lParam |= 1u << 24; //extended key
+            lParam |= 0u << 29; //context code; Note: Alt key combos wont't work
+            /* Same as:
+             * lParam = isPressed ? (lParam |= 0u << 30) : (lParam |= 1u << 30); //prev key state
+             * lParam = isPressed ? (lParam |= 0u << 31) : (lParam |= 1u << 31); //transition state
+             */
+            lParam = isPressed ? lParam : (lParam |= 3u << 30);
+            Native.PostMessageW(hwnd, msg, wParam, (UIntPtr)lParam);
+        }
+
+        /// <summary>
+        /// Converts global mouse position to per-display localized coordinates.
+        /// </summary>
+        public static Point ToMouseDisplayLocal(int x, int y, Rectangle displayBounds) {
+            x += -1 * displayBounds.X;
+            y += -1 * displayBounds.Y;
+            return new Point(x, y);
+        }
+
+        /// <summary>
+        /// Converts global mouse position to span-local coordinates.
+        /// </summary>
+        public static Point ToMouseSpanLocal(int x, int y, Rectangle virtualScreenBounds) {
+            x -= virtualScreenBounds.Location.X;
+            y -= virtualScreenBounds.Location.Y;
+            return new Point(x, y);
+        }
+    }
+}

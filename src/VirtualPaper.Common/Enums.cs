@@ -97,6 +97,7 @@ namespace VirtualPaper.Common {
         FVideo,
         FDesign,
         FimageAI,
+        FWebZip,
     }
 
     public enum RuntimeType {
@@ -104,6 +105,7 @@ namespace VirtualPaper.Common {
         RImage,
         RImage3D,
         RVideo,
+        RWeb,
     }
 
     public enum WallpaperCreateType {
@@ -270,6 +272,13 @@ namespace VirtualPaper.Common {
 
             _properties[nameof(Scaling)] = Scaling;
             _properties[nameof(Parallax)] = Parallax;
+        }
+    }
+
+    [JsonSerializable(typeof(WebCostumize))]
+    public partial class WebCostumizeContext : JsonSerializerContext { }
+    public class WebCostumize : UniverseCostumise {
+        public WebCostumize() {
         }
     }
 

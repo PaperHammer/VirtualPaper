@@ -277,6 +277,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
                 ".gif", ".apng",
                 // FVideo
                 ".mp4", ".webm",
+                // FWebZip
+                ".zip", ".rar", ".7z",
             ];
 
             Assert.IsNotNull(capturedExtensions);

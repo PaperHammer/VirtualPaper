@@ -468,7 +468,11 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
         private void SaveAndApplyBtn_Click(object sender, RoutedEventArgs e) {
             UpdatePropertyFile(true);
-            _applyService?.OnApply(null);
+            _applyService?.OnApply(new ApplyEventArgs() {
+                WpEffectFilePathUsing = _startArgs.WpEffectFilePathUsing,
+                WpEffectFilePathTemplate = _startArgs.WpEffectFilePathTemplate,
+                WpEffectFilePathTemporary = _startArgs.WpEffectFilePathTemporary,
+            });
         }
         #endregion
 

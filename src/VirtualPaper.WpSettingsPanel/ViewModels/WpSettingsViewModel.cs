@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
@@ -288,11 +289,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         string monitorId = Monitors[SelectedMonitorIndex].DeviceId;
                         var jsonString = await _wpControlClient.GetPlayerStartArgsByMonitorIdAsync(monitorId, token);
                         var adjustWindow = new AdjustConfig(jsonString);
-                        adjustWindow.Closed += (sender, args) => {
-                            var ipcMessage = new VirtualPaperReloadEffectCmd();
-                            _wpControlClient.SendMessageWallpaperAsync(monitorId, ipcMessage);
-                            _adjusts.Remove(monitorId);
-                        };
+                        adjustWindow.Closed += OnAdjustWindowClosed;
                         adjustWindow.Applied += (sender, context) => {
                             adjustWindow.Close();
                         };
@@ -314,6 +311,21 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
             Interlocked.Exchange(ref _canAdjust, 1);
             (WpAdjustCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
+        internal void UpdateAdjustWindowCache() {
+            if (_adjusts.TryGetValue(Monitors[SelectedMonitorIndex].DeviceId, out var adjust)) {
+                adjust.Closed -= OnAdjustWindowClosed;
+                adjust.Close();
+            }            
+            _adjusts.Remove(Monitors[SelectedMonitorIndex].DeviceId);
+        }
+
+        private void OnAdjustWindowClosed(object sender, WindowEventArgs e) {
+            string monitorId = Monitors[SelectedMonitorIndex].DeviceId;
+            var ipcMessage = new VirtualPaperReloadEffectCmd();
+            _wpControlClient.SendMessageWallpaperAsync(monitorId, ipcMessage);
+            _adjusts.Remove(monitorId);
         }
         #endregion
 

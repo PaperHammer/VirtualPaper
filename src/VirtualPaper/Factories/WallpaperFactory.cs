@@ -10,7 +10,8 @@ namespace VirtualPaper.Factories {
             switch (data.RType) {
                 case RuntimeType.RImage:
                 case RuntimeType.RImage3D:
-                case RuntimeType.RVideo: {
+                case RuntimeType.RVideo:
+                case RuntimeType.RWeb: {
                         return new WpPlayerWeb(data, monitor, isPreview);
                     }
 
@@ -108,7 +109,7 @@ namespace VirtualPaper.Factories {
 
         public string? CreatePlayerStartArgs(IWpPlayerData data, bool isPreview) {
             return data.RType switch {
-                RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo => new PlayerWebSrartArgs(data, isPreview).ToJson(),
+                RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo or RuntimeType.RWeb => new PlayerWebSrartArgs(data, isPreview).ToJson(),
                 _ => null
             };
         }

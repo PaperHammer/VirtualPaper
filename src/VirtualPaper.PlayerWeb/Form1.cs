@@ -1,13 +1,13 @@
-using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Events.EffectValue.Base;
 using VirtualPaper.Common.Extensions;
-using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Common.Utils.Players;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.PlayerWeb.Extensions;
@@ -28,6 +28,54 @@ namespace VirtualPaper.PlayerWeb {
                 return cp;
             }
         }
+
+        #region native msg
+        protected override void WndProc(ref Message m) {
+            switch (m.Msg) {
+                //case (int)Native.WM.MOUSEMOVE: {
+                //        int x = (short)(m.LParam.ToInt32() & 0xFFFF);
+                //        int y = (short)((m.LParam.ToInt32() >> 16) & 0xFFFF);
+                //        _scriptExecutor?.EnqueueState("mousemove", Fields.MouseMove, x, y);
+                //        return;
+                //    }
+                //case (int)Native.WM.LBUTTONDOWN: {
+                //        int x = (short)(m.LParam.ToInt32() & 0xFFFF);
+                //        int y = (short)((m.LParam.ToInt32() >> 16) & 0xFFFF);
+                //        _scriptExecutor?.EnqueueEvent(Fields.MouseLeftButtonDown, x, y);
+                //        return;
+                //    }
+                //case (int)Native.WM.LBUTTONUP: {
+                //        int x = (short)(m.LParam.ToInt32() & 0xFFFF);
+                //        int y = (short)((m.LParam.ToInt32() >> 16) & 0xFFFF);
+                //        _scriptExecutor?.EnqueueEvent(Fields.MouseLeftButtonUp, x, y);
+                //        return;
+                //    }
+                case (int)Native.WM.MOUSELEAVE: {
+                        OnMouseOut();
+                        return;
+                    }
+                case (int)Native.WM.APP_MOUSEENTER: {
+                        OnMouseIn();
+                        return;
+                    }
+            }
+            base.WndProc(ref m);
+        }
+
+        private void OnMouseIn() {            
+            Interlocked.Exchange(ref _isParallaxOnFromMouse, 1);
+            RunParallax();
+            
+            _scriptExecutor?.EnqueueEvent(Fields.MouseIn);
+        }
+
+        private void OnMouseOut() {            
+            Interlocked.Exchange(ref _isParallaxOnFromMouse, 0);
+            RunParallax();
+            
+            _scriptExecutor?.EnqueueEvent(Fields.MouseOut);
+        }
+        #endregion
 
         public Form1(StartArgsWeb args) {
             InitializeComponent();
@@ -58,7 +106,7 @@ namespace VirtualPaper.PlayerWeb {
 
             _startArgs = args;
 
-            InitializeWebView2Async().Await(() => {                
+            InitializeWebView2Async().Await(() => {
                 _scriptExecutor = new WebViewScriptExecutor(_webView2);
                 _ = StdInListener();
             },
@@ -182,6 +230,19 @@ namespace VirtualPaper.PlayerWeb {
             return $"https://{CoreWebView2Extensions.WallpaperHost}/{Path.GetFileNameWithoutExtension(fileName)}/{fileName}";
         }
 
+        // RWeb: filePath = {wallpapers}/{wpId}/index.html
+        // WallpaperHost → {wallpapers}/
+        // 结果: https://wallpaper.localhost/{wpId}/index.html
+        // iframe 内部的相对引用（js/css/图片）会自动基于此 URL 解析，整个目录可访问
+        string GetWallpaperVirtualPathForWeb(string? filePath) {
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentNullException(nameof(filePath));
+
+            var wpFolder = Path.GetFileName(Path.GetDirectoryName(filePath));
+            var htmlFile = Path.GetFileName(filePath);
+            return $"https://{CoreWebView2Extensions.WallpaperHost}/{wpFolder}/{htmlFile}";
+        }
+
         string GetWallpaperRootVirtualPath(string? fileName, string? filePath) {
             if (string.IsNullOrEmpty(fileName) || string.IsNullOrEmpty(filePath))
                 throw new ArgumentNullException(nameof(filePath));
@@ -254,10 +315,12 @@ namespace VirtualPaper.PlayerWeb {
                         });
                         break;
                     case MessageType.cmd_suspend_parallax:
-                        _isFocusOnDesk = false;
+                        Interlocked.Exchange(ref _isParallaxOnFromIpc, 0);
+                        RunParallax();
                         break;
                     case MessageType.cmd_resume_parallax:
-                        _isFocusOnDesk = true;
+                        Interlocked.Exchange(ref _isParallaxOnFromIpc, 1);
+                        RunParallax();
                         break;
                     case MessageType.vp_general_effect:
                         HandleGenerealEffect((VirtualPaperGeneralEffect)obj);
@@ -326,16 +389,14 @@ namespace VirtualPaper.PlayerWeb {
             _scriptExecutor?.EnqueueEvent(Fields.AudioMuteChanged, muted.IsMuted);
         }
 
-        private void HandleUpdateCommand(VirtualPaperUpdateCmd update) {            
-            if (_startArgs.FilePath != update.FilePath) {
-                _startArgs.FilePath = update.FilePath;
-                _startArgs.RuntimeType = update.RType;
-                _startArgs.WpEffectFilePathTemplate = update.WpEffectFilePathTemplate;
-                _startArgs.WpEffectFilePathTemporary = update.WpEffectFilePathTemporary;
-                _startArgs.WpEffectFilePathUsing = update.WpEffectFilePathUsing;
-            }
-
-            Run();
+        private void HandleUpdateCommand(VirtualPaperUpdateCmd update) {
+            if (update.Args != null) {
+                var args = JsonSerializer.Deserialize<StartArgsWeb>(update.Args);
+                if (args != null && _startArgs.FilePath != args.FilePath) {
+                    _startArgs = args;
+                    Run();
+                }
+            }            
         }
         #endregion
 
@@ -350,6 +411,10 @@ namespace VirtualPaper.PlayerWeb {
                 case "RImage3D":
                     UpdateRectToWebview();
                     _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, GetWallpaperVirtualPath(_startArgs.FilePath), GetWallpaperRootVirtualPath(Path.GetFileNameWithoutExtension(_startArgs.FilePath), _startArgs.DepthFilePath));
+                    break;
+                case "RWeb":
+                    UpdateRectToWebview();
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, GetWallpaperVirtualPathForWeb(_startArgs.FilePath));
                     break;
                 default:
                     break;
@@ -388,6 +453,7 @@ namespace VirtualPaper.PlayerWeb {
                 "RImage" => PlayingFileWeb.PlayerWeb,
                 "RImage3D" => PlayingFileWeb.PlayerWeb3D,
                 "RVideo" => PlayingFileWeb.PlayerWeb,
+                "RWeb" => PlayingFileWeb.PlayerWeb,
                 _ => throw new ArgumentException(nameof(_startArgs.RuntimeType)),
             };
         }
@@ -412,14 +478,21 @@ namespace VirtualPaper.PlayerWeb {
                 }
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<Form1>().Error(ex);
+                Program.WriteToParent(new VirtualPaperMessageConsole() {
+                    MsgType = ConsoleMessageType.Error,
+                    Message = $"Failed to load effect config: {ex.Message}"
+                });
             }
         }
 
         private void ExecuteCheckBoxSet(string propertyName, bool val) {
             switch (propertyName) {
                 case "Parallax":
-                    RunParallax(val);
+                    Interlocked.Exchange(ref _isParallaxOnFromUser, val ? 1 : 0);
+                    RunParallax();
+                    break;
+                case "TimeAtmoPerception":
+                    RunTimePerception(val);
                     break;
                 default:
                     break;
@@ -433,83 +506,105 @@ namespace VirtualPaper.PlayerWeb {
         }
         #endregion
 
-        #region parallax
-        private void StartParallax() {
-            if (Interlocked.CompareExchange(ref _isParallaxRunning, 1, 0) == 1) return;
+        #region time perception
+        private void RunTimePerception(bool isTimePerceptionOn) {
+            // 先停止旧任务
+            _tpCts?.Cancel();
+            _tpCts?.Dispose();
+            _tpCts = null;
 
-            Task.Run(() => {
+            if (isTimePerceptionOn) {
+                _tpCts = new CancellationTokenSource();
+                _ = TimePerceptionLoopAsync(_tpCts.Token);
+            }
+            else {
+                // 通知 JS 关闭
+                var payload = JsonSerializer.Serialize(new { enabled = false });
+                _scriptExecutor?.EnqueueEvent(Fields.TimePerception, payload);
+            }
+        }
+
+        /// <summary>
+        /// 每天重新计算日出日落，下发参数给 JS
+        /// </summary>
+        private async Task TimePerceptionLoopAsync(CancellationToken ct) {
+            while (!ct.IsCancellationRequested) {
+                // 计算今日参数并下发
+                await SendTimePerceptionConfigAsync();
+
+                // 等到次日 00:01 再重新计算
+                var now = DateTime.Now;
+                var nextMidnight = now.Date.AddDays(1).AddMinutes(1);
+                var delay = nextMidnight - now;
+
                 try {
-                    int lastX = int.MinValue;
-                    int lastY = int.MinValue;
-                    bool lastInside = false;
-
-                    while (_isParallaxRunning == 1) {
-                        if (_isFocusOnDesk) {
-                            var pos = RawInput.GetMousePos();
-                            int mouseX = pos.X, mouseY = pos.Y;
-
-                            bool inside = _windowRc.Left <= mouseX && mouseX <= _windowRc.Right &&
-                                        _windowRc.Top <= mouseY && mouseY <= _windowRc.Bottom;
-                            //Debug.WriteLine(inside + " " + mouseX + "," + mouseY + " | " + _windowRc.Left + " " + +_windowRc.Right + " " + _windowRc.Top + " " + _windowRc.Bottom);
-                            if (inside) {
-                                _scriptExecutor?.EnqueueState(
-                                    key: "MouseMove",
-                                    functionName: Fields.MouseMove,
-                                    mouseX, mouseY
-                                );
-                                lastX = mouseX;
-                                lastY = mouseY;
-                            }
-                            else if (lastInside) {
-                                _scriptExecutor?.EnqueueState(
-                                    key: "MouseOut",
-                                    functionName: Fields.MouseOut
-                                );
-                            }
-
-                            lastInside = inside;
-                        }
-                        else {
-                            _scriptExecutor?.EnqueueState(
-                                key: "MouseOut",
-                                functionName: Fields.MouseOut
-                            );
-                        }
-                    }
+                    await Task.Delay(delay, ct);
                 }
-                catch (Exception ex) when (ex is OperationCanceledException) { }
-                catch (Exception e) {
-                    ArcLog.GetLogger<Form1>().Error("[Parallax] Loop error", e);
+                catch (TaskCanceledException) {
+                    break;
                 }
-            });
+            }
+        }
+
+        private async Task SendTimePerceptionConfigAsync() {
+            var (latitude, longitude) = await Win32Util.GetSystemLocationAsync();
+            var (sunriseLocal, sunsetLocal) = SunCalc.Calculate(DateTime.UtcNow.Date, latitude, longitude);
+
+            var config = new {
+                enabled = true,
+                sunrise = sunriseLocal.ToString("HH:mm"),
+                sunset = sunsetLocal.ToString("HH:mm"),
+                transitionMinutes = 30,
+                phases = new {
+                    night = new { brightness = -0.3, hue = 220, saturate = -0.2 },
+                    dawn = new { brightness = 0.1, hue = 30, saturate = 0.3 },
+                    day = new { brightness = 0.0, hue = 0, saturate = 0.0 },
+                    dusk = new { brightness = -0.1, hue = 20, saturate = 0.2 },
+                }
+            };
+
+            var payload = JsonSerializer.Serialize(config);
+            _scriptExecutor?.EnqueueEvent(Fields.TimePerception, payload);
+        }
+
+        private CancellationTokenSource? _tpCts;
+        #endregion
+
+        #region parallax
+
+        private void StartParallax() {
+            _scriptExecutor?.EnqueueEvent(Fields.StartParallax);
         }
 
         private void StopParallax() {
-            if (Interlocked.CompareExchange(ref _isParallaxRunning, 0, 1) == 0) return;
-            _scriptExecutor?.EnqueueState(
-                key: "MouseOut",
-                functionName: Fields.MouseOut
-            );
+            _scriptExecutor?.EnqueueEvent(Fields.StopParallax);
         }
 
-        private void RunParallax(bool isParallaxOn) {
-            if (isParallaxOn) {
+        /// <summary>
+        /// 视差启动条件：用户开启 AND 鼠标在本壁纸上 AND IPC 未挂起（无全屏/焦点应用遮盖）
+        /// </summary>
+        private void RunParallax() {
+            if (Interlocked.CompareExchange(ref _isParallaxOnFromUser, 0, 0) == 1 &&
+                Interlocked.CompareExchange(ref _isParallaxOnFromMouse, 0, 0) == 1 &&
+                Interlocked.CompareExchange(ref _isParallaxOnFromIpc, 0, 0) == 1) {
                 StartParallax();
             }
             else {
                 StopParallax();
             }
         }
+
         #endregion
 
-        private readonly StartArgsWeb _startArgs;
+        private StartArgsWeb _startArgs;
         private WebView _webView2 = null!;
         private WebViewScriptExecutor? _scriptExecutor;
-        private bool _isFocusOnDesk = false;
         private bool _isPaused = false;
         private Native.RECT _windowRc;
-        private volatile int _isParallaxRunning = 0; // 0 = stopped, 1 = running
         private int cefD3DRenderingSubProcessId;
+        private int _isParallaxOnFromUser;      // 0=关闭, 1=开启（用户效果设置）
+        private int _isParallaxOnFromMouse;     // 0=鼠标不在本壁纸上, 1=在（MouseEnter/Leave）
+        private int _isParallaxOnFromIpc = 1;   // 0=IPC 挂起（全屏/焦点应用遮盖）, 1=IPC 允许（默认允许）
         private readonly CancellationTokenSource _ctsConsoleIn = new();
         private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
             AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1 --autoplay-policy=no-user-gesture-required "

@@ -3,13 +3,14 @@ using System.Windows.Interop;
 using Linearstar.Windows.RawInput;
 using Linearstar.Windows.RawInput.Native;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.WpControl;
-using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils.Interfcaes;
-using Point = System.Drawing.Point;
+using Monitor = VirtualPaper.Models.Cores.Monitor;
 
 namespace VirtualPaper.Views.WindowsMsg {
     /// <summary>
@@ -125,26 +126,19 @@ namespace VirtualPaper.Views.WindowsMsg {
 
                         switch (mouse.Mouse.Buttons) {
                             case RawMouseButtonFlags.LeftButtonDown:
-                                ForwardMessageMouse(P.X, P.Y, (int)Native.WM.LBUTTONDOWN, (IntPtr)0x0001);
-                                MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.Left));
+                                RawInput_MouseDownRaw(P.X, P.Y, RawInputMouseBtn.Left);
                                 break;
                             case RawMouseButtonFlags.LeftButtonUp:
-                                ForwardMessageMouse(P.X, P.Y, (int)Native.WM.LBUTTONUP, (IntPtr)0x0001);
-                                MouseUpRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.Left));
+                                RawInput_MouseUpRaw(P.X, P.Y, RawInputMouseBtn.Left);
                                 break;
                             case RawMouseButtonFlags.RightButtonDown:
-                                //issue: click being skipped; desktop already has its own rightclick contextmenu.
-                                //ForwardMessage(M.X, M.Y, (int)Native.WM.RBUTTONDOWN, (IntPtr)0x0002);
-                                MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.Right));
+                                RawInput_MouseDownRaw(P.X, P.Y, RawInputMouseBtn.Right);
                                 break;
                             case RawMouseButtonFlags.RightButtonUp:
-                                //issue: click being skipped; desktop already has its own rightclick contextmenu.
-                                //ForwardMessage(M.X, M.Y, (int)Native.WM.RBUTTONUP, (IntPtr)0x0002);
-                                MouseUpRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.Right));
+                                RawInput_MouseUpRaw(P.X, P.Y, RawInputMouseBtn.Right);
                                 break;
                             case RawMouseButtonFlags.None:
-                                ForwardMessageMouse(P.X, P.Y, (int)Native.WM.MOUSEMOVE, (IntPtr)0x0020);
-                                MouseMoveRaw?.Invoke(this, new MouseRawArgs(P.X, P.Y));
+                                RawInput_MouseMoveRaw(P.X, P.Y);
                                 break;
                             case RawMouseButtonFlags.MouseWheel:
                                 //Disabled, not tested yet.
@@ -176,9 +170,11 @@ namespace VirtualPaper.Views.WindowsMsg {
                         }
                         break;
                     case RawInputKeyboardData keyboard:
-                        ForwardMessageKeyboard((int)keyboard.Keyboard.WindowMessage,
-                            (IntPtr)keyboard.Keyboard.VirutalKey, keyboard.Keyboard.ScanCode,
-                            (keyboard.Keyboard.Flags != RawKeyboardFlags.Up));
+                        RawInput_KeyboardClickRaw(
+                            (int)keyboard.Keyboard.WindowMessage,
+                            (IntPtr)keyboard.Keyboard.VirutalKey,
+                            keyboard.Keyboard.ScanCode,
+                            keyboard.Keyboard.Flags != RawKeyboardFlags.Up);
                         KeyboardClickRaw?.Invoke(this, new KeyboardClickRawArgs(keyboard.Keyboard.VirutalKey));
                         break;
                 }
@@ -187,120 +183,165 @@ namespace VirtualPaper.Views.WindowsMsg {
             return IntPtr.Zero;
         }
 
-        /// <summary>
-        /// Forwards the keyboard message to the required wallpaper window based on given cursor location.<br/>
-        /// Skips if desktop is not focused.
-        /// </summary>
-        /// <param name="msg">key press msg.</param>
-        /// <param name="wParam">Virtual-Key code.</param>
-        /// <param name="scanCode">OEM code of the key.</param>
-        /// <param name="isPressed">Key is pressed.</param>
-        private void ForwardMessageKeyboard(int msg, IntPtr wParam, int scanCode, bool isPressed) {
-            try {
-                //Don'T forward when not on desktop.
-                if (_userSettings.Settings.InputForward == InputForwardMode.mousekeyboard && IsDesktop()) {
-                    //Detect active wp based on cursor pos, better way to do this?
-                    if (!Native.GetCursorPos(out Native.POINT P))
-                        return;
+        private Monitor? _lastHoveredMonitor = null;
 
-                    var display = _monitorManager.GetMonitorByPoint(new(P.X, P.Y));
+        //private void RawInput_MouseMoveRaw(int x, int y) {
+        //    // 非桌面时，仅在 MouseInputMovAlways 开启时才转发 Move
+        //    if (_userSettings.Settings.InputForward == InputForwardMode.off ||
+        //        !IsDesktop() && !_userSettings.Settings.MouseInputMovAlways)
+        //        return;
+
+        //    try {
+        //        var currentDisplay = _monitorManager.GetMonitorByPoint(new(x, y));
+
+        //        // 光标切换到新显示器时，向旧显示器上的壁纸发送 MouseLeave
+        //        if (_lastHoveredMonitor != null && !_lastHoveredMonitor.Equals(currentDisplay)) {
+        //            foreach (var wallpaper in _wpControl.Wallpapers) {
+        //                if (IsInputAllowed(wallpaper.Data.RType) &&
+        //                    wallpaper.Monitor.Equals(_lastHoveredMonitor)) {
+        //                    Native.PostMessageW(wallpaper.ProcWindowHandle, (int)Native.WM.MOUSELEAVE, IntPtr.Zero, IntPtr.Zero);
+        //                    //wallpaper.SendMessage(new VirtualPaperMouseOutCmd());
+        //                }
+        //            }
+        //        }
+        //        _lastHoveredMonitor = currentDisplay;
+
+        //        ForwardMouseToWallpapers(x, y, InputUtil.MouseMove);
+        //        MouseMoveRaw?.Invoke(this, new MouseRawArgs(x, y));
+        //    }
+        //    catch (Exception e) {
+        //        ArcLog.GetLogger<RawInputMsgWindow>().Error("Mouse Move Forwarding Error: " + e.Message);
+        //    }
+        //}
+        private void RawInput_MouseMoveRaw(int x, int y) {
+            if (_userSettings.Settings.InputForward == InputForwardMode.off ||
+                !IsDesktop() && !_userSettings.Settings.MouseInputMovAlways)
+                return;
+
+            try {
+                var currentDisplay = _monitorManager.GetMonitorByPoint(new(x, y));
+
+                if (!currentDisplay.Equals(_lastHoveredMonitor)) {
                     foreach (var wallpaper in _wpControl.Wallpapers) {
-                        if (IsInputAllowed(wallpaper.Data.RType)) {
-                            if (display.Equals(wallpaper.Monitor) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand) {
-                                //ref:
-                                //https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keydown
-                                //https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keyup
-                                uint lParam = 1u; //press
-                                lParam |= (uint)scanCode << 16; //oem code
-                                lParam |= 1u << 24; //extended key
-                                lParam |= 0u << 29; //context code; Note: Alt key combos wont'T work
-                                /* Same as:
-                                 * lParam = isPressed ? (lParam |= 0u << 30) : (lParam |= 1u << 30); //prev key state
-                                 * lParam = isPressed ? (lParam |= 0u << 31) : (lParam |= 1u << 31); //transition state
-                                 */
-                                lParam = isPressed ? lParam : (lParam |= 3u << 30);
-                                Native.PostMessageW(wallpaper.RealPlayerWindowHandle, msg, wParam, (UIntPtr)lParam);
-                            }
+                        if (!IsInputAllowed(wallpaper.Data.RType)) continue;
+
+                        if (_lastHoveredMonitor != null &&
+                            wallpaper.Monitor.Equals(_lastHoveredMonitor)) {
+                            Native.PostMessageW(wallpaper.ProcWindowHandle,
+                                (int)Native.WM.MOUSELEAVE, IntPtr.Zero, IntPtr.Zero);
                         }
+
+                        if (wallpaper.Monitor.Equals(currentDisplay)) {
+                            Native.PostMessageW(wallpaper.ProcWindowHandle,
+                                (int)Native.WM.APP_MOUSEENTER, IntPtr.Zero, IntPtr.Zero);
+                        }
+                    }
+                    _lastHoveredMonitor = currentDisplay; // ✅ 只在变化时赋值
+                }
+
+                ForwardMouseToWallpapers(x, y, InputUtil.MouseMove);
+                MouseMoveRaw?.Invoke(this, new MouseRawArgs(x, y));
+            }
+            catch (Exception e) {
+                ArcLog.GetLogger<RawInputMsgWindow>().Error("Mouse Move Forwarding Error: " + e.Message);
+            }
+        }
+
+        private void RawInput_MouseDownRaw(int x, int y, RawInputMouseBtn btn) {
+            if (_userSettings.Settings.InputForward == InputForwardMode.off || !IsDesktop())
+                return;
+
+            try {
+                switch (btn) {
+                    case RawInputMouseBtn.Left:
+                        if (!InputUtil.IsMouseButtonsSwapped)
+                            ForwardMouseToWallpapers(x, y, InputUtil.MouseLeftButtonDown);
+                        else
+                            ForwardMouseToWallpapers(x, y, InputUtil.MouseRightButtonDown);
+                        break;
+                    case RawInputMouseBtn.Right:
+                        if (InputUtil.IsMouseButtonsSwapped)
+                            ForwardMouseToWallpapers(x, y, InputUtil.MouseLeftButtonDown);
+                        // 桌面右键已有系统上下文菜单，不额外转发右键 Down
+                        break;
+                }
+                MouseDownRaw?.Invoke(this, new MouseClickRawArgs(x, y, btn));
+            }
+            catch (Exception e) {
+                ArcLog.GetLogger<RawInputMsgWindow>().Error("Mouse Down Forwarding Error: " + e.Message);
+            }
+        }
+
+        private void RawInput_MouseUpRaw(int x, int y, RawInputMouseBtn btn) {
+            if (_userSettings.Settings.InputForward == InputForwardMode.off || !IsDesktop())
+                return;
+
+            try {
+                switch (btn) {
+                    case RawInputMouseBtn.Left:
+                        if (!InputUtil.IsMouseButtonsSwapped)
+                            ForwardMouseToWallpapers(x, y, InputUtil.MouseLeftButtonUp);
+                        else
+                            ForwardMouseToWallpapers(x, y, InputUtil.MouseRightButtonUp);
+                        break;
+                    case RawInputMouseBtn.Right:
+                        if (InputUtil.IsMouseButtonsSwapped)
+                            ForwardMouseToWallpapers(x, y, InputUtil.MouseLeftButtonUp);
+                        break;
+                }
+                MouseUpRaw?.Invoke(this, new MouseClickRawArgs(x, y, btn));
+            }
+            catch (Exception e) {
+                ArcLog.GetLogger<RawInputMsgWindow>().Error("Mouse Up Forwarding Error: " + e.Message);
+            }
+        }
+
+        private void RawInput_KeyboardClickRaw(int msg, IntPtr wParam, int scanCode, bool isPressed) {
+            // Don't forward when not on desktop.
+            if (_userSettings.Settings.InputForward != InputForwardMode.mousekeyboard || !IsDesktop())
+                return;
+
+            try {
+                if (!Native.GetCursorPos(out Native.POINT P))
+                    return;
+
+                var display = _monitorManager.GetMonitorByPoint(new(P.X, P.Y));
+                foreach (var wallpaper in _wpControl.Wallpapers) {
+                    if (IsInputAllowed(wallpaper.Data.RType) &&
+                        (display.Equals(wallpaper.Monitor) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand)) {
+                        InputUtil.ForwardMessageKeyboard(wallpaper.RealPlayerWindowHandle, msg, wParam, scanCode, isPressed);
                     }
                 }
             }
             catch (Exception e) {
-                App.Log.Error("Keyboard Forwarding Errors:" + e.Message);
+                ArcLog.GetLogger<RawInputMsgWindow>().Error("Keyboard Forwarding Error: " + e.Message);
             }
         }
 
         /// <summary>
-        /// Forwards the mouse message to the required wallpaper window based on given cursor location.<br/>
-        /// Skips if apps are in foreground.
+        /// 将鼠标动作通过坐标本地化后分发给匹配的壁纸窗口。
         /// </summary>
-        /// <param name="x">Cursor pos x</param>
-        /// <param name="y">Cursor pos y</param>
-        /// <param name="msg">mouse message</param>
-        /// <param name="wParam">additional msg parameter</param>
-        private void ForwardMessageMouse(int x, int y, int msg, IntPtr wParam) {
-            if (_userSettings.Settings.InputForward == InputForwardMode.off) {
-                return;
-            }
-            else if (!IsDesktop()) //Don'T forward when not on desktop.
-            {
-                if (msg != (int)Native.WM.MOUSEMOVE || !_userSettings.Settings.MouseInputMovAlways) {
-                    return;
-                }
-            }
+        private void ForwardMouseToWallpapers(int x, int y, Action<IntPtr, int, int> forwardAction) {
+            var display = _monitorManager.GetMonitorByPoint(new(x, y));
+            var pos = _userSettings.Settings.WallpaperArrangement switch {
+                WallpaperArrangement.Expand => InputUtil.ToMouseSpanLocal(x, y, _monitorManager.VirtualScreenBounds),
+                _ => InputUtil.ToMouseDisplayLocal(x, y, display.Bounds),
+            };
 
-            try {
-                var display = _monitorManager.GetMonitorByPoint(new(x, y));
-                var mouse = CalculateMousePos(x, y, display, _userSettings.Settings.WallpaperArrangement);
-                foreach (var wallpaper in _wpControl.Wallpapers) {
-                    if (IsInputAllowed(wallpaper.Data.RType)) {
-                        if (wallpaper.Monitor.Equals(display) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand) {
-                            //The low-order word specifies the x-coordinate of the cursor, the high-order word specifies the y-coordinate of the cursor.
-                            //ref: https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-mousemove
-                            uint lParam = Convert.ToUInt32(mouse.Y);
-                            lParam <<= 16;
-                            lParam |= Convert.ToUInt32(mouse.X);
-                            Native.PostMessageW(wallpaper.RealPlayerWindowHandle, msg, wParam, (UIntPtr)lParam);
-                        }
-                    }
+            foreach (var wallpaper in _wpControl.Wallpapers) {
+                if (IsInputAllowed(wallpaper.Data.RType) &&
+                    (wallpaper.Monitor.Equals(display) || _userSettings.Settings.WallpaperArrangement == WallpaperArrangement.Expand)) {
+                    forwardAction(wallpaper.RealPlayerWindowHandle, pos.X, pos.Y);
                 }
-            }
-            catch (Exception e) {
-                App.Log.Error("Mouse Forwarding Errors:" + e.Message);
             }
         }
 
         #endregion //input forward
 
         #region helpers
-        /// <summary>
-        /// 将全局鼠标光标位置值转换为每个显示器的本地化值。
-        /// </summary>
-        /// <param name="x">Cursor pos x</param>
-        /// <param name="y">Cursor pos y</param>
-        /// <param name="monitor">Target _monitor device</param>
-        /// <returns>本地化的游标值</returns>
-        private Point CalculateMousePos(int x, int y, IMonitor monitor, WallpaperArrangement arrangement) {
-            if (_monitorManager.IsMultiScreen()) {
-                if (arrangement == WallpaperArrangement.Expand) {
-                    var screenArea = _monitorManager.VirtualScreenBounds;
-                    x -= screenArea.Location.X;
-                    y -= screenArea.Location.Y;
-                }
-                else // 每个监视器或复制模式
-                {
-                    x += -1 * monitor.Bounds.X;
-                    y += -1 * monitor.Bounds.Y;
-                }
-            }
-
-            return new Point(x, y);
-        }
-
         private static bool IsInputAllowed(RuntimeType category) {
             return category switch {
-                RuntimeType.RImage => false,
-                RuntimeType.RImage3D => false,
+                RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RWeb => true,
                 RuntimeType.RVideo => false,
                 _ => false,
             };

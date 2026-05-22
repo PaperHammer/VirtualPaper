@@ -53,7 +53,7 @@ namespace VirtualPaper.Common.Utils.IPC {
         cmd_suspend, // 挂起(Pause)
         cmd_resume, // 恢复(Play)
         cmd_muted,
-        cmd_update,
+        cmd_update,        
         cmd_suspend_parallax,
         cmd_resume_parallax,
 
@@ -81,11 +81,12 @@ namespace VirtualPaper.Common.Utils.IPC {
 
     [Serializable]
     public class VirtualPaperUpdateCmd : IpcMessage {
-        public string FilePath { get; set; } = string.Empty;
-        public string RType { get; set; } = string.Empty;
-        public string WpEffectFilePathTemplate { get; set; } = string.Empty;
-        public string WpEffectFilePathTemporary { get; set; } = string.Empty;
-        public string WpEffectFilePathUsing { get; set; } = string.Empty;
+        //public string FilePath { get; set; } = string.Empty;
+        //public string RType { get; set; } = string.Empty;
+        //public string WpEffectFilePathTemplate { get; set; } = string.Empty;
+        //public string WpEffectFilePathTemporary { get; set; } = string.Empty;
+        //public string WpEffectFilePathUsing { get; set; } = string.Empty;
+        public string? Args { get; set; }
         public VirtualPaperUpdateCmd() : base(MessageType.cmd_update) { }
     }
 

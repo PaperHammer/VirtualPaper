@@ -47,6 +47,13 @@
         object-fit: fill;
     }
 
+    /* RWeb iframe 专用：允许鼠标事件穿透，移除不适用的 object-fit */
+    .rweb-frame {
+        object-fit: unset;
+        pointer-events: auto;
+        border: none;
+    }
+
     /* 淡入效果 */
     .fade-in {
         opacity: 0;

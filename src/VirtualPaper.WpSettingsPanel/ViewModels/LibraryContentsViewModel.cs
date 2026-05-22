@@ -135,7 +135,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
 
                 var onlyDetailWindow = data.FType switch {
-                    FileType.FImage or FileType.FGif or FileType.FVideo => new OnlyDetails(DataConfigTab.GeneralInfo, data),
+                    FileType.FImage or FileType.FGif or FileType.FVideo or FileType.FWebZip => new OnlyDetails(DataConfigTab.GeneralInfo, data),
                     _ => throw new NotImplementedException(),
                 };
                 onlyDetailWindow.Closed += (sender, args) => {
@@ -239,7 +239,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                         var jsonString = await _wpControlClient.GetPlayerStartArgsAsync(data, rtype, depthFilePath, token);
                         var previewWindow = rtype switch {
-                            RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo => new PreviewWithWeb(jsonString),
+                            RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo or RuntimeType.RWeb => new PreviewWithWeb(jsonString),
                             _ or RuntimeType.RUnknown => throw new NotImplementedException(),
                         };
                         previewWindow.Closed += (sender, args) => {
@@ -250,9 +250,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                             Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
                                 _wpSettingsViewModel.Monitors[_wpSettingsViewModel.SelectedMonitorIndex],
-                                data,                                
+                                data,
                                 rtype,
+                                isFromPreview: true,
                                 depthFilePath,
+                                context.WpEffectFilePathUsing,
+                                context.WpEffectFilePathTemplate,
+                                context.WpEffectFilePathTemporary,
                                 token);
                             if (!response.IsFinished) {
                                 GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
@@ -294,15 +298,20 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         if (rtype == RuntimeType.RImage3D) {
                             depthFilePath = SetDepthPath(data);
                         }
-
+                        
                         Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
                             _wpSettingsViewModel.Monitors[_wpSettingsViewModel.SelectedMonitorIndex],
                             data,
                             rtype,
+                            isFromPreview: false,
                             depthFilePath,
+                            null, null, null,
                             token);
                         if (!response.IsFinished) {
                             GlobalMessageUtil.ShowError(Constants.I18n.Dialog_Content_ApplyError, isNeedLocalizer: true);
+                        }
+                        else {
+                            _wpSettingsViewModel.UpdateAdjustWindowCache();
                         }
                     }
                     catch (Exception ex) when
@@ -511,6 +520,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     };
                 case FileType.FVideo:
                     return RuntimeType.RVideo;
+                case FileType.FWebZip:
+                    return RuntimeType.RWeb;
                 default:
                     return RuntimeType.RUnknown;
             }
@@ -675,7 +686,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
         #endregion
 
-        
+
 
         private struct ImportValue(string filePath, FileType ftype) {
             internal string FilePath { get; set; } = filePath;

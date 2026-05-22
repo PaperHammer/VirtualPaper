@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Web.WebView2.WinForms;
-using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.ThreadContext;
 
 namespace VirtualPaper.PlayerWeb.Utils {
@@ -26,6 +26,10 @@ namespace VirtualPaper.PlayerWeb.Utils {
         /// </summary>
         public void EnqueueEvent(string functionName, params object?[] args) {
             _eventQueue.Enqueue(BuildScript(functionName, args));
+        }
+
+        public void EnqueueRawScript(string script) {
+            _eventQueue.Enqueue(script);
         }
 
         private void StartLoops() {
@@ -56,7 +60,7 @@ namespace VirtualPaper.PlayerWeb.Utils {
                 try {
                     while (!_cts.IsCancellationRequested) {
                         if (_eventQueue.TryDequeue(out var script)) {
-                            Dispatch(script);
+                            await DispatchAsync(script);  // 等待执行完再处理下一条
                         }
                         else {
                             await Task.Delay(EventIdleDelay, _cts.Token);
@@ -67,6 +71,25 @@ namespace VirtualPaper.PlayerWeb.Utils {
             });
         }
 
+        private Task DispatchAsync(string script) {
+            var tcs = new TaskCompletionSource();
+            CrossThreadInvoker.InvokeOnUIThread(async () => {
+                try {
+                    await EnsureCoreAsync();
+                    await _webView.ExecuteScriptAsync(script);
+                    tcs.TrySetResult();
+                }
+                catch (Exception ex) {
+                    Program.WriteToParent(new VirtualPaperMessageConsole() {
+                        MsgType = ConsoleMessageType.Error,
+                        Message = $"Script execution error with dispatch_async for {script}: {ex.Message}",
+                    });
+                    tcs.TrySetResult(); // 即使失败也不阻塞队列
+                }
+            });
+            return tcs.Task;
+        }
+
         private void Dispatch(string script) {
             CrossThreadInvoker.InvokeOnUIThread(async () => {
                 try {
@@ -74,7 +97,10 @@ namespace VirtualPaper.PlayerWeb.Utils {
                     await _webView.ExecuteScriptAsync(script);
                 }
                 catch (Exception ex) {
-                    ArcLog.GetLogger<WebViewScriptExecutor>().Error(ex);
+                    Program.WriteToParent(new VirtualPaperMessageConsole() {
+                        MsgType = ConsoleMessageType.Error,
+                        Message = $"Script execution error for {script}: {ex.Message}",
+                    });
                 }
             });
         }

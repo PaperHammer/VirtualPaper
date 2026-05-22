@@ -1,6 +1,4 @@
-using System;
-
-namespace VirtualPaper.PlayerWeb.Core.Utils {
+namespace VirtualPaper.Common.Utils.Players {
     public static class SunCalc {
         /// <summary>
         /// 计算指定日期、经纬度的日出日落时间（UTC）

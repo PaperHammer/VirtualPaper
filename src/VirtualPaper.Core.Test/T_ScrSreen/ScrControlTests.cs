@@ -469,5 +469,75 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
                 Assert.Fail("Adding duplicate whitelist entry should not throw");
             }
         }
+
+        // ----------------------------------------------------------------
+        // IsScreenSaverOn = false 时不应启动
+        // ----------------------------------------------------------------
+
+        [TestMethod]
+        [Description("Tick should not launch screensaver when IsScreenSaverOn is false")]
+        public void Tick_WhenScreenSaverOff_ShouldNotLaunch() {
+            _settings.Object.Settings.IsScreenSaverOn = false;
+            _sut = BuildSut();
+            _sut.Start();
+
+            FireTick();
+
+            _launcher.Verify(l => l.Launch(It.IsAny<ProcessStartInfo>()), Times.Never,
+                "Screensaver should not launch when IsScreenSaverOn is false");
+        }
+
+        [TestMethod]
+        [Description("Tick should not launch screensaver when IsScreenSaverOn is false even if all other conditions are met")]
+        public void Tick_WhenScreenSaverOff_AllOtherConditionsMet_ShouldNotLaunch() {
+            // All other conditions are met (from base Setup), just flip the switch
+            _settings.Object.Settings.IsScreenSaverOn = false;
+            _sut = BuildSut();
+            _sut.Start();
+
+            FireTick();
+
+            _launcher.Verify(l => l.Launch(It.IsAny<ProcessStartInfo>()), Times.Never);
+        }
+
+        // ----------------------------------------------------------------
+        // 屏保已在运行时 Tick 不应再次 Launch
+        // ----------------------------------------------------------------
+
+        [TestMethod]
+        [Description("Tick should not launch screensaver again if it is already running")]
+        public void Tick_WhenAlreadyRunning_ShouldNotLaunchAgain() {
+            _sut.Start();
+            FireTick();
+            SimulateWpLoaded(); // IsRunning = true
+
+            // Reset launcher invocation count
+            _launcher.Invocations.Clear();
+
+            // Act: fire another tick while screensaver is running
+            FireTick();
+
+            _launcher.Verify(l => l.Launch(It.IsAny<ProcessStartInfo>()), Times.Never,
+                "Screensaver should not launch again while already running");
+        }
+
+        [TestMethod]
+        [Description("After screensaver process exits, the next Tick should be allowed to launch again")]
+        public void Tick_AfterProcessExited_NextTickCanLaunchAgain() {
+            _sut.Start();
+            FireTick();
+            SimulateWpLoaded();  // IsRunning = true
+            SimulateProcessExited();  // IsRunning = false
+
+            // Reset
+            _launcher.Invocations.Clear();
+            _launcher.Setup(l => l.HasExited).Returns(false); // fresh process
+
+            // Act: fire another tick
+            FireTick();
+
+            _launcher.Verify(l => l.Launch(It.IsAny<ProcessStartInfo>()), Times.Once,
+                "After process exits and IsRunning resets, next Tick should be able to launch");
+        }
     }
 }

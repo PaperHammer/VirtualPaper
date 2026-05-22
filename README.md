@@ -5,104 +5,131 @@
 [![Documentation](https://img.shields.io/badge/Docs-Wiki-green)](https://github.com/PaperHammer/VirtualPaper/wiki)
 [![Issues](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2FPaperHammer%2FVirtualPaper&query=open_issues&label=Issues&color=orange)](https://github.com/PaperHammer/VirtualPaper/issues)
 
-An open-source, free, lightweight wallpaper management software that runs on Windows 10+
+An open-source, free, lightweight wallpaper management software for Windows 10+
 
-<img src="/resources/logos/virtualpaper-logo_4380x712_with_bg_with_round40.png" width="657" height="107"/>
+<img src="./resources/logos/virtualpaper-logo_4380x712_with_bg_with_round40.png" width="657" height="107"/>
 
-**The required operating environment: .NET 8.0**
+> **Runtime requirement:** .NET 8.0
+
+---
 
 ## Contents
 
 - [About](#about)
 - [Features](#features)
+- [AI+](#ai)
 - [Download](#download)
 - [Support](#support)
 - [License](#license)
 
+---
+
 ## About
 
-Based on the [XamlNexus](https://github.com/PaperHammer/XamlNexus) and [Lively](https://github.com/rocksdanister/lively)
+Built on top of [XamlNexus](https://github.com/PaperHammer/XamlNexus) and [Lively](https://github.com/rocksdanister/lively).
 
-<img src="/resources/library_contents_light.png" width="600" height="338"/>
+<img src="./resources/library_contents_light.png" width="600" height="338"/>
+
+---
 
 ## Features
 
-The following files are supported:
+**Supported file types**
 
-| Wallpaper type | File type                       |
-| -------------- | ------------------------------- |
-| Motion Picture | .gif .apng                      |
-| Still image    | .jpg .jpeg .bmp .png .svg .webp |
-| Video          | .mp4 .webm                      |
-
----
-
-Real-time preview and customize effects
-
-<img src="/resources/preview_light.png" width="600" height="328"/>
+| Wallpaper Type  | Extensions                                          |
+| --------------- | --------------------------------------------------- |
+| Still Image     | `.jpg` `.jpeg` `.bmp` `.png` `.svg` `.webp`         |
+| Motion Picture  | `.gif` `.apng`                                      |
+| Video           | `.mp4` `.webm`                                      |
+| Web Interactive | `.zip` `.rar` `.7z`                                 |
 
 ---
 
-The 3D parallax effect that follows the mouse.
+**Real-time preview & effect customization**
 
-<img src="/resources/parallax.png" width="400" height="260"/>
-
----
-
-Efficient and lightweight rendering capabilities. Supports exporting: PNG, BMP, JPEG, JPEG XR
-
-<img src="/resources/creator.png" width="600" height="328"/>
+<img src="./resources/preview_light.png" width="600" height="328"/>
 
 ---
 
-Screen saver services that don't rely on Windows
+**3D parallax — follows your mouse**
 
-<img src="/resources/screensaver.png" width="600" height="328"/>
-
----
-
-Quickly set the lock screen background image
-
-<img src="/resources/lock_background.png" width="370" height="400"/>
+<img src="./resources/parallax.png" width="400" height="260"/>
 
 ---
 
-Many modern theme styles
+**Efficient lightweight rendering**
 
-<img src="/resources/ui_texture.png" width="700" height="80"/>
+Supports exporting: PNG, BMP, JPEG, JPEG XR
+
+<img src="./resources/creator.png" width="600" height="328"/>
+
+---
+
+**Independent screen saver**
+
+Screen saver service that does not rely on Windows built-in support.
+
+<img src="./resources/screensaver.png" width="600" height="328"/>
+
+---
+
+**Lock screen background**
+
+Quickly set the lock screen background image.
+
+<img src="./resources/lock_background.png" width="370" height="400"/>
+
+---
+
+**Modern theme styles**
+
+<img src="./resources/ui_texture.png" width="700" height="80"/>
+
+---
 
 ## AI+
 
-**Image style transfer**
-Applies the artistic style of one image onto another using an AI model. Upload a content image and a style reference — automatically blends the two and produces a new image that captures both the original content and the target style.
+**Image Style Transfer**
 
-<img src="/resources/styly_transfer_exp.png" width="600" height="328"/>
+Transfer the artistic style of a reference image onto your wallpaper using AI.
+
+<img src="./resources/styly_transfer_exp.png" width="600" height="328"/>
 
 ---
 
 **Super Resolution**
-Enhances your images using AI super-resolution:
--Clarity Restoration: recovers detail and sharpens blurry or low-quality images
--Lossless Upscaling: increases resolution while preserving the original details
 
-<img src="/resources/super_resolution_exp.png" width="600" height="328"/>
+AI-powered image enhancement:
+
+- **Clarity Restoration** — sharpen blurry or low-quality images
+- **Lossless Upscaling** — increase resolution without losing detail
+
+<img src="./resources/super_resolution_exp.png" width="600" height="328"/>
+
+---
 
 ## Download
 
-Windows 10.0.19041.0 及以上
+Requires **Windows 10 (10.0.19041.0)** or above.
 
-##### [Installer (Windows 10 10.0.19041.0 or above)](https://github.com/PaperHammer/VirtualPaper/releases/latest)
+##### [→ Download latest installer](https://github.com/PaperHammer/VirtualPaper/releases/latest)
+
+---
 
 ## Support
 
-#### Localization
+**Localization**
 
-Point out translation errors or translations of Virtual Paper into more languages.[head fore..](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Issue-Bug%2CArea-Localization%2CIssue-Translation%2CNeeds-Triage&projects=&template=translation_issue.yml)
+Found a translation error, or want to add a new language?
+[Submit a localization issue →](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Issue-Bug%2CArea-Localization%2CIssue-Translation%2CNeeds-Triage&projects=&template=translation_issue.yml)
 
-#### Suggestions & Bug report
+**Suggestions & Bug Reports**
 
-Suggest new features or file bug reports to improve Virtual Paper.[head for..](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Issue-Bug%2CNeeds-Triage&projects=&template=bug_report.yml)
+Have a feature idea or found a bug?
+[Open an issue →](https://github.com/PaperHammer/VirtualPaper/issues/new?assignees=&labels=Issue-Bug%2CNeeds-Triage&projects=&template=bug_report.yml)
+
+---
 
 ## License
 
-Virtual Paper is licensed under [GPL-v3.](https://github.com/PaperHammer/VirtualPaper/blob/main/LICENSE)
+VirtualPaper is licensed under [GPL-3.0](https://github.com/PaperHammer/VirtualPaper/blob/main/LICENSE).

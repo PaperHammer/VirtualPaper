@@ -583,7 +583,7 @@ jobs:
 
             # 策略 1：尝试将 main 全量合并到当前分支
             #   -X theirs: 冲突时自动以 main 为准，无需人工介入
-            $mergeOutput = git merge origin/main --no-edit -X theirs 2>&1
+            $mergeOutput = git merge origin/main -m "[Github CI] chore: sync main -> $branch [skip ci]" -X theirs 2>&1
             $mergeExit = $LASTEXITCODE
 
             if ($mergeExit -eq 0) {

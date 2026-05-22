@@ -1,4 +1,4 @@
-﻿using VirtualPaper.Common;
+using VirtualPaper.Common;
 
 namespace VirtualPaper.Models.Cores.Interfaces {
     public interface IWpRuntimeData {
@@ -16,7 +16,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         RuntimeType RType { get; set; }
         void Read(string filePath);
         Task MoveToAsync(string targetFolder);
-        void FromTempMoveToInstallPath(string targetFolderPath);
+        Task FromTempMoveToInstallPathAsync(string targetFolderPath);
         void Save();
         IWpRuntimeData Clone();
         bool IsAvailable();

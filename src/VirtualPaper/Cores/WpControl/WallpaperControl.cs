@@ -275,7 +275,7 @@ namespace VirtualPaper.Cores.WpControl {
 
                 bool isStarted = false;
                 if (isFromPreview) {
-                    _ = GetAndSaveTempRuntimeData(data, monitor.Content);
+                    _ = await GetAndSaveTempRuntimeDataAsync(data, monitor.Content);
                 }
                 // restore 时避免覆盖已有的自定义配置
                 else if (data.WpEffectFilePathUsing == string.Empty) {
@@ -577,7 +577,7 @@ namespace VirtualPaper.Cores.WpControl {
             return data;
         }
 
-        private IWpRuntimeData GetAndSaveTempRuntimeData(IWpPlayerData playerData, string monitorContent) {
+        private async Task<WpRuntimeData> GetAndSaveTempRuntimeDataAsync(IWpPlayerData playerData, string monitorContent) {
             WpRuntimeData data = new();
 
             try {
@@ -602,7 +602,7 @@ namespace VirtualPaper.Cores.WpControl {
                 //File.Copy(data.WpEffectFilePathTemporary, data.WpEffectFilePathUsing, true);
                 data.DepthFilePath = playerData.DepthFilePath;
 
-                data.FromTempMoveToInstallPath(_userSettings.Settings.WallpaperDir);
+                await data.FromTempMoveToInstallPathAsync(_userSettings.Settings.WallpaperDir);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WallpaperControl>().Error(ex);

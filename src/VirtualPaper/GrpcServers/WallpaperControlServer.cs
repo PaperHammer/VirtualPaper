@@ -74,6 +74,7 @@ namespace VirtualPaper.GrpcServers {
             Grpc_SetWallpaperResponse response = await _wpControl.SetWallpaperAsync(
                 wpPlayerData,
                 monitor ?? _monitorManager.PrimaryMonitor,
+                isFromPreview: request.IsFromPreview,
                 token: context.CancellationToken);
 
             return await Task.FromResult(response);

@@ -32,6 +32,10 @@ namespace VirtualPaper.PlayerWeb.Core.Utils {
             _eventQueue.Enqueue(BuildScript(functionName, args));
         }
 
+        public void EnqueueRawScript(string script) {
+            _eventQueue.Enqueue(script);
+        }
+
         private void StartLoops() {
             RunStateLoop();
             RunEventLoop();

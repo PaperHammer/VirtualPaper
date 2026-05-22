@@ -16,6 +16,7 @@ let tpIntervalId = null;
 let tpConfig = null; // 存储 C# 下发的参数
 
 function propertyListener(propertyType, val) {
+    console.log('propertyType: ', propertyType, ', val: ', val)
     switch (propertyType) {
         case "Volume":
             volume = parseFloat(val);
@@ -37,9 +38,6 @@ function propertyListener(propertyType, val) {
             break;
         case "Scaling":
             objectFitChanged(parseInt(val));
-            break;
-        case "TimePerception":
-            runTimePerception(val);
             break;
     }
 
@@ -64,12 +62,18 @@ function applyFilter() {
 
         contentDiv.style.filter = filter.trim();
         element.style.objectFit = newFit;
+        console.log('applied filter successed');
+    } else {
+        console.warn('applyFilter: .source or #content not found');
     }
 
     if (element && curVideoElementId) {
         element.volume = volume;
         element.playbackRate = speed;
         element.muted = muted;
+        console.log('applied filter for video successed');
+    } else {
+        console.warn('applyFilter: .source or #content not found for video');
     }
 
     return "applyFilter success";
@@ -233,4 +237,11 @@ function lerp(a, b, t) {
 
 function easeInOut(t) {
     return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+}
+
+function mouseOut() {
+    document.dispatchEvent(new MouseEvent('mouseleave', {
+        bubbles: false,
+        cancelable: true,
+    }));
 }

@@ -93,13 +93,17 @@ namespace VirtualPaper.Grpc.Client {
         }
 
         public async Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(
-            IMonitor monitor, IWpBasicData data, RuntimeType rtype, string? depthFilePath, CancellationToken token) {
+            IMonitor monitor, IWpBasicData data, RuntimeType rtype, bool isFromPreview, string? depthFilePath, string? wpEffectFilePathUsing, string? wpEffectFilePathTemplate, string? wpEffectFilePathTemporary, CancellationToken token) {
             Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
             wpPlayerdata.DepthFilePath = depthFilePath ?? string.Empty;
+            wpPlayerdata.WpEffectFilePathUsing = wpEffectFilePathUsing ?? string.Empty;
+            wpPlayerdata.WpEffectFilePathTemplate = wpEffectFilePathTemplate ?? string.Empty;
+            wpPlayerdata.WpEffectFilePathTemporary = wpEffectFilePathTemporary ?? string.Empty;
 
             var request = new Grpc_SetWallpaperRequest {
                 WpPlayerData = wpPlayerdata,
                 MonitorId = monitor.DeviceId,
+                IsFromPreview = isFromPreview,
             };
 
             Grpc_SetWallpaperResponse response = await _client.SetWallpaperAsync(request, cancellationToken: token);

@@ -20,6 +20,7 @@ using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
+using VirtualPaper.Utils.BasicDataBuilders;
 using VirtualPaper.Utils.Interfcaes;
 using WinEventHook;
 using static VirtualPaper.Common.Errors;
@@ -49,7 +50,7 @@ namespace VirtualPaper.Cores.WpControl {
                 ArcLog.GetLogger<WallpaperControl>().Warn("Highcontrast mode detected, some functionalities may not work properly.");
 
             this._monitorManager.MonitorUpdated += MonitorSettingsChanged_Hwnd;
-            WallpaperChanged += SetupDesktop_WallpaperChanged;
+            this.WallpaperChanged += SetupDesktop_WallpaperChanged;
 
             SystemEvents.SessionSwitch += (s, e) => {
                 if (e.Reason == SessionSwitchReason.SessionUnlock) {
@@ -149,7 +150,7 @@ namespace VirtualPaper.Cores.WpControl {
         }
 
         public string? GetPlayerStartArgs(IWpPlayerData data, CancellationToken token = default) {
-            var wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, data.DepthFilePath, true, _monitorManager.PrimaryMonitor.Content);
+            var wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, data.DepthFilePath, true, _userSettings.Settings.SelectedMonitor.Content);
             DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
 
             var startArgs = _wallpaperFactory.CreatePlayerStartArgs(data, true);
@@ -224,7 +225,7 @@ namespace VirtualPaper.Cores.WpControl {
         public async Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(
             IWpPlayerData data,
             IMonitor? monitor,
-            bool fromPreview = false,
+            bool isFromPreview = false,
             CancellationToken token = default) {
             await _semaphoreSlimWallpaperLoadingLock.WaitAsync(token);
             Grpc_SetWallpaperResponse response = new() {
@@ -273,22 +274,20 @@ namespace VirtualPaper.Cores.WpControl {
                 #endregion
 
                 bool isStarted = false;
-                IWpRuntimeData? wpRuntimeData;
-                // restore 时避免覆盖已有的自定义配置
-                if (data.WpEffectFilePathUsing == string.Empty) {
-                    if (fromPreview) {
-                        wpRuntimeData = GetTempRuntimeData(data, monitor.Content);
-                    }
-                    else {
-                        wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, data.DepthFilePath, false, monitor.Content);
-                    }
-                    DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
+                if (isFromPreview) {
+                    _ = await GetAndSaveTempRuntimeDataAsync(data, monitor.Content);
                 }
+                // restore 时避免覆盖已有的自定义配置
+                else if (data.WpEffectFilePathUsing == string.Empty) {
+                    IWpRuntimeData? wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, data.DepthFilePath, false, monitor.Content);
+                    DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
+                }                
+
                 int monitorIdx = _monitorManager.Monitors.FindIndex(x => x.DeviceId == monitor.DeviceId);
 
                 switch (_userSettings.Settings.WallpaperArrangement) {
                     case WallpaperArrangement.Per: {
-                            var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId && x.Data.Arrangement == WallpaperArrangement.Per);
+                            var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId && x.Data.RType == data.RType && x.Data.Arrangement == WallpaperArrangement.Per);
                             if (runningInstance != null) {
                                 runningInstance.Update(data);
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
@@ -318,7 +317,7 @@ namespace VirtualPaper.Cores.WpControl {
                         }
                         break;
                     case WallpaperArrangement.Expand: {
-                            var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId && x.Data.Arrangement == WallpaperArrangement.Expand);
+                            var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId && x.Data.RType == data.RType && x.Data.Arrangement == WallpaperArrangement.Expand);
                             if (runningInstance != null) {
                                 runningInstance.Update(data);
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
@@ -349,7 +348,7 @@ namespace VirtualPaper.Cores.WpControl {
                     case WallpaperArrangement.Duplicate: {
                             CloseAllWallpapers();
                             foreach (var item in _monitorManager.Monitors) {
-                                var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId && x.Data.Arrangement == WallpaperArrangement.Duplicate);
+                                var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId && x.Data.RType == data.RType && x.Data.Arrangement == WallpaperArrangement.Duplicate);
                                 if (runningInstance != null) {
                                     runningInstance.Update(data);
                                     _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
@@ -477,33 +476,14 @@ namespace VirtualPaper.Cores.WpControl {
                 folderPath = Path.Combine(_userSettings.Settings.WallpaperDir, folderName);
                 data.FolderPath = folderPath;
 
-                // 创建壁纸存储路径与自定义配置文件路径,将原壁纸复制到 folder 下                
+                // 委托给对应 FileType 的 Builder 完成类型特定的构建
                 Directory.CreateDirectory(folderPath);
-                string destFilePath = Path.Combine(folderPath, folderName + Path.GetExtension(filePath));
-                if (filePath != destFilePath) {
-                    File.Copy(filePath, destFilePath, true);
-                }
-                data.FilePath = destFilePath;
+                _builderRegistry.Get(ftype).Build(filePath, folderPath, folderName, data, token);
 
-                #region 创建展示缩略图
-                string thumbnailPath = Path.Combine(folderPath, folderName + Constants.Field.ThumGifSuff);
-                WallpaperUtil.CreateGif(filePath, thumbnailPath, ftype, token);
-                data.ThumbnailPath = thumbnailPath;
-                #endregion
-
-                #region 文件元数据
-                var fileProperty = WallpaperUtil.GetWpProperty(filePath, ftype);
-                data.Resolution = fileProperty.Resolution;
-                data.AspectRatio = fileProperty.AspectRatio;
-                data.FileSize = fileProperty.FileSize;
-                data.FileExtension = fileProperty.FileExtension;
                 data.CreatedTime = DateTime.UtcNow;
-
-                string basicDatafilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
                 if (isAutoSave) {
                     data.Save();
                 }
-                #endregion
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested) {
                 if (Directory.Exists(folderPath)) {
@@ -597,7 +577,7 @@ namespace VirtualPaper.Cores.WpControl {
             return data;
         }
 
-        private IWpRuntimeData GetTempRuntimeData(IWpPlayerData playerData, string monitorContent) {
+        private async Task<WpRuntimeData> GetAndSaveTempRuntimeDataAsync(IWpPlayerData playerData, string monitorContent) {
             WpRuntimeData data = new();
 
             try {
@@ -619,10 +599,10 @@ namespace VirtualPaper.Cores.WpControl {
                 data.WpEffectFilePathTemplate = playerData.WpEffectFilePathTemplate;
                 data.WpEffectFilePathUsing = playerData.WpEffectFilePathUsing;
                 data.WpEffectFilePathTemporary = playerData.WpEffectFilePathTemporary;
-                File.Copy(data.WpEffectFilePathTemporary, data.WpEffectFilePathUsing, true);
+                //File.Copy(data.WpEffectFilePathTemporary, data.WpEffectFilePathUsing, true);
                 data.DepthFilePath = playerData.DepthFilePath;
 
-                data.FromTempMoveToInstallPath(_userSettings.Settings.WallpaperDir);
+                await data.FromTempMoveToInstallPathAsync(_userSettings.Settings.WallpaperDir);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WallpaperControl>().Error(ex);
@@ -1032,5 +1012,10 @@ namespace VirtualPaper.Cores.WpControl {
         private readonly IMonitorManager _monitorManager;
         private readonly INativeService _nativeService;
         private readonly IJobService _jobService;
+        private readonly WpBasicDataBuilderRegistry _builderRegistry = new WpBasicDataBuilderRegistry()
+            .Register(FileType.FImage, new ImageBasicDataBuilder())
+            .Register(FileType.FGif, new ImageBasicDataBuilder())
+            .Register(FileType.FVideo, new VideoBasicDataBuilder())
+            .Register(FileType.FWebZip, new WebZipBasicDataBuilder());
     }
 }

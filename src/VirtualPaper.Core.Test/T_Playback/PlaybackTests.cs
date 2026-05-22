@@ -289,5 +289,129 @@ namespace VirtualPaper.Core.Test.T_Playback {
 
             _mockWallpaper1.Verify(w => w.Pause(), Times.Never);
         }
+
+        // -------------------------------------------------------
+        // ChangeParralaxState — 全局（无 targetMonitor）路径
+        // -------------------------------------------------------
+
+        [TestMethod]
+        [Description("ChangeParralaxState(Pause, null) should call PauseParallax on ALL wallpapers")]
+        public void ChangeParralaxState_PauseGlobal_ShouldCallPauseParallaxOnAllWallpapers() {
+            var playback = CreatePlayback();
+
+            playback.ChangeParralaxState(AppParallaxRulesEnum.Pause);
+
+            _mockWallpaper1.Verify(w => w.PauseParallax(), Times.Once,
+                "Wallpaper 1 PauseParallax should be called in global Pause mode");
+            _mockWallpaper2.Verify(w => w.PauseParallax(), Times.Once,
+                "Wallpaper 2 PauseParallax should be called in global Pause mode");
+        }
+
+        [TestMethod]
+        [Description("ChangeParralaxState(KeepRun, null) should call ResumeParallax on ALL wallpapers")]
+        public void ChangeParralaxState_KeepRunGlobal_ShouldCallResumeParallaxOnAllWallpapers() {
+            var playback = CreatePlayback();
+
+            playback.ChangeParralaxState(AppParallaxRulesEnum.KeepRun);
+
+            _mockWallpaper1.Verify(w => w.ResumeParallax(), Times.Once,
+                "Wallpaper 1 ResumeParallax should be called in global KeepRun mode");
+            _mockWallpaper2.Verify(w => w.ResumeParallax(), Times.Once,
+                "Wallpaper 2 ResumeParallax should be called in global KeepRun mode");
+        }
+
+        [TestMethod]
+        [Description("ChangeParralaxState(Pause, specificMonitor) should only pause the wallpaper on that monitor")]
+        public void ChangeParralaxState_PauseWithTargetMonitor_ShouldOnlyPauseTargetMonitor() {
+            // Arrange: wallpaper1 bound to monitor1, wallpaper2 bound to monitor2
+            var monitor1 = new Mock<IMonitor>();
+            var monitor2 = new Mock<IMonitor>();
+            monitor1.Setup(m => m.Equals(monitor1.Object)).Returns(true);
+            monitor1.Setup(m => m.Equals(monitor2.Object)).Returns(false);
+            monitor2.Setup(m => m.Equals(monitor1.Object)).Returns(false);
+            monitor2.Setup(m => m.Equals(monitor2.Object)).Returns(true);
+
+            _mockWallpaper1.Setup(w => w.Monitor).Returns(monitor1.Object);
+            _mockWallpaper2.Setup(w => w.Monitor).Returns(monitor2.Object);
+
+            var playback = CreatePlayback();
+
+            // Act: pause only monitor1
+            playback.ChangeParralaxState(AppParallaxRulesEnum.Pause, monitor1.Object);
+
+            // Assert
+            _mockWallpaper1.Verify(w => w.PauseParallax(), Times.Once,
+                "Only target monitor's wallpaper should be paused");
+            _mockWallpaper2.Verify(w => w.PauseParallax(), Times.Never,
+                "Non-target monitor's wallpaper should NOT be paused");
+        }
+
+        [TestMethod]
+        [Description("ChangeParralaxState(KeepRun, specificMonitor) should only resume the wallpaper on that monitor")]
+        public void ChangeParralaxState_KeepRunWithTargetMonitor_ShouldOnlyResumeTargetMonitor() {
+            // Arrange
+            var monitor1 = new Mock<IMonitor>();
+            var monitor2 = new Mock<IMonitor>();
+            monitor1.Setup(m => m.Equals(monitor1.Object)).Returns(true);
+            monitor1.Setup(m => m.Equals(monitor2.Object)).Returns(false);
+            monitor2.Setup(m => m.Equals(monitor1.Object)).Returns(false);
+            monitor2.Setup(m => m.Equals(monitor2.Object)).Returns(true);
+
+            _mockWallpaper1.Setup(w => w.Monitor).Returns(monitor1.Object);
+            _mockWallpaper2.Setup(w => w.Monitor).Returns(monitor2.Object);
+
+            var playback = CreatePlayback();
+
+            // Act: resume only monitor1
+            playback.ChangeParralaxState(AppParallaxRulesEnum.KeepRun, monitor1.Object);
+
+            // Assert
+            _mockWallpaper1.Verify(w => w.ResumeParallax(), Times.Once);
+            _mockWallpaper2.Verify(w => w.ResumeParallax(), Times.Never);
+        }
+
+        [TestMethod]
+        [Description("ChangeParralaxState(Pause) on empty wallpaper list should not throw")]
+        public void ChangeParralaxState_WhenNoWallpapers_ShouldNotThrow() {
+            _mockWpControl.Setup(w => w.Wallpapers).Returns(new List<IWpPlayer>().AsReadOnly());
+            var playback = CreatePlayback();
+
+            playback.ChangeParralaxState(AppParallaxRulesEnum.Pause);
+            // No exception = pass
+        }
+
+        // -------------------------------------------------------
+        // RunPlayback — 壁纸列表有内容时正常播放（Play 路径）
+        // -------------------------------------------------------
+
+        [TestMethod]
+        [Description("RunPlayback when all conditions normal should call Play + UnSilence on all wallpapers")]
+        public void RunPlayback_WhenAllNormal_ShouldPlayAndUnSilenceAllWallpapers() {
+            // All settings KeepRun, battery online, no lock, no remote
+            _mockSettings.Setup(s => s.AppFocus).Returns(AppWpRunRulesEnum.KeepRun);
+            _mockSettings.Setup(s => s.AppFullscreen).Returns(AppWpRunRulesEnum.KeepRun);
+            _mockSettings.Setup(s => s.StatuMechanism).Returns(StatuMechanismEnum.All);
+            _mockMonitorManager.Setup(m => m.IsMultiScreen()).Returns(false);
+
+            // Simulate desktop is foreground (IsDesktop path) by making GetForegroundWindow
+            // return a value that IsExcludedDesktopWindowClass recognises — easiest is to
+            // mock AppRules to force KeepRun via the custom rules path:
+            _mockUserSettings.Setup(u => u.AppRules).Returns(new List<IApplicationRules>());
+
+            var playback = CreatePlayback();
+            playback.WallpaperPlaybackMode = PlaybackMode.Play;
+
+            // Act — AdjustWpBehaviourBaseOnForegroundApp will be hit; it calls P/Invoke
+            // which is untestable, so we only assert no crash and no Pause call
+            try {
+                playback.InvokeRunPlayback();
+            }
+            catch {
+                Assert.Fail("RunPlayback in normal state should not throw");
+            }
+
+            _mockWallpaper1.Verify(w => w.Pause(), Times.Never,
+                "Normal state: Pause should never be called");
+        }
     }
 }

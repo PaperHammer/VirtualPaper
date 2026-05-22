@@ -23,7 +23,6 @@
                 NavigationCompleted="Webview2_NavigationCompleted"/>
 
             <Grid x:Name="InputLayer"
-                Background="Transparent"
                 IsHitTestVisible="True"
                 PointerEntered="InputLayer_PointerEntered"
                 PointerMoved="InputLayer_PointerMoved"

@@ -548,7 +548,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────
   # Job 6: 将 main 同步到 pre-publish branches
   #   策略1: git merge main -X theirs（全量合并，冲突以 main 为准）
-  #   策略2: checkout -- <version-files>（fallback，仅同步版本文件）
+  #   策略2: reset --hard origin/main（fallback，冲突无法自动解决时强制覆盖）
   # ─────────────────────────────────────────────────────────────
   sync:
     name: Sync Version to Pre-publish Branches
@@ -562,7 +562,7 @@ jobs:
         token: ${{ secrets.RELEASE_PAT }}
         fetch-depth: 0
 
-    - name: Sync main -> pre-publish branches (merge preferred, fallback file sync)
+    - name: Sync main -> pre-publish branches (merge with main override on conflict)
       shell: powershell
       run: |
         $newVersion = "${{ needs.prepare.outputs.new_version }}"
@@ -597,22 +597,15 @@ jobs:
                 Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " $branch fully synced with main"
             }
             else {
-                # 策略 2（fallback）：merge 无法自动解决 → 放弃，仅同步版本文件
-                Write-Host "  [WARN]" -ForegroundColor Yellow -NoNewline; Write-Host " merge has unresolvable conflicts, fallback to file-only sync"
+                # 策略 2（fallback）：merge 无法自动解决 → 放弃，直接 reset --hard 到 main
+                # 使用 reset --hard 直接移动分支指针，不产生额外 commit，
+                # 历史看起来如同这次 merge 从未发生，比 git revert 更干净彻底。
+                Write-Host "  [WARN]" -ForegroundColor Yellow -NoNewline; Write-Host " merge has unresolvable conflicts, force-resetting to origin/main"
                 git merge --abort
 
-                git checkout origin/main -- src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
-                Write-Host "  [OK] version files pulled from origin/main"
-
-                git add src/VirtualPaper/VirtualPaper.csproj InnoSetup/setup.iss README.md
-                $status = git status --porcelain
-                if ($status) {
-                    git commit -m "[Github CI] chore: sync version $newVersion (fallback) [skip ci]"
-                    git push origin $branch
-                    Write-Host "[WARN]" -ForegroundColor Yellow -NoNewline; Write-Host " $branch version files synced (full merge skipped due to unresolvable conflicts)"
-                } else {
-                    Write-Host "[SKIP] $branch already at version $newVersion"
-                }
+                git reset --hard origin/main
+                git push --force-with-lease origin $branch
+                Write-Host "[WARN]" -ForegroundColor Yellow -NoNewline; Write-Host " $branch force-reset to origin/main (unresolvable conflicts overridden)"
             }
         }
 

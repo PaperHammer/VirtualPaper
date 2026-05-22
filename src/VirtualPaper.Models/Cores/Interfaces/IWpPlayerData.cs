@@ -1,4 +1,4 @@
-﻿using VirtualPaper.Common;
+using VirtualPaper.Common;
 
 namespace VirtualPaper.Models.Cores.Interfaces {
     public interface IWpPlayerData {
@@ -6,7 +6,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         RuntimeType RType { get; set; }
         WallpaperArrangement Arrangement { get; set; }
         string FilePath { get; set; }
-        string DepthFilePath { get; set; }
+        string? DepthFilePath { get; set; }
         string FolderPath { get; set; }
         string ThumbnailPath { get; set; }
         string WpEffectFilePathTemplate { get; set; }

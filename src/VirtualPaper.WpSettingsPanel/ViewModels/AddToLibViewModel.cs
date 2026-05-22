@@ -39,7 +39,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private async Task FileBrowseActionAsync() {
             var storage = await _storagePicker.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[FileType.FImage], .. FileFilter.FileTypeToExtension[FileType.FGif], .. FileFilter.FileTypeToExtension[FileType.FVideo]],
+                [.. FileFilter.FileTypeToExtension[FileType.FImage], .. FileFilter.FileTypeToExtension[FileType.FGif], .. FileFilter.FileTypeToExtension[FileType.FVideo], .. FileFilter.FileTypeToExtension[FileType.FWebZip]],
                 true);
             if (storage == null || storage.Length < 1) return;
 

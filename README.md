@@ -108,6 +108,22 @@ AI-powered image enhancement:
 
 ---
 
+## AI+
+
+**Image style transfer**
+Applies the artistic style of one image onto another using an AI model. Upload a content image and a style reference — automatically blends the two and produces a new image that captures both the original content and the target style.
+
+<img src="/resources/styly_transfer_exp.png" width="600" height="328"/>
+
+---
+
+**Super Resolution**
+Enhances your images using AI super-resolution:
+-Clarity Restoration: recovers detail and sharpens blurry or low-quality images
+-Lossless Upscaling: increases resolution while preserving the original details
+
+<img src="/resources/super_resolution_exp.png" width="600" height="328"/>
+
 ## Download
 
 Requires **Windows 10 (10.0.19041.0)** or above.

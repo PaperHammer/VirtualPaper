@@ -20,7 +20,7 @@ namespace VirtualPaper.Cores.Players.Web {
         public bool IsExited { get; private set; }
         public bool IsLoaded { get; private set; }
         public bool IsPreview { get; private set; }
-        public string StartArgs { get; private set; }
+        public string StartArgs { get; private set; } = null!;
         public EventHandler? Closing { get; set; }
 
         public WpPlayerWeb(IWpPlayerData data, IMonitor? monitor, bool isPreview) {
@@ -136,12 +136,9 @@ namespace VirtualPaper.Cores.Players.Web {
 
         public void Update(IWpPlayerData data) {
             this.Data = data;
+            StartArgs = new PlayerWebSrartArgs(Data, IsPreview).ToJson();
             SendMessage(new VirtualPaperUpdateCmd() {
-                RType = data.RType.ToString(),
-                FilePath = data.FilePath,
-                WpEffectFilePathUsing = data.WpEffectFilePathUsing,
-                WpEffectFilePathTemplate = data.WpEffectFilePathTemplate,
-                WpEffectFilePathTemporary = data.WpEffectFilePathTemporary,
+                Args = StartArgs
             });
         }
 
@@ -166,7 +163,7 @@ namespace VirtualPaper.Cores.Players.Web {
 
         private void SendMessage(string msg) {
             try {
-                DebugUtil.Output($"WpPlayerWeb Send: {msg}");
+                DebugUtil.Output($"WpPlayerWeb Send: {msg} to {ProcWindowHandle}");
                 Proc?.StandardInput.WriteLine(msg);
                 Proc?.StandardInput.Flush();
             }
@@ -181,10 +178,10 @@ namespace VirtualPaper.Cores.Players.Web {
             if (!string.IsNullOrEmpty(e.Data)) {
                 try {
                     if (JsonSerializer.Deserialize(e.Data, IpcMessageContext.Default.IpcMessage) is VirtualPaperMessageConsole messageConsole && messageConsole.MsgType == ConsoleMessageType.Error) {
-                        App.Log.Error($"WpPlayerWeb-{_uniqueId}: {messageConsole.Message}");
+                        App.Log.Error($"WpPlayerWeb-{_uniqueId}: {messageConsole.Message} form {ProcWindowHandle}");
                     }
                     else {
-                        App.Log.Info($"WpPlayerWeb-{_uniqueId}: {e.Data}");
+                        App.Log.Info($"WpPlayerWeb-{_uniqueId}: {e.Data} from {ProcWindowHandle}");
                     }
                 }
                 catch (Exception ex) {
@@ -225,6 +222,10 @@ namespace VirtualPaper.Cores.Players.Web {
                             _tcsProcessWait.TrySetResult(error);
                         }
                     }
+                }
+
+                if (obj is VirtualPaperMessageConsole mc) {
+                    DebugUtil.Output(mc.Message);
                 }
             }
             else {

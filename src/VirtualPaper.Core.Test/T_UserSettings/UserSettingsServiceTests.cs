@@ -145,6 +145,38 @@ namespace VirtualPaper.Core.Test.T_UserSettings {
             Assert.IsFalse(service.Settings.IsUpdated);
         }
 
+        // SelectedMonitor 为 null 时应回退到 Primary
+        [TestMethod]
+        public void Constructor_WhenSelectedMonitorIsNull_ShouldFallbackToPrimary() {
+            var settings = new Settings { SelectedMonitor = null! };
+
+            _mockJsonSaver
+                .Setup(s => s.Load<Settings>(It.IsAny<string>(), It.IsAny<JsonSerializerContext>()))
+                .Returns(settings);
+
+            var service = CreateService();
+
+            Assert.AreEqual(_primaryMonitor, service.Settings.SelectedMonitor,
+                "When SelectedMonitor is null in saved settings, should fall back to PrimaryMonitor");
+        }
+
+        // SelectedMonitor 存在于列表中时，直接使用保存的实例（不替换为 primary）
+        [TestMethod]
+        public void Constructor_WhenSelectedMonitorIsInList_ShouldNotOverrideWithPrimary() {
+            var secondMonitor = new Monitor { IsPrimary = false, DeviceId = "MONITOR_1" };
+            var settings = new Settings { SelectedMonitor = secondMonitor };
+
+            _mockMonitorManager.Setup(m => m.Monitors).Returns([_primaryMonitor, secondMonitor]);
+            _mockJsonSaver
+                .Setup(s => s.Load<Settings>(It.IsAny<string>(), It.IsAny<JsonSerializerContext>()))
+                .Returns(settings);
+
+            var service = CreateService();
+
+            Assert.AreEqual(secondMonitor, service.Settings.SelectedMonitor,
+                "When a non-primary SelectedMonitor is found in the monitor list, it should be kept as-is");
+        }
+
         private UserSettingsService CreateService() =>
             new UserSettingsService(_mockMonitorManager.Object, _mockJsonSaver.Object);
     }

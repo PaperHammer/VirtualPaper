@@ -18,14 +18,14 @@ namespace VirtualPaper.Cores.ScreenSaver {
         public bool IsRunning { get; private set; } = false;
 
         public ScrControl(
-            IUserSettingsService userSettingsService,
+            IUserSettingsService userSettings,
             IWallpaperControl wpControl,
             IRawInputMsg msgWindow,
             IDispatcherTimer dispatcherTimer,
             INativeService nativeService,
             IProcessLauncher processLauncher,
             IJobService jobService) {
-            _userSettingsService = userSettingsService;
+            _userSettings = userSettings;
             _msgWindow = msgWindow;
             _wpControl = wpControl;
             _nativeService = nativeService;
@@ -39,16 +39,16 @@ namespace VirtualPaper.Cores.ScreenSaver {
 
             _dispatcherTimer = dispatcherTimer;
 
-            foreach (var proc in userSettingsService.Settings.WhiteListScr) {
+            foreach (var proc in userSettings.Settings.WhiteListScr) {
                 _scrWhiteListProcState[proc.ProcName] = false;
             }
         }
 
         public void Start() {
-            if (_isTiming || IsRunning) return;
+            if (!_userSettings.Settings.IsScreenSaverOn || _isTiming || IsRunning) return;
 
             try {
-                _isRunningLock = _userSettingsService.Settings.IsRunningLock;
+                _isRunningLock = _userSettings.Settings.IsRunningLock;
                 StartTimerTask();
             }
             catch (Exception ex) {
@@ -80,7 +80,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
         /// 启动倒计时，倒计时结束后触发屏保启动
         /// </summary>
         private void StartTimerTask() {
-            _dispatcherTimer.Interval = TimeSpan.FromMinutes(_userSettingsService.Settings.WaitingTime);
+            _dispatcherTimer.Interval = TimeSpan.FromMinutes(_userSettings.Settings.WaitingTime);
             _dispatcherTimer.Tick += DispatcherTimer_Tick;
             _dispatcherTimer.Start();
             _isTiming = true;
@@ -109,7 +109,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
             }
 
             // 进程未运行，直接重启计时器
-            if (_userSettingsService.Settings.IsScreenSaverOn) {
+            if (_userSettings.Settings.IsScreenSaverOn) {
                 StartTimerTask();
             }
         }
@@ -242,7 +242,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
         /// 进程退出后重启计时器（用于 Proc_Exited 场景）。
         /// </summary>
         private void RestartTimerAfterExit() {
-            if (_userSettingsService.Settings.IsScreenSaverOn) {
+            if (_userSettings.Settings.IsScreenSaverOn) {
                 StartTimerTask();
             }
         }
@@ -251,7 +251,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
         /// 直接重启计时器（用于 Tick 内部检查未通过的场景）。
         /// </summary>
         private void RestartTimer() {
-            if (_userSettingsService.Settings.IsScreenSaverOn) {
+            if (_userSettings.Settings.IsScreenSaverOn) {
                 StartTimerTask();
             }
         }
@@ -322,7 +322,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
             var cmdArgs = new StringBuilder()
                 .Append($" --file-path {filePath}")
                 .Append($" --wallpaper-type {ftype}")
-                .Append($" --effect {_userSettingsService.Settings.ScreenSaverEffect}");
+                .Append($" --effect {_userSettings.Settings.ScreenSaverEffect}");
 
             return new ProcessStartInfo {
                 FileName = Path.Combine(workingDir, Constants.ModuleName.ScrSaver),
@@ -357,7 +357,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
 
         private readonly IProcessLauncher _processLauncher;
         private readonly IJobService _jobService;
-        private readonly IUserSettingsService _userSettingsService;
+        private readonly IUserSettingsService _userSettings;
         private readonly IRawInputMsg _msgWindow;
         private readonly IWallpaperControl _wpControl;
         private readonly INativeService _nativeService;

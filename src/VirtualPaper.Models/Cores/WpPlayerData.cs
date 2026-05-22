@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -9,7 +9,7 @@ namespace VirtualPaper.Models.Cores {
         public RuntimeType RType { get; set; } = RuntimeType.RUnknown;
         public WallpaperArrangement Arrangement { get; set; }
         public string FilePath { get; set; } = string.Empty;
-        public string DepthFilePath { get; set; } = string.Empty;
+        public string? DepthFilePath { get; set; } = string.Empty;
         public string FolderPath { get; set; } = string.Empty;
         public string ThumbnailPath { get; set; } = string.Empty;
         public string WpEffectFilePathTemplate { get; set; } = string.Empty;

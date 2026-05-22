@@ -264,6 +264,77 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             Assert.IsTrue(raised);
         }
 
+        // ── UpdateLib 在过滤状态下的行为 ──────────────────────────────
+
+        [TestMethod]
+        [Description("UpdateLib should still find and replace the item in the visible list even when a filter is active")]
+        public void UpdateLib_WhenFilterActive_MatchingItem_ReplacesInFilteredView() {
+            // Arrange: populate two items, then apply a filter that only shows uid-1
+            var original = MakeWpData("uid-1", "Nature Wallpaper");
+            var other    = MakeWpData("uid-2", "City Night");
+            PopulateLibrary(original, other);
+            _vm.FilterByTitle("Nature"); // only uid-1 visible
+
+            _wallpaperIndexService
+                .Setup(s => s.TryGetValue("uid-1", out It.Ref<int>.IsAny))
+                .Returns((string _, ref int idx) => { idx = 0; return true; });
+
+            var updated = MakeWpData("uid-1", "Nature Wallpaper v2");
+
+            // Act
+            _vm.UpdateLib(updated);
+
+            // Assert: the visible item should be the updated one
+            Assert.AreEqual("Nature Wallpaper v2", _vm.LibraryWallpapers[0].Title,
+                "UpdateLib should update the item in the filtered visible list");
+            _wallpaperIndexService.Verify(s => s.Update(updated), Times.Once);
+        }
+
+        [TestMethod]
+        [Description("UpdateLib should insert a new item at front even when filter hides existing items")]
+        public void UpdateLib_WhenFilterActive_NewItem_InsertsAtFront() {
+            // Arrange: populate one item and filter it out
+            var existing = MakeWpData("uid-1", "Forest");
+            PopulateLibrary(existing);
+            _vm.FilterByTitle("Ocean"); // no matches → empty view
+
+            _wallpaperIndexService
+                .Setup(s => s.TryGetValue(It.IsAny<string>(), out It.Ref<int>.IsAny))
+                .Returns((string _, ref int idx) => { idx = -1; return false; });
+
+            var newItem = MakeWpData("uid-new", "Ocean Breeze");
+
+            // Act
+            _vm.UpdateLib(newItem);
+
+            // Assert: new item inserted at front regardless of filter state
+            Assert.IsTrue(_vm.LibraryWallpapers.Any(w => w.WallpaperUid == "uid-new"),
+                "New item should be inserted into the visible list even when filter is active");
+            _wallpaperIndexService.Verify(s => s.Update(newItem), Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Calling UpdateLib twice with the same uid should not duplicate the item")]
+        public void UpdateLib_CalledTwice_SameUid_ShouldNotDuplicate() {
+            var item = MakeWpData("uid-1", "Sunset v1");
+            PopulateLibrary(item);
+
+            int callIdx = 0;
+            _wallpaperIndexService
+                .Setup(s => s.TryGetValue("uid-1", out It.Ref<int>.IsAny))
+                .Returns((string _, ref int idx) => { idx = 0; return true; });
+
+            var v2 = MakeWpData("uid-1", "Sunset v2");
+            var v3 = MakeWpData("uid-1", "Sunset v3");
+
+            _vm.UpdateLib(v2);
+            _vm.UpdateLib(v3);
+
+            Assert.HasCount(1, _vm.LibraryWallpapers,
+                "Updating the same uid twice must not duplicate the item in the list");
+            Assert.AreEqual("Sunset v3", _vm.LibraryWallpapers[0].Title);
+        }
+
         // ── 辅助方法 ──────────────────────────────────────────────────
 
         /// <summary>将数据同时写入 LibraryWallpapers 和内部 _libraryWallpapers</summary>

@@ -160,6 +160,7 @@ namespace VirtualPaper.Common.Utils.Files {
         }
 
         public static async Task<string> UpdateFileFolderPathAsync(string sourcefilePath, string sourceFolderPath, string targetFolderPath) {
+            if (string.IsNullOrEmpty(sourcefilePath)) return string.Empty;
             string targetFilePath = sourcefilePath.Replace(sourceFolderPath, targetFolderPath);
             await CopyFileAsync(sourcefilePath, targetFilePath);
             return targetFilePath;

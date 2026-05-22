@@ -1,8 +1,10 @@
 using Moq;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage.Adapter;
+using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.UI.Test.Utils;
 using VirtualPaper.WpSettingsPanel.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 
@@ -19,6 +21,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
         [TestInitialize]
         public void Setup() {
+            CrossThreadInvoker.Initialize(new TUiSynchronizationContext());
             _monitorManagerClient = new Mock<IMonitorManagerClient>();
             _wpControlClient = new Mock<IWallpaperControlClient>();
             _userSettingsClient = new Mock<IUserSettingsClient>();
@@ -32,6 +35,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _primaryMonitor.Setup(m => m.CloneWithPrimaryInfo()).Returns(_primaryMonitor.Object);
             _primaryMonitor.SetupProperty(m => m.Content);
             _primaryMonitor.SetupProperty(m => m.SystemIndex, 0);
+            _primaryMonitor.Setup(m => m.DeviceId).Returns("MONITOR_0");
             _monitorManagerClient.Setup(m => m.PrimaryMonitor).Returns(_primaryMonitor.Object);
         }
 
@@ -43,6 +47,52 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
                 _wpControlClient.Object,
                 _userSettingsClient.Object,
                 _storagePicker.Object);
+        }
+
+        // ── SelectedWpArrangementsIndex setter ────────────────────────
+
+        [TestMethod]
+        [Description("Setting SelectedWpArrangementsIndex to the same value should NOT raise PropertyChanged")]
+        public void SelectedWpArrangementsIndex_WhenValueUnchanged_DoesNotRaisePropertyChanged() {
+            _vm = CreateVm();
+            // force initial value to 0
+            _vm.SelectedWpArrangementsIndex = 0;
+            bool raised = false;
+            _vm.PropertyChanged += (_, e) => {
+                if (e.PropertyName == nameof(_vm.SelectedWpArrangementsIndex)) raised = true;
+            };
+
+            _vm.SelectedWpArrangementsIndex = 0;
+
+            Assert.IsFalse(raised,
+                "PropertyChanged should NOT fire when the same index is set again");
+        }
+
+        [TestMethod]
+        [Description("Setting SelectedWpArrangementsIndex to a new value should raise PropertyChanged")]
+        public void SelectedWpArrangementsIndex_WhenValueChanged_RaisesPropertyChanged() {
+            _vm = CreateVm();
+            _vm.SelectedWpArrangementsIndex = 0;
+            bool raised = false;
+            _vm.PropertyChanged += (_, e) => {
+                if (e.PropertyName == nameof(_vm.SelectedWpArrangementsIndex)) raised = true;
+            };
+
+            _vm.SelectedWpArrangementsIndex = 1;
+
+            Assert.IsTrue(raised,
+                "PropertyChanged should fire when SelectedWpArrangementsIndex changes");
+        }
+
+        [TestMethod]
+        [Description("SelectedWpArrangementsIndex should be initialized from WallpaperArrangement in settings after InitFlyoutData")]
+        public void SelectedWpArrangementsIndex_AfterInitFlyoutData_MatchesArrangementSetting() {
+            _settings.Object.WallpaperArrangement = WallpaperArrangement.Duplicate;
+            _vm = CreateVm();
+            _vm.InitFlyoutData();
+
+            Assert.AreEqual((int)WallpaperArrangement.Duplicate, _vm.SelectedWpArrangementsIndex,
+                "SelectedWpArrangementsIndex must reflect the current WallpaperArrangement after InitFlyoutData");
         }
 
         // ── SelectedMonitorIndex setter ───────────────────────────────
@@ -338,6 +388,24 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _vm = CreateVm();
             var prop = typeof(WpSettingsViewModel).GetProperty(commandName);
             Assert.IsNotNull(prop?.GetValue(_vm), $"{commandName} 为 null");
+        }
+
+        // ── UpdateAdjustWindowCache ───────────────────────────────────
+
+        [TestMethod]
+        [Description("UpdateAdjustWindowCache should not throw when no adjust window is open for the current monitor")]
+        public void UpdateAdjustWindowCache_WhenNoAdjustWindowOpen_DoesNotThrow() {
+            _vm = CreateVm();
+            // Simply assert no exception is raised; the adjust window dictionary is empty
+            _vm.UpdateAdjustWindowCache();
+        }
+
+        [TestMethod]
+        [Description("UpdateAdjustWindowCache can be called multiple times safely without side effects")]
+        public void UpdateAdjustWindowCache_CalledMultipleTimes_DoesNotThrow() {
+            _vm = CreateVm();
+            _vm.UpdateAdjustWindowCache();
+            _vm.UpdateAdjustWindowCache();
         }
 
         // ── 辅助方法 ─────────────────────────────────────────────────

@@ -375,6 +375,77 @@ public class DataAssistMappingTests {
     }
 
     // ════════════════════════════════════════════════════════════════════════
+    // 7. GrpcToPlayerData — effect path 字段（最近新增字段的回归测试）
+    // ════════════════════════════════════════════════════════════════════════
+
+    [TestMethod]
+    [Description("GrpcToPlayerData must preserve WpEffectFilePathUsing, Template, Temporary — these are the fields central to the recent isFromPreview fix")]
+    public void PlayerData_GrpcToPlayerData_PreservesEffectPathFields() {
+        var grpc = new Grpc_WpPlayerData {
+            WallpaperUid = "uid-effect-test",
+            RType = Grpc_RuntimeType.RImage,
+            FilePath = @"C:\wp\file.jpg",
+            FolderPath = @"C:\wp",
+            ThumbnailPath = @"C:\wp\thumb.jpg",
+            WpEffectFilePathUsing    = @"C:\wp\effects\using.json",
+            WpEffectFilePathTemplate = @"C:\wp\effects\template.json",
+            WpEffectFilePathTemporary = @"C:\wp\effects\temp.json",
+        };
+
+        var player = DataAssist.GrpcToPlayerData(grpc);
+
+        Assert.AreEqual(grpc.WpEffectFilePathUsing, player.WpEffectFilePathUsing,
+            "WpEffectFilePathUsing must survive the gRPC round-trip");
+        Assert.AreEqual(grpc.WpEffectFilePathTemplate, player.WpEffectFilePathTemplate,
+            "WpEffectFilePathTemplate must survive the gRPC round-trip");
+        Assert.AreEqual(grpc.WpEffectFilePathTemporary, player.WpEffectFilePathTemporary,
+            "WpEffectFilePathTemporary must survive the gRPC round-trip");
+    }
+
+    [TestMethod]
+    [Description("GrpcToPlayerData when all effect paths are empty strings should not throw and should preserve empty values")]
+    public void PlayerData_GrpcToPlayerData_WhenEffectPathsEmpty_PreservesEmpty() {
+        var grpc = new Grpc_WpPlayerData {
+            WallpaperUid = "uid-no-effect",
+            RType = Grpc_RuntimeType.RImage,
+            FilePath = @"C:\wp\file.jpg",
+            FolderPath = @"C:\wp",
+            ThumbnailPath = string.Empty,
+            WpEffectFilePathUsing     = string.Empty,
+            WpEffectFilePathTemplate  = string.Empty,
+            WpEffectFilePathTemporary = string.Empty,
+        };
+
+        var player = DataAssist.GrpcToPlayerData(grpc);
+
+        Assert.AreEqual(string.Empty, player.WpEffectFilePathUsing);
+        Assert.AreEqual(string.Empty, player.WpEffectFilePathTemplate);
+        Assert.AreEqual(string.Empty, player.WpEffectFilePathTemporary);
+    }
+
+    [TestMethod]
+    [Description("RuntimeData roundtrip: three effect paths must survive BasicData→Grpc→PlayerData chain")]
+    public void RuntimeData_EffectPaths_SurviveRoundtripToPlayerData() {
+        var runtime = new WpRuntimeData {
+            WpEffectFilePathTemplate  = @"C:\effects\template.json",
+            WpEffectFilePathTemporary = @"C:\effects\temp.json",
+            WpEffectFilePathUsing     = @"C:\effects\using.json",
+            DepthFilePath = @"C:\depth.png",
+            AppInfo = new ApplicationInfo(),
+        };
+
+        var grpc     = DataAssist.RuntimeDataToGrpcData(runtime);
+        var restored = DataAssist.GrpcToRuntimeData(grpc);
+
+        Assert.AreEqual(runtime.WpEffectFilePathUsing,     restored.WpEffectFilePathUsing,
+            "WpEffectFilePathUsing lost in RuntimeData roundtrip");
+        Assert.AreEqual(runtime.WpEffectFilePathTemplate,  restored.WpEffectFilePathTemplate,
+            "WpEffectFilePathTemplate lost in RuntimeData roundtrip");
+        Assert.AreEqual(runtime.WpEffectFilePathTemporary, restored.WpEffectFilePathTemporary,
+            "WpEffectFilePathTemporary lost in RuntimeData roundtrip");
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
     // 辅助工厂方法
     // ════════════════════════════════════════════════════════════════════════
 

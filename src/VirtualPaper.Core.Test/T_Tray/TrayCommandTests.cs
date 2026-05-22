@@ -165,5 +165,78 @@ namespace VirtualPaper.Core.Test.T_Tray {
         public async Task SendMsgToUIAsync_WithNullMessage_ShouldNotThrow() {
             await _sut.SendMsgToUIAsync(null!);
         }
+
+        // ----------------------------------------------------------------
+        // 异常时 Dispose 依然执行（资源泄漏回归）
+        // ----------------------------------------------------------------
+
+        [TestMethod]
+        [Description("Pipe client should be disposed even when ConnectAsync throws — prevents resource leak")]
+        public async Task SendMsgToUIAsync_WhenConnectThrows_ShouldStillDisposePipeClient() {
+            // Arrange
+            _pipeClient
+                .Setup(p => p.ConnectAsync(It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new IOException("Pipe broken"));
+
+            // Act
+            await _sut.SendMsgToUIAsync("msg");
+
+            // Assert: Dispose must be called even after exception
+            _pipeClient.Verify(p => p.Dispose(), Times.Once,
+                "Pipe client must be disposed even when ConnectAsync throws — prevents resource leak");
+        }
+
+        [TestMethod]
+        [Description("Pipe client should be disposed even when writing to stream throws")]
+        public async Task SendMsgToUIAsync_WhenWriteThrows_ShouldStillDisposePipeClient() {
+            // Arrange: a stream that looks writable at construction but throws on Write.
+            // We can NOT pass a disposed MemoryStream — its CanWrite returns false and
+            // StreamWriter's constructor rejects it with ArgumentException before any write.
+            // Instead use a custom stream that claims CanWrite=true but throws on Write().
+            var throwingWriter = new StreamWriter(new ThrowOnWriteStream()) { AutoFlush = true };
+            _pipeClient.Setup(p => p.CreateWriter()).Returns(throwingWriter);
+
+            // Act
+            await _sut.SendMsgToUIAsync("msg");
+
+            // Assert
+            _pipeClient.Verify(p => p.Dispose(), Times.Once,
+                "Pipe client must be disposed even when stream write throws");
+        }
+
+        // ----------------------------------------------------------------
+        // Helpers
+        // ----------------------------------------------------------------
+
+        /// <summary>
+        /// A stream that reports CanWrite = true so StreamWriter accepts it,
+        /// but throws IOException on any actual Write call — simulating a broken pipe mid-write.
+        /// </summary>
+        private sealed class ThrowOnWriteStream : Stream {
+            public override bool CanRead  => false;
+            public override bool CanSeek  => false;
+            public override bool CanWrite => true;   // ← must be true for StreamWriter ctor
+            public override long Length   => 0;
+            public override long Position { get; set; }
+
+            public override void Write(byte[] buffer, int offset, int count)
+                => throw new IOException("Simulated broken pipe on write");
+
+            public override void WriteByte(byte value)
+                => throw new IOException("Simulated broken pipe on WriteByte");
+
+            public override void Flush() { /* no-op */ }
+            public override int  Read(byte[] buffer, int offset, int count) => 0;
+            public override long Seek(long offset, SeekOrigin origin)       => 0;
+            public override void SetLength(long value)                      { }
+        }
+
+        [TestMethod]
+        [Description("Pipe client Dispose must be called exactly once regardless of success path")]
+        public async Task SendMsgToUIAsync_SuccessPath_ShouldDisposeExactlyOnce() {
+            await _sut.SendMsgToUIAsync("hello");
+
+            _pipeClient.Verify(p => p.Dispose(), Times.Once);
+        }
     }
 }

@@ -6,7 +6,7 @@
 #define AppId "{{95F4CECE-7C7C-40E1-B485-07DA64D1905F}"
 #define MyAppName "Virtual Paper"
 #define MyAppVersion "0.5.1.0"
-#define MyAppVersionText "0510"
+#define MyAppVersionText "0_5_1_0"
 #define MyAppPublisher "PaperHammer"
 #define MyAppURL "https://github.com/PaperHammer/VirtualPaper"
 #define MyAppExeName "VirtualPaper.exe"

@@ -563,6 +563,24 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="WpCreateDialog_CommonWp_Title" xml:space="preserve">
     <value>普通壁纸</value>
   </data>
+  <data name="WpLib_TypeFilter_All" xml:space="preserve">
+    <value>类型</value>
+  </data>
+  <data name="WpLib_TypeFilter_StaticImage" xml:space="preserve">
+    <value>静态图像</value>
+  </data>
+  <data name="WpLib_TypeFilter_DynamicImage" xml:space="preserve">
+    <value>动态图像</value>
+  </data>
+  <data name="WpLib_TypeFilter_Video" xml:space="preserve">
+    <value>视频</value>
+  </data>
+  <data name="WpLib_TypeFilter_WebInteractive" xml:space="preserve">
+    <value>Web 交互式</value>
+  </data>
+  <data name="WpLib_Search_Placeholder" xml:space="preserve">
+    <value>按标题搜索...</value>
+  </data>
   <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
     <value>库内容</value>
   </data>

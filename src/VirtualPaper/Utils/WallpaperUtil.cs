@@ -293,7 +293,7 @@ namespace VirtualPaper.Utils {
             else if (Math.Abs(aspectRatio - 1.3333) < 0.01) {
                 return "4:3";
             }
-            return "FUnknown";
+            return "-";
         }
 
         // Add NETSCAPE2.0 Application Extension for looping.

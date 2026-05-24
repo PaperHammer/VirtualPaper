@@ -563,6 +563,24 @@ Author: PaperHammer</value>
   <data name="WpCreateDialog_CommonWp_Title" xml:space="preserve">
     <value>Ordinary wallpaper</value>
   </data>
+  <data name="WpLib_TypeFilter_All" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="WpLib_TypeFilter_StaticImage" xml:space="preserve">
+    <value>Static Image</value>
+  </data>
+  <data name="WpLib_TypeFilter_DynamicImage" xml:space="preserve">
+    <value>Dynamic Image</value>
+  </data>
+  <data name="WpLib_TypeFilter_Video" xml:space="preserve">
+    <value>Video</value>
+  </data>
+  <data name="WpLib_TypeFilter_WebInteractive" xml:space="preserve">
+    <value>Web Interactive</value>
+  </data>
+  <data name="WpLib_Search_Placeholder" xml:space="preserve">
+    <value>Search by title...</value>
+  </data>
   <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
     <value>Library contents</value>
   </data>

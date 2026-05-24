@@ -189,6 +189,11 @@ namespace VirtualPaper.Common {
             public static string WpCreateDialog_AIWp_Title => "WpCreateDialog_AIWp_Title";
             public static string WpCreateDialog_CommonWp_Explain => "WpCreateDialog_CommonWp_Explain";
             public static string WpCreateDialog_CommonWp_Title => "WpCreateDialog_CommonWp_Title";
+            public static string WpLib_TypeFilter_All => "WpLib_TypeFilter_All";
+            public static string WpLib_TypeFilter_StaticImage => "WpLib_TypeFilter_StaticImage";
+            public static string WpLib_TypeFilter_DynamicImage => "WpLib_TypeFilter_DynamicImage";
+            public static string WpLib_TypeFilter_Video => "WpLib_TypeFilter_Video";
+            public static string WpLib_TypeFilter_WebInteractive => "WpLib_TypeFilter_WebInteractive";
             public static string? Project_DeployNewDraft_PreviousStep { get; }
             public static string? Project_DeployNewDraft_NextStep { get; }
             public static string? Project_NewName_InvalidTip { get; }

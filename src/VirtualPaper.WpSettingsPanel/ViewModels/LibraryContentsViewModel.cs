@@ -631,15 +631,27 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public FilterKey FilterKeyword { get; set; } = FilterKey.LibraryTitle;
 
         public void ApplyFilter(string keyword) {
-            FilterByTitle(keyword);
+            ApplyFilter(new FilterContext { TitleKeyword = keyword });
         }
 
-        public void FilterByTitle(string keyword) {
-            var filtered = _libraryWallpapers.Where(basicData =>
-                basicData.Title != null && basicData.Title.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
+        public void ApplyFilter(FilterContext context) {
+            var filtered = _libraryWallpapers.Where(data =>
+                MatchesTitle(data, context.TitleKeyword) &&
+                MatchesType(data, context.ActiveTypes)
             ).ToList();
             Remove_NonMatching(filtered);
             AddBack_Procs(filtered);
+        }
+
+        private static bool MatchesTitle(IWpBasicData data, string keyword) =>
+            string.IsNullOrEmpty(keyword) ||
+            (data.Title?.Contains(keyword, StringComparison.InvariantCultureIgnoreCase) ?? false);
+
+        private static bool MatchesType(IWpBasicData data, IReadOnlySet<FileType>? activeTypes) =>
+            activeTypes == null || activeTypes.Contains(data.FType);
+
+        public void FilterByTitle(string keyword) {
+            ApplyFilter(new FilterContext { TitleKeyword = keyword });
         }
 
         private void Remove_NonMatching(IEnumerable<IWpBasicData> basicDatas) {
@@ -652,10 +664,17 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         private void AddBack_Procs(IEnumerable<IWpBasicData> basicDatas) {
-            foreach (var item in basicDatas) {
-                if (!LibraryWallpapers.Contains(item)) {
-                    LibraryWallpapers.Add(item);
+            // basicDatas 已按 _libraryWallpapers 原始顺序排列。
+            // Remove_NonMatching 执行后，LibraryWallpapers 是 basicDatas 的有序子序列，
+            // 因此只需逐位对比：不匹配则在该位置 Insert，无需 Move。
+            // 保证恢复后顺序与 _libraryWallpapers（及 _wallpaperIndexService）完全一致。
+            var ordered = basicDatas as IList<IWpBasicData> ?? basicDatas.ToList();
+            for (int i = 0; i < ordered.Count; i++) {
+                if (i < LibraryWallpapers.Count &&
+                    ReferenceEquals(LibraryWallpapers[i], ordered[i])) {
+                    continue; // 已在正确位置
                 }
+                LibraryWallpapers.Insert(i, ordered[i]);
             }
         }
 

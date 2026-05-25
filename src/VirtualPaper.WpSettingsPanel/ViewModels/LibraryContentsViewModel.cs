@@ -705,8 +705,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
         #endregion
 
-
-
         private struct ImportValue(string filePath, FileType ftype) {
             internal string FilePath { get; set; } = filePath;
             internal FileType FType { get; set; } = ftype;

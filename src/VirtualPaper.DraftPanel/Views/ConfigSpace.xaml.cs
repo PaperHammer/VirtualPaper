@@ -84,6 +84,7 @@ namespace VirtualPaper.DraftPanel.Views {
                             _viewModel.RefreshCardComponentData();
                         };
                         _viewModel._cardComponent = cardComponent;
+                        cardComponent.UpdateCardComponentUI();
                     }
                 }
             });

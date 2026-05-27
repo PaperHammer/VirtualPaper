@@ -165,6 +165,12 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
          */
         public int EraserFeather { get; internal set; } = 0;
 
+        private string? _clickedEffectId;
+        public string? ClickedEffectId {
+            get { return _clickedEffectId; }
+            set { if (_clickedEffectId == value) return; _clickedEffectId = value; OnPropertyChanged(); }
+        }
+
         internal void InitData() {
             UpdateCanvasSizeText();
             AddLayer(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_Text_BackgroundLayer)), true, needRecord: false);

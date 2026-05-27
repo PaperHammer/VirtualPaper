@@ -208,6 +208,7 @@ namespace Workloads.Creation.StaticImg {
         Crop, // 裁剪
         Selection,
         CanvasSet,
+        CanvasEffect,
     }
 
     // rotate per 90 degree

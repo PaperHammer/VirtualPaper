@@ -467,6 +467,16 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
         #endregion
 
+        #region CanvasEffect
+        private void CanvasEffect_Cancel(object sender, RoutedEventArgs e) {
+
+        }
+
+        private void CanvasEffect_Commit(object sender, RoutedEventArgs e) {
+
+        }
+        #endregion
+
         #region Layer Mangaer
         private void LayerManage_AddLayerRequest(object sender, Guid id) {
             _viewModel.Data.AddLayer(layerId: id);

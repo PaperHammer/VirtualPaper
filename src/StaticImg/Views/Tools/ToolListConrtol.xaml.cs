@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -10,7 +10,7 @@ using Workloads.Creation.StaticImg.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Tools {
     public sealed partial class ToolListConrtol : UserControl {
-        public event EventHandler<RoutedEventArgs> ToolListLoaded;
+        public event EventHandler<RoutedEventArgs>? ToolListLoaded;
 
         public ToolItem SelectedTool {
             get { return (ToolItem)GetValue(SelectedToolProperty); }

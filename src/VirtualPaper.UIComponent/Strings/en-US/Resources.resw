@@ -1382,4 +1382,7 @@ The following words cannot be used as usernames:
   <data name="Text_Error_InvalidFile" xml:space="preserve">
     <value>The file may be corrupted and cannot be used</value>
   </data>
+  <data name="Project_StaticImg_ToolName_CanvasEffect" xml:space="preserve">
+    <value>Effect</value>
+  </data>
 </root>

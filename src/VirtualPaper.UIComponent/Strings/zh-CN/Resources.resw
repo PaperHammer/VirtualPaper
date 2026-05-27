@@ -1382,4 +1382,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Text_Error_InvalidFile" xml:space="preserve">
     <value>文件可能已经损坏，无法读取</value>
   </data>
+  <data name="Project_StaticImg_ToolName_CanvasEffect" xml:space="preserve">
+    <value>效果</value>
+  </data>
 </root>

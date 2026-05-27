@@ -7,7 +7,144 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
     mc:Ignorable="d">
+
+    <UserControl.Resources>
+
+        <!--  分组标题 ToggleButton 样式  -->
+        <Style x:Key="AccordionHeaderStyle" TargetType="ToggleButton">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="4,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border
+                            x:Name="RootBorder"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="4">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver">
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="RootBorder"
+                                                Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame KeyTime="0"
+                                                    Value="{ThemeResource SubtleFillColorSecondaryBrush}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="RootBorder"
+                                                Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame KeyTime="0"
+                                                    Value="{ThemeResource SubtleFillColorTertiaryBrush}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Checked">
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="RootBorder"
+                                                Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame KeyTime="0"
+                                                    Value="{ThemeResource SubtleFillColorSecondaryBrush}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="CheckedPointerOver">
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="RootBorder"
+                                                Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame KeyTime="0"
+                                                    Value="{ThemeResource SubtleFillColorTertiaryBrush}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="CheckedPressed">
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames
+                                                Storyboard.TargetName="RootBorder"
+                                                Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame KeyTime="0"
+                                                    Value="{ThemeResource SubtleFillColorSecondaryBrush}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+
+                            <Grid Margin="{TemplateBinding Padding}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!--  分组图标（可选占位）  -->
+                                <ContentPresenter
+                                    Grid.Column="1"
+                                    Content="{TemplateBinding Content}"
+                                    VerticalAlignment="Center"/>
+
+                                <!--  展开/折叠箭头  -->
+                                <FontIcon
+                                    x:Name="ChevronIcon"
+                                    Grid.Column="2"
+                                    FontSize="12"
+                                    Glyph="&#xE76C;"
+                                    VerticalAlignment="Center"
+                                    Margin="8,0,0,0">
+                                    <FontIcon.RenderTransform>
+                                        <RotateTransform x:Name="ChevronRotate" CenterX="6" CenterY="6"/>
+                                    </FontIcon.RenderTransform>
+                                </FontIcon>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--  效果缩略图 DataTemplate  -->
+        <DataTemplate x:Key="EffectItemTemplate" x:DataType="lcl_models:CanvasEffectItem">
+            <Grid
+                Width="76"
+                Margin="3"
+                CornerRadius="6"
+                Background="Transparent">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="58"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Border
+                    CornerRadius="6">
+                    <Image
+                        Stretch="UniformToFill"
+                        Source="{x:Bind PreviewImagePath, Converter={StaticResource ResourceKeyToImageConverter}}"/>
+                </Border>
+
+                <TextBlock
+                    Grid.Row="1"
+                    Margin="0,3,0,2"
+                    HorizontalAlignment="Center"
+                    FontSize="11"
+                    TextTrimming="CharacterEllipsis"
+                    TextAlignment="Center"
+                    Text="{markup:I18n Key=NameKey}"/>
+            </Grid>
+        </DataTemplate>
+
+    </UserControl.Resources>
 
     <Expander Style="{StaticResource RightExpanderStyle}">
         <Expander.Header>
@@ -15,24 +152,188 @@
         </Expander.Header>
         <Expander.Content>
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="10"/>
-                    <ColumnDefinition />
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <Button
-                    Content="{markup:I18n Key=Text_Cancel}"
-                    Height="40"
-                    HorizontalAlignment="Stretch"
-                    Click="SelectCancelBtn_Click"/>
+                <!--  Accordion 主体  -->
+                <ScrollViewer
+                    Grid.Row="0"
+                    MaxHeight="430"
+                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Disabled"
+                    Padding="0,0,6,0">
+                    <StackPanel Orientation="Vertical" Spacing="1">
 
-                <Button 
-                    Grid.Column="2"
-                    Content="{markup:I18n Key=Text_Complete}"
-                    Height="40"
-                    HorizontalAlignment="Stretch"
-                    Click="SelectCommitBtn_Click"/>
+                        <!-- ══════════════ 分组 1：调整 ══════════════ -->
+                        <ToggleButton
+                            x:Name="Header_Adjust"
+                            Style="{StaticResource AccordionHeaderStyle}"
+                            Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Adjust}"
+                            Checked="GroupHeader_Checked"
+                            Unchecked="GroupHeader_Unchecked"/>
+                        <Grid
+                            x:Name="Content_Adjust"
+                            MaxHeight="0">
+                            <GridView
+                                x:Name="EffectGrid_Adjust"
+                                Margin="0,4,0,8"
+                                IsItemClickEnabled="True"
+                                SelectionMode="Single"
+                                ItemTemplate="{StaticResource EffectItemTemplate}"
+                                ItemClick="EffectGridView_ItemClick">
+                                <GridView.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <ItemsWrapGrid
+                                            Orientation="Horizontal"
+                                            MaximumRowsOrColumns="3"/>
+                                    </ItemsPanelTemplate>
+                                </GridView.ItemsPanel>
+                            </GridView>
+                        </Grid>
+
+                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="4,0"/>
+
+                        <!-- ══════════════ 分组 2：颜色 ══════════════ -->
+                        <ToggleButton
+                            x:Name="Header_Color"
+                            Style="{StaticResource AccordionHeaderStyle}"
+                            Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Color}"
+                            Checked="GroupHeader_Checked"
+                            Unchecked="GroupHeader_Unchecked"/>
+                        <Grid
+                            x:Name="Content_Color"
+                            MaxHeight="0">
+                            <GridView
+                                x:Name="EffectGrid_Color"
+                                Margin="0,4,0,8"
+                                IsItemClickEnabled="True"
+                                SelectionMode="Single"
+                                ItemTemplate="{StaticResource EffectItemTemplate}"
+                                ItemClick="EffectGridView_ItemClick">
+                                <GridView.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <ItemsWrapGrid
+                                            Orientation="Horizontal"
+                                            MaximumRowsOrColumns="3"/>
+                                    </ItemsPanelTemplate>
+                                </GridView.ItemsPanel>
+                            </GridView>
+                        </Grid>
+
+                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="4,0"/>
+
+                        <!-- ══════════════ 分组 3：艺术 ══════════════ -->
+                        <ToggleButton
+                            x:Name="Header_Artistic"
+                            Style="{StaticResource AccordionHeaderStyle}"
+                            Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Artistic}"
+                            Checked="GroupHeader_Checked"
+                            Unchecked="GroupHeader_Unchecked"/>
+                        <Grid
+                            x:Name="Content_Artistic"
+                            MaxHeight="0">
+                            <GridView
+                                x:Name="EffectGrid_Artistic"
+                                Margin="0,4,0,8"
+                                IsItemClickEnabled="True"
+                                SelectionMode="Single"
+                                ItemTemplate="{StaticResource EffectItemTemplate}"
+                                ItemClick="EffectGridView_ItemClick">
+                                <GridView.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <ItemsWrapGrid
+                                            Orientation="Horizontal"
+                                            MaximumRowsOrColumns="3"/>
+                                    </ItemsPanelTemplate>
+                                </GridView.ItemsPanel>
+                            </GridView>
+                        </Grid>
+
+                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="4,0"/>
+
+                        <!-- ══════════════ 分组 4：特效 ══════════════ -->
+                        <ToggleButton
+                            x:Name="Header_Special"
+                            Style="{StaticResource AccordionHeaderStyle}"
+                            Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Special}"
+                            Checked="GroupHeader_Checked"
+                            Unchecked="GroupHeader_Unchecked"/>
+                        <Grid
+                            x:Name="Content_Special"
+                            MaxHeight="0">
+                            <GridView
+                                x:Name="EffectGrid_Special"
+                                Margin="0,4,0,8"
+                                IsItemClickEnabled="True"
+                                SelectionMode="Single"
+                                ItemTemplate="{StaticResource EffectItemTemplate}"
+                                ItemClick="EffectGridView_ItemClick">
+                                <GridView.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <ItemsWrapGrid
+                                            Orientation="Horizontal"
+                                            MaximumRowsOrColumns="3"/>
+                                    </ItemsPanelTemplate>
+                                </GridView.ItemsPanel>
+                            </GridView>
+                        </Grid>
+
+                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="4,0"/>
+
+                        <!-- ══════════════ 分组 5：混合 ══════════════ -->
+                        <ToggleButton
+                            x:Name="Header_Blend"
+                            Style="{StaticResource AccordionHeaderStyle}"
+                            Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Blend}"
+                            Checked="GroupHeader_Checked"
+                            Unchecked="GroupHeader_Unchecked"/>
+                        <Grid
+                            x:Name="Content_Blend"
+                            MaxHeight="0">
+                            <GridView
+                                x:Name="EffectGrid_Blend"
+                                Margin="0,4,0,8"
+                                IsItemClickEnabled="True"
+                                SelectionMode="Single"
+                                ItemTemplate="{StaticResource EffectItemTemplate}"
+                                ItemClick="EffectGridView_ItemClick">
+                                <GridView.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <ItemsWrapGrid
+                                            Orientation="Horizontal"
+                                            MaximumRowsOrColumns="3"/>
+                                    </ItemsPanelTemplate>
+                                </GridView.ItemsPanel>
+                            </GridView>
+                        </Grid>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!--  底部操作按钮  -->
+                <Grid Grid.Row="1" Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+
+                    <Button
+                        Content="{markup:I18n Key=Text_Cancel}"
+                        Height="40"
+                        HorizontalAlignment="Stretch"
+                        Click="SelectCancelBtn_Click"/>
+
+                    <Button
+                        Grid.Column="2"
+                        Content="{markup:I18n Key=Text_Complete}"
+                        Height="40"
+                        HorizontalAlignment="Stretch"
+                        Click="SelectCommitBtn_Click"/>
+                </Grid>
+
             </Grid>
         </Expander.Content>
     </Expander>

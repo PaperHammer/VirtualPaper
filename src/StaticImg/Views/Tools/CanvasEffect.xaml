@@ -84,29 +84,20 @@
 
                             <Grid Margin="{TemplateBinding Padding}">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-
-                                <!--  分组图标（可选占位）  -->
                                 <ContentPresenter
-                                    Grid.Column="1"
+                                    Grid.Column="0"
                                     Content="{TemplateBinding Content}"
                                     VerticalAlignment="Center"/>
-
-                                <!--  展开/折叠箭头  -->
                                 <FontIcon
                                     x:Name="ChevronIcon"
-                                    Grid.Column="2"
+                                    Grid.Column="1"
                                     FontSize="12"
                                     Glyph="&#xE76C;"
                                     VerticalAlignment="Center"
-                                    Margin="8,0,0,0">
-                                    <FontIcon.RenderTransform>
-                                        <RotateTransform x:Name="ChevronRotate" CenterX="6" CenterY="6"/>
-                                    </FontIcon.RenderTransform>
-                                </FontIcon>
+                                    Margin="8,0,0,0"/>
                             </Grid>
                         </Border>
                     </ControlTemplate>
@@ -116,33 +107,31 @@
 
         <!--  效果缩略图 DataTemplate  -->
         <DataTemplate x:Key="EffectItemTemplate" x:DataType="lcl_models:CanvasEffectItem">
-            <Grid
-                Width="76"
-                Margin="3"
-                CornerRadius="6"
-                Background="Transparent">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="58"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <Border
-                    CornerRadius="6">
-                    <Image
-                        Stretch="UniformToFill"
-                        Source="{x:Bind PreviewImagePath, Converter={StaticResource ResourceKeyToImageConverter}}"/>
-                </Border>
-
-                <TextBlock
-                    Grid.Row="1"
-                    Margin="0,3,0,2"
-                    HorizontalAlignment="Center"
-                    FontSize="11"
-                    TextTrimming="CharacterEllipsis"
-                    TextAlignment="Center"
-                    Text="{markup:I18n Key=NameKey}"/>
-            </Grid>
+            <GridViewItem Width="92" Height="108" Margin="3">
+                <StackPanel Orientation="Vertical" Spacing="4">
+                    <Border
+                        Width="90"
+                        Height="66"
+                        CornerRadius="6">
+                        <Image
+                            Stretch="UniformToFill"
+                            Source="{x:Bind PreviewImagePath, Converter={StaticResource ResourceKeyToImageConverter}}"/>
+                    </Border>
+                    <TextBlock
+                        Width="82"
+                        HorizontalAlignment="Center"
+                        TextAlignment="Center"
+                        FontSize="11"
+                        MaxLines="2"
+                        TextWrapping="Wrap"
+                        Text="{x:Bind EffectName}"/>
+                </StackPanel>
+            </GridViewItem>
         </DataTemplate>
+
+        <ItemsPanelTemplate x:Key="EffectItemsPanel">
+            <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="3"/>
+        </ItemsPanelTemplate>
 
     </UserControl.Resources>
 
@@ -151,169 +140,103 @@
             <TextBlock Text="{markup:I18n Key=Project_StaticImg_ToolName_CanvasEffect}"/>
         </Expander.Header>
         <Expander.Content>
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <StackPanel Orientation="Vertical" Spacing="6">
 
-                <!--  Accordion 主体  -->
-                <ScrollViewer
-                    Grid.Row="0"
-                    MaxHeight="430"
-                    VerticalScrollBarVisibility="Auto"
-                    HorizontalScrollBarVisibility="Disabled"
-                    Padding="0,0,6,0">
-                    <StackPanel Orientation="Vertical" Spacing="1">
+                <!-- ══ 分组 1：调整 ══ -->
+                <ToggleButton
+                    x:Name="Header_Adjust"
+                    Style="{StaticResource AccordionHeaderStyle}"
+                    Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Adjust}"
+                    Checked="GroupHeader_Checked"
+                    Unchecked="GroupHeader_Unchecked"/>
+                <Grid x:Name="Content_Adjust" MaxHeight="0">
+                    <GridView
+                        x:Name="EffectGrid_Adjust"
+                        SelectionMode="None"
+                        IsItemClickEnabled="True"
+                        ItemTemplate="{StaticResource EffectItemTemplate}"
+                        ItemsPanel="{StaticResource EffectItemsPanel}"
+                        ItemClick="EffectGridView_ItemClick"/>
+                </Grid>
 
-                        <!-- ══════════════ 分组 1：调整 ══════════════ -->
-                        <ToggleButton
-                            x:Name="Header_Adjust"
-                            Style="{StaticResource AccordionHeaderStyle}"
-                            Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Adjust}"
-                            Checked="GroupHeader_Checked"
-                            Unchecked="GroupHeader_Unchecked"/>
-                        <Grid
-                            x:Name="Content_Adjust"
-                            MaxHeight="0">
-                            <GridView
-                                x:Name="EffectGrid_Adjust"
-                                Margin="0,4,0,8"
-                                IsItemClickEnabled="True"
-                                SelectionMode="Single"
-                                ItemTemplate="{StaticResource EffectItemTemplate}"
-                                ItemClick="EffectGridView_ItemClick">
-                                <GridView.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <ItemsWrapGrid
-                                            Orientation="Horizontal"
-                                            MaximumRowsOrColumns="3"/>
-                                    </ItemsPanelTemplate>
-                                </GridView.ItemsPanel>
-                            </GridView>
-                        </Grid>
+                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
 
-                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="4,0"/>
+                <!-- ══ 分组 2：颜色 ══ -->
+                <ToggleButton
+                    x:Name="Header_Color"
+                    Style="{StaticResource AccordionHeaderStyle}"
+                    Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Color}"
+                    Checked="GroupHeader_Checked"
+                    Unchecked="GroupHeader_Unchecked"/>
+                <Grid x:Name="Content_Color" MaxHeight="0">
+                    <GridView
+                        x:Name="EffectGrid_Color"
+                        SelectionMode="None"
+                        IsItemClickEnabled="True"
+                        ItemTemplate="{StaticResource EffectItemTemplate}"
+                        ItemsPanel="{StaticResource EffectItemsPanel}"
+                        ItemClick="EffectGridView_ItemClick"/>
+                </Grid>
 
-                        <!-- ══════════════ 分组 2：颜色 ══════════════ -->
-                        <ToggleButton
-                            x:Name="Header_Color"
-                            Style="{StaticResource AccordionHeaderStyle}"
-                            Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Color}"
-                            Checked="GroupHeader_Checked"
-                            Unchecked="GroupHeader_Unchecked"/>
-                        <Grid
-                            x:Name="Content_Color"
-                            MaxHeight="0">
-                            <GridView
-                                x:Name="EffectGrid_Color"
-                                Margin="0,4,0,8"
-                                IsItemClickEnabled="True"
-                                SelectionMode="Single"
-                                ItemTemplate="{StaticResource EffectItemTemplate}"
-                                ItemClick="EffectGridView_ItemClick">
-                                <GridView.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <ItemsWrapGrid
-                                            Orientation="Horizontal"
-                                            MaximumRowsOrColumns="3"/>
-                                    </ItemsPanelTemplate>
-                                </GridView.ItemsPanel>
-                            </GridView>
-                        </Grid>
+                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
 
-                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="4,0"/>
+                <!-- ══ 分组 3：艺术 ══ -->
+                <ToggleButton
+                    x:Name="Header_Artistic"
+                    Style="{StaticResource AccordionHeaderStyle}"
+                    Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Artistic}"
+                    Checked="GroupHeader_Checked"
+                    Unchecked="GroupHeader_Unchecked"/>
+                <Grid x:Name="Content_Artistic" MaxHeight="0">
+                    <GridView
+                        x:Name="EffectGrid_Artistic"
+                        SelectionMode="None"
+                        IsItemClickEnabled="True"
+                        ItemTemplate="{StaticResource EffectItemTemplate}"
+                        ItemsPanel="{StaticResource EffectItemsPanel}"
+                        ItemClick="EffectGridView_ItemClick"/>
+                </Grid>
 
-                        <!-- ══════════════ 分组 3：艺术 ══════════════ -->
-                        <ToggleButton
-                            x:Name="Header_Artistic"
-                            Style="{StaticResource AccordionHeaderStyle}"
-                            Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Artistic}"
-                            Checked="GroupHeader_Checked"
-                            Unchecked="GroupHeader_Unchecked"/>
-                        <Grid
-                            x:Name="Content_Artistic"
-                            MaxHeight="0">
-                            <GridView
-                                x:Name="EffectGrid_Artistic"
-                                Margin="0,4,0,8"
-                                IsItemClickEnabled="True"
-                                SelectionMode="Single"
-                                ItemTemplate="{StaticResource EffectItemTemplate}"
-                                ItemClick="EffectGridView_ItemClick">
-                                <GridView.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <ItemsWrapGrid
-                                            Orientation="Horizontal"
-                                            MaximumRowsOrColumns="3"/>
-                                    </ItemsPanelTemplate>
-                                </GridView.ItemsPanel>
-                            </GridView>
-                        </Grid>
+                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
 
-                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="4,0"/>
+                <!-- ══ 分组 4：特效 ══ -->
+                <ToggleButton
+                    x:Name="Header_Special"
+                    Style="{StaticResource AccordionHeaderStyle}"
+                    Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Special}"
+                    Checked="GroupHeader_Checked"
+                    Unchecked="GroupHeader_Unchecked"/>
+                <Grid x:Name="Content_Special" MaxHeight="0">
+                    <GridView
+                        x:Name="EffectGrid_Special"
+                        SelectionMode="None"
+                        IsItemClickEnabled="True"
+                        ItemTemplate="{StaticResource EffectItemTemplate}"
+                        ItemsPanel="{StaticResource EffectItemsPanel}"
+                        ItemClick="EffectGridView_ItemClick"/>
+                </Grid>
 
-                        <!-- ══════════════ 分组 4：特效 ══════════════ -->
-                        <ToggleButton
-                            x:Name="Header_Special"
-                            Style="{StaticResource AccordionHeaderStyle}"
-                            Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Special}"
-                            Checked="GroupHeader_Checked"
-                            Unchecked="GroupHeader_Unchecked"/>
-                        <Grid
-                            x:Name="Content_Special"
-                            MaxHeight="0">
-                            <GridView
-                                x:Name="EffectGrid_Special"
-                                Margin="0,4,0,8"
-                                IsItemClickEnabled="True"
-                                SelectionMode="Single"
-                                ItemTemplate="{StaticResource EffectItemTemplate}"
-                                ItemClick="EffectGridView_ItemClick">
-                                <GridView.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <ItemsWrapGrid
-                                            Orientation="Horizontal"
-                                            MaximumRowsOrColumns="3"/>
-                                    </ItemsPanelTemplate>
-                                </GridView.ItemsPanel>
-                            </GridView>
-                        </Grid>
+                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
 
-                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="4,0"/>
-
-                        <!-- ══════════════ 分组 5：混合 ══════════════ -->
-                        <ToggleButton
-                            x:Name="Header_Blend"
-                            Style="{StaticResource AccordionHeaderStyle}"
-                            Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Blend}"
-                            Checked="GroupHeader_Checked"
-                            Unchecked="GroupHeader_Unchecked"/>
-                        <Grid
-                            x:Name="Content_Blend"
-                            MaxHeight="0">
-                            <GridView
-                                x:Name="EffectGrid_Blend"
-                                Margin="0,4,0,8"
-                                IsItemClickEnabled="True"
-                                SelectionMode="Single"
-                                ItemTemplate="{StaticResource EffectItemTemplate}"
-                                ItemClick="EffectGridView_ItemClick">
-                                <GridView.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <ItemsWrapGrid
-                                            Orientation="Horizontal"
-                                            MaximumRowsOrColumns="3"/>
-                                    </ItemsPanelTemplate>
-                                </GridView.ItemsPanel>
-                            </GridView>
-                        </Grid>
-
-                    </StackPanel>
-                </ScrollViewer>
+                <!-- ══ 分组 5：混合 ══ -->
+                <ToggleButton
+                    x:Name="Header_Blend"
+                    Style="{StaticResource AccordionHeaderStyle}"
+                    Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Blend}"
+                    Checked="GroupHeader_Checked"
+                    Unchecked="GroupHeader_Unchecked"/>
+                <Grid x:Name="Content_Blend" MaxHeight="0">
+                    <GridView
+                        x:Name="EffectGrid_Blend"
+                        SelectionMode="None"
+                        IsItemClickEnabled="True"
+                        ItemTemplate="{StaticResource EffectItemTemplate}"
+                        ItemsPanel="{StaticResource EffectItemsPanel}"
+                        ItemClick="EffectGridView_ItemClick"/>
+                </Grid>
 
                 <!--  底部操作按钮  -->
-                <Grid Grid.Row="1" Margin="0,8,0,0">
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
                         <ColumnDefinition Width="10"/>
@@ -334,7 +257,7 @@
                         Click="SelectCommitBtn_Click"/>
                 </Grid>
 
-            </Grid>
+            </StackPanel>
         </Expander.Content>
     </Expander>
 </UserControl>

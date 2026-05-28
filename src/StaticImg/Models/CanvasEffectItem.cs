@@ -9,7 +9,7 @@ namespace Workloads.Creation.StaticImg.Models {
         public string EffectId { get; set; } = string.Empty;
 
         /// <summary>效果显示名称（i18n key）</summary>
-        public string NameKey { get; set; } = string.Empty;
+        public string EffectName { get; set; } = string.Empty;
 
         /// <summary>效果预览图路径（ms-appx:// 或 ms-appdata://）</summary>
         public string PreviewImagePath { get; set; } = string.Empty;

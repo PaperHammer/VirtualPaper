@@ -4,6 +4,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media.Animation;
+using VirtualPaper.Common;
+using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Models;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -42,55 +44,55 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         private void InitEffectGroups() {
             // 调整 (9)
             EffectGrid_Adjust.ItemsSource = new List<CanvasEffectItem> {
-                new() { EffectId = "adjust_grayscale",   NameKey = "灰度",       PreviewImagePath = string.Empty },
-                new() { EffectId = "adjust_invert",      NameKey = "反转",       PreviewImagePath = string.Empty },
-                new() { EffectId = "adjust_exposure",    NameKey = "曝光",       PreviewImagePath = string.Empty },
-                new() { EffectId = "adjust_brightness",  NameKey = "亮度",       PreviewImagePath = string.Empty },
-                new() { EffectId = "adjust_saturation",  NameKey = "饱和",       PreviewImagePath = string.Empty },
-                new() { EffectId = "adjust_hue",         NameKey = "色相旋转",   PreviewImagePath = string.Empty },
-                new() { EffectId = "adjust_contrast",    NameKey = "对比度",     PreviewImagePath = string.Empty },
-                new() { EffectId = "adjust_temperature", NameKey = "冷暖",       PreviewImagePath = string.Empty },
-                new() { EffectId = "adjust_highlights",  NameKey = "高光和阴影", PreviewImagePath = string.Empty },
+                new() { EffectId = "adjust_grayscale",   EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_GrayScale)), PreviewImagePath = string.Empty },
+                new() { EffectId = "adjust_invert",      EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Invert)), PreviewImagePath = string.Empty },
+                new() { EffectId = "adjust_exposure",    EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Exposure)), PreviewImagePath = string.Empty },
+                new() { EffectId = "adjust_brightness",  EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Brightness)), PreviewImagePath = string.Empty },
+                new() { EffectId = "adjust_saturation",  EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Saturation)), PreviewImagePath = string.Empty },
+                new() { EffectId = "adjust_hue",         EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Hue)), PreviewImagePath = string.Empty },
+                new() { EffectId = "adjust_contrast",    EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Contrast)), PreviewImagePath = string.Empty },
+                new() { EffectId = "adjust_temperature", EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Temperature)), PreviewImagePath = string.Empty },
+                new() { EffectId = "adjust_highlights",  EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Highlights)), PreviewImagePath = string.Empty },
             };
 
             // 颜色 (4)
             EffectGrid_Color.ItemsSource = new List<CanvasEffectItem> {
-                new() { EffectId = "color_sepia",   NameKey = "褪色",   PreviewImagePath = string.Empty },
-                new() { EffectId = "color_duotone", NameKey = "双色调", PreviewImagePath = string.Empty },
-                new() { EffectId = "color_lut",     NameKey = "LUT",    PreviewImagePath = string.Empty },
-                new() { EffectId = "color_tint",    NameKey = "着色",   PreviewImagePath = string.Empty },
+                new() { EffectId = "color_sepia",   EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Sepia)), PreviewImagePath = string.Empty },
+                new() { EffectId = "color_duotone", EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Duotone)), PreviewImagePath = string.Empty },
+                new() { EffectId = "color_lut",     EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_LUT)), PreviewImagePath = string.Empty },
+                new() { EffectId = "color_tint",    EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Tint)), PreviewImagePath = string.Empty },
             };
 
             // 艺术 (8)
             EffectGrid_Artistic.ItemsSource = new List<CanvasEffectItem> {
-                new() { EffectId = "art_oilpaint",    NameKey = "油画",   PreviewImagePath = string.Empty },
-                new() { EffectId = "art_sketch",      NameKey = "素描",   PreviewImagePath = string.Empty },
-                new() { EffectId = "art_watercolor",  NameKey = "水彩",   PreviewImagePath = string.Empty },
-                new() { EffectId = "art_pixelate",    NameKey = "像素化", PreviewImagePath = string.Empty },
-                new() { EffectId = "art_emboss",      NameKey = "浮雕",   PreviewImagePath = string.Empty },
-                new() { EffectId = "art_pointillism", NameKey = "点彩",   PreviewImagePath = string.Empty },
-                new() { EffectId = "art_crosshatch",  NameKey = "交叉线", PreviewImagePath = string.Empty },
-                new() { EffectId = "art_cartoon",     NameKey = "卡通",   PreviewImagePath = string.Empty },
+                new() { EffectId = "art_oilpaint",    EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_OilPaint)), PreviewImagePath = string.Empty },
+                new() { EffectId = "art_sketch",      EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Sketch)), PreviewImagePath = string.Empty },
+                new() { EffectId = "art_watercolor",  EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_WaterColor)), PreviewImagePath = string.Empty },
+                new() { EffectId = "art_pixelate",    EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Pixelate)), PreviewImagePath = string.Empty },
+                new() { EffectId = "art_emboss",      EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Emboss)), PreviewImagePath = string.Empty },
+                new() { EffectId = "art_pointillism", EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Pointillism)), PreviewImagePath = string.Empty },
+                new() { EffectId = "art_crosshatch",  EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Crosshatch)), PreviewImagePath = string.Empty },
+                new() { EffectId = "art_cartoon",     EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Cartoon)), PreviewImagePath = string.Empty },
             };
 
             // 特效 (8)
             EffectGrid_Special.ItemsSource = new List<CanvasEffectItem> {
-                new() { EffectId = "fx_blur",      NameKey = "模糊", PreviewImagePath = string.Empty },
-                new() { EffectId = "fx_sharpen",   NameKey = "锐化", PreviewImagePath = string.Empty },
-                new() { EffectId = "fx_noise",     NameKey = "噪点", PreviewImagePath = string.Empty },
-                new() { EffectId = "fx_vignette",  NameKey = "暗角", PreviewImagePath = string.Empty },
-                new() { EffectId = "fx_glow",      NameKey = "发光", PreviewImagePath = string.Empty },
-                new() { EffectId = "fx_bloom",     NameKey = "光晕", PreviewImagePath = string.Empty },
-                new() { EffectId = "fx_chromatic", NameKey = "色差", PreviewImagePath = string.Empty },
-                new() { EffectId = "fx_distort",   NameKey = "扭曲", PreviewImagePath = string.Empty },
+                new() { EffectId = "fx_blur",      EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Blur)), PreviewImagePath = string.Empty },
+                new() { EffectId = "fx_sharpen",   EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Sharpen)), PreviewImagePath = string.Empty },
+                new() { EffectId = "fx_noise",     EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Noise)), PreviewImagePath = string.Empty },
+                new() { EffectId = "fx_vignette",  EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Vignette)), PreviewImagePath = string.Empty },
+                new() { EffectId = "fx_glow",      EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Glow)), PreviewImagePath = string.Empty },
+                new() { EffectId = "fx_bloom",     EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Bloom)), PreviewImagePath = string.Empty },
+                new() { EffectId = "fx_chromatic", EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Chromatic)), PreviewImagePath = string.Empty },
+                new() { EffectId = "fx_distort",   EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Distort)), PreviewImagePath = string.Empty },
             };
 
             // 混合 (4)
             EffectGrid_Blend.ItemsSource = new List<CanvasEffectItem> {
-                new() { EffectId = "blend_multiply",  NameKey = "正片叠底", PreviewImagePath = string.Empty },
-                new() { EffectId = "blend_screen",    NameKey = "滤色",     PreviewImagePath = string.Empty },
-                new() { EffectId = "blend_overlay",   NameKey = "叠加",     PreviewImagePath = string.Empty },
-                new() { EffectId = "blend_softlight", NameKey = "柔光",     PreviewImagePath = string.Empty },
+                new() { EffectId = "blend_multiply",  EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Multiply)), PreviewImagePath = string.Empty },
+                new() { EffectId = "blend_screen",    EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Screen)), PreviewImagePath = string.Empty },
+                new() { EffectId = "blend_overlay",   EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Overlay)), PreviewImagePath = string.Empty },
+                new() { EffectId = "blend_softlight", EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_SoftLight)), PreviewImagePath = string.Empty },
             };
         }
 

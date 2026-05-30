@@ -67,9 +67,10 @@ namespace VirtualPaper.Shader {
                 // 先加载到临时字典，完成后再原子替换，全程 _isInited 保持 true
                 var newCache = new ConcurrentDictionary<ShaderType, byte[]>();
 
+                // 仅加载有 .bin 的自定义着色器
                 var allTypes = Enum.GetValues(typeof(ShaderType))
                                    .Cast<ShaderType>()
-                                   .Where(t => t != ShaderType.None);
+                                   .Where(ShaderTypeManager.IsCustomShader);
 
                 var loadingTasks = allTypes.Select(type =>
                     LoadShaderInternalAsync(type).ContinueWith(t => {
@@ -107,9 +108,10 @@ namespace VirtualPaper.Shader {
         /// 加载所有 ShaderType（不含 None），结果写入缓存
         /// </summary>
         private static async Task LoadShadersInternalAsync() {
+            // 仅加载有 .bin 的自定义着色器
             var allTypes = Enum.GetValues(typeof(ShaderType))
                                .Cast<ShaderType>()
-                               .Where(t => t != ShaderType.None);
+                               .Where(ShaderTypeManager.IsCustomShader);
 
             var failedTypes = new ConcurrentBag<(ShaderType type, Exception ex)>();
             var loadingTasks = allTypes.Select(type =>

@@ -14,11 +14,40 @@
 
 	<ItemGroup>
 		<Content Include="Shaders\GeometryAlphaEraseEffect.bin">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<Content Include="Shaders\ThresholdEffect.bin">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Shaders\GradientMappingEffect.bin">
+			<CopyToOutputDirectory>NevPreserveNewester</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Shaders\RippleEffect.bin">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Shaders\DisplacementLiquefactionEffect.bin">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+
 		<Content Include="Shaders\GeometryAlphaEraseEffect.hlsl">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Content>
+		<Content Include="Shaders\ThresholdEffect.hlsl">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Shaders\GradientMappingEffect.hlsl">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Shaders\RippleEffect.hlsl">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Shaders\DisplacementLiquefactionEffect.hlsl">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.3.2" />
 	</ItemGroup>
 
 	<ItemGroup>

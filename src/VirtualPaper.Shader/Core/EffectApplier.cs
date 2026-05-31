@@ -12,9 +12,9 @@ namespace VirtualPaper.Shader.Core {
                 // ═══ Adjustment ═══
                 ShaderType.Grayscale => new GrayscaleEffect { Source = source },
                 ShaderType.Invert => new InvertEffect { Source = source },
-                ShaderType.Exposure => new ExposureEffect { Exposure = p.Value, Source = source },
-                ShaderType.Brightness => new ColorMatrixEffect { ColorMatrix = Matrix5x4Extension.Brightness(Clamp(p.Value, -1, 1)), Source = source },
-                ShaderType.Saturation => new SaturationEffect { Saturation = p.Value, Source = source },
+                ShaderType.Exposure => new ExposureEffect { Exposure = p.Value / 100f, Source = source },
+                ShaderType.Brightness => new ColorMatrixEffect { ColorMatrix = Matrix5x4Extension.Brightness(p.Value / 100f), Source = source },
+                ShaderType.Saturation => new SaturationEffect { Saturation = p.Value / 100f, Source = source },
                 ShaderType.HueRotation => new HueRotationEffect { Angle = p.Value * MathF.PI / 180f, Source = source },
                 ShaderType.Contrast => new ContrastEffect { Contrast = Clamp(p.Value, -1, 1), Source = source },
                 ShaderType.TemperatureAndTint => new TemperatureAndTintEffect { Temperature = Clamp(p.Value, -1, 1), Tint = Clamp(p.Value2, -1, 1), Source = source },
@@ -27,8 +27,8 @@ namespace VirtualPaper.Shader.Core {
                 ShaderType.ColorMatch => new ColorMatrixEffect { ColorMatrix = ColorMatchMatrix(p.Color1, p.Color2), Source = source },
 
                 // ═══ Effect1 ═══
-                ShaderType.GaussianBlur => new GaussianBlurEffect { BlurAmount = p.Value, Source = source },
-                ShaderType.DirectionalBlur => new DirectionalBlurEffect { BlurAmount = p.Value, Angle = p.Value2 * MathF.PI / 180f, Source = source },
+                ShaderType.GaussianBlur => new GaussianBlurEffect { BlurAmount = p.Value / 10f, Source = source },
+                ShaderType.DirectionalBlur => new DirectionalBlurEffect { BlurAmount = p.Value / 10f, Angle = p.Value2 * MathF.PI / 180f, Source = source },
                 ShaderType.Sharpen => new SharpenEffect { Amount = Clamp(p.Value, 0, 10), Source = source },
                 ShaderType.Shadow => BuildShadow(p, source),
                 ShaderType.EdgeDetection => new EdgeDetectionEffect { Amount = Clamp(p.Value, 0, 1), BlurAmount = Clamp(p.Value2, 0, 10), OverlayEdges = p.Flag, Source = source },

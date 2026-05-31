@@ -99,7 +99,7 @@ namespace VirtualPaper.Common {
         }
 
         public static class WorkingDir {
-            public static string Shader => Path.Combine(UI, "Shaders");
+            public static string Shader => Path.Combine("Plugins", "Shaders");
             public static string ML => Path.Combine("Plugins", "ML");
             public static string ML_DepthEstimate => Path.Combine(ML, "DepthEstimate");
             public static string ML_DepthEstimate_AI_Models => Path.Combine(ML_DepthEstimate, "ai_models");

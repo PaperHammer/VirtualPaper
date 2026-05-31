@@ -17,6 +17,10 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         // ── 公开事件 ─────────────────────────────────────────────────
         public event EventHandler<RoutedEventArgs>? CanvasEffectCancel;
         public event EventHandler<RoutedEventArgs>? CanvasEffectCommit;
+        public event EventHandler<string>? EffectPreviewRequested;
+
+        /// <summary>是否应用到全部图层</summary>
+        public bool ApplyAllLayers => ApplyAllLayersToggle.IsOn;
 
         // ── 当前选中的效果 ID ────────────────────────────────────────
         public string? ClickedEffectId {
@@ -96,7 +100,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             };
         }
 
-        // ── Accordion：打开当前组，折叠其他组 ───────────────────────
+        // Accordion：打开当前组，折叠其他组
         private void GroupHeader_Checked(object sender, RoutedEventArgs e) {
             var clickedHeader = (ToggleButton)sender;
             var clickedContent = GetContentForHeader(clickedHeader);
@@ -117,7 +121,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             AnimateMaxHeight(content, to: 0);
         }
 
-        // ── MaxHeight 动画 ────────────────────────────────────────────
+        // MaxHeight 动画
         private static void AnimateMaxHeight(Grid target, double to) {
             var anim = new DoubleAnimation {
                 To = to,
@@ -133,21 +137,14 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             sb.Begin();
         }
 
-        // ── 效果缩略图点击 ───────────────────────────────────────────
         private void EffectGridView_ItemClick(object sender, ItemClickEventArgs e) {
             if (e.ClickedItem is CanvasEffectItem item) {
                 ClickedEffectId = item.EffectId;
-
-                // 清除其他组的视觉选中态
-                foreach (var grid in AllEffectGridViews) {
-                    if (!ReferenceEquals(grid, sender)) {
-                        grid.SelectedItem = null;
-                    }
-                }
+                EffectPreviewRequested?.Invoke(this, item.EffectId);
             }
         }
 
-        // ── Header ↔ Content 映射 ────────────────────────────────────
+        // Header to Content 映射
         private Grid GetContentForHeader(ToggleButton header) {
             if (ReferenceEquals(header, Header_Adjust)) return Content_Adjust;
             if (ReferenceEquals(header, Header_Color)) return Content_Color;
@@ -165,16 +162,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             (Header_Blend,    Content_Blend),
         ];
 
-        private IEnumerable<GridView> AllEffectGridViews =>
-        [
-            EffectGrid_Adjust,
-            EffectGrid_Color,
-            EffectGrid_Artistic,
-            EffectGrid_Special,
-            EffectGrid_Blend,
-        ];
-
-        // ── 底部按钮 ─────────────────────────────────────────────────
+        // 底部按钮
         private void SelectCancelBtn_Click(object sender, RoutedEventArgs e) {
             ClickedEffectId = null;
 
@@ -183,9 +171,6 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
                     header.IsChecked = false;
                     AnimateMaxHeight(content, to: 0);
                 }
-            }
-            foreach (var grid in AllEffectGridViews) {
-                grid.SelectedItem = null;
             }
 
             CanvasEffectCancel?.Invoke(this, e);

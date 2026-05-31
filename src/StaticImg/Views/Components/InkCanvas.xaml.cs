@@ -16,6 +16,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
+using VirtualPaper.Shader;
 using VirtualPaper.UIComponent.Collection;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Input;
@@ -32,6 +33,7 @@ using Workloads.Creation.StaticImg.Models.ToolItems;
 using Workloads.Creation.StaticImg.Utils;
 using Workloads.Creation.StaticImg.ViewModels;
 using Workloads.Creation.StaticImg.Views.Tools;
+using Workloads.Creation.StaticImg.Views.Tools.Effects;
 using Workloads.Utils.DraftUtils.Models;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -73,6 +75,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.Data));
             _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.Data));
             _tool.RegisterTool(ToolType.Crop, new CropTool(_viewModel.Data));
+            _tool.RegisterTool(ToolType.CanvasEffect, new EffectTool());
 
             foreach (var tool in _tool.GetAllTools()) {
                 tool.SystemCursorChangeRequested += (s, e) => {
@@ -88,6 +91,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                     OnFatalErrorOccurred(s, e);
                 };
             }
+
+            CanvasEffect.EffectPreviewRequested += OnEffectPreviewRequested;
         }
 
         private async void OnFatalErrorOccurred(object? s, Exception e) {
@@ -116,7 +121,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             };
             _viewModel.Data.SeletcedToolChanged += (s, e) => {
                 //before
-                HandleSelectionToolBefore();
+                TryRestore();
                 _selectedTool = _tool.GetTool(_viewModel.Data.SelectedToolItem.Type);
                 //after
 
@@ -147,10 +152,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             TryRestore();
         }
 
-        private void HandleSelectionToolBefore() {
-            TryRestore();
-        }
-
         private void TryRestore() {
             if (_selectedTool is SelectionTool st) {
                 var op = st.RestoreOriginalContent();
@@ -159,6 +160,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             else if (_selectedTool is CropTool ct) {
                 var op = ct.RestoreOriginalContent();
                 if (op) RenderToCompositeTarget(RenderMode.FullRegion);
+            } else if (_selectedTool is EffectTool et) {
+                et.Cancel();
+                CanvasEffect.ClickedEffectId = null;
+                effectPanelHost.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -469,12 +474,50 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         #region CanvasEffect
         private void CanvasEffect_Cancel(object sender, RoutedEventArgs e) {
+            if (_selectedTool is not EffectTool et) return;
 
+            et.Cancel();
+            effectPanelHost.Visibility = Visibility.Collapsed;
+            CanvasEffect.ClickedEffectId = null;
         }
 
         private void CanvasEffect_Commit(object sender, RoutedEventArgs e) {
+            if (_selectedTool is not EffectTool et) return;
 
+            et.Commit();
+            effectPanelHost.Visibility = Visibility.Collapsed;
+            CanvasEffect.ClickedEffectId = null;
         }
+
+        private void OnEffectPreviewRequested(object? sender, string effectId) {
+            if (_selectedTool is not EffectTool et) return;
+
+            et.Cancel(); // 先取消之前的预览，避免重复叠加效果
+
+            var shaderType = EffectMap.ToShaderType(effectId);
+            if (shaderType == ShaderType.None) {
+                effectPanelHost.Visibility = Visibility.Collapsed;
+                CanvasEffect.ClickedEffectId = null;
+                return;
+            }
+
+            et.StartPreview(shaderType);
+            ShowEffectPanel(shaderType);
+        }
+
+        private void ShowEffectPanel(ShaderType shaderType) {
+            effectPanelStack.Children.Clear();
+
+            var panel = EffectPanelFactory.Create(shaderType);
+            panel.ParamsChanged += (_, p) => {
+                if (_selectedTool is EffectTool et && et.IsPreviewing)
+                    et.UpdateParams(p);
+            };
+
+            effectPanelStack.Children.Add(panel);
+            effectPanelHost.Visibility = Visibility.Visible;
+        }
+
         #endregion
 
         #region Layer Mangaer

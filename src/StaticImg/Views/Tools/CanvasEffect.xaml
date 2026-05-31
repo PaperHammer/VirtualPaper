@@ -235,6 +235,15 @@
                         ItemClick="EffectGridView_ItemClick"/>
                 </Grid>
 
+                <!--  图层范围开关  -->
+                <ToggleSwitch
+                    x:Name="ApplyAllLayersToggle"
+                    Header="应用所有图层"
+                    OffContent="仅当前图层"
+                    OnContent="所有图层"
+                    IsOn="False"
+                    Margin="0,4,0,0"/>
+
                 <!--  底部操作按钮  -->
                 <Grid>
                     <Grid.ColumnDefinitions>

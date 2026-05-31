@@ -26,42 +26,58 @@
                 <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
 
-            <ScrollViewer x:Name="scroll"
-                HorizontalScrollBarVisibility="Auto" 
-                VerticalScrollBarVisibility="Auto"
-                ZoomMode="Enabled"
-                IsZoomInertiaEnabled="True"
-                MinZoomFactor="{x:Bind staticImg:Consts.MinZoomFactor}"
-                MaxZoomFactor="{x:Bind staticImg:Consts.MaxZoomFactor}"
-                Background="{ThemeResource ControlStrokeColorDefaultBrush}"
-                ViewChanging="Scroll_ViewChanging"
-                PointerPressed="Scroll_PointerPressed"
-                PointerMoved="Scroll_PointerMoved"
-                PointerReleased="Scroll_PointerReleased"
-                PointerExited="Scroll_PointerExited">
-                <Grid x:Name="container"
-                    Margin="80"
-                    Background="Transparent"
-                    DataContext="{x:Bind _viewModel.Data, Mode=OneWay}"
-                    Width="{x:Bind _viewModel.Data.CanvasSize.Width, Mode=OneWay}"
-                    Height="{x:Bind _viewModel.Data.CanvasSize.Height, Mode=OneWay}"
-                    PointerEntered="Container_PointerEntered"
-                    PointerPressed="Container_PointerPressed"
-                    PointerMoved="Container_PointerMoved"
-                    PointerReleased="Container_PointerReleased"
-                    PointerExited="Container_PointerExited"
-                    PointerWheelChanged="Container_PointerWheelChanged">
+            <Grid>
+                <ScrollViewer x:Name="scroll"
+                    HorizontalScrollBarVisibility="Auto" 
+                    VerticalScrollBarVisibility="Auto"
+                    ZoomMode="Enabled"
+                    IsZoomInertiaEnabled="True"
+                    MinZoomFactor="{x:Bind staticImg:Consts.MinZoomFactor}"
+                    MaxZoomFactor="{x:Bind staticImg:Consts.MaxZoomFactor}"
+                    Background="{ThemeResource ControlStrokeColorDefaultBrush}"
+                    ViewChanging="Scroll_ViewChanging"
+                    PointerPressed="Scroll_PointerPressed"
+                    PointerMoved="Scroll_PointerMoved"
+                    PointerReleased="Scroll_PointerReleased"
+                    PointerExited="Scroll_PointerExited">
+                    <Grid x:Name="container"
+                        Margin="48"
+                        Background="Transparent"
+                        DataContext="{x:Bind _viewModel.Data, Mode=OneWay}"
+                        Width="{x:Bind _viewModel.Data.CanvasSize.Width, Mode=OneWay}"
+                        Height="{x:Bind _viewModel.Data.CanvasSize.Height, Mode=OneWay}"
+                        PointerEntered="Container_PointerEntered"
+                        PointerPressed="Container_PointerPressed"
+                        PointerMoved="Container_PointerMoved"
+                        PointerReleased="Container_PointerReleased"
+                        PointerExited="Container_PointerExited"
+                        PointerWheelChanged="Container_PointerWheelChanged">
 
-                    <!--背景层 -->
-                    <win2d:CanvasVirtualControl x:Name="backgroundGrid"
-                        RegionsInvalidated="BackgroundGrid_RegionsInvalidated"/>
+                        <!--背景层 -->
+                        <win2d:CanvasVirtualControl x:Name="backgroundGrid"
+                            RegionsInvalidated="BackgroundGrid_RegionsInvalidated"/>
 
-                    <!--合成层-->
-                    <win2d:CanvasControl x:Name="renderCanvas"
-                        Loaded="RenderCanvas_Loaded"
-                        Draw="RenderCanvas_Draw"/>
-                </Grid>
-            </ScrollViewer>
+                        <!--合成层-->
+                        <win2d:CanvasControl x:Name="renderCanvas"
+                            Loaded="RenderCanvas_Loaded"
+                            Draw="RenderCanvas_Draw"/>
+                    </Grid>
+                </ScrollViewer>
+
+                <!-- 效果参数面板占位，具体内容由代码动态填充 -->
+                <Border x:Name="effectPanelHost"
+                    MinWidth="420"
+                    MaxWidth="720"
+                    Padding="20,12"
+                    Margin="22,0,22,22"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Bottom"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Visibility="Collapsed">
+                    <StackPanel x:Name="effectPanelStack" Spacing="8"/>
+                </Border>
+            </Grid>
 
             <StackPanel
                 Grid.Column="1"
@@ -69,6 +85,8 @@
                 Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
                 <ScrollViewer
                     Width="350"
+                    MinWidth="320"
+                    MaxWidth="420"
                     HorizontalScrollBarVisibility="Disabled"
                     VerticalScrollBarVisibility="Hidden"
                     HorizontalScrollMode="Disabled"

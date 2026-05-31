@@ -5,6 +5,10 @@ using Windows.ApplicationModel.Core;
 
 /*
  * todo
+ * lib 搜索 ui 调整
+ * create - brightness 网格 ui 调整
+ * slider 模板调整
+ * 
  * 分组循环播放
  * AI 生成壁纸	接入 Stable Diffusion / ComfyUI，本地生成动态壁纸
  * AI 静态图片动态化

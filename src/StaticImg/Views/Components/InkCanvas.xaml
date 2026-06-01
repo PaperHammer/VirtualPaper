@@ -66,10 +66,10 @@
 
                 <!-- 效果参数面板占位，具体内容由代码动态填充 -->
                 <Border x:Name="effectPanelHost"
-                    MinWidth="420"
-                    MaxWidth="720"
+                    MinWidth="480"
+                    MaxWidth="960"
                     Padding="20,12"
-                    Margin="22,0,22,22"
+                    Margin="0,0,0,12"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Bottom"
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"

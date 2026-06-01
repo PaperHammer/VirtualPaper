@@ -509,6 +509,13 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             effectPanelStack.Children.Clear();
 
             var panel = EffectPanelFactory.Create(shaderType);
+
+            // 无参数效果不展示面板
+            if (panel is EmptyEffectPanel) {
+                effectPanelHost.Visibility = Visibility.Collapsed;
+                return;
+            }
+
             panel.ParamsChanged += (_, p) => {
                 if (_selectedTool is EffectTool et && et.IsPreviewing)
                     et.UpdateParams(p);

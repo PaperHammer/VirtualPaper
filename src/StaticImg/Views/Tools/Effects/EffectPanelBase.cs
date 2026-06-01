@@ -25,15 +25,6 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        protected static TextBlock CreateValueText(double value) => new() {
-            Text = value.ToString("0.#"),
-            FontSize = 14,
-            MinWidth = 66,
-            TextAlignment = TextAlignment.Center,
-            Padding = new Thickness(0, 2, 0, 2),
-            HorizontalAlignment = HorizontalAlignment.Right,
-        };
-
         protected ArcSlider CreateSlider(string label, float min, float max, float value, StackPanel parent) {
             return CreateSliderCore(label, min, max, value, parent, null);
         }
@@ -43,15 +34,37 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
         }
 
         private ArcSlider CreateSliderCore(string label, float min, float max, float value, StackPanel parent, Brush? trackBrush) {
-            var titleGrid = new Grid();
-            titleGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            titleGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            var container = new StackPanel { Spacing = 2 };
 
-            var valueText = CreateValueText(value);
-            Grid.SetColumn(valueText, 1);
-            titleGrid.Children.Add(CreateLabel(label));
-            titleGrid.Children.Add(valueText);
+            // 第一行：标签（左）+ NumberBox（右）
+            var headerGrid = new Grid();
+            headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
+            headerGrid.Children.Add(CreateLabel(label));
+
+            var numberBox = new NumberBox {
+                Value = value,
+                Minimum = min,
+                Maximum = max,
+                SmallChange = Math.Max(1, Math.Abs(max - min) / 100),
+                LargeChange = Math.Max(1, Math.Abs(max - min) / 10),
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Hidden,
+                ValidationMode = NumberBoxValidationMode.InvalidInputOverwritten,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                MinWidth = 60,
+                MaxWidth = 72,
+                FontSize = 13,
+                // 仅显示整数，禁止小数位
+                NumberFormatter = new Windows.Globalization.NumberFormatting.DecimalFormatter {
+                    FractionDigits = 0,
+                    IsGrouped = false,
+                },
+            };
+            Grid.SetColumn(numberBox, 1);
+            headerGrid.Children.Add(numberBox);
+
+            // 第二行：Slider（全宽）
             var slider = new ArcSlider {
                 Minimum = min,
                 Maximum = max,
@@ -61,9 +74,28 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
                 SmallChange = Math.Max(1, Math.Abs(max - min) / 100),
                 StepFrequency = Math.Max(1, Math.Abs(max - min) / 100),
                 VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, -4, 0, 0),
             };
-            slider.ValueChanged += (_, _) => {
-                valueText.Text = slider.Value.ToString("0.#");
+
+            bool _syncing = false;
+
+            // Slider → NumberBox
+            slider.ValueChanged += (_, e) => {
+                if (_syncing) return;
+                _syncing = true;
+                numberBox.Value = Math.Round(e.NewValue);      // 取整同步
+                _syncing = false;
+                RaiseParamsChanged();
+            };
+
+            // NumberBox → Slider
+            numberBox.ValueChanged += (_, e) => {
+                if (_syncing || double.IsNaN(e.NewValue)) return;
+                var rounded = Math.Round(e.NewValue);          // 取整
+                _syncing = true;
+                numberBox.Value = rounded;                     // 回写保证显示整数
+                slider.Value = Math.Clamp(rounded, min, max);
+                _syncing = false;
                 RaiseParamsChanged();
             };
 
@@ -72,8 +104,9 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
                 slider.TrackFillMode = ArcSliderTrackFillMode.Full;
             }
 
-            parent.Children.Add(titleGrid);
-            parent.Children.Add(slider);
+            container.Children.Add(headerGrid);
+            container.Children.Add(slider);
+            parent.Children.Add(container);
             return slider;
         }
 
@@ -238,12 +271,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class EmptyEffectPanel : EffectPanelBase {
-        public EmptyEffectPanel() {
-            Content = new TextBlock {
-                Text = "无需参数",
-                HorizontalAlignment = HorizontalAlignment.Center,
-            };
-        }
+        public EmptyEffectPanel() { }
 
         public override EffectParams Params => EffectParams.Default;
     }

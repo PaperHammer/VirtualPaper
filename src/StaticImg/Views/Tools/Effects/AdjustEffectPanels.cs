@@ -1,4 +1,5 @@
 using Microsoft.UI;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Shader;
 using VirtualPaper.UIComponent.Input;
@@ -35,8 +36,15 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
 
         public HueRotationEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
-            _hue = CreateGradientSlider("色相", -180, 180, 0, root,
-                Gradient((0, Colors.Red), (0.17, Colors.Yellow), (0.33, Colors.Lime), (0.5, Colors.Cyan), (0.67, Colors.Blue), (0.83, Colors.Magenta), (1, Colors.Red)));
+            _hue = CreateGradientSlider("色相", 0, 360, 0, root,
+                Gradient(
+                    (0,      Colors.Red),
+                    (1d/6,  Colors.Yellow),
+                    (2d/6,  Colors.Lime),
+                    (3d/6,  Colors.Cyan),
+                    (4d/6,  Colors.Blue),
+                    (5d/6,  Colors.Magenta),
+                    (1,      Colors.Red)));
             Content = root;
         }
 
@@ -65,7 +73,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             _temperature = CreateGradientSlider("色温", -100, 100, 0, root,
                 Gradient((0, Colors.DodgerBlue), (0.5, Colors.White), (1, Colors.Orange)));
             _tint = CreateGradientSlider("色调", -100, 100, 0, root,
-                Gradient((0, Colors.MediumSeaGreen), (0.5, Colors.White), (1, Colors.MediumVioletRed)));
+                Gradient((0, Colors.MediumVioletRed), (0.5, Colors.White), (1, Colors.MediumSeaGreen)));
             Content = root;
         }
 
@@ -83,14 +91,37 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
         private readonly ArcSlider _blur;
 
         public HighlightsShadowsEffectPanel() {
-            var root = new StackPanel { Spacing = 8 };
-            _shadows = CreateGradientSlider("阴影", -100, 100, 0, root,
+            var grid = new Grid { ColumnSpacing = 12, RowSpacing = 4 };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            // 第一行：阴影 | 高光
+            var c00 = new StackPanel();
+            _shadows = CreateGradientSlider("阴影", -100, 100, 0, c00,
                 Gradient((0, Colors.Black), (1, Colors.White)));
-            _highlights = CreateGradientSlider("高光", -100, 100, 0, root,
+            Grid.SetRow(c00, 0); Grid.SetColumn(c00, 0);
+            grid.Children.Add(c00);
+
+            var c01 = new StackPanel();
+            _highlights = CreateGradientSlider("高光", -100, 100, 0, c01,
                 Gradient((0, Colors.Black), (1, Colors.White)));
-            _clarity = CreateSlider("清晰度", -100, 100, 0, root);
-            _blur = CreateSlider("蒙版模糊", 0, 100, 0, root);
-            Content = root;
+            Grid.SetRow(c01, 0); Grid.SetColumn(c01, 1);
+            grid.Children.Add(c01);
+
+            // 第二行：清晰度 | 蒙版模糊
+            var c10 = new StackPanel();
+            _clarity = CreateSlider("清晰度", -100, 100, 0, c10);
+            Grid.SetRow(c10, 1); Grid.SetColumn(c10, 0);
+            grid.Children.Add(c10);
+
+            var c11 = new StackPanel();
+            _blur = CreateSlider("蒙版模糊", 0, 100, 0, c11);
+            Grid.SetRow(c11, 1); Grid.SetColumn(c11, 1);
+            grid.Children.Add(c11);
+
+            Content = grid;
         }
 
         public override EffectParams Params => new() {

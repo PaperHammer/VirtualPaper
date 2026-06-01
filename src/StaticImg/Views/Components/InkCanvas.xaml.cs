@@ -510,11 +510,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
             var panel = EffectPanelFactory.Create(shaderType);
 
-            // 无参数效果不展示面板
-            if (panel is EmptyEffectPanel) {
-                effectPanelHost.Visibility = Visibility.Collapsed;
-                return;
-            }
+            // 一次性效果（无参数）：立即应用，面板仍显示预览提示
+            if (panel.IsOneShot && _selectedTool is EffectTool etOneShot)
+                etOneShot.UpdateParams(panel.Params);
 
             panel.ParamsChanged += (_, p) => {
                 if (_selectedTool is EffectTool et && et.IsPreviewing)

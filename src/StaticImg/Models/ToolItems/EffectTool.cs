@@ -18,7 +18,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         public bool IsPreviewing => _isPreviewing;
         public ShaderType CurrentShaderType => _shaderType;
 
-        /// <summary>开始预览：缓存当前图层。不立即应用效果，等滑块驱动。</summary>
+        /// <summary>开始预览：缓存当前图层。不立即应用效果，等滑块驱动</summary>
         public void StartPreview(ShaderType type, EffectParams? param = null) {
             if (!IsCanvasReady) return;
 
@@ -34,23 +34,25 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             _isPreviewing = true;
         }
 
-        /// <summary>更新参数并刷新预览。</summary>
+        /// <summary>更新参数并刷新预览</summary>
         public void UpdateParams(EffectParams param) {
             if (!_isPreviewing) return;
             _params = param;
             ApplyEffect();
         }
 
-        /// <summary>确认效果。</summary>
+        /// <summary>确认效果：效果已写入 RenderTarget，通知缩略图更新</summary>
         public void Commit() {
             if (!_isPreviewing) return;
             _isPreviewing = false;
             _shaderType = ShaderType.None;
             _originalCache?.Dispose();
             _originalCache = null;
+            // 通知 LayerInfo 内容已变化，驱动缩略图刷新
+            RequestOnceRender();
         }
 
-        /// <summary>取消效果，还原原始图层。</summary>
+        /// <summary>取消效果，还原原始图层</summary>
         public void Cancel() {
             if (!_isPreviewing) return;
 

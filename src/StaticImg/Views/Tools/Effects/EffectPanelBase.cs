@@ -17,6 +17,12 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
 
         public abstract EffectParams Params { get; }
 
+        /// <summary>
+        /// true 表示此效果无需参数、点击即生效（如灰度、反相）
+        /// ShowEffectPanel 检测到此标志后会立即调用一次 UpdateParams
+        /// </summary>
+        public virtual bool IsOneShot => false;
+
         protected void RaiseParamsChanged() => ParamsChanged?.Invoke(this, Params);
 
         protected static TextBlock CreateLabel(string text) => new() {
@@ -271,8 +277,15 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class EmptyEffectPanel : EffectPanelBase {
-        public EmptyEffectPanel() { }
+        public EmptyEffectPanel() {
+            Content = new TextBlock {
+                Text = "预览中",
+                FontSize = 14,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+        }
 
+        public override bool IsOneShot => true;
         public override EffectParams Params => EffectParams.Default;
     }
 }

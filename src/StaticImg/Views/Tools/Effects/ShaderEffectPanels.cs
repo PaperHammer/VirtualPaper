@@ -1,10 +1,11 @@
 using System.Numerics;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Shader;
+using VirtualPaper.UIComponent.Input;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     public sealed partial class ThresholdEffectPanel : EffectPanelBase {
-        private readonly Slider _threshold;
+        private readonly ArcSlider _threshold;
 
         public ThresholdEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -21,10 +22,10 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class RippleEffectPanel : EffectPanelBase {
-        private readonly Slider _frequency;
-        private readonly Slider _phase;
-        private readonly Slider _amplitude;
-        private readonly Slider _spread;
+        private readonly ArcSlider _frequency;
+        private readonly ArcSlider _phase;
+        private readonly ArcSlider _amplitude;
+        private readonly ArcSlider _spread;
 
         public RippleEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -45,8 +46,8 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class DisplacementLiquefactionEffectPanel : EffectPanelBase {
-        private readonly Slider _radius;
-        private readonly Slider _pressure;
+        private readonly ArcSlider _radius;
+        private readonly ArcSlider _pressure;
         private readonly ComboBox _mode;
 
         public DisplacementLiquefactionEffectPanel() {

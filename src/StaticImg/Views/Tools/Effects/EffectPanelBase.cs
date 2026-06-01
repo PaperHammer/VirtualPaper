@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Shader;
+using VirtualPaper.UIComponent.Input;
 using Workloads.Creation.StaticImg.Utils;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
@@ -29,19 +30,19 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             FontSize = 14,
             MinWidth = 66,
             TextAlignment = TextAlignment.Center,
-            Padding = new Thickness(8, 2, 8, 2),
+            Padding = new Thickness(0, 2, 0, 2),
             HorizontalAlignment = HorizontalAlignment.Right,
         };
 
-        protected Slider CreateSlider(string label, float min, float max, float value, StackPanel parent) {
+        protected ArcSlider CreateSlider(string label, float min, float max, float value, StackPanel parent) {
             return CreateSliderCore(label, min, max, value, parent, null);
         }
 
-        protected Slider CreateGradientSlider(string label, float min, float max, float value, StackPanel parent, Brush brush) {
+        protected ArcSlider CreateGradientSlider(string label, float min, float max, float value, StackPanel parent, Brush brush) {
             return CreateSliderCore(label, min, max, value, parent, brush);
         }
 
-        private Slider CreateSliderCore(string label, float min, float max, float value, StackPanel parent, Brush? trackBrush) {
+        private ArcSlider CreateSliderCore(string label, float min, float max, float value, StackPanel parent, Brush? trackBrush) {
             var titleGrid = new Grid();
             titleGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             titleGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -51,7 +52,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             titleGrid.Children.Add(CreateLabel(label));
             titleGrid.Children.Add(valueText);
 
-            var slider = new Slider {
+            var slider = new ArcSlider {
                 Minimum = min,
                 Maximum = max,
                 Value = value,
@@ -67,8 +68,8 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             };
 
             if (trackBrush != null) {
-                slider.Background = trackBrush;
-                slider.Foreground = trackBrush;
+                slider.TrackFill = trackBrush;
+                slider.TrackFillMode = ArcSliderTrackFillMode.Full;
             }
 
             parent.Children.Add(titleGrid);
@@ -102,10 +103,10 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class SingleSliderEffectPanel : EffectPanelBase {
-        private readonly Slider _slider;
+        private readonly ArcSlider _slider;
 
         public SingleSliderEffectPanel(EffectSliderConfig cfg) {
-            var root = new StackPanel { Spacing = 8 };
+            var root = new StackPanel { Spacing = 4 };
             _slider = CreateSlider(cfg.Label, cfg.Min, cfg.Max, cfg.Default, root);
             Content = root;
         }
@@ -114,11 +115,11 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class DoubleSliderEffectPanel : EffectPanelBase {
-        private readonly Slider _slider1;
-        private readonly Slider _slider2;
+        private readonly ArcSlider _slider1;
+        private readonly ArcSlider _slider2;
 
         public DoubleSliderEffectPanel(EffectSliderConfig cfg) {
-            var root = new StackPanel { Spacing = 8 };
+            var root = new StackPanel { Spacing = 4 };
             _slider1 = CreateSlider(cfg.Label, cfg.Min, cfg.Max, cfg.Default, root);
             _slider2 = CreateSlider(cfg.Label2, cfg.Min2, cfg.Max2, cfg.Default2, root);
             Content = root;
@@ -146,7 +147,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
             root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            var presets = new StackPanel { Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
+            var presets = new StackPanel { Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
             foreach (var v in new[] { 150, 125, 100, 75, 50 }) {
                 var btn = new Button { Content = v.ToString(), Height = 36, HorizontalAlignment = HorizontalAlignment.Stretch };
                 btn.Click += (_, _) => SetBrightness(v - 100);

@@ -1,10 +1,11 @@
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Shader;
+using VirtualPaper.UIComponent.Input;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     public sealed partial class BlurEffectPanel : EffectPanelBase {
-        private readonly Slider _blur;
+        private readonly ArcSlider _blur;
 
         public BlurEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -16,8 +17,8 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class DirectionalBlurEffectPanel : EffectPanelBase {
-        private readonly Slider _blur;
-        private readonly Slider _angle;
+        private readonly ArcSlider _blur;
+        private readonly ArcSlider _angle;
 
         public DirectionalBlurEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -31,7 +32,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class SharpenEffectPanel : EffectPanelBase {
-        private readonly Slider _amount;
+        private readonly ArcSlider _amount;
 
         public SharpenEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -43,7 +44,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class VignetteEffectPanel : EffectPanelBase {
-        private readonly Slider _amount;
+        private readonly ArcSlider _amount;
 
         public VignetteEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -56,8 +57,8 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class EmbossEffectPanel : EffectPanelBase {
-        private readonly Slider _amount;
-        private readonly Slider _angle;
+        private readonly ArcSlider _amount;
+        private readonly ArcSlider _angle;
 
         public EmbossEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -71,7 +72,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class PosterizeEffectPanel : EffectPanelBase {
-        private readonly Slider _level;
+        private readonly ArcSlider _level;
 
         public PosterizeEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -88,10 +89,10 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class ShadowEffectPanel : EffectPanelBase {
-        private readonly Slider _blur;
-        private readonly Slider _offsetX;
-        private readonly Slider _offsetY;
-        private readonly Slider _opacity;
+        private readonly ArcSlider _blur;
+        private readonly ArcSlider _offsetX;
+        private readonly ArcSlider _offsetY;
+        private readonly ArcSlider _opacity;
 
         public ShadowEffectPanel() {
             var root = new StackPanel { Spacing = 8 };

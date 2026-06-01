@@ -1,10 +1,11 @@
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Shader;
+using VirtualPaper.UIComponent.Input;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     public sealed partial class ExposureEffectPanel : EffectPanelBase {
-        private readonly Slider _exposure;
+        private readonly ArcSlider _exposure;
 
         public ExposureEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -17,7 +18,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class SaturationEffectPanel : EffectPanelBase {
-        private readonly Slider _saturation;
+        private readonly ArcSlider _saturation;
 
         public SaturationEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -30,7 +31,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class HueRotationEffectPanel : EffectPanelBase {
-        private readonly Slider _hue;
+        private readonly ArcSlider _hue;
 
         public HueRotationEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -43,7 +44,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class ContrastEffectPanel : EffectPanelBase {
-        private readonly Slider _contrast;
+        private readonly ArcSlider _contrast;
 
         public ContrastEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -56,8 +57,8 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class TemperatureTintEffectPanel : EffectPanelBase {
-        private readonly Slider _temperature;
-        private readonly Slider _tint;
+        private readonly ArcSlider _temperature;
+        private readonly ArcSlider _tint;
 
         public TemperatureTintEffectPanel() {
             var root = new StackPanel { Spacing = 8 };
@@ -76,10 +77,10 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class HighlightsShadowsEffectPanel : EffectPanelBase {
-        private readonly Slider _shadows;
-        private readonly Slider _highlights;
-        private readonly Slider _clarity;
-        private readonly Slider _blur;
+        private readonly ArcSlider _shadows;
+        private readonly ArcSlider _highlights;
+        private readonly ArcSlider _clarity;
+        private readonly ArcSlider _blur;
 
         public HighlightsShadowsEffectPanel() {
             var root = new StackPanel { Spacing = 8 };

@@ -1499,4 +1499,97 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_StaticImg_Text_Effect_SoftLight" xml:space="preserve">
     <value>柔光</value>
   </data>
+  <data name="Project_StaticImg_Effect_Grayscale" xml:space="preserve">
+    <value>灰度</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Invert" xml:space="preserve">
+    <value>反转</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Exposure" xml:space="preserve">
+    <value>曝光</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Brightness" xml:space="preserve">
+    <value>亮度</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Saturation" xml:space="preserve">
+    <value>饱和</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Hue" xml:space="preserve">
+    <value>色相旋转</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Contrast" xml:space="preserve">
+    <value>对比度</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Temperature" xml:space="preserve">
+    <value>冷暖</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Highlights" xml:space="preserve">
+    <value>高光和阴影</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sepia" xml:space="preserve">
+    <value>褪色</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Duotone" xml:space="preserve">
+    <value>双色调</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Lut" xml:space="preserve">
+    <value>LUT</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Tint" xml:space="preserve">
+    <value>着色</value>
+  </data>
+  <data name="Project_StaticImg_Effect_OilPaint" xml:space="preserve">
+    <value>油画</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sketch" xml:space="preserve">
+    <value>素描</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Watercolor" xml:space="preserve">
+    <value>水彩</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Pixelate" xml:space="preserve">
+    <value>像素化</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Emboss" xml:space="preserve">
+    <value>浮雕</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Pointillism" xml:space="preserve">
+    <value>点彩</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Crosshatch" xml:space="preserve">
+    <value>交叉线</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Cartoon" xml:space="preserve">
+    <value>卡通</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Blur" xml:space="preserve">
+    <value>模糊</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sharpen" xml:space="preserve">
+    <value>锐化</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Noise" xml:space="preserve">
+    <value>噪点</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Vignette" xml:space="preserve">
+    <value>暗角</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Glow" xml:space="preserve">
+    <value>发光</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Bloom" xml:space="preserve">
+    <value>光晕</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Chromatic" xml:space="preserve">
+    <value>色差</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Distort" xml:space="preserve">
+    <value>扭曲</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Multiply" xml:space="preserve">
+    <value>正片叠底</value>
+  </data>
+  <data name="Project_StaticImg_Effect_SoftLight" xml:space="preserve">
+    <value>柔光</value>
+  </data>
 </root>

@@ -161,7 +161,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
 
                 var editDetailWindow = data.FType switch {
-                    FileType.FImage or FileType.FGif or FileType.FVideo => new OnlyDetails(DataConfigTab.GeneralInfoEdit, data),
+                    FileType.FImage or FileType.FGif or FileType.FVideo or FileType.FWebZip => new OnlyDetails(DataConfigTab.GeneralInfoEdit, data),
                     _ => throw new NotImplementedException(),
                 };
                 editDetailWindow.Closed += (sender, args) => {

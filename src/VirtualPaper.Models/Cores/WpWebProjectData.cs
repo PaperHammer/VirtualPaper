@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace VirtualPaper.Models {
+namespace VirtualPaper.Models.Cores {
     [JsonSerializable(typeof(WpWebProjectData))]
     public partial class WpWebProjectDataContext : JsonSerializerContext { }
 

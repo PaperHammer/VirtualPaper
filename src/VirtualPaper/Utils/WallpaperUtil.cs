@@ -8,7 +8,6 @@ using OpenCvSharp.Extensions;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.Storage;
-using VirtualPaper.Models;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using Size = OpenCvSharp.Size;

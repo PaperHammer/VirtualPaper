@@ -181,6 +181,7 @@
                     <DropDownButton
                         Height="30"
                         VerticalAlignment="Center"
+                        Padding="11 0"
                         Content="{x:Bind _viewModel.TypeFilterLabel, Mode=OneWay}">
                         <DropDownButton.Flyout>
                             <Flyout Placement="Bottom">

@@ -6,9 +6,9 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Microsoft.UI.Xaml.Input;
-using VirtualPaper.Shader;
 using VirtualPaper.UIComponent.Input;
 using Workloads.Creation.StaticImg.Utils;
+using VirtualPaper.Shader.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     /// <summary>效果参数面板基类</summary>
@@ -172,107 +172,51 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     }
 
     public sealed partial class BrightnessEffectPanel : EffectPanelBase {
-        private const double CurveWidth = 260;
-        private const double CurveHeight = 170;
-        private const double ThumbSize = 22;
-
-        private readonly Canvas _curveCanvas;
-        private readonly Border _mainPoint;
-        private double _brightness;
-        private bool _isDragging;
+        private readonly BrightnessCurvePanel _curve;
+        // 预分配数组，避免拖动时频繁 GC
+        private readonly float[] _rTable = new float[256];
+        private readonly float[] _gTable = new float[256];
+        private readonly float[] _bTable = new float[256];
 
         public BrightnessEffectPanel() {
-            var root = new Grid { Width = 420, Height = 220 };
-            root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
-            root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            var root = new StackPanel { Spacing = 8 };
 
-            var presets = new StackPanel { Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
-            foreach (var v in new[] { 150, 125, 100, 75, 50 }) {
-                var btn = new Button { Content = v.ToString(), Height = 36, HorizontalAlignment = HorizontalAlignment.Stretch };
-                btn.Click += (_, _) => SetBrightness(v - 100);
-                presets.Children.Add(btn);
-            }
-            root.Children.Add(presets);
-
-            _curveCanvas = new Canvas {
-                Width = CurveWidth,
-                Height = CurveHeight,
-                Margin = new Thickness(18, 0, 0, 0),
-                Background = new SolidColorBrush(Colors.Transparent),
-                VerticalAlignment = VerticalAlignment.Center,
+            _curve = new BrightnessCurvePanel {
+                Width = 256,
+                Height = 200,
+                Margin = new Thickness(0, 4, 0, 4)
             };
-            Grid.SetColumn(_curveCanvas, 1);
-            BuildBrightnessGrid();
+            _curve.CurveChanged += (_, lut) => {
+                for (int i = 0; i < 256; i++) {
+                    _rTable[i] = (float)lut[i];
+                    _gTable[i] = (float)lut[i];
+                    _bTable[i] = (float)lut[i];
+                }
+            };
 
-            _mainPoint = CreateCurvePoint();
-            _mainPoint.PointerPressed += CurvePoint_PointerPressed;
-            _mainPoint.PointerMoved += CurvePoint_PointerMoved;
-            _mainPoint.PointerReleased += CurvePoint_PointerReleased;
-            _mainPoint.PointerExited += CurvePoint_PointerReleased;
-            _curveCanvas.Children.Add(_mainPoint);
+            root.Children.Add(_curve);
 
-            root.Children.Add(_curveCanvas);
             Content = root;
-            SetBrightness(0, false);
+
+            // 初始化默认恒等曲线
+            ResetToIdentity();
         }
 
         public override EffectParams Params => new() {
-            Value = (float)_brightness,
-            Dpi = 96f,
+            RedTable = _rTable,
+            GreenTable = _gTable,
+            BlueTable = _bTable,
+            AlphaTable = null, // Alpha 不受亮度曲线影响
+            Dpi = 96f
         };
 
-        private void BuildBrightnessGrid() {
-            var stroke = new SolidColorBrush(Colors.Gray) { Opacity = 0.55 };
-            for (int i = 0; i <= 4; i++) {
-                double x = CurveWidth * i / 4;
-                double y = CurveHeight * i / 4;
-                _curveCanvas.Children.Add(new Line { X1 = x, Y1 = 0, X2 = x, Y2 = CurveHeight, Stroke = stroke, StrokeThickness = 1 });
-                _curveCanvas.Children.Add(new Line { X1 = 0, Y1 = y, X2 = CurveWidth, Y2 = y, Stroke = stroke, StrokeThickness = 1 });
+        private void ResetToIdentity() {
+            for (int i = 0; i < 256; i++) {
+                float v = i / 255f;
+                _rTable[i] = v;
+                _gTable[i] = v;
+                _bTable[i] = v;
             }
-            _curveCanvas.Children.Add(new Polyline {
-                Points = { new Windows.Foundation.Point(0, CurveHeight), new Windows.Foundation.Point(CurveWidth * 0.35, CurveHeight * 0.7), new Windows.Foundation.Point(CurveWidth * 0.7, CurveHeight * 0.35), new Windows.Foundation.Point(CurveWidth, 0) },
-                Stroke = new SolidColorBrush(Colors.WhiteSmoke),
-                StrokeThickness = 1.2,
-            });
-        }
-
-        private static Border CreateCurvePoint() => new() {
-            Width = ThumbSize,
-            Height = ThumbSize,
-            CornerRadius = new CornerRadius(ThumbSize / 2),
-            Background = new SolidColorBrush(Colors.WhiteSmoke),
-            BorderBrush = new SolidColorBrush(Colors.DimGray),
-            BorderThickness = new Thickness(4),
-        };
-
-        private void CurvePoint_PointerPressed(object sender, PointerRoutedEventArgs e) {
-            _isDragging = true;
-            _mainPoint.CapturePointer(e.Pointer);
-            UpdateFromPoint(e.GetCurrentPoint(_curveCanvas).Position);
-        }
-
-        private void CurvePoint_PointerMoved(object sender, PointerRoutedEventArgs e) {
-            if (!_isDragging) return;
-            UpdateFromPoint(e.GetCurrentPoint(_curveCanvas).Position);
-        }
-
-        private void CurvePoint_PointerReleased(object sender, PointerRoutedEventArgs e) {
-            _isDragging = false;
-            _mainPoint.ReleasePointerCapture(e.Pointer);
-        }
-
-        private void UpdateFromPoint(Windows.Foundation.Point p) {
-            double y = Math.Clamp(p.Y, 0, CurveHeight);
-            double value = (0.5 - y / CurveHeight) * 200; // -100~100, center=0
-            SetBrightness(value);
-        }
-
-        private void SetBrightness(double value, bool notify = true) {
-            _brightness = Math.Clamp(value, -100, 100);
-            double y = (0.5 - _brightness / 200) * CurveHeight;
-            Canvas.SetLeft(_mainPoint, CurveWidth * 0.5 - ThumbSize / 2);
-            Canvas.SetTop(_mainPoint, y - ThumbSize / 2);
-            if (notify) RaiseParamsChanged();
         }
     }
 

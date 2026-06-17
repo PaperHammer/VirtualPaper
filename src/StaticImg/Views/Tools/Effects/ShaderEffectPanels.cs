@@ -1,6 +1,6 @@
 using System.Numerics;
 using Microsoft.UI.Xaml.Controls;
-using VirtualPaper.Shader;
+using VirtualPaper.Shader.Models;
 using VirtualPaper.UIComponent.Input;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {

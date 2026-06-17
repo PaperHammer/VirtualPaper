@@ -2,6 +2,7 @@ using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
 using VirtualPaper.Shader;
 using VirtualPaper.Shader.Core;
+using VirtualPaper.Shader.Models;
 using Workloads.Creation.StaticImg.Core.Rendering;
 using Workloads.Creation.StaticImg.Events;
 

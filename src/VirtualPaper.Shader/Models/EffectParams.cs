@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace VirtualPaper.Shader {
+namespace VirtualPaper.Shader.Models {
     /// <summary>效果参数载体，覆盖所有 ShaderType 需要的参数。</summary>
     public struct EffectParams {
         // Slider

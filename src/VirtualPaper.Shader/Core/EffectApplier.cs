@@ -1,6 +1,7 @@
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Effects;
 using System.Numerics;
+using VirtualPaper.Shader.Models;
 
 namespace VirtualPaper.Shader.Core {
     /// <summary>

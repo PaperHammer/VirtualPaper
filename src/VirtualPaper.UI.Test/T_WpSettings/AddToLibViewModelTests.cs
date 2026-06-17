@@ -203,7 +203,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             await InvokeFileBrowseAsync(vm);
 
             Assert.IsNotNull(received);
-            Assert.AreEqual(1, received!.Count);
+            Assert.HasCount(1, received);
         }
 
         // ── FolderBrowseActionAsync ────────────────────────────────────

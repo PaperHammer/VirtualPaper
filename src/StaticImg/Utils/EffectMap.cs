@@ -20,24 +20,36 @@ namespace Workloads.Creation.StaticImg.Utils {
 
             "art_emboss" => ShaderType.Emboss,
             "art_pixelate" => ShaderType.Posterize,
+            "art_sepia" => ShaderType.Sepia,
 
             "fx_blur"      => ShaderType.GaussianBlur,
             "fx_sharpen"   => ShaderType.Sharpen,
             "fx_vignette"  => ShaderType.Vignette,
             "fx_glow"      => ShaderType.Shadow,
             "fx_distort"   => ShaderType.RippleEffect,
+            "fx_straighten" => ShaderType.Straighten,
+            "fx_edge"      => ShaderType.EdgeDetection,
+            "fx_morphology" => ShaderType.Morphology,
+
+            "adv_gamma"    => ShaderType.GammaTransfer,
+            "adv_hsb"      => ShaderType.HSB,
+            "adv_luma_alpha" => ShaderType.LuminanceToAlpha,
+            "adv_chroma_key" => ShaderType.ChromaKey,
+            "adv_fog"      => ShaderType.Fog,
+            "adv_glass"    => ShaderType.Glass,
+            "adv_colouring" => ShaderType.Colouring,
 
             _ => ShaderType.None,
         };
 
         /// <summary>效果 → 滑块配置（Value/Value2）</summary>
         public static EffectSliderConfig GetSliderConfig(ShaderType type) => type switch {
-            // ── 无参数效果 ──
+            // 无参数效果
             ShaderType.Grayscale or ShaderType.Invert or
-            ShaderType.Sepia or ShaderType.Colouring
+            ShaderType.Sepia
                 => new EffectSliderConfig(),
 
-            // ── 单滑块 (Value) ──
+            // 单滑块 (Value)
             ShaderType.Exposure
                 => new EffectSliderConfig { Min = -200, Max = 200, Default = 0, Label = "曝光" },
             ShaderType.Brightness
@@ -55,7 +67,7 @@ namespace Workloads.Creation.StaticImg.Utils {
             ShaderType.Tint
                 => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
 
-            // ── 双滑块 (Value + Value2) ──
+            // 双滑块 (Value + Value2)
             ShaderType.HueRotation
                 => new EffectSliderConfig { Min = -180, Max = 180, Default = 0, Label = "色相",
                     Min2 = 0, Max2 = 100, Default2 = 100, Label2 = "强度" },
@@ -89,7 +101,7 @@ namespace Workloads.Creation.StaticImg.Utils {
                 => new EffectSliderConfig { Min = -100, Max = 100, Default = 0, Label = "阴影",
                     Min2 = -100, Max2 = 100, Default2 = 0, Label2 = "高光" },
 
-            // ── 自定义着色器 ──
+            // 自定义着色器
             ShaderType.ThresholdEffect
                 => new EffectSliderConfig { Min = 0, Max = 300, Default = 150, Label = "阈值" },
             ShaderType.RippleEffect
@@ -98,6 +110,17 @@ namespace Workloads.Creation.StaticImg.Utils {
             ShaderType.DisplacementLiquefactionEffect
                 => new EffectSliderConfig { Min = 1, Max = 100, Default = 20, Label = "半径",
                     Min2 = 1, Max2 = 100, Default2 = 50, Label2 = "压力" },
+
+            // 新增效果
+            ShaderType.HSB
+                => new EffectSliderConfig { Min = 0, Max = 360, Default = 0, Label = "色相",
+                    Min2 = 0, Max2 = 400, Default2 = 100, Label2 = "饱和度" },
+            ShaderType.Fog
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "浓度" },
+            ShaderType.Glass
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
+            ShaderType.ChromaKey
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "容差" },
 
             _ => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
         };

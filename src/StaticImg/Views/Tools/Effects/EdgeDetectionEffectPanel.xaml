@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <local:EffectPanelBase
-    x:Class="Workloads.Creation.StaticImg.Views.Tools.Effects.BrightnessEffectPanel"
+    x:Class="Workloads.Creation.StaticImg.Views.Tools.Effects.EdgeDetectionEffectPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
@@ -10,36 +10,42 @@
     mc:Ignorable="d">
 
     <StackPanel Spacing="8">
-        <!-- 黑场 -->
+        <!-- 强度 -->
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="黑场" FontSize="14" VerticalAlignment="Center"/>
-            <TextBlock x:Name="BlackValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+            <TextBlock Text="强度" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock x:Name="AmountValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </Grid>
-        <input:ArcSlider x:Name="BlackSlider"
-            Minimum="0" Maximum="255" Value="0"
-            TickFrequency="32" TickPlacement="BottomRight"
+        <input:ArcSlider x:Name="AmountSlider"
+            Minimum="0" Maximum="100" Value="50"
+            TickFrequency="12.5" TickPlacement="BottomRight"
             SmallChange="1" StepFrequency="1"
-            ValueChanged="BlackSlider_ValueChanged"/>
+            ValueChanged="AmountSlider_ValueChanged"/>
 
-        <!-- 白场 -->
+        <!-- 模糊 -->
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="白场" FontSize="14" VerticalAlignment="Center"/>
-            <TextBlock x:Name="WhiteValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+            <TextBlock Text="模糊" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock x:Name="BlurValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </Grid>
-        <input:ArcSlider x:Name="WhiteSlider"
-            Minimum="0" Maximum="255" Value="255"
-            TickFrequency="32" TickPlacement="BottomRight"
+        <input:ArcSlider x:Name="BlurSlider"
+            Minimum="0" Maximum="100" Value="0"
+            TickFrequency="12.5" TickPlacement="BottomRight"
             SmallChange="1" StepFrequency="1"
-            ValueChanged="WhiteSlider_ValueChanged"/>
+            ValueChanged="BlurSlider_ValueChanged"/>
+
+        <!-- 叠加边缘 -->
+        <ToggleSwitch x:Name="OverlayToggle"
+            Header="叠加边缘"
+            IsOn="False"
+            Toggled="OverlayToggle_Toggled"/>
     </StackPanel>
 </local:EffectPanelBase>

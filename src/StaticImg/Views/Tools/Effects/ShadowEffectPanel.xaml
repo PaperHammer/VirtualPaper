@@ -9,69 +9,86 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <StackPanel Spacing="8">
+    <Grid ColumnSpacing="12" RowSpacing="4">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
         <!-- 模糊 -->
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="模糊" FontSize="14" VerticalAlignment="Center"/>
-            <TextBlock x:Name="BlurValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-        </Grid>
-        <input:ArcSlider x:Name="BlurSlider"
-            Minimum="0" Maximum="100" Value="0"
-            TickFrequency="12.5" TickPlacement="BottomRight"
-            SmallChange="1" StepFrequency="1"
-            ValueChanged="BlurSlider_ValueChanged"/>
+        <StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="模糊" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock x:Name="BlurValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </Grid>
+            <input:ArcSlider x:Name="BlurSlider"
+                Minimum="0" Maximum="100" Value="0"
+                TickFrequency="12.5" TickPlacement="BottomRight"
+                SmallChange="1" StepFrequency="1"
+                ValueChanged="BlurSlider_ValueChanged"/>
+        </StackPanel>
 
         <!-- 偏移X -->
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="偏移X" FontSize="14" VerticalAlignment="Center"/>
-            <TextBlock x:Name="OffsetXValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-        </Grid>
-        <input:ArcSlider x:Name="OffsetXSlider"
-            Minimum="-200" Maximum="200" Value="0"
-            TickFrequency="50" TickPlacement="BottomRight"
-            SmallChange="4" StepFrequency="4"
-            ValueChanged="OffsetXSlider_ValueChanged"/>
+        <StackPanel Grid.Row="0" Grid.Column="1" Spacing="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="偏移X" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock x:Name="OffsetXValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </Grid>
+            <input:ArcSlider x:Name="OffsetXSlider"
+                Minimum="-200" Maximum="200" Value="0"
+                TickFrequency="50" TickPlacement="BottomRight"
+                SmallChange="4" StepFrequency="4"
+                ValueChanged="OffsetXSlider_ValueChanged"/>
+        </StackPanel>
 
         <!-- 偏移Y -->
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="偏移Y" FontSize="14" VerticalAlignment="Center"/>
-            <TextBlock x:Name="OffsetYValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-        </Grid>
-        <input:ArcSlider x:Name="OffsetYSlider"
-            Minimum="-200" Maximum="200" Value="0"
-            TickFrequency="50" TickPlacement="BottomRight"
-            SmallChange="4" StepFrequency="4"
-            ValueChanged="OffsetYSlider_ValueChanged"/>
+        <StackPanel Grid.Row="1" Grid.Column="0" Spacing="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="偏移Y" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock x:Name="OffsetYValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </Grid>
+            <input:ArcSlider x:Name="OffsetYSlider"
+                Minimum="-200" Maximum="200" Value="0"
+                TickFrequency="50" TickPlacement="BottomRight"
+                SmallChange="4" StepFrequency="4"
+                ValueChanged="OffsetYSlider_ValueChanged"/>
+        </StackPanel>
 
         <!-- 透明度 -->
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="透明度" FontSize="14" VerticalAlignment="Center"/>
-            <TextBlock x:Name="OpacityValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-        </Grid>
-        <input:ArcSlider x:Name="OpacitySlider"
-            Minimum="0" Maximum="100" Value="0"
-            TickFrequency="12.5" TickPlacement="BottomRight"
-            SmallChange="1" StepFrequency="1"
-            ValueChanged="OpacitySlider_ValueChanged"/>
-    </StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="1" Spacing="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="透明度" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock x:Name="OpacityValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </Grid>
+            <input:ArcSlider x:Name="OpacitySlider"
+                Minimum="0" Maximum="100" Value="0"
+                TickFrequency="12.5" TickPlacement="BottomRight"
+                SmallChange="1" StepFrequency="1"
+                ValueChanged="OpacitySlider_ValueChanged"/>
+        </StackPanel>
+    </Grid>
 </local:EffectPanelBase>

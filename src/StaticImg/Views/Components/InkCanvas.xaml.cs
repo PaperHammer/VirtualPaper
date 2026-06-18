@@ -514,7 +514,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 return;
             }
 
-            et.StartPreview(shaderType);
+            // 先显示面板获取初始参数
+            var panel = GetEffectPanel(shaderType);
+            var initialParams = panel?.Params ?? new EffectParams { Value = 0f, Value2 = 255f, Dpi = 96f };
+            
+            et.StartPreview(shaderType, initialParams);
             ShowEffectPanel(shaderType);
         }
 
@@ -549,6 +553,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             ShaderType.HighlightsAndShadows => HighlightsShadows,
             ShaderType.Grayscale => Empty,
             ShaderType.Invert => Empty,
+            ShaderType.Sepia => Empty,
             ShaderType.GaussianBlur => Blur,
             ShaderType.DirectionalBlur => DirectionalBlur,
             ShaderType.Sharpen => Sharpen,
@@ -559,6 +564,16 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             ShaderType.ThresholdEffect => Threshold,
             ShaderType.RippleEffect => Ripple,
             ShaderType.DisplacementLiquefactionEffect => DisplacementLiquefaction,
+            ShaderType.Straighten => Straighten,
+            ShaderType.Colouring => Colouring,
+            ShaderType.EdgeDetection => EdgeDetection,
+            ShaderType.Morphology => Morphology,
+            ShaderType.LuminanceToAlpha => LuminanceToAlpha,
+            ShaderType.GammaTransfer => GammaTransfer,
+            ShaderType.HSB => HSB,
+            ShaderType.Fog => Fog,
+            ShaderType.Glass => Glass,
+            ShaderType.ChromaKey => ChromaKey,
             _ => null,
         };
 

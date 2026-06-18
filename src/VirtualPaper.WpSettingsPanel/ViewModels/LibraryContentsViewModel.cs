@@ -578,7 +578,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         public void RegisterPanelActions() {
-            // ── Action：入库 ──────────────────────────────────────────────
+            // Action：入库
             PanelMessageCenter.RegisterAction<string, bool>(
                 PanelContracts.WpSettings.Id,
                 PanelContracts.WpSettings.Action_ImportWallpaper,
@@ -602,7 +602,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     }
                 });
 
-            // ── Action：预览（无需入库，直接打开预览窗口）────────────────
+            // Action：预览（无需入库，直接打开预览窗口）
             PanelMessageCenter.RegisterAction<PreviewFileArgs, bool>(
                 PanelContracts.WpSettings.Id,
                 PanelContracts.WpSettings.Action_PreviewFile,

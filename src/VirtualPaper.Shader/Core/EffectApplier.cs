@@ -10,24 +10,24 @@ namespace VirtualPaper.Shader.Core {
     public static class EffectApplier {
         public static ICanvasImage Apply(ShaderType type, EffectParams p, ICanvasImage source) {
             return type switch {
-                // ═══ Adjustment ═══
+                // Adjustment
                 ShaderType.Grayscale => new GrayscaleEffect { Source = source },
                 ShaderType.Invert => new InvertEffect { Source = source },
                 ShaderType.Exposure => new ExposureEffect { Exposure = p.Value / 100f, Source = source },
-                ShaderType.Brightness => new ColorMatrixEffect { ColorMatrix = Matrix5x4Extension.Brightness(p.Value / 100f), Source = source },
+                ShaderType.Brightness => BuildBrightness(p, source),
                 ShaderType.Saturation => new SaturationEffect { Saturation = p.Value / 100f, Source = source },
                 ShaderType.HueRotation => new HueRotationEffect { Angle = p.Value * MathF.PI / 180f, Source = source },
                 ShaderType.Contrast => new ContrastEffect { Contrast = Clamp(p.Value, -1, 1), Source = source },
                 ShaderType.TemperatureAndTint => new TemperatureAndTintEffect { Temperature = Clamp(p.Value, -1, 1), Tint = Clamp(p.Value2, -1, 1), Source = source },
                 ShaderType.HighlightsAndShadows => new HighlightsAndShadowsEffect { Shadows = Clamp(p.Value, -1, 1), Highlights = Clamp(p.Value2, -1, 1), Clarity = Clamp(p.Value3, -1, 1), MaskBlurAmount = Clamp(p.Value4, 0, 10), Source = source },
 
-                // ═══ Adjustment2 ═══
+                // Adjustment2
                 ShaderType.GammaTransfer => BuildGammaTransfer(p, source),
                 ShaderType.Vignette => new VignetteEffect { Amount = Clamp(p.Value, 0, 1), Color = ColorFromVector(p.Color1), Source = source },
                 ShaderType.ColorMatrix => new ColorMatrixEffect { Source = source },
                 ShaderType.ColorMatch => new ColorMatrixEffect { ColorMatrix = ColorMatchMatrix(p.Color1, p.Color2), Source = source },
 
-                // ═══ Effect1 ═══
+                // Effect1
                 ShaderType.GaussianBlur => new GaussianBlurEffect { BlurAmount = p.Value / 10f, Source = source },
                 ShaderType.DirectionalBlur => new DirectionalBlurEffect { BlurAmount = p.Value / 10f, Angle = p.Value2 * MathF.PI / 180f, Source = source },
                 ShaderType.Sharpen => new SharpenEffect { Amount = Clamp(p.Value, 0, 10), Source = source },
@@ -37,7 +37,7 @@ namespace VirtualPaper.Shader.Core {
                 ShaderType.Emboss => new EmbossEffect { Amount = Clamp(p.Value, 0, 10), Angle = p.Value2 * MathF.PI / 180f, Source = source },
                 ShaderType.Straighten => new StraightenEffect { Angle = p.Value * MathF.PI / 180f, MaintainSize = true, Source = source },
 
-                // ═══ Effect2 ═══
+                // Effect2
                 ShaderType.Sepia => new SepiaEffect { Source = source },
                 ShaderType.Posterize => new PosterizeEffect { RedValueCount = (int)p.Value, GreenValueCount = (int)p.Value2, BlueValueCount = (int)p.Value3, Source = source },
                 ShaderType.LuminanceToAlpha => BuildLuminanceToAlpha(p, source),
@@ -47,15 +47,15 @@ namespace VirtualPaper.Shader.Core {
                 ShaderType.Tint => new TintEffect { ColorHdr = p.Color1, Source = source },
                 ShaderType.DiscreteTransfer => BuildDiscreteTransfer(p, source),
 
-                // ═══ Effect3 ═══
+                // Effect3
                 ShaderType.Lighting => BuildLighting(p, source),
                 ShaderType.Fog => BuildFog(p, source),
                 ShaderType.Glass => BuildGlass(p, source),
 
-                // ═══ Other ═══
+                // Other
                 ShaderType.HSB => BuildHSB(p, source),
 
-                // ═══ Custom Shaders ═══
+                // Custom Shaders
                 ShaderType.ThresholdEffect => BuildThresholdShader(p, source),
                 ShaderType.GradientMappingEffect => BuildGradientMappingShader(p, source),
                 ShaderType.RippleEffect => BuildRippleShader(p, source),
@@ -89,6 +89,20 @@ namespace VirtualPaper.Shader.Core {
             gt.BlueAmplitude = p.Value; gt.BlueExponent = p.Value2; gt.BlueOffset = p.Value3;
             gt.AlphaDisable = false;
             return gt;
+        }
+
+        private static ICanvasImage BuildBrightness(EffectParams p, ICanvasImage source) {
+            // 使用 ColorMatrix 实现亮度调整
+            // brightness = (blackPoint + whitePoint - 255) / 255
+            float brightness = (p.Value + p.Value2 - 255f) / 255f;
+            
+            return new ColorMatrixEffect {
+                Source = source,
+                ColorMatrix = new Matrix5x4 {
+                    M11 = 1, M22 = 1, M33 = 1, M44 = 1,
+                    M51 = brightness, M52 = brightness, M53 = brightness, M54 = 0
+                }
+            };
         }
 
         private static ICanvasImage BuildShadow(EffectParams p, ICanvasImage source) {

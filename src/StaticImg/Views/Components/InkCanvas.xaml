@@ -114,6 +114,26 @@
                             Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Brightness}"/>
                         <staticImgToolsEffect:EmptyEffectPanel x:Name="Empty"
                             Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Empty}"/>
+                        <staticImgToolsEffect:StraightenEffectPanel x:Name="Straighten"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Straighten}"/>
+                        <staticImgToolsEffect:ColouringEffectPanel x:Name="Colouring"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Colouring}"/>
+                        <staticImgToolsEffect:EdgeDetectionEffectPanel x:Name="EdgeDetection"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=EdgeDetection}"/>
+                        <staticImgToolsEffect:MorphologyEffectPanel x:Name="Morphology"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Morphology}"/>
+                        <staticImgToolsEffect:LuminanceToAlphaEffectPanel x:Name="LuminanceToAlpha"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=LuminanceToAlpha}"/>
+                        <staticImgToolsEffect:GammaTransferEffectPanel x:Name="GammaTransfer"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=GammaTransfer}"/>
+                        <staticImgToolsEffect:HSBEffectPanel x:Name="HSB"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HSB}"/>
+                        <staticImgToolsEffect:FogEffectPanel x:Name="Fog"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Fog}"/>
+                        <staticImgToolsEffect:GlassEffectPanel x:Name="Glass"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Glass}"/>
+                        <staticImgToolsEffect:ChromaKeyEffectPanel x:Name="ChromaKey"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=ChromaKey}"/>
                     </Grid>
                 </Border>
             </Grid>

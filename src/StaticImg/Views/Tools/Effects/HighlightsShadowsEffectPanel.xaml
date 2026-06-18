@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<local:EffectPanelBase
+    x:Class="Workloads.Creation.StaticImg.Views.Tools.Effects.HighlightsShadowsEffectPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid ColumnSpacing="12" RowSpacing="4">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 阴影 -->
+        <StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="阴影" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock x:Name="ShadowsValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </Grid>
+            <input:ArcSlider x:Name="ShadowsSlider"
+                Minimum="-100" Maximum="100" Value="0"
+                TickFrequency="25" TickPlacement="BottomRight"
+                SmallChange="2" StepFrequency="2"
+                ValueChanged="ShadowsSlider_ValueChanged"/>
+        </StackPanel>
+
+        <!-- 高光 -->
+        <StackPanel Grid.Row="0" Grid.Column="1" Spacing="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="高光" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock x:Name="HighlightsValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </Grid>
+            <input:ArcSlider x:Name="HighlightsSlider"
+                Minimum="-100" Maximum="100" Value="0"
+                TickFrequency="25" TickPlacement="BottomRight"
+                SmallChange="2" StepFrequency="2"
+                ValueChanged="HighlightsSlider_ValueChanged"/>
+        </StackPanel>
+
+        <!-- 清晰度 -->
+        <StackPanel Grid.Row="1" Grid.Column="0" Spacing="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="清晰度" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock x:Name="ClarityValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </Grid>
+            <input:ArcSlider x:Name="ClaritySlider"
+                Minimum="-100" Maximum="100" Value="0"
+                TickFrequency="25" TickPlacement="BottomRight"
+                SmallChange="2" StepFrequency="2"
+                ValueChanged="ClaritySlider_ValueChanged"/>
+        </StackPanel>
+
+        <!-- 蒙版模糊 -->
+        <StackPanel Grid.Row="1" Grid.Column="1" Spacing="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="蒙版模糊" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock x:Name="BlurValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </Grid>
+            <input:ArcSlider x:Name="BlurSlider"
+                Minimum="0" Maximum="100" Value="0"
+                TickFrequency="12.5" TickPlacement="BottomRight"
+                SmallChange="1" StepFrequency="1"
+                ValueChanged="BlurSlider_ValueChanged"/>
+        </StackPanel>
+    </Grid>
+</local:EffectPanelBase>

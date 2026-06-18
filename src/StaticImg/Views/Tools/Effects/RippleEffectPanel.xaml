@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<local:EffectPanelBase
+    x:Class="Workloads.Creation.StaticImg.Views.Tools.Effects.RippleEffectPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="8">
+        <!-- 频率 -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="频率" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock x:Name="FrequencyValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Grid>
+        <input:ArcSlider x:Name="FrequencySlider"
+            Minimum="0" Maximum="200" Value="140"
+            TickFrequency="25" TickPlacement="BottomRight"
+            SmallChange="2" StepFrequency="2"
+            ValueChanged="FrequencySlider_ValueChanged"/>
+
+        <!-- 相位 -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="相位" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock x:Name="PhaseValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Grid>
+        <input:ArcSlider x:Name="PhaseSlider"
+            Minimum="-200" Maximum="200" Value="0"
+            TickFrequency="50" TickPlacement="BottomRight"
+            SmallChange="4" StepFrequency="4"
+            ValueChanged="PhaseSlider_ValueChanged"/>
+
+        <!-- 振幅 -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="振幅" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock x:Name="AmplitudeValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Grid>
+        <input:ArcSlider x:Name="AmplitudeSlider"
+            Minimum="0" Maximum="100" Value="60"
+            TickFrequency="12.5" TickPlacement="BottomRight"
+            SmallChange="1" StepFrequency="1"
+            ValueChanged="AmplitudeSlider_ValueChanged"/>
+
+        <!-- 扩散 -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="扩散" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock x:Name="SpreadValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Grid>
+        <input:ArcSlider x:Name="SpreadSlider"
+            Minimum="1" Maximum="100" Value="1"
+            TickFrequency="12.5" TickPlacement="BottomRight"
+            SmallChange="1" StepFrequency="1"
+            ValueChanged="SpreadSlider_ValueChanged"/>
+    </StackPanel>
+</local:EffectPanelBase>

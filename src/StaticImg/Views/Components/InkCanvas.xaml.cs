@@ -32,6 +32,8 @@ using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.ToolItems;
 using Workloads.Creation.StaticImg.Utils;
 using Workloads.Creation.StaticImg.ViewModels;
+using Workloads.Creation.StaticImg.Views.Tools.Effects;
+using VirtualPaper.Shader.Models;
 using Workloads.Creation.StaticImg.Views.Tools;
 using Workloads.Creation.StaticImg.Views.Tools.Effects;
 using Workloads.Utils.DraftUtils.Models;
@@ -473,10 +475,13 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         #endregion
 
         #region CanvasEffect
+        private EffectPanelBase? _currentEffectPanel;
+
         private void CanvasEffect_Cancel(object sender, RoutedEventArgs e) {
             if (_selectedTool is not EffectTool et) return;
 
             et.Cancel();
+            UnsubscribeCurrentEffectPanel();
             effectPanelHost.Visibility = Visibility.Collapsed;
             CanvasEffect.ClickedEffectId = null;
         }
@@ -485,8 +490,16 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             if (_selectedTool is not EffectTool et) return;
 
             et.Commit();
+            UnsubscribeCurrentEffectPanel();
             effectPanelHost.Visibility = Visibility.Collapsed;
             CanvasEffect.ClickedEffectId = null;
+        }
+
+        private void UnsubscribeCurrentEffectPanel() {
+            if (_currentEffectPanel != null) {
+                _currentEffectPanel.ParamsChanged -= OnEffectPanelParamsChanged;
+                _currentEffectPanel = null;
+            }
         }
 
         private void OnEffectPreviewRequested(object? sender, string effectId) {
@@ -506,22 +519,46 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void ShowEffectPanel(ShaderType shaderType) {
-            effectPanelStack.Children.Clear();
+            UnsubscribeCurrentEffectPanel();
 
-            var panel = EffectPanelFactory.Create(shaderType);
+            var panel = GetEffectPanel(shaderType);
+            if (panel == null) return;
+
+            _currentEffectPanel = panel;
+            panel.ParamsChanged += OnEffectPanelParamsChanged;
 
             // 一次性效果（无参数）：立即应用，面板仍显示预览提示
             if (panel.IsOneShot && _selectedTool is EffectTool etOneShot)
                 etOneShot.UpdateParams(panel.Params);
 
-            panel.ParamsChanged += (_, p) => {
-                if (_selectedTool is EffectTool et && et.IsPreviewing)
-                    et.UpdateParams(p);
-            };
-
-            effectPanelStack.Children.Add(panel);
             effectPanelHost.Visibility = Visibility.Visible;
         }
+
+        private void OnEffectPanelParamsChanged(object? sender, EffectParams p) {
+            if (_selectedTool is EffectTool et && et.IsPreviewing)
+                et.UpdateParams(p);
+        }
+
+        private EffectPanelBase? GetEffectPanel(ShaderType shaderType) => shaderType switch {
+            ShaderType.Exposure => Exposure,
+            ShaderType.Brightness => Brightness,
+            ShaderType.Saturation => Saturation,
+            ShaderType.HueRotation => HueRotation,
+            ShaderType.Contrast => Contrast,
+            ShaderType.TemperatureAndTint => TemperatureTint,
+            ShaderType.HighlightsAndShadows => HighlightsShadows,
+            ShaderType.GaussianBlur => Blur,
+            ShaderType.DirectionalBlur => DirectionalBlur,
+            ShaderType.Sharpen => Sharpen,
+            ShaderType.Vignette => Vignette,
+            ShaderType.Emboss => Emboss,
+            ShaderType.Posterize => Posterize,
+            ShaderType.Shadow => Shadow,
+            ShaderType.ThresholdEffect => Threshold,
+            ShaderType.RippleEffect => Ripple,
+            ShaderType.DisplacementLiquefactionEffect => DisplacementLiquefaction,
+            _ => null,
+        };
 
         #endregion
 

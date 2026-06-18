@@ -6,6 +6,7 @@
     xmlns:staticImg="using:Workloads.Creation.StaticImg"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Components"
     xmlns:staticImgTools="using:Workloads.Creation.StaticImg.Views.Tools"
+    xmlns:staticImgToolsEffect="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -64,7 +65,7 @@
                     </Grid>
                 </ScrollViewer>
 
-                <!-- 效果参数面板占位，具体内容由代码动态填充 -->
+                <!-- 效果参数面板 -->
                 <Border x:Name="effectPanelHost"
                     MinWidth="480"
                     MaxWidth="960"
@@ -75,8 +76,43 @@
                     Opacity="0.8"
                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                     CornerRadius="8"
-                    Visibility="Collapsed">
-                    <StackPanel x:Name="effectPanelStack" Spacing="8"/>
+                    Visibility="{x:Bind _viewModel.Data.EffectPanelVisible, Mode=OneWay}">
+                    <Grid x:Name="EffectPanelGrid">
+                        <staticImgToolsEffect:ExposureEffectPanel x:Name="Exposure"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Exposure}"/>
+                        <staticImgToolsEffect:SaturationEffectPanel x:Name="Saturation"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Saturation}"/>
+                        <staticImgToolsEffect:HueRotationEffectPanel x:Name="HueRotation"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HueRotation}"/>
+                        <staticImgToolsEffect:ContrastEffectPanel x:Name="Contrast"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Contrast}"/>
+                        <staticImgToolsEffect:TemperatureTintEffectPanel x:Name="TemperatureTint"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=TemperatureTint}"/>
+                        <staticImgToolsEffect:HighlightsShadowsEffectPanel x:Name="HighlightsShadows"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HighlightsShadows}"/>
+                        <staticImgToolsEffect:BlurEffectPanel x:Name="Blur"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Blur}"/>
+                        <staticImgToolsEffect:DirectionalBlurEffectPanel x:Name="DirectionalBlur"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=DirectionalBlur}"/>
+                        <staticImgToolsEffect:SharpenEffectPanel x:Name="Sharpen"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Sharpen}"/>
+                        <staticImgToolsEffect:VignetteEffectPanel x:Name="Vignette"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Vignette}"/>
+                        <staticImgToolsEffect:EmbossEffectPanel x:Name="Emboss"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Emboss}"/>
+                        <staticImgToolsEffect:PosterizeEffectPanel x:Name="Posterize"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Posterize}"/>
+                        <staticImgToolsEffect:ShadowEffectPanel x:Name="Shadow"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Shadow}"/>
+                        <staticImgToolsEffect:ThresholdEffectPanel x:Name="Threshold"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Threshold}"/>
+                        <staticImgToolsEffect:RippleEffectPanel x:Name="Ripple"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Ripple}"/>
+                        <staticImgToolsEffect:DisplacementLiquefactionEffectPanel x:Name="DisplacementLiquefaction"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=DisplacementLiquefaction}"/>
+                        <staticImgToolsEffect:BrightnessEffectPanel x:Name="Brightness"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Brightness}"/>
+                    </Grid>
                 </Border>
             </Grid>
 

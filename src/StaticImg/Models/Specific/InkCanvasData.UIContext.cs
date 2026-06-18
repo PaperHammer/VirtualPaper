@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI;
+using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Models.Mvvm;
@@ -168,8 +169,33 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         private string? _clickedEffectId;
         public string? ClickedEffectId {
             get { return _clickedEffectId; }
-            set { if (_clickedEffectId == value) return; _clickedEffectId = value; OnPropertyChanged(); }
+            set {
+                if (_clickedEffectId == value) return;
+                _clickedEffectId = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(SelectedEffectPanelName));
+            }
         }
+
+        public string SelectedEffectPanelName => ClickedEffectId switch {
+            "adjust_exposure" => "Exposure",
+            "adjust_brightness" => "Brightness",
+            "adjust_saturation" => "Saturation",
+            "adjust_hue" => "HueRotation",
+            "adjust_contrast" => "Contrast",
+            "adjust_temperature" => "TemperatureTint",
+            "adjust_highlights" => "HighlightsShadows",
+            "fx_blur" => "Blur",
+            "fx_sharpen" => "Sharpen",
+            "fx_vignette" => "Vignette",
+            "art_emboss" => "Emboss",
+            "art_pixelate" => "Posterize",
+            "fx_glow" => "Shadow",
+            "fx_distort" => "Ripple",
+            _ => "",
+        };
+
+        public Visibility EffectPanelVisible => string.IsNullOrEmpty(ClickedEffectId) ? Visibility.Collapsed : Visibility.Visible;
 
         internal void InitData() {
             UpdateCanvasSizeText();

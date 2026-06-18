@@ -291,7 +291,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         #region Helper Methods
 
         private FrameworkElement CreateInfoPanel(Brush valueTextBrush) {
-            // 【修改 2】调整面板布局，使其更宽敞
+            // 调整面板布局，使其更宽敞
             var panel = new StackPanel {
                 Orientation = Orientation.Vertical,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -307,20 +307,20 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
                 secondaryTextBrush = new SolidColorBrush(Colors.Gray);
             }
 
-            // 1. 全局深色最低度 (黑点)
+            // 全局深色最低度 (黑点)
             var blackInfo = new StackPanel { Orientation = Orientation.Vertical, Spacing = 2 };
             var blackHeader = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
             blackHeader.Children.Add(new Ellipse { Width = 6, Height = 6, Fill = new SolidColorBrush(Colors.Black), Stroke = new SolidColorBrush(Colors.Gray), StrokeThickness = 1 });
             blackHeader.Children.Add(new TextBlock {
                 Text = "全局深色最低度",
-                FontSize = 11, // 【修改】减小标题文本大小
+                FontSize = 11, // 减小标题文本大小
                 Foreground = secondaryTextBrush,
                 VerticalAlignment = VerticalAlignment.Center
             });
 
             _blackValueText = new TextBlock {
                 Text = "0",
-                FontSize = 16, // 【修改】减小数值文本大小
+                FontSize = 16, // 减小数值文本大小
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Margin = new Thickness(10, 0, 0, 0) // 与标题左侧对齐
             };
@@ -329,20 +329,20 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             blackInfo.Children.Add(_blackValueText);
             panel.Children.Add(blackInfo);
 
-            // 2. 全局浅色最高度 (白点) 
+            // 全局浅色最高度 (白点) 
             var whiteInfo = new StackPanel { Orientation = Orientation.Vertical, Spacing = 2 };
             var whiteHeader = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
             whiteHeader.Children.Add(new Ellipse { Width = 6, Height = 6, Fill = new SolidColorBrush(Colors.White), Stroke = new SolidColorBrush(Colors.Gray), StrokeThickness = 1 });
             whiteHeader.Children.Add(new TextBlock {
                 Text = "全局浅色最高度",
-                FontSize = 11, // 【修改】减小标题文本大小
+                FontSize = 11, // 减小标题文本大小
                 Foreground = secondaryTextBrush,
                 VerticalAlignment = VerticalAlignment.Center
             });
 
             _whiteValueText = new TextBlock {
                 Text = "255",
-                FontSize = 16, // 【修改】减小数值文本大小
+                FontSize = 16, // 减小数值文本大小
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Margin = new Thickness(10, 0, 0, 0) // 与标题左侧对齐
             };
@@ -399,8 +399,8 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         private readonly Line _blackHorizontalLine;
         private readonly Line _whiteVerticalLine;
 
-        private TextBlock _blackValueText;
-        private TextBlock _whiteValueText;
+        private TextBlock _blackValueText = null!;
+        private TextBlock _whiteValueText = null!;
 
         private const double ThumbRadius = 7;
         private const double CurveThickness = 2.0;

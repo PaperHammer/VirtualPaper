@@ -5,10 +5,9 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-using Microsoft.UI.Xaml.Input;
+using VirtualPaper.Shader.Models;
 using VirtualPaper.UIComponent.Input;
 using Workloads.Creation.StaticImg.Utils;
-using VirtualPaper.Shader.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     /// <summary>效果参数面板基类</summary>
@@ -179,12 +178,13 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
         private readonly float[] _bTable = new float[256];
 
         public BrightnessEffectPanel() {
-            var root = new StackPanel { Spacing = 8 };
+            var root = new StackPanel { Spacing = 8, HorizontalAlignment = HorizontalAlignment.Stretch, };
 
             _curve = new BrightnessCurvePanel {
-                Width = 256,
+                Width = 340,
                 Height = 200,
-                Margin = new Thickness(0, 4, 0, 4)
+                Margin = new Thickness(0, 4, 0, 4),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
             };
             _curve.CurveChanged += (_, lut) => {
                 for (int i = 0; i < 256; i++) {

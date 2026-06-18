@@ -20,47 +20,48 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
 
             var grayBorderBrush = (SolidColorBrush)this.Resources["ThumbGrayBorderBrush"];
             var tangentLineBrush = (SolidColorBrush)this.Resources["TangentLineBrush"];
-            
+            var auxiliaryLineBrush = (SolidColorBrush)this.Resources["AuxiliaryLineBrush"];
+
+            var indicatorFg = (SolidColorBrush)this.Resources["IndicatorForegroundBrush"];
+
             var blackFill = new SolidColorBrush(Colors.Black);
             var whiteFill = new SolidColorBrush(Colors.White);
 
-            // 设置控件尺寸
-            this.Width = 300;
-            this.Height = 260;
-            this.HorizontalAlignment = HorizontalAlignment.Center;
-            this.VerticalAlignment = VerticalAlignment.Center;
-
             var rootGrid = new Grid();
-
-            // 定义 2x2 网格
-            rootGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            rootGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rootGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             rootGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             rootGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            // 创建左侧垂直标尺
+            rootGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            rootGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var infoPanel = CreateInfoPanel(indicatorFg);
+            Grid.SetRow(infoPanel, 0);
+            Grid.SetColumn(infoPanel, 0);
+            Grid.SetRowSpan(infoPanel, 2);
+            rootGrid.Children.Add(infoPanel);
+
             var leftRuler = CreateGradientRuler(Orientation.Vertical, borderBrush);
             Grid.SetRow(leftRuler, 0);
-            Grid.SetColumn(leftRuler, 0);
+            Grid.SetColumn(leftRuler, 1);
             rootGrid.Children.Add(leftRuler);
 
-            // 创建下方水平标尺
             var bottomRuler = CreateGradientRuler(Orientation.Horizontal, borderBrush);
             Grid.SetRow(bottomRuler, 1);
-            Grid.SetColumn(bottomRuler, 1);
+            Grid.SetColumn(bottomRuler, 2);
             rootGrid.Children.Add(bottomRuler);
 
-            // 创建曲线容器
             var curveContainer = new Border {
                 BorderBrush = borderBrush,
                 BorderThickness = new Thickness(1),
             };
 
             _curveCanvas = new Canvas {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
                 Background = new SolidColorBrush(Colors.Transparent)
             };
 
-            // 重新添加网格线逻辑
             for (int i = 1; i < 4; i++) {
                 _curveCanvas.Children.Add(new Line {
                     Stroke = gridLineBrush,
@@ -79,6 +80,11 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             _curveCanvas.Children.Add(_blackTangentLine);
             _curveCanvas.Children.Add(_whiteTangentLine);
 
+            _blackHorizontalLine = CreateAuxiliaryLine(auxiliaryLineBrush);
+            _whiteVerticalLine = CreateAuxiliaryLine(auxiliaryLineBrush);
+            _curveCanvas.Children.Add(_blackHorizontalLine);
+            _curveCanvas.Children.Add(_whiteVerticalLine);
+
             _curvePath = new Path {
                 Stroke = curveStroke,
                 StrokeThickness = CurveThickness,
@@ -94,7 +100,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             curveContainer.Child = _curveCanvas;
 
             Grid.SetRow(curveContainer, 0);
-            Grid.SetColumn(curveContainer, 1);
+            Grid.SetColumn(curveContainer, 2);
             rootGrid.Children.Add(curveContainer);
 
             this.Content = rootGrid;
@@ -179,6 +185,19 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             SetLine(_blackTangentLine, uiP0, uiCP1);
             SetLine(_whiteTangentLine, uiP3, uiCP2);
 
+            _blackHorizontalLine.X1 = 0;
+            _blackHorizontalLine.X2 = w;
+            _blackHorizontalLine.Y1 = uiCP1.Y;
+            _blackHorizontalLine.Y2 = uiCP1.Y;
+
+            _whiteVerticalLine.X1 = uiCP2.X;
+            _whiteVerticalLine.X2 = uiCP2.X;
+            _whiteVerticalLine.Y1 = 0;
+            _whiteVerticalLine.Y2 = h;
+
+            _blackValueText.Text = ((int)Math.Round(_blackPoint.X * 255)).ToString();
+            _whiteValueText.Text = ((int)Math.Round(_whitePoint.X * 255)).ToString();
+
             CurveChanged?.Invoke(this, GenerateLUT());
         }
 
@@ -202,8 +221,14 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
 
         private static Line CreateTangentLine(Brush stroke) => new() {
             Stroke = stroke,
-            StrokeThickness = TangentThickness,
-            StrokeDashArray = [3, 3]
+            StrokeThickness = 1.5,
+            StrokeDashArray = [4, 2]
+        };
+
+        private static Line CreateAuxiliaryLine(Brush stroke) => new() {
+            Stroke = stroke,
+            StrokeThickness = 1.2,
+            StrokeDashArray = [2, 4],
         };
 
         #endregion
@@ -221,8 +246,14 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             double dW = Distance(tone, _whitePoint);
             double threshold = 20.0 / Math.Min(w, h);
 
-            if (dB < threshold && dB <= dW) { _isDraggingBlack = true; _curveCanvas.CapturePointer(e.Pointer); }
-            else if (dW < threshold) { _isDraggingWhite = true; _curveCanvas.CapturePointer(e.Pointer); }
+            if (dB < threshold && dB <= dW) {
+                _isDraggingBlack = true;
+                _curveCanvas.CapturePointer(e.Pointer);
+            }
+            else if (dW < threshold) {
+                _isDraggingWhite = true;
+                _curveCanvas.CapturePointer(e.Pointer);
+            }
         }
 
         private void OnPointerMoved(object sender, PointerRoutedEventArgs e) {
@@ -232,8 +263,19 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             if (w <= 0 || h <= 0) return;
 
             var tone = new Point(Math.Clamp(pos.X / w, 0, 1), Math.Clamp(1.0 - pos.Y / h, 0, 1));
-            if (_isDraggingBlack) _blackPoint = tone;
-            if (_isDraggingWhite) _whitePoint = tone;
+
+            if (_isDraggingBlack) {
+                tone.X = Math.Min(tone.X, _whitePoint.X);
+                tone.Y = Math.Min(tone.Y, _whitePoint.Y);
+                _blackPoint = tone;
+            }
+
+            if (_isDraggingWhite) {
+                tone.X = Math.Max(tone.X, _blackPoint.X);
+                tone.Y = Math.Max(tone.Y, _blackPoint.Y);
+                _whitePoint = tone;
+            }
+
             UpdateVisuals();
         }
 
@@ -248,13 +290,77 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
 
         #region Helper Methods
 
+        private FrameworkElement CreateInfoPanel(Brush valueTextBrush) {
+            // 【修改 2】调整面板布局，使其更宽敞
+            var panel = new StackPanel {
+                Orientation = Orientation.Vertical,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(10, 0, 12, 0), // 减小左右边距，让出空间
+                Spacing = 20 // 调整黑白点之间的间距，视觉更匀称
+            };
+
+            Brush secondaryTextBrush;
+            if (this.Resources.TryGetValue("SystemBaseMediumColor", out var res)) {
+                secondaryTextBrush = res is Brush b ? b : new SolidColorBrush((Windows.UI.Color)res);
+            }
+            else {
+                secondaryTextBrush = new SolidColorBrush(Colors.Gray);
+            }
+
+            // 1. 全局深色最低度 (黑点)
+            var blackInfo = new StackPanel { Orientation = Orientation.Vertical, Spacing = 2 };
+            var blackHeader = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
+            blackHeader.Children.Add(new Ellipse { Width = 6, Height = 6, Fill = new SolidColorBrush(Colors.Black), Stroke = new SolidColorBrush(Colors.Gray), StrokeThickness = 1 });
+            blackHeader.Children.Add(new TextBlock {
+                Text = "全局深色最低度",
+                FontSize = 11, // 【修改】减小标题文本大小
+                Foreground = secondaryTextBrush,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+
+            _blackValueText = new TextBlock {
+                Text = "0",
+                FontSize = 16, // 【修改】减小数值文本大小
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                Margin = new Thickness(10, 0, 0, 0) // 与标题左侧对齐
+            };
+
+            blackInfo.Children.Add(blackHeader);
+            blackInfo.Children.Add(_blackValueText);
+            panel.Children.Add(blackInfo);
+
+            // 2. 全局浅色最高度 (白点) 
+            var whiteInfo = new StackPanel { Orientation = Orientation.Vertical, Spacing = 2 };
+            var whiteHeader = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
+            whiteHeader.Children.Add(new Ellipse { Width = 6, Height = 6, Fill = new SolidColorBrush(Colors.White), Stroke = new SolidColorBrush(Colors.Gray), StrokeThickness = 1 });
+            whiteHeader.Children.Add(new TextBlock {
+                Text = "全局浅色最高度",
+                FontSize = 11, // 【修改】减小标题文本大小
+                Foreground = secondaryTextBrush,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+
+            _whiteValueText = new TextBlock {
+                Text = "255",
+                FontSize = 16, // 【修改】减小数值文本大小
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                Margin = new Thickness(10, 0, 0, 0) // 与标题左侧对齐
+            };
+
+            whiteInfo.Children.Add(whiteHeader);
+            whiteInfo.Children.Add(_whiteValueText);
+            panel.Children.Add(whiteInfo);
+
+            return panel;
+        }
+
         private FrameworkElement CreateGradientRuler(Orientation orientation, Brush borderBrush) {
             var container = new Border {
                 Background = new LinearGradientBrush {
                     StartPoint = orientation == Orientation.Horizontal ? new Point(0, 0) : new Point(0, 1),
                     EndPoint = orientation == Orientation.Horizontal ? new Point(1, 0) : new Point(0, 0)
                 },
-                BorderBrush = borderBrush, // 使用传入的主题画刷
+                BorderBrush = borderBrush,
                 BorderThickness = new Thickness(1),
             };
 
@@ -275,7 +381,6 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         }
         #endregion
 
-        // 控制点初始位置与固定端点重合 → 默认直线（线性）
         private Point _blackPoint = new(0, 0);
         private Point _whitePoint = new(1, 1);
         private bool _isDraggingBlack;
@@ -291,8 +396,13 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         private readonly Ellipse _blackThumb;
         private readonly Ellipse _whiteThumb;
 
+        private readonly Line _blackHorizontalLine;
+        private readonly Line _whiteVerticalLine;
+
+        private TextBlock _blackValueText;
+        private TextBlock _whiteValueText;
+
         private const double ThumbRadius = 7;
         private const double CurveThickness = 2.0;
-        private const double TangentThickness = 1.0;
     }
 }

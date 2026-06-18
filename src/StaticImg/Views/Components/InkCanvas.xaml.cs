@@ -17,6 +17,7 @@ using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Shader;
+using VirtualPaper.Shader.Models;
 using VirtualPaper.UIComponent.Collection;
 using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Input;
@@ -32,8 +33,6 @@ using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.ToolItems;
 using Workloads.Creation.StaticImg.Utils;
 using Workloads.Creation.StaticImg.ViewModels;
-using Workloads.Creation.StaticImg.Views.Tools.Effects;
-using VirtualPaper.Shader.Models;
 using Workloads.Creation.StaticImg.Views.Tools;
 using Workloads.Creation.StaticImg.Views.Tools.Effects;
 using Workloads.Utils.DraftUtils.Models;
@@ -162,7 +161,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             else if (_selectedTool is CropTool ct) {
                 var op = ct.RestoreOriginalContent();
                 if (op) RenderToCompositeTarget(RenderMode.FullRegion);
-            } else if (_selectedTool is EffectTool et) {
+            }
+            else if (_selectedTool is EffectTool et) {
                 et.Cancel();
                 CanvasEffect.ClickedEffectId = null;
                 effectPanelHost.Visibility = Visibility.Collapsed;
@@ -244,9 +244,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                         PartialRender(layers, ds, region);
                     }
                 }
-             
+
                 renderCanvas.Invalidate();
-            }           
+            }
         }
 
         private void FullRender(IEnumerable<LayerInfo> layers, CanvasDrawingSession ds) {
@@ -517,7 +517,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             // 先显示面板获取初始参数
             var panel = GetEffectPanel(shaderType);
             var initialParams = panel?.Params ?? new EffectParams { Value = 0f, Value2 = 255f, Dpi = 96f };
-            
+
             et.StartPreview(shaderType, initialParams);
             ShowEffectPanel(shaderType);
         }

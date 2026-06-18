@@ -46,11 +46,26 @@ namespace VirtualPaper.Shader.Core {
                 ShaderType.Colouring => new HueRotationEffect { Angle = p.Value * MathF.PI / 180f, Source = new SepiaEffect { Source = source } },
                 ShaderType.Tint => new TintEffect { ColorHdr = p.Color1, Source = source },
                 ShaderType.DiscreteTransfer => BuildDiscreteTransfer(p, source),
+                ShaderType.OilPaint => new SharpenEffect { Amount = p.Value / 10f, Source = new GaussianBlurEffect { BlurAmount = p.Value / 20f, Source = source } },
+                ShaderType.Sketch => new EdgeDetectionEffect { Amount = Clamp(p.Value, 0, 1), BlurAmount = 0, OverlayEdges = false, Source = new GrayscaleEffect { Source = source } },
+                ShaderType.WaterColor => new GaussianBlurEffect { BlurAmount = p.Value / 20f, Source = new SaturationEffect { Saturation = 1.5f, Source = source } },
+                ShaderType.Pointillism => new PosterizeEffect { RedValueCount = (int)p.Value, GreenValueCount = (int)p.Value, BlueValueCount = (int)p.Value, Source = source },
+                ShaderType.Crosshatch => new PosterizeEffect { RedValueCount = 4, GreenValueCount = 4, BlueValueCount = 4, Source = new GrayscaleEffect { Source = source } },
+                ShaderType.Cartoon => new PosterizeEffect { RedValueCount = 8, GreenValueCount = 8, BlueValueCount = 8, Source = new EdgeDetectionEffect { Amount = 0.5f, BlurAmount = 0, OverlayEdges = true, Source = source } },
 
                 // Effect3
                 ShaderType.Lighting => BuildLighting(p, source),
                 ShaderType.Fog => BuildFog(p, source),
                 ShaderType.Glass => BuildGlass(p, source),
+                ShaderType.Noise => new ArithmeticCompositeEffect { Source1 = source, Source2 = new TurbulenceEffect { Frequency = new Vector2(0.1f), Octaves = 4 }, MultiplyAmount = 0, Source1Amount = 1, Source2Amount = p.Value / 100f },
+                ShaderType.Bloom => new ArithmeticCompositeEffect { Source1 = source, Source2 = new GaussianBlurEffect { BlurAmount = p.Value / 5f, Source = new ExposureEffect { Exposure = 0.5f, Source = source } }, MultiplyAmount = 0, Source1Amount = 1, Source2Amount = p.Value / 100f },
+                ShaderType.Chromatic => BuildChromatic(p, source),
+
+                // Blend modes
+                ShaderType.BlendMultiply => new BlendEffect { Foreground = source, Background = source, Mode = BlendEffectMode.Multiply },
+                ShaderType.BlendScreen => new BlendEffect { Foreground = source, Background = source, Mode = BlendEffectMode.Screen },
+                ShaderType.BlendOverlay => new BlendEffect { Foreground = source, Background = source, Mode = BlendEffectMode.Overlay },
+                ShaderType.BlendSoftLight => new BlendEffect { Foreground = source, Background = source, Mode = BlendEffectMode.SoftLight },
 
                 // Other
                 ShaderType.HSB => BuildHSB(p, source),
@@ -208,6 +223,19 @@ namespace VirtualPaper.Shader.Core {
 
         private static ICanvasImage BuildHSB(EffectParams p, ICanvasImage source) {
             return new ColorMatrixEffect { Source = source, ColorMatrix = Matrix5x4Extension.HSB(p.Value, p.Value2, p.Value3) };
+        }
+
+        private static ICanvasImage BuildChromatic(EffectParams p, ICanvasImage source) {
+            float offset = p.Value / 100f;
+            var redShift = new Transform2DEffect { Source = source, TransformMatrix = Matrix3x2.CreateTranslation(offset, 0) };
+            var blueShift = new Transform2DEffect { Source = source, TransformMatrix = Matrix3x2.CreateTranslation(-offset, 0) };
+            return new ArithmeticCompositeEffect {
+                Source1 = new ColorMatrixEffect { Source = redShift, ColorMatrix = new Matrix5x4 { M11 = 1, M22 = 0, M33 = 0, M44 = 1 } },
+                Source2 = new ColorMatrixEffect { Source = blueShift, ColorMatrix = new Matrix5x4 { M11 = 0, M22 = 1, M33 = 1, M44 = 1 } },
+                MultiplyAmount = 0,
+                Source1Amount = 1,
+                Source2Amount = 1,
+            };
         }
 
         // Custom Pixel Shader builders

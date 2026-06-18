@@ -21,6 +21,12 @@ namespace Workloads.Creation.StaticImg.Utils {
             "art_emboss" => ShaderType.Emboss,
             "art_pixelate" => ShaderType.Posterize,
             "art_sepia" => ShaderType.Sepia,
+            "art_oilpaint" => ShaderType.OilPaint,
+            "art_sketch" => ShaderType.Sketch,
+            "art_watercolor" => ShaderType.WaterColor,
+            "art_pointillism" => ShaderType.Pointillism,
+            "art_crosshatch" => ShaderType.Crosshatch,
+            "art_cartoon" => ShaderType.Cartoon,
 
             "fx_blur"      => ShaderType.GaussianBlur,
             "fx_sharpen"   => ShaderType.Sharpen,
@@ -30,6 +36,9 @@ namespace Workloads.Creation.StaticImg.Utils {
             "fx_straighten" => ShaderType.Straighten,
             "fx_edge"      => ShaderType.EdgeDetection,
             "fx_morphology" => ShaderType.Morphology,
+            "fx_noise"     => ShaderType.Noise,
+            "fx_bloom"     => ShaderType.Bloom,
+            "fx_chromatic" => ShaderType.Chromatic,
 
             "adv_gamma"    => ShaderType.GammaTransfer,
             "adv_hsb"      => ShaderType.HSB,
@@ -38,6 +47,11 @@ namespace Workloads.Creation.StaticImg.Utils {
             "adv_fog"      => ShaderType.Fog,
             "adv_glass"    => ShaderType.Glass,
             "adv_colouring" => ShaderType.Colouring,
+
+            "blend_multiply"  => ShaderType.BlendMultiply,
+            "blend_screen"    => ShaderType.BlendScreen,
+            "blend_overlay"   => ShaderType.BlendOverlay,
+            "blend_softlight" => ShaderType.BlendSoftLight,
 
             _ => ShaderType.None,
         };
@@ -121,6 +135,26 @@ namespace Workloads.Creation.StaticImg.Utils {
                 => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
             ShaderType.ChromaKey
                 => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "容差" },
+            ShaderType.OilPaint
+                => new EffectSliderConfig { Min = 1, Max = 50, Default = 10, Label = "笔触宽度" },
+            ShaderType.Sketch
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
+            ShaderType.WaterColor
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 30, Label = "模糊" },
+            ShaderType.Pointillism
+                => new EffectSliderConfig { Min = 2, Max = 32, Default = 8, Label = "色阶" },
+            ShaderType.Crosshatch
+                => new EffectSliderConfig { Min = 2, Max = 16, Default = 4, Label = "密度" },
+            ShaderType.Cartoon
+                => new EffectSliderConfig { Min = 2, Max = 32, Default = 8, Label = "色阶" },
+            ShaderType.Noise
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 30, Label = "强度" },
+            ShaderType.Bloom
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
+            ShaderType.Chromatic
+                => new EffectSliderConfig { Min = 0, Max = 50, Default = 10, Label = "偏移" },
+            ShaderType.BlendMultiply or ShaderType.BlendScreen or ShaderType.BlendOverlay or ShaderType.BlendSoftLight
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 100, Label = "不透明度" },
 
             _ => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
         };

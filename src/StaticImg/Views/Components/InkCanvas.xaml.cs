@@ -547,6 +547,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             ShaderType.Contrast => Contrast,
             ShaderType.TemperatureAndTint => TemperatureTint,
             ShaderType.HighlightsAndShadows => HighlightsShadows,
+            ShaderType.Grayscale => Empty,
+            ShaderType.Invert => Empty,
             ShaderType.GaussianBlur => Blur,
             ShaderType.DirectionalBlur => DirectionalBlur,
             ShaderType.Sharpen => Sharpen,

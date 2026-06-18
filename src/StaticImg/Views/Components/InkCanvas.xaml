@@ -112,6 +112,8 @@
                             Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=DisplacementLiquefaction}"/>
                         <staticImgToolsEffect:BrightnessEffectPanel x:Name="Brightness"
                             Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Brightness}"/>
+                        <staticImgToolsEffect:EmptyEffectPanel x:Name="Empty"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Empty}"/>
                     </Grid>
                 </Border>
             </Grid>

@@ -4,15 +4,126 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
-    xmlns:tools="using:Workloads.Creation.StaticImg.Views.Tools"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <StackPanel x:Name="Root" Spacing="8" HorizontalAlignment="Stretch">
-        <tools:BrightnessCurvePanel x:Name="Curve"
-            Width="340" Height="200"
-            Margin="0,4,0,4"
-            HorizontalAlignment="Stretch"/>
+    <local:EffectPanelBase.Resources>
+        <SolidColorBrush x:Key="BorderBrush" Color="{ThemeResource SystemBaseMediumColor}" />
+        <SolidColorBrush x:Key="GridLineBrush" Color="{ThemeResource SystemBaseLowColor}" Opacity="0.4" />
+        <SolidColorBrush x:Key="CurveStrokeBrush" Color="{ThemeResource SystemBaseHighColor}" />
+        <SolidColorBrush x:Key="ThumbGrayBorderBrush" Color="{ThemeResource SystemBaseMediumColor}" />
+        <SolidColorBrush x:Key="AuxiliaryLineBrush" Color="{ThemeResource SystemBaseHighColor}" Opacity="0.5" />
+        <SolidColorBrush x:Key="TangentLineBrush" Color="{ThemeResource SystemAccentColorLight2}" />
+        <SolidColorBrush x:Key="SecondaryTextBrush" Color="{ThemeResource SystemBaseMediumColor}" />
+
+        <LinearGradientBrush x:Key="HorizontalGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="Black" Offset="0.0" />
+            <GradientStop Color="White" Offset="1.0" />
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="VerticalGradient" StartPoint="0,1" EndPoint="0,0">
+            <GradientStop Color="Black" Offset="0.0" />
+            <GradientStop Color="White" Offset="1.0" />
+        </LinearGradientBrush>
+    </local:EffectPanelBase.Resources>
+
+    <StackPanel Spacing="8" HorizontalAlignment="Stretch">
+        <Grid x:Name="RootGrid" Width="360" Height="200" Margin="0,4,0,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Info Panel -->
+            <StackPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
+                Orientation="Vertical" VerticalAlignment="Center"
+                Margin="10,0,12,0" Spacing="20">
+
+                <!-- Black Point Info -->
+                <StackPanel Orientation="Vertical" Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                        <Ellipse Width="6" Height="6" Fill="Black" Stroke="Gray" StrokeThickness="1"/>
+                        <TextBlock Text="全局深色最低度" FontSize="12"
+                            Foreground="{StaticResource SecondaryTextBrush}"
+                            VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock x:Name="BlackValueText" Text="0" FontSize="16"
+                        FontWeight="SemiBold" Margin="10,0,0,0"/>
+                </StackPanel>
+
+                <!-- White Point Info -->
+                <StackPanel Orientation="Vertical" Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                        <Ellipse Width="6" Height="6" Fill="White" Stroke="Gray" StrokeThickness="1"/>
+                        <TextBlock Text="全局浅色最高度" FontSize="12"
+                            Foreground="{StaticResource SecondaryTextBrush}"
+                            VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock x:Name="WhiteValueText" Text="255" FontSize="16"
+                        FontWeight="SemiBold" Margin="10,0,0,0"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Left Ruler (Vertical) -->
+            <Border Grid.Row="0" Grid.Column="1"
+                Width="8" Margin="0,0,8,0"
+                Background="{StaticResource VerticalGradient}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"/>
+
+            <!-- Bottom Ruler (Horizontal) -->
+            <Border Grid.Row="1" Grid.Column="2"
+                Height="8" Margin="0,8,0,0"
+                Background="{StaticResource HorizontalGradient}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"/>
+
+            <!-- Curve Container -->
+            <Border Grid.Row="0" Grid.Column="2"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1">
+                <Canvas x:Name="CurveCanvas"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Background="Transparent"
+                    PointerPressed="OnPointerPressed"
+                    PointerMoved="OnPointerMoved"
+                    PointerReleased="OnPointerReleased"
+                    SizeChanged="OnCanvasSizeChanged">
+
+                    <!-- Grid Lines (will be positioned in code) -->
+                    <Line x:Name="VLine1" Stroke="{StaticResource GridLineBrush}" StrokeThickness="0.5"/>
+                    <Line x:Name="HLine1" Stroke="{StaticResource GridLineBrush}" StrokeThickness="0.5"/>
+                    <Line x:Name="VLine2" Stroke="{StaticResource GridLineBrush}" StrokeThickness="0.5"/>
+                    <Line x:Name="HLine2" Stroke="{StaticResource GridLineBrush}" StrokeThickness="0.5"/>
+                    <Line x:Name="VLine3" Stroke="{StaticResource GridLineBrush}" StrokeThickness="0.5"/>
+                    <Line x:Name="HLine3" Stroke="{StaticResource GridLineBrush}" StrokeThickness="0.5"/>
+
+                    <!-- Tangent Lines -->
+                    <Line x:Name="BlackTangentLine" Stroke="{StaticResource TangentLineBrush}" StrokeThickness="1.5" StrokeDashArray="4,2"/>
+                    <Line x:Name="WhiteTangentLine" Stroke="{StaticResource TangentLineBrush}" StrokeThickness="1.5" StrokeDashArray="4,2"/>
+
+                    <!-- Auxiliary Lines -->
+                    <Line x:Name="BlackHorizontalLine" Stroke="{StaticResource AuxiliaryLineBrush}" StrokeThickness="1.2" StrokeDashArray="2,4"/>
+                    <Line x:Name="WhiteVerticalLine" Stroke="{StaticResource AuxiliaryLineBrush}" StrokeThickness="1.2" StrokeDashArray="2,4"/>
+
+                    <!-- Curve Path -->
+                    <Path x:Name="CurvePath" Stroke="{StaticResource CurveStrokeBrush}" StrokeThickness="2">
+                        <Path.Data>
+                            <PathGeometry/>
+                        </Path.Data>
+                    </Path>
+
+                    <!-- Thumbs -->
+                    <Ellipse x:Name="BlackThumb" Width="14" Height="14" Fill="Black" Stroke="{StaticResource ThumbGrayBorderBrush}" StrokeThickness="2"/>
+                    <Ellipse x:Name="WhiteThumb" Width="14" Height="14" Fill="White" Stroke="{StaticResource ThumbGrayBorderBrush}" StrokeThickness="2"/>
+                </Canvas>
+            </Border>
+        </Grid>
     </StackPanel>
 </local:EffectPanelBase>

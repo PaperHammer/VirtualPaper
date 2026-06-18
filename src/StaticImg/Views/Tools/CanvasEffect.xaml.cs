@@ -13,8 +13,6 @@ using Workloads.Creation.StaticImg.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Tools {
     public sealed partial class CanvasEffect : UserControl {
-
-        // ── 公开事件 ─────────────────────────────────────────────────
         public event EventHandler<RoutedEventArgs>? CanvasEffectCancel;
         public event EventHandler<RoutedEventArgs>? CanvasEffectCommit;
         public event EventHandler<string>? EffectPreviewRequested;
@@ -22,7 +20,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         /// <summary>是否应用到全部图层</summary>
         public bool ApplyAllLayers => ApplyAllLayersToggle.IsOn;
 
-        // ── 当前选中的效果 ID ────────────────────────────────────────
+        // 当前选中的效果 ID
         public string? ClickedEffectId {
             get => (string?)GetValue(ClickedEffectIdProperty);
             set => SetValue(ClickedEffectIdProperty, value);
@@ -38,13 +36,12 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         private const double ExpandedMaxHeight = 290.0;
         private static readonly Duration AnimDuration = new(TimeSpan.FromMilliseconds(180));
 
-        // ── 构造 ─────────────────────────────────────────────────────
         public CanvasEffect() {
             InitializeComponent();
             InitEffectGroups();
         }
 
-        // ── 初始化各分组数据 ─────────────────────────────────────────
+        // 初始化各分组数据
         private void InitEffectGroups() {
             // 调整 (9)
             EffectGrid_Adjust.ItemsSource = new List<CanvasEffectItem> {

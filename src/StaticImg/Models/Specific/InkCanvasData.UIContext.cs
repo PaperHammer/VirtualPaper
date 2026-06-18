@@ -185,6 +185,8 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             "adjust_contrast" => "Contrast",
             "adjust_temperature" => "TemperatureTint",
             "adjust_highlights" => "HighlightsShadows",
+            "adjust_grayscale" => "Empty",
+            "adjust_invert" => "Empty",
             "fx_blur" => "Blur",
             "fx_sharpen" => "Sharpen",
             "fx_vignette" => "Vignette",

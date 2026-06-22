@@ -2,8 +2,13 @@ using VirtualPaper.Shader.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     public sealed partial class HSBEffectPanel : EffectPanelBase {
+        private double _defaultHue, _defaultSaturation, _defaultBrightness;
+
         public HSBEffectPanel() {
             this.InitializeComponent();
+            _defaultHue = HueSlider.Value;
+            _defaultSaturation = SaturationSlider.Value;
+            _defaultBrightness = BrightnessSlider.Value;
             UpdateHueText();
             UpdateSaturationText();
             UpdateBrightnessText();
@@ -15,6 +20,15 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             Value3 = (float)BrightnessSlider.Value,
             Dpi = 96f,
         };
+
+        public override void Reset() {
+            HueSlider.Value = _defaultHue;
+            SaturationSlider.Value = _defaultSaturation;
+            BrightnessSlider.Value = _defaultBrightness;
+            UpdateHueText();
+            UpdateSaturationText();
+            UpdateBrightnessText();
+        }
 
         private void HueSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e) {
             UpdateHueText();

@@ -2,8 +2,12 @@ using VirtualPaper.Shader.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     public sealed partial class BrightnessEffectPanel : EffectPanelBase {
+        private double _defaultBlack, _defaultWhite;
+
         public BrightnessEffectPanel() {
             this.InitializeComponent();
+            _defaultBlack = BlackSlider.Value;
+            _defaultWhite = WhiteSlider.Value;
             UpdateBlackText();
             UpdateWhiteText();
         }
@@ -13,6 +17,13 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             Value2 = (float)WhiteSlider.Value,
             Dpi = 96f,
         };
+
+        public override void Reset() {
+            BlackSlider.Value = _defaultBlack;
+            WhiteSlider.Value = _defaultWhite;
+            UpdateBlackText();
+            UpdateWhiteText();
+        }
 
         private void BlackSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e) {
             UpdateBlackText();

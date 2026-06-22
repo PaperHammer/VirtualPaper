@@ -2,8 +2,13 @@ using VirtualPaper.Shader.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     public sealed partial class GlassEffectPanel : EffectPanelBase {
+        private double _defaultAmount;
+        private int _defaultScale;
+
         public GlassEffectPanel() {
             this.InitializeComponent();
+            _defaultAmount = AmountSlider.Value;
+            _defaultScale = ScaleCombo.SelectedIndex;
             UpdateAmountText();
         }
 
@@ -12,6 +17,12 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             Value = (float)AmountSlider.Value,
             Dpi = 96f,
         };
+
+        public override void Reset() {
+            AmountSlider.Value = _defaultAmount;
+            ScaleCombo.SelectedIndex = _defaultScale;
+            UpdateAmountText();
+        }
 
         private void ScaleCombo_SelectionChanged(object sender, Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs e) {
             RaiseParamsChanged();

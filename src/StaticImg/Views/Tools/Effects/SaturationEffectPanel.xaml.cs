@@ -4,14 +4,22 @@ using VirtualPaper.UIComponent.Input;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     public sealed partial class SaturationEffectPanel : EffectPanelBase {
+        private double _defaultValue;
+
         public SaturationEffectPanel() {
             this.InitializeComponent();
+            _defaultValue = Slider.Value;
             Slider.TrackFill = Gradient((0, Colors.Gray), (1, Colors.DeepSkyBlue));
             Slider.TrackFillMode = ArcSliderTrackFillMode.Full;
             UpdateValueText();
         }
 
         public override EffectParams Params => new() { Value = (float)Slider.Value, Dpi = 96f };
+
+        public override void Reset() {
+            Slider.Value = _defaultValue;
+            UpdateValueText();
+        }
 
         private void Slider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e) {
             UpdateValueText();

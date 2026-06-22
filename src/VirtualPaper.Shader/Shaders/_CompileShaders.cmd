@@ -28,7 +28,6 @@ if not exist "!INCLUDEPATH!\d2d1effecthelpers.hlsli" (
 
 call :COMPILE GeometryAlphaEraseEffect.hlsl || goto END
 call :COMPILE ThresholdEffect.hlsl || goto END
-call :COMPILE GradientMappingEffect.hlsl || goto END
 call :COMPILE RippleEffect.hlsl || goto END
 call :COMPILE DisplacementLiquefactionEffect.hlsl || goto END
 

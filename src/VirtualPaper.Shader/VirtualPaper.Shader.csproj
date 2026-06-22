@@ -8,10 +8,6 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
-	<ItemGroup>
-	  <None Remove="Shaders\GeometryAlphaEraseEffect.bin" />
-	</ItemGroup>
-
 	<Target Name="CopyToVirtualPaper" AfterTargets="Build">
 		<ItemGroup>
 			<ShadersBin Include="$(ProjectDir)Shaders\**\*.bin" />

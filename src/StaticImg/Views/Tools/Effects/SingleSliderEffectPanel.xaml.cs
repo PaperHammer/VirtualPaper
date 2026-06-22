@@ -4,12 +4,14 @@ using Workloads.Creation.StaticImg.Utils;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     public sealed partial class SingleSliderEffectPanel : EffectPanelBase {
+        private double _defaultValue;
+
         public SingleSliderEffectPanel(EffectSliderConfig cfg) {
             this.InitializeComponent();
             LabelText.Text = cfg.Label;
             Slider.Minimum = cfg.Min;
             Slider.Maximum = cfg.Max;
-            Slider.Value = cfg.Default;
+            Slider.Value = _defaultValue = cfg.Default;
             Slider.TickFrequency = Math.Max(1, Math.Abs(cfg.Max - cfg.Min) / 8);
             Slider.SmallChange = Math.Max(1, Math.Abs(cfg.Max - cfg.Min) / 100);
             Slider.StepFrequency = Math.Max(1, Math.Abs(cfg.Max - cfg.Min) / 100);
@@ -17,6 +19,11 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
         }
 
         public override EffectParams Params => new() { Value = (float)Slider.Value, Dpi = 96f };
+
+        public override void Reset() {
+            Slider.Value = _defaultValue;
+            UpdateValueText();
+        }
 
         private void Slider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e) {
             UpdateValueText();

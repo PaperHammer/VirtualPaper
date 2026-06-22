@@ -17,6 +17,9 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
         /// </summary>
         public virtual bool IsOneShot => false;
 
+        /// <summary>重置面板参数到初始值（每次打开效果时调用）</summary>
+        public virtual void Reset() { }
+
         protected void RaiseParamsChanged() => ParamsChanged?.Invoke(this, Params);
 
         protected static LinearGradientBrush Gradient(params (double offset, Windows.UI.Color color)[] stops) {

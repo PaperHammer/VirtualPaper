@@ -4,8 +4,14 @@ using VirtualPaper.UIComponent.Input;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     public sealed partial class HighlightsShadowsEffectPanel : EffectPanelBase {
+        private double _defaultShadows, _defaultHighlights, _defaultClarity, _defaultBlur;
+
         public HighlightsShadowsEffectPanel() {
             this.InitializeComponent();
+            _defaultShadows = ShadowsSlider.Value;
+            _defaultHighlights = HighlightsSlider.Value;
+            _defaultClarity = ClaritySlider.Value;
+            _defaultBlur = BlurSlider.Value;
             ShadowsSlider.TrackFill = Gradient((0, Colors.Black), (1, Colors.White));
             ShadowsSlider.TrackFillMode = ArcSliderTrackFillMode.Full;
             HighlightsSlider.TrackFill = Gradient((0, Colors.Black), (1, Colors.White));
@@ -23,6 +29,17 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             Value4 = (float)BlurSlider.Value,
             Dpi = 96f,
         };
+
+        public override void Reset() {
+            ShadowsSlider.Value = _defaultShadows;
+            HighlightsSlider.Value = _defaultHighlights;
+            ClaritySlider.Value = _defaultClarity;
+            BlurSlider.Value = _defaultBlur;
+            UpdateShadowsText();
+            UpdateHighlightsText();
+            UpdateClarityText();
+            UpdateBlurText();
+        }
 
         private void ShadowsSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e) {
             UpdateShadowsText();

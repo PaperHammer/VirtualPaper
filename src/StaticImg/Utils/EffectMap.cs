@@ -14,31 +14,21 @@ namespace Workloads.Creation.StaticImg.Utils {
             "adjust_highlights"  => ShaderType.HighlightsAndShadows,
 
             "color_sepia"   => ShaderType.Sepia,
-            "color_duotone" => ShaderType.GradientMappingEffect,
-            "color_lut"     => ShaderType.DiscreteTransfer,
-            "color_tint"    => ShaderType.Tint,
 
             "art_emboss" => ShaderType.Emboss,
             "art_pixelate" => ShaderType.Posterize,
             "art_sepia" => ShaderType.Sepia,
-            "art_oilpaint" => ShaderType.OilPaint,
-            "art_sketch" => ShaderType.Sketch,
-            "art_watercolor" => ShaderType.WaterColor,
-            "art_pointillism" => ShaderType.Pointillism,
-            "art_crosshatch" => ShaderType.Crosshatch,
-            "art_cartoon" => ShaderType.Cartoon,
 
             "fx_blur"      => ShaderType.GaussianBlur,
             "fx_sharpen"   => ShaderType.Sharpen,
             "fx_vignette"  => ShaderType.Vignette,
-            "fx_glow"      => ShaderType.Shadow,
+            "fx_glow"      => ShaderType.Glow,
             "fx_distort"   => ShaderType.RippleEffect,
             "fx_straighten" => ShaderType.Straighten,
             "fx_edge"      => ShaderType.EdgeDetection,
             "fx_morphology" => ShaderType.Morphology,
             "fx_noise"     => ShaderType.Noise,
             "fx_bloom"     => ShaderType.Bloom,
-            "fx_chromatic" => ShaderType.Chromatic,
 
             "adv_gamma"    => ShaderType.GammaTransfer,
             "adv_hsb"      => ShaderType.HSB,
@@ -78,8 +68,6 @@ namespace Workloads.Creation.StaticImg.Utils {
                 => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = "模糊" },
             ShaderType.Sharpen
                 => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = "锐化" },
-            ShaderType.Tint
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
 
             // 双滑块 (Value + Value2)
             ShaderType.HueRotation
@@ -135,26 +123,12 @@ namespace Workloads.Creation.StaticImg.Utils {
                 => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
             ShaderType.ChromaKey
                 => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "容差" },
-            ShaderType.OilPaint
-                => new EffectSliderConfig { Min = 1, Max = 50, Default = 10, Label = "笔触宽度" },
-            ShaderType.Sketch
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
-            ShaderType.WaterColor
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 30, Label = "模糊" },
-            ShaderType.Pointillism
-                => new EffectSliderConfig { Min = 2, Max = 32, Default = 8, Label = "色阶" },
-            ShaderType.Crosshatch
-                => new EffectSliderConfig { Min = 2, Max = 16, Default = 4, Label = "密度" },
-            ShaderType.Cartoon
-                => new EffectSliderConfig { Min = 2, Max = 32, Default = 8, Label = "色阶" },
             ShaderType.Noise
                 => new EffectSliderConfig { Min = 0, Max = 100, Default = 30, Label = "强度" },
             ShaderType.Bloom
                 => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
-            ShaderType.Chromatic
-                => new EffectSliderConfig { Min = 0, Max = 50, Default = 10, Label = "偏移" },
             ShaderType.BlendMultiply or ShaderType.BlendScreen or ShaderType.BlendOverlay or ShaderType.BlendSoftLight
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 100, Label = "不透明度" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = "强度" },
 
             _ => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
         };

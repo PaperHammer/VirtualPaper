@@ -11,8 +11,8 @@ namespace Workloads.Creation.StaticImg.Models {
         /// <summary>效果显示名称（i18n key）</summary>
         public string EffectName { get; set; } = string.Empty;
 
-        /// <summary>效果预览图路径（ms-appx:// 或 ms-appdata://）</summary>
-        public string PreviewImagePath { get; set; } = string.Empty;
+        /// <summary>效果简要描述（i18n key）</summary>
+        public string EffectDescription { get; set; } = string.Empty;
     }
 
     /// <summary>

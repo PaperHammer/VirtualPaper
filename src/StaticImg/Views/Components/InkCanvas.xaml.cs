@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
+using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
 using Microsoft.UI.Input;
@@ -164,7 +165,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
             else if (_selectedTool is EffectTool et) {
                 et.Cancel();
-                CanvasEffect.ClickedEffectId = null;
+                CanvasEffect.Restore();
+                UnsubscribeCurrentEffectPanel();
                 effectPanelHost.Visibility = Visibility.Collapsed;
             }
         }
@@ -528,6 +530,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             var panel = GetEffectPanel(shaderType);
             if (panel == null) return;
 
+            panel.Reset();
+
             _currentEffectPanel = panel;
             panel.ParamsChanged += OnEffectPanelParamsChanged;
 
@@ -574,6 +578,13 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             ShaderType.Fog => Fog,
             ShaderType.Glass => Glass,
             ShaderType.ChromaKey => ChromaKey,
+            ShaderType.Noise => Noise,
+            ShaderType.Bloom => Bloom,
+            ShaderType.Glow => Glow,
+            ShaderType.BlendMultiply => Blend,
+            ShaderType.BlendScreen => Blend,
+            ShaderType.BlendOverlay => Blend,
+            ShaderType.BlendSoftLight => Blend,
             _ => null,
         };
 

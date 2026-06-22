@@ -192,8 +192,15 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             "fx_vignette" => "Vignette",
             "art_emboss" => "Emboss",
             "art_pixelate" => "Posterize",
-            "fx_glow" => "Shadow",
+            "fx_glow" => "Glow",
             "fx_distort" => "Ripple",
+            "fx_noise" => "Noise",
+            "fx_bloom" => "Bloom",
+            "blend_multiply" => "Blend",
+            "blend_screen" => "Blend",
+            "blend_overlay" => "Blend",
+            "blend_softlight" => "Blend",
+            "color_sepia" => "Empty",
             _ => "",
         };
 

@@ -1,10 +1,10 @@
 using VirtualPaper.Shader.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
-    public sealed partial class SharpenEffectPanel : EffectPanelBase {
+    public sealed partial class NoiseEffectPanel : EffectPanelBase {
         private double _defaultValue;
 
-        public SharpenEffectPanel() {
+        public NoiseEffectPanel() {
             this.InitializeComponent();
             _defaultValue = Slider.Value;
             UpdateValueText();

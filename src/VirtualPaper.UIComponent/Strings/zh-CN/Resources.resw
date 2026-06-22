@@ -1391,9 +1391,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_StaticImg_EffectGroup_Color" xml:space="preserve">
     <value>颜色</value>
   </data>
-  <data name="Project_StaticImg_EffectGroup_Artistic" xml:space="preserve">
-    <value>艺术</value>
-  </data>
   <data name="Project_StaticImg_EffectGroup_Special" xml:space="preserve">
     <value>特效</value>
   </data>
@@ -1430,38 +1427,11 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_StaticImg_Text_Effect_Sepia" xml:space="preserve">
     <value>褪色</value>
   </data>
-  <data name="Project_StaticImg_Text_Effect_Duotone" xml:space="preserve">
-    <value>双色调</value>
-  </data>
-  <data name="Project_StaticImg_Text_Effect_LUT" xml:space="preserve">
-    <value>LUT</value>
-  </data>
-  <data name="Project_StaticImg_Text_Effect_Tint" xml:space="preserve">
-    <value>着色</value>
-  </data>
-  <data name="Project_StaticImg_Text_Effect_OilPaint" xml:space="preserve">
-    <value>油画</value>
-  </data>
-  <data name="Project_StaticImg_Text_Effect_Sketch" xml:space="preserve">
-    <value>素描</value>
-  </data>
-  <data name="Project_StaticImg_Text_Effect_WaterColor" xml:space="preserve">
-    <value>水彩</value>
-  </data>
   <data name="Project_StaticImg_Text_Effect_Pixelate" xml:space="preserve">
     <value>像素化</value>
   </data>
   <data name="Project_StaticImg_Text_Effect_Emboss" xml:space="preserve">
     <value>浮雕</value>
-  </data>
-  <data name="Project_StaticImg_Text_Effect_Pointillism" xml:space="preserve">
-    <value>点彩</value>
-  </data>
-  <data name="Project_StaticImg_Text_Effect_Crosshatch" xml:space="preserve">
-    <value>交叉线</value>
-  </data>
-  <data name="Project_StaticImg_Text_Effect_Cartoon" xml:space="preserve">
-    <value>卡通</value>
   </data>
   <data name="Project_StaticImg_Text_Effect_Blur" xml:space="preserve">
     <value>模糊</value>
@@ -1480,9 +1450,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Project_StaticImg_Text_Effect_Bloom" xml:space="preserve">
     <value>光晕</value>
-  </data>
-  <data name="Project_StaticImg_Text_Effect_Chromatic" xml:space="preserve">
-    <value>色差</value>
   </data>
   <data name="Project_StaticImg_Text_Effect_Distort" xml:space="preserve">
     <value>扭曲</value>
@@ -1529,15 +1496,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_StaticImg_Effect_Sepia" xml:space="preserve">
     <value>褪色</value>
   </data>
-  <data name="Project_StaticImg_Effect_Duotone" xml:space="preserve">
-    <value>双色调</value>
-  </data>
-  <data name="Project_StaticImg_Effect_Lut" xml:space="preserve">
-    <value>LUT</value>
-  </data>
-  <data name="Project_StaticImg_Effect_Tint" xml:space="preserve">
-    <value>着色</value>
-  </data>
   <data name="Project_StaticImg_Effect_OilPaint" xml:space="preserve">
     <value>油画</value>
   </data>
@@ -1580,9 +1538,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_StaticImg_Effect_Bloom" xml:space="preserve">
     <value>光晕</value>
   </data>
-  <data name="Project_StaticImg_Effect_Chromatic" xml:space="preserve">
-    <value>色差</value>
-  </data>
   <data name="Project_StaticImg_Effect_Distort" xml:space="preserve">
     <value>扭曲</value>
   </data>
@@ -1591,5 +1546,75 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Project_StaticImg_Effect_SoftLight" xml:space="preserve">
     <value>柔光</value>
+  </data>
+  <!-- CanvasEffect 效果描述 -->
+  <data name="Project_StaticImg_Text_EffectDesc_GrayScale" xml:space="preserve">
+    <value>去除颜色信息，转为灰度图</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Invert" xml:space="preserve">
+    <value>反转所有颜色，产生底片效果</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Exposure" xml:space="preserve">
+    <value>调整图像整体明暗程度</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Brightness" xml:space="preserve">
+    <value>调整图像亮度</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Saturation" xml:space="preserve">
+    <value>调整颜色鲜艳程度</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Hue" xml:space="preserve">
+    <value>旋转色相环角度，改变整体色调</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Contrast" xml:space="preserve">
+    <value>调整明暗区域之间的差异</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Temperature" xml:space="preserve">
+    <value>调整冷暖色调与色彩偏移</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Highlights" xml:space="preserve">
+    <value>分别调整高光与阴影区域</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Sepia" xml:space="preserve">
+    <value>经典复古棕褐色调</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Pixelate" xml:space="preserve">
+    <value>将图像分解为色块像素</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Emboss" xml:space="preserve">
+    <value>产生立体浮雕凹凸效果</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Blur" xml:space="preserve">
+    <value>柔化图像，减少细节</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Sharpen" xml:space="preserve">
+    <value>增强边缘与细节清晰度</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Noise" xml:space="preserve">
+    <value>添加随机噪点纹理</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Vignette" xml:space="preserve">
+    <value>边缘渐暗，聚焦中心</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Glow" xml:space="preserve">
+    <value>为亮部添加发光光晕</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Bloom" xml:space="preserve">
+    <value>让高光区域产生柔和光晕</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Distort" xml:space="preserve">
+    <value>对图像进行液化变形</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Multiply" xml:space="preserve">
+    <value>正片叠底，加深合成结果</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Screen" xml:space="preserve">
+    <value>滤色模式，提亮合成结果</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Overlay" xml:space="preserve">
+    <value>叠加模式，增强对比</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_SoftLight" xml:space="preserve">
+    <value>柔光模式，产生柔和对比</value>
   </data>
 </root>

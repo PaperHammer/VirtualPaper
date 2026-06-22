@@ -2,8 +2,14 @@ using VirtualPaper.Shader.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     public sealed partial class ShadowEffectPanel : EffectPanelBase {
+        private double _defaultBlur, _defaultOffsetX, _defaultOffsetY, _defaultOpacity;
+
         public ShadowEffectPanel() {
             this.InitializeComponent();
+            _defaultBlur = BlurSlider.Value;
+            _defaultOffsetX = OffsetXSlider.Value;
+            _defaultOffsetY = OffsetYSlider.Value;
+            _defaultOpacity = OpacitySlider.Value;
             UpdateBlurText();
             UpdateOffsetXText();
             UpdateOffsetYText();
@@ -17,6 +23,17 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             Value4 = (float)OpacitySlider.Value,
             Dpi = 96f,
         };
+
+        public override void Reset() {
+            BlurSlider.Value = _defaultBlur;
+            OffsetXSlider.Value = _defaultOffsetX;
+            OffsetYSlider.Value = _defaultOffsetY;
+            OpacitySlider.Value = _defaultOpacity;
+            UpdateBlurText();
+            UpdateOffsetXText();
+            UpdateOffsetYText();
+            UpdateOpacityText();
+        }
 
         private void BlurSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e) {
             UpdateBlurText();

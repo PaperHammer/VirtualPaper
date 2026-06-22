@@ -1,5 +1,6 @@
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Shader;
 using VirtualPaper.Shader.Core;
 using VirtualPaper.Shader.Models;
@@ -8,7 +9,7 @@ using Workloads.Creation.StaticImg.Events;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
     /// <summary>
-    /// 效果工具——在活动图层上实时预览效果，Commit 确认 / Cancel 还原。不参与指针交互，仅负责渲染。
+    /// 效果工具——在活动图层上实时预览效果，Commit 确认 / Restore 还原。不参与指针交互，仅负责渲染。
     /// </summary>
     public sealed partial class EffectTool : RenderBase {
         private ShaderType _shaderType = ShaderType.None;
@@ -74,14 +75,18 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         private void ApplyEffect() {
             if (!IsCanvasReady || _originalCache == null) return;
 
-            // 对缓存（只读）应用效果，避免同时读写 RenderTarget
-            var result = EffectApplier.Apply(_shaderType, _params, _originalCache);
-            using (var ds = RenderTarget.CreateDrawingSession()) {
-                ds.Clear(Colors.Transparent);
-                ds.DrawImage(result);
-            }
+            try {
+                // 对缓存（只读）应用效果，避免同时读写 RenderTarget
+                var result = EffectApplier.Apply(_shaderType, _params, _originalCache);
+                using (var ds = RenderTarget.CreateDrawingSession()) {
+                    ds.Clear(Colors.Transparent);
+                    ds.DrawImage(result);
+                }
 
-            HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+            } catch (System.Exception ex) {
+                ArcLog.GetLogger<EffectTool>().Error($"Apply effect failed: {_shaderType}, {ex.Message}");
+            }
         }
     }
 }

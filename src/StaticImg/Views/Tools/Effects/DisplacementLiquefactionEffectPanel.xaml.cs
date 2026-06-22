@@ -2,8 +2,14 @@ using VirtualPaper.Shader.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     public sealed partial class DisplacementLiquefactionEffectPanel : EffectPanelBase {
+        private double _defaultRadius, _defaultPressure;
+        private int _defaultMode;
+
         public DisplacementLiquefactionEffectPanel() {
             this.InitializeComponent();
+            _defaultRadius = RadiusSlider.Value;
+            _defaultPressure = PressureSlider.Value;
+            _defaultMode = ModeCombo.SelectedIndex;
             UpdateRadiusText();
             UpdatePressureText();
         }
@@ -15,6 +21,14 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             Amount = 512,
             Dpi = 96f,
         };
+
+        public override void Reset() {
+            RadiusSlider.Value = _defaultRadius;
+            PressureSlider.Value = _defaultPressure;
+            ModeCombo.SelectedIndex = _defaultMode;
+            UpdateRadiusText();
+            UpdatePressureText();
+        }
 
         private void ModeCombo_SelectionChanged(object sender, Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs e) {
             RaiseParamsChanged();

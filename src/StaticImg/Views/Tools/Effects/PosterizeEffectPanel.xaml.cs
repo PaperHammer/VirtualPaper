@@ -2,8 +2,11 @@ using VirtualPaper.Shader.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
     public sealed partial class PosterizeEffectPanel : EffectPanelBase {
+        private double _defaultValue;
+
         public PosterizeEffectPanel() {
             this.InitializeComponent();
+            _defaultValue = Slider.Value;
             UpdateValueText();
         }
 
@@ -13,6 +16,11 @@ namespace Workloads.Creation.StaticImg.Views.Tools.Effects {
             Value3 = (float)Slider.Value,
             Dpi = 96f,
         };
+
+        public override void Reset() {
+            Slider.Value = _defaultValue;
+            UpdateValueText();
+        }
 
         private void Slider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e) {
             UpdateValueText();

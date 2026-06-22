@@ -20,18 +20,25 @@ cbuffer constants : register(b0)
 
 D2D_PS_ENTRY(main)
 {
-    float2 toPixel = D2DGetScenePosition().xy - center;
-    float distance = length(toPixel * (96.0f / dpi / 500.0f));
-    float2 direction = normalize(toPixel);
+    float2 pos = D2DGetScenePosition().xy;
+    float2 toPixel = pos - center;
+    
+    // Distance from center, scaled by DPI
+    float distance = length(toPixel) * (96.0f / dpi);
+    
+    // Direction from center (use default right direction if at center)
+    float len = length(toPixel);
+    float2 direction = len > 0.001f ? toPixel / len : float2(1.0f, 0.0f);
 
+    // Wave calculation
     float2 wave;
-    sincos(frequency * distance + phase, wave.x, wave.y);
+    sincos(frequency * distance * 0.02f + phase, wave.x, wave.y);
 
-    float falloff = saturate(1.0f - distance);
-    falloff = pow(falloff, 1.0f / spread);
-
-    float2 inputOffset = (wave.x * falloff * amplitude) * direction;
-    float lighting = lerp(1.0f, 1.0f + wave.x * falloff * 0.2f, saturate(amplitude / 20.0f));
+    // Uniform amplitude - no distance-based falloff
+    float2 inputOffset = wave.x * amplitude * 0.5f * direction;
+    
+    // Subtle lighting effect
+    float lighting = lerp(1.0f, 1.0f + wave.x * 0.1f, saturate(amplitude / 40.0f));
 
     float4 color = D2DSampleInputAtOffset(0, inputOffset);
     color.rgb *= lighting;

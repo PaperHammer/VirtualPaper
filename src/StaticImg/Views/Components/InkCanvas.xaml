@@ -107,6 +107,7 @@
                         <staticImgToolsEffect:ThresholdEffectPanel x:Name="Threshold"
                             Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Threshold}"/>
                         <staticImgToolsEffect:RippleEffectPanel x:Name="Ripple"
+                            CanvasSize="{x:Bind _viewModel.Data.CanvasSize, Mode=OneWay}"
                             Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Ripple}"/>
                         <staticImgToolsEffect:DisplacementLiquefactionEffectPanel x:Name="DisplacementLiquefaction"
                             Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=DisplacementLiquefaction}"/>
@@ -134,6 +135,14 @@
                             Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Glass}"/>
                         <staticImgToolsEffect:ChromaKeyEffectPanel x:Name="ChromaKey"
                             Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=ChromaKey}"/>
+                        <staticImgToolsEffect:NoiseEffectPanel x:Name="Noise"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Noise}"/>
+                        <staticImgToolsEffect:BloomEffectPanel x:Name="Bloom"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Bloom}"/>
+                        <staticImgToolsEffect:GlowEffectPanel x:Name="Glow"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Glow}"/>
+                        <staticImgToolsEffect:BlendEffectPanel x:Name="Blend"
+                            Visibility="{x:Bind _viewModel.Data.SelectedEffectPanelName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Blend}"/>
                     </Grid>
                 </Border>
             </Grid>
@@ -177,7 +186,7 @@
                                 Visibility="{x:Bind _viewModel.Data.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Crop}"
                                 CropCancelRequest="Crop_CropCancelRequest"
                                 CropCommitRequest="Crop_CropCommitRequest"/>
-                            <staticImgTools:CanvasEffect x:Name="CanvasEffect"
+                            <staticImgTools:CanvasEffectControl x:Name="CanvasEffect"
                                 ClickedEffectId="{x:Bind _viewModel.Data.ClickedEffectId, Mode=TwoWay}"
                                 Visibility="{x:Bind _viewModel.Data.SelectedToolItem.TypeString, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=CanvasEffect}"
                                 CanvasEffectCancel="CanvasEffect_Cancel"

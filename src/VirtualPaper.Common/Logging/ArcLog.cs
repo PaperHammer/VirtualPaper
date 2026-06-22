@@ -4,9 +4,6 @@ using NLog;
 using Windows.ApplicationModel.Core;
 
 /*
- * todo
- * create - brightness 网格 ui 调整
- * slider 模板调整
  * rweb-workload
  * 
  * 分组循环播放

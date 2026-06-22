@@ -13,7 +13,6 @@
 		<None Remove="Views\Components\InkCanvas.xaml" />
 		<None Remove="Views\Components\LayerItem.xaml" />
 		<None Remove="Views\Tools\BottomDataBarControl.xaml" />
-		<None Remove="Views\Tools\CanvasEffect.xaml" />
 		<None Remove="Views\Tools\ColorPaletteControl.xaml" />
 		<None Remove="Views\Tools\CropControl.xaml" />
 		<None Remove="Views\Tools\EraserControl.xaml" />
@@ -34,7 +33,7 @@
 	  <ProjectReference Include="..\Workloads.Utils\Workloads.Utils.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-	  <Page Update="Views\Tools\CanvasEffect.xaml">
+	  <Page Update="Views\Tools\CanvasEffectControl.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>

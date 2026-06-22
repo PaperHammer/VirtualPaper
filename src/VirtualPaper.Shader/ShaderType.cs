@@ -7,7 +7,6 @@ namespace VirtualPaper.Shader {
             return type switch {
                 // ── 自定义像素着色器（需要 .bin 文件） ──
                 ShaderType.ThresholdEffect => "ThresholdEffect.bin",
-                ShaderType.GradientMappingEffect => "GradientMappingEffect.bin",
                 ShaderType.RippleEffect => "RippleEffect.bin",
                 ShaderType.DisplacementLiquefactionEffect => "DisplacementLiquefactionEffect.bin",
                 ShaderType.GeometryAlphaEraseEffect => "GeometryAlphaEraseEffect.bin",
@@ -63,10 +62,6 @@ namespace VirtualPaper.Shader {
         GammaTransfer,
         /// <summary>暗角 — <see cref="VignetteEffect"/></summary>
         Vignette,
-        /// <summary>色彩矩阵 — <see cref="ColorMatrixEffect"/></summary>
-        ColorMatrix,
-        /// <summary>色彩匹配 — <see cref="ColorMatrixEffect"/> + ColorMatch 矩阵</summary>
-        ColorMatch,
 
         // 滤镜效果
         /// <summary>高斯模糊 — <see cref="GaussianBlurEffect"/></summary>
@@ -77,6 +72,8 @@ namespace VirtualPaper.Shader {
         Sharpen,
         /// <summary>阴影 — 组合 <see cref="ShadowEffect"/> + <see cref="Transform2DEffect"/> + <see cref="OpacityEffect"/> + <see cref="CompositeEffect"/></summary>
         Shadow,
+        /// <summary>发光 — 同 Shadow 但居中无偏移，用于光晕效果</summary>
+        Glow,
         /// <summary>边缘检测 — <see cref="EdgeDetectionEffect"/></summary>
         EdgeDetection,
         /// <summary>形态学 — <see cref="MorphologyEffect"/></summary>
@@ -95,34 +92,14 @@ namespace VirtualPaper.Shader {
         LuminanceToAlpha,
         /// <summary>色度抠图 — <see cref="ChromaKeyEffect"/></summary>
         ChromaKey,
-        /// <summary>图像边框 — <see cref="CropEffect"/> + <see cref="BorderEffect"/></summary>
-        Border,
         /// <summary>着色 — <see cref="HueRotationEffect"/> × <see cref="SepiaEffect"/></summary>
         Colouring,
-        /// <summary>色调 — <see cref="TintEffect"/></summary>
-        Tint,
-        /// <summary>离散传递曲线 — <see cref="DiscreteTransferEffect"/></summary>
-        DiscreteTransfer,
-        /// <summary>油画 — <see cref="PaintTransitionsEffect"/> 或自定义实现</summary>
-        OilPaint,
-        /// <summary>素描 — <see cref="EdgeDetectionEffect"/> + <see cref="GrayscaleEffect"/></summary>
-        Sketch,
-        /// <summary>水彩 — 模糊 + 饱和度调整</summary>
-        WaterColor,
-        /// <summary>点画 — 噪声 + .posterize</summary>
-        Pointillism,
-        /// <summary>交叉阴影线 — 自定义实现</summary>
-        Crosshatch,
-        /// <summary>卡通 — 边缘检测 + 颜色量化</summary>
-        Cartoon,
 
         // 特效
         /// <summary>噪声 — <see cref="TurbulenceEffect"/></summary>
         Noise,
         /// <summary> blooms — 模糊 + 亮度阈值</summary>
         Bloom,
-        /// <summary>色差 — 通道偏移</summary>
-        Chromatic,
 
         // 混合模式
         /// <summary>正片叠底 — <see cref="BlendEffect"/> Multiply</summary>
@@ -135,8 +112,6 @@ namespace VirtualPaper.Shader {
         BlendSoftLight,
 
         // 高级复合效果
-        /// <summary>光照 — <see cref="SpotDiffuseEffect"/> + <see cref="SpotSpecularEffect"/> + <see cref="ArithmeticCompositeEffect"/></summary>
-        Lighting,
         /// <summary>雾气 — <see cref="ArithmeticCompositeEffect"/> + 湍流噪声</summary>
         Fog,
         /// <summary>玻璃 — <see cref="DisplacementMapEffect"/> + 湍流噪声</summary>
@@ -149,8 +124,6 @@ namespace VirtualPaper.Shader {
         // 自定义像素着色器（需要 .bin）
         /// <summary>阈值 — 自定义 PixelShader</summary>
         ThresholdEffect,
-        /// <summary>渐变映射 — 自定义 PixelShader</summary>
-        GradientMappingEffect,
         /// <summary>涟漪 — 自定义 PixelShader</summary>
         RippleEffect,
         /// <summary>液化 — 自定义 PixelShader</summary>

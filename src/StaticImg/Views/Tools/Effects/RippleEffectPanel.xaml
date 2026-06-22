@@ -21,7 +21,7 @@
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </Grid>
         <input:ArcSlider x:Name="FrequencySlider"
-            Minimum="0" Maximum="200" Value="140"
+            Minimum="0" Maximum="200" Value="0"
             TickFrequency="25" TickPlacement="BottomRight"
             SmallChange="2" StepFrequency="2"
             ValueChanged="FrequencySlider_ValueChanged"/>
@@ -53,7 +53,7 @@
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </Grid>
         <input:ArcSlider x:Name="AmplitudeSlider"
-            Minimum="0" Maximum="100" Value="60"
+            Minimum="0" Maximum="100" Value="0"
             TickFrequency="12.5" TickPlacement="BottomRight"
             SmallChange="1" StepFrequency="1"
             ValueChanged="AmplitudeSlider_ValueChanged"/>
@@ -70,7 +70,7 @@
         </Grid>
         <input:ArcSlider x:Name="SpreadSlider"
             Minimum="1" Maximum="100" Value="1"
-            TickFrequency="12.5" TickPlacement="BottomRight"
+            TickFrequency="10" TickPlacement="BottomRight"
             SmallChange="1" StepFrequency="1"
             ValueChanged="SpreadSlider_ValueChanged"/>
     </StackPanel>

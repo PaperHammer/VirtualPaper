@@ -1,10 +1,14 @@
+using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
+using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Shader;
 using VirtualPaper.Shader.Core;
 using VirtualPaper.Shader.Models;
+using Windows.Foundation;
 using Workloads.Creation.StaticImg.Core.Rendering;
+using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Events;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
@@ -24,6 +28,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         public void StartPreview(ShaderType type, EffectParams? param = null) {
             if (!IsCanvasReady) return;
 
+            LayerId = ViewModel.Data.SelectedLayer.Tag;
             _shaderType = type;
             _params = param ?? new EffectParams { Value = 0f, Value2 = 0f, Value3 = 0f, Value4 = 0f, Dpi = 96f };
 
@@ -43,9 +48,25 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             ApplyEffect();
         }
 
-        /// <summary>确认效果：效果已写入 RenderTarget，通知缩略图更新</summary>
+        /// <summary>确认效果：效果已写入 RenderTarget，记录撤销命令，通知缩略图更新</summary>
         public void Commit() {
-            if (!_isPreviewing) return;
+            if (!_isPreviewing || _originalCache == null) return;
+
+            // 捕获压缩后的原始像素数据
+            var originalPixels = _originalCache.GetPixelBytes().CompressPixels();
+
+            // 创建效果命令并记录到撤销栈
+            var command = new EffectCommand(
+                layerId: LayerId,
+                canvasData: ViewModel.Data,
+                shaderType: _shaderType,
+                effectParams: _params,
+                compressedOriginalPixels: originalPixels,
+                description: $"Apply {_shaderType} effect",
+                requestRenderAction: () => HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion))
+            );
+            ViewModel.Session.UnReUtil.RecordCommand(command);
+
             _isPreviewing = false;
             _shaderType = ShaderType.None;
             _originalCache?.Dispose();

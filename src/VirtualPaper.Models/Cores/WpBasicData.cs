@@ -123,10 +123,7 @@ namespace VirtualPaper.Models.Cores {
         }
 
         public void Save() {
-            JsonSaver.Save<IWpBasicData>(
-                Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName),
-                this,
-                WpBasicDataContext.Default);
+            SaveAsync().GetAwaiter().GetResult();
         }
 
         public async Task SaveAsync() {
@@ -134,6 +131,21 @@ namespace VirtualPaper.Models.Cores {
                 Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName),
                 this,
                 WpBasicDataContext.Default);
+
+            await SaveProjectJsonAsync();
+        }
+
+        private async Task SaveProjectJsonAsync() {
+            if (this.FType != FileType.FWebZip) return;
+
+            string projectJsonPath = Path.Combine(this.FolderPath, "project.json");
+            if (!File.Exists(projectJsonPath)) return;
+
+            var project = await JsonSaver.LoadAsync<WpWebProjectData>(projectJsonPath, WpWebProjectDataContext.Default);
+            project.Title = this.Title;
+            project.Desc = this.Desc;
+            project.Tags = this.Tags;
+            await JsonSaver.SaveAsync(projectJsonPath, project, WpWebProjectDataContext.Default);
         }
 
         public async Task MoveToAsync(string targetFolderPath) {

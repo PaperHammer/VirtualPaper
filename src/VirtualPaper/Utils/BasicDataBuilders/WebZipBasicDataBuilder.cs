@@ -2,7 +2,6 @@ using System.IO;
 using SharpCompress.Archives;
 using SharpCompress.Common;
 using VirtualPaper.Common.Utils.Storage;
-using VirtualPaper.Models;
 using VirtualPaper.Models.Cores;
 
 namespace VirtualPaper.Utils.BasicDataBuilders {

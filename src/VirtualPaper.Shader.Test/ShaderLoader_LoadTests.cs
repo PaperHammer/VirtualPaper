@@ -34,7 +34,7 @@ namespace VirtualPaper.Shader.Test {
         [Description("加载后每个 ShaderType 均可访问，且数据不为空")]
         public void LoadAllShadersAsync_AllTypes_Accessible() {
             var allTypes = Enum.GetValues<ShaderType>()
-                               .Where(t => t != ShaderType.None)
+                               .Where(ShaderTypeManager.IsCustomShader)
                                .ToArray();
 
             foreach (var type in allTypes) {
@@ -65,7 +65,7 @@ namespace VirtualPaper.Shader.Test {
         [Description("ReloadShaderAsync 应返回与缓存一致的数据")]
         public async Task ReloadShaderAsync_UpdatesCache() {
             var type = Enum.GetValues<ShaderType>()
-                           .FirstOrDefault(t => t != ShaderType.None);
+                           .FirstOrDefault(ShaderTypeManager.IsCustomShader);
             if (type == ShaderType.None)
                 Assert.Inconclusive("No ShaderType available");
 

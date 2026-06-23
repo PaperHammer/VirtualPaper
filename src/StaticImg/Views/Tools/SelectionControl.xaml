@@ -17,21 +17,22 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
-                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="8"/>
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
 
                 <Button
                     Content="{markup:I18n Key=Text_Cancel}"
-                    Height="40"
+                    Height="36"
                     HorizontalAlignment="Stretch"
                     Click="SelectCancelBtn_Click"/>
 
                 <Button 
                     Grid.Column="2"
                     Content="{markup:I18n Key=Text_Complete}"
-                    Height="40"
+                    Height="36"
                     HorizontalAlignment="Stretch"
+                    Style="{ThemeResource AccentButtonStyle}"
                     Click="SelectCommitBtn_Click"/>
             </Grid>
         </Expander.Content>

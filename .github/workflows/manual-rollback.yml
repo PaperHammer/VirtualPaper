@@ -1,28 +1,59 @@
 name: Manual Rollback
-run-name: "Manual Rollback v${{ inputs.version }} | by @${{ github.actor }}"
+run-name: "Manual Rollback | ${{ inputs.mode == 'version-rollback' && format('v{0} | {1}', inputs.version, inputs.scope) || format('reset {0} -> {1}', inputs.target_branch, inputs.target_sha) }} | by @${{ github.actor }}"
 
 on:
   workflow_dispatch:
     inputs:
+
+      mode:
+        description: 'Rollback mode'
+        required: true
+        type: choice
+        options:
+          - 'version-rollback'   # 按版本号 revert auto-ci bump commit
+          - 'branch-reset'       # 将指定分支 hard-reset 到任意 commit SHA
+        default: 'version-rollback'
+
+      # ── [version-rollback] 专用输入 ──────────────────────────────────────
       version:
-        description: 'Version number to roll back to (for example, 0.5.0.0)'
-        required: true
+        description: '[version-rollback] Version to roll back (e.g. 0.5.1.0)'
+        required: false
         type: string
+        default: ''
+
       scope:
-        description: 'Rollback Scope'
-        required: true
+        description: '[version-rollback] Rollback scope'
+        required: false
         type: choice
         options:
           - 'all (main + release + dev + bugfix)'
           - 'main only'
         default: 'all (main + release + dev + bugfix)'
 
+      # ── [branch-reset] 专用输入 ──────────────────────────────────────────
+      target_branch:
+        description: '[branch-reset] Branch to reset'
+        required: false
+        type: choice
+        options:
+          - 'main'
+          - 'release'
+          - 'dev'
+          - 'bugfix'
+        default: 'main'
+
+      target_sha:
+        description: '[branch-reset] Target commit SHA to reset to (full or short)'
+        required: false
+        type: string
+        default: ''
+
 permissions:
   contents: write
 
 jobs:
   rollback:
-    name: Rollback v${{ inputs.version }}
+    name: Rollback | ${{ inputs.mode }}
     runs-on: windows-latest
 
     steps:
@@ -32,16 +63,60 @@ jobs:
         token: ${{ secrets.RELEASE_PAT }}
         fetch-depth: 0
 
-    - name: Execute rollback
+    # ─────────────────────────────────────────────────────────────────────
+    # 公共：输入校验
+    # ─────────────────────────────────────────────────────────────────────
+    - name: Validate inputs
+      shell: powershell
+      run: |
+        $mode = "${{ inputs.mode }}"
+
+        if ($mode -eq 'version-rollback') {
+            $ver = "${{ inputs.version }}".Trim()
+            if (-not $ver) {
+                Write-Error "[version-rollback] Input 'version' is required."
+                exit 1
+            }
+            if ($ver -notmatch '^\d+\.\d+\.\d+\.\d+$') {
+                Write-Error "[version-rollback] Invalid format. Expected X.X.X.X, got: $ver"
+                exit 1
+            }
+            Write-Host "[OK] version-rollback input validated: $ver"
+
+        } elseif ($mode -eq 'branch-reset') {
+            $sha = "${{ inputs.target_sha }}".Trim()
+            $branch = "${{ inputs.target_branch }}".Trim()
+            if (-not $sha) {
+                Write-Error "[branch-reset] Input 'target_sha' is required."
+                exit 1
+            }
+            if (-not $branch) {
+                Write-Error "[branch-reset] Input 'target_branch' is required."
+                exit 1
+            }
+            Write-Host "[OK] branch-reset input validated: $branch -> $sha"
+
+        } else {
+            Write-Error "Unknown mode: $mode"
+            exit 1
+        }
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Mode 1: version-rollback
+    #   在 main 上找到 bump commit 并 revert，再将预发布分支内容对齐到 pre-bump 状态
+    # ─────────────────────────────────────────────────────────────────────
+    - name: Execute version rollback
+      if: inputs.mode == 'version-rollback'
       shell: powershell
       run: |
         $version = "${{ inputs.version }}"
         $scope = "${{ inputs.scope }}"
 
         Write-Host "========================================"
-        Write-Host "Manual Rollback: version $version"
-        Write-Host "Scope: $scope"
-        Write-Host "Triggered by: ${{ github.actor }}"
+        Write-Host "Mode       : version-rollback"
+        Write-Host "Version    : $version"
+        Write-Host "Scope      : $scope"
+        Write-Host "Triggered  : ${{ github.actor }}"
         Write-Host "========================================"
 
         git config --local user.email "action@github.com"
@@ -51,9 +126,7 @@ jobs:
         git fetch origin 2>&1 | Out-Null
         $ErrorActionPreference = 'Stop'
 
-        # ─────────────────────────────────────────────────────────
-        # Step 1: 在 main 上找到并 revert 版本递增 commit
-        # ─────────────────────────────────────────────────────────
+        # ── Step 1: 在 main 上找到并 revert 版本递增 commit ──────────────
         Write-Host ""
         Write-Host "--- [1/2] Rolling back main ---"
 
@@ -65,7 +138,6 @@ jobs:
             exit 1
         }
 
-        # 记录 bump commit 的父 commit（即 bump 之前的 main，用于恢复版本文件）
         $preBumpSha = git rev-parse "$bumpCommit~1"
         Write-Host "  Bump commit   : $($bumpCommit.Substring(0,7))"
         Write-Host "  Pre-bump SHA  : $($preBumpSha.Substring(0,7))"
@@ -74,16 +146,7 @@ jobs:
         git push origin main
         Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " main: version $version reverted"
 
-        # ─────────────────────────────────────────────────────────
-        # Step 2: 在预发布分支上创建一个 revert commit，回滚到 pre-bump 状态
-        #   做法：用 `git read-tree --reset -u` 将工作树和 index 重置为
-        #   pre-bump main 的内容快照，但 HEAD 保持不变；再 commit & push。
-        #   效果：
-        #     - 分支内容与 pre-bump main 完全一致（含版本文件等所有文件）
-        #     - 完整保留历史（sync merge / bump commit 都仍在 git log 中）
-        #     - 多一条清晰的 revert commit，可追溯何时回滚到了哪个版本
-        #     - 普通 push 即可，无需 force push
-        # ─────────────────────────────────────────────────────────
+        # ── Step 2: 将预发布分支内容对齐到 pre-bump 状态 ─────────────────
         if ($scope -eq 'main only') {
             Write-Host ""
             Write-Host "[SKIP] Pre-publish branches: scope is 'main only'"
@@ -96,8 +159,6 @@ jobs:
 
                 git checkout -B $branch origin/$branch
 
-                # 将 index 和工作树重置为 pre-bump main 的内容快照（HEAD 不动）
-                # 这样后续 commit 就是一条"内容 = pre-bump"的 revert commit
                 git read-tree --reset -u $preBumpSha
 
                 $status = git status --porcelain
@@ -114,5 +175,76 @@ jobs:
 
         Write-Host ""
         Write-Host "========================================"
-        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Rollback v$version completed"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " version-rollback v$version completed"
+        Write-Host "========================================"
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Mode 2: branch-reset
+    #   将指定分支 hard-reset 到任意 commit SHA，使用 --force-with-lease 防止
+    #   覆盖并发推送。适用于非 auto-ci 产生的误提交、紧急回退等场景。
+    # ─────────────────────────────────────────────────────────────────────
+    - name: Execute branch reset
+      if: inputs.mode == 'branch-reset'
+      shell: powershell
+      run: |
+        $branch    = "${{ inputs.target_branch }}"
+        $targetSha = "${{ inputs.target_sha }}".Trim()
+
+        Write-Host "========================================"
+        Write-Host "Mode       : branch-reset"
+        Write-Host "Branch     : $branch"
+        Write-Host "Target SHA : $targetSha"
+        Write-Host "Triggered  : ${{ github.actor }}"
+        Write-Host "========================================"
+
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+        $ErrorActionPreference = 'Continue'
+        git fetch origin 2>&1 | Out-Null
+        $ErrorActionPreference = 'Stop'
+
+        # ── Step 1: 验证目标 SHA 存在 ─────────────────────────────────────
+        $resolvedSha = git rev-parse --verify $targetSha 2>$null
+        if ($LASTEXITCODE -ne 0 -or -not $resolvedSha) {
+            Write-Error "SHA not found in repository: $targetSha"
+            exit 1
+        }
+        $shortResolved = $resolvedSha.Substring(0, 7)
+
+        # 显示目标 commit 的摘要，便于人工二次确认
+        $commitMsg = git log --format="%h %s" -1 $resolvedSha
+        Write-Host "  Target commit : $commitMsg"
+
+        # ── Step 2: 检查当前 HEAD ──────────────────────────────────────────
+        $currentSha = git rev-parse "origin/$branch"
+        $shortCurrent = $currentSha.Substring(0, 7)
+        Write-Host "  Current HEAD  : $shortCurrent  ($branch)"
+
+        if ($currentSha -eq $resolvedSha) {
+            Write-Host "[SKIP] Branch '$branch' is already at $shortResolved, nothing to do."
+            exit 0
+        }
+
+        # ── Step 3: 切到目标 SHA，force-with-lease push ───────────────────
+        # force-with-lease 确保自本次 fetch 后无其他人推送；若有则报错，需重新触发。
+        git checkout -B $branch $resolvedSha
+
+        # dev / release / bugfix 的 push 会触发 pre-publish-branch-ci-check.yml。
+        # 旧历史 commit 的 message 不含 [skip ci]，直接 push 会触发不必要的 CI。
+        # 解决：在目标 SHA 上追加一个空 commit 并携带 [skip ci]，
+        # 不改变任何文件内容，仅作为回滚标记并阻止 CI 触发。
+        # main 分支无 CI push 触发规则，不需要额外处理。
+        $ciTriggerBranches = @("dev", "release", "bugfix")
+        if ($ciTriggerBranches -contains $branch) {
+            git commit --allow-empty -m "[rollback] hard reset to $shortResolved [skip ci]"
+            Write-Host "  Added empty [skip ci] marker commit to suppress CI trigger"
+        }
+
+        git push --force-with-lease origin $branch
+
+        Write-Host ""
+        Write-Host "========================================"
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline
+        Write-Host " branch-reset completed: $branch  $shortCurrent -> $shortResolved"
         Write-Host "========================================"

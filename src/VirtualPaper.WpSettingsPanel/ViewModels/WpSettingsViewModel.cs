@@ -28,6 +28,16 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public ObservableCollection<IMonitor> Monitors { get; set; } = [];
         public List<WpArrangeDataModel> WpArrangements { get; set; } = [];
 
+        /// <summary>类型过滤选项列表，绑定到下拉多选 UI。</summary>
+        public ObservableCollection<WpTypeFilterItem> TypeFilters { get; } = [];
+
+        private string _typeFilterLabel = string.Empty;
+        /// <summary>类型过滤按钮显示文本，如"类型"或"类型 (2)"。</summary>
+        public string TypeFilterLabel {
+            get => _typeFilterLabel;
+            private set { _typeFilterLabel = value; OnPropertyChanged(); }
+        }
+
         private int _selectedWpArrangementsIndex = -1;
         public int SelectedWpArrangementsIndex {
             get => _selectedWpArrangementsIndex;
@@ -69,6 +79,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
             InitMonitors();
             InitCommand();
+            InitTypeFilters();
         }
 
         #region Init
@@ -138,6 +149,29 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
             SelectedWpArrangementsIndex = (int)_userSettingsClient.Settings.WallpaperArrangement;
         }
+
+        private void InitTypeFilters() {
+            TypeFilters.Add(new WpTypeFilterItem(
+                [FileType.FImage],
+                LanguageUtil.GetI18n(Constants.I18n.WpLib_TypeFilter_StaticImage)));
+            TypeFilters.Add(new WpTypeFilterItem(
+                [FileType.FGif, FileType.FimageAI],
+                LanguageUtil.GetI18n(Constants.I18n.WpLib_TypeFilter_DynamicImage)));
+            TypeFilters.Add(new WpTypeFilterItem(
+                [FileType.FVideo],
+                LanguageUtil.GetI18n(Constants.I18n.WpLib_TypeFilter_Video)));
+            TypeFilters.Add(new WpTypeFilterItem(
+                [FileType.FWebZip],
+                LanguageUtil.GetI18n(Constants.I18n.WpLib_TypeFilter_WebInteractive)));
+
+            // 初始化标签文本
+            _typeFilterLabel = LanguageUtil.GetI18n(Constants.I18n.WpLib_TypeFilter_All);
+
+            // 任一 item 的 IsSelected 变化时重新广播
+            foreach (var item in TypeFilters) {
+                item.PropertyChanged += (_, _) => OnTypeFilterChanged();
+            }
+        }
         #endregion
 
         public void RegisterLibraryContents(IFilterable filterable) {
@@ -152,15 +186,41 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         public void OnFilterChanged(FilterKey fk, string text) {
-            // 遍历并清理死亡引用
+            if (fk == FilterKey.LibraryTitle) {
+                _currentTitleKeyword = text;
+            }
+            BroadcastFilter();
+        }
+
+        private void OnTypeFilterChanged() {
+            UpdateTypeFilterLabel();
+            BroadcastFilter();
+        }
+
+        private void UpdateTypeFilterLabel() {
+            int count = TypeFilters.Count(f => f.IsSelected == true);
+            string baseLabel = LanguageUtil.GetI18n(Constants.I18n.WpLib_TypeFilter_All);
+            TypeFilterLabel = count == 0 ? baseLabel : $"{baseLabel} ({count})";
+        }
+
+        private void BroadcastFilter() {
+            // 收集当前已勾选类型对应的 FileType 集合
+            var activeTypes = TypeFilters
+                .Where(f => f.IsSelected == true)
+                .SelectMany(f => f.FTypes)
+                .ToHashSet();
+
+            var context = new FilterContext {
+                TitleKeyword = _currentTitleKeyword,
+                ActiveTypes = activeTypes.Count > 0 ? activeTypes : null,
+            };
+
             for (int i = _filterables.Count - 1; i >= 0; i--) {
                 if (_filterables[i].TryGetTarget(out var target)) {
-                    if (target.FilterKeyword == fk) {
-                        target.ApplyFilter(text);
-                    }
+                    target.ApplyFilter(context);
                 }
                 else {
-                    _filterables.RemoveAt(i); // 移除已回收的对象
+                    _filterables.RemoveAt(i);
                 }
             }
         }
@@ -336,6 +396,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IStoragePicker _storagePicker;
         private readonly List<WeakReference<IFilterable>> _filterables = [];
         private readonly Dictionary<string, ArcWindow> _adjusts = [];
+
+        private string _currentTitleKeyword = string.Empty;
 
         private volatile int _canClose = 1;
         private volatile int _canDetect = 1;

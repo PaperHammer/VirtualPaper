@@ -164,9 +164,10 @@ namespace VirtualPaper.Common.Utils {
             \p{P} - 标点符号
             \p{S} - 特殊符号
             \p{Zs} - 空格分隔符
+            \p{Cs} - 代理对码位（允许 emoji 等补充平面字符）
             {0,100} - 长度限制0到100个字符
          */
-        [GeneratedRegex(@"^[\p{L}\p{N}\p{P}\p{S}\p{Zs}]{0,100}$", RegexOptions.Compiled)]
+        [GeneratedRegex(@"^[\p{L}\p{N}\p{P}\p{S}\p{Zs}\p{Cs}]{0,100}$", RegexOptions.Compiled)]
         private static partial Regex SignRegex();
     }
 }

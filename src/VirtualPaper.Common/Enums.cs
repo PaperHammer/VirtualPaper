@@ -394,10 +394,13 @@ namespace VirtualPaper.Common {
         public string Type { get; init; } = "Dropdown";
         public string Text { get; init; } = "Scale_Way";
 
+        public int Min => 0;
+        public int Max => 4;
+
         private int val = 0;
         public int Value {
             get => val;
-            set => val = Math.Clamp(value, 0, 4);
+            set => val = Math.Clamp(value, Min, Max);
         }
 
         public List<string> Items { get; init; } = ["Fill", "Contain", "Cover", "None", "Scale-Down"];

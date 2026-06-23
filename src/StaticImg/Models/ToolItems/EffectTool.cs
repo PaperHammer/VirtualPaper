@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI;
 using VirtualPaper.Common.Extensions;
@@ -6,7 +5,6 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.Shader;
 using VirtualPaper.Shader.Core;
 using VirtualPaper.Shader.Models;
-using Windows.Foundation;
 using Workloads.Creation.StaticImg.Core.Rendering;
 using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Events;
@@ -105,7 +103,8 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 }
 
                 HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-            } catch (System.Exception ex) {
+            }
+            catch (System.Exception ex) {
                 ArcLog.GetLogger<EffectTool>().Error($"Apply effect failed: {_shaderType}, {ex.Message}");
             }
         }

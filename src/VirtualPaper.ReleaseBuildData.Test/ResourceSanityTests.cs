@@ -70,7 +70,7 @@ namespace VirtualPaper.ReleaseBuildData.Test {
         [TestCategory("ReleaseBuild")]
         public void Plugin_UI_ShadersDir_Exists() {
             ReleaseBuildSanityTests.AssertDirExists(
-                Path.Combine(PluginsDir, "UI", "Shaders"),
+                Path.Combine(PluginsDir, "Shaders"),
                 "Shaders directory");
         }
     }

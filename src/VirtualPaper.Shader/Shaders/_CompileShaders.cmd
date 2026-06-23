@@ -26,10 +26,15 @@ if not exist "!INCLUDEPATH!\d2d1effecthelpers.hlsli" (
     goto WRONG_COMMAND_PROMPT
 )
 
-call :COMPILE GeometryAlphaEraseEffect.hlsl || goto END
-call :COMPILE ThresholdEffect.hlsl || goto END
-call :COMPILE RippleEffect.hlsl || goto END
-call :COMPILE DisplacementLiquefactionEffect.hlsl || goto END
+set "COUNT=0"
+for %%f in (*.hlsl) do (
+    call :COMPILE "%%f" || goto END
+    set /a COUNT+=1
+)
+if !COUNT!==0 (
+    echo No .hlsl files found in %~dp0
+    goto END
+)
 
 goto END
 

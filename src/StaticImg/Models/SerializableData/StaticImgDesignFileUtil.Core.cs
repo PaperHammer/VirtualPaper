@@ -135,8 +135,10 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                         fs.Read(headerBytes);
                         var header = BytesToStructure<FileHeader>(headerBytes);
 
-                        if (!header.IsValid())
+                        if (!header.IsValid()) {
+                            fs?.Dispose();
                             throw new InvalidDataException("Invalid file header");
+                        }
 
                         fs.Position = 0; // 重置位置
                     }

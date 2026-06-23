@@ -253,4 +253,34 @@ Windows Explorer restarted twice in the last 30 seconds!This could be a conflict
 4. Close the window by clicking Apply and then OK.
 If it still doesn't work, shut down and restart or reboot the system.(Doesn't work in some Windows 10 preview versions)</value>
   </data>
+  <data name="RestartUpdate_InvalidInfo" xml:space="preserve">
+    <value>Invalid update info</value>
+  </data>
+  <data name="RestartUpdate_Starting" xml:space="preserve">
+    <value>Starting update...</value>
+  </data>
+  <data name="RestartUpdate_Completed" xml:space="preserve">
+    <value>Update completed. UI will restart.</value>
+  </data>
+  <data name="RestartUpdate_Failed" xml:space="preserve">
+    <value>Update failed: {0}</value>
+  </data>
+  <data name="RestartUpdate_Stage_Downloading" xml:space="preserve">
+    <value>Downloading plugins...</value>
+  </data>
+  <data name="RestartUpdate_Stage_BackingUp" xml:space="preserve">
+    <value>Backing up current plugins...</value>
+  </data>
+  <data name="RestartUpdate_Stage_Replacing" xml:space="preserve">
+    <value>Replacing plugin files...</value>
+  </data>
+  <data name="RestartUpdate_Stage_Completed" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="RestartUpdate_Stage_Failed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="RestartUpdate_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
 </root>

@@ -116,6 +116,8 @@ namespace VirtualPaper {
             _serviceProvider = ConfigureServices();
             // 将方法绑定到 Grpc 服务上
             _grpcServer = ConfigureGrpcServer();
+            // 检查是否有未完成的热更新，执行恢复（阻塞等待完成）
+            Services.GetRequiredService<IRestartUpdateService>().CheckAndRecoverAsync().GetAwaiter().GetResult();
             #endregion
 
             #region 用户配置
@@ -229,6 +231,8 @@ namespace VirtualPaper {
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
+                .AddSingleton<IRestartUpdateService, RestartUpdateService>()
+                .AddSingleton<IAppBuildService, AppBuildService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
                 .AddSingleton<IWindowService, WindowService>()
                 .AddSingleton<INativeService, NativeService>()
@@ -252,6 +256,7 @@ namespace VirtualPaper {
                 .AddTransient<DebugLog>()
                 .AddTransient<AppUpdaterWindow>()
                 .AddTransient<AppUpdaterWindowViewModel>()
+                .AddTransient<RestartUpdateWindow>()
 
                 .AddTransient<TrayCommand>()
 
@@ -319,6 +324,17 @@ namespace VirtualPaper {
         public static void AppUpdateDialog(AppUpdaterEventArgs e) {
             _updateNotify = false;
             var windowService = Services.GetRequiredService<IWindowService>();
+            var updater = Services.GetRequiredService<IAppUpdaterService>();
+            var releaseInfo = updater.LastReleaseInfo;
+
+            // Check if restart-style update
+            if (releaseInfo != null && releaseInfo.IsRestartUpdate) {
+                var restartWindow = new RestartUpdateWindow(releaseInfo);
+                restartWindow.Show();
+                return;
+            }
+
+            // Installer-style update
             var info = new AppUpdateInfo(e.UpdateUri, e.UpdateSHAUri, e.UpdateVersion.ToString(), e.ChangeLog);
             windowService.Show<AppUpdaterWindow>(info);
         }

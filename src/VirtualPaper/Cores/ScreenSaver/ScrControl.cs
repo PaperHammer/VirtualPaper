@@ -7,6 +7,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils.Interfcaes;
@@ -45,6 +46,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
         }
 
         public void Start() {
+            if (UpdateLock.IsPluginUpdating("ScrSaver")) return;
             if (!_userSettings.Settings.IsScreenSaverOn || _isTiming || IsRunning) return;
 
             try {

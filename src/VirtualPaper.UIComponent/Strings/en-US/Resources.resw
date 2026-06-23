@@ -195,6 +195,42 @@ The file cannot be imported: </value>
   <data name="InfobarMsg_Success" xml:space="preserve">
     <value>Accomplished</value>
   </data>
+  <data name="AppUpdater_RollbackMessage" xml:space="preserve">
+    <value>Update failed. Please retry or perform a full update.</value>
+  </data>
+  <data name="Settings_General_Version_Plugins" xml:space="preserve">
+    <value>Plugins Version</value>
+  </data>
+  <data name="RestartUpdate_InvalidInfo" xml:space="preserve">
+    <value>Invalid update info</value>
+  </data>
+  <data name="RestartUpdate_Starting" xml:space="preserve">
+    <value>Starting update...</value>
+  </data>
+  <data name="RestartUpdate_Completed" xml:space="preserve">
+    <value>Update completed. UI will restart.</value>
+  </data>
+  <data name="RestartUpdate_Failed" xml:space="preserve">
+    <value>Update failed: {0}</value>
+  </data>
+  <data name="RestartUpdate_Stage_Downloading" xml:space="preserve">
+    <value>Downloading plugins...</value>
+  </data>
+  <data name="RestartUpdate_Stage_BackingUp" xml:space="preserve">
+    <value>Backing up current plugins...</value>
+  </data>
+  <data name="RestartUpdate_Stage_Replacing" xml:space="preserve">
+    <value>Replacing plugin files...</value>
+  </data>
+  <data name="RestartUpdate_Stage_Completed" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="RestartUpdate_Stage_Failed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="RestartUpdate_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
   <data name="Text_Apply" xml:space="preserve">
     <value>Apply</value>
   </data>

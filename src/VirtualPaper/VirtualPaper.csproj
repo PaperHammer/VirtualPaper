@@ -14,6 +14,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Folder Include="Cores\AppUpdate\Models\" />
 		<Folder Include="Plugins\" />
 	</ItemGroup>
 
@@ -51,7 +52,27 @@
 			<_PluginFiles Include="$(MSBuildProjectDirectory)\Plugins\**\*" Exclude="$(MSBuildProjectDirectory)\Plugins\**\*.pdb;&#xD;&#xA;			                       $(MSBuildProjectDirectory)\Plugins\**\*.xml" />
 		</ItemGroup>
 		<Copy SourceFiles="@(_PluginFiles)" DestinationFiles="@(_PluginFiles->'$(OutDir)Plugins\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" />
-		<Message Text="[Copy] Plugins ? $(OutDir)Plugins\" Importance="normal" />
+		<Message Text="[Copy] Plugins → $(OutDir)Plugins\" Importance="normal" />
+	</Target>
+
+	<!-- 生成 app_build.json：编译时写入 build number 和各 plugin 版本 -->
+	<Target Name="GenerateAppBuildJson" AfterTargets="CopyPluginsToOutput">
+		<PropertyGroup>
+			<_BuildNumber>$([System.DateTime]::Now.ToString('yyMM'))R$([System.DateTime]::Now.ToString('dd'))T$([System.DateTime]::Now.ToString('HHmm'))</_BuildNumber>
+			<_AppBuildJsonPath>$(OutDir)app_build.json</_AppBuildJsonPath>
+			<_AppBuildJsonContent>
+{
+  "app_build": "$(_BuildNumber)",
+  "plugins": {
+    "UI": "$(_BuildNumber)",
+    "PlayerWeb": "$(_BuildNumber)",
+    "ScrSaver": "$(_BuildNumber)"
+  }
+}
+			</_AppBuildJsonContent>
+		</PropertyGroup>
+		<WriteLinesToFile File="$(_AppBuildJsonPath)" Lines="$(_AppBuildJsonContent)" Overwrite="true" />
+		<Message Text="[Build] Generated app_build.json with build $(_BuildNumber)" Importance="high" />
 	</Target>
 
 	<!-- 构建完成后校验：确认各插件 exe 已复制到输出目录的 Plugins 子目录中 -->

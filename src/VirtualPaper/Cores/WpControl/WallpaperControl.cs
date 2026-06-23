@@ -196,6 +196,11 @@ namespace VirtualPaper.Cores.WpControl {
         public Grpc_RestartWallpaperResponse RestoreWallpaper() {
             Grpc_RestartWallpaperResponse response = new();
 
+            if (VirtualPaper.Cores.AppUpdate.UpdateLock.IsPluginUpdating("PlayerWeb")) {
+                ArcLog.GetLogger<WallpaperControl>().Warn("RestoreWallpaper blocked: PlayerWeb update in progress");
+                return response;
+            }
+
             try {
                 ArcLog.GetLogger<WallpaperControl>().Info("Restore wallpapers...");
                 var wallpaperLayouts = _userSettings.WallpaperLayouts.ToList().AsReadOnly();

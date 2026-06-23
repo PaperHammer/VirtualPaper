@@ -64,6 +64,11 @@ namespace VirtualPaper.Common {
             public static string TempWebView2Dir => Path.Combine(AppDataDir, "WebView2");
             public static string TempScrWebView2Dir => Path.Combine(AppDataDir, "ScrWebView2");
 
+            public static string PendingUpdatesDir => Path.Combine(AppDataDir, "pending_updates");
+            public static string UpdateFlagPath => Path.Combine(PendingUpdatesDir, "update.flag");
+            public static string UpdateBackupDir => Path.Combine(PendingUpdatesDir, "_backup");
+            public static string RollbackNoticePath => Path.Combine(AppDataDir, "update_rollback_notice.json");
+
             private static class Legacy {
                 public static string AppRulesPath => Path.Combine(AppDataDir, "AppRules.json");
                 public static string WallpaperLayoutPath => Path.Combine(AppDataDir, "WallpaperLayout.json");
@@ -129,6 +134,7 @@ namespace VirtualPaper.Common {
             public static string PipeServerName => UniqueAppUid + Environment.UserName;
             public static string UniqueAppUid => "Virtual:WALLPAPERSYSTEM";
             public static string UniqueAppUIUid => "Virtual:UI:WALLPAPERSYSTEM";
+            public static string AppBuildFile => "app_build.json";
         }
 
         public static class EnviromentVarKey {
@@ -154,6 +160,18 @@ namespace VirtualPaper.Common {
             public static string InfobarMsg_Err => "InfobarMsg_Err";
             public static string InfobarMsg_ImportErr => "InfobarMsg_ImportErr";
             public static string InfobarMsg_Success => "InfobarMsg_Success";
+            public static string AppUpdater_RollbackMessage => "AppUpdater_RollbackMessage";
+            public static string Settings_General_Version_Plugins => "Settings_General_Version_Plugins";
+            public static string RestartUpdate_InvalidInfo => "RestartUpdate_InvalidInfo";
+            public static string RestartUpdate_Starting => "RestartUpdate_Starting";
+            public static string RestartUpdate_Completed => "RestartUpdate_Completed";
+            public static string RestartUpdate_Failed => "RestartUpdate_Failed";
+            public static string RestartUpdate_Stage_Downloading => "RestartUpdate_Stage_Downloading";
+            public static string RestartUpdate_Stage_BackingUp => "RestartUpdate_Stage_BackingUp";
+            public static string RestartUpdate_Stage_Replacing => "RestartUpdate_Stage_Replacing";
+            public static string RestartUpdate_Stage_Completed => "RestartUpdate_Stage_Completed";
+            public static string RestartUpdate_Stage_Failed => "RestartUpdate_Stage_Failed";
+            public static string RestartUpdate_Close => "RestartUpdate_Close";
             public static string ScreenSaver__effectBubble => "ScreenSaver__effectBubble";
             public static string ScreenSaver__effectNone => "ScreenSaver__effectNone";
             public static string Settings_General_AppearanceAndAction__sysbdAcrylic => "Settings_General_AppearanceAndAction__sysbdAcrylic";

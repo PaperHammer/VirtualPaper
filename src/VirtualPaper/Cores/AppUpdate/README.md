@@ -1,5 +1,21 @@
 # Hot Update Mechanism
 
+## Supported Plugins
+
+| Plugin | Type | Loaded By | Hot-Updatable |
+|--------|------|-----------|---------------|
+| **UI** | Separate process | Self | ✅ |
+| **PlayerWeb** | Separate process | Self | ✅ |
+| **ScrSaver** | Separate process | Self | ✅ |
+| **ML** | DLL + model files | UI process | ✅ (UI restart required) |
+| **Shaders** | Data files (.cso) | PlayerWeb process | ✅ (PlayerWeb restart required) |
+
+**Update behavior:**
+- Restart-style update always stops and restarts UI
+- If PlayerWeb is being updated, it's also stopped and restarted with UI
+- ML and Shaders don't need explicit stop — they're loaded automatically when UI/PlayerWeb starts
+- UI startup is blocked if UI, ML, or Shaders are being updated
+
 ## Update Type Detection
 
 When a new release is found, determine update type:
@@ -18,59 +34,131 @@ Fetch release → Check if "update_manifest.json" exists in release assets
 ```json
 {
   "type": "restart",
-  "app_build": "20260623.1",
-  "min_app_build": "20260601.1",
+  "app_build": "2606R23T1430",
+  "min_app_build": "2606R01T1200",
   "plugins": {
     "UI": {
-      "build": "20260623.1",
-      "asset": "plugin_UI_20260623.1.zip",
+      "build": "2606R23T1430",
+      "asset": "plugin_UI_2606R23T1430.zip",
       "sha256": "abc..."
     },
     "PlayerWeb": {
-      "build": "20260620.1",
-      "asset": "plugin_PlayerWeb_20260620.1.zip",
+      "build": "2606R20T1000",
+      "asset": "plugin_PlayerWeb_2606R20T1000.zip",
       "sha256": "def..."
     }
-  }
+  },
+  "removed_plugins": ["ScrSaver"]
 }
 ```
 
 - `type`: `"restart"` (hot-update) or `"install"` (installer update)
-- `app_build`: current app build number
+- `app_build`: current app build number (format: `YYMM` + `R` + `DD` + `T` + `HHMM`, e.g., `2606R23T1430`)
 - `min_app_build`: minimum app build required for this hot-update to be compatible
 - `plugins`: map of plugin name to update info
   - `build`: plugin build number (only changes when this plugin is updated)
   - `asset`: release asset filename to download
   - `sha256`: expected hash for verification
+- `removed_plugins`: list of plugin names to be removed (optional)
+  - Client deletes local `Plugins/{name}/` directory for each entry
+  - Supports complete plugin removal via hot-update
+
+### Plugin Zip Structure
+
+Each plugin zip (`plugin_{name}_{build}.zip`) contains the plugin folder contents directly:
+```
+plugin_UI_2606R23T1430.zip
+├── VirtualPaper.UI.exe
+├── VirtualPaper.UI.dll
+├── ... (all plugin files)
+```
+
+The zip-level SHA256 is stored in `update_manifest.json` for download verification.
+
+### Client Update Flow (Parallel Execution)
+
+```
+Phase 1: Download (UI still running)
+1. Download all plugin zips in parallel
+   └── Verify each zip SHA256 against manifest (parallel)
+2. Write update flag (status="pending") with file hashes
+
+Phase 2: Execute (triggered by UI close or core start)
+3. Verify downloaded files against hashes in flag
+4. Lock plugins (prevent startup)
+5. Stop plugins (always stops UI)
+6. Backup current plugins
+7. Update flag to "in_progress"
+8. Extract and replace all plugins in parallel
+9. Update app_build.json
+10. Process removed_plugins
+11. Update flag to "completed", cleanup
+12. Restart UI
+```
+
+### Pending Update Mechanism
+
+If the user cancels UI close (e.g., unsaved work), the update stays in "pending" state:
+- Downloaded files remain in `pending_updates/`
+- Flag file indicates pending state
+- On next UI close or core start, `CheckAndRecoverAsync` detects pending update and executes it
+
+**Trigger points:**
+- `UIRunnerService.Proc_UI_Exited` — when UI process exits normally
+- `App.xaml.cs` startup — `CheckAndRecoverAsync` called on core start
+
+**Safety:**
+- Files are verified against stored hashes before execution
+- If files are missing or corrupted, pending update is cleaned up
+- `UpdateLock` prevents re-entry during active update
 
 ## Version Management
 
-Each component has an independent build number:
+Each component has an independent build number (format: `YYMM` + `R` + `DD` + `T` + `HHMM`):
 
 | Component | Build Number Rule | Example |
 |-----------|-------------------|---------|
-| App | Changes on **any** update | `20260623.1` → `20260624.1` (any update) |
-| UI Plugin | Changes only when **UI** is updated | `20260623.1` → stays `20260623.1` if not updated |
-| PlayerWeb Plugin | Changes only when **PlayerWeb** is updated | `20260620.1` → stays `20260620.1` if not updated |
+| App | Changes on **any** update | `2606R23T1430` → `2606R24T1000` (any update) |
+| UI Plugin | Changes only when **UI** is updated | `2606R23T1430` → stays `2606R23T1430` if not updated |
+| PlayerWeb Plugin | Changes only when **PlayerWeb** is updated | `2606R20T1000` → stays `2606R20T1000` if not updated |
 
 ### Local Version Tracking
 
-Each plugin folder contains `version.json`:
+`app_build.json` stores all build numbers:
 ```json
 {
-  "build": "20260623.1"
+  "app_build": "2606R23T1430",
+  "plugins": {
+    "UI": "2606R23T1430",
+    "PlayerWeb": "2606R20T1000"
+  }
 }
 ```
+
+**File locations:**
+- **Installation directory** (`BaseDirectory/app_build.json`): source of truth. Generated at build time, updated by hot-update.
+- **AppData directory** (`AppDataDir/app_build.json`): synced copy. Force-overwritten from installation directory on every main process startup.
+
+**Flow:**
+1. Build time → MSBuild generates `app_build.json` in output directory
+2. Installer → includes file, installs to installation directory
+3. Main process startup → `AppBuildService.Refresh()` reads from installation dir → force-overwrites to AppData
+4. Hot-update → `RestartUpdateService` updates installation directory's `app_build.json`
+5. UI reads from AppData (always up-to-date after sync)
 
 ### Update Decision Logic
 
 1. Read manifest
-2. For each plugin in manifest:
-   - Read local `Plugins/{plugin}/version.json`
-   - Compare `build` number
+2. Read local `app_build.json`
+3. Process `removed_plugins` (if any):
+   - Delete local `Plugins/{name}/` directory for each entry
+   - Remove from local `app_build.json`
+4. For each plugin in manifest:
+   - Compare local plugin build vs manifest build
    - Different or missing → needs update
    - Same → skip
-3. Only download and replace plugins that need update
+5. Only download and replace plugins that need update
+6. After successful update, update `app_build.json`
 
 ## Storage Structure
 

@@ -1,4 +1,5 @@
 using VirtualPaper.Common.Events;
+using VirtualPaper.Utils.Interfcaes;
 
 namespace VirtualPaper.Cores.AppUpdate {
     public interface IAppUpdaterService {
@@ -10,9 +11,9 @@ namespace VirtualPaper.Cores.AppUpdate {
         Uri? LastCheckShaUri { get; }
         Version LastCheckVersion { get; }
         AppUpdateStatus Status { get; }
+        ReleaseInfo? LastReleaseInfo { get; }
 
         Task<AppUpdateStatus> CheckUpdate(int fetchDelay = 45000);
-        //Task<(Uri exeUri, Uri shaUri, Version version, string changelog)> GetLatestRelease(bool isBeta);
         void Start();
         void Stop();
     }

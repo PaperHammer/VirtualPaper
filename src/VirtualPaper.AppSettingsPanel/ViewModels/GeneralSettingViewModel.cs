@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Grpc.Core;
@@ -13,6 +14,7 @@ using VirtualPaper.Common.Utils.Localization;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
@@ -34,7 +36,36 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                     ver += "b";
                 else if (Constants.ApplicationType.IsMSIX)
                     ver += $" {LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_MsStore)}";
+
+                var appBuild = LoadAppBuildInfo().AppBuild;
+                if (!string.IsNullOrEmpty(appBuild))
+                    ver += $" (Build {appBuild})";
+
                 return ver;
+            }
+        }
+
+        public List<string> PluginVersionTexts {
+            get {
+                var buildInfo = LoadAppBuildInfo();
+                return buildInfo.Plugins.Select(kv => $"{kv.Key}: {kv.Value}").ToList();
+            }
+        }
+
+        public bool HasPluginVersions => PluginVersionTexts.Count > 0;
+
+        public Microsoft.UI.Xaml.Visibility PluginVersionsVisibility =>
+            HasPluginVersions ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
+
+        private static AppBuildInfo LoadAppBuildInfo() {            
+            var path = Path.Combine(Constants.CommonPaths.AppDataDir, Constants.CoreField.AppBuildFile);
+            if (!File.Exists(path)) return new AppBuildInfo();
+            try {
+                var json = File.ReadAllText(path);
+                return JsonSerializer.Deserialize(json, AppBuildInfoContext.Default.AppBuildInfo) ?? new AppBuildInfo();
+            }
+            catch {
+                return new AppBuildInfo();
             }
         }
 

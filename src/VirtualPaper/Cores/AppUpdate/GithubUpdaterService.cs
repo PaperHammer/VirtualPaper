@@ -15,6 +15,7 @@ namespace VirtualPaper.Cores.AppUpdate {
         public Uri LastCheckShaUri { get; private set; } = null!;
         public Version LastCheckVersion { get; private set; } = new Version(0, 0, 0, 0);
         public AppUpdateStatus Status { get; private set; } = AppUpdateStatus.Notchecked;
+        public ReleaseInfo? LastReleaseInfo { get; private set; }
 
         public GithubUpdaterService(
             IGithubReleaseClient githubReleaseClient,
@@ -35,13 +36,15 @@ namespace VirtualPaper.Cores.AppUpdate {
 
             try {
                 await Task.Delay(fetchDelay);
-                (Uri exeUri, Uri shaUri, Version verison, string changelog) = await _githubReleaseClient.GetLatestRelease(Constants.ApplicationType.IsTestBuild);
-                int verCompare = _versionComparer.CompareAssemblyVersion(verison);
+                var releaseInfo = await _githubReleaseClient.GetLatestRelease(Constants.ApplicationType.IsTestBuild);
+                LastReleaseInfo = releaseInfo;
+
+                int verCompare = _versionComparer.CompareAssemblyVersion(releaseInfo.Version);
                 if (verCompare > 0) {
                     //update Available.
                     Status = AppUpdateStatus.Available;
                 }
-                else if (verCompare < 0 || exeUri == null || shaUri == null) {
+                else if (verCompare < 0 || releaseInfo.InstallerUri == null) {
                     //beta release.
                     Status = AppUpdateStatus.Invalid;
                 }
@@ -49,10 +52,10 @@ namespace VirtualPaper.Cores.AppUpdate {
                     //up-to-date.
                     Status = AppUpdateStatus.Uptodate;
                 }
-                LastCheckUri = exeUri;
-                LastCheckShaUri = shaUri;
-                LastCheckVersion = verison;
-                LastCheckChangelog = changelog;
+                LastCheckUri = releaseInfo.InstallerUri ?? new Uri("about:blank");
+                LastCheckShaUri = releaseInfo.InstallerShaUri;
+                LastCheckVersion = releaseInfo.Version;
+                LastCheckChangelog = releaseInfo.Changelog;
             }
             catch (RateLimitExceededException e) {
                 ArcLog.GetLogger<GithubUpdaterService>().Warn("Github rate limit exceeded, retry after reset");

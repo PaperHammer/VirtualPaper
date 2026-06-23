@@ -15,6 +15,13 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
         private static readonly Version FakeVersion = new(0, 0, 0, 0);
         private const string FakeChangelog = "- bug fix";
 
+        private static ReleaseInfo CreateFakeReleaseInfo() => new() {
+            InstallerUri = FakeUri,
+            InstallerShaUri = FakeShaUri,
+            Version = FakeVersion,
+            Changelog = FakeChangelog
+        };
+
         [TestInitialize]
         public void TestInitialize() {
             _mockClient = new Mock<IGithubReleaseClient>();
@@ -22,7 +29,7 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
 
             _mockClient
                 .Setup(c => c.GetLatestRelease(It.IsAny<bool>()))
-                .ReturnsAsync((FakeUri, FakeShaUri, FakeVersion, FakeChangelog));
+                .ReturnsAsync(CreateFakeReleaseInfo());
 
             _service = new GithubUpdaterService(_mockClient.Object, _mockComparer.Object);
         }

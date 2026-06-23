@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.lang;
 using VirtualPaper.Services.Interfaces;
 using MessageBox = System.Windows.MessageBox;
@@ -30,6 +32,13 @@ namespace VirtualPaper.Services {
         }
 
         public void ShowUI() {
+            if (VirtualPaper.Cores.AppUpdate.UpdateLock.IsPluginUpdating("UI") ||
+                VirtualPaper.Cores.AppUpdate.UpdateLock.IsPluginUpdating("ML") ||
+                VirtualPaper.Cores.AppUpdate.UpdateLock.IsPluginUpdating("Shaders")) {
+                App.Log.Warn("UI startup blocked: update in progress");
+                return;
+            }
+
             if (_processUI != null) {
                 try {
                     App.Log.Warn("UI is already running");
@@ -133,6 +142,25 @@ namespace VirtualPaper.Services {
             _processUI.OutputDataReceived -= Proc_OutputDataReceived;
             _processUI.Dispose();
             _processUI = null;
+
+            // Check for pending restart update when UI exits normally
+            // (not during an update - UpdateLock would be set in that case)
+            if (!UpdateLock.IsUpdating) {
+                _ = CheckAndExecutePendingUpdateAsync();
+            }
+        }
+
+        private async Task CheckAndExecutePendingUpdateAsync() {
+            try {
+                var restartService = App.Services.GetRequiredService<IRestartUpdateService>();
+                var flagPath = Constants.CommonPaths.UpdateFlagPath;
+                if (File.Exists(flagPath)) {
+                    await restartService.ExecutePendingUpdateAsync();
+                }
+            }
+            catch (Exception ex) {
+                App.Log.Error("Failed to execute pending restart update", ex);
+            }
         }
 
         #region dispose

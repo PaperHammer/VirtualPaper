@@ -1,0 +1,453 @@
+using System.Collections.Concurrent;
+using System.IO;
+using System.IO.Compression;
+using System.Text.Json;
+using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
+using VirtualPaper.Cores.ScreenSaver;
+using VirtualPaper.Cores.WpControl;
+using VirtualPaper.Models.AppUpdate;
+using VirtualPaper.Services.Interfaces;
+using VirtualPaper.Utils.Interfcaes;
+
+namespace VirtualPaper.Cores.AppUpdate {
+    public interface IRestartUpdateService {
+        Task<RestartUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default);
+        Task<RestartUpdateResult> ExecutePendingUpdateAsync(IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default);
+        Task CheckAndRecoverAsync(CancellationToken token = default);
+    }
+
+    public class RestartUpdateService : IRestartUpdateService {
+        public RestartUpdateService(
+            IDownloadService downloadService,
+            IWallpaperControl wallpaperControl,
+            IScrControl scrControl,
+            IUIRunnerService uiRunnerService,
+            IAppBuildService appBuildService) {
+            _downloadService = downloadService;
+            _wallpaperControl = wallpaperControl;
+            _scrControl = scrControl;
+            _uiRunnerService = uiRunnerService;
+            _appBuildService = appBuildService;
+        }
+
+        public async Task<RestartUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default) {
+            var result = new RestartUpdateResult();
+
+            if (releaseInfo.Manifest == null || !releaseInfo.Manifest.IsRestartUpdate) {
+                result.Success = false;
+                result.ErrorMessage = "Not a restart-style update";
+                return result;
+            }
+
+            var manifest = releaseInfo.Manifest;
+            var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+
+            try {
+                // Clean up any previous pending updates
+                CleanupPendingUpdates();
+
+                Directory.CreateDirectory(pendingDir);
+
+                // Step 1: Download and verify plugin zips in parallel (UI still running)
+                progress?.Report(new RestartUpdateProgress(RestartUpdateStage.Downloading, 0, "Downloading plugins..."));
+                int totalPlugins = manifest.Plugins.Count;
+                int completedCount = 0;
+
+                var downloadTasks = manifest.Plugins.Select(async kv => {
+                    var (pluginName, pluginInfo) = kv;
+                    token.ThrowIfCancellationRequested();
+
+                    if (!releaseInfo.PluginAssetUris.TryGetValue(pluginName, out var downloadUri)) {
+                        throw new InvalidOperationException($"Download URI not found for plugin: {pluginName}");
+                    }
+
+                    var pluginDir = Path.Combine(pendingDir, pluginName);
+                    Directory.CreateDirectory(pluginDir);
+                    var zipPath = Path.Combine(pluginDir, pluginInfo.Asset);
+
+                    // Download
+                    await foreach (var _ in _downloadService.DownloadAsync(downloadUri, zipPath, token)) {
+                        // Consume progress
+                    }
+
+                    // Verify SHA256
+                    bool verified = await _downloadService.VerifyFileIntegrityAsync(zipPath, pluginInfo.Sha256, token);
+                    if (!verified) {
+                        throw new InvalidDataException($"SHA256 verification failed for plugin: {pluginName}");
+                    }
+
+                    var count = Interlocked.Increment(ref completedCount);
+                    progress?.Report(new RestartUpdateProgress(RestartUpdateStage.Downloading, (float)count / totalPlugins * 100, $"Downloaded {pluginName}"));
+                });
+
+                await Task.WhenAll(downloadTasks);
+
+                // Step 2: Write update flag (pending) with file hashes for later verification
+                var updateFlag = new UpdateFlag {
+                    Status = UpdateFlag.UpdateStatusPending,
+                    Plugins = manifest.Plugins.ToDictionary(
+                        kv => kv.Key,
+                        kv => new PluginFlagInfo {
+                            Target = Path.Combine("Plugins", kv.Key),
+                            Build = kv.Value.Build,
+                            Files = new List<FileHashInfo> {
+                                new FileHashInfo {
+                                    Name = kv.Value.Asset,
+                                    Sha256 = kv.Value.Sha256
+                                }
+                            }
+                        }),
+                    RemovedPlugins = manifest.RemovedPlugins
+                };
+                await SaveUpdateFlagAsync(updateFlag, token);
+
+                // Step 3: Execute the pending update (close UI + backup + replace)
+                return await ExecutePendingUpdateAsync(progress, token);
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<RestartUpdateService>().Error("Restart update download failed", ex);
+                result.Success = false;
+                result.ErrorMessage = ex.Message;
+                CleanupPendingUpdates();
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Execute a pending update: close UI, backup, replace, cleanup.
+        /// Can be called immediately after download, or later on UI close / core start.
+        /// </summary>
+        public async Task<RestartUpdateResult> ExecutePendingUpdateAsync(IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default) {
+            var result = new RestartUpdateResult();
+            var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+            var flagPath = Constants.CommonPaths.UpdateFlagPath;
+
+            if (!File.Exists(flagPath)) {
+                result.Success = false;
+                result.ErrorMessage = "No pending update found";
+                return result;
+            }
+
+            var flag = await LoadUpdateFlagAsync(token);
+            if (flag == null || flag.Status != UpdateFlag.UpdateStatusPending) {
+                result.Success = false;
+                result.ErrorMessage = "No pending update found or invalid state";
+                return result;
+            }
+
+            try {
+                // Verify downloaded files against hashes in flag
+                foreach (var (pluginName, pluginInfo) in flag.Plugins) {
+                    foreach (var fileHash in pluginInfo.Files) {
+                        var filePath = Path.Combine(pendingDir, pluginName, fileHash.Name);
+                        if (!File.Exists(filePath)) {
+                            throw new FileNotFoundException($"Pending update file missing: {filePath}");
+                        }
+                        bool verified = await _downloadService.VerifyFileIntegrityAsync(filePath, fileHash.Sha256, token);
+                        if (!verified) {
+                            throw new InvalidDataException($"Pending update file verification failed: {filePath}");
+                        }
+                    }
+                }
+
+                // Lock: prevent specific plugin startup
+                var updatingPluginNames = flag.Plugins.Keys.ToList();
+                if (!updatingPluginNames.Contains("UI")) {
+                    updatingPluginNames.Add("UI");
+                }
+                UpdateLock.SetUpdatingPlugins(updatingPluginNames);
+
+                // Stop plugins (always stops UI, plus others if being updated)
+                StopPlugins(flag.Plugins.Keys.ToList());
+
+                // Step: Backup current plugins
+                progress?.Report(new RestartUpdateProgress(RestartUpdateStage.BackingUp, 0, "Backing up current plugins..."));
+                var backupDir = Constants.CommonPaths.UpdateBackupDir;
+                Directory.CreateDirectory(backupDir);
+
+                foreach (var (pluginName, pluginInfo) in flag.Plugins) {
+                    var sourceDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pluginInfo.Target));
+                    if (Directory.Exists(sourceDir)) {
+                        var backupPath = Path.Combine(backupDir, pluginName);
+                        CopyDirectory(sourceDir, backupPath, true);
+                    }
+                }
+
+                // Step: Update flag to in_progress
+                flag.Status = UpdateFlag.UpdateStatusInProgress;
+                await SaveUpdateFlagAsync(flag, token);
+
+                // Step: Replace plugins in parallel
+                progress?.Report(new RestartUpdateProgress(RestartUpdateStage.Replacing, 0, "Replacing plugins files..."));
+                int totalPlugins = flag.Plugins.Count;
+                int replacedCount = 0;
+
+                var replaceTasks = flag.Plugins.Select(async kv => {
+                    var (pluginName, pluginInfo) = kv;
+                    token.ThrowIfCancellationRequested();
+
+                    var targetDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pluginInfo.Target));
+                    var zipPath = Path.Combine(pendingDir, pluginName, pluginInfo.Files[0].Name);
+
+                    // Clear target directory
+                    if (Directory.Exists(targetDir)) {
+                        DeleteDirectoryContents(targetDir);
+                    }
+                    else {
+                        Directory.CreateDirectory(targetDir);
+                    }
+
+                    // Extract zip
+                    ZipFile.ExtractToDirectory(zipPath, targetDir, true);
+
+                    var count = Interlocked.Increment(ref replacedCount);
+                    progress?.Report(new RestartUpdateProgress(RestartUpdateStage.Replacing, (float)count / totalPlugins * 100, $"Replaced {pluginName}"));
+                });
+
+                await Task.WhenAll(replaceTasks);
+
+                // Step: Update app_build.json for all replaced plugins
+                foreach (var (pluginName, pluginInfo) in flag.Plugins) {
+                    _appBuildService.BuildInfo.Plugins[pluginName] = pluginInfo.Build;
+                }
+                await _appBuildService.SaveAsync();
+
+                // Step: Process removed plugins
+                foreach (var pluginName in flag.RemovedPlugins) {
+                    var pluginDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins", pluginName));
+                    if (Directory.Exists(pluginDir)) {
+                        Directory.Delete(pluginDir, true);
+                    }
+                    _appBuildService.BuildInfo.Plugins.Remove(pluginName);
+                }
+                if (flag.RemovedPlugins.Count > 0) {
+                    await _appBuildService.SaveAsync();
+                }
+
+                // Step: Update flag to completed, then cleanup
+                flag.Status = UpdateFlag.UpdateStatusCompleted;
+                await SaveUpdateFlagAsync(flag, token);
+                CleanupPendingUpdates();
+
+                result.Success = true;
+                progress?.Report(new RestartUpdateProgress(RestartUpdateStage.Completed, 100, "Update completed"));
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<RestartUpdateService>().Error("Restart update failed", ex);
+                result.Success = false;
+                result.ErrorMessage = ex.Message;
+
+                // Rollback
+                await RollbackAsync();
+
+                // Write rollback notice
+                await WriteRollbackNoticeAsync(token);
+            }
+            finally {
+                // Unlock
+                UpdateLock.ClearUpdatingPlugins();
+                // Always restart UI after restart-style update
+                _uiRunnerService.ShowUI();
+            }
+
+            return result;
+        }
+
+        public async Task CheckAndRecoverAsync(CancellationToken token = default) {
+            var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+            if (!Directory.Exists(pendingDir)) return;
+
+            var flagPath = Constants.CommonPaths.UpdateFlagPath;
+            if (!File.Exists(flagPath)) {
+                // Flag missing but pending dir exists - cleanup
+                CleanupPendingUpdates();
+                return;
+            }
+
+            try {
+                var flag = await LoadUpdateFlagAsync(token);
+                if (flag == null) {
+                    // Flag corrupted - rollback if backup exists
+                    UpdateLock.SetUpdatingPlugins(GetAllPluginNames());
+                    StopPlugins(GetAllPluginNames());
+                    await RollbackAsync();
+                    UpdateLock.ClearUpdatingPlugins();
+                    _uiRunnerService.ShowUI();
+                    return;
+                }
+
+                switch (flag.Status) {
+                    case UpdateFlag.UpdateStatusPending:
+                        // Pending update - execute it (files already downloaded and verified)
+                        await ExecutePendingUpdateAsync();
+                        break;
+
+                    case UpdateFlag.UpdateStatusInProgress:
+                        // Crashed during update - rollback
+                        var crashedPlugins = flag.Plugins.Keys.ToList();
+                        UpdateLock.SetUpdatingPlugins(crashedPlugins);
+                        StopPlugins(crashedPlugins);
+                        await RollbackAsync();
+                        UpdateLock.ClearUpdatingPlugins();
+                        // Always restart UI after recovery
+                        _uiRunnerService.ShowUI();
+                        break;
+
+                    case UpdateFlag.UpdateStatusCompleted:
+                        // Completed but not cleaned up - just cleanup
+                        CleanupPendingUpdates();
+                        break;
+                }
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<RestartUpdateService>().Error("Recovery check failed", ex);
+                UpdateLock.SetUpdatingPlugins(GetAllPluginNames());
+                StopPlugins(GetAllPluginNames());
+                await RollbackAsync();
+                UpdateLock.ClearUpdatingPlugins();
+                _uiRunnerService.ShowUI();
+            }
+        }
+
+        private void StopPlugins(IEnumerable<string> pluginNames) {
+            var pluginList = pluginNames.Select(n => n.ToUpperInvariant()).ToHashSet();
+
+            // Always stop UI for restart-style update
+            try { _uiRunnerService.CloseUI(); }
+            catch (Exception ex) { ArcLog.GetLogger<RestartUpdateService>().Warn($"Failed to stop UI: {ex.Message}"); }
+
+            // Stop PlayerWeb if it's being updated
+            if (pluginList.Contains("PLAYERWEB")) {
+                try { _wallpaperControl.CloseAllWallpapers(); }
+                catch (Exception ex) { ArcLog.GetLogger<RestartUpdateService>().Warn($"Failed to stop PlayerWeb: {ex.Message}"); }
+            }
+
+            // Stop ScrSaver if it's being updated
+            if (pluginList.Contains("SCRSAVER")) {
+                try { _scrControl.Stop(); }
+                catch (Exception ex) { ArcLog.GetLogger<RestartUpdateService>().Warn($"Failed to stop ScrSaver: {ex.Message}"); }
+            }
+
+            // ML and Shaders don't need explicit stop - they're loaded by UI/PlayerWeb
+        }
+
+        private static IEnumerable<string> GetAllPluginNames() => new[] { "UI", "PlayerWeb", "ScrSaver", "ML", "Shaders" };
+
+        private async Task RollbackAsync() {
+            var backupDir = Constants.CommonPaths.UpdateBackupDir;
+            if (!Directory.Exists(backupDir)) {
+                ArcLog.GetLogger<RestartUpdateService>().Warn("No backup found for rollback");
+                CleanupPendingUpdates();
+                return;
+            }
+
+            try {
+                // Restore each backed up plugin
+                foreach (var backupPluginDir in Directory.GetDirectories(backupDir)) {
+                    var pluginName = Path.GetFileName(backupPluginDir);
+                    var targetDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins", pluginName));
+
+                    // Clear current
+                    if (Directory.Exists(targetDir)) {
+                        DeleteDirectoryContents(targetDir);
+                    }
+                    else {
+                        Directory.CreateDirectory(targetDir);
+                    }
+
+                    CopyDirectory(backupPluginDir, targetDir, true);
+                }
+
+                ArcLog.GetLogger<RestartUpdateService>().Info("Rollback completed");
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<RestartUpdateService>().Error("Rollback failed", ex);
+            }
+            finally {
+                CleanupPendingUpdates();
+            }
+        }
+
+        private async Task WriteRollbackNoticeAsync(CancellationToken token) {
+            var notice = new RollbackNotice {
+                Rollback = true,
+                MessageKey = Constants.I18n.AppUpdater_RollbackMessage
+            };
+            var json = JsonSerializer.Serialize(notice, RollbackNoticeContext.Default.RollbackNotice);
+            await File.WriteAllTextAsync(Constants.CommonPaths.RollbackNoticePath, json, token);
+        }
+
+        private void CleanupPendingUpdates() {
+            try {
+                var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+                if (Directory.Exists(pendingDir)) {
+                    Directory.Delete(pendingDir, true);
+                }
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<RestartUpdateService>().Warn($"Cleanup failed: {ex.Message}");
+            }
+        }
+
+        private async Task<UpdateFlag?> LoadUpdateFlagAsync(CancellationToken token) {
+            var flagPath = Constants.CommonPaths.UpdateFlagPath;
+            if (!File.Exists(flagPath)) return null;
+
+            var json = await File.ReadAllTextAsync(flagPath, token);
+            return JsonSerializer.Deserialize(json, UpdateFlagContext.Default.UpdateFlag);
+        }
+
+        private async Task SaveUpdateFlagAsync(UpdateFlag flag, CancellationToken token) {
+            var flagPath = Constants.CommonPaths.UpdateFlagPath;
+            Directory.CreateDirectory(Path.GetDirectoryName(flagPath)!);
+            var json = JsonSerializer.Serialize(flag, UpdateFlagContext.Default.UpdateFlag);
+            await File.WriteAllTextAsync(flagPath, json, token);
+        }
+
+        private static void CopyDirectory(string sourceDir, string destDir, bool overwrite) {
+            Directory.CreateDirectory(destDir);
+
+            foreach (var file in Directory.GetFiles(sourceDir)) {
+                var destFile = Path.Combine(destDir, Path.GetFileName(file));
+                File.Copy(file, destFile, overwrite);
+            }
+
+            foreach (var subDir in Directory.GetDirectories(sourceDir)) {
+                var destSubDir = Path.Combine(destDir, Path.GetFileName(subDir));
+                CopyDirectory(subDir, destSubDir, overwrite);
+            }
+        }
+
+        private static void DeleteDirectoryContents(string dirPath) {
+            foreach (var file in Directory.GetFiles(dirPath)) {
+                File.Delete(file);
+            }
+            foreach (var subDir in Directory.GetDirectories(dirPath)) {
+                Directory.Delete(subDir, true);
+            }
+        }
+
+        private readonly IDownloadService _downloadService;
+        private readonly IWallpaperControl _wallpaperControl;
+        private readonly IScrControl _scrControl;
+        private readonly IUIRunnerService _uiRunnerService;
+        private readonly IAppBuildService _appBuildService;
+    }
+
+    public class RestartUpdateResult {
+        public bool Success { get; set; }
+        public string? ErrorMessage { get; set; }
+    }
+
+    public record RestartUpdateProgress(RestartUpdateStage Stage, float Percent, string Message);
+
+    public enum RestartUpdateStage {
+        Downloading,
+        BackingUp,
+        Replacing,
+        Completed,
+        Failed
+    }
+}

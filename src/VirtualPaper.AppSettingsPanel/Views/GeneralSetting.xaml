@@ -18,59 +18,87 @@
                     Text="{markup:I18n Key=Settings_General_Text_Version}"
                     FontWeight="Bold"/>
 
-                <Grid x:Name="VersionContent"
-                    Height="90"
+                <Expander x:Name="VersionExpander"
                     Margin="0 5"
                     Padding="20 0"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
                     Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="auto"/>
-                    </Grid.ColumnDefinitions>
+                    <Expander.Header>
+                        <Grid Height="90">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="auto"/>
+                            </Grid.ColumnDefinitions>
 
-                    <FontIcon Margin="0 0 20 0" Glyph="&#xE117;"/>
-                    
-                    <Grid Grid.Column="1" VerticalAlignment="Center">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                        </Grid.RowDefinitions>
+                            <FontIcon Margin="0 0 20 0" Glyph="&#xE117;"/>
+                            
+                            <Grid Grid.Column="1" VerticalAlignment="Center">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="auto"/>
+                                </Grid.RowDefinitions>
 
-                        <TextBlock Text="{x:Bind _viewModel.AppVersionText}" FontSize="16"/>
-                        <TextBlock 
-                            Grid.Row="1" 
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{x:Bind _viewModel.Version_LastCheckDate, Mode=OneWay}"/>
-                        <HyperlinkButton
-                            Grid.Row="2"
-                            Content="{markup:I18n Key=Settings_General_Version_Release_Notes}"
-                            Margin="0"
-                            Padding="0"
-                            NavigateUri="https://github.com/PaperHammer/VirtualPaper/releases"/>
-                    </Grid>
+                                <TextBlock Text="{x:Bind _viewModel.AppVersionText}" FontSize="16"/>
+                                <TextBlock 
+                                    Grid.Row="1" 
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Text="{x:Bind _viewModel.Version_LastCheckDate, Mode=OneWay}"/>
+                                <HyperlinkButton
+                                    Grid.Row="2"
+                                    Content="{markup:I18n Key=Settings_General_Version_Release_Notes}"
+                                    Margin="0"
+                                    Padding="0"
+                                    NavigateUri="https://github.com/PaperHammer/VirtualPaper/releases"/>
+                            </Grid>
 
-                    <Grid Grid.Column="2" HorizontalAlignment="Stretch">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
 
-                        <ProgressRing x:Name="UpdateProgressRing"
-                            IsActive="{x:Bind _viewModel.IsUpdateRingActive, Mode=OneWay}"
-                            Margin="40 0"
-                            Background="Transparent"/>
-                        <Button x:Name="VersionCheckUpdate"
-                            Grid.Column="1" 
-                            Width="200"
-                            HorizontalAlignment="Stretch"
-                            Content="{markup:I18n Key=Settings_General_Version_UpdateCheck}"
-                            IsEnabled="{x:Bind _viewModel.IsUpdateBtnEnable, Mode=OneWay}"
-                            Command="{x:Bind _viewModel.CheckUpdateCommand}"
-                            Visibility="{x:Bind _viewModel.IsWinStore, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
-                    </Grid>
-                </Grid>
+                                <ProgressRing x:Name="UpdateProgressRing"
+                                    IsActive="{x:Bind _viewModel.IsUpdateRingActive, Mode=OneWay}"
+                                    Margin="40 0"
+                                    Background="Transparent"/>
+                                <Button x:Name="VersionCheckUpdate"
+                                    Grid.Column="1" 
+                                    Width="200"
+                                    HorizontalAlignment="Stretch"
+                                    Content="{markup:I18n Key=Settings_General_Version_UpdateCheck}"
+                                    IsEnabled="{x:Bind _viewModel.IsUpdateBtnEnable, Mode=OneWay}"
+                                    Command="{x:Bind _viewModel.CheckUpdateCommand}"
+                                    Visibility="{x:Bind _viewModel.IsWinStore, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
+                            </Grid>
+                        </Grid>
+                    </Expander.Header>
+                    <Expander.Content>
+                        <StackPanel Orientation="Vertical" Margin="35 10 35 10"
+                            Visibility="{x:Bind _viewModel.PluginVersionsVisibility}">
+                            <TextBlock Text="{markup:I18n Key=Settings_General_Version_Plugins}" 
+                                FontWeight="SemiBold" Margin="0 0 0 5"/>
+                            <ItemsRepeater ItemsSource="{x:Bind _viewModel.PluginVersionTexts, Mode=OneWay}">
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Grid Margin="0 2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="•" Margin="0 0 8 0" 
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock Grid.Column="1" Text="{x:Bind}" 
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                        </StackPanel>
+                    </Expander.Content>
+                </Expander>
 
                 <InfoBar x:Name="InfoBarFindNew"
                     IsOpen="True"

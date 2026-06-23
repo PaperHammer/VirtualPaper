@@ -253,4 +253,34 @@ Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virt
 4. 点击 "应用"，然后按 "确定"，关闭该窗口。
 如果还是不行，关闭并重新启动或重启系统。(在某些 Windows 10 预览版本中不工作)</value>
   </data>
+  <data name="RestartUpdate_InvalidInfo" xml:space="preserve">
+    <value>更新信息无效</value>
+  </data>
+  <data name="RestartUpdate_Starting" xml:space="preserve">
+    <value>正在开始更新...</value>
+  </data>
+  <data name="RestartUpdate_Completed" xml:space="preserve">
+    <value>更新完成，UI 即将重启</value>
+  </data>
+  <data name="RestartUpdate_Failed" xml:space="preserve">
+    <value>更新失败：{0}</value>
+  </data>
+  <data name="RestartUpdate_Stage_Downloading" xml:space="preserve">
+    <value>正在下载组件...</value>
+  </data>
+  <data name="RestartUpdate_Stage_BackingUp" xml:space="preserve">
+    <value>正在备份当前组件...</value>
+  </data>
+  <data name="RestartUpdate_Stage_Replacing" xml:space="preserve">
+    <value>正在替换组件文件...</value>
+  </data>
+  <data name="RestartUpdate_Stage_Completed" xml:space="preserve">
+    <value>已完成</value>
+  </data>
+  <data name="RestartUpdate_Stage_Failed" xml:space="preserve">
+    <value>失败</value>
+  </data>
+  <data name="RestartUpdate_Close" xml:space="preserve">
+    <value>关闭</value>
+  </data>
 </root>

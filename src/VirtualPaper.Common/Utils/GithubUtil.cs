@@ -70,6 +70,16 @@ namespace VirtualPaper.Common.Utils {
             return downloadUrls;
         }
 
+        public static ReleaseAsset? FindAsset(Release release, string assetName) {
+            return release.Assets.FirstOrDefault(x => x.Name.Equals(assetName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static async Task<string> DownloadAssetContent(ReleaseAsset asset) {
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("VirtualPaper-UpdateChecker");
+            return await httpClient.GetStringAsync(asset.BrowserDownloadUrl);
+        }
+
         public static Version GetVersion(Release release) {
             return new Version(Regex.Replace(release.TagName, "[A-Za-z ]", ""));
         }

@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,9 +8,7 @@ using Microsoft.UI.Xaml;
 using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
-using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.ViewModels;
@@ -22,6 +21,7 @@ using VirtualPaper.ML.StyleTransfer;
 using VirtualPaper.ML.StyleTransfer.Interfaces;
 using VirtualPaper.ML.SuperResolution;
 using VirtualPaper.ML.SuperResolution.Interfaces;
+using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Adapter;
@@ -160,6 +160,35 @@ namespace VirtualPaper.UI {
 
             var m_window = AppServiceLocator.Services.GetRequiredService<MainWindow>();
             m_window.Show();
+
+            // Check for rollback notice from hot update
+            CheckRollbackNotice();
+        }
+
+        private static void CheckRollbackNotice() {
+            try {
+                var noticePath = Constants.CommonPaths.RollbackNoticePath;
+                if (!File.Exists(noticePath)) return;
+
+                var json = File.ReadAllText(noticePath);
+                if (string.IsNullOrWhiteSpace(json)) {
+                    File.Delete(noticePath);
+                    return;
+                }
+
+                var notice = System.Text.Json.JsonSerializer.Deserialize(json, RollbackNoticeContext.Default.RollbackNotice);
+                File.Delete(noticePath);
+
+                if (notice != null && !string.IsNullOrEmpty(notice.MessageKey)) {
+                    VirtualPaper.UIComponent.Utils.GlobalMessageUtil.ShowError(
+                        notice.MessageKey,
+                        isNeedLocalizer: true,
+                        key: "RollbackNotice");
+                }
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<App>().Warn($"Failed to read rollback notice: {ex.Message}");
+            }
         }
 
         private static void LogUnhandledException(Exception exception) => ArcLog.GetLogger<App>().Error(exception);

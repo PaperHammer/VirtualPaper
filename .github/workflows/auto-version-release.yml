@@ -40,6 +40,9 @@ jobs:
       release_sha: ${{ steps.shas.outputs.release_sha }}
       pr_title: ${{ steps.pr_info.outputs.pr_title }}
       pr_body: ${{ steps.pr_info.outputs.pr_body }}
+      is_restart_update: ${{ steps.restart_info.outputs.is_restart_update }}
+      restart_plugins: ${{ steps.restart_info.outputs.restart_plugins }}
+      build_number: ${{ steps.restart_info.outputs.build_number }}
 
     steps:
     - name: Checkout with full history
@@ -157,6 +160,62 @@ jobs:
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "$body`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "$delimiter`n", $utf8NoBom)
         Write-Host "PR body captured ($($body.Length) chars)"
+
+    - name: Detect restart-update labels
+      id: restart_info
+      shell: powershell
+      env:
+        PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+      run: |
+        $labels = "$env:PR_LABELS" -split ',' | ForEach-Object { $_.Trim() }
+        $isRestartUpdate = "false"
+        $plugins = @()
+
+        # Check for restart-update label (all plugins)
+        if ($labels -contains "restart-update") {
+            $isRestartUpdate = "true"
+            $plugins = @("UI", "PlayerWeb", "ScrSaver", "ML", "Shaders")
+            Write-Host "Restart update: ALL plugins"
+        }
+        else {
+            # Check for specific plugin labels
+            if ($labels -contains "restart-update-plugin-ui") {
+                $isRestartUpdate = "true"
+                $plugins += "UI"
+            }
+            if ($labels -contains "restart-update-plugin-playerweb") {
+                $isRestartUpdate = "true"
+                $plugins += "PlayerWeb"
+            }
+            if ($labels -contains "restart-update-plugin-scrsaver") {
+                $isRestartUpdate = "true"
+                $plugins += "ScrSaver"
+            }
+            if ($labels -contains "restart-update-plugin-ml") {
+                $isRestartUpdate = "true"
+                $plugins += "ML"
+            }
+            if ($labels -contains "restart-update-plugin-shaders") {
+                $isRestartUpdate = "true"
+                $plugins += "Shaders"
+            }
+            if ($isRestartUpdate -eq "true") {
+                Write-Host "Restart update: $($plugins -join ', ')"
+            }
+            else {
+                Write-Host "No restart-update labels found, installer-only release"
+            }
+        }
+
+        # Generate build number: YYMM + R + DD + T + HHMM
+        $now = Get-Date
+        $buildNumber = $now.ToString("yyMM") + "R" + $now.ToString("dd") + "T" + $now.ToString("HHmm")
+        Write-Host "Build number: $buildNumber"
+
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "is_restart_update=$isRestartUpdate`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "restart_plugins=$($plugins -join ';')`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "build_number=$buildNumber`n", $utf8NoBom)
 
   # ─────────────────────────────────────────────────────────────
   # Job 2: 编译 .NET Release
@@ -524,12 +583,86 @@ jobs:
         Write-Host "[OK] Standalone-UI guard test passed"
 
   # ─────────────────────────────────────────────────────────────
+  # Job 4.5: 制作重启式更新包（plugin zips + manifest）
+  # 仅在冒烟测试通过且 PR 有 restart-update 标签时执行
+  # ─────────────────────────────────────────────────────────────
+  package_restart_update:
+    name: Create Restart Update Packages
+    runs-on: windows-latest
+    needs: [prepare, build, smoke_test]
+    if: needs.prepare.outputs.is_restart_update == 'true' && needs.smoke_test.result == 'success'
+
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-release-output
+        path: src/
+
+    - name: Create restart update packages
+      shell: powershell
+      run: |
+        $buildDir = "src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0"
+        $pluginsDir = "$buildDir/Plugins"
+        $outputDir = "restart-update"
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+
+        $buildNumber = "${{ needs.prepare.outputs.build_number }}"
+        $plugins = "${{ needs.prepare.outputs.restart_plugins }}" -split ';' | Where-Object { $_ -ne "" }
+
+        # Zip each plugin
+        foreach ($plugin in $plugins) {
+            $pluginDir = "$pluginsDir/$plugin"
+            if (Test-Path $pluginDir) {
+                $zipName = "plugin_${plugin}_${buildNumber}.zip"
+                $zipPath = "$outputDir/$zipName"
+                Compress-Archive -Path "$pluginDir/*" -DestinationPath $zipPath -Force
+                Write-Host "[OK] Created $zipName"
+            } else {
+                Write-Warning "Plugin directory not found: $pluginDir"
+            }
+        }
+
+        # Generate update_manifest.json (zip-level SHA256 for download verification)
+        $manifest = @{
+            type = "restart"
+            app_build = $buildNumber
+            min_app_build = $buildNumber
+            plugins = @{}
+        }
+
+        foreach ($plugin in $plugins) {
+            $zipName = "plugin_${plugin}_${buildNumber}.zip"
+            $zipPath = "$outputDir/$zipName"
+            if (Test-Path $zipPath) {
+                $hash = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash.ToLower()
+                $manifest.plugins[$plugin] = @{
+                    build = $buildNumber
+                    asset = $zipName
+                    sha256 = $hash
+                }
+            }
+        }
+
+        $manifestJson = $manifest | ConvertTo-Json -Depth 10
+        Set-Content -Path "$outputDir/update_manifest.json" -Value $manifestJson -Encoding UTF8
+        Write-Host "[OK] Generated update_manifest.json"
+        Write-Host $manifestJson
+
+    - name: Upload restart update packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: VirtualPaper-RestartUpdate-v${{ needs.prepare.outputs.new_version }}
+        path: restart-update/
+        retention-days: 30
+
+  # ─────────────────────────────────────────────────────────────
   # Job 5: 将版本号递增变更提交到 main（冒烟测试通过后才提交）
   # ─────────────────────────────────────────────────────────────
   bump:
     name: Bump Version to main
     runs-on: windows-latest
-    needs: [prepare, package, smoke_test]
+    needs: [prepare, package, smoke_test, package_restart_update]
 
     steps:
     - name: Checkout main with full history
@@ -650,7 +783,7 @@ jobs:
   summary:
     name: Summary
     runs-on: ubuntu-latest
-    needs: [prepare, build, package, smoke_test, bump, sync]
+    needs: [prepare, build, package, smoke_test, package_restart_update, bump, sync]
     if: >-
       !cancelled() &&
       needs.prepare.result == 'success' &&
@@ -658,7 +791,8 @@ jobs:
       needs.package.result == 'success' &&
       needs.smoke_test.result == 'success' &&
       needs.bump.result == 'success' &&
-      needs.sync.result == 'success'
+      needs.sync.result == 'success' &&
+      (needs.package_restart_update.result == 'success' || needs.package_restart_update.result == 'skipped')
 
     steps:
     - name: Print summary
@@ -675,10 +809,20 @@ jobs:
         echo    "Source  : ${{ needs.prepare.outputs.source_branch }} -> main"
         echo    "Type    : $TYPE"
         echo -e "\033[0;36mPackage : ${{ needs.package.outputs.installer_name }}\033[0m"
+        
+        if [ "${{ needs.prepare.outputs.is_restart_update }}" = "true" ]; then
+          echo -e "\033[0;36mRestart : YES (plugins: ${{ needs.prepare.outputs.restart_plugins }}, build: ${{ needs.prepare.outputs.build_number }})\033[0m"
+        else
+          echo    "Restart : NO (installer only)"
+        fi
+        
         echo ""
         echo -e "\033[0;32m[OK]\033[0m Version updated and committed to main"
         echo -e "\033[0;32m[OK]\033[0m Version synced to pre-publish branches (release / dev / bugfix)"
         echo -e "\033[0;32m[OK]\033[0m Installer uploaded as Artifact"
+        if [ "${{ needs.prepare.outputs.is_restart_update }}" = "true" ]; then
+          echo -e "\033[0;32m[OK]\033[0m Restart update packages uploaded as Artifact"
+        fi
         echo -e "\033[0;32m[OK]\033[0m Smoke test passed (install + launch + singleton)"
         echo -e "\033[0;32m[OK]\033[0m Draft GitHub Release will be created: v${{ needs.prepare.outputs.new_version }}"
         echo -e "\033[0;32m==========================================\033[0m"
@@ -689,12 +833,13 @@ jobs:
   #   - 以 PR body 作为 Release 正文
   #   - Tag / Release 标题均为 "v版本号"
   #   - 将 Installer exe 作为 Release 附件上传
+  #   - 如有重启式更新包，一并上传
   #   - 创建为草稿（draft），需人工验证后手动点击发布
   # ─────────────────────────────────────────────────────────────
   release:
     name: Create Draft GitHub Release
     runs-on: ubuntu-latest
-    needs: [prepare, package, summary]
+    needs: [prepare, package, package_restart_update, summary]
     if: needs.summary.result == 'success'
 
     steps:
@@ -703,6 +848,13 @@ jobs:
       with:
         name: VirtualPaper-Installer-v${{ needs.prepare.outputs.new_version }}
         path: dist/
+
+    - name: Download restart update artifact
+      if: needs.prepare.outputs.is_restart_update == 'true'
+      uses: actions/download-artifact@v4
+      with:
+        name: VirtualPaper-RestartUpdate-v${{ needs.prepare.outputs.new_version }}
+        path: dist/restart-update/
 
     - name: Create Draft Release & Tag
       uses: softprops/action-gh-release@v2
@@ -713,6 +865,8 @@ jobs:
         files: |
           dist/*.exe
           dist/SHA256.txt
+          dist/restart-update/*.zip
+          dist/restart-update/update_manifest.json
         draft: true        # 草稿状态，不对外公开，等待人工验证后发布
         make_latest: false  # 草稿阶段不标记为最新，发布时再生效
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -723,7 +877,7 @@ jobs:
   rollback:
     name: Rollback on Failure
     runs-on: windows-latest
-    needs: [prepare, build, package, smoke_test, bump, sync]
+    needs: [prepare, build, package, smoke_test, package_restart_update, bump, sync]
     # 触发条件：bump 或 sync 已经开始执行（分支内容已被修改），且流程出现失败或取消。
     # build 失败时 bump/sync 均为 skipped（分支未动），不触发，避免无意义的回滚操作。
     if: |

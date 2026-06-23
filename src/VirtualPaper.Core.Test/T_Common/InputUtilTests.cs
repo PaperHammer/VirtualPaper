@@ -120,10 +120,6 @@ namespace VirtualPaper.Core.Test.T_Common {
         [TestMethod]
         [Description("ForwardMessageMouse encodes x in low word and y in high word of lParam")]
         public void ForwardMessageMouse_LParamEncoding_XInLowWordYInHighWord() {
-            int capturedMsg = 0;
-            IntPtr capturedWParam = IntPtr.Zero;
-            UIntPtr capturedLParam = UIntPtr.Zero;
-
             // We can verify the encoding formula directly without P/Invoke:
             //   lParam = (uint)y << 16 | (uint)x
             int x = 0x00FF;
@@ -144,7 +140,7 @@ namespace VirtualPaper.Core.Test.T_Common {
             var bounds = new Rectangle(1920, 0, 1920, 1080);
             // Cursor at left edge of second monitor
             var result = InputUtil.ToMouseDisplayLocal(1920, 540, bounds);
-            Assert.IsTrue(result.X >= 0, "X coordinate should be non-negative when inside display");
+            Assert.IsGreaterThanOrEqualTo(0, result.X, "X coordinate should be non-negative when inside display");
         }
 
         [TestMethod]
@@ -153,8 +149,8 @@ namespace VirtualPaper.Core.Test.T_Common {
             var virtualBounds = new Rectangle(-1920, -200, 5760, 1480);
             // Cursor at virtual origin
             var result = InputUtil.ToMouseSpanLocal(-1920, -200, virtualBounds);
-            Assert.IsTrue(result.X >= 0, "X coordinate should be non-negative when at virtual screen origin");
-            Assert.IsTrue(result.Y >= 0, "Y coordinate should be non-negative when at virtual screen origin");
+            Assert.IsGreaterThanOrEqualTo(0, result.X, "X coordinate should be non-negative when at virtual screen origin");
+            Assert.IsGreaterThanOrEqualTo(0, result.Y, "Y coordinate should be non-negative when at virtual screen origin");
         }
     }
 }

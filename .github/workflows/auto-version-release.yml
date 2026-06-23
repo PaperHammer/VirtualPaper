@@ -126,7 +126,8 @@ jobs:
         }
 
         $newVersion = "$major.$minor.$build.$revision"
-        $newVersionText = "$major$minor$build$revision"
+        # 使用下划线分隔，避免各组件 >= 10 时产生歧义（如 0.10.0.0 → 01000 与 0.1.0.0.0 冲突）
+        $newVersionText = "${major}_${minor}_${build}_${revision}"
 
         Write-Host "Version: $currentVersion -> $newVersion"
 
@@ -199,6 +200,22 @@ jobs:
     - name: Rebuild solution
       run: msbuild src/VirtualPaper.sln /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU" /restore /m
 
+    - name: Validate Build Artifacts
+      # 在产物就地校验：主 exe / Plugin exe / 核心 dll 存在且非空。
+      # 通过后才上传 artifact，确保 package / smoke_test job 拿到的是健康的构建产物。
+      env:
+        RELEASE_BIN_DIR: ${{ github.workspace }}/src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0
+      run: dotnet test src/VirtualPaper.ReleaseBuildData.Test/VirtualPaper.ReleaseBuildData.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=release-build-tests.trx" --results-directory TestResults/ReleaseBuild
+      shell: pwsh
+
+    - name: Upload Validate Build Artifacts results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-release-build
+        path: TestResults/ReleaseBuild/
+        retention-days: 1
+
     - name: Upload build output
       uses: actions/upload-artifact@v4
       with:
@@ -218,11 +235,15 @@ jobs:
       installer_path: ${{ steps.installer_info.outputs.installer_path }}
 
     steps:
+    # Step 1：checkout 拿到仓库根目录的全部文件，包含 InnoSetup/ 脚本和其他非编译产物。
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 
+    # Step 2：将 build job 的编译产物下载并覆盖到 src/。
+    # 顺序不可颠倒：必须先 checkout（否则 InnoSetup/ 目录不存在），
+    # 再用 artifact 覆盖 src/（用已打版本号的 Release 二进制替换源码目录下的旧产物）。
     - name: Download build output
       uses: actions/download-artifact@v4
       with:
@@ -241,7 +262,7 @@ jobs:
         $newVersion = "${{ needs.prepare.outputs.new_version }}"
         $newVersionText = "${{ needs.prepare.outputs.new_version_text }}"
         $newContent = $content -replace '#define MyAppVersion "[\d\.]+"', "#define MyAppVersion `"$newVersion`""
-        $newContent = $newContent -replace '#define MyAppVersionText "[\d]+"', "#define MyAppVersionText `"$newVersionText`""
+        $newContent = $newContent -replace '#define MyAppVersionText "[\d_]+"', "#define MyAppVersionText `"$newVersionText`""
         Set-Content $setupPath -Value $newContent -NoNewline
         Write-Host "Patched InnoSetup version to $newVersion (build-time only)"
 
@@ -472,12 +493,26 @@ jobs:
         $classes = @($wins | ForEach-Object { $_.Current.ClassName })
         Write-Host "  Visible window classes: $($classes -join ', ')"
 
+        # ── 正向断言：MessageBox（#32770）应存在 ────────────────────────────
+        # Win32 MessageBox 的窗口类名固定为 #32770，是 Windows API 常量，不会变。
         if (-not ($classes -contains '#32770')) {
             Write-Error "Expected a MessageBox (#32770) but none found - UI may have started normally, guard logic broken"
             Stop-Process -Id $uiProc.Id -Force -ErrorAction SilentlyContinue
             exit 1
         }
-        Write-Host "[OK] VirtualPaper.UI is blocked by a MessageBox (#32770) as expected (PID: $($uiProc.Id))"
+        Write-Host "[OK] MessageBox (#32770) present - guard triggered as expected (PID: $($uiProc.Id))"
+
+        # ── 反向断言：WinUI3 主窗口（WinUIDesktopWin32Window）不应存在 ──────
+        # WinUI3 正常启动后主窗口类名固定为 WinUIDesktopWin32Window。
+        # 若守卫生效，此类名不应出现——与 #32770 正向检查互补，
+        # 覆盖未来从 MessageBox 迁移到其他阻塞机制（ContentDialog 等）的场景：
+        # 届时 #32770 检查会失效，但此反向检查仍能捕获"UI 意外正常启动"。
+        if ($classes -contains 'WinUIDesktopWin32Window') {
+            Write-Error "WinUI3 main window (WinUIDesktopWin32Window) appeared - UI started normally without main process, guard logic broken"
+            Stop-Process -Id $uiProc.Id -Force -ErrorAction SilentlyContinue
+            exit 1
+        }
+        Write-Host "[OK] WinUI3 main window not present - guard is holding correctly"
 
         # ── 清理：强杀被阻塞的 UI 进程 ──────────────────────────────────────
         Stop-Process -Id $uiProc.Id -Force -ErrorAction SilentlyContinue
@@ -521,7 +556,7 @@ jobs:
         $newVersion = "${{ needs.prepare.outputs.new_version }}"
         $newVersionText = "${{ needs.prepare.outputs.new_version_text }}"
         $newContent = $content -replace '#define MyAppVersion "[\d\.]+"', "#define MyAppVersion `"$newVersion`""
-        $newContent = $newContent -replace '#define MyAppVersionText "[\d]+"', "#define MyAppVersionText `"$newVersionText`""
+        $newContent = $newContent -replace '#define MyAppVersionText "[\d_]+"', "#define MyAppVersionText `"$newVersionText`""
         Set-Content $setupPath -Value $newContent -NoNewline
         Write-Host "Updated InnoSetup version to: $newVersion"
 
@@ -583,7 +618,7 @@ jobs:
 
             # 策略 1：尝试将 main 全量合并到当前分支
             #   -X theirs: 冲突时自动以 main 为准，无需人工介入
-            $mergeOutput = git merge origin/main --no-edit -X theirs 2>&1
+            $mergeOutput = git merge origin/main -m "[Github CI] chore: sync main -> $branch [skip ci]" -X theirs 2>&1
             $mergeExit = $LASTEXITCODE
 
             if ($mergeExit -eq 0) {
@@ -689,7 +724,13 @@ jobs:
     name: Rollback on Failure
     runs-on: windows-latest
     needs: [prepare, build, package, smoke_test, bump, sync]
-    if: always() && failure() && needs.prepare.result == 'success'
+    # 触发条件：bump 或 sync 已经开始执行（分支内容已被修改），且流程出现失败或取消。
+    # build 失败时 bump/sync 均为 skipped（分支未动），不触发，避免无意义的回滚操作。
+    if: |
+      always() &&
+      needs.prepare.result == 'success' &&
+      (needs.bump.result != 'skipped' || needs.sync.result != 'skipped') &&
+      (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
 
     steps:
     - name: Checkout with full history

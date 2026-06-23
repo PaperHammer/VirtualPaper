@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<local:EffectPanelBase
+    x:Class="Workloads.Creation.StaticImg.Views.Tools.Effects.DisplacementLiquefactionEffectPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="8">
+        <!-- 模式 -->
+        <ComboBox x:Name="ModeCombo"
+            Header="模式"
+            SelectedIndex="1"
+            SelectionChanged="ModeCombo_SelectionChanged">
+            <x:String>重置</x:String>
+            <x:String>推</x:String>
+            <x:String>挤压</x:String>
+            <x:String>扩展</x:String>
+            <x:String>左旋</x:String>
+            <x:String>右旋</x:String>
+        </ComboBox>
+
+        <!-- 半径 -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="半径" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock x:Name="RadiusValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Grid>
+        <input:ArcSlider x:Name="RadiusSlider"
+            Minimum="1" Maximum="100" Value="20"
+            TickFrequency="12.5" TickPlacement="BottomRight"
+            SmallChange="1" StepFrequency="1"
+            ValueChanged="RadiusSlider_ValueChanged"/>
+
+        <!-- 压力 -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="压力" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock x:Name="PressureValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Grid>
+        <input:ArcSlider x:Name="PressureSlider"
+            Minimum="1" Maximum="100" Value="50"
+            TickFrequency="12.5" TickPlacement="BottomRight"
+            SmallChange="1" StepFrequency="1"
+            ValueChanged="PressureSlider_ValueChanged"/>
+    </StackPanel>
+</local:EffectPanelBase>

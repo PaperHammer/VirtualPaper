@@ -51,7 +51,7 @@ namespace VirtualPaper.Shader.Test {
 
         public static IEnumerable<object[]> AllShaderTypes =>
             Enum.GetValues<ShaderType>()
-                .Where(t => t != ShaderType.None)
+                .Where(ShaderTypeManager.IsCustomShader)
                 .Select(t => new object[] { t });
 
         // ── 逐类型编译测试 ───────────────────────────────────────────

@@ -563,6 +563,24 @@ Author: PaperHammer</value>
   <data name="WpCreateDialog_CommonWp_Title" xml:space="preserve">
     <value>Ordinary wallpaper</value>
   </data>
+  <data name="WpLib_TypeFilter_All" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="WpLib_TypeFilter_StaticImage" xml:space="preserve">
+    <value>Static Image</value>
+  </data>
+  <data name="WpLib_TypeFilter_DynamicImage" xml:space="preserve">
+    <value>Dynamic Image</value>
+  </data>
+  <data name="WpLib_TypeFilter_Video" xml:space="preserve">
+    <value>Video</value>
+  </data>
+  <data name="WpLib_TypeFilter_WebInteractive" xml:space="preserve">
+    <value>Web Interactive</value>
+  </data>
+  <data name="WpLib_Search_Placeholder" xml:space="preserve">
+    <value>Search by title...</value>
+  </data>
   <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
     <value>Library contents</value>
   </data>
@@ -1363,5 +1381,240 @@ The following words cannot be used as usernames:
   </data>
   <data name="Text_Error_InvalidFile" xml:space="preserve">
     <value>The file may be corrupted and cannot be used</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_CanvasEffect" xml:space="preserve">
+    <value>Effect</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Adjust" xml:space="preserve">
+    <value>Adjustments</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Special" xml:space="preserve">
+    <value>Effects</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Blend" xml:space="preserve">
+    <value>Blend</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_GrayScale" xml:space="preserve">
+    <value>Grayscale</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Invert" xml:space="preserve">
+    <value>Invert</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Exposure" xml:space="preserve">
+    <value>Exposure</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Brightness" xml:space="preserve">
+    <value>Brightness</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Saturation" xml:space="preserve">
+    <value>Saturation</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Hue" xml:space="preserve">
+    <value>Hue Rotate</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Contrast" xml:space="preserve">
+    <value>Contrast</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Temperature" xml:space="preserve">
+    <value>Temperature</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Highlights" xml:space="preserve">
+    <value>Highlights &amp; Shadows</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Sepia" xml:space="preserve">
+    <value>Sepia</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Pixelate" xml:space="preserve">
+    <value>Pixelate</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Emboss" xml:space="preserve">
+    <value>Emboss</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Blur" xml:space="preserve">
+    <value>Blur</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Sharpen" xml:space="preserve">
+    <value>Sharpen</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Noise" xml:space="preserve">
+    <value>Noise</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Vignette" xml:space="preserve">
+    <value>Vignette</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Glow" xml:space="preserve">
+    <value>Glow</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Bloom" xml:space="preserve">
+    <value>Bloom</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Distort" xml:space="preserve">
+    <value>Distort</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Multiply" xml:space="preserve">
+    <value>Multiply</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Screen" xml:space="preserve">
+    <value>Screen</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Overlay" xml:space="preserve">
+    <value>Overlay</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_SoftLight" xml:space="preserve">
+    <value>Soft Light</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Grayscale" xml:space="preserve">
+    <value>Grayscale</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Invert" xml:space="preserve">
+    <value>Invert</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Exposure" xml:space="preserve">
+    <value>Exposure</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Brightness" xml:space="preserve">
+    <value>Brightness</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Saturation" xml:space="preserve">
+    <value>Saturation</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Hue" xml:space="preserve">
+    <value>Hue Rotate</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Contrast" xml:space="preserve">
+    <value>Contrast</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Temperature" xml:space="preserve">
+    <value>Temperature</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Highlights" xml:space="preserve">
+    <value>Highlights &amp; Shadows</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sepia" xml:space="preserve">
+    <value>Sepia</value>
+  </data>
+  <data name="Project_StaticImg_Effect_OilPaint" xml:space="preserve">
+    <value>Oil Paint</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sketch" xml:space="preserve">
+    <value>Sketch</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Watercolor" xml:space="preserve">
+    <value>Watercolor</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Pixelate" xml:space="preserve">
+    <value>Pixelate</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Emboss" xml:space="preserve">
+    <value>Emboss</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Pointillism" xml:space="preserve">
+    <value>Pointillism</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Crosshatch" xml:space="preserve">
+    <value>Crosshatch</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Cartoon" xml:space="preserve">
+    <value>Cartoon</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Blur" xml:space="preserve">
+    <value>Blur</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sharpen" xml:space="preserve">
+    <value>Sharpen</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Noise" xml:space="preserve">
+    <value>Noise</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Vignette" xml:space="preserve">
+    <value>Vignette</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Glow" xml:space="preserve">
+    <value>Glow</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Bloom" xml:space="preserve">
+    <value>Bloom</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Distort" xml:space="preserve">
+    <value>Distort</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Multiply" xml:space="preserve">
+    <value>Multiply</value>
+  </data>
+  <data name="Project_StaticImg_Effect_SoftLight" xml:space="preserve">
+    <value>SoftLight</value>
+  </data>
+  <!-- CanvasEffect effect descriptions -->
+  <data name="Project_StaticImg_Text_EffectDesc_GrayScale" xml:space="preserve">
+    <value>Remove color, convert to grayscale</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Invert" xml:space="preserve">
+    <value>Invert all colors for a negative effect</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Exposure" xml:space="preserve">
+    <value>Adjust overall brightness of the image</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Brightness" xml:space="preserve">
+    <value>Adjust image brightness</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Saturation" xml:space="preserve">
+    <value>Adjust color intensity</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Hue" xml:space="preserve">
+    <value>Rotate hue to shift overall tone</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Contrast" xml:space="preserve">
+    <value>Adjust difference between light and dark</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Temperature" xml:space="preserve">
+    <value>Adjust warm/cool tone and tint</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Highlights" xml:space="preserve">
+    <value>Adjust highlights and shadows separately</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Sepia" xml:space="preserve">
+    <value>Classic vintage brownish tone</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Pixelate" xml:space="preserve">
+    <value>Break image into color block pixels</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Emboss" xml:space="preserve">
+    <value>Create a 3D embossed effect</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Blur" xml:space="preserve">
+    <value>Soften image, reduce detail</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Sharpen" xml:space="preserve">
+    <value>Enhance edges and detail clarity</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Noise" xml:space="preserve">
+    <value>Add random noise texture</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Vignette" xml:space="preserve">
+    <value>Darken edges, focus on center</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Glow" xml:space="preserve">
+    <value>Add glowing halo to bright areas</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Bloom" xml:space="preserve">
+    <value>Produce soft halo around highlights</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Distort" xml:space="preserve">
+    <value>Liquefy and warp the image</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Multiply" xml:space="preserve">
+    <value>Multiply blend, darken result</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Screen" xml:space="preserve">
+    <value>Screen blend, lighten result</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Overlay" xml:space="preserve">
+    <value>Overlay blend, boost contrast</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_SoftLight" xml:space="preserve">
+    <value>Soft light blend, gentle contrast</value>
   </data>
 </root>

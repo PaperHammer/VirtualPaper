@@ -33,7 +33,13 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
                 var jsonPath = Path.Combine(folder.FullName, Constants.Field.WpBasicDataFileName);
                 if (!File.Exists(jsonPath)) return;
 
-                var data = await JsonSaver.LoadAsync<WpBasicData>(jsonPath, WpBasicDataContext.Default);
+                WpBasicData data;
+                try {
+                    data = await JsonSaver.LoadAsync<WpBasicData>(jsonPath, WpBasicDataContext.Default);
+                }
+                catch (Exception) {
+                    return;
+                }
 
                 if (!data.IsAvailable()) return;
 

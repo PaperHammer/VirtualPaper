@@ -1,5 +1,7 @@
+using Octokit;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Events;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Utils.Interfcaes;
 using Timer = System.Timers.Timer;
 
@@ -52,8 +54,20 @@ namespace VirtualPaper.Cores.AppUpdate {
                 LastCheckVersion = verison;
                 LastCheckChangelog = changelog;
             }
+            catch (RateLimitExceededException e) {
+                ArcLog.GetLogger<GithubUpdaterService>().Warn("Github rate limit exceeded, retry after reset");
+                Status = AppUpdateStatus.Error;
+                if (e.HttpResponse?.Headers.TryGetValue("X-RateLimit-Reset", out var resetStr) == true
+                    && long.TryParse(resetStr, out var resetUnix)) {
+                    var resetTime = DateTimeOffset.FromUnixTimeSeconds(resetUnix);
+                    var delay = resetTime - DateTimeOffset.UtcNow;
+                    if (delay > TimeSpan.Zero) {
+                        _retryTimer.Interval = delay.TotalMilliseconds + 60_000;
+                    }
+                }
+            }
             catch (Exception e) {
-                App.Log.Error("Github update fetch failed", e);
+                ArcLog.GetLogger<GithubUpdaterService>().Error("Github update fetch failed", e);
                 Status = AppUpdateStatus.Error;
             }
             LastCheckTime = DateTime.Now;

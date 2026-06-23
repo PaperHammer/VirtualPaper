@@ -1,9 +1,16 @@
-﻿using System.Text.RegularExpressions;
+using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using Octokit;
 using ProductHeaderValue = Octokit.ProductHeaderValue;
 
 namespace VirtualPaper.Common.Utils {
     public static class GithubUtil {
+        private static readonly ConcurrentDictionary<string, GitHubClient> _clients = new();
+
+        private static GitHubClient GetClient(string repositoryName) {
+            return _clients.GetOrAdd(repositoryName, name => new GitHubClient(new ProductHeaderValue(name)));
+        }
+
         /// <summary>
         /// After given delay retrieve github release asset download url.
         /// Returns first asset matching substring (make sure asset name is unique to get correct file.), case is ignored.
@@ -29,7 +36,7 @@ namespace VirtualPaper.Common.Utils {
         public static async Task<Release> GetLatestRelease(string repositoryName, string userName, int startDelay = 45000) {
             //wait for computer startup.. so that user and network is ready.
             await Task.Delay(startDelay);
-            GitHubClient client = new(new ProductHeaderValue(repositoryName));
+            var client = GetClient(repositoryName);
             var releases = await client.Repository.Release.GetAll(userName, repositoryName);
             var latest = releases[0];
 
@@ -46,7 +53,7 @@ namespace VirtualPaper.Common.Utils {
         /// <param name="userName"></param>
         /// <returns></returns>
         public static async Task<string> GetAssetUrl(string assetNameSubstring, Release release, string repositoryName, string userName) {
-            GitHubClient client = new(new ProductHeaderValue(repositoryName));
+            var client = GetClient(repositoryName);
             var allAssets = await client.Repository.Release.GetAllAssets(userName, repositoryName, release.Id);
             //var requiredAssets = allAssets.Single(x => x.Name.Equals(assetName, StringComparison.OrdinalIgnoreCase));
             var requiredAsset = allAssets.First(x => Contains(x.Name, assetNameSubstring, StringComparison.OrdinalIgnoreCase));
@@ -54,7 +61,7 @@ namespace VirtualPaper.Common.Utils {
         }
 
         public static async Task<IEnumerable<string>> GetAllAssetUrl(string assetNameSubstring, Release release, string repositoryName, string userName) {
-            GitHubClient client = new(new ProductHeaderValue(repositoryName));
+            var client = GetClient(repositoryName);
             var allAssets = await client.Repository.Release.GetAllAssets(userName, repositoryName, release.Id);
             //var requiredAssets = allAssets.Single(x => x.Name.Equals(assetName, StringComparison.OrdinalIgnoreCase));
             var downloadUrls = allAssets

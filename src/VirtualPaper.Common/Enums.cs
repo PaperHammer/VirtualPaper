@@ -89,7 +89,8 @@ namespace VirtualPaper.Common {
     }
     #endregion
 
-    #region type    
+    #region type
+    [JsonConverter(typeof(FileTypeJsonConverter))]
     public enum FileType {
         FUnknown,
         FImage,
@@ -98,6 +99,20 @@ namespace VirtualPaper.Common {
         FDesign,
         FimageAI,
         FWebZip,
+    }
+
+    public sealed class FileTypeJsonConverter : JsonConverter<FileType> {
+        public override FileType Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options) {
+            var str = reader.GetString();
+            if (str != null && Enum.TryParse<FileType>(str, ignoreCase: true, out var result)) {
+                return result;
+            }
+            return FileType.FUnknown;
+        }
+
+        public override void Write(System.Text.Json.Utf8JsonWriter writer, FileType value, System.Text.Json.JsonSerializerOptions options) {
+            writer.WriteStringValue(value.ToString());
+        }
     }
 
     public enum RuntimeType {

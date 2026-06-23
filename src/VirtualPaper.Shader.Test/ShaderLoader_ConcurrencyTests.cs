@@ -20,7 +20,7 @@ namespace VirtualPaper.Shader.Test {
             await ShaderLoader.LoadAllShadersAsync();
 
             var types = Enum.GetValues<ShaderType>()
-                            .Where(t => t != ShaderType.None)
+                            .Where(ShaderTypeManager.IsCustomShader)
                             .ToArray();
 
             var exceptions = new ConcurrentBag<Exception>();

@@ -277,6 +277,14 @@ namespace VirtualPaper.Common.Utils.Files {
                 if (Path.GetInvalidPathChars().Any(path.Contains))
                     return false;
 
+                // GetInvalidPathChars 不含 < > | " 等，需逐段检查文件名非法字符
+                var invalidFileNameChars = new HashSet<char>(Path.GetInvalidFileNameChars());
+                foreach (var segment in path.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries)) {
+                    if (segment.Length >= 2 && segment[1] == ':') continue; // 跳过盘符 "C:"
+                    if (segment.Any(c => invalidFileNameChars.Contains(c)))
+                        return false;
+                }
+
                 string? dir = Path.GetDirectoryName(path);
                 return !string.IsNullOrEmpty(dir) && Directory.Exists(dir);
             }
@@ -347,7 +355,10 @@ namespace VirtualPaper.Common.Utils.Files {
         public static string SizeSuffix(long value, int decimalPlaces = 1) {
             ArgumentOutOfRangeException.ThrowIfNegative(decimalPlaces);
             if (value < 0) { return "-" + SizeSuffix(-value, decimalPlaces); }
-            if (value == 0) { return string.Format("{0:n" + decimalPlaces + "} bytes", 0); }
+
+            string fmt = "0." + new string('#', decimalPlaces);
+
+            if (value == 0) { return string.Format("{0:" + fmt + "} bytes", 0m); }
 
             // mag is 0 for bytes, 1 for KB, 2, for MB, etc.
             int mag = (int)Math.Log(value, 1024);
@@ -363,7 +374,7 @@ namespace VirtualPaper.Common.Utils.Files {
                 adjustedSize /= 1024;
             }
 
-            return string.Format("{0:n" + decimalPlaces + "} {1}",
+            return string.Format("{0:" + fmt + "} {1}",
                 adjustedSize,
                 SizeSuffixes[mag]);
         }

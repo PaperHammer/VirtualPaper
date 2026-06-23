@@ -7,8 +7,8 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Workloads.Creation.StaticImg.Views.Tools {
     public sealed partial class SelectionControl : UserControl {
-        public event EventHandler<RoutedEventArgs> SelectCancel;
-        public event EventHandler<RoutedEventArgs> SelectCommit;
+        public event EventHandler<RoutedEventArgs>? SelectCancel;
+        public event EventHandler<RoutedEventArgs>? SelectCommit;
 
         public SelectionControl() {
             this.InitializeComponent();

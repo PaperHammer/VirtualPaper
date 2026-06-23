@@ -33,17 +33,6 @@
 
             <NavigationView.PaneFooter>
                 <StackPanel Orientation="Horizontal" Spacing="2">
-                    <TextBox x:Name="tbSearchName"
-                        Tag="{x:Bind localUtils:FilterKey.LibraryTitle}"
-                        Height="30"
-                        Width="280"
-                        PlaceholderText="Search in local lib by title..."
-                        FontSize="12"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        TextChanged="OnFilterChanged"
-                        IsEnabled="{x:Bind Nav_LibraryContents.IsSelected, Mode=OneWay}"/>
-                    
                     <Button x:Name="AddToLib"
                         Padding="12 5 11 5"
                         Background="Transparent"
@@ -165,7 +154,57 @@
                 </StackPanel>
             </NavigationView.PaneFooter>
 
-            <Frame x:Name="ContentFrame" Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"/>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- 过滤栏：仅在"库内容"标签下可见，后续可在此追加更多过滤条件 -->
+                <StackPanel x:Name="FilterBar"
+                    Grid.Row="0"
+                    Orientation="Horizontal"
+                    Spacing="8"
+                    Padding="10 6 10 4">
+
+                    <!-- 标题搜索框 -->
+                    <TextBox x:Name="tbSearchName"
+                        Tag="{x:Bind localUtils:FilterKey.LibraryTitle}"
+                        Height="30"
+                        Width="250"
+                        PlaceholderText="{markup:I18n Key=WpLib_Search_Placeholder}"
+                        FontSize="12"
+                        VerticalAlignment="Center"
+                        TextChanged="OnFilterChanged"/>
+
+                    <!-- 类型多选过滤 -->
+                    <DropDownButton
+                        Height="30"
+                        VerticalAlignment="Center"
+                        Padding="11 0"
+                        Content="{x:Bind _viewModel.TypeFilterLabel, Mode=OneWay}">
+                        <DropDownButton.Flyout>
+                            <Flyout Placement="Bottom">
+                                <ItemsControl ItemsSource="{x:Bind _viewModel.TypeFilters}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="localUtils:WpTypeFilterItem">
+                                            <CheckBox
+                                                Content="{x:Bind Label}"
+                                                IsChecked="{x:Bind IsSelected, Mode=TwoWay}"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Flyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
+
+                    <!-- 未来的过滤条件可在此行继续追加 -->
+                </StackPanel>
+
+                <Frame x:Name="ContentFrame"
+                    Grid.Row="1"
+                    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"/>
+            </Grid>
         </NavigationView>
     </arc:ArcPageHost>
 </arc:ArcPage>

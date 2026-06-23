@@ -29,6 +29,17 @@ namespace VirtualPaper.UIComponent.Collection {
         public static readonly DependencyProperty IsAllwaysSeletedNewItemProperty =
             DependencyProperty.Register(nameof(IsAllwaysSeletedNewItem), typeof(bool), typeof(ArcListView), new PropertyMetadata(true));
 
+        /// <summary>
+        /// 是否允许代码清空选中项（不受 CancelSelectionEnable 限制）。默认 true。
+        /// 设为 false 时，代码清空也会被阻止。
+        /// </summary>
+        public bool ProgrammaticClearEnable {
+            get { return (bool)GetValue(ProgrammaticClearEnableProperty); }
+            set { SetValue(ProgrammaticClearEnableProperty, value); }
+        }
+        public static readonly DependencyProperty ProgrammaticClearEnableProperty =
+            DependencyProperty.Register(nameof(ProgrammaticClearEnable), typeof(bool), typeof(ArcListView), new PropertyMetadata(true));
+
         public ArcListView() {
             DefaultStyleKey = typeof(ListView);
             this.SelectionChanged += ArcListView_SelectionChanged;
@@ -62,7 +73,7 @@ namespace VirtualPaper.UIComponent.Collection {
         private void TryPreventNullSelectOnSelectionChanged(SelectionChangedEventArgs e) {
             if (e.AddedItems.Count > 0) _lastSelectedItem = e.AddedItems[0];
 
-            if (_isDragging || CancelSelectionEnable || SelectedItem != null) return;
+            if (_isDragging || _isProgrammaticClear || CancelSelectionEnable || SelectedItem != null) return;
 
             if (_lastSelectedItem != null && Items.Contains(_lastSelectedItem)) {
                 SelectedItem = _lastSelectedItem;
@@ -70,6 +81,16 @@ namespace VirtualPaper.UIComponent.Collection {
             else {
                 SelectedItem = Items.FirstOrDefault(); // 如果删除的是被选择项则 ui 无法显示出第一项的视觉效果，需要刷新一次
             }
+        }
+
+        /// <summary>
+        /// 代码清空选中项（不受 CancelSelectionEnable 限制，受 ProgrammaticClearEnable 控制）
+        /// </summary>
+        public void ClearSelection() {
+            if (!ProgrammaticClearEnable) return;
+            _isProgrammaticClear = true;
+            SelectedItem = null;
+            _isProgrammaticClear = false;
         }
 
         private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
@@ -147,6 +168,7 @@ namespace VirtualPaper.UIComponent.Collection {
         /// </summary>
         private object _lastSelectedItem;
         private bool _isDragging;
+        private bool _isProgrammaticClear;
         private int _oldIndex;
         private readonly long _itemsSourceChangedToken;
     }

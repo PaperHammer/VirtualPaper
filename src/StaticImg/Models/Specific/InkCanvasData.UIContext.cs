@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI;
+using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Models.Mvvm;
@@ -164,6 +165,46 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             >= 5	强羽化	边缘模糊渐变
          */
         public int EraserFeather { get; internal set; } = 0;
+
+        private string? _clickedEffectId;
+        public string? ClickedEffectId {
+            get { return _clickedEffectId; }
+            set {
+                if (_clickedEffectId == value) return;
+                _clickedEffectId = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(SelectedEffectPanelName));
+            }
+        }
+
+        public string SelectedEffectPanelName => ClickedEffectId switch {
+            "adjust_exposure" => "Exposure",
+            "adjust_brightness" => "Brightness",
+            "adjust_saturation" => "Saturation",
+            "adjust_hue" => "HueRotation",
+            "adjust_contrast" => "Contrast",
+            "adjust_temperature" => "TemperatureTint",
+            "adjust_highlights" => "HighlightsShadows",
+            "adjust_grayscale" => "Empty",
+            "adjust_invert" => "Empty",
+            "fx_blur" => "Blur",
+            "fx_sharpen" => "Sharpen",
+            "fx_vignette" => "Vignette",
+            "art_emboss" => "Emboss",
+            "art_pixelate" => "Posterize",
+            "fx_glow" => "Glow",
+            "fx_distort" => "Ripple",
+            "fx_noise" => "Noise",
+            "fx_bloom" => "Bloom",
+            "blend_multiply" => "Blend",
+            "blend_screen" => "Blend",
+            "blend_overlay" => "Blend",
+            "blend_softlight" => "Blend",
+            "color_sepia" => "Empty",
+            _ => "",
+        };
+
+        public Visibility EffectPanelVisible => string.IsNullOrEmpty(ClickedEffectId) ? Visibility.Collapsed : Visibility.Visible;
 
         internal void InitData() {
             UpdateCanvasSizeText();

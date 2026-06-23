@@ -99,7 +99,7 @@ namespace VirtualPaper.Common {
         }
 
         public static class WorkingDir {
-            public static string Shader => Path.Combine(UI, "Shaders");
+            public static string Shader => Path.Combine("Plugins", "Shaders");
             public static string ML => Path.Combine("Plugins", "ML");
             public static string ML_DepthEstimate => Path.Combine(ML, "DepthEstimate");
             public static string ML_DepthEstimate_AI_Models => Path.Combine(ML_DepthEstimate, "ai_models");
@@ -189,6 +189,11 @@ namespace VirtualPaper.Common {
             public static string WpCreateDialog_AIWp_Title => "WpCreateDialog_AIWp_Title";
             public static string WpCreateDialog_CommonWp_Explain => "WpCreateDialog_CommonWp_Explain";
             public static string WpCreateDialog_CommonWp_Title => "WpCreateDialog_CommonWp_Title";
+            public static string WpLib_TypeFilter_All => "WpLib_TypeFilter_All";
+            public static string WpLib_TypeFilter_StaticImage => "WpLib_TypeFilter_StaticImage";
+            public static string WpLib_TypeFilter_DynamicImage => "WpLib_TypeFilter_DynamicImage";
+            public static string WpLib_TypeFilter_Video => "WpLib_TypeFilter_Video";
+            public static string WpLib_TypeFilter_WebInteractive => "WpLib_TypeFilter_WebInteractive";
             public static string? Project_DeployNewDraft_PreviousStep { get; }
             public static string? Project_DeployNewDraft_NextStep { get; }
             public static string? Project_NewName_InvalidTip { get; }
@@ -236,7 +241,60 @@ namespace VirtualPaper.Common {
             public static string? Add_To_Lib_Success { get; }
             public static string? Intelligent_Enhance_QualityRestore { get; }
             public static string? Intelligent_Enhance_SuperResolution { get; }
-            public static object Text_Error_InvalidFile { get; set; }
+            public static string? Text_Error_InvalidFile { get; }
+            // ── CanvasEffect 分组标题 ──────────────────────────────
+            public static string? Project_StaticImg_EffectGroup_Adjust { get; }
+            public static string? Project_StaticImg_EffectGroup_Color { get; }
+            public static string? Project_StaticImg_EffectGroup_Special { get; }
+            public static string? Project_StaticImg_EffectGroup_Blend { get; }
+            // ── CanvasEffect 效果名称 ─────────────────────────────
+            public static string? Project_StaticImg_Text_Effect_GrayScale { get; }
+            public static string? Project_StaticImg_Text_Effect_Invert { get; }
+            public static string? Project_StaticImg_Text_Effect_Exposure { get; }
+            public static string? Project_StaticImg_Text_Effect_Brightness { get; }
+            public static string? Project_StaticImg_Text_Effect_Saturation { get; }
+            public static string? Project_StaticImg_Text_Effect_Hue { get; }
+            public static string? Project_StaticImg_Text_Effect_Contrast { get; }
+            public static string? Project_StaticImg_Text_Effect_Temperature { get; }
+            public static string? Project_StaticImg_Text_Effect_Highlights { get; }
+            public static string? Project_StaticImg_Text_Effect_Sepia { get; }
+            public static string? Project_StaticImg_Text_Effect_Pixelate { get; }
+            public static string? Project_StaticImg_Text_Effect_Emboss { get; }
+            public static string? Project_StaticImg_Text_Effect_Blur { get; }
+            public static string? Project_StaticImg_Text_Effect_Sharpen { get; }
+            public static string? Project_StaticImg_Text_Effect_Noise { get; }
+            public static string? Project_StaticImg_Text_Effect_Vignette { get; }
+            public static string? Project_StaticImg_Text_Effect_Glow { get; }
+            public static string? Project_StaticImg_Text_Effect_Bloom { get; }
+            public static string? Project_StaticImg_Text_Effect_Distort { get; }
+            public static string? Project_StaticImg_Text_Effect_Multiply { get; }
+            public static string? Project_StaticImg_Text_Effect_Screen { get; }
+            public static string? Project_StaticImg_Text_Effect_Overlay { get; }
+            public static string? Project_StaticImg_Text_Effect_SoftLight { get; }
+            // CanvasEffect 效果描述
+            public static string? Project_StaticImg_Text_EffectDesc_GrayScale { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Invert { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Exposure { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Brightness { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Saturation { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Hue { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Contrast { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Temperature { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Highlights { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Sepia { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Pixelate { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Emboss { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Blur { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Sharpen { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Noise { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Vignette { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Glow { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Bloom { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Distort { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Multiply { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Screen { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_Overlay { get; }
+            public static string? Project_StaticImg_Text_EffectDesc_SoftLight { get; }
         }
 
         public static class Field {
@@ -247,11 +305,6 @@ namespace VirtualPaper.Common {
             public static string WpEffectFilePathTemporary => "wpEffectFilePathTemporary.json";
             public static string WpEffectFilePathUsing => "wpEffectFilePathUsing.json";
             public static string WpRuntimeDataFileName => "wp_metadata_runtime.json";
-        }
-
-        public static class ColorKey {
-            public static string WindowCaptionForeground => "WindowCaptionForeground";
-            public static string WindowCaptionForegroundDisabled => "WindowCaptionForegroundDisabled";
         }
     }
 }

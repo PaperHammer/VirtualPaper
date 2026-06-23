@@ -1,0 +1,28 @@
+using System.Collections.ObjectModel;
+
+namespace Workloads.Creation.StaticImg.Models {
+    /// <summary>
+    /// 单个画布效果项
+    /// </summary>
+    public class CanvasEffectItem {
+        /// <summary>效果唯一标识符</summary>
+        public string EffectId { get; set; } = string.Empty;
+
+        /// <summary>效果显示名称（i18n key）</summary>
+        public string EffectName { get; set; } = string.Empty;
+
+        /// <summary>效果简要描述（i18n key）</summary>
+        public string EffectDescription { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// 效果分组（对应 Accordion 中的一个 Expander）
+    /// </summary>
+    public class CanvasEffectGroup {
+        /// <summary>分组标题（i18n key）</summary>
+        public string GroupNameKey { get; set; } = string.Empty;
+
+        /// <summary>该分组下的效果列表</summary>
+        public ObservableCollection<CanvasEffectItem> Items { get; set; } = [];
+    }
+}

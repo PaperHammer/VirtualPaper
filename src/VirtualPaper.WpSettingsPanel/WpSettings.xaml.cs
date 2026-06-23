@@ -1,5 +1,6 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
@@ -40,6 +41,11 @@ namespace VirtualPaper.WpSettingsPanel {
                     "Nav_ScreenSaver" => typeof(ScreenSaver),
                     _ => throw new NotImplementedException(),
                 };
+
+                // 过滤栏仅在"库内容"标签下展示
+                FilterBar.Visibility = args.SelectedItemContainer.Name == "Nav_LibraryContents"
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
 
                 ContentFrame.Navigate(pageType, this);
             }

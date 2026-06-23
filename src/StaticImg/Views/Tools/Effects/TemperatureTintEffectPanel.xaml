@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<local:EffectPanelBase
+    x:Class="Workloads.Creation.StaticImg.Views.Tools.Effects.TemperatureTintEffectPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="8">
+        <!-- 色温 -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="色温" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock x:Name="TempValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Grid>
+        <input:ArcSlider x:Name="TemperatureSlider"
+            Minimum="-100" Maximum="100" Value="0"
+            TickFrequency="25" TickPlacement="BottomRight"
+            SmallChange="2" StepFrequency="2"
+            ValueChanged="TemperatureSlider_ValueChanged"/>
+
+        <!-- 色调 -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="色调" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock x:Name="TintValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Grid>
+        <input:ArcSlider x:Name="TintSlider"
+            Minimum="-100" Maximum="100" Value="0"
+            TickFrequency="25" TickPlacement="BottomRight"
+            SmallChange="2" StepFrequency="2"
+            ValueChanged="TintSlider_ValueChanged"/>
+    </StackPanel>
+</local:EffectPanelBase>

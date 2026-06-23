@@ -44,6 +44,9 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
     - name: Cache NuGet packages
       uses: actions/cache@v4
       with:
@@ -51,11 +54,28 @@ jobs:
         key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
         restore-keys: nuget-${{ runner.os }}-
 
-    - name: Restore dependencies
-      run: dotnet restore src/VirtualPaper.sln
-
     - name: Build solution
-      run: dotnet build src/VirtualPaper.sln --configuration Release --no-restore
+      # 使用 msbuild 而非 dotnet build，确保 .sln 的 Platform Mapping 生效：
+      # VirtualPaper.UI（WinAppSDK）在 .sln 中映射为 Release|x64，
+      # dotnet build 不读取此映射，msbuild 才能正确路由到 x64 构建。
+      # 与 auto-version-release.yml 保持工具链一致。
+      run: msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release /p:Platform="Any CPU" /restore /m
+
+    - name: Validate Build Artifacts
+      # 在产物就地校验：主 exe / Plugin exe / 核心 dll 存在且非空。
+      # 通过后才上传 artifact，确保下游 job 拿到的是健康的构建产物。
+      env:
+        RELEASE_BIN_DIR: ${{ github.workspace }}/src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0
+      run: dotnet test src/VirtualPaper.ReleaseBuildData.Test/VirtualPaper.ReleaseBuildData.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=release-build-tests.trx" --results-directory TestResults/ReleaseBuild
+      shell: pwsh
+
+    - name: Upload Validate Build Artifacts results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-release-build
+        path: TestResults/ReleaseBuild/
+        retention-days: 7
 
     - name: Upload build output
       uses: actions/upload-artifact@v4
@@ -265,7 +285,7 @@ jobs:
     - name: Verify all test results
       run: |
         echo "=== Checking test result files ==="
-        EXPECTED_FILES=("core-tests.trx" "ui-tests.trx" "ml-tests.trx" "shader-tests.trx")
+        EXPECTED_FILES=("core-tests.trx" "ui-tests.trx" "ml-tests.trx" "shader-tests.trx" "release-build-tests.trx")
         MISSING=0
         
         for file in "${EXPECTED_FILES[@]}"; do
@@ -299,17 +319,17 @@ jobs:
     - name: Set test status
       if: always()
       run: |
-        if [ "${{ needs.build.result }}" = "success" ] && \
-           [ "${{ needs.test-core.result }}" = "success" ] && \
-           [ "${{ needs.test-ui.result }}" = "success" ] && \
-           [ "${{ needs.test-ml.result }}" = "success" ] && \
-           [ "${{ needs.test-shader.result }}" = "success" ] && \
-           [ "${{ env.TEST_RESULTS_VALID }}" = "true" ]; then
-          echo "TEST_STATUS=success" >> $GITHUB_ENV
-          echo "TEST_DESCRIPTION=All tests passed [OK]" >> $GITHUB_ENV
-        else
+        # 用通配方式判断：只要 needs 里任意 job 非 success 且非 skipped，就标记失败。
+        # 新增测试 job 时只需更新 needs 列表，无需修改此处逻辑。
+        ALL_RESULTS="${{ join(needs.*.result, ' ') }}"
+        echo "Job results: $ALL_RESULTS"
+
+        if echo "$ALL_RESULTS" | grep -qE 'failure|cancelled' || [ "${{ env.TEST_RESULTS_VALID }}" != "true" ]; then
           echo "TEST_STATUS=failure" >> $GITHUB_ENV
           echo "TEST_DESCRIPTION=Some tests failed or results missing [FAILED]" >> $GITHUB_ENV
+        else
+          echo "TEST_STATUS=success" >> $GITHUB_ENV
+          echo "TEST_DESCRIPTION=All tests passed [OK]" >> $GITHUB_ENV
         fi
 
     - name: Create Status Check

@@ -221,7 +221,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
             // 验证注册后 OnFilterChanged 能触发它
             _vm.OnFilterChanged(FilterKey.LibraryTitle, "test");
-            filterable.Verify(f => f.ApplyFilter("test"), Times.Once);
+            filterable.Verify(f => f.ApplyFilter(
+                It.Is<FilterContext>(ctx => ctx.TitleKeyword == "test")), Times.Once);
         }
 
         [TestMethod]
@@ -234,7 +235,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _vm.RegisterLibraryContents(filterable.Object);
 
             _vm.OnFilterChanged(FilterKey.LibraryTitle, "test");
-            filterable.Verify(f => f.ApplyFilter("test"), Times.Once);
+            filterable.Verify(f => f.ApplyFilter(
+                It.Is<FilterContext>(ctx => ctx.TitleKeyword == "test")), Times.Once);
         }
 
         // ── OnFilterChanged ───────────────────────────────────────────
@@ -248,26 +250,23 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
             _vm.OnFilterChanged(FilterKey.LibraryTitle, "keyword");
 
-            filterable.Verify(f => f.ApplyFilter("keyword"), Times.Once);
+            filterable.Verify(f => f.ApplyFilter(
+                It.Is<FilterContext>(ctx => ctx.TitleKeyword == "keyword")), Times.Once);
         }
 
         [TestMethod]
-        public void OnFilterChanged_WhenFilterableHasDifferentKey_DoesNotCallApplyFilter() {
+        public void OnFilterChanged_WhenNoFilterableRegistered_DoesNotCallApplyFilter() {
             _vm = CreateVm();
-
-            // 注册一个 filterable，但手动把它的 FilterKeyword 设为与触发不同的值
-            // 由于 FilterKey 只有 LibraryTitle，用 default(FilterKey) 的整数偏移模拟"不匹配"
-            // 更稳健的做法：不注册任何 filterable，直接验证无调用
             var filterable = new Mock<IFilterable>();
             filterable.SetupProperty(f => f.FilterKeyword, FilterKey.LibraryTitle);
-            // 不注册，直接触发
+
             _vm.OnFilterChanged(FilterKey.LibraryTitle, "keyword");
 
-            filterable.Verify(f => f.ApplyFilter(It.IsAny<string>()), Times.Never);
+            filterable.Verify(f => f.ApplyFilter(It.IsAny<FilterContext>()), Times.Never);
         }
 
         [TestMethod]
-        public void OnFilterChanged_WhenMultipleFilterables_AllWithSameKey_AllReceiveFilter() {
+        public void OnFilterChanged_WhenMultipleFilterablesRegistered_AllReceiveFilter() {
             _vm = CreateVm();
 
             var filterable1 = new Mock<IFilterable>();
@@ -281,8 +280,95 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
             _vm.OnFilterChanged(FilterKey.LibraryTitle, "hello");
 
-            filterable1.Verify(f => f.ApplyFilter("hello"), Times.Once);
-            filterable2.Verify(f => f.ApplyFilter("hello"), Times.Once);
+            filterable1.Verify(f => f.ApplyFilter(
+                It.Is<FilterContext>(ctx => ctx.TitleKeyword == "hello")), Times.Once);
+            filterable2.Verify(f => f.ApplyFilter(
+                It.Is<FilterContext>(ctx => ctx.TitleKeyword == "hello")), Times.Once);
+        }
+
+        // ── TypeFilter 广播 ────────────────────────────────────────────
+
+        [TestMethod]
+        public void BroadcastFilter_WhenNoTypeFilterSelected_ActiveTypesIsNull() {
+            _vm = CreateVm();
+            _vm.InitFlyoutData();
+            var filterable = new Mock<IFilterable>();
+            filterable.SetupProperty(f => f.FilterKeyword, FilterKey.LibraryTitle);
+            _vm.RegisterLibraryContents(filterable.Object);
+
+            _vm.OnFilterChanged(FilterKey.LibraryTitle, "test");
+
+            filterable.Verify(f => f.ApplyFilter(
+                It.Is<FilterContext>(ctx => ctx.ActiveTypes == null)), Times.Once);
+        }
+
+        [TestMethod]
+        public void BroadcastFilter_WhenTypeFilterSelected_ActiveTypesContainsMappedTypes() {
+            _vm = CreateVm();
+            _vm.InitFlyoutData();
+            var filterable = new Mock<IFilterable>();
+            filterable.SetupProperty(f => f.FilterKeyword, FilterKey.LibraryTitle);
+            _vm.RegisterLibraryContents(filterable.Object);
+
+            _vm.TypeFilters[0].IsSelected = true;
+
+            _vm.OnFilterChanged(FilterKey.LibraryTitle, "");
+
+            filterable.Verify(f => f.ApplyFilter(
+                It.Is<FilterContext>(ctx =>
+                    ctx.ActiveTypes != null &&
+                    ctx.ActiveTypes.Contains(FileType.FImage))), Times.AtLeastOnce);
+        }
+
+        [TestMethod]
+        public void BroadcastFilter_WhenMultipleTypeFiltersSelected_ActiveTypesIsUnion() {
+            _vm = CreateVm();
+            _vm.InitFlyoutData();
+            var filterable = new Mock<IFilterable>();
+            filterable.SetupProperty(f => f.FilterKeyword, FilterKey.LibraryTitle);
+            _vm.RegisterLibraryContents(filterable.Object);
+
+            _vm.TypeFilters[0].IsSelected = true;
+            _vm.TypeFilters[1].IsSelected = true;
+
+            _vm.OnFilterChanged(FilterKey.LibraryTitle, "");
+
+            filterable.Verify(f => f.ApplyFilter(
+                It.Is<FilterContext>(ctx =>
+                    ctx.ActiveTypes != null &&
+                    ctx.ActiveTypes.Contains(FileType.FImage) &&
+                    ctx.ActiveTypes.Contains(FileType.FGif))), Times.AtLeastOnce);
+        }
+
+        // ── TypeFilterLabel ────────────────────────────────────────────
+
+        [TestMethod]
+        public void TypeFilterLabel_WhenNoFilterSelected_ShowsBaseLabel() {
+            _vm = CreateVm();
+            _vm.InitFlyoutData();
+
+            Assert.DoesNotContain("(", _vm.TypeFilterLabel);
+        }
+
+        [TestMethod]
+        public void TypeFilterLabel_WhenOneFilterSelected_ShowsCount() {
+            _vm = CreateVm();
+            _vm.InitFlyoutData();
+
+            _vm.TypeFilters[0].IsSelected = true;
+
+            Assert.Contains("(1)", _vm.TypeFilterLabel);
+        }
+
+        [TestMethod]
+        public void TypeFilterLabel_WhenTwoFiltersSelected_ShowsCount() {
+            _vm = CreateVm();
+            _vm.InitFlyoutData();
+
+            _vm.TypeFilters[0].IsSelected = true;
+            _vm.TypeFilters[2].IsSelected = true;
+
+            Assert.Contains("(2)", _vm.TypeFilterLabel);
         }
 
         // ── Detect ────────────────────────────────────────────────────

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<local:EffectPanelBase
+    x:Class="Workloads.Creation.StaticImg.Views.Tools.Effects.GlowEffectPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="8">
+        <!-- 模糊 -->
+        <StackPanel Spacing="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="模糊" FontSize="12" VerticalAlignment="Center"/>
+                <TextBlock x:Name="BlurValueText" Grid.Column="1" FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </Grid>
+            <input:ArcSlider x:Name="BlurSlider"
+                Minimum="0" Maximum="100" Value="0"
+                StepFrequency="1"
+                ValueChanged="Slider_ValueChanged"/>
+        </StackPanel>
+
+        <!-- 强度 -->
+        <StackPanel Spacing="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="强度" FontSize="12" VerticalAlignment="Center"/>
+                <TextBlock x:Name="OpacityValueText" Grid.Column="1" FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </Grid>
+            <input:ArcSlider x:Name="OpacitySlider"
+                Minimum="0" Maximum="100" Value="0"
+                StepFrequency="1"
+                ValueChanged="Slider_ValueChanged"/>
+        </StackPanel>
+    </StackPanel>
+</local:EffectPanelBase>

@@ -1,11 +1,8 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
 pushd "%~dp0"
 
-:: -------------------------------------------------------
-:: 允许外部通过参数传入，优先使用参数
-:: 用法: CompileShaders.bat [FXC_PATH] [INCLUDE_PATH]
-:: -------------------------------------------------------
+:: Usage: CompileShaders.cmd [FXC_PATH] [INCLUDE_PATH]
 if not "%~1"=="" (
     set "FXC=%~1"
 ) else (
@@ -20,16 +17,24 @@ if not "%~1"=="" (
 if not "%~2"=="" (
     set "INCLUDEPATH=%~2"
 ) else (
-    if "%WindowsSdkDir%"=="" goto WRONG_COMMAND_PROMPT
-    set "INCLUDEPATH=%WindowsSdkDir%Include\%WindowsSDKVersion%um"
+    if not defined WindowsSdkDir goto WRONG_COMMAND_PROMPT
+    set "INCLUDEPATH=!WindowsSdkDir!Include\!WindowsSDKVersion!um"
 )
 
-if not exist "%INCLUDEPATH%\d2d1effecthelpers.hlsli" (
-    echo d2d1effecthelpers.hlsli not found in %INCLUDEPATH%
+if not exist "!INCLUDEPATH!\d2d1effecthelpers.hlsli" (
+    echo d2d1effecthelpers.hlsli not found in !INCLUDEPATH!
     goto WRONG_COMMAND_PROMPT
 )
 
-call :COMPILE GeometryAlphaEraseEffect.hlsl || goto END
+set "COUNT=0"
+for %%f in (*.hlsl) do (
+    call :COMPILE "%%f" || goto END
+    set /a COUNT+=1
+)
+if !COUNT!==0 (
+    echo No .hlsl files found in %~dp0
+    goto END
+)
 
 goto END
 

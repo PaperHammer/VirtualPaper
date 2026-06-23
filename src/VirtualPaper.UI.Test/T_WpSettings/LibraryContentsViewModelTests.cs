@@ -318,8 +318,6 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         public void UpdateLib_CalledTwice_SameUid_ShouldNotDuplicate() {
             var item = MakeWpData("uid-1", "Sunset v1");
             PopulateLibrary(item);
-
-            int callIdx = 0;
             _wallpaperIndexService
                 .Setup(s => s.TryGetValue("uid-1", out It.Ref<int>.IsAny))
                 .Returns((string _, ref int idx) => { idx = 0; return true; });
@@ -333,6 +331,71 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             Assert.HasCount(1, _vm.LibraryWallpapers,
                 "Updating the same uid twice must not duplicate the item in the list");
             Assert.AreEqual("Sunset v3", _vm.LibraryWallpapers[0].Title);
+        }
+
+        // ── ApplyFilter(FilterContext) 组合过滤 ───────────────────────
+
+        [TestMethod]
+        public void ApplyFilter_WithActiveTypes_OnlyShowsMatchingTypes() {
+            var img = MakeWpData("uid-1", "Alpha", ftype: FileType.FImage);
+            var vid = MakeWpData("uid-2", "Beta", ftype: FileType.FVideo);
+            var gif = MakeWpData("uid-3", "Gamma", ftype: FileType.FGif);
+            PopulateLibrary(img, vid, gif);
+
+            IReadOnlySet<FileType> types = new HashSet<FileType> { FileType.FImage };
+            _vm.ApplyFilter(new FilterContext { ActiveTypes = types });
+
+            Assert.HasCount(1, _vm.LibraryWallpapers);
+            Assert.AreSame(img, _vm.LibraryWallpapers[0]);
+        }
+
+        [TestMethod]
+        public void ApplyFilter_WithNullActiveTypes_ShowsAllItems() {
+            var img = MakeWpData("uid-1", "Alpha", ftype: FileType.FImage);
+            var vid = MakeWpData("uid-2", "Beta", ftype: FileType.FVideo);
+            PopulateLibrary(img, vid);
+
+            _vm.ApplyFilter(new FilterContext { ActiveTypes = null });
+
+            Assert.HasCount(2, _vm.LibraryWallpapers);
+        }
+
+        [TestMethod]
+        public void ApplyFilter_WithTitleAndType_BothConditionsApplied() {
+            var matchImg = MakeWpData("uid-1", "Nature Sky", ftype: FileType.FImage);
+            var matchVid = MakeWpData("uid-2", "Nature River", ftype: FileType.FVideo);
+            var noMatchImg = MakeWpData("uid-3", "City Night", ftype: FileType.FImage);
+            PopulateLibrary(matchImg, matchVid, noMatchImg);
+
+            IReadOnlySet<FileType> types = new HashSet<FileType> { FileType.FImage };
+            _vm.ApplyFilter(new FilterContext { TitleKeyword = "Nature", ActiveTypes = types });
+
+            Assert.HasCount(1, _vm.LibraryWallpapers);
+            Assert.AreSame(matchImg, _vm.LibraryWallpapers[0]);
+        }
+
+        [TestMethod]
+        public void ApplyFilter_WithMultipleActiveTypes_ShowsAllMatching() {
+            var img = MakeWpData("uid-1", "A", ftype: FileType.FImage);
+            var gif = MakeWpData("uid-2", "B", ftype: FileType.FGif);
+            var vid = MakeWpData("uid-3", "C", ftype: FileType.FVideo);
+            PopulateLibrary(img, gif, vid);
+
+            IReadOnlySet<FileType> types = new HashSet<FileType> { FileType.FImage, FileType.FGif };
+            _vm.ApplyFilter(new FilterContext { ActiveTypes = types });
+
+            Assert.HasCount(2, _vm.LibraryWallpapers);
+        }
+
+        [TestMethod]
+        public void ApplyFilter_EmptyContext_ShowsAllItems() {
+            var a = MakeWpData("uid-1", "Alpha");
+            var b = MakeWpData("uid-2", "Beta");
+            PopulateLibrary(a, b);
+
+            _vm.ApplyFilter(FilterContext.Empty);
+
+            Assert.HasCount(2, _vm.LibraryWallpapers);
         }
 
         // ── 辅助方法 ──────────────────────────────────────────────────

@@ -99,6 +99,8 @@ jobs:
     - name: Calculate new version
       id: version
       shell: powershell
+      env:
+        PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
       run: |
         $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
         $content = Get-Content $csprojPath -Raw
@@ -116,16 +118,33 @@ jobs:
 
         $currentVersion = "$major.$minor.$build.$revision"
 
-        $incrementType = "${{ steps.branch_info.outputs.increment_type }}"
-        if ($incrementType -eq "feature") {
-            $minor = $minor + 1      # 第2位 +1
-            $build = 0               # 第3位 清零
-            $revision = 0            # 第4位 清零
-        } elseif ($incrementType -eq "minor") {
-            $build = $build + 1      # 第3位 +1
-            $revision = 0            # 第4位 清零
+        # Check if this is a restart update (version should not change)
+        $labels = "$env:PR_LABELS" -split ',' | ForEach-Object { $_.Trim() }
+        $isRestartUpdate = $false
+        $restartLabels = @("restart-update", "restart-update-plugin-ui", "restart-update-plugin-playerweb", "restart-update-plugin-scrsaver", "restart-update-plugin-ml", "restart-update-plugin-shaders")
+        foreach ($label in $labels) {
+            if ($restartLabels -contains $label) {
+                $isRestartUpdate = $true
+                break
+            }
+        }
+
+        if ($isRestartUpdate) {
+            # Restart update: keep the same version, only build number changes
+            Write-Host "Restart update detected - keeping version unchanged: $currentVersion"
         } else {
-            $revision = $revision + 1  # 第4位 +1
+            # Normal release: increment version based on branch
+            $incrementType = "${{ steps.branch_info.outputs.increment_type }}"
+            if ($incrementType -eq "feature") {
+                $minor = $minor + 1      # 第2位 +1
+                $build = 0               # 第3位 清零
+                $revision = 0            # 第4位 清零
+            } elseif ($incrementType -eq "minor") {
+                $build = $build + 1      # 第3位 +1
+                $revision = 0            # 第4位 清零
+            } else {
+                $revision = $revision + 1  # 第4位 +1
+            }
         }
 
         $newVersion = "$major.$minor.$build.$revision"

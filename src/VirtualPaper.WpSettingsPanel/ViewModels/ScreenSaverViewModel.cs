@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Pipes;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -123,10 +125,24 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         internal async Task ListenForClients() {
             ArcLog.GetLogger<ScreenSaverViewModel>().Info("[PipeServer] Pipe Server is running...");
 
+            var pipeSecurity = new PipeSecurity();
+            var currentUserId = WindowsIdentity.GetCurrent().User;
+            if (currentUserId != null) {
+                pipeSecurity.AddAccessRule(new PipeAccessRule(currentUserId, PipeAccessRights.ReadWrite, AccessControlType.Allow));
+            }
+
             try {
                 await Task.Run(async () => {
                     while (!_ctsListen.IsCancellationRequested) {
-                        using var server = new NamedPipeServerStream("TRAY_CMD", PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.Asynchronous);
+                        using var server = NamedPipeServerStreamAcl.Create(
+                            "TRAY_CMD",
+                            PipeDirection.InOut,
+                            1,
+                            PipeTransmissionMode.Message,
+                            PipeOptions.Asynchronous,
+                            0,
+                            0,
+                            pipeSecurity);
                         await server.WaitForConnectionAsync(_ctsListen.Token);
                         using var reader = new StreamReader(server);
                         string? cmd = await reader.ReadLineAsync(_ctsListen.Token);

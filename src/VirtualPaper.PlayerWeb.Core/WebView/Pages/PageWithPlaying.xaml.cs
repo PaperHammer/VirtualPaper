@@ -79,7 +79,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
 
         private void InputLayer_PointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
-            if (_isParallaxRunning != 1) return;
+            //if (_isParallaxRunning != 1) return;
 
             var point = e.GetCurrentPoint(this);
             _mousePos = point.Position;
@@ -378,11 +378,11 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         private ArcWindow? _arcWindow;
         private Point _mousePos;
         private Rect _pageRegion;
-        private volatile int _isParallaxRunning = 0; // 0 = stopped, 1 = running
+        //private volatile int _isParallaxRunning = 0; // 0 = stopped, 1 = running
         private bool _isPointerInsidePage;
         private readonly TaskCompletionSource _loadedTcs = new();
         private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
-            AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1 --autoplay-policy=no-user-gesture-required "
-        }; // workaround: avoid cache
+            AdditionalBrowserArguments = "--disk-cache-size=1 --autoplay-policy=no-user-gesture-required"
+        };
     }
 }

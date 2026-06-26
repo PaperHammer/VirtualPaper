@@ -15,7 +15,7 @@ namespace VirtualPaper.PlayerWeb.Extensions {
             webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
                 hostName,
                 folder,
-                CoreWebView2HostResourceAccessKind.Allow
+                CoreWebView2HostResourceAccessKind.DenyCors
             );
         }
 
@@ -32,11 +32,11 @@ namespace VirtualPaper.PlayerWeb.Extensions {
             webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
                 hostName,
                 directoryPath,
-                CoreWebView2HostResourceAccessKind.Allow);
+                CoreWebView2HostResourceAccessKind.DenyCors);
             webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
                 WallpaperHost,
                 Path.Combine(Constants.CommonPaths.LibraryDir, Constants.FolderName.WpStoreFolderName),
-                CoreWebView2HostResourceAccessKind.Allow);
+                CoreWebView2HostResourceAccessKind.DenyCors);
 
             webView.CoreWebView2.Navigate($"https://{hostName}/{fileName}");
         }

@@ -52,10 +52,11 @@ namespace VirtualPaper.Common.Utils.Files {
                     FileName = "explorer.exe"
                 };
                 if (File.Exists(path)) {
-                    startInfo.Arguments = "/select, \"" + path + "\"";
+                    startInfo.ArgumentList.Add("/select,");
+                    startInfo.ArgumentList.Add(path);
                 }
                 else if (Directory.Exists(path)) {
-                    startInfo.Arguments = "\"" + path + "\"";
+                    startInfo.ArgumentList.Add(path);
                 }
                 else {
                     throw new FileNotFoundException();

@@ -172,6 +172,8 @@ namespace VirtualPaper.Common {
             public static string RestartUpdate_Stage_Completed => "RestartUpdate_Stage_Completed";
             public static string RestartUpdate_Stage_Failed => "RestartUpdate_Stage_Failed";
             public static string RestartUpdate_Close => "RestartUpdate_Close";
+            public static string RestartUpdate_PostponeTip => "RestartUpdate_PostponeTip";
+            public static string Find_New_Version_Restart => "Find_New_Version_Restart";
             public static string ScreenSaver__effectBubble => "ScreenSaver__effectBubble";
             public static string ScreenSaver__effectNone => "ScreenSaver__effectNone";
             public static string Settings_General_AppearanceAndAction__sysbdAcrylic => "Settings_General_AppearanceAndAction__sysbdAcrylic";
@@ -313,6 +315,7 @@ namespace VirtualPaper.Common {
             public static string? Project_StaticImg_Text_EffectDesc_Screen { get; }
             public static string? Project_StaticImg_Text_EffectDesc_Overlay { get; }
             public static string? Project_StaticImg_Text_EffectDesc_SoftLight { get; }
+            public static string? Settings_General_Version_FindNew { get; set; }
         }
 
         public static class Field {

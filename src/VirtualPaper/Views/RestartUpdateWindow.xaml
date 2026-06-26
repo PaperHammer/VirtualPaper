@@ -81,19 +81,40 @@
                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                        HorizontalAlignment="Center"
                        Margin="0,12,0,0"/>
+
+            <!-- Postpone Tip (shown after completion) -->
+            <TextBlock Text="{Binding PostponeTip}"
+                       FontSize="12"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                       HorizontalAlignment="Center"
+                       Margin="0,8,0,0">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
         </StackPanel>
 
         <!-- Bottom Bar -->
         <Border Grid.Row="2"
                 Padding="20,12"
                 Background="{DynamicResource ControlFillColorDefaultBrush}">
-            <ui:Button Content="{Binding [RestartUpdate_Close], Source={x:Static lang:LanguageManager.Instance}}"
+            <ui:Button 
                        Command="{Binding CloseCommand}"
                        IsEnabled="{Binding IsCompleted}"
                        Appearance="Primary"
                        Width="100"
                        Height="32"
-                       HorizontalAlignment="Right"/>
+                       HorizontalAlignment="Right">
+                <TextBlock Text="{Binding [RestartUpdate_Close], Source={x:Static lang:LanguageManager.Instance}}"/>
+            </ui:Button>
         </Border>
     </Grid>
 </ui:FluentWindow>

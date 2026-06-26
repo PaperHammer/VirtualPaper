@@ -347,8 +347,15 @@ namespace VirtualPaper {
                     if (_updateNotifyAmt > 0) {
                         _updateNotifyAmt--;
                         _updateNotify = true;
+
+                        var updater = Services.GetRequiredService<IAppUpdaterService>();
+                        var isRestart = updater.LastReleaseInfo?.IsRestartUpdate == true;
+                        var toastKey = isRestart
+                            ? Constants.I18n.Find_New_Version_Restart
+                            : nameof(Constants.I18n.Settings_General_Version_FindNew);
+
                         new ToastContentBuilder()
-                            .AddText(LanguageManager.Instance["Find_New_Verison"])
+                            .AddText(LanguageManager.Instance[toastKey])
                             .Show();
                     }
 
@@ -381,9 +388,9 @@ namespace VirtualPaper {
             Application.Current.Dispatcher.Invoke(Application.Current.Shutdown);
         }
 
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IServiceProvider _serviceProvider = null!;
         private readonly Mutex _mutex = new(false, Constants.CoreField.UniqueAppUid);
-        private readonly NamedPipeServer _grpcServer;
+        private readonly NamedPipeServer _grpcServer = null!;
         private static readonly CancellationTokenSource _ctsPlayback = new();
         private static readonly Logger _log = LogManager.GetCurrentClassLogger();
     }

@@ -607,7 +607,7 @@ namespace VirtualPaper.PlayerWeb {
         private int _isParallaxOnFromIpc = 1;   // 0=IPC 挂起（全屏/焦点应用遮盖）, 1=IPC 允许（默认允许）
         private readonly CancellationTokenSource _ctsConsoleIn = new();
         private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
-            AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1 --autoplay-policy=no-user-gesture-required "
-        }; // workaround: avoid cache
+            AdditionalBrowserArguments = "--disk-cache-size=1 --autoplay-policy=no-user-gesture-required"
+        };
     }
 }

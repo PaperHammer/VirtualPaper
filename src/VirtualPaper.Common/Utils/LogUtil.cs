@@ -49,12 +49,12 @@ namespace VirtualPaper.Common.Utils {
             }
 
             var logFolderCore = Constants.CommonPaths.LogDirCore;
-            if (Directory.Exists(logFolder)) {
+            if (Directory.Exists(logFolderCore)) {
                 files.AddRange(Directory.GetFiles(logFolderCore, "*.*", SearchOption.TopDirectoryOnly));
             }
 
             var logFolderUI = Constants.CommonPaths.LogDirUI;
-            if (Directory.Exists(logFolder)) {
+            if (Directory.Exists(logFolderUI)) {
                 files.AddRange(Directory.GetFiles(logFolderUI, "*.*", SearchOption.TopDirectoryOnly));
             }
 

@@ -193,6 +193,9 @@ https://github.com/PaperHammer/VirtualPaper/releases</value>
   <data name="Find_New_Verison" xml:space="preserve">
     <value>Find a newer version!</value>
   </data>
+  <data name="Find_New_Version_Restart" xml:space="preserve">
+    <value>Component update available!</value>
+  </data>
   <data name="Systray_TextCloseAllWallpapers" xml:space="preserve">
     <value>Close all wallpapers</value>
   </data>
@@ -282,5 +285,8 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   </data>
   <data name="RestartUpdate_Close" xml:space="preserve">
     <value>Close</value>
+  </data>
+  <data name="RestartUpdate_PostponeTip" xml:space="preserve">
+    <value>Update ready. Close the main window to apply.</value>
   </data>
 </root>

@@ -50,6 +50,12 @@ namespace VirtualPaper.ViewModels {
             set { _isIndeterminate = value; OnPropertyChanged(); }
         }
 
+        private string _postponeTip = string.Empty;
+        public string PostponeTip {
+            get => _postponeTip;
+            set { _postponeTip = value; OnPropertyChanged(); }
+        }
+
         public ICommand CloseCommand { get; }
 
         public RestartUpdateWindowViewModel() {
@@ -73,6 +79,7 @@ namespace VirtualPaper.ViewModels {
 
             if (result.Success) {
                 StatusText = LanguageManager.Instance[Constants.I18n.RestartUpdate_Completed];
+                PostponeTip = LanguageManager.Instance[Constants.I18n.RestartUpdate_PostponeTip];
                 IsCompleted = true;
             }
             else {

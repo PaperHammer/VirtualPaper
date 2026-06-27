@@ -118,10 +118,10 @@ jobs:
 
         $currentVersion = "$major.$minor.$build.$revision"
 
-        # Check if this is a restart update (version should not change)
+        # Check if this is a plugin update (version should not change)
         $labels = "$env:PR_LABELS" -split ',' | ForEach-Object { $_.Trim() }
         $isRestartUpdate = $false
-        $restartLabels = @("restart-update", "restart-update-plugin-ui", "restart-update-plugin-playerweb", "restart-update-plugin-scrsaver", "restart-update-plugin-ml", "restart-update-plugin-shaders")
+        $restartLabels = @("update-plugins", "update-plugin-ui", "update-plugin-playerweb", "update-plugin-scrsaver", "update-plugin-ml", "update-plugin-shader")
         foreach ($label in $labels) {
             if ($restartLabels -contains $label) {
                 $isRestartUpdate = $true
@@ -130,8 +130,8 @@ jobs:
         }
 
         if ($isRestartUpdate) {
-            # Restart update: keep the same version, only build number changes
-            Write-Host "Restart update detected - keeping version unchanged: $currentVersion"
+            # Plugin update: keep the same version, only build number changes
+            Write-Host "Plugin update detected - keeping version unchanged: $currentVersion"
         } else {
             # Normal release: increment version based on branch
             $incrementType = "${{ steps.branch_info.outputs.increment_type }}"
@@ -180,7 +180,7 @@ jobs:
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "$delimiter`n", $utf8NoBom)
         Write-Host "PR body captured ($($body.Length) chars)"
 
-    - name: Detect restart-update labels
+    - name: Detect update-plugins labels
       id: restart_info
       shell: powershell
       env:
@@ -190,39 +190,39 @@ jobs:
         $isRestartUpdate = "false"
         $plugins = @()
 
-        # Check for restart-update label (all plugins)
-        if ($labels -contains "restart-update") {
+        # Check for update-plugins label (all plugins)
+        if ($labels -contains "update-plugins") {
             $isRestartUpdate = "true"
             $plugins = @("UI", "PlayerWeb", "ScrSaver", "ML", "Shaders")
-            Write-Host "Restart update: ALL plugins"
+            Write-Host "Plugin update: ALL plugins"
         }
         else {
             # Check for specific plugin labels
-            if ($labels -contains "restart-update-plugin-ui") {
+            if ($labels -contains "update-plugin-ui") {
                 $isRestartUpdate = "true"
                 $plugins += "UI"
             }
-            if ($labels -contains "restart-update-plugin-playerweb") {
+            if ($labels -contains "update-plugin-playerweb") {
                 $isRestartUpdate = "true"
                 $plugins += "PlayerWeb"
             }
-            if ($labels -contains "restart-update-plugin-scrsaver") {
+            if ($labels -contains "update-plugin-scrsaver") {
                 $isRestartUpdate = "true"
                 $plugins += "ScrSaver"
             }
-            if ($labels -contains "restart-update-plugin-ml") {
+            if ($labels -contains "update-plugin-ml") {
                 $isRestartUpdate = "true"
                 $plugins += "ML"
             }
-            if ($labels -contains "restart-update-plugin-shaders") {
+            if ($labels -contains "update-plugin-shader") {
                 $isRestartUpdate = "true"
                 $plugins += "Shaders"
             }
             if ($isRestartUpdate -eq "true") {
-                Write-Host "Restart update: $($plugins -join ', ')"
+                Write-Host "Plugin update: $($plugins -join ', ')"
             }
             else {
-                Write-Host "No restart-update labels found, installer-only release"
+                Write-Host "No update-plugins labels found, installer-only release"
             }
         }
 

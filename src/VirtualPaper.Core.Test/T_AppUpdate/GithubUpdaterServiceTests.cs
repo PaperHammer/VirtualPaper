@@ -8,6 +8,7 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
     public class GithubUpdaterServiceTests {
         private Mock<IGithubReleaseClient> _mockClient = null!;
         private Mock<IVersionComparer> _mockComparer = null!;
+        private Mock<IAppBuildService> _mockBuildService = null!;
         private GithubUpdaterService _service = null!;
 
         private static readonly Uri FakeUri = new("https://fake/setup.exe");
@@ -26,12 +27,13 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
         public void TestInitialize() {
             _mockClient = new Mock<IGithubReleaseClient>();
             _mockComparer = new Mock<IVersionComparer>();
+            _mockBuildService = new Mock<IAppBuildService>();
 
             _mockClient
                 .Setup(c => c.GetLatestRelease(It.IsAny<bool>()))
                 .ReturnsAsync(CreateFakeReleaseInfo());
 
-            _service = new GithubUpdaterService(_mockClient.Object, _mockComparer.Object);
+            _service = new GithubUpdaterService(_mockClient.Object, _mockComparer.Object, _mockBuildService.Object);
         }
 
         // -------------------------------------------------------

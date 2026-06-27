@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Cores.ScreenSaver;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.AppUpdate;
@@ -171,7 +172,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                     var sourceDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pluginInfo.Target));
                     if (Directory.Exists(sourceDir)) {
                         var backupPath = Path.Combine(backupDir, pluginName);
-                        CopyDirectory(sourceDir, backupPath, true);
+                        FileUtil.CopyDirectory(sourceDir, backupPath, true);
                     }
                 }
 
@@ -191,16 +192,47 @@ namespace VirtualPaper.Cores.AppUpdate {
                     var targetDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pluginInfo.Target));
                     var zipPath = Path.Combine(pendingDir, pluginName, pluginInfo.Files[0].Name);
 
+                    // Verify zip SHA256 against manifest
+                    var actualHash = FileUtil.GetChecksumSHA256(zipPath);
+                    var expectedHash = pluginInfo.Files[0].Sha256;
+                    if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase)) {
+                        throw new InvalidOperationException($"SHA256 mismatch for {pluginName}: expected {expectedHash}, got {actualHash}");
+                    }
+
                     // Clear target directory
                     if (Directory.Exists(targetDir)) {
-                        DeleteDirectoryContents(targetDir);
+                        FileUtil.DeleteDirectoryContents(targetDir);
                     }
                     else {
                         Directory.CreateDirectory(targetDir);
                     }
 
-                    // Extract zip
-                    ZipFile.ExtractToDirectory(zipPath, targetDir, true);
+                    // Extract zip - the zip contains a single folder with the plugin name
+                    var extractDir = Path.Combine(pendingDir, pluginName, "extracted");
+                    if (Directory.Exists(extractDir)) {
+                        Directory.Delete(extractDir, true);
+                    }
+                    Directory.CreateDirectory(extractDir);
+                    ZipFile.ExtractToDirectory(zipPath, extractDir, true);
+
+                    // Find the plugin folder inside the extracted content
+                    var folders = Directory.GetDirectories(extractDir);
+                    if (folders.Length != 1) {
+                        throw new InvalidOperationException($"Expected exactly one folder in plugin zip, found {folders.Length}");
+                    }
+                    var pluginFolder = folders[0];
+
+                    // Move contents from plugin folder to target
+                    foreach (var item in Directory.GetFileSystemEntries(pluginFolder)) {
+                        var destPath = Path.Combine(targetDir, Path.GetFileName(item));
+                        if (Directory.Exists(item)) {
+                            FileUtil.CopyDirectory(item, destPath, true);
+                            Directory.Delete(item, true);
+                        }
+                        else {
+                            File.Move(item, destPath);
+                        }
+                    }
 
                     var count = Interlocked.Increment(ref replacedCount);
                     progress?.Report(new RestartUpdateProgress(RestartUpdateStage.Replacing, (float)count / totalPlugins * 100, $"Replaced {pluginName}"));
@@ -351,13 +383,13 @@ namespace VirtualPaper.Cores.AppUpdate {
 
                     // Clear current
                     if (Directory.Exists(targetDir)) {
-                        DeleteDirectoryContents(targetDir);
+                        FileUtil.DeleteDirectoryContents(targetDir);
                     }
                     else {
                         Directory.CreateDirectory(targetDir);
                     }
 
-                    CopyDirectory(backupPluginDir, targetDir, true);
+                    FileUtil.CopyDirectory(backupPluginDir, targetDir, true);
                 }
 
                 ArcLog.GetLogger<RestartUpdateService>().Info("Rollback completed");
@@ -404,29 +436,6 @@ namespace VirtualPaper.Cores.AppUpdate {
             Directory.CreateDirectory(Path.GetDirectoryName(flagPath)!);
             var json = JsonSerializer.Serialize(flag, UpdateFlagContext.Default.UpdateFlag);
             await File.WriteAllTextAsync(flagPath, json, token);
-        }
-
-        private static void CopyDirectory(string sourceDir, string destDir, bool overwrite) {
-            Directory.CreateDirectory(destDir);
-
-            foreach (var file in Directory.GetFiles(sourceDir)) {
-                var destFile = Path.Combine(destDir, Path.GetFileName(file));
-                File.Copy(file, destFile, overwrite);
-            }
-
-            foreach (var subDir in Directory.GetDirectories(sourceDir)) {
-                var destSubDir = Path.Combine(destDir, Path.GetFileName(subDir));
-                CopyDirectory(subDir, destSubDir, overwrite);
-            }
-        }
-
-        private static void DeleteDirectoryContents(string dirPath) {
-            foreach (var file in Directory.GetFiles(dirPath)) {
-                File.Delete(file);
-            }
-            foreach (var subDir in Directory.GetDirectories(dirPath)) {
-                Directory.Delete(subDir, true);
-            }
         }
 
         private readonly IDownloadService _downloadService;

@@ -19,9 +19,11 @@ namespace VirtualPaper.Cores.AppUpdate {
 
         public GithubUpdaterService(
             IGithubReleaseClient githubReleaseClient,
-            IVersionComparer versionComparer) {
+            IVersionComparer versionComparer,
+            IAppBuildService appBuildService) {
             _githubReleaseClient = githubReleaseClient;
             _versionComparer = versionComparer;
+            _appBuildService = appBuildService;
 
             _retryTimer.Elapsed += RetryTimer_Elapsed;
             //giving the retry delay is not reliable since it will reset if system sleeps/suspends.
@@ -47,6 +49,10 @@ namespace VirtualPaper.Cores.AppUpdate {
                 else if (verCompare < 0 || releaseInfo.InstallerUri == null) {
                     //beta release.
                     Status = AppUpdateStatus.Invalid;
+                }
+                else if (releaseInfo.IsRestartUpdate && releaseInfo.Manifest != null && HasPluginUpdate(releaseInfo)) {
+                    //version unchanged, but plugin updates available.
+                    Status = AppUpdateStatus.Available;
                 }
                 else {
                     //up-to-date.
@@ -142,6 +148,18 @@ namespace VirtualPaper.Cores.AppUpdate {
                 _ = CheckUpdate(0);
             }
         }
+
+        private bool HasPluginUpdate(ReleaseInfo releaseInfo) {
+            foreach (var (pluginName, pluginInfo) in releaseInfo.Manifest!.Plugins) {
+                var localBuild = _appBuildService.GetPluginBuild(pluginName);
+                if (!string.IsNullOrEmpty(localBuild) &&
+                    string.Compare(pluginInfo.Build, localBuild, StringComparison.Ordinal) > 0) {
+                    ArcLog.GetLogger<GithubUpdaterService>().Info($"Plugin update available: {pluginName} ({localBuild} -> {pluginInfo.Build})");
+                    return true;
+                }
+            }
+            return false;
+        }
         #endregion
 
         private readonly int _fetchDelayError = 30 * 60 * 1000; //30min
@@ -149,5 +167,6 @@ namespace VirtualPaper.Cores.AppUpdate {
         private readonly Timer _retryTimer = new();
         private readonly IGithubReleaseClient _githubReleaseClient;
         private readonly IVersionComparer _versionComparer;
+        private readonly IAppBuildService _appBuildService;
     }
 }

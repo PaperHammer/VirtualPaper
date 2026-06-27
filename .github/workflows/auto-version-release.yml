@@ -22,7 +22,7 @@ jobs:
   # Job 1: 准备阶段 - 记录 SHA、确定分支、计算新版本号
   # ─────────────────────────────────────────────────────────────
   prepare:
-    name: Prepare - Calculate Version & Record SHAs
+    name: Prepare - Version & Metadata
     runs-on: windows-latest
     if: |
       github.event.pull_request.merged == true &&
@@ -126,21 +126,19 @@ jobs:
         if ($labels -contains "update-plugins") {
             $isPluginUpdate = $true
             $plugins = @("UI", "PlayerWeb", "ScrSaver", "ML", "Shaders")
-            Write-Host "Plugin update: ALL plugins"
         } else {
             if ($labels -contains "update-plugin-ui")         { $isPluginUpdate = $true; $plugins += "UI" }
             if ($labels -contains "update-plugin-playerweb")   { $isPluginUpdate = $true; $plugins += "PlayerWeb" }
             if ($labels -contains "update-plugin-scrsaver")    { $isPluginUpdate = $true; $plugins += "ScrSaver" }
             if ($labels -contains "update-plugin-ml")          { $isPluginUpdate = $true; $plugins += "ML" }
             if ($labels -contains "update-plugin-shader")      { $isPluginUpdate = $true; $plugins += "Shaders" }
-            if ($isPluginUpdate) { Write-Host "Plugin update: $($plugins -join ', ')" }
-            else { Write-Host "No update-plugins labels found, installer-only release" }
         }
 
         # ── Calculate version ────────────────────────────────────────
         if ($isPluginUpdate) {
-            Write-Host "Plugin update detected - keeping version unchanged: $currentVersion"
+            Write-Host "Plugin update ($($plugins -join ', ')) - version unchanged: $currentVersion"
         } else {
+            Write-Host "Installer-only release - no plugin updates"
             $incrementType = "${{ steps.branch_info.outputs.increment_type }}"
             if ($incrementType -eq "feature") {
                 $minor = $minor + 1      # 第2位 +1
@@ -589,20 +587,22 @@ jobs:
         $buildNumber = "${{ needs.prepare.outputs.build_number }}"
         $plugins = "${{ needs.prepare.outputs.restart_plugins }}" -split ';' | Where-Object { $_ -ne "" }
 
-        # Zip each plugin
+        # Create each plugin zip containing only the plugin folder
         foreach ($plugin in $plugins) {
             $pluginDir = "$pluginsDir/$plugin"
             if (Test-Path $pluginDir) {
-                $zipName = "plugin_${plugin}_${buildNumber}.zip"
+                $pluginLower = $plugin.ToLower()
+                $zipName = "plugin-$pluginLower-$buildNumber.zip"
                 $zipPath = "$outputDir/$zipName"
-                Compress-Archive -Path "$pluginDir/*" -DestinationPath $zipPath -Force
+                # Zip the folder itself (not just contents)
+                Compress-Archive -Path $pluginDir -DestinationPath $zipPath -Force
                 Write-Host "[OK] Created $zipName"
             } else {
                 Write-Warning "Plugin directory not found: $pluginDir"
             }
         }
 
-        # Generate update_manifest.json (zip-level SHA256 for download verification)
+        # Generate update_manifest.json with zip-level SHA256
         $manifest = @{
             type = "restart"
             app_build = $buildNumber
@@ -611,7 +611,8 @@ jobs:
         }
 
         foreach ($plugin in $plugins) {
-            $zipName = "plugin_${plugin}_${buildNumber}.zip"
+            $pluginLower = $plugin.ToLower()
+            $zipName = "plugin-$pluginLower-$buildNumber.zip"
             $zipPath = "$outputDir/$zipName"
             if (Test-Path $zipPath) {
                 $hash = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash.ToLower()
@@ -624,9 +625,16 @@ jobs:
         }
 
         $manifestJson = $manifest | ConvertTo-Json -Depth 10
-        Set-Content -Path "$outputDir/update_manifest.json" -Value $manifestJson -Encoding UTF8
-        Write-Host "[OK] Generated update_manifest.json"
+        # Use UTF-8 without BOM to match client-side hash computation
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+        [System.IO.File]::WriteAllText("$outputDir/plugin-manifest.json", $manifestJson, $utf8NoBom)
+        Write-Host "[OK] Generated plugin-manifest.json"
         Write-Host $manifestJson
+
+        # Generate PLUGIN_MANIFEST_SHA256.txt for manifest verification
+        $manifestHash = (Get-FileHash -Path "$outputDir/plugin-manifest.json" -Algorithm SHA256).Hash.ToLower()
+        [System.IO.File]::WriteAllText("$outputDir/PLUGIN_MANIFEST_SHA256.txt", $manifestHash, $utf8NoBom)
+        Write-Host "[OK] Generated PLUGIN_MANIFEST_SHA256.txt: $manifestHash"
 
     - name: Upload restart update packages
       uses: actions/upload-artifact@v4
@@ -792,9 +800,9 @@ jobs:
         echo -e "\033[0;36mPackage : ${{ needs.package.outputs.installer_name }}\033[0m"
         
         if [ "${{ needs.prepare.outputs.is_restart_update }}" = "true" ]; then
-          echo -e "\033[0;36mRestart : YES (plugins: ${{ needs.prepare.outputs.restart_plugins }}, build: ${{ needs.prepare.outputs.build_number }})\033[0m"
+          echo -e "\033[0;36mRestart Update: YES (plugins: ${{ needs.prepare.outputs.restart_plugins }}, build: ${{ needs.prepare.outputs.build_number }})\033[0m"
         else
-          echo    "Restart : NO (installer only)"
+          echo    "Restart Update: NO (installer only)"
         fi
         
         echo ""
@@ -826,7 +834,9 @@ jobs:
     name: Create Draft GitHub Release
     runs-on: ubuntu-latest
     needs: [prepare, package, package_restart_update, summary]
-    if: needs.summary.result == 'success'
+    if: >-
+      needs.summary.result == 'success' &&
+      (needs.package_restart_update.result == 'success' || needs.package_restart_update.result == 'skipped')
 
     steps:
     - name: Download installer artifact
@@ -852,7 +862,8 @@ jobs:
           dist/*.exe
           dist/SHA256.txt
           dist/restart-update/*.zip
-          dist/restart-update/update_manifest.json
+          dist/restart-update/plugin-manifest.json
+          dist/restart-update/PLUGIN_MANIFEST_SHA256.txt
         draft: true        # 草稿状态，不对外公开，等待人工验证后发布
         make_latest: false  # 草稿阶段不标记为最新，发布时再生效
         token: ${{ secrets.GITHUB_TOKEN }}

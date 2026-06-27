@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
+using System.Text;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
 
@@ -118,10 +119,10 @@ namespace VirtualPaper.Common.Utils.Files {
         }
 
         /// <summary>
-        /// 计算文件校验和
+        /// 计算文件 SHA256 校验和
         /// </summary>
-        /// <param name="filePath"></param>
-        /// <returns>SHA256 checksum.</returns>
+        /// <param name="filePath">文件路径</param>
+        /// <returns>SHA256 checksum (小写 hex)</returns>
         public static string GetChecksumSHA256(string filePath) {
             using SHA256 sha256 = SHA256.Create();
             using var stream = File.OpenRead(filePath);
@@ -130,9 +131,53 @@ namespace VirtualPaper.Common.Utils.Files {
             return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
         }
 
+        /// <summary>
+        /// 计算字符串内容的 SHA256 校验和（UTF-8 编码）
+        /// 自动处理 BOM：如果内容以 UTF-8 BOM 开头，会先移除再计算
+        /// </summary>
+        /// <param name="content">字符串内容</param>
+        /// <returns>SHA256 checksum (小写 hex)</returns>
+        public static string GetChecksumSHA256FromContent(string content) {
+            // 移除 UTF-8 BOM（如果存在）
+            if (content.Length > 0 && content[0] == '\uFEFF') {
+                content = content.Substring(1);
+            }
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(content));
+            return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+        }
+
         public static void EmptyDirectory(string directory) {
             DirectoryInfo di = new(directory);
             di.Delete(true);
+        }
+
+        /// <summary>
+        /// 清空目录内容（删除所有文件和子目录），但保留目录本身。
+        /// 使用 Enumerate 延迟求值，适合大目录。
+        /// 跳过符号链接和联接点，避免意外删除外部文件。
+        /// </summary>
+        /// <param name="dirPath">要清空的目录路径</param>
+        public static void DeleteDirectoryContents(string dirPath) {
+            if (!Directory.Exists(dirPath)) return;
+
+            var dir = new DirectoryInfo(dirPath);
+            var options = new EnumerationOptions {
+                AttributesToSkip = System.IO.FileAttributes.ReparsePoint  // 跳过 symlink/junction
+            };
+
+            // 先删文件（延迟枚举，不一次性加载全部路径）
+            foreach (var file in dir.EnumerateFiles("*", options)) {
+                // 清除只读属性
+                if (file.Attributes.HasFlag(System.IO.FileAttributes.ReadOnly)) {
+                    file.Attributes &= ~System.IO.FileAttributes.ReadOnly;
+                }
+                file.Delete();
+            }
+
+            // 再删子目录（递归删除，跳过 reparse point）
+            foreach (var subDir in dir.EnumerateDirectories("*", options)) {
+                subDir.Delete(true);
+            }
         }
 
         public static bool IsFileGreaterThanThreshold(string filePath, long bytes) {

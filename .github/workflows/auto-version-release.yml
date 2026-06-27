@@ -40,9 +40,9 @@ jobs:
       release_sha: ${{ steps.shas.outputs.release_sha }}
       pr_title: ${{ steps.pr_info.outputs.pr_title }}
       pr_body: ${{ steps.pr_info.outputs.pr_body }}
-      is_restart_update: ${{ steps.restart_info.outputs.is_restart_update }}
-      restart_plugins: ${{ steps.restart_info.outputs.restart_plugins }}
-      build_number: ${{ steps.restart_info.outputs.build_number }}
+      is_restart_update: ${{ steps.version.outputs.is_restart_update }}
+      restart_plugins: ${{ steps.version.outputs.restart_plugins }}
+      build_number: ${{ steps.version.outputs.build_number }}
 
     steps:
     - name: Checkout with full history
@@ -96,7 +96,7 @@ jobs:
         Write-Output "source_branch=$sourceBranch" >> $env:GITHUB_OUTPUT
         Write-Output "increment_type=$incrementType" >> $env:GITHUB_OUTPUT
 
-    - name: Calculate new version
+    - name: Prepare release metadata
       id: version
       shell: powershell
       env:
@@ -118,22 +118,29 @@ jobs:
 
         $currentVersion = "$major.$minor.$build.$revision"
 
-        # Check if this is a plugin update (version should not change)
+        # ── Detect plugin update labels ──────────────────────────────
         $labels = "$env:PR_LABELS" -split ',' | ForEach-Object { $_.Trim() }
-        $isRestartUpdate = $false
-        $restartLabels = @("update-plugins", "update-plugin-ui", "update-plugin-playerweb", "update-plugin-scrsaver", "update-plugin-ml", "update-plugin-shader")
-        foreach ($label in $labels) {
-            if ($restartLabels -contains $label) {
-                $isRestartUpdate = $true
-                break
-            }
+        $isPluginUpdate = $false
+        $plugins = @()
+
+        if ($labels -contains "update-plugins") {
+            $isPluginUpdate = $true
+            $plugins = @("UI", "PlayerWeb", "ScrSaver", "ML", "Shaders")
+            Write-Host "Plugin update: ALL plugins"
+        } else {
+            if ($labels -contains "update-plugin-ui")         { $isPluginUpdate = $true; $plugins += "UI" }
+            if ($labels -contains "update-plugin-playerweb")   { $isPluginUpdate = $true; $plugins += "PlayerWeb" }
+            if ($labels -contains "update-plugin-scrsaver")    { $isPluginUpdate = $true; $plugins += "ScrSaver" }
+            if ($labels -contains "update-plugin-ml")          { $isPluginUpdate = $true; $plugins += "ML" }
+            if ($labels -contains "update-plugin-shader")      { $isPluginUpdate = $true; $plugins += "Shaders" }
+            if ($isPluginUpdate) { Write-Host "Plugin update: $($plugins -join ', ')" }
+            else { Write-Host "No update-plugins labels found, installer-only release" }
         }
 
-        if ($isRestartUpdate) {
-            # Plugin update: keep the same version, only build number changes
+        # ── Calculate version ────────────────────────────────────────
+        if ($isPluginUpdate) {
             Write-Host "Plugin update detected - keeping version unchanged: $currentVersion"
         } else {
-            # Normal release: increment version based on branch
             $incrementType = "${{ steps.branch_info.outputs.increment_type }}"
             if ($incrementType -eq "feature") {
                 $minor = $minor + 1      # 第2位 +1
@@ -150,12 +157,21 @@ jobs:
         $newVersion = "$major.$minor.$build.$revision"
         # 使用下划线分隔，避免各组件 >= 10 时产生歧义（如 0.10.0.0 → 01000 与 0.1.0.0.0 冲突）
         $newVersionText = "${major}_${minor}_${build}_${revision}"
-
         Write-Host "Version: $currentVersion -> $newVersion"
 
-        Write-Output "current_version=$currentVersion" >> $env:GITHUB_OUTPUT
-        Write-Output "new_version=$newVersion" >> $env:GITHUB_OUTPUT
-        Write-Output "new_version_text=$newVersionText" >> $env:GITHUB_OUTPUT
+        # ── Generate build number: YYMM + R + DD + T + HHMM ─────────
+        $now = Get-Date
+        $buildNumber = $now.ToString("yyMM") + "R" + $now.ToString("dd") + "T" + $now.ToString("HHmm")
+        Write-Host "Build number: $buildNumber"
+
+        # ── Outputs ──────────────────────────────────────────────────
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "current_version=$currentVersion`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "new_version=$newVersion`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "new_version_text=$newVersionText`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "is_restart_update=$($isPluginUpdate.ToString().ToLower())`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "restart_plugins=$($plugins -join ';')`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "build_number=$buildNumber`n", $utf8NoBom)
 
     - name: Capture PR title and body
       id: pr_info
@@ -179,62 +195,6 @@ jobs:
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "$body`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "$delimiter`n", $utf8NoBom)
         Write-Host "PR body captured ($($body.Length) chars)"
-
-    - name: Detect update-plugins labels
-      id: restart_info
-      shell: powershell
-      env:
-        PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-      run: |
-        $labels = "$env:PR_LABELS" -split ',' | ForEach-Object { $_.Trim() }
-        $isRestartUpdate = "false"
-        $plugins = @()
-
-        # Check for update-plugins label (all plugins)
-        if ($labels -contains "update-plugins") {
-            $isRestartUpdate = "true"
-            $plugins = @("UI", "PlayerWeb", "ScrSaver", "ML", "Shaders")
-            Write-Host "Plugin update: ALL plugins"
-        }
-        else {
-            # Check for specific plugin labels
-            if ($labels -contains "update-plugin-ui") {
-                $isRestartUpdate = "true"
-                $plugins += "UI"
-            }
-            if ($labels -contains "update-plugin-playerweb") {
-                $isRestartUpdate = "true"
-                $plugins += "PlayerWeb"
-            }
-            if ($labels -contains "update-plugin-scrsaver") {
-                $isRestartUpdate = "true"
-                $plugins += "ScrSaver"
-            }
-            if ($labels -contains "update-plugin-ml") {
-                $isRestartUpdate = "true"
-                $plugins += "ML"
-            }
-            if ($labels -contains "update-plugin-shader") {
-                $isRestartUpdate = "true"
-                $plugins += "Shaders"
-            }
-            if ($isRestartUpdate -eq "true") {
-                Write-Host "Plugin update: $($plugins -join ', ')"
-            }
-            else {
-                Write-Host "No update-plugins labels found, installer-only release"
-            }
-        }
-
-        # Generate build number: YYMM + R + DD + T + HHMM
-        $now = Get-Date
-        $buildNumber = $now.ToString("yyMM") + "R" + $now.ToString("dd") + "T" + $now.ToString("HHmm")
-        Write-Host "Build number: $buildNumber"
-
-        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
-        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "is_restart_update=$isRestartUpdate`n", $utf8NoBom)
-        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "restart_plugins=$($plugins -join ';')`n", $utf8NoBom)
-        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "build_number=$buildNumber`n", $utf8NoBom)
 
   # ─────────────────────────────────────────────────────────────
   # Job 2: 编译 .NET Release
@@ -682,6 +642,7 @@ jobs:
     name: Bump Version to main
     runs-on: windows-latest
     needs: [prepare, package, smoke_test, package_restart_update]
+    if: needs.prepare.outputs.is_restart_update != 'true'
 
     steps:
     - name: Checkout main with full history
@@ -741,6 +702,7 @@ jobs:
     name: Sync Version to Pre-publish Branches
     runs-on: windows-latest
     needs: [prepare, bump]
+    if: needs.prepare.outputs.is_restart_update != 'true'
 
     steps:
     - name: Checkout with full history
@@ -809,8 +771,8 @@ jobs:
       needs.build.result == 'success' &&
       needs.package.result == 'success' &&
       needs.smoke_test.result == 'success' &&
-      needs.bump.result == 'success' &&
-      needs.sync.result == 'success' &&
+      (needs.bump.result == 'success' || (needs.prepare.outputs.is_restart_update == 'true' && needs.bump.result == 'skipped')) &&
+      (needs.sync.result == 'success' || (needs.prepare.outputs.is_restart_update == 'true' && needs.sync.result == 'skipped')) &&
       (needs.package_restart_update.result == 'success' || needs.package_restart_update.result == 'skipped')
 
     steps:
@@ -836,8 +798,13 @@ jobs:
         fi
         
         echo ""
-        echo -e "\033[0;32m[OK]\033[0m Version updated and committed to main"
-        echo -e "\033[0;32m[OK]\033[0m Version synced to pre-publish branches (release / dev / bugfix)"
+        if [ "${{ needs.prepare.outputs.is_restart_update }}" = "true" ]; then
+          echo -e "\033[0;33m[SKIP]\033[0m Version bump skipped (plugin update - version unchanged)"
+          echo -e "\033[0;33m[SKIP]\033[0m Branch sync skipped (plugin update)"
+        else
+          echo -e "\033[0;32m[OK]\033[0m Version updated and committed to main"
+          echo -e "\033[0;32m[OK]\033[0m Version synced to pre-publish branches (release / dev / bugfix)"
+        fi
         echo -e "\033[0;32m[OK]\033[0m Installer uploaded as Artifact"
         if [ "${{ needs.prepare.outputs.is_restart_update }}" = "true" ]; then
           echo -e "\033[0;32m[OK]\033[0m Restart update packages uploaded as Artifact"

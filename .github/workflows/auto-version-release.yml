@@ -40,7 +40,7 @@ jobs:
       release_sha: ${{ steps.shas.outputs.release_sha }}
       pr_title: ${{ steps.pr_info.outputs.pr_title }}
       pr_body: ${{ steps.pr_info.outputs.pr_body }}
-      is_restart_update: ${{ steps.version.outputs.is_restart_update }}
+      has_plugin_update: ${{ steps.version.outputs.has_plugin_update }}
       restart_plugins: ${{ steps.version.outputs.restart_plugins }}
       build_number: ${{ steps.version.outputs.build_number }}
 
@@ -167,7 +167,7 @@ jobs:
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "current_version=$currentVersion`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "new_version=$newVersion`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "new_version_text=$newVersionText`n", $utf8NoBom)
-        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "is_restart_update=$($isPluginUpdate.ToString().ToLower())`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "has_plugin_update=$($isPluginUpdate.ToString().ToLower())`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "restart_plugins=$($plugins -join ';')`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "build_number=$buildNumber`n", $utf8NoBom)
 
@@ -561,14 +561,14 @@ jobs:
 
   # ─────────────────────────────────────────────────────────────
   # Job 4.5: 制作重启式更新包（plugin zips + manifest）
-  # 仅在冒烟测试通过且 PR 有 restart-update 标签时执行
+  # 仅在冒烟测试通过且 PR 有 plugin-packages 标签时执行
   # ─────────────────────────────────────────────────────────────
   package_restart_update:
-    name: Create Restart Update Packages
+    name: Create Plugin Packages
     runs-on: windows-latest
     needs: [prepare, build, smoke_test]
     if: |
-      needs.prepare.outputs.is_restart_update == 'true' &&
+      needs.prepare.outputs.has_plugin_update == 'true' &&
       needs.build.result == 'success' &&
       needs.smoke_test.result == 'success'
 
@@ -579,12 +579,12 @@ jobs:
         name: build-release-output
         path: src/
 
-    - name: Create restart update packages
+    - name: Create Plugin packages
       shell: powershell
       run: |
         $buildDir = "src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0"
         $pluginsDir = "$buildDir/Plugins"
-        $outputDir = "restart-update"
+        $outputDir = "plugin-packages"
         New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 
         $buildNumber = "${{ needs.prepare.outputs.build_number }}"
@@ -643,7 +643,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: VirtualPaper-Plugins-v${{ needs.prepare.outputs.new_version }}
-        path: restart-update/
+        path: plugin-packages/
         retention-days: 30
 
   # ─────────────────────────────────────────────────────────────
@@ -654,7 +654,7 @@ jobs:
     runs-on: windows-latest
     needs: [prepare, package, smoke_test, package_restart_update]
     if: |
-      needs.prepare.outputs.is_restart_update != 'true' &&
+      needs.prepare.outputs.has_plugin_update != 'true' &&
       needs.smoke_test.result == 'success'
 
     steps:
@@ -716,7 +716,7 @@ jobs:
     runs-on: windows-latest
     needs: [prepare, bump]
     if: |
-      needs.prepare.outputs.is_restart_update != 'true' &&
+      needs.prepare.outputs.has_plugin_update != 'true' &&
       needs.bump.result == 'success'
 
     steps:
@@ -786,8 +786,8 @@ jobs:
       needs.build.result == 'success' &&
       needs.package.result == 'success' &&
       needs.smoke_test.result == 'success' &&
-      (needs.prepare.outputs.is_restart_update == 'true' || (needs.bump.result == 'success' && needs.sync.result == 'success')) &&
-      (needs.prepare.outputs.is_restart_update != 'true' || needs.package_restart_update.result == 'success')
+      (needs.prepare.outputs.has_plugin_update == 'true' || (needs.bump.result == 'success' && needs.sync.result == 'success')) &&
+      (needs.prepare.outputs.has_plugin_update != 'true' || needs.package_restart_update.result == 'success')
 
     steps:
     - name: Print summary
@@ -805,14 +805,14 @@ jobs:
         echo    "Type    : $TYPE"
         echo -e "\033[0;36mPackage : ${{ needs.package.outputs.installer_name }}\033[0m"
         
-        if [ "${{ needs.prepare.outputs.is_restart_update }}" = "true" ]; then
+        if [ "${{ needs.prepare.outputs.has_plugin_update }}" = "true" ]; then
           echo -e "\033[0;36mRestart Update: YES (plugins: ${{ needs.prepare.outputs.restart_plugins }}, build: ${{ needs.prepare.outputs.build_number }})\033[0m"
         else
           echo    "Restart Update: NO (installer only)"
         fi
         
         echo ""
-        if [ "${{ needs.prepare.outputs.is_restart_update }}" = "true" ]; then
+        if [ "${{ needs.prepare.outputs.has_plugin_update }}" = "true" ]; then
           echo -e "\033[0;33m[SKIP]\033[0m Version bump skipped (plugin update - version unchanged)"
           echo -e "\033[0;33m[SKIP]\033[0m Branch sync skipped (plugin update)"
         else
@@ -820,7 +820,7 @@ jobs:
           echo -e "\033[0;32m[OK]\033[0m Version synced to pre-publish branches (release / dev / bugfix)"
         fi
         echo -e "\033[0;32m[OK]\033[0m Installer uploaded as Artifact"
-        if [ "${{ needs.prepare.outputs.is_restart_update }}" = "true" ]; then
+        if [ "${{ needs.prepare.outputs.has_plugin_update }}" = "true" ]; then
           echo -e "\033[0;32m[OK]\033[0m Restart update packages uploaded as Artifact"
         fi
         echo -e "\033[0;32m[OK]\033[0m Smoke test passed (install + launch + singleton)"
@@ -839,8 +839,15 @@ jobs:
   release:
     name: Create Draft GitHub Release
     runs-on: ubuntu-latest
-    needs: [prepare, package, summary]
-    if: needs.summary.result == 'success'
+    needs: [prepare, build, package, smoke_test, package_restart_update, bump, sync, summary]
+    if: |
+      !cancelled() &&
+      needs.prepare.result == 'success' &&
+      needs.build.result == 'success' &&
+      needs.package.result == 'success' &&
+      needs.smoke_test.result == 'success' &&
+      (needs.prepare.outputs.has_plugin_update == 'true' || (needs.bump.result == 'success' && needs.sync.result == 'success')) &&
+      (needs.prepare.outputs.has_plugin_update != 'true' || needs.package_restart_update.result == 'success')
 
     steps:
     - name: Download installer artifact
@@ -850,11 +857,11 @@ jobs:
         path: dist/
 
     - name: Download plugin update artifact
-      if: needs.prepare.outputs.is_restart_update == 'true'
+      if: needs.prepare.outputs.has_plugin_update == 'true'
       uses: actions/download-artifact@v4
       with:
         name: VirtualPaper-Plugins-v${{ needs.prepare.outputs.new_version }}
-        path: dist/restart-update/
+        path: dist/plugin-packages/
 
     - name: Create Draft Release & Tag
       uses: softprops/action-gh-release@v2
@@ -865,9 +872,9 @@ jobs:
         files: |
           dist/*.exe
           dist/SHA256.txt
-          dist/restart-update/*.zip
-          dist/restart-update/plugin-manifest.json
-          dist/restart-update/PLUGIN_MANIFEST_SHA256.txt
+          dist/plugin-packages/*.zip
+          dist/plugin-packages/plugin-manifest.json
+          dist/plugin-packages/PLUGIN_MANIFEST_SHA256.txt
         draft: true        # 草稿状态，不对外公开，等待人工验证后发布
         make_latest: false  # 草稿阶段不标记为最新，发布时再生效
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -885,7 +892,7 @@ jobs:
     #   3. bump 依赖 smoke_test 成功，因此 smoke_test 失败时 bump/sync 均为 skipped，不触发回滚
     if: |
       always() &&
-      needs.prepare.outputs.is_restart_update != 'true' &&
+      needs.prepare.outputs.has_plugin_update != 'true' &&
       needs.prepare.result == 'success' &&
       (needs.bump.result != 'skipped' || needs.sync.result != 'skipped') &&
       (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))

@@ -131,7 +131,7 @@ jobs:
             if ($labels -contains "update-plugin-playerweb")   { $isPluginUpdate = $true; $plugins += "PlayerWeb" }
             if ($labels -contains "update-plugin-scrsaver")    { $isPluginUpdate = $true; $plugins += "ScrSaver" }
             if ($labels -contains "update-plugin-ml")          { $isPluginUpdate = $true; $plugins += "ML" }
-            if ($labels -contains "update-plugin-shader")      { $isPluginUpdate = $true; $plugins += "Shaders" }
+            if ($labels -contains "update-plugin-shaders")     { $isPluginUpdate = $true; $plugins += "Shaders" }
         }
 
         # ── Calculate version ────────────────────────────────────────
@@ -567,7 +567,10 @@ jobs:
     name: Create Restart Update Packages
     runs-on: windows-latest
     needs: [prepare, build, smoke_test]
-    if: needs.prepare.outputs.is_restart_update == 'true' && needs.smoke_test.result == 'success'
+    if: |
+      needs.prepare.outputs.is_restart_update == 'true' &&
+      needs.build.result == 'success' &&
+      needs.smoke_test.result == 'success'
 
     steps:
     - name: Download build output
@@ -636,10 +639,10 @@ jobs:
         [System.IO.File]::WriteAllText("$outputDir/PLUGIN_MANIFEST_SHA256.txt", $manifestHash, $utf8NoBom)
         Write-Host "[OK] Generated PLUGIN_MANIFEST_SHA256.txt: $manifestHash"
 
-    - name: Upload restart update packages
+    - name: Upload plugin update packages
       uses: actions/upload-artifact@v4
       with:
-        name: VirtualPaper-RestartUpdate-v${{ needs.prepare.outputs.new_version }}
+        name: VirtualPaper-Plugins-v${{ needs.prepare.outputs.new_version }}
         path: restart-update/
         retention-days: 30
 
@@ -650,7 +653,9 @@ jobs:
     name: Bump Version to main
     runs-on: windows-latest
     needs: [prepare, package, smoke_test, package_restart_update]
-    if: needs.prepare.outputs.is_restart_update != 'true'
+    if: |
+      needs.prepare.outputs.is_restart_update != 'true' &&
+      needs.smoke_test.result == 'success'
 
     steps:
     - name: Checkout main with full history
@@ -710,7 +715,9 @@ jobs:
     name: Sync Version to Pre-publish Branches
     runs-on: windows-latest
     needs: [prepare, bump]
-    if: needs.prepare.outputs.is_restart_update != 'true'
+    if: |
+      needs.prepare.outputs.is_restart_update != 'true' &&
+      needs.bump.result == 'success'
 
     steps:
     - name: Checkout with full history
@@ -773,15 +780,14 @@ jobs:
     name: Summary
     runs-on: ubuntu-latest
     needs: [prepare, build, package, smoke_test, package_restart_update, bump, sync]
-    if: >-
+    if: |
       !cancelled() &&
       needs.prepare.result == 'success' &&
       needs.build.result == 'success' &&
       needs.package.result == 'success' &&
       needs.smoke_test.result == 'success' &&
-      (needs.bump.result == 'success' || (needs.prepare.outputs.is_restart_update == 'true' && needs.bump.result == 'skipped')) &&
-      (needs.sync.result == 'success' || (needs.prepare.outputs.is_restart_update == 'true' && needs.sync.result == 'skipped')) &&
-      (needs.package_restart_update.result == 'success' || needs.package_restart_update.result == 'skipped')
+      (needs.prepare.outputs.is_restart_update == 'true' || (needs.bump.result == 'success' && needs.sync.result == 'success')) &&
+      (needs.prepare.outputs.is_restart_update != 'true' || needs.package_restart_update.result == 'success')
 
     steps:
     - name: Print summary
@@ -834,9 +840,7 @@ jobs:
     name: Create Draft GitHub Release
     runs-on: ubuntu-latest
     needs: [prepare, package, package_restart_update, summary]
-    if: >-
-      needs.summary.result == 'success' &&
-      (needs.package_restart_update.result == 'success' || needs.package_restart_update.result == 'skipped')
+    if: needs.summary.result == 'success'
 
     steps:
     - name: Download installer artifact
@@ -845,11 +849,11 @@ jobs:
         name: VirtualPaper-Installer-v${{ needs.prepare.outputs.new_version }}
         path: dist/
 
-    - name: Download restart update artifact
+    - name: Download plugin update artifact
       if: needs.prepare.outputs.is_restart_update == 'true'
       uses: actions/download-artifact@v4
       with:
-        name: VirtualPaper-RestartUpdate-v${{ needs.prepare.outputs.new_version }}
+        name: VirtualPaper-Plugins-v${{ needs.prepare.outputs.new_version }}
         path: dist/restart-update/
 
     - name: Create Draft Release & Tag
@@ -875,10 +879,13 @@ jobs:
     name: Rollback on Failure
     runs-on: windows-latest
     needs: [prepare, build, package, smoke_test, package_restart_update, bump, sync]
-    # 触发条件：bump 或 sync 已经开始执行（分支内容已被修改），且流程出现失败或取消。
-    # build 失败时 bump/sync 均为 skipped（分支未动），不触发，避免无意义的回滚操作。
+    # 触发条件：
+    #   1. 仅针对常规安装式更新（重启式更新不涉及版本同步，无需回滚）
+    #   2. bump 或 sync 已经开始执行（分支内容已被修改），且流程出现失败或取消
+    #   3. bump 依赖 smoke_test 成功，因此 smoke_test 失败时 bump/sync 均为 skipped，不触发回滚
     if: |
       always() &&
+      needs.prepare.outputs.is_restart_update != 'true' &&
       needs.prepare.result == 'success' &&
       (needs.bump.result != 'skipped' || needs.sync.result != 'skipped') &&
       (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))

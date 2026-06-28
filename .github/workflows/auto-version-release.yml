@@ -839,7 +839,7 @@ jobs:
   release:
     name: Create Draft GitHub Release
     runs-on: ubuntu-latest
-    needs: [prepare, package, package_restart_update, summary]
+    needs: [prepare, package, summary]
     if: needs.summary.result == 'success'
 
     steps:

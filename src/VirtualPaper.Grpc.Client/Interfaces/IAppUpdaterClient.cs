@@ -1,11 +1,13 @@
-using VirtualPaper.Common.Events;
+using VirtualPaper.Models.AppUpdate;
+using VirtualPaper.Models.Events;
 
 namespace VirtualPaper.Grpc.Client.Interfaces {
     public interface IAppUpdaterClient : IDisposable {
-        string LastCheckChangelog { get; }
-        DateTime LastCheckTime { get; }
-        Uri LastCheckUri { get; }
-        Version LastCheckVersion { get; }
+        //string LastCheckChangelog { get; }
+        //DateTime LastCheckTime { get; }
+        //Uri LastCheckUri { get; }
+        //Version LastCheckVersion { get; }
+        ReleaseInfo Release { get; }
         AppUpdateStatus Status { get; }
 
         event EventHandler<AppUpdaterEventArgs>? UpdateChecked;

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events.EffectValue.Base;
+using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils;

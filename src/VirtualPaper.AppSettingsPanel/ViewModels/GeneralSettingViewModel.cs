@@ -17,6 +17,7 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.Events;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
@@ -57,7 +58,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         public Microsoft.UI.Xaml.Visibility PluginVersionsVisibility =>
             HasPluginVersions ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 
-        private static AppBuildInfo LoadAppBuildInfo() {            
+        private static AppBuildInfo LoadAppBuildInfo() {
             var path = Path.Combine(Constants.CommonPaths.AppDataDir, Constants.CoreField.AppBuildFile);
             if (!File.Exists(path)) return new AppBuildInfo();
             try {
@@ -267,21 +268,19 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
         private void AppUpdater_UpdateChecked(object? sender, AppUpdaterEventArgs e) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
-                MenuUpdate(e.UpdateStatus, e.UpdateDate, e.UpdateVersion);
+                MenuUpdate(e.UpdateStatus, e.Release);
             });
         }
 
-        private void MenuUpdate(AppUpdateStatus status, DateTime date, Version version) {
-            Version = $"v{version}";
-//#if DEBUG
-//            CurrentVersionState = VersionState.FindNew;
-//#else
+        private void MenuUpdate(AppUpdateStatus status, ReleaseInfo? release) {
+            //CurrentVersionState = VersionState.FindNew;
+            
             switch (status) {
                 case AppUpdateStatus.Uptodate:
                     CurrentVersionState = VersionState.UptoNewest;
                     break;
                 case AppUpdateStatus.Available:
-                    Version = $"v{version}";
+                    Version = $"v{release?.Version} Build ({release?.AppBuild})";
                     CurrentVersionState = VersionState.FindNew;
                     break;
                 case AppUpdateStatus.Invalid or AppUpdateStatus.Error:
@@ -290,9 +289,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 default:
                     break;
             }
-//#endif
             Version_LastCheckDate = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_LastCheckDate);
-            Version_LastCheckDate += status == AppUpdateStatus.Notchecked ? "" : $" {date}";
+            Version_LastCheckDate += status == AppUpdateStatus.Notchecked ? "" : $" {release?.CheckedTime}";
         }
 
         private async Task StartDownloadAsync() {
@@ -407,9 +405,11 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                     WpLibData libData = new();
                     foreach (string file in files) {
                         if (Path.GetFileName(file) == Constants.Field.WpBasicDataFileName) {
-                            libData.BasicData = await JsonSaver.LoadAsync<WpBasicData>(file, WpBasicDataContext.Default);
+                            var basicData = await JsonSaver.LoadAsync<WpBasicData>(file, WpBasicDataContext.Default);
+                            if (basicData == null) continue;
 
-                            if (libData.BasicData.IsAvailable()) {
+                            libData.BasicData = basicData;
+                            if (libData.BasicData != null && libData.BasicData.IsAvailable()) {
                                 libData.Idx = idx++;
                                 yield return libData;
                                 break;

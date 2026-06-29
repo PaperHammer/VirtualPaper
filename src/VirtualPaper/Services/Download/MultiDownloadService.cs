@@ -52,7 +52,7 @@ namespace VirtualPaper.Services.Download {
                         : 0);
 
                 // 尝试异步写入通道
-                channel.Writer.TryWrite(new DownloadProgress(percent, speed, remaining));
+                channel.Writer.TryWrite(new DownloadProgress(percent, speed, remaining, e.ReceivedBytesSize, e.TotalBytesToReceive));
             }
 
             void OnCompleted(object? sender, AsyncCompletedEventArgs e) {
@@ -171,33 +171,6 @@ namespace VirtualPaper.Services.Download {
             return SHA256Regex().IsMatch(sha256);
         }
         #endregion
-
-        ///// <summary>
-        ///// 内部轻量级异步通道（单消费者）
-        ///// </summary>
-        //private sealed class Channel<T> {
-        //    private readonly Queue<T> _queue = new();
-        //    private readonly SemaphoreSlim _signal = new(0);
-
-        //    public void TryWrite(T value) {
-        //        lock (_queue) {
-        //            _queue.Enqueue(value);
-        //        }
-        //        _signal.Release();
-        //    }
-
-        //    public async IAsyncEnumerable<T> ReadAllAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken token) {
-        //        while (!token.IsCancellationRequested) {
-        //            await _signal.WaitAsync(token);
-        //            T item;
-        //            lock (_queue) {
-        //                if (_queue.Count == 0) continue;
-        //                item = _queue.Dequeue();
-        //            }
-        //            yield return item;
-        //        }
-        //    }
-        //}
 
         private readonly DownloadService _downloader;
 

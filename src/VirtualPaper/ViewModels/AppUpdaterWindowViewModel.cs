@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Input;
+using VirtualPaper.Common;
 using VirtualPaper.lang;
-using VirtualPaper.Models;
+using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Interfaces;
 using Wpf.Ui;
@@ -60,6 +62,8 @@ namespace VirtualPaper.ViewModels {
             set { _isIndeterminate = value; OnPropertyChanged(); }
         }
 
+        public bool IsRestartUpdate { get; private set; }
+
         public ICommand? ActionCommand { get; }
 
         private DownloadState _currentState;
@@ -75,21 +79,32 @@ namespace VirtualPaper.ViewModels {
 
         public AppUpdaterWindowViewModel(
             IDownloadService downloadService,
-            IContentDialogService contentDialogService) {
+            IContentDialogService contentDialogService,
+            IRestartUpdateService restartUpdateService) {
             _downloadService = downloadService;
             _contentDialogService = contentDialogService;
+            _restartUpdateService = restartUpdateService;
 
             ActionCommand = new RelayCommand(OnActionCommand);
         }
 
         public void ReceiveParameter(object? parameter) {
-            if (parameter is AppUpdateInfo info) {
-                _downloadUri = info.DownloadUri;
-                _shaUri = info.SHAUri;
-                Version = info.Version;
-                ChangeLog = info.ChangeLog;
-                CurrentState = DownloadState.Ready;
-                _savePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(_downloadUri.LocalPath));
+            if (parameter is ReleaseInfo info) {
+                if (info.IsRestartUpdate) {
+                    IsRestartUpdate = true;
+                    _releaseInfo = info;
+                    Version = info.Version?.ToString() ?? string.Empty;
+                    ChangeLog = info.Changelog ?? string.Empty;
+                    CurrentState = DownloadState.Ready;
+                }
+                else {
+                    _downloadUri = info.InstallerUri!;
+                    _shaUri = info.InstallerShaUri!;
+                    Version = info.Version?.ToString() ?? string.Empty;
+                    ChangeLog = info.Changelog ?? string.Empty;
+                    CurrentState = DownloadState.Ready;
+                    _savePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(_downloadUri.LocalPath));
+                }
             }
         }
 
@@ -140,6 +155,11 @@ namespace VirtualPaper.ViewModels {
 
         #region Download Logic
         private async Task StartDownloadAsync() {
+            if (IsRestartUpdate) {
+                await StartPluginsDownloadAsync();
+                return;
+            }
+
             if (_downloadUri == null)
                 return;
 
@@ -152,10 +172,44 @@ namespace VirtualPaper.ViewModels {
 
                 await foreach (var progress in _downloadService.DownloadAsync(_downloadUri, _savePath, _cts.Token)) {
                     Progress = progress.Percent;
-                    SpeedText = $"{progress.Speed:F2} MB/s | 剩余时间：{progress.Remaining:hh\\:mm\\:ss}";
+                    var sizeText = progress.TotalBytes > 0 ? $"{FormatBytes(progress.ReceivedBytes)} / {FormatBytes(progress.TotalBytes)}" : "";
+                    SpeedText = $"{progress.Speed:F2} MB/s | {sizeText} | {LanguageManager.Instance[nameof(Constants.I18n.AppUpdater_SpeedText_Ready)]}：{progress.Remaining:hh\\:mm\\:ss}";
                 }
 
                 await VerifyAsync();
+            }
+            catch (OperationCanceledException) {
+                if (CurrentState != DownloadState.Paused)
+                    CurrentState = DownloadState.Paused;
+            }
+            catch (Exception ex) {
+                App.Log.Error(ex);
+                CurrentState = DownloadState.DownloadFailed;
+            }
+        }
+
+        private async Task StartPluginsDownloadAsync() {
+            if (_releaseInfo == null)
+                return;
+
+            _cts = new CancellationTokenSource();
+            CurrentState = DownloadState.Downloading;
+
+            try {
+                var progress = new Progress<DownloadProgress>(p => {
+                    Progress = p.Percent;
+                    var sizeText = p.TotalBytes > 0 ? $"{FormatBytes(p.ReceivedBytes)} / {FormatBytes(p.TotalBytes)}" : "";
+                    SpeedText = $"{p.Speed:F2} MB/s | {sizeText} | {LanguageManager.Instance[nameof(Constants.I18n.AppUpdater_SpeedText_Ready)]}：{p.Remaining:hh\\:mm\\:ss}";
+                });
+
+                var result = await _restartUpdateService.DownloadPendingAsync(_releaseInfo, progress, _cts.Token);
+
+                if (!result.Success) {
+                    CurrentState = DownloadState.DownloadFailed;
+                    return;
+                }
+
+                CurrentState = DownloadState.Completed;
             }
             catch (OperationCanceledException) {
                 if (CurrentState != DownloadState.Paused)
@@ -191,6 +245,12 @@ namespace VirtualPaper.ViewModels {
         }
 
         private async void InstallUpdate() {
+            if (IsRestartUpdate) {
+                CurrentState = DownloadState.Installing;
+                App.ShutDown();
+                return;
+            }
+
             CurrentState = DownloadState.Installing;
             try {
                 //run setup in silent mode.
@@ -239,7 +299,9 @@ namespace VirtualPaper.ViewModels {
                     break;
 
                 case DownloadState.Completed:
-                    ActionButtonText = LanguageManager.Instance["AppUpdater_ActionButtonText_Completed"];
+                    ActionButtonText = IsRestartUpdate
+                        ? LanguageManager.Instance["RestartUpdate_Close"]
+                        : LanguageManager.Instance["AppUpdater_ActionButtonText_Completed"];
                     StatusText = LanguageManager.Instance["AppUpdater_StatusText_Completed"];
                     SpeedText = string.Empty;
                     break;
@@ -283,8 +345,22 @@ namespace VirtualPaper.ViewModels {
             }
         }
 
+        private static string FormatBytes(long bytes) {
+            if (bytes <= 0) return "0 B";
+            string[] units = { "B", "KB", "MB", "GB" };
+            double value = bytes;
+            int unit = 0;
+            while (value >= 1024 && unit < units.Length - 1) {
+                value /= 1024;
+                unit++;
+            }
+            return $"{value:0.#} {units[unit]}";
+        }
+
         private readonly IDownloadService _downloadService;
         private readonly IContentDialogService _contentDialogService;
+        private readonly IRestartUpdateService _restartUpdateService;
+        private ReleaseInfo? _releaseInfo;
         private Uri _downloadUri = null!;
         private Uri _shaUri = null!;
         private CancellationTokenSource? _cts;

@@ -8,8 +8,10 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.CommonModels;
+using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.Events;
 using VirtualPaper.UI.Test.Utils;
 
 namespace VirtualPaper.UI.Test.T_AppSettings {
@@ -55,14 +57,16 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
 
         [TestMethod]
         public void MenuUpdate_WhenUptodate_SetsUptoNewest() {
+            var releaseInfo = new ReleaseInfo {
+                Version = new Version(1, 0),
+                CheckedTime = DateTime.Now,
+                InstallerUri = new Uri("https://example.com/update"),
+                InstallerShaUri = new Uri("https://example.com/update.sha"),
+            };
             _appUpdater.Raise(a => a.UpdateChecked += null,
                 new AppUpdaterEventArgs(
                     AppUpdateStatus.Uptodate,
-                    new Version(1, 0),
-                    DateTime.Now,
-                    new Uri("https://example.com/update"),
-                    new Uri("https://example.com/update.sha"),
-                    string.Empty));
+                    releaseInfo));
 
             Assert.AreEqual(VersionState.UptoNewest, _vm.CurrentVersionState);
         }
@@ -70,14 +74,17 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         [TestMethod]
         public void MenuUpdate_WhenAvailable_SetsVersionAndFindNew() {
             var version = new Version(2, 0);
+            var releaseInfo = new ReleaseInfo {
+                Version = version,
+                CheckedTime = DateTime.Now,
+                InstallerUri = new Uri("https://example.com/update"),
+                InstallerShaUri = new Uri("https://example.com/update.sha"),
+            };
             _appUpdater.Raise(a => a.UpdateChecked += null,
                 new AppUpdaterEventArgs(
                     AppUpdateStatus.Available,
-                    version,
-                    DateTime.Now,
-                    new Uri("https://example.com/update"),
-                    new Uri("https://example.com/update.sha"),
-                    string.Empty));
+                    releaseInfo));
+
 
             Assert.AreEqual(VersionState.FindNew, _vm.CurrentVersionState);
             Assert.AreEqual("v2.0", _vm.Version);
@@ -87,14 +94,16 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         [DataRow(AppUpdateStatus.Invalid)]
         [DataRow(AppUpdateStatus.Error)]
         public void MenuUpdate_WhenInvalidOrError_SetsUpdateErr(AppUpdateStatus status) {
+            var releaseInfo = new ReleaseInfo {
+                Version = new Version(1, 0),
+                CheckedTime = DateTime.Now,
+                InstallerUri = new Uri("https://example.com/update"),
+                InstallerShaUri = new Uri("https://example.com/update.sha"),
+            };
             _appUpdater.Raise(a => a.UpdateChecked += null,
                 new AppUpdaterEventArgs(
                     status,
-                    new Version(1, 0),
-                    DateTime.Now,
-                    new Uri("https://example.com/update"),
-                    new Uri("https://example.com/update.sha"),
-                    string.Empty));
+                    releaseInfo));
 
             Assert.AreEqual(VersionState.UpdateErr, _vm.CurrentVersionState);
         }

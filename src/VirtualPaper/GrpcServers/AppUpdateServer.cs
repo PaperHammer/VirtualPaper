@@ -1,10 +1,10 @@
 using System.Windows.Threading;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using VirtualPaper.Common.Events;
 using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.Update;
+using VirtualPaper.Models.Events;
 
 namespace VirtualPaper.GrpcServers {
     public class AppUpdateServer(
@@ -16,9 +16,9 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override Task<Empty> StartDownload(Empty _, ServerCallContext context) {
-            if (true || _updater.Status == AppUpdateStatus.Available) {
+            if (_updater.Status == AppUpdateStatus.Available) {
                 System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(delegate {
-                    App.AppUpdateDialog(new AppUpdaterEventArgs(_updater.Status, _updater.LastCheckVersion, _updater.LastCheckTime, _updater.LastCheckUri, _updater.LastCheckShaUri, _updater.LastCheckChangelog));
+                    App.AppUpdateDialog(new AppUpdaterEventArgs(_updater.Status, _updater.LastReleaseInfo));
                 }));
             }
 
@@ -27,12 +27,13 @@ namespace VirtualPaper.GrpcServers {
 
         public override Task<Grpc_UpdateResponse> GetUpdateStatus(Empty _, ServerCallContext context) {
             return Task.FromResult(new Grpc_UpdateResponse() {
-                Status = (Grpc_UpdateStatus)((int)_updater.Status),
-                Changelog = _updater.LastCheckChangelog ?? string.Empty,
-                Uri = _updater.LastCheckUri?.OriginalString ?? string.Empty,
-                ShaUri = _updater.LastCheckShaUri?.OriginalString ?? string.Empty,
-                Version = _updater.LastCheckVersion.ToString() ?? string.Empty,
-                Time = Timestamp.FromDateTime(_updater.LastCheckTime.ToUniversalTime()),
+                Status = (Grpc_UpdateStatus)((int)_updater.Status),               
+                Changelog = _updater.LastReleaseInfo?.Changelog ?? string.Empty,
+                Uri = _updater.LastReleaseInfo?.InstallerUri?.OriginalString ?? string.Empty,
+                ShaUri = _updater.LastReleaseInfo?.InstallerShaUri?.OriginalString ?? string.Empty,
+                Version = _updater.LastReleaseInfo?.Version?.ToString() ?? string.Empty,
+                AppBuild = _updater.LastReleaseInfo?.AppBuild ?? string.Empty,
+                Time = Timestamp.FromDateTime(_updater.LastReleaseInfo?.CheckedTime.ToUniversalTime() ?? DateTime.UtcNow),
             });
         }
 

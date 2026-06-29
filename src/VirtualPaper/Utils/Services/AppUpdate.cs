@@ -3,6 +3,7 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Cores.AppUpdate.Models;
+using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Utils.Interfcaes;
 
 namespace VirtualPaper.Utils.Services {
@@ -12,7 +13,8 @@ namespace VirtualPaper.Utils.Services {
 
         public async Task<ReleaseInfo> GetLatestRelease(bool isBeta) {
             var userName = "PaperHammer";
-            var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper";
+            var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper_Mirror_Test";
+            //var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper";
             var gitRelease = await GithubUtil.GetLatestRelease(repositoryName, userName, 0);
             Version version = GithubUtil.GetVersion(gitRelease);
             string changelog = gitRelease.Body;
@@ -40,6 +42,7 @@ namespace VirtualPaper.Utils.Services {
                     var manifest = JsonSerializer.Deserialize(manifestContent, UpdateManifestContext.Default.UpdateManifest);
                     if (manifest != null) {
                         result.Manifest = manifest;
+                        result.AppBuild = manifest.AppBuild;
 
                         if (manifest.IsRestartUpdate) {
                             // Plugin update: gather plugin asset URIs, skip installer

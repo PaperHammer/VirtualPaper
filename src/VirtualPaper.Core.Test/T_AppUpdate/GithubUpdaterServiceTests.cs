@@ -1,6 +1,7 @@
 using Moq;
-using VirtualPaper.Common.Events;
 using VirtualPaper.Cores.AppUpdate;
+using VirtualPaper.Models.AppUpdate;
+using VirtualPaper.Models.Events;
 using VirtualPaper.Utils.Interfcaes;
 
 namespace VirtualPaper.Core.Test.T_AppUpdate {
@@ -93,7 +94,7 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
 
             await _service.CheckUpdate(fetchDelay: 0);
 
-            Assert.IsTrue(_service.LastCheckTime >= before);
+            Assert.IsTrue(_service.LastReleaseInfo?.CheckedTime >= before);
         }
 
         [TestMethod]
@@ -105,7 +106,7 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
 
             await _service.CheckUpdate(fetchDelay: 0);
 
-            Assert.IsTrue(_service.LastCheckTime >= before);
+            Assert.IsTrue(_service.LastReleaseInfo?.CheckedTime >= before);
         }
 
         // -------------------------------------------------------
@@ -122,10 +123,10 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
 
             Assert.IsNotNull(received);
             Assert.AreEqual(AppUpdateStatus.Available, received.UpdateStatus);
-            Assert.AreEqual(FakeVersion, received.UpdateVersion);
-            Assert.AreEqual(FakeUri, received.UpdateUri);
-            Assert.AreEqual(FakeShaUri, received.UpdateSHAUri);
-            Assert.AreEqual(FakeChangelog, received.ChangeLog);
+            Assert.AreEqual(FakeVersion, received.Release?.Version);
+            Assert.AreEqual(FakeUri, received.Release?.InstallerUri);
+            Assert.AreEqual(FakeShaUri, received.Release?.InstallerShaUri);
+            Assert.AreEqual(FakeChangelog, received.Release?.Changelog);
         }
 
         [TestMethod]

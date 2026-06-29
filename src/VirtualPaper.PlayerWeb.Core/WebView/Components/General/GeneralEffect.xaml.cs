@@ -2,20 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events.EffectValue;
-using VirtualPaper.Common.Events.EffectValue.Base;
+using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.PlayerWeb.Core.Interfaces;
 using VirtualPaper.PlayerWeb.Core.Utils.Interfaces;
 using VirtualPaper.UIComponent.Utils;
-using VirtualPaper.UIComponent.Utils.Extensions;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

@@ -9,11 +9,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Events\EffectValue\**" />
 	  <Compile Remove="Utils\SpatialIndex\**" />
-	  <EmbeddedResource Remove="Events\EffectValue\**" />
 	  <EmbeddedResource Remove="Utils\SpatialIndex\**" />
-	  <None Remove="Events\EffectValue\**" />
 	  <None Remove="Utils\SpatialIndex\**" />
 	</ItemGroup>
 

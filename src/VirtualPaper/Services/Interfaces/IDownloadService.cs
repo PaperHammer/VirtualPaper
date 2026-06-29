@@ -7,5 +7,5 @@ namespace VirtualPaper.Services.Interfaces {
         void Resume();
     }
 
-    public record DownloadProgress(float Percent, float Speed, TimeSpan Remaining);
+    public record DownloadProgress(float Percent, float Speed, TimeSpan Remaining, long ReceivedBytes = 0, long TotalBytes = 0);
 }

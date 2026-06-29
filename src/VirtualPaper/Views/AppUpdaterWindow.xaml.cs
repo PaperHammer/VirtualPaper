@@ -26,6 +26,12 @@ namespace VirtualPaper.Views {
         /// 关闭前检查当前状态，必要时进行拦截
         /// </summary>
         private async void FluentWindow_Closing(object? sender, CancelEventArgs e) {
+            if (_viewModel.IsRestartUpdate) {
+                this.Closing -= FluentWindow_Closing;
+             
+                return;
+            }
+
             switch (_viewModel.CurrentState) {
                 case DownloadState.Downloading:
                 case DownloadState.Paused:

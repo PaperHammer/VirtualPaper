@@ -32,6 +32,7 @@ using VirtualPaper.GrpcServers;
 using VirtualPaper.lang;
 using VirtualPaper.Models;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.Events;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
@@ -256,7 +257,6 @@ namespace VirtualPaper {
                 .AddTransient<DebugLog>()
                 .AddTransient<AppUpdaterWindow>()
                 .AddTransient<AppUpdaterWindowViewModel>()
-                .AddTransient<RestartUpdateWindow>()
 
                 .AddTransient<TrayCommand>()
 
@@ -324,19 +324,9 @@ namespace VirtualPaper {
         public static void AppUpdateDialog(AppUpdaterEventArgs e) {
             _updateNotify = false;
             var windowService = Services.GetRequiredService<IWindowService>();
-            var updater = Services.GetRequiredService<IAppUpdaterService>();
-            var releaseInfo = updater.LastReleaseInfo;
 
-            // Check if restart-style update
-            if (releaseInfo != null && releaseInfo.IsRestartUpdate) {
-                var restartWindow = new RestartUpdateWindow(releaseInfo);
-                restartWindow.Show();
-                return;
-            }
-
-            // Installer-style update
-            var info = new AppUpdateInfo(e.UpdateUri, e.UpdateSHAUri, e.UpdateVersion.ToString(), e.ChangeLog);
-            windowService.Show<AppUpdaterWindow>(info);
+            // Both installer-style and restart-style updates use AppUpdaterWindow
+            windowService.Show<AppUpdaterWindow>(e.Release);
         }
 
         private static int _updateNotifyAmt = 1;

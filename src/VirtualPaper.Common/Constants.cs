@@ -315,7 +315,8 @@ namespace VirtualPaper.Common {
             public static string? Project_StaticImg_Text_EffectDesc_Screen { get; }
             public static string? Project_StaticImg_Text_EffectDesc_Overlay { get; }
             public static string? Project_StaticImg_Text_EffectDesc_SoftLight { get; }
-            public static string? Settings_General_Version_FindNew { get; set; }
+            public static string? Settings_General_Version_FindNew { get; }
+            public static string? AppUpdater_SpeedText_Ready { get; }
         }
 
         public static class Field {

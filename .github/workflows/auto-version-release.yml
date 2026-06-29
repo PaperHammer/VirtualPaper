@@ -606,12 +606,19 @@ jobs:
         }
 
         # Generate update_manifest.json with zip-level SHA256
-        $manifest = @{
-            type = "restart"
-            app_build = $buildNumber
-            min_app_build = $buildNumber
-            plugins = @{}
-        }
+        # 使用 System.Text.Json 的 Utf8JsonWriter 替代 ConvertTo-Json，
+        # 避免 PowerShell 5.1 默认缩进随嵌套深度爆炸的问题
+        $ms = [System.IO.MemoryStream]::new()
+        $writer = [System.Text.Json.Utf8JsonWriter]::new($ms, [System.Text.Json.JsonWriterOptions]@{
+            Indented = $true
+        })
+
+        $writer.WriteStartObject()
+        $writer.WriteString("type", "restart")
+        $writer.WriteString("app_build", $buildNumber)
+        $writer.WriteString("min_app_build", $buildNumber)
+        $writer.WritePropertyName("plugins")
+        $writer.WriteStartObject()
 
         foreach ($plugin in $plugins) {
             $pluginLower = $plugin.ToLower()
@@ -619,15 +626,23 @@ jobs:
             $zipPath = "$outputDir/$zipName"
             if (Test-Path $zipPath) {
                 $hash = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash.ToLower()
-                $manifest.plugins[$plugin] = @{
-                    build = $buildNumber
-                    asset = $zipName
-                    sha256 = $hash
-                }
+                $writer.WritePropertyName($plugin)
+                $writer.WriteStartObject()
+                $writer.WriteString("build", $buildNumber)
+                $writer.WriteString("asset", $zipName)
+                $writer.WriteString("sha256", $hash)
+                $writer.WriteEndObject()
             }
         }
 
-        $manifestJson = $manifest | ConvertTo-Json -Depth 10
+        $writer.WriteEndObject()
+        $writer.WriteEndObject()
+        $writer.Flush()
+
+        $manifestJson = [System.Text.Encoding]::UTF8.GetString($ms.ToArray())
+        $writer.Dispose()
+        $ms.Dispose()
+
         # Use UTF-8 without BOM to match client-side hash computation
         $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
         [System.IO.File]::WriteAllText("$outputDir/plugin-manifest.json", $manifestJson, $utf8NoBom)
@@ -867,7 +882,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ needs.prepare.outputs.new_version }}
-        name: v${{ needs.prepare.outputs.new_version }}
+        name: v${{ needs.prepare.outputs.new_version }} (Build ${{ needs.prepare.outputs.build_number }})
         body: ${{ needs.prepare.outputs.pr_body }}
         files: |
           dist/*.exe

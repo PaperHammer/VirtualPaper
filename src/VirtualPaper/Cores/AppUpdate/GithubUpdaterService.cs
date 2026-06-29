@@ -1,7 +1,8 @@
 using Octokit;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Models.AppUpdate;
+using VirtualPaper.Models.Events;
 using VirtualPaper.Utils.Interfcaes;
 using Timer = System.Timers.Timer;
 
@@ -9,11 +10,11 @@ namespace VirtualPaper.Cores.AppUpdate {
     public sealed class GithubUpdaterService : IAppUpdaterService {
         public event EventHandler<AppUpdaterEventArgs>? UpdateChecked;
 
-        public string LastCheckChangelog { get; private set; } = string.Empty;
-        public DateTime LastCheckTime { get; private set; } = DateTime.MinValue;
-        public Uri LastCheckUri { get; private set; } = null!;
-        public Uri LastCheckShaUri { get; private set; } = null!;
-        public Version LastCheckVersion { get; private set; } = new Version(0, 0, 0, 0);
+        //public string LastCheckChangelog { get; private set; } = string.Empty;
+        //public DateTime LastCheckTime { get; private set; } = DateTime.MinValue;
+        //public Uri LastCheckUri { get; private set; } = null!;
+        //public Uri LastCheckShaUri { get; private set; } = null!;
+        //public Version LastCheckVersion { get; private set; } = new Version(0, 0, 0, 0);
         public AppUpdateStatus Status { get; private set; } = AppUpdateStatus.Notchecked;
         public ReleaseInfo? LastReleaseInfo { get; private set; }
 
@@ -40,28 +41,29 @@ namespace VirtualPaper.Cores.AppUpdate {
                 await Task.Delay(fetchDelay);
                 var releaseInfo = await _githubReleaseClient.GetLatestRelease(Constants.ApplicationType.IsTestBuild);
                 LastReleaseInfo = releaseInfo;
+                LastReleaseInfo.CheckedTime = DateTime.Now;
 
                 int verCompare = _versionComparer.CompareAssemblyVersion(releaseInfo.Version);
                 if (verCompare > 0) {
                     //update Available.
                     Status = AppUpdateStatus.Available;
                 }
-                else if (verCompare < 0 || releaseInfo.InstallerUri == null) {
-                    //beta release.
-                    Status = AppUpdateStatus.Invalid;
-                }
                 else if (releaseInfo.IsRestartUpdate && releaseInfo.Manifest != null && HasPluginUpdate(releaseInfo)) {
                     //version unchanged, but plugin updates available.
                     Status = AppUpdateStatus.Available;
+                }
+                else if (verCompare < 0 || releaseInfo.InstallerUri == null) {
+                    //beta release.
+                    Status = AppUpdateStatus.Invalid;
                 }
                 else {
                     //up-to-date.
                     Status = AppUpdateStatus.Uptodate;
                 }
-                LastCheckUri = releaseInfo.InstallerUri ?? new Uri("about:blank");
-                LastCheckShaUri = releaseInfo.InstallerShaUri;
-                LastCheckVersion = releaseInfo.Version;
-                LastCheckChangelog = releaseInfo.Changelog;
+                //LastCheckUri = releaseInfo.InstallerUri ?? new Uri("about:blank");
+                //LastCheckShaUri = releaseInfo.InstallerShaUri;
+                //LastCheckVersion = releaseInfo.Version;
+                //LastCheckChangelog = releaseInfo.Changelog;
             }
             catch (RateLimitExceededException e) {
                 ArcLog.GetLogger<GithubUpdaterService>().Warn("Github rate limit exceeded, retry after reset");
@@ -79,9 +81,9 @@ namespace VirtualPaper.Cores.AppUpdate {
                 ArcLog.GetLogger<GithubUpdaterService>().Error("Github update fetch failed", e);
                 Status = AppUpdateStatus.Error;
             }
-            LastCheckTime = DateTime.Now;
+            //LastCheckTime = DateTime.Now;
 
-            UpdateChecked?.Invoke(this, new AppUpdaterEventArgs(Status, LastCheckVersion, LastCheckTime, LastCheckUri, LastCheckShaUri, LastCheckChangelog));
+            UpdateChecked?.Invoke(this, new AppUpdaterEventArgs(Status, LastReleaseInfo));
             return Status;
         }
 
@@ -144,7 +146,7 @@ namespace VirtualPaper.Cores.AppUpdate {
 
         #region private
         private void RetryTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e) {
-            if ((DateTime.Now - LastCheckTime).TotalMilliseconds > (Status != AppUpdateStatus.Error ? _fetchDelayRepeat : _fetchDelayError)) {
+            if ((DateTime.Now - LastReleaseInfo.CheckedTime).TotalMilliseconds > (Status != AppUpdateStatus.Error ? _fetchDelayRepeat : _fetchDelayError)) {
                 _ = CheckUpdate(0);
             }
         }

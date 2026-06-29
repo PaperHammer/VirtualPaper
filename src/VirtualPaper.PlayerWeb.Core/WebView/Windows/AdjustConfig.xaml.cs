@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
-using VirtualPaper.Common.Events.EffectValue.Base;
+using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils.Storage;
@@ -55,7 +55,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
 
         private async void AfterFeReady() {
             _wpBasicData ??= await JsonSaver.LoadAsync<WpBasicData>(_startArgs.WpBasicDataFilePath, WpBasicDataContext.Default);
-            string windowTitle = !string.IsNullOrEmpty(_wpBasicData.Title) ? $"{_wpBasicData.Title} (Adjust)" :
+            string windowTitle = !string.IsNullOrEmpty(_wpBasicData?.Title) ? $"{_wpBasicData.Title} (Adjust)" :
                 (!string.IsNullOrEmpty(_startArgs.FilePath) ? $"{Path.GetFileName(_startArgs.FilePath)} (Adjust)" : "Virtual Paper PlayerWeb (Adjust)");
             this.Title = this.MainHost.Title = windowTitle;
         }
@@ -68,8 +68,8 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
             EffectChanged?.Invoke(this, e);
         }
 
-        private readonly StartArgsWeb? _startArgs;
+        private readonly StartArgsWeb _startArgs = null!;
         private readonly ArcWindowManagerKey _windowKey;
-        private WpBasicData _wpBasicData;
+        private WpBasicData? _wpBasicData;
     }
 }

@@ -83,7 +83,8 @@ message Grpc_UpdateResponse {
 	string uri = 3;
 	string sha_uri = 4;
 	string changelog = 5;
-	google.protobuf.Timestamp time = 6;
+	string app_build = 6;
+	google.protobuf.Timestamp time = 7;
 }
 
 message Grpc_WallpaperLayoutsSettings {

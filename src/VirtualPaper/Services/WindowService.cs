@@ -19,6 +19,7 @@ namespace VirtualPaper.Services {
             window.Closed += (_, _) => _openWindows.Remove(typeof(TWindow));
             _openWindows[typeof(TWindow)] = window;
             window.Show();
+            window.Activate();
         }
 
         public Task<bool?> ShowDialogAsync<TWindow>(object? parameter = null) where TWindow : class {

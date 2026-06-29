@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
@@ -14,6 +13,7 @@ using VirtualPaper.Utils.Interfcaes;
 namespace VirtualPaper.Cores.AppUpdate {
     public interface IRestartUpdateService {
         Task<RestartUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default);
+        Task<RestartUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default);
         Task<RestartUpdateResult> ExecutePendingUpdateAsync(IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default);
         Task CheckAndRecoverAsync(CancellationToken token = default);
     }
@@ -33,6 +33,12 @@ namespace VirtualPaper.Cores.AppUpdate {
         }
 
         public async Task<RestartUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default) {
+            var downloadResult = await DownloadPendingAsync(releaseInfo, null, token);
+            if (!downloadResult.Success) return downloadResult;
+            return await ExecutePendingUpdateAsync(progress, token);
+        }
+
+        public async Task<RestartUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default) {
             var result = new RestartUpdateResult();
 
             if (releaseInfo.Manifest == null || !releaseInfo.Manifest.IsRestartUpdate) {
@@ -45,18 +51,12 @@ namespace VirtualPaper.Cores.AppUpdate {
             var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
 
             try {
-                // Clean up any previous pending updates
                 CleanupPendingUpdates();
-
                 Directory.CreateDirectory(pendingDir);
 
-                // Step 1: Download and verify plugin zips in parallel (UI still running)
-                progress?.Report(new RestartUpdateProgress(RestartUpdateStage.Downloading, 0, "Downloading plugins..."));
-                int totalPlugins = manifest.Plugins.Count;
-                int completedCount = 0;
-
-                var downloadTasks = manifest.Plugins.Select(async kv => {
-                    var (pluginName, pluginInfo) = kv;
+                foreach (var kv in manifest.Plugins) {
+                    var pluginName = kv.Key;
+                    var pluginInfo = kv.Value;
                     token.ThrowIfCancellationRequested();
 
                     if (!releaseInfo.PluginAssetUris.TryGetValue(pluginName, out var downloadUri)) {
@@ -67,24 +67,16 @@ namespace VirtualPaper.Cores.AppUpdate {
                     Directory.CreateDirectory(pluginDir);
                     var zipPath = Path.Combine(pluginDir, pluginInfo.Asset);
 
-                    // Download
-                    await foreach (var _ in _downloadService.DownloadAsync(downloadUri, zipPath, token)) {
-                        // Consume progress
+                    await foreach (var p in _downloadService.DownloadAsync(downloadUri, zipPath, token)) {
+                        progress?.Report(p);
                     }
 
-                    // Verify SHA256
                     bool verified = await _downloadService.VerifyFileIntegrityAsync(zipPath, pluginInfo.Sha256, token);
                     if (!verified) {
                         throw new InvalidDataException($"SHA256 verification failed for plugin: {pluginName}");
                     }
+                }
 
-                    var count = Interlocked.Increment(ref completedCount);
-                    progress?.Report(new RestartUpdateProgress(RestartUpdateStage.Downloading, (float)count / totalPlugins * 100, $"Downloaded {pluginName}"));
-                });
-
-                await Task.WhenAll(downloadTasks);
-
-                // Step 2: Write update flag (pending) with file hashes for later verification
                 var updateFlag = new UpdateFlag {
                     Status = UpdateFlag.UpdateStatusPending,
                     Plugins = manifest.Plugins.ToDictionary(
@@ -103,8 +95,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 };
                 await SaveUpdateFlagAsync(updateFlag, token);
 
-                // Step 3: Execute the pending update (close UI + backup + replace)
-                return await ExecutePendingUpdateAsync(progress, token);
+                result.Success = true;
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<RestartUpdateService>().Error("Restart update download failed", ex);
@@ -450,7 +441,33 @@ namespace VirtualPaper.Cores.AppUpdate {
         public string? ErrorMessage { get; set; }
     }
 
-    public record RestartUpdateProgress(RestartUpdateStage Stage, float Percent, string Message);
+    public record RestartUpdateProgress(
+        RestartUpdateStage Stage,
+        float Percent,
+        string Message,
+        float Speed = 0,
+        IReadOnlyList<PluginDownloadProgress>? PluginDetails = null);
+
+    public record PluginDownloadProgress(
+        string PluginName,
+        float Percent,
+        long ReceivedBytes,
+        long TotalBytes,
+        float Speed) {
+        public string SizeText => $"{FormatBytes(ReceivedBytes)} / {FormatBytes(TotalBytes)}";
+
+        private static string FormatBytes(long bytes) {
+            if (bytes <= 0) return "0 B";
+            string[] units = { "B", "KB", "MB", "GB" };
+            double value = bytes;
+            int unit = 0;
+            while (value >= 1024 && unit < units.Length - 1) {
+                value /= 1024;
+                unit++;
+            }
+            return $"{value:0.#} {units[unit]}";
+        }
+    }
 
     public enum RestartUpdateStage {
         Downloading,

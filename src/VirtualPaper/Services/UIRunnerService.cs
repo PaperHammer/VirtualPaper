@@ -169,7 +169,18 @@ namespace VirtualPaper.Services {
             if (!_isDisposed) {
                 if (disposing) {
                     try {
-                        _processUI?.Kill();
+                        // If a pending restart update exists, close UI gracefully so
+                        // Proc_UI_Exited fires and triggers ExecutePendingUpdateAsync.
+                        var flagPath = VirtualPaper.Common.Constants.CommonPaths.UpdateFlagPath;
+                        if (_processUI != null && File.Exists(flagPath)) {
+                            CloseUI();
+                            if (_processUI != null && !_processUI.HasExited) {
+                                _processUI.WaitForExit(5000);
+                            }
+                        }
+                        else {
+                            _processUI?.Kill();
+                        }
                     }
                     catch { }
                 }

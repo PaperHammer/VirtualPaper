@@ -109,9 +109,16 @@
                                  Value="{Binding Progress}"
                                  Minimum="0" Maximum="100"/>
 
-                    <TextBlock Text="{Binding SpeedText}"
-                               FontSize="12"
-                               Margin="0,6,0,0"/>
+                    <Grid Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding SpeedValue}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontSize="12"/>
+                        <TextBlock Grid.Column="2" Text="{Binding RemainingText}" FontSize="12"/>
+                    </Grid>
                 </StackPanel>
 
                 <!-- 右侧：操作按钮 -->

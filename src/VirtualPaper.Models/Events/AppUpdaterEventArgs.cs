@@ -18,5 +18,9 @@ namespace VirtualPaper.Models.Events {
         Notchecked,
         [Description("Update check failed.")]
         Error,
+        [Description("Installer ready.")]
+        InstallerReady,
+        [Description("Plugins ready.")]
+        PluginsReady,
     }
 }

@@ -8,12 +8,12 @@ using VirtualPaper.Cores.ScreenSaver;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Services.Interfaces;
-using VirtualPaper.Utils.Interfcaes;
 
 namespace VirtualPaper.Cores.AppUpdate {
     public interface IRestartUpdateService {
         Task<RestartUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default);
         Task<RestartUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default);
+        Task<RestartUpdateResult> VerifyAndSavePendingAsync(ReleaseInfo releaseInfo, CancellationToken token = default);
         Task<RestartUpdateResult> ExecutePendingUpdateAsync(IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default);
         Task CheckAndRecoverAsync(CancellationToken token = default);
     }
@@ -35,6 +35,8 @@ namespace VirtualPaper.Cores.AppUpdate {
         public async Task<RestartUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default) {
             var downloadResult = await DownloadPendingAsync(releaseInfo, null, token);
             if (!downloadResult.Success) return downloadResult;
+            var verifyResult = await VerifyAndSavePendingAsync(releaseInfo, token);
+            if (!verifyResult.Success) return verifyResult;
             return await ExecutePendingUpdateAsync(progress, token);
         }
 
@@ -51,13 +53,14 @@ namespace VirtualPaper.Cores.AppUpdate {
             var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
 
             try {
-                CleanupPendingUpdates();
+                FileUtil.RemoveDirectory(pendingDir);
                 Directory.CreateDirectory(pendingDir);
+
+                var downloadItems = new List<(Uri uri, string saveFilePath)>();
 
                 foreach (var kv in manifest.Plugins) {
                     var pluginName = kv.Key;
                     var pluginInfo = kv.Value;
-                    token.ThrowIfCancellationRequested();
 
                     if (!releaseInfo.PluginAssetUris.TryGetValue(pluginName, out var downloadUri)) {
                         throw new InvalidOperationException($"Download URI not found for plugin: {pluginName}");
@@ -67,9 +70,42 @@ namespace VirtualPaper.Cores.AppUpdate {
                     Directory.CreateDirectory(pluginDir);
                     var zipPath = Path.Combine(pluginDir, pluginInfo.Asset);
 
-                    await foreach (var p in _downloadService.DownloadAsync(downloadUri, zipPath, token)) {
-                        progress?.Report(p);
-                    }
+                    downloadItems.Add((downloadUri, zipPath));
+                }
+
+                await foreach (var p in _downloadService.DownloadMultipleAsync(downloadItems, token)) {
+                    progress?.Report(p);
+                }
+
+                result.Success = true;
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<RestartUpdateService>().Error("Restart update download failed", ex);
+                result.Success = false;
+                result.ErrorMessage = ex.Message;
+                FileUtil.RemoveDirectory(pendingDir);
+            }
+
+            return result;
+        }
+
+        public async Task<RestartUpdateResult> VerifyAndSavePendingAsync(ReleaseInfo releaseInfo, CancellationToken token = default) {
+            var result = new RestartUpdateResult();
+
+            if (releaseInfo.Manifest == null || !releaseInfo.Manifest.IsRestartUpdate) {
+                result.Success = false;
+                result.ErrorMessage = "Not a restart-style update";
+                return result;
+            }
+
+            var manifest = releaseInfo.Manifest;
+            var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+
+            try {
+                foreach (var kv in manifest.Plugins) {
+                    var pluginName = kv.Key;
+                    var pluginInfo = kv.Value;
+                    var zipPath = Path.Combine(pendingDir, pluginName, pluginInfo.Asset);
 
                     bool verified = await _downloadService.VerifyFileIntegrityAsync(zipPath, pluginInfo.Sha256, token);
                     if (!verified) {
@@ -98,10 +134,10 @@ namespace VirtualPaper.Cores.AppUpdate {
                 result.Success = true;
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<RestartUpdateService>().Error("Restart update download failed", ex);
+                ArcLog.GetLogger<RestartUpdateService>().Error("Restart update verify failed", ex);
                 result.Success = false;
                 result.ErrorMessage = ex.Message;
-                CleanupPendingUpdates();
+                FileUtil.RemoveDirectory(pendingDir);
             }
 
             return result;
@@ -252,7 +288,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 // Step: Update flag to completed, then cleanup
                 flag.Status = UpdateFlag.UpdateStatusCompleted;
                 await SaveUpdateFlagAsync(flag, token);
-                CleanupPendingUpdates();
+                FileUtil.RemoveDirectory(pendingDir);
 
                 result.Success = true;
                 progress?.Report(new RestartUpdateProgress(RestartUpdateStage.Completed, 100, "Update completed"));
@@ -285,7 +321,7 @@ namespace VirtualPaper.Cores.AppUpdate {
             var flagPath = Constants.CommonPaths.UpdateFlagPath;
             if (!File.Exists(flagPath)) {
                 // Flag missing but pending dir exists - cleanup
-                CleanupPendingUpdates();
+                FileUtil.RemoveDirectory(pendingDir);
                 return;
             }
 
@@ -320,7 +356,7 @@ namespace VirtualPaper.Cores.AppUpdate {
 
                     case UpdateFlag.UpdateStatusCompleted:
                         // Completed but not cleaned up - just cleanup
-                        CleanupPendingUpdates();
+                        FileUtil.RemoveDirectory(pendingDir);
                         break;
                 }
             }
@@ -360,9 +396,10 @@ namespace VirtualPaper.Cores.AppUpdate {
 
         private async Task RollbackAsync() {
             var backupDir = Constants.CommonPaths.UpdateBackupDir;
+            var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
             if (!Directory.Exists(backupDir)) {
                 ArcLog.GetLogger<RestartUpdateService>().Warn("No backup found for rollback");
-                CleanupPendingUpdates();
+                FileUtil.RemoveDirectory(pendingDir);
                 return;
             }
 
@@ -389,7 +426,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 ArcLog.GetLogger<RestartUpdateService>().Error("Rollback failed", ex);
             }
             finally {
-                CleanupPendingUpdates();
+                FileUtil.RemoveDirectory(pendingDir);
             }
         }
 
@@ -400,18 +437,6 @@ namespace VirtualPaper.Cores.AppUpdate {
             };
             var json = JsonSerializer.Serialize(notice, RollbackNoticeContext.Default.RollbackNotice);
             await File.WriteAllTextAsync(Constants.CommonPaths.RollbackNoticePath, json, token);
-        }
-
-        private void CleanupPendingUpdates() {
-            try {
-                var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
-                if (Directory.Exists(pendingDir)) {
-                    Directory.Delete(pendingDir, true);
-                }
-            }
-            catch (Exception ex) {
-                ArcLog.GetLogger<RestartUpdateService>().Warn($"Cleanup failed: {ex.Message}");
-            }
         }
 
         private async Task<UpdateFlag?> LoadUpdateFlagAsync(CancellationToken token) {
@@ -454,19 +479,7 @@ namespace VirtualPaper.Cores.AppUpdate {
         long ReceivedBytes,
         long TotalBytes,
         float Speed) {
-        public string SizeText => $"{FormatBytes(ReceivedBytes)} / {FormatBytes(TotalBytes)}";
-
-        private static string FormatBytes(long bytes) {
-            if (bytes <= 0) return "0 B";
-            string[] units = { "B", "KB", "MB", "GB" };
-            double value = bytes;
-            int unit = 0;
-            while (value >= 1024 && unit < units.Length - 1) {
-                value /= 1024;
-                unit++;
-            }
-            return $"{value:0.#} {units[unit]}";
-        }
+        public string SizeText => $"{FileUtil.SizeSuffix(ReceivedBytes)} / {FileUtil.SizeSuffix(TotalBytes)}";
     }
 
     public enum RestartUpdateStage {

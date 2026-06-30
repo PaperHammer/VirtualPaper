@@ -77,7 +77,7 @@ namespace VirtualPaper.Utils.Services {
     }
 
     public class AssemblyVersionComparer : IVersionComparer {
-        public int CompareAssemblyVersion(Version version) {
+        public int CompareAssemblyVersion(Version? version) {
             return GithubUtil.CompareAssemblyVersion(version);
         }
     }

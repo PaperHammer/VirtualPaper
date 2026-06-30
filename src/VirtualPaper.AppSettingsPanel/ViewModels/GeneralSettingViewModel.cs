@@ -186,10 +186,28 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             set { _isWallpaperDirectoryChangeEnable = value; OnPropertyChanged(); }
         }
 
+        private string? _text_UpdateBtn;
+        public string? Text_UpdateBtn {
+            get { return _text_UpdateBtn; }
+            set { _text_UpdateBtn = value; OnPropertyChanged(); }
+        }
+
+        private string? _text_UpdateReady;
+        public string? Text_UpdateReady {
+            get { return _text_UpdateReady; }
+            set { _text_UpdateReady = value; OnPropertyChanged(); }
+        }
+
+        private ICommand? _updateBtnComand;
+        public ICommand? UpdateBtnComand {
+            get { return _updateBtnComand; }
+            set { _updateBtnComand = value; OnPropertyChanged(); }
+        }
+
         public ICommand? ChangeFileStorageCommand { get; private set; }
         public ICommand? OpenFileStorageCommand { get; private set; }
         public ICommand? CheckUpdateCommand { get; private set; }
-        public ICommand? StartDownloadComand { get; private set; }
+        //public ICommand? StartDownloadComand { get; private set; }
 
         public GeneralSettingViewModel(
             IAppUpdaterClient appUpdater,
@@ -215,9 +233,9 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             CheckUpdateCommand = new RelayCommand(async () => {
                 await CheckUpdateAsync();
             });
-            StartDownloadComand = new RelayCommand(async () => {
-                await StartDownloadAsync();
-            });
+            //StartDownloadComand = new RelayCommand(async () => {
+            //    await StartDownloadAsync();
+            //});
         }
 
         private void InitContent() {
@@ -274,14 +292,34 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
         private void MenuUpdate(AppUpdateStatus status, ReleaseInfo? release) {
             //CurrentVersionState = VersionState.FindNew;
-            
+
             switch (status) {
                 case AppUpdateStatus.Uptodate:
                     CurrentVersionState = VersionState.UptoNewest;
                     break;
                 case AppUpdateStatus.Available:
+                    Text_UpdateBtn = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_DownloadStart));
                     Version = $"v{release?.Version} Build ({release?.AppBuild})";
                     CurrentVersionState = VersionState.FindNew;
+                    UpdateBtnComand = new RelayCommand(async () => {
+                        await StartDownloadAsync();
+                    });
+                    break;
+                case AppUpdateStatus.InstallerReady:
+                    Text_UpdateBtn = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_Install));
+                    Text_UpdateReady = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_InstallerReady));
+                    UpdateBtnComand = new RelayCommand(async () => {
+                        
+                    });
+                    CurrentVersionState = VersionState.InstallReady;
+                    break;
+                case AppUpdateStatus.PluginsReady:
+                    Text_UpdateBtn = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_Install));
+                    Text_UpdateReady = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_PluginsReady));
+                    UpdateBtnComand = new RelayCommand(async () => {
+
+                    });
+                    CurrentVersionState = VersionState.InstallReady;
                     break;
                 case AppUpdateStatus.Invalid or AppUpdateStatus.Error:
                     CurrentVersionState = VersionState.UpdateErr;
@@ -364,7 +402,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 GlobalMessageUtil.ShowException(ex);
                 ArcLog.GetLogger<GeneralSettingViewModel>().Error(ex.Message);
                 if (destFolderPath != string.Empty) {
-                    FileUtil.EmptyDirectory(destFolderPath);
+                    FileUtil.RemoveDirectory(destFolderPath);
                 }
             }
             finally {
@@ -455,6 +493,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         DownloadFailed,    // 下载失败
         VerifyFailed,      // 校验失败
         Downloaded,        // 下载完成
-        UpdateErr          // 网络或更新错误
+        UpdateErr,          // 网络或更新错误
+        InstallReady
     }
 }

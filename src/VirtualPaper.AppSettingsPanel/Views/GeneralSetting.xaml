@@ -104,7 +104,7 @@
                     IsOpen="True"
                     IsClosable="False"
                     Severity="Informational"
-                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=FindNew}"
+                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=FindNew|InstallReady}"
                     Title="{markup:I18n Key=Settings_General_Version_FindNew}"
                     Message="{x:Bind _viewModel.Version, Mode=OneWay}" >
                     <InfoBar.Content>
@@ -115,10 +115,10 @@
                             </Grid.ColumnDefinitions>
 
                             <Button
-                                Content="{markup:I18n Key=Settings_General_Version_DownloadStart}"
+                                Content="{x:Bind _viewModel.Text_UpdateBtn, Mode=OneWay}"
                                 IsEnabled="{x:Bind _viewModel.IsUpdateBtnEnable, Mode=OneWay}"
                                 Width="100"
-                                Command="{x:Bind _viewModel.StartDownloadComand}"/>
+                                Command="{x:Bind _viewModel.UpdateBtnComand, Mode=OneWay}"/>
 
                             <HyperlinkButton
                                 Grid.Column="1"
@@ -142,6 +142,14 @@
                     IsClosable="False"
                     Severity="Success"
                     Title="{markup:I18n Key=Settings_General_Version_UptoNewest}" >
+                </InfoBar>
+
+                <InfoBar x:Name="InfoBarUpdateReady"
+                    Visibility="{x:Bind _viewModel.CurrentVersionState, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=InstallReady}"
+                    IsOpen="True"
+                    IsClosable="False"
+                    Severity="Success"
+                    Title="{x:Bind _viewModel.Text_UpdateReady, Mode=OneWay}" >
                 </InfoBar>
             </StackPanel>
 

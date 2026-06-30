@@ -51,17 +51,31 @@ namespace VirtualPaper.UIComponent.Converters {
             }
             // --- 3️ Enum 匹配 ---
             else if (value is Enum enumValue && !string.IsNullOrEmpty(param)) {
-                try {
-                    var targetValue = Enum.Parse(value.GetType(), param, ignoreCase: true);
-                    result = enumValue.Equals(targetValue);
-                }
-                catch {
-                    result = false;
+                var candidates = param.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                result = false;
+                foreach (var candidate in candidates) {
+                    try {
+                        var targetValue = Enum.Parse(value.GetType(), candidate, ignoreCase: true);
+                        if (enumValue.Equals(targetValue)) {
+                            result = true;
+                            break;
+                        }
+                    }
+                    catch {
+                        // ignore invalid enum value
+                    }
                 }
             }
             // --- 4️ 字符串匹配 ---
             else if (value is string str && !string.IsNullOrEmpty(param)) {
-                result = str.Equals(param, StringComparison.OrdinalIgnoreCase);
+                var candidates = param.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                result = false;
+                foreach (var candidate in candidates) {
+                    if (str.Equals(candidate, StringComparison.OrdinalIgnoreCase)) {
+                        result = true;
+                        break;
+                    }
+                }
             }
             // --- 5️ 默认行为（非空即显示） ---
             else {

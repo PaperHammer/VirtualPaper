@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using Downloader;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Services.Interfaces;
 using IDownloadService = VirtualPaper.Services.Interfaces.IDownloadService;
 
@@ -24,6 +25,7 @@ namespace VirtualPaper.Services.Download {
             };
 
             _downloader = new DownloadService(downloadOpt);
+            _parallelDownloaders = new List<DownloadService>();
         }
 
 
@@ -90,6 +92,104 @@ namespace VirtualPaper.Services.Download {
         }
 
         /// <summary>
+        /// 并行下载多个文件，返回聚合后的总进度
+        /// </summary>
+        public async IAsyncEnumerable<DownloadProgress> DownloadMultipleAsync(
+            IEnumerable<(Uri uri, string saveFilePath)> downloads,
+            [EnumeratorCancellation] CancellationToken token) {
+
+            var downloadList = downloads.ToList();
+            if (downloadList.Count == 0) yield break;
+
+            if (downloadList.Count == 1) {
+                await foreach (var p in DownloadAsync(downloadList[0].uri, downloadList[0].saveFilePath, token))
+                    yield return p;
+                yield break;
+            }
+
+            var channel = Channel.CreateUnbounded<DownloadProgress>(
+                new UnboundedChannelOptions { SingleReader = true });
+
+            var perPlugin = new (long received, long total, float speed)[downloadList.Count];
+            var lockObj = new object();
+
+            void ReportAggregate() {
+                long totalReceived = 0, totalAll = 0;
+                float totalSpeed = 0;
+                lock (lockObj) {
+                    for (int i = 0; i < perPlugin.Length; i++) {
+                        totalReceived += perPlugin[i].received;
+                        totalAll += perPlugin[i].total;
+                        totalSpeed += perPlugin[i].speed;
+                    }
+                }
+                float percent = totalAll > 0 ? (float)totalReceived / totalAll * 100 : 0;
+                TimeSpan remaining = totalSpeed > 0
+                    ? TimeSpan.FromSeconds((totalAll - totalReceived) / (totalSpeed * 1024.0 * 1024.0))
+                    : TimeSpan.Zero;
+                channel.Writer.TryWrite(new DownloadProgress(percent, totalSpeed, remaining, totalReceived, totalAll));
+            }
+
+            var tasks = downloadList.Select((item, index) => Task.Run(async () => {
+                var downloadOpt = new DownloadConfiguration() {
+                    BufferBlockSize = 8000,
+                    ChunkCount = 4,
+                    MaxTryAgainOnFailover = 5,
+                    Timeout = 10000,
+                    ClearPackageOnCompletionWithFailure = false,
+                    ReserveStorageSpaceBeforeStartingDownload = false,
+                };
+                var downloader = new DownloadService(downloadOpt);
+                
+                lock (_parallelDownloaders) {
+                    _parallelDownloaders.Add(downloader);
+                }
+                
+                try {
+                    var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                    downloader.DownloadProgressChanged += (s, e) => {
+                        if (token.IsCancellationRequested) return;
+                        lock (lockObj) {
+                            perPlugin[index] = (e.ReceivedBytesSize, e.TotalBytesToReceive, (float)(e.BytesPerSecondSpeed / 1024.0 / 1024.0));
+                        }
+                        ReportAggregate();
+                    };
+                    downloader.DownloadFileCompleted += (s, e) => {
+                        if (e.Error != null) tcs.TrySetException(e.Error);
+                        else if (e.Cancelled) tcs.TrySetCanceled(token);
+                        else tcs.TrySetResult();
+                    };
+
+                    var downloadTask = downloader.DownloadFileTaskAsync(item.uri.AbsoluteUri, item.saveFilePath, token)
+                        .ContinueWith(t => { if (t.IsFaulted) _ = t.Exception; }, TaskContinuationOptions.ExecuteSynchronously);
+
+                    await Task.WhenAll(downloadTask, tcs.Task);
+                }
+                finally {
+                    lock (_parallelDownloaders) {
+                        _parallelDownloaders.Remove(downloader);
+                    }
+                }
+            }, token)).ToArray();
+
+            // 在后台等待所有下载完成，然后关闭 channel
+            _ = Task.Run(async () => {
+                try {
+                    await Task.WhenAll(tasks);
+                }
+                catch { }
+                channel.Writer.TryComplete();
+            });
+
+            await foreach (var p in channel.Reader.ReadAllAsync(token))
+                yield return p;
+
+            // 等待所有下载任务完成（传播异常）
+            await Task.WhenAll(tasks);
+        }
+
+        /// <summary>
         /// 下载 SHA256.txt 并缓存其内容
         /// </summary>
         public async Task<string> DownloadShaTxtAsync(Uri shaUri, CancellationToken token) {
@@ -103,7 +203,7 @@ namespace VirtualPaper.Services.Download {
                 string sha256Content = await File.ReadAllTextAsync(tempFilePath, token);
                 sha256Content = sha256Content.Trim();
 
-                if (!IsValidSHA256(sha256Content))
+                if (sha256Content.Length != 64 || !System.Text.RegularExpressions.Regex.IsMatch(sha256Content, @"^[a-fA-F0-9]{64}$"))
                     throw new InvalidDataException("The downloaded SHA256 file format is invalid");
 
                 return sha256Content;
@@ -127,54 +227,51 @@ namespace VirtualPaper.Services.Download {
         /// <param name="token">取消令牌</param>
         /// <returns>校验结果</returns>
         public async Task<bool> VerifyFileIntegrityAsync(string filePath, string expectedSha256, CancellationToken token = default) {
-            if (!File.Exists(filePath) || !IsValidSHA256(expectedSha256))
-                return false;
-
-            string actualSha256 = await CalculateFileSHA256Async(filePath, token);
-
-            return string.Equals(actualSha256, expectedSha256, StringComparison.OrdinalIgnoreCase);
+            return await FileUtil.VerifyFileIntegrityAsync(filePath, expectedSha256, token);
         }
 
 
         public void Pause() {
             if (_downloader.Status == DownloadStatus.Running)
                 _downloader.Pause();
+            
+            List<DownloadService> snapshot;
+            lock (_parallelDownloaders) {
+                snapshot = _parallelDownloaders.ToList();
+            }
+            
+            Parallel.ForEach(snapshot, downloader => {
+                if (downloader.Status == DownloadStatus.Running)
+                    downloader.Pause();
+            });
         }
 
         public void Resume() {
             if (_downloader.Status == DownloadStatus.Paused)
                 _downloader.Resume();
+            
+            List<DownloadService> snapshot;
+            lock (_parallelDownloaders) {
+                snapshot = _parallelDownloaders.ToList();
+            }
+            
+            Parallel.ForEach(snapshot, downloader => {
+                if (downloader.Status == DownloadStatus.Paused)
+                    downloader.Resume();
+            });
         }
 
         public void Dispose() {
             _downloader?.Dispose();
+            lock (_parallelDownloaders) {
+                foreach (var downloader in _parallelDownloaders) {
+                    downloader.Dispose();
+                }
+                _parallelDownloaders.Clear();
+            }
         }
-
-        #region Private Methods
-        /// <summary>
-        /// 计算文件的SHA256哈希值
-        /// </summary>
-        private static async Task<string> CalculateFileSHA256Async(string filePath, CancellationToken token) {
-            using var sha256 = System.Security.Cryptography.SHA256.Create();
-            using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, true);
-
-            var hashBytes = await sha256.ComputeHashAsync(fileStream, token);
-            return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
-        }
-
-        /// <summary>
-        /// 验证SHA256字符串格式
-        /// </summary>
-        private static bool IsValidSHA256(string sha256) {
-            if (string.IsNullOrEmpty(sha256) || sha256.Length != 64)
-                return false;
-            return SHA256Regex().IsMatch(sha256);
-        }
-        #endregion
 
         private readonly DownloadService _downloader;
-
-        [System.Text.RegularExpressions.GeneratedRegex(@"^[a-fA-F0-9]{64}$")]
-        private static partial System.Text.RegularExpressions.Regex SHA256Regex();
+        private readonly List<DownloadService> _parallelDownloaders;
     }
 }

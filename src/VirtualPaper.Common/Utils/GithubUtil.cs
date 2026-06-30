@@ -98,7 +98,9 @@ namespace VirtualPaper.Common.Utils {
             return result;
         }
 
-        public static int CompareAssemblyVersion(Version version) {
+        public static int CompareAssemblyVersion(Version? version) {
+            if (version == null) return -1;
+
             var appVersion = new Version(System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString());
             return version.CompareTo(appVersion);
         }

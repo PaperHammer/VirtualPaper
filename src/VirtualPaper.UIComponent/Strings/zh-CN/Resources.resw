@@ -1583,7 +1583,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Project_StaticImg_Effect_SoftLight" xml:space="preserve">
     <value>柔光</value>
   </data>
-  <!-- CanvasEffect 效果描述 -->
   <data name="Project_StaticImg_Text_EffectDesc_GrayScale" xml:space="preserve">
     <value>去除颜色信息，转为灰度图</value>
   </data>
@@ -1652,5 +1651,11 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   </data>
   <data name="Project_StaticImg_Text_EffectDesc_SoftLight" xml:space="preserve">
     <value>柔光模式，产生柔和对比</value>
+  </data>
+  <data name="Settings_General_Version_InstallerReady" xml:space="preserve">
+    <value>更新已就绪，点击安装。安装需完全退出应用，请注意保存数据</value>
+  </data>
+  <data name="Settings_General_Version_PluginsReady" xml:space="preserve">
+    <value>更新已就绪，点击安装。安装需关闭主窗口，请注意保存数据</value>
   </data>
 </root>

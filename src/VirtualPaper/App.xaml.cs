@@ -87,7 +87,7 @@ namespace VirtualPaper {
             #region 必要路径处理
             try {
                 // 清空缓存
-                FileUtil.EmptyDirectory(Constants.CommonPaths.TempDir);
+                FileUtil.RemoveDirectory(Constants.CommonPaths.TempDir);
             }
             catch { }
 

@@ -1,6 +1,9 @@
+using System.IO;
+using System.Text.Json;
 using Octokit;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Models.Events;
 using VirtualPaper.Utils.Interfcaes;
@@ -35,6 +38,13 @@ namespace VirtualPaper.Cores.AppUpdate {
             if (Constants.ApplicationType.IsMSIX) {
                 //msix already has built-in _updater.
                 return AppUpdateStatus.Notchecked;
+            }
+
+            var localStatus = ProbeLocalUpdate();
+            if (localStatus != null) {
+                Status = localStatus.Value;
+                UpdateChecked?.Invoke(this, new AppUpdaterEventArgs(Status, LastReleaseInfo));
+                return Status;
             }
 
             try {
@@ -129,6 +139,79 @@ namespace VirtualPaper.Cores.AppUpdate {
         //}
 
         /// <summary>
+        /// 本地探测：检查 pending_updates 和 installer_cache 是否有已就绪的更新。
+        /// 验证失败则清理对应目录。
+        /// </summary>
+        private AppUpdateStatus? ProbeLocalUpdate() {
+            // 1. 检查 restart-style: pending_updates + update.flag (pending status)
+            if (ProbePluginsReady())
+                return AppUpdateStatus.PluginsReady;
+
+            // 2. 检查 install-style: installer_cache 有文件 + sha256 验证通过
+            if (ProbeInstallerReady())
+                return AppUpdateStatus.InstallerReady;
+
+            return null;
+        }
+
+        private bool ProbePluginsReady() {
+            try {
+                var flagPath = Constants.CommonPaths.UpdateFlagPath;
+                if (!File.Exists(flagPath)) return false;
+
+                var json = File.ReadAllText(flagPath);
+                var flag = JsonSerializer.Deserialize(json, UpdateFlagContext.Default.UpdateFlag);
+                if (flag == null || flag.Status != UpdateFlag.UpdateStatusPending) {
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
+                    return false;
+                }
+
+                var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+                foreach (var kv in flag.Plugins) {
+                    var pluginName = kv.Key;
+                    foreach (var fileHash in kv.Value.Files) {
+                        var filePath = Path.Combine(pendingDir, pluginName, fileHash.Name);
+                        if (!FileUtil.VerifyFileIntegrityAsync(filePath, fileHash.Sha256).GetAwaiter().GetResult()) {
+                            FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            catch {
+                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
+                return false;
+            }
+        }
+
+        private bool ProbeInstallerReady() {
+            try {
+                var cacheDir = Constants.CommonPaths.InstallerCacheDir;
+                if (!Directory.Exists(cacheDir)) return false;
+
+                foreach (var file in Directory.GetFiles(cacheDir)) {
+                    if (file.EndsWith(".sha256", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    var shaPath = file + ".sha256";
+                    if (!File.Exists(shaPath)) continue;
+
+                    var expectedSha = File.ReadAllText(shaPath).Trim();
+                    if (FileUtil.VerifyFileIntegrityAsync(file, expectedSha).GetAwaiter().GetResult())
+                        return true;
+                }
+
+                // 有文件但无有效配对 → 清理
+                FileUtil.RemoveDirectory(Constants.CommonPaths.InstallerCacheDir);
+                return false;
+            }
+            catch {
+                FileUtil.RemoveDirectory(Constants.CommonPaths.InstallerCacheDir);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Check for updates periodically.
         /// </summary>
         public void Start() {
@@ -146,7 +229,7 @@ namespace VirtualPaper.Cores.AppUpdate {
 
         #region private
         private void RetryTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e) {
-            if ((DateTime.Now - LastReleaseInfo.CheckedTime).TotalMilliseconds > (Status != AppUpdateStatus.Error ? _fetchDelayRepeat : _fetchDelayError)) {
+            if (LastReleaseInfo == null || (DateTime.Now - LastReleaseInfo.CheckedTime).TotalMilliseconds > (Status != AppUpdateStatus.Error ? _fetchDelayRepeat : _fetchDelayError)) {
                 _ = CheckUpdate(0);
             }
         }

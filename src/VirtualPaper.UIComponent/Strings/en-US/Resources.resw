@@ -1583,7 +1583,6 @@ The following words cannot be used as usernames:
   <data name="Project_StaticImg_Effect_SoftLight" xml:space="preserve">
     <value>SoftLight</value>
   </data>
-  <!-- CanvasEffect effect descriptions -->
   <data name="Project_StaticImg_Text_EffectDesc_GrayScale" xml:space="preserve">
     <value>Remove color, convert to grayscale</value>
   </data>
@@ -1652,5 +1651,11 @@ The following words cannot be used as usernames:
   </data>
   <data name="Project_StaticImg_Text_EffectDesc_SoftLight" xml:space="preserve">
     <value>Soft light blend, gentle contrast</value>
+  </data>
+  <data name="Settings_General_Version_InstallerReady" xml:space="preserve">
+    <value>Update ready. Click to install. The app must be fully closed, please save your data.</value>
+  </data>
+  <data name="Settings_General_Version_PluginsReady" xml:space="preserve">
+    <value>Update ready. Click to install. The main window must be closed, please save your data.</value>
   </data>
 </root>

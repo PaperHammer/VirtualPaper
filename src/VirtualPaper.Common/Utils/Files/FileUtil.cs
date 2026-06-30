@@ -132,6 +132,29 @@ namespace VirtualPaper.Common.Utils.Files {
         }
 
         /// <summary>
+        /// 验证文件 SHA256 是否与预期值匹配
+        /// </summary>
+        public static async Task<bool> VerifyFileIntegrityAsync(string filePath, string expectedSha256, CancellationToken token = default) {
+            if (!File.Exists(filePath) || !IsValidSHA256(expectedSha256))
+                return false;
+            var actual = await CalculateFileSHA256Async(filePath, token);
+            return string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static async Task<string> CalculateFileSHA256Async(string filePath, CancellationToken token) {
+            using var sha256 = SHA256.Create();
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, true);
+            var hashBytes = await sha256.ComputeHashAsync(stream, token);
+            return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+        }
+
+        private static bool IsValidSHA256(string sha256) {
+            if (string.IsNullOrEmpty(sha256) || sha256.Length != 64)
+                return false;
+            return System.Text.RegularExpressions.Regex.IsMatch(sha256, @"^[a-fA-F0-9]{64}$");
+        }
+
+        /// <summary>
         /// 计算字符串内容的 SHA256 校验和（UTF-8 编码）
         /// 自动处理 BOM：如果内容以 UTF-8 BOM 开头，会先移除再计算
         /// </summary>
@@ -146,7 +169,9 @@ namespace VirtualPaper.Common.Utils.Files {
             return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
         }
 
-        public static void EmptyDirectory(string directory) {
+        public static void RemoveDirectory(string directory) {
+            if (!Directory.Exists(directory)) return;
+
             DirectoryInfo di = new(directory);
             di.Delete(true);
         }
@@ -402,7 +427,7 @@ namespace VirtualPaper.Common.Utils.Files {
             ArgumentOutOfRangeException.ThrowIfNegative(decimalPlaces);
             if (value < 0) { return "-" + SizeSuffix(-value, decimalPlaces); }
 
-            string fmt = "0." + new string('#', decimalPlaces);
+            string fmt = "0." + new string('0', decimalPlaces);
 
             if (value == 0) { return string.Format("{0:" + fmt + "} bytes", 0m); }
 

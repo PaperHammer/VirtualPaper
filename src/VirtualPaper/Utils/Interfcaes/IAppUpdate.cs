@@ -6,6 +6,6 @@ namespace VirtualPaper.Utils.Interfcaes {
     }
 
     public interface IVersionComparer {
-        int CompareAssemblyVersion(Version version);
+        int CompareAssemblyVersion(Version? version);
     }
 }

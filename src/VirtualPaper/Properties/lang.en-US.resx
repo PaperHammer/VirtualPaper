@@ -139,7 +139,7 @@
     <value>Download complete!</value>
   </data>
   <data name="AppUpdater_StatusText_DownloadFailed" xml:space="preserve">
-    <value>Unable to access the resource, please check your network and try again.</value>
+    <value>Unable to access, please check network or try again.</value>
   </data>
   <data name="AppUpdater_StatusText_Downloading" xml:space="preserve">
     <value>Downloading...</value>

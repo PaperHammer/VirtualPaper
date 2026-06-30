@@ -64,6 +64,7 @@ namespace VirtualPaper.Common {
             public static string TempWebView2Dir => Path.Combine(AppDataDir, "WebView2");
             public static string TempScrWebView2Dir => Path.Combine(AppDataDir, "ScrWebView2");
 
+            public static string InstallerCacheDir => Path.Combine(AppDataDir, "installer_cache");
             public static string PendingUpdatesDir => Path.Combine(AppDataDir, "pending_updates");
             public static string UpdateFlagPath => Path.Combine(PendingUpdatesDir, "update.flag");
             public static string UpdateBackupDir => Path.Combine(PendingUpdatesDir, "_backup");
@@ -317,6 +318,10 @@ namespace VirtualPaper.Common {
             public static string? Project_StaticImg_Text_EffectDesc_SoftLight { get; }
             public static string? Settings_General_Version_FindNew { get; }
             public static string? AppUpdater_SpeedText_Ready { get; }
+            public static string? Settings_General_Version_DownloadStart { get; }
+            public static string? Settings_General_Version_Install { get; }
+            public static string? Settings_General_Version_InstallerReady { get; }
+            public static string? Settings_General_Version_PluginsReady { get; }
         }
 
         public static class Field {

@@ -77,8 +77,6 @@ namespace VirtualPaper.ViewModels {
 
         public bool IsRestartUpdate { get; private set; }
 
-        public ICommand? ActionCommand { get; }
-
         private DownloadState _currentState;
         public DownloadState CurrentState {
             get { return _currentState; }
@@ -99,8 +97,6 @@ namespace VirtualPaper.ViewModels {
             _downloadService = downloadService;
             _contentDialogService = contentDialogService;
             _restartUpdateService = restartUpdateService;
-
-            ActionCommand = new RelayCommand(OnActionCommand);
         }
 
         public void ReceiveParameter(object? parameter) {
@@ -142,7 +138,7 @@ namespace VirtualPaper.ViewModels {
         }
 
         #region Command Handlers
-        private async void OnActionCommand() {
+        internal async void OnActionCommand() {
             switch (CurrentState) {
                 case DownloadState.Ready:
                 case DownloadState.DownloadFailed:
@@ -279,7 +275,6 @@ namespace VirtualPaper.ViewModels {
 
         private async void InstallUpdate() {
             if (IsRestartUpdate) {
-                CurrentState = DownloadState.Completed;
                 return;
             }
 
@@ -331,7 +326,7 @@ namespace VirtualPaper.ViewModels {
 
                 case DownloadState.Completed:
                     ActionButtonText = IsRestartUpdate
-                        ? LanguageManager.Instance["Text_Confirm"]
+                        ? LanguageManager.Instance["Common_TextConfirm"]
                         : LanguageManager.Instance["AppUpdater_ActionButtonText_Completed"];
                     StatusText = LanguageManager.Instance["AppUpdater_StatusText_Completed"];
                     ClearSpeedInfo();

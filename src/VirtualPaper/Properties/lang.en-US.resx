@@ -127,7 +127,7 @@
     <value>Installing...</value>
   </data>
   <data name="AppUpdater_ActionButtonText_Paused" xml:space="preserve">
-    <value>Resume downloading</value>
+    <value>Resume</value>
   </data>
   <data name="AppUpdater_ActionButtonText_Ready" xml:space="preserve">
     <value>Download</value>

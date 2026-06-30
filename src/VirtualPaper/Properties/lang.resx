@@ -127,7 +127,7 @@
     <value>安装中...</value>
   </data>
   <data name="AppUpdater_ActionButtonText_Paused" xml:space="preserve">
-    <value>继续下载</value>
+    <value>继续</value>
   </data>
   <data name="AppUpdater_ActionButtonText_Ready" xml:space="preserve">
     <value>下载</value>

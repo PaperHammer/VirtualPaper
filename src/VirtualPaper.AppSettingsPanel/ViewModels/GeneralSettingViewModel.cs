@@ -103,6 +103,12 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             set { _isUpdateBtnEnable = value; OnPropertyChanged(); }
         }
 
+        private bool _isInstallBtnEnable = true;
+        public bool IsInstallBtnEnable {
+            get => _isInstallBtnEnable;
+            set { _isInstallBtnEnable = value; OnPropertyChanged(); }
+        }
+
         private bool _isUpdateRingActive = false;
         public bool IsUpdateRingActive {
             get => _isUpdateRingActive;
@@ -186,28 +192,22 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             set { _isWallpaperDirectoryChangeEnable = value; OnPropertyChanged(); }
         }
 
-        private string? _text_UpdateBtn;
-        public string? Text_UpdateBtn {
-            get { return _text_UpdateBtn; }
-            set { _text_UpdateBtn = value; OnPropertyChanged(); }
-        }
-
         private string? _text_UpdateReady;
         public string? Text_UpdateReady {
             get { return _text_UpdateReady; }
             set { _text_UpdateReady = value; OnPropertyChanged(); }
         }
 
-        private ICommand? _updateBtnComand;
-        public ICommand? UpdateBtnComand {
-            get { return _updateBtnComand; }
-            set { _updateBtnComand = value; OnPropertyChanged(); }
+        private ICommand? _installBtnComand;
+        public ICommand? InstallBtnComand {
+            get { return _installBtnComand; }
+            set { _installBtnComand = value; OnPropertyChanged(); }
         }
 
         public ICommand? ChangeFileStorageCommand { get; private set; }
         public ICommand? OpenFileStorageCommand { get; private set; }
         public ICommand? CheckUpdateCommand { get; private set; }
-        //public ICommand? StartDownloadComand { get; private set; }
+        public ICommand? StartDownloadComand { get; private set; }
 
         public GeneralSettingViewModel(
             IAppUpdaterClient appUpdater,
@@ -233,9 +233,9 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             CheckUpdateCommand = new RelayCommand(async () => {
                 await CheckUpdateAsync();
             });
-            //StartDownloadComand = new RelayCommand(async () => {
-            //    await StartDownloadAsync();
-            //});
+            StartDownloadComand = new RelayCommand(async () => {
+                await StartDownloadAsync();
+            });
         }
 
         private void InitContent() {
@@ -270,14 +270,15 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private async Task CheckUpdateAsync() {
+            IsInstallBtnEnable = false;
             IsUpdateBtnEnable = false;
             IsUpdateRingActive = true;
             InfoBarVisibilityRestore();
 
             await _appUpdater.CheckUpdateAsync();
 
-            IsUpdateBtnEnable = true;
             IsUpdateRingActive = false;
+            IsUpdateBtnEnable = true;
         }
 
         private void InfoBarVisibilityRestore() {
@@ -298,28 +299,24 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                     CurrentVersionState = VersionState.UptoNewest;
                     break;
                 case AppUpdateStatus.Available:
-                    Text_UpdateBtn = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_DownloadStart));
                     Version = $"v{release?.Version} Build ({release?.AppBuild})";
                     CurrentVersionState = VersionState.FindNew;
-                    UpdateBtnComand = new RelayCommand(async () => {
-                        await StartDownloadAsync();
-                    });
                     break;
                 case AppUpdateStatus.InstallerReady:
-                    Text_UpdateBtn = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_Install));
                     Text_UpdateReady = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_InstallerReady));
-                    UpdateBtnComand = new RelayCommand(async () => {
+                    InstallBtnComand = new RelayCommand(async () => {
                         
                     });
                     CurrentVersionState = VersionState.InstallReady;
+                    IsInstallBtnEnable = true;
                     break;
                 case AppUpdateStatus.PluginsReady:
-                    Text_UpdateBtn = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_Install));
                     Text_UpdateReady = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_PluginsReady));
-                    UpdateBtnComand = new RelayCommand(async () => {
+                    InstallBtnComand = new RelayCommand(async () => {
 
                     });
                     CurrentVersionState = VersionState.InstallReady;
+                    IsInstallBtnEnable = true;
                     break;
                 case AppUpdateStatus.Invalid or AppUpdateStatus.Error:
                     CurrentVersionState = VersionState.UpdateErr;

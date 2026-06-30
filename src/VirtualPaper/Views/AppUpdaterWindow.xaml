@@ -122,15 +122,16 @@
                 </StackPanel>
 
                 <!-- 右侧：操作按钮 -->
-                <ui:Button Grid.Column="1"
-                           Content="{Binding ActionButtonText}"
-                           Command="{Binding ActionCommand}"
-                           IsEnabled="{Binding ActionButtonEnable}"
-                           Appearance="Primary"
-                           Width="100"
-                           Height="36"
-                           Margin="8,0"
-                           HorizontalAlignment="Right"/>
+                <ui:Button x:Name="actionBtn"
+                    Grid.Column="1"
+                    Content="{Binding ActionButtonText}"
+                    Click="ActionBtn_Click"
+                    IsEnabled="{Binding ActionButtonEnable}"
+                    Appearance="Primary"
+                    Width="100"
+                    Height="36"
+                    Margin="8,0"
+                    HorizontalAlignment="Right"/>
             </Grid>
         </Border>
 

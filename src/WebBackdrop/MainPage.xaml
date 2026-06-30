@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<arc:ArcPage
+    x:Class="Workloads.Creation.WebBackdrop.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Workloads.Creation.WebBackdrop"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    mc:Ignorable="d"
+    IsEnabled="False"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <arc:ArcPageHost x:Name="MainHost">
+
+    </arc:ArcPageHost>
+</arc:ArcPage>

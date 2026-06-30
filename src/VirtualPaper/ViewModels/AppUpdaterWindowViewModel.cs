@@ -1,12 +1,11 @@
 using System.Diagnostics;
 using System.IO;
-using System.Windows.Input;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.lang;
 using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Models.Mvvm;
-using VirtualPaper.Common.Utils.Files;
-using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Interfaces;
 using Wpf.Ui;

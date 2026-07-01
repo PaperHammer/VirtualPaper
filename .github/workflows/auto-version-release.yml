@@ -41,8 +41,9 @@ jobs:
       pr_title: ${{ steps.pr_info.outputs.pr_title }}
       pr_body: ${{ steps.pr_info.outputs.pr_body }}
       has_plugin_update: ${{ steps.version.outputs.has_plugin_update }}
-      restart_plugins: ${{ steps.version.outputs.restart_plugins }}
+      update_plugins: ${{ steps.version.outputs.update_plugins }}
       build_number: ${{ steps.version.outputs.build_number }}
+      release_tag: ${{ steps.version.outputs.release_tag }}
 
     steps:
     - name: Checkout with full history
@@ -165,6 +166,22 @@ jobs:
         $buildNumber = $now.ToString("yyMM") + "R" + $now.ToString("dd") + "T" + $now.ToString("HHmm")
         Write-Host "Build number: $buildNumber"
 
+        # ── Generate release tag ─────────────────────────────────────
+        # Plugin 更新：tag 后缀用字母编码 build number，保证旧客户端正则兼容
+        #   数字 0-9 → A-J，字母原样保留
+        #   例：2607R01T2100 → CGAHRABTCBAA
+        #   tag：v0.4.1.0pluginCGAHRABTCBAA → 正则后 0.4.1.0
+        # 常规更新：tag 为 v{version}
+        if ($isPluginUpdate) {
+            $encoded = ($buildNumber.ToCharArray() | ForEach-Object {
+                if ($_ -ge '0' -and $_ -le '9') { [char]([int][char]'A' + ([int]$_ - [int][char]'0')) } else { $_ }
+            }) -join ''
+            $releaseTag = "v${newVersion}plugin${encoded}"
+        } else {
+            $releaseTag = "v${newVersion}"
+        }
+        Write-Host "Release tag: $releaseTag"
+
         # ── Outputs ──────────────────────────────────────────────────
         $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "current_version=$currentVersion`n", $utf8NoBom)
@@ -172,8 +189,9 @@ jobs:
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "new_version=$newVersion`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "new_version_text=$newVersionText`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "has_plugin_update=$($isPluginUpdate.ToString().ToLower())`n", $utf8NoBom)
-        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "restart_plugins=$($plugins -join ';')`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "update_plugins=$($plugins -join ';')`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "build_number=$buildNumber`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "release_tag=$releaseTag`n", $utf8NoBom)
 
     - name: Capture PR title and body
       id: pr_info
@@ -564,10 +582,10 @@ jobs:
         Write-Host "[OK] Standalone-UI guard test passed"
 
   # ─────────────────────────────────────────────────────────────
-  # Job 4.5: 制作重启式更新包（plugin zips + manifest）
+  # Job 4.5: 制作插件更新包（plugin zips + manifest）
   # 仅在冒烟测试通过且 PR 有 plugin-packages 标签时执行
   # ─────────────────────────────────────────────────────────────
-  package_restart_update:
+  package_plugin_update:
     name: Create Plugin Packages
     runs-on: windows-latest
     needs: [prepare, build, smoke_test]
@@ -589,7 +607,7 @@ jobs:
         New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 
         $buildNumber = "${{ needs.prepare.outputs.build_number }}"
-        $plugins = "${{ needs.prepare.outputs.restart_plugins }}" -split ';' | Where-Object { $_ -ne "" }
+        $plugins = "${{ needs.prepare.outputs.update_plugins }}" -split ';' | Where-Object { $_ -ne "" }
 
         # Create each plugin zip containing only the plugin folder
         foreach ($plugin in $plugins) {
@@ -615,7 +633,7 @@ jobs:
         })
 
         $writer.WriteStartObject()
-        $writer.WriteString("type", "restart")
+        $writer.WriteString("type", "plugins")
         $writer.WriteString("app_build", $buildNumber)
         $writer.WriteString("min_app_build", $buildNumber)
         $writer.WritePropertyName("plugins")
@@ -668,7 +686,7 @@ jobs:
   bump:
     name: Bump Version to main
     runs-on: windows-latest
-    needs: [prepare, package, smoke_test, package_restart_update]
+    needs: [prepare, package, smoke_test, package_plugin_update]
     if: |
       always() &&
       needs.prepare.outputs.has_plugin_update != 'true' &&
@@ -796,7 +814,7 @@ jobs:
   summary:
     name: Summary
     runs-on: ubuntu-latest
-    needs: [prepare, build, package, smoke_test, package_restart_update, bump, sync]
+    needs: [prepare, build, package, smoke_test, package_plugin_update, bump, sync]
     if: |
       !cancelled() &&
       needs.prepare.result == 'success' &&
@@ -804,7 +822,7 @@ jobs:
       needs.package.result == 'success' &&
       needs.smoke_test.result == 'success' &&
       (needs.prepare.outputs.has_plugin_update == 'true' || (needs.bump.result == 'success' && needs.sync.result == 'success')) &&
-      (needs.prepare.outputs.has_plugin_update != 'true' || needs.package_restart_update.result == 'success')
+      (needs.prepare.outputs.has_plugin_update != 'true' || needs.package_plugin_update.result == 'success')
 
     steps:
     - name: Print summary
@@ -823,9 +841,9 @@ jobs:
         echo -e "\033[0;36mPackage : ${{ needs.package.outputs.installer_name }}\033[0m"
         
         if [ "${{ needs.prepare.outputs.has_plugin_update }}" = "true" ]; then
-          echo -e "\033[0;36mRestart Update: YES (plugins: ${{ needs.prepare.outputs.restart_plugins }}, build: ${{ needs.prepare.outputs.build_number }})\033[0m"
+          echo -e "\033[0;36mPlugins Update: YES (plugins: ${{ needs.prepare.outputs.update_plugins }}, build: ${{ needs.prepare.outputs.build_number }})\033[0m"
         else
-          echo    "Restart Update: NO (installer only)"
+          echo    "Plugins Update: NO (installer only)"
         fi
         
         echo ""
@@ -838,7 +856,7 @@ jobs:
         fi
         echo -e "\033[0;32m[OK]\033[0m Installer uploaded as Artifact"
         if [ "${{ needs.prepare.outputs.has_plugin_update }}" = "true" ]; then
-          echo -e "\033[0;32m[OK]\033[0m Restart update packages uploaded as Artifact"
+          echo -e "\033[0;32m[OK]\033[0m Plugins update packages uploaded as Artifact"
         fi
         echo -e "\033[0;32m[OK]\033[0m Smoke test passed (install + launch + singleton)"
         echo -e "\033[0;32m[OK]\033[0m Draft GitHub Release will be created: v${{ needs.prepare.outputs.new_version }}"
@@ -856,7 +874,7 @@ jobs:
   release:
     name: Create Draft GitHub Release
     runs-on: ubuntu-latest
-    needs: [prepare, build, package, smoke_test, package_restart_update, bump, sync, summary]
+    needs: [prepare, build, package, smoke_test, package_plugin_update, bump, sync, summary]
     if: |
       !cancelled() &&
       needs.prepare.result == 'success' &&
@@ -864,7 +882,7 @@ jobs:
       needs.package.result == 'success' &&
       needs.smoke_test.result == 'success' &&
       (needs.prepare.outputs.has_plugin_update == 'true' || (needs.bump.result == 'success' && needs.sync.result == 'success')) &&
-      (needs.prepare.outputs.has_plugin_update != 'true' || needs.package_restart_update.result == 'success')
+      (needs.prepare.outputs.has_plugin_update != 'true' || needs.package_plugin_update.result == 'success')
 
     steps:
     - name: Download installer artifact
@@ -883,8 +901,8 @@ jobs:
     - name: Create Draft Release & Tag
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v${{ needs.prepare.outputs.new_version }}
-        name: v${{ needs.prepare.outputs.new_version }} (Build ${{ needs.prepare.outputs.build_number }})
+        tag_name: ${{ needs.prepare.outputs.release_tag }}
+        name: ${{ needs.prepare.outputs.has_plugin_update == 'true' && format('v{0} Plugin Update (Build {1})', needs.prepare.outputs.new_version, needs.prepare.outputs.build_number) || format('v{0} (Build {1})', needs.prepare.outputs.new_version, needs.prepare.outputs.build_number) }}
         body: ${{ needs.prepare.outputs.pr_body }}
         files: |
           dist/*.exe
@@ -897,12 +915,12 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
 
   # ─────────────────────────────────────────────────────────────
-  # Job 9: 失败回滚（任意 job 失败时执行）
+  # Job 9: 失败回滚（bump 或 sync 执行后失败时）
   # ─────────────────────────────────────────────────────────────
   rollback:
     name: Rollback on Failure
     runs-on: windows-latest
-    needs: [prepare, build, package, smoke_test, package_restart_update, bump, sync]
+    needs: [prepare, build, package, smoke_test, package_plugin_update, bump, sync]
     # 触发条件：
     #   1. 仅针对常规安装式更新（重启式更新不涉及版本同步，无需回滚）
     #   2. bump 或 sync 已经开始执行（分支内容已被修改），且流程出现失败或取消

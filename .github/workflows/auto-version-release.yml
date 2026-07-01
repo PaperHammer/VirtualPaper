@@ -567,10 +567,7 @@ jobs:
     name: Create Plugin Packages
     runs-on: windows-latest
     needs: [prepare, build, smoke_test]
-    if: |
-      needs.prepare.outputs.has_plugin_update == 'true' &&
-      needs.build.result == 'success' &&
-      needs.smoke_test.result == 'success'
+    if: needs.prepare.outputs.has_plugin_update == 'true'
 
     steps:
     - name: Download build output
@@ -669,6 +666,7 @@ jobs:
     runs-on: windows-latest
     needs: [prepare, package, smoke_test, package_restart_update]
     if: |
+      always() &&
       needs.prepare.outputs.has_plugin_update != 'true' &&
       needs.smoke_test.result == 'success'
 
@@ -731,7 +729,7 @@ jobs:
     runs-on: windows-latest
     needs: [prepare, bump]
     if: |
-      needs.prepare.outputs.has_plugin_update != 'true' &&
+      always() &&
       needs.bump.result == 'success'
 
     steps:

@@ -2,7 +2,6 @@ using Grpc.Core;
 using Moq;
 using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Utils.Localization;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
@@ -87,7 +86,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
 
 
             Assert.AreEqual(VersionState.FindNew, _vm.CurrentVersionState);
-            Assert.AreEqual("v2.0", _vm.Version);
+            Assert.AreEqual("v2.0 Build ()", _vm.Version);
         }
 
         [TestMethod]

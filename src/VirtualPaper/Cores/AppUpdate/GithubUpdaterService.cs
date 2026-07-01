@@ -43,6 +43,9 @@ namespace VirtualPaper.Cores.AppUpdate {
             var localStatus = ProbeLocalUpdate();
             if (localStatus != null) {
                 Status = localStatus.Value;
+                LastReleaseInfo = new() {
+                    CheckedTime = DateTime.Now
+                };
                 UpdateChecked?.Invoke(this, new AppUpdaterEventArgs(Status, LastReleaseInfo));
                 return Status;
             }
@@ -77,6 +80,8 @@ namespace VirtualPaper.Cores.AppUpdate {
             }
             catch (RateLimitExceededException e) {
                 ArcLog.GetLogger<GithubUpdaterService>().Warn("Github rate limit exceeded, retry after reset");
+                LastReleaseInfo ??= new ReleaseInfo();
+                LastReleaseInfo.CheckedTime = DateTime.Now;
                 Status = AppUpdateStatus.Error;
                 if (e.HttpResponse?.Headers.TryGetValue("X-RateLimit-Reset", out var resetStr) == true
                     && long.TryParse(resetStr, out var resetUnix)) {
@@ -89,6 +94,8 @@ namespace VirtualPaper.Cores.AppUpdate {
             }
             catch (Exception e) {
                 ArcLog.GetLogger<GithubUpdaterService>().Error("Github update fetch failed", e);
+                LastReleaseInfo ??= new ReleaseInfo();
+                LastReleaseInfo.CheckedTime = DateTime.Now;
                 Status = AppUpdateStatus.Error;
             }
             //LastCheckTime = DateTime.Now;

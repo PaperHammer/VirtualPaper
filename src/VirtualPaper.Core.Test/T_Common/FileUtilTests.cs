@@ -53,12 +53,12 @@ namespace VirtualPaper.Core.Test.T_Common {
         // ── SizeSuffix ────────────────────────────────────────────────
 
         [TestMethod]
-        [DataRow(0, "0 bytes")]
-        [DataRow(500, "500 bytes")]
-        [DataRow(1024, "1 KB")]
+        [DataRow(0, "0.0 bytes")]
+        [DataRow(500, "500.0 bytes")]
+        [DataRow(1024, "1.0 KB")]
         [DataRow(1536, "1.5 KB")]
-        [DataRow(1048576, "1 MB")]
-        [DataRow(1073741824, "1 GB")]
+        [DataRow(1048576, "1.0 MB")]
+        [DataRow(1073741824, "1.0 GB")]
         public void SizeSuffix_CorrectFormatting(long value, string expected) {
             Assert.AreEqual(expected, FileUtil.SizeSuffix(value));
         }
@@ -73,7 +73,7 @@ namespace VirtualPaper.Core.Test.T_Common {
         public void SizeSuffix_LargeValue_RoundsUp() {
             // 1024 MB → 应显示为 1 GB 而非 1024.0 MB
             var result = FileUtil.SizeSuffix(1024L * 1024 * 1024);
-            Assert.AreEqual("1 GB", result);
+            Assert.AreEqual("1.0 GB", result);
         }
 
         // ── NextAvailableFilename ─────────────────────────────────────

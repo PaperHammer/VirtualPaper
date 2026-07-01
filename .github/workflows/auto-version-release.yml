@@ -56,19 +56,20 @@ jobs:
       shell: powershell
       run: |
         $mainSha = git rev-parse HEAD
-        Write-Output "main_sha=$mainSha" >> $env:GITHUB_OUTPUT
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "main_sha=$mainSha`n", $utf8NoBom)
         Write-Host "main SHA: $mainSha"
 
         $devSha = git rev-parse origin/dev
-        Write-Output "dev_sha=$devSha" >> $env:GITHUB_OUTPUT
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "dev_sha=$devSha`n", $utf8NoBom)
         Write-Host "dev SHA: $devSha"
 
         $bugfixSha = git rev-parse origin/bugfix
-        Write-Output "bugfix_sha=$bugfixSha" >> $env:GITHUB_OUTPUT
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "bugfix_sha=$bugfixSha`n", $utf8NoBom)
         Write-Host "bugfix SHA: $bugfixSha"
 
         $releaseSha = git rev-parse origin/release
-        Write-Output "release_sha=$releaseSha" >> $env:GITHUB_OUTPUT
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "release_sha=$releaseSha`n", $utf8NoBom)
         Write-Host "release SHA: $releaseSha"
 
     - name: Determine source branch and version increment
@@ -93,8 +94,9 @@ jobs:
             Write-Host "Unknown source branch: $sourceBranch - defaulting to patch"
         }
 
-        Write-Output "source_branch=$sourceBranch" >> $env:GITHUB_OUTPUT
-        Write-Output "increment_type=$incrementType" >> $env:GITHUB_OUTPUT
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "source_branch=$sourceBranch`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "increment_type=$incrementType`n", $utf8NoBom)
 
     - name: Prepare release metadata
       id: version
@@ -117,6 +119,7 @@ jobs:
         $revision = [int]$versionMatch.Groups[4].Value
 
         $currentVersion = "$major.$minor.$build.$revision"
+        $currentVersionText = "${major}_${minor}_${build}_${revision}"
 
         # ── Detect plugin update labels ──────────────────────────────
         $labels = "$env:PR_LABELS" -split ',' | ForEach-Object { $_.Trim() }
@@ -165,6 +168,7 @@ jobs:
         # ── Outputs ──────────────────────────────────────────────────
         $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "current_version=$currentVersion`n", $utf8NoBom)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "current_version_text=$currentVersionText`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "new_version=$newVersion`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "new_version_text=$newVersionText`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "has_plugin_update=$($isPluginUpdate.ToString().ToLower())`n", $utf8NoBom)
@@ -577,7 +581,7 @@ jobs:
         path: src/
 
     - name: Create Plugin packages
-      shell: powershell
+      shell: pwsh
       run: |
         $buildDir = "src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0"
         $pluginsDir = "$buildDir/Plugins"

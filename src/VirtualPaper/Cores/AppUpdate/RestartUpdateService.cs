@@ -203,6 +203,13 @@ namespace VirtualPaper.Cores.AppUpdate {
                     }
                 }
 
+                // Backup app_build.json from installation root
+                var appBuildPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.CoreField.AppBuildFile);
+                if (File.Exists(appBuildPath)) {
+                    var appBuildBackup = Path.Combine(backupDir, Constants.CoreField.AppBuildFile);
+                    File.Copy(appBuildPath, appBuildBackup, true);
+                }
+
                 // Step: Update flag to in_progress
                 flag.Status = UpdateFlag.UpdateStatusInProgress;
                 await SaveUpdateFlagAsync(flag, token);
@@ -267,11 +274,19 @@ namespace VirtualPaper.Cores.AppUpdate {
 
                 await Task.WhenAll(replaceTasks);
 
-                // Step: Update app_build.json for all replaced plugins
-                foreach (var (pluginName, pluginInfo) in flag.Plugins) {
-                    _appBuildService.BuildInfo.Plugins[pluginName] = pluginInfo.Build;
+                // Step: Copy app_build.json from pending to installation root
+                var pendingAppBuild = Path.Combine(pendingDir, Constants.CoreField.AppBuildFile);
+                if (File.Exists(pendingAppBuild)) {
+                    File.Copy(pendingAppBuild, appBuildPath, true);
+                    _appBuildService.Refresh();
                 }
-                await _appBuildService.SaveAsync();
+                else {
+                    // Fallback: update in-memory and save
+                    foreach (var (pluginName, pluginInfo) in flag.Plugins) {
+                        _appBuildService.BuildInfo.Plugins[pluginName] = pluginInfo.Build;
+                    }
+                    await _appBuildService.SaveAsync();
+                }
 
                 // Step: Process removed plugins
                 foreach (var pluginName in flag.RemovedPlugins) {
@@ -418,6 +433,14 @@ namespace VirtualPaper.Cores.AppUpdate {
                     }
 
                     FileUtil.CopyDirectory(backupPluginDir, targetDir, true);
+                }
+
+                // Restore app_build.json from backup
+                var appBuildBackup = Path.Combine(backupDir, Constants.CoreField.AppBuildFile);
+                if (File.Exists(appBuildBackup)) {
+                    var appBuildPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.CoreField.AppBuildFile);
+                    File.Copy(appBuildBackup, appBuildPath, true);
+                    _appBuildService.Refresh();
                 }
 
                 ArcLog.GetLogger<RestartUpdateService>().Info("Rollback completed");

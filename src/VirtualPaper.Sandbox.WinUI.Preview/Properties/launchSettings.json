@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "VirtualPaper.Sandbox.WinUI.Preview (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "VirtualPaper.Sandbox.WinUI.Preview (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

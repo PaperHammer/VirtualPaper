@@ -702,6 +702,21 @@ jobs:
         [System.IO.File]::WriteAllText("$outputDir/PLUGIN_MANIFEST_SHA256.txt", $manifestHash, $utf8NoBom)
         Write-Host "[OK] Generated PLUGIN_MANIFEST_SHA256.txt: $manifestHash"
 
+        # Generate app_build.json for installation root
+        $appBuildJson = @{
+            app_build = $buildNumber
+            plugins = @{
+                UI = $buildNumber
+                PlayerWeb = $buildNumber
+                ScrSaver = $buildNumber
+                ML = $buildNumber
+                Shaders = $buildNumber
+            }
+        } | ConvertTo-Json -Depth 3
+        [System.IO.File]::WriteAllText("$outputDir/app_build.json", $appBuildJson, $utf8NoBom)
+        Write-Host "[OK] Generated app_build.json"
+        Write-Host $appBuildJson
+
     - name: Upload plugin update packages
       uses: actions/upload-artifact@v4
       with:

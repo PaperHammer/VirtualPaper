@@ -257,6 +257,7 @@ namespace VirtualPaper {
                 .AddTransient<DebugLog>()
                 .AddTransient<AppUpdaterWindow>()
                 .AddTransient<AppUpdaterWindowViewModel>()
+                .AddTransient<PluginUpdateWindow>()
 
                 .AddTransient<TrayCommand>()
 
@@ -326,7 +327,7 @@ namespace VirtualPaper {
             var windowService = Services.GetRequiredService<IWindowService>();
 
             // Both installer-style and restart-style updates use AppUpdaterWindow
-            windowService.Show<AppUpdaterWindow>(e.Release);
+            windowService.Show<AppUpdaterWindow>(e.Release, bringToFront: true);
         }
 
         private static int _updateNotifyAmt = 1;

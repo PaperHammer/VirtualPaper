@@ -21,7 +21,7 @@
     <Grid>
         <Border CornerRadius="10">
             <Border.Background>
-                <ImageBrush ImageSource="pack://application:,,,/Resources/splash.png" Stretch="Fill" />
+                <ImageBrush ImageSource="pack://application:,,,/VirtualPaper;component/Resources/splash.png" Stretch="Fill" />
             </Border.Background>
         </Border>
 

@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Interop;
+using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Services {
@@ -7,9 +9,13 @@ namespace VirtualPaper.Services {
             _serviceProvider = serviceProvider;
         }
 
-        public void Show<TWindow>(object? parameter = null) where TWindow : class {
+        public void Show<TWindow>(object? parameter = null, bool bringToFront = false) where TWindow : class {
             if (_openWindows.TryGetValue(typeof(TWindow), out var existing)) {
-                existing.Activate();
+                if (bringToFront) {
+                    BringToFront(existing);
+                } else {
+                    existing.Activate();
+                }
                 return;
             }
 
@@ -19,7 +25,16 @@ namespace VirtualPaper.Services {
             window.Closed += (_, _) => _openWindows.Remove(typeof(TWindow));
             _openWindows[typeof(TWindow)] = window;
             window.Show();
-            window.Activate();
+            if (bringToFront) {
+                BringToFront(window);
+            } else {
+                window.Activate();
+            }
+        }
+
+        private static void BringToFront(Window window) {
+            var hwnd = new WindowInteropHelper(window).EnsureHandle();
+            Native.SetForegroundWindow(hwnd);
         }
 
         public Task<bool?> ShowDialogAsync<TWindow>(object? parameter = null) where TWindow : class {

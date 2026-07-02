@@ -3,11 +3,13 @@ using System.IO;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.lang;
 using VirtualPaper.Services.Interfaces;
+using VirtualPaper.Views;
 using MessageBox = System.Windows.MessageBox;
 using UAC = UACHelper.UACHelper;
 
@@ -17,7 +19,7 @@ namespace VirtualPaper.Services {
 
         public UIRunnerService() {
             if (UAC.IsElevated) {
-                App.Log.Warn("Process is running elevated, UI may not function properly.");
+                ArcLog.GetLogger<UIRunnerService>().Warn("Process is running elevated, UI may not function properly.");
             }
 
             if (Constants.ApplicationType.IsMSIX) {
@@ -32,21 +34,21 @@ namespace VirtualPaper.Services {
         }
 
         public void ShowUI() {
-            if (VirtualPaper.Cores.AppUpdate.UpdateLock.IsPluginUpdating("UI") ||
-                VirtualPaper.Cores.AppUpdate.UpdateLock.IsPluginUpdating("ML") ||
-                VirtualPaper.Cores.AppUpdate.UpdateLock.IsPluginUpdating("Shaders")) {
-                App.Log.Warn("UI startup blocked: update in progress");
+            if (UpdateLock.IsPluginUpdating("UI") ||
+                UpdateLock.IsPluginUpdating("ML") ||
+                UpdateLock.IsPluginUpdating("Shaders")) {
+                ArcLog.GetLogger<UIRunnerService>().Warn("UI startup blocked: update in progress");
                 return;
             }
 
             if (_processUI != null) {
                 try {
-                    App.Log.Warn("UI is already running");
+                    ArcLog.GetLogger<UIRunnerService>().Warn("UI is already running");
                     UISendCmd?.Invoke(this, MessageType.cmd_active);
                     //_processUI.StandardInput.WriteLine(JsonSerializer.Serialize(new VirtualPaperActiveCmd(), IpcMessageContext.Default.IpcMessage));
                 }
                 catch (Exception e) {
-                    App.Log.Error(e);
+                    ArcLog.GetLogger<UIRunnerService>().Error(e);
                 }
             }
             else {
@@ -72,7 +74,7 @@ namespace VirtualPaper.Services {
                     //_processUI.BeginErrorReadLine();
                 }
                 catch (Exception e) {
-                    App.Log.Error(e);
+                    ArcLog.GetLogger<UIRunnerService>().Error(e);
                     _processUI = null;
                     _ = MessageBox.Show(
                         $"{LanguageManager.Instance["UIRunnerService_VirtualPaperExceptionGeneral"]}\nEXCEPTION:\n{e.Message}",
@@ -94,7 +96,7 @@ namespace VirtualPaper.Services {
                     _processUI.Dispose();
                 }
                 catch (Exception e) {
-                    App.Log.Error(e);
+                    ArcLog.GetLogger<UIRunnerService>().Error(e);
                 }
                 finally {
                     _processUI = null;
@@ -113,7 +115,7 @@ namespace VirtualPaper.Services {
                 }
             }
             catch (Exception e) {
-                App.Log.Error(e);
+                ArcLog.GetLogger<UIRunnerService>().Error(e);
             }
         }
 
@@ -131,7 +133,7 @@ namespace VirtualPaper.Services {
             //When the redirected stream is closed, a null line is sent to the event handler.
             if (!string.IsNullOrEmpty(e.Data)) {
                 //Ref: https://github.com/cyanfish/grpc-dotnet-namedpipes/issues/8
-                App.Log.Info($"UI: {e.Data}");
+                ArcLog.GetLogger<UIRunnerService>().Info($"UI: {e.Data}");
             }
         }
 
@@ -155,11 +157,32 @@ namespace VirtualPaper.Services {
                 var restartService = App.Services.GetRequiredService<IRestartUpdateService>();
                 var flagPath = Constants.CommonPaths.UpdateFlagPath;
                 if (File.Exists(flagPath)) {
-                    await restartService.ExecutePendingUpdateAsync();
+                    // Create window on UI thread
+                    Views.PluginUpdateWindow? progressWindow = null;
+                    System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                        var windowService = App.Services.GetRequiredService<IWindowService>();
+                        windowService.Show<PluginUpdateWindow>(bringToFront: true);
+                        windowService.TryGet<PluginUpdateWindow>(out progressWindow);
+                    });
+
+                    // Progress callback marshals to UI thread (non-blocking)
+                    var progress = new Progress<RestartUpdateProgress>(p => {
+                        System.Windows.Application.Current.Dispatcher.BeginInvoke(() => {
+                            progressWindow?.ReportProgress(p);
+                        });
+                    });
+
+                    // Run update on background thread
+                    var result = await Task.Run(() => restartService.ExecutePendingUpdateAsync(progress));
+                    if (!result.Success) {
+                        System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                            progressWindow?.ShowError(result.ErrorMessage ?? "Unknown error");
+                        });
+                    }
                 }
             }
             catch (Exception ex) {
-                App.Log.Error("Failed to execute pending restart update", ex);
+                ArcLog.GetLogger<UIRunnerService>().Error("Failed to execute pending restart update", ex);
             }
         }
 

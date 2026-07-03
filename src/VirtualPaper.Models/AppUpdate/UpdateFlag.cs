@@ -10,6 +10,9 @@ namespace VirtualPaper.Models.AppUpdate {
         [JsonPropertyName("status")]
         public string Status { get; set; } = UpdateStatusPending;
 
+        [JsonPropertyName("app_build")]
+        public string AppBuild { get; set; } = string.Empty;
+
         [JsonPropertyName("plugins")]
         public Dictionary<string, PluginFlagInfo> Plugins { get; set; } = new();
 

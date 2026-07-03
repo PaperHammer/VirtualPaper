@@ -10,7 +10,7 @@ namespace VirtualPaper.GrpcServers {
     public class AppUpdateServer(
         IAppUpdaterService updater) : Grpc_UpdateService.Grpc_UpdateServiceBase {
         public override async Task<Empty> CheckUpdate(Empty _, ServerCallContext context) {
-            await _updater.CheckUpdate(0);
+            await _updater.CheckUpdateAsync(0);
 
             return await Task.FromResult(new Empty());
         }

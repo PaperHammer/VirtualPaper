@@ -11,6 +11,7 @@ using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Shell;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Factories.Interfaces;
@@ -39,12 +40,14 @@ namespace VirtualPaper.Cores.WpControl {
             IMonitorManager monitorManager,
             IWallpaperFactory wallpaperFactory,
             INativeService nativeService,
-            IJobService jobService) {
+            IJobService jobService,
+            IPluginsUpdateService pluginsUpdateService) {
             this._userSettings = userSettings;
             this._monitorManager = monitorManager;
             this._wallpaperFactory = wallpaperFactory;
             this._nativeService = nativeService;
             this._jobService = jobService;
+            this._pluginsUpdateService = pluginsUpdateService;
 
             if (SystemParameters.HighContrast)
                 ArcLog.GetLogger<WallpaperControl>().Warn("Highcontrast mode detected, some functionalities may not work properly.");
@@ -193,13 +196,11 @@ namespace VirtualPaper.Cores.WpControl {
             }
         }
 
-        public Grpc_RestartWallpaperResponse RestoreWallpaper() {
+        public async Task<Grpc_RestartWallpaperResponse> RestoreWallpaperAsync() {
             Grpc_RestartWallpaperResponse response = new();
 
-            if (VirtualPaper.Cores.AppUpdate.UpdateLock.IsPluginUpdating("PlayerWeb")) {
-                ArcLog.GetLogger<WallpaperControl>().Warn("RestoreWallpaper blocked: PlayerWeb update in progress");
-                return response;
-            }
+            // Wait for any pending plugin update to complete
+            await _pluginsUpdateService.WaitForPendingUpdateAsync();
 
             try {
                 ArcLog.GetLogger<WallpaperControl>().Info("Restore wallpapers...");
@@ -315,7 +316,7 @@ namespace VirtualPaper.Cores.WpControl {
                             }
                             else {
                                 instance.Closing += ClosingEvent;
-                                _jobService.AddProcess(instance.Proc.Id);
+                                _jobService.AddProcess(instance.Proc.Id, PluginName.PlayerWeb);
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                 _wallpapers.Add(instance);
                             }
@@ -344,7 +345,7 @@ namespace VirtualPaper.Cores.WpControl {
                             }
                             else {
                                 instance.Closing += ClosingEvent;
-                                _jobService.AddProcess(instance.Proc.Id);
+                                _jobService.AddProcess(instance.Proc.Id, PluginName.PlayerWeb);
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                 _wallpapers.Add(instance);
                             }
@@ -374,7 +375,7 @@ namespace VirtualPaper.Cores.WpControl {
                                 }
                                 else {
                                     instance.Closing += ClosingEvent;
-                                    _jobService.AddProcess(instance.Proc.Id);
+                                    _jobService.AddProcess(instance.Proc.Id, PluginName.PlayerWeb);
                                     _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                     _wallpapers.Add(instance);
                                 }
@@ -860,9 +861,11 @@ namespace VirtualPaper.Cores.WpControl {
         private void ClosingEvent(object? s, EventArgs e) {
             if (s is not IWpPlayer instance) return;
 
+            var pid = instance.Proc.Id;
             instance.Closing -= ClosingEvent;
             instance.Closing = null;
             _wallpapers.RemoveAll(x => x.Monitor!.DeviceId == instance.Monitor!.DeviceId);
+            _jobService.StopPlugin(pid);
         }
 
         private void SetupDesktop_WallpaperChanged(object? sender, EventArgs e) {
@@ -1017,6 +1020,7 @@ namespace VirtualPaper.Cores.WpControl {
         private readonly IMonitorManager _monitorManager;
         private readonly INativeService _nativeService;
         private readonly IJobService _jobService;
+        private readonly IPluginsUpdateService _pluginsUpdateService;
         private readonly WpBasicDataBuilderRegistry _builderRegistry = new WpBasicDataBuilderRegistry()
             .Register(FileType.FImage, new ImageBasicDataBuilder())
             .Register(FileType.FGif, new ImageBasicDataBuilder())

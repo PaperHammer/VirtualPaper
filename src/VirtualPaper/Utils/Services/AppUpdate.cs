@@ -44,7 +44,7 @@ namespace VirtualPaper.Utils.Services {
                         result.Manifest = manifest;
                         result.AppBuild = manifest.AppBuild;
 
-                        if (manifest.IsRestartUpdate) {
+                        if (manifest.IsPluginsUpdate) {
                             // Plugin update: gather plugin asset URIs, skip installer
                             foreach (var (pluginName, pluginInfo) in manifest.Plugins) {
                                 var asset = GithubUtil.FindAsset(gitRelease, pluginInfo.Asset);

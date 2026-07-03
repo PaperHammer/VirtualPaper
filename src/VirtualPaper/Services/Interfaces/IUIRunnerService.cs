@@ -9,7 +9,7 @@ namespace VirtualPaper.Services.Interfaces {
 
         bool IsVisibleUI { get; }
         
-        void ShowUI();
+        Task ShowUIAsync();
         void CloseUI();
         void RestartUI();
         nint GetUIHwnd();

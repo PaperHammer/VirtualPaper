@@ -12,9 +12,9 @@ using Application = System.Windows.Application;
 namespace VirtualPaper.GrpcServers {
     public class CommandsServer(
         IUIRunnerService runner) : Grpc_CommandsService.Grpc_CommandsServiceBase {
-        public override Task<Empty> ShowUI(Empty _, ServerCallContext context) {
-            _runner.ShowUI();
-            return Task.FromResult(new Empty());
+        public override async Task<Empty> ShowUI(Empty _, ServerCallContext context) {
+            await _runner.ShowUIAsync();
+            return new Empty();
         }
 
         public override Task<Empty> CloseUI(Empty _, ServerCallContext context) {

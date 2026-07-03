@@ -157,6 +157,14 @@ namespace VirtualPaper.Common {
     public static class FileExtension {
         public const string FE_Design = ".vpd";
     }
+
+    public enum PluginName {
+        UI,
+        PlayerWeb,
+        ScrSaver,
+        ML,
+        Shaders
+    }
     #endregion    
 
     #region common

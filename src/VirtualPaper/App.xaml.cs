@@ -118,7 +118,11 @@ namespace VirtualPaper {
             // 将方法绑定到 Grpc 服务上
             _grpcServer = ConfigureGrpcServer();
             // 检查是否有未完成的热更新，执行恢复（阻塞等待完成）
-            Services.GetRequiredService<IRestartUpdateService>().CheckAndRecoverAsync().GetAwaiter().GetResult();
+            var hasPendingPluginUpdate = Services.GetRequiredService<IPluginsUpdateService>().CheckAndRecoverAsync().GetAwaiter().GetResult();
+            // 如果有待处理的插件更新，非阻塞启动更新（ShowUIAsync 会等待完成）
+            if (hasPendingPluginUpdate) {
+                _ = Services.GetRequiredService<IPluginsUpdateService>().ExecutePendingPluginUpdateWithWindowAsync();
+            }
             #endregion
 
             #region 用户配置
@@ -165,17 +169,17 @@ namespace VirtualPaper {
 
                 //restore wallpaper(s) from previous run.
                 var wpControl = Services.GetRequiredService<IWallpaperControl>();
-                wpControl.RestoreWallpaper();
+                _ = wpControl.RestoreWallpaperAsync();
 
                 // 启动屏保服务（需要在"还原壁纸"后进行）
                 bool isScrOn = UserSettings.Settings.IsScreenSaverOn;
                 if (isScrOn) {
-                    Services.GetRequiredService<IScrControl>().Start();
+                    _ = Services.GetRequiredService<IScrControl>().StartAsync();
                 }
 
                 //first run Setup-Wizard show..
                 if (UserSettings.Settings.IsFirstRun) {
-                    Services.GetRequiredService<IUIRunnerService>().ShowUI();
+                    _ = Services.GetRequiredService<IUIRunnerService>().ShowUIAsync();
                 }
             }
             catch (Exception ex) {
@@ -232,7 +236,7 @@ namespace VirtualPaper {
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
-                .AddSingleton<IRestartUpdateService, RestartUpdateService>()
+                .AddSingleton<IPluginsUpdateService, PluginsUpdateService>()
                 .AddSingleton<IAppBuildService, AppBuildService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
                 .AddSingleton<IWindowService, WindowService>()
@@ -340,7 +344,7 @@ namespace VirtualPaper {
                         _updateNotify = true;
 
                         var updater = Services.GetRequiredService<IAppUpdaterService>();
-                        var isRestart = updater.LastReleaseInfo?.IsRestartUpdate == true;
+                        var isRestart = updater.LastReleaseInfo?.IsPluginsUpdate == true;
                         var toastKey = isRestart
                             ? Constants.I18n.Find_New_Version_Restart
                             : nameof(Constants.I18n.Settings_General_Version_FindNew);

@@ -1,14 +1,33 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
+using VirtualPaper.lang;
 using VirtualPaper.Views;
+using Wpf.Ui.Appearance;
 
 namespace VirtualPaper.Sandbox.WPF.Preview {
     public partial class MainWindow {
-        private readonly ObservableCollection<Window> _openedWindows = new();
-
         public MainWindow() {
             InitializeComponent();
             WindowList.ItemsSource = _openedWindows;
+            Closed += (_, _) => CloseAllTrackedWindows();
+        }
+
+        private void ThemeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (ThemeCombo.SelectedItem is ComboBoxItem item) {
+                var theme = item.Content?.ToString() == "Light"
+                    ? ApplicationTheme.Light
+                    : ApplicationTheme.Dark;
+                ApplicationThemeManager.Apply(theme, updateAccent: false);
+            }
+        }
+
+        private void LangCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (LangCombo.SelectedItem is ComboBoxItem item) {
+                var lang = item.Content?.ToString() ?? "zh-CN";
+                LanguageManager.Instance.ChangeLanguage(new CultureInfo(lang));
+            }
         }
 
         private void OpenPluginUpdateWindow(object sender, RoutedEventArgs e) {
@@ -42,10 +61,17 @@ namespace VirtualPaper.Sandbox.WPF.Preview {
         }
 
         private void RefreshList() {
-            // trigger UI refresh
-            var items = WindowList.Items;
             WindowList.ItemsSource = null;
             WindowList.ItemsSource = _openedWindows;
         }
+
+        private void CloseAllTrackedWindows() {
+            foreach (var w in _openedWindows.ToList()) {
+                w.Close();
+            }
+            _openedWindows.Clear();
+        }
+
+        private readonly ObservableCollection<Window> _openedWindows = [];
     }
 }

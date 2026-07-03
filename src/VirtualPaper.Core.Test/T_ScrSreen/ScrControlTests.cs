@@ -4,6 +4,7 @@ using Moq;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.ScreenSaver;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.Cores;
@@ -23,6 +24,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         private Mock<INativeService> _native = null!;
         private Mock<IProcessLauncher> _launcher = null!;
         private Mock<IJobService> _jobService = null!;
+        private Mock<IPluginsUpdateService> _pluginsUpdateService = null!;
 
         private EventHandler? _capturedTick;
 
@@ -34,6 +36,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
             _native = new Mock<INativeService>();
             _launcher = new Mock<IProcessLauncher>();
             _jobService = new Mock<IJobService>();
+            _pluginsUpdateService = new Mock<IPluginsUpdateService>();
 
             _timer = new Mock<IDispatcherTimer>();
             _timer
@@ -72,7 +75,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
 
         private ScrControl BuildSut() => new(
             _settings.Object, _wpControl.Object, _msgWindow.Object,
-            _timer.Object, _native.Object, _launcher.Object, _jobService.Object);
+            _timer.Object, _native.Object, _launcher.Object, _jobService.Object, _pluginsUpdateService.Object);
 
         private void FireTick() =>
             _capturedTick?.Invoke(_timer.Object, EventArgs.Empty);
@@ -97,38 +100,38 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         }
 
         // ----------------------------------------------------------------
-        // Start / Stop 生命周期
+        // StartAsync / Stop 生命周期
         // ----------------------------------------------------------------
 
         [TestMethod]
-        [Description("Start should configure timer interval from settings and start it")]
+        [Description("StartAsync should configure timer interval from settings and start it")]
         public void Start_ShouldConfigureAndStartTimer() {
             _settings.Object.Settings.WaitingTime = 5;
 
-            _sut.Start();
+            _sut.StartAsync();
 
             _timer.VerifySet(t => t.Interval = TimeSpan.FromMinutes(5), Times.Once);
             _timer.Verify(t => t.Start(), Times.Once);
         }
 
         [TestMethod]
-        [Description("Start should not start the timer if it is already timing")]
+        [Description("StartAsync should not start the timer if it is already timing")]
         public void Start_WhenAlreadyTiming_ShouldNotStartAgain() {
-            _sut.Start();
-            _sut.Start();
+            _sut.StartAsync();
+            _sut.StartAsync();
 
             _timer.Verify(t => t.Start(), Times.Once,
                 "Timer should only be started once");
         }
 
         [TestMethod]
-        [Description("Start should not start the timer if screensaver is already running")]
+        [Description("StartAsync should not start the timer if screensaver is already running")]
         public void Start_WhenAlreadyRunning_ShouldNotStartTimer() {
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
             SimulateWpLoaded(); // IsRunning = true
 
-            _sut.Start();
+            _sut.StartAsync();
 
             _timer.Verify(t => t.Start(), Times.Once);
         }
@@ -136,7 +139,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("Stop should stop the timer")]
         public void Stop_ShouldStopTimer() {
-            _sut.Start();
+            _sut.StartAsync();
 
             _sut.Stop();
 
@@ -150,7 +153,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("Tick should stop the timer before evaluating launch conditions")]
         public void Tick_ShouldStopTimerFirst() {
-            _sut.Start();
+            _sut.StartAsync();
 
             FireTick();
 
@@ -164,7 +167,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
                 .Setup(w => w.GetPrimaryWpFilePathRType())
                 .Returns((null, RuntimeType.RUnknown));
             _settings.Object.Settings.IsScreenSaverOn = true;
-            _sut.Start();
+            _sut.StartAsync();
 
             FireTick();
 
@@ -179,7 +182,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
                 .Setup(n => n.SHQueryUserNotificationState(out busyState))
                 .Returns(0);
             _settings.Object.Settings.IsScreenSaverOn = true;
-            _sut.Start();
+            _sut.StartAsync();
 
             FireTick();
 
@@ -192,7 +195,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
             _native.Setup(n => n.GetProcessNameById(It.IsAny<int>())).Returns("chrome");
             _sut.AddToWhiteList("chrome");
             _settings.Object.Settings.IsScreenSaverOn = true;
-            _sut.Start();
+            _sut.StartAsync();
 
             FireTick();
 
@@ -202,7 +205,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("Tick should launch screensaver when all conditions are met")]
         public void Tick_WhenAllConditionsMet_ShouldLaunchProcess() {
-            _sut.Start();
+            _sut.StartAsync();
 
             FireTick();
 
@@ -212,7 +215,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("Tick should call BeginOutputReadLine after launch to start reading stdout")]
         public void Tick_AfterLaunch_ShouldBeginOutputReadLine() {
-            _sut.Start();
+            _sut.StartAsync();
 
             FireTick();
 
@@ -232,7 +235,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
                 .Setup(l => l.Launch(It.IsAny<ProcessStartInfo>()))
                 .Callback<ProcessStartInfo>(info => capturedInfo = info);
 
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
 
             Assert.IsNotNull(capturedInfo);
@@ -247,7 +250,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
             _launcher
                 .Setup(l => l.Launch(It.IsAny<ProcessStartInfo>()))
                 .Callback<ProcessStartInfo>(psi => captured = psi);
-            _sut.Start();
+            _sut.StartAsync();
 
             FireTick();
 
@@ -266,7 +269,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
             _launcher
                 .Setup(l => l.Launch(It.IsAny<ProcessStartInfo>()))
                 .Throws(new InvalidOperationException("Process start failed"));
-            _sut.Start();
+            _sut.StartAsync();
 
             try {
                 FireTick();
@@ -286,7 +289,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
             _launcher
                 .Setup(l => l.Launch(It.IsAny<ProcessStartInfo>()))
                 .Throws(new InvalidOperationException("Process start failed"));
-            _sut.Start();
+            _sut.StartAsync();
 
             try { FireTick(); } catch { /* ignored */ }
 
@@ -300,7 +303,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("After WpLoaded signal received, IsRunning should become true")]
         public void OutputDataReceived_WpLoaded_IsRunningShouldBecomeTrue() {
-            _sut.Start();
+            _sut.StartAsync();
             
             Assert.IsNotNull(_capturedTick, "Tick未被注册");
 
@@ -317,7 +320,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("After WpLoaded, timer should not restart (screensaver is active)")]
         public void OutputDataReceived_WpLoaded_TimerShouldNotRestart() {
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
             int startCountAfterTick = _timer.Invocations
                 .Count(i => i.Method.Name == nameof(IDispatcherTimer.Start));
@@ -334,7 +337,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("OutputDataReceived with null data should not throw")]
         public void OutputDataReceived_NullData_ShouldNotThrow() {
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
 
             try {
@@ -350,7 +353,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("OutputDataReceived with unrecognized data should not affect IsRunning")]
         public void OutputDataReceived_UnrecognizedData_IsRunningShouldRemainFalse() {
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
 
             _launcher.Raise(
@@ -367,7 +370,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("When process exits normally, IsRunning should become false")]
         public void ProcessExited_Normal_IsRunningShouldBecomeFalse() {
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
             SimulateWpLoaded(); // IsRunning = true
 
@@ -380,7 +383,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("When process exits normally, timer should restart to allow re-trigger")]
         public void ProcessExited_Normal_TimerShouldRestart() {
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
             SimulateWpLoaded();
 
@@ -393,7 +396,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("When process exits unexpectedly (before WpLoaded), state should still reset")]
         public void ProcessExited_BeforeWpLoaded_ShouldResetState() {
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
             // 不调用 SimulateWpLoaded，直接退出
 
@@ -406,7 +409,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("When process exits, it should be disposed")]
         public void ProcessExited_ShouldDisposeProcess() {
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
             SimulateWpLoaded();
 
@@ -426,7 +429,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
             _native.Setup(n => n.GetProcessNameById(It.IsAny<int>())).Returns("notepad");
 
             _sut.AddToWhiteList("notepad");
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
 
             _launcher.Verify(l => l.Launch(It.IsAny<ProcessStartInfo>()), Times.Never);
@@ -439,7 +442,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
             _sut.AddToWhiteList("notepad");
 
             _sut.RemoveFromWhiteList("notepad");
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
 
             _launcher.Verify(l => l.Launch(It.IsAny<ProcessStartInfo>()), Times.Once);
@@ -451,7 +454,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
             _native.Setup(n => n.GetProcessNameById(It.IsAny<int>())).Returns("Notepad");
 
             _sut.AddToWhiteList("notepad"); // 小写加入
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
 
             _launcher.Verify(l => l.Launch(It.IsAny<ProcessStartInfo>()), Times.Never,
@@ -479,7 +482,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         public void Tick_WhenScreenSaverOff_ShouldNotLaunch() {
             _settings.Object.Settings.IsScreenSaverOn = false;
             _sut = BuildSut();
-            _sut.Start();
+            _sut.StartAsync();
 
             FireTick();
 
@@ -493,7 +496,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
             // All other conditions are met (from base Setup), just flip the switch
             _settings.Object.Settings.IsScreenSaverOn = false;
             _sut = BuildSut();
-            _sut.Start();
+            _sut.StartAsync();
 
             FireTick();
 
@@ -507,7 +510,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("Tick should not launch screensaver again if it is already running")]
         public void Tick_WhenAlreadyRunning_ShouldNotLaunchAgain() {
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
             SimulateWpLoaded(); // IsRunning = true
 
@@ -524,7 +527,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         [TestMethod]
         [Description("After screensaver process exits, the next Tick should be allowed to launch again")]
         public void Tick_AfterProcessExited_NextTickCanLaunchAgain() {
-            _sut.Start();
+            _sut.StartAsync();
             FireTick();
             SimulateWpLoaded();  // IsRunning = true
             SimulateProcessExited();  // IsRunning = false

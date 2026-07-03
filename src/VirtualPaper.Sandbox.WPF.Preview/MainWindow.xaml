@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="WPF Sandbox Preview"
         Width="520"
-        Height="580"
+        Height="620"
         WindowStartupLocation="CenterScreen"
         WindowBackdropType="Mica"
         ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
@@ -26,19 +26,35 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
+            <!-- Settings -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                <TextBlock Text="主题" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <ComboBox x:Name="ThemeCombo" Width="100" SelectionChanged="ThemeCombo_SelectionChanged">
+                    <ComboBoxItem Content="Dark" IsSelected="True" />
+                    <ComboBoxItem Content="Light" />
+                </ComboBox>
+
+                <TextBlock Text="语言" VerticalAlignment="Center" Margin="20,0,8,0" />
+                <ComboBox x:Name="LangCombo" Width="100" SelectionChanged="LangCombo_SelectionChanged">
+                    <ComboBoxItem Content="zh-CN" IsSelected="True" />
+                    <ComboBoxItem Content="en-US" />
+                </ComboBox>
+            </StackPanel>
+
             <TextBlock
-                Grid.Row="0"
+                Grid.Row="1"
                 FontSize="18"
                 FontWeight="SemiBold"
                 Text="打开窗口"
                 Margin="0,0,0,12" />
 
-            <StackPanel Grid.Row="1">
+            <StackPanel Grid.Row="2">
                 <ui:Button Content="PluginUpdateWindow"  Appearance="Primary" Margin="0,0,0,8" Click="OpenPluginUpdateWindow" />
                 <ui:Button Content="SplashWindow"        Appearance="Primary" Margin="0,0,0,8" Click="OpenSplashWindow" />
                 <ui:Button Content="IdentifyWindow"      Appearance="Primary" Margin="0,0,0,8" Click="OpenIdentifyWindow" />
@@ -46,7 +62,7 @@
             </StackPanel>
 
             <TextBlock
-                Grid.Row="2"
+                Grid.Row="3"
                 FontSize="14"
                 FontWeight="SemiBold"
                 Text="已打开窗口"
@@ -54,13 +70,13 @@
                 VerticalAlignment="Bottom" />
 
             <ListBox x:Name="WindowList"
-                     Grid.Row="3"
+                     Grid.Row="4"
                      Height="120"
                      Margin="0,0,0,8"
                      DisplayMemberPath="Title" />
 
             <ui:Button
-                Grid.Row="4"
+                Grid.Row="5"
                 Content="关闭选中窗口"
                 Appearance="Danger"
                 HorizontalAlignment="Right"

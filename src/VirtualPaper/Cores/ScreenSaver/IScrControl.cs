@@ -4,7 +4,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
         void AddToWhiteList(string procName);
         void ChangeLockStatu(bool isLock);
         void RemoveFromWhiteList(string procName);
-        void Start();
+        Task StartAsync();
         void Stop();
     }
 }

@@ -3,36 +3,45 @@ using System.IO.Compression;
 using System.Text.Json;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.lang;
 using VirtualPaper.Common.Utils.Files;
-using VirtualPaper.Cores.ScreenSaver;
-using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Cores.AppUpdate {
-    public interface IRestartUpdateService {
-        Task<RestartUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default);
-        Task<RestartUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default);
-        Task<RestartUpdateResult> VerifyAndSavePendingAsync(ReleaseInfo releaseInfo, CancellationToken token = default);
-        Task<RestartUpdateResult> ExecutePendingUpdateAsync(IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default);
-        Task CheckAndRecoverAsync(CancellationToken token = default);
+    public interface IPluginsUpdateService {
+        Task<PluginsUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default);
+        Task<PluginsUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default);
+        Task<PluginsUpdateResult> VerifyAndSavePendingAsync(ReleaseInfo releaseInfo, CancellationToken token = default);
+        Task<PluginsUpdateResult> ExecutePendingUpdateAsync(IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default);
+        Task<bool> CheckAndRecoverAsync(CancellationToken token = default);
+        
+        /// <summary>
+        /// 执行待处理的插件更新，显示进度窗口
+        /// </summary>
+        Task ExecutePendingPluginUpdateWithWindowAsync();
+        
+        /// <summary>
+        /// 等待待处理的插件更新完成（如果有）
+        /// </summary>
+        Task WaitForPendingUpdateAsync();
     }
 
-    public class RestartUpdateService : IRestartUpdateService {
-        public RestartUpdateService(
+    public class PluginsUpdateService : IPluginsUpdateService {
+        public PluginsUpdateService(
             IDownloadService downloadService,
-            IWallpaperControl wallpaperControl,
-            IScrControl scrControl,
+            IJobService jobService,
             IUIRunnerService uiRunnerService,
-            IAppBuildService appBuildService) {
+            IAppBuildService appBuildService,
+            IWindowService windowService) {
             _downloadService = downloadService;
-            _wallpaperControl = wallpaperControl;
-            _scrControl = scrControl;
+            _jobService = jobService;
             _uiRunnerService = uiRunnerService;
             _appBuildService = appBuildService;
+            _windowService = windowService;
         }
 
-        public async Task<RestartUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default) {
+        public async Task<PluginsUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default) {
             var downloadResult = await DownloadPendingAsync(releaseInfo, null, token);
             if (!downloadResult.Success) return downloadResult;
             var verifyResult = await VerifyAndSavePendingAsync(releaseInfo, token);
@@ -40,10 +49,10 @@ namespace VirtualPaper.Cores.AppUpdate {
             return await ExecutePendingUpdateAsync(progress, token);
         }
 
-        public async Task<RestartUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default) {
-            var result = new RestartUpdateResult();
+        public async Task<PluginsUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default) {
+            var result = new PluginsUpdateResult();
 
-            if (releaseInfo.Manifest == null || !releaseInfo.Manifest.IsRestartUpdate) {
+            if (releaseInfo.Manifest == null || !releaseInfo.Manifest.IsPluginsUpdate) {
                 result.Success = false;
                 result.ErrorMessage = "Not a restart-style update";
                 return result;
@@ -80,7 +89,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 result.Success = true;
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<RestartUpdateService>().Error("Restart update download failed", ex);
+                ArcLog.GetLogger<PluginsUpdateService>().Error("Restart update download failed", ex);
                 result.Success = false;
                 result.ErrorMessage = ex.Message;
                 FileUtil.RemoveDirectory(pendingDir);
@@ -89,10 +98,10 @@ namespace VirtualPaper.Cores.AppUpdate {
             return result;
         }
 
-        public async Task<RestartUpdateResult> VerifyAndSavePendingAsync(ReleaseInfo releaseInfo, CancellationToken token = default) {
-            var result = new RestartUpdateResult();
+        public async Task<PluginsUpdateResult> VerifyAndSavePendingAsync(ReleaseInfo releaseInfo, CancellationToken token = default) {
+            var result = new PluginsUpdateResult();
 
-            if (releaseInfo.Manifest == null || !releaseInfo.Manifest.IsRestartUpdate) {
+            if (releaseInfo.Manifest == null || !releaseInfo.Manifest.IsPluginsUpdate) {
                 result.Success = false;
                 result.ErrorMessage = "Not a restart-style update";
                 return result;
@@ -115,6 +124,7 @@ namespace VirtualPaper.Cores.AppUpdate {
 
                 var updateFlag = new UpdateFlag {
                     Status = UpdateFlag.UpdateStatusPending,
+                    AppBuild = manifest.AppBuild,
                     Plugins = manifest.Plugins.ToDictionary(
                         kv => kv.Key,
                         kv => new PluginFlagInfo {
@@ -134,7 +144,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 result.Success = true;
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<RestartUpdateService>().Error("Restart update verify failed", ex);
+                ArcLog.GetLogger<PluginsUpdateService>().Error("Restart update verify failed", ex);
                 result.Success = false;
                 result.ErrorMessage = ex.Message;
                 FileUtil.RemoveDirectory(pendingDir);
@@ -147,8 +157,8 @@ namespace VirtualPaper.Cores.AppUpdate {
         /// Execute a pending update: close UI, backup, replace, cleanup.
         /// Can be called immediately after download, or later on UI close / core start.
         /// </summary>
-        public async Task<RestartUpdateResult> ExecutePendingUpdateAsync(IProgress<RestartUpdateProgress>? progress = null, CancellationToken token = default) {
-            var result = new RestartUpdateResult();
+        public async Task<PluginsUpdateResult> ExecutePendingUpdateAsync(IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default) {
+            var result = new PluginsUpdateResult();
             var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
             var flagPath = Constants.CommonPaths.UpdateFlagPath;
 
@@ -191,7 +201,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 StopPlugins(flag.Plugins.Keys.ToList());
 
                 // Step: Backup current plugins
-                progress?.Report(new RestartUpdateProgress(RestartUpdateStage.BackingUp, 0, "Backing up current plugins..."));
+                progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.BackingUp, 0, LanguageManager.Instance[nameof(Constants.I18n.PluginsUpdate_Stage_BackingUp)]));
                 var backupDir = Constants.CommonPaths.UpdateBackupDir;
                 Directory.CreateDirectory(backupDir);
 
@@ -203,7 +213,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                     }
                 }
 
-                // Backup app_build.json from installation root
+                // Backup app_build.json from WorkSpace root
                 var appBuildPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.CoreField.AppBuildFile);
                 if (File.Exists(appBuildPath)) {
                     var appBuildBackup = Path.Combine(backupDir, Constants.CoreField.AppBuildFile);
@@ -215,7 +225,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 await SaveUpdateFlagAsync(flag, token);
 
                 // Step: Replace plugins in parallel
-                progress?.Report(new RestartUpdateProgress(RestartUpdateStage.Replacing, 0, "Replacing plugins files..."));
+                progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Replacing, 0, LanguageManager.Instance[nameof(Constants.I18n.PluginsUpdate_Stage_Replacing)]));
                 int totalPlugins = flag.Plugins.Count;
                 int replacedCount = 0;
 
@@ -269,7 +279,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                     }
 
                     var count = Interlocked.Increment(ref replacedCount);
-                    progress?.Report(new RestartUpdateProgress(RestartUpdateStage.Replacing, (float)count / totalPlugins * 100, $"Replaced {pluginName}"));
+                    progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Replacing, (float)count / totalPlugins * 100, string.Format(LanguageManager.Instance[nameof(Constants.I18n.PluginUpdate_ReplacedPlugin)], pluginName)));
                 });
 
                 await Task.WhenAll(replaceTasks);
@@ -282,6 +292,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 }
                 else {
                     // Fallback: update in-memory and save
+                    _appBuildService.BuildInfo.AppBuild = flag.AppBuild;
                     foreach (var (pluginName, pluginInfo) in flag.Plugins) {
                         _appBuildService.BuildInfo.Plugins[pluginName] = pluginInfo.Build;
                     }
@@ -306,10 +317,10 @@ namespace VirtualPaper.Cores.AppUpdate {
                 FileUtil.RemoveDirectory(pendingDir);
 
                 result.Success = true;
-                progress?.Report(new RestartUpdateProgress(RestartUpdateStage.Completed, 100, "Update completed"));
+                progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Completed, 100, LanguageManager.Instance[nameof(Constants.I18n.PluginsUpdate_Stage_Completed)]));
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<RestartUpdateService>().Error("Restart update failed", ex);
+                ArcLog.GetLogger<PluginsUpdateService>().Error("Plugins update failed", ex);
                 result.Success = false;
                 result.ErrorMessage = ex.Message;
 
@@ -323,21 +334,21 @@ namespace VirtualPaper.Cores.AppUpdate {
                 // Unlock
                 UpdateLock.ClearUpdatingPlugins();
                 // Always restart UI after restart-style update
-                _uiRunnerService.ShowUI();
+                await _uiRunnerService.ShowUIAsync();
             }
 
             return result;
         }
 
-        public async Task CheckAndRecoverAsync(CancellationToken token = default) {
+        public async Task<bool> CheckAndRecoverAsync(CancellationToken token = default) {
             var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
-            if (!Directory.Exists(pendingDir)) return;
+            if (!Directory.Exists(pendingDir)) return false;
 
             var flagPath = Constants.CommonPaths.UpdateFlagPath;
             if (!File.Exists(flagPath)) {
                 // Flag missing but pending dir exists - cleanup
                 FileUtil.RemoveDirectory(pendingDir);
-                return;
+                return false;
             }
 
             try {
@@ -348,15 +359,15 @@ namespace VirtualPaper.Cores.AppUpdate {
                     StopPlugins(GetAllPluginNames());
                     await RollbackAsync();
                     UpdateLock.ClearUpdatingPlugins();
-                    _uiRunnerService.ShowUI();
-                    return;
+                    await _uiRunnerService.ShowUIAsync();
+                    return false;
                 }
 
                 switch (flag.Status) {
                     case UpdateFlag.UpdateStatusPending:
-                        // Pending update - execute it (files already downloaded and verified)
-                        await ExecutePendingUpdateAsync();
-                        break;
+                        // Pending update - start the update task and return true
+                        _pendingUpdateTask = ExecutePendingPluginUpdateWithWindowAsync();
+                        return true;
 
                     case UpdateFlag.UpdateStatusInProgress:
                         // Crashed during update - rollback
@@ -366,45 +377,37 @@ namespace VirtualPaper.Cores.AppUpdate {
                         await RollbackAsync();
                         UpdateLock.ClearUpdatingPlugins();
                         // Always restart UI after recovery
-                        _uiRunnerService.ShowUI();
-                        break;
+                        await _uiRunnerService.ShowUIAsync();
+                        return false;
 
                     case UpdateFlag.UpdateStatusCompleted:
                         // Completed but not cleaned up - just cleanup
                         FileUtil.RemoveDirectory(pendingDir);
-                        break;
+                        return false;
                 }
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<RestartUpdateService>().Error("Recovery check failed", ex);
+                ArcLog.GetLogger<PluginsUpdateService>().Error("Recovery check failed", ex);
                 UpdateLock.SetUpdatingPlugins(GetAllPluginNames());
                 StopPlugins(GetAllPluginNames());
                 await RollbackAsync();
                 UpdateLock.ClearUpdatingPlugins();
-                _uiRunnerService.ShowUI();
+                await _uiRunnerService.ShowUIAsync();
             }
+            return false;
         }
 
         private void StopPlugins(IEnumerable<string> pluginNames) {
-            var pluginList = pluginNames.Select(n => n.ToUpperInvariant()).ToHashSet();
+            var plugins = pluginNames
+                .Select(n => Enum.TryParse<PluginName>(n, true, out var p) ? (PluginName?)p : null)
+                .Where(p => p.HasValue)
+                .Select(p => p!.Value)
+                .ToHashSet();
 
-            // Always stop UI for restart-style update
-            try { _uiRunnerService.CloseUI(); }
-            catch (Exception ex) { ArcLog.GetLogger<RestartUpdateService>().Warn($"Failed to stop UI: {ex.Message}"); }
-
-            // Stop PlayerWeb if it's being updated
-            if (pluginList.Contains("PLAYERWEB")) {
-                try { _wallpaperControl.CloseAllWallpapers(); }
-                catch (Exception ex) { ArcLog.GetLogger<RestartUpdateService>().Warn($"Failed to stop PlayerWeb: {ex.Message}"); }
+            foreach (var plugin in plugins) {
+                try { _jobService.StopPlugin(plugin); }
+                catch (Exception ex) { ArcLog.GetLogger<PluginsUpdateService>().Warn($"Failed to stop {plugin}: {ex.Message}"); }
             }
-
-            // Stop ScrSaver if it's being updated
-            if (pluginList.Contains("SCRSAVER")) {
-                try { _scrControl.Stop(); }
-                catch (Exception ex) { ArcLog.GetLogger<RestartUpdateService>().Warn($"Failed to stop ScrSaver: {ex.Message}"); }
-            }
-
-            // ML and Shaders don't need explicit stop - they're loaded by UI/PlayerWeb
         }
 
         private static IEnumerable<string> GetAllPluginNames() => new[] { "UI", "PlayerWeb", "ScrSaver", "ML", "Shaders" };
@@ -413,7 +416,7 @@ namespace VirtualPaper.Cores.AppUpdate {
             var backupDir = Constants.CommonPaths.UpdateBackupDir;
             var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
             if (!Directory.Exists(backupDir)) {
-                ArcLog.GetLogger<RestartUpdateService>().Warn("No backup found for rollback");
+                ArcLog.GetLogger<PluginsUpdateService>().Warn("No backup found for rollback");
                 FileUtil.RemoveDirectory(pendingDir);
                 return;
             }
@@ -443,10 +446,10 @@ namespace VirtualPaper.Cores.AppUpdate {
                     _appBuildService.Refresh();
                 }
 
-                ArcLog.GetLogger<RestartUpdateService>().Info("Rollback completed");
+                ArcLog.GetLogger<PluginsUpdateService>().Info("Rollback completed");
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<RestartUpdateService>().Error("Rollback failed", ex);
+                ArcLog.GetLogger<PluginsUpdateService>().Error("Rollback failed", ex);
             }
             finally {
                 FileUtil.RemoveDirectory(pendingDir);
@@ -478,19 +481,63 @@ namespace VirtualPaper.Cores.AppUpdate {
         }
 
         private readonly IDownloadService _downloadService;
-        private readonly IWallpaperControl _wallpaperControl;
-        private readonly IScrControl _scrControl;
+        private readonly IJobService _jobService;
         private readonly IUIRunnerService _uiRunnerService;
         private readonly IAppBuildService _appBuildService;
+        private readonly IWindowService _windowService;
+        
+        private Task? _pendingUpdateTask;
+
+        public async Task ExecutePendingPluginUpdateWithWindowAsync() {
+            try {
+                var flagPath = Constants.CommonPaths.UpdateFlagPath;
+                if (!File.Exists(flagPath)) return;
+
+                // Create window on UI thread
+                Views.PluginUpdateWindow? progressWindow = null;
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                    _windowService.Show<Views.PluginUpdateWindow>(bringToFront: true);
+                    _windowService.TryGet(out progressWindow);
+                });
+
+                // Progress callback marshals to UI thread (non-blocking)
+                var progress = new Progress<PluginsUpdateProgress>(p => {
+                    System.Windows.Application.Current.Dispatcher.BeginInvoke(() => {
+                        progressWindow?.ReportProgress(p);
+                    });
+                });
+
+                // Run update on background thread
+                var result = await Task.Run(() => ExecutePendingUpdateAsync(progress));
+                if (!result.Success) {
+                    System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                        progressWindow?.ShowError(result.ErrorMessage ?? "Unknown error");
+                    });
+                }
+                else {
+                    // Auto-close on success
+                    System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                        progressWindow?.Close();
+                    });
+                }
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<PluginsUpdateService>().Error("Failed to execute pending plugin update", ex);
+            }
+        }
+
+        public Task WaitForPendingUpdateAsync() {
+            return _pendingUpdateTask ?? Task.CompletedTask;
+        }
     }
 
-    public class RestartUpdateResult {
+    public class PluginsUpdateResult {
         public bool Success { get; set; }
         public string? ErrorMessage { get; set; }
     }
 
-    public record RestartUpdateProgress(
-        RestartUpdateStage Stage,
+    public record PluginsUpdateProgress(
+        PluginsUpdateStage Stage,
         float Percent,
         string Message,
         float Speed = 0,
@@ -505,7 +552,7 @@ namespace VirtualPaper.Cores.AppUpdate {
         public string SizeText => $"{FileUtil.SizeSuffix(ReceivedBytes)} / {FileUtil.SizeSuffix(TotalBytes)}";
     }
 
-    public enum RestartUpdateStage {
+    public enum PluginsUpdateStage {
         Downloading,
         BackingUp,
         Replacing,

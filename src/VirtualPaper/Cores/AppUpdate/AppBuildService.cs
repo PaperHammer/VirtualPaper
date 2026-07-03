@@ -26,24 +26,17 @@ namespace VirtualPaper.Cores.AppUpdate {
         }
 
         public void Refresh() {
-            var installPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.CoreField.AppBuildFile);
-            var appDataPath = Path.Combine(Constants.CommonPaths.AppDataDir, Constants.CoreField.AppBuildFile);
-
-            // Always read from installation directory (source of truth)
-            if (File.Exists(installPath)) {
-                BuildInfo = LoadFromFile(installPath);
+            var path = GetFilePath();
+            if (File.Exists(path)) {
+                BuildInfo = LoadFromFile(path);
             }
             else {
                 BuildInfo = new AppBuildInfo();
             }
+        }
 
-            // Force sync to AppData
-            try {
-                Directory.CreateDirectory(Constants.CommonPaths.AppDataDir);
-                var json = JsonSerializer.Serialize(BuildInfo, AppBuildInfoContext.Default.AppBuildInfo);
-                File.WriteAllText(appDataPath, json);
-            }
-            catch { }
+        private static string GetFilePath() {
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.CoreField.AppBuildFile);
         }
 
         private static AppBuildInfo LoadFromFile(string path) {
@@ -57,8 +50,7 @@ namespace VirtualPaper.Cores.AppUpdate {
         }
 
         public async Task SaveAsync() {
-            // Save to installation directory (source of truth)
-            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.CoreField.AppBuildFile);
+            var path = GetFilePath();
             var json = JsonSerializer.Serialize(BuildInfo, AppBuildInfoContext.Default.AppBuildInfo);
             await File.WriteAllTextAsync(path, json);
         }

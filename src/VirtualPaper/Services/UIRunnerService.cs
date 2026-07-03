@@ -9,7 +9,6 @@ using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.lang;
 using VirtualPaper.Services.Interfaces;
-using VirtualPaper.Views;
 using MessageBox = System.Windows.MessageBox;
 using UAC = UACHelper.UACHelper;
 
@@ -33,13 +32,10 @@ namespace VirtualPaper.Services {
             }
         }
 
-        public void ShowUI() {
-            if (UpdateLock.IsPluginUpdating("UI") ||
-                UpdateLock.IsPluginUpdating("ML") ||
-                UpdateLock.IsPluginUpdating("Shaders")) {
-                ArcLog.GetLogger<UIRunnerService>().Warn("UI startup blocked: update in progress");
-                return;
-            }
+        public async Task ShowUIAsync() {
+            // Wait for any pending plugin update to complete
+            var restartService = App.Services.GetRequiredService<IPluginsUpdateService>();
+            await restartService.WaitForPendingUpdateAsync();
 
             if (_processUI != null) {
                 try {
@@ -67,7 +63,7 @@ namespace VirtualPaper.Services {
                     _processUI.Exited += Proc_UI_Exited;
                     _processUI.OutputDataReceived += Proc_OutputDataReceived;
                     _processUI.Start();
-                    App.Jobs.AddProcess(_processUI.Id);
+                    App.Jobs.AddProcess(_processUI.Id, PluginName.UI);
 
                     //winui writing debug information into output stream :/
                     //_processUI.BeginOutputReadLine();
@@ -102,7 +98,7 @@ namespace VirtualPaper.Services {
                     _processUI = null;
                 }
             }
-            ShowUI();
+            ShowUIAsync();
         }
 
         public void CloseUI() {
@@ -140,49 +136,18 @@ namespace VirtualPaper.Services {
         private void Proc_UI_Exited(object? sender, EventArgs e) {
             if (_processUI == null) return;
 
+            var pid = _processUI.Id;
             _processUI.Exited -= Proc_UI_Exited;
             _processUI.OutputDataReceived -= Proc_OutputDataReceived;
             _processUI.Dispose();
             _processUI = null;
+            App.Jobs.StopPlugin(pid);
 
             // Check for pending restart update when UI exits normally
             // (not during an update - UpdateLock would be set in that case)
             if (!UpdateLock.IsUpdating) {
-                _ = CheckAndExecutePendingUpdateAsync();
-            }
-        }
-
-        private async Task CheckAndExecutePendingUpdateAsync() {
-            try {
-                var restartService = App.Services.GetRequiredService<IRestartUpdateService>();
-                var flagPath = Constants.CommonPaths.UpdateFlagPath;
-                if (File.Exists(flagPath)) {
-                    // Create window on UI thread
-                    Views.PluginUpdateWindow? progressWindow = null;
-                    System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                        var windowService = App.Services.GetRequiredService<IWindowService>();
-                        windowService.Show<PluginUpdateWindow>(bringToFront: true);
-                        windowService.TryGet<PluginUpdateWindow>(out progressWindow);
-                    });
-
-                    // Progress callback marshals to UI thread (non-blocking)
-                    var progress = new Progress<RestartUpdateProgress>(p => {
-                        System.Windows.Application.Current.Dispatcher.BeginInvoke(() => {
-                            progressWindow?.ReportProgress(p);
-                        });
-                    });
-
-                    // Run update on background thread
-                    var result = await Task.Run(() => restartService.ExecutePendingUpdateAsync(progress));
-                    if (!result.Success) {
-                        System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                            progressWindow?.ShowError(result.ErrorMessage ?? "Unknown error");
-                        });
-                    }
-                }
-            }
-            catch (Exception ex) {
-                ArcLog.GetLogger<UIRunnerService>().Error("Failed to execute pending restart update", ex);
+                var restartService = App.Services.GetRequiredService<IPluginsUpdateService>();
+                _ = restartService.ExecutePendingPluginUpdateWithWindowAsync();
             }
         }
 

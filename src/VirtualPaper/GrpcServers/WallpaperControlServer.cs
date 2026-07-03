@@ -62,9 +62,9 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override async Task<Grpc_RestartWallpaperResponse> RestartAllWallpapers(Empty request, ServerCallContext context) {
-            Grpc_RestartWallpaperResponse response = _wpControl.RestoreWallpaper();
+            Grpc_RestartWallpaperResponse response = await _wpControl.RestoreWallpaperAsync();
 
-            return await Task.FromResult(response);
+            return response;
         }
 
         public override async Task<Grpc_SetWallpaperResponse> SetWallpaper(Grpc_SetWallpaperRequest request, ServerCallContext context) {

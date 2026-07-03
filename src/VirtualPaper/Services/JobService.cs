@@ -1,6 +1,8 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Services.Interfaces;
 
@@ -87,6 +89,62 @@ namespace VirtualPaper.Services {
         }
 
         /// <summary>
+        /// 进程加入到作业对象中，并记录所属插件名
+        /// </summary>
+        public bool AddProcess(int processId, PluginName pluginName) {
+            if (!AddProcess(processId)) return false;
+            _pluginProcesses.AddOrUpdate(
+                pluginName,
+                new ConcurrentHashSet<int> { processId },
+                (_, set) => { set.Add(processId); return set; });
+            return true;
+        }
+
+        /// <summary>
+        /// 停止指定插件的所有已注册进程
+        /// </summary>
+        public void StopPlugin(PluginName pluginName) {
+            if (!_pluginProcesses.TryRemove(pluginName, out var pids)) return;
+
+            foreach (var pid in pids) {
+                try {
+                    var proc = Process.GetProcessById(pid);
+                    if (!proc.HasExited) {
+                        if (!proc.CloseMainWindow() || !proc.WaitForExit(3000)) {
+                            proc.Kill();
+                        }
+                    }
+                }
+                catch (ArgumentException) { }
+                catch (Exception ex) {
+                    ArcLog.GetLogger<JobService>().Warn($"Failed to stop process {pid} for plugin {pluginName}: {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 按 PID 停止单个进程，并从跟踪集合中移除
+        /// </summary>
+        public void StopPlugin(int pid) {
+            try {
+                var proc = Process.GetProcessById(pid);
+                if (!proc.HasExited) {
+                    if (!proc.CloseMainWindow() || !proc.WaitForExit(3000)) {
+                        proc.Kill();
+                    }
+                }
+            }
+            catch (ArgumentException) { }
+            catch (Exception ex) {
+                ArcLog.GetLogger<JobService>().Warn($"Failed to stop process {pid}: {ex.Message}");
+            }
+
+            foreach (var kv in _pluginProcesses) {
+                kv.Value.Remove(pid);
+            }
+        }
+
+        /// <summary>
         /// 销毁作业对象，手动调用则其拥有的所有进程都会退出
         /// </summary>
         public void Dispose() {
@@ -111,6 +169,16 @@ namespace VirtualPaper.Services {
 
         private IntPtr _handle;
         private bool _disposed;
+        private readonly ConcurrentDictionary<PluginName, ConcurrentHashSet<int>> _pluginProcesses = new();
+
+        private class ConcurrentHashSet<T> : IEnumerable<T> {
+            private readonly HashSet<T> _set = new();
+            private readonly object _lock = new();
+            public bool Add(T item) { lock (_lock) return _set.Add(item); }
+            public bool Remove(T item) { lock (_lock) return _set.Remove(item); }
+            public IEnumerator<T> GetEnumerator() { lock (_lock) return _set.ToList().GetEnumerator(); }
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]

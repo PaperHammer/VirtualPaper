@@ -52,13 +52,13 @@ namespace VirtualPaper {
                 .Show();
         }
 
-        private void NotifyIcon_LeftDoubleClick(Wpf.Ui.Tray.Controls.NotifyIcon sender, RoutedEventArgs e) {
-            _uiRunnerService.ShowUI();
+        private async void NotifyIcon_LeftDoubleClick(Wpf.Ui.Tray.Controls.NotifyIcon sender, RoutedEventArgs e) {
+            await _uiRunnerService.ShowUIAsync();
             e.Handled = true;
         }
 
-        private void OpenAppMenuItem_Click(object sender, RoutedEventArgs e) {
-            _uiRunnerService.ShowUI();
+        private async void OpenAppMenuItem_Click(object sender, RoutedEventArgs e) {
+            await _uiRunnerService.ShowUIAsync();
         }
 
         private void CloseAllWpMenuItem_Click(object sender, RoutedEventArgs e) {

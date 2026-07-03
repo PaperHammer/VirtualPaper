@@ -163,17 +163,17 @@ namespace VirtualPaper.Common {
             public static string InfobarMsg_Success => "InfobarMsg_Success";
             public static string AppUpdater_RollbackMessage => "AppUpdater_RollbackMessage";
             public static string Settings_General_Version_Plugins => "Settings_General_Version_Plugins";
-            public static string RestartUpdate_InvalidInfo => "RestartUpdate_InvalidInfo";
-            public static string RestartUpdate_Starting => "RestartUpdate_Starting";
-            public static string RestartUpdate_Completed => "RestartUpdate_Completed";
-            public static string RestartUpdate_Failed => "RestartUpdate_Failed";
-            public static string RestartUpdate_Stage_Downloading => "RestartUpdate_Stage_Downloading";
-            public static string RestartUpdate_Stage_BackingUp => "RestartUpdate_Stage_BackingUp";
-            public static string RestartUpdate_Stage_Replacing => "RestartUpdate_Stage_Replacing";
-            public static string RestartUpdate_Stage_Completed => "RestartUpdate_Stage_Completed";
-            public static string RestartUpdate_Stage_Failed => "RestartUpdate_Stage_Failed";
-            public static string RestartUpdate_Close => "RestartUpdate_Close";
-            public static string RestartUpdate_PostponeTip => "RestartUpdate_PostponeTip";
+            public static string PluginsUpdate_InvalidInfo => "PluginsUpdate_InvalidInfo";
+            public static string PluginsUpdate_Starting => "PluginsUpdate_Starting";
+            public static string PluginsUpdate_Completed => "PluginsUpdate_Completed";
+            public static string PluginsUpdate_Failed => "PluginsUpdate_Failed";
+            public static string PluginsUpdate_Stage_Downloading => "PluginsUpdate_Stage_Downloading";
+            public static string PluginsUpdate_Stage_BackingUp => "PluginsUpdate_Stage_BackingUp";
+            public static string PluginsUpdate_Stage_Replacing => "PluginsUpdate_Stage_Replacing";
+            public static string PluginsUpdate_Stage_Completed => "PluginsUpdate_Stage_Completed";
+            public static string PluginsUpdate_Stage_Failed => "PluginsUpdate_Stage_Failed";
+            public static string PluginsUpdate_Close => "PluginsUpdate_Close";
+            public static string PluginsUpdate_PostponeTip => "PluginsUpdate_PostponeTip";
             public static string Find_New_Version_Restart => "Find_New_Version_Restart";
             public static string ScreenSaver__effectBubble => "ScreenSaver__effectBubble";
             public static string ScreenSaver__effectNone => "ScreenSaver__effectNone";
@@ -322,6 +322,9 @@ namespace VirtualPaper.Common {
             public static string? Settings_General_Version_Install { get; }
             public static string? Settings_General_Version_InstallerReady { get; }
             public static string? Settings_General_Version_PluginsReady { get; }
+            public static string? PluginUpdate_ReplacedPlugin { get; }
+            public static string? PluginUpdate_Title_Completed { get; }
+            public static string? PluginUpdate_Title_Failed { get; }
         }
 
         public static class Field {

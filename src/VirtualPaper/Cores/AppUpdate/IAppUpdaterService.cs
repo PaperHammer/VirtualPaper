@@ -13,7 +13,7 @@ namespace VirtualPaper.Cores.AppUpdate {
         AppUpdateStatus Status { get; }
         ReleaseInfo? LastReleaseInfo { get; }
 
-        Task<AppUpdateStatus> CheckUpdate(int fetchDelay = 45000);
+        Task<AppUpdateStatus> CheckUpdateAsync(int fetchDelay = 45000);
         void Start();
         void Stop();
     }

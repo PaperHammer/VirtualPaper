@@ -143,7 +143,7 @@ Each component has an independent build number (format: `YYMM` + `R` + `DD` + `T
 1. Build time → MSBuild generates `app_build.json` in output directory
 2. Installer → includes file, installs to installation directory
 3. Main process startup → `AppBuildService.Refresh()` reads from installation dir → force-overwrites to AppData
-4. Hot-update → `RestartUpdateService` updates installation directory's `app_build.json`
+4. Hot-update → `PluginsUpdateService` updates installation directory's `app_build.json`
 5. UI reads from AppData (always up-to-date after sync)
 
 ### Update Decision Logic

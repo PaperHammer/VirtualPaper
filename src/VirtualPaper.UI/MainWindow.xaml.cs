@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.AppSettingsPanel;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel;
@@ -86,7 +87,9 @@ namespace VirtualPaper.UI {
                 switch (messageType) {
                     case MessageType.cmd_active:
                         CrossThreadInvoker.InvokeOnUIThread(() => {
-                            this.Activate();
+                            var hwnd = WindowConsts.WindowHandle;
+                            Native.ShowWindow(hwnd, (uint)Native.SHOWWINDOW.SW_RESTORE);
+                            _ = Native.SetForegroundWindow(hwnd);
                         });
                         break;
                     default:

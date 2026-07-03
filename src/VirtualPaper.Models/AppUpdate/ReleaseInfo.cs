@@ -15,7 +15,7 @@ namespace VirtualPaper.Models.AppUpdate {
         // For restart-style update - asset download URIs
         public Dictionary<string, Uri> PluginAssetUris { get; set; } = new();
 
-        public bool IsRestartUpdate => Manifest?.IsRestartUpdate == true;
-        public bool IsInstallUpdate => Manifest == null || Manifest.IsInstallUpdate;
+        public bool IsPluginsUpdate => Manifest?.IsPluginsUpdate == true;
+        public bool IsInstallerUpdate => Manifest == null || Manifest.IsInstallerUpdate;
     }
 }

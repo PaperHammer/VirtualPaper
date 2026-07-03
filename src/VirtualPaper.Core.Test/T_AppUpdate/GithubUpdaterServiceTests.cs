@@ -38,14 +38,14 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
         }
 
         // -------------------------------------------------------
-        // CheckUpdate - 版本比较分支
+        // CheckUpdateAsync - 版本比较分支
         // -------------------------------------------------------
 
         [TestMethod]
         public async Task CheckUpdate_WhenNewerVersion_ShouldReturnAvailable() {
             _mockComparer.Setup(c => c.CompareAssemblyVersion(FakeVersion)).Returns(1);
 
-            var result = await _service.CheckUpdate(fetchDelay: 0);
+            var result = await _service.CheckUpdateAsync(fetchDelay: 0);
 
             Assert.AreEqual(AppUpdateStatus.Available, result);
             Assert.AreEqual(AppUpdateStatus.Available, _service.Status);
@@ -55,7 +55,7 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
         public async Task CheckUpdate_WhenSameVersion_ShouldReturnUptodate() {
             _mockComparer.Setup(c => c.CompareAssemblyVersion(FakeVersion)).Returns(0);
 
-            var result = await _service.CheckUpdate(fetchDelay: 0);
+            var result = await _service.CheckUpdateAsync(fetchDelay: 0);
 
             Assert.AreEqual(AppUpdateStatus.Uptodate, result);
             Assert.AreEqual(AppUpdateStatus.Uptodate, _service.Status);
@@ -65,7 +65,7 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
         public async Task CheckUpdate_WhenOlderVersion_ShouldReturnInvalid() {
             _mockComparer.Setup(c => c.CompareAssemblyVersion(FakeVersion)).Returns(-1);
 
-            var result = await _service.CheckUpdate(fetchDelay: 0);
+            var result = await _service.CheckUpdateAsync(fetchDelay: 0);
 
             Assert.AreEqual(AppUpdateStatus.Invalid, result);
             Assert.AreEqual(AppUpdateStatus.Invalid, _service.Status);
@@ -77,14 +77,14 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
                 .Setup(c => c.GetLatestRelease(It.IsAny<bool>()))
                 .ThrowsAsync(new HttpRequestException("network error"));
 
-            var result = await _service.CheckUpdate(fetchDelay: 0);
+            var result = await _service.CheckUpdateAsync(fetchDelay: 0);
 
             Assert.AreEqual(AppUpdateStatus.Error, result);
             Assert.AreEqual(AppUpdateStatus.Error, _service.Status);
         }
 
         // -------------------------------------------------------
-        // CheckUpdate - LastCheckTime 更新
+        // CheckUpdateAsync - LastCheckTime 更新
         // -------------------------------------------------------
 
         [TestMethod]
@@ -92,7 +92,7 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
             _mockComparer.Setup(c => c.CompareAssemblyVersion(FakeVersion)).Returns(0);
             var before = DateTime.Now;
 
-            await _service.CheckUpdate(fetchDelay: 0);
+            await _service.CheckUpdateAsync(fetchDelay: 0);
 
             Assert.IsTrue(_service.LastReleaseInfo?.CheckedTime >= before);
         }
@@ -104,13 +104,13 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
                 .ThrowsAsync(new Exception());
             var before = DateTime.Now;
 
-            await _service.CheckUpdate(fetchDelay: 0);
+            await _service.CheckUpdateAsync(fetchDelay: 0);
 
             Assert.IsTrue(_service.LastReleaseInfo?.CheckedTime >= before);
         }
 
         // -------------------------------------------------------
-        // CheckUpdate - UpdateChecked 事件触发
+        // CheckUpdateAsync - UpdateChecked 事件触发
         // -------------------------------------------------------
 
         [TestMethod]
@@ -119,7 +119,7 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
             AppUpdaterEventArgs? received = null;
             _service.UpdateChecked += (_, args) => received = args;
 
-            await _service.CheckUpdate(fetchDelay: 0);
+            await _service.CheckUpdateAsync(fetchDelay: 0);
 
             Assert.IsNotNull(received);
             Assert.AreEqual(AppUpdateStatus.Available, received.UpdateStatus);
@@ -137,14 +137,14 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
             AppUpdaterEventArgs? received = null;
             _service.UpdateChecked += (_, args) => received = args;
 
-            await _service.CheckUpdate(fetchDelay: 0);
+            await _service.CheckUpdateAsync(fetchDelay: 0);
 
             Assert.IsNotNull(received);
             Assert.AreEqual(AppUpdateStatus.Error, received.UpdateStatus);
         }
 
         // -------------------------------------------------------
-        // Start / Stop
+        // StartAsync / Stop
         // -------------------------------------------------------
 
         [TestMethod]

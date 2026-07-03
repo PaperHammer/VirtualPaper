@@ -17,6 +17,11 @@ namespace VirtualPaper.Views {
             InitializeComponent();
             contentDialogService.SetDialogHost(RootContentDialog);
             DataContext = _viewModel = viewModel;
+            Loaded += AppUpdaterWindow_Loaded;
+        }
+
+        private void AppUpdaterWindow_Loaded(object sender, RoutedEventArgs e) {
+            _viewModel?.AutoStartDownload();
         }
 
         private void FluentWindow_Closed(object? sender, EventArgs e) {
@@ -62,7 +67,7 @@ namespace VirtualPaper.Views {
         }
 
         private void ActionBtn_Click(object sender, RoutedEventArgs e) {
-            if (_viewModel.IsRestartUpdate && _viewModel.CurrentState == DownloadState.Completed) {
+            if (_viewModel.IsPluginsUpdate && _viewModel.CurrentState == DownloadState.Completed) {
                 this.Close();
                 return;
             }

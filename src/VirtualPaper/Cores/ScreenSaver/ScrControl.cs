@@ -25,13 +25,15 @@ namespace VirtualPaper.Cores.ScreenSaver {
             IDispatcherTimer dispatcherTimer,
             INativeService nativeService,
             IProcessLauncher processLauncher,
-            IJobService jobService) {
+            IJobService jobService,
+            IPluginsUpdateService pluginsUpdateService) {
             _userSettings = userSettings;
             _msgWindow = msgWindow;
             _wpControl = wpControl;
             _nativeService = nativeService;
             _processLauncher = processLauncher;
             _jobService = jobService;
+            _pluginsUpdateService = pluginsUpdateService;
 
             _msgWindow.MouseMoveRaw += MsgWindow_MouseMoveRaw;
             _msgWindow.MouseDownRaw += MsgWindow_MouseDownRaw;
@@ -45,8 +47,10 @@ namespace VirtualPaper.Cores.ScreenSaver {
             }
         }
 
-        public void Start() {
-            if (UpdateLock.IsPluginUpdating("ScrSaver")) return;
+        public async Task StartAsync() {
+            // Wait for any pending plugin update to complete
+            await _pluginsUpdateService.WaitForPendingUpdateAsync();
+
             if (!_userSettings.Settings.IsScreenSaverOn || _isTiming || IsRunning) return;
 
             try {
@@ -117,7 +121,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
         }
 
         // -------------------------------------------------------------------------
-        // Process: Start
+        // Process: StartAsync
         // -------------------------------------------------------------------------
 
         private void DispatcherTimer_Tick(object? sender, EventArgs e) {
@@ -178,7 +182,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
             _processLauncher.Exited += Proc_Exited;
             _processLauncher.OutputDataReceived += Proc_OutputDataReceived;
             _processLauncher.Launch(startInfo);
-            _jobService.AddProcess(_processLauncher.ProcessId);
+            _jobService.AddProcess(_processLauncher.ProcessId, PluginName.ScrSaver);
             _processLauncher.BeginOutputReadLine();
 
             ArcLog.GetLogger<ScrControl>().Info("ScreenSaver launched.");
@@ -210,10 +214,12 @@ namespace VirtualPaper.Cores.ScreenSaver {
         /// 无论是主动 Stop 还是意外退出，都走这里。
         /// </summary>
         private void Proc_Exited(object? sender, EventArgs e) {
+            var pid = _processLauncher.ProcessId;
             _processLauncher.OutputDataReceived -= Proc_OutputDataReceived;
             _processLauncher.Exited -= Proc_Exited;
 
             CleanupProc();
+            _jobService.StopPlugin(pid);
             RestartTimerAfterExit();
         }
 
@@ -364,6 +370,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
         private readonly IWallpaperControl _wpControl;
         private readonly INativeService _nativeService;
         private readonly IDispatcherTimer _dispatcherTimer;
+        private readonly IPluginsUpdateService _pluginsUpdateService;
         private readonly ConcurrentDictionary<string, bool> _scrWhiteListProcState = new(StringComparer.OrdinalIgnoreCase);
         private readonly object _objStop = new();
         private readonly object _objStart = new();

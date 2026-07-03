@@ -21,8 +21,8 @@ namespace VirtualPaper.Cores.AppUpdate.Models {
         [JsonPropertyName("removed_plugins")]
         public List<string> RemovedPlugins { get; set; } = [];
 
-        public bool IsRestartUpdate => Type.Equals("plugins", StringComparison.OrdinalIgnoreCase);
-        public bool IsInstallUpdate => !IsRestartUpdate;
+        public bool IsPluginsUpdate => Type.Equals("plugins", StringComparison.OrdinalIgnoreCase);
+        public bool IsInstallerUpdate => !IsPluginsUpdate;
     }
 
     public class PluginUpdateInfo {

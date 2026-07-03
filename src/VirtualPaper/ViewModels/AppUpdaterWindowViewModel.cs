@@ -74,7 +74,7 @@ namespace VirtualPaper.ViewModels {
             set { _isIndeterminate = value; OnPropertyChanged(); }
         }
 
-        public bool IsRestartUpdate { get; private set; }
+        public bool IsPluginsUpdate { get; private set; }
 
         private DownloadState _currentState;
         public DownloadState CurrentState {
@@ -92,16 +92,18 @@ namespace VirtualPaper.ViewModels {
         public AppUpdaterWindowViewModel(
             IDownloadService downloadService,
             IContentDialogService contentDialogService,
-            IRestartUpdateService restartUpdateService) {
+            IPluginsUpdateService pluginsUpdateService,
+            IAppUpdaterService appUpdaterService) {
             _downloadService = downloadService;
             _contentDialogService = contentDialogService;
-            _restartUpdateService = restartUpdateService;
+            _pluginsUpdateService = pluginsUpdateService;
+            _appUpdaterService = appUpdaterService;
         }
 
         public void ReceiveParameter(object? parameter) {
             if (parameter is ReleaseInfo info) {
-                if (info.IsRestartUpdate) {
-                    IsRestartUpdate = true;
+                if (info.IsPluginsUpdate) {
+                    IsPluginsUpdate = true;
                     _releaseInfo = info;                    
                 }
                 else {
@@ -112,6 +114,12 @@ namespace VirtualPaper.ViewModels {
                 Version = $"{info.Version?.ToString()} (Build {info.AppBuild?.ToString()})";
                 ChangeLog = info.Changelog ?? string.Empty;
                 CurrentState = DownloadState.Ready;
+            }
+        }
+
+        public void AutoStartDownload() {
+            if (CurrentState == DownloadState.Ready) {
+                _ = StartDownloadAsync();
             }
         }
 
@@ -162,7 +170,7 @@ namespace VirtualPaper.ViewModels {
 
         #region Download Logic
         private async Task StartDownloadAsync() {
-            if (IsRestartUpdate) {
+            if (IsPluginsUpdate) {
                 await StartPluginsDownloadAsync();
                 return;
             }
@@ -209,7 +217,7 @@ namespace VirtualPaper.ViewModels {
                     UpdateSpeedInfo(p.Speed, p.ReceivedBytes, p.TotalBytes, p.Remaining);
                 });
 
-                var result = await _restartUpdateService.DownloadPendingAsync(_releaseInfo, progress, _cts.Token);
+                var result = await _pluginsUpdateService.DownloadPendingAsync(_releaseInfo, progress, _cts.Token);
 
                 if (!result.Success) {
                     CurrentState = DownloadState.DownloadFailed;
@@ -217,7 +225,7 @@ namespace VirtualPaper.ViewModels {
                 }
 
                 CurrentState = DownloadState.Verifying;
-                var verifyResult = await _restartUpdateService.VerifyAndSavePendingAsync(_releaseInfo, _cts.Token);
+                var verifyResult = await _pluginsUpdateService.VerifyAndSavePendingAsync(_releaseInfo, _cts.Token);
 
                 if (!verifyResult.Success) {
                     CurrentState = DownloadState.VerifyFailed;
@@ -225,6 +233,9 @@ namespace VirtualPaper.ViewModels {
                 }
 
                 CurrentState = DownloadState.Completed;
+
+                // Trigger a new update check to refresh the status in GeneralSettingViewModel
+                _ = Task.Run(() => _appUpdaterService.CheckUpdateAsync());
             }
             catch (OperationCanceledException) {
                 FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
@@ -273,7 +284,7 @@ namespace VirtualPaper.ViewModels {
         }
 
         private async void InstallUpdate() {
-            if (IsRestartUpdate) {
+            if (IsPluginsUpdate) {
                 return;
             }
 
@@ -324,16 +335,16 @@ namespace VirtualPaper.ViewModels {
                     break;
 
                 case DownloadState.Completed:
-                    ActionButtonText = IsRestartUpdate
+                    ActionButtonText = IsPluginsUpdate
                         ? LanguageManager.Instance["Common_TextConfirm"]
                         : LanguageManager.Instance["AppUpdater_ActionButtonText_Completed"];
                     StatusText = LanguageManager.Instance["AppUpdater_StatusText_Completed"];
                     ClearSpeedInfo();
-                    if (IsRestartUpdate) {
+                    if (IsPluginsUpdate) {
                         _ = _contentDialogService.ShowSimpleDialogAsync(
                             new SimpleContentDialogCreateOptions() {
-                                Title = LanguageManager.Instance["RestartUpdate_Close"],
-                                Content = LanguageManager.Instance["RestartUpdate_PostponeTip"],
+                                Title = LanguageManager.Instance["PluginsUpdate_Close"],
+                                Content = LanguageManager.Instance["PluginsUpdate_PostponeTip"],
                                 CloseButtonText = LanguageManager.Instance["Common_TextConfirm"],
                             }
                         );
@@ -371,7 +382,8 @@ namespace VirtualPaper.ViewModels {
 
         private readonly IDownloadService _downloadService;
         private readonly IContentDialogService _contentDialogService;
-        private readonly IRestartUpdateService _restartUpdateService;
+        private readonly IPluginsUpdateService _pluginsUpdateService;
+        private readonly IAppUpdaterService _appUpdaterService;
         private ReleaseInfo? _releaseInfo;
         private Uri _downloadUri = null!;
         private Uri _shaUri = null!;

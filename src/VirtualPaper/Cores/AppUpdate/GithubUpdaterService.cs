@@ -34,7 +34,7 @@ namespace VirtualPaper.Cores.AppUpdate {
             _retryTimer.Interval = 5 * 60 * 1000;
         }
 
-        public async Task<AppUpdateStatus> CheckUpdate(int fetchDelay = 45000) {
+        public async Task<AppUpdateStatus> CheckUpdateAsync(int fetchDelay = 45000) {
             if (Constants.ApplicationType.IsMSIX) {
                 //msix already has built-in _updater.
                 return AppUpdateStatus.Notchecked;
@@ -61,7 +61,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                     //update Available.
                     Status = AppUpdateStatus.Available;
                 }
-                else if (releaseInfo.IsRestartUpdate && releaseInfo.Manifest != null && HasPluginUpdate(releaseInfo)) {
+                else if (releaseInfo.IsPluginsUpdate && releaseInfo.Manifest != null && HasPluginUpdate(releaseInfo)) {
                     //version unchanged, but plugin updates available.
                     Status = AppUpdateStatus.Available;
                 }
@@ -237,7 +237,7 @@ namespace VirtualPaper.Cores.AppUpdate {
         #region private
         private void RetryTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e) {
             if (LastReleaseInfo == null || (DateTime.Now - LastReleaseInfo.CheckedTime).TotalMilliseconds > (Status != AppUpdateStatus.Error ? _fetchDelayRepeat : _fetchDelayError)) {
-                _ = CheckUpdate(0);
+                _ = CheckUpdateAsync(0);
             }
         }
 

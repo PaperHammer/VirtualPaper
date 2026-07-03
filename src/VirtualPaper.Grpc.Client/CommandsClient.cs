@@ -17,7 +17,7 @@ namespace VirtualPaper.Grpc.Client {
             _uiRecievedCmdTask = Task.Run(() => SubscribeUIRecievedCmdTaskStream(_ctsUIRecievedCmd.Token));
         }
 
-        public async Task ShowUI() {
+        public async Task ShowUIAsync() {
             await _client.ShowUIAsync(new Empty());
         }
 

@@ -298,99 +298,99 @@ namespace VirtualPaper.Properties {
         /// <summary>
         ///   查找类似 关闭 的本地化字符串。
         /// </summary>
-        public static string RestartUpdate_Close {
+        public static string PluginsUpdate_Close {
             get {
-                return ResourceManager.GetString("RestartUpdate_Close", resourceCulture);
+                return ResourceManager.GetString("PluginsUpdate_Close", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 更新完成，UI 即将重启 的本地化字符串。
         /// </summary>
-        public static string RestartUpdate_Completed {
+        public static string PluginsUpdate_Completed {
             get {
-                return ResourceManager.GetString("RestartUpdate_Completed", resourceCulture);
+                return ResourceManager.GetString("PluginsUpdate_Completed", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 更新失败：{0} 的本地化字符串。
         /// </summary>
-        public static string RestartUpdate_Failed {
+        public static string PluginsUpdate_Failed {
             get {
-                return ResourceManager.GetString("RestartUpdate_Failed", resourceCulture);
+                return ResourceManager.GetString("PluginsUpdate_Failed", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 更新信息无效 的本地化字符串。
         /// </summary>
-        public static string RestartUpdate_InvalidInfo {
+        public static string PluginsUpdate_InvalidInfo {
             get {
-                return ResourceManager.GetString("RestartUpdate_InvalidInfo", resourceCulture);
+                return ResourceManager.GetString("PluginsUpdate_InvalidInfo", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 更新已就绪，关闭主窗口以触发更新 的本地化字符串。
         /// </summary>
-        public static string RestartUpdate_PostponeTip {
+        public static string PluginsUpdate_PostponeTip {
             get {
-                return ResourceManager.GetString("RestartUpdate_PostponeTip", resourceCulture);
+                return ResourceManager.GetString("PluginsUpdate_PostponeTip", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 正在备份当前组件... 的本地化字符串。
         /// </summary>
-        public static string RestartUpdate_Stage_BackingUp {
+        public static string PluginsUpdate_Stage_BackingUp {
             get {
-                return ResourceManager.GetString("RestartUpdate_Stage_BackingUp", resourceCulture);
+                return ResourceManager.GetString("PluginsUpdate_Stage_BackingUp", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 已完成 的本地化字符串。
         /// </summary>
-        public static string RestartUpdate_Stage_Completed {
+        public static string PluginsUpdate_Stage_Completed {
             get {
-                return ResourceManager.GetString("RestartUpdate_Stage_Completed", resourceCulture);
+                return ResourceManager.GetString("PluginsUpdate_Stage_Completed", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 正在下载组件... 的本地化字符串。
         /// </summary>
-        public static string RestartUpdate_Stage_Downloading {
+        public static string PluginsUpdate_Stage_Downloading {
             get {
-                return ResourceManager.GetString("RestartUpdate_Stage_Downloading", resourceCulture);
+                return ResourceManager.GetString("PluginsUpdate_Stage_Downloading", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 失败 的本地化字符串。
         /// </summary>
-        public static string RestartUpdate_Stage_Failed {
+        public static string PluginsUpdate_Stage_Failed {
             get {
-                return ResourceManager.GetString("RestartUpdate_Stage_Failed", resourceCulture);
+                return ResourceManager.GetString("PluginsUpdate_Stage_Failed", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 正在替换组件文件... 的本地化字符串。
         /// </summary>
-        public static string RestartUpdate_Stage_Replacing {
+        public static string PluginsUpdate_Stage_Replacing {
             get {
-                return ResourceManager.GetString("RestartUpdate_Stage_Replacing", resourceCulture);
+                return ResourceManager.GetString("PluginsUpdate_Stage_Replacing", resourceCulture);
             }
         }
         
         /// <summary>
         ///   查找类似 正在开始更新... 的本地化字符串。
         /// </summary>
-        public static string RestartUpdate_Starting {
+        public static string PluginsUpdate_Starting {
             get {
-                return ResourceManager.GetString("RestartUpdate_Starting", resourceCulture);
+                return ResourceManager.GetString("PluginsUpdate_Starting", resourceCulture);
             }
         }
         

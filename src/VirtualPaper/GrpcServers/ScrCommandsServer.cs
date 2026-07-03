@@ -13,10 +13,10 @@ namespace VirtualPaper.GrpcServers {
             return Task.FromResult(new Empty());
         }
 
-        public override Task<Empty> Start(Empty request, ServerCallContext context) {
-            _scrControl.Start();
+        public override async Task<Empty> Start(Empty request, ServerCallContext context) {
+            await _scrControl.StartAsync();
 
-            return Task.FromResult(new Empty());
+            return new Empty();
         }
 
         public override Task<Empty> Stop(Empty request, ServerCallContext context) {

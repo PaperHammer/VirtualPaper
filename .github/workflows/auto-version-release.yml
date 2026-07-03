@@ -44,6 +44,7 @@ jobs:
       update_plugins: ${{ steps.version.outputs.update_plugins }}
       build_number: ${{ steps.version.outputs.build_number }}
       release_tag: ${{ steps.version.outputs.release_tag }}
+      previous_tag: ${{ steps.prev_tag.outputs.previous_tag }}
 
     steps:
     - name: Checkout with full history
@@ -202,6 +203,19 @@ jobs:
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "update_plugins=$($plugins -join ';')`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "build_number=$buildNumber`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "release_tag=$releaseTag`n", $utf8NoBom)
+
+    - name: Get previous tag
+      id: prev_tag
+      shell: powershell
+      run: |
+        $prevTag = git describe --tags --abbrev=0 2>$null
+        if (-not $prevTag) {
+            Write-Host "No previous tag found, this is the first release"
+            $prevTag = ""
+        }
+        Write-Host "Previous tag: $prevTag"
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "previous_tag=$prevTag`n", $utf8NoBom)
 
     - name: Capture PR title and body
       id: pr_info
@@ -948,6 +962,7 @@ jobs:
         tag_name: ${{ needs.prepare.outputs.release_tag }}
         name: ${{ needs.prepare.outputs.has_plugin_update == 'true' && format('v{0} Plugin Update (Build {1})', needs.prepare.outputs.new_version, needs.prepare.outputs.build_number) || format('v{0} (Build {1})', needs.prepare.outputs.new_version, needs.prepare.outputs.build_number) }}
         body: ${{ needs.prepare.outputs.pr_body }}
+        previous_tag: ${{ needs.prepare.outputs.previous_tag }}
         files: |
           dist/*.exe
           dist/SHA256.txt

@@ -107,7 +107,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 Proc.Exited += Proc_Exited;
                 Proc.OutputDataReceived += Proc_OutputDataReceived;
                 Proc.Start();
-                App.Jobs.AddProcess(Proc.Id);
+                App.Jobs.AddProcess(Proc.Id, PluginName.PlayerWeb);
                 Proc.BeginOutputReadLine();
 
                 StartArgs = new PlayerWebSrartArgs(Data, IsPreview).ToJson();
@@ -234,10 +234,12 @@ namespace VirtualPaper.Cores.Players.Web {
         }
 
         private void Proc_Exited(object? sender, EventArgs e) {
+            var pid = Proc.Id;
             _tcsProcessWait.TrySetResult(null);
             Proc.OutputDataReceived -= Proc_OutputDataReceived;
             Terminate();
             IsExited = true;
+            App.Jobs.StopPlugin(pid);
         }
 
         public bool Equals(IWpPlayer? other) {

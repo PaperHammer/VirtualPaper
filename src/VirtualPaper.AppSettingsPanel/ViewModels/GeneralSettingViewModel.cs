@@ -59,7 +59,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             HasPluginVersions ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 
         private static AppBuildInfo LoadAppBuildInfo() {
-            var path = Path.Combine(Constants.CommonPaths.AppDataDir, Constants.CoreField.AppBuildFile);
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.CoreField.AppBuildFile);
             if (!File.Exists(path)) return new AppBuildInfo();
             try {
                 var json = File.ReadAllText(path);
@@ -212,10 +212,12 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         public GeneralSettingViewModel(
             IAppUpdaterClient appUpdater,
             IUserSettingsClient userSettingsClient,
-            IWallpaperControlClient wallpaperControlClient) {
+            IWallpaperControlClient wallpaperControlClient,
+            ICommandsClient commandsClient) {
             _appUpdater = appUpdater;
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
+            _commandsClient = commandsClient;
 
             InitText();
             InitCollections();
@@ -313,7 +315,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 case AppUpdateStatus.PluginsReady:
                     Text_UpdateReady = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_PluginsReady));
                     InstallBtnComand = new RelayCommand(async () => {
-
+                        await _commandsClient.CloseUI();
                     });
                     CurrentVersionState = VersionState.InstallReady;
                     IsInstallBtnEnable = true;
@@ -480,6 +482,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private readonly IAppUpdaterClient _appUpdater;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly IWallpaperControlClient _wpControlClient;
+        private readonly ICommandsClient _commandsClient;
     }
 
     public enum VersionState {

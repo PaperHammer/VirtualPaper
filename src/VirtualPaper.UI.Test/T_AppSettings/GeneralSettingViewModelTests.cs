@@ -20,6 +20,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         private Mock<IUserSettingsClient> _userSettingsClient = null!;
         private Mock<IWallpaperControlClient> _wpControlClient = null!;
         private Mock<ISettings> _settings = null!;
+        private Mock<ICommandsClient> _commandsClient;
         private GeneralSettingViewModel _vm = null!;
 
         [TestInitialize]
@@ -30,6 +31,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _userSettingsClient = new Mock<IUserSettingsClient>();
             _wpControlClient = new Mock<IWallpaperControlClient>();
             _settings = new Mock<ISettings>();
+            _commandsClient = new Mock<ICommandsClient>();
 
             _settings.SetupProperty(s => s.IsAutoStart, false);
             _settings.SetupProperty(s => s.SystemBackdrop, AppSystemBackdrop.Default);
@@ -44,7 +46,8 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _vm = new GeneralSettingViewModel(
                 _appUpdater.Object,
                 _userSettingsClient.Object,
-                _wpControlClient.Object);
+                _wpControlClient.Object,
+                _commandsClient.Object);
         }
 
         [TestCleanup]

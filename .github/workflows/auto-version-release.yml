@@ -105,7 +105,7 @@ jobs:
       shell: powershell
       run: |
         # Use for-each-ref sorted by creatordate — not limited to ancestor chain
-        $prevTag = git for-each-ref --sort=-creatordate --format="%(refname:short)" refs/tags/ | Select-Object -First 1
+        $prevTag = git for-each-ref --sort=-creatordate --count=1 --format="%(refname:short)" refs/tags/
         if (-not $prevTag) {
             Write-Host "No previous tag found, this is the first release"
             $prevTag = ""

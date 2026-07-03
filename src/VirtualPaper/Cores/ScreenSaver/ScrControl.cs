@@ -217,8 +217,10 @@ namespace VirtualPaper.Cores.ScreenSaver {
             _processLauncher.Exited -= Proc_Exited;
 
             CleanupProc();
-            _jobService.StopPlugin(pid);
-            RestartTimerAfterExit();
+            if (!App.IsShuttingDown) {
+                _jobService.StopPlugin(pid);
+                RestartTimerAfterExit();
+            }
         }
 
         /// <summary>

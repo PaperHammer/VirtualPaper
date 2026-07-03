@@ -359,7 +359,10 @@ namespace VirtualPaper {
             }));
         }
 
+        public static volatile bool IsShuttingDown;
+
         public static void ShutDown() {
+            IsShuttingDown = true;
             try {
                 _ctsPlayback.Cancel();
                 Jobs?.Close();

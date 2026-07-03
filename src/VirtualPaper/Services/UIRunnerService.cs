@@ -139,6 +139,9 @@ namespace VirtualPaper.Services {
             _processUI.OutputDataReceived -= Proc_OutputDataReceived;
             _processUI.Dispose();
             _processUI = null;
+
+            if (App.IsShuttingDown) return;
+
             App.Jobs.StopPlugin(pid);
 
             // Check for pending restart update when UI exits normally

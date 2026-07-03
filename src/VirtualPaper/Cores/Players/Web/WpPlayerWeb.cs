@@ -239,7 +239,9 @@ namespace VirtualPaper.Cores.Players.Web {
             Proc.OutputDataReceived -= Proc_OutputDataReceived;
             Terminate();
             IsExited = true;
-            App.Jobs.StopPlugin(pid);
+            if (!App.IsShuttingDown) {
+                App.Jobs.StopPlugin(pid);
+            }
         }
 
         public bool Equals(IWpPlayer? other) {

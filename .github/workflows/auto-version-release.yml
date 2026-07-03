@@ -100,11 +100,26 @@ jobs:
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "source_branch=$sourceBranch`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "increment_type=$incrementType`n", $utf8NoBom)
 
+    - name: Get previous tag
+      id: prev_tag
+      shell: powershell
+      run: |
+        # Use for-each-ref sorted by creatordate — not limited to ancestor chain
+        $prevTag = git for-each-ref --sort=-creatordate --format="%(refname:short)" refs/tags/ | Select-Object -First 1
+        if (-not $prevTag) {
+            Write-Host "No previous tag found, this is the first release"
+            $prevTag = ""
+        }
+        Write-Host "Previous tag: $prevTag"
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "previous_tag=$prevTag`n", $utf8NoBom)
+
     - name: Prepare release metadata
       id: version
       shell: powershell
       env:
         PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        PREV_TAG: ${{ steps.prev_tag.outputs.previous_tag }}
       run: |
         $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
         $content = Get-Content $csprojPath -Raw
@@ -163,15 +178,30 @@ jobs:
         Write-Host "Version: $currentVersion -> $newVersion"
 
         # ── Generate build number: YYMM + R + xx (每月重置) ─────────
-        # 通过 git tag 统计当月发布次数（不依赖 GitHub API，无 rate limit 风险）
+        # 从 previous tag 解码上一次 build number，同月 +1，跨月重置
         $now = Get-Date
         $yearMonth = $now.ToString("yyMM")
-        
-        $monthCount = (git tag -l "v*${yearMonth}R*" | Measure-Object).Count
-        $buildSeq = $monthCount + 1
-        
+
+        $prevBuildNum = ""
+        $prevTag = "$env:PREV_TAG"
+        if ($prevTag -match 'plugin([A-Z]+)$') {
+            $encoded = $Matches[1]
+            $prevBuildNum = ($encoded.ToCharArray() | ForEach-Object {
+                if ($_ -ge 'A' -and $_ -le 'J') { [char]([int][char]'0' + ([int]$_ - [int][char]'A')) } else { $_ }
+            }) -join ''
+        }
+
+        $buildSeq = 1
+        if ($prevBuildNum -match "^(\d{4})R(\d{2})$") {
+            $prevYM = $Matches[1]
+            $prevSeq = [int]$Matches[2]
+            if ($prevYM -eq $yearMonth) {
+                $buildSeq = $prevSeq + 1
+            }
+        }
+
         $buildNumber = "${yearMonth}R{0:D2}" -f $buildSeq
-        Write-Host "Build number: $buildNumber (month count: $monthCount, seq: $buildSeq)"
+        Write-Host "Build number: $buildNumber (prev: $prevBuildNum, seq: $buildSeq)"
 
         # ── Generate release tag ─────────────────────────────────────
         # Plugin 更新：tag 后缀用字母编码 build number，保证旧客户端正则兼容
@@ -199,19 +229,6 @@ jobs:
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "update_plugins=$($plugins -join ';')`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "build_number=$buildNumber`n", $utf8NoBom)
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "release_tag=$releaseTag`n", $utf8NoBom)
-
-    - name: Get previous tag
-      id: prev_tag
-      shell: powershell
-      run: |
-        $prevTag = git describe --tags --abbrev=0 2>$null
-        if (-not $prevTag) {
-            Write-Host "No previous tag found, this is the first release"
-            $prevTag = ""
-        }
-        Write-Host "Previous tag: $prevTag"
-        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
-        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "previous_tag=$prevTag`n", $utf8NoBom)
 
     - name: Capture PR title and body
       id: pr_info

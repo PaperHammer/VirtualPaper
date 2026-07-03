@@ -2,7 +2,6 @@ using Moq;
 using NLog.Config;
 using VirtualPaper.Common;
 using VirtualPaper.Core.Test.Infrastructure;
-using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Factories.Interfaces;
@@ -20,7 +19,6 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
         private Mock<IMonitorManager> _monitorMgr = null!;
         private Mock<IWallpaperFactory> _factory = null!;
         private Mock<IUserSettingsService> _settings = null!;
-        private Mock<IPluginsUpdateService> _pluginsUpdateService = null!;
         private readonly List<string> _tempFiles = [];
 
         [TestInitialize]
@@ -30,11 +28,10 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             _factory = new Mock<IWallpaperFactory>();
             var desktop = MockFactory.CreateDesktopService();
             var jobService = new Mock<IJobService>();
-            _pluginsUpdateService = new Mock<IPluginsUpdateService>();
 
             _sut = new WallpaperControl(
                 _settings.Object, _monitorMgr.Object,
-                _factory.Object, desktop.Object, jobService.Object, _pluginsUpdateService.Object);
+                _factory.Object, desktop.Object, jobService.Object);
         }
 
         [TestCleanup]
@@ -151,7 +148,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             var jobService = new Mock<IJobService>();
             _sut = new WallpaperControl(
                 _settings.Object, _monitorMgr.Object,
-                _factory.Object, desktop.Object, jobService.Object, _pluginsUpdateService.Object);
+                _factory.Object, desktop.Object, jobService.Object);
 
             var data = TestDataBuilder.CreateValidPlayerData(_tempFiles).Object;
             foreach (var m in _monitorMgr.Object.Monitors) {
@@ -242,7 +239,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             var jobService = new Mock<IJobService>();
             _sut = new WallpaperControl(
                 _settings.Object, _monitorMgr.Object,
-                _factory.Object, desktop.Object, jobService.Object, _pluginsUpdateService.Object);
+                _factory.Object, desktop.Object, jobService.Object);
 
             var monitor = _monitorMgr.Object.PrimaryMonitor;
             var dataImg = TestDataBuilder.CreateValidPlayerData(_tempFiles, rtype: RuntimeType.RImage, wpId: "wp_img").Object;
@@ -401,7 +398,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
             var jobService = new Mock<IJobService>();
             _sut = new WallpaperControl(
                 _settings.Object, _monitorMgr.Object,
-                _factory.Object, desktop.Object, jobService.Object, _pluginsUpdateService.Object);
+                _factory.Object, desktop.Object, jobService.Object);
 
             var monitor = _monitorMgr.Object.PrimaryMonitor;
             var dataImg = TestDataBuilder.CreateValidPlayerData(_tempFiles, rtype: RuntimeType.RImage, wpId: "wp_img").Object;

@@ -1,7 +1,6 @@
 using Moq;
 using VirtualPaper.Core.Test.Infrastructure;
 using VirtualPaper.Cores;
-using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Factories.Interfaces;
@@ -18,13 +17,11 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
         private Mock<IMonitorManager> _monitorMgr = null!;
         private Mock<IWallpaperFactory> _factory = null!;
         private Mock<IUserSettingsService> _settings = null!;
-        private Mock<IPluginsUpdateService> _pluginsUpdateService = null!;
         private readonly List<string> _tempFiles = [];
 
         [TestInitialize]
         public void Setup() {
             _settings = MockFactory.CreateUserSettings();
-            _pluginsUpdateService = new Mock<IPluginsUpdateService>();
             _monitorMgr = MockFactory.CreateMonitorManager(monitorCount: 2);
             _factory = new Mock<IWallpaperFactory>();
             var desktop = MockFactory.CreateDesktopService();
@@ -32,7 +29,7 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
 
             _sut = new WallpaperControl(
                 _settings.Object, _monitorMgr.Object,
-                _factory.Object, desktop.Object, jobService.Object, _pluginsUpdateService.Object);
+                _factory.Object, desktop.Object, jobService.Object);
         }
 
         [TestCleanup]

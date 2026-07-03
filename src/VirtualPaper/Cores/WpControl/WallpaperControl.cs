@@ -40,14 +40,12 @@ namespace VirtualPaper.Cores.WpControl {
             IMonitorManager monitorManager,
             IWallpaperFactory wallpaperFactory,
             INativeService nativeService,
-            IJobService jobService,
-            IPluginsUpdateService pluginsUpdateService) {
+            IJobService jobService) {
             this._userSettings = userSettings;
             this._monitorManager = monitorManager;
             this._wallpaperFactory = wallpaperFactory;
             this._nativeService = nativeService;
             this._jobService = jobService;
-            this._pluginsUpdateService = pluginsUpdateService;
 
             if (SystemParameters.HighContrast)
                 ArcLog.GetLogger<WallpaperControl>().Warn("Highcontrast mode detected, some functionalities may not work properly.");
@@ -200,7 +198,7 @@ namespace VirtualPaper.Cores.WpControl {
             Grpc_RestartWallpaperResponse response = new();
 
             // Wait for any pending plugin update to complete
-            await _pluginsUpdateService.WaitForPendingUpdateAsync();
+            await UpdateLock.WaitAllAsync();
 
             try {
                 ArcLog.GetLogger<WallpaperControl>().Info("Restore wallpapers...");
@@ -210,7 +208,7 @@ namespace VirtualPaper.Cores.WpControl {
                     if (wallpaperLayouts.Count > 0) {
                         var layout = wallpaperLayouts.FirstOrDefault(x => x.MonitorDeviceId == _monitorManager.PrimaryMonitor.DeviceId);
                         var data = WallpaperUtil.GetWallpaperByFolder(layout.FolderPath, _monitorManager.PrimaryMonitor.Content, layout.RType);
-                        SetWallpaperAsync(data.GetPlayerData(), _monitorManager.PrimaryMonitor);
+                        _ = SetWallpaperAsync(data.GetPlayerData(), _monitorManager.PrimaryMonitor);
                     }
                 }
                 else {
@@ -1020,7 +1018,6 @@ namespace VirtualPaper.Cores.WpControl {
         private readonly IMonitorManager _monitorManager;
         private readonly INativeService _nativeService;
         private readonly IJobService _jobService;
-        private readonly IPluginsUpdateService _pluginsUpdateService;
         private readonly WpBasicDataBuilderRegistry _builderRegistry = new WpBasicDataBuilderRegistry()
             .Register(FileType.FImage, new ImageBasicDataBuilder())
             .Register(FileType.FGif, new ImageBasicDataBuilder())

@@ -33,9 +33,7 @@ namespace VirtualPaper.Services {
         }
 
         public async Task ShowUIAsync() {
-            // Wait for any pending plugin update to complete
-            var restartService = App.Services.GetRequiredService<IPluginsUpdateService>();
-            await restartService.WaitForPendingUpdateAsync();
+            await UpdateLock.WaitAllAsync();
 
             if (_processUI != null) {
                 try {
@@ -98,7 +96,7 @@ namespace VirtualPaper.Services {
                     _processUI = null;
                 }
             }
-            ShowUIAsync();
+            _ = ShowUIAsync();
         }
 
         public void CloseUI() {
@@ -145,7 +143,7 @@ namespace VirtualPaper.Services {
 
             // Check for pending restart update when UI exits normally
             // (not during an update - UpdateLock would be set in that case)
-            if (!UpdateLock.IsUpdating) {
+            if (!UpdateLock.IsAnyLocked) {
                 var restartService = App.Services.GetRequiredService<IPluginsUpdateService>();
                 _ = restartService.ExecutePendingPluginUpdateWithWindowAsync();
             }

@@ -25,15 +25,13 @@ namespace VirtualPaper.Cores.ScreenSaver {
             IDispatcherTimer dispatcherTimer,
             INativeService nativeService,
             IProcessLauncher processLauncher,
-            IJobService jobService,
-            IPluginsUpdateService pluginsUpdateService) {
+            IJobService jobService) {
             _userSettings = userSettings;
             _msgWindow = msgWindow;
             _wpControl = wpControl;
             _nativeService = nativeService;
             _processLauncher = processLauncher;
             _jobService = jobService;
-            _pluginsUpdateService = pluginsUpdateService;
 
             _msgWindow.MouseMoveRaw += MsgWindow_MouseMoveRaw;
             _msgWindow.MouseDownRaw += MsgWindow_MouseDownRaw;
@@ -49,7 +47,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
 
         public async Task StartAsync() {
             // Wait for any pending plugin update to complete
-            await _pluginsUpdateService.WaitForPendingUpdateAsync();
+            await UpdateLock.WaitAllAsync();
 
             if (!_userSettings.Settings.IsScreenSaverOn || _isTiming || IsRunning) return;
 
@@ -370,7 +368,6 @@ namespace VirtualPaper.Cores.ScreenSaver {
         private readonly IWallpaperControl _wpControl;
         private readonly INativeService _nativeService;
         private readonly IDispatcherTimer _dispatcherTimer;
-        private readonly IPluginsUpdateService _pluginsUpdateService;
         private readonly ConcurrentDictionary<string, bool> _scrWhiteListProcState = new(StringComparer.OrdinalIgnoreCase);
         private readonly object _objStop = new();
         private readonly object _objStart = new();

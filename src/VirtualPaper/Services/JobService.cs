@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Services {
@@ -142,6 +143,11 @@ namespace VirtualPaper.Services {
             foreach (var kv in _pluginProcesses) {
                 kv.Value.Remove(pid);
             }
+        }
+
+        public async Task StartPluginAsync(PluginName pluginName, Func<Task> startAction, CancellationToken token = default) {
+            await UpdateLock.WaitAsync(pluginName, token);
+            await startAction();
         }
 
         /// <summary>

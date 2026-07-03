@@ -3,10 +3,11 @@ using System.IO.Compression;
 using System.Text.Json;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.lang;
 using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.lang;
 using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Services.Interfaces;
+using VirtualPaper.Views;
 
 namespace VirtualPaper.Cores.AppUpdate {
     public interface IPluginsUpdateService {
@@ -20,25 +21,34 @@ namespace VirtualPaper.Cores.AppUpdate {
         /// 执行待处理的插件更新，显示进度窗口
         /// </summary>
         Task ExecutePendingPluginUpdateWithWindowAsync();
-        
-        /// <summary>
-        /// 等待待处理的插件更新完成（如果有）
-        /// </summary>
-        Task WaitForPendingUpdateAsync();
     }
 
-    public class PluginsUpdateService : IPluginsUpdateService {
+    public interface IPluginsUpdateServiceInit {
+        Task InitAsync();
+    }
+
+    public class PluginsUpdateService : IPluginsUpdateService, IPluginsUpdateServiceInit {
         public PluginsUpdateService(
             IDownloadService downloadService,
             IJobService jobService,
-            IUIRunnerService uiRunnerService,
             IAppBuildService appBuildService,
             IWindowService windowService) {
             _downloadService = downloadService;
             _jobService = jobService;
-            _uiRunnerService = uiRunnerService;
             _appBuildService = appBuildService;
             _windowService = windowService;
+        }
+
+        public async Task InitAsync() {
+            UpdateLock.RegisterAll();
+
+            var hasPending = await CheckAndRecoverAsync();
+            if (hasPending) {
+                await ExecutePendingPluginUpdateWithWindowAsync();
+            }
+            else {
+                UpdateLock.ReleaseAll();
+            }
         }
 
         public async Task<PluginsUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default) {
@@ -176,7 +186,7 @@ namespace VirtualPaper.Cores.AppUpdate {
             }
 
             try {
-                // Verify downloaded files against hashes in flag
+                // Verify downloaded files against hashes in flag (single verification pass)
                 foreach (var (pluginName, pluginInfo) in flag.Plugins) {
                     foreach (var fileHash in pluginInfo.Files) {
                         var filePath = Path.Combine(pendingDir, pluginName, fileHash.Name);
@@ -190,19 +200,15 @@ namespace VirtualPaper.Cores.AppUpdate {
                     }
                 }
 
-                // Lock: prevent specific plugin startup
-                var updatingPluginNames = flag.Plugins.Keys.ToList();
-                if (!updatingPluginNames.Contains("UI")) {
-                    updatingPluginNames.Add("UI");
-                }
-                UpdateLock.SetUpdatingPlugins(updatingPluginNames);
-
-                // Stop plugins (always stops UI, plus others if being updated)
-                StopPlugins(flag.Plugins.Keys.ToList());
+                // Lock first (prevent restart), then stop processes
+                var updatingPlugins = ParsePluginNames(flag.Plugins.Keys);
+                UpdateLock.LockAll(updatingPlugins);
+                StopPlugins(updatingPlugins);
 
                 // Step: Backup current plugins
                 progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.BackingUp, 0, LanguageManager.Instance[nameof(Constants.I18n.PluginsUpdate_Stage_BackingUp)]));
                 var backupDir = Constants.CommonPaths.UpdateBackupDir;
+                FileUtil.RemoveDirectory(backupDir);
                 Directory.CreateDirectory(backupDir);
 
                 foreach (var (pluginName, pluginInfo) in flag.Plugins) {
@@ -224,24 +230,16 @@ namespace VirtualPaper.Cores.AppUpdate {
                 flag.Status = UpdateFlag.UpdateStatusInProgress;
                 await SaveUpdateFlagAsync(flag, token);
 
-                // Step: Replace plugins in parallel
+                // Step: Replace plugins sequentially (avoid IO contention on Windows)
                 progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Replacing, 0, LanguageManager.Instance[nameof(Constants.I18n.PluginsUpdate_Stage_Replacing)]));
                 int totalPlugins = flag.Plugins.Count;
                 int replacedCount = 0;
 
-                var replaceTasks = flag.Plugins.Select(async kv => {
-                    var (pluginName, pluginInfo) = kv;
+                foreach (var (pluginName, pluginInfo) in flag.Plugins) {
                     token.ThrowIfCancellationRequested();
 
                     var targetDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pluginInfo.Target));
                     var zipPath = Path.Combine(pendingDir, pluginName, pluginInfo.Files[0].Name);
-
-                    // Verify zip SHA256 against manifest
-                    var actualHash = FileUtil.GetChecksumSHA256(zipPath);
-                    var expectedHash = pluginInfo.Files[0].Sha256;
-                    if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase)) {
-                        throw new InvalidOperationException($"SHA256 mismatch for {pluginName}: expected {expectedHash}, got {actualHash}");
-                    }
 
                     // Clear target directory
                     if (Directory.Exists(targetDir)) {
@@ -278,11 +276,9 @@ namespace VirtualPaper.Cores.AppUpdate {
                         }
                     }
 
-                    var count = Interlocked.Increment(ref replacedCount);
-                    progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Replacing, (float)count / totalPlugins * 100, string.Format(LanguageManager.Instance[nameof(Constants.I18n.PluginUpdate_ReplacedPlugin)], pluginName)));
-                });
-
-                await Task.WhenAll(replaceTasks);
+                    replacedCount++;
+                    progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Replacing, (float)replacedCount / totalPlugins * 100, string.Format(LanguageManager.Instance[nameof(Constants.I18n.PluginUpdate_ReplacedPlugin)], pluginName)));
+                }
 
                 // Step: Copy app_build.json from pending to installation root
                 var pendingAppBuild = Path.Combine(pendingDir, Constants.CoreField.AppBuildFile);
@@ -315,6 +311,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 flag.Status = UpdateFlag.UpdateStatusCompleted;
                 await SaveUpdateFlagAsync(flag, token);
                 FileUtil.RemoveDirectory(pendingDir);
+                FileUtil.RemoveDirectory(backupDir);
 
                 result.Success = true;
                 progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Completed, 100, LanguageManager.Instance[nameof(Constants.I18n.PluginsUpdate_Stage_Completed)]));
@@ -325,16 +322,13 @@ namespace VirtualPaper.Cores.AppUpdate {
                 result.ErrorMessage = ex.Message;
 
                 // Rollback
-                await RollbackAsync();
+                await RollbackAsync(flag);
 
                 // Write rollback notice
                 await WriteRollbackNoticeAsync(token);
             }
             finally {
-                // Unlock
-                UpdateLock.ClearUpdatingPlugins();
-                // Always restart UI after restart-style update
-                await _uiRunnerService.ShowUIAsync();
+                UpdateLock.ReleaseAll();
             }
 
             return result;
@@ -354,65 +348,46 @@ namespace VirtualPaper.Cores.AppUpdate {
             try {
                 var flag = await LoadUpdateFlagAsync(token);
                 if (flag == null) {
-                    // Flag corrupted - rollback if backup exists
-                    UpdateLock.SetUpdatingPlugins(GetAllPluginNames());
-                    StopPlugins(GetAllPluginNames());
-                    await RollbackAsync();
-                    UpdateLock.ClearUpdatingPlugins();
-                    await _uiRunnerService.ShowUIAsync();
+                    await RollbackAsync(null);
                     return false;
                 }
 
                 switch (flag.Status) {
                     case UpdateFlag.UpdateStatusPending:
-                        // Pending update - start the update task and return true
-                        _pendingUpdateTask = ExecutePendingPluginUpdateWithWindowAsync();
                         return true;
 
                     case UpdateFlag.UpdateStatusInProgress:
-                        // Crashed during update - rollback
-                        var crashedPlugins = flag.Plugins.Keys.ToList();
-                        UpdateLock.SetUpdatingPlugins(crashedPlugins);
-                        StopPlugins(crashedPlugins);
-                        await RollbackAsync();
-                        UpdateLock.ClearUpdatingPlugins();
-                        // Always restart UI after recovery
-                        await _uiRunnerService.ShowUIAsync();
+                        await RollbackAsync(flag);
                         return false;
 
                     case UpdateFlag.UpdateStatusCompleted:
-                        // Completed but not cleaned up - just cleanup
                         FileUtil.RemoveDirectory(pendingDir);
+                        FileUtil.RemoveDirectory(Constants.CommonPaths.UpdateBackupDir);
                         return false;
                 }
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<PluginsUpdateService>().Error("Recovery check failed", ex);
-                UpdateLock.SetUpdatingPlugins(GetAllPluginNames());
-                StopPlugins(GetAllPluginNames());
-                await RollbackAsync();
-                UpdateLock.ClearUpdatingPlugins();
-                await _uiRunnerService.ShowUIAsync();
+                await RollbackAsync(null);
             }
             return false;
         }
 
-        private void StopPlugins(IEnumerable<string> pluginNames) {
-            var plugins = pluginNames
-                .Select(n => Enum.TryParse<PluginName>(n, true, out var p) ? (PluginName?)p : null)
-                .Where(p => p.HasValue)
-                .Select(p => p!.Value)
-                .ToHashSet();
-
+        private void StopPlugins(IEnumerable<PluginName> plugins) {
             foreach (var plugin in plugins) {
                 try { _jobService.StopPlugin(plugin); }
                 catch (Exception ex) { ArcLog.GetLogger<PluginsUpdateService>().Warn($"Failed to stop {plugin}: {ex.Message}"); }
             }
         }
 
-        private static IEnumerable<string> GetAllPluginNames() => new[] { "UI", "PlayerWeb", "ScrSaver", "ML", "Shaders" };
+        private static List<PluginName> ParsePluginNames(IEnumerable<string> names) =>
+            names
+                .Select(n => Enum.TryParse<PluginName>(n, true, out var p) ? (PluginName?)p : null)
+                .Where(p => p.HasValue)
+                .Select(p => p!.Value)
+                .ToList();
 
-        private async Task RollbackAsync() {
+        private async Task RollbackAsync(UpdateFlag? flag) {
             var backupDir = Constants.CommonPaths.UpdateBackupDir;
             var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
             if (!Directory.Exists(backupDir)) {
@@ -422,10 +397,17 @@ namespace VirtualPaper.Cores.AppUpdate {
             }
 
             try {
-                // Restore each backed up plugin
+                // Restore each backed up plugin using target path from flag if available
                 foreach (var backupPluginDir in Directory.GetDirectories(backupDir)) {
                     var pluginName = Path.GetFileName(backupPluginDir);
-                    var targetDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins", pluginName));
+                    string targetDir;
+
+                    if (flag != null && flag.Plugins.TryGetValue(pluginName, out var pluginInfo)) {
+                        targetDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pluginInfo.Target));
+                    }
+                    else {
+                        targetDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins", pluginName));
+                    }
 
                     // Clear current
                     if (Directory.Exists(targetDir)) {
@@ -453,6 +435,7 @@ namespace VirtualPaper.Cores.AppUpdate {
             }
             finally {
                 FileUtil.RemoveDirectory(pendingDir);
+                FileUtil.RemoveDirectory(backupDir);
             }
         }
 
@@ -480,21 +463,23 @@ namespace VirtualPaper.Cores.AppUpdate {
             await File.WriteAllTextAsync(flagPath, json, token);
         }
 
-        private readonly IDownloadService _downloadService;
-        private readonly IJobService _jobService;
-        private readonly IUIRunnerService _uiRunnerService;
-        private readonly IAppBuildService _appBuildService;
-        private readonly IWindowService _windowService;
-        
-        private Task? _pendingUpdateTask;
-
         public async Task ExecutePendingPluginUpdateWithWindowAsync() {
+            // Prevent concurrent execution
+            lock (_pendingLock) {
+                if (_pendingUpdateTask != null && !_pendingUpdateTask.IsCompleted) return;
+                _updateCts = new CancellationTokenSource();
+                _pendingUpdateTask = ExecutePendingPluginUpdateCoreAsync(_updateCts.Token);
+            }
+            await _pendingUpdateTask;
+        }
+
+        private async Task ExecutePendingPluginUpdateCoreAsync(CancellationToken token) {
             try {
                 var flagPath = Constants.CommonPaths.UpdateFlagPath;
                 if (!File.Exists(flagPath)) return;
 
                 // Create window on UI thread
-                Views.PluginUpdateWindow? progressWindow = null;
+                PluginUpdateWindow? progressWindow = null;
                 System.Windows.Application.Current.Dispatcher.Invoke(() => {
                     _windowService.Show<Views.PluginUpdateWindow>(bringToFront: true);
                     _windowService.TryGet(out progressWindow);
@@ -507,8 +492,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                     });
                 });
 
-                // Run update on background thread
-                var result = await Task.Run(() => ExecutePendingUpdateAsync(progress));
+                var result = await ExecutePendingUpdateAsync(progress, token);
                 if (!result.Success) {
                     System.Windows.Application.Current.Dispatcher.Invoke(() => {
                         progressWindow?.ShowError(result.ErrorMessage ?? "Unknown error");
@@ -521,14 +505,22 @@ namespace VirtualPaper.Cores.AppUpdate {
                     });
                 }
             }
+            catch (OperationCanceledException) {
+                ArcLog.GetLogger<PluginsUpdateService>().Info("Plugin update cancelled");
+            }
             catch (Exception ex) {
                 ArcLog.GetLogger<PluginsUpdateService>().Error("Failed to execute pending plugin update", ex);
             }
         }
 
-        public Task WaitForPendingUpdateAsync() {
-            return _pendingUpdateTask ?? Task.CompletedTask;
-        }
+        private readonly IDownloadService _downloadService;
+        private readonly IJobService _jobService;
+        private readonly IAppBuildService _appBuildService;
+        private readonly IWindowService _windowService;
+
+        private Task? _pendingUpdateTask;
+        private readonly object _pendingLock = new();
+        private CancellationTokenSource? _updateCts;
     }
 
     public class PluginsUpdateResult {

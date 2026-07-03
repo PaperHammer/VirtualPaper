@@ -117,12 +117,8 @@ namespace VirtualPaper {
             _serviceProvider = ConfigureServices();
             // 将方法绑定到 Grpc 服务上
             _grpcServer = ConfigureGrpcServer();
-            // 检查是否有未完成的热更新，执行恢复（阻塞等待完成）
-            var hasPendingPluginUpdate = Services.GetRequiredService<IPluginsUpdateService>().CheckAndRecoverAsync().GetAwaiter().GetResult();
-            // 如果有待处理的插件更新，非阻塞启动更新（ShowUIAsync 会等待完成）
-            if (hasPendingPluginUpdate) {
-                _ = Services.GetRequiredService<IPluginsUpdateService>().ExecutePendingPluginUpdateWithWindowAsync();
-            }
+            // 检查是否有未完成的插件更新（异步，不阻塞 UI 线程）
+            _ = ((IPluginsUpdateServiceInit)Services.GetRequiredService<IPluginsUpdateService>()).InitAsync();
             #endregion
 
             #region 用户配置

@@ -4,7 +4,6 @@ using Moq;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
-using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.ScreenSaver;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Models.Cores;
@@ -24,7 +23,6 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         private Mock<INativeService> _native = null!;
         private Mock<IProcessLauncher> _launcher = null!;
         private Mock<IJobService> _jobService = null!;
-        private Mock<IPluginsUpdateService> _pluginsUpdateService = null!;
 
         private EventHandler? _capturedTick;
 
@@ -36,7 +34,6 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
             _native = new Mock<INativeService>();
             _launcher = new Mock<IProcessLauncher>();
             _jobService = new Mock<IJobService>();
-            _pluginsUpdateService = new Mock<IPluginsUpdateService>();
 
             _timer = new Mock<IDispatcherTimer>();
             _timer
@@ -75,7 +72,7 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
 
         private ScrControl BuildSut() => new(
             _settings.Object, _wpControl.Object, _msgWindow.Object,
-            _timer.Object, _native.Object, _launcher.Object, _jobService.Object, _pluginsUpdateService.Object);
+            _timer.Object, _native.Object, _launcher.Object, _jobService.Object);
 
         private void FireTick() =>
             _capturedTick?.Invoke(_timer.Object, EventArgs.Empty);

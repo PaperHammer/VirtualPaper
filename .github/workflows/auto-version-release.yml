@@ -105,6 +105,7 @@ jobs:
       shell: powershell
       env:
         PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
         $content = Get-Content $csprojPath -Raw
@@ -169,7 +170,7 @@ jobs:
         $repo = "${{ github.repository }}"
         
         # 获取所有 releases，统计当月 tag 数量
-        $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases" -Headers @{ "Accept" = "application/vnd.github.v3+json" }
+        $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases" -Headers @{ "Authorization" = "token $env:GH_TOKEN"; "Accept" = "application/vnd.github.v3+json" }
         $monthPattern = "v.*${yearMonth}R"
         $monthCount = ($releases | Where-Object { $_.tag_name -match $monthPattern }).Count
         $buildSeq = $monthCount + 1

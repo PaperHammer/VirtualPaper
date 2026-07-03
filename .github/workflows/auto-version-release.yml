@@ -105,7 +105,6 @@ jobs:
       shell: powershell
       env:
         PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
         $content = Get-Content $csprojPath -Raw
@@ -164,15 +163,11 @@ jobs:
         Write-Host "Version: $currentVersion -> $newVersion"
 
         # ── Generate build number: YYMM + R + xx (每月重置) ─────────
-        # 查询 GitHub releases 统计当月发布次数
+        # 通过 git tag 统计当月发布次数（不依赖 GitHub API，无 rate limit 风险）
         $now = Get-Date
         $yearMonth = $now.ToString("yyMM")
-        $repo = "${{ github.repository }}"
         
-        # 获取所有 releases，统计当月 tag 数量
-        $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases" -Headers @{ "Authorization" = "token $env:GH_TOKEN"; "Accept" = "application/vnd.github.v3+json" }
-        $monthPattern = "v.*${yearMonth}R"
-        $monthCount = ($releases | Where-Object { $_.tag_name -match $monthPattern }).Count
+        $monthCount = (git tag -l "v*${yearMonth}R*" | Measure-Object).Count
         $buildSeq = $monthCount + 1
         
         $buildNumber = "${yearMonth}R{0:D2}" -f $buildSeq
@@ -855,11 +850,15 @@ jobs:
                 Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " $branch fully synced with main"
             }
             else {
-                # 策略 2（fallback）：merge 无法自动解决 → 放弃，直接 reset --hard 到 main
-                # 使用 reset --hard 直接移动分支指针，不产生额外 commit，
-                # 历史看起来如同这次 merge 从未发生，比 git revert 更干净彻底。
-                Write-Host "  [WARN]" -ForegroundColor Yellow -NoNewline; Write-Host " merge has unresolvable conflicts, force-resetting to origin/main"
+                # 策略 2（fallback）：merge 无法自动解决 → 备份后 reset --hard 到 main
+                Write-Host "  [WARN]" -ForegroundColor Yellow -NoNewline; Write-Host " merge has unresolvable conflicts, backing up and force-resetting to origin/main"
                 git merge --abort
+
+                # 备份当前分支状态到 ${branch}_backup，再 reset
+                $backupBranch = "${branch}_backup"
+                git branch -f $backupBranch HEAD
+                git push --force origin $backupBranch
+                Write-Host "  [BACKUP]" -ForegroundColor Cyan -NoNewline; Write-Host " $branch saved to $backupBranch"
 
                 git reset --hard origin/main
                 git push --force-with-lease origin $branch
@@ -944,6 +943,11 @@ jobs:
       (needs.prepare.outputs.has_plugin_update != 'true' || needs.package_plugin_update.result == 'success')
 
     steps:
+    - name: Checkout (for tag verification)
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
     - name: Download installer artifact
       uses: actions/download-artifact@v4
       with:
@@ -956,6 +960,18 @@ jobs:
       with:
         name: VirtualPaper-Plugins-v${{ needs.prepare.outputs.new_version }}
         path: dist/plugin-packages/
+
+    - name: Verify tag does not exist
+      id: tag_check
+      shell: powershell
+      run: |
+        $tag = "${{ needs.prepare.outputs.release_tag }}"
+        $existing = git tag -l $tag 2>$null
+        if ($existing) {
+            Write-Error "Tag '$tag' already exists! Possible concurrent build race. Aborting release."
+            exit 1
+        }
+        Write-Host "[OK] Tag '$tag' is unique, safe to create"
 
     - name: Create Draft Release & Tag
       uses: softprops/action-gh-release@v2

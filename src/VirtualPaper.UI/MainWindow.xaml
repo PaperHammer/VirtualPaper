@@ -53,7 +53,7 @@
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>
                     </NavigationViewItem>
-                    <!--<NavigationViewItem x:Name="Nav_Intelligent">
+                    <NavigationViewItem x:Name="Nav_Intelligent">
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
@@ -65,7 +65,7 @@
                                 </StackPanel>
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>
-                    </NavigationViewItem>-->
+                    </NavigationViewItem>
                 </navi:ArcNavigationView.MenuItems>
 
                 <navi:ArcNavigationView.PaneFooter>

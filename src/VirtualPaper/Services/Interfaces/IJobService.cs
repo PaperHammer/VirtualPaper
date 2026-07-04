@@ -2,6 +2,8 @@ using VirtualPaper.Common;
 
 namespace VirtualPaper.Services.Interfaces {
     public interface IJobService {
+        event EventHandler? PluginsUpdateFinishedEvent;
+
         bool AddProcess(IntPtr processHandle);
         bool AddProcess(int processId);
         bool AddProcess(int processId, PluginName pluginName); 
@@ -14,5 +16,6 @@ namespace VirtualPaper.Services.Interfaces {
         /// Start a plugin, waiting asynchronously if the plugin is being updated.
         /// </summary>
         Task StartPluginAsync(PluginName pluginName, Func<Task> startAction, CancellationToken token = default);
+        void PluginsUpdateFinished();
     }
 }

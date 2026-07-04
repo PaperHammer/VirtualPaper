@@ -53,6 +53,10 @@ namespace VirtualPaper.Cores.WpControl {
             this._monitorManager.MonitorUpdated += MonitorSettingsChanged_Hwnd;
             this.WallpaperChanged += SetupDesktop_WallpaperChanged;
 
+            _jobService.PluginsUpdateFinishedEvent += (s, e) => {
+                _ = RestoreWallpaperAsync();
+            };
+
             SystemEvents.SessionSwitch += (s, e) => {
                 if (e.Reason == SessionSwitchReason.SessionUnlock) {
                     if (!(DesktopWorkerW == IntPtr.Zero || Native.IsWindow(DesktopWorkerW))) {

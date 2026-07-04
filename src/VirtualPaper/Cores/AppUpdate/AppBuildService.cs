@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Models.AppUpdate;
 
 namespace VirtualPaper.Cores.AppUpdate {
@@ -10,6 +11,7 @@ namespace VirtualPaper.Cores.AppUpdate {
         string GetPluginBuild(string pluginName);
         void Refresh();
         Task SaveAsync();
+        Task MoveFileToAppDirAsync();
     }
 
     public class AppBuildService : IAppBuildService {
@@ -53,6 +55,13 @@ namespace VirtualPaper.Cores.AppUpdate {
             var path = GetFilePath();
             var json = JsonSerializer.Serialize(BuildInfo, AppBuildInfoContext.Default.AppBuildInfo);
             await File.WriteAllTextAsync(path, json);
+        }
+
+        public async Task MoveFileToAppDirAsync() {
+            var src = GetFilePath();
+            if (!File.Exists(src)) return;
+            var dest = Path.Combine(Constants.CommonPaths.AppDataDir, Constants.CoreField.AppBuildFile);
+            await FileUtil.CopyFileAsync(src, dest);
         }
     }
 }

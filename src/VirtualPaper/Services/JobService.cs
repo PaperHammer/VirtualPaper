@@ -9,6 +9,8 @@ using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Services {
     internal partial class JobService : IJobService, IDisposable {
+        public event EventHandler? PluginsUpdateFinishedEvent;
+
         #region Helper classes
         /// <summary>
         ///  作业对象，主要用于子进程管理。
@@ -148,6 +150,10 @@ namespace VirtualPaper.Services {
         public async Task StartPluginAsync(PluginName pluginName, Func<Task> startAction, CancellationToken token = default) {
             await UpdateLock.WaitAsync(pluginName, token);
             await startAction();
+        }
+
+        public void PluginsUpdateFinished() {
+            PluginsUpdateFinishedEvent?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>

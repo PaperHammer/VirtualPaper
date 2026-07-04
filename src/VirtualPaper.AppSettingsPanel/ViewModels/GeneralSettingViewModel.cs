@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Grpc.Core;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Localization;
@@ -38,7 +37,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 else if (Constants.ApplicationType.IsMSIX)
                     ver += $" {LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_MsStore)}";
 
-                var appBuild = LoadAppBuildInfo().AppBuild;
+                var appBuild = _buildInfo?.AppBuild;
                 if (!string.IsNullOrEmpty(appBuild))
                     ver += $" (Build {appBuild})";
 
@@ -48,8 +47,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
         public List<string> PluginVersionTexts {
             get {
-                var buildInfo = LoadAppBuildInfo();
-                return buildInfo.Plugins.Select(kv => $"{kv.Key}: {kv.Value}").ToList();
+                return _buildInfo?.Plugins.Select(kv => $"{kv.Key}: {kv.Value}").ToList() ?? [];
             }
         }
 
@@ -58,15 +56,20 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         public Microsoft.UI.Xaml.Visibility PluginVersionsVisibility =>
             HasPluginVersions ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 
-        private static AppBuildInfo LoadAppBuildInfo() {
-            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.CoreField.AppBuildFile);
-            if (!File.Exists(path)) return new AppBuildInfo();
+        private AppBuildInfo? _buildInfo;
+
+        private void LoadAppBuildInfo() {
+            var path = Path.Combine(Constants.CommonPaths.AppDataDir, Constants.CoreField.AppBuildFile);
+            if (!File.Exists(path)) {
+                return;
+            }
+
             try {
                 var json = File.ReadAllText(path);
-                return JsonSerializer.Deserialize(json, AppBuildInfoContext.Default.AppBuildInfo) ?? new AppBuildInfo();
+                _buildInfo = JsonSerializer.Deserialize(json, AppBuildInfoContext.Default.AppBuildInfo) ?? new AppBuildInfo();
             }
             catch {
-                return new AppBuildInfo();
+                _buildInfo = new AppBuildInfo();
             }
         }
 
@@ -247,6 +250,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
             IsAutoStart = _userSettingsClient.Settings.IsAutoStart;
             WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
+
+            LoadAppBuildInfo();
         }
 
         private void InitText() {

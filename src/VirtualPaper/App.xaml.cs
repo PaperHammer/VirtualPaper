@@ -117,8 +117,6 @@ namespace VirtualPaper {
             _serviceProvider = ConfigureServices();
             // 将方法绑定到 Grpc 服务上
             _grpcServer = ConfigureGrpcServer();
-            // 检查是否有未完成的插件更新（异步，不阻塞 UI 线程）
-            _ = ((IPluginsUpdateServiceInit)Services.GetRequiredService<IPluginsUpdateService>()).InitAsync();
             #endregion
 
             #region 用户配置
@@ -135,8 +133,11 @@ namespace VirtualPaper {
                 UserSettings.Settings.WallpaperDir = Path.Combine(Constants.CommonPaths.LibraryDir, Constants.FolderName.WpStoreFolderName);
                 Directory.CreateDirectory(UserSettings.Settings.WallpaperDir);
             }
-            // 初始化语言包
+            // 初始化语言包（需在插件更新前，确保更新进度窗口文字有 i18n）
             ChangeLanguage(UserSettings.Settings.Language);
+
+            // 检查是否有未完成的插件更新（异步，不阻塞 UI 线程）
+            _ = ((IPluginsUpdateServiceInit)Services.GetRequiredService<IPluginsUpdateService>()).InitAsync();
 
             UserSettings.Save<ISettings>();
             #endregion

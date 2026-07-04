@@ -49,6 +49,7 @@ namespace VirtualPaper.Cores.AppUpdate {
             else {
                 UpdateLock.ReleaseAll();
             }
+            await _appBuildService.MoveFileToAppDirAsync();
         }
 
         public async Task<PluginsUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default) {
@@ -329,6 +330,7 @@ namespace VirtualPaper.Cores.AppUpdate {
             }
             finally {
                 UpdateLock.ReleaseAll();
+                _jobService.PluginsUpdateFinished();
             }
 
             return result;

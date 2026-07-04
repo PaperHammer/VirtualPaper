@@ -55,7 +55,7 @@ jobs:
 
     - name: Record original branch SHAs
       id: shas
-      shell: powershell
+      shell: pwsh
       run: |
         $mainSha = git rev-parse HEAD
         $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
@@ -76,7 +76,7 @@ jobs:
 
     - name: Determine source branch and version increment
       id: branch_info
-      shell: powershell
+      shell: pwsh
       env:
         PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
       run: |
@@ -102,7 +102,7 @@ jobs:
 
     - name: Get previous tag
       id: prev_tag
-      shell: powershell
+      shell: pwsh
       run: |
         # Use for-each-ref sorted by creatordate — not limited to ancestor chain
         $prevTag = git for-each-ref --sort=-creatordate --count=1 --format="%(refname:short)" refs/tags/
@@ -116,7 +116,7 @@ jobs:
 
     - name: Prepare release metadata
       id: version
-      shell: powershell
+      shell: pwsh
       env:
         PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         PREV_TAG: ${{ steps.prev_tag.outputs.previous_tag }}
@@ -232,7 +232,7 @@ jobs:
 
     - name: Capture PR title and body
       id: pr_info
-      shell: powershell
+      shell: pwsh
       env:
         PR_TITLE: ${{ github.event.pull_request.title }}
         PR_BODY: ${{ github.event.pull_request.body }}
@@ -280,7 +280,7 @@ jobs:
         restore-keys: nuget-${{ runner.os }}-
 
     - name: Patch AssemblyVersion in csproj (local only, not committed)
-      shell: powershell
+      shell: pwsh
       run: |
         $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
         $content = Get-Content $csprojPath -Raw
@@ -295,24 +295,87 @@ jobs:
     - name: Rebuild solution
       run: msbuild src/VirtualPaper.sln /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU" /restore /m
 
-    - name: Generate app_build.json
+    - name: Generate app_build.json (merge with previous release)
       shell: pwsh
       run: |
         $buildNumber = "${{ needs.prepare.outputs.build_number }}"
+        $hasPluginUpdate = "${{ needs.prepare.outputs.has_plugin_update }}" -eq "true"
+        $updatePlugins = "${{ needs.prepare.outputs.update_plugins }}" -split ';' | Where-Object { $_ -ne "" }
+        $prevTag = "${{ needs.prepare.outputs.previous_tag }}"
         $outDir = "src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0"
-        $json = @{
-            app_build = $buildNumber
-            plugins = @{
-                UI = $buildNumber
-                PlayerWeb = $buildNumber
-                ScrSaver = $buildNumber
-                ML = $buildNumber
-                Shaders = $buildNumber
-            }
-        } | ConvertTo-Json -Depth 3
         $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+
+        $prevBuildInfo = $null
+
+        # 尝试从上一个 release 下载 app_build.json
+        if ($prevTag) {
+            try {
+                gh release download $prevTag --pattern "app_build.json" --output "prev_app_build.json" 2>$null
+                if (Test-Path "prev_app_build.json") {
+                    $prevBuildInfo = Get-Content "prev_app_build.json" -Raw | ConvertFrom-Json
+                    Write-Host "[OK] Downloaded previous app_build.json from release $prevTag"
+                }
+            }
+            catch {
+                Write-Host "[WARN] Could not download previous app_build.json: $_"
+            }
+        }
+
+        if ($prevBuildInfo) {
+            # 合并：仅更新本次涉及的组件
+            if ($hasPluginUpdate) {
+                foreach ($plugin in $updatePlugins) {
+                    # 使用 PSObject 动态属性赋值
+                    $prevBuildInfo.plugins | Add-Member -NotePropertyName $plugin -NotePropertyValue $buildNumber -Force
+                }
+                Write-Host "[OK] Merged plugin updates: $($updatePlugins -join ', ')"
+            }
+            else {
+                # 非组件更新：仅更新 app_build
+                $prevBuildInfo.app_build = $buildNumber
+                Write-Host "[OK] Updated app_build to $buildNumber"
+            }
+            # 使用 Utf8JsonWriter 保证输出格式一致
+            $ms = [System.IO.MemoryStream]::new()
+            $writer = [System.Text.Json.Utf8JsonWriter]::new($ms, [System.Text.Json.JsonWriterOptions]@{ Indented = $true })
+            $writer.WriteStartObject()
+            $writer.WriteString("app_build", $prevBuildInfo.app_build)
+            $writer.WritePropertyName("plugins")
+            $writer.WriteStartObject()
+            foreach ($prop in $prevBuildInfo.plugins.PSObject.Properties) {
+                $writer.WriteString($prop.Name, $prop.Value)
+            }
+            $writer.WriteEndObject()
+            $writer.WriteEndObject()
+            $writer.Flush()
+            $json = [System.Text.Encoding]::UTF8.GetString($ms.ToArray())
+            $writer.Dispose()
+            $ms.Dispose()
+        }
+        else {
+            # 首次发布：全量生成
+            Write-Host "[INFO] No previous app_build.json found, generating full data"
+            $ms = [System.IO.MemoryStream]::new()
+            $writer = [System.Text.Json.Utf8JsonWriter]::new($ms, [System.Text.Json.JsonWriterOptions]@{ Indented = $true })
+            $writer.WriteStartObject()
+            $writer.WriteString("app_build", $buildNumber)
+            $writer.WritePropertyName("plugins")
+            $writer.WriteStartObject()
+            foreach ($p in @("UI", "PlayerWeb", "ScrSaver", "ML", "Shaders")) {
+                $writer.WriteString($p, $buildNumber)
+            }
+            $writer.WriteEndObject()
+            $writer.WriteEndObject()
+            $writer.Flush()
+            $json = [System.Text.Encoding]::UTF8.GetString($ms.ToArray())
+            $writer.Dispose()
+            $ms.Dispose()
+        }
+
         [System.IO.File]::WriteAllText("$outDir/app_build.json", $json, $utf8NoBom)
-        Write-Host "[OK] Generated app_build.json with build $buildNumber"
+        [System.IO.File]::WriteAllText("app_build.json", $json, $utf8NoBom)
+        Write-Host "[OK] Generated app_build.json"
+        Write-Host $json
 
     - name: Validate Build Artifacts
       # 在产物就地校验：主 exe / Plugin exe / 核心 dll 存在且非空。
@@ -335,6 +398,13 @@ jobs:
       with:
         name: build-release-output
         path: src/
+        retention-days: 1
+
+    - name: Upload app_build.json
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-build-json
+        path: app_build.json
         retention-days: 1
 
   # ─────────────────────────────────────────────────────────────
@@ -365,11 +435,11 @@ jobs:
         path: src/
 
     - name: Install Inno Setup 6.7.1
-      shell: powershell
+      shell: pwsh
       run: choco install innosetup --version=6.7.1 --no-progress -y
 
     - name: Patch version in InnoSetup script (local only, not committed)
-      shell: powershell
+      shell: pwsh
       run: |
         $setupPath = "InnoSetup/setup.iss"
         $content = Get-Content $setupPath -Raw
@@ -381,7 +451,7 @@ jobs:
         Write-Host "Patched InnoSetup version to $newVersion (build-time only)"
 
     - name: Download InnoDependencyInstaller
-      shell: powershell
+      shell: pwsh
       run: |
         $url = "https://raw.githubusercontent.com/DomGries/InnoDependencyInstaller/master/CodeDependencies.iss"
         $dest = "InnoSetup\CodeDependencies.iss"
@@ -390,7 +460,7 @@ jobs:
 
     - name: Compile installer
       id: build_installer
-      shell: powershell
+      shell: pwsh
       run: |
         $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
         if (-not (Test-Path $iscc)) {
@@ -406,7 +476,7 @@ jobs:
 
     - name: Record installer info
       id: installer_info
-      shell: powershell
+      shell: pwsh
       run: |
         $outputDir = "InnoSetup\Output"
         $installerFiles = Get-ChildItem -Path $outputDir -Filter "*.exe" -ErrorAction SilentlyContinue
@@ -420,7 +490,7 @@ jobs:
         Write-Output "installer_name=$($installerFiles[0].Name)" >> $env:GITHUB_OUTPUT
 
     - name: Generate SHA256 for installer
-      shell: powershell
+      shell: pwsh
       run: |
         $hash = (Get-FileHash -Path "${{ steps.installer_info.outputs.installer_path }}" -Algorithm SHA256).Hash.ToLower()
         Set-Content -Path "${{ github.workspace }}\InnoSetup\Output\SHA256.txt" -Value $hash
@@ -460,7 +530,7 @@ jobs:
 
     - name: Silent install
       id: install
-      shell: powershell
+      shell: pwsh
       run: |
         $installer = Get-ChildItem "dist\" -Filter "*.exe" | Select-Object -First 1
         if (-not $installer) {
@@ -481,7 +551,7 @@ jobs:
         Write-Host "[OK] Installation completed"
 
     - name: Verify key files exist
-      shell: powershell
+      shell: pwsh
       run: |
         $base = "${{ steps.install.outputs.install_dir }}"
         $required = @(
@@ -503,7 +573,7 @@ jobs:
         }
 
     - name: Launch and verify UI process
-      shell: powershell
+      shell: pwsh
       run: |
         $installDir = "${{ steps.install.outputs.install_dir }}"
         $mainExe = "$installDir\VirtualPaper.exe"
@@ -564,7 +634,7 @@ jobs:
         Write-Host "[OK] Smoke test passed"
 
     - name: Verify UI cannot start without main process
-      shell: powershell
+      shell: pwsh
       run: |
         $installDir = "${{ steps.install.outputs.install_dir }}"
         $uiExe = "$installDir\Plugins\UI\VirtualPaper.UI.exe"
@@ -654,6 +724,12 @@ jobs:
         name: build-release-output
         path: src/
 
+    - name: Download app_build.json
+      uses: actions/download-artifact@v4
+      with:
+        name: app-build-json
+        path: plugin-packages/
+
     - name: Create Plugin packages
       shell: pwsh
       run: |
@@ -729,21 +805,6 @@ jobs:
         [System.IO.File]::WriteAllText("$outputDir/PLUGIN_MANIFEST_SHA256.txt", $manifestHash, $utf8NoBom)
         Write-Host "[OK] Generated PLUGIN_MANIFEST_SHA256.txt: $manifestHash"
 
-        # Generate app_build.json for installation root
-        $appBuildJson = @{
-            app_build = $buildNumber
-            plugins = @{
-                UI = $buildNumber
-                PlayerWeb = $buildNumber
-                ScrSaver = $buildNumber
-                ML = $buildNumber
-                Shaders = $buildNumber
-            }
-        } | ConvertTo-Json -Depth 3
-        [System.IO.File]::WriteAllText("$outputDir/app_build.json", $appBuildJson, $utf8NoBom)
-        Write-Host "[OK] Generated app_build.json"
-        Write-Host $appBuildJson
-
     - name: Upload plugin update packages
       uses: actions/upload-artifact@v4
       with:
@@ -771,7 +832,7 @@ jobs:
         fetch-depth: 0
 
     - name: Update version in csproj
-      shell: powershell
+      shell: pwsh
       run: |
         $csprojPath = "src/VirtualPaper/VirtualPaper.csproj"
         $content = Get-Content $csprojPath -Raw
@@ -781,7 +842,7 @@ jobs:
         Write-Host "Updated csproj version to: $newVersion"
 
     - name: Update version in InnoSetup script
-      shell: powershell
+      shell: pwsh
       run: |
         $setupPath = "InnoSetup/setup.iss"
         $content = Get-Content $setupPath -Raw
@@ -793,7 +854,7 @@ jobs:
         Write-Host "Updated InnoSetup version to: $newVersion"
 
     - name: Update version badge in README
-      shell: powershell
+      shell: pwsh
       run: |
         $readmePath = "README.md"
         $content = Get-Content $readmePath -Raw
@@ -803,7 +864,7 @@ jobs:
         Write-Host "Updated README badge version to: $newVersion"
 
     - name: Commit and push to main
-      shell: powershell
+      shell: pwsh
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
@@ -833,7 +894,7 @@ jobs:
         fetch-depth: 0
 
     - name: Sync main -> pre-publish branches (merge with main override on conflict)
-      shell: powershell
+      shell: pwsh
       run: |
         $newVersion = "${{ needs.prepare.outputs.new_version }}"
 
@@ -978,9 +1039,15 @@ jobs:
         name: VirtualPaper-Plugins-v${{ needs.prepare.outputs.new_version }}
         path: dist/plugin-packages/
 
+    - name: Download app_build.json
+      uses: actions/download-artifact@v4
+      with:
+        name: app-build-json
+        path: dist/
+
     - name: Verify tag does not exist
       id: tag_check
-      shell: powershell
+      shell: pwsh
       run: |
         $tag = "${{ needs.prepare.outputs.release_tag }}"
         $existing = git tag -l $tag 2>$null
@@ -1000,6 +1067,7 @@ jobs:
         files: |
           dist/*.exe
           dist/SHA256.txt
+          dist/app_build.json
           dist/plugin-packages/*.zip
           dist/plugin-packages/plugin-manifest.json
           dist/plugin-packages/PLUGIN_MANIFEST_SHA256.txt
@@ -1033,7 +1101,7 @@ jobs:
         fetch-depth: 0
 
     - name: Rollback changes
-      shell: powershell
+      shell: pwsh
       run: |
         Write-Host ""
         Write-Host "[WARN]" -ForegroundColor Yellow -NoNewline; Write-Host " Pipeline failure detected, starting rollback..."

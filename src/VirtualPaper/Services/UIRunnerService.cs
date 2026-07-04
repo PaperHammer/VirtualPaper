@@ -16,7 +16,9 @@ namespace VirtualPaper.Services {
     public partial class UIRunnerService : IUIRunnerService {
         public event EventHandler<MessageType>? UISendCmd;
 
-        public UIRunnerService() {
+        public UIRunnerService(IJobService jobService) {
+            _jobService = jobService;
+
             if (UAC.IsElevated) {
                 ArcLog.GetLogger<UIRunnerService>().Warn("Process is running elevated, UI may not function properly.");
             }
@@ -147,6 +149,9 @@ namespace VirtualPaper.Services {
             // Check for pending restart update when UI exits normally
             // (not during an update - UpdateLock would be set in that case)
             if (!UpdateLock.IsAnyLocked) {
+                _jobService.PluginsUpdateFinishedEvent += (s, e) => {
+                    _ = ShowUIAsync();
+                };
                 var restartService = App.Services.GetRequiredService<IPluginsUpdateService>();
                 _ = restartService.ExecutePendingPluginUpdateWithWindowAsync();
             }
@@ -158,17 +163,16 @@ namespace VirtualPaper.Services {
             if (!_isDisposed) {
                 if (disposing) {
                     try {
-                        // If a pending restart update exists, close UI gracefully so
-                        // Proc_UI_Exited fires and triggers ExecutePendingUpdateAsync.
-                        var flagPath = VirtualPaper.Common.Constants.CommonPaths.UpdateFlagPath;
-                        if (_processUI != null && File.Exists(flagPath)) {
-                            CloseUI();
-                            if (_processUI != null && !_processUI.HasExited) {
-                                _processUI.WaitForExit(5000);
+                        if (_processUI != null) {
+                            // If a pending restart update exists, close UI gracefully so
+                            // Proc_UI_Exited fires and triggers ExecutePendingUpdateAsync.
+                            var flagPath = VirtualPaper.Common.Constants.CommonPaths.UpdateFlagPath;
+                            if (File.Exists(flagPath)) {
+                                CloseUI();
                             }
-                        }
-                        else {
-                            _processUI?.Kill();
+                            else {
+                                _processUI.Kill();
+                            }
                         }
                     }
                     catch { }
@@ -185,5 +189,6 @@ namespace VirtualPaper.Services {
 
         private Process? _processUI;
         private readonly string _fileName, _workingDir;
+        private readonly IJobService _jobService;
     }
 }

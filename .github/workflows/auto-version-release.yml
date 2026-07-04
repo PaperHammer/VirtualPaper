@@ -311,12 +311,14 @@ jobs:
         if ($prevTag) {
             try {
                 gh release download $prevTag --pattern "app_build.json" --output "prev_app_build.json" 2>$null
+                $global:LASTEXITCODE = 0
                 if (Test-Path "prev_app_build.json") {
                     $prevBuildInfo = Get-Content "prev_app_build.json" -Raw | ConvertFrom-Json
                     Write-Host "[OK] Downloaded previous app_build.json from release $prevTag"
                 }
             }
             catch {
+                $global:LASTEXITCODE = 0
                 Write-Host "[WARN] Could not download previous app_build.json: $_"
             }
         }

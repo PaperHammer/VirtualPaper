@@ -1096,8 +1096,7 @@ jobs:
         name: VirtualPaper-Plugins-v${{ needs.prepare.outputs.new_version }}
         path: dist/
 
-    - name: Download app_comp_manifest (installer-only)
-      if: needs.prepare.outputs.has_plugin_update != 'true'
+    - name: Download app_comp_manifest
       uses: actions/download-artifact@v4
       with:
         name: app-comp-manifest

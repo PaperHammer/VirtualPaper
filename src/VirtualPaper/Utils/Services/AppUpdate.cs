@@ -31,7 +31,9 @@ namespace VirtualPaper.Utils.Services {
                 result.PluginPatchUri = new Uri(patchAsset.BrowserDownloadUrl);
                 result.PluginPatchSha256Uri = new Uri(patchSha256Asset.BrowserDownloadUrl);
 
-                // Download app_comp_manifest.json from release assets for build info
+                // Download app_comp_manifest.json from release assets for build info.
+                // Note: app_comp_manifest.json also exists inside plugins_patch.zip (which is SHA256 verified),
+                // so this standalone copy is not separately verified — it's only used for displaying target version.
                 var appCompManifestAsset = GithubUtil.FindAsset(gitRelease, APP_COMP_MANIFEST_ASSET_NAME);
                 if (appCompManifestAsset != null) {
                     try {

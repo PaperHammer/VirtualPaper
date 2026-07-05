@@ -59,14 +59,25 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private AppBuildInfo? _buildInfo;
 
         private void LoadAppBuildInfo() {
-            var path = Path.Combine(Constants.CommonPaths.AppDataDir, Constants.CoreField.AppBuildFile);
+            // 从 app_manifest.json 读取版本信息
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_manifest.json");
             if (!File.Exists(path)) {
+                _buildInfo = new AppBuildInfo();
                 return;
             }
 
             try {
                 var json = File.ReadAllText(path);
-                _buildInfo = JsonSerializer.Deserialize(json, AppBuildInfoContext.Default.AppBuildInfo) ?? new AppBuildInfo();
+                var manifest = JsonSerializer.Deserialize(json, VirtualPaper.Cores.AppUpdate.Models.UpdateManifestContext.Default.UpdateManifest);
+                if (manifest?.AppPluginsInfo == null) {
+                    _buildInfo = new AppBuildInfo();
+                    return;
+                }
+
+                _buildInfo = new AppBuildInfo { AppBuild = manifest.AppBuild };
+                foreach (var (pluginName, pluginInfo) in manifest.AppPluginsInfo) {
+                    _buildInfo.Plugins[pluginName] = pluginInfo.BuildNumber;
+                }
             }
             catch {
                 _buildInfo = new AppBuildInfo();

@@ -4,6 +4,7 @@ using System.Text.Json;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Cores.AppUpdate.Models;
 using VirtualPaper.lang;
 using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Services.Interfaces;
@@ -49,7 +50,7 @@ namespace VirtualPaper.Cores.AppUpdate {
             else {
                 UpdateLock.ReleaseAll();
             }
-            await _appBuildService.MoveFileToAppDirAsync();
+            _appBuildService.Refresh();
         }
 
         public async Task<PluginsUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default) {
@@ -96,6 +97,11 @@ namespace VirtualPaper.Cores.AppUpdate {
                 await foreach (var p in _downloadService.DownloadMultipleAsync(downloadItems, token)) {
                     progress?.Report(p);
                 }
+
+                // Save manifest to pending dir for later copy to installation root
+                var manifestJson = JsonSerializer.Serialize(manifest, UpdateManifestContext.Default.UpdateManifest);
+                var manifestPath = Path.Combine(pendingDir, "app_manifest.json");
+                await File.WriteAllTextAsync(manifestPath, manifestJson, token);
 
                 result.Success = true;
             }
@@ -148,6 +154,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                                 }
                             }
                         }),
+                    AppPluginsInfo = manifest.AppPluginsInfo,
                     RemovedPlugins = manifest.RemovedPlugins
                 };
                 await SaveUpdateFlagAsync(updateFlag, token);
@@ -220,11 +227,11 @@ namespace VirtualPaper.Cores.AppUpdate {
                     }
                 }
 
-                // Backup app_build.json from WorkSpace root
-                var appBuildPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.CoreField.AppBuildFile);
-                if (File.Exists(appBuildPath)) {
-                    var appBuildBackup = Path.Combine(backupDir, Constants.CoreField.AppBuildFile);
-                    File.Copy(appBuildPath, appBuildBackup, true);
+                // Backup app_manifest.json from WorkSpace root
+                var appManifestPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_manifest.json");
+                if (File.Exists(appManifestPath)) {
+                    var appManifestBackup = Path.Combine(backupDir, "app_manifest.json");
+                    File.Copy(appManifestPath, appManifestBackup, true);
                 }
 
                 // Step: Update flag to in_progress
@@ -281,19 +288,11 @@ namespace VirtualPaper.Cores.AppUpdate {
                     progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Replacing, (float)replacedCount / totalPlugins * 100, string.Format(LanguageManager.Instance[nameof(Constants.I18n.PluginUpdate_ReplacedPlugin)], pluginName)));
                 }
 
-                // Step: Copy app_build.json from pending to installation root
-                var pendingAppBuild = Path.Combine(pendingDir, Constants.CoreField.AppBuildFile);
-                if (File.Exists(pendingAppBuild)) {
-                    File.Copy(pendingAppBuild, appBuildPath, true);
-                    _appBuildService.Refresh();
-                }
-                else {
-                    // Fallback: update in-memory and save
-                    _appBuildService.BuildInfo.AppBuild = flag.AppBuild;
-                    foreach (var (pluginName, pluginInfo) in flag.Plugins) {
-                        _appBuildService.BuildInfo.Plugins[pluginName] = pluginInfo.Build;
-                    }
-                    await _appBuildService.SaveAsync();
+                // Step: Copy app_manifest.json from pending to installation root
+                var pendingManifest = Path.Combine(pendingDir, "app_manifest.json");
+                if (File.Exists(pendingManifest)) {
+                    var installManifest = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_manifest.json");
+                    File.Copy(pendingManifest, installManifest, true);
                 }
 
                 // Step: Process removed plugins
@@ -302,11 +301,10 @@ namespace VirtualPaper.Cores.AppUpdate {
                     if (Directory.Exists(pluginDir)) {
                         Directory.Delete(pluginDir, true);
                     }
-                    _appBuildService.BuildInfo.Plugins.Remove(pluginName);
                 }
-                if (flag.RemovedPlugins.Count > 0) {
-                    await _appBuildService.SaveAsync();
-                }
+
+                // Refresh build info from manifest
+                _appBuildService.Refresh();
 
                 // Step: Update flag to completed, then cleanup
                 flag.Status = UpdateFlag.UpdateStatusCompleted;
@@ -390,6 +388,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 .ToList();
 
         private async Task RollbackAsync(UpdateFlag? flag) {
+            ArcLog.GetLogger<PluginsUpdateService>().Warn("Plugins update error, rolling back");
             var backupDir = Constants.CommonPaths.UpdateBackupDir;
             var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
             if (!Directory.Exists(backupDir)) {
@@ -422,13 +421,15 @@ namespace VirtualPaper.Cores.AppUpdate {
                     FileUtil.CopyDirectory(backupPluginDir, targetDir, true);
                 }
 
-                // Restore app_build.json from backup
-                var appBuildBackup = Path.Combine(backupDir, Constants.CoreField.AppBuildFile);
-                if (File.Exists(appBuildBackup)) {
-                    var appBuildPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.CoreField.AppBuildFile);
-                    File.Copy(appBuildBackup, appBuildPath, true);
-                    _appBuildService.Refresh();
+                // Restore app_manifest.json from backup
+                var appManifestBackup = Path.Combine(backupDir, "app_manifest.json");
+                if (File.Exists(appManifestBackup)) {
+                    var appManifestPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_manifest.json");
+                    File.Copy(appManifestBackup, appManifestPath, true);
                 }
+
+                // Refresh build info from manifest
+                _appBuildService.Refresh();
 
                 ArcLog.GetLogger<PluginsUpdateService>().Info("Rollback completed");
             }

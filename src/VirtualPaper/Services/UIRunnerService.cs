@@ -20,7 +20,7 @@ namespace VirtualPaper.Services {
             _jobService = jobService;
 
             if (UAC.IsElevated) {
-                ArcLog.GetLogger<UIRunnerService>().Warn("Process is running elevated, UI may not function properly.");
+                ArcLog.GetLogger<UIRunnerService>().Warn("Process is running elevated, UI may not work properly.");
             }
 
             if (Constants.ApplicationType.IsMSIX) {

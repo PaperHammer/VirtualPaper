@@ -1,9 +1,11 @@
 using System.Text.Json.Serialization;
+using VirtualPaper.Cores.AppUpdate.Models;
 
 namespace VirtualPaper.Models.AppUpdate {
     [JsonSerializable(typeof(UpdateFlag))]
     [JsonSerializable(typeof(PluginFlagInfo))]
     [JsonSerializable(typeof(FileHashInfo))]
+    [JsonSerializable(typeof(PluginManifestInfo))]
     public partial class UpdateFlagContext : JsonSerializerContext { }
 
     public class UpdateFlag {
@@ -15,6 +17,9 @@ namespace VirtualPaper.Models.AppUpdate {
 
         [JsonPropertyName("plugins")]
         public Dictionary<string, PluginFlagInfo> Plugins { get; set; } = new();
+
+        [JsonPropertyName("app_plugins_info")]
+        public Dictionary<string, PluginManifestInfo> AppPluginsInfo { get; set; } = new();
 
         [JsonPropertyName("removed_plugins")]
         public List<string> RemovedPlugins { get; set; } = new();

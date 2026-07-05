@@ -8,8 +8,8 @@ using VirtualPaper.Utils.Interfcaes;
 
 namespace VirtualPaper.Utils.Services {
     public class GithubReleaseClient : IGithubReleaseClient {
-        private const string PLUGIN_MANIFEST_ASSEST_NAME = "plugin-manifest.json";
-        private const string PLUGIN_MANIFEST_SHA256_ASSET_NAME = "PLUGIN_MANIFEST_SHA256.txt";
+        private const string APP_MANIFEST_ASSET_NAME = "app_manifest.json";
+        private const string APP_MANIFEST_SHA256_ASSET_NAME = "APP_MANIFEST_SHA256.txt";
 
         public async Task<ReleaseInfo> GetLatestRelease(bool isBeta) {
             var userName = "PaperHammer";
@@ -25,8 +25,8 @@ namespace VirtualPaper.Utils.Services {
             };
 
             // Check for manifest
-            var manifestAsset = GithubUtil.FindAsset(gitRelease, PLUGIN_MANIFEST_ASSEST_NAME);
-            var manifestSha256Asset = GithubUtil.FindAsset(gitRelease, PLUGIN_MANIFEST_SHA256_ASSET_NAME);
+            var manifestAsset = GithubUtil.FindAsset(gitRelease, APP_MANIFEST_ASSET_NAME);
+            var manifestSha256Asset = GithubUtil.FindAsset(gitRelease, APP_MANIFEST_SHA256_ASSET_NAME);
             if (manifestAsset != null && manifestSha256Asset != null) {
                 try {
                     // Download manifest and its expected hash

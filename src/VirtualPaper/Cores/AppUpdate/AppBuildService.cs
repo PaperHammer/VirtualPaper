@@ -2,6 +2,7 @@ using System.IO;
 using System.Text.Json;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Cores.AppUpdate.Models;
 using VirtualPaper.Models.AppUpdate;
 
 namespace VirtualPaper.Cores.AppUpdate {
@@ -10,11 +11,11 @@ namespace VirtualPaper.Cores.AppUpdate {
         string AppBuild { get; }
         string GetPluginBuild(string pluginName);
         void Refresh();
-        Task SaveAsync();
-        Task MoveFileToAppDirAsync();
     }
 
     public class AppBuildService : IAppBuildService {
+        private const string AppManifestFile = "app_manifest.json";
+
         public AppBuildInfo BuildInfo { get; private set; } = new();
 
         public string AppBuild => BuildInfo.AppBuild;
@@ -28,40 +29,34 @@ namespace VirtualPaper.Cores.AppUpdate {
         }
 
         public void Refresh() {
-            var path = GetFilePath();
-            if (File.Exists(path)) {
-                BuildInfo = LoadFromFile(path);
-            }
-            else {
-                BuildInfo = new AppBuildInfo();
-            }
+            BuildInfo = LoadFromManifest() ?? new AppBuildInfo();
         }
 
-        private static string GetFilePath() {
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.CoreField.AppBuildFile);
-        }
+        private static AppBuildInfo? LoadFromManifest() {
+            // 优先从 AppDataDir 读取，其次从 BaseDirectory
+            var paths = new[] {
+                Path.Combine(Constants.CommonPaths.AppDataDir, AppManifestFile),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, AppManifestFile)
+            };
 
-        private static AppBuildInfo LoadFromFile(string path) {
-            try {
-                var json = File.ReadAllText(path);
-                return JsonSerializer.Deserialize(json, AppBuildInfoContext.Default.AppBuildInfo) ?? new AppBuildInfo();
+            foreach (var path in paths) {
+                if (!File.Exists(path)) continue;
+                try {
+                    var json = File.ReadAllText(path);
+                    var manifest = JsonSerializer.Deserialize(json, UpdateManifestContext.Default.UpdateManifest);
+                    if (manifest?.AppPluginsInfo == null) continue;
+
+                    var info = new AppBuildInfo { AppBuild = manifest.AppBuild };
+                    foreach (var (pluginName, pluginInfo) in manifest.AppPluginsInfo) {
+                        info.Plugins[pluginName] = pluginInfo.BuildNumber;
+                    }
+                    return info;
+                }
+                catch {
+                    continue;
+                }
             }
-            catch {
-                return new AppBuildInfo();
-            }
-        }
-
-        public async Task SaveAsync() {
-            var path = GetFilePath();
-            var json = JsonSerializer.Serialize(BuildInfo, AppBuildInfoContext.Default.AppBuildInfo);
-            await File.WriteAllTextAsync(path, json);
-        }
-
-        public async Task MoveFileToAppDirAsync() {
-            var src = GetFilePath();
-            if (!File.Exists(src)) return;
-            var dest = Path.Combine(Constants.CommonPaths.AppDataDir, Constants.CoreField.AppBuildFile);
-            await FileUtil.CopyFileAsync(src, dest);
+            return null;
         }
     }
 }

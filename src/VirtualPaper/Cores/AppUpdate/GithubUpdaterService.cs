@@ -56,7 +56,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                     //update Available.
                     Status = AppUpdateStatus.Available;
                 }
-                else if (releaseInfo.IsPluginsUpdate && releaseInfo.PendingManifest != null && HasPluginUpdate(releaseInfo)) {
+                else if (releaseInfo.IsPluginsUpdate && releaseInfo.AppCompManifest != null && HasPluginUpdate(releaseInfo)) {
                     //version unchanged, but plugin updates available.
                     Status = AppUpdateStatus.Available;
                 }
@@ -195,11 +195,11 @@ namespace VirtualPaper.Cores.AppUpdate {
         }
 
         private bool HasPluginUpdate(ReleaseInfo releaseInfo) {
-            foreach (var (pluginName, pluginInfo) in releaseInfo.PendingManifest!.Plugins) {
+            foreach (var (pluginName, remoteBuild) in releaseInfo.AppCompManifest!.Plugins) {
                 var localBuild = _appBuildService.GetPluginBuild(pluginName);
                 if (!string.IsNullOrEmpty(localBuild) &&
-                    string.Compare(pluginInfo.BuildNumber, localBuild, StringComparison.Ordinal) > 0) {
-                    ArcLog.GetLogger<GithubUpdaterService>().Info($"Plugin update available: {pluginName} ({localBuild} -> {pluginInfo.BuildNumber})");
+                    string.Compare(remoteBuild, localBuild, StringComparison.Ordinal) > 0) {
+                    ArcLog.GetLogger<GithubUpdaterService>().Info($"Plugin update available: {pluginName} ({localBuild} -> {remoteBuild})");
                     return true;
                 }
             }

@@ -59,8 +59,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private AppBuildInfo? _buildInfo;
 
         private void LoadAppBuildInfo() {
-            // 从 app_comp_manifest.json 读取版本信息
-            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_comp_manifest.json");
+            // 从 AppData 目录读取 app_comp_manifest.json
+            var path = Path.Combine(VirtualPaper.Common.Constants.CommonPaths.AppDataDir, "app_comp_manifest.json");
             if (!File.Exists(path)) {
                 _buildInfo = new AppBuildInfo();
                 return;

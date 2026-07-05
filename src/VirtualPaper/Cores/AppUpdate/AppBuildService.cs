@@ -52,30 +52,22 @@ namespace VirtualPaper.Cores.AppUpdate {
         }
 
         private static AppBuildInfo? LoadFromManifest() {
-            // 优先从 AppDataDir 读取，其次从 BaseDirectory
-            var paths = new[] {
-                Path.Combine(Constants.CommonPaths.AppDataDir, AppCompManifestFile),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, AppCompManifestFile)
-            };
+            var path = Path.Combine(Constants.CommonPaths.AppDataDir, AppCompManifestFile);
+            if (!File.Exists(path)) return null;
+            try {
+                var json = File.ReadAllText(path);
+                var manifest = JsonSerializer.Deserialize(json, UpdateManifestContext.Default.AppCompManifest);
+                if (manifest?.Plugins == null) return null;
 
-            foreach (var path in paths) {
-                if (!File.Exists(path)) continue;
-                try {
-                    var json = File.ReadAllText(path);
-                    var manifest = JsonSerializer.Deserialize(json, UpdateManifestContext.Default.AppCompManifest);
-                    if (manifest?.Plugins == null) continue;
-
-                    var info = new AppBuildInfo { AppBuildNumber = manifest.AppBuildNumber };
-                    foreach (var (pluginName, buildNumber) in manifest.Plugins) {
-                        info.Plugins[pluginName] = buildNumber;
-                    }
-                    return info;
+                var info = new AppBuildInfo { AppBuildNumber = manifest.AppBuildNumber };
+                foreach (var (pluginName, buildNumber) in manifest.Plugins) {
+                    info.Plugins[pluginName] = buildNumber;
                 }
-                catch {
-                    continue;
-                }
+                return info;
             }
-            return null;
+            catch {
+                return null;
+            }
         }
     }
 }

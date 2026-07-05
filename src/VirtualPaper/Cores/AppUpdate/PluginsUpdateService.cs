@@ -160,7 +160,6 @@ namespace VirtualPaper.Cores.AppUpdate {
                 await SaveUpdateFlagAsync(updateFlag, token);
 
                 // Store release info for later use
-                releaseInfo.PendingManifest = pendingManifest;
                 releaseInfo.AppCompManifest = appCompManifest;
                 releaseInfo.AppBuild = appCompManifest?.AppBuildNumber;
 

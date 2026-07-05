@@ -10,7 +10,6 @@ namespace VirtualPaper.Models.AppUpdate {
         // For plugin update (plugins_patch.zip)
         public Uri? PluginPatchUri { get; set; }
         public Uri? PluginPatchSha256Uri { get; set; }
-        public PendingUpdateManifest? PendingManifest { get; set; }
         public AppCompManifest? AppCompManifest { get; set; }
 
         // For installer update

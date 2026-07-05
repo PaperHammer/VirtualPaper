@@ -37,7 +37,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 else if (Constants.ApplicationType.IsMSIX)
                     ver += $" {LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_MsStore)}";
 
-                var appBuild = _buildInfo?.AppBuild;
+                var appBuild = _buildInfo?.AppBuildNumber;
                 if (!string.IsNullOrEmpty(appBuild))
                     ver += $" (Build {appBuild})";
 
@@ -59,8 +59,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private AppBuildInfo? _buildInfo;
 
         private void LoadAppBuildInfo() {
-            // 从 app_manifest.json 读取版本信息
-            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_manifest.json");
+            // 从 app_comp_manifest.json 读取版本信息
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_comp_manifest.json");
             if (!File.Exists(path)) {
                 _buildInfo = new AppBuildInfo();
                 return;
@@ -68,15 +68,15 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
             try {
                 var json = File.ReadAllText(path);
-                var manifest = JsonSerializer.Deserialize(json, VirtualPaper.Cores.AppUpdate.Models.UpdateManifestContext.Default.UpdateManifest);
-                if (manifest?.AppPluginsInfo == null) {
+                var manifest = JsonSerializer.Deserialize(json, VirtualPaper.Cores.AppUpdate.Models.UpdateManifestContext.Default.AppCompManifest);
+                if (manifest?.Plugins == null) {
                     _buildInfo = new AppBuildInfo();
                     return;
                 }
 
-                _buildInfo = new AppBuildInfo { AppBuild = manifest.AppBuild };
-                foreach (var (pluginName, pluginInfo) in manifest.AppPluginsInfo) {
-                    _buildInfo.Plugins[pluginName] = pluginInfo.BuildNumber;
+                _buildInfo = new AppBuildInfo { AppBuildNumber = manifest.AppBuildNumber };
+                foreach (var (pluginName, buildNumber) in manifest.Plugins) {
+                    _buildInfo.Plugins[pluginName] = buildNumber;
                 }
             }
             catch {

@@ -1,15 +1,15 @@
 using System.Text.Json;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
-using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Cores.AppUpdate.Models;
 using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Utils.Interfcaes;
 
 namespace VirtualPaper.Utils.Services {
     public class GithubReleaseClient : IGithubReleaseClient {
-        private const string APP_MANIFEST_ASSET_NAME = "app_manifest.json";
-        private const string APP_MANIFEST_SHA256_ASSET_NAME = "APP_MANIFEST_SHA256.txt";
+        private const string PLUGINS_PATCH_ASSET_NAME = "plugins_patch.zip";
+        private const string PLUGINS_PATCH_SHA256_ASSET_NAME = "PLUGINS_PATCH_SHS256.txt";
+        private const string APP_COMP_MANIFEST_ASSET_NAME = "app_comp_manifest.json";
 
         public async Task<ReleaseInfo> GetLatestRelease(bool isBeta) {
             var userName = "PaperHammer";
@@ -24,41 +24,30 @@ namespace VirtualPaper.Utils.Services {
                 Changelog = changelog
             };
 
-            // Check for manifest
-            var manifestAsset = GithubUtil.FindAsset(gitRelease, APP_MANIFEST_ASSET_NAME);
-            var manifestSha256Asset = GithubUtil.FindAsset(gitRelease, APP_MANIFEST_SHA256_ASSET_NAME);
-            if (manifestAsset != null && manifestSha256Asset != null) {
-                try {
-                    // Download manifest and its expected hash
-                    var manifestContent = await GithubUtil.DownloadAssetContent(manifestAsset);
-                    var expectedHash = (await GithubUtil.DownloadAssetContent(manifestSha256Asset)).Trim().ToLowerInvariant();
+            // Check for plugin update: plugins_patch.zip + PLUGINS_PATCH_SHS256.txt
+            var patchAsset = GithubUtil.FindAsset(gitRelease, PLUGINS_PATCH_ASSET_NAME);
+            var patchSha256Asset = GithubUtil.FindAsset(gitRelease, PLUGINS_PATCH_SHA256_ASSET_NAME);
+            if (patchAsset != null && patchSha256Asset != null) {
+                result.PluginPatchUri = new Uri(patchAsset.BrowserDownloadUrl);
+                result.PluginPatchSha256Uri = new Uri(patchSha256Asset.BrowserDownloadUrl);
 
-                    // Verify manifest hash
-                    var actualHash = FileUtil.GetChecksumSHA256FromContent(manifestContent);
-                    if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase)) {
-                        throw new InvalidOperationException($"Manifest SHA256 mismatch: expected {expectedHash}, got {actualHash}");
-                    }
-
-                    var manifest = JsonSerializer.Deserialize(manifestContent, UpdateManifestContext.Default.UpdateManifest);
-                    if (manifest != null) {
-                        result.Manifest = manifest;
-                        result.AppBuild = manifest.AppBuild;
-
-                        if (manifest.IsPluginsUpdate) {
-                            // Plugin update: gather plugin asset URIs, skip installer
-                            foreach (var (pluginName, pluginInfo) in manifest.Plugins) {
-                                var asset = GithubUtil.FindAsset(gitRelease, pluginInfo.Asset);
-                                if (asset != null) {
-                                    result.PluginAssetUris[pluginName] = new Uri(asset.BrowserDownloadUrl);
-                                }
-                            }
-                            return result;
+                // Download app_comp_manifest.json from release assets for build info
+                var appCompManifestAsset = GithubUtil.FindAsset(gitRelease, APP_COMP_MANIFEST_ASSET_NAME);
+                if (appCompManifestAsset != null) {
+                    try {
+                        var manifestContent = await GithubUtil.DownloadAssetContent(appCompManifestAsset);
+                        var appCompManifest = JsonSerializer.Deserialize(manifestContent, UpdateManifestContext.Default.AppCompManifest);
+                        if (appCompManifest != null) {
+                            result.AppCompManifest = appCompManifest;
+                            result.AppBuild = appCompManifest.AppBuildNumber;
                         }
                     }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<GithubReleaseClient>().Error("Failed to parse app_comp_manifest", ex);
+                    }
                 }
-                catch (Exception ex) {                    
-                    ArcLog.GetLogger<GithubReleaseClient>().Error("Failed to parse or verify manifest", ex);
-                }
+
+                return result;
             }
 
             // Install-style update: gather installer info

@@ -68,6 +68,7 @@ namespace VirtualPaper.Common {
             public static string PendingUpdatesDir => Path.Combine(AppDataDir, "pending_updates");
             public static string UpdateFlagPath => Path.Combine(PendingUpdatesDir, "update.flag");
             public static string UpdateBackupDir => Path.Combine(PendingUpdatesDir, "_backup");
+            public static string PluginPatchExtractDir => Path.Combine(PendingUpdatesDir, "extracted");
             public static string RollbackNoticePath => Path.Combine(AppDataDir, "update_rollback_notice.json");
 
             private static class Legacy {

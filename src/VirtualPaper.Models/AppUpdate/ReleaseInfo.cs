@@ -6,16 +6,18 @@ namespace VirtualPaper.Models.AppUpdate {
         public string? AppBuild { get; set; }
         public string Changelog { get; set; } = string.Empty;
         public DateTime CheckedTime { get; set; }
-        public UpdateManifest? Manifest { get; set; }
 
-        // For install-style update
+        // For plugin update (plugins_patch.zip)
+        public Uri? PluginPatchUri { get; set; }
+        public Uri? PluginPatchSha256Uri { get; set; }
+        public PendingUpdateManifest? PendingManifest { get; set; }
+        public AppCompManifest? AppCompManifest { get; set; }
+
+        // For installer update
         public Uri? InstallerUri { get; set; }
         public Uri? InstallerShaUri { get; set; }
 
-        // For restart-style update - asset download URIs
-        public Dictionary<string, Uri> PluginAssetUris { get; set; } = new();
-
-        public bool IsPluginsUpdate => Manifest?.IsPluginsUpdate == true;
-        public bool IsInstallerUpdate => Manifest == null || Manifest.IsInstallerUpdate;
+        public bool IsPluginsUpdate => PluginPatchUri != null;
+        public bool IsInstallerUpdate => !IsPluginsUpdate;
     }
 }

@@ -13,11 +13,6 @@ namespace VirtualPaper.Cores.AppUpdate {
     public sealed class GithubUpdaterService : IAppUpdaterService {
         public event EventHandler<AppUpdaterEventArgs>? UpdateChecked;
 
-        //public string LastCheckChangelog { get; private set; } = string.Empty;
-        //public DateTime LastCheckTime { get; private set; } = DateTime.MinValue;
-        //public Uri LastCheckUri { get; private set; } = null!;
-        //public Uri LastCheckShaUri { get; private set; } = null!;
-        //public Version LastCheckVersion { get; private set; } = new Version(0, 0, 0, 0);
         public AppUpdateStatus Status { get; private set; } = AppUpdateStatus.Notchecked;
         public ReleaseInfo? LastReleaseInfo { get; private set; }
 
@@ -61,7 +56,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                     //update Available.
                     Status = AppUpdateStatus.Available;
                 }
-                else if (releaseInfo.IsPluginsUpdate && releaseInfo.Manifest != null && HasPluginUpdate(releaseInfo)) {
+                else if (releaseInfo.IsPluginsUpdate && releaseInfo.PendingManifest != null && HasPluginUpdate(releaseInfo)) {
                     //version unchanged, but plugin updates available.
                     Status = AppUpdateStatus.Available;
                 }
@@ -73,10 +68,6 @@ namespace VirtualPaper.Cores.AppUpdate {
                     //up-to-date.
                     Status = AppUpdateStatus.Uptodate;
                 }
-                //LastCheckUri = releaseInfo.InstallerUri ?? new Uri("about:blank");
-                //LastCheckShaUri = releaseInfo.InstallerShaUri;
-                //LastCheckVersion = releaseInfo.Version;
-                //LastCheckChangelog = releaseInfo.Changelog;
             }
             catch (RateLimitExceededException e) {
                 ArcLog.GetLogger<GithubUpdaterService>().Warn("Github rate limit exceeded, retry after reset");
@@ -98,52 +89,10 @@ namespace VirtualPaper.Cores.AppUpdate {
                 LastReleaseInfo.CheckedTime = DateTime.Now;
                 Status = AppUpdateStatus.Error;
             }
-            //LastCheckTime = DateTime.Now;
 
             UpdateChecked?.Invoke(this, new AppUpdaterEventArgs(Status, LastReleaseInfo));
             return Status;
         }
-
-        //private async Task<List<(Uri, Version, string)>> GetModulesLatestRelease(bool isBeta) {
-        //    var userName = "PaperHammer";
-        //    var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper";
-        //    var gitRelease = await GithubUtil.GetLatestRelease(repositoryName, userName, 0);
-        //    Version version = GithubUtil.GetVersion(gitRelease);
-
-        //    //download asset format: virtualpaper_x64_module_YYY_vXXXX.dll, YYY - module-name, XXXX - 4 digit version no.
-        //    var gitUrls = await GithubUtil.GetAllAssetUrl(
-        //        "virtualpaper_x64_module",
-        //        gitRelease, repositoryName, userName);
-        //    List<(Uri, Version, string)> res = [];
-        //    foreach (var url in gitUrls) {
-        //        Uri uri = new(url);
-        //        string changelog = gitRelease.Body;
-        //        res.Add((uri, version, changelog));
-        //    }
-
-        //    return res;
-        //}
-
-        //public async Task<(Uri exeUri, Uri shaUri, Version version, string changelog)> GetLatestRelease(bool isBeta) {
-        //    var userName = "PaperHammer";
-        //    var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper";
-        //    var gitRelease = await GithubUtil.GetLatestRelease(repositoryName, userName, 0);
-        //    Version version = GithubUtil.GetVersion(gitRelease);
-
-        //    //download asset format: virtualpaper_setup_x64_full_vXXXX.exe, XXXX - 4 digit version no.
-        //    var gitUrl = await GithubUtil.GetAssetUrl(
-        //        "virtualpaper_setup_x64_full",
-        //        gitRelease, repositoryName, userName);
-        //    Uri exeUri = new(gitUrl);
-        //    string changelog = gitRelease.Body;
-
-        //    gitUrl = await GithubUtil.GetAssetUrl(
-        //        "SHA256",
-        //        gitRelease, repositoryName, userName);
-        //    Uri shaUri = new(gitUrl);
-
-        //    return (exeUri, shaUri, version, changelog);
-        //}
 
         /// <summary>
         /// 本地探测：检查 pending_updates 和 installer_cache 是否有已就绪的更新。
@@ -173,11 +122,15 @@ namespace VirtualPaper.Cores.AppUpdate {
                     return false;
                 }
 
-                var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+                var extractDir = Constants.CommonPaths.PluginPatchExtractDir;
+                if (!Directory.Exists(extractDir)) {
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
+                    return false;
+                }
+
                 foreach (var kv in flag.Plugins) {
-                    var pluginName = kv.Key;
                     foreach (var fileHash in kv.Value.Files) {
-                        var filePath = Path.Combine(pendingDir, pluginName, fileHash.Name);
+                        var filePath = Path.Combine(extractDir, fileHash.Name);
                         if (!FileUtil.VerifyFileIntegrityAsync(filePath, fileHash.Sha256).GetAwaiter().GetResult()) {
                             FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
                             return false;
@@ -242,11 +195,11 @@ namespace VirtualPaper.Cores.AppUpdate {
         }
 
         private bool HasPluginUpdate(ReleaseInfo releaseInfo) {
-            foreach (var (pluginName, pluginInfo) in releaseInfo.Manifest!.Plugins) {
+            foreach (var (pluginName, pluginInfo) in releaseInfo.PendingManifest!.Plugins) {
                 var localBuild = _appBuildService.GetPluginBuild(pluginName);
                 if (!string.IsNullOrEmpty(localBuild) &&
-                    string.Compare(pluginInfo.Build, localBuild, StringComparison.Ordinal) > 0) {
-                    ArcLog.GetLogger<GithubUpdaterService>().Info($"Plugin update available: {pluginName} ({localBuild} -> {pluginInfo.Build})");
+                    string.Compare(pluginInfo.BuildNumber, localBuild, StringComparison.Ordinal) > 0) {
+                    ArcLog.GetLogger<GithubUpdaterService>().Info($"Plugin update available: {pluginName} ({localBuild} -> {pluginInfo.BuildNumber})");
                     return true;
                 }
             }

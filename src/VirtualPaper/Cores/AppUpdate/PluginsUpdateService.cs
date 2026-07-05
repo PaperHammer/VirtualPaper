@@ -12,7 +12,6 @@ using VirtualPaper.Views;
 
 namespace VirtualPaper.Cores.AppUpdate {
     public interface IPluginsUpdateService {
-        Task<PluginsUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default);
         Task<PluginsUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default);
         Task<PluginsUpdateResult> VerifyAndSavePendingAsync(ReleaseInfo releaseInfo, CancellationToken token = default);
         Task<PluginsUpdateResult> ExecutePendingUpdateAsync(IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default);
@@ -53,60 +52,30 @@ namespace VirtualPaper.Cores.AppUpdate {
             _appBuildService.Refresh();
         }
 
-        public async Task<PluginsUpdateResult> ExecuteUpdateAsync(ReleaseInfo releaseInfo, IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default) {
-            var downloadResult = await DownloadPendingAsync(releaseInfo, null, token);
-            if (!downloadResult.Success) return downloadResult;
-            var verifyResult = await VerifyAndSavePendingAsync(releaseInfo, token);
-            if (!verifyResult.Success) return verifyResult;
-            return await ExecutePendingUpdateAsync(progress, token);
-        }
-
         public async Task<PluginsUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default) {
             var result = new PluginsUpdateResult();
 
-            if (releaseInfo.Manifest == null || !releaseInfo.Manifest.IsPluginsUpdate) {
+            if (releaseInfo.PluginPatchUri == null) {
                 result.Success = false;
-                result.ErrorMessage = "Not a restart-style update";
+                result.ErrorMessage = "No plugin patch available";
                 return result;
             }
 
-            var manifest = releaseInfo.Manifest;
             var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
 
             try {
                 FileUtil.RemoveDirectory(pendingDir);
                 Directory.CreateDirectory(pendingDir);
 
-                var downloadItems = new List<(Uri uri, string saveFilePath)>();
-
-                foreach (var kv in manifest.Plugins) {
-                    var pluginName = kv.Key;
-                    var pluginInfo = kv.Value;
-
-                    if (!releaseInfo.PluginAssetUris.TryGetValue(pluginName, out var downloadUri)) {
-                        throw new InvalidOperationException($"Download URI not found for plugin: {pluginName}");
-                    }
-
-                    var pluginDir = Path.Combine(pendingDir, pluginName);
-                    Directory.CreateDirectory(pluginDir);
-                    var zipPath = Path.Combine(pluginDir, pluginInfo.Asset);
-
-                    downloadItems.Add((downloadUri, zipPath));
-                }
-
-                await foreach (var p in _downloadService.DownloadMultipleAsync(downloadItems, token)) {
+                var patchZipPath = Path.Combine(pendingDir, "plugins_patch.zip");
+                await foreach (var p in _downloadService.DownloadAsync(releaseInfo.PluginPatchUri, patchZipPath, token)) {
                     progress?.Report(p);
                 }
-
-                // Save manifest to pending dir for later copy to installation root
-                var manifestJson = JsonSerializer.Serialize(manifest, UpdateManifestContext.Default.UpdateManifest);
-                var manifestPath = Path.Combine(pendingDir, "app_manifest.json");
-                await File.WriteAllTextAsync(manifestPath, manifestJson, token);
 
                 result.Success = true;
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<PluginsUpdateService>().Error("Restart update download failed", ex);
+                ArcLog.GetLogger<PluginsUpdateService>().Error("Plugin patch download failed", ex);
                 result.Success = false;
                 result.ErrorMessage = ex.Message;
                 FileUtil.RemoveDirectory(pendingDir);
@@ -118,51 +87,87 @@ namespace VirtualPaper.Cores.AppUpdate {
         public async Task<PluginsUpdateResult> VerifyAndSavePendingAsync(ReleaseInfo releaseInfo, CancellationToken token = default) {
             var result = new PluginsUpdateResult();
 
-            if (releaseInfo.Manifest == null || !releaseInfo.Manifest.IsPluginsUpdate) {
+            if (releaseInfo.PluginPatchSha256Uri == null) {
                 result.Success = false;
-                result.ErrorMessage = "Not a restart-style update";
+                result.ErrorMessage = "No plugin patch SHA256 available";
                 return result;
             }
 
-            var manifest = releaseInfo.Manifest;
             var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+            var patchZipPath = Path.Combine(pendingDir, "plugins_patch.zip");
 
             try {
-                foreach (var kv in manifest.Plugins) {
-                    var pluginName = kv.Key;
-                    var pluginInfo = kv.Value;
-                    var zipPath = Path.Combine(pendingDir, pluginName, pluginInfo.Asset);
-
-                    bool verified = await _downloadService.VerifyFileIntegrityAsync(zipPath, pluginInfo.Sha256, token);
-                    if (!verified) {
-                        throw new InvalidDataException($"SHA256 verification failed for plugin: {pluginName}");
-                    }
+                // Download and verify SHA256 of plugins_patch.zip
+                var expectedHash = await _downloadService.DownloadShaTxtAsync(releaseInfo.PluginPatchSha256Uri, token);
+                bool verified = await _downloadService.VerifyFileIntegrityAsync(patchZipPath, expectedHash, token);
+                if (!verified) {
+                    throw new InvalidDataException("SHA256 verification failed for plugins_patch.zip");
                 }
 
+                // Extract plugins_patch.zip
+                var extractDir = Constants.CommonPaths.PluginPatchExtractDir;
+                if (Directory.Exists(extractDir)) {
+                    Directory.Delete(extractDir, true);
+                }
+                Directory.CreateDirectory(extractDir);
+                ZipFile.ExtractToDirectory(patchZipPath, extractDir, true);
+
+                // Parse pending_update_plugins_manifest.json
+                var pendingManifestPath = Path.Combine(extractDir, "pending_update_plugins_manifest.json");
+                if (!File.Exists(pendingManifestPath)) {
+                    throw new FileNotFoundException("pending_update_plugins_manifest.json not found in patch");
+                }
+                var pendingJson = await File.ReadAllTextAsync(pendingManifestPath, token);
+                var pendingManifest = JsonSerializer.Deserialize(pendingJson, UpdateManifestContext.Default.PendingUpdateManifest);
+                if (pendingManifest == null || pendingManifest.Plugins.Count == 0) {
+                    throw new InvalidOperationException("No plugins to update in pending manifest");
+                }
+
+                // Parse app_comp_manifest.json
+                var appCompManifestPath = Path.Combine(extractDir, "app_comp_manifest.json");
+                AppCompManifest? appCompManifest = null;
+                if (File.Exists(appCompManifestPath)) {
+                    var appCompJson = await File.ReadAllTextAsync(appCompManifestPath, token);
+                    appCompManifest = JsonSerializer.Deserialize(appCompJson, UpdateManifestContext.Default.AppCompManifest);
+                }
+
+                // Build update flag
                 var updateFlag = new UpdateFlag {
                     Status = UpdateFlag.UpdateStatusPending,
-                    AppBuild = manifest.AppBuild,
-                    Plugins = manifest.Plugins.ToDictionary(
-                        kv => kv.Key,
-                        kv => new PluginFlagInfo {
-                            Target = Path.Combine("Plugins", kv.Key),
-                            Build = kv.Value.Build,
-                            Files = new List<FileHashInfo> {
-                                new FileHashInfo {
-                                    Name = kv.Value.Asset,
-                                    Sha256 = kv.Value.Sha256
-                                }
-                            }
-                        }),
-                    AppPluginsInfo = manifest.AppPluginsInfo,
-                    RemovedPlugins = manifest.RemovedPlugins
+                    AppBuildNumber = appCompManifest?.AppBuildNumber ?? string.Empty,
+                    Plugins = new Dictionary<string, PluginFlagInfo>()
                 };
+
+                foreach (var (pluginName, pluginInfo) in pendingManifest.Plugins) {
+                    // Verify individual plugin zip exists in extracted content
+                    var pluginZipPath = Path.Combine(extractDir, pluginInfo.Asset);
+                    if (!File.Exists(pluginZipPath)) {
+                        throw new FileNotFoundException($"Plugin zip not found in patch: {pluginInfo.Asset}");
+                    }
+
+                    updateFlag.Plugins[pluginName] = new PluginFlagInfo {
+                        Target = Path.Combine("Plugins", pluginName),
+                        Build = pluginInfo.BuildNumber,
+                        Files = new List<FileHashInfo> {
+                            new FileHashInfo {
+                                Name = pluginInfo.Asset,
+                                Sha256 = pluginInfo.Sha256
+                            }
+                        }
+                    };
+                }
+
                 await SaveUpdateFlagAsync(updateFlag, token);
+
+                // Store release info for later use
+                releaseInfo.PendingManifest = pendingManifest;
+                releaseInfo.AppCompManifest = appCompManifest;
+                releaseInfo.AppBuild = appCompManifest?.AppBuildNumber;
 
                 result.Success = true;
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<PluginsUpdateService>().Error("Restart update verify failed", ex);
+                ArcLog.GetLogger<PluginsUpdateService>().Error("Plugin patch verify failed", ex);
                 result.Success = false;
                 result.ErrorMessage = ex.Message;
                 FileUtil.RemoveDirectory(pendingDir);
@@ -194,10 +199,12 @@ namespace VirtualPaper.Cores.AppUpdate {
             }
 
             try {
-                // Verify downloaded files against hashes in flag (single verification pass)
+                var extractDir = Constants.CommonPaths.PluginPatchExtractDir;
+
+                // Verify extracted plugin zips against hashes in flag
                 foreach (var (pluginName, pluginInfo) in flag.Plugins) {
                     foreach (var fileHash in pluginInfo.Files) {
-                        var filePath = Path.Combine(pendingDir, pluginName, fileHash.Name);
+                        var filePath = Path.Combine(extractDir, fileHash.Name);
                         if (!File.Exists(filePath)) {
                             throw new FileNotFoundException($"Pending update file missing: {filePath}");
                         }
@@ -227,11 +234,11 @@ namespace VirtualPaper.Cores.AppUpdate {
                     }
                 }
 
-                // Backup app_manifest.json from WorkSpace root
-                var appManifestPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_manifest.json");
-                if (File.Exists(appManifestPath)) {
-                    var appManifestBackup = Path.Combine(backupDir, "app_manifest.json");
-                    File.Copy(appManifestPath, appManifestBackup, true);
+                // Backup app_comp_manifest.json from WorkSpace root
+                var appCompManifestPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_comp_manifest.json");
+                if (File.Exists(appCompManifestPath)) {
+                    var appManifestBackup = Path.Combine(backupDir, "app_comp_manifest.json");
+                    File.Copy(appCompManifestPath, appManifestBackup, true);
                 }
 
                 // Step: Update flag to in_progress
@@ -247,7 +254,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                     token.ThrowIfCancellationRequested();
 
                     var targetDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pluginInfo.Target));
-                    var zipPath = Path.Combine(pendingDir, pluginName, pluginInfo.Files[0].Name);
+                    var zipPath = Path.Combine(extractDir, pluginInfo.Files[0].Name);
 
                     // Clear target directory
                     if (Directory.Exists(targetDir)) {
@@ -257,16 +264,16 @@ namespace VirtualPaper.Cores.AppUpdate {
                         Directory.CreateDirectory(targetDir);
                     }
 
-                    // Extract zip - the zip contains a single folder with the plugin name
-                    var extractDir = Path.Combine(pendingDir, pluginName, "extracted");
-                    if (Directory.Exists(extractDir)) {
-                        Directory.Delete(extractDir, true);
+                    // Extract plugin zip - the zip contains a single folder with the plugin name
+                    var pluginExtractDir = Path.Combine(pendingDir, pluginName, "extracted");
+                    if (Directory.Exists(pluginExtractDir)) {
+                        Directory.Delete(pluginExtractDir, true);
                     }
-                    Directory.CreateDirectory(extractDir);
-                    ZipFile.ExtractToDirectory(zipPath, extractDir, true);
+                    Directory.CreateDirectory(pluginExtractDir);
+                    ZipFile.ExtractToDirectory(zipPath, pluginExtractDir, true);
 
                     // Find the plugin folder inside the extracted content
-                    var folders = Directory.GetDirectories(extractDir);
+                    var folders = Directory.GetDirectories(pluginExtractDir);
                     if (folders.Length != 1) {
                         throw new InvalidOperationException($"Expected exactly one folder in plugin zip, found {folders.Length}");
                     }
@@ -288,11 +295,13 @@ namespace VirtualPaper.Cores.AppUpdate {
                     progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Replacing, (float)replacedCount / totalPlugins * 100, string.Format(LanguageManager.Instance[nameof(Constants.I18n.PluginUpdate_ReplacedPlugin)], pluginName)));
                 }
 
-                // Step: Copy app_manifest.json from pending to installation root
-                var pendingManifest = Path.Combine(pendingDir, "app_manifest.json");
-                if (File.Exists(pendingManifest)) {
-                    var installManifest = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_manifest.json");
-                    File.Copy(pendingManifest, installManifest, true);
+                // Step: Copy app_comp_manifest.json from extracted patch to both BaseDirectory and AppDataDir
+                var extractedAppCompManifest = Path.Combine(extractDir, "app_comp_manifest.json");
+                if (File.Exists(extractedAppCompManifest)) {
+                    var baseManifest = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_comp_manifest.json");
+                    var appDataManifest = Path.Combine(Constants.CommonPaths.AppDataDir, "app_comp_manifest.json");
+                    File.Copy(extractedAppCompManifest, baseManifest, true);
+                    File.Copy(extractedAppCompManifest, appDataManifest, true);
                 }
 
                 // Step: Process removed plugins
@@ -421,11 +430,13 @@ namespace VirtualPaper.Cores.AppUpdate {
                     FileUtil.CopyDirectory(backupPluginDir, targetDir, true);
                 }
 
-                // Restore app_manifest.json from backup
-                var appManifestBackup = Path.Combine(backupDir, "app_manifest.json");
-                if (File.Exists(appManifestBackup)) {
-                    var appManifestPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_manifest.json");
-                    File.Copy(appManifestBackup, appManifestPath, true);
+                // Restore app_comp_manifest.json from backup to both BaseDirectory and AppDataDir
+                var appCompManifestBackup = Path.Combine(backupDir, "app_comp_manifest.json");
+                if (File.Exists(appCompManifestBackup)) {
+                    var baseManifest = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_comp_manifest.json");
+                    var appDataManifest = Path.Combine(Constants.CommonPaths.AppDataDir, "app_comp_manifest.json");
+                    File.Copy(appCompManifestBackup, baseManifest, true);
+                    File.Copy(appCompManifestBackup, appDataManifest, true);
                 }
 
                 // Refresh build info from manifest

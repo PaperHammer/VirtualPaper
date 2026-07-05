@@ -5,11 +5,6 @@ namespace VirtualPaper.Cores.AppUpdate {
     public interface IAppUpdaterService {
         event EventHandler<AppUpdaterEventArgs> UpdateChecked;
 
-        //string LastCheckChangelog { get; }
-        //DateTime LastCheckTime { get; }
-        //Uri LastCheckUri { get; }
-        //Uri? LastCheckShaUri { get; }
-        //Version LastCheckVersion { get; }
         AppUpdateStatus Status { get; }
         ReleaseInfo? LastReleaseInfo { get; }
 

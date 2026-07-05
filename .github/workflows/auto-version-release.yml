@@ -45,7 +45,7 @@ jobs:
       build_number: ${{ steps.version.outputs.build_number }}
       release_tag: ${{ steps.version.outputs.release_tag }}
       previous_tag: ${{ steps.prev_tag.outputs.previous_tag }}
-      app_plugins_info: ${{ steps.app_info.outputs.app_plugins_info }}
+      app_comp_manifest: ${{ steps.app_info.outputs.app_comp_manifest }}
 
     steps:
     - name: Checkout with full history
@@ -254,7 +254,7 @@ jobs:
         [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "$delimiter`n", $utf8NoBom)
         Write-Host "PR body captured ($($body.Length) chars)"
 
-    - name: Build app_plugins_info (merge with previous release manifest)
+    - name: Build app_comp_manifest (merge with previous release manifest)
       id: app_info
       shell: pwsh
       env:
@@ -271,31 +271,21 @@ jobs:
 
         $prevPlugins = @{}
 
-        # 尝试从上一个 release 下载 manifest（兼容新旧文件名）
+        # 从上一个 release 下载 manifest
         if ($prevTag) {
-            foreach ($pattern in @("app_manifest.json", "app_manifest", "plugin-manifest.json")) {
-                try {
-                    gh release download $prevTag --pattern $pattern --output "prev_manifest" 2>$null
-                    $global:LASTEXITCODE = 0
-                    if (Test-Path "prev_manifest") {
-                        $manifest = Get-Content "prev_manifest" -Raw | ConvertFrom-Json
-                        # 兼容旧格式（app_info.plugins）和新格式（app_plugins_info）
-                        if ($manifest.app_plugins_info) {
-                            foreach ($prop in $manifest.app_plugins_info.PSObject.Properties) {
-                                $prevPlugins[$prop.Name] = $prop.Value.build_number
-                            }
-                        } elseif ($manifest.app_info -and $manifest.app_info.plugins) {
-                            foreach ($prop in $manifest.app_info.plugins.PSObject.Properties) {
-                                $prevPlugins[$prop.Name] = $prop.Value
-                            }
-                        }
-                        Write-Host "[OK] Downloaded previous manifest from release $prevTag (file: $pattern)"
-                        break
+            try {
+                gh release download $prevTag --pattern "app_comp_manifest.json" --output "prev_manifest" 2>$null
+                $global:LASTEXITCODE = 0
+                if (Test-Path "prev_manifest") {
+                    $manifest = Get-Content "prev_manifest" -Raw | ConvertFrom-Json
+                    foreach ($prop in $manifest.plugins.PSObject.Properties) {
+                        $prevPlugins[$prop.Name] = $prop.Value
                     }
+                    Write-Host "[OK] Downloaded previous manifest from release $prevTag"
                 }
-                catch {
-                    $global:LASTEXITCODE = 0
-                }
+            }
+            catch {
+                $global:LASTEXITCODE = 0
             }
         }
 
@@ -315,21 +305,25 @@ jobs:
             $pluginsInfo[$plugin] = $pluginBuild
         }
 
-        # 输出 JSON（仅 build_number，pending_update 由后续 job 添加）
+        # 输出 app_comp_manifest JSON
         $ms = [System.IO.MemoryStream]::new()
         $writer = [System.Text.Json.Utf8JsonWriter]::new($ms, [System.Text.Json.JsonWriterOptions]@{ Indented = $false })
+        $writer.WriteStartObject()
+        $writer.WriteString("app_build_number", $buildNumber)
+        $writer.WritePropertyName("plugins")
         $writer.WriteStartObject()
         foreach ($kv in $pluginsInfo.GetEnumerator() | Sort-Object Name) {
             $writer.WriteString($kv.Key, $kv.Value)
         }
+        $writer.WriteEndObject()
         $writer.WriteEndObject()
         $writer.Flush()
         $json = [System.Text.Encoding]::UTF8.GetString($ms.ToArray())
         $writer.Dispose()
         $ms.Dispose()
 
-        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "app_plugins_info=$json`n", $utf8NoBom)
-        Write-Host "app_plugins_info: $json"
+        [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "app_comp_manifest=$json`n", $utf8NoBom)
+        Write-Host "app_comp_manifest: $json"
 
   # ─────────────────────────────────────────────────────────────
   # Job 2: 编译 .NET Release
@@ -373,65 +367,38 @@ jobs:
     - name: Rebuild solution
       run: msbuild src/VirtualPaper.sln /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU" /restore /m
 
-    - name: Generate app_manifest.json
+    - name: Generate app_comp_manifest.json
       shell: pwsh
       env:
-        BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
-        HAS_PLUGIN_UPDATE: ${{ needs.prepare.outputs.has_plugin_update }}
-        UPDATE_PLUGINS: ${{ needs.prepare.outputs.update_plugins }}
-        APP_PLUGINS_INFO: ${{ needs.prepare.outputs.app_plugins_info }}
+        APP_COMP_MANIFEST: ${{ needs.prepare.outputs.app_comp_manifest }}
       run: |
-        $buildNumber = $env:BUILD_NUMBER
-        $hasPluginUpdate = $env:HAS_PLUGIN_UPDATE -eq "true"
-        $updatePlugins = $env:UPDATE_PLUGINS -split ';' | Where-Object { $_ -ne "" }
-        $pluginsInfoJson = $env:APP_PLUGINS_INFO
+        $manifestJson = $env:APP_COMP_MANIFEST
         $outDir = "src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0"
         $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
-        # 解析 plugins info
-        $pluginsInfo = $pluginsInfoJson | ConvertFrom-Json
-
-        # 确定 type
-        $type = if ($hasPluginUpdate) { "plugins" } else { "installer" }
-
-        # 构建 app_plugins_info
+        # 格式化 JSON（Indented）
+        $parsed = $manifestJson | ConvertFrom-Json
         $ms = [System.IO.MemoryStream]::new()
         $writer = [System.Text.Json.Utf8JsonWriter]::new($ms, [System.Text.Json.JsonWriterOptions]@{ Indented = $true })
         $writer.WriteStartObject()
-        $writer.WriteString("type", $type)
-        $writer.WriteString("app_build", $buildNumber)
-        $writer.WriteString("min_app_build", $buildNumber)
-        $writer.WritePropertyName("app_plugins_info")
+        $writer.WriteString("app_build_number", $parsed.app_build_number)
+        $writer.WritePropertyName("plugins")
         $writer.WriteStartObject()
-
-        foreach ($prop in $pluginsInfo.PSObject.Properties | Sort-Object Name) {
-            $pluginName = $prop.Name
-            $pluginBuild = $prop.Value
-            $isPending = $hasPluginUpdate -and ($updatePlugins -contains $pluginName)
-
-            $writer.WritePropertyName($pluginName)
-            $writer.WriteStartObject()
-            $writer.WriteBoolean("pending_update", $isPending)
-            $writer.WriteString("build_number", $pluginBuild)
-            $writer.WriteEndObject()
+        foreach ($prop in $parsed.plugins.PSObject.Properties | Sort-Object Name) {
+            $writer.WriteString($prop.Name, $prop.Value)
         }
-
         $writer.WriteEndObject()
         $writer.WriteEndObject()
         $writer.Flush()
-        $manifestJson = [System.Text.Encoding]::UTF8.GetString($ms.ToArray())
+        $indentedJson = [System.Text.Encoding]::UTF8.GetString($ms.ToArray())
         $writer.Dispose()
         $ms.Dispose()
 
-        [System.IO.File]::WriteAllText("$outDir/app_manifest.json", $manifestJson, $utf8NoBom)
-        [System.IO.File]::WriteAllText("app_manifest.json", $manifestJson, $utf8NoBom)
+        [System.IO.File]::WriteAllText("$outDir/app_comp_manifest.json", $indentedJson, $utf8NoBom)
+        [System.IO.File]::WriteAllText("app_comp_manifest.json", $indentedJson, $utf8NoBom)
 
-        # 生成 SHA256
-        $hash = (Get-FileHash -Path "app_manifest.json" -Algorithm SHA256).Hash.ToLower()
-        [System.IO.File]::WriteAllText("APP_MANIFEST_SHA256.txt", $hash, $utf8NoBom)
-
-        Write-Host "[OK] Generated app_manifest.json (type: $type)"
-        Write-Host $manifestJson
+        Write-Host "[OK] Generated app_comp_manifest.json"
+        Write-Host $indentedJson
 
     - name: Validate Build Artifacts
       # 在产物就地校验：主 exe / Plugin exe / 核心 dll 存在且非空。
@@ -456,13 +423,11 @@ jobs:
         path: src/
         retention-days: 1
 
-    - name: Upload app_manifest
+    - name: Upload app_comp_manifest
       uses: actions/upload-artifact@v4
       with:
-        name: app-manifest
-        path: |
-          app_manifest.json
-          APP_MANIFEST_SHA256.txt
+        name: app-comp-manifest
+        path: app_comp_manifest.json
         retention-days: 1
 
   # ─────────────────────────────────────────────────────────────
@@ -782,100 +747,126 @@ jobs:
         name: build-release-output
         path: src/
 
-    - name: Download app_manifest
+    - name: Download app_comp_manifest
       uses: actions/download-artifact@v4
       with:
-        name: app-manifest
+        name: app-comp-manifest
         path: plugin-packages/
 
-    - name: Create Plugin packages and update manifest
+    - name: Create plugin patch package
       shell: pwsh
       run: |
         $buildDir = "src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0"
         $pluginsDir = "$buildDir/Plugins"
-        $outputDir = "plugin-packages"
+        $workDir = "plugin-packages"
         $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
         $buildNumber = "${{ needs.prepare.outputs.build_number }}"
         $plugins = "${{ needs.prepare.outputs.update_plugins }}" -split ';' | Where-Object { $_ -ne "" }
 
-        # Create each plugin zip containing only the plugin folder
+        # 读取 app_comp_manifest.json
+        $appCompManifest = Get-Content "$workDir/app_comp_manifest.json" -Raw | ConvertFrom-Json
+
+        # 创建每个插件的 zip 并计算 sha256
+        $pendingManifest = @{ plugins = @{} }
+        $tempPluginZips = @()
+
         foreach ($plugin in $plugins) {
             $pluginDir = "$pluginsDir/$plugin"
             if (Test-Path $pluginDir) {
                 $pluginLower = $plugin.ToLower()
                 $zipName = "plugin-$pluginLower-$buildNumber.zip"
-                $zipPath = "$outputDir/$zipName"
+                $zipPath = "$workDir/$zipName"
                 Compress-Archive -Path $pluginDir -DestinationPath $zipPath -Force
-                Write-Host "[OK] Created $zipName"
+                $tempPluginZips += $zipPath
+
+                $hash = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash.ToLower()
+                $pluginBuild = $appCompManifest.plugins.$plugin
+
+                $pendingManifest.plugins[$plugin] = @{
+                    build_number = $pluginBuild
+                    asset = $zipName
+                    sha256 = $hash
+                }
+                Write-Host "[OK] Created $zipName (sha256: $hash)"
             } else {
                 Write-Warning "Plugin directory not found: $pluginDir"
             }
         }
 
-        # 读取 build job 生成的 app_manifest.json
-        $manifest = Get-Content "$outputDir/app_manifest.json" -Raw | ConvertFrom-Json
-
-        # 为 pending_update 的插件添加 asset 和 sha256
-        foreach ($plugin in $plugins) {
-            $pluginLower = $plugin.ToLower()
-            $zipName = "plugin-$pluginLower-$buildNumber.zip"
-            $zipPath = "$outputDir/$zipName"
-
-            if (Test-Path $zipPath) {
-                $hash = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash.ToLower()
-
-                # 使用 PSObject 动态添加属性
-                $pluginInfo = $manifest.app_plugins_info.$plugin
-                $pluginInfo | Add-Member -NotePropertyName "asset" -NotePropertyValue $zipName -Force
-                $pluginInfo | Add-Member -NotePropertyName "sha256" -NotePropertyValue $hash -Force
-            }
-        }
-
-        # 重新序列化 manifest
+        # 生成 pending_update_plugins_manifest.json
         $ms = [System.IO.MemoryStream]::new()
         $writer = [System.Text.Json.Utf8JsonWriter]::new($ms, [System.Text.Json.JsonWriterOptions]@{ Indented = $true })
         $writer.WriteStartObject()
-        $writer.WriteString("type", $manifest.type)
-        $writer.WriteString("app_build", $manifest.app_build)
-        $writer.WriteString("min_app_build", $manifest.min_app_build)
-        $writer.WritePropertyName("app_plugins_info")
+        $writer.WritePropertyName("plugins")
         $writer.WriteStartObject()
-
-        foreach ($prop in $manifest.app_plugins_info.PSObject.Properties | Sort-Object Name) {
-            $writer.WritePropertyName($prop.Name)
+        foreach ($kv in $pendingManifest.plugins.GetEnumerator() | Sort-Object Name) {
+            $writer.WritePropertyName($kv.Key)
             $writer.WriteStartObject()
-            $info = $prop.Value
-            $writer.WriteBoolean("pending_update", $info.pending_update)
-            $writer.WriteString("build_number", $info.build_number)
-            if ($info.asset) {
-                $writer.WriteString("asset", $info.asset)
-                $writer.WriteString("sha256", $info.sha256)
-            }
+            $writer.WriteString("build_number", $kv.Value.build_number)
+            $writer.WriteString("asset", $kv.Value.asset)
+            $writer.WriteString("sha256", $kv.Value.sha256)
             $writer.WriteEndObject()
         }
-
         $writer.WriteEndObject()
         $writer.WriteEndObject()
         $writer.Flush()
-        $manifestJson = [System.Text.Encoding]::UTF8.GetString($ms.ToArray())
+        $pendingJson = [System.Text.Encoding]::UTF8.GetString($ms.ToArray())
         $writer.Dispose()
         $ms.Dispose()
 
-        [System.IO.File]::WriteAllText("$outputDir/app_manifest.json", $manifestJson, $utf8NoBom)
-        Write-Host "[OK] Updated app_manifest.json with asset/sha256"
-        Write-Host $manifestJson
+        [System.IO.File]::WriteAllText("$workDir/pending_update_plugins_manifest.json", $pendingJson, $utf8NoBom)
+        Write-Host "[OK] Generated pending_update_plugins_manifest.json"
+        Write-Host $pendingJson
 
-        # 重新生成 SHA256
-        $manifestHash = (Get-FileHash -Path "$outputDir/app_manifest.json" -Algorithm SHA256).Hash.ToLower()
-        [System.IO.File]::WriteAllText("$outputDir/APP_MANIFEST_SHA256.txt", $manifestHash, $utf8NoBom)
-        Write-Host "[OK] Generated APP_MANIFEST_SHA256.txt: $manifestHash"
+        # 生成 app_comp_manifest.json（打包到 zip 里的版本）
+        $ms2 = [System.IO.MemoryStream]::new()
+        $writer2 = [System.Text.Json.Utf8JsonWriter]::new($ms2, [System.Text.Json.JsonWriterOptions]@{ Indented = $true })
+        $writer2.WriteStartObject()
+        $writer2.WriteString("app_build_number", $appCompManifest.app_build_number)
+        $writer2.WritePropertyName("plugins")
+        $writer2.WriteStartObject()
+        foreach ($prop in $appCompManifest.plugins.PSObject.Properties | Sort-Object Name) {
+            $writer2.WriteString($prop.Name, $prop.Value)
+        }
+        $writer2.WriteEndObject()
+        $writer2.WriteEndObject()
+        $writer2.Flush()
+        $appCompJson = [System.Text.Encoding]::UTF8.GetString($ms2.ToArray())
+        $writer2.Dispose()
+        $ms2.Dispose()
 
-    - name: Upload plugin update packages
+        [System.IO.File]::WriteAllText("$workDir/app_comp_manifest.json", $appCompJson, $utf8NoBom)
+        Write-Host "[OK] Generated app_comp_manifest.json for zip"
+
+        # 打包 plugins_patch.zip（包含所有插件 zip + 两个 manifest）
+        $patchZipPath = "plugins_patch.zip"
+        $filesToZip = @()
+        $filesToZip += "$workDir/pending_update_plugins_manifest.json"
+        $filesToZip += "$workDir/app_comp_manifest.json"
+        $filesToZip += $tempPluginZips
+
+        Compress-Archive -Path $filesToZip -DestinationPath $patchZipPath -Force
+        Write-Host "[OK] Created plugins_patch.zip"
+
+        # 生成 PLUGINS_PATCH_SHS256.txt（plugins_patch.zip 的 sha256）
+        $patchHash = (Get-FileHash -Path $patchZipPath -Algorithm SHA256).Hash.ToLower()
+        [System.IO.File]::WriteAllText("PLUGINS_PATCH_SHS256.txt", $patchHash, $utf8NoBom)
+        Write-Host "[OK] Generated PLUGINS_PATCH_SHS256.txt: $patchHash"
+
+        # 输出产物信息
+        Write-Host ""
+        Write-Host "=== Plugin Patch Package ==="
+        Write-Host "plugins_patch.zip: $((Get-Item $patchZipPath).Length) bytes"
+        Write-Host "PLUGINS_PATCH_SHS256.txt: $patchHash"
+
+    - name: Upload plugin patch package
       uses: actions/upload-artifact@v4
       with:
         name: VirtualPaper-Plugins-v${{ needs.prepare.outputs.new_version }}
-        path: plugin-packages/
+        path: |
+          plugins_patch.zip
+          PLUGINS_PATCH_SHS256.txt
         retention-days: 30
 
   # ─────────────────────────────────────────────────────────────
@@ -1098,32 +1089,19 @@ jobs:
         name: VirtualPaper-Installer-v${{ needs.prepare.outputs.new_version }}
         path: dist/
 
-    - name: Download plugin update artifact
+    - name: Download plugin patch artifact
       if: needs.prepare.outputs.has_plugin_update == 'true'
       uses: actions/download-artifact@v4
       with:
         name: VirtualPaper-Plugins-v${{ needs.prepare.outputs.new_version }}
-        path: dist/plugin-packages/
+        path: dist/
 
-    - name: Download app_manifest (installer-only)
+    - name: Download app_comp_manifest (installer-only)
       if: needs.prepare.outputs.has_plugin_update != 'true'
       uses: actions/download-artifact@v4
       with:
-        name: app-manifest
+        name: app-comp-manifest
         path: dist/
-
-    - name: Prepare manifest for release
-      shell: pwsh
-      run: |
-        # 插件更新：使用 plugin-packages 中的 manifest（含 asset/sha256）
-        # 非插件更新：使用 build 生成的 manifest
-        if ("${{ needs.prepare.outputs.has_plugin_update }}" -eq "true") {
-            Copy-Item "dist/plugin-packages/app_manifest.json" "dist/app_manifest.json" -Force
-            Copy-Item "dist/plugin-packages/APP_MANIFEST_SHA256.txt" "dist/APP_MANIFEST_SHA256.txt" -Force
-            Write-Host "[OK] Using plugin manifest with asset/sha256"
-        } else {
-            Write-Host "[OK] Using installer manifest"
-        }
 
     - name: Verify tag does not exist
       id: tag_check
@@ -1147,9 +1125,9 @@ jobs:
         files: |
           dist/*.exe
           dist/SHA256.txt
-          dist/app_manifest.json
-          dist/APP_MANIFEST_SHA256.txt
-          dist/plugin-packages/*.zip
+          dist/app_comp_manifest.json
+          dist/plugins_patch.zip
+          dist/PLUGINS_PATCH_SHS256.txt
         draft: true        # 草稿状态，不对外公开，等待人工验证后发布
         make_latest: false  # 草稿阶段不标记为最新，发布时再生效
         token: ${{ secrets.GITHUB_TOKEN }}

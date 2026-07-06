@@ -12,6 +12,7 @@ using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Localization;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.Cores.AppUpdate.Models;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Models.Cores;
@@ -65,7 +66,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             if (_buildInfo != null) return _buildInfo;
 
             // 从 AppData 目录读取 app_comp_manifest.json
-            var path = Path.Combine(VirtualPaper.Common.Constants.CommonPaths.AppDataDir, "app_comp_manifest.json");
+            var path = Path.Combine(Constants.CommonPaths.AppDataDir, "app_comp_manifest.json");
             if (!File.Exists(path)) {
                 _buildInfo = null;
                 return null;
@@ -73,7 +74,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
             try {
                 var json = File.ReadAllText(path);
-                var manifest = JsonSerializer.Deserialize(json, VirtualPaper.Cores.AppUpdate.Models.UpdateManifestContext.Default.AppCompManifest);
+                var manifest = JsonSerializer.Deserialize(json, UpdateManifestContext.Default.AppCompManifest);
                 if (manifest?.Plugins == null) {
                     _buildInfo = null;
                     return null;

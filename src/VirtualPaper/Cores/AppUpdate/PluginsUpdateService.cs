@@ -145,6 +145,13 @@ namespace VirtualPaper.Cores.AppUpdate {
                         throw new FileNotFoundException($"Plugin zip not found in patch: {pluginInfo.Asset}");
                     }
 
+                    // Cross-verify: compute actual SHA256 of plugin zip and compare with manifest declaration.
+                    // This catches tampering with the manifest's sha256 field after the outer zip was extracted.
+                    bool pluginZipVerified = await _downloadService.VerifyFileIntegrityAsync(pluginZipPath, pluginInfo.Sha256, token);
+                    if (!pluginZipVerified) {
+                        throw new InvalidDataException($"SHA256 verification failed for plugin zip: {pluginInfo.Asset}");
+                    }
+
                     updateFlag.Plugins[pluginName] = new PluginFlagInfo {
                         Target = Path.Combine("Plugins", pluginName),
                         Build = pluginInfo.BuildNumber,
@@ -205,11 +212,11 @@ namespace VirtualPaper.Cores.AppUpdate {
                     foreach (var fileHash in pluginInfo.Files) {
                         var filePath = Path.Combine(extractDir, fileHash.Name);
                         if (!File.Exists(filePath)) {
-                            throw new FileNotFoundException($"Pending update file missing: {filePath}");
+                            throw new FileNotFoundException($"File missing: {Path.GetFileName(filePath)}");
                         }
                         bool verified = await _downloadService.VerifyFileIntegrityAsync(filePath, fileHash.Sha256, token);
                         if (!verified) {
-                            throw new InvalidDataException($"Pending update file verification failed: {filePath}");
+                            throw new InvalidDataException($"File verification failed: {Path.GetFileName(filePath)}");
                         }
                     }
                 }
@@ -325,14 +332,20 @@ namespace VirtualPaper.Cores.AppUpdate {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<PluginsUpdateService>().Error("Plugins update failed", ex);
+                progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Failed, 100, LanguageManager.Instance[nameof(Constants.I18n.PluginsUpdate_Stage_Failed)]));
                 result.Success = false;
                 result.ErrorMessage = ex.Message;
 
-                // Rollback
-                await RollbackAsync(flag);
-
-                // Write rollback notice
-                await WriteRollbackNoticeAsync(token);
+                // Only rollback if backup exists (i.e. installation had started)
+                var backupDir = Constants.CommonPaths.UpdateBackupDir;
+                if (Directory.Exists(backupDir)) {
+                    await RollbackAsync(flag);
+                }
+                else {
+                    // No backup = verification failed before installation, just clean up
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
+                }
+                await WriteUpdateFailedNoticeAsync(ex, token);
             }
             finally {
                 UpdateLock.ReleaseAll();
@@ -396,7 +409,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 .ToList();
 
         private async Task RollbackAsync(UpdateFlag? flag) {
-            ArcLog.GetLogger<PluginsUpdateService>().Warn("Plugins update error, rolling back");
+            ArcLog.GetLogger<PluginsUpdateService>().Warn("Start plugins rolling back");
             var backupDir = Constants.CommonPaths.UpdateBackupDir;
             var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
             if (!Directory.Exists(backupDir)) {
@@ -452,13 +465,13 @@ namespace VirtualPaper.Cores.AppUpdate {
             }
         }
 
-        private async Task WriteRollbackNoticeAsync(CancellationToken token) {
-            var notice = new RollbackNotice {
-                Rollback = true,
-                MessageKey = Constants.I18n.AppUpdater_RollbackMessage
+        private async Task WriteUpdateFailedNoticeAsync(Exception ex, CancellationToken token) {
+            var notice = new UpdateFailedNotice {
+                MessageKey = Constants.I18n.AppUpdater_UpdateFailedMessage,
+                ExceptionMessage = ex.ToString()
             };
-            var json = JsonSerializer.Serialize(notice, RollbackNoticeContext.Default.RollbackNotice);
-            await File.WriteAllTextAsync(Constants.CommonPaths.RollbackNoticePath, json, token);
+            var json = JsonSerializer.Serialize(notice, UpdateFailedNoticeContext.Default.UpdateFailedNotice);
+            await File.WriteAllTextAsync(Constants.CommonPaths.UpdateFailedNoticePath, json, token);
         }
 
         private async Task<UpdateFlag?> LoadUpdateFlagAsync(CancellationToken token) {

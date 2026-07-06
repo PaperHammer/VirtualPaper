@@ -1692,6 +1692,25 @@ namespace VirtualPaper.Common.Utils.PInvoke {
         [DllImport("User32.dll")]
         public static extern int SetForegroundWindow(IntPtr point);
 
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern bool FlashWindowEx(ref FLASHWINFO pwfi);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct FLASHWINFO {
+            public uint cbSize;
+            public IntPtr hwnd;
+            public uint dwFlags;
+            public uint uCount;
+            public uint dwTimeout;
+        }
+
+        public const uint FLASHW_STOP = 0;
+        public const uint FLASHW_CAPTION = 1;
+        public const uint FLASHW_TRAY = 2;
+        public const uint FLASHW_ALL = FLASHW_CAPTION | FLASHW_TRAY;
+        public const uint FLASHW_TIMER = 4;
+        public const uint FLASHW_TIMERNOFG = 12;
+
         #endregion keyboard
 
         #region Pause

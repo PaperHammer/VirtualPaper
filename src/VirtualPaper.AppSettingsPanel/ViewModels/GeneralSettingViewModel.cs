@@ -37,7 +37,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 else if (Constants.ApplicationType.IsMSIX)
                     ver += $" {LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_MsStore)}";
 
-                var appBuild = _buildInfo?.AppBuildNumber;
+                var appBuild = LoadAppBuildInfo()?.AppBuildNumber;
                 if (!string.IsNullOrEmpty(appBuild))
                     ver += $" (Build {appBuild})";
 
@@ -47,7 +47,12 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
         public List<string> PluginVersionTexts {
             get {
-                return _buildInfo?.Plugins.Select(kv => $"{kv.Key}: {kv.Value}").ToList() ?? [];
+                var plugins = LoadAppBuildInfo()?.Plugins;
+                if (plugins == null) return [];
+                return plugins
+                    .OrderBy(kv => Enum.TryParse<PluginName>(kv.Key, true, out var p) ? (int)p : int.MaxValue)
+                    .Select(kv => $"{kv.Key}: {kv.Value}")
+                    .ToList();
             }
         }
 
@@ -56,22 +61,22 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         public Microsoft.UI.Xaml.Visibility PluginVersionsVisibility =>
             HasPluginVersions ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 
-        private AppBuildInfo? _buildInfo;
+        private AppBuildInfo? LoadAppBuildInfo() {
+            if (_buildInfo != null) return _buildInfo;
 
-        private void LoadAppBuildInfo() {
             // 从 AppData 目录读取 app_comp_manifest.json
             var path = Path.Combine(VirtualPaper.Common.Constants.CommonPaths.AppDataDir, "app_comp_manifest.json");
             if (!File.Exists(path)) {
-                _buildInfo = new AppBuildInfo();
-                return;
+                _buildInfo = null;
+                return null;
             }
 
             try {
                 var json = File.ReadAllText(path);
                 var manifest = JsonSerializer.Deserialize(json, VirtualPaper.Cores.AppUpdate.Models.UpdateManifestContext.Default.AppCompManifest);
                 if (manifest?.Plugins == null) {
-                    _buildInfo = new AppBuildInfo();
-                    return;
+                    _buildInfo = null;
+                    return null;
                 }
 
                 _buildInfo = new AppBuildInfo { AppBuildNumber = manifest.AppBuildNumber };
@@ -80,8 +85,10 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 }
             }
             catch {
-                _buildInfo = new AppBuildInfo();
+                _buildInfo = null;
             }
+
+            return _buildInfo;
         }
 
         public List<string> SystemBackdrops { get; set; } = [];
@@ -499,6 +506,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly ICommandsClient _commandsClient;
+        private AppBuildInfo? _buildInfo;
     }
 
     public enum VersionState {

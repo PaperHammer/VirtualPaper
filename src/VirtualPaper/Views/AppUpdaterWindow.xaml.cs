@@ -1,7 +1,9 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
-using DJ;
+using System.Windows.Interop;
+using System.Windows.Shell;
+using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.ViewModels;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
@@ -18,10 +20,56 @@ namespace VirtualPaper.Views {
             contentDialogService.SetDialogHost(RootContentDialog);
             DataContext = _viewModel = viewModel;
             Loaded += AppUpdaterWindow_Loaded;
+            _viewModel.RequestFlashTaskbar = FlashTaskbar;
+            _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+
+            TaskbarItemInfo = new TaskbarItemInfo();
+        }
+
+        private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
+            if (e.PropertyName == nameof(AppUpdaterWindowViewModel.Progress)
+                || e.PropertyName == nameof(AppUpdaterWindowViewModel.CurrentState)) {
+                UpdateTaskbarProgress();
+            }
+        }
+
+        private void UpdateTaskbarProgress() {
+            if (TaskbarItemInfo == null) return;
+
+            switch (_viewModel.CurrentState) {
+                case DownloadState.Downloading:
+                    TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Normal;
+                    TaskbarItemInfo.ProgressValue = _viewModel.Progress / 100.0;
+                    break;
+                case DownloadState.Verifying:
+                    TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Indeterminate;
+                    TaskbarItemInfo.ProgressValue = 0;
+                    break;
+                case DownloadState.Completed:
+                    TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
+                    TaskbarItemInfo.ProgressValue = 0;
+                    break;
+                default:
+                    TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
+                    TaskbarItemInfo.ProgressValue = 0;
+                    break;
+            }
         }
 
         private void AppUpdaterWindow_Loaded(object sender, RoutedEventArgs e) {
             _viewModel?.AutoStartDownload();
+        }
+
+        private void FlashTaskbar() {
+            var hwnd = new WindowInteropHelper(this).EnsureHandle();
+            var fi = new Native.FLASHWINFO {
+                cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<Native.FLASHWINFO>(),
+                hwnd = hwnd,
+                dwFlags = Native.FLASHW_TRAY | Native.FLASHW_TIMERNOFG,
+                uCount = uint.MaxValue,
+                dwTimeout = 0
+            };
+            Native.FlashWindowEx(ref fi);
         }
 
         private void FluentWindow_Closed(object? sender, EventArgs e) {

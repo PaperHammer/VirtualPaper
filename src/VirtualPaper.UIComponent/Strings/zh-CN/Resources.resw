@@ -195,8 +195,8 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   <data name="InfobarMsg_Success" xml:space="preserve">
     <value>已完成</value>
   </data>
-  <data name="AppUpdater_RollbackMessage" xml:space="preserve">
-    <value>更新发生错误，请重试或执行全量更新</value>
+  <data name="AppUpdater_UpdateFailedMessage" xml:space="preserve">
+    <value>更新发生错误，请重试或下载完整安装包进行更新</value>
   </data>
   <data name="Settings_General_Version_Plugins" xml:space="preserve">
     <value>组件版本</value>

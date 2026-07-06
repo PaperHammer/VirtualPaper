@@ -69,7 +69,7 @@ namespace VirtualPaper.Common {
             public static string UpdateFlagPath => Path.Combine(PendingUpdatesDir, "update.flag");
             public static string UpdateBackupDir => Path.Combine(PendingUpdatesDir, "_backup");
             public static string PluginPatchExtractDir => Path.Combine(PendingUpdatesDir, "extracted");
-            public static string RollbackNoticePath => Path.Combine(AppDataDir, "update_rollback_notice.json");
+            public static string UpdateFailedNoticePath => Path.Combine(AppDataDir, "update_failed_notice.json");
 
             private static class Legacy {
                 public static string AppRulesPath => Path.Combine(AppDataDir, "AppRules.json");
@@ -162,7 +162,7 @@ namespace VirtualPaper.Common {
             public static string InfobarMsg_Err => "InfobarMsg_Err";
             public static string InfobarMsg_ImportErr => "InfobarMsg_ImportErr";
             public static string InfobarMsg_Success => "InfobarMsg_Success";
-            public static string AppUpdater_RollbackMessage => "AppUpdater_RollbackMessage";
+            public static string AppUpdater_UpdateFailedMessage => "AppUpdater_UpdateFailedMessage";
             public static string Settings_General_Version_Plugins => "Settings_General_Version_Plugins";
             public static string PluginsUpdate_InvalidInfo => "PluginsUpdate_InvalidInfo";
             public static string PluginsUpdate_Starting => "PluginsUpdate_Starting";

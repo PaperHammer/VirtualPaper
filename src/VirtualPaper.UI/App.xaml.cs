@@ -163,13 +163,13 @@ namespace VirtualPaper.UI {
             var m_window = AppServiceLocator.Services.GetRequiredService<MainWindow>();
             m_window.Show();
 
-            // Check for rollback notice from hot update
-            CheckRollbackNotice();
+            // Check for update failed notice
+            CheckUpdateFailedNotice();
         }
 
-        private static void CheckRollbackNotice() {
+        private static void CheckUpdateFailedNotice() {
             try {
-                var noticePath = Constants.CommonPaths.RollbackNoticePath;
+                var noticePath = Constants.CommonPaths.UpdateFailedNoticePath;
                 if (!File.Exists(noticePath)) return;
 
                 var json = File.ReadAllText(noticePath);
@@ -178,18 +178,19 @@ namespace VirtualPaper.UI {
                     return;
                 }
 
-                var notice = System.Text.Json.JsonSerializer.Deserialize(json, RollbackNoticeContext.Default.RollbackNotice);
+                var notice = System.Text.Json.JsonSerializer.Deserialize(json, UpdateFailedNoticeContext.Default.UpdateFailedNotice);
                 File.Delete(noticePath);
 
                 if (notice != null && !string.IsNullOrEmpty(notice.MessageKey)) {
                     VirtualPaper.UIComponent.Utils.GlobalMessageUtil.ShowError(
                         notice.MessageKey,
                         isNeedLocalizer: true,
-                        key: "RollbackNotice");
+                        key: "UpdateFailedNotice",
+                        extraMsg: string.IsNullOrEmpty(notice.ExceptionMessage) ? null : notice.ExceptionMessage);
                 }
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<App>().Warn($"Failed to read rollback notice: {ex.Message}");
+                ArcLog.GetLogger<App>().Warn($"Failed to read update failed notice: {ex.Message}");
             }
         }
 

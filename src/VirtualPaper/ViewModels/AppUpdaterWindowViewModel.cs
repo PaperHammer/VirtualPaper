@@ -76,6 +76,8 @@ namespace VirtualPaper.ViewModels {
 
         public bool IsPluginsUpdate { get; private set; }
 
+        public Action? RequestFlashTaskbar { get; set; }
+
         private DownloadState _currentState;
         public DownloadState CurrentState {
             get { return _currentState; }
@@ -86,6 +88,8 @@ namespace VirtualPaper.ViewModels {
                 ActionButtonEnable = _currentState != DownloadState.Verifying;
                 IsIndeterminate = _currentState == DownloadState.Verifying;
                 UpdateUIByState();
+
+                OnPropertyChanged();
             }
         }
 
@@ -349,6 +353,7 @@ namespace VirtualPaper.ViewModels {
                             }
                         );
                     }
+                    RequestFlashTaskbar?.Invoke();
                     break;
 
                 case DownloadState.DownloadFailed:

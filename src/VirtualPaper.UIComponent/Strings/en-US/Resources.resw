@@ -195,8 +195,8 @@ The file cannot be imported: </value>
   <data name="InfobarMsg_Success" xml:space="preserve">
     <value>Accomplished</value>
   </data>
-  <data name="AppUpdater_RollbackMessage" xml:space="preserve">
-    <value>Update failed. Please retry or perform a full update.</value>
+  <data name="AppUpdater_UpdateFailedMessage" xml:space="preserve">
+    <value>Update failed. Please retry or download the full installer to update.</value>
   </data>
   <data name="Settings_General_Version_Plugins" xml:space="preserve">
     <value>Plugins Version</value>

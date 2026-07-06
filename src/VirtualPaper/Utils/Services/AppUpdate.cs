@@ -13,8 +13,8 @@ namespace VirtualPaper.Utils.Services {
 
         public async Task<ReleaseInfo> GetLatestRelease(bool isBeta) {
             var userName = "PaperHammer";
-            var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper_Mirror_Test";
-            //var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper";
+            //var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper_Mirror_Test";
+            var repositoryName = isBeta ? "VirtualPaper-beta" : "VirtualPaper";
             var gitRelease = await GithubUtil.GetLatestRelease(repositoryName, userName, 0);
             Version version = GithubUtil.GetVersion(gitRelease);
             string changelog = gitRelease.Body;

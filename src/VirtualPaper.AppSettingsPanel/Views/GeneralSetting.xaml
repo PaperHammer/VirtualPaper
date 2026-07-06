@@ -157,7 +157,7 @@
                                 Width="100"
                                 Content="{markup:I18n Key=Settings_General_Version_Install}"
                                 IsEnabled="{x:Bind _viewModel.IsInstallBtnEnable, Mode=OneWay}"                                
-                                Command="{x:Bind _viewModel.InstallBtnComand, Mode=OneWay}"/>
+                                Command="{x:Bind _viewModel.InstallBtnComand}"/>
                         </Grid>
                     </InfoBar.Content>
                 </InfoBar>

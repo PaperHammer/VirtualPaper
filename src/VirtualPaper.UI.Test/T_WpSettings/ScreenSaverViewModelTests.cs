@@ -1,5 +1,6 @@
 using Moq;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Pipe.Interfaces;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models;
@@ -15,6 +16,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         private Mock<IScrCommandsClient> _scrCommandsClient = null!;
         private Mock<ISettings> _settings = null!;
         private ScreenSaverViewModel _vm = null!;
+        private Mock<IPipeServerFactory> _pipeServerFactory = null!;
 
         [TestInitialize]
         public void Setup() {
@@ -22,6 +24,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _userSettingsClient = new Mock<IUserSettingsClient>();
             _scrCommandsClient = new Mock<IScrCommandsClient>();
             _settings = new Mock<ISettings>();
+            _pipeServerFactory = new Mock<IPipeServerFactory>();
 
             _settings.SetupProperty(s => s.IsScreenSaverOn, false);
             _settings.SetupProperty(s => s.IsRunningLock, false);
@@ -33,7 +36,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
             _vm = new ScreenSaverViewModel(
                 _userSettingsClient.Object,
-                _scrCommandsClient.Object);
+                _scrCommandsClient.Object,
+                _pipeServerFactory.Object);
         }
 
         [TestCleanup]

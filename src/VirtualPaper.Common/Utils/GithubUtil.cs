@@ -11,20 +11,20 @@ namespace VirtualPaper.Common.Utils {
             return _clients.GetOrAdd(repositoryName, name => new GitHubClient(new ProductHeaderValue(name)));
         }
 
-        /// <summary>
-        /// After given delay retrieve github release asset download url.
-        /// Returns first asset matching substring (make sure asset name is unique to get correct file.), case is ignored.
-        /// </summary>
-        /// <param name="assetNameSubstring"></param>
-        /// <param name="repositoryName"></param>
-        /// <param name="userName"></param>
-        /// <param name="startDelay"></param>
-        /// <returns></returns>
-        public static async Task<string> GetLatestAssetUrl(string assetNameSubstring, string repositoryName, string userName, int startDelay = 1000) {
-            Release release = await GetLatestRelease(repositoryName, userName, startDelay);
-            var url = await GetAssetUrl(assetNameSubstring, release, repositoryName, userName);
-            return url;
-        }
+        ///// <summary>
+        ///// After given delay retrieve github release asset download url.
+        ///// Returns first asset matching substring (make sure asset name is unique to get correct file.), case is ignored.
+        ///// </summary>
+        ///// <param name="assetNameSubstring"></param>
+        ///// <param name="repositoryName"></param>
+        ///// <param name="userName"></param>
+        ///// <param name="startDelay"></param>
+        ///// <returns></returns>
+        //public static async Task<string> GetLatestAssetUrl(string assetNameSubstring, string repositoryName, string userName, int startDelay = 1000) {
+        //    Release release = await GetLatestRelease(repositoryName, userName, startDelay);
+        //    var url = await GetAssetUrl(assetNameSubstring, release, repositoryName, userName);
+        //    return url;
+        //}
 
         /// <summary>
         /// Get latest release from github after given delay.
@@ -43,35 +43,35 @@ namespace VirtualPaper.Common.Utils {
             return latest;
         }
 
-        /// <summary>
-        /// Get github release asset download url.
-        /// Returns first asset matching substring (make sure asset name is unique to get correct file.), case is ignored.
-        /// </summary>
-        /// <param name="assetNameSubstring"></param>
-        /// <param name="release"></param>
-        /// <param name="repositoryName"></param>
-        /// <param name="userName"></param>
-        /// <returns></returns>
-        public static async Task<string> GetAssetUrl(string assetNameSubstring, Release release, string repositoryName, string userName) {
-            var client = GetClient(repositoryName);
-            var allAssets = await client.Repository.Release.GetAllAssets(userName, repositoryName, release.Id);
-            //var requiredAssets = allAssets.Single(x => x.Name.Equals(assetName, StringComparison.OrdinalIgnoreCase));
-            var requiredAsset = allAssets.First(x => Contains(x.Name, assetNameSubstring, StringComparison.OrdinalIgnoreCase));
-            return requiredAsset.BrowserDownloadUrl;
-        }
+        ///// <summary>
+        ///// Get github release asset download url.
+        ///// Returns first asset matching substring (make sure asset name is unique to get correct file.), case is ignored.
+        ///// </summary>
+        ///// <param name="assetNameSubstring"></param>
+        ///// <param name="release"></param>
+        ///// <param name="repositoryName"></param>
+        ///// <param name="userName"></param>
+        ///// <returns></returns>
+        //public static async Task<string> GetAssetUrl(string assetNameSubstring, Release release, string repositoryName, string userName) {
+        //    var client = GetClient(repositoryName);
+        //    var allAssets = await client.Repository.Release.GetAllAssets(userName, repositoryName, release.Id);
+        //    //var requiredAssets = allAssets.Single(x => x.Name.Equals(assetName, StringComparison.OrdinalIgnoreCase));
+        //    var requiredAsset = allAssets.First(x => Contains(x.Name, assetNameSubstring, StringComparison.OrdinalIgnoreCase));
+        //    return requiredAsset.BrowserDownloadUrl;
+        //}
 
-        public static async Task<IEnumerable<string>> GetAllAssetUrl(string assetNameSubstring, Release release, string repositoryName, string userName) {
-            var client = GetClient(repositoryName);
-            var allAssets = await client.Repository.Release.GetAllAssets(userName, repositoryName, release.Id);
-            //var requiredAssets = allAssets.Single(x => x.Name.Equals(assetName, StringComparison.OrdinalIgnoreCase));
-            var downloadUrls = allAssets
-                .Where(x => Contains(x.Name, assetNameSubstring, StringComparison.OrdinalIgnoreCase))
-                .Select(x => x.BrowserDownloadUrl);
-            return downloadUrls;
-        }
+        //public static async Task<IEnumerable<string>> GetAllAssetUrl(string assetNameSubstring, Release release, string repositoryName, string userName) {
+        //    var client = GetClient(repositoryName);
+        //    var allAssets = await client.Repository.Release.GetAllAssets(userName, repositoryName, release.Id);
+        //    //var requiredAssets = allAssets.Single(x => x.Name.Equals(assetName, StringComparison.OrdinalIgnoreCase));
+        //    var downloadUrls = allAssets
+        //        .Where(x => Contains(x.Name, assetNameSubstring, StringComparison.OrdinalIgnoreCase))
+        //        .Select(x => x.BrowserDownloadUrl);
+        //    return downloadUrls;
+        //}
 
         public static ReleaseAsset? FindAsset(Release release, string assetName) {
-            return release.Assets.FirstOrDefault(x => x.Name.Equals(assetName, StringComparison.OrdinalIgnoreCase));
+            return release.Assets.FirstOrDefault(x => x.Name.StartsWith(assetName, StringComparison.OrdinalIgnoreCase));
         }
 
         public static async Task<string> DownloadAssetContent(ReleaseAsset asset) {
@@ -84,19 +84,19 @@ namespace VirtualPaper.Common.Utils {
             return new Version(Regex.Replace(release.TagName, "[A-Za-z ]", ""));
         }
 
-        /// <summary>
-        /// Compare current software assembly version with given release version.
-        /// </summary>
-        /// <param name="release"></param>
-        /// <returns> =0 same, >0 git greater, <0 pgm greater</returns>
-        public static int CompareAssemblyVersion(Release release) {
-            string tmp = Regex.Replace(release.TagName, "[A-Za-z ]", "");
-            var gitVersion = new Version(tmp);
-            var appVersion = new Version(System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString());
-            var result = gitVersion.CompareTo(appVersion);
+        ///// <summary>
+        ///// Compare current software assembly version with given release version.
+        ///// </summary>
+        ///// <param name="release"></param>
+        ///// <returns> =0 same, >0 git greater, <0 pgm greater</returns>
+        //public static int CompareAssemblyVersion(Release release) {
+        //    string tmp = Regex.Replace(release.TagName, "[A-Za-z ]", "");
+        //    var gitVersion = new Version(tmp);
+        //    var appVersion = new Version(System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString());
+        //    var result = gitVersion.CompareTo(appVersion);
 
-            return result;
-        }
+        //    return result;
+        //}
 
         public static int CompareAssemblyVersion(Version? version) {
             if (version == null) return -1;

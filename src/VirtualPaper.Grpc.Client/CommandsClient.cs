@@ -21,19 +21,23 @@ namespace VirtualPaper.Grpc.Client {
             await _client.ShowUIAsync(new Empty());
         }
 
-        public async Task CloseUI() {
+        public async Task CloseUIAsync() {
             await _client.CloseUIAsync(new Empty());
         }
 
-        public async Task RestartUI() {
+        public async Task RequestInstallAsync() {
+            await _client.RequestInstallAsync(new Empty());
+        }
+
+        public async Task RestartUIAsync() {
             await _client.RestartUIAsync(new Empty());
         }
 
-        public async Task ShowDebugView() {
+        public async Task ShowDebugViewAsync() {
             await _client.ShowDebugViewAsync(new Empty());
         }
 
-        public async Task ShutDown() {
+        public async Task ShutDownAsync() {
             await _client.ShutDownAsync(new Empty());
         }
 

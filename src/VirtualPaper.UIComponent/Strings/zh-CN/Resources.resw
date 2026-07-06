@@ -367,7 +367,7 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
     <value>发现新版本</value>
   </data>
   <data name="Settings_General_Version_Install" xml:space="preserve">
-    <value>立即安装</value>
+    <value>安装</value>
   </data>
   <data name="Settings_General_Version_LastCheckDate" xml:space="preserve">
     <value>上次检测时间：</value>

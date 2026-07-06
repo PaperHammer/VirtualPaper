@@ -64,11 +64,12 @@ namespace VirtualPaper.Common {
             public static string TempWebView2Dir => Path.Combine(AppDataDir, "WebView2");
             public static string TempScrWebView2Dir => Path.Combine(AppDataDir, "ScrWebView2");
 
-            public static string InstallerCacheDir => Path.Combine(AppDataDir, "installer_cache");
-            public static string PendingUpdatesDir => Path.Combine(AppDataDir, "pending_updates");
-            public static string UpdateFlagPath => Path.Combine(PendingUpdatesDir, "update.flag");
-            public static string UpdateBackupDir => Path.Combine(PendingUpdatesDir, "_backup");
-            public static string PluginPatchExtractDir => Path.Combine(PendingUpdatesDir, "extracted");
+            public static string PendingPluginsUpdateDir => Path.Combine(AppDataDir, "pending_plugins_update");
+            public static string PendingInstallerUpdateDir => Path.Combine(AppDataDir, "pending_installer_update");
+            public static string UpdateFlagPath => Path.Combine(PendingPluginsUpdateDir, "update.flag");
+            public static string InstallerUpdateFlagPath => Path.Combine(PendingInstallerUpdateDir, "update.flag");
+            public static string UpdateBackupDir => Path.Combine(PendingPluginsUpdateDir, "_backup");
+            public static string PluginPatchExtractDir => Path.Combine(PendingPluginsUpdateDir, "extracted");
             public static string UpdateFailedNoticePath => Path.Combine(AppDataDir, "update_failed_notice.json");
 
             private static class Legacy {
@@ -137,6 +138,11 @@ namespace VirtualPaper.Common {
             public static string UniqueAppUid => "Virtual:WALLPAPERSYSTEM";
             public static string UniqueAppUIUid => "Virtual:UI:WALLPAPERSYSTEM";
             public static string AppBuildFile => "app_build.json";
+        }
+
+        public static class PipeControlField {
+            public static string TrayCmdPipeName => "TRAY_CMD";
+            public static string CmdUpdateScrSettings => "UPDATE_SCRSETTINGS";
         }
 
         public static class EnviromentVarKey {

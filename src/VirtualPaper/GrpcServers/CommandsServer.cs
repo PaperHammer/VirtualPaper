@@ -46,6 +46,12 @@ namespace VirtualPaper.GrpcServers {
             }
         }
 
+        public override Task<Empty> RequestInstall(Empty request, ServerCallContext context) {
+            _runner.SendCloseCmd();
+
+            return Task.FromResult(new Empty());
+        }
+
         public override async Task SubscribeUIRecievedCmd(Empty request, IServerStreamWriter<Grpc_UIRecievedCmd> responseStream, ServerCallContext context) {
             try {
                 while (!context.CancellationToken.IsCancellationRequested) {

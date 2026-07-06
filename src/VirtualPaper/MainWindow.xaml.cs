@@ -6,8 +6,8 @@ using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Toolkit.Uwp.Notifications;
 using VirtualPaper.Common;
+using VirtualPaper.Cores.PipeControl;
 using VirtualPaper.Cores.PlaybackControl;
-using VirtualPaper.Cores.TrayControl;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.lang;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -187,6 +187,7 @@ namespace VirtualPaper {
                 Symbol = isOn ? SymbolRegular.Checkmark20 : SymbolRegular.Empty,
             };
             srcsaver.Tag = isOn ? "On" : "Off";
+            lockScr.IsEnabled = isOn;
             deNone.IsEnabled = isOn;
             deBubble.IsEnabled = isOn;
         }
@@ -206,7 +207,7 @@ namespace VirtualPaper {
             _userSettingsService.Save<ISettings>();
 
             var pipeClient = App.Services.GetRequiredService<TrayCommand>();
-            await pipeClient.SendMsgToUIAsync("UPDATE_SCRSETTINGS");
+            await pipeClient.SendMsgToUIAsync(Constants.PipeControlField.CmdUpdateScrSettings);
         }
 
         private readonly IUIRunnerService _uiRunnerService;

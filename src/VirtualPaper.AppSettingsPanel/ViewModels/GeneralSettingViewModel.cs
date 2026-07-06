@@ -220,12 +220,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             set { _text_UpdateReady = value; OnPropertyChanged(); }
         }
 
-        private ICommand? _installBtnComand;
-        public ICommand? InstallBtnComand {
-            get { return _installBtnComand; }
-            set { _installBtnComand = value; OnPropertyChanged(); }
-        }
-
+        public ICommand? InstallBtnComand { get; private set; }
         public ICommand? ChangeFileStorageCommand { get; private set; }
         public ICommand? OpenFileStorageCommand { get; private set; }
         public ICommand? CheckUpdateCommand { get; private set; }
@@ -259,6 +254,9 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             });
             StartDownloadComand = new RelayCommand(async () => {
                 await StartDownloadAsync();
+            });
+            InstallBtnComand = new RelayCommand(async () => {
+                await RequstInstallAsync();
             });
         }
 
@@ -325,22 +323,18 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                     CurrentVersionState = VersionState.UptoNewest;
                     break;
                 case AppUpdateStatus.Available:
-                    Version = $"v{release?.Version} Build ({release?.AppBuild})";
+                    Version = release?.IsPluginsUpdate == true
+                        ? $"v{release?.Version} Build ({release?.AppBuild})"
+                        : $"v{release?.Version}";
                     CurrentVersionState = VersionState.FindNew;
                     break;
                 case AppUpdateStatus.InstallerReady:
                     Text_UpdateReady = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_InstallerReady));
-                    InstallBtnComand = new RelayCommand(async () => {
-                        
-                    });
                     CurrentVersionState = VersionState.InstallReady;
                     IsInstallBtnEnable = true;
                     break;
                 case AppUpdateStatus.PluginsReady:
                     Text_UpdateReady = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_PluginsReady));
-                    InstallBtnComand = new RelayCommand(async () => {
-                        await _commandsClient.CloseUI();
-                    });
                     CurrentVersionState = VersionState.InstallReady;
                     IsInstallBtnEnable = true;
                     break;
@@ -360,6 +354,10 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             await _appUpdater.StartDownloadAsync();
 
             IsUpdateBtnEnable = true;
+        }
+
+        private async Task RequstInstallAsync() {
+            await _commandsClient.RequestInstallAsync();
         }
 
         private async void WallpaperDirectoryChange() {

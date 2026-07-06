@@ -9,16 +9,16 @@ using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Win32;
 using NLog;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Cores.AppUpdate;
+using VirtualPaper.Cores.AppUpdate.Specific;
 using VirtualPaper.Cores.Monitor;
+using VirtualPaper.Cores.PipeControl;
 using VirtualPaper.Cores.PlaybackControl;
 using VirtualPaper.Cores.ScreenSaver;
-using VirtualPaper.Cores.TrayControl;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Factories;
 using VirtualPaper.Factories.Interfaces;
@@ -30,7 +30,6 @@ using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.GrpcServers;
 using VirtualPaper.lang;
-using VirtualPaper.Models;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Events;
 using VirtualPaper.Services;
@@ -88,6 +87,7 @@ namespace VirtualPaper {
             try {
                 // 清空缓存
                 FileUtil.RemoveDirectory(Constants.CommonPaths.TempDir);
+                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
             }
             catch { }
 
@@ -234,6 +234,7 @@ namespace VirtualPaper {
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
                 .AddSingleton<IPluginsUpdateService, PluginsUpdateService>()
+                .AddSingleton<IInstallerUpdateService, InstallerUpdateService>()
                 .AddSingleton<IAppBuildService, AppBuildService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
                 .AddSingleton<IWindowService, WindowService>()
@@ -377,6 +378,8 @@ namespace VirtualPaper {
                     UserSettings.Settings.IsUpdated = false;
                     UserSettings.Save<ISettings>();
                 }
+
+                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
             }
             catch (InvalidOperationException) { /* not initialised */ }
 

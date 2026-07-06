@@ -52,7 +52,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 LastReleaseInfo.CheckedTime = DateTime.Now;
 
                 int verCompare = _versionComparer.CompareAssemblyVersion(releaseInfo.Version);
-                if (verCompare > 0) {
+                if (verCompare > 0 && releaseInfo.IsInstallerUpdate && releaseInfo.InstallerUri != null) {
                     //update Available.
                     Status = AppUpdateStatus.Available;
                 }
@@ -95,15 +95,15 @@ namespace VirtualPaper.Cores.AppUpdate {
         }
 
         /// <summary>
-        /// 本地探测：检查 pending_updates 和 installer_cache 是否有已就绪的更新。
+        /// 本地探测：检查 pending_plugins_update 和 pending_installer_update 是否有已就绪的更新。
         /// 验证失败则清理对应目录。
         /// </summary>
         private AppUpdateStatus? ProbeLocalUpdate() {
-            // 1. 检查 restart-style: pending_updates + update.flag (pending status)
+            // 检查 restart-style: pending_plugins_update + update.flag (pending status)
             if (ProbePluginsReady())
                 return AppUpdateStatus.PluginsReady;
 
-            // 2. 检查 install-style: installer_cache 有文件 + sha256 验证通过
+            // 检查 install-style: pending_installer_update 有文件 + sha256 验证通过
             if (ProbeInstallerReady())
                 return AppUpdateStatus.InstallerReady;
 
@@ -116,15 +116,15 @@ namespace VirtualPaper.Cores.AppUpdate {
                 if (!File.Exists(flagPath)) return false;
 
                 var json = File.ReadAllText(flagPath);
-                var flag = JsonSerializer.Deserialize(json, UpdateFlagContext.Default.UpdateFlag);
-                if (flag == null || flag.Status != UpdateFlag.UpdateStatusPending) {
-                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
+                var flag = JsonSerializer.Deserialize(json, UpdateFlagContext.Default.PluginsUpdateFlag);
+                if (flag == null || flag.Status != UpdateStatus.Pending) {
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingPluginsUpdateDir);
                     return false;
                 }
 
                 var extractDir = Constants.CommonPaths.PluginPatchExtractDir;
                 if (!Directory.Exists(extractDir)) {
-                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingPluginsUpdateDir);
                     return false;
                 }
 
@@ -132,7 +132,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                     foreach (var fileHash in kv.Value.Files) {
                         var filePath = Path.Combine(extractDir, fileHash.Name);
                         if (!FileUtil.VerifyFileIntegrityAsync(filePath, fileHash.Sha256).GetAwaiter().GetResult()) {
-                            FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
+                            FileUtil.RemoveDirectory(Constants.CommonPaths.PendingPluginsUpdateDir);
                             return false;
                         }
                     }
@@ -140,14 +140,14 @@ namespace VirtualPaper.Cores.AppUpdate {
                 return true;
             }
             catch {
-                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
+                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingPluginsUpdateDir);
                 return false;
             }
         }
 
         private bool ProbeInstallerReady() {
             try {
-                var cacheDir = Constants.CommonPaths.InstallerCacheDir;
+                var cacheDir = Constants.CommonPaths.PendingInstallerUpdateDir;
                 if (!Directory.Exists(cacheDir)) return false;
 
                 foreach (var file in Directory.GetFiles(cacheDir)) {
@@ -162,11 +162,11 @@ namespace VirtualPaper.Cores.AppUpdate {
                 }
 
                 // 有文件但无有效配对 → 清理
-                FileUtil.RemoveDirectory(Constants.CommonPaths.InstallerCacheDir);
+                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
                 return false;
             }
             catch {
-                FileUtil.RemoveDirectory(Constants.CommonPaths.InstallerCacheDir);
+                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
                 return false;
             }
         }

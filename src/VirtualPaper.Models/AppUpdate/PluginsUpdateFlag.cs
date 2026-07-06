@@ -1,14 +1,21 @@
 using System.Text.Json.Serialization;
 
 namespace VirtualPaper.Models.AppUpdate {
-    [JsonSerializable(typeof(UpdateFlag))]
+    [JsonSerializable(typeof(PluginsUpdateFlag))]
+    [JsonSerializable(typeof(InstallerUpdateFlag))]
     [JsonSerializable(typeof(PluginFlagInfo))]
     [JsonSerializable(typeof(FileHashInfo))]
     public partial class UpdateFlagContext : JsonSerializerContext { }
 
-    public class UpdateFlag {
+    public enum UpdateStatus {
+        Pending,
+        InProgress,
+        Completed
+    }
+
+    public class PluginsUpdateFlag {
         [JsonPropertyName("status")]
-        public string Status { get; set; } = UpdateStatusPending;
+        public UpdateStatus Status { get; set; }
 
         [JsonPropertyName("app_build_number")]
         public string AppBuildNumber { get; set; } = string.Empty;
@@ -18,10 +25,14 @@ namespace VirtualPaper.Models.AppUpdate {
 
         [JsonPropertyName("removed_plugins")]
         public List<string> RemovedPlugins { get; set; } = new();
+    }
 
-        public const string UpdateStatusPending = "pending";
-        public const string UpdateStatusInProgress = "in_progress";
-        public const string UpdateStatusCompleted = "completed";
+    public class InstallerUpdateFlag {
+        [JsonPropertyName("status")]
+        public UpdateStatus Status { get; set; }
+
+        [JsonPropertyName("installer_path")]
+        public string InstallerPath { get; set; } = string.Empty;
     }
 
     public class PluginFlagInfo {

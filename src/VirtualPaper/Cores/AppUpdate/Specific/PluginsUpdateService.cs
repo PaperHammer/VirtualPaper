@@ -10,7 +10,7 @@ using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Views;
 
-namespace VirtualPaper.Cores.AppUpdate {
+namespace VirtualPaper.Cores.AppUpdate.Specific {
     public interface IPluginsUpdateService {
         Task<PluginsUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default);
         Task<PluginsUpdateResult> VerifyAndSavePendingAsync(ReleaseInfo releaseInfo, CancellationToken token = default);
@@ -27,18 +27,11 @@ namespace VirtualPaper.Cores.AppUpdate {
         Task InitAsync();
     }
 
-    public class PluginsUpdateService : IPluginsUpdateService, IPluginsUpdateServiceInit {
-        public PluginsUpdateService(
-            IDownloadService downloadService,
-            IJobService jobService,
-            IAppBuildService appBuildService,
-            IWindowService windowService) {
-            _downloadService = downloadService;
-            _jobService = jobService;
-            _appBuildService = appBuildService;
-            _windowService = windowService;
-        }
-
+    public class PluginsUpdateService(
+        IDownloadService downloadService,
+        IJobService jobService,
+        IAppBuildService appBuildService,
+        IWindowService windowService) : IPluginsUpdateService, IPluginsUpdateServiceInit {
         public async Task InitAsync() {
             UpdateLock.RegisterAll();
 
@@ -49,7 +42,7 @@ namespace VirtualPaper.Cores.AppUpdate {
             else {
                 UpdateLock.ReleaseAll();
             }
-            _appBuildService.Refresh();
+            appBuildService.Refresh();
         }
 
         public async Task<PluginsUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default) {
@@ -61,14 +54,14 @@ namespace VirtualPaper.Cores.AppUpdate {
                 return result;
             }
 
-            var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+            var pendingDir = Constants.CommonPaths.PendingPluginsUpdateDir;
 
             try {
                 FileUtil.RemoveDirectory(pendingDir);
                 Directory.CreateDirectory(pendingDir);
 
                 var patchZipPath = Path.Combine(pendingDir, "plugins_patch.zip");
-                await foreach (var p in _downloadService.DownloadAsync(releaseInfo.PluginPatchUri, patchZipPath, token)) {
+                await foreach (var p in downloadService.DownloadAsync(releaseInfo.PluginPatchUri, patchZipPath, token)) {
                     progress?.Report(p);
                 }
 
@@ -93,13 +86,13 @@ namespace VirtualPaper.Cores.AppUpdate {
                 return result;
             }
 
-            var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+            var pendingDir = Constants.CommonPaths.PendingPluginsUpdateDir;
             var patchZipPath = Path.Combine(pendingDir, "plugins_patch.zip");
 
             try {
                 // Download and verify SHA256 of plugins_patch.zip
-                var expectedHash = await _downloadService.DownloadShaTxtAsync(releaseInfo.PluginPatchSha256Uri, token);
-                bool verified = await _downloadService.VerifyFileIntegrityAsync(patchZipPath, expectedHash, token);
+                var expectedHash = await downloadService.DownloadShaTxtAsync(releaseInfo.PluginPatchSha256Uri, token);
+                bool verified = await downloadService.VerifyFileIntegrityAsync(patchZipPath, expectedHash, token);
                 if (!verified) {
                     throw new InvalidDataException("SHA256 verification failed for plugins_patch.zip");
                 }
@@ -132,8 +125,8 @@ namespace VirtualPaper.Cores.AppUpdate {
                 }
 
                 // Build update flag
-                var updateFlag = new UpdateFlag {
-                    Status = UpdateFlag.UpdateStatusPending,
+                var updateFlag = new PluginsUpdateFlag {
+                    Status = UpdateStatus.Pending,
                     AppBuildNumber = appCompManifest?.AppBuildNumber ?? string.Empty,
                     Plugins = new Dictionary<string, PluginFlagInfo>()
                 };
@@ -147,7 +140,7 @@ namespace VirtualPaper.Cores.AppUpdate {
 
                     // Cross-verify: compute actual SHA256 of plugin zip and compare with manifest declaration.
                     // This catches tampering with the manifest's sha256 field after the outer zip was extracted.
-                    bool pluginZipVerified = await _downloadService.VerifyFileIntegrityAsync(pluginZipPath, pluginInfo.Sha256, token);
+                    bool pluginZipVerified = await downloadService.VerifyFileIntegrityAsync(pluginZipPath, pluginInfo.Sha256, token);
                     if (!pluginZipVerified) {
                         throw new InvalidDataException($"SHA256 verification failed for plugin zip: {pluginInfo.Asset}");
                     }
@@ -188,7 +181,7 @@ namespace VirtualPaper.Cores.AppUpdate {
         /// </summary>
         public async Task<PluginsUpdateResult> ExecutePendingUpdateAsync(IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default) {
             var result = new PluginsUpdateResult();
-            var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+            var pendingDir = Constants.CommonPaths.PendingPluginsUpdateDir;
             var flagPath = Constants.CommonPaths.UpdateFlagPath;
 
             if (!File.Exists(flagPath)) {
@@ -198,7 +191,7 @@ namespace VirtualPaper.Cores.AppUpdate {
             }
 
             var flag = await LoadUpdateFlagAsync(token);
-            if (flag == null || flag.Status != UpdateFlag.UpdateStatusPending) {
+            if (flag == null || flag.Status != UpdateStatus.Pending) {
                 result.Success = false;
                 result.ErrorMessage = "No pending update found or invalid state";
                 return result;
@@ -214,7 +207,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                         if (!File.Exists(filePath)) {
                             throw new FileNotFoundException($"File missing: {Path.GetFileName(filePath)}");
                         }
-                        bool verified = await _downloadService.VerifyFileIntegrityAsync(filePath, fileHash.Sha256, token);
+                        bool verified = await downloadService.VerifyFileIntegrityAsync(filePath, fileHash.Sha256, token);
                         if (!verified) {
                             throw new InvalidDataException($"File verification failed: {Path.GetFileName(filePath)}");
                         }
@@ -248,7 +241,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 }
 
                 // Step: Update flag to in_progress
-                flag.Status = UpdateFlag.UpdateStatusInProgress;
+                flag.Status = UpdateStatus.InProgress;
                 await SaveUpdateFlagAsync(flag, token);
 
                 // Step: Replace plugins sequentially (avoid IO contention on Windows)
@@ -319,10 +312,10 @@ namespace VirtualPaper.Cores.AppUpdate {
                 }
 
                 // Refresh build info from manifest
-                _appBuildService.Refresh();
+                appBuildService.Refresh();
 
                 // Step: Update flag to completed, then cleanup
-                flag.Status = UpdateFlag.UpdateStatusCompleted;
+                flag.Status = UpdateStatus.Completed;
                 await SaveUpdateFlagAsync(flag, token);
                 FileUtil.RemoveDirectory(pendingDir);
                 FileUtil.RemoveDirectory(backupDir);
@@ -343,20 +336,20 @@ namespace VirtualPaper.Cores.AppUpdate {
                 }
                 else {
                     // No backup = verification failed before installation, just clean up
-                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingPluginsUpdateDir);
                 }
                 await WriteUpdateFailedNoticeAsync(ex, token);
             }
             finally {
                 UpdateLock.ReleaseAll();
-                _jobService.PluginsUpdateFinished();
+                jobService.PluginsUpdateFinished();
             }
 
             return result;
         }
 
         public async Task<bool> CheckAndRecoverAsync(CancellationToken token = default) {
-            var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+            var pendingDir = Constants.CommonPaths.PendingPluginsUpdateDir;
             if (!Directory.Exists(pendingDir)) return false;
 
             var flagPath = Constants.CommonPaths.UpdateFlagPath;
@@ -374,14 +367,14 @@ namespace VirtualPaper.Cores.AppUpdate {
                 }
 
                 switch (flag.Status) {
-                    case UpdateFlag.UpdateStatusPending:
+                    case UpdateStatus.Pending:
                         return true;
 
-                    case UpdateFlag.UpdateStatusInProgress:
+                    case UpdateStatus.InProgress:
                         await RollbackAsync(flag);
                         return false;
 
-                    case UpdateFlag.UpdateStatusCompleted:
+                    case UpdateStatus.Completed:
                         FileUtil.RemoveDirectory(pendingDir);
                         FileUtil.RemoveDirectory(Constants.CommonPaths.UpdateBackupDir);
                         return false;
@@ -396,7 +389,7 @@ namespace VirtualPaper.Cores.AppUpdate {
 
         private void StopPlugins(IEnumerable<PluginName> plugins) {
             foreach (var plugin in plugins) {
-                try { _jobService.StopPlugin(plugin); }
+                try { jobService.StopPlugin(plugin); }
                 catch (Exception ex) { ArcLog.GetLogger<PluginsUpdateService>().Warn($"Failed to stop {plugin}: {ex.Message}"); }
             }
         }
@@ -408,10 +401,10 @@ namespace VirtualPaper.Cores.AppUpdate {
                 .Select(p => p!.Value)
                 .ToList();
 
-        private async Task RollbackAsync(UpdateFlag? flag) {
+        private async Task RollbackAsync(PluginsUpdateFlag? flag) {
             ArcLog.GetLogger<PluginsUpdateService>().Warn("Start plugins rolling back");
             var backupDir = Constants.CommonPaths.UpdateBackupDir;
-            var pendingDir = Constants.CommonPaths.PendingUpdatesDir;
+            var pendingDir = Constants.CommonPaths.PendingPluginsUpdateDir;
             if (!Directory.Exists(backupDir)) {
                 ArcLog.GetLogger<PluginsUpdateService>().Warn("No backup found for rollback");
                 FileUtil.RemoveDirectory(pendingDir);
@@ -452,7 +445,7 @@ namespace VirtualPaper.Cores.AppUpdate {
                 }
 
                 // Refresh build info from manifest
-                _appBuildService.Refresh();
+                appBuildService.Refresh();
 
                 ArcLog.GetLogger<PluginsUpdateService>().Info("Rollback completed");
             }
@@ -474,18 +467,18 @@ namespace VirtualPaper.Cores.AppUpdate {
             await File.WriteAllTextAsync(Constants.CommonPaths.UpdateFailedNoticePath, json, token);
         }
 
-        private async Task<UpdateFlag?> LoadUpdateFlagAsync(CancellationToken token) {
+        private async Task<PluginsUpdateFlag?> LoadUpdateFlagAsync(CancellationToken token) {
             var flagPath = Constants.CommonPaths.UpdateFlagPath;
             if (!File.Exists(flagPath)) return null;
 
             var json = await File.ReadAllTextAsync(flagPath, token);
-            return JsonSerializer.Deserialize(json, UpdateFlagContext.Default.UpdateFlag);
+            return JsonSerializer.Deserialize(json, UpdateFlagContext.Default.PluginsUpdateFlag);
         }
 
-        private async Task SaveUpdateFlagAsync(UpdateFlag flag, CancellationToken token) {
+        private async Task SaveUpdateFlagAsync(PluginsUpdateFlag flag, CancellationToken token) {
             var flagPath = Constants.CommonPaths.UpdateFlagPath;
             Directory.CreateDirectory(Path.GetDirectoryName(flagPath)!);
-            var json = JsonSerializer.Serialize(flag, UpdateFlagContext.Default.UpdateFlag);
+            var json = JsonSerializer.Serialize(flag, UpdateFlagContext.Default.PluginsUpdateFlag);
             await File.WriteAllTextAsync(flagPath, json, token);
         }
 
@@ -507,8 +500,8 @@ namespace VirtualPaper.Cores.AppUpdate {
                 // Create window on UI thread
                 PluginUpdateWindow? progressWindow = null;
                 System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    _windowService.Show<Views.PluginUpdateWindow>(bringToFront: true);
-                    _windowService.TryGet(out progressWindow);
+                    windowService.Show<Views.PluginUpdateWindow>(bringToFront: true);
+                    windowService.TryGet(out progressWindow);
                 });
 
                 // Progress callback marshals to UI thread (non-blocking)
@@ -538,11 +531,6 @@ namespace VirtualPaper.Cores.AppUpdate {
                 ArcLog.GetLogger<PluginsUpdateService>().Error("Failed to execute pending plugin update", ex);
             }
         }
-
-        private readonly IDownloadService _downloadService;
-        private readonly IJobService _jobService;
-        private readonly IAppBuildService _appBuildService;
-        private readonly IWindowService _windowService;
 
         private Task? _pendingUpdateTask;
         private readonly object _pendingLock = new();

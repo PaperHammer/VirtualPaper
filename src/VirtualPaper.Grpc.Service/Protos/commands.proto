@@ -6,6 +6,7 @@ import "Protos/common_models.proto";
 service Grpc_CommandsService {
 	rpc ShowUI (google.protobuf.Empty) returns (google.protobuf.Empty);
 	rpc CloseUI (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc RequestInstall (google.protobuf.Empty) returns (google.protobuf.Empty);
 	rpc RestartUI (google.protobuf.Empty) returns (google.protobuf.Empty);
 	rpc ShowDebugView (google.protobuf.Empty) returns (google.protobuf.Empty);
 	rpc ShutDown (google.protobuf.Empty) returns (google.protobuf.Empty);

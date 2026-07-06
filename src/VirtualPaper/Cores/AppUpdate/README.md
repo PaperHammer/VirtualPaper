@@ -99,7 +99,7 @@ Phase 2: Execute (triggered by UI close or core start)
 ### Pending Update Mechanism
 
 If the user cancels UI close (e.g., unsaved work), the update stays in "pending" state:
-- Downloaded files remain in `pending_updates/`
+- Downloaded files remain in `pending_plugins_update/`
 - Flag file indicates pending state
 - On next UI close or core start, `CheckAndRecoverAsync` detects pending update and executes it
 
@@ -164,7 +164,7 @@ Each component has an independent build number (format: `YYMM` + `R` + `DD` + `T
 
 ```
 AppDataDir/
-├── pending_updates/
+├── pending_plugins_update/
 │   ├── update.flag          # Flag file with update metadata
 │   ├── UI/                  # New files for Plugins/UI/
 │   ├── PlayerWeb/           # New files for Plugins/PlayerWeb/
@@ -198,49 +198,49 @@ Status values: `pending` | `in_progress` | `completed`
 
 ### Download Phase
 
-1. Download new files to `pending_updates/{plugin}/`
+1. Download new files to `pending_plugins_update/{plugin}/`
 2. Calculate SHA256 for each downloaded file
 3. Write `update.flag` with `status="pending"`, file list + hashes
 
 ### Execution Phase (UI closed, triggered by main process)
 
 1. Read `update.flag`
-2. **Backup** current `plugins/` → `pending_updates/_backup/{plugin}/` (first step)
+2. **Backup** current `plugins/` → `pending_plugins_update/_backup/{plugin}/` (first step)
 3. Verify all downloaded files against SHA256
-   - Any failure → delete `pending_updates/` (no restore needed, originals untouched)
+   - Any failure → delete `pending_plugins_update/` (no restore needed, originals untouched)
    - All pass → continue
 4. Write `update.flag` with `status="in_progress"`
 5. For each plugin:
    - Clear target folder
-   - Copy new files from `pending_updates/{plugin}/`
+   - Copy new files from `pending_plugins_update/{plugin}/`
    - Verify copied files match SHA256
 6. All successful:
-   - Delete `pending_updates/` (including backups)
+   - Delete `pending_plugins_update/` (including backups)
    - Start UI
 7. Any failure:
    - Full rollback from `_backup/`
-   - Delete `pending_updates/`
+   - Delete `pending_plugins_update/`
    - Start UI
 
 ### Crash Recovery (main process startup)
 
-1. `pending_updates/` does not exist → normal startup
-2. `update.flag` missing or corrupted → rollback from `_backup/`, delete `pending_updates/`
+1. `pending_plugins_update/` does not exist → normal startup
+2. `update.flag` missing or corrupted → rollback from `_backup/`, delete `pending_plugins_update/`
 3. `status="pending"` → re-verify files, proceed with execution if pass, else delete
-4. `status="in_progress"` → rollback from `_backup/`, delete `pending_updates/`
-5. `status="completed"` → delete `pending_updates/`
+4. `status="in_progress"` → rollback from `_backup/`, delete `pending_plugins_update/`
+5. `status="completed"` → delete `pending_plugins_update/`
 
 ## Key Principles
 
 - **No intermediate state**: either full success or full rollback
 - **Backup first**: before any modifications, backup current plugins
 - **Verify twice**: verify downloaded files before replacement, verify copied files after
-- **Always cleanup**: all paths (success, failure, crash) end with `pending_updates/` deleted
+- **Always cleanup**: all paths (success, failure, crash) end with `pending_plugins_update/` deleted
 - **Granularity**: per-plugin folder (each plugin is a separate process)
 
 ## Fallback Cases
 
-- `pending_updates/` directory missing → rollback if `_backup/` exists
+- `pending_plugins_update/` directory missing → rollback if `_backup/` exists
 - `update.flag` corrupted → rollback from `_backup/`
 - Files manually deleted → rollback from `_backup/` if available
 - Backup also missing → log error, start UI with current state (may be broken)
@@ -263,7 +263,7 @@ When a restart-style update is rolled back, write a notification file. UI displa
 
 ### Flow
 
-1. **On rollback** (any path): write `update_rollback_notice.json` before cleaning up `pending_updates/`
+1. **On rollback** (any path): write `update_rollback_notice.json` before cleaning up `pending_plugins_update/`
 2. **UI startup**: check if `update_rollback_notice.json` exists
    - Exists → display global message, then **delete the file**
    - Not exists → normal startup

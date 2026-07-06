@@ -1,8 +1,8 @@
-using System.Diagnostics;
-using System.IO;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Cores.AppUpdate;
+using VirtualPaper.Cores.AppUpdate.Specific;
 using VirtualPaper.lang;
 using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Models.Mvvm;
@@ -97,10 +97,12 @@ namespace VirtualPaper.ViewModels {
             IDownloadService downloadService,
             IContentDialogService contentDialogService,
             IPluginsUpdateService pluginsUpdateService,
+            IInstallerUpdateService installerUpdateService,
             IAppUpdaterService appUpdaterService) {
             _downloadService = downloadService;
             _contentDialogService = contentDialogService;
             _pluginsUpdateService = pluginsUpdateService;
+            _installerUpdateService = installerUpdateService;
             _appUpdaterService = appUpdaterService;
         }
 
@@ -108,14 +110,12 @@ namespace VirtualPaper.ViewModels {
             if (parameter is ReleaseInfo info) {
                 if (info.IsPluginsUpdate) {
                     IsPluginsUpdate = true;
-                    _releaseInfo = info;                    
                 }
-                else {
-                    _downloadUri = info.InstallerUri!;
-                    _shaUri = info.InstallerShaUri!;
-                    _savePath = Path.Combine(Constants.CommonPaths.InstallerCacheDir, Path.GetFileName(_downloadUri.LocalPath));
-                }
-                Version = $"{info.Version?.ToString()} (Build {info.AppBuild?.ToString()})";
+                _releaseInfo = info;
+
+                Version = info.IsPluginsUpdate
+                    ? $"{info.Version?.ToString()} (Build {info.AppBuild?.ToString()})"
+                    : info.Version?.ToString() ?? string.Empty;
                 ChangeLog = info.Changelog ?? string.Empty;
                 CurrentState = DownloadState.Ready;
             }
@@ -166,7 +166,7 @@ namespace VirtualPaper.ViewModels {
                     break;
 
                 case DownloadState.Completed:
-                    InstallUpdate();
+                    // 关闭 UI 触发更新（plugin/installer 都通过 Proc_UI_Exited 执行）
                     break;
             }
         }
@@ -179,31 +179,51 @@ namespace VirtualPaper.ViewModels {
                 return;
             }
 
-            if (_downloadUri == null)
+            await StartInstallerDownloadAsync();
+        }
+
+        private async Task StartInstallerDownloadAsync() {
+            if (_releaseInfo == null)
                 return;
 
-            FileUtil.DeleteDirectoryContents(Constants.CommonPaths.InstallerCacheDir);
             _cts = new CancellationTokenSource();
             CurrentState = DownloadState.Downloading;
 
             try {
-                _sha256 = await _downloadService.DownloadShaTxtAsync(_shaUri, _cts.Token);
-                File.WriteAllText(_savePath + ".sha256", _sha256);
+                var progress = new Progress<DownloadProgress>(p => {
+                    Progress = p.Percent;
+                    UpdateSpeedInfo(p.Speed, p.ReceivedBytes, p.TotalBytes, p.Remaining);
+                });
 
-                await foreach (var progress in _downloadService.DownloadAsync(_downloadUri, _savePath, _cts.Token)) {
-                    Progress = progress.Percent;
-                    UpdateSpeedInfo(progress.Speed, progress.ReceivedBytes, progress.TotalBytes, progress.Remaining);
+                var result = await _installerUpdateService.DownloadAsync(_releaseInfo, progress, _cts.Token);
+
+                if (!result.Success || result.InstallerPath == null) {
+                    CurrentState = DownloadState.DownloadFailed;
+                    return;
                 }
 
-                await VerifyAsync();
+                _installerPath = result.InstallerPath;
+
+                CurrentState = DownloadState.Verifying;
+                var verifyResult = await _installerUpdateService.VerifyAsync(_releaseInfo, _installerPath, _cts.Token);
+
+                if (!verifyResult.Success) {
+                    CurrentState = DownloadState.VerifyFailed;
+                    return;
+                }
+
+                CurrentState = DownloadState.Completed;
+
+                // Trigger a new update check to refresh the status in GeneralSettingViewModel
+                _ = Task.Run(() => _appUpdaterService.CheckUpdateAsync());
             }
             catch (OperationCanceledException) {
-                FileUtil.DeleteDirectoryContents(Constants.CommonPaths.InstallerCacheDir);
+                FileUtil.DeleteDirectoryContents(Constants.CommonPaths.PendingInstallerUpdateDir);
                 if (CurrentState != DownloadState.Paused)
                     CurrentState = DownloadState.Paused;
             }
             catch (Exception ex) {
-                App.Log.Error(ex);
+                ArcLog.GetLogger<AppUpdaterWindowViewModel>().Error(ex);
                 CurrentState = DownloadState.DownloadFailed;
             }
         }
@@ -242,27 +262,14 @@ namespace VirtualPaper.ViewModels {
                 _ = Task.Run(() => _appUpdaterService.CheckUpdateAsync());
             }
             catch (OperationCanceledException) {
-                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingUpdatesDir);
+                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingPluginsUpdateDir);
                 if (CurrentState != DownloadState.Paused)
                     CurrentState = DownloadState.Paused;
             }
             catch (Exception ex) {
-                App.Log.Error(ex);
+                ArcLog.GetLogger<AppUpdaterWindowViewModel>().Error(ex);
                 CurrentState = DownloadState.DownloadFailed;
             }
-        }
-
-        private async Task VerifyAsync() {
-            CurrentState = DownloadState.Verifying;
-            var verified = await _downloadService.VerifyFileIntegrityAsync(_savePath, _sha256, _cts!.Token);
-
-            if (!verified) {
-                CurrentState = DownloadState.VerifyFailed;
-                FileUtil.DeleteDirectoryContents(Constants.CommonPaths.InstallerCacheDir);
-                return;
-            }
-
-            CurrentState = DownloadState.Completed;
         }
 
         private void PauseDownload() {
@@ -285,32 +292,6 @@ namespace VirtualPaper.ViewModels {
             SpeedValue = string.Empty;
             SizeText = string.Empty;
             RemainingText = string.Empty;
-        }
-
-        private async void InstallUpdate() {
-            if (IsPluginsUpdate) {
-                return;
-            }
-
-            CurrentState = DownloadState.Installing;
-            try {
-                //run setup in silent mode.
-                Process.Start(_savePath, "/SILENT /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS");
-                //inno installer will auto retry, waiting for application exit.
-                CurrentState = DownloadState.Installed;
-                App.ShutDown();
-            }
-            catch (Exception ex) {
-                App.Log.Error("Install for silent updating failed", ex);
-                CurrentState = DownloadState.Completed;
-                _ = await _contentDialogService.ShowSimpleDialogAsync(
-                    new SimpleContentDialogCreateOptions() {
-                        Title = LanguageManager.Instance["Common_TextError"],
-                        Content = LanguageManager.Instance["AppUpdater_Update_ExceptionAppUpdateFail"],
-                        CloseButtonText = LanguageManager.Instance["Common_TextConfirm"],
-                    }
-                );
-            }
         }
         #endregion
 
@@ -339,20 +320,16 @@ namespace VirtualPaper.ViewModels {
                     break;
 
                 case DownloadState.Completed:
-                    ActionButtonText = IsPluginsUpdate
-                        ? LanguageManager.Instance["Common_TextConfirm"]
-                        : LanguageManager.Instance["AppUpdater_ActionButtonText_Completed"];
+                    ActionButtonText = LanguageManager.Instance["Common_TextConfirm"];
                     StatusText = LanguageManager.Instance["AppUpdater_StatusText_Completed"];
                     ClearSpeedInfo();
-                    if (IsPluginsUpdate) {
-                        _ = _contentDialogService.ShowSimpleDialogAsync(
-                            new SimpleContentDialogCreateOptions() {
-                                Title = LanguageManager.Instance["PluginsUpdate_Close"],
-                                Content = LanguageManager.Instance["PluginsUpdate_PostponeTip"],
-                                CloseButtonText = LanguageManager.Instance["Common_TextConfirm"],
-                            }
-                        );
-                    }
+                    _ = _contentDialogService.ShowSimpleDialogAsync(
+                        new SimpleContentDialogCreateOptions() {
+                            Title = LanguageManager.Instance["PluginsUpdate_Close"],
+                            Content = LanguageManager.Instance["PluginsUpdate_PostponeTip"],
+                            CloseButtonText = LanguageManager.Instance["Common_TextConfirm"],
+                        }
+                    );
                     RequestFlashTaskbar?.Invoke();
                     break;
 
@@ -388,13 +365,11 @@ namespace VirtualPaper.ViewModels {
         private readonly IDownloadService _downloadService;
         private readonly IContentDialogService _contentDialogService;
         private readonly IPluginsUpdateService _pluginsUpdateService;
+        private readonly IInstallerUpdateService _installerUpdateService;
         private readonly IAppUpdaterService _appUpdaterService;
         private ReleaseInfo? _releaseInfo;
-        private Uri _downloadUri = null!;
-        private Uri _shaUri = null!;
         private CancellationTokenSource? _cts;
-        private string _savePath = string.Empty;
-        private string _sha256 = string.Empty;
+        private string? _installerPath;
     }
 
     public enum DownloadState {

@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.AppSettingsPanel;
@@ -81,7 +82,7 @@ namespace VirtualPaper.UI {
             HandleIpcMessage(e);
         }
 
-        private void HandleIpcMessage(int type) {
+        private async void HandleIpcMessage(int type) {
             try {
                 MessageType messageType = (MessageType)type;
                 switch (messageType) {
@@ -91,6 +92,15 @@ namespace VirtualPaper.UI {
                             Native.ShowWindow(hwnd, (uint)Native.SHOWWINDOW.SW_RESTORE);
                             _ = Native.SetForegroundWindow(hwnd);
                         });
+                        break;
+                    case MessageType.cmd_close:
+                        var canClose = await NaviContent.CheckAllPagesCanCloseAsync();
+                        if (canClose) {
+                            CrossThreadInvoker.InvokeOnUIThread(() => {
+                                _isSafeToClose = true;
+                                this.Close();
+                            });
+                        }
                         break;
                     default:
                         throw new InvalidOperationException($"Unsupported message type: {messageType}");

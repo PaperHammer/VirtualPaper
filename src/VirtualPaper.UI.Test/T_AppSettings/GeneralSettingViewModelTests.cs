@@ -89,7 +89,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
 
 
             Assert.AreEqual(VersionState.FindNew, _vm.CurrentVersionState);
-            Assert.AreEqual("v2.0 Build ()", _vm.Version);
+            Assert.AreEqual("v2.0", _vm.Version);
         }
 
         [TestMethod]

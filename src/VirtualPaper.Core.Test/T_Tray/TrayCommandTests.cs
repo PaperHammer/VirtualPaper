@@ -1,6 +1,7 @@
 using Moq;
-using VirtualPaper.Cores.TrayControl;
-using VirtualPaper.Utils.Interfcaes;
+using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Pipe.Interfaces;
+using VirtualPaper.Cores.PipeControl;
 
 namespace VirtualPaper.Core.Test.T_Tray {
     [TestClass]
@@ -17,7 +18,7 @@ namespace VirtualPaper.Core.Test.T_Tray {
 
             // 默认：Connect 成功，Writer 返回可写流
             _factory
-                .Setup(f => f.Create("localhost", "TRAY_CMD"))
+                .Setup(f => f.Create("localhost", Constants.PipeControlField.TrayCmdPipeName))
                 .Returns(_pipeClient.Object);
 
             _pipeClient
@@ -43,7 +44,7 @@ namespace VirtualPaper.Core.Test.T_Tray {
 
             // Assert
             _factory.Verify(
-                f => f.Create("localhost", "TRAY_CMD"),
+                f => f.Create("localhost", Constants.PipeControlField.TrayCmdPipeName),
                 Times.Once,
                 "Should connect to pipe named TRAY_CMD on localhost");
         }

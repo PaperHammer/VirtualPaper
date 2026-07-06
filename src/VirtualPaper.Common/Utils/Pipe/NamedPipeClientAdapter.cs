@@ -1,9 +1,8 @@
-using System.IO;
 using System.IO.Pipes;
 using System.Security.Principal;
-using VirtualPaper.Utils.Interfcaes;
+using VirtualPaper.Common.Utils.Pipe.Interfaces;
 
-namespace VirtualPaper.Utils.Services {
+namespace VirtualPaper.Common.Utils.Pipe {
     public class NamedPipeClientAdapter : IPipeClient {
         public NamedPipeClientAdapter(string serverName, string pipeName) {
             _inner = new NamedPipeClientStream(
@@ -20,6 +19,9 @@ namespace VirtualPaper.Utils.Services {
 
         public StreamWriter CreateWriter() =>
             new StreamWriter(_inner) { AutoFlush = true };
+
+        public StreamReader CreateReader() =>
+            new StreamReader(_inner);
 
         public void Dispose() => _inner.Dispose();
 

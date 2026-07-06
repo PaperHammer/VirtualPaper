@@ -61,15 +61,6 @@ namespace VirtualPaper.Properties {
         }
         
         /// <summary>
-        ///   查找类似 安装 的本地化字符串。
-        /// </summary>
-        public static string AppUpdater_ActionButtonText_Completed {
-            get {
-                return ResourceManager.GetString("AppUpdater_ActionButtonText_Completed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   查找类似 暂停 的本地化字符串。
         /// </summary>
         public static string AppUpdater_ActionButtonText_Downloading {

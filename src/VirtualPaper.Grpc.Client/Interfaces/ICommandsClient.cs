@@ -3,9 +3,10 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         event EventHandler<int>? UIRecieveCmd;
 
         Task ShowUIAsync();
-        Task CloseUI();
-        Task RestartUI();
-        Task ShowDebugView();
-        Task ShutDown();
+        Task CloseUIAsync();
+        Task RequestInstallAsync();
+        Task RestartUIAsync();
+        Task ShowDebugViewAsync();
+        Task ShutDownAsync();
     }
 }

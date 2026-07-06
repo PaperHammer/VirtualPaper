@@ -11,6 +11,8 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Common.Utils.Pipe;
+using VirtualPaper.Common.Utils.Pipe.Interfaces;
 using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.ViewModels;
@@ -123,12 +125,13 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IGlobalDialogService, GlobalDialogService>()
                 .AddSingleton<IStoragePicker, StoragePickerWrapper>()
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()
+                .AddSingleton<IPipeServerFactory, NamedPipeServerFactory>()
 
                 .AddSingleton<IDepthEstimate, MiDaS>()
                 .AddSingleton<IStyleTransfer, AdaIn>()
                 .AddSingleton<ISuperResolution, Realesrgan>()
-
-                .BuildServiceProvider();
+                
+                .BuildServiceProvider();            
 
             return provider;
         }

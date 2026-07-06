@@ -1097,10 +1097,11 @@ jobs:
         path: dist/
 
     - name: Download app_comp_manifest
+      if: needs.prepare.outputs.has_plugin_update == 'true'
       uses: actions/download-artifact@v4
       with:
         name: app-comp-manifest
-        path: dist/
+        path: dist/manifest/
 
     - name: Verify tag does not exist
       id: tag_check
@@ -1124,7 +1125,7 @@ jobs:
         files: |
           dist/*.exe
           dist/SHA256.txt
-          dist/app_comp_manifest.json
+          dist/manifest/*
           dist/plugins_patch.zip
           dist/PLUGINS_PATCH_SHS256.txt
         draft: true        # 草稿状态，不对外公开，等待人工验证后发布

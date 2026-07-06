@@ -5,7 +5,7 @@ using System.Windows.Shell;
 using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.PInvoke;
-using VirtualPaper.Cores.AppUpdate;
+using VirtualPaper.Cores.AppUpdate.Specific;
 using VirtualPaper.lang;
 using VirtualPaper.Services.Interfaces;
 

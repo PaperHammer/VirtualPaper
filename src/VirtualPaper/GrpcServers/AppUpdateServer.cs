@@ -2,6 +2,7 @@ using System.Windows.Threading;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using VirtualPaper.Cores.AppUpdate;
+using VirtualPaper.Cores.AppUpdate.Models;
 using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.Update;
 using VirtualPaper.Models.Events;
@@ -26,14 +27,20 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override Task<Grpc_UpdateResponse> GetUpdateStatus(Empty _, ServerCallContext context) {
+            var release = _updater.LastReleaseInfo;
             return Task.FromResult(new Grpc_UpdateResponse() {
-                Status = (Grpc_UpdateStatus)((int)_updater.Status),               
-                Changelog = _updater.LastReleaseInfo?.Changelog ?? string.Empty,
-                Uri = _updater.LastReleaseInfo?.InstallerUri?.OriginalString ?? string.Empty,
-                ShaUri = _updater.LastReleaseInfo?.InstallerShaUri?.OriginalString ?? string.Empty,
-                Version = _updater.LastReleaseInfo?.Version?.ToString() ?? string.Empty,
-                AppBuild = _updater.LastReleaseInfo?.AppBuild ?? string.Empty,
-                Time = Timestamp.FromDateTime(_updater.LastReleaseInfo?.CheckedTime.ToUniversalTime() ?? DateTime.UtcNow),
+                Status = (Grpc_UpdateStatus)((int)_updater.Status),
+                Changelog = release?.Changelog ?? string.Empty,
+                InstallerUri = release?.InstallerUri?.OriginalString ?? string.Empty,
+                InstallerShaUri = release?.InstallerShaUri?.OriginalString ?? string.Empty,
+                Version = release?.Version?.ToString() ?? string.Empty,
+                AppBuild = release?.AppBuild ?? string.Empty,
+                CheckedTime = Timestamp.FromDateTime(release?.CheckedTime.ToUniversalTime() ?? DateTime.UtcNow),
+                PluginPatchUri = release?.PluginPatchUri?.OriginalString ?? string.Empty,
+                PluginPatchSha256Uri = release?.PluginPatchSha256Uri?.OriginalString ?? string.Empty,
+                AppCompManifest = release?.AppCompManifest != null
+                    ? System.Text.Json.JsonSerializer.Serialize(release.AppCompManifest, UpdateManifestContext.Default.AppCompManifest)
+                    : string.Empty,
             });
         }
 

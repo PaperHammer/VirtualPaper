@@ -115,7 +115,7 @@ namespace VirtualPaper.Views {
         }
 
         private void ActionBtn_Click(object sender, RoutedEventArgs e) {
-            if (_viewModel.IsPluginsUpdate && _viewModel.CurrentState == DownloadState.Completed) {
+            if (_viewModel.CurrentState == DownloadState.Completed) {
                 this.Close();
                 return;
             }

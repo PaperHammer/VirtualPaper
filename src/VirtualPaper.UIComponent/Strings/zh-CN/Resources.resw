@@ -1653,9 +1653,9 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>柔光模式，产生柔和对比</value>
   </data>
   <data name="Settings_General_Version_InstallerReady" xml:space="preserve">
-    <value>更新已就绪，点击安装。安装需完全退出应用，请注意保存数据</value>
+    <value>安装包已就绪，点击安装。安装需完全退出应用，请注意保存数据</value>
   </data>
   <data name="Settings_General_Version_PluginsReady" xml:space="preserve">
-    <value>更新已就绪，点击安装。安装需关闭主窗口，请注意保存数据</value>
+    <value>组件更新已就绪，点击安装。安装需关闭主窗口，请注意保存数据</value>
   </data>
 </root>

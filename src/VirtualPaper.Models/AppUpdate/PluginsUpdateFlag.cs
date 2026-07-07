@@ -33,6 +33,9 @@ namespace VirtualPaper.Models.AppUpdate {
 
         [JsonPropertyName("installer_path")]
         public string InstallerPath { get; set; } = string.Empty;
+
+        [JsonPropertyName("sha256")]
+        public string Sha256 { get; set; } = string.Empty;
     }
 
     public class PluginFlagInfo {

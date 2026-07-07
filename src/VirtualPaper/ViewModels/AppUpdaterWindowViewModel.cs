@@ -74,6 +74,12 @@ namespace VirtualPaper.ViewModels {
             set { _isIndeterminate = value; OnPropertyChanged(); }
         }
 
+        private bool _isError;
+        public bool IsError {
+            get => _isError;
+            set { _isError = value; OnPropertyChanged(); }
+        }
+
         public bool IsPluginsUpdate { get; private set; }
 
         public Action? RequestFlashTaskbar { get; set; }
@@ -186,11 +192,18 @@ namespace VirtualPaper.ViewModels {
             if (_releaseInfo == null)
                 return;
 
+            ResetAllState();
             _cts = new CancellationTokenSource();
             CurrentState = DownloadState.Downloading;
 
             try {
+                var lastUpdate = DateTime.MinValue;
                 var progress = new Progress<DownloadProgress>(p => {
+                    // 节流：每 100ms 更新一次 UI
+                    var now = DateTime.Now;
+                    if ((now - lastUpdate).TotalMilliseconds < 100) return;
+                    lastUpdate = now;
+
                     Progress = p.Percent;
                     UpdateSpeedInfo(p.Speed, p.ReceivedBytes, p.TotalBytes, p.Remaining);
                 });
@@ -232,11 +245,18 @@ namespace VirtualPaper.ViewModels {
             if (_releaseInfo == null)
                 return;
 
+            ResetAllState();
             _cts = new CancellationTokenSource();
             CurrentState = DownloadState.Downloading;
 
             try {
+                var lastUpdate = DateTime.MinValue;
                 var progress = new Progress<DownloadProgress>(p => {
+                    // 节流：每 100ms 更新一次 UI
+                    var now = DateTime.Now;
+                    if ((now - lastUpdate).TotalMilliseconds < 100) return;
+                    lastUpdate = now;
+
                     Progress = p.Percent;
                     UpdateSpeedInfo(p.Speed, p.ReceivedBytes, p.TotalBytes, p.Remaining);
                 });
@@ -293,6 +313,13 @@ namespace VirtualPaper.ViewModels {
             SizeText = string.Empty;
             RemainingText = string.Empty;
         }
+
+        private void ResetAllState() {
+            Progress = 0;
+            IsError = false;
+            IsIndeterminate = false;
+            ClearSpeedInfo();
+        }
         #endregion
 
         #region UI State Mapping
@@ -326,7 +353,9 @@ namespace VirtualPaper.ViewModels {
                     _ = _contentDialogService.ShowSimpleDialogAsync(
                         new SimpleContentDialogCreateOptions() {
                             Title = LanguageManager.Instance["PluginsUpdate_Close"],
-                            Content = LanguageManager.Instance["PluginsUpdate_PostponeTip"],
+                            Content = IsPluginsUpdate
+                                ? LanguageManager.Instance["PluginsUpdate_PostponeTip"]
+                                : LanguageManager.Instance["InstallerUpdate_PostponeTip"],
                             CloseButtonText = LanguageManager.Instance["Common_TextConfirm"],
                         }
                     );
@@ -336,11 +365,15 @@ namespace VirtualPaper.ViewModels {
                 case DownloadState.DownloadFailed:
                     ActionButtonText = LanguageManager.Instance["Common_TextRetry"];
                     StatusText = LanguageManager.Instance["AppUpdater_StatusText_DownloadFailed"];
+                    IsError = true;
+                    ClearSpeedInfo();
                     break;
                     
                 case DownloadState.VerifyFailed:
                     ActionButtonText = LanguageManager.Instance["Common_TextRetry"];
                     StatusText = LanguageManager.Instance["AppUpdater_StatusText_VerifyFailed"];
+                    IsError = true;
+                    ClearSpeedInfo();
                     break;
 
                 case DownloadState.Installing:

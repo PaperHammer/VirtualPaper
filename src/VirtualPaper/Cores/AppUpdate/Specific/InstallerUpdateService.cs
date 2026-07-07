@@ -72,10 +72,11 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                     throw new InvalidDataException("SHA256 verification failed for installer");
                 }
 
-                // Write update flag after successful verification
+                // Write update flag with SHA256 after successful verification
                 await SaveUpdateFlagAsync(new InstallerUpdateFlag {
                     Status = UpdateStatus.Pending,
-                    InstallerPath = installerPath
+                    InstallerPath = installerPath,
+                    Sha256 = expectedHash
                 }, token);
 
                 result.Success = true;

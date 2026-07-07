@@ -80,11 +80,14 @@ message Grpc_ProcInfoData {
 message Grpc_UpdateResponse {
 	Grpc_UpdateStatus status = 1;
 	string version = 2;
-	string uri = 3;
-	string sha_uri = 4;
+	string installer_uri = 3;
+	string installer_sha_uri = 4;
 	string changelog = 5;
 	string app_build = 6;
-	google.protobuf.Timestamp time = 7;
+	google.protobuf.Timestamp checked_time = 7;
+	string plugin_patch_uri = 8;
+	string plugin_patch_sha256_uri = 9;
+	string app_comp_manifest = 10;
 }
 
 message Grpc_WallpaperLayoutsSettings {

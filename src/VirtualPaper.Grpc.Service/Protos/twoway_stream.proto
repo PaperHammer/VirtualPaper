@@ -1,0 +1,18 @@
+syntax = "proto3";
+package VirtualPaper.Grpc.Service.TwoWay;
+import "google/protobuf/empty.proto";
+
+// 通用双向通信消息
+message TwoWayMessage {
+    // 消息类型标识
+    string type = 1;
+    // 消息负载（JSON 格式）
+    string payload = 2;
+    // 请求 ID（用于匹配请求和响应）
+    string request_id = 3;
+}
+
+service Grpc_TwoWayService {
+    // 双向流：支持随时发送和接收消息
+    rpc TwoWayStream (stream TwoWayMessage) returns (stream TwoWayMessage);
+}

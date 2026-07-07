@@ -8,6 +8,7 @@ using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.AppUpdate.Specific;
+using VirtualPaper.GrpcServers;
 using VirtualPaper.lang;
 using VirtualPaper.Services.Interfaces;
 using MessageBox = System.Windows.MessageBox;
@@ -120,6 +121,15 @@ namespace VirtualPaper.Services {
             UISendCmd?.Invoke(this, MessageType.cmd_close);
         }
 
+        public async Task<bool> RequestUICloseAsync() {
+            if (!IsVisibleUI) {
+                return true; // UI 已经关闭
+            }
+
+            // 通过双向流发送关闭请求并等待响应
+            return await TwoWayServer.RequestUICloseAsync(TimeSpan.FromSeconds(30));
+        }
+
         public nint GetUIHwnd() {
             if (_processUI == null) {
                 return default;
@@ -151,38 +161,18 @@ namespace VirtualPaper.Services {
 
             App.Jobs.StopPlugin(pid);
 
-            // Check for pending restart update when UI exits normally
+            // Check for pending plugin update when UI exits normally
             // (not during an update - UpdateLock would be set in that case)
+            // Installer update is handled in App.ShutDownAsync()
             if (!UpdateLock.IsAnyLocked) {
-                // Check for pending plugin update
-                var pluginFlagPath = VirtualPaper.Common.Constants.CommonPaths.UpdateFlagPath;
+                var pluginFlagPath =Constants.CommonPaths.UpdateFlagPath;
                 if (File.Exists(pluginFlagPath)) {
                     _jobService.PluginsUpdateFinishedEvent += (s, e) => {
                         _ = ShowUIAsync();
                     };
                     var restartService = App.Services.GetRequiredService<IPluginsUpdateService>();
                     _ = restartService.ExecutePendingPluginUpdateWithWindowAsync();
-                    return;
                 }
-
-                // Check for pending installer update
-                var installerFlagPath = VirtualPaper.Common.Constants.CommonPaths.InstallerUpdateFlagPath;
-                if (File.Exists(installerFlagPath)) {
-                    var installerService = App.Services.GetRequiredService<IInstallerUpdateService>();
-                    _ = ExecuteInstallerAndUpdateAsync(installerService);
-                    return;
-                }
-            }
-        }
-
-        private async Task ExecuteInstallerAndUpdateAsync(IInstallerUpdateService installerService) {
-            try {
-                await installerService.ExecuteAsync();
-                // Installer started, exit main process
-                App.ShutDown();
-            }
-            catch (Exception ex) {
-                ArcLog.GetLogger<UIRunnerService>().Error($"Failed to execute installer: {ex.Message}");
             }
         }
 

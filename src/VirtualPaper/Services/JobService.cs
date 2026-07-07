@@ -171,6 +171,7 @@ namespace VirtualPaper.Services {
             CloseHandle(_handle);
             _handle = IntPtr.Zero;
         }
+
         private void Dispose(bool disposing) {
             if (_disposed)
                 return;

@@ -286,6 +286,9 @@ Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virt
   <data name="PluginsUpdate_PostponeTip" xml:space="preserve">
     <value>更新已就绪，关闭主窗口以触发更新</value>
   </data>
+  <data name="InstallerUpdate_PostponeTip" xml:space="preserve">
+    <value>安装包已就绪，完全退出应用后触发安装</value>
+  </data>
   <data name="PluginUpdate_Title_Updating" xml:space="preserve">
     <value>正在更新组件...</value>
   </data>

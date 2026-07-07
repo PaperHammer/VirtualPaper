@@ -8,7 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Win32;
 using NLog;
+using Octokit.Internal;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
@@ -25,6 +27,7 @@ using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Grpc.Service.Commands;
 using VirtualPaper.Grpc.Service.MonitorManager;
 using VirtualPaper.Grpc.Service.ScrCommands;
+using VirtualPaper.Grpc.Service.TwoWay;
 using VirtualPaper.Grpc.Service.Update;
 using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Grpc.Service.WallpaperControl;
@@ -68,7 +71,7 @@ namespace VirtualPaper {
                 // 保证全局只有一个实例
                 if (!_mutex.WaitOne(TimeSpan.FromSeconds(1), false)) {
                     MessageBox.Show("已存在正在运行的程序，请检查托盘或任务管理器\nThere are already running programs, check the tray or Task Manager", "Virtual Paper", MessageBoxButton.OK, MessageBoxImage.Information);
-                    ShutDown();
+                    _ = ShutDownAsync();
                     return;
                 }
             }
@@ -81,7 +84,7 @@ namespace VirtualPaper {
             #endregion
 
             SetupUnhandledExceptionLogging(); // 初始化异常处理机制
-            Log.Info(LogUtil.GetHardwareInfo()); // 记录硬件信息
+            ArcLog.GetLogger<App>().Info(LogUtil.GetHardwareInfo()); // 记录硬件信息
 
             #region 必要路径处理
             try {
@@ -102,8 +105,9 @@ namespace VirtualPaper {
                 //Directory.CreateDirectory(Path.Combine(Constants.CommonPaths.TempDir, Constants.FolderName.WpStoreFolderName));
             }
             catch (Exception ex) {
+                ArcLog.GetLogger<App>().Error("Failed to create AppData directory.", ex);
                 MessageBox.Show(ex.Message, "AppData directory creation failed, exiting..", MessageBoxButton.OK, MessageBoxImage.Error);
-                ShutDown();
+                _ = ShutDownAsync();
                 return;
             }
             #endregion
@@ -155,7 +159,7 @@ namespace VirtualPaper {
                 InitMemorySharedContext();
             }
             catch (Exception ex) {
-                Log.Error(ex);
+                ArcLog.GetLogger<App>().Error(ex);
                 MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
                 return;
             }
@@ -180,7 +184,7 @@ namespace VirtualPaper {
                 }
             }
             catch (Exception ex) {
-                Log.Error(ex);
+                ArcLog.GetLogger<App>().Error(ex);
                 MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
                 return;
             }
@@ -203,7 +207,8 @@ namespace VirtualPaper {
             this.SessionEnding += (s, e) => {
                 if (e.ReasonSessionEnding == ReasonSessionEnding.Shutdown || e.ReasonSessionEnding == ReasonSessionEnding.Logoff) {
                     e.Cancel = true;
-                    ShutDown();
+                    ArcLog.GetLogger<App>().Error($"SessionEnding: {e.ReasonSessionEnding}");
+                    _ = ShutDownAsync();
                 }
             };
             #endregion
@@ -253,6 +258,7 @@ namespace VirtualPaper {
                 .AddSingleton<AppUpdateServer>()
                 .AddSingleton<CommandsServer>()
                 .AddSingleton<ScrCommandsServer>()
+                .AddSingleton<TwoWayServer>()
 
                 .AddSingleton<WndProcMsgWindow>()
                 .AddSingleton<MainWindow>()
@@ -277,13 +283,14 @@ namespace VirtualPaper {
             Grpc_UpdateService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<AppUpdateServer>());
             Grpc_CommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<CommandsServer>());
             Grpc_ScrCommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<ScrCommandsServer>());
+            Grpc_TwoWayService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<TwoWayServer>());
             server.Start();
 
             return server;
         }
 
         private static void LogUnhandledException(Exception exception, string source)
-            => Log.Error(exception, source);
+            => ArcLog.GetLogger<App>().Error(source, exception);
 
         private void SetupUnhandledExceptionLogging() {
             // 当.NET应用程序域中的任何线程抛出了未捕获的异常时，会触发此事件。
@@ -311,9 +318,9 @@ namespace VirtualPaper {
                 });
             }
             catch (Exception e) {
-                Log.Error(e);
+                ArcLog.GetLogger<App>().Error(e);
             }
-            Log.Info($"Theme changed: {theme}");
+            ArcLog.GetLogger<App>().Info($"Theme changed: {theme}");
         }
 
         public static void ChangeLanguage(string lang) {
@@ -357,13 +364,36 @@ namespace VirtualPaper {
                         AppUpdateDialog(e);
                     }
                 }
-                Log.Info($"AppUpdate status: {e.UpdateStatus}");
+                ArcLog.GetLogger<App>().Info($"AppUpdate status: {e.UpdateStatus}");
             }));
         }
 
-        public static volatile bool IsShuttingDown;
+        private static async Task TryInstallerUpdateAsync() {
+            // Execute pending installer update before cleanup
+            var installerFlagPath = Constants.CommonPaths.InstallerUpdateFlagPath;
+            if (File.Exists(installerFlagPath)) {
+                try {
+                    var installerService = Services.GetRequiredService<IInstallerUpdateService>();
+                    await installerService.ExecuteAsync();
+                }
+                catch (Exception ex) {
+                    ArcLog.GetLogger<App>().Error($"Failed to execute installer: {ex.Message}");
+                }
+            }
+        }
 
-        public static void ShutDown() {
+        public static volatile bool IsShuttingDown;
+        public static async Task ShutDownAsync(bool isForce = false) {
+            if (!isForce) {
+                var uiRunner = Services.GetRequiredService<IUIRunnerService>();
+                var canClose = await uiRunner.RequestUICloseAsync();
+                if (!canClose) {
+                    return; // UI 拒绝关闭，终止 shutdown
+                }
+            }
+
+            await TryInstallerUpdateAsync();
+
             IsShuttingDown = true;
             try {
                 _ctsPlayback.Cancel();
@@ -378,8 +408,6 @@ namespace VirtualPaper {
                     UserSettings.Settings.IsUpdated = false;
                     UserSettings.Save<ISettings>();
                 }
-
-                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
             }
             catch (InvalidOperationException) { /* not initialised */ }
 

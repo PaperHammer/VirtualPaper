@@ -286,6 +286,9 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   <data name="PluginsUpdate_PostponeTip" xml:space="preserve">
     <value>Update ready. Close the main window to apply.</value>
   </data>
+  <data name="InstallerUpdate_PostponeTip" xml:space="preserve">
+    <value>Installer ready. Installation will start after fully exiting the application.</value>
+  </data>
   <data name="PluginUpdate_Title_Updating" xml:space="preserve">
     <value>Updating components...</value>
   </data>

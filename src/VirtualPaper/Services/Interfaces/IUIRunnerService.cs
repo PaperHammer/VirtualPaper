@@ -12,6 +12,7 @@ namespace VirtualPaper.Services.Interfaces {
         Task ShowUIAsync();
         void CloseUI();
         void SendCloseCmd();
+        Task<bool> RequestUICloseAsync();
         void RestartUI();
         nint GetUIHwnd();
     }

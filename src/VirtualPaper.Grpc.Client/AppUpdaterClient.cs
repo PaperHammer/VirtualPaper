@@ -3,6 +3,7 @@ using Grpc.Core;
 using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Cores.AppUpdate.Models;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Update;
 using VirtualPaper.Models.AppUpdate;
@@ -42,13 +43,18 @@ namespace VirtualPaper.Grpc.Client {
         private async Task UpdateStatusRefresh() {
             var resp = await _client.GetUpdateStatusAsync(new Empty());
             Status = (AppUpdateStatus)((int)resp.Status);
-            Release.CheckedTime = resp.Time.ToDateTime().ToLocalTime();
+            Release.CheckedTime = resp.CheckedTime.ToDateTime().ToLocalTime();
             Release.Changelog = resp.Changelog;
             Release.AppBuild = resp.AppBuild;
             try {
                 Release.Version = string.IsNullOrEmpty(resp.Version) ? null : new Version(resp.Version);
-                Release.InstallerUri = string.IsNullOrEmpty(resp.Uri) ? null : new Uri(resp.Uri);
-                Release.InstallerShaUri = string.IsNullOrEmpty(resp.ShaUri) ? null : new Uri(resp.ShaUri);
+                Release.InstallerUri = string.IsNullOrEmpty(resp.InstallerUri) ? null : new Uri(resp.InstallerUri);
+                Release.InstallerShaUri = string.IsNullOrEmpty(resp.InstallerShaUri) ? null : new Uri(resp.InstallerShaUri);
+                Release.PluginPatchUri = string.IsNullOrEmpty(resp.PluginPatchUri) ? null : new Uri(resp.PluginPatchUri);
+                Release.PluginPatchSha256Uri = string.IsNullOrEmpty(resp.PluginPatchSha256Uri) ? null : new Uri(resp.PluginPatchSha256Uri);
+                if (!string.IsNullOrEmpty(resp.AppCompManifest)) {
+                    Release.AppCompManifest = System.Text.Json.JsonSerializer.Deserialize(resp.AppCompManifest, UpdateManifestContext.Default.AppCompManifest);
+                }
             }
             catch { /* TODO */ }
         }

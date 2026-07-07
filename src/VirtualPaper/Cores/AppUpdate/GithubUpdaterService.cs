@@ -147,23 +147,34 @@ namespace VirtualPaper.Cores.AppUpdate {
 
         private bool ProbeInstallerReady() {
             try {
-                var cacheDir = Constants.CommonPaths.PendingInstallerUpdateDir;
-                if (!Directory.Exists(cacheDir)) return false;
+                var flagPath = Constants.CommonPaths.InstallerUpdateFlagPath;
+                if (!File.Exists(flagPath)) return false;
 
-                foreach (var file in Directory.GetFiles(cacheDir)) {
-                    if (file.EndsWith(".sha256", StringComparison.OrdinalIgnoreCase)) continue;
-
-                    var shaPath = file + ".sha256";
-                    if (!File.Exists(shaPath)) continue;
-
-                    var expectedSha = File.ReadAllText(shaPath).Trim();
-                    if (FileUtil.VerifyFileIntegrityAsync(file, expectedSha).GetAwaiter().GetResult())
-                        return true;
+                // 读取 flag 验证 installer 和 SHA256
+                var json = File.ReadAllText(flagPath);
+                var flag = System.Text.Json.JsonSerializer.Deserialize(json, UpdateFlagContext.Default.InstallerUpdateFlag);
+                if (flag == null || flag.Status != UpdateStatus.Pending) {
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
+                    return false;
                 }
 
-                // 有文件但无有效配对 → 清理
-                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
-                return false;
+                if (string.IsNullOrEmpty(flag.InstallerPath) || !File.Exists(flag.InstallerPath)) {
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(flag.Sha256)) {
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
+                    return false;
+                }
+
+                // 验证 installer 完整性
+                if (!FileUtil.VerifyFileIntegrityAsync(flag.InstallerPath, flag.Sha256).GetAwaiter().GetResult()) {
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
+                    return false;
+                }
+
+                return true;
             }
             catch {
                 FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);

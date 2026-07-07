@@ -8,6 +8,7 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:lang="clr-namespace:VirtualPaper.lang"
         xmlns:mdxam="clr-namespace:MdXaml;assembly=MdXaml"
+        xmlns:converters="clr-namespace:VirtualPaper.Converters"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
         WindowBackdropType="Mica"
@@ -22,6 +23,10 @@
         Closing="FluentWindow_Closing"
         Closed="FluentWindow_Closed"
         PreviewKeyDown="FluentWindow_PreviewKeyDown">
+
+    <ui:FluentWindow.Resources>
+        <converters:BoolToErrorBrushConverter x:Key="BoolToErrorBrushConverter"/>
+    </ui:FluentWindow.Resources>
 
     <Grid x:Name="MainGrid">
         <Grid.RowDefinitions>
@@ -102,9 +107,9 @@
                                FontSize="13"/>
 
                     <ProgressBar Height="8"
-                                 Margin="0,8,0,0"                                 
+                                 Margin="0,8,0,0"                                            
                                  IsIndeterminate="{Binding IsIndeterminate}"
-                                 Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                                 Foreground="{Binding IsError, Converter={StaticResource BoolToErrorBrushConverter}}"
                                  Background="{DynamicResource ControlStrokeColorSecondaryBrush}"
                                  Value="{Binding Progress}"
                                  Minimum="0" Maximum="100"/>

@@ -95,7 +95,7 @@ namespace VirtualPaper {
         }
 
         private void ExitMenuItem_Click(object sender, RoutedEventArgs e) {
-            App.ShutDown();
+            _ = App.ShutDownAsync();
         }
 
         private void Playback_PlaybackStateChanged(object? sender, PlaybackMode e) {

@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows.Threading;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
@@ -37,17 +38,23 @@ namespace VirtualPaper.GrpcServers {
             return Task.FromResult(new Empty());
         }
 
-        public override Task<Empty> ShutDown(Empty _, ServerCallContext context) {
-            try {
-                return Task.FromResult(new Empty());
-            }
-            finally {
-                App.ShutDown();
-            }
+        public override async Task<Empty> ShutDown(Empty _, ServerCallContext context) {
+            App.ShutDownAsync();
+
+            return new Empty();
         }
 
         public override Task<Empty> RequestInstall(Empty request, ServerCallContext context) {
-            _runner.SendCloseCmd();
+            // 检查是否有 pending installer update
+            var installerFlagPath = Common.Constants.CommonPaths.InstallerUpdateFlagPath;
+            if (File.Exists(installerFlagPath)) {
+                // Installer update: 调用 ShutDownAsync 通过双向流请求 UI 关闭
+                _ = App.ShutDownAsync();
+            }
+            else {
+                // Plugin update: 直接发送关闭命令
+                _runner.SendCloseCmd();
+            }
 
             return Task.FromResult(new Empty());
         }
@@ -61,7 +68,7 @@ namespace VirtualPaper.GrpcServers {
                     void UIRecievedCmd(object? s, MessageType e) {
                         _runner.UISendCmd -= UIRecievedCmd;
                         message = e;
-                        tcs.TrySetResult(true);                        
+                        tcs.TrySetResult(true);
                     }
                     using var item = context.CancellationToken.Register(() => { tcs.TrySetResult(false); });
                     await tcs.Task;

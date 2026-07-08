@@ -9,6 +9,7 @@ using VirtualPaper.lang;
 using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Views;
+using Windows.AI.MachineLearning;
 
 namespace VirtualPaper.Cores.AppUpdate.Specific {
     public interface IPluginsUpdateService {
@@ -16,7 +17,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         Task<PluginsUpdateResult> VerifyAndSavePendingAsync(ReleaseInfo releaseInfo, CancellationToken token = default);
         Task<PluginsUpdateResult> ExecutePendingUpdateAsync(IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default);
         Task<bool> CheckAndRecoverAsync(CancellationToken token = default);
-        
+
         /// <summary>
         /// 执行待处理的插件更新，显示进度窗口
         /// </summary>
@@ -32,6 +33,10 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         IJobService jobService,
         IAppBuildService appBuildService,
         IWindowService windowService) : IPluginsUpdateService, IPluginsUpdateServiceInit {
+        // ===== TEST HOOKS - 模拟测试用，后期删除 =====
+        public static bool ForceRollback { get; set; } = false;
+        // ==========================================
+
         public async Task InitAsync() {
             UpdateLock.RegisterAll();
 
@@ -55,23 +60,26 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
             }
 
             var pendingDir = Constants.CommonPaths.PendingPluginsUpdateDir;
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token);
 
             try {
-                FileUtil.RemoveDirectory(pendingDir);
                 Directory.CreateDirectory(pendingDir);
 
                 var patchZipPath = Path.Combine(pendingDir, "plugins_patch.zip");
-                await foreach (var p in downloadService.DownloadAsync(releaseInfo.PluginPatchUri, patchZipPath, token)) {
+                await foreach (var p in downloadService.DownloadAsync(releaseInfo.PluginPatchUri, patchZipPath, linkedCts.Token)) {
                     progress?.Report(p);
                 }
 
                 result.Success = true;
             }
-            catch (Exception ex) {
+            catch (Exception ex) when (!token.IsCancellationRequested) {
                 ArcLog.GetLogger<PluginsUpdateService>().Error("Plugin patch download failed", ex);
                 result.Success = false;
                 result.ErrorMessage = ex.Message;
-                FileUtil.RemoveDirectory(pendingDir);
+                // Keep downloaded files for potential resume
+            }
+            finally {
+                linkedCts.Cancel();
             }
 
             return result;
@@ -224,6 +232,12 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 var backupDir = Constants.CommonPaths.UpdateBackupDir;
                 FileUtil.RemoveDirectory(backupDir);
                 Directory.CreateDirectory(backupDir);
+
+                // ===== TEST HOOK - 模拟回滚 =====
+                if (ForceRollback) {
+                    throw new Exception("[TEST] Forced rollback during update");
+                }
+                // ================================
 
                 foreach (var (pluginName, pluginInfo) in flag.Plugins) {
                     var sourceDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pluginInfo.Target));

@@ -31,6 +31,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
             }
 
             var cacheDir = Constants.CommonPaths.PendingInstallerUpdateDir;
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token);
 
             try {
                 Directory.CreateDirectory(cacheDir);
@@ -38,18 +39,21 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 var installerFileName = Path.GetFileName(releaseInfo.InstallerUri.LocalPath);
                 var installerPath = Path.Combine(cacheDir, installerFileName);
 
-                await foreach (var p in downloadService.DownloadAsync(releaseInfo.InstallerUri, installerPath, token)) {
+                await foreach (var p in downloadService.DownloadAsync(releaseInfo.InstallerUri, installerPath, linkedCts.Token)) {
                     progress?.Report(p);
                 }
 
                 result.Success = true;
                 result.InstallerPath = installerPath;
             }
-            catch (Exception ex) {
+            catch (Exception ex) when (!token.IsCancellationRequested) {
                 ArcLog.GetLogger<InstallerUpdateService>().Error("Installer download failed", ex);
                 result.Success = false;
                 result.ErrorMessage = ex.Message;
-                FileUtil.RemoveDirectory(cacheDir);
+                // Keep downloaded files for potential resume
+            }
+            finally {
+                linkedCts.Cancel();
             }
 
             return result;

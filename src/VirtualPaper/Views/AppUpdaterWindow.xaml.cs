@@ -45,6 +45,11 @@ namespace VirtualPaper.Views {
                     TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Indeterminate;
                     TaskbarItemInfo.ProgressValue = 0;
                     break;
+                case DownloadState.DownloadFailed:
+                case DownloadState.VerifyFailed:
+                    TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Error;
+                    TaskbarItemInfo.ProgressValue = _viewModel.Progress / 100.0;
+                    break;
                 case DownloadState.Completed:
                     TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
                     TaskbarItemInfo.ProgressValue = 0;

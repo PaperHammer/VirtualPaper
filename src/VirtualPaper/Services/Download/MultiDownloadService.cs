@@ -28,7 +28,6 @@ namespace VirtualPaper.Services.Download {
             _parallelDownloaders = new List<DownloadService>();
         }
 
-
         /// <summary>
         /// 异步下载文件并逐步返回下载进度。
         /// </summary>
@@ -36,8 +35,6 @@ namespace VirtualPaper.Services.Download {
             Uri uri,
             string saveFilePath,
             [EnumeratorCancellation] CancellationToken token) {
-            await _downloader.Clear();
-
             var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var channel = Channel.CreateUnbounded<DownloadProgress>(
                 new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });

@@ -192,17 +192,17 @@ namespace VirtualPaper.ViewModels {
             if (_releaseInfo == null)
                 return;
 
-            ResetAllState();
+            ResetAllState(CurrentState == DownloadState.VerifyFailed);
             _cts = new CancellationTokenSource();
             CurrentState = DownloadState.Downloading;
 
             try {
-                var lastUpdate = DateTime.MinValue;
+                //var lastUpdate = DateTime.MinValue;
                 var progress = new Progress<DownloadProgress>(p => {
-                    // 节流：每 100ms 更新一次 UI
-                    var now = DateTime.Now;
-                    if ((now - lastUpdate).TotalMilliseconds < 100) return;
-                    lastUpdate = now;
+                    //// 节流：每 100ms 更新一次 UI
+                    //var now = DateTime.Now;
+                    //if ((now - lastUpdate).TotalMilliseconds < 100) return;
+                    //lastUpdate = now;
 
                     Progress = p.Percent;
                     UpdateSpeedInfo(p.Speed, p.ReceivedBytes, p.TotalBytes, p.Remaining);
@@ -245,17 +245,12 @@ namespace VirtualPaper.ViewModels {
             if (_releaseInfo == null)
                 return;
 
-            ResetAllState();
+            ResetAllState(CurrentState == DownloadState.VerifyFailed);
             _cts = new CancellationTokenSource();
             CurrentState = DownloadState.Downloading;
 
             try {
-                var lastUpdate = DateTime.MinValue;
                 var progress = new Progress<DownloadProgress>(p => {
-                    // 节流：每 100ms 更新一次 UI
-                    var now = DateTime.Now;
-                    if ((now - lastUpdate).TotalMilliseconds < 100) return;
-                    lastUpdate = now;
 
                     Progress = p.Percent;
                     UpdateSpeedInfo(p.Speed, p.ReceivedBytes, p.TotalBytes, p.Remaining);
@@ -265,6 +260,7 @@ namespace VirtualPaper.ViewModels {
 
                 if (!result.Success) {
                     CurrentState = DownloadState.DownloadFailed;
+                    // Keep downloaded files for potential resume
                     return;
                 }
 
@@ -273,6 +269,8 @@ namespace VirtualPaper.ViewModels {
 
                 if (!verifyResult.Success) {
                     CurrentState = DownloadState.VerifyFailed;
+                    // Verify failed, must re-download
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingPluginsUpdateDir);
                     return;
                 }
 
@@ -314,11 +312,13 @@ namespace VirtualPaper.ViewModels {
             RemainingText = string.Empty;
         }
 
-        private void ResetAllState() {
-            Progress = 0;
+        private void ResetAllState(bool isRedownloadAll) {
+            if (isRedownloadAll) {
+                Progress = 0;
+                ClearSpeedInfo();
+            }
             IsError = false;
             IsIndeterminate = false;
-            ClearSpeedInfo();
         }
         #endregion
 
@@ -367,6 +367,7 @@ namespace VirtualPaper.ViewModels {
                     StatusText = LanguageManager.Instance["AppUpdater_StatusText_DownloadFailed"];
                     IsError = true;
                     ClearSpeedInfo();
+                    RequestFlashTaskbar?.Invoke();
                     break;
                     
                 case DownloadState.VerifyFailed:
@@ -374,6 +375,7 @@ namespace VirtualPaper.ViewModels {
                     StatusText = LanguageManager.Instance["AppUpdater_StatusText_VerifyFailed"];
                     IsError = true;
                     ClearSpeedInfo();
+                    RequestFlashTaskbar?.Invoke();
                     break;
 
                 case DownloadState.Installing:

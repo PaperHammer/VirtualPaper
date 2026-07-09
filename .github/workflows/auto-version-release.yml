@@ -1147,8 +1147,8 @@ jobs:
       always() &&
       needs.prepare.outputs.has_plugin_update != 'true' &&
       needs.prepare.result == 'success' &&
-      (needs.bump.result != 'skipped' || needs.sync.result != 'skipped') &&
-      (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
+      ((needs.smoke_test.result == 'success' && needs.bump.result != 'success') ||
+       (needs.bump.result == 'success' && needs.sync.result != 'success'))
 
     steps:
     - name: Checkout with full history

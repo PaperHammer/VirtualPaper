@@ -221,10 +221,7 @@ namespace VirtualPaper.ViewModels {
 
                 for (int i = 0; i < 5; i++) {
                     try {
-                        if (IsPluginsUpdate)
-                            FileUtil.RemoveDirectory(dir);
-                        else
-                            FileUtil.DeleteDirectoryContents(dir);
+                        FileUtil.RemoveDirectory(dir);
                         break;
                     }
                     catch {

@@ -40,7 +40,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
             else {
                 UpdateLock.ReleaseAll();
             }
-            appBuildService.Refresh();
+            _appBuildService.Refresh();
         }
 
         public async Task<bool> DownloadUpdateAsync(ReleaseInfo info, IProgress<DownloadProgress> progress, CancellationToken token) {
@@ -62,8 +62,8 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
 
             try {
                 // Download and verify SHA256 of plugins_patch.zip
-                var expectedHash = await downloadService.DownloadShaTxtAsync(info.PluginPatchSha256Uri, token);
-                bool verified = await downloadService.VerifyFileIntegrityAsync(patchZipPath, expectedHash, token);
+                var expectedHash = await _downloadService.DownloadShaTxtAsync(info.PluginPatchSha256Uri, token);
+                bool verified = await _downloadService.VerifyFileIntegrityAsync(patchZipPath, expectedHash, token);
                 if (!verified) {
                     throw new InvalidDataException("SHA256 verification failed for plugins_patch.zip");
                 }
@@ -111,7 +111,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
 
                     // Cross-verify: compute actual SHA256 of plugin zip and compare with manifest declaration.
                     // This catches tampering with the manifest's sha256 field after the outer zip was extracted.
-                    bool pluginZipVerified = await downloadService.VerifyFileIntegrityAsync(pluginZipPath, pluginInfo.Sha256, token);
+                    bool pluginZipVerified = await _downloadService.VerifyFileIntegrityAsync(pluginZipPath, pluginInfo.Sha256, token);
                     if (!pluginZipVerified) {
                         throw new InvalidDataException($"SHA256 verification failed for plugin zip: {pluginInfo.Asset}");
                     }
@@ -175,7 +175,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                         if (!File.Exists(filePath)) {
                             throw new FileNotFoundException($"File missing: {Path.GetFileName(filePath)}");
                         }
-                        bool verified = await downloadService.VerifyFileIntegrityAsync(filePath, fileHash.Sha256, token);
+                        bool verified = await _downloadService.VerifyFileIntegrityAsync(filePath, fileHash.Sha256, token);
                         if (!verified) {
                             throw new InvalidDataException($"File verification failed: {Path.GetFileName(filePath)}");
                         }
@@ -280,7 +280,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 }
 
                 // Refresh build info from manifest
-                appBuildService.Refresh();
+                _appBuildService.Refresh();
 
                 // Step: Update flag to completed, then cleanup
                 flag.Status = UpdateStatus.Completed;
@@ -310,7 +310,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
             }
             finally {
                 UpdateLock.ReleaseAll();
-                jobService.PluginsUpdateFinished();
+                _jobService.PluginsUpdateFinished();
             }
 
             return result;
@@ -357,7 +357,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
 
         private void StopPlugins(IEnumerable<PluginName> plugins) {
             foreach (var plugin in plugins) {
-                try { jobService.StopPlugin(plugin); }
+                try { _jobService.StopPlugin(plugin); }
                 catch (Exception ex) { ArcLog.GetLogger<PluginsUpdateService>().Warn($"Failed to stop {plugin}: {ex.Message}"); }
             }
         }
@@ -413,7 +413,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 }
 
                 // Refresh build info from manifest
-                appBuildService.Refresh();
+                _appBuildService.Refresh();
 
                 ArcLog.GetLogger<PluginsUpdateService>().Info("Rollback completed");
             }
@@ -468,8 +468,8 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 // Create window on UI thread
                 PluginUpdateWindow? progressWindow = null;
                 System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    windowService.Show<Views.PluginUpdateWindow>(bringToFront: true);
-                    windowService.TryGet(out progressWindow);
+                    _windowService.Show<PluginUpdateWindow>(bringToFront: true);
+                    _windowService.TryGet(out progressWindow);
                 });
 
                 // Progress callback marshals to UI thread (non-blocking)
@@ -502,6 +502,10 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
 
         private Task? _pendingUpdateTask;
         private readonly object _pendingLock = new();
+        private readonly IDownloadService _downloadService = downloadService;
+        private readonly IJobService _jobService = jobService;
+        private readonly IAppBuildService _appBuildService = appBuildService;
+        private readonly IWindowService _windowService = windowService;
         private CancellationTokenSource? _updateCts;
     }
 

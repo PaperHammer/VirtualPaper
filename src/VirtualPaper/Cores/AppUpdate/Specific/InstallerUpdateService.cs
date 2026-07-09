@@ -19,8 +19,6 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
     }
 
     public class InstallerUpdateService(IDownloadService downloadService) : UpdateServiceBase<InstallerUpdateService>(downloadService), IInstallerUpdateService {
-        private string? _installerPath;
-
         public async Task<bool> DownloadUpdateAsync(ReleaseInfo info, IProgress<DownloadProgress> progress, CancellationToken token) {
             if (info.InstallerUri == null)
                 return false;
@@ -39,8 +37,8 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 return false;
 
             try {
-                var expectedHash = await downloadService.DownloadShaTxtAsync(info.InstallerShaUri, token);
-                var verified = await downloadService.VerifyFileIntegrityAsync(_installerPath, expectedHash, token);
+                var expectedHash = await _downloadService.DownloadShaTxtAsync(info.InstallerShaUri, token);
+                var verified = await _downloadService.VerifyFileIntegrityAsync(_installerPath, expectedHash, token);
 
                 if (!verified) {
                     throw new InvalidDataException("SHA256 verification failed for installer");
@@ -110,5 +108,8 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
             var json = JsonSerializer.Serialize(flag, UpdateFlagContext.Default.InstallerUpdateFlag);
             await File.WriteAllTextAsync(flagPath, json, token);
         }
+
+        private string? _installerPath;
+        private readonly IDownloadService _downloadService = downloadService;
     }
 }

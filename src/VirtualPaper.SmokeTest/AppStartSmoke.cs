@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.IO;
+using System.Windows.Automation;
 
 namespace VirtualPaper.SmokeTest;
 

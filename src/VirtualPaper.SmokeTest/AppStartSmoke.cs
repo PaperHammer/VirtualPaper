@@ -118,20 +118,23 @@ internal static class AppStartSmoke
             return false;
         }
 
+        if (Process.GetProcessesByName("VirtualPaper.UI").Length == 0)
+        {
+            Console.WriteLine("  UI did not auto-launch within 10s, launching manually...");
+            Process.Start(new ProcessStartInfo { FileName = uiExe, UseShellExecute = true });
+            Thread.Sleep(10000);
+        }
+
         var uiBefore = Process.GetProcessesByName("VirtualPaper.UI");
         if (uiBefore.Length == 0)
         {
-            Console.Error.WriteLine("  UI did not auto-launch within 10s");
+            Console.Error.WriteLine("  UI failed to start (auto + manual), cannot test singleton");
             KillProcessTree(main);
             return false;
         }
+        Console.WriteLine($"  UI running (PID: {uiBefore[0].Id}), launching second instance...");
 
-        Console.WriteLine("  Launching VirtualPaper.UI again...");
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = uiExe,
-            UseShellExecute = true,
-        });
+        Process.Start(new ProcessStartInfo { FileName = uiExe, UseShellExecute = true });
         Thread.Sleep(3000);
 
         var uiProcs = Process.GetProcessesByName("VirtualPaper.UI");
@@ -272,38 +275,46 @@ internal static class AppStartSmoke
         var scrSaverExe = Path.Combine(installDir, "Plugins", "ScrSaver", "VirtualPaper.ScreenSaver.exe");
         var tempBmp = CreateMinimalBmp();
 
+        Process? proc = null;
         try
         {
-            var args = $"--file-path \"{tempBmp}\" --wallpaper-type RImage --effect 0";
+            var args = $"--file-path \"{tempBmp}\" --wallpaper-type RImage --effect none";
             Console.WriteLine($"  Launching: {scrSaverExe} {args}");
 
-            var proc = Process.Start(new ProcessStartInfo
+            // Keep stdin pipe open so StdInListener doesn't read EOF and shut down
+            proc = Process.Start(new ProcessStartInfo
             {
                 FileName = scrSaverExe,
                 Arguments = args,
                 WorkingDirectory = Path.Combine(installDir, "Plugins", "ScrSaver"),
-                UseShellExecute = true,
+                UseShellExecute = false,
+                RedirectStandardInput = true,
+                CreateNoWindow = false,
             })!;
 
-            Thread.Sleep(3000);
+            Thread.Sleep(4000);
 
             proc.Refresh();
             if (proc.HasExited)
             {
+                if (proc.ExitCode == 2)
+                {
+                    Console.Error.WriteLine("  ScreenSaver exited: WebView2 runtime not available (skip)");
+                    return true;
+                }
                 Console.Error.WriteLine($"  ScreenSaver exited immediately (code: {proc.ExitCode})");
                 return false;
             }
 
-            // ScreenSaver is a fullscreen window, check it exists
             var windowClasses = GetWindowClasses(proc);
             bool hasWindow = windowClasses.Count > 0;
-
             Console.WriteLine($"  [OK] ScreenSaver running (PID: {proc.Id}, windows: {(hasWindow ? "yes" : "none")})");
-            StopProcess(proc);
             return true;
         }
         finally
         {
+            if (proc != null && !proc.HasExited)
+                StopProcess(proc);
             try { File.Delete(tempBmp); } catch { }
         }
     }

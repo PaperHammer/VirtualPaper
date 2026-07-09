@@ -20,10 +20,15 @@ var results = new List<(string Name, bool Passed)>();
 // ── App Startup ────────────────────────────────────────────────
 results.Add(Run("Verify key files",     () => AppStartSmoke.VerifyKeyFiles(installDir)));
 results.Add(Run("Auto-launch UI",       () => AppStartSmoke.TestAutoLaunchUI(installDir)));
+Thread.Sleep(1000);
 results.Add(Run("Singleton guard",      () => AppStartSmoke.TestSingleton(installDir)));
+Thread.Sleep(1000);
 results.Add(Run("Standalone UI guard",  () => AppStartSmoke.TestStandaloneUIGuard(installDir)));
+Thread.Sleep(1000);
 results.Add(Run("PlayerWeb startup",    () => AppStartSmoke.TestPlayerWebStartup(installDir)));
+Thread.Sleep(1000);
 results.Add(Run("ScreenSaver startup",  () => AppStartSmoke.TestScreenSaverStartup(installDir)));
+Thread.Sleep(1000);
 
 // ── Download ───────────────────────────────────────────────────
 results.Add(Run("Single download",      () => DownloadSmoke.TestSingleDownload()));
@@ -50,19 +55,31 @@ Console.WriteLine($"Total: {results.Count} | Passed: {results.Count - failed} | 
 return failed > 0 ? 1 : 0;
 
 // ── Helper ─────────────────────────────────────────────────────
-static (string, bool) Run(string name, Func<bool> test)
+static (string, bool) Run(string name, Func<bool> test, int timeoutMs = 60000)
 {
     Console.WriteLine();
     Console.WriteLine($"--- {name} ---");
     try
     {
-        var passed = test();
+        var task = Task.Run(test);
+        if (!task.Wait(timeoutMs))
+        {
+            Console.Error.WriteLine($"  [TIMEOUT] {name} exceeded {timeoutMs}ms");
+            return (name, false);
+        }
+        var passed = task.Result;
         Console.WriteLine(passed ? "  [PASS]" : "  [FAIL]");
         return (name, passed);
     }
+    catch (AggregateException ae) when (ae.InnerException is TimeoutException)
+    {
+        Console.Error.WriteLine($"  [TIMEOUT] {ae.InnerException.Message}");
+        return (name, false);
+    }
     catch (Exception ex)
     {
-        Console.Error.WriteLine($"  [ERROR] {ex.Message}");
+        var inner = ex is AggregateException ae2 ? ae2.InnerException ?? ex : ex;
+        Console.Error.WriteLine($"  [ERROR] {inner.Message}");
         return (name, false);
     }
 }

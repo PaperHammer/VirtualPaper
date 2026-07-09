@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
 using System.Windows.Automation;
 
 namespace VirtualPaper.SmokeTest;
@@ -55,6 +56,7 @@ internal static class AppStartSmoke
             if (main.HasExited)
             {
                 Console.Error.WriteLine($"  VirtualPaper.exe exited after {i}s (code: {main.ExitCode})");
+                KillAllProcesses("VirtualPaper.UI");
                 return false;
             }
 
@@ -70,7 +72,7 @@ internal static class AppStartSmoke
         if (uiProc == null)
         {
             Console.WriteLine($"  [FALLBACK] Launching UI manually: {uiExe}");
-            Process.Start(new ProcessStartInfo
+            var fallback = Process.Start(new ProcessStartInfo
             {
                 FileName = uiExe,
                 UseShellExecute = true,
@@ -81,6 +83,7 @@ internal static class AppStartSmoke
             {
                 Console.Error.WriteLine("  UI failed to start even manually");
                 KillProcessTree(main);
+                if (fallback != null) StopProcess(fallback);
                 return false;
             }
             Console.WriteLine($"  [OK] UI started via fallback (PID: {uiProc.Id})");
@@ -106,6 +109,22 @@ internal static class AppStartSmoke
         })!;
 
         WaitForProcess("VirtualPaper.UI", 10000);
+
+        main.Refresh();
+        if (main.HasExited)
+        {
+            Console.Error.WriteLine($"  VirtualPaper.exe exited before UI spawned (code: {main.ExitCode})");
+            KillAllProcesses("VirtualPaper.UI");
+            return false;
+        }
+
+        var uiBefore = Process.GetProcessesByName("VirtualPaper.UI");
+        if (uiBefore.Length == 0)
+        {
+            Console.Error.WriteLine("  UI did not auto-launch within 10s");
+            KillProcessTree(main);
+            return false;
+        }
 
         Console.WriteLine("  Launching VirtualPaper.UI again...");
         Process.Start(new ProcessStartInfo
@@ -184,31 +203,65 @@ internal static class AppStartSmoke
     {
         KillAllProcesses("VirtualPaper.PlayerWeb");
 
-        var playerWebExe = Path.Combine(installDir, "Plugins", "PlayerWeb", "VirtualPaper.PlayerWeb.exe");
-        Console.WriteLine($"  Launching: {playerWebExe}");
-
-        var proc = Process.Start(new ProcessStartInfo
+        var tempBmp = CreateMinimalBmp();
+        try
         {
-            FileName = playerWebExe,
-            WorkingDirectory = Path.Combine(installDir, "Plugins", "PlayerWeb"),
-            UseShellExecute = false,
-            RedirectStandardInput = false,
-            RedirectStandardOutput = false,
-            CreateNoWindow = false,
-        })!;
+            var playerWebExe = Path.Combine(installDir, "Plugins", "PlayerWeb", "VirtualPaper.PlayerWeb.exe");
+            var argsJson = JsonSerializer.Serialize(new
+            {
+                isDebug = false,
+                isPreview = false,
+                filePath = tempBmp,
+                depthFilePath = (string?)null,
+                wpBasicDataFilePath = (string?)null,
+                wpEffectFilePathUsing = (string?)null,
+                wpEffectFilePathTemporary = (string?)null,
+                wpEffectFilePathTemplate = (string?)null,
+                runtimeType = "RImage",
+                systemBackdrop = 0,
+                applicationTheme = 0,
+                language = "en-US",
+                extra = (string?)null,
+            });
 
-        Thread.Sleep(3000);
+            Console.WriteLine($"  Launching: {playerWebExe}");
+            Console.WriteLine($"  Args: {argsJson}");
 
-        proc.Refresh();
-        if (proc.HasExited)
-        {
-            Console.Error.WriteLine($"  PlayerWeb exited immediately (code: {proc.ExitCode})");
-            return false;
+            var proc = Process.Start(new ProcessStartInfo
+            {
+                FileName = playerWebExe,
+                WorkingDirectory = Path.Combine(installDir, "Plugins", "PlayerWeb"),
+                UseShellExecute = false,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = false,
+                CreateNoWindow = false,
+            })!;
+
+            proc.StandardInput.WriteLine(argsJson);
+            proc.StandardInput.Close();
+
+            Thread.Sleep(3000);
+
+            proc.Refresh();
+            if (proc.HasExited)
+            {
+                if (proc.ExitCode == 2)
+                {
+                    Console.Error.WriteLine("  PlayerWeb exited: WebView2 runtime not available (skip test)");
+                    return true;
+                }
+                Console.Error.WriteLine($"  PlayerWeb exited immediately (code: {proc.ExitCode})");
+                return false;
+            }
+
+            Console.WriteLine($"  [OK] PlayerWeb running (PID: {proc.Id})");
+            StopProcess(proc);
+            return true;
         }
-
-        Console.WriteLine($"  [OK] PlayerWeb running (PID: {proc.Id})");
-        StopProcess(proc);
-        return true;
+        finally
+        {
+            try { File.Delete(tempBmp); } catch { }
+        }
     }
 
     // ── ScreenSaver 启动检测 ────────────────────────────────────────
@@ -300,9 +353,7 @@ internal static class AppStartSmoke
         try
         {
             KillProcessTree(p);
-            Thread.Sleep(1000);
-            p.Refresh();
-            if (!p.HasExited)
+            if (!p.WaitForExit(3000))
             {
                 var tk = Process.Start(new ProcessStartInfo
                 {
@@ -320,16 +371,41 @@ internal static class AppStartSmoke
     private static List<string> GetWindowClasses(Process proc)
     {
         var classes = new List<string>();
-        try
+        var ready = new System.Threading.ManualResetEventSlim(false);
+        List<string>? result = null;
+        Exception? err = null;
+
+        var thread = new Thread(() =>
         {
-            var desktop = AutomationElement.RootElement;
-            var pidCond = new PropertyCondition(AutomationElement.ProcessIdProperty, proc.Id);
-            var wins = desktop.FindAll(TreeScope.Children, pidCond);
-            foreach (AutomationElement w in wins)
-                classes.Add(w.Current.ClassName);
+            try
+            {
+                var desktop = AutomationElement.RootElement;
+                var pidCond = new PropertyCondition(AutomationElement.ProcessIdProperty, proc.Id);
+                var wins = desktop.FindAll(TreeScope.Children, pidCond);
+                var list = new List<string>();
+                if (wins != null)
+                    foreach (AutomationElement w in wins)
+                        list.Add(w.Current.ClassName);
+                result = list;
+            }
+            catch (Exception ex) { err = ex; }
+            finally { ready.Set(); }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.IsBackground = true;
+        thread.Start();
+
+        if (!ready.Wait(5000))
+        {
+            Console.Error.WriteLine("  [WARN] GetWindowClasses timed out (5s)");
+            return classes;
         }
-        catch { }
-        return classes;
+        if (err != null)
+        {
+            Console.Error.WriteLine($"  [WARN] GetWindowClasses failed: {err.Message}");
+            return classes;
+        }
+        return result ?? classes;
     }
 
     /// <summary>

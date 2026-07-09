@@ -43,7 +43,12 @@ internal static class DownloadSmoke
     // ── 取消下载 ──────────────────────────────────────────────────
     public static bool TestCancelDownload()
     {
-        using var server = new HttpSmokeServer(TestContent1, chunkDelayMs: 200);
+        // Use a large enough payload so the stream doesn't finish before we cancel.
+        // 1 KB padded with zeros guarantees the read loop is still in-flight when cancel fires.
+        var bigPayload = new byte[1024];
+        Array.Fill(bigPayload, (byte)0xAB);
+
+        using var server = new HttpSmokeServer(bigPayload, chunkDelayMs: 50);
 
         var savePath = Path.Combine(Path.GetTempPath(), $"vp_smoke_cancel_{Guid.NewGuid():N}.dat");
         try
@@ -57,27 +62,25 @@ internal static class DownloadSmoke
                 using var stream = await resp.Content.ReadAsStreamAsync(cts.Token);
                 await using var fs = File.Create(savePath);
 
-                // Download 2 chunks then cancel
-                var buf = new byte[4];
-                int total = 0;
-                for (int i = 0; i < 2 && total < TestContent1.Length; i++)
+                var buf = new byte[16];
+                // Read one chunk successfully, then cancel before reading more
+                int read = await stream.ReadAsync(buf, 0, buf.Length, cts.Token);
+                if (read > 0)
                 {
-                    int read = stream.Read(buf, 0, buf.Length);
-                    if (read <= 0) break;
-                    fs.Write(buf, 0, read);
-                    total += read;
-                    Console.WriteLine($"  Chunk {i + 1}: {total} bytes");
-                    Thread.Sleep(100);
+                    await fs.WriteAsync(buf, 0, read, cts.Token);
+                    Console.WriteLine($"  Read {read} bytes, now cancelling...");
                 }
 
                 cts.Cancel();
-                cts.Token.ThrowIfCancellationRequested();
+
+                // This read must throw OperationCanceledException
+                await stream.ReadAsync(buf, 0, buf.Length, cts.Token);
             }, cts.Token);
 
             try
             {
                 task.GetAwaiter().GetResult();
-                Console.Error.WriteLine("  [FAIL] Expected OperationCanceledException");
+                Console.Error.WriteLine("  [FAIL] Expected OperationCanceledException but task completed normally");
                 return false;
             }
             catch (AggregateException ae) when (ae.InnerException is OperationCanceledException)
@@ -111,10 +114,16 @@ internal static class DownloadSmoke
 
         var sw = Stopwatch.StartNew();
         var tasks = files.Select(f => DownloadAndVerifyAsync(f.Item1, f.Item2)).ToArray();
-        Task.WaitAll(tasks, 20000);
+        bool completed = Task.WaitAll(tasks, 20000);
         sw.Stop();
 
-        bool allOk = tasks.All(t => t.Result);
+        if (!completed)
+        {
+            Console.Error.WriteLine("  [FAIL] Multi-download timed out (20s)");
+            return false;
+        }
+
+        bool allOk = tasks.All(t => t.IsCompletedSuccessfully && t.Result);
         Console.WriteLine(allOk
             ? $"  [OK] 3 files concurrently in {sw.ElapsedMilliseconds}ms"
             : "  [FAIL] One or more downloads failed");

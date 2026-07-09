@@ -532,7 +532,10 @@ jobs:
     needs: [prepare, package]
 
     steps:
-    - name: Setup .NET (app runtime dependency)
+    - name: Checkout code (source of smoke test project)
+      uses: actions/checkout@v4
+
+    - name: Setup .NET (app runtime + smoke test build)
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
@@ -565,162 +568,13 @@ jobs:
         Write-Output "install_dir=$installDir" >> $env:GITHUB_OUTPUT
         Write-Host "[OK] Installation completed"
 
-    - name: Verify key files exist
+    - name: Build smoke test
       shell: pwsh
-      run: |
-        $base = "${{ steps.install.outputs.install_dir }}"
-        $required = @(
-            "$base\VirtualPaper.exe",
-            "$base\Plugins\UI\VirtualPaper.UI.exe"
-        )
-        $failed = $false
-        foreach ($f in $required) {
-            if (Test-Path $f) {
-                Write-Host "[OK]      $f"
-            } else {
-                Write-Host "[MISSING] $f" -ForegroundColor Red
-                $failed = $true
-            }
-        }
-        if ($failed) {
-            Write-Error "Required files missing after installation"
-            exit 1
-        }
+      run: dotnet build src/VirtualPaper.SmokeTest/VirtualPaper.SmokeTest.csproj -c Release
 
-    - name: Launch and verify UI process
+    - name: Run smoke tests
       shell: pwsh
-      run: |
-        $installDir = "${{ steps.install.outputs.install_dir }}"
-        $mainExe = "$installDir\VirtualPaper.exe"
-        $uiExe = "$installDir\Plugins\UI\VirtualPaper.UI.exe"
-
-        # ── 阶段 1：启动主程序，等待其自动拉起 UI（最多 10s）──────────────
-        Write-Host "Launching: $mainExe"
-        $main = Start-Process -FilePath $mainExe -PassThru -ErrorAction Stop
-
-        $uiProc = $null
-        $autoWait = 10
-        for ($i = 1; $i -le $autoWait; $i++) {
-            Start-Sleep -Seconds 1
-            $main.Refresh()
-            if ($main.HasExited) {
-                Write-Error "VirtualPaper.exe exited unexpectedly after ${i}s (exit code: $($main.ExitCode))"
-                exit 1
-            }
-            $uiProc = Get-Process -Name "VirtualPaper.UI" -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($uiProc) {
-                Write-Host "[OK] VirtualPaper.UI auto-started after ${i}s (PID: $($uiProc.Id))"
-                break
-            }
-            Write-Host "  [wait] ${i}s - waiting for VirtualPaper.UI to be auto-spawned..."
-        }
-
-        # ── 阶段 2：兜底 - 若未自动拉起则手动启动 UI ──────────────────────
-        if (-not $uiProc) {
-            Write-Host "[FALLBACK] UI not auto-spawned after ${autoWait}s, launching manually: $uiExe"
-            Start-Process -FilePath $uiExe -ErrorAction Stop
-            Start-Sleep -Seconds 5
-            $uiProc = Get-Process -Name "VirtualPaper.UI" -ErrorAction SilentlyContinue | Select-Object -First 1
-            if (-not $uiProc) {
-                Write-Error "VirtualPaper.UI.exe failed to start even when launched manually"
-                taskkill /F /T /PID $main.Id 2>$null
-                exit 1
-            }
-            Write-Host "[OK] VirtualPaper.UI started via fallback (PID: $($uiProc.Id))"
-        }
-
-        # ── 阶段 3：单例守卫验证 - 再次启动 UI，期望仍只有 1 个进程 ────────
-        Write-Host "Verifying singleton: launching VirtualPaper.UI again..."
-        Start-Process -FilePath $uiExe -ErrorAction SilentlyContinue
-        Start-Sleep -Seconds 3
-
-        $uiProcs = @(Get-Process -Name "VirtualPaper.UI" -ErrorAction SilentlyContinue)
-        if ($uiProcs.Count -ne 1) {
-            Write-Error "Singleton check FAILED: expected 1 VirtualPaper.UI process, found $($uiProcs.Count)"
-            taskkill /F /T /PID $main.Id 2>$null
-            Get-Process -Name "VirtualPaper.UI" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-            exit 1
-        }
-        Write-Host "[OK] Singleton check passed: only 1 VirtualPaper.UI process (PID: $($uiProcs[0].Id))"
-
-        # ── 清理 ───────────────────────────────────────────────────────────
-        taskkill /F /T /PID $main.Id 2>$null
-        Get-Process -Name "VirtualPaper.UI" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-        Write-Host "[OK] Smoke test passed"
-
-    - name: Verify UI cannot start without main process
-      shell: pwsh
-      run: |
-        $installDir = "${{ steps.install.outputs.install_dir }}"
-        $uiExe = "$installDir\Plugins\UI\VirtualPaper.UI.exe"
-
-        # 前置清理：确保主进程与 UI 进程均未运行（强杀残留）
-        @("VirtualPaper", "VirtualPaper.UI") | ForEach-Object {
-            $procs = Get-Process -Name $_ -ErrorAction SilentlyContinue
-            if ($procs) {
-                Write-Host "[CLEANUP] Killing residual process: $_"
-                $procs | Stop-Process -Force -ErrorAction SilentlyContinue
-            }
-        }
-        Start-Sleep -Seconds 1
-
-        # ── 直接启动 UI（不启动主进程）──────────────────────────────────────
-        Write-Host "Launching VirtualPaper.UI.exe without main process..."
-        $uiProc = Start-Process -FilePath $uiExe -PassThru -ErrorAction Stop
-
-        # 等待足够时间让 MessageBox 弹出
-        Start-Sleep -Seconds 3
-
-        # ── 断言：进程应仍在运行（被 MessageBox 阻塞，未正常退出）────────────
-        $uiProc.Refresh()
-        if ($uiProc.HasExited) {
-            Write-Error "VirtualPaper.UI exited on its own - expected it to be blocked by a MessageBox"
-            exit 1
-        }
-
-        # ── 进一步断言：确认是 MessageBox（#32770）而非 UI 正常启动 ──────────
-        # 通过 UIAutomation 枚举该进程的顶层窗口并读取 Win32 ClassName
-        # MessageBox 的 ClassName 固定为 #32770，无需注入 C# 代码
-        Add-Type -AssemblyName UIAutomationClient
-        Add-Type -AssemblyName UIAutomationTypes
-
-        $desktop = [System.Windows.Automation.AutomationElement]::RootElement
-        $pidCond = New-Object System.Windows.Automation.PropertyCondition(
-            [System.Windows.Automation.AutomationElement]::ProcessIdProperty,
-            $uiProc.Id)
-        $wins = $desktop.FindAll([System.Windows.Automation.TreeScope]::Children, $pidCond)
-        $classes = @($wins | ForEach-Object { $_.Current.ClassName })
-        Write-Host "  Visible window classes: $($classes -join ', ')"
-
-        # ── 正向断言：MessageBox（#32770）应存在 ────────────────────────────
-        # Win32 MessageBox 的窗口类名固定为 #32770，是 Windows API 常量，不会变。
-        if (-not ($classes -contains '#32770')) {
-            Write-Error "Expected a MessageBox (#32770) but none found - UI may have started normally, guard logic broken"
-            Stop-Process -Id $uiProc.Id -Force -ErrorAction SilentlyContinue
-            exit 1
-        }
-        Write-Host "[OK] MessageBox (#32770) present - guard triggered as expected (PID: $($uiProc.Id))"
-
-        # ── 反向断言：WinUI3 主窗口（WinUIDesktopWin32Window）不应存在 ──────
-        # WinUI3 正常启动后主窗口类名固定为 WinUIDesktopWin32Window。
-        # 若守卫生效，此类名不应出现——与 #32770 正向检查互补，
-        # 覆盖未来从 MessageBox 迁移到其他阻塞机制（ContentDialog 等）的场景：
-        # 届时 #32770 检查会失效，但此反向检查仍能捕获"UI 意外正常启动"。
-        if ($classes -contains 'WinUIDesktopWin32Window') {
-            Write-Error "WinUI3 main window (WinUIDesktopWin32Window) appeared - UI started normally without main process, guard logic broken"
-            Stop-Process -Id $uiProc.Id -Force -ErrorAction SilentlyContinue
-            exit 1
-        }
-        Write-Host "[OK] WinUI3 main window not present - guard is holding correctly"
-
-        # ── 清理：强杀被阻塞的 UI 进程 ──────────────────────────────────────
-        Stop-Process -Id $uiProc.Id -Force -ErrorAction SilentlyContinue
-        Start-Sleep -Seconds 1
-        $uiProc.Refresh()
-        if (-not $uiProc.HasExited) {
-            taskkill /F /PID $uiProc.Id 2>$null
-        }
-        Write-Host "[OK] Standalone-UI guard test passed"
+      run: dotnet run --project src/VirtualPaper.SmokeTest/VirtualPaper.SmokeTest.csproj -c Release --no-build -- --install-dir "${{ steps.install.outputs.install_dir }}"
 
   # ─────────────────────────────────────────────────────────────
   # Job 4.5: 制作插件更新包（plugin zips + manifest）

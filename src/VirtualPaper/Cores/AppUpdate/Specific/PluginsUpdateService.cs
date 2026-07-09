@@ -9,12 +9,9 @@ using VirtualPaper.lang;
 using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Views;
-using Windows.AI.MachineLearning;
 
 namespace VirtualPaper.Cores.AppUpdate.Specific {
-    public interface IPluginsUpdateService {
-        Task<PluginsUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default);
-        Task<PluginsUpdateResult> VerifyAndSavePendingAsync(ReleaseInfo releaseInfo, CancellationToken token = default);
+    public interface IPluginsUpdateService : IUpdateService {
         Task<PluginsUpdateResult> ExecutePendingUpdateAsync(IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default);
         Task<bool> CheckAndRecoverAsync(CancellationToken token = default);
 
@@ -32,11 +29,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         IDownloadService downloadService,
         IJobService jobService,
         IAppBuildService appBuildService,
-        IWindowService windowService) : IPluginsUpdateService, IPluginsUpdateServiceInit {
-        // ===== TEST HOOKS - 模拟测试用，后期删除 =====
-        public static bool ForceRollback { get; set; } = false;
-        // ==========================================
-
+        IWindowService windowService) : UpdateServiceBase<PluginsUpdateService>(downloadService), IPluginsUpdateService, IPluginsUpdateServiceInit {
         public async Task InitAsync() {
             UpdateLock.RegisterAll();
 
@@ -50,56 +43,26 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
             appBuildService.Refresh();
         }
 
-        public async Task<PluginsUpdateResult> DownloadPendingAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default) {
-            var result = new PluginsUpdateResult();
-
-            if (releaseInfo.PluginPatchUri == null) {
-                result.Success = false;
-                result.ErrorMessage = "No plugin patch available";
-                return result;
-            }
+        public async Task<bool> DownloadUpdateAsync(ReleaseInfo info, IProgress<DownloadProgress> progress, CancellationToken token) {
+            if (info.PluginPatchUri == null)
+                return false;
 
             var pendingDir = Constants.CommonPaths.PendingPluginsUpdateDir;
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token);
 
-            try {
-                Directory.CreateDirectory(pendingDir);
-
-                var patchZipPath = Path.Combine(pendingDir, "plugins_patch.zip");
-                await foreach (var p in downloadService.DownloadAsync(releaseInfo.PluginPatchUri, patchZipPath, linkedCts.Token)) {
-                    progress?.Report(p);
-                }
-
-                result.Success = true;
-            }
-            catch (Exception ex) when (!token.IsCancellationRequested) {
-                ArcLog.GetLogger<PluginsUpdateService>().Error("Plugin patch download failed", ex);
-                result.Success = false;
-                result.ErrorMessage = ex.Message;
-                // Keep downloaded files for potential resume
-            }
-            finally {
-                linkedCts.Cancel();
-            }
-
-            return result;
+            var (success, _, _) = await DownloadFileAsync(info.PluginPatchUri, pendingDir, "plugins_patch.zip", progress, token);
+            return success;
         }
 
-        public async Task<PluginsUpdateResult> VerifyAndSavePendingAsync(ReleaseInfo releaseInfo, CancellationToken token = default) {
-            var result = new PluginsUpdateResult();
-
-            if (releaseInfo.PluginPatchSha256Uri == null) {
-                result.Success = false;
-                result.ErrorMessage = "No plugin patch SHA256 available";
-                return result;
-            }
+        public async Task<bool> VerifyUpdateAsync(ReleaseInfo info, CancellationToken token) {
+            if (info.PluginPatchSha256Uri == null)
+                return false;
 
             var pendingDir = Constants.CommonPaths.PendingPluginsUpdateDir;
             var patchZipPath = Path.Combine(pendingDir, "plugins_patch.zip");
 
             try {
                 // Download and verify SHA256 of plugins_patch.zip
-                var expectedHash = await downloadService.DownloadShaTxtAsync(releaseInfo.PluginPatchSha256Uri, token);
+                var expectedHash = await downloadService.DownloadShaTxtAsync(info.PluginPatchSha256Uri, token);
                 bool verified = await downloadService.VerifyFileIntegrityAsync(patchZipPath, expectedHash, token);
                 if (!verified) {
                     throw new InvalidDataException("SHA256 verification failed for plugins_patch.zip");
@@ -168,19 +131,16 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 await SaveUpdateFlagAsync(updateFlag, token);
 
                 // Store release info for later use
-                releaseInfo.AppCompManifest = appCompManifest;
-                releaseInfo.AppBuild = appCompManifest?.AppBuildNumber;
+                info.AppCompManifest = appCompManifest;
+                info.AppBuild = appCompManifest?.AppBuildNumber;
 
-                result.Success = true;
+                return true;
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<PluginsUpdateService>().Error("Plugin patch verify failed", ex);
-                result.Success = false;
-                result.ErrorMessage = ex.Message;
                 FileUtil.RemoveDirectory(pendingDir);
+                return false;
             }
-
-            return result;
         }
 
         /// <summary>
@@ -232,12 +192,6 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 var backupDir = Constants.CommonPaths.UpdateBackupDir;
                 FileUtil.RemoveDirectory(backupDir);
                 Directory.CreateDirectory(backupDir);
-
-                // ===== TEST HOOK - 模拟回滚 =====
-                if (ForceRollback) {
-                    throw new Exception("[TEST] Forced rollback during update");
-                }
-                // ================================
 
                 foreach (var (pluginName, pluginInfo) in flag.Plugins) {
                     var sourceDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pluginInfo.Target));
@@ -352,7 +306,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                     // No backup = verification failed before installation, just clean up
                     FileUtil.RemoveDirectory(Constants.CommonPaths.PendingPluginsUpdateDir);
                 }
-                await WriteUpdateFailedNoticeAsync(ex, token);
+                await WriteUpdateFailedNoticeAsync(ex.Message, token);
             }
             finally {
                 UpdateLock.ReleaseAll();
@@ -472,10 +426,10 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
             }
         }
 
-        private async Task WriteUpdateFailedNoticeAsync(Exception ex, CancellationToken token) {
+        private async Task WriteUpdateFailedNoticeAsync(string exMsg, CancellationToken token) {
             var notice = new UpdateFailedNotice {
                 MessageKey = Constants.I18n.AppUpdater_UpdateFailedMessage,
-                ExceptionMessage = ex.ToString()
+                ExceptionMessage = exMsg,
             };
             var json = JsonSerializer.Serialize(notice, UpdateFailedNoticeContext.Default.UpdateFailedNotice);
             await File.WriteAllTextAsync(Constants.CommonPaths.UpdateFailedNoticePath, json, token);

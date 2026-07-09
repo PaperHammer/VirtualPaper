@@ -6,6 +6,7 @@ namespace VirtualPaper.Services.Interfaces {
         Task<bool> VerifyFileIntegrityAsync(string filePath, string expectedSha256, CancellationToken token = default);
         void Pause();
         void Resume();
+        Task CancelAsync();
     }
 
     public record DownloadProgress(float Percent, float Speed, TimeSpan Remaining, long ReceivedBytes = 0, long TotalBytes = 0);

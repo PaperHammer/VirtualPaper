@@ -8,9 +8,7 @@ using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Cores.AppUpdate.Specific {
-    public interface IInstallerUpdateService {
-        Task<InstallerUpdateResult> DownloadAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default);
-        Task<InstallerUpdateResult> VerifyAsync(ReleaseInfo releaseInfo, string installerPath, CancellationToken token = default);
+    public interface IInstallerUpdateService : IUpdateService {
         Task ExecuteAsync();
     }
 
@@ -20,80 +18,47 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         public string? InstallerPath { get; set; }
     }
 
-    public class InstallerUpdateService(IDownloadService downloadService) : IInstallerUpdateService {
-        public async Task<InstallerUpdateResult> DownloadAsync(ReleaseInfo releaseInfo, IProgress<DownloadProgress>? progress = null, CancellationToken token = default) {
-            var result = new InstallerUpdateResult();
+    public class InstallerUpdateService(IDownloadService downloadService) : UpdateServiceBase<InstallerUpdateService>(downloadService), IInstallerUpdateService {
+        private string? _installerPath;
 
-            if (releaseInfo.InstallerUri == null) {
-                result.Success = false;
-                result.ErrorMessage = "No installer URI available";
-                return result;
-            }
+        public async Task<bool> DownloadUpdateAsync(ReleaseInfo info, IProgress<DownloadProgress> progress, CancellationToken token) {
+            if (info.InstallerUri == null)
+                return false;
 
             var cacheDir = Constants.CommonPaths.PendingInstallerUpdateDir;
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            var installerFileName = Path.GetFileName(info.InstallerUri.LocalPath);
 
-            try {
-                Directory.CreateDirectory(cacheDir);
+            var (success, filePath, _) = await DownloadFileAsync(info.InstallerUri, cacheDir, installerFileName, progress, token);
 
-                var installerFileName = Path.GetFileName(releaseInfo.InstallerUri.LocalPath);
-                var installerPath = Path.Combine(cacheDir, installerFileName);
-
-                await foreach (var p in downloadService.DownloadAsync(releaseInfo.InstallerUri, installerPath, linkedCts.Token)) {
-                    progress?.Report(p);
-                }
-
-                result.Success = true;
-                result.InstallerPath = installerPath;
-            }
-            catch (Exception ex) when (!token.IsCancellationRequested) {
-                ArcLog.GetLogger<InstallerUpdateService>().Error("Installer download failed", ex);
-                result.Success = false;
-                result.ErrorMessage = ex.Message;
-                // Keep downloaded files for potential resume
-            }
-            finally {
-                linkedCts.Cancel();
-            }
-
-            return result;
+            _installerPath = filePath;
+            return success;
         }
 
-        public async Task<InstallerUpdateResult> VerifyAsync(ReleaseInfo releaseInfo, string installerPath, CancellationToken token = default) {
-            var result = new InstallerUpdateResult();
-
-            if (releaseInfo.InstallerShaUri == null) {
-                result.Success = false;
-                result.ErrorMessage = "No installer SHA256 URI available";
-                return result;
-            }
+        public async Task<bool> VerifyUpdateAsync(ReleaseInfo info, CancellationToken token) {
+            if (_installerPath == null || info.InstallerShaUri == null)
+                return false;
 
             try {
-                var expectedHash = await downloadService.DownloadShaTxtAsync(releaseInfo.InstallerShaUri, token);
-                var verified = await downloadService.VerifyFileIntegrityAsync(installerPath, expectedHash, token);
+                var expectedHash = await downloadService.DownloadShaTxtAsync(info.InstallerShaUri, token);
+                var verified = await downloadService.VerifyFileIntegrityAsync(_installerPath, expectedHash, token);
 
                 if (!verified) {
                     throw new InvalidDataException("SHA256 verification failed for installer");
                 }
 
-                // Write update flag with SHA256 after successful verification
                 await SaveUpdateFlagAsync(new InstallerUpdateFlag {
                     Status = UpdateStatus.Pending,
-                    InstallerPath = installerPath,
+                    InstallerPath = _installerPath,
                     Sha256 = expectedHash
                 }, token);
 
-                result.Success = true;
-                result.InstallerPath = installerPath;
+                return true;
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<InstallerUpdateService>().Error("Installer verify failed", ex);
-                result.Success = false;
-                result.ErrorMessage = ex.Message;
                 FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
+                return false;
             }
-
-            return result;
         }
 
         public async Task ExecuteAsync() {

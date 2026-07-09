@@ -10,6 +10,10 @@ using IDownloadService = VirtualPaper.Services.Interfaces.IDownloadService;
 namespace VirtualPaper.Services.Download {
     public partial class MultiDownloadService : IDownloadService {
         public MultiDownloadService() {
+            _parallelDownloaders = new List<DownloadService>();
+        }
+
+        private static DownloadService CreateDownloader() {
             //CPU can get toasty.. should rate limit to 100MB/s ?
             var downloadOpt = new DownloadConfiguration() {
                 BufferBlockSize = 8000, // usually, hosts support max to 8000 bytes, default values is 8000
@@ -24,8 +28,7 @@ namespace VirtualPaper.Services.Download {
                 ReserveStorageSpaceBeforeStartingDownload = false,
             };
 
-            _downloader = new DownloadService(downloadOpt);
-            _parallelDownloaders = new List<DownloadService>();
+            return new DownloadService(downloadOpt);
         }
 
         /// <summary>
@@ -65,11 +68,19 @@ namespace VirtualPaper.Services.Download {
                 channel.Writer.TryComplete();
             }
 
-            _downloader.DownloadProgressChanged += OnProgressChanged;
-            _downloader.DownloadFileCompleted += OnCompleted;
+            var downloader = _downloader ?? CreateDownloader();
+            _downloader = downloader;
+
+            downloader.DownloadProgressChanged += OnProgressChanged;
+            downloader.DownloadFileCompleted += OnCompleted;
+
+            var ctr = token.Register(() => {
+                var captured = downloader;
+                _ = Task.Run(() => { try { captured.Dispose(); } catch { } });
+            });
 
             try {
-                var downloadTask = _downloader.DownloadFileTaskAsync(uri.AbsoluteUri, saveFilePath, token)
+                var downloadTask = downloader.DownloadFileTaskAsync(uri.AbsoluteUri, saveFilePath, token)
                     .ContinueWith(t => {
                         // 捕获潜在未观察异常
                         if (t.IsFaulted)
@@ -83,8 +94,13 @@ namespace VirtualPaper.Services.Download {
                 await Task.WhenAll(downloadTask, tcs.Task);
             }
             finally {
-                _downloader.DownloadProgressChanged -= OnProgressChanged;
-                _downloader.DownloadFileCompleted -= OnCompleted;
+                ctr.Dispose();
+                downloader.DownloadProgressChanged -= OnProgressChanged;
+                downloader.DownloadFileCompleted -= OnCompleted;
+
+                if (token.IsCancellationRequested) {
+                    _downloader = null;
+                }
             }
         }
 
@@ -142,6 +158,7 @@ namespace VirtualPaper.Services.Download {
                     _parallelDownloaders.Add(downloader);
                 }
                 
+                CancellationTokenRegistration itemCtr = default;
                 try {
                     var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -158,12 +175,18 @@ namespace VirtualPaper.Services.Download {
                         else tcs.TrySetResult();
                     };
 
+                    itemCtr = token.Register(() => {
+                        var captured = downloader;
+                        _ = Task.Run(() => { try { captured.Dispose(); } catch { } });
+                    });
+
                     var downloadTask = downloader.DownloadFileTaskAsync(item.uri.AbsoluteUri, item.saveFilePath, token)
                         .ContinueWith(t => { if (t.IsFaulted) _ = t.Exception; }, TaskContinuationOptions.ExecuteSynchronously);
 
                     await Task.WhenAll(downloadTask, tcs.Task);
                 }
                 finally {
+                    itemCtr.Dispose();
                     lock (_parallelDownloaders) {
                         _parallelDownloaders.Remove(downloader);
                     }
@@ -194,8 +217,11 @@ namespace VirtualPaper.Services.Download {
 
             string tempFilePath = Path.Combine(Path.GetTempPath(), $"virtualpaper_sha256_{Guid.NewGuid():N}.txt");
 
+            var downloader = _downloader ?? CreateDownloader();
+            _downloader = downloader;
+
             try {
-                await _downloader.DownloadFileTaskAsync(shaUri.AbsoluteUri, tempFilePath, token);
+                await downloader.DownloadFileTaskAsync(shaUri.AbsoluteUri, tempFilePath, token);
 
                 string sha256Content = await File.ReadAllTextAsync(tempFilePath, token);
                 sha256Content = sha256Content.Trim();
@@ -229,7 +255,7 @@ namespace VirtualPaper.Services.Download {
 
 
         public void Pause() {
-            if (_downloader.Status == DownloadStatus.Running)
+            if (_downloader?.Status == DownloadStatus.Running)
                 _downloader.Pause();
             
             List<DownloadService> snapshot;
@@ -244,7 +270,7 @@ namespace VirtualPaper.Services.Download {
         }
 
         public void Resume() {
-            if (_downloader.Status == DownloadStatus.Paused)
+            if (_downloader?.Status == DownloadStatus.Paused)
                 _downloader.Resume();
             
             List<DownloadService> snapshot;
@@ -258,6 +284,22 @@ namespace VirtualPaper.Services.Download {
             });
         }
 
+        public Task CancelAsync() {
+            _downloader?.Dispose();
+            _downloader = null;
+
+            List<DownloadService> snapshot;
+            lock (_parallelDownloaders) {
+                snapshot = _parallelDownloaders.ToList();
+                _parallelDownloaders.Clear();
+            }
+            foreach (var downloader in snapshot) {
+                downloader.Dispose();
+            }
+
+            return Task.CompletedTask;
+        }
+
         public void Dispose() {
             _downloader?.Dispose();
             lock (_parallelDownloaders) {
@@ -268,7 +310,7 @@ namespace VirtualPaper.Services.Download {
             }
         }
 
-        private readonly DownloadService _downloader;
+        private DownloadService? _downloader;
         private readonly List<DownloadService> _parallelDownloaders;
     }
 }

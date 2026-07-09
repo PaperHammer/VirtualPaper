@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:lang="clr-namespace:VirtualPaper.lang"
         Title="PluginUpdateWindow"
-        Icon="pack://application:,,,/VirtualPaper;component/Resources/appicon_download.png"
+        Icon="pack://application:,,,/VirtualPaper;component/Resources/appicon_download.ico"
         Width="620"
         Height="300"
         AllowsTransparency="True"

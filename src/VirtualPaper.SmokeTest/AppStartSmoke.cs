@@ -5,10 +5,8 @@ using System.Windows.Automation;
 
 namespace VirtualPaper.SmokeTest;
 
-internal static class AppStartSmoke
-{
-    public static bool VerifyKeyFiles(string installDir)
-    {
+internal static class AppStartSmoke {
+    public static bool VerifyKeyFiles(string installDir) {
         string[] required =
         [
             Path.Combine(installDir, "VirtualPaper.exe"),
@@ -18,12 +16,10 @@ internal static class AppStartSmoke
         ];
 
         bool ok = true;
-        foreach (var f in required)
-        {
+        foreach (var f in required) {
             if (File.Exists(f))
                 Console.WriteLine($"  [OK]  {f}");
-            else
-            {
+            else {
                 Console.Error.WriteLine($"  [MISSING] {f}");
                 ok = false;
             }
@@ -32,16 +28,14 @@ internal static class AppStartSmoke
     }
 
     // ── 阶段 1+2: 启动主进程，等待 UI 自动拉起（最多 10s）────────────────
-    public static bool TestAutoLaunchUI(string installDir)
-    {
+    public static bool TestAutoLaunchUI(string installDir) {
         KillAllProcesses("VirtualPaper", "VirtualPaper.UI", "VirtualPaper.PlayerWeb", "VirtualPaper.ScreenSaver");
 
         var mainExe = Path.Combine(installDir, "VirtualPaper.exe");
         var uiExe = Path.Combine(installDir, "Plugins", "UI", "VirtualPaper.UI.exe");
 
         Console.WriteLine($"  Launching: {mainExe}");
-        var main = Process.Start(new ProcessStartInfo
-        {
+        var main = Process.Start(new ProcessStartInfo {
             FileName = mainExe,
             UseShellExecute = true,
             ErrorDialog = false,
@@ -49,38 +43,32 @@ internal static class AppStartSmoke
 
         // Wait for UI auto-spawn (max 10s)
         Process? uiProc = null;
-        for (int i = 1; i <= 10; i++)
-        {
+        for (int i = 1; i <= 10; i++) {
             Thread.Sleep(1000);
             main.Refresh();
-            if (main.HasExited)
-            {
+            if (main.HasExited) {
                 Console.Error.WriteLine($"  VirtualPaper.exe exited after {i}s (code: {main.ExitCode})");
                 KillAllProcesses("VirtualPaper.UI");
                 return false;
             }
 
             uiProc = Process.GetProcessesByName("VirtualPaper.UI").FirstOrDefault();
-            if (uiProc != null)
-            {
+            if (uiProc != null) {
                 Console.WriteLine($"  [OK] UI auto-started after {i}s (PID: {uiProc.Id})");
                 break;
             }
             Console.WriteLine($"  [wait] {i}s ...");
         }
 
-        if (uiProc == null)
-        {
+        if (uiProc == null) {
             Console.WriteLine($"  [FALLBACK] Launching UI manually: {uiExe}");
-            var fallback = Process.Start(new ProcessStartInfo
-            {
+            var fallback = Process.Start(new ProcessStartInfo {
                 FileName = uiExe,
                 UseShellExecute = true,
             });
             Thread.Sleep(5000);
             uiProc = Process.GetProcessesByName("VirtualPaper.UI").FirstOrDefault();
-            if (uiProc == null)
-            {
+            if (uiProc == null) {
                 Console.Error.WriteLine("  UI failed to start even manually");
                 KillProcessTree(main);
                 if (fallback != null) StopProcess(fallback);
@@ -95,15 +83,13 @@ internal static class AppStartSmoke
     }
 
     // ── 阶段 3: 单例守卫 ──────────────────────────────────────────────
-    public static bool TestSingleton(string installDir)
-    {
+    public static bool TestSingleton(string installDir) {
         KillAllProcesses("VirtualPaper", "VirtualPaper.UI");
 
         var mainExe = Path.Combine(installDir, "VirtualPaper.exe");
         var uiExe = Path.Combine(installDir, "Plugins", "UI", "VirtualPaper.UI.exe");
 
-        var main = Process.Start(new ProcessStartInfo
-        {
+        var main = Process.Start(new ProcessStartInfo {
             FileName = mainExe,
             UseShellExecute = true,
         })!;
@@ -111,23 +97,20 @@ internal static class AppStartSmoke
         WaitForProcess("VirtualPaper.UI", 10000);
 
         main.Refresh();
-        if (main.HasExited)
-        {
+        if (main.HasExited) {
             Console.Error.WriteLine($"  VirtualPaper.exe exited before UI spawned (code: {main.ExitCode})");
             KillAllProcesses("VirtualPaper.UI");
             return false;
         }
 
-        if (Process.GetProcessesByName("VirtualPaper.UI").Length == 0)
-        {
+        if (Process.GetProcessesByName("VirtualPaper.UI").Length == 0) {
             Console.WriteLine("  UI did not auto-launch within 10s, launching manually...");
             Process.Start(new ProcessStartInfo { FileName = uiExe, UseShellExecute = true });
             Thread.Sleep(10000);
         }
 
         var uiBefore = Process.GetProcessesByName("VirtualPaper.UI");
-        if (uiBefore.Length == 0)
-        {
+        if (uiBefore.Length == 0) {
             Console.Error.WriteLine("  UI failed to start (auto + manual), cannot test singleton");
             KillProcessTree(main);
             return false;
@@ -138,8 +121,7 @@ internal static class AppStartSmoke
         Thread.Sleep(3000);
 
         var uiProcs = Process.GetProcessesByName("VirtualPaper.UI");
-        if (uiProcs.Length != 1)
-        {
+        if (uiProcs.Length != 1) {
             Console.Error.WriteLine($"  Singleton FAILED: expected 1, found {uiProcs.Length}");
             KillProcessTree(main);
             KillAllProcesses("VirtualPaper.UI");
@@ -153,16 +135,14 @@ internal static class AppStartSmoke
     }
 
     // ── 阶段 4: UI 独立启动守卫（MessageBox 检查）────────────────────
-    public static bool TestStandaloneUIGuard(string installDir)
-    {
+    public static bool TestStandaloneUIGuard(string installDir) {
         KillAllProcesses("VirtualPaper", "VirtualPaper.UI");
         Thread.Sleep(1000);
 
         var uiExe = Path.Combine(installDir, "Plugins", "UI", "VirtualPaper.UI.exe");
         Console.WriteLine($"  Launching UI without main process: {uiExe}");
 
-        var uiProc = Process.Start(new ProcessStartInfo
-        {
+        var uiProc = Process.Start(new ProcessStartInfo {
             FileName = uiExe,
             UseShellExecute = true,
         })!;
@@ -170,8 +150,7 @@ internal static class AppStartSmoke
         Thread.Sleep(3000);
 
         uiProc.Refresh();
-        if (uiProc.HasExited)
-        {
+        if (uiProc.HasExited) {
             Console.Error.WriteLine("  UI exited on its own - guard NOT triggered");
             return false;
         }
@@ -182,15 +161,13 @@ internal static class AppStartSmoke
         bool hasMsgBox = classes.Contains("#32770");
         bool hasWinUI = classes.Contains("WinUIDesktopWin32Window");
 
-        if (hasWinUI)
-        {
+        if (hasWinUI) {
             Console.Error.WriteLine("  Guard FAILED: WinUI window appeared (started normally without main)");
             StopProcess(uiProc);
             return false;
         }
 
-        if (!hasMsgBox)
-        {
+        if (!hasMsgBox) {
             Console.Error.WriteLine("  Guard FAILED: no MessageBox (#32770) found");
             StopProcess(uiProc);
             return false;
@@ -202,16 +179,13 @@ internal static class AppStartSmoke
     }
 
     // ── PlayerWeb 启动检测 ──────────────────────────────────────────
-    public static bool TestPlayerWebStartup(string installDir)
-    {
+    public static bool TestPlayerWebStartup(string installDir) {
         KillAllProcesses("VirtualPaper.PlayerWeb");
 
         var tempBmp = CreateMinimalBmp();
-        try
-        {
+        try {
             var playerWebExe = Path.Combine(installDir, "Plugins", "PlayerWeb", "VirtualPaper.PlayerWeb.exe");
-            var argsJson = JsonSerializer.Serialize(new
-            {
+            var argsJson = JsonSerializer.Serialize(new {
                 isDebug = false,
                 isPreview = false,
                 filePath = tempBmp,
@@ -230,8 +204,7 @@ internal static class AppStartSmoke
             Console.WriteLine($"  Launching: {playerWebExe}");
             Console.WriteLine($"  Args: {argsJson}");
 
-            var proc = Process.Start(new ProcessStartInfo
-            {
+            var proc = Process.Start(new ProcessStartInfo {
                 FileName = playerWebExe,
                 WorkingDirectory = Path.Combine(installDir, "Plugins", "PlayerWeb"),
                 UseShellExecute = false,
@@ -246,10 +219,8 @@ internal static class AppStartSmoke
             Thread.Sleep(3000);
 
             proc.Refresh();
-            if (proc.HasExited)
-            {
-                if (proc.ExitCode == 2)
-                {
+            if (proc.HasExited) {
+                if (proc.ExitCode == 2) {
                     Console.Error.WriteLine("  PlayerWeb exited: WebView2 runtime not available (skip test)");
                     return true;
                 }
@@ -261,29 +232,25 @@ internal static class AppStartSmoke
             StopProcess(proc);
             return true;
         }
-        finally
-        {
+        finally {
             try { File.Delete(tempBmp); } catch { }
         }
     }
 
     // ── ScreenSaver 启动检测 ────────────────────────────────────────
-    public static bool TestScreenSaverStartup(string installDir)
-    {
+    public static bool TestScreenSaverStartup(string installDir) {
         KillAllProcesses("VirtualPaper.ScreenSaver");
 
         var scrSaverExe = Path.Combine(installDir, "Plugins", "ScrSaver", "VirtualPaper.ScreenSaver.exe");
         var tempBmp = CreateMinimalBmp();
 
         Process? proc = null;
-        try
-        {
+        try {
             var args = $"--file-path \"{tempBmp}\" --wallpaper-type RImage --effect none";
             Console.WriteLine($"  Launching: {scrSaverExe} {args}");
 
             // Keep stdin pipe open so StdInListener doesn't read EOF and shut down
-            proc = Process.Start(new ProcessStartInfo
-            {
+            proc = Process.Start(new ProcessStartInfo {
                 FileName = scrSaverExe,
                 Arguments = args,
                 WorkingDirectory = Path.Combine(installDir, "Plugins", "ScrSaver"),
@@ -295,10 +262,8 @@ internal static class AppStartSmoke
             Thread.Sleep(4000);
 
             proc.Refresh();
-            if (proc.HasExited)
-            {
-                if (proc.ExitCode == 2)
-                {
+            if (proc.HasExited) {
+                if (proc.ExitCode == 2) {
                     Console.Error.WriteLine("  ScreenSaver exited: WebView2 runtime not available (skip)");
                     return true;
                 }
@@ -311,8 +276,7 @@ internal static class AppStartSmoke
             Console.WriteLine($"  [OK] ScreenSaver running (PID: {proc.Id}, windows: {(hasWindow ? "yes" : "none")})");
             return true;
         }
-        finally
-        {
+        finally {
             if (proc != null && !proc.HasExited)
                 StopProcess(proc);
             try { File.Delete(tempBmp); } catch { }
@@ -320,35 +284,27 @@ internal static class AppStartSmoke
     }
 
     // ── Helpers ────────────────────────────────────────────────────
-    private static void WaitForProcess(string name, int timeoutMs)
-    {
+    private static void WaitForProcess(string name, int timeoutMs) {
         int elapsed = 0;
-        while (elapsed < timeoutMs)
-        {
+        while (elapsed < timeoutMs) {
             if (Process.GetProcessesByName(name).Length > 0) return;
             Thread.Sleep(500);
             elapsed += 500;
         }
     }
 
-    private static void KillAllProcesses(params string[] names)
-    {
-        foreach (var name in names)
-        {
-            foreach (var p in Process.GetProcessesByName(name))
-            {
+    private static void KillAllProcesses(params string[] names) {
+        foreach (var name in names) {
+            foreach (var p in Process.GetProcessesByName(name)) {
                 try { KillProcessTree(p); } catch { }
             }
         }
     }
 
-    private static void KillProcessTree(Process p)
-    {
-        try
-        {
+    private static void KillProcessTree(Process p) {
+        try {
             var pid = p.Id;
-            var taskkill = Process.Start(new ProcessStartInfo
-            {
+            var taskkill = Process.Start(new ProcessStartInfo {
                 FileName = "taskkill",
                 Arguments = $"/F /T /PID {pid}",
                 UseShellExecute = false,
@@ -359,15 +315,11 @@ internal static class AppStartSmoke
         catch { }
     }
 
-    private static void StopProcess(Process p)
-    {
-        try
-        {
+    private static void StopProcess(Process p) {
+        try {
             KillProcessTree(p);
-            if (!p.WaitForExit(3000))
-            {
-                var tk = Process.Start(new ProcessStartInfo
-                {
+            if (!p.WaitForExit(3000)) {
+                var tk = Process.Start(new ProcessStartInfo {
                     FileName = "taskkill",
                     Arguments = $"/F /PID {p.Id}",
                     UseShellExecute = false,
@@ -379,17 +331,14 @@ internal static class AppStartSmoke
         catch { }
     }
 
-    private static List<string> GetWindowClasses(Process proc)
-    {
+    private static List<string> GetWindowClasses(Process proc) {
         var classes = new List<string>();
         var ready = new System.Threading.ManualResetEventSlim(false);
         List<string>? result = null;
         Exception? err = null;
 
-        var thread = new Thread(() =>
-        {
-            try
-            {
+        var thread = new Thread(() => {
+            try {
                 var desktop = AutomationElement.RootElement;
                 var pidCond = new PropertyCondition(AutomationElement.ProcessIdProperty, proc.Id);
                 var wins = desktop.FindAll(TreeScope.Children, pidCond);
@@ -406,13 +355,11 @@ internal static class AppStartSmoke
         thread.IsBackground = true;
         thread.Start();
 
-        if (!ready.Wait(5000))
-        {
+        if (!ready.Wait(5000)) {
             Console.Error.WriteLine("  [WARN] GetWindowClasses timed out (5s)");
             return classes;
         }
-        if (err != null)
-        {
+        if (err != null) {
             Console.Error.WriteLine($"  [WARN] GetWindowClasses failed: {err.Message}");
             return classes;
         }
@@ -422,8 +369,7 @@ internal static class AppStartSmoke
     /// <summary>
     /// Create a minimal 1x1 white BMP file in temp.
     /// </summary>
-    private static string CreateMinimalBmp()
-    {
+    private static string CreateMinimalBmp() {
         var path = Path.Combine(Path.GetTempPath(), $"vp_smoke_bmp_{Guid.NewGuid():N}.bmp");
         // 54-byte header + 4 bytes BGR pixel data = 58 bytes
         using var fs = new FileStream(path, FileMode.Create);

@@ -6,20 +6,17 @@ using System.Security.Cryptography;
 
 namespace VirtualPaper.SmokeTest;
 
-internal static class DownloadSmoke
-{
+internal static class DownloadSmoke {
     private static readonly byte[] TestContent1 = "VirtualPaper_smoke_payload_A"u8.ToArray();
     private static readonly byte[] TestContent2 = "VirtualPaper_smoke_payload_BB"u8.ToArray();
     private static readonly byte[] TestContent3 = "VirtualPaper_smoke_payload_CCC"u8.ToArray();
 
     // ── 单文件下载 ────────────────────────────────────────────────
-    public static bool TestSingleDownload()
-    {
+    public static bool TestSingleDownload() {
         using var server = new HttpSmokeServer(TestContent1);
 
         var savePath = Path.Combine(Path.GetTempPath(), $"vp_smoke_{Guid.NewGuid():N}.dat");
-        try
-        {
+        try {
             using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             var data = client.GetByteArrayAsync(server.Url).GetAwaiter().GetResult();
 
@@ -34,15 +31,13 @@ internal static class DownloadSmoke
                 : $"  [FAIL] Content mismatch");
             return ok;
         }
-        finally
-        {
+        finally {
             try { File.Delete(savePath); } catch { }
         }
     }
 
     // ── 取消下载 ──────────────────────────────────────────────────
-    public static bool TestCancelDownload()
-    {
+    public static bool TestCancelDownload() {
         // Use a large enough payload so the stream doesn't finish before we cancel.
         // 1 KB padded with zeros guarantees the read loop is still in-flight when cancel fires.
         var bigPayload = new byte[1024];
@@ -51,13 +46,11 @@ internal static class DownloadSmoke
         using var server = new HttpSmokeServer(bigPayload, chunkDelayMs: 50);
 
         var savePath = Path.Combine(Path.GetTempPath(), $"vp_smoke_cancel_{Guid.NewGuid():N}.dat");
-        try
-        {
+        try {
             using var cts = new CancellationTokenSource();
             using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
 
-            var task = Task.Run(async () =>
-            {
+            var task = Task.Run(async () => {
                 using var resp = await client.GetAsync(server.Url, HttpCompletionOption.ResponseHeadersRead, cts.Token);
                 using var stream = await resp.Content.ReadAsStreamAsync(cts.Token);
                 await using var fs = File.Create(savePath);
@@ -65,8 +58,7 @@ internal static class DownloadSmoke
                 var buf = new byte[16];
                 // Read one chunk successfully, then cancel before reading more
                 int read = await stream.ReadAsync(buf, 0, buf.Length, cts.Token);
-                if (read > 0)
-                {
+                if (read > 0) {
                     await fs.WriteAsync(buf, 0, read, cts.Token);
                     Console.WriteLine($"  Read {read} bytes, now cancelling...");
                 }
@@ -77,32 +69,27 @@ internal static class DownloadSmoke
                 await stream.ReadAsync(buf, 0, buf.Length, cts.Token);
             }, cts.Token);
 
-            try
-            {
+            try {
                 task.GetAwaiter().GetResult();
                 Console.Error.WriteLine("  [FAIL] Expected OperationCanceledException but task completed normally");
                 return false;
             }
-            catch (AggregateException ae) when (ae.InnerException is OperationCanceledException)
-            {
+            catch (AggregateException ae) when (ae.InnerException is OperationCanceledException) {
                 Console.WriteLine("  [OK] Download cancelled correctly");
                 return true;
             }
-            catch (OperationCanceledException)
-            {
+            catch (OperationCanceledException) {
                 Console.WriteLine("  [OK] Download cancelled correctly");
                 return true;
             }
         }
-        finally
-        {
+        finally {
             try { File.Delete(savePath); } catch { }
         }
     }
 
     // ── 多文件并发下载 ──────────────────────────────────────────────
-    public static bool TestMultiDownload()
-    {
+    public static bool TestMultiDownload() {
         using var server = new HttpSmokeServer(TestContent1, TestContent2, TestContent3);
 
         var files = new[]
@@ -117,8 +104,7 @@ internal static class DownloadSmoke
         bool completed = Task.WaitAll(tasks, 20000);
         sw.Stop();
 
-        if (!completed)
-        {
+        if (!completed) {
             Console.Error.WriteLine("  [FAIL] Multi-download timed out (20s)");
             return false;
         }
@@ -130,8 +116,7 @@ internal static class DownloadSmoke
         return allOk;
     }
 
-    private static async Task<bool> DownloadAndVerifyAsync(string url, byte[] expected)
-    {
+    private static async Task<bool> DownloadAndVerifyAsync(string url, byte[] expected) {
         using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
         var data = await client.GetByteArrayAsync(url);
         bool ok = data.SequenceEqual(expected);
@@ -141,8 +126,7 @@ internal static class DownloadSmoke
 }
 
 // ── 内嵌 HTTP Server ──────────────────────────────────────────────
-internal sealed class HttpSmokeServer : IDisposable
-{
+internal sealed class HttpSmokeServer : IDisposable {
     private readonly HttpListener _listener;
     private readonly CancellationTokenSource _cts;
     private readonly (string Path, byte[] Content)[] _routes;
@@ -157,8 +141,7 @@ internal sealed class HttpSmokeServer : IDisposable
     public HttpSmokeServer(byte[] c1, byte[] c2, byte[] c3, int chunkDelayMs = 0)
         : this(new[] { ("/a.dat", c1), ("/b.dat", c2), ("/c.dat", c3) }, chunkDelayMs) { }
 
-    private HttpSmokeServer((string Path, byte[] Content)[] routes, int chunkDelayMs)
-    {
+    private HttpSmokeServer((string Path, byte[] Content)[] routes, int chunkDelayMs) {
         _routes = routes;
         _chunkDelayMs = chunkDelayMs;
         _cts = new CancellationTokenSource();
@@ -173,12 +156,9 @@ internal sealed class HttpSmokeServer : IDisposable
         Task.Run(() => ServeLoop(_cts.Token));
     }
 
-    private async Task ServeLoop(CancellationToken token)
-    {
-        while (!token.IsCancellationRequested)
-        {
-            try
-            {
+    private async Task ServeLoop(CancellationToken token) {
+        while (!token.IsCancellationRequested) {
+            try {
                 var ctx = await _listener.GetContextAsync().WaitAsync(token);
                 _ = Task.Run(() => HandleRequest(ctx), token);
             }
@@ -187,10 +167,8 @@ internal sealed class HttpSmokeServer : IDisposable
         }
     }
 
-    private async Task HandleRequest(HttpListenerContext ctx)
-    {
-        try
-        {
+    private async Task HandleRequest(HttpListenerContext ctx) {
+        try {
             var route = _routes.FirstOrDefault(r =>
                 ctx.Request.Url!.AbsolutePath.EndsWith(r.Path.Split('/').Last()));
             var content = route.Content ?? _routes[0].Content;
@@ -198,19 +176,16 @@ internal sealed class HttpSmokeServer : IDisposable
             ctx.Response.ContentType = "application/octet-stream";
             ctx.Response.ContentLength64 = content.Length;
 
-            if (_chunkDelayMs > 0)
-            {
+            if (_chunkDelayMs > 0) {
                 // Simulate slow download by sending in chunks
                 int chunkSize = Math.Max(4, content.Length / 10);
-                for (int offset = 0; offset < content.Length; offset += chunkSize)
-                {
+                for (int offset = 0; offset < content.Length; offset += chunkSize) {
                     await Task.Delay(_chunkDelayMs);
                     int len = Math.Min(chunkSize, content.Length - offset);
                     await ctx.Response.OutputStream.WriteAsync(content, offset, len);
                 }
             }
-            else
-            {
+            else {
                 await ctx.Response.OutputStream.WriteAsync(content);
             }
 
@@ -219,8 +194,7 @@ internal sealed class HttpSmokeServer : IDisposable
         catch { }
     }
 
-    private static int GetFreePort()
-    {
+    private static int GetFreePort() {
         var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         int port = ((IPEndPoint)listener.LocalEndpoint).Port;
@@ -228,8 +202,7 @@ internal sealed class HttpSmokeServer : IDisposable
         return port;
     }
 
-    public void Dispose()
-    {
+    public void Dispose() {
         _cts.Cancel();
         try { _listener.Stop(); } catch { }
         _listener.Close();

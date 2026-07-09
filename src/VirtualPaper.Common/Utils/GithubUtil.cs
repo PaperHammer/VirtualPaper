@@ -9,6 +9,16 @@ namespace VirtualPaper.Common.Utils {
 
         private static GitHubClient GetClient(string repositoryName) {
             return _clients.GetOrAdd(repositoryName, name => new GitHubClient(new ProductHeaderValue(name)));
+            
+            // 调试时，填入 token 避免 429
+            //return _clients.GetOrAdd(repositoryName, name => {
+            //    var client = new GitHubClient(new ProductHeaderValue(name));
+            //    var token = "token";
+            //    if (!string.IsNullOrEmpty(token)) {
+            //        client.Credentials = new Credentials(token);
+            //    }
+            //    return client;
+            //});
         }
 
         ///// <summary>

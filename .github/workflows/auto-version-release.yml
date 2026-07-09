@@ -473,14 +473,6 @@ jobs:
         Set-Content $setupPath -Value $newContent -NoNewline
         Write-Host "Patched InnoSetup version to $newVersion (build-time only)"
 
-    - name: Download InnoDependencyInstaller
-      shell: pwsh
-      run: |
-        $url = "https://raw.githubusercontent.com/DomGries/InnoDependencyInstaller/master/CodeDependencies.iss"
-        $dest = "InnoSetup\CodeDependencies.iss"
-        Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
-        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " CodeDependencies.iss downloaded"
-
     - name: Compile installer
       id: build_installer
       shell: pwsh

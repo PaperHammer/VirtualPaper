@@ -74,6 +74,13 @@
 	  <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\WebBackdrop\WebBackdrop.csproj" />
+	  <ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
+	  <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
+	  <ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
+	</ItemGroup>
+
 	<!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
     Explorer "Package and Publish" context menu entry to be enabled for this project even if

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<arc:ArcWindow
+    x:Class="VirtualPaper.Sandbox.WinUI.Preview.WebEditorWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VirtualPaper.Sandbox.WinUI.Preview"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    xmlns:web="using:Workloads.Creation.WebBackdrop"
+    mc:Ignorable="d"
+    Width="1400" Height="850">
+
+    <arc:ArcWindowHost x:Name="MainHost">
+        <arc:ArcPageHost>
+            <web:MainPage x:Name="EditorPage"/>
+        </arc:ArcPageHost>
+    </arc:ArcWindowHost>
+</arc:ArcWindow>

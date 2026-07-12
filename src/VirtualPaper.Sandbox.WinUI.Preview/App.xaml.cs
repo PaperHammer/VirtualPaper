@@ -1,8 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -11,6 +14,13 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
+using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Models.Cores;
+using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.UIComponent.Utils;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
@@ -31,6 +41,7 @@ namespace VirtualPaper.Sandbox.WinUI.Preview {
         /// executed, and as such is the logical equivalent of main() or WinMain().
         /// </summary>
         public App() {
+            AppServiceLocator.Services = ConfigureServices();
             InitializeComponent();
         }
 
@@ -38,9 +49,40 @@ namespace VirtualPaper.Sandbox.WinUI.Preview {
         /// Invoked when the application is launched.
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
-        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args) {
+        protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args) {
+            CrossThreadInvoker.Initialize(new UiSynchronizationContext());
+
+            if (Constants.ApplicationType.IsMSIX) {
+                await LanguageUtil.InitializeLocalizerForPackaged("zh-CN");
+            }
+            else {
+                await LanguageUtil.InitializeLocalizerForUnpackaged("zh-CN");
+            }
+
             _window = new MainWindow();
             _window.Activate();
+        }
+
+        private static ServiceProvider ConfigureServices() {
+            return new ServiceCollection()
+                .AddSingleton<IUserSettingsClient, StubUserSettingsClient>()
+                .BuildServiceProvider();
+        }
+
+        private sealed class StubUserSettingsClient : IUserSettingsClient {
+            public ISettings Settings { get; } = new Settings();
+            public List<IApplicationRules> AppRules { get; } = [];
+            public List<IWallpaperLayout> WallpaperLayouts { get; } = [];
+            public List<IRecentUsed> RecentUseds { get; } = [];
+
+            public void Dispose() { }
+            public void Load<T>() { }
+            public Task LoadAsync<T>() => Task.CompletedTask;
+            public void Save<T>() { }
+            public Task SaveAsync<T>() => Task.CompletedTask;
+            public Task UpdateRecentUsedAsync(string filePath) => Task.CompletedTask;
+            public Task UpdateRecetUsedAsync(string[] filePath) => Task.CompletedTask;
+            public Task DeleteRecetUsedAsync(IRecentUsed item) => Task.CompletedTask;
         }
     }
 }

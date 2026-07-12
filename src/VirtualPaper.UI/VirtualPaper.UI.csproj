@@ -23,8 +23,7 @@
 	<!-- 排除 ONNX Runtime 重复的原生 DLL（在 MSIX payload 重复检测之前从 PackagingOutputs 移除 NuGet 缓存副本） -->
 	<Target Name="RemoveDuplicateOnnxRuntimeDlls" BeforeTargets="_ComputeAppxPackagePayload" AfterTargets="GetPackagingOutputs">
 		<ItemGroup>
-			<PackagingOutputs Remove="@(PackagingOutputs)"
-				Condition="('%(Filename)%(Extension)' == 'onnxruntime.dll' or '%(Filename)%(Extension)' == 'onnxruntime_providers_shared.dll') and $([System.String]::new('%(FullPath)').Contains('.nuget'))" />
+			<PackagingOutputs Remove="@(PackagingOutputs)" Condition="('%(Filename)%(Extension)' == 'onnxruntime.dll' or '%(Filename)%(Extension)' == 'onnxruntime_providers_shared.dll') and $([System.String]::new('%(FullPath)').Contains('.nuget'))" />
 		</ItemGroup>
 	</Target>
 
@@ -193,6 +192,12 @@
 		<Content Update="Assets\staticImg\Light\ic_fluent_select_object_24_filled.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<Content Update="Assets\ui_components\Dark\project_create_staticimg_dark.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\ui_components\Dark\project_create_webbackdrop_dark.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 		<Content Update="Assets\ui_components\Dark\theme_dark.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -206,6 +211,9 @@
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Assets\ui_components\Light\intelligent_light.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\ui_components\Light\project_create_webbackdrop_light.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Assets\ui_components\Light\theme_auto.png">
@@ -223,6 +231,9 @@
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Assets\ui_components\Light\project_create_staticimg_light.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\ui_components\project-create-webbackdrop-desc.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Assets\virtualpaper.ico">

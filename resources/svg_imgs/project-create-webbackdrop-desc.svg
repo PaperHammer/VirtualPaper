@@ -1,0 +1,31 @@
+<svg width="320" height="200" viewBox="0 0 320 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="320" height="200" fill="#6BA3D6"/>
+  <g opacity="0.2" stroke="#FFFFFF" stroke-width="1.5" fill="none">
+    <path d="M20 40L60 20L100 40L140 20L180 40L220 20L260 40L300 20"/>
+    <path d="M20 80L60 60L100 80L140 60L180 80L220 60L260 80L300 60"/>
+    <path d="M20 120L60 100L100 120L140 100L180 120L220 100L260 120L300 100"/>
+    <path d="M20 160L60 140L100 160L140 140L180 160L220 140L260 160L300 140"/>
+    <path d="M40 20L40 60L40 100L40 140L40 180"/>
+    <path d="M80 20L80 60L80 100L80 140L80 180"/>
+    <path d="M120 20L120 60L120 100L120 140L120 180"/>
+    <path d="M160 20L160 60L160 100L160 140L160 180"/>
+    <path d="M200 20L200 60L200 100L200 140L200 180"/>
+    <path d="M240 20L240 60L240 100L240 140L240 180"/>
+    <path d="M280 20L280 60L280 100L280 140L280 180"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <rect x="123" y="67" width="74" height="58" rx="8" fill="#FFFFFF"/>
+    <path d="M135 111L150 95L160 105L172 90L186 111" stroke="#6BA3D6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="176" cy="82" r="5" fill="#6BA3D6"/>
+  </g>
+
+  <rect x="112" y="58" width="54" height="27" rx="5" fill="#FFFFFF"/>
+  <text x="139" y="78" font-family="Arial, sans-serif" font-size="19" font-weight="700" text-anchor="middle" fill="#6BA3D6">Web</text>
+
+  <defs>
+    <filter id="softShadow" x="113" y="57" width="94" height="78" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#3A6F9E" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+</svg>

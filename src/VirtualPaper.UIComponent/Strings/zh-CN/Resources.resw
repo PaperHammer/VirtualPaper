@@ -1102,7 +1102,13 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>静态图像</value>
   </data>
   <data name="Draft_Template_StaticImage_Desc" xml:space="preserve">
-    <value>标准位图编辑模式。提供像素级绘图工具，适用于绘画、修图及常规图像处理</value>
+    <value>像素级位图编辑模式，适用于绘画、修图及常规图像处理</value>
+  </data>
+  <data name="Draft_Template_WebBackdrop_Name" xml:space="preserve">
+    <value>Web 壁纸</value>
+  </data>
+  <data name="Draft_Template_WebBackdrop_Desc" xml:space="preserve">
+    <value>基于 Web 技术的交互壁纸模板，支持使用 HTML/CSS/JS 创建动态、可交互的桌面壁纸</value>
   </data>
   <data name="Project_Create_New" xml:space="preserve">
     <value>新建</value>

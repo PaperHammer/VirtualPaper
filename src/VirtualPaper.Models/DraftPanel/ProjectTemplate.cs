@@ -1,4 +1,4 @@
-﻿using VirtualPaper.Common;
+using VirtualPaper.Common;
 
 namespace VirtualPaper.Models.DraftPanel {
     public class ProjectTemplate {
@@ -6,6 +6,6 @@ namespace VirtualPaper.Models.DraftPanel {
         public string? DescImageKey { get; set; }
         public string? Name { get; set; }
         public string? Desc { get; set; }
-        public ProjectType Type { get; set; }
+        public ProjectType ProjType { get; set; }
     }
 }

@@ -58,7 +58,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
             UIElement? obj = null;
             foreach (var item in _wpEffectData.AsObject()) {
-                string uiElementType = item.Value["Type"].ToString();
+                string uiElementType = item.Value["ProjType"].ToString();
                 if (uiElementType.Equals("Slider", StringComparison.OrdinalIgnoreCase)) {
                     Slider slider;
                     if (_controls.TryGetValue(item.Key, out UIElement? value)) {
@@ -323,7 +323,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
         //        foreach (var lp in _wpEffectData)
         //        {
-        //            string uiElementType = lp.Value["Type"].ToString();
+        //            string uiElementType = lp.Value["ProjType"].ToString();
         //            if (uiElementType.Equals("folderDropdown", StringComparison.OrdinalIgnoreCase) && panel.Name == lp.Key)
         //            {
         //                var filePicker = new FileOpenPicker();

@@ -87,7 +87,7 @@
                     <RowDefinition />
                 </Grid.RowDefinitions>
 
-                <styles:ArcImageIcon
+                <styles:ArcImage
                     Width="320"
                     Height="200"
                     VerticalAlignment="Stretch"

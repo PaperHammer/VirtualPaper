@@ -147,5 +147,6 @@ namespace VirtualPaper.UIComponent.Utils {
         StaticImgFileName,
         SelectedIntelliPageIdx,
         IntelligentCTS,
+        WebProjectSession,
     }
 }

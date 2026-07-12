@@ -18,6 +18,7 @@
     <BitmapImage x:Key="UIC_Create_Common" UriSource="ms-appx:///Assets/ui_components/icons8-image-96.png"/>
     <BitmapImage x:Key="UIC_Create_3D" UriSource="ms-appx:///Assets/ui_components/icons8-picture-94.png"/>
     <BitmapImage x:Key="DraftPanel_Create_StaticImge_Desc" UriSource="ms-appx:///Assets/ui_components/project-create-static-image-desc.png"/>
+    <BitmapImage x:Key="DraftPanel_Create_WebBackdrop_Desc" UriSource="ms-appx:///Assets/ui_components/project-create-webbackdrop-desc.png"/>
     <BitmapImage x:Key="DraftPanel_Create_StaticImge_LayerThu" UriSource="ms-appx:///Assets/staticImg/layer_thu_grid.png"/>
     
     <BitmapImage x:Key="PresetStyles_Anime" UriSource="ms-appx:///Assets/intelligent/preset_styles/anime.jpg"/>

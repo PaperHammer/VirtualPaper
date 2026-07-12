@@ -97,7 +97,8 @@ namespace VirtualPaper.Common {
         FGif,
         FVideo,
         FDesign,
-        FimageAI,
+        FWebDesign,
+        FImageAI,
         FWebZip,
     }
 
@@ -140,6 +141,7 @@ namespace VirtualPaper.Common {
     public enum ProjectType {
         PUnknown,
         P_StaticImage,
+        P_WebBackdrop,
     }
 
     public enum ObjectLifetime {

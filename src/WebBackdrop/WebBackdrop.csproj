@@ -9,19 +9,50 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 	<ItemGroup>
-	  <None Remove="MainPage.xaml" />
+		<None Remove="MainPage.xaml" />
+		<None Remove="Views\Components\WebEditor.xaml" />
+		<None Remove="Views\Components\MonacoEditor.xaml" />
+		<None Remove="Views\Tools\WebToolListControl.xaml" />
+		<None Remove="Views\Tools\WebFileTreeControl.xaml" />
+		<None Remove="Views\Tools\WebProjectInfoControl.xaml" />
+		<None Remove="Views\Tools\WebStatusBarControl.xaml" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
 	</ItemGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\Workloads.Utils\Workloads.Utils.csproj" />
+		<ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
+		<ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
+		<ProjectReference Include="..\Workloads.Utils\Workloads.Utils.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-	  <Page Update="MainPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Page>
+		<Page Update="MainPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\WebEditor.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\MonacoEditor.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Tools\WebToolListControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Tools\WebFileTreeControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Tools\WebProjectInfoControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Tools\WebStatusBarControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="Views\Components\monaco.html">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 
 </Project>

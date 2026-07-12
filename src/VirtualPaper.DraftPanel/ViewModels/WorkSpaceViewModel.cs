@@ -8,10 +8,12 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
@@ -26,7 +28,7 @@ using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 using Windows.Storage;
-using Workloads.Creation.StaticImg.Models.SerializableData;
+using Workloads.Entry.Interfaces;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
 
@@ -272,6 +274,10 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     AddToWorkSpace(fileName, FileType.FDesign);
                     break;
 
+                case ProjectType.P_WebBackdrop:
+                    AddToWorkSpace(fileName, FileType.FWebDesign);
+                    break;
+
                 default:
                     break;
             }
@@ -289,26 +295,26 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private async Task<bool> ReadDesignFileAsync(string filePath) {
-            var result = await StaticImgDesignFileUtil.GetFileHeaderAsync(filePath);
-            if (result is not FileHeader header) {
-                return false;
-            }
+            //var result = await StaticImgDesignFileUtil.GetFileHeaderAsync(filePath);
+            //if (result is not FileHeader header) {
+            //    return false;
+            //}
 
-            switch (header.ProjType) {
-                case ProjectType.P_StaticImage:
-                    AddToWorkSpace(filePath, FileType.FDesign);
-                    break;
+            //switch (header.ProjType) {
+            //    case ProjectType.P_StaticImage:
+            //        AddToWorkSpace(filePath, FileType.FDesign);
+            //        break;
 
-                default:
-                    break;
-            }
+            //    default:
+            //        break;
+            //}
 
             return true;
         }
 
         private void AddToWorkSpace(string file, FileType fileType) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
-                var runtime = new Workloads.Creation.StaticImg.MainPage(file, fileType);
+                var runtime = AppServiceLocator.Services.GetRequiredService<IRuntimeFactory>().Create(file, fileType);
                 runtime.IsSavedChanged += Runtime_IsSavedChanged;
 
                 var header = new ArcTabViewItemHeader() {

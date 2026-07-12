@@ -45,20 +45,20 @@ namespace VirtualPaper.Common.Utils.Files {
         /// <summary>
         /// 在 <see cref="GetFileType"/> 基础上进行更精细的分类：
         /// 对 AI 模型支持的光栅图像格式（jpg / jpeg / bmp / png / webp）做魔术头校验，
-        /// 验证通过则返回 <see cref="FileType.FimageAI"/>；其余格式回落到 <see cref="GetFileType"/> 的结果。
+        /// 验证通过则返回 <see cref="FileType.FImageAI"/>；其余格式回落到 <see cref="GetFileType"/> 的结果。
         /// </summary>
         public static FileType GetFileTypeFroImageAI(string filePath) {
             if (!TryReadHeader(filePath, out string extension, out string headerHex, out byte[] headerBytes, out int bytesRead)) {
                 return FileType.FUnknown;
             }
 
-            // WebP 特殊处理 → FimageAI
+            // WebP 特殊处理 → FImageAI
             if (headerHex.StartsWith("52494646", StringComparison.OrdinalIgnoreCase)
                 && bytesRead >= 12
                 && headerHex.Length >= 24
                 && headerHex.Substring(16, 8) == "57454250"
                 && extension == ".webp") {
-                return FileType.FimageAI;
+                return FileType.FImageAI;
             }
 
             // 优先匹配 AI 签名
@@ -109,7 +109,7 @@ namespace VirtualPaper.Common.Utils.Files {
             [FileType.FGif] = [".gif", ".apng"],
             [FileType.FVideo] = [".mp4", ".webm"],
             [FileType.FDesign] = [FileExtension.FE_Design],
-            [FileType.FimageAI] = FImageAIExts,
+            [FileType.FImageAI] = FImageAIExts,
             [FileType.FWebZip] = [".zip", ".rar", ".7z"],
         };
 
@@ -187,12 +187,12 @@ namespace VirtualPaper.Common.Utils.Files {
 
         /// <summary>
         /// AI 场景专用签名：与 <see cref="_signatures"/> 中的光栅图像条目对应，
-        /// 但类型为 <see cref="FileType.FimageAI"/>，不含 svg 等矢量格式。
+        /// 但类型为 <see cref="FileType.FImageAI"/>，不含 svg 等矢量格式。
         /// </summary>
         private static readonly FileSignature[] _signaturesAI = [
-            new("FFD8FF",           FileType.FimageAI, [".jpg", ".jpeg"],  MustStartWith: true),
-            new("424D",             FileType.FimageAI, [".bmp"],           MustStartWith: true),
-            new("89504E470D0A1A0A", FileType.FimageAI, [".png"],           MustStartWith: true),
+            new("FFD8FF",           FileType.FImageAI, [".jpg", ".jpeg"],  MustStartWith: true),
+            new("424D",             FileType.FImageAI, [".bmp"],           MustStartWith: true),
+            new("89504E470D0A1A0A", FileType.FImageAI, [".png"],           MustStartWith: true),
         ];
     }
 }

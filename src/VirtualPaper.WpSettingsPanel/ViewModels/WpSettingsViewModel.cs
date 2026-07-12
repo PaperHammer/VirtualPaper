@@ -155,7 +155,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 [FileType.FImage],
                 LanguageUtil.GetI18n(Constants.I18n.WpLib_TypeFilter_StaticImage)));
             TypeFilters.Add(new WpTypeFilterItem(
-                [FileType.FGif, FileType.FimageAI],
+                [FileType.FGif, FileType.FImageAI],
                 LanguageUtil.GetI18n(Constants.I18n.WpLib_TypeFilter_DynamicImage)));
             TypeFilters.Add(new WpTypeFilterItem(
                 [FileType.FVideo],

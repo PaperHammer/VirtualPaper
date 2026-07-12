@@ -35,6 +35,8 @@ using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.Core;
 using WinUIEx;
+using Workloads.Entry.Interfaces;
+using Workloads.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -131,6 +133,10 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IDepthEstimate, MiDaS>()
                 .AddSingleton<IStyleTransfer, AdaIn>()
                 .AddSingleton<ISuperResolution, Realesrgan>()
+
+                .AddTransient<Workloads.Creation.StaticImg.MainPage>()
+                .AddTransient<Workloads.Creation.WebBackdrop.MainPage>()
+                .AddTransient<IRuntimeFactory, RuntimeFactory>()
                 
                 .BuildServiceProvider();            
 

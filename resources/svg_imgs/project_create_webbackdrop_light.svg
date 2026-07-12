@@ -1,0 +1,17 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Image frame -->
+  <rect x="10" y="10" width="60" height="60" rx="4" stroke="#2D2D2D" stroke-width="3" fill="none"/>
+  
+  <!-- Mountain landscape -->
+  <path d="M14 58 L26 42 L34 50 L46 34 L66 58" stroke="#2D2D2D" stroke-width="3" stroke-linejoin="round" fill="none"/>
+  
+  <!-- Sun -->
+  <circle cx="56" cy="28" r="5" stroke="#2D2D2D" stroke-width="3" fill="none"/>
+  
+  <!-- Ground line -->
+  <line x1="14" y1="58" x2="66" y2="58" stroke="#2D2D2D" stroke-width="3"/>
+  
+  <!-- Web label badge (top-left, maximum) -->
+  <rect x="0" y="0" width="44" height="26" rx="4" fill="#2D2D2D"/>
+  <text x="22" y="20" font-family="Arial, sans-serif" font-size="18" fill="#FFFFFF" font-weight="bold" text-anchor="middle">Web</text>
+</svg>

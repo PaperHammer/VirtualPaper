@@ -1102,7 +1102,13 @@ The following words cannot be used as usernames:
     <value>Static Image</value>
   </data>
   <data name="Draft_Template_StaticImage_Desc" xml:space="preserve">
-    <value>Standard bitmap editing mode. Provides pixel-level tools suitable for drawing, retouching, and general image processing</value>
+    <value>Pixel-level bitmap editing mode, suitable for drawing, retouching, and general image processing</value>
+  </data>
+  <data name="Draft_Template_WebBackdrop_Name" xml:space="preserve">
+    <value>Web Wallpaper</value>
+  </data>
+  <data name="Draft_Template_WebBackdrop_Desc" xml:space="preserve">
+    <value>Interactive wallpaper template based on web technologies, supporting dynamic and interactive desktop wallpapers created with HTML/CSS/JS</value>
   </data>
   <data name="Project_Create_New" xml:space="preserve">
     <value>New</value>

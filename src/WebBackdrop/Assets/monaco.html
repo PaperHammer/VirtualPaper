@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monaco Editor</title>
+    <style>
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background: #1e1e1e;
+        }
+        #container { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+
+    <script src="monaco-editor/vs/loader.js"></script>
+    <script>
+        let editor;
+
+        require.config({
+            paths: { vs: 'monaco-editor/vs' }
+        });
+
+        require([
+            'vs/editor/editor.main',
+            'vs/language/html/monaco.contribution',
+            'vs/language/css/monaco.contribution',
+            'vs/language/typescript/monaco.contribution',
+            'vs/basic-languages/monaco.contribution'
+        ], function () {
+            // Configure TS/JS with full intellisense
+            monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+                target: monaco.languages.typescript.ScriptTarget.ESNext,
+                allowNonTsExtensions: true,
+                allowJs: true,
+                checkJs: true,
+                moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+                jsx: monaco.languages.typescript.JsxEmit.React
+            });
+            monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+                noSemanticValidation: false,
+                noSyntaxValidation: false,
+                noSuggestionDiagnostics: false
+            });
+            monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+                target: monaco.languages.typescript.ScriptTarget.ESNext,
+                allowNonTsExtensions: true,
+                allowJs: true,
+                checkJs: true,
+                moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+                jsx: monaco.languages.typescript.JsxEmit.React,
+                strict: true,
+                strictNullChecks: true
+            });
+
+            // CSS diagnostics
+            monaco.languages.css.cssDefaults.setDiagnosticsOptions({ validate: true });
+            monaco.languages.css.lessDefaults.setDiagnosticsOptions({ validate: true });
+            monaco.languages.css.scssDefaults.setDiagnosticsOptions({ validate: true });
+
+            editor = monaco.editor.create(document.getElementById('container'), {
+                value: '',
+                language: 'plaintext',
+                theme: 'vs-dark',
+                automaticLayout: true,
+
+                minimap: { enabled: true, scale: 1, showSlider: 'mouseover' },
+                fontSize: 14,
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                tabSize: 2,
+                insertSpaces: true,
+                detectIndentation: true,
+                snippetSuggestions: 'top',
+
+                // IntelliSense
+                quickSuggestions: { other: true, comments: true, strings: true },
+                suggestOnTriggerCharacters: true,
+                acceptSuggestionOnCommitCharacter: true,
+                acceptSuggestionOnEnter: 'on',
+                tabCompletion: 'on',
+                wordBasedSuggestions: 'currentDocument',
+                parameterHints: { enabled: true, cycle: true },
+                hover: { enabled: true, delay: 300 },
+                occurrencesHighlight: 'singleFile',
+
+                // Formatting
+                formatOnPaste: true,
+                formatOnType: true,
+
+                // Brackets
+                matchBrackets: 'always',
+                autoClosingBrackets: 'always',
+                autoClosingQuotes: 'always',
+                autoClosingDelete: 'always',
+                autoSurround: 'languageDefined',
+                bracketPairColorization: { enabled: true },
+                guides: { bracketPairs: true, indentation: true },
+                colorDecorators: true,
+
+                // General
+                autoIndent: 'full',
+                folding: true,
+                foldingHighlight: true,
+                showFoldingControls: 'always',
+                links: true,
+                cursorBlinking: 'smooth',
+                cursorSmoothCaretAnimation: 'on',
+                smoothScrolling: true,
+                stickyScroll: { enabled: true },
+                renderWhitespace: 'selection',
+                semanticHighlighting: { enabled: true },
+                copyWithSyntaxHighlighting: true,
+                multiCursorModifier: 'alt',
+            });
+
+            editor.onDidChangeModelContent(function () {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'contentChange' }));
+                }
+            });
+
+            editor.onDidChangeCursorPosition(function (e) {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({
+                        type: 'cursorPositionChange',
+                        lineNumber: e.position.lineNumber,
+                        column: e.position.column
+                    }));
+                }
+            });
+
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB, function () {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'toggleLeftSideBar' }));
+                }
+            });
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyJ, function () {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'toggleBottomPanel' }));
+                }
+            });
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.KeyB, function () {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'toggleRightSideBar' }));
+                }
+            });
+
+            window.setValue = function (value) {
+                var current = editor.getValue();
+                if (current !== value) {
+                    editor.setValue(value);
+                }
+            };
+
+            window.getValue = function () {
+                return editor.getValue();
+            };
+
+            window.setLanguage = function (language) {
+                var model = editor.getModel();
+                if (model) {
+                    monaco.editor.setModelLanguage(model, language);
+                }
+            };
+
+            function createSnippetProvider(snippets) {
+                return {
+                    triggerCharacters: ['!', '.', '#', ':'],
+                    provideCompletionItems: function (model, position) {
+                        var text = model.getValueInRange({
+                            startLineNumber: position.lineNumber,
+                            startColumn: 1,
+                            endLineNumber: position.lineNumber,
+                            endColumn: position.column
+                        });
+                        var match = text.match(/[!a-zA-Z0-9._:-]+$/);
+                        var startColumn = match ? position.column - match[0].length : position.column;
+                        var range = {
+                            startLineNumber: position.lineNumber,
+                            endLineNumber: position.lineNumber,
+                            startColumn: startColumn,
+                            endColumn: position.column
+                        };
+                        return {
+                            suggestions: snippets.map(function (snippet) {
+                                return {
+                                    label: snippet.label,
+                                    kind: monaco.languages.CompletionItemKind.Snippet,
+                                    insertText: snippet.insertText,
+                                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                                    detail: snippet.detail,
+                                    range: range
+                                };
+                            })
+                        };
+                    }
+                };
+            }
+
+            monaco.languages.registerCompletionItemProvider('html', createSnippetProvider([
+                { label: '!', detail: 'DOCTYPE declaration', insertText: '<!DOCTYPE html>' },
+                { label: '!!!', detail: 'HTML5 document', insertText: '<!DOCTYPE html>\n<html lang="en">\n<head>\n\t<meta charset="UTF-8">\n\t<meta name="viewport" content="width=device-width, initial-scale=1.0">\n\t<title>${1:Document}</title>\n</head>\n<body>\n\t$0\n</body>\n</html>' },
+                { label: 'meta:vp', detail: 'Viewport meta', insertText: '<meta name="viewport" content="width=device-width, initial-scale=1.0">' },
+                { label: 'link:css', detail: 'Stylesheet link', insertText: '<link rel="stylesheet" href="${1:style.css}">' },
+                { label: 'script:src', detail: 'Script source', insertText: '<script src="${1:script.js}"><\/script>' },
+                { label: 'div', detail: 'Div with class', insertText: '<div class="${1:container}">\n\t$0\n</div>' },
+                { label: 'btn', detail: 'Button', insertText: '<button type="button" class="${1:btn}">$0</button>' },
+                { label: 'input', detail: 'Input', insertText: '<input type="${1:text}" name="${2:name}" placeholder="${3:placeholder}">' },
+                { label: 'img', detail: 'Image', insertText: '<img src="${1:image.png}" alt="${2:description}">' },
+                { label: 'ul', detail: 'List', insertText: '<ul>\n\t<li>${1:item}</li>\n\t<li>${2:item}</li>\n</ul>' }
+            ]));
+
+            monaco.languages.registerCompletionItemProvider('css', createSnippetProvider([
+                { label: 'reset', detail: 'CSS reset', insertText: '* {\n\tbox-sizing: border-box;\n}\n\nhtml, body {\n\tmargin: 0;\n\tpadding: 0;\n\twidth: 100%;\n\theight: 100%;\n}' },
+                { label: 'center', detail: 'Flex center', insertText: 'display: flex;\nalign-items: center;\njustify-content: center;' },
+                { label: 'flex', detail: 'Flex row', insertText: 'display: flex;\ngap: ${1:16px};\nalign-items: center;' },
+                { label: 'grid', detail: 'Responsive grid', insertText: 'display: grid;\ngrid-template-columns: repeat(${1:auto-fit}, minmax(${2:240px}, 1fr));\ngap: ${3:16px};' },
+                { label: 'abs', detail: 'Absolute fill', insertText: 'position: absolute;\ninset: 0;' },
+                { label: 'media', detail: 'Media query', insertText: '@media (max-width: ${1:768px}) {\n\t$0\n}' },
+                { label: 'anim', detail: 'Keyframes animation', insertText: 'animation: ${1:fadeIn} ${2:300ms} ease ${3:both};\n\n@keyframes ${1:fadeIn} {\n\tfrom { opacity: 0; }\n\tto { opacity: 1; }\n}' }
+            ]));
+
+            monaco.languages.registerCompletionItemProvider('javascript', createSnippetProvider([
+                { label: 'fn', detail: 'Function declaration', insertText: 'function ${1:name}(${2:params}) {\n\t$0\n}' },
+                { label: 'afn', detail: 'Arrow function', insertText: 'const ${1:name} = (${2:params}) => {\n\t$0\n};' },
+                { label: 'log', detail: 'Console log', insertText: 'console.log(${1:value});' },
+                { label: 'event', detail: 'Event listener', insertText: '${1:element}.addEventListener(\'${2:click}\', (${3:event}) => {\n\t$0\n});' },
+                { label: 'fetch', detail: 'Fetch async', insertText: 'const response = await fetch(\'${1:url}\');\nconst data = await response.json();\n$0' },
+                { label: 'try', detail: 'Try catch', insertText: 'try {\n\t$0\n} catch (error) {\n\tconsole.error(error);\n}' },
+                { label: 'raf', detail: 'requestAnimationFrame loop', insertText: 'function ${1:tick}(${2:time}) {\n\t$0\n\trequestAnimationFrame(${1:tick});\n}\nrequestAnimationFrame(${1:tick});' }
+            ]));
+
+            monaco.languages.registerCompletionItemProvider('typescript', createSnippetProvider([
+                { label: 'interface', detail: 'Interface', insertText: 'interface ${1:Name} {\n\t${2:property}: ${3:string};\n}' },
+                { label: 'type', detail: 'Type alias', insertText: 'type ${1:Name} = {\n\t${2:property}: ${3:string};\n};' },
+                { label: 'class', detail: 'Class', insertText: 'class ${1:Name} {\n\tconstructor(${2}) {\n\t\t$0\n\t}\n}' },
+                { label: 'async', detail: 'Async function', insertText: 'async function ${1:name}(${2:params}): Promise<${3:void}> {\n\t$0\n}' }
+            ]));
+
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(JSON.stringify({ type: 'ready' }));
+            }
+
+            window.formatDocument = function () {
+                editor.getAction('editor.action.formatDocument').run();
+            };
+        });
+    </script>
+</body>
+</html>

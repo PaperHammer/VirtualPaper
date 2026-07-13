@@ -1,47 +1,52 @@
 using System;
 using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class MonacoEditor : UserControl {
         public event EventHandler<string>? ContentChanged;
+        public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
+        public event EventHandler<string>? ShortcutRequested;
 
-        public string Content {
+        public string EditorContent {
             get => _content;
             set {
                 if (_content == value) return;
                 _content = value;
-                SetValue(ContentProperty, value);
+                SetValue(EditorContentProperty, value);
                 _ = SetContentAsync(value);
             }
         }
 
-        public static readonly DependencyProperty ContentProperty =
-            DependencyProperty.Register(nameof(Content), typeof(string), typeof(MonacoEditor),
-                new PropertyMetadata(string.Empty, OnContentPropertyChanged));
+        public static readonly DependencyProperty EditorContentProperty =
+            DependencyProperty.Register(nameof(EditorContent), typeof(string), typeof(MonacoEditor),
+                new PropertyMetadata(string.Empty, OnEditorContentPropertyChanged));
 
-        private static void OnContentPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+        private static void OnEditorContentPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is MonacoEditor editor && e.NewValue is string newContent) {
                 editor._content = newContent;
                 _ = editor.SetContentAsync(newContent);
             }
         }
 
-        public string Language {
-            get => (string)GetValue(LanguageProperty);
-            set => SetValue(LanguageProperty, value);
+        public string EditorLanguage {
+            get => (string)GetValue(EditorLanguageProperty);
+            set => SetValue(EditorLanguageProperty, value);
         }
 
-        public static readonly DependencyProperty LanguageProperty =
-            DependencyProperty.Register(nameof(Language), typeof(string), typeof(MonacoEditor),
-                new PropertyMetadata("plaintext", OnLanguagePropertyChanged));
+        public static readonly DependencyProperty EditorLanguageProperty =
+            DependencyProperty.Register(nameof(EditorLanguage), typeof(string), typeof(MonacoEditor),
+                new PropertyMetadata("plaintext", OnEditorLanguagePropertyChanged));
 
-        private static void OnLanguagePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+        private static void OnEditorLanguagePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is MonacoEditor editor && e.NewValue is string lang) {
+                editor._pendingLanguage = lang;
                 _ = editor.SetLanguageAsync(lang);
             }
         }
@@ -53,20 +58,40 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private async Task InitializeWebViewAsync() {
             try {
-                await monacoWebView.EnsureCoreWebView2Async();
+                Directory.CreateDirectory(Constants.CommonPaths.TempWebView2Dir);
+                var env = await CoreWebView2Environment.CreateWithOptionsAsync(null, Constants.CommonPaths.TempWebView2Dir, _environmentOptions);
+                await monacoWebView.EnsureCoreWebView2Async(env);
 
-                var htmlPath = Path.Combine(AppContext.BaseDirectory, "Views", "Components", "monaco.html");
-                if (!File.Exists(htmlPath)) {
-                    htmlPath = Path.Combine(AppContext.BaseDirectory, "monaco.html");
-                }
-
-                if (File.Exists(htmlPath)) {
-                    monacoWebView.CoreWebView2.Navigate(new Uri(htmlPath).AbsoluteUri);
-                } else {
-                    monacoWebView.CoreWebView2.NavigateToString(GetFallbackHtml());
-                }
+#if DEBUG
+                monacoWebView.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
+                monacoWebView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+                monacoWebView.CoreWebView2.Settings.AreDevToolsEnabled = true;
+                monacoWebView.CoreWebView2.OpenDevToolsWindow();
+#else
+                monacoWebView.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+                monacoWebView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+                monacoWebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
+#endif
 
                 monacoWebView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
+                monacoWebView.CoreWebView2.ProcessFailed += CoreWebView2_ProcessFailed;
+
+                var htmlPath = Path.Combine(AppContext.BaseDirectory, "Assets", "monaco.html");
+                ArcLog.GetLogger<MonacoEditor>().Info($"Monaco html path: {htmlPath}");
+
+                if (File.Exists(htmlPath)) {
+                    var hostName = "monaco.localhost";
+                    var assetsPath = Path.GetDirectoryName(htmlPath)!;
+                    monacoWebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+                        hostName,
+                        assetsPath,
+                        CoreWebView2HostResourceAccessKind.DenyCors);
+                    ArcLog.GetLogger<MonacoEditor>().Info($"Navigating to: https://{hostName}/monaco.html");
+                    monacoWebView.CoreWebView2.Navigate($"https://{hostName}/monaco.html");
+                } else {
+                    ArcLog.GetLogger<MonacoEditor>().Warn("monaco.html not found, using fallback");
+                    monacoWebView.CoreWebView2.NavigateToString(GetFallbackHtml());
+                }
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
             }
@@ -74,16 +99,48 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private async void CoreWebView2_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e) {
             try {
-                var message = e.WebMessageAsJson;
-                if (message.Contains("\"type\":\"contentChange\"")) {
-                    var content = await monacoWebView.CoreWebView2.ExecuteScriptAsync("editor.getValue()");
+                var message = e.TryGetWebMessageAsString();
+                ArcLog.GetLogger<MonacoEditor>().Info($"Monaco message: {message}");
+                using var json = JsonDocument.Parse(message);
+                if (!json.RootElement.TryGetProperty("type", out var typeElement)) {
+                    return;
+                }
+
+                var type = typeElement.GetString();
+                if (type == "ready") {
+                    _isEditorReady = true;
+                    if (_pendingContent != null) {
+                        _ = SetContentAsync(_pendingContent);
+                        _pendingContent = null;
+                    }
+                    if (_pendingLanguage != null) {
+                        _ = SetLanguageAsync(_pendingLanguage);
+                        _pendingLanguage = null;
+                    }
+                    return;
+                }
+                if (type == "shortcut") {
+                    var command = json.RootElement.GetProperty("command").GetString();
+                    if (!string.IsNullOrEmpty(command)) {
+                        ShortcutRequested?.Invoke(this, command);
+                    }
+                    return;
+                }
+                if (type == "contentChange") {
+                    var content = await monacoWebView.CoreWebView2.ExecuteScriptAsync("window.getValue()");
                     if (content != null) {
-                        content = content.Trim('"').Replace("\\n", "\n").Replace("\\\"", "\"");
+                        content = JsonSerializer.Deserialize<string>(content) ?? string.Empty;
                         if (_content != content) {
                             _content = content;
                             ContentChanged?.Invoke(this, content);
                         }
                     }
+                    return;
+                }
+                if (type == "cursorPositionChange") {
+                    var lineNumber = json.RootElement.GetProperty("lineNumber").GetInt32();
+                    var column = json.RootElement.GetProperty("column").GetInt32();
+                    CursorPositionChanged?.Invoke(this, new MonacoCursorPosition(lineNumber, column));
                 }
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
@@ -91,19 +148,25 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private async Task SetContentAsync(string content) {
-            if (monacoWebView.CoreWebView2 == null) return;
+            if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
+                _pendingContent = content;
+                return;
+            }
             try {
-                var escaped = content.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r");
-                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"editor.setValue(\"{escaped}\")");
+                var serialized = JsonSerializer.Serialize(content);
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setValue({serialized})");
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
             }
         }
 
         private async Task SetLanguageAsync(string language) {
-            if (monacoWebView.CoreWebView2 == null) return;
+            if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
+                _pendingLanguage = language;
+                return;
+            }
             try {
-                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"monaco.editor.setModelLanguage(editor.getModel(), \"{language}\")");
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setLanguage(\"{language}\")");
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
             }
@@ -112,10 +175,26 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private void MonacoWebView_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e) {
             if (!e.IsSuccess) {
                 ArcLog.GetLogger<MonacoEditor>().Error($"Monaco navigation failed: {e.WebErrorStatus}");
+                return;
             }
+
+            ArcLog.GetLogger<MonacoEditor>().Info("Monaco navigation completed");
+        }
+
+        private void CoreWebView2_ProcessFailed(CoreWebView2 sender, CoreWebView2ProcessFailedEventArgs args) {
+            if (args.Reason == CoreWebView2ProcessFailedReason.Unresponsive)
+                return;
+
+            ArcLog.GetLogger<MonacoEditor>().Error($"CoreWebView2 process failed: {args.Reason}");
         }
 
         private string _content = string.Empty;
+        private string? _pendingContent;
+        private string? _pendingLanguage;
+        private bool _isEditorReady;
+        private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
+            AdditionalBrowserArguments = "--disk-cache-size=1 --autoplay-policy=no-user-gesture-required"
+        };
 
         private string GetFallbackHtml() {
             return """
@@ -137,10 +216,15 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     });
                     window.setValue = (val) => { editor.value = val; };
                     window.getValue = () => editor.value;
+                    if (window.chrome && window.chrome.webview) {
+                        window.chrome.webview.postMessage(JSON.stringify({ type: 'ready' }));
+                    }
                 </script>
             </body>
             </html>
             """;
         }
     }
+
+    public readonly record struct MonacoCursorPosition(int LineNumber, int Column);
 }

@@ -1,8 +1,5 @@
-using System;
-using Microsoft.UI.Xaml;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
-using Workloads.Creation.WebBackdrop;
 
 namespace VirtualPaper.Sandbox.WinUI.Preview {
     public sealed partial class WebEditorWindow : ArcWindow {

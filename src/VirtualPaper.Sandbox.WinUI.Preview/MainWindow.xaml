@@ -66,8 +66,13 @@
             <ListBox x:Name="WindowList"
                      Grid.Row="4"
                      Height="120"
-                     Margin="0,0,0,8"
-                     DisplayMemberPath="Title" />
+                     Margin="0,0,0,8">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:OpenedWindowItem">
+                        <TextBlock Text="{x:Bind Title, Mode=OneWay}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
             <Button
                 Grid.Row="5"

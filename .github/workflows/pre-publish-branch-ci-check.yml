@@ -324,7 +324,7 @@ jobs:
         ALL_RESULTS="${{ join(needs.*.result, ' ') }}"
         echo "Job results: $ALL_RESULTS"
 
-        if echo "$ALL_RESULTS" | grep -qE 'failure|cancelled' || [ "${{ env.TEST_RESULTS_VALID }}" != "true" ]; then
+        if echo "$ALL_RESULTS" | grep -qE 'failure|cancelled' || [ "${TEST_RESULTS_VALID:-false}" != "true" ]; then
           echo "TEST_STATUS=failure" >> $GITHUB_ENV
           echo "TEST_DESCRIPTION=Some tests failed or results missing [FAILED]" >> $GITHUB_ENV
         else

@@ -10,7 +10,9 @@
 
     <Grid>
         <WebView2 x:Name="monacoWebView"
-                  DefaultBackgroundColor="Transparent"
+                  DefaultBackgroundColor="#1E1E1E"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
                   NavigationCompleted="MonacoWebView_NavigationCompleted"/>
     </Grid>
 </UserControl>

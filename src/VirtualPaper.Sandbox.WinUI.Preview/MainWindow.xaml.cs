@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Microsoft.UI.Xaml;
@@ -37,17 +35,20 @@ namespace VirtualPaper.Sandbox.WinUI.Preview {
         private void TrackAndShow(Window w, string label) {
             w.Title = string.IsNullOrEmpty(w.Title) ? label : w.Title;
             w.Closed += (_, _) => {
-                _openedWindows.Remove(w);
+                var item = _openedWindows.FirstOrDefault(x => x.Window == w);
+                if (item != null) {
+                    _openedWindows.Remove(item);
+                }
                 RefreshList();
             };
-            _openedWindows.Add(w);
+            _openedWindows.Add(new OpenedWindowItem(w, string.IsNullOrEmpty(w.Title) ? label : w.Title));
             w.Activate();
             RefreshList();
         }
 
         private void CloseWindow_Click(object sender, RoutedEventArgs e) {
-            if (WindowList.SelectedItem is Window w) {
-                w.Close();
+            if (WindowList.SelectedItem is OpenedWindowItem item) {
+                item.Window.Close();
             }
         }
 
@@ -57,12 +58,22 @@ namespace VirtualPaper.Sandbox.WinUI.Preview {
         }
 
         private void CloseAllTrackedWindows() {
-            foreach (var w in _openedWindows.ToList()) {
-                w.Close();
+            foreach (var item in _openedWindows.ToList()) {
+                item.Window.Close();
             }
             _openedWindows.Clear();
         }
 
-        private readonly ObservableCollection<Window> _openedWindows = [];
+        private readonly ObservableCollection<OpenedWindowItem> _openedWindows = [];
+    }
+
+    public sealed class OpenedWindowItem {
+        public OpenedWindowItem(Window window, string title) {
+            Window = window;
+            Title = title;
+        }
+
+        public Window Window { get; }
+        public string Title { get; }
     }
 }

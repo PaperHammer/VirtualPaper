@@ -61,6 +61,49 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
                 File.WriteAllText(jsPath, DefaultJsTemplate());
             }
 
+            var assetsPath = Path.Combine(ProjectFolder, "assets");
+            Directory.CreateDirectory(assetsPath);
+
+            var tsPath = Path.Combine(ProjectFolder, "example.ts");
+            if (!File.Exists(tsPath)) {
+                File.WriteAllText(tsPath, "export const message: string = 'Hello TypeScript';\n");
+            }
+
+            var jsxPath = Path.Combine(ProjectFolder, "component.jsx");
+            if (!File.Exists(jsxPath)) {
+                File.WriteAllText(jsxPath, "export function Component() {\n    return <div>Hello JSX</div>;\n}\n");
+            }
+
+            var tsxPath = Path.Combine(ProjectFolder, "component.tsx");
+            if (!File.Exists(tsxPath)) {
+                File.WriteAllText(tsxPath, "type ComponentProps = { title: string };\n\nexport function Component({ title }: ComponentProps) {\n    return <div>{title}</div>;\n}\n");
+            }
+
+            var dataJsonPath = Path.Combine(ProjectFolder, "data.json");
+            if (!File.Exists(dataJsonPath)) {
+                File.WriteAllText(dataJsonPath, "{\n    \"name\": \"VirtualPaper\"\n}\n");
+            }
+
+            var svgPath = Path.Combine(ProjectFolder, "logo.svg");
+            if (!File.Exists(svgPath)) {
+                File.WriteAllText(svgPath, "<svg width=\"64\" height=\"64\" viewBox=\"0 0 64 64\" xmlns=\"http://www.w3.org/2000/svg\">\n    <circle cx=\"32\" cy=\"32\" r=\"24\" fill=\"#33A9DC\"/>\n</svg>\n");
+            }
+
+            var imagePath = Path.Combine(ProjectFolder, "image.png");
+            if (!File.Exists(imagePath)) {
+                File.WriteAllBytes(imagePath, Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/luzf7wAAAABJRU5ErkJggg=="));
+            }
+
+            var mdPath = Path.Combine(ProjectFolder, "notes.md");
+            if (!File.Exists(mdPath)) {
+                File.WriteAllText(mdPath, "# Notes\n");
+            }
+
+            var filePath = Path.Combine(ProjectFolder, "LICENSE");
+            if (!File.Exists(filePath)) {
+                File.WriteAllText(filePath, "Mock file\n");
+            }
+
             var projectJson = Path.Combine(ProjectFolder, "project.json");
             if (!File.Exists(projectJson)) {
                 SaveProjectData(GetOrCreateProjectData());

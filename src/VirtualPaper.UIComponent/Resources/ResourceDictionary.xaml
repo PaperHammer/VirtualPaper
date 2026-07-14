@@ -20,7 +20,20 @@
     <BitmapImage x:Key="DraftPanel_Create_StaticImge_Desc" UriSource="ms-appx:///Assets/ui_components/project-create-static-image-desc.png"/>
     <BitmapImage x:Key="DraftPanel_Create_WebBackdrop_Desc" UriSource="ms-appx:///Assets/ui_components/project-create-webbackdrop-desc.png"/>
     <BitmapImage x:Key="DraftPanel_Create_StaticImge_LayerThu" UriSource="ms-appx:///Assets/staticImg/layer_thu_grid.png"/>
-    
+    <BitmapImage x:Key="WebBackdrop_FileTree_Folder" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/folder.png"/>
+    <BitmapImage x:Key="WebBackdrop_FileTree_FolderOpen" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/folder-open.png"/>
+    <BitmapImage x:Key="WebBackdrop_FileTree_File" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/file.png"/>
+    <BitmapImage x:Key="WebBackdrop_FileTree_Html" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/html.png"/>
+    <BitmapImage x:Key="WebBackdrop_FileTree_Css" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/css.png"/>
+    <BitmapImage x:Key="WebBackdrop_FileTree_Js" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/js.png"/>
+    <BitmapImage x:Key="WebBackdrop_FileTree_Ts" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/ts.png"/>
+    <BitmapImage x:Key="WebBackdrop_FileTree_Jsx" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/jsx.png"/>
+    <BitmapImage x:Key="WebBackdrop_FileTree_Tsx" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/tsx.png"/>
+    <BitmapImage x:Key="WebBackdrop_FileTree_Json" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/json.png"/>
+    <BitmapImage x:Key="WebBackdrop_FileTree_Svg" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/svg.png"/>
+    <BitmapImage x:Key="WebBackdrop_FileTree_Image" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/image.png"/>
+    <BitmapImage x:Key="WebBackdrop_FileTree_Md" UriSource="ms-appx:///Assets/webbackdrop/file_tree_icons/md.png"/>
+
     <BitmapImage x:Key="PresetStyles_Anime" UriSource="ms-appx:///Assets/intelligent/preset_styles/anime.jpg"/>
     <BitmapImage x:Key="PresetStyles_Cartoon" UriSource="ms-appx:///Assets/intelligent/preset_styles/cartoon.jpg"/>
     <BitmapImage x:Key="PresetStyles_Gongbi" UriSource="ms-appx:///Assets/intelligent/preset_styles/gongbi.jpg"/>
@@ -36,7 +49,7 @@
     <BitmapImage x:Key="Intelli_Demo_StyleTransfer_Result" UriSource="ms-appx:///Assets/intelligent/demo/style_transfer/result.jpg"/>
     <BitmapImage x:Key="Intelli_Demo_SuperResolution_Origin" UriSource="ms-appx:///Assets/intelligent/demo/super_resolution/origin.jpg"/>
     <BitmapImage x:Key="Intelli_Demo_SuperResolution_Result" UriSource="ms-appx:///Assets/intelligent/demo/super_resolution/result.jpg"/>
-
+       
     <Style x:Key="RightExpanderStyle" TargetType="Expander">
         <Setter Property="HorizontalAlignment" Value="Stretch"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>

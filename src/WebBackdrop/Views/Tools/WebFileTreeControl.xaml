@@ -8,6 +8,44 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <DataTemplate x:Key="FolderTemplate" x:DataType="local:WebFileItem">
+            <TreeViewItem AutomationProperties.Name="{x:Bind FileName}"
+                ItemsSource="{x:Bind Children}" IsExpanded="True">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image
+                        Width="16"
+                        Height="16"
+                        VerticalAlignment="Center"
+                        Stretch="Uniform"
+                        UseLayoutRounding="True"
+                        Source="{StaticResource WebBackdrop_FileTree_Folder}"/>
+                    <TextBlock Text="{x:Bind FileName}" />
+                </StackPanel>
+            </TreeViewItem>
+        </DataTemplate>
+
+        <DataTemplate x:Key="FileTemplate" x:DataType="local:WebFileItem">
+            <TreeViewItem AutomationProperties.Name="{x:Bind FileName}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image
+                        Width="16"
+                        Height="16"
+                        VerticalAlignment="Center"
+                        Stretch="Uniform"
+                        UseLayoutRounding="True"
+                        Source="{x:Bind IconSource}"/>
+                    <TextBlock Text="{x:Bind FileName}"/>
+                </StackPanel>
+            </TreeViewItem>
+        </DataTemplate>
+
+        <local:WebFileItemTemplateSelector
+            x:Key="WebFileItemTemplateSelector"
+            FolderTemplate="{StaticResource FolderTemplate}"
+            FileTemplate="{StaticResource FileTemplate}"/>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
@@ -37,36 +75,11 @@
             </Button>
         </Grid>
 
-        <!-- File list -->
-        <ListView
+        <TreeView
             Grid.Row="1"
-            x:Name="fileListView"
-            SelectionMode="Single"
-            ItemsSource="{x:Bind FileItems, Mode=OneWay}"
-            SelectionChanged="FileListView_SelectionChanged">
-            <ListView.ItemContainerStyle>
-                <Style BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
-                    <Setter Property="Padding" Value="8 4"/>
-                    <Setter Property="MinHeight" Value="0"/>
-                </Style>
-            </ListView.ItemContainerStyle>
-            <ListView.ItemTemplate>
-                <DataTemplate x:DataType="local:WebFileItem">
-                    <Grid ColumnSpacing="6">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-                        <FontIcon Glyph="{x:Bind FileGlyph}" FontSize="12" VerticalAlignment="Center"/>
-                        <TextBlock
-                            Grid.Column="1"
-                            FontSize="12"
-                            VerticalAlignment="Center"
-                            Text="{x:Bind FileName}"
-                            TextTrimming="CharacterEllipsis"/>
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+            x:Name="fileTreeView"
+            ItemsSource="{x:Bind DataSource, Mode=OneWay}"
+            ItemTemplateSelector="{StaticResource WebFileItemTemplateSelector}"
+            ItemInvoked="FileTreeView_ItemInvoked"/>
     </Grid>
 </UserControl>

@@ -15,12 +15,12 @@
 <body>
     <div id="container"></div>
 
-    <script src="monaco-editor/vs/loader.js"></script>
+    <script src="monaco-editor/min/vs/loader.js"></script>
     <script>
         let editor;
 
         require.config({
-            paths: { vs: 'monaco-editor/vs' }
+            paths: { vs: 'monaco-editor/min/vs' }
         });
 
         require([

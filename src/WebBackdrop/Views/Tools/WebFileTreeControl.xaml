@@ -6,12 +6,13 @@
     xmlns:local="using:Workloads.Creation.WebBackdrop.Views.Tools"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:collection="using:VirtualPaper.UIComponent.Collection"
     mc:Ignorable="d">
 
     <UserControl.Resources>
         <DataTemplate x:Key="FolderTemplate" x:DataType="local:WebFileItem">
-            <TreeViewItem AutomationProperties.Name="{x:Bind FileName}"
-                ItemsSource="{x:Bind Children}" IsExpanded="True">
+            <collection:ArcTreeViewItem AutomationProperties.Name="{x:Bind FileName}"
+                ItemsSource="{x:Bind Children}" IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <Image
                         Width="16"
@@ -19,14 +20,14 @@
                         VerticalAlignment="Center"
                         Stretch="Uniform"
                         UseLayoutRounding="True"
-                        Source="{StaticResource WebBackdrop_FileTree_Folder}"/>
+                        Source="{x:Bind FolderIconSource, Mode=OneWay}"/>
                     <TextBlock Text="{x:Bind FileName}" />
                 </StackPanel>
-            </TreeViewItem>
+            </collection:ArcTreeViewItem>
         </DataTemplate>
 
         <DataTemplate x:Key="FileTemplate" x:DataType="local:WebFileItem">
-            <TreeViewItem AutomationProperties.Name="{x:Bind FileName}">
+            <collection:ArcTreeViewItem AutomationProperties.Name="{x:Bind FileName}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <Image
                         Width="16"
@@ -37,7 +38,7 @@
                         Source="{x:Bind IconSource}"/>
                     <TextBlock Text="{x:Bind FileName}"/>
                 </StackPanel>
-            </TreeViewItem>
+            </collection:ArcTreeViewItem>
         </DataTemplate>
 
         <local:WebFileItemTemplateSelector

@@ -76,7 +76,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 monacoWebView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
                 monacoWebView.CoreWebView2.ProcessFailed += CoreWebView2_ProcessFailed;
 
-                var htmlPath = Path.Combine(AppContext.BaseDirectory, "Assets", "monaco.html");
+                var htmlPath = Path.Combine(AppContext.BaseDirectory, "WebBackdrop", "Assets", "monaco.html");
                 ArcLog.GetLogger<MonacoEditor>().Info($"Monaco html path: {htmlPath}");
 
                 if (File.Exists(htmlPath)) {

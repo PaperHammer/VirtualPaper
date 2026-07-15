@@ -43,6 +43,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Remove="Collection\ArcTreeViewItem.xaml" />
 		<None Remove="Host\ArcWindowContent.xaml" />
 		<None Remove="Input\Button\ArcButton.xaml" />
 		<None Remove="Input\Slider\ArcSlider.xaml" />
@@ -77,10 +78,17 @@
 	<ItemGroup>
 		<Folder Include="Input\ColorPicker\" />
 		<Folder Include="Input\Palette\" />
+		<Folder Include="Themes\" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Collection\ArcTreeViewItem.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -27,6 +29,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
         public WebFileTreeControl() {
             InitializeComponent();
+            PreloadFolderOpenIcon();
+        }
+
+        private static void PreloadFolderOpenIcon() {
+            _ = Application.Current.Resources.TryGetValue("WebBackdrop_FileTree_FolderOpen", out _);
         }
 
         public void Refresh(string projectFolder) {
@@ -52,6 +59,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         }
 
         private void FileTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args) {
+            if (args.InvokedItem is WebFileItem { Type: WebFileItemType.Folder } folder) {
+                folder.IsExpanded = !folder.IsExpanded;
+                return;
+            }
+
             if (args.InvokedItem is WebFileItem { Type: WebFileItemType.File } item)
                 FileOpenRequested?.Invoke(this, item.FilePath);
         }
@@ -66,11 +78,24 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         File,
     }
 
-    public class WebFileItem {
+    public class WebFileItem : INotifyPropertyChanged {
         public string FilePath { get; }
         public WebFileItemType Type { get; }
         public ObservableCollection<WebFileItem> Children { get; } = [];
         public string FileName => Path.GetFileName(FilePath);
+        public bool IsExpanded {
+            get => _isExpanded;
+            set {
+                if (_isExpanded == value) return;
+                _isExpanded = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(FolderIconSource));
+            }
+        }
+        public BitmapImage? FolderIconSource => Application.Current.Resources.TryGetValue(
+            IsExpanded ? "WebBackdrop_FileTree_FolderOpen" : "WebBackdrop_FileTree_Folder", out var resource) && resource is BitmapImage image
+            ? image
+            : null;
         public BitmapImage? IconSource => Application.Current.Resources.TryGetValue(IconResourceKey, out var resource) && resource is BitmapImage image
             ? image
             : null;
@@ -88,10 +113,18 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             _ => "WebBackdrop_FileTree_File",
         };
 
+        public event PropertyChangedEventHandler? PropertyChanged;
+
         public WebFileItem(string filePath, WebFileItemType type) {
             FilePath = filePath;
             Type = type;
         }
+
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private bool _isExpanded;
     }
 
     class WebFileItemTemplateSelector : DataTemplateSelector {

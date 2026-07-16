@@ -76,9 +76,11 @@
             </Button>
         </Grid>
 
-        <TreeView
+        <collection:ArcTreeView
             Grid.Row="1"
             x:Name="fileTreeView"
+            CancelSelectionEnable="False"
+            SelectedItem="{x:Bind SelectedFileItem, Mode=TwoWay}"
             ItemsSource="{x:Bind DataSource, Mode=OneWay}"
             ItemTemplateSelector="{StaticResource WebFileItemTemplateSelector}"
             ItemInvoked="FileTreeView_ItemInvoked"/>

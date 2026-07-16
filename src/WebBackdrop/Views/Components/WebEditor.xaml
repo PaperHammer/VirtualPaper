@@ -29,7 +29,10 @@
 
             <Grid>
                 <Grid x:Name="leftSideBar" Background="{ThemeResource LayerFillColorDefaultBrush}">
-                    <tools:WebFileTreeControl x:Name="leftFileTreeControl" FileOpenRequested="FileTree_FileOpenRequested"/>
+                    <tools:WebFileTreeControl x:Name="leftFileTreeControl"
+                        SelectedFileItem="{x:Bind ViewModel.SelectedFileItem, Mode=TwoWay}"
+                        FileOpenRequested="FileTree_FileOpenRequested"
+                        FolderSelected="FileTree_FolderSelected"/>
 
                     <Rectangle x:Name="leftSideBarBorderLine"
                         Width="1"
@@ -98,6 +101,30 @@
                             ContentChanged="MonacoEditor_ContentChanged"
                             CursorPositionChanged="MonacoEditor_CursorPositionChanged"
                             ShortcutRequested="MonacoEditor_ShortcutRequested"/>
+
+                        <Grid
+                            x:Name="welcomePanel"
+                            Grid.Row="1"
+                            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+                            <StackPanel
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="10">
+                                <FontIcon
+                                    Glyph="&#xE8A5;"
+                                    FontSize="42"
+                                    Opacity="0.45"/>
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    FontSize="18"
+                                    FontWeight="SemiBold"
+                                    Text="Select a file to start"/>
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    Opacity="0.6"
+                                    Text="Open a file from the explorer to edit and preview."/>
+                            </StackPanel>
+                        </Grid>
                     </Grid>
                 </Border>
 
@@ -164,18 +191,7 @@
                 Background="{ThemeResource LayerFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="40"/>
-                    <ColumnDefinition/>
-                </Grid.ColumnDefinitions>
-
-                <tools:WebToolListControl
-                    x:Name="toolList"
-                    ToolItems="{x:Bind ViewModel.ToolItems, Mode=OneWay}"
-                    SelectedTool="{x:Bind SelectedTool, Mode=TwoWay}"
-                    ToolListLoaded="ToolList_ToolListLoaded"/>
-
-                <Grid x:Name="toolPanelHost" Grid.Column="1"/>
+                <tools:WebPropertyPanelControl x:Name="propertyPanelControl"/>
 
                 <Rectangle x:Name="rightSideBarBorderLine"
                     Width="1"

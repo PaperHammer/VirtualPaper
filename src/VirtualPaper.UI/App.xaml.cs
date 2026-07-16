@@ -35,8 +35,8 @@ using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.Core;
 using WinUIEx;
+using Workloads.Entry;
 using Workloads.Entry.Interfaces;
-using Workloads.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

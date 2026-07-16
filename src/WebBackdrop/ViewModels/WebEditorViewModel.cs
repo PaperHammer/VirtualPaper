@@ -11,6 +11,7 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
+using Workloads.Creation.WebBackdrop.Views.Tools;
 
 namespace Workloads.Creation.WebBackdrop.ViewModels {
     public partial class WebEditorViewModel : ObservableObject {
@@ -23,6 +24,12 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 _activeFile = value;
                 OnPropertyChanged();
             }
+        }
+
+        private WebFileItem? _selectedFileItem;
+        public WebFileItem? SelectedFileItem {
+            get { return _selectedFileItem; }
+            set { if (_selectedFileItem == value) return; _selectedFileItem = value; OnPropertyChanged(); }
         }
 
         public WebProjectSession Session { get; }

@@ -15,6 +15,7 @@
 		<None Remove="Views\Tools\WebToolListControl.xaml" />
 		<None Remove="Views\Tools\WebFileTreeControl.xaml" />
 		<None Remove="Views\Tools\WebProjectInfoControl.xaml" />
+		<None Remove="Views\Tools\WebPropertyPanelControl.xaml" />
 		<None Remove="Views\Tools\WebStatusBarControl.xaml" />
 	</ItemGroup>
 	<ItemGroup>
@@ -43,6 +44,9 @@
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Tools\WebProjectInfoControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Tools\WebPropertyPanelControl.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Tools\WebStatusBarControl.xaml">

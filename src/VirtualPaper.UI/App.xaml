@@ -27,11 +27,10 @@
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/Slider/ArcSlider.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Navigation/TabView/ArcTabViewItem.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Navigation/RootView/ArcNavigationview.xaml" />
-                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Navigation/RootView/ArcNavigationContentView.xaml" />
-                <!--Styles-->
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Navigation/RootView/ArcNavigationviewStyle.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Styles/ArcImage.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Collection/ArcTreeViewItem.xaml" />
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Collection/ArcTreeView.xaml" />
 
                 <!--Other merged dictionaries here-->
             </ResourceDictionary.MergedDictionaries>

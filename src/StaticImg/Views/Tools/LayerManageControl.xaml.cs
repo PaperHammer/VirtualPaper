@@ -14,11 +14,11 @@ using Workloads.Creation.StaticImg.Views.Components;
 
 namespace Workloads.Creation.StaticImg.Views.Tools {
     public sealed partial class LayerManageControl : UserControl {
-        public event EventHandler<ItemMoveEventArgs> MoveLayerRequest;
-        public event EventHandler<Guid> AddLayerRequest;
-        public event EventHandler<Guid> CopyLayerRequest;
-        public event EventHandler<Guid> RenameLayerRequest;
-        public event EventHandler<Guid> DeleteLayerRequest;
+        public event EventHandler<ItemMoveEventArgs>? MoveLayerRequest;
+        public event EventHandler<Guid>? AddLayerRequest;
+        public event EventHandler<Guid>? CopyLayerRequest;
+        public event EventHandler<Guid>? RenameLayerRequest;
+        public event EventHandler<Guid>? DeleteLayerRequest;
 
         public LayerInfo SelectedLayer {
             get { return (LayerInfo)GetValue(SelectedLayerProperty); }
@@ -46,18 +46,22 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         }
 
         private void AddLayer_Click(object sender, RoutedEventArgs e) {
+            if (_rightTappedItem == null) return;
             AddLayerRequest?.Invoke(sender, _rightTappedItem.ItemTag);
         }
 
         private void CopyLayer_Click(object sender, RoutedEventArgs e) {
+            if (_rightTappedItem == null) return;
             CopyLayerRequest?.Invoke(sender, _rightTappedItem.ItemTag);
         }
 
         private void RenameLayer_Click(object sender, RoutedEventArgs e) {
+            if (_rightTappedItem == null) return;
             RenameLayerRequest?.Invoke(sender, _rightTappedItem.ItemTag);
         }
 
         private void DeleteLayer_Click(object sender, RoutedEventArgs e) {
+            if (_rightTappedItem == null) return;
             DeleteLayerRequest?.Invoke(sender, _rightTappedItem.ItemTag);
         }
 
@@ -67,7 +71,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
 
         private void LayersListView_RightTapped(object sender, RightTappedRoutedEventArgs e) {
             var container = LayersListView.ContainerFromItem((e.OriginalSource as FrameworkElement)?.DataContext) as ListViewItem;
-            _rightTappedItem = container.Content as LayerItem;
+            _rightTappedItem = container?.Content as LayerItem;
             RightClick();
         }
 
@@ -80,7 +84,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             }
         }
 
-        private LayerItem _rightTappedItem;
+        private LayerItem? _rightTappedItem;
         private readonly string _SIG_Text_AddLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_AddLayer)); // 新增图层
         private readonly string _SIG_Text_CopyLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_CopyLayer)); // 复制图层
         private readonly string _SIG_Text_RenameLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_RenameLayer)); // 删除图层

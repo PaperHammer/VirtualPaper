@@ -28,6 +28,7 @@ using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 using Windows.Storage;
+using Workloads.Creation.StaticImg.Models.SerializableData;
 using Workloads.Entry.Interfaces;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
@@ -295,19 +296,19 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private async Task<bool> ReadDesignFileAsync(string filePath) {
-            //var result = await StaticImgDesignFileUtil.GetFileHeaderAsync(filePath);
-            //if (result is not FileHeader header) {
-            //    return false;
-            //}
+            var result = await StaticImgDesignFileUtil.GetFileHeaderAsync(filePath);
+            if (result is not FileHeader header) {
+                return false;
+            }
 
-            //switch (header.ProjType) {
-            //    case ProjectType.P_StaticImage:
-            //        AddToWorkSpace(filePath, FileType.FDesign);
-            //        break;
+            switch (header.ProjType) {
+                case ProjectType.P_StaticImage:
+                    AddToWorkSpace(filePath, FileType.FDesign);
+                    break;
 
-            //    default:
-            //        break;
-            //}
+                default:
+                    break;
+            }
 
             return true;
         }

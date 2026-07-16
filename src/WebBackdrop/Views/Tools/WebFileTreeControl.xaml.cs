@@ -7,10 +7,12 @@ using System.Runtime.CompilerServices;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
+using VirtualPaper.Models.Mvvm;
 
 namespace Workloads.Creation.WebBackdrop.Views.Tools {
     public sealed partial class WebFileTreeControl : UserControl {
         public event EventHandler<string>? FileOpenRequested;
+        public event EventHandler<string>? FolderSelected;
         public event EventHandler<string>? NewFileRequested;
 
         public string ProjectName {
@@ -26,6 +28,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         }
         public static readonly DependencyProperty DataSourceProperty =
             DependencyProperty.Register(nameof(DataSource), typeof(ObservableCollection<WebFileItem>), typeof(WebFileTreeControl), new PropertyMetadata(null));
+
+        public WebFileItem? SelectedFileItem {
+            get => (WebFileItem?)GetValue(SelectedFileItemProperty);
+            set => SetValue(SelectedFileItemProperty, value);
+        }
+        public static readonly DependencyProperty SelectedFileItemProperty =
+            DependencyProperty.Register(nameof(SelectedFileItem), typeof(WebFileItem), typeof(WebFileTreeControl), new PropertyMetadata(null));
 
         public WebFileTreeControl() {
             InitializeComponent();
@@ -44,15 +53,59 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             };
         }
 
+        public void SelectFile(string filePath) {
+            var item = FindItem(filePath);
+            if (item == null) return;
+
+            ExpandParents(item);
+        }
+
+        private WebFileItem? FindItem(string filePath) {
+            return DataSource?.Select(root => FindItem(root, filePath)).FirstOrDefault(item => item != null);
+        }
+
+        private static WebFileItem? FindItem(WebFileItem item, string filePath) {
+            if (string.Equals(item.FilePath, filePath, StringComparison.OrdinalIgnoreCase)) return item;
+
+            foreach (var child in item.Children) {
+                var result = FindItem(child, filePath);
+                if (result != null) return result;
+            }
+
+            return null;
+        }
+
+        private static void ExpandParents(WebFileItem item) {
+            var parent = item.Parent;
+            while (parent != null) {
+                parent.IsExpanded = true;
+                parent = parent.Parent;
+            }
+        }
+
         private static WebFileItem BuildDirectoryItem(string folderPath) {
             var item = new WebFileItem(folderPath, WebFileItemType.Folder);
 
             foreach (var folder in Directory.GetDirectories(folderPath).OrderBy(Path.GetFileName)) {
-                item.Children.Add(BuildDirectoryItem(folder));
+                item.Children.Add(BuildDirectoryItem(folder, item));
             }
 
             foreach (var file in Directory.GetFiles(folderPath).OrderBy(Path.GetFileName)) {
-                item.Children.Add(new WebFileItem(file, WebFileItemType.File));
+                item.Children.Add(new WebFileItem(file, WebFileItemType.File, item));
+            }
+
+            return item;
+        }
+
+        private static WebFileItem BuildDirectoryItem(string folderPath, WebFileItem parent) {
+            var item = new WebFileItem(folderPath, WebFileItemType.Folder, parent);
+
+            foreach (var folder in Directory.GetDirectories(folderPath).OrderBy(Path.GetFileName)) {
+                item.Children.Add(BuildDirectoryItem(folder, item));
+            }
+
+            foreach (var file in Directory.GetFiles(folderPath).OrderBy(Path.GetFileName)) {
+                item.Children.Add(new WebFileItem(file, WebFileItemType.File, item));
             }
 
             return item;
@@ -61,11 +114,15 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         private void FileTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args) {
             if (args.InvokedItem is WebFileItem { Type: WebFileItemType.Folder } folder) {
                 folder.IsExpanded = !folder.IsExpanded;
+                //SelectItem(folder);
+                FolderSelected?.Invoke(this, folder.FilePath);
                 return;
             }
 
-            if (args.InvokedItem is WebFileItem { Type: WebFileItemType.File } item)
+            if (args.InvokedItem is WebFileItem { Type: WebFileItemType.File } item) {
+                //SelectItem(item);
                 FileOpenRequested?.Invoke(this, item.FilePath);
+            }
         }
 
         private void NewFile_Click(object sender, RoutedEventArgs e) {
@@ -78,10 +135,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         File,
     }
 
-    public class WebFileItem : INotifyPropertyChanged {
+    public partial class WebFileItem : ObservableObject, IEquatable<WebFileItem> {
         public string FilePath { get; }
         public WebFileItemType Type { get; }
         public ObservableCollection<WebFileItem> Children { get; } = [];
+        public WebFileItem? Parent { get; }
         public string FileName => Path.GetFileName(FilePath);
         public bool IsExpanded {
             get => _isExpanded;
@@ -113,15 +171,23 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             _ => "WebBackdrop_FileTree_File",
         };
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        public WebFileItem(string filePath, WebFileItemType type) {
+        public WebFileItem(string filePath, WebFileItemType type, WebFileItem? parent = null) {
             FilePath = filePath;
             Type = type;
+            Parent = parent;
         }
 
-        private void OnPropertyChanged([CallerMemberName] string? propertyName = null) {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        public bool Equals(WebFileItem? other) {
+            if (other == null) return false;
+            return FilePath == other.FilePath && Type == other.Type;
+        }
+
+        public override bool Equals(object? obj) {
+            return obj is WebFileItem other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(FilePath, Type);
         }
 
         private bool _isExpanded;

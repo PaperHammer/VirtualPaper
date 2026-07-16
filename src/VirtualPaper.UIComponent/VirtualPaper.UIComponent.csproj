@@ -43,6 +43,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Remove="Collection\ArcTreeView.xaml" />
 		<None Remove="Collection\ArcTreeViewItem.xaml" />
 		<None Remove="Host\ArcWindowContent.xaml" />
 		<None Remove="Input\Button\ArcButton.xaml" />
@@ -83,6 +84,12 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Collection\ArcTreeView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 
 	<ItemGroup>

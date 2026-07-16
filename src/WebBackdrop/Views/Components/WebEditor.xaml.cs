@@ -23,14 +23,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class WebEditor : ArcUserControl {
         public WebEditorViewModel ViewModel { get; private set; } = null!;
 
-        public WebToolItem? SelectedTool {
-            get => (WebToolItem?)GetValue(SelectedToolProperty);
-            set => SetValue(SelectedToolProperty, value);
-        }
-        public static readonly DependencyProperty SelectedToolProperty =
-            DependencyProperty.Register(nameof(SelectedTool), typeof(WebToolItem), typeof(WebEditor),
-                new PropertyMetadata(null, OnSelectedToolChanged));
-
         public string ActiveFilePathText {
             get => (string)GetValue(ActiveFilePathTextProperty);
             set => SetValue(ActiveFilePathTextProperty, value);
@@ -64,8 +56,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 new PropertyMetadata(1));
 
         private WebProjectSession? _session;
-        private WebFileTreeControl? _fileTreeControl;
-        private WebProjectInfoControl? _projectInfoControl;
         private string _activeBottomPanel = "PROBLEMS";
         private Dictionary<EditorPanelSlot, PanelLayoutState> _panelLayoutStates = null!;
         private Dictionary<object, Rectangle> _splitterLines = null!;
@@ -134,20 +124,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             leftFileTreeControl.ProjectName = _session.DesignFileUtil.ProjectName;
             leftFileTreeControl.Refresh(_session.DesignFileUtil.ProjectFolder);
 
-            var projectData = _session.DesignFileUtil.GetOrCreateProjectData();
-            if (projectData != null) {
-                _projectInfoControl ??= new WebProjectInfoControl();
-                _projectInfoControl.Load(projectData);
-                _projectInfoControl.ProjectInfoSaved += ProjectInfo_ProjectInfoSaved;
-                toolPanelHost.Children.Add(_projectInfoControl);
-            }
-
-            // Open entry file
-            var entryFile = _session.DesignFileUtil.EntryFilePath;
-            if (File.Exists(entryFile)) {
-                ViewModel.OpenFile(entryFile);
-            }
-
             UpdateStatusBar();
         }
 
@@ -167,16 +143,24 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 ActiveFileLanguage = GetLanguageFromExtension(ViewModel.ActiveFile.FileExtension);
                 monacoEditor.EditorContent = ViewModel.ActiveFile.Content;
                 monacoEditor.EditorLanguage = ActiveFileLanguage;
+                monacoEditor.Visibility = Visibility.Visible;
+                welcomePanel.Visibility = Visibility.Collapsed;
             }
             else {
                 ActiveFilePathText = string.Empty;
                 ActiveFileLanguage = "plaintext";
                 monacoEditor.EditorContent = string.Empty;
                 monacoEditor.EditorLanguage = ActiveFileLanguage;
+                monacoEditor.Visibility = Visibility.Collapsed;
+                welcomePanel.Visibility = Visibility.Visible;
             }
 
             CursorLineNumber = 1;
             CursorColumn = 1;
+            propertyPanelControl.Load(ViewModel?.ActiveFile, ActiveFileLanguage);
+            if (ViewModel?.ActiveFile != null) {
+                leftFileTreeControl.SelectFile(ViewModel.ActiveFile.FilePath);
+            }
             UpdateStatusBarLayoutState();
         }
 
@@ -206,6 +190,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private void MonacoEditor_ContentChanged(object? sender, string content) {
             if (ViewModel?.ActiveFile != null && ViewModel.ActiveFile.Content != content) {
                 ViewModel.ActiveFile.Content = content;
+                propertyPanelControl.Load(ViewModel.ActiveFile, ActiveFileLanguage);
             }
         }
 
@@ -220,48 +205,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
-        private void ToolList_ToolListLoaded(object? sender, RoutedEventArgs e) {
-        }
-
-        private static void OnSelectedToolChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            if (d is WebEditor editor) {
-                editor.OnSelectedToolChanged(e.NewValue as WebToolItem);
-            }
-        }
-
-        private void OnSelectedToolChanged(WebToolItem? tool) {
-            if (tool == null) {
-                toolPanelHost.Visibility = Visibility.Collapsed;
-                return;
-            }
-
-            toolPanelHost.Visibility = Visibility.Visible;
-            toolPanelHost.Children.Clear();
-
-            switch (tool.Type) {
-                case WebToolType.FileTree:
-                    _fileTreeControl ??= new WebFileTreeControl();
-                    _fileTreeControl.ProjectName = _session?.DesignFileUtil.ProjectName ?? string.Empty;
-                    _fileTreeControl.Refresh(_session?.DesignFileUtil.ProjectFolder ?? string.Empty);
-                    _fileTreeControl.FileOpenRequested -= FileTree_FileOpenRequested;
-                    _fileTreeControl.FileOpenRequested += FileTree_FileOpenRequested;
-                    toolPanelHost.Children.Add(_fileTreeControl);
-                    break;
-
-                case WebToolType.ProjectInfo:
-                    _projectInfoControl ??= new WebProjectInfoControl();
-                    var projectData = _session?.DesignFileUtil.GetOrCreateProjectData();
-                    if (projectData != null) {
-                        _projectInfoControl.Load(projectData);
-                    }
-                    _projectInfoControl.ProjectInfoSaved += ProjectInfo_ProjectInfoSaved;
-                    toolPanelHost.Children.Add(_projectInfoControl);
-                    break;
-            }
-        }
-
         private void FileTree_FileOpenRequested(object? sender, string filePath) {
             ViewModel?.OpenFile(filePath);
+        }
+
+        private void FileTree_FolderSelected(object? sender, string folderPath) {
+            propertyPanelControl.LoadFolder(folderPath);
         }
 
         private void RegisterShortcuts() {
@@ -386,10 +335,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             if (_splitterLines.TryGetValue(sender, out var line)) {
                 line.ClearValue(Shape.FillProperty);
             }
-        }
-
-        private void ProjectInfo_ProjectInfoSaved(object? sender, WpWebProjectData data) {
-            _session?.DesignFileUtil.SaveProjectData(data);
         }
 
         private void StatusBar_PanelRequested(object? sender, string panel) {

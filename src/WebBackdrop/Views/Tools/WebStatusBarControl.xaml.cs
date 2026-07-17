@@ -1,6 +1,9 @@
 using System;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 
 namespace Workloads.Creation.WebBackdrop.Views.Tools {
     public sealed partial class WebStatusBarControl : UserControl {
@@ -44,8 +47,45 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public static readonly DependencyProperty ColumnProperty =
             DependencyProperty.Register(nameof(Column), typeof(int), typeof(WebStatusBarControl), new PropertyMetadata(1, OnCursorPositionChanged));
 
-        public string LineText => $"Ln {LineNumber}";
-        public string ColumnText => $"Col {Column}";
+        public int SelectedCharacterCount {
+            get => (int)GetValue(SelectedCharacterCountProperty);
+            set => SetValue(SelectedCharacterCountProperty, value);
+        }
+        public static readonly DependencyProperty SelectedCharacterCountProperty =
+            DependencyProperty.Register(nameof(SelectedCharacterCount), typeof(int), typeof(WebStatusBarControl), new PropertyMetadata(0, OnCursorPositionChanged));
+
+        public bool IsSelectedCharacterCountOverflow {
+            get => (bool)GetValue(IsSelectedCharacterCountOverflowProperty);
+            set => SetValue(IsSelectedCharacterCountOverflowProperty, value);
+        }
+        public static readonly DependencyProperty IsSelectedCharacterCountOverflowProperty =
+            DependencyProperty.Register(nameof(IsSelectedCharacterCountOverflow), typeof(bool), typeof(WebStatusBarControl), new PropertyMetadata(false, OnCursorPositionChanged));
+
+        public int ProblemErrorCount {
+            get => (int)GetValue(ProblemErrorCountProperty);
+            set => SetValue(ProblemErrorCountProperty, value);
+        }
+        public static readonly DependencyProperty ProblemErrorCountProperty =
+            DependencyProperty.Register(nameof(ProblemErrorCount), typeof(int), typeof(WebStatusBarControl), new PropertyMetadata(0, OnProblemCountChanged));
+
+        public int ProblemWarningCount {
+            get => (int)GetValue(ProblemWarningCountProperty);
+            set => SetValue(ProblemWarningCountProperty, value);
+        }
+        public static readonly DependencyProperty ProblemWarningCountProperty =
+            DependencyProperty.Register(nameof(ProblemWarningCount), typeof(int), typeof(WebStatusBarControl), new PropertyMetadata(0, OnProblemCountChanged));
+
+        public string CursorPositionText => SelectedCharacterCount > 0
+            ? $"Ln {LineNumber}, Col {Column} ({SelectedCharacterCount}{(IsSelectedCharacterCountOverflow ? "+" : string.Empty)} selected)"
+            : $"Ln {LineNumber}, Col {Column}";
+        public string ProblemErrorText => ProblemErrorCount.ToString();
+        public string ProblemWarningText => ProblemWarningCount.ToString();
+        public Brush ProblemErrorBrush => ProblemErrorCount > 0
+            ? new SolidColorBrush(Colors.Red)
+            : (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"];
+        public Brush ProblemWarningBrush => ProblemWarningCount > 0
+            ? new SolidColorBrush(Colors.Orange)
+            : (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"];
         public string IndentText => "Spaces: 2";
         public string EncodingText => "UTF-8";
         public string LineEndingText => "CRLF";
@@ -60,6 +100,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         }
 
         private static void OnCursorPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            if (d is WebStatusBarControl control) {
+                control.Bindings.Update();
+            }
+        }
+
+        private static void OnProblemCountChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is WebStatusBarControl control) {
                 control.Bindings.Update();
             }

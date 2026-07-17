@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class MonacoEditor : UserControl {
         public event EventHandler<string>? ContentChanged;
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
+        public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
         public event EventHandler<string>? ShortcutRequested;
 
         public string EditorContent {
@@ -140,8 +142,33 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 if (type == "cursorPositionChange") {
                     var lineNumber = json.RootElement.GetProperty("lineNumber").GetInt32();
                     var column = json.RootElement.GetProperty("column").GetInt32();
-                    CursorPositionChanged?.Invoke(this, new MonacoCursorPosition(lineNumber, column));
+                    var selectedCharacterCount = 0;
+                    var isSelectedCharacterCountOverflow = false;
+                    if (json.RootElement.TryGetProperty("selectedCharacterCount", out var selectedCharacterCountElement)) {
+                        var count = selectedCharacterCountElement.GetInt64();
+                        isSelectedCharacterCountOverflow = count > MaxSelectedCharacterCount;
+                        selectedCharacterCount = isSelectedCharacterCountOverflow
+                            ? MaxSelectedCharacterCount
+                            : (int)count;
+                    }
+                    CursorPositionChanged?.Invoke(this, new MonacoCursorPosition(lineNumber, column, selectedCharacterCount, isSelectedCharacterCountOverflow));
+                    return;
                 }
+                if (type == "markersChanged") {
+                    var markers = JsonSerializer.Deserialize<List<MonacoMarker>>(json.RootElement.GetProperty("markers").GetRawText(), _jsonSerializerOptions) ?? [];
+                    MarkersChanged?.Invoke(this, markers);
+                }
+            } catch (Exception ex) {
+                ArcLog.GetLogger<MonacoEditor>().Error(ex);
+            }
+        }
+
+        public async Task RevealPositionAsync(int lineNumber, int column) {
+            if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
+                return;
+            }
+            try {
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.revealPosition({lineNumber}, {column})");
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
             }
@@ -192,6 +219,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private string? _pendingContent;
         private string? _pendingLanguage;
         private bool _isEditorReady;
+        private const int MaxSelectedCharacterCount = int.MaxValue / 2;
+        private static readonly JsonSerializerOptions _jsonSerializerOptions = new() {
+            PropertyNameCaseInsensitive = true
+        };
         private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
             AdditionalBrowserArguments = "--disk-cache-size=1 --autoplay-policy=no-user-gesture-required"
         };
@@ -226,5 +257,16 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
     }
 
-    public readonly record struct MonacoCursorPosition(int LineNumber, int Column);
+    public readonly record struct MonacoCursorPosition(int LineNumber, int Column, int SelectedCharacterCount, bool IsSelectedCharacterCountOverflow);
+
+    public sealed class MonacoMarker {
+        public int Severity { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public int StartLineNumber { get; set; }
+        public int StartColumn { get; set; }
+        public int EndLineNumber { get; set; }
+        public int EndColumn { get; set; }
+        public string Source { get; set; } = string.Empty;
+        public string Code { get; set; } = string.Empty;
+    }
 }

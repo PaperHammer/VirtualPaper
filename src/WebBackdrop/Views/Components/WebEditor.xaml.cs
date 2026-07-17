@@ -1,23 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
+using System.Threading.Tasks;
 using Microsoft.UI;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.Models.Cores;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Windows.System;
 using Windows.UI;
+using Windows.UI.Text;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.ViewModels;
-using Workloads.Creation.WebBackdrop.Views.Tools;
+using Workloads.Creation.WebBackdrop.Views.Components.BottomPanels;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class WebEditor : ArcUserControl {
@@ -55,11 +56,37 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             DependencyProperty.Register(nameof(CursorColumn), typeof(int), typeof(WebEditor),
                 new PropertyMetadata(1));
 
-        private WebProjectSession? _session;
-        private string _activeBottomPanel = "PROBLEMS";
-        private Dictionary<EditorPanelSlot, PanelLayoutState> _panelLayoutStates = null!;
-        private Dictionary<object, Rectangle> _splitterLines = null!;
-        private Dictionary<string, Action> _shortcutActions = null!;
+        public int SelectedCharacterCount {
+            get => (int)GetValue(SelectedCharacterCountProperty);
+            set => SetValue(SelectedCharacterCountProperty, value);
+        }
+        public static readonly DependencyProperty SelectedCharacterCountProperty =
+            DependencyProperty.Register(nameof(SelectedCharacterCount), typeof(int), typeof(WebEditor),
+                new PropertyMetadata(0));
+
+        public bool IsSelectedCharacterCountOverflow {
+            get => (bool)GetValue(IsSelectedCharacterCountOverflowProperty);
+            set => SetValue(IsSelectedCharacterCountOverflowProperty, value);
+        }
+        public static readonly DependencyProperty IsSelectedCharacterCountOverflowProperty =
+            DependencyProperty.Register(nameof(IsSelectedCharacterCountOverflow), typeof(bool), typeof(WebEditor),
+                new PropertyMetadata(false));
+
+        public int ProblemErrorCount {
+            get => (int)GetValue(ProblemErrorCountProperty);
+            set => SetValue(ProblemErrorCountProperty, value);
+        }
+        public static readonly DependencyProperty ProblemErrorCountProperty =
+            DependencyProperty.Register(nameof(ProblemErrorCount), typeof(int), typeof(WebEditor),
+                new PropertyMetadata(0));
+
+        public int ProblemWarningCount {
+            get => (int)GetValue(ProblemWarningCountProperty);
+            set => SetValue(ProblemWarningCountProperty, value);
+        }
+        public static readonly DependencyProperty ProblemWarningCountProperty =
+            DependencyProperty.Register(nameof(ProblemWarningCount), typeof(int), typeof(WebEditor),
+                new PropertyMetadata(0));
 
         private enum EditorPanelSlot {
             Left,
@@ -110,8 +137,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void ArcUserControl_Loaded(object sender, RoutedEventArgs e) {
-            KeyboardSinglePressUtil.Instance.AddListener(this);
-
             if (Payload == null) return;
 
             Payload.TryGet(NaviPayloadKey.WebProjectSession, out _session);
@@ -123,6 +148,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             leftFileTreeControl.ProjectName = _session.DesignFileUtil.ProjectName;
             leftFileTreeControl.Refresh(_session.DesignFileUtil.ProjectFolder);
+            problemsPanel.SetProjectFolder(_session.DesignFileUtil.ProjectFolder);
 
             UpdateStatusBar();
         }
@@ -139,7 +165,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private void UpdateStatusBar() {
             if (ViewModel?.ActiveFile != null) {
-                ActiveFilePathText = ViewModel.ActiveFile.FilePath;
+                var filePath = ViewModel.ActiveFile.FilePath;
+                if (!string.Equals(_activeEditorFilePath, filePath, StringComparison.OrdinalIgnoreCase)) {
+                    _activeEditorFilePath = filePath;
+                    _ignoredEmptyMarkersFilePath = filePath;
+                }
+
+                ActiveFilePathText = filePath;
                 ActiveFileLanguage = GetLanguageFromExtension(ViewModel.ActiveFile.FileExtension);
                 monacoEditor.EditorContent = ViewModel.ActiveFile.Content;
                 monacoEditor.EditorLanguage = ActiveFileLanguage;
@@ -157,6 +189,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             CursorLineNumber = 1;
             CursorColumn = 1;
+            SelectedCharacterCount = 0;
+            IsSelectedCharacterCountOverflow = false;
             propertyPanelControl.Load(ViewModel?.ActiveFile, ActiveFileLanguage);
             if (ViewModel?.ActiveFile != null) {
                 leftFileTreeControl.SelectFile(ViewModel.ActiveFile.FilePath);
@@ -179,6 +213,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private void FileTabView_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args) {
             if (args.Item is WebEditorFile file) {
+                problemsPanel.RemoveFile(file.FilePath);
+                RefreshProblemCounts();
                 ViewModel.CloseFile(file);
             }
         }
@@ -187,6 +223,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             UpdateStatusBar();
         }
 
+        #region MonacoEditor event handlers
         private void MonacoEditor_ContentChanged(object? sender, string content) {
             if (ViewModel?.ActiveFile != null && ViewModel.ActiveFile.Content != content) {
                 ViewModel.ActiveFile.Content = content;
@@ -197,13 +234,26 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private void MonacoEditor_CursorPositionChanged(object? sender, MonacoCursorPosition position) {
             CursorLineNumber = position.LineNumber;
             CursorColumn = position.Column;
+            SelectedCharacterCount = position.SelectedCharacterCount;
+            IsSelectedCharacterCountOverflow = position.IsSelectedCharacterCountOverflow;
+        }
+
+        private void MonacoEditor_MarkersChanged(object? sender, IReadOnlyList<MonacoMarker> markers) {
+            if (ViewModel?.ActiveFile != null
+                && markers.Count == 0
+                && string.Equals(_ignoredEmptyMarkersFilePath, ViewModel.ActiveFile.FilePath, StringComparison.OrdinalIgnoreCase)) {
+                _ignoredEmptyMarkersFilePath = null;
+                return;
+            }
+
+            _ignoredEmptyMarkersFilePath = null;
+            UpdateProblems(markers);
         }
 
         private void MonacoEditor_ShortcutRequested(object? sender, string command) {
-            if (_shortcutActions.TryGetValue(command, out var action)) {
-                action();
-            }
+            InvokeShortcut(command);
         }
+        #endregion
 
         private void FileTree_FileOpenRequested(object? sender, string filePath) {
             ViewModel?.OpenFile(filePath);
@@ -213,29 +263,35 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             propertyPanelControl.LoadFolder(folderPath);
         }
 
+        #region keyboard accelerators
+        private void KeyboardAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
+            var command = (sender.Key, sender.Modifiers) switch {
+                (VirtualKey.B, VirtualKeyModifiers.Control) => "toggleLeftSideBar",
+                (VirtualKey.J, VirtualKeyModifiers.Control) => "toggleBottomPanel",
+                (VirtualKey.B, VirtualKeyModifiers.Control | VirtualKeyModifiers.Menu) => "toggleRightSideBar",
+                _ => null,
+            };
+
+            if (command == null) return;
+
+            InvokeShortcut(command);
+            args.Handled = true;
+        }
+
+        private void InvokeShortcut(string command) {
+            if (_shortcutActions.TryGetValue(command, out var action)) {
+                action();
+            }
+        }
+
         private void RegisterShortcuts() {
             _shortcutActions = new Dictionary<string, Action> {
                 ["toggleLeftSideBar"] = () => TogglePanel(EditorPanelSlot.Left),
                 ["toggleBottomPanel"] = ToggleBottomPanel,
                 ["toggleRightSideBar"] = () => TogglePanel(EditorPanelSlot.Right),
             };
-
-            KeyboardSinglePressUtil.Instance.RegisterShortcut(
-                _shortcutActions["toggleLeftSideBar"],
-                VirtualKey.B,
-                VirtualKeyModifiers.Control,
-                "Toggle left side bar");
-            KeyboardSinglePressUtil.Instance.RegisterShortcut(
-                _shortcutActions["toggleBottomPanel"],
-                VirtualKey.J,
-                VirtualKeyModifiers.Control,
-                "Toggle bottom panel");
-            KeyboardSinglePressUtil.Instance.RegisterShortcut(
-                _shortcutActions["toggleRightSideBar"],
-                VirtualKey.B,
-                VirtualKeyModifiers.Control | VirtualKeyModifiers.Menu,
-                "Toggle right side bar");
         }
+        #endregion
 
         private void ToggleBottomPanel() {
             Action updateBottomPanel = bottomPanel.Visibility == Visibility.Visible
@@ -384,6 +440,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private void SetBottomPanel(string panel) {
             _activeBottomPanel = panel;
+            UpdateBottomPanelTabStates();
+            problemsPanel.Visibility = panel == "PROBLEMS" && problemsPanel.ProblemCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+            bottomPanelContent.Visibility = panel == "PROBLEMS" && problemsPanel.ProblemCount > 0 ? Visibility.Collapsed : Visibility.Visible;
             bottomPanelContent.Text = panel switch {
                 "PROBLEMS" => "当前没有检测到问题。",
                 "OUTPUT" => "暂无输出。",
@@ -394,11 +453,58 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             };
         }
 
+        private void UpdateBottomPanelTabStates() {
+            foreach (var child in bottomPanelTabStackPanel.Children) {
+                if (child is not Button button || button.Tag is not string panel) continue;
+
+                var isActive = panel == _activeBottomPanel;
+                var tabBrush = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
+                button.Foreground = tabBrush;
+                button.Resources["ButtonForegroundPointerOver"] = tabBrush;
+                button.Resources["ButtonForegroundPressed"] = tabBrush;
+                button.FontWeight = isActive ? FontWeights.SemiBold : FontWeights.Normal;
+                button.BorderThickness = isActive ? new Thickness(0, 0, 0, 2) : new Thickness(0);
+                button.BorderBrush = isActive
+                    ? (Brush)Application.Current.Resources["SystemControlHighlightAccentBrush"]
+                    : (Brush)Application.Current.Resources["ControlFillColorTransparentBrush"];
+            }
+        }
+
+        private void UpdateProblems(IReadOnlyList<MonacoMarker> markers) {
+            if (ViewModel?.ActiveFile == null) return;
+
+            problemsPanel.UpdateProblems(ViewModel.ActiveFile.FilePath, markers);
+            RefreshProblemCounts();
+        }
+
+        private void RefreshProblemCounts() {
+            ProblemErrorCount = problemsPanel.ErrorCount;
+            ProblemWarningCount = problemsPanel.WarningCount;
+
+            if (_activeBottomPanel == "PROBLEMS") {
+                SetBottomPanel(_activeBottomPanel);
+            }
+        }
+
+        private async void ProblemsPanel_ProblemRequested(object? sender, ProblemItem item) {
+            ViewModel.OpenFile(item.FilePath);
+            await Task.Delay(50);
+            await monacoEditor.RevealPositionAsync(item.LineNumber, item.ColumnNumber);
+        }
+
         private void UpdateStatusBarLayoutState() {
             statusBar.IsLeftSideBarVisible = leftSideBar.Visibility == Visibility.Visible;
             statusBar.IsBottomPanelVisible = bottomPanel.Visibility == Visibility.Visible;
             statusBar.IsRightSideBarVisible = rightSideBar.Visibility == Visibility.Visible;
             statusBar.RefreshLayoutState();
         }
+
+        private WebProjectSession? _session;
+        private string _activeBottomPanel = "PROBLEMS";
+        private string? _activeEditorFilePath;
+        private string? _ignoredEmptyMarkersFilePath;
+        private Dictionary<EditorPanelSlot, PanelLayoutState> _panelLayoutStates = null!;
+        private Dictionary<object, Rectangle> _splitterLines = null!;
+        private Dictionary<string, Action> _shortcutActions = null!;
     }
 }

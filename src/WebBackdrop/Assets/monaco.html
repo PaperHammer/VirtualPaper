@@ -123,14 +123,65 @@
                 }
             });
 
-            editor.onDidChangeCursorPosition(function (e) {
-                if (window.chrome && window.chrome.webview) {
-                    window.chrome.webview.postMessage(JSON.stringify({
-                        type: 'cursorPositionChange',
-                        lineNumber: e.position.lineNumber,
-                        column: e.position.column
-                    }));
+            function postCursorPosition(position) {
+                if (!window.chrome || !window.chrome.webview) {
+                    return;
                 }
+
+                var model = editor.getModel();
+                var currentPosition = position || editor.getPosition();
+                if (!model || !currentPosition) {
+                    return;
+                }
+
+                var selection = editor.getSelection();
+                var selectedCharacterCount = selection ? model.getValueInRange(selection).length : 0;
+                window.chrome.webview.postMessage(JSON.stringify({
+                    type: 'cursorPositionChange',
+                    lineNumber: currentPosition.lineNumber,
+                    column: currentPosition.column,
+                    selectedCharacterCount: selectedCharacterCount
+                }));
+            }
+
+            editor.onDidChangeCursorPosition(function (e) {
+                postCursorPosition(e.position);
+            });
+
+            editor.onDidChangeCursorSelection(function (e) {
+                postCursorPosition(e.position || editor.getPosition());
+            });
+
+            function postCurrentMarkers() {
+                var model = editor.getModel();
+                if (!model || !window.chrome || !window.chrome.webview) {
+                    return;
+                }
+
+                window.chrome.webview.postMessage(JSON.stringify({
+                    type: 'markersChanged',
+                    markers: monaco.editor.getModelMarkers({ resource: model.uri }).map(function (marker) {
+                        return {
+                            severity: marker.severity,
+                            message: marker.message,
+                            startLineNumber: marker.startLineNumber,
+                            startColumn: marker.startColumn,
+                            endLineNumber: marker.endLineNumber,
+                            endColumn: marker.endColumn,
+                            source: marker.source || '',
+                            code: marker.code ? String(marker.code.value || marker.code) : ''
+                        };
+                    })
+                }));
+            }
+
+            monaco.editor.onDidChangeMarkers(function (uris) {
+                var model = editor.getModel();
+                if (!model || !uris.some(function (uri) { return uri.toString() === model.uri.toString(); })) {
+                    return;
+                }
+
+                postCurrentMarkers();
             });
 
             editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB, function () {
@@ -158,6 +209,12 @@
 
             window.getValue = function () {
                 return editor.getValue();
+            };
+
+            window.revealPosition = function (lineNumber, column) {
+                editor.setPosition({ lineNumber: lineNumber, column: column });
+                editor.revealPositionInCenter({ lineNumber: lineNumber, column: column });
+                editor.focus();
             };
 
             window.setLanguage = function (language) {

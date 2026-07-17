@@ -11,6 +11,7 @@
 	<ItemGroup>
 		<None Remove="MainPage.xaml" />
 		<None Remove="Views\Components\WebEditor.xaml" />
+		<None Remove="Views\Components\BottomPanels\WebProblemsPanelControl.xaml" />
 		<None Remove="Views\Components\MonacoEditor.xaml" />
 		<None Remove="Views\Tools\WebToolListControl.xaml" />
 		<None Remove="Views\Tools\WebFileTreeControl.xaml" />
@@ -32,6 +33,9 @@
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Components\WebEditor.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\BottomPanels\WebProblemsPanelControl.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Components\MonacoEditor.xaml">

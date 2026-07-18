@@ -14,34 +14,28 @@
         <cvs:VisibilityByValueConverter x:Key="VisibilityByValueConverter"/>
     </UserControl.Resources>
 
-    <StackPanel
-        Orientation="Vertical"
-        Spacing="8">
-        <StackPanel
-            Spacing="4">
+    <StackPanel Orientation="Vertical" Spacing="10">
+        <StackPanel Spacing="6">
             <TextBlock
                 Text="{markup:I18n Key=RenameDialog_Text_BeforeChange}"
                 FontWeight="Bold"
-                FontSize="12"/>
-            <TextBlock
-                Text="{x:Bind _viewModel.OldName}"
-                FontSize="12"/>
+                FontSize="16"/>
+            <TextBlock Text="{x:Bind _viewModel.OldName}" FontSize="16"/>
         </StackPanel>
 
         <StackPanel
-            Grid.Row="2"
             Orientation="Vertical"
             HorizontalAlignment="Left"
             Spacing="6">
             <TextBlock
                 Text="{markup:I18n Key=RenameDialog_Text_AfterChange}"
                 FontWeight="Bold"
-                FontSize="12"/>
+                FontSize="16"/>
 
             <TextBox
                 IsSpellCheckEnabled="False"
                 Text="{x:Bind _viewModel.NewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                FontSize="12"
+                FontSize="16"
                 Width="500">
             </TextBox>
 
@@ -51,15 +45,15 @@
                 Margin="2 0 0 0"
                 Visibility="{x:Bind _viewModel.IsNameOk, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}">
                 <FontIcon 
-                    FontSize="14"
+                    FontSize="16"
                     VerticalAlignment="Bottom"
-                    Foreground="Red"
+                    Foreground="#FFFF4D4D"
                     Glyph="&#xE783;" />
 
                 <TextBlock
                     Text="{markup:I18n Key=Project_NewName_InvalidTip}"
-                    FontSize="12"
-                    Foreground="Red"/>
+                    FontSize="14"
+                    Foreground="#FFFF4D4D"/>
             </StackPanel>
         </StackPanel>
     </StackPanel>

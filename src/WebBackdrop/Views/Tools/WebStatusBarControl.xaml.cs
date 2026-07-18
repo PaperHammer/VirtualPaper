@@ -81,7 +81,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public string ProblemErrorText => ProblemErrorCount.ToString();
         public string ProblemWarningText => ProblemWarningCount.ToString();
         public Brush ProblemErrorBrush => ProblemErrorCount > 0
-            ? new SolidColorBrush(Colors.Red)
+            ? new SolidColorBrush(Color.FromArgb(255, 255, 77, 77))
             : (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"];
         public Brush ProblemWarningBrush => ProblemWarningCount > 0
             ? new SolidColorBrush(Colors.Orange)

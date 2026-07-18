@@ -148,6 +148,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             leftFileTreeControl.ProjectName = _session.DesignFileUtil.ProjectName;
             leftFileTreeControl.Refresh(_session.DesignFileUtil.ProjectFolder);
+            propertyPanelControl.LoadProject(_session.DesignFileUtil);
             problemsPanel.SetProjectFolder(_session.DesignFileUtil.ProjectFolder);
 
             UpdateStatusBar();
@@ -419,8 +420,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             TogglePanel(EditorPanelSlot.Right);
         }
 
-        private void BottomPanelTab_Click(object sender, RoutedEventArgs e) {
-            if (sender is FrameworkElement element && element.Tag is string panel) {
+        private void BottomPanelSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs e) {
+            if (sender.SelectedItem is SelectorBarItem { Tag: string panel }) {
                 ShowBottomPanel(panel);
             }
         }
@@ -446,27 +447,15 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             bottomPanelContent.Text = panel switch {
                 "PROBLEMS" => "当前没有检测到问题。",
                 "OUTPUT" => "暂无输出。",
-                "DEBUG CONSOLE" => "调试控制台尚未连接。",
-                "TERMINAL" => "终端功能暂未启用。",
-                //"PORTS" => "暂无转发端口。",
                 _ => string.Empty,
             };
         }
 
         private void UpdateBottomPanelTabStates() {
-            foreach (var child in bottomPanelTabStackPanel.Children) {
-                if (child is not Button button || button.Tag is not string panel) continue;
-
-                var isActive = panel == _activeBottomPanel;
-                var tabBrush = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
-                button.Foreground = tabBrush;
-                button.Resources["ButtonForegroundPointerOver"] = tabBrush;
-                button.Resources["ButtonForegroundPressed"] = tabBrush;
-                button.FontWeight = isActive ? FontWeights.SemiBold : FontWeights.Normal;
-                button.BorderThickness = isActive ? new Thickness(0, 0, 0, 2) : new Thickness(0);
-                button.BorderBrush = isActive
-                    ? (Brush)Application.Current.Resources["SystemControlHighlightAccentBrush"]
-                    : (Brush)Application.Current.Resources["ControlFillColorTransparentBrush"];
+            foreach (var item in bottomPanelSelectorBar.Items) {
+                if (item is SelectorBarItem selectorBarItem && selectorBarItem.Tag is string panel) {
+                    selectorBarItem.IsSelected = panel == _activeBottomPanel;
+                }
             }
         }
 
@@ -481,6 +470,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             ProblemErrorCount = problemsPanel.ErrorCount;
             ProblemWarningCount = problemsPanel.WarningCount;
 
+            // 问题数量变化时，刷新 Problems 面板显示状态。避免有问题了，但底部仍显示“当前没有检测到问题”
             if (_activeBottomPanel == "PROBLEMS") {
                 SetBottomPanel(_activeBottomPanel);
             }

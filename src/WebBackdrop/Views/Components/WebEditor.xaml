@@ -145,23 +145,15 @@
                     BorderThickness="0 1 0 0"
                     Visibility="Collapsed">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="36"/>
+                        <RowDefinition Height="auto"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <Grid>
-                        <StackPanel x:Name="bottomPanelTabStackPanel" Orientation="Horizontal" Spacing="0">
-                            <StackPanel.Resources>
-                                <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="ControlFillColorTransparentBrush"/>
-                                <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="ControlFillColorTransparentBrush"/>
-                                <StaticResource x:Key="ButtonForegroundPointerOver" ResourceKey="TextFillColorSecondaryBrush"/>
-                                <StaticResource x:Key="ButtonForegroundPressed" ResourceKey="TextFillColorSecondaryBrush"/>
-                            </StackPanel.Resources>
-                            <Button Content="PROBLEMS" Tag="PROBLEMS" Padding="12 0" BorderThickness="0" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Click="BottomPanelTab_Click"/>
-                            <Button Content="OUTPUT" Tag="OUTPUT" Padding="12 0" BorderThickness="0" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Click="BottomPanelTab_Click"/>
-                            <Button Content="DEBUG CONSOLE" Tag="DEBUG CONSOLE" Padding="12 0" BorderThickness="0" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Click="BottomPanelTab_Click"/>
-                            <Button Content="TERMINAL" Tag="TERMINAL" Padding="12 0" BorderThickness="0" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Click="BottomPanelTab_Click"/>
-                            <Button Content="PORTS" Tag="PORTS" Padding="12 0" BorderThickness="0" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Click="BottomPanelTab_Click"/>
-                        </StackPanel>
+                        <SelectorBar x:Name="bottomPanelSelectorBar"
+                            SelectionChanged="BottomPanelSelectorBar_SelectionChanged">
+                            <SelectorBarItem Text="PROBLEMS" Tag="PROBLEMS" IsSelected="True"/>
+                            <SelectorBarItem Text="OUTPUT" Tag="OUTPUT"/>
+                        </SelectorBar>
                         <Button
                             HorizontalAlignment="Right"
                             VerticalAlignment="Stretch"

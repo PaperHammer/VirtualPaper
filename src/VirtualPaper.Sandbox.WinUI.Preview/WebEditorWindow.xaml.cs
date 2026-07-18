@@ -5,7 +5,7 @@ namespace VirtualPaper.Sandbox.WinUI.Preview {
     public sealed partial class WebEditorWindow : ArcWindow {
         public override ArcWindowHost ContentHost => this.MainHost;
         public override ArcWindowManagerKey Key => default;
-        protected override bool IsNeedTrack => false;
+        public override bool IsMainWindow => true;
 
         public WebEditorWindow(FrameworkPayload payload) {
             this.InitializeComponent();

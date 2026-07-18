@@ -1,14 +1,19 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.ApplicationModel.DataTransfer;
 using Workloads.Creation.WebBackdrop.Models;
+using Workloads.Creation.WebBackdrop.Models.SerializableData;
 
 namespace Workloads.Creation.WebBackdrop.Views.Tools {
     public sealed partial class WebPropertyPanelControl : UserControl {
+        private string? _projectFolder;
+        private string? _currentPath;
         private string? _pendingPreviewHtml;
 
         public WebPropertyPanelControl() {
@@ -22,66 +27,87 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             }
         }
 
+        public void LoadProject(WebDesignFileUtil designFileUtil) {
+            _projectFolder = designFileUtil.ProjectFolder;
+            var data = designFileUtil.GetOrCreateProjectData();
+
+            ProjectTitleText.Text = string.IsNullOrWhiteSpace(data.Title) ? designFileUtil.ProjectName : data.Title;
+            ProjectEntryText.Text = data.File;
+            ProjectPathText.Text = designFileUtil.ProjectFolder;
+        }
+
         public void Load(WebEditorFile? file, string language) {
             if (file == null) {
-                Clear();
+                ClearCurrentItem();
                 return;
             }
 
+            _currentPath = file.FilePath;
             var info = new FileInfo(file.FilePath);
             FileNameText.Text = file.FileName;
-            LanguageLabel.Text = "Language";
-            LanguageText.Text = language;
-            StatusLabel.Text = "Status";
+            TypeLabel.Text = "Language";
+            TypeText.Text = language;
             StatusText.Text = file.IsSaved ? "Saved" : "Unsaved";
             SizeText.Text = info.Exists ? FormatSize(info.Length) : "-";
             LineCountText.Text = CountLines(file.Content).ToString();
-            CreatedText.Text = info.Exists ? info.CreationTime.ToString("yyyy-MM-dd HH:mm:ss") : "-";
             ModifiedText.Text = info.Exists ? info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") : "-";
+            RelativePathText.Text = GetRelativePath(file.FilePath);
             PathText.Text = file.FilePath;
 
-            LanguageRow.Visibility = Visibility.Visible;
+            NoItemPanel.Visibility = Visibility.Collapsed;
+            ItemInfoPanel.Visibility = Visibility.Visible;
             StatusRow.Visibility = Visibility.Visible;
             SizeRow.Visibility = Visibility.Visible;
             LineCountRow.Visibility = Visibility.Visible;
-            CreatedRow.Visibility = Visibility.Visible;
-            ModifiedRow.Visibility = Visibility.Visible;
-            PathRow.Visibility = Visibility.Visible;
 
             LoadPreview(file);
         }
 
         public void LoadFolder(string folderPath) {
+            _currentPath = folderPath;
             var info = new DirectoryInfo(folderPath);
             FileNameText.Text = info.Exists ? info.Name : Path.GetFileName(folderPath);
-            LanguageLabel.Text = "Type";
-            LanguageText.Text = "Folder";
-            CreatedText.Text = info.Exists ? info.CreationTime.ToString("yyyy-MM-dd HH:mm:ss") : "-";
+            TypeLabel.Text = "Type";
+            TypeText.Text = "Folder";
             ModifiedText.Text = info.Exists ? info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") : "-";
+            RelativePathText.Text = GetRelativePath(folderPath);
             PathText.Text = folderPath;
 
-            LanguageRow.Visibility = Visibility.Visible;
+            NoItemPanel.Visibility = Visibility.Collapsed;
+            ItemInfoPanel.Visibility = Visibility.Visible;
             StatusRow.Visibility = Visibility.Collapsed;
             SizeRow.Visibility = Visibility.Collapsed;
             LineCountRow.Visibility = Visibility.Collapsed;
-            CreatedRow.Visibility = Visibility.Visible;
-            ModifiedRow.Visibility = Visibility.Visible;
-            PathRow.Visibility = Visibility.Visible;
 
-            SetPreviewMessage("Only Markdown and image files can be previewed.");
+            SetPreviewMessage("Select an image, SVG, or Markdown file to preview.");
         }
 
         public void Clear() {
-            FileNameText.Text = "No item selected";
-            LanguageRow.Visibility = Visibility.Collapsed;
-            StatusRow.Visibility = Visibility.Collapsed;
-            SizeRow.Visibility = Visibility.Collapsed;
-            LineCountRow.Visibility = Visibility.Collapsed;
-            CreatedRow.Visibility = Visibility.Collapsed;
-            ModifiedRow.Visibility = Visibility.Collapsed;
-            PathRow.Visibility = Visibility.Collapsed;
+            ProjectTitleText.Text = "-";
+            ProjectEntryText.Text = "-";
+            ProjectPathText.Text = "-";
+            ClearCurrentItem();
+        }
 
+        private void ClearCurrentItem() {
+            _currentPath = null;
+            NoItemPanel.Visibility = Visibility.Visible;
+            ItemInfoPanel.Visibility = Visibility.Collapsed;
             SetPreviewMessage("No preview available.");
+        }
+
+        private void CopyPath_Click(object sender, RoutedEventArgs e) {
+            if (string.IsNullOrEmpty(_currentPath)) return;
+
+            var package = new DataPackage();
+            package.SetText(_currentPath);
+            Clipboard.SetContent(package);
+        }
+
+        private void Reveal_Click(object sender, RoutedEventArgs e) {
+            if (string.IsNullOrEmpty(_currentPath)) return;
+
+            Process.Start("Explorer", "/select," + _currentPath);
         }
 
         private void LoadPreview(WebEditorFile file) {
@@ -125,7 +151,7 @@ a{color:#8ab4f8;}
                 return;
             }
 
-            SetPreviewMessage("Only Markdown and image files can be previewed.");
+            SetPreviewMessage("Preview supports images, SVG, and Markdown.");
         }
 
         private void SetPreviewMessage(string message) {
@@ -135,7 +161,7 @@ a{color:#8ab4f8;}
 <head>
 <meta charset="utf-8">
 <style>
-html,body{margin:0;width:100%;height:100%;background:#1e1e1e;color:#aaa;font-family:'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;text-align:center;}
+html,body{margin:0;width:100%;height:100%;background:#1e1e1e;color:#aaa;font-family:'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;box-sizing:border-box;}
 </style>
 </head>
 <body>{{WebUtility.HtmlEncode(message)}}</body>
@@ -155,6 +181,12 @@ html,body{margin:0;width:100%;height:100%;background:#1e1e1e;color:#aaa;font-fam
             if (_pendingPreviewHtml == html) {
                 previewWebView.NavigateToString(html);
             }
+        }
+
+        private string GetRelativePath(string path) {
+            return string.IsNullOrEmpty(_projectFolder)
+                ? path
+                : Path.GetRelativePath(_projectFolder, path);
         }
 
         private static string RenderMarkdown(string markdown) {

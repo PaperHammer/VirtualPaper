@@ -308,7 +308,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
         public string PositionText { get; }
         public string Glyph => Severity == ProblemSeverity.Error ? "\uEA39" : "\uE7BA";
         public Brush Brush => Severity == ProblemSeverity.Error
-            ? new SolidColorBrush(Colors.Red)
+            ? new SolidColorBrush(Color.FromArgb(255, 255, 77, 77))
             : new SolidColorBrush(Colors.Orange);
 
         public bool EqualsByValue(ProblemItem other) {

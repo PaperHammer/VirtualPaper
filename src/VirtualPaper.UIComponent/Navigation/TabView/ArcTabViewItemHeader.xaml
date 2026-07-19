@@ -21,13 +21,21 @@
             Margin="4 0"
             Content="{x:Bind MainContent}"/>
 
-        <Ellipse 
-            x:Name="UnsavedDot"
+        <Border
             Grid.Column="1"
-            Width="8" Height="8"
+            Width="14" Height="14"
             HorizontalAlignment="Right"
             VerticalAlignment="Center"
-            Fill="{ThemeResource SystemAccentColor}"
-            Visibility="{x:Bind IsSaved, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
+            BorderBrush="{ThemeResource SystemAccentColor}"
+            BorderThickness="2"
+            CornerRadius="2"
+            Visibility="{x:Bind IsSaved, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}">
+            <Ellipse
+                x:Name="UnsavedDot"
+                Width="6" Height="6"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Fill="{ThemeResource SystemAccentColor}"/>
+        </Border>
     </Grid>
 </UserControl>

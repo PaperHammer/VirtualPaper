@@ -8,17 +8,18 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
 using VirtualPaper.DraftPanel.Model;
+using VirtualPaper.DraftPanel.Services;
+using Workloads.Entry.FileLoaders;
+using Workloads.Entry.FileLoaders.Specific;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
@@ -28,7 +29,7 @@ using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 using Windows.Storage;
-using Workloads.Creation.StaticImg.Models.SerializableData;
+using Workloads.Entry;
 using Workloads.Entry.Interfaces;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
@@ -53,9 +54,19 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         public ICommand? MFI_ManualCommand { get; private set; }
         public ICommand? MFI_AboutCommand { get; private set; }
 
-        public WorkSpaceViewModel(IUserSettingsClient userSettings, IGlobalDialogService globalDialogService) {
+        public WorkSpaceViewModel(
+            IUserSettingsClient userSettings,
+            IGlobalDialogService globalDialogService,
+            IRuntimeFactory? runtimeFactory = null,
+            IWorkspaceSaveCoordinator? saveCoordinator = null,
+            ProjectFileLoaderRegistry? fileLoaderRegistry = null) {
             this._userSettings = userSettings;
-            this._globalDialogService = globalDialogService;
+            this._runtimeFactory = runtimeFactory ?? new RuntimeFactory();
+            this._saveCoordinator = saveCoordinator ?? new WorkspaceSaveCoordinator(globalDialogService);
+            this._fileLoaderRegistry = fileLoaderRegistry ?? new ProjectFileLoaderRegistry([
+                new ImageProjectFileLoader(),
+                new DesignProjectFileLoader(),
+            ]);
             InitCommand();
         }
 
@@ -139,11 +150,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private async Task OpenLocalFilesAsync(StorageFile[]? items) {
             if (items == null || items.Length < 1) return;
 
-            int n = items.Length;
-            PreProjectData[] datas = new PreProjectData[n];
-            for (int i = 0; i < n; i++) {
-                datas[i] = new PreProjectData(items[i].Path, ProjectType.P_StaticImage);
-            }
+            PreProjectData[] datas = items
+                .Select(item => new PreProjectData(item.Path, ProjectType.P_StaticImage))
+                .ToArray();
             await AddNewItemsAsync(datas);
         }
 
@@ -152,9 +161,10 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private async Task SaveAsAsync() => await ExecuteRuntimeCommandAsync(InternalSaveAsAsync);
 
         private void RefreshHeaderAsync(IRuntime runtime) {
-            var header = _runtimeToArcTab[runtime].Header;
+            if (!_runtimeToArcTab.TryGetValue(runtime, out var tab)) return;
+
             CrossThreadInvoker.InvokeOnUIThread(async () => {
-                if (header.MainContent is TextBlock tb) {
+                if (tab.Header.MainContent is TextBlock tb) {
                     tb.Text = Path.GetFileName(runtime.FileName);
                 }
             });
@@ -198,7 +208,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             await runtime.SaveAsync();
             RefreshHeaderAsync(runtime);
         }
-        
+
         private async Task InternalSaveAsAsync(IRuntime runtime) {
             await runtime.SaveAsAsync();
             RefreshHeaderAsync(runtime);
@@ -209,27 +219,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
             foreach (var data in predatas) {
                 try {
-                    // 判断是物理路径(打开现有)还是纯名称(新建)
-                    bool isFilePath = Path.IsPathRooted(data.Identity) || File.Exists(data.Identity);
-
-                    if (isFilePath) {
-                        if (!File.Exists(data.Identity)) {
-                            GlobalMessageUtil.ShowError(
-                                message: nameof(Constants.I18n.Project_SI_FileNotFound),
-                                isNeedLocalizer: true,
-                                extraMsg: data.Identity);
-                            continue;
-                        }
-
-                        if (FileUtil.IsValidFilePath(data.Identity)) {
-                            await InitRuntimeItemWithFileAsync(data.Identity);
-                        }
-                    }
-                    else {
-                        if (FileUtil.IsValidFileName(data.Identity)) {
-                            InitRuntimeItemWithIdentify(data.Identity, data.Type);
-                        }
-                    }
+                    await AddNewItemAsync(data);
                 }
                 catch (Exception ex) {
                     ArcLog.GetLogger<WorkSpaceViewModel>().Error($"Failed to process project item: {data.Identity}", ex);
@@ -242,86 +232,62 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             }
         }
 
-        private async Task InitRuntimeItemWithFileAsync(string filePath) {
-            string extension = Path.GetExtension(filePath);
-            FileType fType = FileFilter.GetRuntimeFileType(extension);
+        private async Task AddNewItemAsync(PreProjectData data) {
+            if (IsExistingProjectIdentity(data.Identity)) {
+                await InitRuntimeItemWithFileAsync(data.Identity);
+                return;
+            }
 
-            bool isSuccess;
-            switch (fType) {
-                case FileType.FImage:
-                    isSuccess = await ReadImgFileAsync(filePath, fType);
-                    if (isSuccess && !_tempRecentUsed.Contains(filePath)) {
-                        _tempRecentUsed.Add(filePath);
-                    }
-                    break;
-                //case FileType.FGif:
-                //    break;
-                //case FileType.FVideo:
-                //    break;
-                case FileType.FDesign:
-                    isSuccess = await ReadDesignFileAsync(filePath);
-                    if (isSuccess && !_tempRecentUsed.Contains(filePath)) {
-                        _tempRecentUsed.Add(filePath);
-                    }
-                    break;
-                default:
-                    break;
+            if (FileUtil.IsValidFileName(data.Identity)) {
+                InitRuntimeItemWithIdentify(data.Identity, data.Type);
+            }
+        }
+
+        private static bool IsExistingProjectIdentity(string identity) {
+            if (!Path.IsPathRooted(identity) && !File.Exists(identity)) return false;
+
+            if (File.Exists(identity)) return true;
+
+            GlobalMessageUtil.ShowError(
+                message: nameof(Constants.I18n.Project_SI_FileNotFound),
+                isNeedLocalizer: true,
+                extraMsg: identity);
+            return false;
+        }
+
+        private async Task InitRuntimeItemWithFileAsync(string filePath) {
+            if (!FileUtil.IsValidFilePath(filePath)) return;
+
+            var result = await _fileLoaderRegistry.LoadAsync(filePath);
+            if (result == null) return;
+
+            AddToWorkSpace(result.FilePath, result.FileType);
+            if (!_tempRecentUsed.Contains(filePath)) {
+                _tempRecentUsed.Add(filePath);
             }
         }
 
         private void InitRuntimeItemWithIdentify(string fileName, ProjectType type) {
-            switch (type) {
-                case ProjectType.P_StaticImage:
-                    AddToWorkSpace(fileName, FileType.FDesign);
-                    break;
+            var fileType = type switch {
+                ProjectType.P_StaticImage => FileType.FDesign,
+                ProjectType.P_WebBackdrop => FileType.FWebDesign,
+                _ => (FileType?)null,
+            };
 
-                case ProjectType.P_WebBackdrop:
-                    AddToWorkSpace(fileName, FileType.FWebDesign);
-                    break;
-
-                default:
-                    break;
+            if (fileType != null) {
+                AddToWorkSpace(fileName, fileType.Value);
             }
-        }
-
-        private async Task<bool> ReadImgFileAsync(string filePath, FileType fType) {
-            var checked_type = FileFilter.GetFileType(filePath);
-            if (checked_type != fType) {
-                GlobalMessageUtil.ShowError(message: nameof(Constants.I18n.Project_SI_FileTypeMismatch), isNeedLocalizer: true, extraMsg: filePath);
-                return false;
-            }
-            AddToWorkSpace(filePath, fType);
-
-            return true;
-        }
-
-        private async Task<bool> ReadDesignFileAsync(string filePath) {
-            var result = await StaticImgDesignFileUtil.GetFileHeaderAsync(filePath);
-            if (result is not FileHeader header) {
-                return false;
-            }
-
-            switch (header.ProjType) {
-                case ProjectType.P_StaticImage:
-                    AddToWorkSpace(filePath, FileType.FDesign);
-                    break;
-
-                default:
-                    break;
-            }
-
-            return true;
         }
 
         private void AddToWorkSpace(string file, FileType fileType) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
-                var runtime = AppServiceLocator.Services.GetRequiredService<IRuntimeFactory>().Create(file, fileType);
+                var runtime = _runtimeFactory.Create(file, fileType);
                 runtime.IsSavedChanged += Runtime_IsSavedChanged;
 
                 var header = new ArcTabViewItemHeader() {
                     MainContent = new TextBlock {
                         Text = Path.GetFileName(file),
-                        TextTrimming = TextTrimming.CharacterEllipsis, // 文本超出时显示省略号
+                        TextTrimming = TextTrimming.CharacterEllipsis,
                         MaxWidth = 200
                     },
                     IsSaved = runtime.IsSavedFromInit,
@@ -353,7 +319,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     TabViewItems.Clear();
                     _middleMenuItems.Clear();
                     _tempRecentUsed.Clear();
-                    _runtimeToArcTab.Clear();
                     ClearCommand();
                 }
                 _isDisposed = true;
@@ -361,7 +326,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private void ClearCommand() {
+            MFI_OpenCommand = null;
             MFI_SaveCommand = null;
+            MFI_SaveAsCommand = null;
             MFI_SaveAllCommand = null;
             MFI_ExitCommand = null;
             MFI_UndoCommand = null;
@@ -380,91 +347,33 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
             foreach (var tabItem in tabsToClose) {
                 if (tabItem.Tag is not IRuntime runtime) continue;
+                if (!_runtimeToArcTab.TryGetValue(runtime, out var value)) continue;
+                if (value.Header.IsSaved) continue;
+                if (!await _saveCoordinator.CanCloseAsync(runtime, value.Header.IsSaved, canCancel: false)) continue;
 
-                bool shouldClose = false;
-                if (_runtimeToArcTab.TryGetValue(runtime, out var value)) {
-                    var header = value.Header;
-
-                    if (!header.IsSaved) {
-                        var res = await _globalDialogService.ShowDialogAsync(
-                            content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
-                            title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
-                            primaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Save))}",
-                            secondaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Unsave))}"
-                        );
-
-                        if (res == DialogResult.Primary) {
-                            shouldClose = await runtime.SaveAsync();
-                        }
-                        else if (res == DialogResult.Secondary) {
-                            shouldClose = true;
-                        }
-                    }
-                }
-
-                if (shouldClose) {
-                    CloseWorkSpaceTab(runtime, tabItem);
-                    yield return tabItem;
-                }
+                CloseWorkSpaceTab(runtime, tabItem);
+                yield return tabItem;
             }
         }
 
         public async Task<bool> CheckSaveStatusAsync(IRuntime runtime) {
-            bool flag;
-            var header = _runtimeToArcTab[runtime].Header;
+            if (!_runtimeToArcTab.TryGetValue(runtime, out var value)) return false;
+            if (!await _saveCoordinator.CanCloseAsync(runtime, value.Header.IsSaved, canCancel: true)) return false;
 
-            if (header.IsSaved) {
-                flag = true;
-            }
-            else {
-                var res = await _globalDialogService.ShowDialogAsync(
-                    content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
-                    title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
-                    primaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Save))}",
-                    secondaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Unsave))}",
-                    closeBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel))}");
-
-                if (res == DialogResult.Primary) {
-                    flag = await runtime.SaveAsync();
-                }
-                else if (res == DialogResult.Secondary) {
-                    flag = true;
-                }
-                else {
-                    flag = false;
-                }
-            }
-
-            if (flag) {
-                CloseWorkSpaceTab(runtime, _runtimeToArcTab[runtime].Item);
-            }
-            return flag;
+            CloseWorkSpaceTab(runtime, value.Item);
+            return true;
         }
 
         public async Task<bool> CheckAllSaveStatusAsync() {
-            foreach (var kvp in _runtimeToArcTab) {
+            foreach (var kvp in _runtimeToArcTab.ToList()) {
                 var runtime = kvp.Key;
-                var header = kvp.Value.Header;
+                var tab = kvp.Value;
 
-                if (!header.IsSaved) {
-                    var res = await _globalDialogService.ShowDialogAsync(
-                        content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
-                        title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
-                        primaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Save))}",
-                        secondaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Unsave))}",
-                        closeBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel))}"
-                    );
-
-                    if (res == DialogResult.Primary) {
-                        bool isSuccess = await runtime.SaveAsync();
-                        if (!isSuccess) return false;
-                    }
-                    else if (res == DialogResult.None) {
-                        return false;
-                    }
+                if (!await _saveCoordinator.CanCloseAsync(runtime, tab.Header.IsSaved, canCancel: true)) {
+                    return false;
                 }
 
-                CloseWorkSpaceTab(runtime, kvp.Value.Item);
+                CloseWorkSpaceTab(runtime, tab.Item);
             }
 
             return true;
@@ -484,7 +393,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         internal readonly ObservableCollection<MenuBarItem> _middleMenuItems = [];
         private readonly IUserSettingsClient _userSettings;
-        private readonly IGlobalDialogService _globalDialogService;
+        private readonly IRuntimeFactory _runtimeFactory;
+        private readonly IWorkspaceSaveCoordinator _saveCoordinator;
+        private readonly ProjectFileLoaderRegistry _fileLoaderRegistry;
         private readonly ConcurrentBag<string> _tempRecentUsed = [];
         private readonly Dictionary<IRuntime, (IArcTabViewItemHeader Header, IArcTabViewItem Item)> _runtimeToArcTab = [];
     }

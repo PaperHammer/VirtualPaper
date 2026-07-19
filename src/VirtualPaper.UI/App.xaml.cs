@@ -15,6 +15,7 @@ using VirtualPaper.Common.Utils.Pipe;
 using VirtualPaper.Common.Utils.Pipe.Interfaces;
 using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.DraftPanel.Services;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
@@ -36,6 +37,8 @@ using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.Core;
 using WinUIEx;
 using Workloads.Entry;
+using Workloads.Entry.FileLoaders;
+using Workloads.Entry.FileLoaders.Specific;
 using Workloads.Entry.Interfaces;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -126,6 +129,10 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
                 .AddSingleton<ITwoWayClient, TwoWayClient>()
                 .AddSingleton<IGlobalDialogService, GlobalDialogService>()
+                .AddSingleton<IWorkspaceSaveCoordinator, WorkspaceSaveCoordinator>()
+                .AddSingleton<IProjectFileLoader, ImageProjectFileLoader>()
+                .AddSingleton<IProjectFileLoader, DesignProjectFileLoader>()
+                .AddSingleton<ProjectFileLoaderRegistry>()
                 .AddSingleton<IStoragePicker, StoragePickerWrapper>()
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()
                 .AddSingleton<IPipeServerFactory, NamedPipeServerFactory>()

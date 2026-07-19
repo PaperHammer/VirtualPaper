@@ -115,7 +115,7 @@ namespace VirtualPaper.DraftPanel.Views {
             overlayFrame.Navigate(pageType, parameter);
         }
 
-        public async void HideOverlayPage() {
+        public void HideOverlayPage() {
             if (overlayFrame.Content is FrameworkElement element) {
                 element.DataContext = null;
             }

@@ -63,7 +63,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 Payload.TryGet(NaviPayloadKey.ArcPageContext, out context);
                 Consts.InitData();
             }
-            _viewModel = new InkCanvasViewModel(_session, context);
+            _viewModel = new InkCanvasViewModel(_session, context!);
             _tool = new ToolManager(_viewModel);
         }
 

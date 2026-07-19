@@ -1,6 +1,7 @@
+using Microsoft.UI.Xaml;
 using System;
 using System.Threading.Tasks;
-using Microsoft.UI.Xaml;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
 using VirtualPaper.UIComponent.Templates;
@@ -9,7 +10,13 @@ using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
 
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
 namespace Workloads.Creation.WebBackdrop {
+    /// <summary>
+    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// </summary>
     public sealed partial class MainPage : ArcPage, IRuntime {
         public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
         public string FileName => Session.DesignFileUtil.ProjectName;
@@ -21,21 +28,26 @@ namespace Workloads.Creation.WebBackdrop {
         public bool IsSavedFromInit => Session.DesignFileUtil.IsSaveFromInit;
 
         public MainPage() {
-            InitializeComponent();
+            this.InitializeComponent();
+            ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
+        }
+
+        /// <summary>
+        /// 由 RuntimeFactory 在构造后调用，传入文件路径完成初始化
+        /// </summary>
+        /// <param name="filePath">类型为 web 项目（zip/rar/7z）的文件路径或项目名称</param>
+        public void Initialize(string filePath, FileType fileType) {
+            Session = new WebProjectSession(filePath);
+            Payload = new FrameworkPayload() {
+                [NaviPayloadKey.ArcPageContext] = this.ArcContext,
+                [NaviPayloadKey.WebProjectSession] = this.Session
+            };
+            Session.IsSavedChanged += Session_IsSavedChanged;
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e) {
             try {
-                var identify = Payload?.Get<string>(NaviPayloadKey.StaticImgFileName) ?? string.Empty;
-                Session = new WebProjectSession(identify);
-                Session.IsSavedChanged += Session_IsSavedChanged;
-
-                var payload = new FrameworkPayload() {
-                    [NaviPayloadKey.ArcPageContext] = this.ArcContext,
-                    [NaviPayloadKey.WebProjectSession] = this.Session
-                };
-                webEditor.Payload = payload;
-
+                webEditor.Payload = Payload;
                 IsEnabled = true;
             }
             catch (Exception ex) {

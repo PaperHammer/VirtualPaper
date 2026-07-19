@@ -163,7 +163,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private void RefreshHeaderAsync(IRuntime runtime) {
             if (!_runtimeToArcTab.TryGetValue(runtime, out var tab)) return;
 
-            CrossThreadInvoker.InvokeOnUIThread(async () => {
+            CrossThreadInvoker.InvokeOnUIThread(() => {
                 if (tab.Header.MainContent is TextBlock tb) {
                     tb.Text = Path.GetFileName(runtime.FileName);
                 }

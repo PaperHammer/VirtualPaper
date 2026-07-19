@@ -98,8 +98,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             CardUIStateChanged?.Invoke();
         }
 
-        public async Task OnNextStepClickedAsync() {
-            if (SelectedTemplate == null || !IsNameOk) return;
+        public Task OnNextStepClickedAsync() {
+            if (SelectedTemplate == null || !IsNameOk) return Task.CompletedTask;
 
             var preData = new PreProjectData[] { new(ProjectName!, SelectedTemplate!.ProjType) };
             _navigateComponent?.GetPaylaod()?.Set(NaviPayloadKey.Project, preData);
@@ -110,15 +110,19 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             else {
                 _navigateComponent?.NavigateByState(DraftPanelState.WorkSpace);
             }
+
+            return Task.CompletedTask;
         }
 
-        public async Task OnPreviousStepClickedAsync() {
+        public Task OnPreviousStepClickedAsync() {
             if (IsFromWorkSpace_AddProj) {
                 DraftConfigTCS?.TrySetResult(null);
             }
             else {
                 _navigateComponent?.NavigateByState(DraftPanelState.GetStart);
             }
+
+            return Task.CompletedTask;
         }
 
         #region filter

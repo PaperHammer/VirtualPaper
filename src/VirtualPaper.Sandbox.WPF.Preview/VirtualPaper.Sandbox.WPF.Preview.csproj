@@ -15,8 +15,4 @@
     <ProjectReference Include="..\VirtualPaper\VirtualPaper.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="WPF-UI" Version="4.0.0" />
-  </ItemGroup>
-
 </Project>

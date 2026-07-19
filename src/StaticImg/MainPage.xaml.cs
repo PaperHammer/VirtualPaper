@@ -29,7 +29,7 @@ namespace Workloads.Creation.StaticImg {
         public string Id => Session.SessionId;
         public override Type ArcType => typeof(MainPage);
         protected override bool IsMultiInstance => true;
-        public InkProjectSession Session { get; private set; }
+        public InkProjectSession Session { get; private set; } = null!;
 
         public double FrameTimeMs {
             get { lock (_frameTimeLock) return _frameTimeMs; }
@@ -38,23 +38,21 @@ namespace Workloads.Creation.StaticImg {
 
         public bool IsSavedFromInit => Session.DesignFileUtil.IsSaveFromInit;
 
+        public MainPage() {
+            this.InitializeComponent();
+            ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
+        }
+
         /// <summary>
-        /// 打开文件
+        /// 由 RuntimeFactory 在构造后调用，传入文件路径和类型完成初始化
         /// </summary>
         /// <param name="filePath">类型为 vpd 或静态图像的文件路径</param>
-        public MainPage(string filePath, FileType fileType) {
+        public void Initialize(string filePath, FileType fileType) {
             Session = new InkProjectSession(filePath, fileType);
             Payload = new FrameworkPayload() {
                 [NaviPayloadKey.ArcPageContext] = this.ArcContext,
                 [NaviPayloadKey.InkProjectSession] = this.Session
             };
-            this.InitializeComponent();
-            ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
-
-            InitEvents();
-        }
-
-        private void InitEvents() {
             Session.IsSavedChanged += Session_IsSavedChanged;
         }
 

@@ -45,9 +45,9 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
             _requestRenderAction = requestRenderAction;
         }
 
-        public async Task ExecuteAsync() {
+        public Task ExecuteAsync() {
             var renderData = GetRenderData();
-            if (renderData?.RenderTarget == null) return;
+            if (renderData?.RenderTarget == null) return Task.CompletedTask;
 
             byte[] selPixels = _compressedTargetNewPixels.DecompressPixels();
 
@@ -59,11 +59,13 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
 
             renderData.HandleOnceRenderCompleted();
             _requestRenderAction(new Rect(_ox, _oy, _w, _h).UnionRect(new Rect(_nx, _ny, _w, _h)));
+
+            return Task.CompletedTask;
         }
 
-        public async Task UndoAsync() {
+        public Task UndoAsync() {
             var renderData = GetRenderData();
-            if (renderData?.RenderTarget == null) return;
+            if (renderData?.RenderTarget == null) return Task.CompletedTask;
 
             byte[] selPixels = _compressedSelectionPixels.DecompressPixels();
             byte[] targetOriginal = _compressedTargetOriginalPixels.DecompressPixels();
@@ -75,6 +77,8 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
 
             renderData.HandleOnceRenderCompleted();
             _requestRenderAction(new Rect(_ox, _oy, _w, _h).UnionRect(new Rect(_nx, _ny, _w, _h)));
+
+            return Task.CompletedTask;
         }
 
         private InkRenderData? GetRenderData() {

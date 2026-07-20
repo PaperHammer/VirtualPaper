@@ -127,6 +127,7 @@ namespace VirtualPaper.Common {
             public static string UI => "VirtualPaper.UI.exe";
             public static string ScrSaver => "VirtualPaper.ScreenSaver.exe";
             public static string PlayerWeb => "VirtualPaper.PlayerWeb.exe";
+            public static string WebBackdrop => "WebBackdrop";
         }
 
         public static class CoreField {

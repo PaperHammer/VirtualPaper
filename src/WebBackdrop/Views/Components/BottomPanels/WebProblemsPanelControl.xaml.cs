@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using VirtualPaper.Models.Mvvm;
-using Windows.UI;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
     public sealed partial class WebProblemsPanelControl : UserControl {
@@ -307,9 +304,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
         public int ColumnNumber { get; }
         public string PositionText { get; }
         public string Glyph => Severity == ProblemSeverity.Error ? "\uEA39" : "\uE7BA";
-        public Brush Brush => Severity == ProblemSeverity.Error
-            ? new SolidColorBrush(Color.FromArgb(255, 255, 77, 77))
-            : new SolidColorBrush(Colors.Orange);
+        public Visibility ErrorVisibility => Severity == ProblemSeverity.Error ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility WarningVisibility => Severity == ProblemSeverity.Warning ? Visibility.Visible : Visibility.Collapsed;
 
         public bool EqualsByValue(ProblemItem other) {
             return FilePath == other.FilePath

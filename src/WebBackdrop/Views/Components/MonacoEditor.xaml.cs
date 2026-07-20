@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
-using Windows.UI;
+using Workloads.Creation.WebBackdrop.Core.Theme;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class MonacoEditor : UserControl {
@@ -65,11 +65,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private void UpdateTheme() {
             var theme = ActualTheme == ElementTheme.Light ? "vs" : "vs-dark";
-            var background = ActualTheme == ElementTheme.Light
-                ? Color.FromArgb(255, 255, 255, 255)
-                : Color.FromArgb(255, 30, 30, 30);
+            var backgroundRole = ActualTheme == ElementTheme.Light
+                ? WebBackdropColorRole.WebViewLightBackground
+                : WebBackdropColorRole.WebViewDarkBackground;
 
-            monacoWebView.DefaultBackgroundColor = background;
+            monacoWebView.DefaultBackgroundColor = WebBackdropThemeResource.GetColor(this, backgroundRole);
             if (monacoWebView.CoreWebView2 != null && _isEditorReady) {
                 _ = monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setEditorTheme('{theme}')");
             }
@@ -246,14 +246,19 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         };
 
         private string GetFallbackHtml() {
-            return """
+            var lightBackground = WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackLightBackground);
+            var darkBackground = WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackDarkBackground);
+            var lightForeground = WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackLightForeground);
+            var darkForeground = WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackDarkForeground);
+
+            return $$"""
             <!DOCTYPE html>
             <html>
             <head>
                 <meta charset="UTF-8">
                 <style>
-                    body { margin: 0; padding: 20px; font-family: monospace; background: #1e1e1e; color: #d4d4d4; }
-                    textarea { width: 100%; height: calc(100vh - 40px); background: #1e1e1e; color: #d4d4d4; border: none; font-family: monospace; font-size: 14px; resize: none; }
+                    body { margin: 0; padding: 20px; font-family: monospace; background: {{darkBackground}}; color: {{darkForeground}}; }
+                    textarea { width: 100%; height: calc(100vh - 40px); background: {{darkBackground}}; color: {{darkForeground}}; border: none; font-family: monospace; font-size: 14px; resize: none; }
                 </style>
             </head>
             <body>
@@ -266,9 +271,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     window.setValue = (val) => { editor.value = val; };
                     window.getValue = () => editor.value;
                     window.setEditorTheme = (theme) => {
-                        document.body.style.background = theme === 'vs' ? '#ffffff' : '#1e1e1e';
-                        document.getElementById('editor').style.background = theme === 'vs' ? '#ffffff' : '#1e1e1e';
-                        document.getElementById('editor').style.color = theme === 'vs' ? '#000000' : '#d4d4d4';
+                        document.body.style.background = theme === 'vs' ? '{{lightBackground}}' : '{{darkBackground}}';
+                        document.getElementById('editor').style.background = theme === 'vs' ? '{{lightBackground}}' : '{{darkBackground}}';
+                        document.getElementById('editor').style.color = theme === 'vs' ? '{{lightForeground}}' : '{{darkForeground}}';
                     };
                     if (window.chrome && window.chrome.webview) {
                         window.chrome.webview.postMessage(JSON.stringify({ type: 'ready' }));

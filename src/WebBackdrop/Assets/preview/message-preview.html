@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--preview-background);
+            color: var(--preview-secondary-foreground);
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+    </style>
+    <script>
+        document.documentElement.style.setProperty('--preview-background', '{{PreviewBackground}}');
+        document.documentElement.style.setProperty('--preview-secondary-foreground', '{{PreviewSecondaryForeground}}');
+    </script>
+</head>
+<body>
+    {{Message}}
+</body>
+</html>

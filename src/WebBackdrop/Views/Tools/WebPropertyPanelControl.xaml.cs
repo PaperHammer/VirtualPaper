@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -6,8 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using VirtualPaper.Common;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.UI;
+using Workloads.Creation.WebBackdrop.Core.Theme;
 using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.Models.SerializableData;
 
@@ -46,19 +48,24 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         }
 
         private void UpdatePreviewBackground() {
-            previewWebView.DefaultBackgroundColor = IsLightTheme
-                ? Color.FromArgb(255, 255, 255, 255)
-                : Color.FromArgb(255, 30, 30, 30);
+            var role = IsLightTheme
+                ? WebBackdropColorRole.WebViewLightBackground
+                : WebBackdropColorRole.WebViewDarkBackground;
+            previewWebView.DefaultBackgroundColor = WebBackdropThemeResource.GetColor(this, role);
         }
 
         private bool IsLightTheme => ActualTheme == ElementTheme.Light;
         private bool IsCurrentPreviewImage => _currentFile != null && IsImage(_currentFile.FileExtension);
-        private string PreviewBackground => IsLightTheme ? "#ffffff" : "#1e1e1e";
-        private string PreviewForeground => IsLightTheme ? "#1a1a1a" : "#f3f3f3";
-        private string PreviewSecondaryForeground => IsLightTheme ? "#666666" : "#aaaaaa";
-        private string PreviewCodeBackground => IsLightTheme ? "#f3f3f3" : "#2d2d2d";
-        private string PreviewQuoteBorder => IsLightTheme ? "#999999" : "#777777";
-        private string PreviewLinkForeground => IsLightTheme ? "#0067c0" : "#8ab4f8";
+        private string PreviewBackground => GetPreviewString(WebBackdropStringRole.PreviewLightBackground, WebBackdropStringRole.PreviewDarkBackground);
+        private string PreviewForeground => GetPreviewString(WebBackdropStringRole.PreviewLightForeground, WebBackdropStringRole.PreviewDarkForeground);
+        private string PreviewSecondaryForeground => GetPreviewString(WebBackdropStringRole.PreviewLightSecondaryForeground, WebBackdropStringRole.PreviewDarkSecondaryForeground);
+        private string PreviewCodeBackground => GetPreviewString(WebBackdropStringRole.PreviewLightCodeBackground, WebBackdropStringRole.PreviewDarkCodeBackground);
+        private string PreviewQuoteBorder => GetPreviewString(WebBackdropStringRole.PreviewLightQuoteBorder, WebBackdropStringRole.PreviewDarkQuoteBorder);
+        private string PreviewLinkForeground => GetPreviewString(WebBackdropStringRole.PreviewLightLinkForeground, WebBackdropStringRole.PreviewDarkLinkForeground);
+
+        private string GetPreviewString(WebBackdropStringRole lightRole, WebBackdropStringRole darkRole) {
+            return WebBackdropThemeResource.GetString(this, IsLightTheme ? lightRole : darkRole);
+        }
 
         private void PreviewWebViewHost_SizeChanged(object sender, SizeChangedEventArgs e) => UpdatePreviewHeight(e.NewSize.Width);
 
@@ -160,42 +167,16 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
         private void LoadPreview(WebEditorFile file) {
             if (IsImage(file.FileExtension)) {
-                var uri = new Uri(file.FilePath).AbsoluteUri;
-                NavigatePreview($$"""
-<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-html,body{margin:0;width:100%;height:100%;background:{{PreviewBackground}};display:flex;align-items:center;justify-content:center;}
-img{max-width:100%;max-height:100%;object-fit:contain;}
-</style>
-</head>
-<body><img src="{{WebUtility.HtmlEncode(uri)}}"></body>
-</html>
-""");
+                NavigatePreview(RenderPreviewTemplate("image-preview.html", new Dictionary<string, string> {
+                    ["ImageUri"] = WebUtility.HtmlEncode(new Uri(file.FilePath).AbsoluteUri),
+                }));
                 return;
             }
 
             if (file.FileExtension == ".md" || file.FileExtension == ".markdown") {
-                NavigatePreview($$"""
-<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-body{font-family:'Segoe UI',sans-serif;margin:16px;line-height:1.55;color:{{PreviewForeground}};background:{{PreviewBackground}};}
-h1,h2,h3,h4,h5,h6{line-height:1.25;}
-pre,code{font-family:Consolas,monospace;background:{{PreviewCodeBackground}};border-radius:4px;}
-code{padding:2px 4px;}
-pre{padding:10px;overflow:auto;}
-blockquote{border-left:3px solid {{PreviewQuoteBorder}};margin-left:0;padding-left:10px;color:{{PreviewSecondaryForeground}};}
-a{color:{{PreviewLinkForeground}};}
-</style>
-</head>
-<body>{{RenderMarkdown(file.Content)}}</body>
-</html>
-""");
+                NavigatePreview(RenderPreviewTemplate("markdown-preview.html", new Dictionary<string, string> {
+                    ["MarkdownHtml"] = RenderMarkdown(file.Content),
+                }));
                 return;
             }
 
@@ -203,18 +184,35 @@ a{color:{{PreviewLinkForeground}};}
         }
 
         private void SetPreviewMessage(string message) {
-            NavigatePreview($$"""
-<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-html,body{margin:0;width:100%;height:100%;background:{{PreviewBackground}};color:{{PreviewSecondaryForeground}};font-family:'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;box-sizing:border-box;}
-</style>
-</head>
-<body>{{WebUtility.HtmlEncode(message)}}</body>
-</html>
-""");
+            NavigatePreview(RenderPreviewTemplate("message-preview.html", new Dictionary<string, string> {
+                ["Message"] = WebUtility.HtmlEncode(message),
+            }));
+        }
+
+        private string RenderPreviewTemplate(string templateName, IReadOnlyDictionary<string, string> values) {
+            var html = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, Constants.ModuleName.WebBackdrop, "Assets", "preview", templateName));
+            foreach (var pair in GetPreviewTemplateValues(values)) {
+                html = html.Replace("{{" + pair.Key + "}}", pair.Value);
+            }
+
+            return html;
+        }
+
+        private IReadOnlyDictionary<string, string> GetPreviewTemplateValues(IReadOnlyDictionary<string, string> values) {
+            var templateValues = new Dictionary<string, string> {
+                ["PreviewBackground"] = PreviewBackground,
+                ["PreviewForeground"] = PreviewForeground,
+                ["PreviewSecondaryForeground"] = PreviewSecondaryForeground,
+                ["PreviewCodeBackground"] = PreviewCodeBackground,
+                ["PreviewQuoteBorder"] = PreviewQuoteBorder,
+                ["PreviewLinkForeground"] = PreviewLinkForeground,
+            };
+
+            foreach (var pair in values) {
+                templateValues[pair.Key] = pair.Value;
+            }
+
+            return templateValues;
         }
 
         private async void NavigatePreview(string html) {

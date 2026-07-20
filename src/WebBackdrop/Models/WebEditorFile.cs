@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using VirtualPaper.Models.Mvvm;
 
 namespace Workloads.Creation.WebBackdrop.Models {
@@ -34,6 +35,24 @@ namespace Workloads.Creation.WebBackdrop.Models {
             FilePath = filePath;
             _content = File.Exists(filePath) ? File.ReadAllText(filePath) : string.Empty;
             _isSaved = true;
+        }
+
+        public static async Task<WebEditorFile> LoadAsync(string filePath) {
+            var content = File.Exists(filePath) ? await File.ReadAllTextAsync(filePath) : string.Empty;
+            return new WebEditorFile(filePath, content);
+        }
+
+        private WebEditorFile(string filePath, string content) {
+            FilePath = filePath;
+            _content = content;
+            _isSaved = true;
+        }
+
+        public async Task ReloadAsync() {
+            _content = File.Exists(FilePath) ? await File.ReadAllTextAsync(FilePath) : string.Empty;
+            _isSaved = true;
+            OnPropertyChanged(nameof(Content));
+            OnPropertyChanged(nameof(IsSaved));
         }
 
         public void MarkAsSaved() {

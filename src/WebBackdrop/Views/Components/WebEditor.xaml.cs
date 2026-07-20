@@ -11,8 +11,9 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Windows.System;
-using Windows.UI;
+using Workloads.Creation.WebBackdrop.Core.Theme;
 using Workloads.Creation.WebBackdrop.Core.Utils;
+using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.ViewModels;
 using Workloads.Creation.WebBackdrop.Views.Components.BottomPanels;
 
@@ -133,11 +134,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void ArcUserControl_Loaded(object sender, RoutedEventArgs e) {
-            if (Payload == null) return;
+            if (_isLoaded || Payload == null) return;
 
             Payload.TryGet(NaviPayloadKey.WebProjectSession, out _session);
             if (_session == null) return;
 
+            _isLoaded = true;
             ViewModel = new WebEditorViewModel(_session);
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
@@ -148,6 +150,14 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             UpdateStatusBar();
         }
 
+        private void ArcUserControl_Unloaded(object sender, RoutedEventArgs e) {
+            if (ViewModel != null) {
+                ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            }
+
+            _isLoaded = false;
+        }
+
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
             if (e.PropertyName == nameof(WebEditorViewModel.ActiveFile)) {
                 UpdateStatusBar();
@@ -155,19 +165,21 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void UpdateStatusBar() {
-            if (ViewModel?.ActiveFile != null) {
-                var filePath = ViewModel.ActiveFile.FilePath;
+            var activeFile = ViewModel?.ActiveFile;
+            if (activeFile != null) {
+                var filePath = activeFile.FilePath;
                 if (!string.Equals(_activeEditorFilePath, filePath, StringComparison.OrdinalIgnoreCase)) {
                     _activeEditorFilePath = filePath;
                     _ignoredEmptyMarkersFilePath = filePath;
                 }
 
                 ActiveFilePathText = filePath;
-                ActiveFileLanguage = GetLanguageFromExtension(ViewModel.ActiveFile.FileExtension);
-                monacoEditor.EditorContent = ViewModel.ActiveFile.Content;
+                ActiveFileLanguage = GetLanguageFromExtension(activeFile.FileExtension);
+                monacoEditor.EditorContent = activeFile.Content;
                 monacoEditor.EditorLanguage = ActiveFileLanguage;
                 monacoEditor.Visibility = Visibility.Visible;
                 welcomePanel.Visibility = Visibility.Collapsed;
+                leftFileTreeControl.SelectFile(filePath);
             }
             else {
                 ActiveFilePathText = string.Empty;
@@ -182,10 +194,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             CursorColumn = 1;
             SelectedCharacterCount = 0;
             IsSelectedCharacterCountOverflow = false;
-            propertyPanelControl.Load(ViewModel?.ActiveFile, ActiveFileLanguage);
-            if (ViewModel?.ActiveFile != null) {
-                leftFileTreeControl.SelectFile(ViewModel.ActiveFile.FilePath);
-            }
+            propertyPanelControl.Load(activeFile, ActiveFileLanguage);
             UpdateStatusBarLayoutState();
         }
 
@@ -206,7 +215,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private void MonacoEditor_ContentChanged(object? sender, string content) {
             if (ViewModel?.ActiveFile != null && ViewModel.ActiveFile.Content != content) {
                 ViewModel.ActiveFile.Content = content;
-                propertyPanelControl.Load(ViewModel.ActiveFile, ActiveFileLanguage);
+                QueuePropertyPanelRefresh(ViewModel.ActiveFile, ActiveFileLanguage);
             }
         }
 
@@ -234,8 +243,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
         #endregion
 
-        private void FileTree_FileOpenRequested(object? sender, string filePath) {
-            ViewModel?.OpenFile(filePath);
+        private async void FileTree_FileOpenRequested(object? sender, string filePath) {
+            if (ViewModel != null) {
+                await ViewModel.OpenFileAsync(filePath);
+            }
         }
 
         private void FileTree_FolderSelected(object? sender, string folderPath) {
@@ -402,7 +413,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private void Splitter_PointerEntered(object sender, PointerRoutedEventArgs e) {
             if (_splitterLines.TryGetValue(sender, out var line)) {
-                line.Fill = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                line.Fill = (Brush)Resources[WebBackdropThemeResource.GetBrushKey(WebBackdropBrushRole.SplitterHover)];
             }
         }
 
@@ -494,8 +505,17 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
+        private async void QueuePropertyPanelRefresh(WebEditorFile file, string language) {
+            _propertyPanelRefreshVersion++;
+            var version = _propertyPanelRefreshVersion;
+            await Task.Delay(250);
+            if (version == _propertyPanelRefreshVersion && ReferenceEquals(ViewModel?.ActiveFile, file)) {
+                propertyPanelControl.Load(file, language);
+            }
+        }
+
         private async void ProblemsPanel_ProblemRequested(object? sender, ProblemItem item) {
-            ViewModel.OpenFile(item.FilePath);
+            await ViewModel.OpenFileAsync(item.FilePath);
             await Task.Delay(50);
             await monacoEditor.RevealPositionAsync(item.LineNumber, item.ColumnNumber);
         }
@@ -508,6 +528,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private WebProjectSession? _session;
+        private bool _isLoaded;
+        private int _propertyPanelRefreshVersion;
         private string _activeBottomPanel = "PROBLEMS";
         private string? _activeEditorFilePath;
         private string? _ignoredEmptyMarkersFilePath;

@@ -8,6 +8,14 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ms-appx:///WebBackdrop/Themes/WebBackdropColors.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <Grid Height="28" Padding="6 0" Background="{ThemeResource LayerFillColorDefaultBrush}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -16,24 +24,28 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-            <Button Padding="8 2" BorderThickness="0" Background="Transparent" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Click="Problems_Click">
+            <Button Padding="8 2" BorderThickness="0" Background="Transparent" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" Click="Problems_Click">
                 <StackPanel Orientation="Horizontal" Spacing="5">
-                    <FontIcon Glyph="&#xEA39;" FontSize="14" Foreground="{x:Bind ProblemErrorBrush, Mode=OneWay}"/>
-                    <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemErrorText, Mode=OneWay}" Foreground="{x:Bind ProblemErrorBrush, Mode=OneWay}"/>
-                    <FontIcon Glyph="&#xE7BA;" FontSize="14" Foreground="{x:Bind ProblemWarningBrush, Mode=OneWay}"/>
-                    <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemWarningText, Mode=OneWay}" Foreground="{x:Bind ProblemWarningBrush, Mode=OneWay}"/>
+                    <FontIcon Glyph="&#xEA39;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemErrorBrush}" Visibility="{x:Bind ProblemErrorActiveVisibility, Mode=OneWay}"/>
+                    <FontIcon Glyph="&#xEA39;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemErrorInactiveVisibility, Mode=OneWay}"/>
+                    <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemErrorText, Mode=OneWay}" Foreground="{ThemeResource WebBackdropProblemErrorBrush}" Visibility="{x:Bind ProblemErrorActiveVisibility, Mode=OneWay}"/>
+                    <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemErrorText, Mode=OneWay}" Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemErrorInactiveVisibility, Mode=OneWay}"/>
+                    <FontIcon Glyph="&#xE7BA;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemWarningBrush}" Visibility="{x:Bind ProblemWarningActiveVisibility, Mode=OneWay}"/>
+                    <FontIcon Glyph="&#xE7BA;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemWarningInactiveVisibility, Mode=OneWay}"/>
+                    <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemWarningText, Mode=OneWay}" Foreground="{ThemeResource WebBackdropProblemWarningBrush}" Visibility="{x:Bind ProblemWarningActiveVisibility, Mode=OneWay}"/>
+                    <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemWarningText, Mode=OneWay}" Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemWarningInactiveVisibility, Mode=OneWay}"/>
                 </StackPanel>
             </Button>
 
-            <Button Padding="8 2" BorderThickness="0" CornerRadius="4" Background="Transparent" Foreground="{ThemeResource TextFillColorTertiaryBrush}" ToolTipService.ToolTip="Run" Click="Run_Click">
+            <Button Padding="8 2" BorderThickness="0" CornerRadius="4" Background="Transparent" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" ToolTipService.ToolTip="Run" Click="Run_Click">
                 <StackPanel Orientation="Horizontal" Spacing="4">
-                    <FontIcon Glyph="&#xE768;" FontSize="14" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                    <FontIcon Glyph="&#xE768;" FontSize="14" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
                     <TextBlock FontSize="11" Text="运行"/>
                 </StackPanel>
             </Button>
-            <!--<Button Padding="8 2" BorderThickness="0" CornerRadius="4" Background="Transparent" Foreground="{ThemeResource TextFillColorTertiaryBrush}" ToolTipService.ToolTip="Debug" Click="Debug_Click">
+            <!--<Button Padding="8 2" BorderThickness="0" CornerRadius="4" Background="Transparent" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" ToolTipService.ToolTip="Debug" Click="Debug_Click">
                 <StackPanel Orientation="Horizontal" Spacing="4">
-                    <FontIcon Glyph="&#xEBE8;" FontSize="14" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                    <FontIcon Glyph="&#xEBE8;" FontSize="14" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
                     <TextBlock FontSize="11" Text="调试"/>
                 </StackPanel>
             </Button>-->
@@ -42,30 +54,30 @@
         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
             <Button Padding="5" BorderThickness="0" Background="Transparent" ToolTipService.ToolTip="切换左侧栏" Click="ToggleLeftSideBar_Click">
                 <Grid Width="14" Height="14">
-                    <Border BorderBrush="{ThemeResource TextFillColorTertiaryBrush}" BorderThickness="1" CornerRadius="2"/>
-                    <Border Width="6" HorizontalAlignment="Left" Background="{ThemeResource TextFillColorTertiaryBrush}" CornerRadius="2 0 0 2" Visibility="{x:Bind LeftSideBarFillVisibility, Mode=OneWay}"/>
-                    <Rectangle Width="1" HorizontalAlignment="Left" Margin="5,0,0,0" Fill="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind LeftSideBarLineVisibility, Mode=OneWay}"/>
+                    <Border BorderBrush="{ThemeResource WebBackdropStatusBarForegroundBrush}" BorderThickness="1" CornerRadius="2"/>
+                    <Border Width="6" HorizontalAlignment="Left" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="2 0 0 2" Visibility="{x:Bind LeftSideBarFillVisibility, Mode=OneWay}"/>
+                    <Rectangle Width="1" HorizontalAlignment="Left" Margin="5,0,0,0" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind LeftSideBarLineVisibility, Mode=OneWay}"/>
                 </Grid>
             </Button>
             <Button Padding="5" BorderThickness="0" Background="Transparent" ToolTipService.ToolTip="切换底部面板" Click="ToggleBottomPanel_Click">
                 <Grid Width="14" Height="14">
-                    <Border BorderBrush="{ThemeResource TextFillColorTertiaryBrush}" BorderThickness="1" CornerRadius="2"/>
-                    <Border Height="6" VerticalAlignment="Bottom" Background="{ThemeResource TextFillColorTertiaryBrush}" CornerRadius="0 0 2 2" Visibility="{x:Bind BottomPanelFillVisibility, Mode=OneWay}"/>
-                    <Rectangle Height="1" VerticalAlignment="Bottom" Margin="0,0,0,5" Fill="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind BottomPanelLineVisibility, Mode=OneWay}"/>
+                    <Border BorderBrush="{ThemeResource WebBackdropStatusBarForegroundBrush}" BorderThickness="1" CornerRadius="2"/>
+                    <Border Height="6" VerticalAlignment="Bottom" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="0 0 2 2" Visibility="{x:Bind BottomPanelFillVisibility, Mode=OneWay}"/>
+                    <Rectangle Height="1" VerticalAlignment="Bottom" Margin="0,0,0,5" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind BottomPanelLineVisibility, Mode=OneWay}"/>
                 </Grid>
             </Button>
             <Button Padding="5" BorderThickness="0" Background="Transparent" ToolTipService.ToolTip="切换右侧栏" Click="ToggleRightSideBar_Click">
                 <Grid Width="14" Height="14">
-                    <Border BorderBrush="{ThemeResource TextFillColorTertiaryBrush}" BorderThickness="1" CornerRadius="2"/>
-                    <Border Width="6" HorizontalAlignment="Right" Background="{ThemeResource TextFillColorTertiaryBrush}" CornerRadius="0 2 2 0" Visibility="{x:Bind RightSideBarFillVisibility, Mode=OneWay}"/>
-                    <Rectangle Width="1" HorizontalAlignment="Right" Margin="0,0,5,0" Fill="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{x:Bind RightSideBarLineVisibility, Mode=OneWay}"/>
+                    <Border BorderBrush="{ThemeResource WebBackdropStatusBarForegroundBrush}" BorderThickness="1" CornerRadius="2"/>
+                    <Border Width="6" HorizontalAlignment="Right" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="0 2 2 0" Visibility="{x:Bind RightSideBarFillVisibility, Mode=OneWay}"/>
+                    <Rectangle Width="1" HorizontalAlignment="Right" Margin="0,0,5,0" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind RightSideBarLineVisibility, Mode=OneWay}"/>
                 </Grid>
             </Button>
-            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" Text="{x:Bind CursorPositionText, Mode=OneWay}"/>
-            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" Text="{x:Bind IndentText, Mode=OneWay}"/>
-            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" Text="{x:Bind EncodingText, Mode=OneWay}"/>
-            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" Text="{x:Bind LineEndingText, Mode=OneWay}"/>
-            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" Text="{x:Bind LanguageStatusText, Mode=OneWay}"/>
+            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind CursorPositionText, Mode=OneWay}"/>
+            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind IndentText, Mode=OneWay}"/>
+            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind EncodingText, Mode=OneWay}"/>
+            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind LineEndingText, Mode=OneWay}"/>
+            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind LanguageStatusText, Mode=OneWay}"/>
         </StackPanel>
     </Grid>
 

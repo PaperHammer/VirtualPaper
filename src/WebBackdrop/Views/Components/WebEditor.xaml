@@ -12,7 +12,16 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"  
     DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}"
-    Loaded="ArcUserControl_Loaded">
+    Loaded="ArcUserControl_Loaded"
+    Unloaded="ArcUserControl_Unloaded">
+
+    <arc:ArcUserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ms-appx:///WebBackdrop/Themes/WebBackdropColors.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </arc:ArcUserControl.Resources>
 
     <arc:ArcUserControl.KeyboardAccelerators>
         <KeyboardAccelerator Modifiers="Control" Key="J" Invoked="KeyboardAccelerator_Invoked"/>
@@ -72,9 +81,7 @@
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
 
-                <Border
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="0 0 0 1">
+                <Border BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0 0 0 1">
                     <Grid>
                         <local:MonacoEditor x:Name="monacoEditor"
                             EditorContent="{x:Bind ViewModel.ActiveFile.Content, Mode=TwoWay}"
@@ -84,10 +91,7 @@
                             MarkersChanged="MonacoEditor_MarkersChanged"
                             ShortcutRequested="MonacoEditor_ShortcutRequested"/>
 
-                        <Grid
-                            x:Name="welcomePanel"
-                            Grid.Row="1"
-                            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+                        <Grid x:Name="welcomePanel" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
                             <StackPanel
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"

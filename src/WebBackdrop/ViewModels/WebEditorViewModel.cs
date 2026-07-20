@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,7 +14,7 @@ using Workloads.Creation.WebBackdrop.Views.Tools;
 
 namespace Workloads.Creation.WebBackdrop.ViewModels {
     public partial class WebEditorViewModel : ObservableObject {
-        public List<WebEditorFile> OpenFiles { get; } = [];
+        public IReadOnlyList<WebEditorFile> OpenFiles => _openFiles;
 
         public WebEditorFile? ActiveFile {
             get => _activeFile;
@@ -44,25 +43,41 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             _userSettings = AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>();
         }
 
+        public async Task OpenFileAsync(string filePath) {
+            if (_openFileMap.TryGetValue(filePath, out var existing)) {
+                await existing.ReloadAsync();
+                ActiveFile = existing;
+                return;
+            }
+
+            var file = await WebEditorFile.LoadAsync(filePath);
+            _openFiles.Add(file);
+            _openFileMap[filePath] = file;
+            ActiveFile = file;
+        }
+
         public void OpenFile(string filePath) {
-            var existing = OpenFiles.FirstOrDefault(f => f.FilePath == filePath);
-            if (existing != null) {
+            if (_openFileMap.TryGetValue(filePath, out var existing)) {
                 ActiveFile = existing;
                 return;
             }
 
             var file = new WebEditorFile(filePath);
-            OpenFiles.Add(file);
+            _openFiles.Add(file);
+            _openFileMap[filePath] = file;
             ActiveFile = file;
         }
 
         public void CloseFile(WebEditorFile file) {
-            var idx = OpenFiles.IndexOf(file);
-            OpenFiles.Remove(file);
+            var idx = _openFiles.IndexOf(file);
+            if (idx < 0) return;
+
+            _openFiles.RemoveAt(idx);
+            _openFileMap.Remove(file.FilePath);
 
             if (ActiveFile == file) {
-                ActiveFile = OpenFiles.Count > 0
-                    ? OpenFiles[Math.Max(0, idx - 1)]
+                ActiveFile = _openFiles.Count > 0
+                    ? _openFiles[Math.Max(0, idx - 1)]
                     : null;
             }
         }
@@ -74,22 +89,22 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
         public async Task<bool> SaveAllAsync() {
             bool allOk = true;
-            foreach (var f in OpenFiles) {
+            foreach (var f in _openFiles) {
                 if (!f.IsSaved)
                     allOk &= await SaveFileAsync(f);
             }
             return allOk;
         }
 
-        private static Task<bool> SaveFileAsync(WebEditorFile file) {
+        private static async Task<bool> SaveFileAsync(WebEditorFile file) {
             try {
-                File.WriteAllText(file.FilePath, file.Content);
+                await File.WriteAllTextAsync(file.FilePath, file.Content);
                 file.MarkAsSaved();
-                return Task.FromResult(true);
+                return true;
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
-                return Task.FromResult(false);
+                return false;
             }
         }
 
@@ -99,6 +114,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         private WebEditorFile? _activeFile;
+        private readonly List<WebEditorFile> _openFiles = [];
+        private readonly Dictionary<string, WebEditorFile> _openFileMap = new(StringComparer.OrdinalIgnoreCase);
         private readonly IUserSettingsClient _userSettings;
     }
 }

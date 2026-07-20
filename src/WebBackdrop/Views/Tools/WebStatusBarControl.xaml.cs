@@ -1,9 +1,6 @@
 using System;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
-using Windows.UI;
 
 namespace Workloads.Creation.WebBackdrop.Views.Tools {
     public sealed partial class WebStatusBarControl : UserControl {
@@ -80,12 +77,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             : $"Ln {LineNumber}, Col {Column}";
         public string ProblemErrorText => ProblemErrorCount.ToString();
         public string ProblemWarningText => ProblemWarningCount.ToString();
-        public Brush ProblemErrorBrush => ProblemErrorCount > 0
-            ? new SolidColorBrush(Color.FromArgb(255, 255, 77, 77))
-            : (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"];
-        public Brush ProblemWarningBrush => ProblemWarningCount > 0
-            ? new SolidColorBrush(Colors.Orange)
-            : (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"];
+        public Visibility ProblemErrorActiveVisibility => ProblemErrorCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility ProblemErrorInactiveVisibility => ProblemErrorCount > 0 ? Visibility.Collapsed : Visibility.Visible;
+        public Visibility ProblemWarningActiveVisibility => ProblemWarningCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility ProblemWarningInactiveVisibility => ProblemWarningCount > 0 ? Visibility.Collapsed : Visibility.Visible;
         public string IndentText => "Spaces: 2";
         public string EncodingText => "UTF-8";
         public string LineEndingText => "CRLF";

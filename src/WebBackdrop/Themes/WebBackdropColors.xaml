@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="WebBackdropProblemErrorBrush" Color="#FFFF4D4D"/>
+    <SolidColorBrush x:Key="WebBackdropProblemWarningBrush" Color="#FFFFA500"/>
+    <SolidColorBrush x:Key="WebBackdropProblemInactiveBrush" Color="{ThemeResource TextFillColorSecondary}"/>
+    <SolidColorBrush x:Key="WebBackdropStatusBarForegroundBrush" Color="{ThemeResource TextFillColorSecondary}"/>
+    <SolidColorBrush x:Key="WebBackdropProblemBadgeBackgroundBrush" Color="{ThemeResource ControlFillColorSecondary}"/>
+    <SolidColorBrush x:Key="WebBackdropProblemBadgeForegroundBrush" Color="{ThemeResource TextFillColorPrimary}"/>
+    <SolidColorBrush x:Key="WebBackdropSplitterHoverBrush" Color="{ThemeResource SystemAccentColor}"/>
+
+    <Color x:Key="WebBackdropWebViewLightBackgroundColor">#FFFFFFFF</Color>
+    <Color x:Key="WebBackdropWebViewDarkBackgroundColor">#FF1E1E1E</Color>
+    <x:String x:Key="WebBackdropPreviewLightBackground">#ffffff</x:String>
+    <x:String x:Key="WebBackdropPreviewDarkBackground">#1e1e1e</x:String>
+    <x:String x:Key="WebBackdropPreviewLightForeground">#1a1a1a</x:String>
+    <x:String x:Key="WebBackdropPreviewDarkForeground">#f3f3f3</x:String>
+    <x:String x:Key="WebBackdropPreviewLightSecondaryForeground">#666666</x:String>
+    <x:String x:Key="WebBackdropPreviewDarkSecondaryForeground">#aaaaaa</x:String>
+    <x:String x:Key="WebBackdropPreviewLightCodeBackground">#f3f3f3</x:String>
+    <x:String x:Key="WebBackdropPreviewDarkCodeBackground">#2d2d2d</x:String>
+    <x:String x:Key="WebBackdropPreviewLightQuoteBorder">#999999</x:String>
+    <x:String x:Key="WebBackdropPreviewDarkQuoteBorder">#777777</x:String>
+    <x:String x:Key="WebBackdropPreviewLightLinkForeground">#0067c0</x:String>
+    <x:String x:Key="WebBackdropPreviewDarkLinkForeground">#8ab4f8</x:String>
+    <x:String x:Key="WebBackdropMonacoFallbackLightBackground">#ffffff</x:String>
+    <x:String x:Key="WebBackdropMonacoFallbackDarkBackground">#1e1e1e</x:String>
+    <x:String x:Key="WebBackdropMonacoFallbackLightForeground">#000000</x:String>
+    <x:String x:Key="WebBackdropMonacoFallbackDarkForeground">#d4d4d4</x:String>
+</ResourceDictionary>

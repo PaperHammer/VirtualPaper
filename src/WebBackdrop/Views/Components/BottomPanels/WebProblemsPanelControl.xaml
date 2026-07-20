@@ -10,7 +10,12 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <DataTemplate x:Key="FileTemplate" x:DataType="local:ProblemFileGroup">
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ms-appx:///WebBackdrop/Themes/WebBackdropColors.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <DataTemplate x:Key="FileTemplate" x:DataType="local:ProblemFileGroup">
             <collection:ArcTreeViewItem
                 AutomationProperties.Name="{x:Bind FileName}"
                 ItemsSource="{x:Bind Items}"
@@ -46,11 +51,12 @@
                         Height="16"
                         Padding="4 0"
                         CornerRadius="8"
-                        Background="{ThemeResource SystemAccentColor}">
+                        Background="{ThemeResource WebBackdropProblemBadgeBackgroundBrush}">
                         <TextBlock
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             FontSize="10"
+                            Foreground="{ThemeResource WebBackdropProblemBadgeForegroundBrush}"
                             Text="{x:Bind CountText, Mode=OneWay}"/>
                     </Border>
                 </Grid>
@@ -68,7 +74,14 @@
                         Margin="0 2 0 0"
                         Glyph="{x:Bind Glyph}"
                         FontSize="14"
-                        Foreground="{x:Bind Brush}"/>
+                        Foreground="{ThemeResource WebBackdropProblemErrorBrush}"
+                        Visibility="{x:Bind ErrorVisibility, Mode=OneWay}"/>
+                    <FontIcon
+                        Margin="0 2 0 0"
+                        Glyph="{x:Bind Glyph}"
+                        FontSize="14"
+                        Foreground="{ThemeResource WebBackdropProblemWarningBrush}"
+                        Visibility="{x:Bind WarningVisibility, Mode=OneWay}"/>
                     <StackPanel
                         Grid.Column="1"
                         Orientation="Horizontal"
@@ -108,6 +121,7 @@
             FileTemplate="{StaticResource FileTemplate}"
             ProblemTemplate="{StaticResource ProblemTemplate}"
             OverflowTemplate="{StaticResource OverflowTemplate}"/>
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <collection:ArcTreeView

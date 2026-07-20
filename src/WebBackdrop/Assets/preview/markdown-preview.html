@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 16px;
+            line-height: 1.55;
+            color: var(--preview-foreground);
+            background: var(--preview-background);
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            line-height: 1.25;
+        }
+
+        pre,
+        code {
+            font-family: Consolas, monospace;
+            background: var(--preview-code-background);
+            border-radius: 4px;
+        }
+
+        code {
+            padding: 2px 4px;
+        }
+
+        pre {
+            padding: 10px;
+            overflow: auto;
+        }
+
+        blockquote {
+            border-left: 3px solid var(--preview-quote-border);
+            margin-left: 0;
+            padding-left: 10px;
+            color: var(--preview-secondary-foreground);
+        }
+
+        a {
+            color: var(--preview-link-foreground);
+        }
+    </style>
+    <script>
+        document.documentElement.style.setProperty('--preview-background', '{{PreviewBackground}}');
+        document.documentElement.style.setProperty('--preview-foreground', '{{PreviewForeground}}');
+        document.documentElement.style.setProperty('--preview-secondary-foreground', '{{PreviewSecondaryForeground}}');
+        document.documentElement.style.setProperty('--preview-code-background', '{{PreviewCodeBackground}}');
+        document.documentElement.style.setProperty('--preview-quote-border', '{{PreviewQuoteBorder}}');
+        document.documentElement.style.setProperty('--preview-link-foreground', '{{PreviewLinkForeground}}');
+    </script>
+</head>
+<body>
+    {{MarkdownHtml}}
+</body>
+</html>

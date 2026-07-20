@@ -8,9 +8,16 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ms-appx:///WebBackdrop/Themes/WebBackdropColors.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <Grid>
         <WebView2 x:Name="monacoWebView"
-                  DefaultBackgroundColor="#1E1E1E"
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch"
                   NavigationCompleted="MonacoWebView_NavigationCompleted"/>

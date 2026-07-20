@@ -18,6 +18,7 @@
 		<None Remove="Views\Tools\WebProjectInfoControl.xaml" />
 		<None Remove="Views\Tools\WebPropertyPanelControl.xaml" />
 		<None Remove="Views\Tools\WebStatusBarControl.xaml" />
+		<None Remove="Themes\WebBackdropColors.xaml" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
@@ -56,6 +57,9 @@
 		<Page Update="Views\Tools\WebStatusBarControl.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
+		<Page Update="Themes\WebBackdropColors.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
 	</ItemGroup>
 		<ItemGroup>
 			<Content Remove="Assets\monaco-editor-0.55.1\package\**\*" />
@@ -63,6 +67,9 @@
 		</ItemGroup>
 		<ItemGroup>
 			<Content Include="Assets\monaco.html">
+				<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			</Content>
+			<Content Include="Assets\preview\*.html">
 				<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			</Content>
 			<Content Include="Assets\monaco-editor-0.55.1\package\**\*" Exclude="Assets\monaco-editor-0.55.1\package\dev\**\*;Assets\monaco-editor-0.55.1\package\README.md;Assets\monaco-editor-0.55.1\package\CHANGELOG.md">

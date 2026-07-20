@@ -1,8 +1,6 @@
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using Workloads.Creation.StaticImg.Models.SerializableData;
-using Workloads.Entry.FileLoaders;
-using Workloads.Utils.DraftUtils.Models;
 
 namespace Workloads.Entry.FileLoaders.Specific {
     public class DesignProjectFileLoader : IProjectFileLoader {

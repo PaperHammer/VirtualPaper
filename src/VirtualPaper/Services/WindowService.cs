@@ -74,7 +74,7 @@ namespace VirtualPaper.Services {
         private Window CreateWindow<TWindow>() where TWindow : class {
             var window = _serviceProvider.GetService(typeof(TWindow)) as Window
                 ?? throw new InvalidOperationException(
-                    $"ProjType {typeof(TWindow).Name} is not registered or is not a Window.");
+                    $"Type {typeof(TWindow).Name} is not registered or is not a Window.");
             return window;
         }
 

@@ -6,6 +6,6 @@ namespace VirtualPaper.Models.DraftPanel {
         public string? DescImageKey { get; set; }
         public string? Name { get; set; }
         public string? Desc { get; set; }
-        public ProjectType ProjType { get; set; }
+        public ProjectType Type { get; set; }
     }
 }

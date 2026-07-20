@@ -101,7 +101,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         public Task OnNextStepClickedAsync() {
             if (SelectedTemplate == null || !IsNameOk) return Task.CompletedTask;
 
-            var preData = new PreProjectData[] { new(ProjectName!, SelectedTemplate!.ProjType) };
+            var preData = new PreProjectData[] { new(ProjectName!, SelectedTemplate!.Type) };
             _navigateComponent?.GetPaylaod()?.Set(NaviPayloadKey.Project, preData);
 
             if (IsFromWorkSpace_AddProj) {

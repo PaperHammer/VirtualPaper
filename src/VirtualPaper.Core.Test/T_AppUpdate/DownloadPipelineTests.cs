@@ -54,7 +54,7 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
             Assert.IsNotNull(filePath);
             Assert.IsTrue(File.Exists(filePath));
             Assert.IsNull(error);
-            Assert.IsTrue(progressValues.Count > 0, "应报告进度");
+            Assert.IsNotEmpty(progressValues);
             Assert.IsTrue(progressValues.Exists(p => p.Percent >= 100), "应包含完成进度");
         }
 
@@ -417,9 +417,9 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
             }
         }
 
-        public async Task<string> DownloadShaTxtAsync(Uri shaUri, CancellationToken token) {
+        public Task<string> DownloadShaTxtAsync(Uri shaUri, CancellationToken token) {
             if (ShaDownloadError != null) throw ShaDownloadError;
-            return Sha256Content!;
+            return Task.FromResult(Sha256Content!);
         }
 
         public async Task<bool> VerifyFileIntegrityAsync(

@@ -333,7 +333,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                 if (wpEffectFilePath == null) return;
 
                 foreach (var item in JsonNodeUtil.GetReadonlyJson(wpEffectFilePath).EnumerateObject()) {
-                    string uiElementType = item.Value.GetProperty("ProjType").ToString();
+                    string uiElementType = item.Value.GetProperty("Type").ToString();
                     if (!uiElementType.Equals("Button", StringComparison.OrdinalIgnoreCase) && !uiElementType.Equals("Label", StringComparison.OrdinalIgnoreCase)) {
                         if (uiElementType.Equals("Slider", StringComparison.OrdinalIgnoreCase) ||
                             uiElementType.Equals("Dropdown", StringComparison.OrdinalIgnoreCase) ||

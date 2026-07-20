@@ -192,7 +192,7 @@ namespace VirtualPaper.Core.Test.T_Common {
         }
 
         [TestMethod]
-        public async Task IsSaved_TrueAfterMarkAsSaved() {
+        public void IsSaved_TrueAfterMarkAsSaved() {
             _util.Record(MakeCommand());
             Assert.IsFalse(_util.IsSaved);
 

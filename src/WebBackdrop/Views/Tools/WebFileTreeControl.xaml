@@ -78,36 +78,7 @@
     </UserControl.Resources>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
-
-        <!-- Header -->
-        <Grid Padding="8 6" Background="{ThemeResource LayerFillColorDefaultBrush}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock
-                VerticalAlignment="Center"
-                FontSize="12"
-                FontWeight="SemiBold"
-                Text="{x:Bind ProjectName, Mode=OneWay}"
-                TextTrimming="CharacterEllipsis"/>
-            <Button
-                Grid.Column="1"
-                Padding="4"
-                BorderThickness="0"
-                Background="Transparent"
-                ToolTipService.ToolTip="New File"
-                Click="NewFile_Click">
-                <FontIcon Glyph="&#xE8A5;" FontSize="14"/>
-            </Button>
-        </Grid>
-
         <collection:ArcTreeView
-            Grid.Row="1"
             x:Name="fileTreeView"
             CancelSelectionEnable="False"
             SelectedItem="{x:Bind SelectedFileItem, Mode=TwoWay}"

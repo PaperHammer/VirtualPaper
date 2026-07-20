@@ -63,7 +63,7 @@
             editor = monaco.editor.create(document.getElementById('container'), {
                 value: '',
                 language: 'plaintext',
-                theme: 'vs-dark',
+                theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'vs' : 'vs-dark',
                 automaticLayout: true,
 
                 minimap: { enabled: true, scale: 1, showSlider: 'mouseover' },
@@ -215,6 +215,12 @@
                 editor.setPosition({ lineNumber: lineNumber, column: column });
                 editor.revealPositionInCenter({ lineNumber: lineNumber, column: column });
                 editor.focus();
+            };
+
+            window.setEditorTheme = function (theme) {
+                monaco.editor.setTheme(theme);
+                document.documentElement.dataset.theme = theme;
+                document.body.style.background = theme === 'vs' ? '#ffffff' : '#1e1e1e';
             };
 
             window.setLanguage = function (language) {

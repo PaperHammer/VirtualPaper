@@ -6,7 +6,6 @@
     xmlns:local="using:Workloads.Creation.WebBackdrop.Views.Components"
     xmlns:bottomPanels="using:Workloads.Creation.WebBackdrop.Views.Components.BottomPanels"
     xmlns:tools="using:Workloads.Creation.WebBackdrop.Views.Tools"
-    xmlns:models="using:Workloads.Creation.WebBackdrop.Models"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:utils="using:VirtualPaper.UIComponent.Utils"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -27,7 +26,7 @@
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
-        <Grid>
+        <Grid x:Name="editorGrid">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="leftSideBarColumn" Width="260"/>
                 <ColumnDefinition/>
@@ -51,8 +50,12 @@
                     Width="7"
                     HorizontalAlignment="Right"
                     Background="Transparent"
-                    ManipulationMode="TranslateX"
-                    ManipulationDelta="LeftSideBarSplitter_ManipulationDelta"
+                    ManipulationMode="None"
+                    PointerPressed="LeftSideBarSplitter_PointerPressed"
+                    PointerMoved="Splitter_PointerMoved"
+                    PointerReleased="Splitter_PointerReleased"
+                    PointerCanceled="Splitter_PointerReleased"
+                    PointerCaptureLost="Splitter_PointerCaptureLost"
                     PointerEntered="Splitter_PointerEntered"
                     PointerExited="Splitter_PointerExited"
                     utils:CursorUtil.CursorShape="SizeWestEast">
@@ -73,36 +76,7 @@
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="0 0 0 1">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition/>
-                        </Grid.RowDefinitions>
-
-                        <TabView x:Name="fileTabView"
-                            TabWidthMode="SizeToContent"
-                            CloseButtonOverlayMode="OnPointerOver"
-                            TabItemsSource="{x:Bind ViewModel.OpenFiles, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.ActiveFile, Mode=TwoWay}"
-                            TabCloseRequested="FileTabView_TabCloseRequested"
-                            SelectionChanged="FileTabView_SelectionChanged">
-                            <TabView.TabItemTemplate>
-                                <DataTemplate x:DataType="models:WebEditorFile">
-                                    <TabViewItem>
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <FontIcon Glyph="&#xE8A5;" FontSize="12"/>
-                                            <TextBlock Text="{x:Bind FileName}" FontSize="12"/>
-                                            <Ellipse
-                                                Width="6" Height="6"
-                                                Fill="{ThemeResource SystemAccentColor}"
-                                                Visibility="{x:Bind IsSaved, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
-                                        </StackPanel>
-                                    </TabViewItem>
-                                </DataTemplate>
-                            </TabView.TabItemTemplate>
-                        </TabView>
-
                         <local:MonacoEditor x:Name="monacoEditor"
-                            Grid.Row="1"
                             EditorContent="{x:Bind ViewModel.ActiveFile.Content, Mode=TwoWay}"
                             EditorLanguage="{x:Bind ActiveFileLanguage, Mode=OneWay}"
                             ContentChanged="MonacoEditor_ContentChanged"
@@ -184,8 +158,12 @@
                         VerticalAlignment="Top"
                         Background="Transparent"
                         Visibility="Collapsed"
-                        ManipulationMode="TranslateY"
-                        ManipulationDelta="BottomSideBarSplitter_ManipulationDelta"
+                        ManipulationMode="None"
+                        PointerPressed="BottomSideBarSplitter_PointerPressed"
+                        PointerMoved="Splitter_PointerMoved"
+                        PointerReleased="Splitter_PointerReleased"
+                        PointerCanceled="Splitter_PointerReleased"
+                        PointerCaptureLost="Splitter_PointerCaptureLost"
                         PointerEntered="Splitter_PointerEntered"
                         PointerExited="Splitter_PointerExited"
                         utils:CursorUtil.CursorShape="SizeNorthSouth">
@@ -213,8 +191,12 @@
                     Width="7"
                     HorizontalAlignment="Left"
                     Background="Transparent"
-                    ManipulationMode="TranslateX"
-                    ManipulationDelta="RightSideBarSplitter_ManipulationDelta"
+                    ManipulationMode="None"
+                    PointerPressed="RightSideBarSplitter_PointerPressed"
+                    PointerMoved="Splitter_PointerMoved"
+                    PointerReleased="Splitter_PointerReleased"
+                    PointerCanceled="Splitter_PointerReleased"
+                    PointerCaptureLost="Splitter_PointerCaptureLost"
                     PointerEntered="Splitter_PointerEntered"
                     PointerExited="Splitter_PointerExited"
                     utils:CursorUtil.CursorShape="SizeWestEast">

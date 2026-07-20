@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.UI;
 using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.Models.SerializableData;
 
@@ -14,17 +15,58 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
     public sealed partial class WebPropertyPanelControl : UserControl {
         private string? _projectFolder;
         private string? _currentPath;
+        private WebEditorFile? _currentFile;
         private string? _pendingPreviewHtml;
 
         public WebPropertyPanelControl() {
             InitializeComponent();
             Loaded += WebPropertyPanelControl_Loaded;
+            ActualThemeChanged += WebPropertyPanelControl_ActualThemeChanged;
+            UpdatePreviewBackground();
         }
 
         private void WebPropertyPanelControl_Loaded(object sender, RoutedEventArgs e) {
+            UpdatePreviewBackground();
+            UpdatePreviewHeight();
             if (_pendingPreviewHtml != null) {
                 _ = NavigatePreviewAsync(_pendingPreviewHtml);
             }
+        }
+
+        private void WebPropertyPanelControl_ActualThemeChanged(FrameworkElement sender, object args) {
+            UpdatePreviewBackground();
+            if (_currentFile != null) {
+                LoadPreview(_currentFile);
+                return;
+            }
+
+            SetPreviewMessage(NoItemPanel.Visibility == Visibility.Visible
+                ? "No preview available."
+                : "Select an image, SVG, or Markdown file to preview.");
+        }
+
+        private void UpdatePreviewBackground() {
+            previewWebView.DefaultBackgroundColor = IsLightTheme
+                ? Color.FromArgb(255, 255, 255, 255)
+                : Color.FromArgb(255, 30, 30, 30);
+        }
+
+        private bool IsLightTheme => ActualTheme == ElementTheme.Light;
+        private bool IsCurrentPreviewImage => _currentFile != null && IsImage(_currentFile.FileExtension);
+        private string PreviewBackground => IsLightTheme ? "#ffffff" : "#1e1e1e";
+        private string PreviewForeground => IsLightTheme ? "#1a1a1a" : "#f3f3f3";
+        private string PreviewSecondaryForeground => IsLightTheme ? "#666666" : "#aaaaaa";
+        private string PreviewCodeBackground => IsLightTheme ? "#f3f3f3" : "#2d2d2d";
+        private string PreviewQuoteBorder => IsLightTheme ? "#999999" : "#777777";
+        private string PreviewLinkForeground => IsLightTheme ? "#0067c0" : "#8ab4f8";
+
+        private void PreviewWebViewHost_SizeChanged(object sender, SizeChangedEventArgs e) => UpdatePreviewHeight(e.NewSize.Width);
+
+        private void UpdatePreviewHeight(double width = 0) {
+            var previewWidth = width > 0 ? width : PreviewWebViewHost.ActualWidth;
+            if (previewWidth <= 0) return;
+
+            PreviewWebViewHost.Height = Math.Max(160, previewWidth * 10 / 16);
         }
 
         public void LoadProject(WebDesignFileUtil designFileUtil) {
@@ -33,7 +75,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
             ProjectTitleText.Text = string.IsNullOrWhiteSpace(data.Title) ? designFileUtil.ProjectName : data.Title;
             ProjectEntryText.Text = data.File;
-            ProjectPathText.Text = designFileUtil.ProjectFolder;
+            //ProjectPathText.Text = designFileUtil.ProjectFolder;
         }
 
         public void Load(WebEditorFile? file, string language) {
@@ -43,6 +85,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             }
 
             _currentPath = file.FilePath;
+            _currentFile = file;
+            UpdatePreviewHeight();
             var info = new FileInfo(file.FilePath);
             FileNameText.Text = file.FileName;
             TypeLabel.Text = "Language";
@@ -52,7 +96,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             LineCountText.Text = CountLines(file.Content).ToString();
             ModifiedText.Text = info.Exists ? info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") : "-";
             RelativePathText.Text = GetRelativePath(file.FilePath);
-            PathText.Text = file.FilePath;
+            //PathText.Text = file.FilePath;
 
             NoItemPanel.Visibility = Visibility.Collapsed;
             ItemInfoPanel.Visibility = Visibility.Visible;
@@ -65,13 +109,15 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
         public void LoadFolder(string folderPath) {
             _currentPath = folderPath;
+            _currentFile = null;
+            UpdatePreviewHeight();
             var info = new DirectoryInfo(folderPath);
             FileNameText.Text = info.Exists ? info.Name : Path.GetFileName(folderPath);
             TypeLabel.Text = "Type";
             TypeText.Text = "Folder";
             ModifiedText.Text = info.Exists ? info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") : "-";
             RelativePathText.Text = GetRelativePath(folderPath);
-            PathText.Text = folderPath;
+            //PathText.Text = folderPath;
 
             NoItemPanel.Visibility = Visibility.Collapsed;
             ItemInfoPanel.Visibility = Visibility.Visible;
@@ -85,30 +131,32 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public void Clear() {
             ProjectTitleText.Text = "-";
             ProjectEntryText.Text = "-";
-            ProjectPathText.Text = "-";
+            //ProjectPathText.Text = "-";
             ClearCurrentItem();
         }
 
         private void ClearCurrentItem() {
             _currentPath = null;
+            _currentFile = null;
+            UpdatePreviewHeight();
             NoItemPanel.Visibility = Visibility.Visible;
             ItemInfoPanel.Visibility = Visibility.Collapsed;
             SetPreviewMessage("No preview available.");
         }
 
-        private void CopyPath_Click(object sender, RoutedEventArgs e) {
-            if (string.IsNullOrEmpty(_currentPath)) return;
+        //private void CopyPath_Click(object sender, RoutedEventArgs e) {
+        //    if (string.IsNullOrEmpty(_currentPath)) return;
 
-            var package = new DataPackage();
-            package.SetText(_currentPath);
-            Clipboard.SetContent(package);
-        }
+        //    var package = new DataPackage();
+        //    package.SetText(_currentPath);
+        //    Clipboard.SetContent(package);
+        //}
 
-        private void Reveal_Click(object sender, RoutedEventArgs e) {
-            if (string.IsNullOrEmpty(_currentPath)) return;
+        //private void Reveal_Click(object sender, RoutedEventArgs e) {
+        //    if (string.IsNullOrEmpty(_currentPath)) return;
 
-            Process.Start("Explorer", "/select," + _currentPath);
-        }
+        //    Process.Start("Explorer", "/select," + _currentPath);
+        //}
 
         private void LoadPreview(WebEditorFile file) {
             if (IsImage(file.FileExtension)) {
@@ -119,7 +167,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 <head>
 <meta charset="utf-8">
 <style>
-html,body{margin:0;width:100%;height:100%;background:#1e1e1e;display:flex;align-items:center;justify-content:center;}
+html,body{margin:0;width:100%;height:100%;background:{{PreviewBackground}};display:flex;align-items:center;justify-content:center;}
 img{max-width:100%;max-height:100%;object-fit:contain;}
 </style>
 </head>
@@ -136,13 +184,13 @@ img{max-width:100%;max-height:100%;object-fit:contain;}
 <head>
 <meta charset="utf-8">
 <style>
-body{font-family:'Segoe UI',sans-serif;margin:16px;line-height:1.55;color:#f3f3f3;background:#1e1e1e;}
+body{font-family:'Segoe UI',sans-serif;margin:16px;line-height:1.55;color:{{PreviewForeground}};background:{{PreviewBackground}};}
 h1,h2,h3,h4,h5,h6{line-height:1.25;}
-pre,code{font-family:Consolas,monospace;background:#2d2d2d;border-radius:4px;}
+pre,code{font-family:Consolas,monospace;background:{{PreviewCodeBackground}};border-radius:4px;}
 code{padding:2px 4px;}
 pre{padding:10px;overflow:auto;}
-blockquote{border-left:3px solid #777;margin-left:0;padding-left:10px;color:#ccc;}
-a{color:#8ab4f8;}
+blockquote{border-left:3px solid {{PreviewQuoteBorder}};margin-left:0;padding-left:10px;color:{{PreviewSecondaryForeground}};}
+a{color:{{PreviewLinkForeground}};}
 </style>
 </head>
 <body>{{RenderMarkdown(file.Content)}}</body>
@@ -161,7 +209,7 @@ a{color:#8ab4f8;}
 <head>
 <meta charset="utf-8">
 <style>
-html,body{margin:0;width:100%;height:100%;background:#1e1e1e;color:#aaa;font-family:'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;box-sizing:border-box;}
+html,body{margin:0;width:100%;height:100%;background:{{PreviewBackground}};color:{{PreviewSecondaryForeground}};font-family:'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;box-sizing:border-box;}
 </style>
 </head>
 <body>{{WebUtility.HtmlEncode(message)}}</body>

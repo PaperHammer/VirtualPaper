@@ -15,7 +15,7 @@ using Workloads.Creation.WebBackdrop.Views.Tools;
 
 namespace Workloads.Creation.WebBackdrop.ViewModels {
     public partial class WebEditorViewModel : ObservableObject {
-        public ObservableCollection<WebEditorFile> OpenFiles { get; } = [];
+        public List<WebEditorFile> OpenFiles { get; } = [];
 
         public WebEditorFile? ActiveFile {
             get => _activeFile;

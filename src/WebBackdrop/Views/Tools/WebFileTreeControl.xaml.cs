@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -21,13 +20,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public event EventHandler<string>? FileOpenRequested;
         public event EventHandler<string>? FolderSelected;
         public event EventHandler<string>? NewFileRequested;
-
-        public string ProjectName {
-            get => (string)GetValue(ProjectNameProperty);
-            set => SetValue(ProjectNameProperty, value);
-        }
-        public static readonly DependencyProperty ProjectNameProperty =
-            DependencyProperty.Register(nameof(ProjectName), typeof(string), typeof(WebFileTreeControl), new PropertyMetadata(string.Empty));
 
         public ObservableCollection<WebFileItem> DataSource {
             get => (ObservableCollection<WebFileItem>)GetValue(DataSourceProperty);
@@ -56,8 +48,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             if (!Directory.Exists(projectFolder)) return;
 
             _projectFolder = projectFolder;
+            var root = BuildDirectoryItem(projectFolder);
+            root.IsExpanded = true;
             DataSource = new ObservableCollection<WebFileItem> {
-                BuildDirectoryItem(projectFolder),
+                root,
             };
         }
 

@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using Windows.UI;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class MonacoEditor : UserControl {
@@ -55,7 +56,23 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         public MonacoEditor() {
             InitializeComponent();
+            ActualThemeChanged += MonacoEditor_ActualThemeChanged;
+            UpdateTheme();
             _ = InitializeWebViewAsync();
+        }
+
+        private void MonacoEditor_ActualThemeChanged(FrameworkElement sender, object args) => UpdateTheme();
+
+        private void UpdateTheme() {
+            var theme = ActualTheme == ElementTheme.Light ? "vs" : "vs-dark";
+            var background = ActualTheme == ElementTheme.Light
+                ? Color.FromArgb(255, 255, 255, 255)
+                : Color.FromArgb(255, 30, 30, 30);
+
+            monacoWebView.DefaultBackgroundColor = background;
+            if (monacoWebView.CoreWebView2 != null && _isEditorReady) {
+                _ = monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setEditorTheme('{theme}')");
+            }
         }
 
         private async Task InitializeWebViewAsync() {
@@ -119,6 +136,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                         _ = SetLanguageAsync(_pendingLanguage);
                         _pendingLanguage = null;
                     }
+                    UpdateTheme();
                     return;
                 }
                 if (type == "shortcut") {
@@ -247,6 +265,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     });
                     window.setValue = (val) => { editor.value = val; };
                     window.getValue = () => editor.value;
+                    window.setEditorTheme = (theme) => {
+                        document.body.style.background = theme === 'vs' ? '#ffffff' : '#1e1e1e';
+                        document.getElementById('editor').style.background = theme === 'vs' ? '#ffffff' : '#1e1e1e';
+                        document.getElementById('editor').style.color = theme === 'vs' ? '#000000' : '#d4d4d4';
+                    };
                     if (window.chrome && window.chrome.webview) {
                         window.chrome.webview.postMessage(JSON.stringify({ type: 'ready' }));
                     }

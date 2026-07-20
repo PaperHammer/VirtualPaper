@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using Microsoft.UI;
-using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -14,9 +12,7 @@ using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Windows.System;
 using Windows.UI;
-using Windows.UI.Text;
 using Workloads.Creation.WebBackdrop.Core.Utils;
-using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.ViewModels;
 using Workloads.Creation.WebBackdrop.Views.Components.BottomPanels;
 
@@ -105,7 +101,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 double maxSize,
                 Func<double> getSize,
                 Action<double> setSize,
-                Func<ManipulationDeltaRoutedEventArgs, double> getDelta) {
+                Func<double, double> getSizeDelta) {
                 Panel = panel;
                 Splitter = splitter;
                 ResetSizeOnToggle = resetSizeOnToggle;
@@ -115,7 +111,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 MaxSize = maxSize;
                 GetSize = getSize;
                 SetSize = setSize;
-                GetDelta = getDelta;
+                GetSizeDelta = getSizeDelta;
             }
 
             public FrameworkElement Panel { get; }
@@ -127,7 +123,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             public double MaxSize { get; }
             public Func<double> GetSize { get; }
             public Action<double> SetSize { get; }
-            public Func<ManipulationDeltaRoutedEventArgs, double> GetDelta { get; }
+            public Func<double, double> GetSizeDelta { get; }
         }
 
         public WebEditor() {
@@ -144,17 +140,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             ViewModel = new WebEditorViewModel(_session);
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-            ViewModel.OpenFiles.CollectionChanged += OpenFiles_CollectionChanged;
 
-            leftFileTreeControl.ProjectName = _session.DesignFileUtil.ProjectName;
             leftFileTreeControl.Refresh(_session.DesignFileUtil.ProjectFolder);
             propertyPanelControl.LoadProject(_session.DesignFileUtil);
             problemsPanel.SetProjectFolder(_session.DesignFileUtil.ProjectFolder);
 
-            UpdateStatusBar();
-        }
-
-        private void OpenFiles_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) {
             UpdateStatusBar();
         }
 
@@ -210,18 +200,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 ".md" => "markdown",
                 _ => "plaintext",
             };
-        }
-
-        private void FileTabView_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args) {
-            if (args.Item is WebEditorFile file) {
-                problemsPanel.RemoveFile(file.FilePath);
-                RefreshProblemCounts();
-                ViewModel.CloseFile(file);
-            }
-        }
-
-        private void FileTabView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            UpdateStatusBar();
         }
 
         #region MonacoEditor event handlers
@@ -313,7 +291,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     480,
                     () => leftSideBarColumn.Width.Value,
                     value => leftSideBarColumn.Width = new GridLength(value),
-                    e => e.Delta.Translation.X),
+                    delta => delta),
                 [EditorPanelSlot.Bottom] = new(
                     bottomPanel,
                     bottomSideBarSplitter,
@@ -324,7 +302,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     480,
                     () => bottomPanel.Height,
                     value => bottomPanel.Height = value,
-                    e => -e.Delta.Translation.Y),
+                    delta => -delta),
                 [EditorPanelSlot.Right] = new(
                     rightSideBar,
                     rightSideBarSplitter,
@@ -335,7 +313,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     600,
                     () => rightSideBarColumn.Width.Value,
                     value => rightSideBarColumn.Width = new GridLength(value),
-                    e => -e.Delta.Translation.X),
+                    delta => -delta),
             };
 
             _splitterLines = new Dictionary<object, Rectangle> {
@@ -345,11 +323,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             };
         }
 
-        private void ResizePanel(EditorPanelSlot slot, ManipulationDeltaRoutedEventArgs e) {
+        private void ResizePanel(EditorPanelSlot slot, double pointerPosition) {
             var state = _panelLayoutStates[slot];
-            if (state.Panel.Visibility != Visibility.Visible) return;
+            if (state.Panel.Visibility != Visibility.Visible || _activeResizeSlot != slot) return;
 
-            var size = state.GetSize() + state.GetDelta(e);
+            var pointerDelta = pointerPosition - _resizeStartPointerPosition;
+            var size = _resizeStartSize + state.GetSizeDelta(pointerDelta);
             state.SetSize(Math.Clamp(size, state.MinSize, state.MaxSize));
         }
 
@@ -370,16 +349,55 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             SetPanelVisibility(slot, _panelLayoutStates[slot].Panel.Visibility != Visibility.Visible);
         }
 
-        private void LeftSideBarSplitter_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e) {
-            ResizePanel(EditorPanelSlot.Left, e);
+        private void StartResize(EditorPanelSlot slot, PointerRoutedEventArgs e) {
+            var state = _panelLayoutStates[slot];
+            if (state.Panel.Visibility != Visibility.Visible || e.Pointer.PointerDeviceType != Microsoft.UI.Input.PointerDeviceType.Mouse) return;
+
+            _activeResizeSlot = slot;
+            _resizePointer = e.Pointer;
+            _resizeStartSize = state.GetSize();
+            _resizeStartPointerPosition = GetPointerPosition(slot, e);
+            state.Splitter.CapturePointer(e.Pointer);
+            e.Handled = true;
         }
 
-        private void RightSideBarSplitter_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e) {
-            ResizePanel(EditorPanelSlot.Right, e);
+        private double GetPointerPosition(EditorPanelSlot slot, PointerRoutedEventArgs e) {
+            var position = e.GetCurrentPoint(editorGrid).Position;
+            return slot == EditorPanelSlot.Bottom ? position.Y : position.X;
         }
 
-        private void BottomSideBarSplitter_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e) {
-            ResizePanel(EditorPanelSlot.Bottom, e);
+        private void LeftSideBarSplitter_PointerPressed(object sender, PointerRoutedEventArgs e) {
+            StartResize(EditorPanelSlot.Left, e);
+        }
+
+        private void RightSideBarSplitter_PointerPressed(object sender, PointerRoutedEventArgs e) {
+            StartResize(EditorPanelSlot.Right, e);
+        }
+
+        private void BottomSideBarSplitter_PointerPressed(object sender, PointerRoutedEventArgs e) {
+            StartResize(EditorPanelSlot.Bottom, e);
+        }
+
+        private void Splitter_PointerMoved(object sender, PointerRoutedEventArgs e) {
+            if (_activeResizeSlot == null || sender is not FrameworkElement splitter || splitter != _panelLayoutStates[_activeResizeSlot.Value].Splitter) return;
+
+            ResizePanel(_activeResizeSlot.Value, GetPointerPosition(_activeResizeSlot.Value, e));
+            e.Handled = true;
+        }
+
+        private void Splitter_PointerReleased(object sender, PointerRoutedEventArgs e) {
+            if (sender is UIElement element && _resizePointer != null) {
+                element.ReleasePointerCapture(_resizePointer);
+            }
+
+            _activeResizeSlot = null;
+            _resizePointer = null;
+            e.Handled = true;
+        }
+
+        private void Splitter_PointerCaptureLost(object sender, PointerRoutedEventArgs e) {
+            _activeResizeSlot = null;
+            _resizePointer = null;
         }
 
         private void Splitter_PointerEntered(object sender, PointerRoutedEventArgs e) {
@@ -496,5 +514,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private Dictionary<EditorPanelSlot, PanelLayoutState> _panelLayoutStates = null!;
         private Dictionary<object, Rectangle> _splitterLines = null!;
         private Dictionary<string, Action> _shortcutActions = null!;
+        private EditorPanelSlot? _activeResizeSlot;
+        private Pointer? _resizePointer;
+        private double _resizeStartPointerPosition;
+        private double _resizeStartSize;
     }
 }

@@ -4,13 +4,14 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Workloads.Creation.WebBackdrop.Views.Tools"
+    xmlns:models="using:Workloads.Creation.WebBackdrop.Models"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:collection="using:VirtualPaper.UIComponent.Collection"
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <DataTemplate x:Key="FolderTemplate" x:DataType="local:WebFileItem">
+        <DataTemplate x:Key="FolderTemplate" x:DataType="models:WebFileItem">
             <collection:ArcTreeViewItem AutomationProperties.Name="{x:Bind FileName}"
                 ItemsSource="{x:Bind Children}" IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}">
                 <collection:ArcTreeViewItem.ContextFlyout>
@@ -20,7 +21,7 @@
                         <MenuFlyoutSeparator/>
                         <MenuFlyoutItem Text="Cut" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
                         <MenuFlyoutItem Text="Copy" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
-                        <MenuFlyoutItem Text="Paste" Tag="{x:Bind}" Click="PasteMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="pasteMenuItem" Text="Paste" Tag="{x:Bind}" Click="PasteMenuItem_Click"/>
                         <MenuFlyoutItem Text="Copy Path" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
                         <MenuFlyoutItem Text="Copy Relative Path" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
                         <MenuFlyoutSeparator/>
@@ -43,7 +44,7 @@
             </collection:ArcTreeViewItem>
         </DataTemplate>
 
-        <DataTemplate x:Key="FileTemplate" x:DataType="local:WebFileItem">
+        <DataTemplate x:Key="FileTemplate" x:DataType="models:WebFileItem">
             <collection:ArcTreeViewItem AutomationProperties.Name="{x:Bind FileName}">
                 <collection:ArcTreeViewItem.ContextFlyout>
                     <MenuFlyout>
@@ -82,7 +83,7 @@
             x:Name="fileTreeView"
             CancelSelectionEnable="False"
             SelectedItem="{x:Bind SelectedFileItem, Mode=TwoWay}"
-            ItemsSource="{x:Bind DataSource, Mode=OneWay}"
+            ItemsSource="{x:Bind _viewModel.FileItems}"
             ItemTemplateSelector="{StaticResource WebFileItemTemplateSelector}"
             ItemInvoked="FileTreeView_ItemInvoked"/>
     </Grid>

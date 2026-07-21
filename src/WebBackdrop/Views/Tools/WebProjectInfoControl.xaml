@@ -13,44 +13,43 @@
             <!-- Title -->
             <StackPanel Spacing="4">
                 <TextBlock FontSize="11" Opacity="0.6" Text="Title"/>
-                <TextBox x:Name="TitleBox" PlaceholderText="Wallpaper title" TextChanged="TitleBox_TextChanged"/>
+                <TextBox x:Name="titleBox" PlaceholderText="Wallpaper title" Text="{x:Bind _viewModel.Title, Mode=TwoWay}" />
             </StackPanel>
 
             <!-- Description -->
             <StackPanel Spacing="4">
                 <TextBlock FontSize="11" Opacity="0.6" Text="Description"/>
-                <TextBox
-                    x:Name="DescBox"
+                <TextBox x:Name="descBox"
                     PlaceholderText="Short description"
                     AcceptsReturn="True"
                     TextWrapping="Wrap"
                     Height="72"
-                    TextChanged="DescBox_TextChanged"/>
+                    Text="{x:Bind _viewModel.Desc, Mode=TwoWay}"/>
             </StackPanel>
 
             <!-- Author -->
             <StackPanel Spacing="4">
                 <TextBlock FontSize="11" Opacity="0.6" Text="Author"/>
-                <TextBox x:Name="AuthorBox" PlaceholderText="Author name" TextChanged="AuthorBox_TextChanged"/>
+                <TextBox x:Name="authorBox" PlaceholderText="Author name" Text="{x:Bind _viewModel.Authors, Mode=TwoWay}"/>
             </StackPanel>
 
             <!-- Tags -->
             <StackPanel Spacing="4">
                 <TextBlock FontSize="11" Opacity="0.6" Text="Tags (semicolon separated)"/>
-                <TextBox x:Name="TagsBox" PlaceholderText="tag1; tag2" TextChanged="TagsBox_TextChanged"/>
+                <TextBox x:Name="tagsBox" PlaceholderText="tag1; tag2" Text="{x:Bind _viewModel.Tags, Mode=TwoWay}"/>
             </StackPanel>
 
             <!-- Entry file -->
             <StackPanel Spacing="4">
                 <TextBlock FontSize="11" Opacity="0.6" Text="Entry file"/>
-                <TextBox x:Name="EntryFileBox" PlaceholderText="index.html" TextChanged="EntryFileBox_TextChanged"/>
+                <TextBox x:Name="entryFileBox" PlaceholderText="index.html" Text="{x:Bind _viewModel.File, Mode=TwoWay}"/>
             </StackPanel>
 
             <!-- Save button -->
             <Button
                 HorizontalAlignment="Stretch"
                 Content="Save project.json"
-                Click="SaveProjectInfo_Click"/>
+                Command="{x:Bind _viewModel.SaveCommand}"/>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

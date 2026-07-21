@@ -174,7 +174,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 }
 
                 ActiveFilePathText = filePath;
-                ActiveFileLanguage = GetLanguageFromExtension(activeFile.FileExtension);
+                ActiveFileLanguage = WebEditorFileUtil.GetLanguageFromExtension(activeFile.FileExtension);
                 monacoEditor.EditorContent = activeFile.Content;
                 monacoEditor.EditorLanguage = ActiveFileLanguage;
                 monacoEditor.Visibility = Visibility.Visible;
@@ -196,19 +196,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             IsSelectedCharacterCountOverflow = false;
             propertyPanelControl.Load(activeFile, ActiveFileLanguage);
             UpdateStatusBarLayoutState();
-        }
-
-        private static string GetLanguageFromExtension(string ext) {
-            return ext.ToLowerInvariant() switch {
-                ".html" or ".htm" => "html",
-                ".css" => "css",
-                ".js" => "javascript",
-                ".json" => "json",
-                ".ts" => "typescript",
-                ".xml" => "xml",
-                ".md" => "markdown",
-                _ => "plaintext",
-            };
         }
 
         #region MonacoEditor event handlers
@@ -286,7 +273,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private void ToggleBottomPanel() {
             Action updateBottomPanel = bottomPanel.Visibility == Visibility.Visible
                 ? HideBottomPanel
-                : () => ShowBottomPanel(string.IsNullOrEmpty(_activeBottomPanel) ? "PROBLEMS" : _activeBottomPanel);
+                : () => ShowBottomPanel(_activeBottomPanel);
             updateBottomPanel();
         }
 
@@ -423,7 +410,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
-        private void StatusBar_PanelRequested(object? sender, string panel) {
+        private void StatusBar_PanelRequested(object? sender, WebEditorBottomPanel panel) {
             var isCurrentPanelVisible = bottomPanel.Visibility == Visibility.Visible && _activeBottomPanel == panel;
             Action updateBottomPanel = isCurrentPanelVisible ? HideBottomPanel : () => ShowBottomPanel(panel);
             updateBottomPanel();
@@ -450,7 +437,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void BottomPanelSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs e) {
-            if (sender.SelectedItem is SelectorBarItem { Tag: string panel }) {
+            if (sender.SelectedItem is SelectorBarItem { Tag: WebEditorBottomPanel panel }) {
                 ShowBottomPanel(panel);
             }
         }
@@ -459,7 +446,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             HideBottomPanel();
         }
 
-        private void ShowBottomPanel(string panel) {
+        private void ShowBottomPanel(WebEditorBottomPanel panel) {
             SetBottomPanel(panel);
             SetPanelVisibility(EditorPanelSlot.Bottom, true);
         }
@@ -468,21 +455,22 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             SetPanelVisibility(EditorPanelSlot.Bottom, false);
         }
 
-        private void SetBottomPanel(string panel) {
+        private void SetBottomPanel(WebEditorBottomPanel panel) {
             _activeBottomPanel = panel;
             UpdateBottomPanelTabStates();
-            problemsPanel.Visibility = panel == "PROBLEMS" && problemsPanel.ProblemCount > 0 ? Visibility.Visible : Visibility.Collapsed;
-            bottomPanelContent.Visibility = panel == "PROBLEMS" && problemsPanel.ProblemCount > 0 ? Visibility.Collapsed : Visibility.Visible;
+            var showProblems = panel == WebEditorBottomPanel.Problems && problemsPanel.ProblemCount > 0;
+            problemsPanel.Visibility = showProblems ? Visibility.Visible : Visibility.Collapsed;
+            bottomPanelContent.Visibility = showProblems ? Visibility.Collapsed : Visibility.Visible;
             bottomPanelContent.Text = panel switch {
-                "PROBLEMS" => "当前没有检测到问题。",
-                "OUTPUT" => "暂无输出。",
+                WebEditorBottomPanel.Problems => "当前没有检测到问题。",
+                WebEditorBottomPanel.Output => "暂无输出。",
                 _ => string.Empty,
             };
         }
 
         private void UpdateBottomPanelTabStates() {
             foreach (var item in bottomPanelSelectorBar.Items) {
-                if (item is SelectorBarItem selectorBarItem && selectorBarItem.Tag is string panel) {
+                if (item is SelectorBarItem selectorBarItem && selectorBarItem.Tag is WebEditorBottomPanel panel) {
                     selectorBarItem.IsSelected = panel == _activeBottomPanel;
                 }
             }
@@ -500,7 +488,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             ProblemWarningCount = problemsPanel.WarningCount;
 
             // 问题数量变化时，刷新 Problems 面板显示状态。避免有问题了，但底部仍显示“当前没有检测到问题”
-            if (_activeBottomPanel == "PROBLEMS") {
+            if (_activeBottomPanel == WebEditorBottomPanel.Problems) {
                 SetBottomPanel(_activeBottomPanel);
             }
         }
@@ -530,7 +518,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private WebProjectSession? _session;
         private bool _isLoaded;
         private int _propertyPanelRefreshVersion;
-        private string _activeBottomPanel = "PROBLEMS";
+        private WebEditorBottomPanel _activeBottomPanel = WebEditorBottomPanel.Problems;
         private string? _activeEditorFilePath;
         private string? _ignoredEmptyMarkersFilePath;
         private Dictionary<EditorPanelSlot, PanelLayoutState> _panelLayoutStates = null!;
@@ -540,5 +528,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private Pointer? _resizePointer;
         private double _resizeStartPointerPosition;
         private double _resizeStartSize;
+    }
+
+    public enum WebEditorBottomPanel {
+        Problems,
+        Output,
     }
 }

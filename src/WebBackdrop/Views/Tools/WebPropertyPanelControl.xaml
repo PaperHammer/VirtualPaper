@@ -31,11 +31,11 @@
                     <StackPanel Spacing="8">
                         <StackPanel Spacing="2">
                             <TextBlock FontSize="11" Opacity="0.6" Text="Title"/>
-                            <TextBlock x:Name="ProjectTitleText" TextWrapping="Wrap"/>
+                            <TextBlock Text="{x:Bind _viewModel.ProjectTitleText, Mode=OneWay}" TextWrapping="Wrap"/>
                         </StackPanel>
                         <StackPanel Spacing="2">
                             <TextBlock FontSize="11" Opacity="0.6" Text="Entry"/>
-                            <TextBlock x:Name="ProjectEntryText" TextWrapping="Wrap"/>
+                            <TextBlock Text="{x:Bind _viewModel.ProjectEntryText, Mode=OneWay}" TextWrapping="Wrap"/>
                         </StackPanel>
                     </StackPanel>
                 </Expander>
@@ -46,38 +46,38 @@
                     HorizontalAlignment="Stretch" 
                     HorizontalContentAlignment="Stretch">
                     <StackPanel Spacing="10">
-                        <StackPanel x:Name="NoItemPanel" Spacing="4">
+                        <StackPanel Spacing="2" Visibility="{x:Bind _viewModel.NoItemVisibility, Mode=OneWay}">
                             <TextBlock Opacity="0.65" Text="No item selected."/>
                         </StackPanel>
 
-                        <StackPanel x:Name="ItemInfoPanel" Spacing="8" Visibility="Collapsed">
+                        <StackPanel Spacing="8" Visibility="{x:Bind _viewModel.ItemInfoVisibility, Mode=OneWay}">
                             <StackPanel Spacing="2">
                                 <TextBlock FontSize="11" Opacity="0.6" Text="Name"/>
-                                <TextBlock x:Name="FileNameText" TextWrapping="Wrap"/>
+                                <TextBlock Text="{x:Bind _viewModel.FileNameText, Mode=OneWay}" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Spacing="2">
-                                <TextBlock x:Name="TypeLabel" FontSize="11" Opacity="0.6" Text="Type"/>
-                                <TextBlock x:Name="TypeText" TextWrapping="Wrap"/>
+                                <TextBlock FontSize="11" Opacity="0.6" Text="{x:Bind _viewModel.TypeLabelText, Mode=OneWay}"/>
+                                <TextBlock Text="{x:Bind _viewModel.TypeText, Mode=OneWay}" TextWrapping="Wrap"/>
                             </StackPanel>
-                            <StackPanel x:Name="StatusRow" Spacing="2">
+                            <StackPanel Spacing="2" Visibility="{x:Bind _viewModel.StatusVisibility, Mode=OneWay}">
                                 <TextBlock FontSize="11" Opacity="0.6" Text="Status"/>
-                                <TextBlock x:Name="StatusText"/>
+                                <TextBlock Text="{x:Bind _viewModel.StatusText, Mode=OneWay}"/>
                             </StackPanel>
-                            <StackPanel x:Name="SizeRow" Spacing="2">
+                            <StackPanel Spacing="2" Visibility="{x:Bind _viewModel.SizeVisibility, Mode=OneWay}">
                                 <TextBlock FontSize="11" Opacity="0.6" Text="Size"/>
-                                <TextBlock x:Name="SizeText"/>
+                                <TextBlock Text="{x:Bind _viewModel.SizeText, Mode=OneWay}"/>
                             </StackPanel>
-                            <StackPanel x:Name="LineCountRow" Spacing="2">
+                            <StackPanel Spacing="2" Visibility="{x:Bind _viewModel.LineCountVisibility, Mode=OneWay}">
                                 <TextBlock FontSize="11" Opacity="0.6" Text="Lines"/>
-                                <TextBlock x:Name="LineCountText"/>
+                                <TextBlock Text="{x:Bind _viewModel.LineCountText, Mode=OneWay}"/>
                             </StackPanel>
                             <StackPanel Spacing="2">
                                 <TextBlock FontSize="11" Opacity="0.6" Text="Modified"/>
-                                <TextBlock x:Name="ModifiedText" TextWrapping="Wrap"/>
+                                <TextBlock Text="{x:Bind _viewModel.ModifiedText, Mode=OneWay}" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Spacing="2">
                                 <TextBlock FontSize="11" Opacity="0.6" Text="Relative Path"/>
-                                <TextBlock x:Name="RelativePathText" TextWrapping="Wrap"/>
+                                <TextBlock Text="{x:Bind _viewModel.RelativePathText, Mode=OneWay}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>

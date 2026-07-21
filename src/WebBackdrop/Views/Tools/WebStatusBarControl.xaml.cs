@@ -1,11 +1,13 @@
 using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Workloads.Creation.WebBackdrop.Core.Utils;
+using Workloads.Creation.WebBackdrop.Views.Components;
 
 namespace Workloads.Creation.WebBackdrop.Views.Tools {
     public sealed partial class WebStatusBarControl : UserControl {
         public event EventHandler<RoutedEventArgs>? PreviewRequested;
-        public event EventHandler<string>? PanelRequested;
+        public event EventHandler<WebEditorBottomPanel>? PanelRequested;
         public event EventHandler<RoutedEventArgs>? RunRequested;
         public event EventHandler<RoutedEventArgs>? DebugRequested;
         public event EventHandler<RoutedEventArgs>? ToggleLeftSideBarRequested;
@@ -84,7 +86,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public string IndentText => "Spaces: 2";
         public string EncodingText => "UTF-8";
         public string LineEndingText => "CRLF";
-        public string LanguageStatusText => $"{{ }} {FormatLanguage(ActiveFileLanguage)}";
+        public string LanguageStatusText => $"{{ }} {WebEditorFileUtil.FormatLanguage(ActiveFileLanguage)}";
 
         public WebStatusBarControl() {
             InitializeComponent();
@@ -112,30 +114,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             }
         }
 
-        private static string FormatLanguage(string language) {
-            return language switch {
-                "html" => "HTML",
-                "css" => "CSS",
-                "javascript" => "JavaScript",
-                "typescript" => "TypeScript",
-                "json" => "JSON",
-                "xml" => "XML",
-                "markdown" => "Markdown",
-                _ => "Plain Text",
-            };
-        }
-
         private void Problems_Click(object sender, RoutedEventArgs e) {
-            PanelRequested?.Invoke(this, "PROBLEMS");
+            PanelRequested?.Invoke(this, WebEditorBottomPanel.Problems);
         }
 
         private void Run_Click(object sender, RoutedEventArgs e) {
             RunRequested?.Invoke(this, e);
-        }
-
-        private void Debug_Click(object sender, RoutedEventArgs e) {
-            DebugRequested?.Invoke(this, e);
-        }
+        }      
 
         private void ToggleLeftSideBar_Click(object sender, RoutedEventArgs e) {
             ToggleLeftSideBarRequested?.Invoke(this, e);

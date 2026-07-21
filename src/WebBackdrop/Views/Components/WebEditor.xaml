@@ -129,8 +129,8 @@
                     <Grid>
                         <SelectorBar x:Name="bottomPanelSelectorBar"
                             SelectionChanged="BottomPanelSelectorBar_SelectionChanged">
-                            <SelectorBarItem Text="PROBLEMS" Tag="PROBLEMS" IsSelected="True"/>
-                            <SelectorBarItem Text="OUTPUT" Tag="OUTPUT"/>
+                            <SelectorBarItem Text="PROBLEMS" Tag="{x:Bind local:WebEditorBottomPanel.Problems, Mode=OneTime}" IsSelected="True"/>
+                            <SelectorBarItem Text="OUTPUT" Tag="{x:Bind local:WebEditorBottomPanel.Output, Mode=OneTime}"/>
                         </SelectorBar>
                         <Button
                             HorizontalAlignment="Right"

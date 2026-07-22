@@ -1,9 +1,10 @@
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace VirtualPaper.Common.Utils {
     public static partial class ComplianceUtil {
         public static bool IsValidFolderPath(string? path, int minLen = 3, int maxLen = 260) {
-            if (string.IsNullOrEmpty(path)) {
+            if (string.IsNullOrWhiteSpace(path) || string.IsNullOrEmpty(path)) {
                 return false;
             }
 
@@ -11,19 +12,29 @@ namespace VirtualPaper.Common.Utils {
                 return false;
             }
 
-            // 快速检查路径的基本格式
             if (!path.StartsWith(@"\\") && (path.Length < 3 || path[1] != ':' || path[2] != '\\')) {
                 return false;
             }
 
-            // 检查每个字符是否都在允许的字符集中
-            foreach (char c in path) {
-                if (!ValidChars.Contains(c)) {
+            try {
+                if (Path.GetInvalidPathChars().Any(path.Contains)) {
                     return false;
                 }
-            }
 
-            return true;
+                var invalidFileNameChars = new HashSet<char>(Path.GetInvalidFileNameChars());
+                var segments = path.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries);
+                foreach (var segment in segments) {
+                    if (segment.Length == 2 && segment[1] == ':') continue;
+                    if (segment.Any(invalidFileNameChars.Contains)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            catch {
+                return false;
+            }
         }
 
         public static bool IsValidName(string? value, int minLen = 1, int maxLen = 30) {

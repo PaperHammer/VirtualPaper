@@ -66,6 +66,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             this._fileLoaderRegistry = fileLoaderRegistry ?? new ProjectFileLoaderRegistry([
                 new ImageProjectFileLoader(),
                 new DesignProjectFileLoader(),
+                new WebProjectFileLoader(),
             ]);
             InitCommand();
         }
@@ -142,7 +143,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private async Task OpenAsync() {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                  WindowConsts.WindowHandle,
-                 [.. FileFilter.FileTypeToExtension[FileType.FDesign], .. FileFilter.FileTypeToExtension[FileType.FImage]],
+                 [.. FileFilter.FileTypeToExtension[FileType.FDesign], .. FileFilter.FileTypeToExtension[FileType.FWebDesign], .. FileFilter.FileTypeToExtension[FileType.FImage]],
                  true);
             await OpenLocalFilesAsync(storage);
         }
@@ -151,7 +152,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             if (items == null || items.Length < 1) return;
 
             PreProjectData[] datas = items
-                .Select(item => new PreProjectData(item.Path, ProjectType.P_StaticImage))
+                .Select(item => new PreProjectData(item.Path, ProjectType.P_StaticImage, ProjectOpenIntent.OpenExisting))
                 .ToArray();
             await AddNewItemsAsync(datas);
         }
@@ -159,21 +160,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         internal async Task ExportAsync(ExportImageFormat format) => await ExecuteRuntimeCommandAsync(x => x.ExportAsync(format));
         private async Task SaveAsync() => await ExecuteRuntimeCommandAsync(InternalSaveAsync);
         private async Task SaveAsAsync() => await ExecuteRuntimeCommandAsync(InternalSaveAsAsync);
-
-        private void RefreshHeaderAsync(IRuntime runtime) {
-            if (!_runtimeToArcTab.TryGetValue(runtime, out var tab)) return;
-
-            CrossThreadInvoker.InvokeOnUIThread(() => {
-                if (tab.Header.MainContent is TextBlock tb) {
-                    tb.Text = Path.GetFileName(runtime.FileName);
-                }
-            });
-        }
-
         private async Task SaveAllAsync() => await Task.WhenAll(TabViewItems.Select(item => ExecuteRuntimeCommandAsync(InternalSaveAsync, item)));
 
         private async Task UndoAsync() => await ExecuteRuntimeCommandAsync(x => x.UndoAsync());
-
         private async Task RedoAsync() => await ExecuteRuntimeCommandAsync(x => x.RedoAsync());
 
         private Task ExecuteRuntimeCommandAsync(Func<IRuntime, Task> command, IArcTabViewItem? specificItem = null) {
@@ -200,6 +189,16 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                     yield return item;
                 }
             }
+        }
+
+        private void RefreshHeaderAsync(IRuntime runtime) {
+            if (!_runtimeToArcTab.TryGetValue(runtime, out var tab)) return;
+
+            CrossThreadInvoker.InvokeOnUIThread(() => {
+                if (tab.Header.MainContent is TextBlock tb) {
+                    tb.Text = Path.GetFileName(runtime.FileName);
+                }
+            });
         }
         #endregion
 
@@ -233,26 +232,17 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         private async Task AddNewItemAsync(PreProjectData data) {
-            if (IsExistingProjectIdentity(data.Identity)) {
-                await InitRuntimeItemWithFileAsync(data.Identity);
-                return;
+            switch (data.Intent) {
+                case ProjectOpenIntent.OpenExisting:
+                    await InitRuntimeItemWithFileAsync(data.Identity);
+                    break;
+                case ProjectOpenIntent.CreateFromName:
+                case ProjectOpenIntent.CreateAtDirectory:
+                    InitRuntimeItemWithIdentify(data.Identity, data.Type);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(data.Intent), $"Unsupported project open intent: {data.Intent}");
             }
-
-            if (FileUtil.IsValidFileName(data.Identity)) {
-                InitRuntimeItemWithIdentify(data.Identity, data.Type);
-            }
-        }
-
-        private static bool IsExistingProjectIdentity(string identity) {
-            if (!Path.IsPathRooted(identity) && !File.Exists(identity)) return false;
-
-            if (File.Exists(identity)) return true;
-
-            GlobalMessageUtil.ShowError(
-                message: nameof(Constants.I18n.Project_SI_FileNotFound),
-                isNeedLocalizer: true,
-                extraMsg: identity);
-            return false;
         }
 
         private async Task InitRuntimeItemWithFileAsync(string filePath) {

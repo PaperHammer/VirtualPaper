@@ -18,6 +18,15 @@ namespace Workloads.Creation.WebBackdrop.Models {
         public WebFileItem? Parent { get; }
         public string FileName => Path.GetFileName(FilePath);
 
+        public bool IsSaved {
+            get => _isSaved;
+            set {
+                if (_isSaved == value) return;
+                _isSaved = value;
+                OnPropertyChanged();
+            }
+        }
+
         public bool IsExpanded {
             get => _isExpanded;
             set {
@@ -70,6 +79,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
             return HashCode.Combine(FilePath, Type);
         }
 
+        private bool _isSaved = true;
         private bool _isExpanded;
     }
 }

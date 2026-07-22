@@ -705,7 +705,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>输入设计稿名称</value>
   </data>
   <data name="Project_NewDraftPosition" xml:space="preserve">
-    <value>位置(L)</value>
+    <value>位置</value>
   </data>
   <data name="Project_NewDraftPosition_BrowserFolder_Tooltip" xml:space="preserve">
     <value>浏览目录</value>

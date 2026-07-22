@@ -19,7 +19,7 @@ namespace Workloads.Creation.WebBackdrop {
     /// </summary>
     public sealed partial class MainPage : ArcPage, IRuntime {
         public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
-        public string FileName => Session.DesignFileUtil.ProjectName;
+        public string FileName => Session.DesignFileUtil.ProjectFilePath;
         public string FileNameWithoutEx => Session.DesignFileUtil.ProjectName;
         public string Id => Session.SessionId;
         public override Type ArcType => typeof(MainPage);
@@ -70,7 +70,7 @@ namespace Workloads.Creation.WebBackdrop {
             try {
                 var result = await webEditor.ViewModel.SaveAllAsync();
                 if (result) {
-                    await webEditor.ViewModel.UpdateRecentUsedAsync(Session.DesignFileUtil.ProjectFolder);
+                    await webEditor.ViewModel.UpdateRecentUsedAsync(Session.DesignFileUtil.ProjectFilePath);
                 }
                 return result;
             }

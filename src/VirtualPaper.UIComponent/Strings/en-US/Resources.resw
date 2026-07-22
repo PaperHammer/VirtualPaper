@@ -705,7 +705,7 @@ Author: PaperHammer</value>
     <value>Enter a name for the design</value>
   </data>
   <data name="Project_NewDraftPosition" xml:space="preserve">
-    <value>Position (L)</value>
+    <value>Position</value>
   </data>
   <data name="Project_NewDraftPosition_BrowserFolder_Tooltip" xml:space="preserve">
     <value>Browse the folder</value>

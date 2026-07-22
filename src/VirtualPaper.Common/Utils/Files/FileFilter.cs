@@ -109,6 +109,7 @@ namespace VirtualPaper.Common.Utils.Files {
             [FileType.FGif] = [".gif", ".apng"],
             [FileType.FVideo] = [".mp4", ".webm"],
             [FileType.FDesign] = [FileExtension.FE_Design],
+            [FileType.FWebDesign] = [FileExtension.FE_WebDesign],
             [FileType.FImageAI] = FImageAIExts,
             [FileType.FWebZip] = [".zip", ".rar", ".7z"],
         };

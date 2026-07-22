@@ -45,7 +45,7 @@
         </DataTemplate>
 
         <DataTemplate x:Key="FileTemplate" x:DataType="models:WebFileItem">
-            <collection:ArcTreeViewItem AutomationProperties.Name="{x:Bind FileName}">
+            <collection:ArcTreeViewItem AutomationProperties.Name="{x:Bind FileName}" HorizontalContentAlignment="Stretch">
                 <collection:ArcTreeViewItem.ContextFlyout>
                     <MenuFlyout>
                         <MenuFlyoutItem Text="Cut" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
@@ -59,16 +59,39 @@
                         <MenuFlyoutItem Text="Reveal in Explorer" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
                     </MenuFlyout>
                 </collection:ArcTreeViewItem.ContextFlyout>
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image
-                        Width="16"
-                        Height="16"
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="20"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Image
+                            Width="16"
+                            Height="16"
+                            VerticalAlignment="Center"
+                            Stretch="Uniform"
+                            UseLayoutRounding="True"
+                            Source="{x:Bind IconSource}"/>
+                        <TextBlock Text="{x:Bind FileName}"/>
+                    </StackPanel>
+                    <Border
+                        Grid.Column="1"
+                        Width="14"
+                        Height="14"
+                        HorizontalAlignment="Right"
                         VerticalAlignment="Center"
-                        Stretch="Uniform"
-                        UseLayoutRounding="True"
-                        Source="{x:Bind IconSource}"/>
-                    <TextBlock Text="{x:Bind FileName}"/>
-                </StackPanel>
+                        BorderBrush="{ThemeResource SystemAccentColor}"
+                        BorderThickness="2"
+                        CornerRadius="2"
+                        Visibility="{x:Bind IsSaved, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}">
+                        <Ellipse
+                            Width="6"
+                            Height="6"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Fill="{ThemeResource SystemAccentColor}"/>
+                    </Border>
+                </Grid>
             </collection:ArcTreeViewItem>
         </DataTemplate>
 

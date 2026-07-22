@@ -66,7 +66,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
                     return;
                 }
 
-                _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, new PreProjectData[] { new(ru.FilePath, ProjectType.P_StaticImage) });
+                _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, new PreProjectData[] { new(ru.FilePath, ProjectType.P_StaticImage, ProjectOpenIntent.OpenExisting) });
                 _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
             }
         }
@@ -78,7 +78,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         private async void BtnStartupOpen_Click(object sender, RoutedEventArgs e) {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[FileType.FDesign], .. FileFilter.FileTypeToExtension[FileType.FImage]],
+                [.. FileFilter.FileTypeToExtension[FileType.FDesign], .. FileFilter.FileTypeToExtension[FileType.FWebDesign], .. FileFilter.FileTypeToExtension[FileType.FImage]],
                 true);
             OpenLocalFiles(storage);
         }
@@ -89,7 +89,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             int n = items.Count;
             PreProjectData[] datas = new PreProjectData[n];
             for (int i = 0; i < items.Count; i++) {
-                datas[i] = new PreProjectData(items[i].Path, ProjectType.P_StaticImage);
+                datas[i] = new PreProjectData(items[i].Path, ProjectType.P_StaticImage, ProjectOpenIntent.OpenExisting);
             }
 
             _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, datas);
@@ -100,7 +100,8 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
             if (e.DataView.Contains(StandardDataFormats.StorageItems)) {
                 var items = await e.DataView.GetStorageItemsAsync();
                 var allowedExtensions = FileFilter.FileTypeToExtension[FileType.FImage]
-                    .Concat(FileFilter.FileTypeToExtension[FileType.FDesign]);
+                    .Concat(FileFilter.FileTypeToExtension[FileType.FDesign])
+                    .Concat(FileFilter.FileTypeToExtension[FileType.FWebDesign]);
 
                 var filteredItems = items
                     .OfType<IStorageFile>()

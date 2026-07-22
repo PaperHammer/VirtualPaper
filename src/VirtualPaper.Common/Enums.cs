@@ -158,6 +158,7 @@ namespace VirtualPaper.Common {
 
     public static class FileExtension {
         public const string FE_Design = ".vpd";
+        public const string FE_WebDesign = ".vpw";
     }
 
     public enum PluginName {

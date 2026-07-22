@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
@@ -12,6 +13,7 @@ using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.Models.DraftPanel;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Utils.DraftUtils.Interfaces;
 
@@ -29,8 +31,44 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 _projectName = value;
                 OnPropertyChanged();
                 IsNameOk = ComplianceUtil.IsValidName(value);
-                IsNextEnable = IsNameOk && SelectedTemplate != null;
+                RefreshNextState();
+                RefreshProjectCreatePath();
             }
+        }
+
+        private string? _projectLocation;
+        public string? ProjectLocation {
+            get => _projectLocation;
+            set {
+                if (_projectLocation == value) return;
+                _projectLocation = value;
+                OnPropertyChanged();
+                IsLocationOk = ComplianceUtil.IsValidFolderPath(value);
+                RefreshNextState();
+                RefreshProjectCreatePath();
+            }
+        }
+
+        private bool _isLocationOk;
+        public bool IsLocationOk {
+            get { return _isLocationOk; }
+            set { _isLocationOk = value; OnPropertyChanged(); }
+        }
+
+        private string _projectCreatePathText = string.Empty;
+        public string ProjectCreatePathText {
+            get { return _projectCreatePathText; }
+            set { if (_projectCreatePathText == value) return; _projectCreatePathText = value; OnPropertyChanged(); }
+        }
+
+        public bool IsProjectCreatePathVisible => IsNameOk && IsLocationOk;
+
+        public bool IsWebTemplateSelected => SelectedTemplate?.Type == ProjectType.P_WebBackdrop;
+
+        public ICommand BrowseProjectLocationCommand { get; }
+
+        public DraftConfigViewModel() {
+            BrowseProjectLocationCommand = new RelayCommand(async () => await BrowseProjectLocationAsync());
         }
 
         private bool _isNameOk;
@@ -48,7 +86,13 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private ProjectTemplate? _selectedTemplate;
         public ProjectTemplate? SelectedTemplate {
             get { return _selectedTemplate; }
-            set { _selectedTemplate = value; OnPropertyChanged(); IsNextEnable = IsNameOk && value != null; }
+            set {
+                _selectedTemplate = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsWebTemplateSelected));
+                RefreshNextState();
+                RefreshProjectCreatePath();
+            }
         }
 
         public string PreviousStepBtnText { get; private set; } = string.Empty;
@@ -98,10 +142,37 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             CardUIStateChanged?.Invoke();
         }
 
-        public Task OnNextStepClickedAsync() {
-            if (SelectedTemplate == null || !IsNameOk) return Task.CompletedTask;
+        private void RefreshNextState() {
+            IsNextEnable = IsNameOk
+                && SelectedTemplate != null
+                && (!IsWebTemplateSelected || IsLocationOk);
+        }
 
-            var preData = new PreProjectData[] { new(ProjectName!, SelectedTemplate!.Type) };
+        private void RefreshProjectCreatePath() {
+            ProjectCreatePathText = IsNameOk && IsLocationOk
+                ? Path.Combine(ProjectLocation!, ProjectName!)
+                : string.Empty;
+            OnPropertyChanged(nameof(IsProjectCreatePathVisible));
+        }
+
+        private async Task BrowseProjectLocationAsync() {
+            var folder = await WindowsStoragePickers.PickFolderAsync(WindowConsts.WindowHandle);
+            if (folder == null) return;
+
+            ProjectLocation = folder.Path;
+        }
+
+        public Task OnNextStepClickedAsync() {
+            if (SelectedTemplate == null || !IsNameOk || (IsWebTemplateSelected && !IsLocationOk)) return Task.CompletedTask;
+
+            var identity = IsWebTemplateSelected
+                ? Path.Combine(ProjectLocation!, ProjectName!)
+                : ProjectName!;
+            var intent = IsWebTemplateSelected
+                ? ProjectOpenIntent.CreateAtDirectory
+                : ProjectOpenIntent.CreateFromName;
+            var preData = new PreProjectData[] { new(identity, SelectedTemplate!.Type, intent) };
+
             _navigateComponent?.GetPaylaod()?.Set(NaviPayloadKey.Project, preData);
 
             if (IsFromWorkSpace_AddProj) {

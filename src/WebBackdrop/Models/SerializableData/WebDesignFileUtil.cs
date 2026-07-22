@@ -1,35 +1,44 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Models.Cores;
 
 namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
     public class WebDesignFileUtil {
         public string ProjectFolder { get; private set; }
-        public string ProjectName => Path.GetFileName(ProjectFolder);
+        public string ProjectFilePath { get; private set; }
+        public string ProjectName => Path.GetFileNameWithoutExtension(ProjectFilePath);
         public string EntryFilePath => Path.Combine(ProjectFolder, _projectData?.File ?? "index.html");
         public bool IsSaveFromInit { get; internal set; }
 
         private WpWebProjectData? _projectData;
 
-        private WebDesignFileUtil(string folderPath) {
-            ProjectFolder = Path.GetFullPath(folderPath);
-            IsSaveFromInit = Directory.Exists(folderPath);
+        private WebDesignFileUtil(string projectFilePath) {
+            if (Path.GetExtension(projectFilePath).Equals(FileExtension.FE_WebDesign, StringComparison.OrdinalIgnoreCase)) {
+                ProjectFilePath = Path.GetFullPath(projectFilePath);
+                ProjectFolder = Path.GetDirectoryName(ProjectFilePath)!;
+            }
+            else {
+                ProjectFolder = Path.GetFullPath(projectFilePath);
+                ProjectFilePath = Path.Combine(ProjectFolder, Path.GetFileName(ProjectFolder) + FileExtension.FE_WebDesign);
+            }
+
+            IsSaveFromInit = File.Exists(ProjectFilePath);
             _projectData = LoadProjectData();
         }
 
         public static WebDesignFileUtil Create(string identify) {
             if (string.IsNullOrWhiteSpace(identify)) throw new ArgumentException("Input cannot be empty");
 
-            if (FileUtil.IsValidFilePath(identify)) {
-                // identify 可以是项目文件夹路径，或者 index.html 路径
-                var folder = Directory.Exists(identify) ? identify : Path.GetDirectoryName(identify)!;
-                return new WebDesignFileUtil(folder);
+            if (Path.GetExtension(identify).Equals(FileExtension.FE_WebDesign, StringComparison.OrdinalIgnoreCase)) {
+                return new WebDesignFileUtil(identify);
             }
 
-            // 只是一个名字，在 Documents 下创建
-            var dir = Path.Combine(FileUtil.GetDocumentsDir(), identify);
+            var dir = Path.IsPathRooted(identify)
+                ? identify
+                : Path.Combine(FileUtil.GetDocumentsDir(), identify);
             return new WebDesignFileUtil(dir);
         }
 
@@ -102,6 +111,11 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             var filePath = Path.Combine(ProjectFolder, "LICENSE");
             if (!File.Exists(filePath)) {
                 File.WriteAllText(filePath, "Mock file\n");
+            }
+
+            var projectFilePath = ProjectFilePath;
+            if (!File.Exists(projectFilePath)) {
+                File.WriteAllText(projectFilePath, string.Empty);
             }
 
             var projectJson = Path.Combine(ProjectFolder, "project.json");

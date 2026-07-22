@@ -1,0 +1,20 @@
+{
+    "title": "{{i18n:template.title}}",
+    "description": "{{i18n:template.description}}",
+    "authors": "VirtualPaper",
+    "tags": "web;interactive;wallpaper;template",
+    "file": "index.html",
+    "preview": "preview.jpg",
+    "i18n": {
+        "zh-CN": {
+            "template.title": "交互光流",
+            "template.description": "基础 Web 型交互壁纸模板。鼠标移动与点击会生成动态光流，播放端通用滤镜、缩放、视差等逻辑由 PlayerWeb 适配。",
+            "template.hint": "移动鼠标或点击画面生成光流"
+        },
+        "en-US": {
+            "template.title": "Interactive Glow",
+            "template.description": "Basic interactive web wallpaper template. Move or click the mouse to create glowing streams. PlayerWeb handles shared filters, scaling and parallax.",
+            "template.hint": "Move the mouse or click to create glowing streams"
+        }
+    }
+}

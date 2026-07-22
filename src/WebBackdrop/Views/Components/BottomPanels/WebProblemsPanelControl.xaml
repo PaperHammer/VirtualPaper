@@ -51,7 +51,7 @@
                         Height="16"
                         Padding="4 0"
                         CornerRadius="8"
-                        Background="{ThemeResource WebBackdropProblemBadgeBackgroundBrush}">
+                        Background="#FF0078D4">
                         <TextBlock
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"

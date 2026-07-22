@@ -1,0 +1,31 @@
+{
+    "version": 1,
+    "name": "template",
+    "files": [
+        {
+            "path": "index.html",
+            "type": "html",
+            "role": "entry"
+        },
+        {
+            "path": "style.css",
+            "type": "css",
+            "role": "style"
+        },
+        {
+            "path": "script.js",
+            "type": "javascript",
+            "role": "script"
+        },
+        {
+            "path": "project.json",
+            "type": "json",
+            "role": "metadata"
+        },
+        {
+            "path": "template.vpw",
+            "type": "vpw",
+            "role": "solution"
+        }
+    ]
+}

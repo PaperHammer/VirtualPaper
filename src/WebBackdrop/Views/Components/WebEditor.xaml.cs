@@ -176,7 +176,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 ActiveFilePathText = filePath;
                 ActiveFileLanguage = WebEditorFileUtil.GetLanguageFromExtension(activeFile.FileExtension);
                 monacoEditor.EditorContent = activeFile.Content;
-                monacoEditor.EditorLanguage = ActiveFileLanguage;
+                monacoEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(ActiveFileLanguage);
                 monacoEditor.Visibility = Visibility.Visible;
                 welcomePanel.Visibility = Visibility.Collapsed;
                 leftFileTreeControl.SelectFile(filePath);
@@ -185,7 +185,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 ActiveFilePathText = string.Empty;
                 ActiveFileLanguage = "plaintext";
                 monacoEditor.EditorContent = string.Empty;
-                monacoEditor.EditorLanguage = ActiveFileLanguage;
+                monacoEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(ActiveFileLanguage);
                 monacoEditor.Visibility = Visibility.Collapsed;
                 welcomePanel.Visibility = Visibility.Visible;
             }

@@ -18,8 +18,6 @@ using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
 using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.Services;
-using Workloads.Entry.FileLoaders;
-using Workloads.Entry.FileLoaders.Specific;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
@@ -30,9 +28,12 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 using Windows.Storage;
 using Workloads.Entry;
+using Workloads.Entry.FileLoaders;
+using Workloads.Entry.FileLoaders.Specific;
 using Workloads.Entry.Interfaces;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
+using static VirtualPaper.Common.Utils.Archive.ZipUtil;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject, IDisposable {
@@ -252,21 +253,34 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             if (result == null) return;
 
             AddToWorkSpace(result.FilePath, result.FileType);
-            if (!_tempRecentUsed.Contains(filePath)) {
-                _tempRecentUsed.Add(filePath);
-            }
+            AddRecentUsed(filePath);
         }
 
-        private void InitRuntimeItemWithIdentify(string fileName, ProjectType type) {
+        private void InitRuntimeItemWithIdentify(string identity, ProjectType type) {
             var fileType = type switch {
                 ProjectType.P_StaticImage => FileType.FDesign,
                 ProjectType.P_WebBackdrop => FileType.FWebDesign,
                 _ => (FileType?)null,
             };
+            if (fileType == null) return;
 
-            if (fileType != null) {
-                AddToWorkSpace(fileName, fileType.Value);
+            AddToWorkSpace(identity, fileType.Value);
+
+            if (fileType == FileType.FWebDesign) {
+                AddRecentUsed(GetWebProjectFilePath(identity));
             }
+        }
+
+        private void AddRecentUsed(string filePath) {
+            if (!_tempRecentUsed.Contains(filePath)) {
+                _tempRecentUsed.Add(filePath);
+            }
+        }
+
+        private static string GetWebProjectFilePath(string projectFolder) {
+            var normalizedFolder = projectFolder.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var projectName = Path.GetFileName(normalizedFolder);
+            return Path.Combine(normalizedFolder, projectName + FileExtension.FE_WebDesign);
         }
 
         private void AddToWorkSpace(string file, FileType fileType) {

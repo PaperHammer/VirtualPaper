@@ -9,6 +9,7 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
                 ".css" => "css",
                 ".js" => "javascript",
                 ".json" => "json",
+                ".vpw" => "vpw",
                 ".ts" => "typescript",
                 ".xml" => "xml",
                 ".md" => "markdown",
@@ -23,10 +24,15 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
                 "javascript" => "JavaScript",
                 "typescript" => "TypeScript",
                 "json" => "JSON",
+                "vpw" => "VPW",
                 "xml" => "XML",
                 "markdown" => "Markdown",
                 _ => "Plain Text",
             };
+        }
+
+        public static string GetEditorLanguage(string language) {
+            return language == "vpw" ? "json" : language;
         }
 
         public static bool IsPreviewImageExtension(string extension) {

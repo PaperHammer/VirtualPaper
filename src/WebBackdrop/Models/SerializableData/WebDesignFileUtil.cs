@@ -1,6 +1,9 @@
 using System;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Models.Cores;
@@ -55,68 +58,9 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
 
         public void EnsureProjectStructure() {
             Directory.CreateDirectory(ProjectFolder);
-
-            if (!File.Exists(EntryFilePath)) {
-                File.WriteAllText(EntryFilePath, DefaultHtmlTemplate());
-            }
-
-            var cssPath = Path.Combine(ProjectFolder, "style.css");
-            if (!File.Exists(cssPath)) {
-                File.WriteAllText(cssPath, DefaultCssTemplate());
-            }
-
-            var jsPath = Path.Combine(ProjectFolder, "script.js");
-            if (!File.Exists(jsPath)) {
-                File.WriteAllText(jsPath, DefaultJsTemplate());
-            }
-
-            var assetsPath = Path.Combine(ProjectFolder, "assets");
-            Directory.CreateDirectory(assetsPath);
-
-            var tsPath = Path.Combine(ProjectFolder, "example.ts");
-            if (!File.Exists(tsPath)) {
-                File.WriteAllText(tsPath, "export const message: string = 'Hello TypeScript';\n");
-            }
-
-            var jsxPath = Path.Combine(ProjectFolder, "component.jsx");
-            if (!File.Exists(jsxPath)) {
-                File.WriteAllText(jsxPath, "export function Component() {\n    return <div>Hello JSX</div>;\n}\n");
-            }
-
-            var tsxPath = Path.Combine(ProjectFolder, "component.tsx");
-            if (!File.Exists(tsxPath)) {
-                File.WriteAllText(tsxPath, "type ComponentProps = { title: string };\n\nexport function Component({ title }: ComponentProps) {\n    return <div>{title}</div>;\n}\n");
-            }
-
-            var dataJsonPath = Path.Combine(ProjectFolder, "data.json");
-            if (!File.Exists(dataJsonPath)) {
-                File.WriteAllText(dataJsonPath, "{\n    \"name\": \"VirtualPaper\"\n}\n");
-            }
-
-            var svgPath = Path.Combine(ProjectFolder, "logo.svg");
-            if (!File.Exists(svgPath)) {
-                File.WriteAllText(svgPath, "<svg width=\"64\" height=\"64\" viewBox=\"0 0 64 64\" xmlns=\"http://www.w3.org/2000/svg\">\n    <circle cx=\"32\" cy=\"32\" r=\"24\" fill=\"#33A9DC\"/>\n</svg>\n");
-            }
-
-            var imagePath = Path.Combine(ProjectFolder, "image.png");
-            if (!File.Exists(imagePath)) {
-                File.WriteAllBytes(imagePath, Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/luzf7wAAAABJRU5ErkJggg=="));
-            }
-
-            var mdPath = Path.Combine(ProjectFolder, "notes.md");
-            if (!File.Exists(mdPath)) {
-                File.WriteAllText(mdPath, "# Notes\n");
-            }
-
-            var filePath = Path.Combine(ProjectFolder, "LICENSE");
-            if (!File.Exists(filePath)) {
-                File.WriteAllText(filePath, "Mock file\n");
-            }
-
-            var projectFilePath = ProjectFilePath;
-            if (!File.Exists(projectFilePath)) {
-                File.WriteAllText(projectFilePath, string.Empty);
-            }
+            CopyTemplateIfNeeded();
+            EnsureProjectFile();
+            RenameProjectFileInManifest();
 
             var projectJson = Path.Combine(ProjectFolder, "project.json");
             if (!File.Exists(projectJson)) {
@@ -124,76 +68,146 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             }
         }
 
+        private void CopyTemplateIfNeeded() {
+            if (Directory.EnumerateFileSystemEntries(ProjectFolder).Any()) return;
+
+            var templatePath = Path.Combine(AppContext.BaseDirectory, Constants.ModuleName.WebBackdrop, "Assets", "templates", "v1");
+            if (!Directory.Exists(templatePath)) return;
+
+            CopyDirectory(templatePath, ProjectFolder);
+        }
+
+        private static void CopyDirectory(string source, string target) {
+            Directory.CreateDirectory(target);
+
+            foreach (var directory in Directory.EnumerateDirectories(source, "*", SearchOption.AllDirectories)) {
+                Directory.CreateDirectory(Path.Combine(target, Path.GetRelativePath(source, directory)));
+            }
+
+            foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories)) {
+                File.Copy(file, Path.Combine(target, Path.GetRelativePath(source, file)), false);
+            }
+        }
+
+        private void EnsureProjectFile() {
+            if (File.Exists(ProjectFilePath)) return;
+
+            var templateProjectFile = Path.Combine(ProjectFolder, "template" + FileExtension.FE_WebDesign);
+            if (File.Exists(templateProjectFile) && !templateProjectFile.Equals(ProjectFilePath, StringComparison.OrdinalIgnoreCase)) {
+                File.Move(templateProjectFile, ProjectFilePath);
+                IsSaveFromInit = true;
+                return;
+            }
+
+            File.WriteAllText(ProjectFilePath, CreateProjectManifest());
+            IsSaveFromInit = true;
+        }
+
+        private void RenameProjectFileInManifest() {
+            if (!File.Exists(ProjectFilePath)) return;
+
+            try {
+                var node = JsonNode.Parse(File.ReadAllText(ProjectFilePath)) as JsonObject;
+                if (node == null) return;
+
+                node["name"] = ProjectName;
+                if (node["files"] is JsonArray files) {
+                    foreach (var item in files.OfType<JsonObject>()) {
+                        if (item["role"]?.GetValue<string>() == "solution") {
+                            item["path"] = Path.GetFileName(ProjectFilePath);
+                        }
+                    }
+                }
+
+                File.WriteAllText(ProjectFilePath, node.ToJsonString(_jsonSerializerOptions));
+            }
+            catch { }
+        }
+
+        private string CreateProjectManifest() {
+            var files = Directory.EnumerateFiles(ProjectFolder, "*", SearchOption.TopDirectoryOnly)
+                .Select(Path.GetFileName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(name => new JsonObject {
+                    ["path"] = name,
+                    ["type"] = GetFileType(name!),
+                    ["role"] = GetFileRole(name!)
+                });
+
+            var manifest = new JsonObject {
+                ["version"] = 1,
+                ["name"] = ProjectName,
+                ["files"] = new JsonArray(files.Select(file => JsonNode.Parse(file.ToJsonString())!).ToArray())
+            };
+
+            manifest["files"]!.AsArray().Add(new JsonObject {
+                ["path"] = Path.GetFileName(ProjectFilePath),
+                ["type"] = "vpw",
+                ["role"] = "solution"
+            });
+
+            return manifest.ToJsonString(_jsonSerializerOptions);
+        }
+
+        private static string GetFileType(string fileName) => Path.GetExtension(fileName).ToLowerInvariant() switch {
+            ".html" => "html",
+            ".css" => "css",
+            ".js" => "javascript",
+            ".json" => "json",
+            ".vpw" => "vpw",
+            _ => "file"
+        };
+
+        private static string GetFileRole(string fileName) => fileName.ToLowerInvariant() switch {
+            "index.html" => "entry",
+            "style.css" => "style",
+            "script.js" => "script",
+            "project.json" => "metadata",
+            _ when Path.GetExtension(fileName).Equals(FileExtension.FE_WebDesign, StringComparison.OrdinalIgnoreCase) => "solution",
+            _ => "asset"
+        };
+
+        private static readonly JsonSerializerOptions _jsonSerializerOptions = new() { WriteIndented = true };
+
         private WpWebProjectData? LoadProjectData() {
             var projectJson = Path.Combine(ProjectFolder, "project.json");
             if (!File.Exists(projectJson)) return null;
             try {
                 var json = File.ReadAllText(projectJson);
-                return JsonSerializer.Deserialize(json, WpWebProjectDataContext.Default.WpWebProjectData);
+                var data = JsonSerializer.Deserialize(json, WpWebProjectDataContext.Default.WpWebProjectData);
+                return data == null ? null : ResolveProjectI18n(data, json);
             }
             catch {
                 return null;
             }
         }
 
-        private static string DefaultHtmlTemplate() =>
-            """
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <title>Wallpaper</title>
-                <link rel="stylesheet" href="style.css" />
-            </head>
-            <body>
-                <canvas id="canvas"></canvas>
-                <script src="script.js"></script>
-            </body>
-            </html>
-            """;
+        private static WpWebProjectData ResolveProjectI18n(WpWebProjectData data, string json) {
+            var root = JsonNode.Parse(json) as JsonObject;
+            if (root?["i18n"] is not JsonObject i18n) return data;
 
-        private static string DefaultCssTemplate() =>
-            """
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
+            var cultureName = CultureInfo.CurrentUICulture.Name;
+            var languageName = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+            var values = i18n[cultureName] as JsonObject
+                ?? i18n[languageName] as JsonObject
+                ?? i18n["en-US"] as JsonObject;
+            if (values == null) return data;
 
-            body {
-                width: 100vw;
-                height: 100vh;
-                overflow: hidden;
-                background: #000;
-            }
+            data.Title = ResolveI18nValue(data.Title, values);
+            data.Desc = ResolveI18nValue(data.Desc, values);
+            data.Authors = ResolveI18nValue(data.Authors, values);
+            data.Tags = ResolveI18nValue(data.Tags, values);
+            return data;
+        }
 
-            canvas {
-                display: block;
-                width: 100%;
-                height: 100%;
-            }
-            """;
+        private static string ResolveI18nValue(string value, JsonObject values) {
+            const string prefix = "{{i18n:";
+            const string suffix = "}}";
 
-        private static string DefaultJsTemplate() =>
-            """
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
+            if (!value.StartsWith(prefix, StringComparison.Ordinal) || !value.EndsWith(suffix, StringComparison.Ordinal)) return value;
 
-            function resize() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            }
-
-            window.addEventListener('resize', resize);
-            resize();
-
-            function draw() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                requestAnimationFrame(draw);
-            }
-
-            draw();
-            """;
+            var key = value[prefix.Length..^suffix.Length];
+            return values[key]?.GetValue<string>() ?? value;
+        }
     }
 }

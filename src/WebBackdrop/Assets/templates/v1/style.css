@@ -1,0 +1,78 @@
+:root {
+    color-scheme: dark;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: #050816;
+    color: #f8fafc;
+}
+
+* {
+    box-sizing: border-box;
+    user-select: none;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+body {
+    position: fixed;
+    inset: 0;
+    cursor: crosshair;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.22), transparent 28%),
+        radial-gradient(circle at 80% 30%, rgba(168, 85, 247, 0.22), transparent 30%),
+        linear-gradient(135deg, #020617 0%, #0f172a 50%, #111827 100%);
+}
+
+canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.hud {
+    position: fixed;
+    left: 6vw;
+    bottom: 7vh;
+    max-width: 520px;
+    padding: 28px 32px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 28px;
+    background: rgba(15, 23, 42, 0.34);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(22px);
+    pointer-events: none;
+}
+
+.eyebrow {
+    margin: 0 0 12px;
+    color: #93c5fd;
+    font-size: 13px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+}
+
+h1 {
+    margin: 0;
+    font-size: clamp(44px, 7vw, 92px);
+    font-weight: 700;
+    line-height: 0.95;
+}
+
+#time {
+    margin: 18px 0 0;
+    color: #e0f2fe;
+    font-size: clamp(28px, 4vw, 56px);
+    font-weight: 600;
+}
+
+.hint {
+    margin: 12px 0 0;
+    color: rgba(226, 232, 240, 0.76);
+    font-size: 16px;
+}

@@ -59,7 +59,9 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         }
 
         /// <summary>
-        /// 创建ProjectFile 自动区分路径和文件名
+        /// 创建 ProjectFile，自动区分文件路径和文件名。
+        /// 文件路径：直接打开指定文件（通常是 .vpd 或图片文件）。
+        /// 文件名：放到默认文档目录下创建/打开。
         /// </summary>
         public static StaticImgDesignFileUtil Create(string idnetify, FileType fileType) {
             if (string.IsNullOrWhiteSpace(idnetify)) throw new ArgumentException("Input cannot be empty");

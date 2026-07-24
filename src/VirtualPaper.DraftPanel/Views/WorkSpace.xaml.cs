@@ -41,7 +41,7 @@ namespace VirtualPaper.DraftPanel.Views {
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
             _viewModel.TabViewItems.CollectionChanged -= TabViewItems_CollectionChanged;
             _preProjectDatas = null;
-            _tabToFrame.Clear();
+            _tabToHost.Clear();
             _viewModel.Dispose();
         }
 
@@ -78,32 +78,37 @@ namespace VirtualPaper.DraftPanel.Views {
             _viewModel.OnTabItemsChanged(sender, args);
         }
 
+        // 这里使用 ContentControl 承载已经创建好的 runtime 页面，而不是 Frame。
+        // Frame 是导航容器，适合通过 Navigate(typeof(Page), parameter) 创建和管理 Page；
+        // 直接把已有 Page 实例塞进 Frame.Content 会绕过导航生命周期，
+        // 对 Win2D/CanvasControl 等依赖 XAML 树和加载顺序的控件容易触发底层异常。
+        // 当前场景只是 Tab 与已创建 runtime 页面之间的显示/隐藏，ContentControl 更合适。
         private void SyncWorkspaceUI() {
-            // 找出集合中有，但 UI 字典里没有的，创建 Frame
+            // 找出集合中有，但 UI 字典里没有的，创建内容宿主。
             foreach (var item in _viewModel.TabViewItems) {
-                if (!_tabToFrame.ContainsKey(item) && item.Tag is IRuntime runtime) {
-                    var frame = new Frame {
+                if (!_tabToHost.ContainsKey(item) && item.Tag is IRuntime runtime) {
+                    var host = new ContentControl {
                         Content = runtime,
                         Visibility = Visibility.Collapsed
                     };
-                    _tabToFrame[item] = frame;
-                    workspaceContentPool.Children.Add(frame);
+                    _tabToHost[item] = host;
+                    workspaceContentPool.Children.Add(host);
                 }
             }
 
-            // 找出 UI 字典里有，但集合里已经不存在的，彻底销毁 Frame
-            var itemsToRemove = _tabToFrame.Keys.Where(k => !_viewModel.TabViewItems.Contains(k)).ToList();
+            // 找出 UI 字典里有，但集合里已经不存在的，彻底销毁内容宿主。
+            var itemsToRemove = _tabToHost.Keys.Where(k => !_viewModel.TabViewItems.Contains(k)).ToList();
             foreach (var item in itemsToRemove) {
-                if (_tabToFrame.TryGetValue(item, out var frame)) {
-                    workspaceContentPool.Children.Remove(frame);
-                    _tabToFrame.Remove(item);
-                    frame.Content = null;
+                if (_tabToHost.TryGetValue(item, out var host)) {
+                    workspaceContentPool.Children.Remove(host);
+                    _tabToHost.Remove(item);
+                    host.Content = null;
                 }
             }
 
-            // 根据当前的选中项，控制可见性
+            // 根据当前的选中项，控制可见性。
             var selectedItem = TabViewControl.SelectedItem as ArcTabViewItem;
-            foreach (var kvp in _tabToFrame) {
+            foreach (var kvp in _tabToHost) {
                 kvp.Value.Visibility = (kvp.Key as ArcTabViewItem == selectedItem) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
@@ -194,10 +199,10 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         private void CleanUpTabUI(IArcTabViewItem tabViewItem) {
-            if (_tabToFrame.TryGetValue(tabViewItem, out var frame) && tabViewItem is ArcTabViewItem arcTab) {
-                workspaceContentPool.Children.Remove(arcTab);
-                _tabToFrame.Remove(tabViewItem);
-                frame.Content = null;
+            if (_tabToHost.TryGetValue(tabViewItem, out var host)) {
+                workspaceContentPool.Children.Remove(host);
+                _tabToHost.Remove(tabViewItem);
+                host.Content = null;
             }
         }
         #endregion
@@ -230,6 +235,6 @@ namespace VirtualPaper.DraftPanel.Views {
         private Draft? _draftPage;
         private readonly WorkSpaceViewModel _viewModel;
         private PreProjectData[]? _preProjectDatas;
-        private readonly Dictionary<IArcTabViewItem, Frame> _tabToFrame = [];
+        private readonly Dictionary<IArcTabViewItem, ContentControl> _tabToHost = [];
     }
 }

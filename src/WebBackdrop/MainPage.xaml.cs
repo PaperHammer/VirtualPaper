@@ -35,9 +35,9 @@ namespace Workloads.Creation.WebBackdrop {
         /// <summary>
         /// 由 RuntimeFactory 在构造后调用，传入文件路径完成初始化
         /// </summary>
-        /// <param name="filePath">类型为 web 项目（zip/rar/7z）的文件路径或项目名称</param>
-        public void Initialize(string filePath, FileType fileType) {
-            Session = new WebProjectSession(filePath);
+        /// <param name="identify">类型为 web 项目（zip/rar/7z）的文件路径或项目名称</param>
+        public void Initialize(string identify, FileType fileType) {
+            Session = new WebProjectSession(identify);
             Payload = new FrameworkPayload() {
                 [NaviPayloadKey.ArcPageContext] = this.ArcContext,
                 [NaviPayloadKey.WebProjectSession] = this.Session

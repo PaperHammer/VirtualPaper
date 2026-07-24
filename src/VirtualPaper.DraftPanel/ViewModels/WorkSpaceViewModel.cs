@@ -33,7 +33,6 @@ using Workloads.Entry.FileLoaders.Specific;
 using Workloads.Entry.Interfaces;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
-using static VirtualPaper.Common.Utils.Archive.ZipUtil;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class WorkSpaceViewModel : ObservableObject, IDisposable {
@@ -235,18 +234,18 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private async Task AddNewItemAsync(PreProjectData data) {
             switch (data.Intent) {
                 case ProjectOpenIntent.OpenExisting:
-                    await InitRuntimeItemWithFileAsync(data.Identity);
+                    await InitRuntimeWithFileAsync(data.Identity);
                     break;
                 case ProjectOpenIntent.CreateFromName:
                 case ProjectOpenIntent.CreateAtDirectory:
-                    InitRuntimeItemWithIdentify(data.Identity, data.Type);
+                    InitRuntimeWithIdentify(data.Identity, data.Type);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(data.Intent), $"Unsupported project open intent: {data.Intent}");
+                    throw new ArgumentOutOfRangeException(nameof(data), $"Unsupported project open intent: {data.Intent}");
             }
         }
 
-        private async Task InitRuntimeItemWithFileAsync(string filePath) {
+        private async Task InitRuntimeWithFileAsync(string filePath) {
             if (!FileUtil.IsValidFilePath(filePath)) return;
 
             var result = await _fileLoaderRegistry.LoadAsync(filePath);
@@ -256,7 +255,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             AddRecentUsed(filePath);
         }
 
-        private void InitRuntimeItemWithIdentify(string identity, ProjectType type) {
+        private void InitRuntimeWithIdentify(string identity, ProjectType type) {
             var fileType = type switch {
                 ProjectType.P_StaticImage => FileType.FDesign,
                 ProjectType.P_WebBackdrop => FileType.FWebDesign,

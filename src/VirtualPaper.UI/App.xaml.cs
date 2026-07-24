@@ -135,6 +135,7 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IWorkspaceSaveCoordinator, WorkspaceSaveCoordinator>()
                 .AddSingleton<IProjectFileLoader, ImageProjectFileLoader>()
                 .AddSingleton<IProjectFileLoader, DesignProjectFileLoader>()
+                .AddSingleton<IProjectFileLoader, WebProjectFileLoader>()
                 .AddSingleton<ProjectFileLoaderRegistry>()
                 .AddSingleton<IStoragePicker, StoragePickerWrapper>()
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()

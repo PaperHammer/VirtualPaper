@@ -68,6 +68,7 @@ namespace VirtualPaper.DraftPanel.Views {
                 }
 
                 if (targetPageType != null) {
+                    Payload?.AddRange(naviPayloadDatas);
                     if (IsNextPageTarget(targetPageType)) {
                         FrameComp.GoForward();
                     }
@@ -75,7 +76,6 @@ namespace VirtualPaper.DraftPanel.Views {
                         FrameComp.GoBack();
                     }
                     else {
-                        Payload?.AddRange(naviPayloadDatas);
                         FrameComp.Navigate(targetPageType, Payload);
                     }
 

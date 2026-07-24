@@ -63,7 +63,22 @@ namespace VirtualPaper.DraftPanel.Views {
         #region add and selection
         private async void TabViewControl_Loaded(object sender, RoutedEventArgs e) {
             if (_preProjectDatas == null) return;
-            await _viewModel.AddNewItemsAsync(_preProjectDatas);
+
+            var ctx = ArcPageContextManager.GetContext<Draft>();
+            var loadingCtx = ctx?.LoadingContext;
+            var hasLoadedItem = false;
+            if (loadingCtx == null) {
+                hasLoadedItem = await _viewModel.AddNewItemsAsync(_preProjectDatas);
+            }
+            else {
+                await loadingCtx.RunAsync(async (_) => {
+                    hasLoadedItem = await _viewModel.AddNewItemsAsync(_preProjectDatas);
+                });
+            }
+
+            if (!hasLoadedItem && _viewModel.TabViewItems.Count == 0) {
+                _draftPage?.NavigateByState(DraftPanelState.ConfigSpace);
+            }
         }
 
         private void TabViewItems_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
@@ -87,9 +102,17 @@ namespace VirtualPaper.DraftPanel.Views {
             // 找出集合中有，但 UI 字典里没有的，创建内容宿主。
             foreach (var item in _viewModel.TabViewItems) {
                 if (!_tabToHost.ContainsKey(item) && item.Tag is IRuntime runtime) {
+                    if (runtime is FrameworkElement element) {
+                        element.HorizontalAlignment = HorizontalAlignment.Stretch;
+                        element.VerticalAlignment = VerticalAlignment.Stretch;
+                    }
                     var host = new ContentControl {
                         Content = runtime,
-                        Visibility = Visibility.Collapsed
+                        Visibility = Visibility.Collapsed,
+                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                        VerticalAlignment = VerticalAlignment.Stretch,
+                        HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                        VerticalContentAlignment = VerticalAlignment.Stretch
                     };
                     _tabToHost[item] = host;
                     workspaceContentPool.Children.Add(host);

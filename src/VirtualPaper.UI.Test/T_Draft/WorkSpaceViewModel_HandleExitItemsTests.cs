@@ -1,23 +1,27 @@
 using Moq;
-using VirtualPaper.Common;
+using VirtualPaper.DraftPanel.Services;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
-using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 using Workloads.Utils.DraftUtils.Interfaces;
 
 namespace VirtualPaper.UI.Test.T_Draft {
     [TestClass]
     public class WorkSpaceViewModel_HandleExitItemsTests {
         private WorkSpaceViewModel _vm = null!;
-        private Mock<IGlobalDialogService> _dialogService = null!;
+        private Mock<IWorkspaceSaveCoordinator> _saveCoordinator = null!;
 
         [TestInitialize]
         public void Setup() {
-            _dialogService = new Mock<IGlobalDialogService>();
+            _saveCoordinator = new Mock<IWorkspaceSaveCoordinator>();
+            _saveCoordinator
+                .Setup(x => x.CanCloseAsync(It.IsAny<IRuntime>(), It.IsAny<bool>(), It.IsAny<bool>()))
+                .ReturnsAsync(true);
             _vm = new WorkSpaceViewModel(
                 Mock.Of<IUserSettingsClient>(),
-                _dialogService.Object);
+                Mock.Of<Workloads.Entry.Interfaces.IRuntimeFactory>(),
+                _saveCoordinator.Object,
+                new Mock<Workloads.Entry.FileLoaders.ProjectFileLoaderRegistry>(new Workloads.Entry.FileLoaders.IProjectFileLoader[] { }).Object);
         }
 
         private Mock<IRuntime> RegisterRuntime(bool isSaved, string fileName = "file.vp") {
@@ -43,117 +47,65 @@ namespace VirtualPaper.UI.Test.T_Draft {
             return mockRuntime;
         }
 
-        private static async Task<List<IArcTabViewItem>> CollectAsync(IAsyncEnumerable<IArcTabViewItem> source) {
-            var list = new List<IArcTabViewItem>();
-            await foreach (var item in source) list.Add(item);
-            return list;
+        [TestMethod]
+        public async Task HandleExitItemsAsync_AllSaved_YieldsNothing() {
+            RegisterRuntime(isSaved: true);
+            RegisterRuntime(isSaved: true);
+
+            var result = new List<IArcTabViewItem>();
+            await foreach (var item in _vm.HandleExitItemsAsync()) {
+                result.Add(item);
+            }
+
+            Assert.IsEmpty(result);
+            Assert.AreEqual(2, _vm.TabViewItems.Count);
+            _saveCoordinator.Verify(x => x.CanCloseAsync(It.IsAny<IRuntime>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never);
         }
 
-        // ── 已保存，不弹窗，不 yield ──────────────────────────────────────
-
         [TestMethod]
-        public async Task HandleExitItemsAsync_SavedTabs_NotYielded() {
-            RegisterRuntime(isSaved: true, "a.vp");
+        public async Task HandleExitItemsAsync_UnsavedCanClose_YieldsAndRemovesItems() {
+            RegisterRuntime(isSaved: false);
+            RegisterRuntime(isSaved: false);
 
-            var yielded = await CollectAsync(_vm.HandleExitItemsAsync());
+            var result = new List<IArcTabViewItem>();
+            await foreach (var item in _vm.HandleExitItemsAsync()) {
+                result.Add(item);
+            }
 
-            Assert.IsEmpty(yielded);
-            _dialogService.Verify(
-                d => d.ShowDialogAsync(
-                    It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true),
-                Times.Never);
+            Assert.AreEqual(2, result.Count);
+            Assert.IsEmpty(_vm.TabViewItems);
+            _saveCoordinator.Verify(x => x.CanCloseAsync(It.IsAny<IRuntime>(), false, false), Times.Exactly(2));
         }
 
-        // ── 未保存，用户选 Primary（保存成功），yield ─────────────────────
-
         [TestMethod]
-        public async Task HandleExitItemsAsync_Unsaved_UserSaves_TabYielded() {
-            var r = RegisterRuntime(isSaved: false, "a.vp");
-            r.Setup(x => x.SaveAsync()).ReturnsAsync(true);
+        public async Task HandleExitItemsAsync_UnsavedCannotClose_SkipsItem() {
+            var runtime = RegisterRuntime(isSaved: false);
+            _saveCoordinator
+                .Setup(x => x.CanCloseAsync(runtime.Object, false, false))
+                .ReturnsAsync(false);
 
-            _dialogService
-                .Setup(d => d.ShowDialogAsync(
-                    It.IsAny<object>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), true))
-                .ReturnsAsync(DialogResult.Primary);
+            var result = new List<IArcTabViewItem>();
+            await foreach (var item in _vm.HandleExitItemsAsync()) {
+                result.Add(item);
+            }
 
-            var yielded = await CollectAsync(_vm.HandleExitItemsAsync());
-
-            Assert.HasCount(1, yielded);
-            r.Verify(x => x.SaveAsync(), Times.Once);
+            Assert.IsEmpty(result);
+            Assert.AreEqual(1, _vm.TabViewItems.Count);
         }
 
-        // ── 未保存，用户选 Primary（保存失败），不 yield ───────────────────
-
         [TestMethod]
-        public async Task HandleExitItemsAsync_Unsaved_SaveFails_TabNotYielded() {
-            var r = RegisterRuntime(isSaved: false, "a.vp");
-            r.Setup(x => x.SaveAsync()).ReturnsAsync(false);
+        public async Task HandleExitItemsAsync_MixedSavedAndUnsaved_YieldsOnlyUnsavedClosableItems() {
+            RegisterRuntime(isSaved: true);
+            RegisterRuntime(isSaved: false);
 
-            _dialogService
-                .Setup(d => d.ShowDialogAsync(
-                    It.IsAny<object>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), true))
-                .ReturnsAsync(DialogResult.Primary);
+            var result = new List<IArcTabViewItem>();
+            await foreach (var item in _vm.HandleExitItemsAsync()) {
+                result.Add(item);
+            }
 
-            var yielded = await CollectAsync(_vm.HandleExitItemsAsync());
-
-            Assert.IsEmpty(yielded);
-        }
-
-        // ── 未保存，用户选 Secondary（不保存），yield ─────────────────────
-
-        [TestMethod]
-        public async Task HandleExitItemsAsync_Unsaved_UserDontSave_TabYielded() {
-            RegisterRuntime(isSaved: false, "a.vp");
-
-            _dialogService
-                .Setup(d => d.ShowDialogAsync(
-                    It.IsAny<object>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), true))
-                .ReturnsAsync(DialogResult.Secondary);
-
-            var yielded = await CollectAsync(_vm.HandleExitItemsAsync());
-
-            Assert.HasCount(1, yielded);
-        }
-
-        // ── 未保存，用户关闭弹窗（None），不 yield ────────────────────────
-
-        [TestMethod]
-        public async Task HandleExitItemsAsync_Unsaved_UserClosesDialog_TabNotYielded() {
-            RegisterRuntime(isSaved: false, "a.vp");
-
-            _dialogService
-                .Setup(d => d.ShowDialogAsync(
-                    It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true))
-                .ReturnsAsync(DialogResult.None);
-
-            var yielded = await CollectAsync(_vm.HandleExitItemsAsync());
-
-            Assert.IsEmpty(yielded);
-        }
-
-        // ── 多个 Tab，部分关闭 ────────────────────────────────────────────
-
-        [TestMethod]
-        public async Task HandleExitItemsAsync_Mixed_OnlyConfirmedTabsYielded() {
-            RegisterRuntime(isSaved: true, "saved.vp");
-            var unsaved = RegisterRuntime(isSaved: false, "unsaved.vp");
-            unsaved.Setup(x => x.SaveAsync()).ReturnsAsync(true);
-
-            _dialogService
-                .Setup(d => d.ShowDialogAsync(
-                    It.IsAny<object>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), true))
-                .ReturnsAsync(DialogResult.Primary);
-
-            var yielded = await CollectAsync(_vm.HandleExitItemsAsync());
-
-            // saved 不弹窗不 yield，unsaved 保存成功后 yield
-            Assert.HasCount(1, yielded);
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual(1, _vm.TabViewItems.Count);
+            _saveCoordinator.Verify(x => x.CanCloseAsync(It.IsAny<IRuntime>(), false, false), Times.Once);
         }
     }
 }

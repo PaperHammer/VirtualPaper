@@ -56,18 +56,13 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         public WorkSpaceViewModel(
             IUserSettingsClient userSettings,
-            IGlobalDialogService globalDialogService,
-            IRuntimeFactory? runtimeFactory = null,
-            IWorkspaceSaveCoordinator? saveCoordinator = null,
-            ProjectFileLoaderRegistry? fileLoaderRegistry = null) {
+            IRuntimeFactory runtimeFactory,
+            IWorkspaceSaveCoordinator saveCoordinator,
+            ProjectFileLoaderRegistry fileLoaderRegistry) {
             this._userSettings = userSettings;
-            this._runtimeFactory = runtimeFactory ?? new RuntimeFactory();
-            this._saveCoordinator = saveCoordinator ?? new WorkspaceSaveCoordinator(globalDialogService);
-            this._fileLoaderRegistry = fileLoaderRegistry ?? new ProjectFileLoaderRegistry([
-                new ImageProjectFileLoader(),
-                new DesignProjectFileLoader(),
-                new WebProjectFileLoader(),
-            ]);
+            this._runtimeFactory = runtimeFactory;
+            this._saveCoordinator = saveCoordinator;
+            this._fileLoaderRegistry = fileLoaderRegistry;
             InitCommand();
         }
 
@@ -213,12 +208,13 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             RefreshHeaderAsync(runtime);
         }
 
-        internal async Task AddNewItemsAsync(PreProjectData[]? predatas) {
-            if (predatas == null || predatas.Length == 0) return;
+        internal async Task<bool> AddNewItemsAsync(PreProjectData[]? predatas) {
+            if (predatas == null || predatas.Length == 0) return false;
 
+            var hasAddedItem = false;
             foreach (var data in predatas) {
                 try {
-                    await AddNewItemAsync(data);
+                    hasAddedItem |= await AddNewItemAsync(data);
                 }
                 catch (Exception ex) {
                     ArcLog.GetLogger<WorkSpaceViewModel>().Error($"Failed to process project item: {data.Identity}", ex);
@@ -226,48 +222,53 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 }
             }
 
-            if (!_tempRecentUsed.IsEmpty) {
+            if (hasAddedItem && !_tempRecentUsed.IsEmpty) {
                 await _userSettings.UpdateRecetUsedAsync(_tempRecentUsed.ToArray());
             }
+
+            return hasAddedItem;
         }
 
-        private async Task AddNewItemAsync(PreProjectData data) {
-            switch (data.Intent) {
-                case ProjectOpenIntent.OpenExisting:
-                    await InitRuntimeWithFileAsync(data.Identity);
-                    break;
-                case ProjectOpenIntent.CreateFromName:
-                case ProjectOpenIntent.CreateAtDirectory:
-                    InitRuntimeWithIdentify(data.Identity, data.Type);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(data), $"Unsupported project open intent: {data.Intent}");
+        private async Task<bool> AddNewItemAsync(PreProjectData data) {
+            return data.Intent switch {
+                ProjectOpenIntent.OpenExisting => await InitRuntimeWithFileAsync(data.Identity),
+                ProjectOpenIntent.CreateFromName or ProjectOpenIntent.CreateAtDirectory => InitRuntimeWithIdentify(data.Identity, data.Type),
+                _ => throw new ArgumentOutOfRangeException(nameof(data), $"Unsupported project open intent: {data.Intent}"),
+            };
+        }
+
+        private async Task<bool> InitRuntimeWithFileAsync(string filePath) {
+            if (!FileUtil.IsValidFilePath(filePath)) {
+                GlobalMessageUtil.ShowError(
+                    message: nameof(Constants.I18n.Project_FileLoad_Failed),
+                    isNeedLocalizer: true,
+                    extraMsg: filePath);
+                return false;
             }
-        }
-
-        private async Task InitRuntimeWithFileAsync(string filePath) {
-            if (!FileUtil.IsValidFilePath(filePath)) return;
 
             var result = await _fileLoaderRegistry.LoadAsync(filePath);
-            if (result == null) return;
+            if (result == null) return false;
 
             AddToWorkSpace(result.FilePath, result.FileType);
             AddRecentUsed(filePath);
+            return true;
         }
 
-        private void InitRuntimeWithIdentify(string identity, ProjectType type) {
+        private bool InitRuntimeWithIdentify(string identity, ProjectType type) {
             var fileType = type switch {
                 ProjectType.P_StaticImage => FileType.FDesign,
                 ProjectType.P_WebBackdrop => FileType.FWebDesign,
                 _ => (FileType?)null,
             };
-            if (fileType == null) return;
+            if (fileType == null) return false;
 
             AddToWorkSpace(identity, fileType.Value);
 
             if (fileType == FileType.FWebDesign) {
                 AddRecentUsed(GetWebProjectFilePath(identity));
             }
+
+            return true;
         }
 
         private void AddRecentUsed(string filePath) {

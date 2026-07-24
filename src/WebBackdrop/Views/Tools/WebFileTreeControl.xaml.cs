@@ -12,6 +12,7 @@ using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
 using Workloads.Creation.WebBackdrop.Models;
+using Workloads.Creation.WebBackdrop.Models.SerializableData;
 using Workloads.Creation.WebBackdrop.ViewModels;
 
 namespace Workloads.Creation.WebBackdrop.Views.Tools {
@@ -32,6 +33,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             _viewModel = AppServiceLocator.Services.GetRequiredService<WebFileTreeViewModel>();
             DataContext = _viewModel;
             PreloadFolderOpenIcon();
+        }
+
+        public void Refresh(WebDesignFileUtil designFileUtil) {
+            _viewModel.Refresh(designFileUtil);
         }
 
         public void Refresh(string projectFolder) {

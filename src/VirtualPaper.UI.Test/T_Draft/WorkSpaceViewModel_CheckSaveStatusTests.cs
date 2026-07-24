@@ -1,39 +1,38 @@
 using Moq;
-using VirtualPaper.Common;
+using VirtualPaper.DraftPanel.Services;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
-using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 using Workloads.Utils.DraftUtils.Interfaces;
 
 namespace VirtualPaper.UI.Test.T_Draft {
     [TestClass]
     public class WorkSpaceViewModel_CheckSaveStatusTests {
         private WorkSpaceViewModel _vm = null!;
-        private Mock<IGlobalDialogService> _dialogService = null!;
+        private Mock<IWorkspaceSaveCoordinator> _saveCoordinator = null!;
 
         [TestInitialize]
         public void Setup() {
-            _dialogService = new Mock<IGlobalDialogService>();
+            _saveCoordinator = new Mock<IWorkspaceSaveCoordinator>();
+            _saveCoordinator
+                .Setup(x => x.CanCloseAsync(It.IsAny<IRuntime>(), It.IsAny<bool>(), It.IsAny<bool>()))
+                .ReturnsAsync(true);
             _vm = new WorkSpaceViewModel(
                 Mock.Of<IUserSettingsClient>(),
-                _dialogService.Object);
+                Mock.Of<Workloads.Entry.Interfaces.IRuntimeFactory>(),
+                _saveCoordinator.Object,
+                new Mock<Workloads.Entry.FileLoaders.ProjectFileLoaderRegistry>(
+                    new Workloads.Entry.FileLoaders.IProjectFileLoader[] { }).Object);
         }
 
-        /// <summary>
-        /// 向 ViewModel 内部 _runtimeToArcTab 注册一个 runtime，
-        /// 并同步加入 TabViewItems，模拟 AddToWorkSpace 效果。
-        /// </summary>
         private (Mock<IRuntime>, IArcTabViewItem) RegisterRuntime(bool isSaved) {
             var mockRuntime = new Mock<IRuntime>();
-           
             var mockHeader = new Mock<IArcTabViewItemHeader>();
             mockHeader.SetupProperty(h => h.IsSaved, isSaved);
 
             var mockTabItem = new Mock<IArcTabViewItem>();
             mockTabItem.SetupProperty(t => t.Tag, mockRuntime.Object);
 
-            // 通过反射写入私有字典
             var dict = (Dictionary<IRuntime, (IArcTabViewItemHeader, IArcTabViewItem)>)
                 typeof(WorkSpaceViewModel)
                     .GetField("_runtimeToArcTab",
@@ -47,20 +46,14 @@ namespace VirtualPaper.UI.Test.T_Draft {
             return (mockRuntime, mockTabItem.Object);
         }
 
-        // ── 已保存，直接关闭 ──────────────────────────────────────────────
-
         [TestMethod]
-        public async Task CheckSaveStatusAsync_AlreadySaved_ReturnsTrue_NoDialog() {
+        public async Task CheckSaveStatusAsync_AlreadySaved_ReturnsTrue() {
             var (mockRuntime, _) = RegisterRuntime(isSaved: true);
 
             bool result = await _vm.CheckSaveStatusAsync(mockRuntime.Object);
 
             Assert.IsTrue(result);
-            _dialogService.Verify(
-                d => d.ShowDialogAsync(
-                    It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true),
-                Times.Never);
+            _saveCoordinator.Verify(x => x.CanCloseAsync(mockRuntime.Object, true, true), Times.Once);
         }
 
         [TestMethod]
@@ -72,82 +65,37 @@ namespace VirtualPaper.UI.Test.T_Draft {
             Assert.DoesNotContain(tabItem, _vm.TabViewItems);
         }
 
-        // ── 未保存，用户选 Primary（保存）────────────────────────────────
-
         [TestMethod]
-        public async Task CheckSaveStatusAsync_Unsaved_UserSaves_CallsSaveAsync() {
+        public async Task CheckSaveStatusAsync_Unsaved_CanClose_ReturnsTrue() {
             var (mockRuntime, _) = RegisterRuntime(isSaved: false);
-            mockRuntime.Setup(r => r.FileName).Returns("test.vp");
-            mockRuntime.Setup(r => r.SaveAsync()).ReturnsAsync(true);
-
-            _dialogService
-                .Setup(d => d.ShowDialogAsync(
-                    It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true))
-                .ReturnsAsync(DialogResult.Primary);
 
             bool result = await _vm.CheckSaveStatusAsync(mockRuntime.Object);
 
-            mockRuntime.Verify(r => r.SaveAsync(), Times.Once);
             Assert.IsTrue(result);
+            _saveCoordinator.Verify(x => x.CanCloseAsync(mockRuntime.Object, false, true), Times.Once);
         }
 
         [TestMethod]
-        public async Task CheckSaveStatusAsync_Unsaved_UserSaves_SaveFails_ReturnsFalse() {
+        public async Task CheckSaveStatusAsync_Unsaved_CannotClose_ReturnsFalse() {
             var (mockRuntime, tabItem) = RegisterRuntime(isSaved: false);
-            mockRuntime.Setup(r => r.FileName).Returns("test.vp");
-            mockRuntime.Setup(r => r.SaveAsync()).ReturnsAsync(false);
-
-            _dialogService
-                .Setup(d => d.ShowDialogAsync(
-                    It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true))
-                .ReturnsAsync(DialogResult.Primary);
+            _saveCoordinator
+                .Setup(x => x.CanCloseAsync(mockRuntime.Object, false, true))
+                .ReturnsAsync(false);
 
             bool result = await _vm.CheckSaveStatusAsync(mockRuntime.Object);
 
             Assert.IsFalse(result);
-            // 保存失败，Tab 不应被关闭
             Assert.Contains(tabItem, _vm.TabViewItems);
         }
 
-        // ── 未保存，用户选 Secondary（不保存直接关闭）────────────────────
-
         [TestMethod]
-        public async Task CheckSaveStatusAsync_Unsaved_UserDontSave_ReturnsTrue_NoSave() {
-            var (mockRuntime, _) = RegisterRuntime(isSaved: false);
-            mockRuntime.Setup(r => r.FileName).Returns("test.vp");
-
-            _dialogService
-                .Setup(d => d.ShowDialogAsync(
-                    It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true))
-                .ReturnsAsync(DialogResult.Secondary);
-
-            bool result = await _vm.CheckSaveStatusAsync(mockRuntime.Object);
-
-            mockRuntime.Verify(r => r.SaveAsync(), Times.Never);
-            Assert.IsTrue(result);
-        }
-
-        // ── 未保存，用户选 Close（取消）──────────────────────────────────
-
-        [TestMethod]
-        public async Task CheckSaveStatusAsync_Unsaved_UserCancels_ReturnsFalse() {
-            var (mockRuntime, tabItem) = RegisterRuntime(isSaved: false);
-            mockRuntime.Setup(r => r.FileName).Returns("test.vp");
-
-            _dialogService
-                .Setup(d => d.ShowDialogAsync(
-                    It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true))
-                .ReturnsAsync(DialogResult.None);
+        public async Task CheckSaveStatusAsync_RuntimeNotRegistered_ReturnsFalse() {
+            var mockRuntime = new Mock<IRuntime>();
 
             bool result = await _vm.CheckSaveStatusAsync(mockRuntime.Object);
 
             Assert.IsFalse(result);
-            // 取消时 Tab 不应被关闭
-            Assert.Contains(tabItem, _vm.TabViewItems);
+            _saveCoordinator.Verify(x => x.CanCloseAsync(It.IsAny<IRuntime>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never);
         }
     }
 }

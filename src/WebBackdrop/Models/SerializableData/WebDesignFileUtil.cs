@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -13,20 +14,24 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         public string ProjectFolder { get; private set; }
         public string ProjectFilePath { get; private set; }
         public string ProjectName => Path.GetFileNameWithoutExtension(ProjectFilePath);
-        public string EntryFilePath => Path.Combine(ProjectFolder, _projectData?.File ?? "index.html");
+        public string EntryFilePath => Path.Combine(ProjectFolder, GetManifestFilePathByRole("entry") ?? _projectData?.File ?? "index.html");
         public bool IsSaveFromInit { get; internal set; }
 
         private WpWebProjectData? _projectData;
 
-        private WebDesignFileUtil(string projectFilePath) {
-            if (Path.GetExtension(projectFilePath).Equals(FileExtension.FE_WebDesign, StringComparison.OrdinalIgnoreCase)) {
-                ProjectFilePath = Path.GetFullPath(projectFilePath);
-                ProjectFolder = Path.GetDirectoryName(ProjectFilePath)!;
-            }
-            else {
-                ProjectFolder = Path.GetFullPath(projectFilePath);
-                ProjectFilePath = Path.Combine(ProjectFolder, Path.GetFileName(ProjectFolder) + FileExtension.FE_WebDesign);
-            }
+        private WebDesignFileUtil(string identify) {
+            var fullPath = Path.GetFullPath(identify);
+            // 支持两种输入：.vpw 项目文件，或项目目录。
+            // .vpw：直接作为项目入口文件，所在目录作为项目目录。
+            // 目录：作为项目目录，并约定目录下的 {目录名}.vpw 为项目入口文件。
+            var isProjectFile = Path.GetExtension(fullPath).Equals(FileExtension.FE_WebDesign, StringComparison.OrdinalIgnoreCase);
+
+            ProjectFilePath = isProjectFile
+                ? fullPath
+                : Path.Combine(fullPath, Path.GetFileName(fullPath) + FileExtension.FE_WebDesign);
+            ProjectFolder = isProjectFile
+                ? Path.GetDirectoryName(ProjectFilePath)!
+                : fullPath;
 
             IsSaveFromInit = File.Exists(ProjectFilePath);
             _projectData = LoadProjectData();
@@ -35,14 +40,12 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         public static WebDesignFileUtil Create(string identify) {
             if (string.IsNullOrWhiteSpace(identify)) throw new ArgumentException("Input cannot be empty");
 
-            if (Path.GetExtension(identify).Equals(FileExtension.FE_WebDesign, StringComparison.OrdinalIgnoreCase)) {
-                return new WebDesignFileUtil(identify);
-            }
-
-            var dir = Path.IsPathRooted(identify)
+            // identify 可能是 .vpw 文件、绝对项目目录，或只包含项目名。
+            // .vpw/绝对路径保持原样；项目名放到默认文档目录下创建。
+            var path = Path.GetExtension(identify).Equals(FileExtension.FE_WebDesign, StringComparison.OrdinalIgnoreCase) || Path.IsPathRooted(identify)
                 ? identify
                 : Path.Combine(FileUtil.GetDocumentsDir(), identify);
-            return new WebDesignFileUtil(dir);
+            return new WebDesignFileUtil(path);
         }
 
         public WpWebProjectData GetOrCreateProjectData() {
@@ -53,7 +56,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         public void SaveProjectData(WpWebProjectData data) {
             _projectData = data;
             var json = JsonSerializer.Serialize(data, WpWebProjectDataContext.Default.WpWebProjectData);
-            File.WriteAllText(Path.Combine(ProjectFolder, "project.json"), json);
+            File.WriteAllText(GetProjectDataFilePath(), json);
         }
 
         public void EnsureProjectStructure() {
@@ -61,11 +64,87 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             CopyTemplateIfNeeded();
             EnsureProjectFile();
             RenameProjectFileInManifest();
+            _projectData ??= LoadProjectData();
 
-            var projectJson = Path.Combine(ProjectFolder, "project.json");
-            if (!File.Exists(projectJson)) {
+            if (!File.Exists(GetProjectDataFilePath())) {
                 SaveProjectData(GetOrCreateProjectData());
+                AddManifestPath(GetProjectDataFilePath(), "metadata");
             }
+        }
+
+        public IReadOnlyList<WebProjectManifestItem> GetManifestItems() {
+            return GetManifestFiles()
+                .Select(item => new WebProjectManifestItem(
+                    item["path"]?.GetValue<string>() ?? string.Empty,
+                    item["type"]?.GetValue<string>() ?? "file",
+                    item["role"]?.GetValue<string>() ?? "asset"))
+                .Where(item => !string.IsNullOrWhiteSpace(item.Path))
+                .ToList();
+        }
+
+        public void AddManifestPath(string path, string? role = null) {
+            if (IsProjectFile(path) && role == null) return;
+
+            var relativePath = ToRelativePath(path);
+            var manifest = LoadOrCreateManifest();
+            var files = GetOrCreateFilesArray(manifest);
+            if (files.OfType<JsonObject>().Any(item => IsSameManifestPath(item["path"]?.GetValue<string>(), relativePath))) return;
+
+            files.Add(new JsonObject {
+                ["path"] = relativePath,
+                ["type"] = Directory.Exists(path) ? "folder" : GetFileType(relativePath),
+                ["role"] = role ?? GetFileRole(relativePath)
+            });
+            SaveManifest(manifest);
+        }
+
+        public void AddManifestPathRecursive(string path) {
+            AddManifestPath(path);
+            if (!Directory.Exists(path)) return;
+
+            foreach (var directory in Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories)) {
+                AddManifestPath(directory);
+            }
+            foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories)) {
+                AddManifestPath(file);
+            }
+        }
+
+        public void RemoveManifestPath(string path) {
+            if (IsProjectFile(path)) return;
+
+            var relativePath = ToRelativePath(path);
+            var manifest = LoadOrCreateManifest();
+            if (manifest["files"] is not JsonArray files) return;
+
+            for (var i = files.Count - 1; i >= 0; i--) {
+                if (files[i] is not JsonObject item) continue;
+                var itemPath = item["path"]?.GetValue<string>();
+                if (IsSameManifestPath(itemPath, relativePath) || IsManifestChildPath(itemPath, relativePath)) {
+                    files.RemoveAt(i);
+                }
+            }
+            SaveManifest(manifest);
+        }
+
+        public void RenameManifestPath(string oldPath, string newPath) {
+            if (IsProjectFile(oldPath)) return;
+
+            var oldRelativePath = ToRelativePath(oldPath);
+            var newRelativePath = ToRelativePath(newPath);
+            var manifest = LoadOrCreateManifest();
+            if (manifest["files"] is not JsonArray files) return;
+
+            foreach (var item in files.OfType<JsonObject>()) {
+                var itemPath = item["path"]?.GetValue<string>();
+                if (IsSameManifestPath(itemPath, oldRelativePath)) {
+                    item["path"] = newRelativePath;
+                }
+                else if (IsManifestChildPath(itemPath, oldRelativePath)) {
+                    item["path"] = newRelativePath + itemPath![oldRelativePath.Length..];
+                }
+            }
+            SaveManifest(manifest);
         }
 
         private void CopyTemplateIfNeeded() {
@@ -106,33 +185,27 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         private void RenameProjectFileInManifest() {
             if (!File.Exists(ProjectFilePath)) return;
 
-            try {
-                var node = JsonNode.Parse(File.ReadAllText(ProjectFilePath)) as JsonObject;
-                if (node == null) return;
+            var manifest = LoadOrCreateManifest();
+            manifest["name"] = ProjectName;
+            manifest.Remove("project");
+            manifest.Remove("entry");
 
-                node["name"] = ProjectName;
-                if (node["files"] is JsonArray files) {
-                    foreach (var item in files.OfType<JsonObject>()) {
-                        if (item["role"]?.GetValue<string>() == "solution") {
-                            item["path"] = Path.GetFileName(ProjectFilePath);
-                        }
+            if (manifest["files"] is JsonArray files) {
+                foreach (var item in files.OfType<JsonObject>()) {
+                    if (item["role"]?.GetValue<string>() == "solution") {
+                        item["path"] = Path.GetFileName(ProjectFilePath);
                     }
                 }
-
-                File.WriteAllText(ProjectFilePath, node.ToJsonString(_jsonSerializerOptions));
             }
-            catch { }
+
+            SaveManifest(manifest);
         }
 
         private string CreateProjectManifest() {
-            var files = Directory.EnumerateFiles(ProjectFolder, "*", SearchOption.TopDirectoryOnly)
-                .Select(Path.GetFileName)
-                .Where(name => !string.IsNullOrWhiteSpace(name))
-                .Select(name => new JsonObject {
-                    ["path"] = name,
-                    ["type"] = GetFileType(name!),
-                    ["role"] = GetFileRole(name!)
-                });
+            var files = Directory.EnumerateDirectories(ProjectFolder, "*", SearchOption.AllDirectories)
+                .Select(path => CreateManifestFileItem(path))
+                .Concat(Directory.EnumerateFiles(ProjectFolder, "*", SearchOption.AllDirectories)
+                    .Select(path => CreateManifestFileItem(path)));
 
             var manifest = new JsonObject {
                 ["version"] = 1,
@@ -140,13 +213,88 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
                 ["files"] = new JsonArray(files.Select(file => JsonNode.Parse(file.ToJsonString())!).ToArray())
             };
 
-            manifest["files"]!.AsArray().Add(new JsonObject {
-                ["path"] = Path.GetFileName(ProjectFilePath),
-                ["type"] = "vpw",
-                ["role"] = "solution"
-            });
+            if (manifest["files"]!.AsArray().OfType<JsonObject>().All(item => item["role"]?.GetValue<string>() != "solution")) {
+                manifest["files"]!.AsArray().Add(new JsonObject {
+                    ["path"] = Path.GetFileName(ProjectFilePath),
+                    ["type"] = "vpw",
+                    ["role"] = "solution"
+                });
+            }
 
             return manifest.ToJsonString(_jsonSerializerOptions);
+        }
+
+        private JsonObject CreateManifestFileItem(string path) {
+            var relativePath = ToRelativePath(path);
+            return new JsonObject {
+                ["path"] = relativePath,
+                ["type"] = Directory.Exists(path) ? "folder" : GetFileType(relativePath),
+                ["role"] = IsProjectFile(path) ? "solution" : GetFileRole(relativePath)
+            };
+        }
+
+        private string GetProjectDataFilePath() {
+            return Path.Combine(ProjectFolder, GetManifestFilePathByRole("metadata") ?? "project.json");
+        }
+
+        private string? GetManifestFilePathByRole(string role) {
+            return GetManifestFiles()
+                .OfType<JsonObject>()
+                .FirstOrDefault(item => item["role"]?.GetValue<string>() == role)?["path"]?.GetValue<string>();
+        }
+
+        private IEnumerable<JsonObject> GetManifestFiles() {
+            if (!File.Exists(ProjectFilePath)) return [];
+
+            try {
+                return JsonNode.Parse(File.ReadAllText(ProjectFilePath))?["files"]?.AsArray().OfType<JsonObject>().ToList() ?? [];
+            }
+            catch {
+                return [];
+            }
+        }
+
+        private JsonObject LoadOrCreateManifest() {
+            if (File.Exists(ProjectFilePath)) {
+                try {
+                    if (JsonNode.Parse(File.ReadAllText(ProjectFilePath)) is JsonObject node) return node;
+                }
+                catch { }
+            }
+
+            return new JsonObject {
+                ["version"] = 1,
+                ["name"] = ProjectName,
+                ["files"] = new JsonArray()
+            };
+        }
+
+        private static JsonArray GetOrCreateFilesArray(JsonObject manifest) {
+            if (manifest["files"] is JsonArray files) return files;
+
+            files = [];
+            manifest["files"] = files;
+            return files;
+        }
+
+        private void SaveManifest(JsonObject manifest) {
+            File.WriteAllText(ProjectFilePath, manifest.ToJsonString(_jsonSerializerOptions));
+        }
+
+        private string ToRelativePath(string path) {
+            return Path.GetRelativePath(ProjectFolder, path).Replace(Path.DirectorySeparatorChar, '/');
+        }
+
+        private bool IsProjectFile(string path) {
+            return string.Equals(Path.GetFullPath(path), ProjectFilePath, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsSameManifestPath(string? left, string right) {
+            return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsManifestChildPath(string? path, string parentPath) {
+            return path != null && path.StartsWith(parentPath + "/", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string GetFileType(string fileName) => Path.GetExtension(fileName).ToLowerInvariant() switch {
@@ -170,10 +318,10 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         private static readonly JsonSerializerOptions _jsonSerializerOptions = new() { WriteIndented = true };
 
         private WpWebProjectData? LoadProjectData() {
-            var projectJson = Path.Combine(ProjectFolder, "project.json");
-            if (!File.Exists(projectJson)) return null;
+            var projectDataPath = GetProjectDataFilePath();
+            if (!File.Exists(projectDataPath)) return null;
             try {
-                var json = File.ReadAllText(projectJson);
+                var json = File.ReadAllText(projectDataPath);
                 var data = JsonSerializer.Deserialize(json, WpWebProjectDataContext.Default.WpWebProjectData);
                 return data == null ? null : ResolveProjectI18n(data, json);
             }
@@ -210,4 +358,6 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             return values[key]?.GetValue<string>() ?? value;
         }
     }
+
+    public record WebProjectManifestItem(string Path, string Type, string Role);
 }

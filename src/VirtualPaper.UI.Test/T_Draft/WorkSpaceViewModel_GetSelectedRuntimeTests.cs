@@ -14,7 +14,10 @@ namespace VirtualPaper.UI.Test.T_Draft {
         public void Setup() {
             _vm = new WorkSpaceViewModel(
                 Mock.Of<IUserSettingsClient>(),
-                Mock.Of<IGlobalDialogService>());
+                Mock.Of<Workloads.Entry.Interfaces.IRuntimeFactory>(),
+                Mock.Of<VirtualPaper.DraftPanel.Services.IWorkspaceSaveCoordinator>(),
+                new Mock<Workloads.Entry.FileLoaders.ProjectFileLoaderRegistry>(
+                    new Workloads.Entry.FileLoaders.IProjectFileLoader[] { }).Object);
         }
 
         [TestMethod]

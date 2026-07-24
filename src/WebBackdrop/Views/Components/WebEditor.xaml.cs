@@ -143,7 +143,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             ViewModel = new WebEditorViewModel(_session);
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
-            leftFileTreeControl.Refresh(_session.DesignFileUtil.ProjectFolder);
+            leftFileTreeControl.Refresh(_session.DesignFileUtil);
             propertyPanelControl.LoadProject(_session.DesignFileUtil);
             problemsPanel.SetProjectFolder(_session.DesignFileUtil.ProjectFolder);
 

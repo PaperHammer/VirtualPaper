@@ -66,8 +66,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
                     return;
                 }
 
-                _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, new PreProjectData[] { new(ru.FilePath, ProjectType.P_StaticImage, ProjectOpenIntent.OpenExisting) });
-                _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
+                NavigateToWorkSpace([new(ru.FilePath, ProjectType.P_StaticImage, ProjectOpenIntent.OpenExisting)]);
             }
         }
 
@@ -92,8 +91,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
                 datas[i] = new PreProjectData(items[i].Path, ProjectType.P_StaticImage, ProjectOpenIntent.OpenExisting);
             }
 
-            _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, datas);
-            _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
+            NavigateToWorkSpace(datas);
         }
 
         private async void GridDrop_Drop(object sender, DragEventArgs e) {
@@ -125,6 +123,11 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         }
 
         public void UpdateCardComponentUI() {
+        }
+
+        private void NavigateToWorkSpace(PreProjectData[] datas) {
+            _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, datas);
+            _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
         }
 
         private readonly GetStartViewModel _viewModel;

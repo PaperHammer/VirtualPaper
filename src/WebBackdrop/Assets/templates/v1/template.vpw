@@ -18,6 +18,16 @@
             "role": "script"
         },
         {
+            "path": "sample.md",
+            "type": "markdown",
+            "role": "asset"
+        },
+        {
+            "path": "sample-image.png",
+            "type": "file",
+            "role": "asset"
+        },
+        {
             "path": "project.json",
             "type": "json",
             "role": "metadata"

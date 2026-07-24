@@ -8,6 +8,7 @@ using System.Text.Json.Nodes;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Models.Cores;
+using Workloads.Creation.WebBackdrop.Core.Utils;
 
 namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
     public class WebDesignFileUtil {
@@ -297,14 +298,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             return path != null && path.StartsWith(parentPath + "/", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string GetFileType(string fileName) => Path.GetExtension(fileName).ToLowerInvariant() switch {
-            ".html" => "html",
-            ".css" => "css",
-            ".js" => "javascript",
-            ".json" => "json",
-            ".vpw" => "vpw",
-            _ => "file"
-        };
+        private static string GetFileType(string fileName) => WebEditorFileUtil.GetManifestFileTypeFromExtension(Path.GetExtension(fileName));
 
         private static string GetFileRole(string fileName) => fileName.ToLowerInvariant() switch {
             "index.html" => "entry",

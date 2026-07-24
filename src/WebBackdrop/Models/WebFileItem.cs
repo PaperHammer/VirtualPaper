@@ -4,6 +4,7 @@ using System.IO;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
 using VirtualPaper.Models.Mvvm;
+using Workloads.Creation.WebBackdrop.Core.Utils;
 
 namespace Workloads.Creation.WebBackdrop.Models {
     public enum WebFileItemType {
@@ -46,19 +47,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
             ? image
             : null;
 
-        private string IconResourceKey => Path.GetExtension(FilePath).ToLowerInvariant() switch {
-            ".html" or ".htm" => "WebBackdrop_FileTree_Html",
-            ".css" => "WebBackdrop_FileTree_Css",
-            ".js" => "WebBackdrop_FileTree_Js",
-            ".ts" => "WebBackdrop_FileTree_Ts",
-            ".jsx" => "WebBackdrop_FileTree_Jsx",
-            ".tsx" => "WebBackdrop_FileTree_Tsx",
-            ".json" => "WebBackdrop_FileTree_Json",
-            ".svg" => "WebBackdrop_FileTree_Svg",
-            ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" or ".bmp" => "WebBackdrop_FileTree_Image",
-            ".md" => "WebBackdrop_FileTree_Md",
-            _ => "WebBackdrop_FileTree_File",
-        };
+        private string IconResourceKey => WebEditorFileUtil.GetIconResourceKeyFromExtension(Path.GetExtension(FilePath));
 
         public WebFileItem(string filePath, WebFileItemType type, WebFileItem? parent = null) {
             FilePath = filePath;

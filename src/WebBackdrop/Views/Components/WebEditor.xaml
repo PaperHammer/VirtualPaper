@@ -83,13 +83,92 @@
 
                 <Border BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0 0 0 1">
                     <Grid>
-                        <local:MonacoEditor x:Name="monacoEditor"
-                            EditorContent="{x:Bind ViewModel.ActiveFile.Content, Mode=TwoWay}"
-                            EditorLanguage="{x:Bind ActiveFileLanguage, Mode=OneWay}"
-                            ContentChanged="MonacoEditor_ContentChanged"
-                            CursorPositionChanged="MonacoEditor_CursorPositionChanged"
-                            MarkersChanged="MonacoEditor_MarkersChanged"
-                            ShortcutRequested="MonacoEditor_ShortcutRequested"/>
+                        <Grid x:Name="editorHost">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="markdownSourceColumn"/>
+                                <ColumnDefinition x:Name="markdownPreviewSplitterColumn" Width="0"/>
+                                <ColumnDefinition x:Name="markdownPreviewColumn" Width="0"/>
+                            </Grid.ColumnDefinitions>
+                            <local:MonacoEditor x:Name="monacoEditor"
+                                EditorContent="{x:Bind ViewModel.ActiveFile.Content, Mode=TwoWay}"
+                                EditorLanguage="{x:Bind ActiveFileLanguage, Mode=OneWay}"
+                                ContentChanged="MonacoEditor_ContentChanged"
+                                CursorPositionChanged="MonacoEditor_CursorPositionChanged"
+                                MarkersChanged="MonacoEditor_MarkersChanged"
+                                ShortcutRequested="MonacoEditor_ShortcutRequested"/>
+
+                            <Grid x:Name="markdownPreviewSplitter"
+                                Grid.Column="1"
+                                Width="7"
+                                HorizontalAlignment="Stretch"
+                                Background="Transparent"
+                                ManipulationMode="None"
+                                Visibility="Collapsed"
+                                PointerPressed="MarkdownPreviewSplitter_PointerPressed"
+                                PointerMoved="MarkdownPreviewSplitter_PointerMoved"
+                                PointerReleased="MarkdownPreviewSplitter_PointerReleased"
+                                PointerCanceled="MarkdownPreviewSplitter_PointerReleased"
+                                PointerCaptureLost="MarkdownPreviewSplitter_PointerCaptureLost"
+                                PointerEntered="Splitter_PointerEntered"
+                                PointerExited="Splitter_PointerExited"
+                                utils:CursorUtil.CursorShape="SizeWestEast">
+                                <Rectangle x:Name="markdownPreviewSplitterLine"
+                                    Width="4"
+                                    HorizontalAlignment="Center"/>
+                            </Grid>
+
+                            <Border x:Name="markdownPreviewHost"
+                                Grid.Column="2"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1 0 0 0"
+                                Visibility="Collapsed">
+                                <WebView2 x:Name="markdownPreviewWebView"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"/>
+                            </Border>
+                        </Grid>
+
+                        <Grid x:Name="imagePreviewPanel"
+                            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                            Visibility="Collapsed"
+                            PointerWheelChanged="ImagePreviewPanel_PointerWheelChanged">
+                            <ScrollViewer
+                                HorizontalScrollBarVisibility="Auto"
+                                VerticalScrollBarVisibility="Auto"
+                                ZoomMode="Disabled">
+                                <Image x:Name="imagePreview"
+                                    Margin="24"
+                                    Stretch="None"
+                                    RenderTransformOrigin="0.5,0.5">
+                                    <Image.RenderTransform>
+                                        <ScaleTransform x:Name="imagePreviewScaleTransform" ScaleX="1" ScaleY="1"/>
+                                    </Image.RenderTransform>
+                                </Image>
+                            </ScrollViewer>
+                        </Grid>
+
+                        <Grid x:Name="fallbackPanel"
+                            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                            Visibility="Collapsed">
+                            <StackPanel
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="10">
+                                <FontIcon
+                                    Glyph="&#xE8A5;"
+                                    FontSize="42"
+                                    Opacity="0.45"/>
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    FontSize="18"
+                                    FontWeight="SemiBold"
+                                    Text="Preview unavailable"/>
+                                <TextBlock x:Name="fallbackMessageText"
+                                    HorizontalAlignment="Center"
+                                    Opacity="0.6"
+                                    Text="This file type cannot be opened directly."/>
+                            </StackPanel>
+                        </Grid>
 
                         <Grid x:Name="welcomePanel" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
                             <StackPanel

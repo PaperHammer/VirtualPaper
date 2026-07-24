@@ -2,12 +2,15 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using VirtualPaper.Models.Mvvm;
+using Workloads.Creation.WebBackdrop.Core.Utils;
 
 namespace Workloads.Creation.WebBackdrop.Models {
     public partial class WebEditorFile : ObservableObject {
         public string FilePath { get; }
         public string FileName => Path.GetFileName(FilePath);
         public string FileExtension => Path.GetExtension(FilePath).ToLowerInvariant();
+
+        public bool CanOpenAsText => WebEditorFileUtil.IsTextExtension(FileExtension);
 
         public string Content {
             get => _content;
@@ -33,12 +36,12 @@ namespace Workloads.Creation.WebBackdrop.Models {
 
         public WebEditorFile(string filePath) {
             FilePath = filePath;
-            _content = File.Exists(filePath) ? File.ReadAllText(filePath) : string.Empty;
+            _content = ReadContent(filePath);
             _isSaved = true;
         }
 
         public static async Task<WebEditorFile> LoadAsync(string filePath) {
-            var content = File.Exists(filePath) ? await File.ReadAllTextAsync(filePath) : string.Empty;
+            var content = await ReadContentAsync(filePath);
             return new WebEditorFile(filePath, content);
         }
 
@@ -49,7 +52,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
         }
 
         public async Task ReloadAsync() {
-            _content = File.Exists(FilePath) ? await File.ReadAllTextAsync(FilePath) : string.Empty;
+            _content = await ReadContentAsync(FilePath);
             _isSaved = true;
             OnPropertyChanged(nameof(Content));
             OnPropertyChanged(nameof(IsSaved));
@@ -58,6 +61,18 @@ namespace Workloads.Creation.WebBackdrop.Models {
         public void MarkAsSaved() {
             _isSaved = true;
             OnPropertyChanged(nameof(IsSaved));
+        }
+
+        private static string ReadContent(string filePath) {
+            return File.Exists(filePath) && WebEditorFileUtil.IsTextExtension(Path.GetExtension(filePath))
+                ? File.ReadAllText(filePath)
+                : string.Empty;
+        }
+
+        private static async Task<string> ReadContentAsync(string filePath) {
+            return File.Exists(filePath) && WebEditorFileUtil.IsTextExtension(Path.GetExtension(filePath))
+                ? await File.ReadAllTextAsync(filePath)
+                : string.Empty;
         }
 
         private string _content;

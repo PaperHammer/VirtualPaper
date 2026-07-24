@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using VirtualPaper.Models.Mvvm;
+using Workloads.Creation.WebBackdrop.Core.Utils;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
     public sealed partial class WebProblemsPanelControl : UserControl {
@@ -205,19 +206,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
         public BitmapImage? IconSource => Application.Current.Resources.TryGetValue(IconResourceKey, out var resource) && resource is BitmapImage image
             ? image
             : null;
-        private string IconResourceKey => Path.GetExtension(FilePath).ToLowerInvariant() switch {
-            ".html" or ".htm" => "WebBackdrop_FileTree_Html",
-            ".css" => "WebBackdrop_FileTree_Css",
-            ".js" => "WebBackdrop_FileTree_Js",
-            ".ts" => "WebBackdrop_FileTree_Ts",
-            ".jsx" => "WebBackdrop_FileTree_Jsx",
-            ".tsx" => "WebBackdrop_FileTree_Tsx",
-            ".json" => "WebBackdrop_FileTree_Json",
-            ".svg" => "WebBackdrop_FileTree_Svg",
-            ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" or ".bmp" => "WebBackdrop_FileTree_Image",
-            ".md" => "WebBackdrop_FileTree_Md",
-            _ => "WebBackdrop_FileTree_File",
-        };
+        private string IconResourceKey => WebEditorFileUtil.GetIconResourceKeyFromExtension(Path.GetExtension(FilePath));
         public ObservableCollection<object> Items { get; }
         public string CountText => IsOverflow ? string.Empty : TotalCount.ToString();
 

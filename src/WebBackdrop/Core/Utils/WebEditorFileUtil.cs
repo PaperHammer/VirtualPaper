@@ -1,20 +1,71 @@
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Text;
 
 namespace Workloads.Creation.WebBackdrop.Core.Utils {
     public static class WebEditorFileUtil {
+        public const string DefaultLanguage = "plaintext";
+        public const string DefaultIconResourceKey = "WebBackdrop_FileTree_File";
+
+        private static readonly IReadOnlyDictionary<string, string> ExtensionLanguageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+            [".html"] = "html",
+            [".htm"] = "html",
+            [".css"] = "css",
+            [".js"] = "javascript",
+            [".json"] = "json",
+            [".vpw"] = "vpw",
+            [".ts"] = "typescript",
+            [".xml"] = "xml",
+            [".md"] = "markdown",
+            [".markdown"] = "markdown",
+            [".txt"] = DefaultLanguage,
+        };
+
+        private static readonly IReadOnlyDictionary<string, string> ExtensionIconResourceKeyMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+            [".html"] = "WebBackdrop_FileTree_Html",
+            [".htm"] = "WebBackdrop_FileTree_Html",
+            [".css"] = "WebBackdrop_FileTree_Css",
+            [".js"] = "WebBackdrop_FileTree_Js",
+            [".ts"] = "WebBackdrop_FileTree_Ts",
+            [".jsx"] = "WebBackdrop_FileTree_Jsx",
+            [".tsx"] = "WebBackdrop_FileTree_Tsx",
+            [".json"] = "WebBackdrop_FileTree_Json",
+            [".svg"] = "WebBackdrop_FileTree_Svg",
+            [".png"] = "WebBackdrop_FileTree_Image",
+            [".jpg"] = "WebBackdrop_FileTree_Image",
+            [".jpeg"] = "WebBackdrop_FileTree_Image",
+            [".gif"] = "WebBackdrop_FileTree_Image",
+            [".webp"] = "WebBackdrop_FileTree_Image",
+            [".bmp"] = "WebBackdrop_FileTree_Image",
+            [".md"] = "WebBackdrop_FileTree_Md",
+            [".markdown"] = "WebBackdrop_FileTree_Md",
+        };
+
+        private static readonly ISet<string> PreviewImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".webp",
+            ".bmp",
+            ".svg",
+        };
+
         public static string GetLanguageFromExtension(string extension) {
-            return extension.ToLowerInvariant() switch {
-                ".html" or ".htm" => "html",
-                ".css" => "css",
-                ".js" => "javascript",
-                ".json" => "json",
-                ".vpw" => "vpw",
-                ".ts" => "typescript",
-                ".xml" => "xml",
-                ".md" => "markdown",
-                _ => "plaintext",
-            };
+            return ExtensionLanguageMap.TryGetValue(extension, out var language) ? language : DefaultLanguage;
+        }
+
+        public static string GetManifestFileTypeFromExtension(string extension) {
+            return ExtensionLanguageMap.TryGetValue(extension, out var language) ? language : "file";
+        }
+
+        public static string GetIconResourceKeyFromExtension(string extension) {
+            return ExtensionIconResourceKeyMap.TryGetValue(extension, out var iconResourceKey) ? iconResourceKey : DefaultIconResourceKey;
+        }
+
+        public static bool IsTextExtension(string extension) {
+            return ExtensionLanguageMap.ContainsKey(extension);
         }
 
         public static string FormatLanguage(string language) {
@@ -36,11 +87,11 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         }
 
         public static bool IsPreviewImageExtension(string extension) {
-            return extension is ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" or ".bmp" or ".svg";
+            return PreviewImageExtensions.Contains(extension);
         }
 
         public static bool IsMarkdownExtension(string extension) {
-            return extension is ".md" or ".markdown";
+            return GetLanguageFromExtension(extension) == "markdown";
         }
 
         public static int CountLines(string content) {

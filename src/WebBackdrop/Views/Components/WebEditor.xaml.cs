@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Shapes;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
@@ -19,6 +23,11 @@ using Workloads.Creation.WebBackdrop.Views.Components.BottomPanels;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class WebEditor : ArcUserControl {
+        private const double MarkdownPaneMinWidth = 240;
+        private const double ImagePreviewMinScale = 0.1;
+        private const double ImagePreviewMaxScale = 8;
+        private const double ImagePreviewScaleStep = 1.1;
+
         public WebEditorViewModel ViewModel { get; private set; } = null!;
 
         public string ActiveFilePathText {
@@ -155,6 +164,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             }
 
+            ReleaseEditorResources();
             _isLoaded = false;
         }
 
@@ -175,19 +185,18 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
                 ActiveFilePathText = filePath;
                 ActiveFileLanguage = WebEditorFileUtil.GetLanguageFromExtension(activeFile.FileExtension);
-                monacoEditor.EditorContent = activeFile.Content;
-                monacoEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(ActiveFileLanguage);
-                monacoEditor.Visibility = Visibility.Visible;
-                welcomePanel.Visibility = Visibility.Collapsed;
+                if (!activeFile.CanOpenAsText && !WebEditorFileUtil.IsPreviewImageExtension(activeFile.FileExtension)) {
+                    ActiveFileLanguage = "binary";
+                }
+                UpdateEditorContent(activeFile);
                 leftFileTreeControl.SelectFile(filePath);
             }
             else {
                 ActiveFilePathText = string.Empty;
-                ActiveFileLanguage = "plaintext";
+                ActiveFileLanguage = WebEditorFileUtil.DefaultLanguage;
                 monacoEditor.EditorContent = string.Empty;
                 monacoEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(ActiveFileLanguage);
-                monacoEditor.Visibility = Visibility.Collapsed;
-                welcomePanel.Visibility = Visibility.Visible;
+                ShowWelcomePanel();
             }
 
             CursorLineNumber = 1;
@@ -199,9 +208,170 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         #region MonacoEditor event handlers
+        private void UpdateEditorContent(WebEditorFile file) {
+            HideEditorPanels();
+
+            if (WebEditorFileUtil.IsPreviewImageExtension(file.FileExtension)) {
+                _ = LoadImagePreviewAsync(file.FilePath);
+                imagePreviewPanel.Visibility = Visibility.Visible;
+                return;
+            }
+
+            if (!file.CanOpenAsText) {
+                fallbackMessageText.Text = "This file type cannot be opened directly.";
+                fallbackPanel.Visibility = Visibility.Visible;
+                return;
+            }
+
+            monacoEditor.EditorContent = file.Content;
+            monacoEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(ActiveFileLanguage);
+            editorHost.Visibility = Visibility.Visible;
+
+            if (WebEditorFileUtil.IsMarkdownExtension(file.FileExtension)) {
+                ShowMarkdownPreview();
+                UpdateMarkdownPreview(file);
+            }
+        }
+
+        private void ShowMarkdownPreview() {
+            markdownSourceColumn.MinWidth = MarkdownPaneMinWidth;
+            markdownPreviewColumn.MinWidth = MarkdownPaneMinWidth;
+            markdownPreviewSplitterColumn.Width = new GridLength(7);
+            markdownPreviewColumn.Width = new GridLength(1, GridUnitType.Star);
+            markdownPreviewSplitter.Visibility = Visibility.Visible;
+            markdownPreviewHost.Visibility = Visibility.Visible;
+        }
+
+        private void ShowWelcomePanel() {
+            HideEditorPanels();
+            welcomePanel.Visibility = Visibility.Visible;
+        }
+
+        private void HideEditorPanels() {
+            editorHost.Visibility = Visibility.Collapsed;
+            markdownSourceColumn.ClearValue(ColumnDefinition.MinWidthProperty);
+            markdownPreviewColumn.ClearValue(ColumnDefinition.MinWidthProperty);
+            markdownPreviewSplitterColumn.Width = new GridLength(0);
+            markdownPreviewColumn.Width = new GridLength(0);
+            markdownPreviewSplitter.Visibility = Visibility.Collapsed;
+            markdownPreviewHost.Visibility = Visibility.Collapsed;
+            imagePreviewPanel.Visibility = Visibility.Collapsed;
+            ReleaseImagePreviewSource();
+            fallbackPanel.Visibility = Visibility.Collapsed;
+            welcomePanel.Visibility = Visibility.Collapsed;
+        }
+
+        private void UpdateMarkdownPreview(WebEditorFile file) {
+            if (!WebEditorFileUtil.IsMarkdownExtension(file.FileExtension)) return;
+
+            NavigateMarkdownPreview(RenderMarkdownPreviewHtml(file));
+        }
+
+        private string RenderMarkdownPreviewHtml(WebEditorFile file) {
+            var templatePath = System.IO.Path.Combine(AppContext.BaseDirectory, Constants.ModuleName.WebBackdrop, "Assets", "preview", "markdown-preview.html");
+            return File.ReadAllText(templatePath)
+                .Replace("{{PreviewBackground}}", GetPreviewString(WebBackdropStringRole.PreviewLightBackground, WebBackdropStringRole.PreviewDarkBackground))
+                .Replace("{{PreviewForeground}}", GetPreviewString(WebBackdropStringRole.PreviewLightForeground, WebBackdropStringRole.PreviewDarkForeground))
+                .Replace("{{PreviewSecondaryForeground}}", GetPreviewString(WebBackdropStringRole.PreviewLightSecondaryForeground, WebBackdropStringRole.PreviewDarkSecondaryForeground))
+                .Replace("{{PreviewCodeBackground}}", GetPreviewString(WebBackdropStringRole.PreviewLightCodeBackground, WebBackdropStringRole.PreviewDarkCodeBackground))
+                .Replace("{{PreviewQuoteBorder}}", GetPreviewString(WebBackdropStringRole.PreviewLightQuoteBorder, WebBackdropStringRole.PreviewDarkQuoteBorder))
+                .Replace("{{PreviewLinkForeground}}", GetPreviewString(WebBackdropStringRole.PreviewLightLinkForeground, WebBackdropStringRole.PreviewDarkLinkForeground))
+                .Replace("{{MarkdownHtml}}", WebEditorFileUtil.RenderMarkdown(file.Content));
+        }
+
+        private string GetPreviewString(WebBackdropStringRole lightRole, WebBackdropStringRole darkRole) {
+            return WebBackdropThemeResource.GetString(this, ActualTheme == ElementTheme.Light ? lightRole : darkRole);
+        }
+
+        private async void NavigateMarkdownPreview(string html) {
+            _pendingMarkdownPreviewHtml = html;
+            await markdownPreviewWebView.EnsureCoreWebView2Async();
+            if (_pendingMarkdownPreviewHtml == html) {
+                markdownPreviewWebView.NavigateToString(html);
+            }
+        }
+
+        private async Task LoadImagePreviewAsync(string filePath) {
+            var version = ++_imagePreviewLoadVersion;
+            imagePreviewScaleTransform.ScaleX = 1;
+            imagePreviewScaleTransform.ScaleY = 1;
+
+            if (!File.Exists(filePath)) return;
+
+            var bytes = await File.ReadAllBytesAsync(filePath);
+            if (version != _imagePreviewLoadVersion) return;
+
+            var bitmap = new BitmapImage();
+            using var stream = new MemoryStream(bytes);
+            await bitmap.SetSourceAsync(stream.AsRandomAccessStream());
+            if (version == _imagePreviewLoadVersion) {
+                imagePreview.Source = bitmap;
+            }
+        }
+
+        private void ReleaseImagePreviewSource() {
+            _imagePreviewLoadVersion++;
+            imagePreview.Source = null;
+            imagePreviewScaleTransform.ScaleX = 1;
+            imagePreviewScaleTransform.ScaleY = 1;
+        }
+
+        private void ReleaseEditorResources() {
+            ReleaseImagePreviewSource();
+            _pendingMarkdownPreviewHtml = null;
+            markdownPreviewWebView.NavigateToString(string.Empty);
+        }
+
+        private void ImagePreviewPanel_PointerWheelChanged(object sender, PointerRoutedEventArgs e) {
+            var wheelDelta = e.GetCurrentPoint(imagePreviewPanel).Properties.MouseWheelDelta;
+            var scale = wheelDelta > 0
+                ? imagePreviewScaleTransform.ScaleX * ImagePreviewScaleStep
+                : imagePreviewScaleTransform.ScaleX / ImagePreviewScaleStep;
+            scale = Math.Clamp(scale, ImagePreviewMinScale, ImagePreviewMaxScale);
+            imagePreviewScaleTransform.ScaleX = scale;
+            imagePreviewScaleTransform.ScaleY = scale;
+            e.Handled = true;
+        }
+
+        private void MarkdownPreviewSplitter_PointerPressed(object sender, PointerRoutedEventArgs e) {
+            if (e.Pointer.PointerDeviceType != Microsoft.UI.Input.PointerDeviceType.Mouse) return;
+
+            _markdownPreviewResizePointer = e.Pointer;
+            _markdownPreviewResizeStartX = e.GetCurrentPoint(editorHost).Position.X;
+            _markdownPreviewResizeStartLeftWidth = markdownSourceColumn.ActualWidth;
+            _markdownPreviewResizeStartRightWidth = markdownPreviewColumn.ActualWidth;
+            markdownPreviewSplitter.CapturePointer(e.Pointer);
+            e.Handled = true;
+        }
+
+        private void MarkdownPreviewSplitter_PointerMoved(object sender, PointerRoutedEventArgs e) {
+            if (_markdownPreviewResizePointer == null) return;
+
+            var delta = e.GetCurrentPoint(editorHost).Position.X - _markdownPreviewResizeStartX;
+            var totalWidth = _markdownPreviewResizeStartLeftWidth + _markdownPreviewResizeStartRightWidth;
+            var leftWidth = Math.Clamp(_markdownPreviewResizeStartLeftWidth + delta, MarkdownPaneMinWidth, totalWidth - MarkdownPaneMinWidth);
+            markdownSourceColumn.Width = new GridLength(leftWidth);
+            markdownPreviewColumn.Width = new GridLength(totalWidth - leftWidth);
+            e.Handled = true;
+        }
+
+        private void MarkdownPreviewSplitter_PointerReleased(object sender, PointerRoutedEventArgs e) {
+            if (_markdownPreviewResizePointer != null) {
+                markdownPreviewSplitter.ReleasePointerCapture(_markdownPreviewResizePointer);
+            }
+
+            _markdownPreviewResizePointer = null;
+            e.Handled = true;
+        }
+
+        private void MarkdownPreviewSplitter_PointerCaptureLost(object sender, PointerRoutedEventArgs e) {
+            _markdownPreviewResizePointer = null;
+        }
+
         private void MonacoEditor_ContentChanged(object? sender, string content) {
             if (ViewModel?.ActiveFile != null && ViewModel.ActiveFile.Content != content) {
                 ViewModel.ActiveFile.Content = content;
+                UpdateMarkdownPreview(ViewModel.ActiveFile);
                 QueuePropertyPanelRefresh(ViewModel.ActiveFile, ActiveFileLanguage);
             }
         }
@@ -318,6 +488,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 [leftSideBarSplitter] = leftSideBarSplitterLine,
                 [bottomSideBarSplitter] = bottomSideBarSplitterLine,
                 [rightSideBarSplitter] = rightSideBarSplitterLine,
+                [markdownPreviewSplitter] = markdownPreviewSplitterLine,
             };
         }
 
@@ -521,6 +692,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private WebEditorBottomPanel _activeBottomPanel = WebEditorBottomPanel.Problems;
         private string? _activeEditorFilePath;
         private string? _ignoredEmptyMarkersFilePath;
+        private string? _pendingMarkdownPreviewHtml;
+        private Pointer? _markdownPreviewResizePointer;
+        private double _markdownPreviewResizeStartX;
+        private double _markdownPreviewResizeStartLeftWidth;
+        private double _markdownPreviewResizeStartRightWidth;
+        private int _imagePreviewLoadVersion;
         private Dictionary<EditorPanelSlot, PanelLayoutState> _panelLayoutStates = null!;
         private Dictionary<object, Rectangle> _splitterLines = null!;
         private Dictionary<string, Action> _shortcutActions = null!;

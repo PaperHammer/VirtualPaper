@@ -87,7 +87,8 @@
                     Header="Preview" 
                     IsExpanded="True" 
                     HorizontalAlignment="Stretch"  
-                    HorizontalContentAlignment="Stretch">
+                    HorizontalContentAlignment="Stretch"
+                    Visibility="Collapsed">
                     <Border x:Name="PreviewWebViewHost"
                         MinHeight="160"
                         CornerRadius="4"

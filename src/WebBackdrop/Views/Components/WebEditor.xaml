@@ -86,7 +86,8 @@
                         ContentChanged="EditorContentView_ContentChanged"
                         CursorPositionChanged="EditorContentView_CursorPositionChanged"
                         MarkersChanged="EditorContentView_MarkersChanged"
-                        ShortcutRequested="EditorContentView_ShortcutRequested"/>
+                        ShortcutRequested="EditorContentView_ShortcutRequested"
+                        EditorStateChanged="EditorContentView_EditorStateChanged"/>
                 </Border>
 
                 <Grid x:Name="bottomPanel"

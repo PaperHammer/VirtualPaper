@@ -43,7 +43,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
         public async Task OpenFileAsync(string filePath) {
             if (_openFileMap.TryGetValue(filePath, out var existing)) {
-                await existing.ReloadAsync();
                 ActiveFile = existing;
                 return;
             }
@@ -83,6 +82,12 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         public async Task<bool> SaveActiveFileAsync() {
             if (ActiveFile == null) return false;
             return await SaveFileAsync(ActiveFile);
+        }
+
+        public bool IsAllSaved => _openFiles.TrueForAll(file => file.IsSaved);
+
+        public WebEditorFile? GetOpenFile(string filePath) {
+            return _openFileMap.TryGetValue(filePath, out var file) ? file : null;
         }
 
         public async Task<bool> SaveAllAsync() {

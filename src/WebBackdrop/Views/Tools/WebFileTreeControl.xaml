@@ -45,7 +45,7 @@
         </DataTemplate>
 
         <DataTemplate x:Key="FileTemplate" x:DataType="models:WebFileItem">
-            <collection:ArcTreeViewItem AutomationProperties.Name="{x:Bind FileName}" HorizontalContentAlignment="Stretch">
+            <collection:ArcTreeViewItem Margin="2 0 0 0" AutomationProperties.Name="{x:Bind FileName}" HorizontalContentAlignment="Stretch">
                 <collection:ArcTreeViewItem.ContextFlyout>
                     <MenuFlyout>
                         <MenuFlyoutItem Text="Cut" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
@@ -62,7 +62,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
-                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <Image
@@ -75,6 +75,7 @@
                         <TextBlock Text="{x:Bind FileName}"/>
                     </StackPanel>
                     <Border
+                        Margin="10 0"
                         Grid.Column="1"
                         Width="14"
                         Height="14"
@@ -102,8 +103,7 @@
     </UserControl.Resources>
 
     <Grid>
-        <collection:ArcTreeView
-            x:Name="fileTreeView"
+        <collection:ArcTreeView x:Name="fileTreeView"
             CancelSelectionEnable="False"
             SelectedItem="{x:Bind SelectedFileItem, Mode=TwoWay}"
             ItemsSource="{x:Bind _viewModel.FileItems}"

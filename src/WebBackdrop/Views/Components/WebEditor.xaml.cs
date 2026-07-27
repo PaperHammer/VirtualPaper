@@ -219,6 +219,45 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
+        private void EditorContentView_EditorStateChanged(object? sender, MonacoEditorState state) {
+            if (ViewModel?.ActiveFile == null) return;
+
+            ViewModel.ActiveFile.SetSavedState(state.IsSaved);
+            SyncFileSavedState(ViewModel.ActiveFile);
+        }
+
+        private void SyncFileSavedState(WebEditorFile file) {
+            leftFileTreeControl.SetFileSaved(file.FilePath, file.IsSaved);
+            _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
+        }
+
+        public Task UndoAsync() {
+            return editorContentView.UndoAsync();
+        }
+
+        public Task RedoAsync() {
+            return editorContentView.RedoAsync();
+        }
+
+        public Task<MonacoEditorState> GetEditorStateAsync() {
+            return editorContentView.GetEditorStateAsync();
+        }
+
+        public async Task<bool> SaveAllAsync() {
+            if (ViewModel == null) return false;
+
+            var activeFile = ViewModel.ActiveFile;
+            var result = await ViewModel.SaveAllAsync();
+            if (result && activeFile != null) {
+                await editorContentView.MarkSavedAsync();
+                foreach (var file in ViewModel.OpenFiles) {
+                    leftFileTreeControl.SetFileSaved(file.FilePath, file.IsSaved);
+                }
+                _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
+            }
+            return result;
+        }
+
         private void EditorContentView_CursorPositionChanged(object? sender, MonacoCursorPosition position) {
             CursorLineNumber = position.LineNumber;
             CursorColumn = position.Column;

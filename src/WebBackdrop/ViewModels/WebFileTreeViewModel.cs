@@ -26,8 +26,10 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             if (!Directory.Exists(designFileUtil.ProjectFolder)) return;
 
             _designFileUtil = designFileUtil;
+            _manifestItems = designFileUtil.GetManifestItems();
             ProjectFolder = designFileUtil.ProjectFolder;
-            var root = BuildManifestDirectoryItem(ProjectFolder, null, designFileUtil.GetManifestItems());
+            var root = CreateDirectoryItem(ProjectFolder, null);
+            LoadChildren(root);
             root.IsExpanded = true;
             FileItems.Clear();
             FileItems.Add(root);
@@ -36,18 +38,37 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         public void Refresh(string projectFolder) {
             if (!Directory.Exists(projectFolder)) return;
 
+            _designFileUtil = null;
+            _manifestItems = null;
             ProjectFolder = projectFolder;
-            var root = BuildDirectoryItem(projectFolder);
+            var root = CreateDirectoryItem(projectFolder, null);
+            LoadChildren(root);
             root.IsExpanded = true;
             FileItems.Clear();
             FileItems.Add(root);
         }
 
         public void SelectFile(string filePath) {
-            var item = FindItem(filePath);
+            var item = FindOrLoadItem(filePath);
             if (item == null) return;
 
             ExpandParents(item);
+        }
+
+        public void SetFileSaved(string filePath, bool isSaved) {
+            var item = FindOrLoadItem(filePath);
+            if (item == null) return;
+
+            item.IsSaved = isSaved;
+        }
+
+        public void ToggleFolder(WebFileItem folder) {
+            if (folder.Type != WebFileItemType.Folder) return;
+
+            if (!folder.IsExpanded) {
+                LoadChildren(folder);
+            }
+            folder.IsExpanded = !folder.IsExpanded;
         }
 
         public async Task CreateFileAsync(string folderPath, Func<string, Task<string?>> getRenamedPathAsync) {
@@ -56,7 +77,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             File.WriteAllText(path, string.Empty);
             _designFileUtil?.AddManifestPath(path);
-            var parent = FindItem(folderPath);
+            var parent = FindOrLoadItem(folderPath);
             AddItem(parent, new WebFileItem(path, WebFileItemType.File, parent));
         }
 
@@ -66,8 +87,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             Directory.CreateDirectory(path);
             _designFileUtil?.AddManifestPath(path);
-            var parent = FindItem(folderPath);
-            AddItem(parent, new WebFileItem(path, WebFileItemType.Folder, parent));
+            var parent = FindOrLoadItem(folderPath);
+            AddItem(parent, CreateDirectoryItem(path, parent));
         }
 
         public async Task RenameAsync(WebFileItem item, Func<string, Task<string?>> getRenamedPathAsync) {
@@ -126,6 +147,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
 
             AddItem(target, BuildItem(destinationPath, source.Type, target));
+            LoadChildren(target);
             target.IsExpanded = true;
         }
 
@@ -158,6 +180,28 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             return FileItems.Select(root => FindItem(root, filePath)).FirstOrDefault(item => item != null);
         }
 
+        private WebFileItem? FindOrLoadItem(string filePath) {
+            var item = FindItem(filePath);
+            if (item != null) return item;
+
+            var root = FileItems.FirstOrDefault();
+            if (root == null) return null;
+
+            var relativePath = Path.GetRelativePath(ProjectFolder, filePath);
+            if (relativePath == ".") return root;
+            if (relativePath.StartsWith("..") || Path.IsPathRooted(relativePath)) return null;
+
+            var current = root;
+            foreach (var part in relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)) {
+                if (string.IsNullOrEmpty(part)) continue;
+                LoadChildren(current);
+                current = current.Children.FirstOrDefault(child => string.Equals(child.FileName, part, StringComparison.OrdinalIgnoreCase));
+                if (current == null) return null;
+            }
+
+            return current;
+        }
+
         private static WebFileItem? FindItem(WebFileItem item, string filePath) {
             if (string.Equals(item.FilePath, filePath, StringComparison.OrdinalIgnoreCase)) return item;
 
@@ -177,32 +221,44 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
         }
 
-        private static WebFileItem BuildDirectoryItem(string folderPath) {
-            return BuildDirectoryItem(folderPath, null);
-        }
-
-        private static WebFileItem BuildDirectoryItem(string folderPath, WebFileItem? parent) {
+        private WebFileItem CreateDirectoryItem(string folderPath, WebFileItem? parent) {
             var item = new WebFileItem(folderPath, WebFileItemType.Folder, parent);
-
-            foreach (var folder in Directory.GetDirectories(folderPath).OrderBy(Path.GetFileName)) {
-                item.Children.Add(BuildDirectoryItem(folder, item));
+            if (HasChildren(folderPath)) {
+                item.Children.Add(new WebFileItem(Path.Combine(folderPath, PlaceholderFileName), WebFileItemType.File, item));
             }
-
-            foreach (var file in Directory.GetFiles(folderPath).OrderBy(Path.GetFileName)) {
-                item.Children.Add(new WebFileItem(file, WebFileItemType.File, item));
-            }
-
             return item;
         }
 
-        private WebFileItem BuildManifestDirectoryItem(string folderPath, WebFileItem? parent, IReadOnlyList<WebProjectManifestItem> manifestItems) {
-            var item = new WebFileItem(folderPath, WebFileItemType.Folder, parent);
-            var relativeFolder = Path.GetRelativePath(ProjectFolder, folderPath).Replace(Path.DirectorySeparatorChar, '/');
+        private void LoadChildren(WebFileItem folder) {
+            if (folder.Type != WebFileItemType.Folder || folder.IsChildrenLoaded) return;
+
+            folder.Children.Clear();
+            if (_manifestItems != null) {
+                LoadManifestChildren(folder);
+            }
+            else {
+                LoadDirectoryChildren(folder);
+            }
+            folder.IsChildrenLoaded = true;
+        }
+
+        private void LoadDirectoryChildren(WebFileItem folder) {
+            foreach (var childFolder in Directory.GetDirectories(folder.FilePath).OrderBy(Path.GetFileName)) {
+                folder.Children.Add(CreateDirectoryItem(childFolder, folder));
+            }
+
+            foreach (var file in Directory.GetFiles(folder.FilePath).OrderBy(Path.GetFileName)) {
+                folder.Children.Add(new WebFileItem(file, WebFileItemType.File, folder));
+            }
+        }
+
+        private void LoadManifestChildren(WebFileItem folder) {
+            var relativeFolder = Path.GetRelativePath(ProjectFolder, folder.FilePath).Replace(Path.DirectorySeparatorChar, '/');
             if (relativeFolder == ".") {
                 relativeFolder = string.Empty;
             }
 
-            var directItems = manifestItems
+            var directItems = _manifestItems!
                 .Where(manifestItem => IsDirectChild(relativeFolder, manifestItem.Path))
                 .OrderBy(manifestItem => manifestItem.Type == "folder" ? 0 : 1)
                 .ThenBy(manifestItem => Path.GetFileName(manifestItem.Path), StringComparer.OrdinalIgnoreCase);
@@ -210,14 +266,24 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             foreach (var manifestItem in directItems) {
                 var path = Path.Combine(ProjectFolder, manifestItem.Path.Replace('/', Path.DirectorySeparatorChar));
                 if (manifestItem.Type == "folder") {
-                    item.Children.Add(BuildManifestDirectoryItem(path, item, manifestItems));
+                    folder.Children.Add(CreateDirectoryItem(path, folder));
                 }
                 else if (File.Exists(path)) {
-                    item.Children.Add(new WebFileItem(path, WebFileItemType.File, item));
+                    folder.Children.Add(new WebFileItem(path, WebFileItemType.File, folder));
                 }
             }
+        }
 
-            return item;
+        private bool HasChildren(string folderPath) {
+            if (_manifestItems != null) {
+                var relativeFolder = Path.GetRelativePath(ProjectFolder, folderPath).Replace(Path.DirectorySeparatorChar, '/');
+                if (relativeFolder == ".") {
+                    relativeFolder = string.Empty;
+                }
+                return _manifestItems.Any(manifestItem => IsDirectChild(relativeFolder, manifestItem.Path));
+            }
+
+            return Directory.EnumerateFileSystemEntries(folderPath).Any();
         }
 
         private static bool IsDirectChild(string relativeFolder, string itemPath) {
@@ -265,7 +331,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
         private static WebFileItem BuildItem(string path, WebFileItemType type, WebFileItem? parent) {
             return type == WebFileItemType.Folder
-                ? BuildDirectoryItem(path, parent)
+                ? new WebFileItem(path, WebFileItemType.Folder, parent)
                 : new WebFileItem(path, WebFileItemType.File, parent);
         }
 
@@ -284,7 +350,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         private string _projectFolder = string.Empty;
+        private const string PlaceholderFileName = ".__lazy_placeholder__";
         private WebDesignFileUtil? _designFileUtil;
+        private IReadOnlyList<WebProjectManifestItem>? _manifestItems;
         private WebFileItem? _clipboardItem;
         private WebFileTreeClipboardOperation _clipboardOperation;
     }

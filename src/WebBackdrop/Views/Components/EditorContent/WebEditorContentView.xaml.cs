@@ -12,6 +12,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
         public event EventHandler<string>? ShortcutRequested;
+        public event EventHandler<MonacoEditorState>? EditorStateChanged;
 
         public WebEditorContentView() {
             InitializeComponent();
@@ -54,6 +55,30 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
                 : textEditor.RevealPositionAsync(lineNumber, columnNumber);
         }
 
+        public Task UndoAsync() {
+            return _currentKind == WebEditorFileKind.Markdown
+                ? markdownEditor.UndoAsync()
+                : textEditor.UndoAsync();
+        }
+
+        public Task RedoAsync() {
+            return _currentKind == WebEditorFileKind.Markdown
+                ? markdownEditor.RedoAsync()
+                : textEditor.RedoAsync();
+        }
+
+        public Task MarkSavedAsync() {
+            return _currentKind == WebEditorFileKind.Markdown
+                ? markdownEditor.MarkSavedAsync()
+                : textEditor.MarkSavedAsync();
+        }
+
+        public Task<MonacoEditorState> GetEditorStateAsync() {
+            return _currentKind == WebEditorFileKind.Markdown
+                ? markdownEditor.GetEditorStateAsync()
+                : textEditor.GetEditorStateAsync();
+        }
+
         public void ReleaseResources() {
             imagePreview.ReleaseResources();
             markdownEditor.ReleaseResources();
@@ -83,6 +108,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
 
         private void Editor_ShortcutRequested(object? sender, string command) {
             ShortcutRequested?.Invoke(this, command);
+        }
+
+        private void Editor_EditorStateChanged(object? sender, MonacoEditorState state) {
+            EditorStateChanged?.Invoke(this, state);
         }
 
         private WebEditorFileKind? _currentKind;

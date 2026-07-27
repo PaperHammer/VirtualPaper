@@ -117,7 +117,28 @@
                 multiCursorModifier: 'alt',
             });
 
+            function postEditorState() {
+                if (!window.chrome || !window.chrome.webview) {
+                    return;
+                }
+
+                var model = editor.getModel();
+                if (!model) {
+                    return;
+                }
+
+                var alternativeVersionId = model.getAlternativeVersionId();
+                window.chrome.webview.postMessage(JSON.stringify({
+                    type: 'editorStateChanged',
+                    alternativeVersionId: alternativeVersionId,
+                    isSaved: alternativeVersionId === window.savedAlternativeVersionId,
+                    canUndo: alternativeVersionId !== window.initialAlternativeVersionId,
+                    canRedo: false
+                }));
+            }
+
             editor.onDidChangeModelContent(function () {
+                postEditorState();
                 if (window.chrome && window.chrome.webview) {
                     window.chrome.webview.postMessage(JSON.stringify({ type: 'contentChange' }));
                 }
@@ -205,6 +226,47 @@
                 if (current !== value) {
                     editor.setValue(value);
                 }
+                var model = editor.getModel();
+                if (model) {
+                    window.initialAlternativeVersionId = model.getAlternativeVersionId();
+                    window.savedAlternativeVersionId = model.getAlternativeVersionId();
+                }
+                postEditorState();
+            };
+
+            window.markSaved = function () {
+                var model = editor.getModel();
+                if (!model) {
+                    return;
+                }
+
+                window.savedAlternativeVersionId = model.getAlternativeVersionId();
+                postEditorState();
+            };
+
+            window.undo = function () {
+                editor.trigger('host', 'undo', null);
+                postEditorState();
+            };
+
+            window.redo = function () {
+                editor.trigger('host', 'redo', null);
+                postEditorState();
+            };
+
+            window.getEditorState = function () {
+                var model = editor.getModel();
+                if (!model) {
+                    return JSON.stringify({ isSaved: true, canUndo: false, canRedo: false });
+                }
+
+                var alternativeVersionId = model.getAlternativeVersionId();
+                return JSON.stringify({
+                    alternativeVersionId: alternativeVersionId,
+                    isSaved: alternativeVersionId === window.savedAlternativeVersionId,
+                    canUndo: alternativeVersionId !== window.initialAlternativeVersionId,
+                    canRedo: false
+                });
             };
 
             window.getValue = function () {

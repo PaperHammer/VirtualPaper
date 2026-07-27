@@ -28,7 +28,8 @@
             ContentChanged="MonacoEditor_ContentChanged"
             CursorPositionChanged="MonacoEditor_CursorPositionChanged"
             MarkersChanged="MonacoEditor_MarkersChanged"
-            ShortcutRequested="MonacoEditor_ShortcutRequested"/>
+            ShortcutRequested="MonacoEditor_ShortcutRequested"
+            EditorStateChanged="MonacoEditor_EditorStateChanged"/>
 
         <Grid x:Name="splitter"
             Grid.Column="1"

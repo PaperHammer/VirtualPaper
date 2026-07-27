@@ -17,6 +17,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
         public event EventHandler<string>? ShortcutRequested;
+        public event EventHandler<MonacoEditorState>? EditorStateChanged;
 
         public string EditorContent {
             get => _content;
@@ -124,6 +125,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     "ready" => HandleEditorReadyAsync(),
                     "shortcut" => HandleShortcutAsync(json.RootElement),
                     "contentChange" => HandleContentChangeAsync(),
+                    "editorStateChanged" => HandleEditorStateChangedAsync(json.RootElement),
                     "cursorPositionChange" => HandleCursorPositionChangeAsync(json.RootElement),
                     "markersChanged" => HandleMarkersChangedAsync(json.RootElement),
                     _ => Task.CompletedTask
@@ -166,6 +168,17 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
+        private Task HandleEditorStateChangedAsync(JsonElement rootElement) {
+            var alternativeVersionId = rootElement.TryGetProperty("alternativeVersionId", out var alternativeVersionIdElement)
+                ? alternativeVersionIdElement.GetInt32()
+                : 0;
+            var isSaved = rootElement.TryGetProperty("isSaved", out var isSavedElement) && isSavedElement.GetBoolean();
+            var canUndo = rootElement.TryGetProperty("canUndo", out var canUndoElement) && canUndoElement.GetBoolean();
+            var canRedo = rootElement.TryGetProperty("canRedo", out var canRedoElement) && canRedoElement.GetBoolean();
+            EditorStateChanged?.Invoke(this, new MonacoEditorState(alternativeVersionId, isSaved, canUndo, canRedo));
+            return Task.CompletedTask;
+        }
+
         private Task HandleCursorPositionChangeAsync(JsonElement rootElement) {
             var lineNumber = rootElement.GetProperty("lineNumber").GetInt32();
             var column = rootElement.GetProperty("column").GetInt32();
@@ -194,6 +207,46 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
             try {
                 await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.revealPosition({lineNumber}, {column})");
+            } catch (Exception ex) {
+                ArcLog.GetLogger<MonacoEditor>().Error(ex);
+            }
+        }
+
+        public Task UndoAsync() {
+            return ExecuteEditorCommandAsync("window.undo()");
+        }
+
+        public Task RedoAsync() {
+            return ExecuteEditorCommandAsync("window.redo()");
+        }
+
+        public Task MarkSavedAsync() {
+            return ExecuteEditorCommandAsync("window.markSaved()");
+        }
+
+        public async Task<MonacoEditorState> GetEditorStateAsync() {
+            if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
+                return new MonacoEditorState(0, true, false, false);
+            }
+
+            try {
+                var result = await monacoWebView.CoreWebView2.ExecuteScriptAsync("window.getEditorState()");
+                var json = JsonSerializer.Deserialize<string>(result) ?? string.Empty;
+                var state = JsonSerializer.Deserialize<MonacoEditorState>(json, _jsonSerializerOptions);
+                return state ?? new MonacoEditorState(0, true, false, false);
+            } catch (Exception ex) {
+                ArcLog.GetLogger<MonacoEditor>().Error(ex);
+                return new MonacoEditorState(0, true, false, false);
+            }
+        }
+
+        private async Task ExecuteEditorCommandAsync(string script) {
+            if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
+                return;
+            }
+
+            try {
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync(script);
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
             }
@@ -262,6 +315,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
     }
 
     public readonly record struct MonacoCursorPosition(int LineNumber, int Column, int SelectedCharacterCount, bool IsSelectedCharacterCountOverflow);
+
+    public sealed record MonacoEditorState(int AlternativeVersionId, bool IsSaved, bool CanUndo, bool CanRedo);
 
     public sealed class MonacoMarker {
         public int Severity { get; set; }

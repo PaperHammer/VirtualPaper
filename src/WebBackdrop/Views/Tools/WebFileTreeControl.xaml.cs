@@ -47,13 +47,17 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             _viewModel.SelectFile(filePath);
         }
 
+        public void SetFileSaved(string filePath, bool isSaved) {
+            _viewModel.SetFileSaved(filePath, isSaved);
+        }
+
         private static void PreloadFolderOpenIcon() {
             _ = Application.Current.Resources.TryGetValue("WebBackdrop_FileTree_FolderOpen", out _);
         }
 
         private void FileTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args) {
             if (args.InvokedItem is WebFileItem { Type: WebFileItemType.Folder } folder) {
-                folder.IsExpanded = !folder.IsExpanded;
+                _viewModel.ToggleFolder(folder);
                 FolderSelected?.Invoke(this, folder.FilePath);
                 return;
             }

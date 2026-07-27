@@ -68,7 +68,7 @@ namespace Workloads.Creation.WebBackdrop {
         #region IRuntime
         public async Task<bool> SaveAsync() {
             try {
-                var result = await webEditor.ViewModel.SaveAllAsync();
+                var result = await webEditor.SaveAllAsync();
                 if (result) {
                     await webEditor.ViewModel.UpdateRecentUsedAsync(Session.DesignFileUtil.ProjectFilePath);
                 }
@@ -94,13 +94,11 @@ namespace Workloads.Creation.WebBackdrop {
         }
 
         public Task UndoAsync() {
-            // Web editor doesn't have undo/redo yet
-            return Task.CompletedTask;
+            return webEditor.UndoAsync();
         }
 
         public Task RedoAsync() {
-            // Web editor doesn't have undo/redo yet
-            return Task.CompletedTask;
+            return webEditor.RedoAsync();
         }
 
         public Task<string?> ExportAsync(ExportImageFormat format) {

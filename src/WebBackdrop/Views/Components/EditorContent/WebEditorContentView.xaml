@@ -15,13 +15,15 @@
             ContentChanged="TextEditor_ContentChanged"
             CursorPositionChanged="Editor_CursorPositionChanged"
             MarkersChanged="Editor_MarkersChanged"
-            ShortcutRequested="Editor_ShortcutRequested"/>
+            ShortcutRequested="Editor_ShortcutRequested"
+            EditorStateChanged="Editor_EditorStateChanged"/>
         <editorContent:MarkdownEditorView x:Name="markdownEditor"
             Visibility="Collapsed"
             ContentChanged="TextEditor_ContentChanged"
             CursorPositionChanged="Editor_CursorPositionChanged"
             MarkersChanged="Editor_MarkersChanged"
-            ShortcutRequested="Editor_ShortcutRequested"/>
+            ShortcutRequested="Editor_ShortcutRequested"
+            EditorStateChanged="Editor_EditorStateChanged"/>
         <editorContent:ImagePreviewView x:Name="imagePreview" Visibility="Collapsed"/>
         <editorContent:FallbackContentView x:Name="fallbackView" Visibility="Collapsed"/>
         <editorContent:WelcomeContentView x:Name="welcomeView"/>

@@ -33,6 +33,36 @@
             "role": "metadata"
         },
         {
+            "path": "nested",
+            "type": "folder",
+            "role": "asset"
+        },
+        {
+            "path": "nested/README.md",
+            "type": "markdown",
+            "role": "asset"
+        },
+        {
+            "path": "nested/level-1",
+            "type": "folder",
+            "role": "asset"
+        },
+        {
+            "path": "nested/level-1/helper.js",
+            "type": "javascript",
+            "role": "asset"
+        },
+        {
+            "path": "nested/level-1/level-2",
+            "type": "folder",
+            "role": "asset"
+        },
+        {
+            "path": "nested/level-1/level-2/data.json",
+            "type": "json",
+            "role": "asset"
+        },
+        {
             "path": "template.vpw",
             "type": "vpw",
             "role": "solution"

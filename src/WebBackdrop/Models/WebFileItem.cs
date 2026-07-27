@@ -18,6 +18,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
         public ObservableCollection<WebFileItem> Children { get; } = [];
         public WebFileItem? Parent { get; }
         public string FileName => Path.GetFileName(FilePath);
+        public bool IsChildrenLoaded { get; set; }
 
         public bool IsSaved {
             get => _isSaved;

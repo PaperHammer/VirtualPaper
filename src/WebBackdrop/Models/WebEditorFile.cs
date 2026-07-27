@@ -59,16 +59,12 @@ namespace Workloads.Creation.WebBackdrop.Models {
             _isSaved = true;
         }
 
-        public async Task ReloadAsync() {
-            _content = await ReadContentAsync(FilePath);
-            _isSaved = true;
-            OnPropertyChanged(nameof(Content));
-            OnPropertyChanged(nameof(IsSaved));
+        public void MarkAsSaved() {
+            IsSaved = true;
         }
 
-        public void MarkAsSaved() {
-            _isSaved = true;
-            OnPropertyChanged(nameof(IsSaved));
+        public void SetSavedState(bool isSaved) {
+            IsSaved = isSaved;
         }
 
         private static WebEditorFileKind GetKind(string extension) {

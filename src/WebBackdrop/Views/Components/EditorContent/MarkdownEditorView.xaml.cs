@@ -19,6 +19,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
         public event EventHandler<string>? ShortcutRequested;
+        public event EventHandler<MonacoEditorState>? EditorStateChanged;
 
         public MarkdownEditorView() {
             InitializeComponent();
@@ -35,6 +36,22 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
 
         public Task RevealPositionAsync(int lineNumber, int columnNumber) {
             return monacoEditor.RevealPositionAsync(lineNumber, columnNumber);
+        }
+
+        public Task UndoAsync() {
+            return monacoEditor.UndoAsync();
+        }
+
+        public Task RedoAsync() {
+            return monacoEditor.RedoAsync();
+        }
+
+        public Task MarkSavedAsync() {
+            return monacoEditor.MarkSavedAsync();
+        }
+
+        public Task<MonacoEditorState> GetEditorStateAsync() {
+            return monacoEditor.GetEditorStateAsync();
         }
 
         public void ReleaseResources() {
@@ -149,6 +166,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
 
         private void MonacoEditor_ShortcutRequested(object? sender, string command) {
             ShortcutRequested?.Invoke(this, command);
+        }
+
+        private void MonacoEditor_EditorStateChanged(object? sender, MonacoEditorState state) {
+            EditorStateChanged?.Invoke(this, state);
         }
 
         private string _content = string.Empty;

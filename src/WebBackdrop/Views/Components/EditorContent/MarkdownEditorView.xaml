@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Workloads.Creation.WebBackdrop.Views.Components.EditorContent.MarkdownEditorView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Workloads.Creation.WebBackdrop.Views.Components"
+    xmlns:utils="using:VirtualPaper.UIComponent.Utils"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ms-appx:///WebBackdrop/Themes/WebBackdropColors.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid x:Name="rootGrid">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="sourceColumn" MinWidth="240"/>
+            <ColumnDefinition Width="7"/>
+            <ColumnDefinition x:Name="previewColumn" MinWidth="240"/>
+        </Grid.ColumnDefinitions>
+
+        <local:MonacoEditor x:Name="monacoEditor"
+            ContentChanged="MonacoEditor_ContentChanged"
+            CursorPositionChanged="MonacoEditor_CursorPositionChanged"
+            MarkersChanged="MonacoEditor_MarkersChanged"
+            ShortcutRequested="MonacoEditor_ShortcutRequested"/>
+
+        <Grid x:Name="splitter"
+            Grid.Column="1"
+            Width="7"
+            HorizontalAlignment="Stretch"
+            Background="Transparent"
+            ManipulationMode="None"
+            PointerPressed="Splitter_PointerPressed"
+            PointerMoved="Splitter_PointerMoved"
+            PointerReleased="Splitter_PointerReleased"
+            PointerCanceled="Splitter_PointerReleased"
+            PointerCaptureLost="Splitter_PointerCaptureLost"
+            PointerEntered="Splitter_PointerEntered"
+            PointerExited="Splitter_PointerExited"
+            utils:CursorUtil.CursorShape="SizeWestEast">
+            <Rectangle x:Name="splitterLine"
+                Width="4"
+                HorizontalAlignment="Center"/>
+        </Grid>
+
+        <Border Grid.Column="2"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1 0 0 0">
+            <WebView2 x:Name="previewWebView"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"/>
+        </Border>
+    </Grid>
+</UserControl>

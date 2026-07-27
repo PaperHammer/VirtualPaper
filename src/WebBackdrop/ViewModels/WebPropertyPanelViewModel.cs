@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Net;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Models.Mvvm;
 using Microsoft.UI.Xaml;
@@ -87,16 +84,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             private set { if (_lineCountVisibility == value) return; _lineCountVisibility = value; OnPropertyChanged(); }
         }
 
-        public string? PreviewHtml {
-            get => _previewHtml;
-            private set { if (_previewHtml == value) return; _previewHtml = value; OnPropertyChanged(); }
-        }
-
-        public void SetPreviewTheme(WebPropertyPanelPreviewTheme theme) {
-            _previewTheme = theme;
-            RefreshPreview();
-        }
-
         public void LoadProject(WebDesignFileUtil designFileUtil) {
             _projectFolder = designFileUtil.ProjectFolder;
             var data = designFileUtil.GetOrCreateProjectData();
@@ -111,14 +98,13 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 return;
             }
 
-            _currentFile = file;
             var info = new FileInfo(file.FilePath);
             FileNameText = file.FileName;
-            TypeLabelText = "Language";
-            TypeText = language;
+            TypeLabelText = file.CanOpenAsText ? "Language" : "Type";
+            TypeText = file.Kind == WebEditorFileKind.Unsupported ? "Unsupported" : language;
             StatusText = file.IsSaved ? "Saved" : "Unsaved";
             SizeText = info.Exists ? FileUtil.SizeSuffix(info.Length) : "-";
-            LineCountText = WebEditorFileUtil.CountLines(file.Content).ToString();
+            LineCountText = file.CanOpenAsText ? WebEditorFileUtil.CountLines(file.Content).ToString() : "-";
             ModifiedText = info.Exists ? info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") : "-";
             RelativePathText = FileUtil.GetRelativePath(_projectFolder, file.FilePath);
 
@@ -126,13 +112,10 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             ItemInfoVisibility = Visibility.Visible;
             StatusVisibility = Visibility.Visible;
             SizeVisibility = Visibility.Visible;
-            LineCountVisibility = Visibility.Visible;
-
-            LoadPreview(file);
+            LineCountVisibility = file.CanOpenAsText ? Visibility.Visible : Visibility.Collapsed;
         }
 
         public void LoadFolder(string folderPath) {
-            _currentFile = null;
             var info = new DirectoryInfo(folderPath);
             FileNameText = info.Exists ? info.Name : Path.GetFileName(folderPath);
             TypeLabelText = "Type";
@@ -145,8 +128,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             StatusVisibility = Visibility.Collapsed;
             SizeVisibility = Visibility.Collapsed;
             LineCountVisibility = Visibility.Collapsed;
-
-            SetPreviewMessage("Select an image, SVG, or Markdown file to preview.");
         }
 
         public void Clear() {
@@ -156,77 +137,11 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         private void ClearCurrentItem() {
-            _currentFile = null;
             NoItemVisibility = Visibility.Visible;
             ItemInfoVisibility = Visibility.Collapsed;
-            SetPreviewMessage("No preview available.");
-        }
-
-        private void RefreshPreview() {
-            if (_currentFile != null) {
-                LoadPreview(_currentFile);
-            }
-            else if (NoItemVisibility == Visibility.Visible) {
-                SetPreviewMessage("No preview available.");
-            }
-            else {
-                SetPreviewMessage("Select an image, SVG, or Markdown file to preview.");
-            }
-        }
-
-        private void LoadPreview(WebEditorFile file) {
-            if (WebEditorFileUtil.IsPreviewImageExtension(file.FileExtension)) {
-                PreviewHtml = RenderPreviewTemplate("image-preview.html", new Dictionary<string, string> {
-                    ["ImageUri"] = WebUtility.HtmlEncode(new Uri(file.FilePath).AbsoluteUri),
-                });
-                return;
-            }
-
-            if (WebEditorFileUtil.IsMarkdownExtension(file.FileExtension)) {
-                PreviewHtml = RenderPreviewTemplate("markdown-preview.html", new Dictionary<string, string> {
-                    ["MarkdownHtml"] = WebEditorFileUtil.RenderMarkdown(file.Content),
-                });
-                return;
-            }
-
-            SetPreviewMessage("Preview supports images, SVG, and Markdown.");
-        }
-
-        private void SetPreviewMessage(string message) {
-            PreviewHtml = RenderPreviewTemplate("message-preview.html", new Dictionary<string, string> {
-                ["Message"] = WebUtility.HtmlEncode(message),
-            });
-        }
-
-        private string RenderPreviewTemplate(string templateName, IReadOnlyDictionary<string, string> values) {
-            var html = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, Constants.ModuleName.WebBackdrop, "Assets", "preview", templateName));
-            foreach (var pair in GetPreviewTemplateValues(values)) {
-                html = html.Replace("{{" + pair.Key + "}}", pair.Value);
-            }
-
-            return html;
-        }
-
-        private Dictionary<string, string> GetPreviewTemplateValues(IReadOnlyDictionary<string, string> values) {
-            var templateValues = new Dictionary<string, string> {
-                ["PreviewBackground"] = _previewTheme.PreviewBackground,
-                ["PreviewForeground"] = _previewTheme.PreviewForeground,
-                ["PreviewSecondaryForeground"] = _previewTheme.PreviewSecondaryForeground,
-                ["PreviewCodeBackground"] = _previewTheme.PreviewCodeBackground,
-                ["PreviewQuoteBorder"] = _previewTheme.PreviewQuoteBorder,
-                ["PreviewLinkForeground"] = _previewTheme.PreviewLinkForeground,
-            };
-
-            foreach (var pair in values) {
-                templateValues[pair.Key] = pair.Value;
-            }
-
-            return templateValues;
         }
 
         private string _projectFolder = string.Empty;
-        private WebEditorFile? _currentFile;
-        private WebPropertyPanelPreviewTheme _previewTheme = WebPropertyPanelPreviewTheme.Empty;
         private string _projectTitleText = "-";
         private string _projectEntryText = "-";
         private string _fileNameText = string.Empty;
@@ -242,22 +157,5 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         private Visibility _statusVisibility = Visibility.Visible;
         private Visibility _sizeVisibility = Visibility.Visible;
         private Visibility _lineCountVisibility = Visibility.Visible;
-        private string? _previewHtml;
-    }
-
-    public readonly record struct WebPropertyPanelPreviewTheme(
-        string PreviewBackground,
-        string PreviewForeground,
-        string PreviewSecondaryForeground,
-        string PreviewCodeBackground,
-        string PreviewQuoteBorder,
-        string PreviewLinkForeground) {
-        public static WebPropertyPanelPreviewTheme Empty { get; } = new(
-            string.Empty,
-            string.Empty,
-            string.Empty,
-            string.Empty,
-            string.Empty,
-            string.Empty);
     }
 }

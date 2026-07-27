@@ -5,12 +5,20 @@ using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 
 namespace Workloads.Creation.WebBackdrop.Models {
+    public enum WebEditorFileKind {
+        Text,
+        Markdown,
+        Image,
+        Unsupported,
+    }
+
     public partial class WebEditorFile : ObservableObject {
         public string FilePath { get; }
         public string FileName => Path.GetFileName(FilePath);
         public string FileExtension => Path.GetExtension(FilePath).ToLowerInvariant();
 
-        public bool CanOpenAsText => WebEditorFileUtil.IsTextExtension(FileExtension);
+        public bool CanOpenAsText => Kind is WebEditorFileKind.Text or WebEditorFileKind.Markdown;
+        public WebEditorFileKind Kind => GetKind(FileExtension);
 
         public string Content {
             get => _content;
@@ -61,6 +69,13 @@ namespace Workloads.Creation.WebBackdrop.Models {
         public void MarkAsSaved() {
             _isSaved = true;
             OnPropertyChanged(nameof(IsSaved));
+        }
+
+        private static WebEditorFileKind GetKind(string extension) {
+            if (WebEditorFileUtil.IsMarkdownExtension(extension)) return WebEditorFileKind.Markdown;
+            if (WebEditorFileUtil.IsPreviewImageExtension(extension)) return WebEditorFileKind.Image;
+            if (WebEditorFileUtil.IsTextExtension(extension)) return WebEditorFileKind.Text;
+            return WebEditorFileKind.Unsupported;
         }
 
         private static string ReadContent(string filePath) {

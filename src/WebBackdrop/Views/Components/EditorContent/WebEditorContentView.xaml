@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Workloads.Creation.WebBackdrop.Views.Components.EditorContent.WebEditorContentView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Workloads.Creation.WebBackdrop.Views.Components"
+    xmlns:editorContent="using:Workloads.Creation.WebBackdrop.Views.Components.EditorContent"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid>
+        <local:MonacoEditor x:Name="textEditor"
+            Visibility="Collapsed"
+            ContentChanged="TextEditor_ContentChanged"
+            CursorPositionChanged="Editor_CursorPositionChanged"
+            MarkersChanged="Editor_MarkersChanged"
+            ShortcutRequested="Editor_ShortcutRequested"/>
+        <editorContent:MarkdownEditorView x:Name="markdownEditor"
+            Visibility="Collapsed"
+            ContentChanged="TextEditor_ContentChanged"
+            CursorPositionChanged="Editor_CursorPositionChanged"
+            MarkersChanged="Editor_MarkersChanged"
+            ShortcutRequested="Editor_ShortcutRequested"/>
+        <editorContent:ImagePreviewView x:Name="imagePreview"
+            Visibility="Collapsed"/>
+        <editorContent:FallbackContentView x:Name="fallbackView"
+            Visibility="Collapsed"/>
+        <editorContent:WelcomeContentView x:Name="welcomeView"/>
+    </Grid>
+</UserControl>

@@ -54,6 +54,10 @@
         document.documentElement.style.setProperty('--preview-code-background', '{{PreviewCodeBackground}}');
         document.documentElement.style.setProperty('--preview-quote-border', '{{PreviewQuoteBorder}}');
         document.documentElement.style.setProperty('--preview-link-foreground', '{{PreviewLinkForeground}}');
+
+        window.setMarkdownHtml = function (html) {
+            document.body.innerHTML = html;
+        };
     </script>
 </head>
 <body>

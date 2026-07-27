@@ -82,23 +82,6 @@
                         </StackPanel>
                     </StackPanel>
                 </Expander>
-
-                <Expander x:Name="previewExpander"
-                    Header="Preview" 
-                    IsExpanded="True" 
-                    HorizontalAlignment="Stretch"  
-                    HorizontalContentAlignment="Stretch"
-                    Visibility="Collapsed">
-                    <Border x:Name="PreviewWebViewHost"
-                        MinHeight="160"
-                        CornerRadius="4"
-                        Background="{ThemeResource LayerFillColorDefaultBrush}"
-                        SizeChanged="PreviewWebViewHost_SizeChanged">
-                        <WebView2 x:Name="previewWebView"
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch"/>
-                    </Border>
-                </Expander>
             </StackPanel>
         </ScrollViewer>
     </Grid>

@@ -5,7 +5,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
-using Workloads.Creation.WebBackdrop.Views.Components;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
     public sealed partial class WebEditorContentView : UserControl {

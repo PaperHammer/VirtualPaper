@@ -12,7 +12,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"  
-    DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}"
     Loaded="ArcUserControl_Loaded"
     Unloaded="ArcUserControl_Unloaded">
 
@@ -102,6 +101,7 @@
                         <RowDefinition Height="auto"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
+                    
                     <Grid>
                         <SelectorBar x:Name="bottomPanelSelectorBar"
                             SelectionChanged="BottomPanelSelectorBar_SelectionChanged">
@@ -119,6 +119,7 @@
                             <FontIcon Glyph="&#xE921;" FontSize="12"/>
                         </Button>
                     </Grid>
+                    
                     <Grid Grid.Row="1">
                         <bottomPanels:WebProblemsPanelControl x:Name="problemsPanel"
                             Visibility="Collapsed"
@@ -128,6 +129,7 @@
                             FontSize="12"
                             Opacity="0.7"/>
                     </Grid>
+                    
                     <Rectangle x:Name="bottomSideBarBorderLine"
                         Height="1"
                         VerticalAlignment="Top"

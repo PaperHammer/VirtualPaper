@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.PlayerWeb.Core.Utils;
 using Workloads.Creation.WebBackdrop.Core.Theme;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components {
@@ -99,14 +100,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 ArcLog.GetLogger<MonacoEditor>().Info($"Monaco html path: {htmlPath}");
 
                 if (File.Exists(htmlPath)) {
-                    var hostName = "monaco.localhost";
-                    var assetsPath = Path.GetDirectoryName(htmlPath)!;
-                    monacoWebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
-                        hostName,
-                        assetsPath,
-                        CoreWebView2HostResourceAccessKind.DenyCors);
-                    ArcLog.GetLogger<MonacoEditor>().Info($"Navigating to: https://{hostName}/monaco.html");
-                    monacoWebView.CoreWebView2.Navigate($"https://{hostName}/monaco.html");
+                    var uri = monacoWebView.CoreWebView2.NavigateToLocalFile(htmlPath);
+                    ArcLog.GetLogger<MonacoEditor>().Info($"Navigating to: {uri}");
                 } else {
                     ArcLog.GetLogger<MonacoEditor>().Warn("monaco.html not found, using fallback");
                     monacoWebView.CoreWebView2.NavigateToString(GetFallbackHtml());
@@ -121,64 +116,76 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 var message = e.TryGetWebMessageAsString();
                 ArcLog.GetLogger<MonacoEditor>().Info($"Monaco message: {message}");
                 using var json = JsonDocument.Parse(message);
-                if (!json.RootElement.TryGetProperty("type", out var typeElement)) {
-                    return;
-                }
+                var type = json.RootElement.TryGetProperty("type", out var typeElement)
+                    ? typeElement.GetString()
+                    : null;
 
-                var type = typeElement.GetString();
-                if (type == "ready") {
-                    _isEditorReady = true;
-                    if (_pendingContent != null) {
-                        _ = SetContentAsync(_pendingContent);
-                        _pendingContent = null;
-                    }
-                    if (_pendingLanguage != null) {
-                        _ = SetLanguageAsync(_pendingLanguage);
-                        _pendingLanguage = null;
-                    }
-                    UpdateTheme();
-                    return;
-                }
-                if (type == "shortcut") {
-                    var command = json.RootElement.GetProperty("command").GetString();
-                    if (!string.IsNullOrEmpty(command)) {
-                        ShortcutRequested?.Invoke(this, command);
-                    }
-                    return;
-                }
-                if (type == "contentChange") {
-                    var content = await monacoWebView.CoreWebView2.ExecuteScriptAsync("window.getValue()");
-                    if (content != null) {
-                        content = JsonSerializer.Deserialize<string>(content) ?? string.Empty;
-                        if (_content != content) {
-                            _content = content;
-                            ContentChanged?.Invoke(this, content);
-                        }
-                    }
-                    return;
-                }
-                if (type == "cursorPositionChange") {
-                    var lineNumber = json.RootElement.GetProperty("lineNumber").GetInt32();
-                    var column = json.RootElement.GetProperty("column").GetInt32();
-                    var selectedCharacterCount = 0;
-                    var isSelectedCharacterCountOverflow = false;
-                    if (json.RootElement.TryGetProperty("selectedCharacterCount", out var selectedCharacterCountElement)) {
-                        var count = selectedCharacterCountElement.GetInt64();
-                        isSelectedCharacterCountOverflow = count > MaxSelectedCharacterCount;
-                        selectedCharacterCount = isSelectedCharacterCountOverflow
-                            ? MaxSelectedCharacterCount
-                            : (int)count;
-                    }
-                    CursorPositionChanged?.Invoke(this, new MonacoCursorPosition(lineNumber, column, selectedCharacterCount, isSelectedCharacterCountOverflow));
-                    return;
-                }
-                if (type == "markersChanged") {
-                    var markers = JsonSerializer.Deserialize<List<MonacoMarker>>(json.RootElement.GetProperty("markers").GetRawText(), _jsonSerializerOptions) ?? [];
-                    MarkersChanged?.Invoke(this, markers);
-                }
+                await (type switch {
+                    "ready" => HandleEditorReadyAsync(),
+                    "shortcut" => HandleShortcutAsync(json.RootElement),
+                    "contentChange" => HandleContentChangeAsync(),
+                    "cursorPositionChange" => HandleCursorPositionChangeAsync(json.RootElement),
+                    "markersChanged" => HandleMarkersChangedAsync(json.RootElement),
+                    _ => Task.CompletedTask
+                });
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
             }
+        }
+
+        private Task HandleEditorReadyAsync() {
+            _isEditorReady = true;
+            if (_pendingContent != null) {
+                _ = SetContentAsync(_pendingContent);
+                _pendingContent = null;
+            }
+            if (_pendingLanguage != null) {
+                _ = SetLanguageAsync(_pendingLanguage);
+                _pendingLanguage = null;
+            }
+            UpdateTheme();
+            return Task.CompletedTask;
+        }
+
+        private Task HandleShortcutAsync(JsonElement rootElement) {
+            var command = rootElement.GetProperty("command").GetString();
+            if (!string.IsNullOrEmpty(command)) {
+                ShortcutRequested?.Invoke(this, command);
+            }
+            return Task.CompletedTask;
+        }
+
+        private async Task HandleContentChangeAsync() {
+            var content = await monacoWebView.CoreWebView2.ExecuteScriptAsync("window.getValue()");
+            if (content != null) {
+                content = JsonSerializer.Deserialize<string>(content) ?? string.Empty;
+                if (_content != content) {
+                    _content = content;
+                    ContentChanged?.Invoke(this, content);
+                }
+            }
+        }
+
+        private Task HandleCursorPositionChangeAsync(JsonElement rootElement) {
+            var lineNumber = rootElement.GetProperty("lineNumber").GetInt32();
+            var column = rootElement.GetProperty("column").GetInt32();
+            var selectedCharacterCount = 0;
+            var isSelectedCharacterCountOverflow = false;
+            if (rootElement.TryGetProperty("selectedCharacterCount", out var selectedCharacterCountElement)) {
+                var count = selectedCharacterCountElement.GetInt64();
+                isSelectedCharacterCountOverflow = count > MaxSelectedCharacterCount;
+                selectedCharacterCount = isSelectedCharacterCountOverflow
+                    ? MaxSelectedCharacterCount
+                    : (int)count;
+            }
+            CursorPositionChanged?.Invoke(this, new MonacoCursorPosition(lineNumber, column, selectedCharacterCount, isSelectedCharacterCountOverflow));
+            return Task.CompletedTask;
+        }
+
+        private Task HandleMarkersChangedAsync(JsonElement rootElement) {
+            var markers = JsonSerializer.Deserialize<List<MonacoMarker>>(rootElement.GetProperty("markers").GetRawText(), _jsonSerializerOptions) ?? [];
+            MarkersChanged?.Invoke(this, markers);
+            return Task.CompletedTask;
         }
 
         public async Task RevealPositionAsync(int lineNumber, int column) {
@@ -217,7 +224,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
-        private void MonacoWebView_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e) {
+        private void MonacoWebView_NavigationCompleted(WebView2 sender, CoreWebView2NavigationCompletedEventArgs e) {
             if (!e.IsSuccess) {
                 ArcLog.GetLogger<MonacoEditor>().Error($"Monaco navigation failed: {e.WebErrorStatus}");
                 return;
@@ -246,42 +253,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         };
 
         private string GetFallbackHtml() {
-            var lightBackground = WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackLightBackground);
-            var darkBackground = WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackDarkBackground);
-            var lightForeground = WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackLightForeground);
-            var darkForeground = WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackDarkForeground);
-
-            return $$"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body { margin: 0; padding: 20px; font-family: monospace; background: {{darkBackground}}; color: {{darkForeground}}; }
-                    textarea { width: 100%; height: calc(100vh - 40px); background: {{darkBackground}}; color: {{darkForeground}}; border: none; font-family: monospace; font-size: 14px; resize: none; }
-                </style>
-            </head>
-            <body>
-                <textarea id="editor" placeholder="Monaco Editor loading..."></textarea>
-                <script>
-                    const editor = document.getElementById('editor');
-                    editor.addEventListener('input', () => {
-                        window.chrome.webview.postMessage(JSON.stringify({ type: 'contentChange', content: editor.value }));
-                    });
-                    window.setValue = (val) => { editor.value = val; };
-                    window.getValue = () => editor.value;
-                    window.setEditorTheme = (theme) => {
-                        document.body.style.background = theme === 'vs' ? '{{lightBackground}}' : '{{darkBackground}}';
-                        document.getElementById('editor').style.background = theme === 'vs' ? '{{lightBackground}}' : '{{darkBackground}}';
-                        document.getElementById('editor').style.color = theme === 'vs' ? '{{lightForeground}}' : '{{darkForeground}}';
-                    };
-                    if (window.chrome && window.chrome.webview) {
-                        window.chrome.webview.postMessage(JSON.stringify({ type: 'ready' }));
-                    }
-                </script>
-            </body>
-            </html>
-            """;
+            return File.ReadAllText(Path.Combine(AppContext.BaseDirectory, Constants.ModuleName.WebBackdrop, "Assets", "monaco-fallback.html"))
+                .Replace("{{LightBackground}}", WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackLightBackground))
+                .Replace("{{DarkBackground}}", WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackDarkBackground))
+                .Replace("{{LightForeground}}", WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackLightForeground))
+                .Replace("{{DarkForeground}}", WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackDarkForeground));
         }
     }
 

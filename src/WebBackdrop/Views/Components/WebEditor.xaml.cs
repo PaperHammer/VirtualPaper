@@ -21,13 +21,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class WebEditor : ArcUserControl {
         public WebEditorViewModel ViewModel { get; private set; } = null!;
 
-        public string ActiveFilePathText {
-            get => (string)GetValue(ActiveFilePathTextProperty);
-            set => SetValue(ActiveFilePathTextProperty, value);
-        }
-        public static readonly DependencyProperty ActiveFilePathTextProperty =
-            DependencyProperty.Register(nameof(ActiveFilePathText), typeof(string), typeof(WebEditor),
-                new PropertyMetadata(string.Empty));
+        //public string ActiveFilePathText {
+        //    get => (string)GetValue(ActiveFilePathTextProperty);
+        //    set => SetValue(ActiveFilePathTextProperty, value);
+        //}
+        //public static readonly DependencyProperty ActiveFilePathTextProperty =
+        //    DependencyProperty.Register(nameof(ActiveFilePathText), typeof(string), typeof(WebEditor),
+        //        new PropertyMetadata(string.Empty));
 
         public string ActiveFileLanguage {
             get => (string)GetValue(ActiveFileLanguageProperty);
@@ -91,6 +91,24 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             Right,
         }
 
+        private static class PanelLayoutDefaults {
+            public const double CollapsedSize = 0;
+            public const double LeftExpandedWidth = 260;
+            public const double LeftMinWidth = 180;
+            public const double LeftMaxWidth = 480;
+            public const double BottomExpandedHeight = 240;
+            public const double BottomMaxHeight = 480;
+            public const double RightExpandedWidth = 280;
+            public const double RightMinWidth = 200;
+            public const double RightMaxWidth = 600;
+        }
+
+        private enum WebEditorCommand {
+            ToggleLeftSideBar,
+            ToggleBottomPanel,
+            ToggleRightSideBar,
+        }
+
         private sealed class PanelLayoutState {
             public PanelLayoutState(
                 FrameworkElement panel,
@@ -130,7 +148,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         public WebEditor() {
             InitializeComponent();
             InitializePanelLayoutStates();
-            RegisterShortcuts();
+            RegisterCommands();
         }
 
         private void ArcUserControl_Loaded(object sender, RoutedEventArgs e) {
@@ -174,13 +192,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     _ignoredEmptyMarkersFilePath = filePath;
                 }
 
-                ActiveFilePathText = filePath;
+                //ActiveFilePathText = filePath;
                 ActiveFileLanguage = WebEditorFileUtil.GetLanguageFromExtension(activeFile.FileExtension);
                 editorContentView.LoadFile(activeFile, ActiveFileLanguage);
                 leftFileTreeControl.SelectFile(filePath);
             }
             else {
-                ActiveFilePathText = string.Empty;
+                //ActiveFilePathText = string.Empty;
                 ActiveFileLanguage = WebEditorFileUtil.DefaultLanguage;
                 editorContentView.LoadFile(null, ActiveFileLanguage);
             }
@@ -235,35 +253,52 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             propertyPanelControl.LoadFolder(folderPath);
         }
 
-        #region keyboard accelerators
+        #region commands
         private void KeyboardAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
-            var command = (sender.Key, sender.Modifiers) switch {
-                (VirtualKey.B, VirtualKeyModifiers.Control) => "toggleLeftSideBar",
-                (VirtualKey.J, VirtualKeyModifiers.Control) => "toggleBottomPanel",
-                (VirtualKey.B, VirtualKeyModifiers.Control | VirtualKeyModifiers.Menu) => "toggleRightSideBar",
-                _ => null,
-            };
-
-            if (command == null) return;
-
-            InvokeShortcut(command);
-            args.Handled = true;
+            if (_keyboardCommands.TryGetValue((sender.Key, sender.Modifiers), out var command)) {
+                ExecuteCommand(command);
+                args.Handled = true;
+            }
         }
 
         private void InvokeShortcut(string command) {
-            if (_shortcutActions.TryGetValue(command, out var action)) {
+            if (_monacoCommands.TryGetValue(command, out var editorCommand)) {
+                ExecuteCommand(editorCommand);
+            }
+        }
+
+        private void ExecuteCommand(WebEditorCommand command) {
+            if (_commandActions.TryGetValue(command, out var action)) {
                 action();
             }
         }
 
-        private void RegisterShortcuts() {
-            _shortcutActions = new Dictionary<string, Action> {
-                ["toggleLeftSideBar"] = () => TogglePanel(EditorPanelSlot.Left),
-                ["toggleBottomPanel"] = ToggleBottomPanel,
-                ["toggleRightSideBar"] = () => TogglePanel(EditorPanelSlot.Right),
+        private void RegisterCommands() {
+            _commandActions = new Dictionary<WebEditorCommand, Action> {
+                [WebEditorCommand.ToggleLeftSideBar] = () => TogglePanel(EditorPanelSlot.Left),
+                [WebEditorCommand.ToggleBottomPanel] = ToggleBottomPanel,
+                [WebEditorCommand.ToggleRightSideBar] = () => TogglePanel(EditorPanelSlot.Right),
             };
+
+            _keyboardCommands = new Dictionary<(VirtualKey Key, VirtualKeyModifiers Modifiers), WebEditorCommand>(KeyboardCommandMap);
+
+            _monacoCommands = new Dictionary<string, WebEditorCommand>(MonacoCommandMap);
         }
         #endregion
+
+        private static readonly IReadOnlyDictionary<(VirtualKey Key, VirtualKeyModifiers Modifiers), WebEditorCommand> KeyboardCommandMap =
+            new Dictionary<(VirtualKey Key, VirtualKeyModifiers Modifiers), WebEditorCommand> {
+                [(VirtualKey.B, VirtualKeyModifiers.Control)] = WebEditorCommand.ToggleLeftSideBar,
+                [(VirtualKey.J, VirtualKeyModifiers.Control)] = WebEditorCommand.ToggleBottomPanel,
+                [(VirtualKey.B, VirtualKeyModifiers.Control | VirtualKeyModifiers.Menu)] = WebEditorCommand.ToggleRightSideBar,
+            };
+
+        private static readonly IReadOnlyDictionary<string, WebEditorCommand> MonacoCommandMap =
+            new Dictionary<string, WebEditorCommand> {
+                ["toggleLeftSideBar"] = WebEditorCommand.ToggleLeftSideBar,
+                ["toggleBottomPanel"] = WebEditorCommand.ToggleBottomPanel,
+                ["toggleRightSideBar"] = WebEditorCommand.ToggleRightSideBar,
+            };
 
         private void ToggleBottomPanel() {
             Action updateBottomPanel = bottomPanel.Visibility == Visibility.Visible
@@ -274,38 +309,28 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private void InitializePanelLayoutStates() {
             _panelLayoutStates = new Dictionary<EditorPanelSlot, PanelLayoutState> {
-                [EditorPanelSlot.Left] = new(
+                [EditorPanelSlot.Left] = CreateColumnPanelState(
                     leftSideBar,
                     leftSideBarSplitter,
-                    true,
-                    0,
-                    260,
-                    180,
-                    480,
-                    () => leftSideBarColumn.Width.Value,
-                    value => leftSideBarColumn.Width = new GridLength(value),
+                    leftSideBarColumn,
+                    PanelLayoutDefaults.LeftExpandedWidth,
+                    PanelLayoutDefaults.LeftMinWidth,
+                    PanelLayoutDefaults.LeftMaxWidth,
                     delta => delta),
-                [EditorPanelSlot.Bottom] = new(
+                [EditorPanelSlot.Bottom] = CreateHeightPanelState(
                     bottomPanel,
                     bottomSideBarSplitter,
-                    false,
-                    0,
-                    240,
+                    PanelLayoutDefaults.BottomExpandedHeight,
                     bottomPanel.MinHeight,
-                    480,
-                    () => bottomPanel.Height,
-                    value => bottomPanel.Height = value,
+                    PanelLayoutDefaults.BottomMaxHeight,
                     delta => -delta),
-                [EditorPanelSlot.Right] = new(
+                [EditorPanelSlot.Right] = CreateColumnPanelState(
                     rightSideBar,
                     rightSideBarSplitter,
-                    true,
-                    0,
-                    280,
-                    200,
-                    600,
-                    () => rightSideBarColumn.Width.Value,
-                    value => rightSideBarColumn.Width = new GridLength(value),
+                    rightSideBarColumn,
+                    PanelLayoutDefaults.RightExpandedWidth,
+                    PanelLayoutDefaults.RightMinWidth,
+                    PanelLayoutDefaults.RightMaxWidth,
                     delta => -delta),
             };
 
@@ -314,6 +339,47 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 [bottomSideBarSplitter] = bottomSideBarSplitterLine,
                 [rightSideBarSplitter] = rightSideBarSplitterLine,
             };
+        }
+
+        private static PanelLayoutState CreateColumnPanelState(
+            FrameworkElement panel,
+            FrameworkElement splitter,
+            ColumnDefinition column,
+            double expandedWidth,
+            double minWidth,
+            double maxWidth,
+            Func<double, double> getSizeDelta) {
+            return new PanelLayoutState(
+                panel,
+                splitter,
+                true,
+                PanelLayoutDefaults.CollapsedSize,
+                expandedWidth,
+                minWidth,
+                maxWidth,
+                () => column.Width.Value,
+                value => column.Width = new GridLength(value),
+                getSizeDelta);
+        }
+
+        private static PanelLayoutState CreateHeightPanelState(
+            FrameworkElement panel,
+            FrameworkElement splitter,
+            double expandedHeight,
+            double minHeight,
+            double maxHeight,
+            Func<double, double> getSizeDelta) {
+            return new PanelLayoutState(
+                panel,
+                splitter,
+                false,
+                PanelLayoutDefaults.CollapsedSize,
+                expandedHeight,
+                minHeight,
+                maxHeight,
+                () => panel.Height,
+                value => panel.Height = value,
+                getSizeDelta);
         }
 
         private void ResizePanel(EditorPanelSlot slot, double pointerPosition) {
@@ -420,15 +486,15 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void StatusBar_ToggleLeftSideBarRequested(object? sender, RoutedEventArgs e) {
-            TogglePanel(EditorPanelSlot.Left);
+            ExecuteCommand(WebEditorCommand.ToggleLeftSideBar);
         }
 
         private void StatusBar_ToggleBottomPanelRequested(object? sender, RoutedEventArgs e) {
-            ToggleBottomPanel();
+            ExecuteCommand(WebEditorCommand.ToggleBottomPanel);
         }
 
         private void StatusBar_ToggleRightSideBarRequested(object? sender, RoutedEventArgs e) {
-            TogglePanel(EditorPanelSlot.Right);
+            ExecuteCommand(WebEditorCommand.ToggleRightSideBar);
         }
 
         private void BottomPanelSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs e) {
@@ -488,11 +554,20 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
+        /*
+         * 编辑器内容每次变化都会触发 ContentChanged。如果每输入一个字符都刷新右侧属性面板，会频繁计算行数、状态、文件信息，浪费
+         * 
+         * 每次调用都生成新版本，让旧任务失效
+         * 等 250ms。期间如果又输入字符，版本会增加
+         * 防止等待期间切换文件。只有当前文件还是当初那个文件，才刷新面板
+         * 
+         * 输入停止 250ms 后，只刷新当前文件一次。避免频繁刷新和旧文件回写
+         */
         private async void QueuePropertyPanelRefresh(WebEditorFile file, string language) {
             _propertyPanelRefreshVersion++;
             var version = _propertyPanelRefreshVersion;
             await Task.Delay(250);
-            if (version == _propertyPanelRefreshVersion && ReferenceEquals(ViewModel?.ActiveFile, file)) {
+            if (version == _propertyPanelRefreshVersion && ViewModel?.ActiveFile?.Equals(file) == true) {
                 propertyPanelControl.Load(file, language);
             }
         }
@@ -518,7 +593,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private string? _ignoredEmptyMarkersFilePath;
         private Dictionary<EditorPanelSlot, PanelLayoutState> _panelLayoutStates = null!;
         private Dictionary<object, Rectangle> _splitterLines = null!;
-        private Dictionary<string, Action> _shortcutActions = null!;
+        private Dictionary<WebEditorCommand, Action> _commandActions = null!;
+        private Dictionary<(VirtualKey Key, VirtualKeyModifiers Modifiers), WebEditorCommand> _keyboardCommands = null!;
+        private Dictionary<string, WebEditorCommand> _monacoCommands = null!;
         private EditorPanelSlot? _activeResizeSlot;
         private Pointer? _resizePointer;
         private double _resizeStartPointerPosition;

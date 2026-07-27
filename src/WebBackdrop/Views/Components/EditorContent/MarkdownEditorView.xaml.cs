@@ -10,7 +10,6 @@ using Microsoft.UI.Xaml.Shapes;
 using Workloads.Creation.WebBackdrop.Core.Preview;
 using Workloads.Creation.WebBackdrop.Core.Theme;
 using Workloads.Creation.WebBackdrop.Core.Utils;
-using Workloads.Creation.WebBackdrop.Views.Components;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
     public sealed partial class MarkdownEditorView : UserControl {

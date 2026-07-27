@@ -18,8 +18,8 @@
 
     <Grid>
         <WebView2 x:Name="monacoWebView"
-                  HorizontalAlignment="Stretch"
-                  VerticalAlignment="Stretch"
-                  NavigationCompleted="MonacoWebView_NavigationCompleted"/>
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            NavigationCompleted="MonacoWebView_NavigationCompleted"/>
     </Grid>
 </UserControl>

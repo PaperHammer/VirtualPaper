@@ -12,7 +12,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
         Unsupported,
     }
 
-    public partial class WebEditorFile : ObservableObject {
+    public partial class WebEditorFile : ObservableObject, IEquatable<WebEditorFile> {
         public string FilePath { get; }
         public string FileName => Path.GetFileName(FilePath);
         public string FileExtension => Path.GetExtension(FilePath).ToLowerInvariant();
@@ -88,6 +88,18 @@ namespace Workloads.Creation.WebBackdrop.Models {
             return File.Exists(filePath) && WebEditorFileUtil.IsTextExtension(Path.GetExtension(filePath))
                 ? await File.ReadAllTextAsync(filePath)
                 : string.Empty;
+        }
+
+        public override bool Equals(object? obj) {
+            return Equals(obj as WebEditorFile);
+        }
+
+        public bool Equals(WebEditorFile? other) {
+            return other != null && FilePath == other.FilePath;
+        }
+
+        public override int GetHashCode() {
+            return FilePath.GetHashCode();
         }
 
         private string _content;

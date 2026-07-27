@@ -261,13 +261,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
         private bool _isExpanded;
     }
 
-    public sealed class ProblemOverflowItem {
-        public ProblemOverflowItem(string text) {
-            Text = text;
-        }
-
-        public string Text { get; }
-    }
+    public sealed record ProblemOverflowItem(string Text);
 
     public enum ProblemSeverity {
         Warning,

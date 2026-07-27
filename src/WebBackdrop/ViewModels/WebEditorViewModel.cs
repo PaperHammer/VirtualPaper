@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common.Logging;
@@ -10,7 +9,6 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
-using Workloads.Creation.WebBackdrop.Views.Tools;
 
 namespace Workloads.Creation.WebBackdrop.ViewModels {
     public partial class WebEditorViewModel : ObservableObject {

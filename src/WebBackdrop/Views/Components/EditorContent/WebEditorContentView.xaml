@@ -22,10 +22,8 @@
             CursorPositionChanged="Editor_CursorPositionChanged"
             MarkersChanged="Editor_MarkersChanged"
             ShortcutRequested="Editor_ShortcutRequested"/>
-        <editorContent:ImagePreviewView x:Name="imagePreview"
-            Visibility="Collapsed"/>
-        <editorContent:FallbackContentView x:Name="fallbackView"
-            Visibility="Collapsed"/>
+        <editorContent:ImagePreviewView x:Name="imagePreview" Visibility="Collapsed"/>
+        <editorContent:FallbackContentView x:Name="fallbackView" Visibility="Collapsed"/>
         <editorContent:WelcomeContentView x:Name="welcomeView"/>
     </Grid>
 </UserControl>

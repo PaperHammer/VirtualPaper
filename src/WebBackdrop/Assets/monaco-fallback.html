@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: monospace;
+            background: var(--fallback-background);
+            color: var(--fallback-foreground);
+        }
+
+        textarea {
+            width: 100%;
+            height: calc(100vh - 40px);
+            background: var(--fallback-background);
+            color: var(--fallback-foreground);
+            border: none;
+            font-family: monospace;
+            font-size: 14px;
+            resize: none;
+        }
+    </style>
+    <script>
+        document.documentElement.style.setProperty('--fallback-light-background', '{{LightBackground}}');
+        document.documentElement.style.setProperty('--fallback-dark-background', '{{DarkBackground}}');
+        document.documentElement.style.setProperty('--fallback-light-foreground', '{{LightForeground}}');
+        document.documentElement.style.setProperty('--fallback-dark-foreground', '{{DarkForeground}}');
+        document.documentElement.style.setProperty('--fallback-background', '{{DarkBackground}}');
+        document.documentElement.style.setProperty('--fallback-foreground', '{{DarkForeground}}');
+    </script>
+</head>
+<body>
+    <textarea id="editor" placeholder="Monaco Editor loading..."></textarea>
+    <script>
+        const editor = document.getElementById('editor');
+        editor.addEventListener('input', () => {
+            window.chrome.webview.postMessage(JSON.stringify({ type: 'contentChange', content: editor.value }));
+        });
+        window.setValue = (val) => { editor.value = val; };
+        window.getValue = () => editor.value;
+        window.setEditorTheme = (theme) => {
+            const background = theme === 'vs' ? '{{LightBackground}}' : '{{DarkBackground}}';
+            const foreground = theme === 'vs' ? '{{LightForeground}}' : '{{DarkForeground}}';
+            document.documentElement.style.setProperty('--fallback-background', background);
+            document.documentElement.style.setProperty('--fallback-foreground', foreground);
+        };
+        if (window.chrome && window.chrome.webview) {
+            window.chrome.webview.postMessage(JSON.stringify({ type: 'ready' }));
+        }
+    </script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Workloads.Creation.WebBackdrop.Core.Utils;
@@ -6,6 +7,7 @@ using Workloads.Creation.WebBackdrop.Views.Components;
 
 namespace Workloads.Creation.WebBackdrop.Views.Tools {
     public sealed partial class WebStatusBarControl : UserControl {
+        public event PropertyChangedEventHandler? PropertyChanged;
         public event EventHandler<RoutedEventArgs>? PreviewRequested;
         public event EventHandler<WebEditorBottomPanel>? PanelRequested;
         public event EventHandler<RoutedEventArgs>? RunRequested;
@@ -13,6 +15,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public event EventHandler<RoutedEventArgs>? ToggleLeftSideBarRequested;
         public event EventHandler<RoutedEventArgs>? ToggleBottomPanelRequested;
         public event EventHandler<RoutedEventArgs>? ToggleRightSideBarRequested;
+        public event EventHandler<(int TabSize, bool InsertSpaces)>? IndentChanged;
+        public event EventHandler<string>? EncodingChanged;
+        public event EventHandler<string>? LineEndingChanged;
 
         public bool IsLeftSideBarVisible { get; set; } = true;
         public bool IsBottomPanelVisible { get; set; }
@@ -74,6 +79,34 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public static readonly DependencyProperty ProblemWarningCountProperty =
             DependencyProperty.Register(nameof(ProblemWarningCount), typeof(int), typeof(WebStatusBarControl), new PropertyMetadata(0, OnProblemCountChanged));
 
+        public bool IsSaving {
+            get => (bool)GetValue(IsSavingProperty);
+            set => SetValue(IsSavingProperty, value);
+        }
+        public static readonly DependencyProperty IsSavingProperty =
+            DependencyProperty.Register(nameof(IsSaving), typeof(bool), typeof(WebStatusBarControl), new PropertyMetadata(false));
+
+        public string IndentText {
+            get => (string)GetValue(IndentTextProperty);
+            set => SetValue(IndentTextProperty, value);
+        }
+        public static readonly DependencyProperty IndentTextProperty =
+            DependencyProperty.Register(nameof(IndentText), typeof(string), typeof(WebStatusBarControl), new PropertyMetadata(string.Empty));
+
+        public string EncodingText {
+            get => (string)GetValue(EncodingTextProperty);
+            set => SetValue(EncodingTextProperty, value);
+        }
+        public static readonly DependencyProperty EncodingTextProperty =
+            DependencyProperty.Register(nameof(EncodingText), typeof(string), typeof(WebStatusBarControl), new PropertyMetadata(string.Empty));
+
+        public string LineEndingText {
+            get => (string)GetValue(LineEndingTextProperty);
+            set => SetValue(LineEndingTextProperty, value);
+        }
+        public static readonly DependencyProperty LineEndingTextProperty =
+            DependencyProperty.Register(nameof(LineEndingText), typeof(string), typeof(WebStatusBarControl), new PropertyMetadata(string.Empty));
+
         public string CursorPositionText => SelectedCharacterCount > 0
             ? $"Ln {LineNumber}, Col {Column} ({SelectedCharacterCount}{(IsSelectedCharacterCountOverflow ? "+" : string.Empty)} selected)"
             : $"Ln {LineNumber}, Col {Column}";
@@ -83,10 +116,15 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public Visibility ProblemErrorInactiveVisibility => ProblemErrorCount > 0 ? Visibility.Collapsed : Visibility.Visible;
         public Visibility ProblemWarningActiveVisibility => ProblemWarningCount > 0 ? Visibility.Visible : Visibility.Collapsed;
         public Visibility ProblemWarningInactiveVisibility => ProblemWarningCount > 0 ? Visibility.Collapsed : Visibility.Visible;
-        public string IndentText => "Spaces: 2";
-        public string EncodingText => "UTF-8";
-        public string LineEndingText => "CRLF";
+        public Visibility SavingVisibility => IsSaving ? Visibility.Visible : Visibility.Collapsed;
         public string LanguageStatusText => $"{{ }} {WebEditorFileUtil.FormatLanguage(ActiveFileLanguage)}";
+
+        public bool IsTextFile {
+            get => (bool)GetValue(IsTextFileProperty);
+            set => SetValue(IsTextFileProperty, value);
+        }
+        public static readonly DependencyProperty IsTextFileProperty =
+            DependencyProperty.Register(nameof(IsTextFile), typeof(bool), typeof(WebStatusBarControl), new PropertyMetadata(false));
 
         public WebStatusBarControl() {
             InitializeComponent();
@@ -132,6 +170,34 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
         private void ToggleRightSideBar_Click(object sender, RoutedEventArgs e) {
             ToggleRightSideBarRequested?.Invoke(this, e);
+        }
+
+        private void Indent_Click(object sender, RoutedEventArgs e) { }
+
+        private void IndentOption_Click(object sender, RoutedEventArgs e) {
+            if (sender is MenuFlyoutItem { Tag: string tag }) {
+                var parts = tag.Split(',');
+                if (parts.Length == 2 && int.TryParse(parts[0], out var tabSize)) {
+                    var insertSpaces = parts[1] == "spaces";
+                    IndentChanged?.Invoke(this, (tabSize, insertSpaces));
+                }
+            }
+        }
+
+        private void Encoding_Click(object sender, RoutedEventArgs e) { }
+
+        private void EncodingOption_Click(object sender, RoutedEventArgs e) {
+            if (sender is MenuFlyoutItem { Tag: string encoding }) {
+                EncodingChanged?.Invoke(this, encoding);
+            }
+        }
+
+        private void LineEnding_Click(object sender, RoutedEventArgs e) { }
+
+        private void LineEndingOption_Click(object sender, RoutedEventArgs e) {
+            if (sender is MenuFlyoutItem { Tag: string lineEnding }) {
+                LineEndingChanged?.Invoke(this, lineEnding);
+            }
         }
     }
 }

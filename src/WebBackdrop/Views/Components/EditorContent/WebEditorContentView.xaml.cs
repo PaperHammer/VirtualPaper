@@ -16,6 +16,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
 
         private const int OverlayDelayMilliseconds = 80;
 
+        public MonacoEditor ActiveMonacoEditor => _currentKind == WebEditorFileKind.Markdown
+            ? markdownEditor.MonacoEditor
+            : textEditor;
+
+        public MonacoEditor TextEditor => textEditor;
+        public MarkdownEditorView MarkdownEditor => markdownEditor;
+
         public WebEditorContentView() {
             InitializeComponent();
         }
@@ -79,6 +86,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             return _currentKind == WebEditorFileKind.Markdown
                 ? markdownEditor.MarkSavedAsync()
                 : textEditor.MarkSavedAsync();
+        }
+
+        public Task<string> GetContentAsync() {
+            return _currentKind == WebEditorFileKind.Markdown
+                ? markdownEditor.GetContentAsync()
+                : textEditor.GetContentAsync();
         }
 
         public Task<MonacoEditorState> GetEditorStateAsync() {

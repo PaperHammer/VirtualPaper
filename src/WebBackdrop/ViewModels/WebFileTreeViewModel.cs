@@ -33,6 +33,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             root.IsExpanded = true;
             FileItems.Clear();
             FileItems.Add(root);
+            RebuildPathMap(root);
         }
 
         public void Refresh(string projectFolder) {
@@ -46,17 +47,18 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             root.IsExpanded = true;
             FileItems.Clear();
             FileItems.Add(root);
+            RebuildPathMap(root);
         }
 
         public void SelectFile(string filePath) {
-            var item = FindOrLoadItem(filePath);
+            var item = FindItem(filePath);
             if (item == null) return;
 
             ExpandParents(item);
         }
 
         public void SetFileSaved(string filePath, bool isSaved) {
-            var item = FindOrLoadItem(filePath);
+            var item = FindItem(filePath);
             if (item == null) return;
 
             item.IsSaved = isSaved;
@@ -77,7 +79,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             File.WriteAllText(path, string.Empty);
             _designFileUtil?.AddManifestPath(path);
-            var parent = FindOrLoadItem(folderPath);
+            var parent = FindItem(folderPath);
             AddItem(parent, new WebFileItem(path, WebFileItemType.File, parent));
         }
 
@@ -87,7 +89,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             Directory.CreateDirectory(path);
             _designFileUtil?.AddManifestPath(path);
-            var parent = FindOrLoadItem(folderPath);
+            var parent = FindItem(folderPath);
             AddItem(parent, CreateDirectoryItem(path, parent));
         }
 
@@ -177,40 +179,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         private WebFileItem? FindItem(string filePath) {
-            return FileItems.Select(root => FindItem(root, filePath)).FirstOrDefault(item => item != null);
-        }
-
-        private WebFileItem? FindOrLoadItem(string filePath) {
-            var item = FindItem(filePath);
-            if (item != null) return item;
-
-            var root = FileItems.FirstOrDefault();
-            if (root == null) return null;
-
-            var relativePath = Path.GetRelativePath(ProjectFolder, filePath);
-            if (relativePath == ".") return root;
-            if (relativePath.StartsWith("..") || Path.IsPathRooted(relativePath)) return null;
-
-            var current = root;
-            foreach (var part in relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)) {
-                if (string.IsNullOrEmpty(part)) continue;
-                LoadChildren(current);
-                current = current.Children.FirstOrDefault(child => string.Equals(child.FileName, part, StringComparison.OrdinalIgnoreCase));
-                if (current == null) return null;
-            }
-
-            return current;
-        }
-
-        private static WebFileItem? FindItem(WebFileItem item, string filePath) {
-            if (string.Equals(item.FilePath, filePath, StringComparison.OrdinalIgnoreCase)) return item;
-
-            foreach (var child in item.Children) {
-                var result = FindItem(child, filePath);
-                if (result != null) return result;
-            }
-
-            return null;
+            return _pathMap.TryGetValue(filePath, out var item) ? item : null;
         }
 
         private static void ExpandParents(WebFileItem item) {
@@ -240,6 +209,10 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 LoadDirectoryChildren(folder);
             }
             folder.IsChildrenLoaded = true;
+
+            foreach (var child in folder.Children) {
+                _pathMap[child.FilePath] = child;
+            }
         }
 
         private void LoadDirectoryChildren(WebFileItem folder) {
@@ -300,6 +273,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 index++;
             }
             collection.Insert(index, item);
+            _pathMap[item.FilePath] = item;
             if (parent != null) {
                 parent.IsExpanded = true;
             }
@@ -312,13 +286,36 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             var index = collection.IndexOf(oldItem);
             if (index < 0) return;
 
+            _pathMap.Remove(oldItem.FilePath);
             collection.RemoveAt(index);
             AddItem(oldItem.Parent, newItem);
         }
 
         private void RemoveItem(WebFileItem item) {
+            _pathMap.Remove(item.FilePath);
+            RemoveDescendantsFromPathMap(item);
+
             var collection = item.Parent?.Children ?? FileItems;
             collection?.Remove(item);
+        }
+
+        private void RemoveDescendantsFromPathMap(WebFileItem item) {
+            foreach (var child in item.Children) {
+                _pathMap.Remove(child.FilePath);
+                RemoveDescendantsFromPathMap(child);
+            }
+        }
+
+        private void RebuildPathMap(WebFileItem root) {
+            _pathMap.Clear();
+            AddToPathMap(root);
+        }
+
+        private void AddToPathMap(WebFileItem item) {
+            _pathMap[item.FilePath] = item;
+            foreach (var child in item.Children) {
+                AddToPathMap(child);
+            }
         }
 
         private static int CompareFileItems(WebFileItem left, WebFileItem right) {
@@ -351,6 +348,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
         private string _projectFolder = string.Empty;
         private const string PlaceholderFileName = ".__lazy_placeholder__";
+        private readonly Dictionary<string, WebFileItem> _pathMap = new(StringComparer.OrdinalIgnoreCase);
         private WebDesignFileUtil? _designFileUtil;
         private IReadOnlyList<WebProjectManifestItem>? _manifestItems;
         private WebFileItem? _clipboardItem;

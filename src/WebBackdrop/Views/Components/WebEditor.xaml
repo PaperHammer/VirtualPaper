@@ -200,12 +200,20 @@
                 IsSelectedCharacterCountOverflow="{x:Bind IsSelectedCharacterCountOverflow, Mode=OneWay}"
                 ProblemErrorCount="{x:Bind ProblemErrorCount, Mode=OneWay}"
                 ProblemWarningCount="{x:Bind ProblemWarningCount, Mode=OneWay}"
+                IsSaving="{x:Bind IsSaving, Mode=OneWay}"
+                IndentText="{x:Bind IndentText, Mode=OneWay}"
+                EncodingText="{x:Bind EncodingText, Mode=OneWay}"
+                LineEndingText="{x:Bind LineEndingText, Mode=OneWay}"
+                IsTextFile="{x:Bind ActiveFileIsText, Mode=OneWay}"
                 PanelRequested="StatusBar_PanelRequested"
                 RunRequested="StatusBar_RunRequested"
                 DebugRequested="StatusBar_DebugRequested"
                 ToggleLeftSideBarRequested="StatusBar_ToggleLeftSideBarRequested"
                 ToggleBottomPanelRequested="StatusBar_ToggleBottomPanelRequested"
-                ToggleRightSideBarRequested="StatusBar_ToggleRightSideBarRequested"/>
+                ToggleRightSideBarRequested="StatusBar_ToggleRightSideBarRequested"
+                IndentChanged="StatusBar_IndentChanged"
+                EncodingChanged="StatusBar_EncodingChanged"
+                LineEndingChanged="StatusBar_LineEndingChanged"/>
 
             <Rectangle x:Name="bottomStatusSideBarBorderLine"
                 Height="1"

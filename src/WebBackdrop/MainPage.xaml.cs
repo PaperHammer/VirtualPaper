@@ -65,6 +65,23 @@ namespace Workloads.Creation.WebBackdrop {
             IsSavedChanged?.Invoke(this, e);
         }
 
+        private async void WebEditor_SaveRequested(object? sender, EventArgs e) {
+            try {
+                var result = await webEditor.SaveActiveFileAsync();
+                if (result) {
+                    await webEditor.ViewModel.UpdateRecentUsedAsync(Session.DesignFileUtil.ProjectFilePath);
+                }
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+            }
+        }
+
+        private async void WebEditor_SaveAllRequested(object? sender, EventArgs e) {
+            await SaveAsync();
+        }
+
         #region IRuntime
         public async Task<bool> SaveAsync() {
             try {

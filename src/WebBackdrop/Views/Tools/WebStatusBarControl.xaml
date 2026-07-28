@@ -6,6 +6,7 @@
     xmlns:local="using:Workloads.Creation.WebBackdrop.Views.Tools"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="using:VirtualPaper.UIComponent.Converters"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -13,6 +14,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ms-appx:///WebBackdrop/Themes/WebBackdropColors.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <converters:VisibilityByValueConverter x:Key="VisibilityConverter"/>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -49,35 +51,68 @@
                     <TextBlock FontSize="11" Text="调试"/>
                 </StackPanel>
             </Button>-->
+            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Visibility="{x:Bind SavingVisibility, Mode=OneWay}">
+                <ProgressRing Width="12" Height="12" IsActive="{x:Bind IsSaving, Mode=OneWay}" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                <TextBlock FontSize="11" Text="正在保存..." Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+            </StackPanel>
         </StackPanel>
 
         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-            <Button Padding="5" BorderThickness="0" Background="Transparent" ToolTipService.ToolTip="切换左侧栏" Click="ToggleLeftSideBar_Click">
+            <Button Padding="5" BorderThickness="0" Background="Transparent" Click="ToggleLeftSideBar_Click">
                 <Grid Width="14" Height="14">
                     <Border BorderBrush="{ThemeResource WebBackdropStatusBarForegroundBrush}" BorderThickness="1" CornerRadius="2"/>
                     <Border Width="6" HorizontalAlignment="Left" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="2 0 0 2" Visibility="{x:Bind LeftSideBarFillVisibility, Mode=OneWay}"/>
                     <Rectangle Width="1" HorizontalAlignment="Left" Margin="5,0,0,0" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind LeftSideBarLineVisibility, Mode=OneWay}"/>
                 </Grid>
             </Button>
-            <Button Padding="5" BorderThickness="0" Background="Transparent" ToolTipService.ToolTip="切换底部面板" Click="ToggleBottomPanel_Click">
+            <Button Padding="5" BorderThickness="0" Background="Transparent" Click="ToggleBottomPanel_Click">
                 <Grid Width="14" Height="14">
                     <Border BorderBrush="{ThemeResource WebBackdropStatusBarForegroundBrush}" BorderThickness="1" CornerRadius="2"/>
                     <Border Height="6" VerticalAlignment="Bottom" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="0 0 2 2" Visibility="{x:Bind BottomPanelFillVisibility, Mode=OneWay}"/>
                     <Rectangle Height="1" VerticalAlignment="Bottom" Margin="0,0,0,5" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind BottomPanelLineVisibility, Mode=OneWay}"/>
                 </Grid>
             </Button>
-            <Button Padding="5" BorderThickness="0" Background="Transparent" ToolTipService.ToolTip="切换右侧栏" Click="ToggleRightSideBar_Click">
+            <Button Padding="5" BorderThickness="0" Background="Transparent" Click="ToggleRightSideBar_Click">
                 <Grid Width="14" Height="14">
                     <Border BorderBrush="{ThemeResource WebBackdropStatusBarForegroundBrush}" BorderThickness="1" CornerRadius="2"/>
                     <Border Width="6" HorizontalAlignment="Right" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="0 2 2 0" Visibility="{x:Bind RightSideBarFillVisibility, Mode=OneWay}"/>
                     <Rectangle Width="1" HorizontalAlignment="Right" Margin="0,0,5,0" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind RightSideBarLineVisibility, Mode=OneWay}"/>
                 </Grid>
             </Button>
-            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind CursorPositionText, Mode=OneWay}"/>
-            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind IndentText, Mode=OneWay}"/>
-            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind EncodingText, Mode=OneWay}"/>
-            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind LineEndingText, Mode=OneWay}"/>
-            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind LanguageStatusText, Mode=OneWay}"/>
+            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind CursorPositionText, Mode=OneWay}" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}"/>
+            <Button Padding="8 0" BorderThickness="0" Background="Transparent" VerticalAlignment="Stretch" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}" Click="Indent_Click">
+                <Button.Flyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem x:Name="indentTab2" Text="Tabs: 2" Click="IndentOption_Click" Tag="2,tabs"/>
+                        <MenuFlyoutItem x:Name="indentTab4" Text="Tabs: 4" Click="IndentOption_Click" Tag="4,tabs"/>
+                        <MenuFlyoutItem x:Name="indentSpace2" Text="Spaces: 2" Click="IndentOption_Click" Tag="2,spaces"/>
+                        <MenuFlyoutItem x:Name="indentSpace4" Text="Spaces: 4" Click="IndentOption_Click" Tag="4,spaces"/>
+                        <MenuFlyoutItem x:Name="indentSpace8" Text="Spaces: 8" Click="IndentOption_Click" Tag="8,spaces"/>
+                    </MenuFlyout>
+                </Button.Flyout>
+                <TextBlock FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind IndentText, Mode=OneWay}"/>
+            </Button>
+            <Button Padding="8 0" BorderThickness="0" Background="Transparent" VerticalAlignment="Stretch" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}" Click="Encoding_Click">
+                <Button.Flyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem Text="UTF-8" Click="EncodingOption_Click" Tag="UTF-8"/>
+                        <MenuFlyoutItem Text="UTF-8 BOM" Click="EncodingOption_Click" Tag="UTF-8 BOM"/>
+                        <MenuFlyoutItem Text="UTF-16 LE" Click="EncodingOption_Click" Tag="UTF-16 LE"/>
+                        <MenuFlyoutItem Text="UTF-16 BE" Click="EncodingOption_Click" Tag="UTF-16 BE"/>
+                    </MenuFlyout>
+                </Button.Flyout>
+                <TextBlock FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind EncodingText, Mode=OneWay}"/>
+            </Button>
+            <Button Padding="8 0" BorderThickness="0" Background="Transparent" VerticalAlignment="Stretch" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}" Click="LineEnding_Click">
+                <Button.Flyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem Text="LF" Click="LineEndingOption_Click" Tag="LF"/>
+                        <MenuFlyoutItem Text="CRLF" Click="LineEndingOption_Click" Tag="CRLF"/>
+                    </MenuFlyout>
+                </Button.Flyout>
+                <TextBlock FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind LineEndingText, Mode=OneWay}"/>
+            </Button>
+            <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind LanguageStatusText, Mode=OneWay}" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}"/>
         </StackPanel>
     </Grid>
 

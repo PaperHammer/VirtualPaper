@@ -117,6 +117,17 @@
                 multiCursorModifier: 'alt',
             });
 
+            function getLineEndingText(model) {
+                return model && model.getEOL && model.getEOL() === '\r\n' ? 'CRLF' : 'LF';
+            }
+
+            function getIndentText(model) {
+                if (!model) return 'Spaces: 2';
+
+                var options = model.getOptions();
+                return options.insertSpaces ? 'Spaces: ' + options.tabSize : 'Tabs: ' + options.tabSize;
+            }
+
             function postEditorState() {
                 if (!window.chrome || !window.chrome.webview) {
                     return;
@@ -133,17 +144,23 @@
                     alternativeVersionId: alternativeVersionId,
                     isSaved: alternativeVersionId === window.savedAlternativeVersionId,
                     canUndo: alternativeVersionId !== window.initialAlternativeVersionId,
-                    canRedo: false
+                    canRedo: false,
+                    lineEnding: getLineEndingText(model),
+                    encoding: window.editorEncoding || 'UTF-8',
+                    indent: getIndentText(model)
                 }));
             }
 
             editor.onDidChangeModelContent(function () {
-                postEditorState();
+                if (!window.isSettingValue) {
+                    postEditorState();
+                }
                 if (window.chrome && window.chrome.webview) {
                     window.chrome.webview.postMessage(JSON.stringify({ type: 'contentChange' }));
                 }
             });
 
+            var lastCursorPositionPayload = null;
             function postCursorPosition(position) {
                 if (!window.chrome || !window.chrome.webview) {
                     return;
@@ -157,12 +174,16 @@
 
                 var selection = editor.getSelection();
                 var selectedCharacterCount = selection ? model.getValueInRange(selection).length : 0;
-                window.chrome.webview.postMessage(JSON.stringify({
+                var payload = {
                     type: 'cursorPositionChange',
                     lineNumber: currentPosition.lineNumber,
                     column: currentPosition.column,
                     selectedCharacterCount: selectedCharacterCount
-                }));
+                };
+                var serialized = JSON.stringify(payload);
+                if (serialized === lastCursorPositionPayload) return;
+                lastCursorPositionPayload = serialized;
+                window.chrome.webview.postMessage(serialized);
             }
 
             editor.onDidChangeCursorPosition(function (e) {
@@ -210,6 +231,16 @@
                     window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'toggleLeftSideBar' }));
                 }
             });
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'save' }));
+                }
+            });
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS, function () {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'saveAll' }));
+                }
+            });
             editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyJ, function () {
                 if (window.chrome && window.chrome.webview) {
                     window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'toggleBottomPanel' }));
@@ -223,7 +254,9 @@
 
             window.setValue = function (value) {
                 var current = editor.getValue();
-                if (current !== value) {
+                var isChanged = current !== value;
+                if (isChanged) {
+                    window.isSettingValue = true;
                     editor.setValue(value);
                 }
                 var model = editor.getModel();
@@ -231,6 +264,7 @@
                     window.initialAlternativeVersionId = model.getAlternativeVersionId();
                     window.savedAlternativeVersionId = model.getAlternativeVersionId();
                 }
+                window.isSettingValue = false;
                 postEditorState();
             };
 
@@ -246,18 +280,24 @@
 
             window.undo = function () {
                 editor.trigger('host', 'undo', null);
-                postEditorState();
             };
 
             window.redo = function () {
                 editor.trigger('host', 'redo', null);
-                postEditorState();
             };
 
             window.getEditorState = function () {
                 var model = editor.getModel();
                 if (!model) {
-                    return JSON.stringify({ isSaved: true, canUndo: false, canRedo: false });
+                    return JSON.stringify({
+                        alternativeVersionId: 0,
+                        isSaved: true,
+                        canUndo: false,
+                        canRedo: false,
+                        lineEnding: 'LF',
+                        encoding: window.editorEncoding || 'UTF-8',
+                        indent: 'Spaces: 2'
+                    });
                 }
 
                 var alternativeVersionId = model.getAlternativeVersionId();
@@ -265,7 +305,10 @@
                     alternativeVersionId: alternativeVersionId,
                     isSaved: alternativeVersionId === window.savedAlternativeVersionId,
                     canUndo: alternativeVersionId !== window.initialAlternativeVersionId,
-                    canRedo: false
+                    canRedo: false,
+                    lineEnding: getLineEndingText(model),
+                    encoding: window.editorEncoding || 'UTF-8',
+                    indent: getIndentText(model)
                 });
             };
 
@@ -372,6 +415,50 @@
 
             window.formatDocument = function () {
                 editor.getAction('editor.action.formatDocument').run();
+            };
+
+            window.setEncoding = function (encoding) {
+                window.editorEncoding = encoding || 'UTF-8';
+                postEditorState();
+            };
+
+            window.setIndentOptions = function (newTabSize, newInsertSpaces) {
+                editor.updateOptions({
+                    tabSize: newTabSize,
+                    indentSize: newInsertSpaces ? newTabSize : 'tabSize',
+                    insertSpaces: newInsertSpaces,
+                    detectIndentation: false
+                });
+
+                var model = editor.getModel();
+                if (model) {
+                    model.updateOptions({
+                        tabSize: newTabSize,
+                        indentSize: newInsertSpaces ? newTabSize : 'tabSize',
+                        insertSpaces: newInsertSpaces
+                    });
+                }
+                postEditorState();
+            };
+
+            window.getIndentOptions = function () {
+                var options = editor.getOptions();
+                var model = editor.getModel();
+                var tabSize = model ? model.getOptions().tabSize : options.get(monaco.editor.EditorOption.tabSize);
+                var insertSpaces = model ? model.getOptions().insertSpaces : options.get(monaco.editor.EditorOption.insertSpaces);
+                return JSON.stringify({
+                    tabSize: tabSize,
+                    insertSpaces: insertSpaces
+                });
+            };
+            window.replaceLineEndings = function (targetEnding) {
+                var model = editor.getModel();
+                if (!model) return;
+                if (model.getEOL() === targetEnding) return;
+
+                model.pushEOL(targetEnding === '\r\n'
+                    ? monaco.editor.EndOfLineSequence.CRLF
+                    : monaco.editor.EndOfLineSequence.LF);
             };
         });
     </script>

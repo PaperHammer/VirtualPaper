@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common.Logging;
@@ -91,17 +93,24 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         public async Task<bool> SaveAllAsync() {
-            bool allOk = true;
-            foreach (var f in _openFiles) {
-                if (!f.IsSaved)
-                    allOk &= await SaveFileAsync(f);
-            }
-            return allOk;
+            var tasks = _openFiles
+                .Where(file => !file.IsSaved)
+                .Select(SaveFileAsync);
+            var results = await Task.WhenAll(tasks);
+            return results.All(result => result);
         }
 
         private static async Task<bool> SaveFileAsync(WebEditorFile file) {
             try {
-                await File.WriteAllTextAsync(file.FilePath, file.Content);
+                var text = file.Content;
+                var enc = file.EncodingText switch {
+                    "UTF-8 BOM" => new UTF8Encoding(true),
+                    "UTF-16 LE" => Encoding.Unicode,
+                    "UTF-16 BE" => Encoding.BigEndianUnicode,
+                    _ => new UTF8Encoding(false),
+                };
+
+                await File.WriteAllTextAsync(file.FilePath, text, enc);
                 file.MarkAsSaved();
                 return true;
             }

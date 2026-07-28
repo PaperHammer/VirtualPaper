@@ -22,6 +22,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         public event EventHandler<MonacoEditorState>? EditorStateChanged;
         public event EventHandler? PreviewReady;
 
+        public MonacoEditor MonacoEditor => monacoEditor;
+
         public MarkdownEditorView() {
             InitializeComponent();
             UpdatePreviewWebViewBackground();
@@ -51,6 +53,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
 
         public Task MarkSavedAsync() {
             return monacoEditor.MarkSavedAsync();
+        }
+
+        public Task<string> GetContentAsync() {
+            return monacoEditor.GetContentAsync();
         }
 
         public Task<MonacoEditorState> GetEditorStateAsync() {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -19,71 +20,95 @@ using Workloads.Creation.WebBackdrop.Views.Components.BottomPanels;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class WebEditor : ArcUserControl {
-        public WebEditorViewModel ViewModel { get; private set; } = null!;
+        public event EventHandler? SaveRequested;
+        public event EventHandler? SaveAllRequested;
 
-        //public string ActiveFilePathText {
-        //    get => (string)GetValue(ActiveFilePathTextProperty);
-        //    set => SetValue(ActiveFilePathTextProperty, value);
-        //}
-        //public static readonly DependencyProperty ActiveFilePathTextProperty =
-        //    DependencyProperty.Register(nameof(ActiveFilePathText), typeof(string), typeof(WebEditor),
-        //        new PropertyMetadata(string.Empty));
+        public WebEditorViewModel ViewModel { get; private set; } = null!;
 
         public string ActiveFileLanguage {
             get => (string)GetValue(ActiveFileLanguageProperty);
             set => SetValue(ActiveFileLanguageProperty, value);
         }
         public static readonly DependencyProperty ActiveFileLanguageProperty =
-            DependencyProperty.Register(nameof(ActiveFileLanguage), typeof(string), typeof(WebEditor),
-                new PropertyMetadata("plaintext"));
+            DependencyProperty.Register(nameof(ActiveFileLanguage), typeof(string), typeof(WebEditor), new PropertyMetadata("plaintext"));
 
         public int CursorLineNumber {
             get => (int)GetValue(CursorLineNumberProperty);
             set => SetValue(CursorLineNumberProperty, value);
         }
         public static readonly DependencyProperty CursorLineNumberProperty =
-            DependencyProperty.Register(nameof(CursorLineNumber), typeof(int), typeof(WebEditor),
-                new PropertyMetadata(1));
+            DependencyProperty.Register(nameof(CursorLineNumber), typeof(int), typeof(WebEditor), new PropertyMetadata(1));
 
         public int CursorColumn {
             get => (int)GetValue(CursorColumnProperty);
             set => SetValue(CursorColumnProperty, value);
         }
         public static readonly DependencyProperty CursorColumnProperty =
-            DependencyProperty.Register(nameof(CursorColumn), typeof(int), typeof(WebEditor),
-                new PropertyMetadata(1));
+            DependencyProperty.Register(nameof(CursorColumn), typeof(int), typeof(WebEditor), new PropertyMetadata(1));
 
         public int SelectedCharacterCount {
             get => (int)GetValue(SelectedCharacterCountProperty);
             set => SetValue(SelectedCharacterCountProperty, value);
         }
         public static readonly DependencyProperty SelectedCharacterCountProperty =
-            DependencyProperty.Register(nameof(SelectedCharacterCount), typeof(int), typeof(WebEditor),
-                new PropertyMetadata(0));
+            DependencyProperty.Register(nameof(SelectedCharacterCount), typeof(int), typeof(WebEditor), new PropertyMetadata(0));
 
         public bool IsSelectedCharacterCountOverflow {
             get => (bool)GetValue(IsSelectedCharacterCountOverflowProperty);
             set => SetValue(IsSelectedCharacterCountOverflowProperty, value);
         }
         public static readonly DependencyProperty IsSelectedCharacterCountOverflowProperty =
-            DependencyProperty.Register(nameof(IsSelectedCharacterCountOverflow), typeof(bool), typeof(WebEditor),
-                new PropertyMetadata(false));
+            DependencyProperty.Register(nameof(IsSelectedCharacterCountOverflow), typeof(bool), typeof(WebEditor), new PropertyMetadata(false));
 
         public int ProblemErrorCount {
             get => (int)GetValue(ProblemErrorCountProperty);
             set => SetValue(ProblemErrorCountProperty, value);
         }
         public static readonly DependencyProperty ProblemErrorCountProperty =
-            DependencyProperty.Register(nameof(ProblemErrorCount), typeof(int), typeof(WebEditor),
-                new PropertyMetadata(0));
+            DependencyProperty.Register(nameof(ProblemErrorCount), typeof(int), typeof(WebEditor), new PropertyMetadata(0));
 
         public int ProblemWarningCount {
             get => (int)GetValue(ProblemWarningCountProperty);
             set => SetValue(ProblemWarningCountProperty, value);
         }
         public static readonly DependencyProperty ProblemWarningCountProperty =
-            DependencyProperty.Register(nameof(ProblemWarningCount), typeof(int), typeof(WebEditor),
-                new PropertyMetadata(0));
+            DependencyProperty.Register(nameof(ProblemWarningCount), typeof(int), typeof(WebEditor), new PropertyMetadata(0));
+
+        public bool IsSaving {
+            get => (bool)GetValue(IsSavingProperty);
+            set => SetValue(IsSavingProperty, value);
+        }
+        public static readonly DependencyProperty IsSavingProperty =
+            DependencyProperty.Register(nameof(IsSaving), typeof(bool), typeof(WebEditor), new PropertyMetadata(false));
+
+        public string IndentText {
+            get => (string)GetValue(IndentTextProperty);
+            set => SetValue(IndentTextProperty, value);
+        }
+        public static readonly DependencyProperty IndentTextProperty =
+            DependencyProperty.Register(nameof(IndentText), typeof(string), typeof(WebEditor), new PropertyMetadata(string.Empty));
+
+        public string EncodingText {
+            get => (string)GetValue(EncodingTextProperty);
+            set => SetValue(EncodingTextProperty, value);
+        }
+        public static readonly DependencyProperty EncodingTextProperty =
+            DependencyProperty.Register(nameof(EncodingText), typeof(string), typeof(WebEditor), new PropertyMetadata(string.Empty));
+
+        public string LineEndingText {
+            get => (string)GetValue(LineEndingTextProperty);
+            set => SetValue(LineEndingTextProperty, value);
+        }
+        public static readonly DependencyProperty LineEndingTextProperty =
+            DependencyProperty.Register(nameof(LineEndingText), typeof(string), typeof(WebEditor), new PropertyMetadata(string.Empty));
+
+        public bool ActiveFileIsText {
+            get => (bool)GetValue(ActiveFileIsTextProperty);
+            set => SetValue(ActiveFileIsTextProperty, value);
+        }
+        public static readonly DependencyProperty ActiveFileIsTextProperty =
+            DependencyProperty.Register(nameof(ActiveFileIsText), typeof(bool), typeof(WebEditor),
+                new PropertyMetadata(false));
 
         private enum EditorPanelSlot {
             Left,
@@ -107,6 +132,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             ToggleLeftSideBar,
             ToggleBottomPanel,
             ToggleRightSideBar,
+            Save,
+            SaveAll,
         }
 
         private sealed class PanelLayoutState {
@@ -192,14 +219,20 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     _ignoredEmptyMarkersFilePath = filePath;
                 }
 
-                //ActiveFilePathText = filePath;
                 ActiveFileLanguage = WebEditorFileUtil.GetLanguageFromExtension(activeFile.FileExtension);
+                EncodingText = activeFile.EncodingText;
+                ActiveFileIsText = activeFile.CanOpenAsText;
                 editorContentView.LoadFile(activeFile, ActiveFileLanguage);
                 leftFileTreeControl.SelectFile(filePath);
+
+                SyncEncodingToMonaco(activeFile.EncodingText);
             }
             else {
-                //ActiveFilePathText = string.Empty;
                 ActiveFileLanguage = WebEditorFileUtil.DefaultLanguage;
+                IndentText = string.Empty;
+                EncodingText = string.Empty;
+                LineEndingText = string.Empty;
+                ActiveFileIsText = false;
                 editorContentView.LoadFile(null, ActiveFileLanguage);
             }
 
@@ -215,6 +248,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private void EditorContentView_ContentChanged(object? sender, string content) {
             if (ViewModel?.ActiveFile != null && ViewModel.ActiveFile.Content != content) {
                 ViewModel.ActiveFile.Content = content;
+                LineEndingText = ViewModel.ActiveFile.LineEndingText;
                 QueuePropertyPanelRefresh(ViewModel.ActiveFile, ActiveFileLanguage);
             }
         }
@@ -223,6 +257,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             if (ViewModel?.ActiveFile == null) return;
 
             ViewModel.ActiveFile.SetSavedState(state.IsSaved);
+            ViewModel.ActiveFile.SetLineEnding(state.LineEnding);
+            ViewModel.ActiveFile.SetEncoding(state.Encoding);
+            IndentText = state.Indent;
+            EncodingText = state.Encoding;
+            LineEndingText = state.LineEnding;
             SyncFileSavedState(ViewModel.ActiveFile);
         }
 
@@ -244,18 +283,58 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         public async Task<bool> SaveAllAsync() {
-            if (ViewModel == null) return false;
+            await _saveLock.WaitAsync();
+            try {
+                IsSaving = true;
+                if (ViewModel == null) return false;
 
-            var activeFile = ViewModel.ActiveFile;
-            var result = await ViewModel.SaveAllAsync();
-            if (result && activeFile != null) {
-                await editorContentView.MarkSavedAsync();
-                foreach (var file in ViewModel.OpenFiles) {
-                    leftFileTreeControl.SetFileSaved(file.FilePath, file.IsSaved);
+                await SyncActiveEditorContentAsync();
+                var activeFile = ViewModel.ActiveFile;
+                var result = await ViewModel.SaveAllAsync();
+                if (result && activeFile != null) {
+                    await editorContentView.MarkSavedAsync();
+                    foreach (var file in ViewModel.OpenFiles) {
+                        leftFileTreeControl.SetFileSaved(file.FilePath, file.IsSaved);
+                    }
+                    _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
                 }
-                _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
+                return result;
+            } finally {
+                IsSaving = false;
+                _saveLock.Release();
             }
-            return result;
+        }
+
+        public async Task<bool> SaveActiveFileAsync() {
+            await _saveLock.WaitAsync();
+            try {
+                IsSaving = true;
+                if (ViewModel == null) return false;
+
+                await SyncActiveEditorContentAsync();
+                var activeFile = ViewModel.ActiveFile;
+                var result = await ViewModel.SaveActiveFileAsync();
+                if (result && activeFile != null) {
+                    await editorContentView.MarkSavedAsync();
+                    leftFileTreeControl.SetFileSaved(activeFile.FilePath, activeFile.IsSaved);
+                    _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
+                }
+                return result;
+            } finally {
+                IsSaving = false;
+                _saveLock.Release();
+            }
+        }
+
+        private async Task SyncActiveEditorContentAsync() {
+            var activeFile = ViewModel?.ActiveFile;
+            if (activeFile?.CanOpenAsText != true) return;
+
+            var content = await editorContentView.GetContentAsync();
+            if (activeFile.Content != content) {
+                activeFile.Content = content;
+                QueuePropertyPanelRefresh(activeFile, ActiveFileLanguage);
+            }
         }
 
         private void EditorContentView_CursorPositionChanged(object? sender, MonacoCursorPosition position) {
@@ -317,6 +396,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 [WebEditorCommand.ToggleLeftSideBar] = () => TogglePanel(EditorPanelSlot.Left),
                 [WebEditorCommand.ToggleBottomPanel] = ToggleBottomPanel,
                 [WebEditorCommand.ToggleRightSideBar] = () => TogglePanel(EditorPanelSlot.Right),
+                [WebEditorCommand.Save] = () => SaveRequested?.Invoke(this, EventArgs.Empty),
+                [WebEditorCommand.SaveAll] = () => SaveAllRequested?.Invoke(this, EventArgs.Empty),
             };
 
             _keyboardCommands = new Dictionary<(VirtualKey Key, VirtualKeyModifiers Modifiers), WebEditorCommand>(KeyboardCommandMap);
@@ -330,6 +411,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 [(VirtualKey.B, VirtualKeyModifiers.Control)] = WebEditorCommand.ToggleLeftSideBar,
                 [(VirtualKey.J, VirtualKeyModifiers.Control)] = WebEditorCommand.ToggleBottomPanel,
                 [(VirtualKey.B, VirtualKeyModifiers.Control | VirtualKeyModifiers.Menu)] = WebEditorCommand.ToggleRightSideBar,
+                [(VirtualKey.S, VirtualKeyModifiers.Control)] = WebEditorCommand.Save,
+                [(VirtualKey.S, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift)] = WebEditorCommand.SaveAll,
             };
 
         private static readonly IReadOnlyDictionary<string, WebEditorCommand> MonacoCommandMap =
@@ -337,6 +420,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 ["toggleLeftSideBar"] = WebEditorCommand.ToggleLeftSideBar,
                 ["toggleBottomPanel"] = WebEditorCommand.ToggleBottomPanel,
                 ["toggleRightSideBar"] = WebEditorCommand.ToggleRightSideBar,
+                ["save"] = WebEditorCommand.Save,
+                ["saveAll"] = WebEditorCommand.SaveAll,
             };
 
         private void ToggleBottomPanel() {
@@ -536,6 +621,50 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             ExecuteCommand(WebEditorCommand.ToggleRightSideBar);
         }
 
+        private async void StatusBar_IndentChanged(object? sender, (int TabSize, bool InsertSpaces) args) {
+            if (ViewModel?.ActiveFile == null) return;
+
+            //IndentText = args.InsertSpaces ? $"Spaces: {args.TabSize}" : $"Tabs: {args.TabSize}";
+            var monacoEditor = GetActiveMonacoEditor();
+            if (monacoEditor != null) {
+                await monacoEditor.SetIndentOptionsAsync(args.TabSize, args.InsertSpaces);
+            }
+        }
+
+        private async void StatusBar_EncodingChanged(object? sender, string encoding) {
+            if (ViewModel?.ActiveFile == null) return;
+
+            //EncodingText = encoding;
+            //ViewModel.ActiveFile.SetEncoding(encoding);
+            //ViewModel.ActiveFile.ReopenWithEncoding(encoding);
+
+            var monacoEditor = GetActiveMonacoEditor();
+            if (monacoEditor != null) {
+                await monacoEditor.SetEncodingAsync(encoding);
+                monacoEditor.EditorContent = ViewModel.ActiveFile.Content;
+            }
+        }
+
+        private async void StatusBar_LineEndingChanged(object? sender, string lineEnding) {
+            if (ViewModel?.ActiveFile == null) return;
+
+            var monacoEditor = GetActiveMonacoEditor();
+            if (monacoEditor != null) {
+                await monacoEditor.ReplaceLineEndingsAsync(lineEnding == "LF" ? "\\n" : "\\r\\n");
+            }
+        }
+
+        private MonacoEditor? GetActiveMonacoEditor() {
+            return editorContentView.ActiveMonacoEditor;
+        }
+
+        private async void SyncEncodingToMonaco(string encoding) {
+            var monacoEditor = GetActiveMonacoEditor();
+            if (monacoEditor == null) return;
+
+            await monacoEditor.SetEncodingAsync(encoding);
+        }
+
         private void BottomPanelSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs e) {
             if (sender.SelectedItem is SelectorBarItem { Tag: WebEditorBottomPanel panel }) {
                 ShowBottomPanel(panel);
@@ -635,6 +764,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private Dictionary<WebEditorCommand, Action> _commandActions = null!;
         private Dictionary<(VirtualKey Key, VirtualKeyModifiers Modifiers), WebEditorCommand> _keyboardCommands = null!;
         private Dictionary<string, WebEditorCommand> _monacoCommands = null!;
+        private readonly SemaphoreSlim _saveLock = new(1, 1);
         private EditorPanelSlot? _activeResizeSlot;
         private Pointer? _resizePointer;
         private double _resizeStartPointerPosition;

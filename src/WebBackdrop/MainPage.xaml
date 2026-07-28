@@ -15,6 +15,9 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <arc:ArcPageHost x:Name="MainHost">
-        <components:WebEditor x:Name="webEditor" Payload="{x:Bind Payload}"/>
+        <components:WebEditor x:Name="webEditor"
+            Payload="{x:Bind Payload}"
+            SaveRequested="WebEditor_SaveRequested"
+            SaveAllRequested="WebEditor_SaveAllRequested"/>
     </arc:ArcPageHost>
 </arc:ArcPage>

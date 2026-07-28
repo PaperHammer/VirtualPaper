@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.PlayerWeb.Core.Utils;
 using Workloads.Creation.WebBackdrop.Core.Theme;
 
@@ -28,14 +29,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 _ = SetContentAsync(value);
             }
         }
-
         public static readonly DependencyProperty EditorContentProperty =
             DependencyProperty.Register(nameof(EditorContent), typeof(string), typeof(MonacoEditor),
                 new PropertyMetadata(string.Empty, OnEditorContentPropertyChanged));
 
         private static void OnEditorContentPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is MonacoEditor editor && e.NewValue is string newContent) {
-                editor._content = newContent;
                 _ = editor.SetContentAsync(newContent);
             }
         }
@@ -121,6 +120,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     ? typeElement.GetString()
                     : null;
 
+                DebugUtil.Output($"Monaco message type: {type}");
                 await (type switch {
                     "ready" => HandleEditorReadyAsync(),
                     "shortcut" => HandleShortcutAsync(json.RootElement),
@@ -136,6 +136,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private Task HandleEditorReadyAsync() {
+            if (_isEditorReady) return Task.CompletedTask;
             _isEditorReady = true;
             if (_pendingContent != null) {
                 _ = SetContentAsync(_pendingContent);
@@ -144,6 +145,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             if (_pendingLanguage != null) {
                 _ = SetLanguageAsync(_pendingLanguage);
                 _pendingLanguage = null;
+            }
+            if (_pendingEncoding != null) {
+                _ = SetEncodingAsync(_pendingEncoding);
+            }
+            if (_pendingIndentOptions is { } indentOptions) {
+                _ = SetIndentOptionsAsync(indentOptions.TabSize, indentOptions.InsertSpaces);
             }
             UpdateTheme();
             return Task.CompletedTask;
@@ -175,7 +182,16 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             var isSaved = rootElement.TryGetProperty("isSaved", out var isSavedElement) && isSavedElement.GetBoolean();
             var canUndo = rootElement.TryGetProperty("canUndo", out var canUndoElement) && canUndoElement.GetBoolean();
             var canRedo = rootElement.TryGetProperty("canRedo", out var canRedoElement) && canRedoElement.GetBoolean();
-            EditorStateChanged?.Invoke(this, new MonacoEditorState(alternativeVersionId, isSaved, canUndo, canRedo));
+            var lineEnding = rootElement.TryGetProperty("lineEnding", out var lineEndingElement)
+                ? lineEndingElement.GetString() ?? "LF"
+                : "LF";
+            var encoding = rootElement.TryGetProperty("encoding", out var encodingElement)
+                ? encodingElement.GetString() ?? "UTF-8"
+                : "UTF-8";
+            var indent = rootElement.TryGetProperty("indent", out var indentElement)
+                ? indentElement.GetString() ?? "Spaces: 2"
+                : "Spaces: 2";
+            EditorStateChanged?.Invoke(this, new MonacoEditorState(alternativeVersionId, isSaved, canUndo, canRedo, lineEnding, encoding, indent));
             return Task.CompletedTask;
         }
 
@@ -224,19 +240,71 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             return ExecuteEditorCommandAsync("window.markSaved()");
         }
 
+        public async Task<string> GetContentAsync() {
+            if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
+                return _content;
+            }
+
+            try {
+                var result = await monacoWebView.CoreWebView2.ExecuteScriptAsync("window.getValue()");
+                return JsonSerializer.Deserialize<string>(result) ?? string.Empty;
+            } catch (Exception ex) {
+                ArcLog.GetLogger<MonacoEditor>().Error(ex);
+                return _content;
+            }
+        }
+
+        public async Task ReplaceLineEndingsAsync(string targetEnding) {
+            if (monacoWebView.CoreWebView2 == null || !_isEditorReady) return;
+
+            try {
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.replaceLineEndings('{targetEnding}')");
+            } catch (Exception ex) {
+                ArcLog.GetLogger<MonacoEditor>().Error(ex);
+            }
+        }
+
+        public async Task SetEncodingAsync(string encoding) {
+            _pendingEncoding = encoding;
+            if (monacoWebView.CoreWebView2 == null || !_isEditorReady) return;
+
+            try {
+                var serialized = JsonSerializer.Serialize(encoding);
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setEncoding({serialized})");
+                _pendingEncoding = null;
+            } catch (Exception ex) {
+                ArcLog.GetLogger<MonacoEditor>().Error(ex);
+            }
+        }
+
+        public async Task SetIndentOptionsAsync(int tabSize, bool insertSpaces) {
+            _pendingIndentOptions = (tabSize, insertSpaces);
+            if (monacoWebView.CoreWebView2 == null || !_isEditorReady) return;
+
+            try {
+                var insertSpacesStr = insertSpaces ? "true" : "false";
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setIndentOptions({tabSize}, {insertSpacesStr})");
+                _pendingIndentOptions = null;
+            } catch (Exception ex) {
+                ArcLog.GetLogger<MonacoEditor>().Error(ex);
+            }
+        }
+
+        private static MonacoEditorState DefaultEditorState => new(0, true, false, false, "LF", "UTF-8", "Spaces: 2");
+
         public async Task<MonacoEditorState> GetEditorStateAsync() {
             if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
-                return new MonacoEditorState(0, true, false, false);
+                return DefaultEditorState;
             }
 
             try {
                 var result = await monacoWebView.CoreWebView2.ExecuteScriptAsync("window.getEditorState()");
                 var json = JsonSerializer.Deserialize<string>(result) ?? string.Empty;
                 var state = JsonSerializer.Deserialize<MonacoEditorState>(json, _jsonSerializerOptions);
-                return state ?? new MonacoEditorState(0, true, false, false);
+                return state ?? DefaultEditorState;
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
-                return new MonacoEditorState(0, true, false, false);
+                return DefaultEditorState;
             }
         }
 
@@ -296,6 +364,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private string _content = string.Empty;
         private string? _pendingContent;
         private string? _pendingLanguage;
+        private string? _pendingEncoding;
+        private (int TabSize, bool InsertSpaces)? _pendingIndentOptions;
         private bool _isEditorReady;
         private const int MaxSelectedCharacterCount = int.MaxValue / 2;
         private static readonly JsonSerializerOptions _jsonSerializerOptions = new() {
@@ -316,7 +386,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
     public readonly record struct MonacoCursorPosition(int LineNumber, int Column, int SelectedCharacterCount, bool IsSelectedCharacterCountOverflow);
 
-    public sealed record MonacoEditorState(int AlternativeVersionId, bool IsSaved, bool CanUndo, bool CanRedo);
+    public sealed record MonacoEditorState(int AlternativeVersionId, bool IsSaved, bool CanUndo, bool CanRedo, string LineEnding, string Encoding, string Indent);
 
     public sealed class MonacoMarker {
         public int Severity { get; set; }

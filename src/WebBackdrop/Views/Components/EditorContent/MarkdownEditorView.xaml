@@ -50,12 +50,20 @@
                 HorizontalAlignment="Center"/>
         </Grid>
 
-        <Border Grid.Column="2"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1 0 0 0">
-            <WebView2 x:Name="previewWebView"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch"/>
-        </Border>
+        <Grid Grid.Column="2">
+            <Border
+                Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1 0 0 0">
+                <WebView2 x:Name="previewWebView"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    NavigationCompleted="PreviewWebView_NavigationCompleted"/>
+            </Border>
+
+            <Grid x:Name="previewOverlay"
+                Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                IsHitTestVisible="False"/>
+        </Grid>
     </Grid>
 </UserControl>

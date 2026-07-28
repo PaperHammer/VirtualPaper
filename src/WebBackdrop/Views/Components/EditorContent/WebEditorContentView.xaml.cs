@@ -14,18 +14,24 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         public event EventHandler<string>? ShortcutRequested;
         public event EventHandler<MonacoEditorState>? EditorStateChanged;
 
+        private const int OverlayDelayMilliseconds = 80;
+
         public WebEditorContentView() {
             InitializeComponent();
         }
 
         public void LoadFile(WebEditorFile? file, string language) {
+            ShowContentOverlay();
+            var previousKind = _currentKind;
             _currentKind = file?.Kind;
+            _previousKind = previousKind;
             HideAll();
 
             if (file == null) {
                 textEditor.EditorContent = string.Empty;
                 textEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(language);
                 welcomeView.Visibility = Visibility.Visible;
+                CompleteContentSwitch(previousKind);
                 return;
             }
 
@@ -42,9 +48,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
                     textEditor.EditorContent = file.Content;
                     textEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(language);
                     textEditor.Visibility = Visibility.Visible;
+                    CompleteContentSwitch(previousKind);
                     break;
                 case WebEditorFileKind.Unsupported:
                     fallbackView.Visibility = Visibility.Visible;
+                    CompleteContentSwitch(previousKind);
                     break;
             }
         }
@@ -84,12 +92,40 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             markdownEditor.ReleaseResources();
         }
 
+        private void ShowContentOverlay() {
+            _overlayVersion++;
+            contentOverlay.Visibility = Visibility.Visible;
+        }
+
+        private void HideContentOverlayAfterDelay() {
+            var version = _overlayVersion;
+            _ = HideContentOverlayAfterDelayAsync(version);
+        }
+
+        private async Task HideContentOverlayAfterDelayAsync(int version) {
+            await Task.Delay(OverlayDelayMilliseconds);
+            if (version != _overlayVersion) return;
+            contentOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private void CompleteContentSwitch(WebEditorFileKind? previousKind) {
+            ReleaseInactivePreviewResources(previousKind);
+            HideContentOverlayAfterDelay();
+        }
+
+        private void ReleaseInactivePreviewResources(WebEditorFileKind? previousKind) {
+            if (previousKind == WebEditorFileKind.Markdown && _currentKind != WebEditorFileKind.Markdown) {
+                markdownEditor.ReleaseResources();
+            }
+            if (previousKind == WebEditorFileKind.Image && _currentKind != WebEditorFileKind.Image) {
+                imagePreview.ReleaseResources();
+            }
+        }
+
         private void HideAll() {
             textEditor.Visibility = Visibility.Collapsed;
             markdownEditor.Visibility = Visibility.Collapsed;
-            markdownEditor.ReleaseResources();
             imagePreview.Visibility = Visibility.Collapsed;
-            imagePreview.ReleaseResources();
             fallbackView.Visibility = Visibility.Collapsed;
             welcomeView.Visibility = Visibility.Collapsed;
         }
@@ -114,6 +150,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             EditorStateChanged?.Invoke(this, state);
         }
 
+        private void Preview_PreviewReady(object? sender, EventArgs e) {
+            CompleteContentSwitch(_previousKind);
+        }
+
         private WebEditorFileKind? _currentKind;
+        private WebEditorFileKind? _previousKind;
+        private int _overlayVersion;
     }
 }

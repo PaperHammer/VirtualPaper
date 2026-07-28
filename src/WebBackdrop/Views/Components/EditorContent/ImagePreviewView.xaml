@@ -20,7 +20,12 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Stretch="Uniform"
-                ImageOpened="ImagePreview_ImageOpened"/>
+                ImageOpened="ImagePreview_ImageOpened"
+                ImageFailed="ImagePreview_ImageFailed"/>
         </ScrollViewer>
+
+        <Grid x:Name="previewOverlay"
+            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+            IsHitTestVisible="False"/>
     </Grid>
 </UserControl>

@@ -20,9 +20,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
         public event EventHandler<string>? ShortcutRequested;
         public event EventHandler<MonacoEditorState>? EditorStateChanged;
+        public event EventHandler? PreviewReady;
 
         public MarkdownEditorView() {
             InitializeComponent();
+            UpdatePreviewWebViewBackground();
+            _ = PreparePreviewWebViewAsync();
             ActualThemeChanged += MarkdownEditorView_ActualThemeChanged;
         }
 
@@ -71,7 +74,20 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         }
 
         private void MarkdownEditorView_ActualThemeChanged(FrameworkElement sender, object args) {
+            UpdatePreviewWebViewBackground();
             LoadPreviewDocument(_content);
+        }
+
+        private void UpdatePreviewWebViewBackground() {
+            var backgroundRole = ActualTheme == ElementTheme.Light
+                ? WebBackdropColorRole.WebViewLightBackground
+                : WebBackdropColorRole.WebViewDarkBackground;
+            previewWebView.DefaultBackgroundColor = WebBackdropThemeResource.GetColor(this, backgroundRole);
+        }
+
+        private async Task PreparePreviewWebViewAsync() {
+            await previewWebView.EnsureCoreWebView2Async();
+            UpdatePreviewWebViewBackground();
         }
 
         private void LoadPreviewDocument(string content) {
@@ -97,11 +113,17 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         private async void NavigatePreview(string html) {
             var version = ++_previewVersion;
             _pendingPreviewHtml = html;
-            await previewWebView.EnsureCoreWebView2Async();
+            previewOverlay.Visibility = Visibility.Visible;
+            await PreparePreviewWebViewAsync();
             if (version == _previewVersion && _pendingPreviewHtml == html) {
                 previewWebView.NavigateToString(html);
                 _previewDocumentLoaded = true;
             }
+        }
+
+        private void PreviewWebView_NavigationCompleted(WebView2 sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs args) {
+            previewOverlay.Visibility = Visibility.Collapsed;
+            PreviewReady?.Invoke(this, EventArgs.Empty);
         }
 
         private void Splitter_PointerPressed(object sender, PointerRoutedEventArgs e) {

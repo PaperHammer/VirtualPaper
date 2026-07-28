@@ -10,17 +10,21 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         private const double MaxScale = 8;
         private const double ScaleStep = 1.1;
 
+        public event EventHandler? PreviewReady;
+
         public ImagePreviewView() {
             InitializeComponent();
         }
 
         public void Load(string filePath) {
+            previewOverlay.Visibility = Visibility.Visible;
             _zoomScale = 1;
             imagePreview.Source = new BitmapImage(new Uri(filePath));
             UpdateImageSize();
         }
 
         public void ReleaseResources() {
+            previewOverlay.Visibility = Visibility.Visible;
             imagePreview.Source = null;
             _zoomScale = 1;
             imagePreview.Width = double.NaN;
@@ -29,6 +33,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
 
         private void ImagePreview_ImageOpened(object sender, RoutedEventArgs e) {
             UpdateImageSize();
+            previewOverlay.Visibility = Visibility.Collapsed;
+            PreviewReady?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void ImagePreview_ImageFailed(object sender, ExceptionRoutedEventArgs e) {
+            previewOverlay.Visibility = Visibility.Collapsed;
+            PreviewReady?.Invoke(this, EventArgs.Empty);
         }
 
         private void ImageScrollViewer_SizeChanged(object sender, SizeChangedEventArgs e) {

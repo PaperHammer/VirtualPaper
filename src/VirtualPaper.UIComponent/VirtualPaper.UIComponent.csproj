@@ -186,5 +186,8 @@
 		<Page Update="Others\RenameView.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
+		<Page Update="Others\AddFileItemView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
 	</ItemGroup>
 </Project>

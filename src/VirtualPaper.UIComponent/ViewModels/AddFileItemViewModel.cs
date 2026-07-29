@@ -2,12 +2,12 @@ using VirtualPaper.Common.Utils;
 using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.UIComponent.ViewModels {
-    public partial class RenameViewModel : ObservableObject {
+    public partial class AddFileItemViewModel : ObservableObject {
         private string? _newName;
         public string? NewName {
             get { return _newName; }
             set {
-                _newName = value; 
+                _newName = value;
                 IsNameOk = ComplianceUtil.IsValidPathSegmentName(value, 1, _maxLength, _onlyLength);
                 OnPropertyChanged();
             }
@@ -19,12 +19,10 @@ namespace VirtualPaper.UIComponent.ViewModels {
             set { _isNameOk = value; OnPropertyChanged(); }
         }
 
-        public string OldName { get; set; } = null!;
-
-        public RenameViewModel(string oldName, int maxLength, bool onlyLength) {
-            OldName = oldName;
+        public AddFileItemViewModel(string defaultName, int maxLength, bool onlyLength) {
             _maxLength = maxLength;
             _onlyLength = onlyLength;
+            NewName = defaultName;
         }
 
         private readonly int _maxLength;

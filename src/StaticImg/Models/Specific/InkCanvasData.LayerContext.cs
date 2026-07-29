@@ -161,7 +161,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
             try {
                 string oldName = layer.Name;
-                var viewModel = new RenameViewModel(oldName);
+                var viewModel = new RenameViewModel(oldName, 30, true);
                 var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
                     new RenameView(viewModel),
                     LanguageUtil.GetI18n(nameof(Constants.I18n.Dialog_Title_Rename)),

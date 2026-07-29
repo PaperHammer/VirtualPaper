@@ -18,7 +18,7 @@ namespace VirtualPaper.Core.Test.T_Common {
             Assert.DoesNotContain(':', result);
         }
 
-        // ── IsValidFileName ───────────────────────────────────────────
+        // ── IsValidPathSegmentName ───────────────────────────────────────────
 
         [TestMethod]
         [DataRow("test.vpd")]

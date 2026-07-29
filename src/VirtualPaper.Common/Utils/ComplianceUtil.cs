@@ -1,4 +1,3 @@
-using System.IO;
 using System.Text.RegularExpressions;
 
 namespace VirtualPaper.Common.Utils {
@@ -65,6 +64,28 @@ namespace VirtualPaper.Common.Utils {
             }
 
             return true;
+        }
+
+        public static bool IsValidPathSegmentName(string? value, int minLen = 1, int maxLen = 255, bool onlyLength = false) {
+            if (string.IsNullOrWhiteSpace(value)) {
+                return false;
+            }
+
+            if (value.Length < minLen || value.Length > maxLen) {
+                return false;
+            }
+
+            try {
+                if (onlyLength) {
+                    return true;
+                }
+
+                return !Path.GetInvalidFileNameChars().Any(value.Contains)
+                    && !string.IsNullOrWhiteSpace(Path.GetFileNameWithoutExtension(value));
+            }
+            catch {
+                return false;
+            }
         }
 
         public static bool IsValidEmail(string value) {

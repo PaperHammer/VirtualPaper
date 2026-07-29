@@ -71,14 +71,14 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             var item = GetMenuItemTarget(sender);
             if (item == null) return;
 
-            await _viewModel.CreateFileAsync(item.FilePath, GetRenamedPathAsync);
+            await _viewModel.CreateFileAsync(item.FilePath, GetAddFileOrFolderItemPathAsync);
         }
 
         private async void NewFolderMenuItem_Click(object sender, RoutedEventArgs e) {
             var item = GetMenuItemTarget(sender);
             if (item == null) return;
 
-            await _viewModel.CreateFolderAsync(item.FilePath, GetRenamedPathAsync);
+            await _viewModel.CreateFolderAsync(item.FilePath, GetAddFileOrFolderItemPathAsync);
         }
 
         private void CutMenuItem_Click(object sender, RoutedEventArgs e) {
@@ -150,7 +150,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
         private async Task<string?> GetRenamedPathAsync(string path) {
             var oldName = Path.GetFileName(path);
-            var viewModel = new RenameViewModel(oldName);
+            var viewModel = new RenameViewModel(oldName, 255, false);
             var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
                 new RenameView(viewModel),
                 "Rename",
@@ -158,13 +158,31 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
                 "Cancel");
 
             if (dialogRes != DialogResult.Primary
-                || !ComplianceUtil.IsValidValueOnlyLength(viewModel.NewName)
+                || !ComplianceUtil.IsValidPathSegmentName(viewModel.NewName)
                 || string.Equals(oldName, viewModel.NewName, StringComparison.Ordinal)) {
                 return null;
             }
 
             var newName = viewModel.NewName!;
-            if (!FileUtil.IsValidFileName(newName)) return null;
+            return FileUtil.NextAvailablePath(Path.Combine(Path.GetDirectoryName(path)!, newName));
+        }
+
+        private async Task<string?> GetAddFileOrFolderItemPathAsync(string path) {
+            var defaultPath = FileUtil.NextAvailablePath(path);
+            var defaultName = Path.GetFileName(defaultPath);
+            var viewModel = new AddFileItemViewModel(defaultName, 255, false);
+            var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
+                new AddFileItemView(viewModel),
+                "Add",
+                "Confirm",
+                "Cancel");
+
+            if (dialogRes != DialogResult.Primary
+                || !ComplianceUtil.IsValidPathSegmentName(viewModel.NewName)) {
+                return null;
+            }
+
+            var newName = viewModel.NewName!;
             return FileUtil.NextAvailablePath(Path.Combine(Path.GetDirectoryName(path)!, newName));
         }
 

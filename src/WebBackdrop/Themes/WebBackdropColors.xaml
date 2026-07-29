@@ -3,6 +3,17 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Default">
+            <SolidColorBrush x:Key="WebBackdropStatusBarButtonBackgroundPointerOverBrush" Color="#1FFFFFFF"/>
+            <SolidColorBrush x:Key="WebBackdropStatusBarButtonBackgroundPressedBrush" Color="#14FFFFFF"/>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="WebBackdropStatusBarButtonBackgroundPointerOverBrush" Color="#1F000000"/>
+            <SolidColorBrush x:Key="WebBackdropStatusBarButtonBackgroundPressedBrush" Color="#14000000"/>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
     <SolidColorBrush x:Key="WebBackdropProblemErrorBrush" Color="#FFFF4D4D"/>
     <SolidColorBrush x:Key="WebBackdropProblemWarningBrush" Color="#FFFFA500"/>
     <SolidColorBrush x:Key="WebBackdropProblemInactiveBrush" Color="{ThemeResource TextFillColorSecondary}"/>

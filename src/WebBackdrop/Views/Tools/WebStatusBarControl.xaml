@@ -15,6 +15,52 @@
                 <ResourceDictionary Source="ms-appx:///WebBackdrop/Themes/WebBackdropColors.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <converters:VisibilityByValueConverter x:Key="VisibilityConverter"/>
+            <Style x:Key="StatusBarButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="Foreground" Value="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                <Setter Property="BackgroundSizing" Value="OuterBorderEdge"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <ContentPresenter x:Name="ContentPresenter"
+                                Background="{TemplateBinding Background}"
+                                BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                CornerRadius="{TemplateBinding CornerRadius}"
+                                Foreground="{TemplateBinding Foreground}"
+                                Padding="{TemplateBinding Padding}"
+                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal"/>
+                                        <VisualState x:Name="PointerOver">
+                                            <VisualState.Setters>
+                                                <Setter Target="ContentPresenter.Background" Value="{ThemeResource WebBackdropStatusBarButtonBackgroundPointerOverBrush}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <VisualState.Setters>
+                                                <Setter Target="ContentPresenter.Background" Value="{ThemeResource WebBackdropStatusBarButtonBackgroundPressedBrush}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter Target="ContentPresenter.Opacity" Value="0.4"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </ContentPresenter>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -25,8 +71,8 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-            <Button Padding="8 2" BorderThickness="0" Background="Transparent" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" Click="Problems_Click">
+        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Stretch">
+            <Button Padding="8 2" Style="{StaticResource StatusBarButtonStyle}" VerticalAlignment="Stretch" Click="Problems_Click">
                 <StackPanel Orientation="Horizontal" Spacing="5">
                     <FontIcon Glyph="&#xEA39;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemErrorBrush}" Visibility="{x:Bind ProblemErrorActiveVisibility, Mode=OneWay}"/>
                     <FontIcon Glyph="&#xEA39;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemErrorInactiveVisibility, Mode=OneWay}"/>
@@ -39,13 +85,13 @@
                 </StackPanel>
             </Button>
 
-            <Button Padding="8 2" BorderThickness="0" CornerRadius="4" Background="Transparent" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" ToolTipService.ToolTip="Run" Click="Run_Click">
+            <Button Padding="8 2" Style="{StaticResource StatusBarButtonStyle}" VerticalAlignment="Stretch" ToolTipService.ToolTip="Run" Click="Run_Click">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <FontIcon Glyph="&#xE768;" FontSize="14" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
                     <TextBlock FontSize="11" Text="运行"/>
                 </StackPanel>
             </Button>
-            <!--<Button Padding="8 2" BorderThickness="0" CornerRadius="4" Background="Transparent" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" ToolTipService.ToolTip="Debug" Click="Debug_Click">
+            <!--<Button Padding="8 2" Style="{StaticResource StatusBarButtonStyle}" ToolTipService.ToolTip="Debug" Click="Debug_Click">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <FontIcon Glyph="&#xEBE8;" FontSize="14" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
                     <TextBlock FontSize="11" Text="调试"/>
@@ -58,21 +104,21 @@
         </StackPanel>
 
         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-            <Button Padding="5" BorderThickness="0" Background="Transparent" Click="ToggleLeftSideBar_Click">
+            <Button Padding="5" Style="{StaticResource StatusBarButtonStyle}" Click="ToggleLeftSideBar_Click">
                 <Grid Width="14" Height="14">
                     <Border BorderBrush="{ThemeResource WebBackdropStatusBarForegroundBrush}" BorderThickness="1" CornerRadius="2"/>
                     <Border Width="6" HorizontalAlignment="Left" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="2 0 0 2" Visibility="{x:Bind LeftSideBarFillVisibility, Mode=OneWay}"/>
                     <Rectangle Width="1" HorizontalAlignment="Left" Margin="5,0,0,0" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind LeftSideBarLineVisibility, Mode=OneWay}"/>
                 </Grid>
             </Button>
-            <Button Padding="5" BorderThickness="0" Background="Transparent" Click="ToggleBottomPanel_Click">
+            <Button Padding="5" Style="{StaticResource StatusBarButtonStyle}" Click="ToggleBottomPanel_Click">
                 <Grid Width="14" Height="14">
                     <Border BorderBrush="{ThemeResource WebBackdropStatusBarForegroundBrush}" BorderThickness="1" CornerRadius="2"/>
                     <Border Height="6" VerticalAlignment="Bottom" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="0 0 2 2" Visibility="{x:Bind BottomPanelFillVisibility, Mode=OneWay}"/>
                     <Rectangle Height="1" VerticalAlignment="Bottom" Margin="0,0,0,5" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind BottomPanelLineVisibility, Mode=OneWay}"/>
                 </Grid>
             </Button>
-            <Button Padding="5" BorderThickness="0" Background="Transparent" Click="ToggleRightSideBar_Click">
+            <Button Padding="5" Style="{StaticResource StatusBarButtonStyle}" Click="ToggleRightSideBar_Click">
                 <Grid Width="14" Height="14">
                     <Border BorderBrush="{ThemeResource WebBackdropStatusBarForegroundBrush}" BorderThickness="1" CornerRadius="2"/>
                     <Border Width="6" HorizontalAlignment="Right" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="0 2 2 0" Visibility="{x:Bind RightSideBarFillVisibility, Mode=OneWay}"/>
@@ -80,7 +126,7 @@
                 </Grid>
             </Button>
             <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind CursorPositionText, Mode=OneWay}" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}"/>
-            <Button Padding="8 0" BorderThickness="0" Background="Transparent" VerticalAlignment="Stretch" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}" Click="Indent_Click">
+            <Button Padding="8 0" Style="{StaticResource StatusBarButtonStyle}" VerticalAlignment="Stretch" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}" Click="Indent_Click">
                 <Button.Flyout>
                     <MenuFlyout>
                         <MenuFlyoutItem x:Name="indentTab2" Text="Tabs: 2" Click="IndentOption_Click" Tag="2,tabs"/>
@@ -92,7 +138,7 @@
                 </Button.Flyout>
                 <TextBlock FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind IndentText, Mode=OneWay}"/>
             </Button>
-            <Button Padding="8 0" BorderThickness="0" Background="Transparent" VerticalAlignment="Stretch" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}" Click="Encoding_Click">
+            <Button Padding="8 0" Style="{StaticResource StatusBarButtonStyle}" VerticalAlignment="Stretch" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}" Click="Encoding_Click">
                 <Button.Flyout>
                     <MenuFlyout>
                         <MenuFlyoutItem Text="UTF-8" Click="EncodingOption_Click" Tag="UTF-8"/>
@@ -103,7 +149,7 @@
                 </Button.Flyout>
                 <TextBlock FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind EncodingText, Mode=OneWay}"/>
             </Button>
-            <Button Padding="8 0" BorderThickness="0" Background="Transparent" VerticalAlignment="Stretch" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}" Click="LineEnding_Click">
+            <Button Padding="8 0" Style="{StaticResource StatusBarButtonStyle}" VerticalAlignment="Stretch" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}" Click="LineEnding_Click">
                 <Button.Flyout>
                     <MenuFlyout>
                         <MenuFlyoutItem Text="LF" Click="LineEndingOption_Click" Tag="LF"/>

@@ -16,19 +16,20 @@
                 ItemsSource="{x:Bind Children}" IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}">
                 <collection:ArcTreeViewItem.ContextFlyout>
                     <MenuFlyout Opening="FolderMenuFlyout_Opening">
-                        <MenuFlyoutItem Text="New File" Tag="{x:Bind}" Click="NewFileMenuItem_Click"/>
-                        <MenuFlyoutItem Text="New Folder" Tag="{x:Bind}" Click="NewFolderMenuItem_Click"/>
-                        <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem Text="Cut" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
-                        <MenuFlyoutItem Text="Copy" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderNewFileMenuItem" Text="New File" Tag="{x:Bind}" Click="NewFileMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderNewFolderMenuItem" Text="New Folder" Tag="{x:Bind}" Click="NewFolderMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderAddItemsMenuItem" Text="Add Items" Tag="{x:Bind}" Click="AddItemsMenuItem_Click"/>
+                        <MenuFlyoutSeparator x:Name="folderEditSeparator1"/>
+                        <MenuFlyoutItem x:Name="folderCutMenuItem" Text="Cut" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderCopyMenuItem" Text="Copy" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
                         <MenuFlyoutItem x:Name="pasteMenuItem" Text="Paste" Tag="{x:Bind}" Click="PasteMenuItem_Click"/>
-                        <MenuFlyoutItem Text="Copy Path" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
-                        <MenuFlyoutItem Text="Copy Relative Path" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
-                        <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem Text="Rename" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
-                        <MenuFlyoutItem Text="Delete" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
-                        <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem Text="Reveal in Explorer" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderCopyPathMenuItem" Text="Copy Path" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderCopyRelativePathMenuItem" Text="Copy Relative Path" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
+                        <MenuFlyoutSeparator x:Name="folderEditSeparator2"/>
+                        <MenuFlyoutItem x:Name="folderRenameMenuItem" Text="Rename" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderDeleteMenuItem" Text="Delete" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
+                        <MenuFlyoutSeparator x:Name="folderExplorerSeparator"/>
+                        <MenuFlyoutItem x:Name="folderRevealMenuItem" Text="Reveal in Explorer" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
                     </MenuFlyout>
                 </collection:ArcTreeViewItem.ContextFlyout>
                 <StackPanel Orientation="Horizontal" Spacing="6">
@@ -39,7 +40,14 @@
                         Stretch="Uniform"
                         UseLayoutRounding="True"
                         Source="{x:Bind FolderIconSource, Mode=OneWay}"/>
-                    <TextBlock Text="{x:Bind FileName}" />
+                    <Grid>
+                        <TextBlock Text="{x:Bind FileName}"
+                                   Foreground="{x:Bind NameForeground, Mode=OneWay}" />
+                        <Rectangle Height="2"
+                                   VerticalAlignment="Center"
+                                   Fill="{x:Bind NameForeground, Mode=OneWay}"
+                                   Visibility="{x:Bind ExistsOnDisk, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}" />
+                    </Grid>
                 </StackPanel>
             </collection:ArcTreeViewItem>
         </DataTemplate>
@@ -47,16 +55,16 @@
         <DataTemplate x:Key="FileTemplate" x:DataType="models:WebFileItem">
             <collection:ArcTreeViewItem Margin="2 0 0 0" AutomationProperties.Name="{x:Bind FileName}" HorizontalContentAlignment="Stretch">
                 <collection:ArcTreeViewItem.ContextFlyout>
-                    <MenuFlyout>
-                        <MenuFlyoutItem Text="Cut" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
-                        <MenuFlyoutItem Text="Copy" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
-                        <MenuFlyoutItem Text="Copy Path" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
-                        <MenuFlyoutItem Text="Copy Relative Path" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
-                        <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem Text="Rename" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
-                        <MenuFlyoutItem Text="Delete" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
-                        <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem Text="Reveal in Explorer" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
+                    <MenuFlyout Opening="FileMenuFlyout_Opening">
+                        <MenuFlyoutItem x:Name="fileCutMenuItem" Text="Cut" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileCopyMenuItem" Text="Copy" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileCopyPathMenuItem" Text="Copy Path" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileCopyRelativePathMenuItem" Text="Copy Relative Path" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
+                        <MenuFlyoutSeparator x:Name="fileEditSeparator"/>
+                        <MenuFlyoutItem x:Name="fileRenameMenuItem" Text="Rename" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileDeleteMenuItem" Text="Delete" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
+                        <MenuFlyoutSeparator x:Name="fileExplorerSeparator"/>
+                        <MenuFlyoutItem x:Name="fileRevealMenuItem" Text="Reveal in Explorer" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
                     </MenuFlyout>
                 </collection:ArcTreeViewItem.ContextFlyout>
                 <Grid>
@@ -72,7 +80,14 @@
                             Stretch="Uniform"
                             UseLayoutRounding="True"
                             Source="{x:Bind IconSource}"/>
-                        <TextBlock Text="{x:Bind FileName}"/>
+                        <Grid>
+                            <TextBlock Text="{x:Bind FileName}"
+                                       Foreground="{x:Bind NameForeground, Mode=OneWay}" />
+                            <Rectangle Height="2"
+                                       VerticalAlignment="Center"
+                                       Fill="{x:Bind NameForeground, Mode=OneWay}"
+                                       Visibility="{x:Bind ExistsOnDisk, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}" />
+                        </Grid>
                     </StackPanel>
                     <Border
                         Margin="10 0"

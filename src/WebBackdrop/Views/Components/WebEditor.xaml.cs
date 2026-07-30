@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -9,14 +10,17 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Common.Utils.ProjectSystem.Events;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
-using Windows.System;
 using Workloads.Creation.WebBackdrop.Core.Theme;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
+using Workloads.Creation.WebBackdrop.Models.SerializableData;
 using Workloads.Creation.WebBackdrop.ViewModels;
 using Workloads.Creation.WebBackdrop.Views.Components.BottomPanels;
+using Windows.System;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class WebEditor : ArcUserControl {
@@ -188,6 +192,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             ViewModel = new WebEditorViewModel(_session);
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
+            _session.FileManager.Changed += FileManager_Changed;
+
             leftFileTreeControl.Refresh(_session.DesignFileUtil);
             propertyPanelControl.LoadProject(_session.DesignFileUtil);
             problemsPanel.SetProjectFolder(_session.DesignFileUtil.ProjectFolder);
@@ -196,6 +202,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void ArcUserControl_Unloaded(object sender, RoutedEventArgs e) {
+            if (_session != null) {
+                _session.FileManager.Changed -= FileManager_Changed;
+            }
+
             if (ViewModel != null) {
                 ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             }
@@ -206,8 +216,75 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
             if (e.PropertyName == nameof(WebEditorViewModel.ActiveFile)) {
+                CheckAndRefreshActiveFile();
                 UpdateStatusBar();
             }
+        }
+
+        private async void CheckAndRefreshActiveFile() {
+            if (ViewModel?.ActiveFile == null || _session == null) return;
+
+            var filePath = ViewModel.ActiveFile.FilePath;
+            var fileManager = _session.FileManager;
+
+            if (fileManager.TryConsumeExternalChange(filePath, out var changeType) && changeType == FileChangeType.Changed) {
+                try {
+                    await ViewModel.ActiveFile.ReopenWithEncodingAsync(ViewModel.ActiveFile.EncodingText);
+                }
+                catch (Exception ex) {
+                    ArcLog.GetLogger<WebEditor>().Error($"Failed to reload externally changed file: {filePath}", ex);
+                }
+            }
+        }
+
+        private void FileManager_Changed(ProjectChangedEvent e) {
+            DispatcherQueue.TryEnqueue(() => {
+                switch (e.Type) {
+                    case ProjectChangeType.Created:
+                    case ProjectChangeType.Deleted:
+                    case ProjectChangeType.Renamed:
+                        leftFileTreeControl.ApplyChange(e);
+                        break;
+
+                    case ProjectChangeType.Modified:
+                    case ProjectChangeType.Reloaded:
+                        HandleFileReloaded(e.Path);
+                        break;
+
+                    case ProjectChangeType.Conflict:
+                        HandleFileConflict(e.Path);
+                        break;
+                }
+            });
+        }
+
+        private async void HandleFileReloaded(string filePath) {
+            if (ViewModel == null) return;
+
+            var openFile = ViewModel.GetOpenFile(filePath);
+            if (openFile == null) return;
+
+            try {
+                await openFile.ReopenWithEncodingAsync(openFile.EncodingText);
+
+                if (ViewModel.ActiveFile?.Equals(openFile) == true) {
+                    editorContentView.ReloadContent(openFile, ActiveFileLanguage);
+                }
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<WebEditor>().Error($"Failed to reload file: {filePath}", ex);
+            }
+        }
+
+        private void HandleFileConflict(string filePath) {
+            if (ViewModel == null) return;
+
+            var openFile = ViewModel.GetOpenFile(filePath);
+            if (openFile == null) return;
+
+            ArcLog.GetLogger<WebEditor>().Warn(
+                $"Conflict detected: {filePath} was modified externally while unsaved changes exist. " +
+                "User should be prompted to reload or keep.");
         }
 
         private void UpdateStatusBar() {

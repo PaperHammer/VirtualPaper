@@ -64,6 +64,23 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             }
         }
 
+        public void ReloadContent(WebEditorFile file, string language) {
+            if (_currentKind != file.Kind) {
+                LoadFile(file, language);
+                return;
+            }
+
+            switch (file.Kind) {
+                case WebEditorFileKind.Text:
+                    textEditor.EditorContent = file.Content;
+                    textEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(language);
+                    break;
+                case WebEditorFileKind.Markdown:
+                    markdownEditor.Load(file.Content, language);
+                    break;
+            }
+        }
+
         public Task RevealPositionAsync(int lineNumber, int columnNumber) {
             return _currentKind == WebEditorFileKind.Markdown
                 ? markdownEditor.RevealPositionAsync(lineNumber, columnNumber)

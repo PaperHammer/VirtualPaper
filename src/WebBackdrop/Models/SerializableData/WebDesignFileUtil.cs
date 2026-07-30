@@ -86,17 +86,19 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         public void AddManifestPath(string path, string? role = null) {
             if (IsProjectFile(path) && role == null) return;
 
-            var relativePath = ToRelativePath(path);
-            var manifest = LoadOrCreateManifest();
-            var files = GetOrCreateFilesArray(manifest);
-            if (files.OfType<JsonObject>().Any(item => IsSameManifestPath(item["path"]?.GetValue<string>(), relativePath))) return;
+            lock (_manifestLock) {
+                var relativePath = ToRelativePath(path);
+                var manifest = LoadOrCreateManifest();
+                var files = GetOrCreateFilesArray(manifest);
+                if (files.OfType<JsonObject>().Any(item => IsSameManifestPath(item["path"]?.GetValue<string>(), relativePath))) return;
 
-            files.Add(new JsonObject {
-                ["path"] = relativePath,
-                ["type"] = Directory.Exists(path) ? "folder" : GetFileType(relativePath),
-                ["role"] = role ?? GetFileRole(relativePath)
-            });
-            SaveManifest(manifest);
+                files.Add(new JsonObject {
+                    ["path"] = relativePath,
+                    ["type"] = Directory.Exists(path) ? "folder" : GetFileType(relativePath),
+                    ["role"] = role ?? GetFileRole(relativePath)
+                });
+                SaveManifest(manifest);
+            }
         }
 
         public void AddManifestPathRecursive(string path) {
@@ -114,38 +116,42 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         public void RemoveManifestPath(string path) {
             if (IsProjectFile(path)) return;
 
-            var relativePath = ToRelativePath(path);
-            var manifest = LoadOrCreateManifest();
-            if (manifest["files"] is not JsonArray files) return;
+            lock (_manifestLock) {
+                var relativePath = ToRelativePath(path);
+                var manifest = LoadOrCreateManifest();
+                if (manifest["files"] is not JsonArray files) return;
 
-            for (var i = files.Count - 1; i >= 0; i--) {
-                if (files[i] is not JsonObject item) continue;
-                var itemPath = item["path"]?.GetValue<string>();
-                if (IsSameManifestPath(itemPath, relativePath) || IsManifestChildPath(itemPath, relativePath)) {
-                    files.RemoveAt(i);
+                for (var i = files.Count - 1; i >= 0; i--) {
+                    if (files[i] is not JsonObject item) continue;
+                    var itemPath = item["path"]?.GetValue<string>();
+                    if (IsSameManifestPath(itemPath, relativePath) || IsManifestChildPath(itemPath, relativePath)) {
+                        files.RemoveAt(i);
+                    }
                 }
+                SaveManifest(manifest);
             }
-            SaveManifest(manifest);
         }
 
         public void RenameManifestPath(string oldPath, string newPath) {
             if (IsProjectFile(oldPath)) return;
 
-            var oldRelativePath = ToRelativePath(oldPath);
-            var newRelativePath = ToRelativePath(newPath);
-            var manifest = LoadOrCreateManifest();
-            if (manifest["files"] is not JsonArray files) return;
+            lock (_manifestLock) {
+                var oldRelativePath = ToRelativePath(oldPath);
+                var newRelativePath = ToRelativePath(newPath);
+                var manifest = LoadOrCreateManifest();
+                if (manifest["files"] is not JsonArray files) return;
 
-            foreach (var item in files.OfType<JsonObject>()) {
-                var itemPath = item["path"]?.GetValue<string>();
-                if (IsSameManifestPath(itemPath, oldRelativePath)) {
-                    item["path"] = newRelativePath;
+                foreach (var item in files.OfType<JsonObject>()) {
+                    var itemPath = item["path"]?.GetValue<string>();
+                    if (IsSameManifestPath(itemPath, oldRelativePath)) {
+                        item["path"] = newRelativePath;
+                    }
+                    else if (IsManifestChildPath(itemPath, oldRelativePath)) {
+                        item["path"] = newRelativePath + itemPath![oldRelativePath.Length..];
+                    }
                 }
-                else if (IsManifestChildPath(itemPath, oldRelativePath)) {
-                    item["path"] = newRelativePath + itemPath![oldRelativePath.Length..];
-                }
+                SaveManifest(manifest);
             }
-            SaveManifest(manifest);
         }
 
         private void CopyTemplateIfNeeded() {
@@ -186,20 +192,22 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         private void RenameProjectFileInManifest() {
             if (!File.Exists(ProjectFilePath)) return;
 
-            var manifest = LoadOrCreateManifest();
-            manifest["name"] = ProjectName;
-            manifest.Remove("project");
-            manifest.Remove("entry");
+            lock (_manifestLock) {
+                var manifest = LoadOrCreateManifest();
+                manifest["name"] = ProjectName;
+                manifest.Remove("project");
+                manifest.Remove("entry");
 
-            if (manifest["files"] is JsonArray files) {
-                foreach (var item in files.OfType<JsonObject>()) {
-                    if (item["role"]?.GetValue<string>() == "solution") {
-                        item["path"] = Path.GetFileName(ProjectFilePath);
+                if (manifest["files"] is JsonArray files) {
+                    foreach (var item in files.OfType<JsonObject>()) {
+                        if (item["role"]?.GetValue<string>() == "solution") {
+                            item["path"] = Path.GetFileName(ProjectFilePath);
+                        }
                     }
                 }
-            }
 
-            SaveManifest(manifest);
+                SaveManifest(manifest);
+            }
         }
 
         private string CreateProjectManifest() {
@@ -279,6 +287,17 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         }
 
         private void SaveManifest(JsonObject manifest) {
+            // 保存前自动去重：按 path 保留首次出现的条目
+            if (manifest["files"] is JsonArray files) {
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                for (var i = files.Count - 1; i >= 0; i--) {
+                    var path = files[i]?["path"]?.GetValue<string>();
+                    if (path == null || !seen.Add(path)) {
+                        files.RemoveAt(i);
+                    }
+                }
+            }
+
             File.WriteAllText(ProjectFilePath, manifest.ToJsonString(_jsonSerializerOptions));
         }
 
@@ -310,6 +329,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         };
 
         private static readonly JsonSerializerOptions _jsonSerializerOptions = new() { WriteIndented = true };
+        private readonly object _manifestLock = new();
 
         private WpWebProjectData? LoadProjectData() {
             var projectDataPath = GetProjectDataFilePath();

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -8,12 +10,20 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Common.Utils.ProjectSystem.Events;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.ViewModels;
 using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.Models.SerializableData;
 using Workloads.Creation.WebBackdrop.ViewModels;
+
+/*
+ * add 多项无法写入 vpw
+ * 偶现  .lazy 文件
+ * 
+ */
 
 namespace Workloads.Creation.WebBackdrop.Views.Tools {
     public sealed partial class WebFileTreeControl : UserControl {
@@ -51,6 +61,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             _viewModel.SetFileSaved(filePath, isSaved);
         }
 
+        public void ApplyChange(ProjectChangedEvent e) {
+            _viewModel.ApplyChange(e);
+        }
+
         private static void PreloadFolderOpenIcon() {
             _ = Application.Current.Resources.TryGetValue("WebBackdrop_FileTree_FolderOpen", out _);
         }
@@ -63,6 +77,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             }
 
             if (args.InvokedItem is WebFileItem { Type: WebFileItemType.File } item) {
+                if (!item.ExistsOnDisk) return;
                 FileOpenRequested?.Invoke(this, item.FilePath);
             }
         }
@@ -79,6 +94,19 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             if (item == null) return;
 
             await _viewModel.CreateFolderAsync(item.FilePath, GetAddFileOrFolderItemPathAsync);
+        }
+
+        private async void AddItemsMenuItem_Click(object sender, RoutedEventArgs e) {
+            var target = GetMenuItemTarget(sender);
+            if (target == null) return;
+
+            var hwnd = VirtualPaper.Common.Constants.Runtime.MainWindowHwnd;
+            var files = await WindowsStoragePickers.PickFilesAsync(hwnd, ["*"], multiSelect: true);
+            if (files.Length == 0) return;
+
+            foreach (var file in files) {
+                await _viewModel.ImportExternalFileAsync(file.Path, target.FilePath);
+            }
         }
 
         private void CutMenuItem_Click(object sender, RoutedEventArgs e) {
@@ -140,10 +168,48 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         private void FolderMenuFlyout_Opening(object sender, object e) {
             if (sender is not MenuFlyout menuFlyout) return;
 
+            var folderItem = menuFlyout.Items.OfType<MenuFlyoutItem>()
+                .FirstOrDefault()?.Tag as WebFileItem;
+            if (folderItem == null) return;
+
+            var existsOnDisk = folderItem.ExistsOnDisk;
+
             foreach (var item in menuFlyout.Items) {
-                if (item is MenuFlyoutItem { Name: "pasteMenuItem", Tag: WebFileItem target } menuItem) {
-                    menuItem.IsEnabled = _viewModel.CanPasteTo(target);
-                    return;
+                switch (item) {
+                    case MenuFlyoutItem { Name: "pasteMenuItem", Tag: WebFileItem pasteTarget } menuItem:
+                        menuItem.IsEnabled = _viewModel.CanPasteTo(pasteTarget);
+                        break;
+                    case MenuFlyoutItem { Name: "folderDeleteMenuItem" }:
+                        break; // Delete always enabled
+                    case MenuFlyoutItem menuItem:
+                        menuItem.IsEnabled = existsOnDisk;
+                        break;
+                    case MenuFlyoutSeparator sep when sep.Name is "folderEditSeparator1" or "folderEditSeparator2" or "folderExplorerSeparator":
+                        sep.Visibility = existsOnDisk ? Visibility.Visible : Visibility.Collapsed;
+                        break;
+                }
+            }
+        }
+
+        private void FileMenuFlyout_Opening(object sender, object e) {
+            if (sender is not MenuFlyout menuFlyout) return;
+
+            var fileItem = menuFlyout.Items.OfType<MenuFlyoutItem>()
+                .FirstOrDefault()?.Tag as WebFileItem;
+            if (fileItem == null) return;
+
+            var existsOnDisk = fileItem.ExistsOnDisk;
+
+            foreach (var item in menuFlyout.Items) {
+                switch (item) {
+                    case MenuFlyoutItem { Name: "fileDeleteMenuItem" }:
+                        break; // Delete always enabled
+                    case MenuFlyoutItem menuItem:
+                        menuItem.IsEnabled = existsOnDisk;
+                        break;
+                    case MenuFlyoutSeparator sep when sep.Name is "fileEditSeparator" or "fileExplorerSeparator":
+                        sep.Visibility = existsOnDisk ? Visibility.Visible : Visibility.Collapsed;
+                        break;
                 }
             }
         }

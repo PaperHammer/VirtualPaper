@@ -34,11 +34,30 @@ namespace Workloads.Creation.WebBackdrop.Models {
             if (!File.Exists(FilePath)) return;
 
             var enc = GetEncodingFromText(encoding);
-            Content = File.ReadAllText(FilePath, enc);
+            Content = ReadAllText(FilePath, enc);
             LineEndingText = GetLineEndingText(_content);            
             _isSaved = true;
             IsSavedChanged?.Invoke(this, EventArgs.Empty);
         }
+
+        public async Task ReopenWithEncodingAsync(string encoding) {
+            if (!File.Exists(FilePath)) return;
+
+            var enc = GetEncodingFromText(encoding);
+            Content = await ReadAllTextAsync(FilePath, enc);
+            LineEndingText = GetLineEndingText(_content);
+            _isSaved = true;
+            IsSavedChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void SetExternalDeleted() {
+            _isExternalDeleted = true;
+            _isSaved = false;
+            OnPropertyChanged(nameof(IsSaved));
+            IsSavedChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private bool _isExternalDeleted;
 
         private static Encoding GetEncodingFromText(string encoding) {
             return encoding switch {
@@ -114,13 +133,13 @@ namespace Workloads.Creation.WebBackdrop.Models {
 
         private static string ReadContent(string filePath) {
             return File.Exists(filePath) && WebEditorFileUtil.IsTextExtension(Path.GetExtension(filePath))
-                ? File.ReadAllText(filePath)
+                ? ReadAllText(filePath)
                 : string.Empty;
         }
 
         private static async Task<string> ReadContentAsync(string filePath) {
             return File.Exists(filePath) && WebEditorFileUtil.IsTextExtension(Path.GetExtension(filePath))
-                ? await File.ReadAllTextAsync(filePath)
+                ? await ReadAllTextAsync(filePath)
                 : string.Empty;
         }
 
@@ -159,14 +178,14 @@ namespace Workloads.Creation.WebBackdrop.Models {
         private static string GetEncodingText(string filePath) {
             if (!File.Exists(filePath) || !WebEditorFileUtil.IsTextExtension(Path.GetExtension(filePath))) return "UTF-8";
 
-            var bytes = File.ReadAllBytes(filePath);
+            var bytes = ReadAllBytes(filePath);
             return GetEncodingText(bytes);
         }
 
         private static async Task<string> GetEncodingTextAsync(string filePath) {
             if (!File.Exists(filePath) || !WebEditorFileUtil.IsTextExtension(Path.GetExtension(filePath))) return "UTF-8";
 
-            var bytes = await File.ReadAllBytesAsync(filePath);
+            var bytes = await ReadAllBytesAsync(filePath);
             return GetEncodingText(bytes);
         }
 
@@ -187,6 +206,32 @@ namespace Workloads.Creation.WebBackdrop.Models {
 
         public override int GetHashCode() {
             return FilePath.GetHashCode();
+        }
+
+        private static string ReadAllText(string path, Encoding? encoding = null) {
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var sr = encoding == null ? new StreamReader(fs) : new StreamReader(fs, encoding);
+            return sr.ReadToEnd();
+        }
+
+        private static async Task<string> ReadAllTextAsync(string path, Encoding? encoding = null) {
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, useAsync: true);
+            using var sr = encoding == null ? new StreamReader(fs) : new StreamReader(fs, encoding);
+            return await sr.ReadToEndAsync();
+        }
+
+        private static byte[] ReadAllBytes(string path) {
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var bytes = new byte[fs.Length];
+            fs.ReadExactly(bytes);
+            return bytes;
+        }
+
+        private static async Task<byte[]> ReadAllBytesAsync(string path) {
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, useAsync: true);
+            var bytes = new byte[fs.Length];
+            await fs.ReadExactlyAsync(bytes);
+            return bytes;
         }
 
         private string _content;

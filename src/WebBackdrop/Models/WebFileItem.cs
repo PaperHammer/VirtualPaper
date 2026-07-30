@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.WebBackdrop.Core.Utils;
@@ -19,6 +20,30 @@ namespace Workloads.Creation.WebBackdrop.Models {
         public WebFileItem? Parent { get; }
         public string FileName => Path.GetFileName(FilePath);
         public bool IsChildrenLoaded { get; set; }
+
+        public bool ExistsOnDisk {
+            get => _existsOnDisk;
+            set {
+                if (_existsOnDisk == value) return;
+                _existsOnDisk = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(NameForeground));
+            }
+        }
+
+        public SolidColorBrush NameForeground => _existsOnDisk ? _defaultBrush ??= GetThemeTextBrush() : _missingBrush;
+
+        private static SolidColorBrush? _defaultBrush;
+
+        private static SolidColorBrush GetThemeTextBrush() {
+            if (Application.Current?.Resources.TryGetValue("TextFillColorPrimaryBrush", out var obj) == true
+                && obj is SolidColorBrush brush) {
+                return brush;
+            }
+            return new SolidColorBrush(Windows.UI.Color.FromArgb(255, 255, 255, 255));
+        }
+
+        private static readonly SolidColorBrush _missingBrush = new(Windows.UI.Color.FromArgb(255, 220, 80, 80));
 
         public bool IsSaved {
             get => _isSaved;
@@ -54,6 +79,9 @@ namespace Workloads.Creation.WebBackdrop.Models {
             FilePath = filePath;
             Type = type;
             Parent = parent;
+            _existsOnDisk = Type == WebFileItemType.Folder
+                ? Directory.Exists(filePath)
+                : File.Exists(filePath);
         }
 
         public bool Equals(WebFileItem? other) {
@@ -71,5 +99,6 @@ namespace Workloads.Creation.WebBackdrop.Models {
 
         private bool _isSaved = true;
         private bool _isExpanded;
+        private bool _existsOnDisk;
     }
 }

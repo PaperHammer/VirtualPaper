@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.WebBackdrop.Core.Utils;
@@ -46,6 +47,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         public async Task OpenFileAsync(string filePath) {
             if (_openFileMap.TryGetValue(filePath, out var existing)) {
                 ActiveFile = existing;
+                Session.FileManager.UpdateSnapshot(filePath);
                 return;
             }
 
@@ -53,11 +55,13 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             _openFiles.Add(file);
             _openFileMap[filePath] = file;
             ActiveFile = file;
+            Session.FileManager.UpdateSnapshot(filePath);
         }
 
         public void OpenFile(string filePath) {
             if (_openFileMap.TryGetValue(filePath, out var existing)) {
                 ActiveFile = existing;
+                Session.FileManager.UpdateSnapshot(filePath);
                 return;
             }
 
@@ -65,6 +69,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             _openFiles.Add(file);
             _openFileMap[filePath] = file;
             ActiveFile = file;
+            Session.FileManager.UpdateSnapshot(filePath);
         }
 
         public void CloseFile(WebEditorFile file) {
@@ -73,6 +78,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             _openFiles.RemoveAt(idx);
             _openFileMap.Remove(file.FilePath);
+            Session.FileManager.CloseDocument(file.FilePath);
 
             if (ActiveFile == file) {
                 ActiveFile = _openFiles.Count > 0
@@ -100,7 +106,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             return results.All(result => result);
         }
 
-        private static async Task<bool> SaveFileAsync(WebEditorFile file) {
+        private async Task<bool> SaveFileAsync(WebEditorFile file) {
             try {
                 var text = file.Content;
                 var enc = file.EncodingText switch {
@@ -112,6 +118,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
                 await File.WriteAllTextAsync(file.FilePath, text, enc);
                 file.MarkAsSaved();
+
+                Session.FileManager.NotifySaved(file.FilePath);
                 return true;
             }
             catch (Exception ex) {

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Common.Utils.ProjectSystem.Events;
 using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.Models.SerializableData;
@@ -50,6 +51,28 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             RebuildPathMap(root);
         }
 
+        /// <summary>
+        /// 应用 ProjectSystemManager 的变化事件
+        /// 
+        /// 增量更新文件树
+        /// 不需要重新扫描整个目录
+        /// </summary>
+        public void ApplyChange(ProjectChangedEvent e) {
+            switch (e.Type) {
+                case ProjectChangeType.Created:
+                    ApplyCreated(e.Path);
+                    break;
+
+                case ProjectChangeType.Deleted:
+                    ApplyDeleted(e.Path);
+                    break;
+
+                case ProjectChangeType.Renamed:
+                    ApplyRenamed(e.OldPath!, e.Path);
+                    break;
+            }
+        }
+
         public void SelectFile(string filePath) {
             var item = FindItem(filePath);
             if (item == null) return;
@@ -77,6 +100,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             var path = await getRenamedPathAsync(Path.Combine(folderPath, "New File.txt"));
             if (path == null) return;
 
+            if (IsPathInManifest(path)) return;
+
             File.WriteAllText(path, string.Empty);
             _designFileUtil?.AddManifestPath(path);
             var parent = FindItem(folderPath);
@@ -87,6 +112,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             var path = await getRenamedPathAsync(Path.Combine(folderPath, "New Folder"));
             if (path == null) return;
 
+            if (IsPathInManifest(path)) return;
+
             Directory.CreateDirectory(path);
             _designFileUtil?.AddManifestPath(path);
             var parent = FindItem(folderPath);
@@ -94,6 +121,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         public async Task RenameAsync(WebFileItem item, Func<string, Task<string?>> getRenamedPathAsync) {
+            if (!item.ExistsOnDisk) return;
+
             var path = await getRenamedPathAsync(item.FilePath);
             if (path == null) return;
 
@@ -110,17 +139,22 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         public void Cut(WebFileItem item) {
+            if (!item.ExistsOnDisk) return;
+
             _clipboardItem = item;
             _clipboardOperation = WebFileTreeClipboardOperation.Cut;
         }
 
         public void Copy(WebFileItem item) {
+            if (!item.ExistsOnDisk && item.Type == WebFileItemType.Folder) return;
+
             _clipboardItem = item;
             _clipboardOperation = WebFileTreeClipboardOperation.Copy;
         }
 
         public void PasteTo(WebFileItem target) {
             if (!CanPasteTo(target)) return;
+            if (!target.ExistsOnDisk) return;
 
             var source = _clipboardItem!;
             var destinationPath = FileUtil.NextAvailablePath(Path.Combine(target.FilePath, source.FileName));
@@ -155,7 +189,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
         public void Delete(WebFileItem item) {
             _designFileUtil?.RemoveManifestPath(item.FilePath);
-            DeletePath(item);
+            if (item.ExistsOnDisk) {
+                DeletePath(item);
+            }
             RemoveItem(item);
             if (_clipboardItem == item) {
                 ClearClipboard();
@@ -178,6 +214,24 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             return true;
         }
 
+        public async Task ImportExternalFileAsync(string sourcePath, string targetFolder) {
+            var destinationPath = FileUtil.NextAvailablePath(Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
+            if (IsPathInManifest(destinationPath)) return;
+
+            File.Copy(sourcePath, destinationPath, overwrite: false);
+            _designFileUtil?.AddManifestPath(destinationPath);
+            var parent = FindItem(targetFolder);
+            AddItem(parent, new WebFileItem(destinationPath, WebFileItemType.File, parent));
+        }
+
+        private bool IsPathInManifest(string path) {
+            if (_manifestItems == null) return false;
+
+            var relativePath = Path.GetRelativePath(ProjectFolder, path).Replace(Path.DirectorySeparatorChar, '/');
+            return _manifestItems.Any(item =>
+                string.Equals(item.Path, relativePath, StringComparison.OrdinalIgnoreCase));
+        }
+
         private WebFileItem? FindItem(string filePath) {
             return _pathMap.TryGetValue(filePath, out var item) ? item : null;
         }
@@ -193,7 +247,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         private WebFileItem CreateDirectoryItem(string folderPath, WebFileItem? parent) {
             var item = new WebFileItem(folderPath, WebFileItemType.Folder, parent);
             if (HasChildren(folderPath)) {
-                item.Children.Add(new WebFileItem(Path.Combine(folderPath, PlaceholderFileName), WebFileItemType.File, item));
+                var placeholder = new WebFileItem(Path.Combine(folderPath, PlaceholderFileName), WebFileItemType.File, item);
+                placeholder.ExistsOnDisk = true; // Placeholder should never show as deleted
+                item.Children.Add(placeholder);
             }
             return item;
         }
@@ -241,8 +297,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 if (manifestItem.Type == "folder") {
                     folder.Children.Add(CreateDirectoryItem(path, folder));
                 }
-                else if (File.Exists(path)) {
-                    folder.Children.Add(new WebFileItem(path, WebFileItemType.File, folder));
+                else {
+                    var fileItem = new WebFileItem(path, WebFileItemType.File, folder);
+                    folder.Children.Add(fileItem);
                 }
             }
         }
@@ -267,6 +324,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         private void AddItem(WebFileItem? parent, WebFileItem item) {
             var collection = parent?.Children ?? FileItems;
             if (collection == null) return;
+
+            // 防止文件系统监控器触发的重复添加
+            if (_pathMap.ContainsKey(item.FilePath)) return;
 
             var index = 0;
             while (index < collection.Count && CompareFileItems(collection[index], item) <= 0) {
@@ -344,6 +404,38 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         private void ClearClipboard() {
             _clipboardItem = null;
             _clipboardOperation = WebFileTreeClipboardOperation.None;
+        }
+
+        private void ApplyCreated(string path) {
+            var parentPath = Path.GetDirectoryName(path);
+            if (parentPath == null) return;
+
+            var parent = FindItem(parentPath);
+            if (parent == null) return;
+
+            if (Directory.Exists(path)) {
+                var folderItem = CreateDirectoryItem(path, parent);
+                AddItem(parent, folderItem);
+            }
+            else {
+                var fileItem = new WebFileItem(path, WebFileItemType.File, parent);
+                AddItem(parent, fileItem);
+            }
+        }
+
+        private void ApplyDeleted(string path) {
+            var item = FindItem(path);
+            if (item == null) return;
+
+            RemoveItem(item);
+        }
+
+        private void ApplyRenamed(string oldPath, string newPath) {
+            var oldItem = FindItem(oldPath);
+            if (oldItem == null) return;
+
+            var newItem = BuildItem(newPath, oldItem.Type, oldItem.Parent);
+            ReplaceItem(oldItem, newItem);
         }
 
         private string _projectFolder = string.Empty;

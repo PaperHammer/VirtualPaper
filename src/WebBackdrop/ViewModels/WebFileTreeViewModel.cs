@@ -12,6 +12,8 @@ using Workloads.Creation.WebBackdrop.Models.SerializableData;
 
 namespace Workloads.Creation.WebBackdrop.ViewModels {
     public partial class WebFileTreeViewModel : ObservableObject {
+        public event Action<string>? ProjectFileRenamed;
+
         public ObservableCollection<WebFileItem> FileItems = [];
 
         public string ProjectFolder {
@@ -96,11 +98,16 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             folder.IsExpanded = !folder.IsExpanded;
         }
 
+        public bool IsProjectFileItem(WebFileItem item) {
+            return _designFileUtil?.IsProjectFile(item.FilePath) == true;
+        }
+
         public async Task CreateFileAsync(string folderPath, Func<string, Task<string?>> getRenamedPathAsync) {
             var path = await getRenamedPathAsync(Path.Combine(folderPath, "New File.txt"));
             if (path == null) return;
 
             if (IsPathInManifest(path)) return;
+            if (_designFileUtil?.IsProjectFile(path) == true) return;
 
             File.WriteAllText(path, string.Empty);
             _designFileUtil?.AddManifestPath(path);
@@ -113,6 +120,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             if (path == null) return;
 
             if (IsPathInManifest(path)) return;
+            if (_designFileUtil?.IsProjectFile(path) == true) return;
 
             Directory.CreateDirectory(path);
             _designFileUtil?.AddManifestPath(path);
@@ -122,6 +130,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
         public async Task RenameAsync(WebFileItem item, Func<string, Task<string?>> getRenamedPathAsync) {
             if (!item.ExistsOnDisk) return;
+            if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
 
             var path = await getRenamedPathAsync(item.FilePath);
             if (path == null) return;
@@ -140,6 +149,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
         public void Cut(WebFileItem item) {
             if (!item.ExistsOnDisk) return;
+            if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
 
             _clipboardItem = item;
             _clipboardOperation = WebFileTreeClipboardOperation.Cut;
@@ -147,6 +157,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
         public void Copy(WebFileItem item) {
             if (!item.ExistsOnDisk && item.Type == WebFileItemType.Folder) return;
+            if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
 
             _clipboardItem = item;
             _clipboardOperation = WebFileTreeClipboardOperation.Copy;
@@ -158,6 +169,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             var source = _clipboardItem!;
             var destinationPath = FileUtil.NextAvailablePath(Path.Combine(target.FilePath, source.FileName));
+            if (_designFileUtil?.IsProjectFile(destinationPath) == true) return;
 
             if (source.Type == WebFileItemType.File) {
                 File.Copy(source.FilePath, destinationPath);
@@ -188,6 +200,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         public void Delete(WebFileItem item) {
+            if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
+
             _designFileUtil?.RemoveManifestPath(item.FilePath);
             if (item.ExistsOnDisk) {
                 DeletePath(item);
@@ -247,8 +261,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         private WebFileItem CreateDirectoryItem(string folderPath, WebFileItem? parent) {
             var item = new WebFileItem(folderPath, WebFileItemType.Folder, parent);
             if (HasChildren(folderPath)) {
-                var placeholder = new WebFileItem(Path.Combine(folderPath, PlaceholderFileName), WebFileItemType.File, item);
-                placeholder.ExistsOnDisk = true; // Placeholder should never show as deleted
+                var placeholder = new WebFileItem(Path.Combine(folderPath, PlaceholderFileName), WebFileItemType.File, item)
+                    { IsPlaceholder = true };
+                placeholder.ExistsOnDisk = true;
                 item.Children.Add(placeholder);
             }
             return item;

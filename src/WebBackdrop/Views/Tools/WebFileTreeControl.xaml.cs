@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,16 +11,17 @@ using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.ProjectSystem.Events;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.Extensions;
 using VirtualPaper.UIComponent.ViewModels;
 using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.Models.SerializableData;
 using Workloads.Creation.WebBackdrop.ViewModels;
 
 /*
- * add 多项无法写入 vpw
- * 偶现  .lazy 文件
+ * copy，patse 与外部互通
  * 
  */
 
@@ -30,6 +30,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public event EventHandler<string>? FileOpenRequested;
         public event EventHandler<string>? FolderSelected;
         public event EventHandler<string>? NewFileRequested;
+        public event EventHandler<string>? ProjectFileRenamed;
 
         public WebFileItem? SelectedFileItem {
             get => (WebFileItem?)GetValue(SelectedFileItemProperty);
@@ -41,6 +42,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public WebFileTreeControl() {
             InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<WebFileTreeViewModel>();
+            _viewModel.ProjectFileRenamed += path => ProjectFileRenamed?.Invoke(this, path);
             DataContext = _viewModel;
             PreloadFolderOpenIcon();
         }
@@ -99,9 +101,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         private async void AddItemsMenuItem_Click(object sender, RoutedEventArgs e) {
             var target = GetMenuItemTarget(sender);
             if (target == null) return;
-
+            
             var hwnd = VirtualPaper.Common.Constants.Runtime.MainWindowHwnd;
-            var files = await WindowsStoragePickers.PickFilesAsync(hwnd, ["*"], multiSelect: true);
+            if (hwnd == IntPtr.Zero) {
+                hwnd = AppServiceLocator.Services.GetRequiredService<Microsoft.UI.Xaml.Window>().GetWindowHandleEx();
+            }
+            var files = await WindowsStoragePickers.PickFilesAsync(WindowConsts.WindowHandle, ["*"], multiSelect: true);
             if (files.Length == 0) return;
 
             foreach (var file in files) {
@@ -173,19 +178,21 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             if (folderItem == null) return;
 
             var existsOnDisk = folderItem.ExistsOnDisk;
+            var isProjectFile = _viewModel.IsProjectFileItem(folderItem);
 
             foreach (var item in menuFlyout.Items) {
                 switch (item) {
+                    case MenuFlyoutItem { Name: "folderCopyPathMenuItem" or "folderCopyRelativePathMenuItem" or "folderRevealMenuItem" } menuItem:
+                        SetVisible(menuItem, isProjectFile || existsOnDisk);
+                        break;
                     case MenuFlyoutItem { Name: "pasteMenuItem", Tag: WebFileItem pasteTarget } menuItem:
-                        menuItem.IsEnabled = _viewModel.CanPasteTo(pasteTarget);
+                        SetVisible(menuItem, !isProjectFile && existsOnDisk && _viewModel.CanPasteTo(pasteTarget));
                         break;
-                    case MenuFlyoutItem { Name: "folderDeleteMenuItem" }:
-                        break; // Delete always enabled
                     case MenuFlyoutItem menuItem:
-                        menuItem.IsEnabled = existsOnDisk;
+                        SetVisible(menuItem, !isProjectFile && existsOnDisk);
                         break;
-                    case MenuFlyoutSeparator sep when sep.Name is "folderEditSeparator1" or "folderEditSeparator2" or "folderExplorerSeparator":
-                        sep.Visibility = existsOnDisk ? Visibility.Visible : Visibility.Collapsed;
+                    case MenuFlyoutSeparator sep:
+                        sep.Visibility = !isProjectFile && existsOnDisk ? Visibility.Visible : Visibility.Collapsed;
                         break;
                 }
             }
@@ -199,19 +206,28 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             if (fileItem == null) return;
 
             var existsOnDisk = fileItem.ExistsOnDisk;
+            var isProjectFile = _viewModel.IsProjectFileItem(fileItem);
 
             foreach (var item in menuFlyout.Items) {
                 switch (item) {
-                    case MenuFlyoutItem { Name: "fileDeleteMenuItem" }:
-                        break; // Delete always enabled
-                    case MenuFlyoutItem menuItem:
-                        menuItem.IsEnabled = existsOnDisk;
+                    case MenuFlyoutItem { Name: "fileCopyPathMenuItem" or "fileCopyRelativePathMenuItem" or "fileRevealMenuItem" } menuItem:
+                        SetVisible(menuItem, isProjectFile || existsOnDisk);
                         break;
-                    case MenuFlyoutSeparator sep when sep.Name is "fileEditSeparator" or "fileExplorerSeparator":
-                        sep.Visibility = existsOnDisk ? Visibility.Visible : Visibility.Collapsed;
+                    case MenuFlyoutItem { Name: "fileDeleteMenuItem" } menuItem:
+                        SetVisible(menuItem, !isProjectFile);
+                        break;
+                    case MenuFlyoutItem menuItem:
+                        SetVisible(menuItem, !isProjectFile && existsOnDisk);
+                        break;
+                    case MenuFlyoutSeparator sep:
+                        sep.Visibility = !isProjectFile && existsOnDisk ? Visibility.Visible : Visibility.Collapsed;
                         break;
                 }
             }
+        }
+
+        private static void SetVisible(MenuFlyoutItem item, bool visible) {
+            item.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private async Task<string?> GetRenamedPathAsync(string path) {

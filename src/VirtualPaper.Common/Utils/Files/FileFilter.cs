@@ -97,7 +97,7 @@ namespace VirtualPaper.Common.Utils.Files {
 
         public static FileType GetRuntimeFileType(string extension) {
             foreach (var kvp in FileTypeToExtension) {
-                if (kvp.Value.Contains(extension)) {
+                if (kvp.Value.Contains(extension, StringComparer.OrdinalIgnoreCase)) {
                     return kvp.Key;
                 }
             }

@@ -53,7 +53,8 @@
         </DataTemplate>
 
         <DataTemplate x:Key="FileTemplate" x:DataType="models:WebFileItem">
-            <collection:ArcTreeViewItem Margin="2 0 0 0" AutomationProperties.Name="{x:Bind FileName}" HorizontalContentAlignment="Stretch">
+            <collection:ArcTreeViewItem Margin="2 0 0 0" AutomationProperties.Name="{x:Bind FileName}" HorizontalContentAlignment="Stretch"
+                Visibility="{x:Bind IsPlaceholder, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}">
                 <collection:ArcTreeViewItem.ContextFlyout>
                     <MenuFlyout Opening="FileMenuFlyout_Opening">
                         <MenuFlyoutItem x:Name="fileCutMenuItem" Text="Cut" Tag="{x:Bind}" Click="CutMenuItem_Click"/>

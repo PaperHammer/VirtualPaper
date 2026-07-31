@@ -195,6 +195,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             _session.FileManager.Changed += FileManager_Changed;
 
             leftFileTreeControl.Refresh(_session.DesignFileUtil);
+            leftFileTreeControl.ProjectFileRenamed += OnProjectFileRenamed;
             propertyPanelControl.LoadProject(_session.DesignFileUtil);
             problemsPanel.SetProjectFolder(_session.DesignFileUtil.ProjectFolder);
 
@@ -212,6 +213,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             editorContentView.ReleaseResources();
             _isLoaded = false;
+        }
+
+        private void OnProjectFileRenamed(object? sender, string newPath) {
+            _ = ViewModel?.UpdateRecentUsedAsync(newPath);
+            SaveAllRequested?.Invoke(this, EventArgs.Empty);
         }
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e) {

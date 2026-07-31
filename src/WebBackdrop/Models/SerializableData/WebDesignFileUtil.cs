@@ -305,8 +305,13 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             return Path.GetRelativePath(ProjectFolder, path).Replace(Path.DirectorySeparatorChar, '/');
         }
 
-        private bool IsProjectFile(string path) {
+        public bool IsProjectFile(string path) {
             return string.Equals(Path.GetFullPath(path), ProjectFilePath, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public void UpdateProjectFilePath(string newPath) {
+            ProjectFilePath = newPath;
+            ProjectFolder = Path.GetDirectoryName(newPath)!;
         }
 
         private static bool IsSameManifestPath(string? left, string right) {

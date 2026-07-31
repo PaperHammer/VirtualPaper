@@ -20,6 +20,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
         public WebFileItem? Parent { get; }
         public string FileName => Path.GetFileName(FilePath);
         public bool IsChildrenLoaded { get; set; }
+        public bool IsPlaceholder { get; init; }
 
         public bool ExistsOnDisk {
             get => _existsOnDisk;

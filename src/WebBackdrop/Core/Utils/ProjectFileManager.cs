@@ -11,19 +11,17 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         Renamed,
     }
 
-    public class ProjectFileManager : IDisposable {
+    public partial class ProjectFileManager : IDisposable {
         public event Action<ProjectChangedEvent>? Changed;
 
         public ProjectSystemManager ProjectSystem { get; }
 
         public ProjectFileManager(
             string projectFolder,
-            Func<string, bool> isProjectFile,
             Action<string> addToManifest,
             Action<string> removeFromManifest,
             Action<string, string> renameInManifest) {
 
-            _isProjectFile = isProjectFile;
             _addToManifest = addToManifest;
             _removeFromManifest = removeFromManifest;
             _renameInManifest = renameInManifest;
@@ -87,7 +85,6 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         }
 
         private bool _isDisposed;
-
         public void Dispose() {
             if (!_isDisposed) {
                 ProjectSystem.Changed -= OnProjectChanged;
@@ -98,7 +95,6 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             GC.SuppressFinalize(this);
         }
 
-        private readonly Func<string, bool> _isProjectFile;
         private readonly Action<string> _addToManifest;
         private readonly Action<string> _removeFromManifest;
         private readonly Action<string, string> _renameInManifest;

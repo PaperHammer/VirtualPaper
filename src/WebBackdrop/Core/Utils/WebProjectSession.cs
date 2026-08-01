@@ -18,10 +18,6 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
 
             FileManager = new ProjectFileManager(
                 DesignFileUtil.ProjectFolder,
-                isProjectFile: path => string.Equals(
-                    Path.GetFullPath(path),
-                    DesignFileUtil.ProjectFilePath,
-                    StringComparison.OrdinalIgnoreCase),
                 addToManifest: path => DesignFileUtil.AddManifestPath(path),
                 removeFromManifest: DesignFileUtil.RemoveManifestPath,
                 renameInManifest: DesignFileUtil.RenameManifestPath);

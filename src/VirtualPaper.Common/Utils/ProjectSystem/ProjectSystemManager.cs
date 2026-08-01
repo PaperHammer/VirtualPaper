@@ -4,6 +4,9 @@ using VirtualPaper.Common.Utils.ProjectSystem.FileSystem;
 using VirtualPaper.Common.Utils.ProjectSystem.Project;
 
 namespace VirtualPaper.Common.Utils.ProjectSystem {
+    /// <summary>
+    /// 项目系统管理器，负责管理项目树、文档和文件系统监视器，并处理项目变化事件
+    /// </summary>
     public class ProjectSystemManager {
         public event Action<ProjectChangedEvent>? Changed;
 

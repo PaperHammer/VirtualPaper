@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -10,17 +9,15 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.ProjectSystem.Events;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using Windows.System;
 using Workloads.Creation.WebBackdrop.Core.Theme;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
-using Workloads.Creation.WebBackdrop.Models.SerializableData;
 using Workloads.Creation.WebBackdrop.ViewModels;
 using Workloads.Creation.WebBackdrop.Views.Components.BottomPanels;
-using Windows.System;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class WebEditor : ArcUserControl {
@@ -382,7 +379,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
                 }
                 return result;
-            } finally {
+            }
+            finally {
                 IsSaving = false;
                 _saveLock.Release();
             }
@@ -403,7 +401,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
                 }
                 return result;
-            } finally {
+            }
+            finally {
                 IsSaving = false;
                 _saveLock.Release();
             }

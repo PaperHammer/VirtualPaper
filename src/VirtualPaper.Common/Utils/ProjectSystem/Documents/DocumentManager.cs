@@ -1,37 +1,40 @@
 namespace VirtualPaper.Common.Utils.ProjectSystem.Documents {
+    /// <summary>
+    /// 文档管理器，负责管理项目中被打开的文档对象
+    /// </summary>
     public class DocumentManager {
-        private readonly Dictionary<string, Document> documents = [];
-
         public Document Open(string path) {
-            if (documents.TryGetValue(path, out var doc))
+            if (_documents.TryGetValue(path, out var doc))
                 return doc;
 
             doc = new Document(path);
-            documents[path] = doc;
+            _documents[path] = doc;
 
             return doc;
         }
 
         public void Close(string path) {
-            documents.Remove(path);
+            _documents.Remove(path);
         }
 
         public bool IsOpen(string path) {
-            return documents.ContainsKey(path);
+            return _documents.ContainsKey(path);
         }
 
         public Document? Get(string path) {
-            documents.TryGetValue(path, out var doc);
+            _documents.TryGetValue(path, out var doc);
             return doc;
         }
 
         public void Rename(string oldPath, string newPath) {
-            if (!documents.TryGetValue(oldPath, out var doc))
+            if (!_documents.TryGetValue(oldPath, out var doc))
                 return;
 
-            documents.Remove(oldPath);
+            _documents.Remove(oldPath);
             doc.Rename(newPath);
-            documents[newPath] = doc;
+            _documents[newPath] = doc;
         }
+        
+        private readonly Dictionary<string, Document> _documents = [];
     }
 }

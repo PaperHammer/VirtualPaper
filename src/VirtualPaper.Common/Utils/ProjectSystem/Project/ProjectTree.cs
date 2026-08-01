@@ -1,4 +1,7 @@
 namespace VirtualPaper.Common.Utils.ProjectSystem.Project {
+    /// <summary>
+    /// 项目树结构，表示项目中的文件和文件夹层级关系
+    /// </summary>
     public class ProjectTree {
         public ProjectFolder Root { get; }
 
@@ -12,6 +15,7 @@ namespace VirtualPaper.Common.Utils.ProjectSystem.Project {
         }
 
         private void Load(ProjectFolder folder) {
+            // 扫描当前层级所有目录
             foreach (var dir in Directory.GetDirectories(folder.FullPath)) {
                 var node = new ProjectFolder {
                     Name = Path.GetFileName(dir),
@@ -23,6 +27,7 @@ namespace VirtualPaper.Common.Utils.ProjectSystem.Project {
                 Load(node);
             }
 
+            // 扫描当前层级所有文件
             foreach (var file in Directory.GetFiles(folder.FullPath)) {
                 folder.Children.Add(new ProjectFile {
                     Name = Path.GetFileName(file),
@@ -34,8 +39,8 @@ namespace VirtualPaper.Common.Utils.ProjectSystem.Project {
         }
 
         public void Add(string path) {
-            var parent = Find(Path.GetDirectoryName(path)!) as ProjectFolder;
-            if (parent == null)
+            // 如果父目录不存在于记录中，说明为外部文件，则不添加
+            if (Find(Path.GetDirectoryName(path)!) is not ProjectFolder parent)
                 return;
 
             ProjectNode node;
@@ -74,7 +79,7 @@ namespace VirtualPaper.Common.Utils.ProjectSystem.Project {
             return FindNode(Root, path);
         }
 
-        private ProjectNode? FindNode(ProjectNode node, string path) {
+        private static ProjectNode? FindNode(ProjectNode node, string path) {
             if (node.FullPath == path)
                 return node;
 

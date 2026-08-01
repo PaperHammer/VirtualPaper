@@ -1,4 +1,7 @@
 namespace VirtualPaper.Common.Utils.ProjectSystem.FileSystem {
+    /// <summary>
+    /// 项目文件系统监视器，负责监视项目根目录下的文件和文件夹的创建、删除、修改和重命名事件
+    /// </summary>
     public class ProjectWatcher {
         public event Action<string>? Created;
         public event Action<string>? Deleted;

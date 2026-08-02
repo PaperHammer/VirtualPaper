@@ -65,7 +65,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         }
 
         public async Task<(bool Success, string? FinalPath)> SaveAtEmergencyAsync(InkProjectSession session) {
-            if (!session.DesignFileUtil.IsValidVpdFile) {
+            if (!session.DesignFileUtil.IsValidVpdFile || session.DesignFileUtil.IsLoadFailed) {
                 string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                 string fileName = $"virtualpaperdesign_{timestamp}{FileExtension.FE_Design}";

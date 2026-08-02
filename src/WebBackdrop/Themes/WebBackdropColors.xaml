@@ -7,10 +7,12 @@
         <ResourceDictionary x:Key="Default">
             <SolidColorBrush x:Key="WebBackdropStatusBarButtonBackgroundPointerOverBrush" Color="#1FFFFFFF"/>
             <SolidColorBrush x:Key="WebBackdropStatusBarButtonBackgroundPressedBrush" Color="#14FFFFFF"/>
+            <SolidColorBrush x:Key="WebBackdropProblemBadgeCountBackgroundBrush" Color="#467c9c"/>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Light">
             <SolidColorBrush x:Key="WebBackdropStatusBarButtonBackgroundPointerOverBrush" Color="#1F000000"/>
             <SolidColorBrush x:Key="WebBackdropStatusBarButtonBackgroundPressedBrush" Color="#14000000"/>
+            <SolidColorBrush x:Key="WebBackdropProblemBadgeCountBackgroundBrush" Color="#cccccc"/>
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 

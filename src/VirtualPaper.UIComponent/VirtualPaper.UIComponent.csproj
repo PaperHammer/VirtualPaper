@@ -14,6 +14,14 @@
 		<SupportedCultures>zh-CN;en-US</SupportedCultures>
 		<GenerateSatelliteAssemblies>false</GenerateSatelliteAssemblies>
 	</PropertyGroup>
+	<ItemGroup>
+	  <Compile Remove="Themes\**" />
+	  <Content Remove="Themes\**" />
+	  <EmbeddedResource Remove="Themes\**" />
+	  <None Remove="Themes\**" />
+	  <Page Remove="Themes\**" />
+	  <PRIResource Remove="Themes\**" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PRIResource Remove="Strings\en-US\Resources.resw" />
@@ -32,6 +40,7 @@
 		<PackageReference Include="H.Hooks" Version="1.6.0" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+		<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
 		<PackageReference Include="WinUI3Localizer" Version="2.2.0" />
 		<PackageReference Include="WinUIEx" Version="2.4.2" />
 	</ItemGroup>
@@ -79,7 +88,6 @@
 	<ItemGroup>
 		<Folder Include="Input\ColorPicker\" />
 		<Folder Include="Input\Palette\" />
-		<Folder Include="Themes\" />
 	</ItemGroup>
 
 	<ItemGroup>

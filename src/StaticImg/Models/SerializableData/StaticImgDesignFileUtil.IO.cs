@@ -88,10 +88,12 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 var layers = await Layer.DeserializeAsync(session, fs, header.LayerCount, canvasSize);
 
                 UpdateCache(header, businessData, layers);
+                _loadFailed = false;
                 return (header, businessData, layers);
 
             }
             catch (Exception ex) {
+                _loadFailed = true;
                 ArcLog.GetLogger<StaticImgDesignFileUtil>().Error(ex);
                 return (null, null, null);
             }
@@ -104,6 +106,14 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             ArcSize arcSize,
             BusinessData business,
             List<Layer> layers) {
+            if (_loadFailed) {
+                GlobalMessageUtil.ShowError(
+                    $"Cannot save file: {FilePath}\n" +
+                    "The file failed to load and may be corrupted. Please use Save As to create a new file.",
+                    key: "VpdLoadFailed");
+                return (false, null);
+            }
+
             await _ioLock.WaitAsync();
             string tempPath = FileUtil.GetTempFile(Constants.CommonPaths.TempDir);
 
@@ -150,6 +160,14 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         // 单独保存 BusinessData
         public async Task<bool> SaveBusinessDataAsync(BusinessData business) {
             if (!IsValidVpdFile) {
+                return false;
+            }
+
+            if (_loadFailed) {
+                GlobalMessageUtil.ShowError(
+                    $"Cannot save file: {FilePath}\n" +
+                    "The file failed to load and may be corrupted. Please use Save As to create a new file.",
+                    key: "VpdLoadFailed");
                 return false;
             }
 
@@ -203,6 +221,14 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 return false;
             }
 
+            if (_loadFailed) {
+                GlobalMessageUtil.ShowError(
+                    $"Cannot save file: {FilePath}\n" +
+                    "The file failed to load and may be corrupted. Please use Save As to create a new file.",
+                    key: "VpdLoadFailed");
+                return false;
+            }
+
             await _ioLock.WaitAsync();
             string tempPath = FileUtil.GetTempFile(Constants.CommonPaths.TempDir);
 
@@ -251,6 +277,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
         internal void SetFilePath(string selectedPath) {
             FilePath = selectedPath;
+            _loadFailed = false;
         }
 
         /// <summary>

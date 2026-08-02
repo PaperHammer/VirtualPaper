@@ -20,7 +20,7 @@
                 AutomationProperties.Name="{x:Bind FileName}"
                 ItemsSource="{x:Bind Items}"
                 IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}">
-                <Grid Padding="0" ColumnSpacing="6">
+                <Grid Padding="0" ColumnSpacing="8" VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
@@ -28,30 +28,27 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Image
-                        Width="16"
-                        Height="16"
-                        VerticalAlignment="Center"
+                        Width="18"
+                        Height="18"
                         Stretch="Uniform"
                         UseLayoutRounding="True"
                         Source="{x:Bind IconSource, Mode=OneWay}"/>
                     <TextBlock
                         Grid.Column="1"
-                        FontSize="12"
-                        VerticalAlignment="Center"
+                        FontSize="14"
+                        LineHeight="22"
                         Text="{x:Bind FileName}"/>
                     <TextBlock
                         Grid.Column="2"
-                        FontSize="12"
+                        FontSize="14"
                         Opacity="0.65"
-                        VerticalAlignment="Center"
                         Text="{x:Bind RelativeDirectory}"/>
                     <Border
                         Grid.Column="3"
-                        MinWidth="16"
-                        Height="16"
-                        Padding="4 0"
+                        MinWidth="18"
+                        Height="18"
                         CornerRadius="8"
-                        Background="#FF0078D4">
+                        Background="{ThemeResource WebBackdropProblemBadgeCountBackgroundBrush}">
                         <TextBlock
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"

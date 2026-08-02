@@ -92,6 +92,15 @@ namespace Workloads.Creation.WebBackdrop.Models {
             }
         }
 
+        /// <summary>
+        /// 文件加载/重载失败时置为 true，阻止保存以避免覆盖可能可恢复的原始数据
+        /// </summary>
+        public bool IsLoadFailed { get; private set; }
+
+        public void SetLoadFailed() {
+            IsLoadFailed = true;
+        }
+
         public event EventHandler? IsSavedChanged;
 
         public WebEditorFile(string filePath) {

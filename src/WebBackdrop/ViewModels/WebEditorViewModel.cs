@@ -10,6 +10,7 @@ using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
 
@@ -51,11 +52,17 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 return;
             }
 
-            var file = await WebEditorFile.LoadAsync(filePath);
-            _openFiles.Add(file);
-            _openFileMap[filePath] = file;
-            ActiveFile = file;
-            Session.FileManager.UpdateSnapshot(filePath);
+            try {
+                var file = await WebEditorFile.LoadAsync(filePath);
+                _openFiles.Add(file);
+                _openFileMap[filePath] = file;
+                ActiveFile = file;
+                Session.FileManager.UpdateSnapshot(filePath);
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
+                GlobalMessageUtil.ShowError($"Failed to open file: {filePath}\nThe file may be corrupted or unreadable.\n{ex.Message}");
+            }
         }
 
         public void OpenFile(string filePath) {
@@ -65,11 +72,17 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 return;
             }
 
-            var file = new WebEditorFile(filePath);
-            _openFiles.Add(file);
-            _openFileMap[filePath] = file;
-            ActiveFile = file;
-            Session.FileManager.UpdateSnapshot(filePath);
+            try {
+                var file = new WebEditorFile(filePath);
+                _openFiles.Add(file);
+                _openFileMap[filePath] = file;
+                ActiveFile = file;
+                Session.FileManager.UpdateSnapshot(filePath);
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
+                GlobalMessageUtil.ShowError($"Failed to open file: {filePath}\nThe file may be corrupted or unreadable.\n{ex.Message}");
+            }
         }
 
         public void CloseFile(WebEditorFile file) {
@@ -107,6 +120,15 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         private async Task<bool> SaveFileAsync(WebEditorFile file) {
+            // 文件加载/重载失败时禁止保存，避免覆盖可能可恢复的原始数据
+            if (file.IsLoadFailed) {
+                GlobalMessageUtil.ShowError(
+                    $"Cannot save file: {file.FilePath}\n" +
+                    "The file failed to load and may be corrupted. Please close and reopen it.",
+                    key: "FileLoadFailed");
+                return false;
+            }
+
             try {
                 var text = file.Content;
                 var enc = file.EncodingText switch {

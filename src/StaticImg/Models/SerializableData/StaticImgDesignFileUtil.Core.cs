@@ -25,6 +25,11 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         public List<Layer> LayesCache => _layersCache;
         public bool IsSaveFromInit { get; internal set; } // 标记当撤销栈为空时，是否已经被保存（.vpd 为 true， 其余为 false）。在保存一次后，永久为 true
 
+        /// <summary>
+        /// 文件加载失败时置为 true，阻止保存以避免覆盖可能可恢复的原始数据
+        /// </summary>
+        public bool IsLoadFailed => _loadFailed;
+
         private StaticImgDesignFileUtil(string path, FileType fileType) {
             FilePath = Path.GetFullPath(path);
             IsSaveFromInit = IsValidVpdFile;
@@ -208,5 +213,6 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         private BusinessData _businessDataCache = null!;
         private List<Layer> _layersCache = null!;
         private readonly SemaphoreSlim _ioLock = new(1, 1);
+        private bool _loadFailed;
     }
 }

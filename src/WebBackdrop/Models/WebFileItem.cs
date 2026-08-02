@@ -28,23 +28,10 @@ namespace Workloads.Creation.WebBackdrop.Models {
                 if (_existsOnDisk == value) return;
                 _existsOnDisk = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(NameForeground));
             }
         }
 
-        public SolidColorBrush NameForeground => _existsOnDisk ? _defaultBrush ??= GetThemeTextBrush() : _missingBrush;
-
-        private static SolidColorBrush? _defaultBrush;
-
-        private static SolidColorBrush GetThemeTextBrush() {
-            if (Application.Current?.Resources.TryGetValue("TextFillColorPrimaryBrush", out var obj) == true
-                && obj is SolidColorBrush brush) {
-                return brush;
-            }
-            return new SolidColorBrush(Windows.UI.Color.FromArgb(255, 255, 255, 255));
-        }
-
-        private static readonly SolidColorBrush _missingBrush = new(Windows.UI.Color.FromArgb(255, 220, 80, 80));
+        public SolidColorBrush MissingBrush => new(Windows.UI.Color.FromArgb(255, 220, 80, 80));
 
         public bool IsSaved {
             get => _isSaved;

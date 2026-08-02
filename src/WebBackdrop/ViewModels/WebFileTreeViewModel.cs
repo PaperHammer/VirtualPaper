@@ -54,10 +54,84 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         /// <summary>
-        /// 应用 ProjectSystemManager 的变化事件
+        /// 项目清单 (.vpw) 变更时，增量同步文件树
         /// 
-        /// 增量更新文件树
-        /// 不需要重新扫描整个目录
+        /// 对比新清单与当前文件树，只增删差异项，避免全量刷新导致的闪烁和性能问题
+        /// </summary>
+        public void SyncManifest(WebDesignFileUtil designFileUtil) {
+            if (_designFileUtil == null || _manifestItems == null) {
+                Refresh(designFileUtil);
+                return;
+            }
+
+            _designFileUtil = designFileUtil;
+            IReadOnlyList<WebProjectManifestItem> newManifestItems;
+            newManifestItems = designFileUtil.GetManifestItems();
+            if (ProjectFolder != designFileUtil.ProjectFolder) {
+                ProjectFolder = designFileUtil.ProjectFolder;
+            }
+
+            // 构建新旧路径集合（绝对路径）
+            var newPathSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in newManifestItems) {
+                newPathSet.Add(Path.Combine(ProjectFolder, item.Path.Replace('/', Path.DirectorySeparatorChar)));
+            }
+
+            var oldPathSet = new HashSet<string>(_pathMap.Keys, StringComparer.OrdinalIgnoreCase);
+
+            // 1. 先更新清单引用（后续 HasChildren / CreateDirectoryItem 依赖新清单）
+            _manifestItems = newManifestItems;
+
+            // 2. 移除不在新清单中的项（按路径深度降序：先删子项再删父项）
+            //    排除根目录和占位项
+            var removedPaths = oldPathSet.Except(newPathSet)
+                .Where(p => !string.Equals(p, ProjectFolder, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            removedPaths.Sort((a, b) => b.Count(c => c == Path.DirectorySeparatorChar)
+                .CompareTo(a.Count(c => c == Path.DirectorySeparatorChar)));
+
+            foreach (var path in removedPaths) {
+                var item = FindItem(path);
+                if (item != null && !item.IsPlaceholder) {
+                    RemoveItem(item);
+                }
+            }
+
+            // 3. 添加新清单中有但树中没有的项（按路径深度升序：先加父项再加子项）
+            var addedPaths = newPathSet.Except(oldPathSet).ToList();
+            addedPaths.Sort((a, b) => a.Count(c => c == Path.DirectorySeparatorChar)
+                .CompareTo(b.Count(c => c == Path.DirectorySeparatorChar)));
+
+            var manifestItemMap = new Dictionary<string, WebProjectManifestItem>(StringComparer.OrdinalIgnoreCase);
+            foreach (var mi in newManifestItems) {
+                manifestItemMap[Path.Combine(ProjectFolder, mi.Path.Replace('/', Path.DirectorySeparatorChar))] = mi;
+            }
+
+            foreach (var path in addedPaths) {
+                var parentPath = Path.GetDirectoryName(path);
+                if (parentPath == null) continue;
+
+                var parent = FindItem(parentPath);
+                if (parent == null) continue;
+
+                // 确保父节点的子项已展开加载
+                if (!parent.IsChildrenLoaded) {
+                    LoadChildren(parent);
+                }
+
+                if (!manifestItemMap.TryGetValue(path, out var manifestItem)) continue;
+
+                if (manifestItem.Type == "folder") {
+                    AddItem(parent, CreateDirectoryItem(path, parent));
+                }
+                else {
+                    AddItem(parent, new WebFileItem(path, WebFileItemType.File, parent));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 应用 ProjectSystemManager 的变化事件——所有文件系统变更的统一入口
         /// </summary>
         public void ApplyChange(ProjectChangedEvent e) {
             switch (e.Type) {
@@ -71,6 +145,14 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
                 case ProjectChangeType.Renamed:
                     ApplyRenamed(e.OldPath!, e.Path);
+                    break;
+
+                case ProjectChangeType.Modified:
+                case ProjectChangeType.Reloaded:
+                    // 项目清单 (.vpw) 被外部修改时，增量同步文件树
+                    if (_designFileUtil?.IsProjectFile(e.Path) == true) {
+                        SyncManifest(_designFileUtil);
+                    }
                     break;
             }
         }
@@ -261,8 +343,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         private WebFileItem CreateDirectoryItem(string folderPath, WebFileItem? parent) {
             var item = new WebFileItem(folderPath, WebFileItemType.Folder, parent);
             if (HasChildren(folderPath)) {
-                var placeholder = new WebFileItem(Path.Combine(folderPath, PlaceholderFileName), WebFileItemType.File, item)
-                    { IsPlaceholder = true };
+                var placeholder = new WebFileItem(Path.Combine(folderPath, PlaceholderFileName), WebFileItemType.File, item) { IsPlaceholder = true };
                 placeholder.ExistsOnDisk = true;
                 item.Children.Add(placeholder);
             }

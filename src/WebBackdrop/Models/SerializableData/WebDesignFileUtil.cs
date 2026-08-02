@@ -8,6 +8,7 @@ using System.Text.Json.Nodes;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Models.Cores;
+using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 
 namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
@@ -253,29 +254,29 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         }
 
         private IEnumerable<JsonObject> GetManifestFiles() {
-            if (!File.Exists(ProjectFilePath)) return [];
-
-            try {
-                return JsonNode.Parse(File.ReadAllText(ProjectFilePath))?["files"]?.AsArray().OfType<JsonObject>().ToList() ?? [];
-            }
-            catch {
-                return [];
-            }
+            var manifest = LoadOrCreateManifest();
+            return manifest["files"] is JsonArray files
+                ? files.OfType<JsonObject>().ToList()
+                : [];
         }
 
         private JsonObject LoadOrCreateManifest() {
             if (File.Exists(ProjectFilePath)) {
                 try {
-                    if (JsonNode.Parse(File.ReadAllText(ProjectFilePath)) is JsonObject node) return node;
+                    if (JsonNode.Parse(File.ReadAllText(ProjectFilePath)) is JsonObject node) {
+                        _parseFailed = false;
+                        return node;
+                    }
                 }
-                catch { }
+                catch (Exception ex) {
+                    _parseFailed = true;
+                    GlobalMessageUtil.ShowError(
+                        $"Failed to parse project file: {ProjectFilePath}\n{ex.Message}",
+                        key: nameof(ProjectFilePath));
+                }
             }
 
-            return new JsonObject {
-                ["version"] = 1,
-                ["name"] = ProjectName,
-                ["files"] = new JsonArray()
-            };
+            return [];
         }
 
         private static JsonArray GetOrCreateFilesArray(JsonObject manifest) {
@@ -287,6 +288,15 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         }
 
         private void SaveManifest(JsonObject manifest) {
+            // 解析失败时禁止保存，避免覆盖可能被恢复的数据
+            if (_parseFailed) {
+                GlobalMessageUtil.ShowError(
+                    $"Cannot save project file: {ProjectFilePath}\n" +
+                    "The file is corrupted. Please fix or restore it before making changes.",
+                    key: "VpwSaveBlocked");
+                return;
+            }
+
             // 保存前自动去重：按 path 保留首次出现的条目
             if (manifest["files"] is JsonArray files) {
                 var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -333,9 +343,6 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             _ => "asset"
         };
 
-        private static readonly JsonSerializerOptions _jsonSerializerOptions = new() { WriteIndented = true };
-        private readonly object _manifestLock = new();
-
         private WpWebProjectData? LoadProjectData() {
             var projectDataPath = GetProjectDataFilePath();
             if (!File.Exists(projectDataPath)) return null;
@@ -376,6 +383,10 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             var key = value[prefix.Length..^suffix.Length];
             return values[key]?.GetValue<string>() ?? value;
         }
+
+        private static readonly JsonSerializerOptions _jsonSerializerOptions = new() { WriteIndented = true };
+        private readonly object _manifestLock = new();
+        private bool _parseFailed;
     }
 
     public record WebProjectManifestItem(string Path, string Type, string Role);

@@ -19,6 +19,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
         public event EventHandler<string>? ShortcutRequested;
         public event EventHandler<MonacoEditorState>? EditorStateChanged;
+        public event EventHandler<string>? FileOpenRequested;
 
         public string EditorContent {
             get => _content;
@@ -54,6 +55,14 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 _ = editor.SetLanguageAsync(lang);
             }
         }
+
+        public string FilePath {
+            get => (string)GetValue(FilePathProperty);
+            set => SetValue(FilePathProperty, value);
+        }
+        public static readonly DependencyProperty FilePathProperty =
+            DependencyProperty.Register(nameof(FilePath), typeof(string), typeof(MonacoEditor),
+                new PropertyMetadata(string.Empty));
 
         public MonacoEditor() {
             InitializeComponent();
@@ -128,6 +137,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     "editorStateChanged" => HandleEditorStateChangedAsync(json.RootElement),
                     "cursorPositionChange" => HandleCursorPositionChangeAsync(json.RootElement),
                     "markersChanged" => HandleMarkersChangedAsync(json.RootElement),
+                    "openFile" => HandleOpenFileAsync(json.RootElement),
                     _ => Task.CompletedTask
                 });
             } catch (Exception ex) {
@@ -214,6 +224,14 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private Task HandleMarkersChangedAsync(JsonElement rootElement) {
             var markers = JsonSerializer.Deserialize<List<MonacoMarker>>(rootElement.GetProperty("markers").GetRawText(), _jsonSerializerOptions) ?? [];
             MarkersChanged?.Invoke(this, markers);
+            return Task.CompletedTask;
+        }
+
+        private Task HandleOpenFileAsync(JsonElement rootElement) {
+            var filePath = rootElement.GetProperty("filePath").GetString();
+            if (!string.IsNullOrEmpty(filePath)) {
+                FileOpenRequested?.Invoke(this, filePath);
+            }
             return Task.CompletedTask;
         }
 
@@ -327,7 +345,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
             try {
                 var serialized = JsonSerializer.Serialize(content);
-                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setValue({serialized})");
+                var filePath = FilePath;
+                if (!string.IsNullOrEmpty(filePath)) {
+                    var filePathSerialized = JsonSerializer.Serialize(filePath);
+                    await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setValue({serialized}, {filePathSerialized})");
+                } else {
+                    await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setValue({serialized})");
+                }
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
             }

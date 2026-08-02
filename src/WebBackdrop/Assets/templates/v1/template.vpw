@@ -8,22 +8,32 @@
             "role": "entry"
         },
         {
-            "path": "style.css",
+            "path": "css",
+            "type": "folder",
+            "role": "style"
+        },
+        {
+            "path": "css/style.css",
             "type": "css",
             "role": "style"
         },
         {
-            "path": "script.js",
+            "path": "js",
+            "type": "folder",
+            "role": "script"
+        },
+        {
+            "path": "js/script.js",
             "type": "javascript",
             "role": "script"
         },
         {
-            "path": "sample.md",
-            "type": "markdown",
+            "path": "images",
+            "type": "folder",
             "role": "asset"
         },
         {
-            "path": "sample-image.png",
+            "path": "images/sample-image.png",
             "type": "file",
             "role": "asset"
         },
@@ -31,41 +41,6 @@
             "path": "project.json",
             "type": "json",
             "role": "metadata"
-        },
-        {
-            "path": "nested",
-            "type": "folder",
-            "role": "asset"
-        },
-        {
-            "path": "nested/README.md",
-            "type": "markdown",
-            "role": "asset"
-        },
-        {
-            "path": "nested/level-1",
-            "type": "folder",
-            "role": "asset"
-        },
-        {
-            "path": "nested/level-1/helper.js",
-            "type": "javascript",
-            "role": "asset"
-        },
-        {
-            "path": "nested/level-1/level-2",
-            "type": "folder",
-            "role": "asset"
-        },
-        {
-            "path": "nested/level-1/level-2/data.json",
-            "type": "json",
-            "role": "asset"
-        },
-        {
-            "path": "template.vpw",
-            "type": "vpw",
-            "role": "solution"
         }
     ]
 }

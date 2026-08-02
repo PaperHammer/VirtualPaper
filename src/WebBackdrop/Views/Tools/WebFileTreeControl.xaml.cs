@@ -21,7 +21,10 @@ using Workloads.Creation.WebBackdrop.Models.SerializableData;
 using Workloads.Creation.WebBackdrop.ViewModels;
 
 /*
- * copy，patse 与外部互通
+ * 修复 js/ html 误报、无法跳转文件的问题
+ * 运行、调试
+ * output 重定向
+ * 导出为 zip、入库
  * 
  */
 
@@ -53,6 +56,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
         public void Refresh(string projectFolder) {
             _viewModel.Refresh(projectFolder);
+        }
+
+        public void SyncManifest(WebDesignFileUtil designFileUtil) {
+            _viewModel.SyncManifest(designFileUtil);
         }
 
         public void SelectFile(string filePath) {
@@ -246,6 +253,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             }
 
             var newName = viewModel.NewName!;
+            // 如果新名称没有后缀，则自动补上源文件的后缀
+            if (!string.IsNullOrEmpty(Path.GetExtension(oldName))
+                && string.IsNullOrEmpty(Path.GetExtension(newName))) {
+                newName += Path.GetExtension(oldName);
+            }
+
             return FileUtil.NextAvailablePath(Path.Combine(Path.GetDirectoryName(path)!, newName));
         }
 

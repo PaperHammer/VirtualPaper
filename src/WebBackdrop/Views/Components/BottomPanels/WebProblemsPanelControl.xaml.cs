@@ -158,7 +158,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
         }
 
         private void ProblemsTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args) {
-            if (args.InvokedItem is ProblemItem item) {
+            if (args.InvokedItem is ProblemFileGroup group) {
+                group.IsExpanded = !group.IsExpanded;
+            }
+            else if (args.InvokedItem is ProblemItem item) {
                 ProblemRequested?.Invoke(this, item);
             }
         }

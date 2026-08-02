@@ -52,6 +52,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
                     markdownEditor.Visibility = Visibility.Visible;
                     break;
                 case WebEditorFileKind.Text:
+                    textEditor.FilePath = file.FilePath;
                     textEditor.EditorContent = file.Content;
                     textEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(language);
                     textEditor.Visibility = Visibility.Visible;

@@ -8,6 +8,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:collection="using:VirtualPaper.UIComponent.Collection"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -32,21 +33,30 @@
                         <MenuFlyoutItem x:Name="folderRevealMenuItem" Text="Reveal in Explorer" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
                     </MenuFlyout>
                 </collection:ArcTreeViewItem.ContextFlyout>
-                <StackPanel Orientation="Horizontal" Spacing="6">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                     <Image
-                        Width="16"
-                        Height="16"
-                        VerticalAlignment="Center"
+                        Width="18"
+                        Height="18"
                         Stretch="Uniform"
                         UseLayoutRounding="True"
                         Source="{x:Bind FolderIconSource, Mode=OneWay}"/>
                     <Grid>
-                        <TextBlock Text="{x:Bind FileName}"
-                                   Foreground="{x:Bind NameForeground, Mode=OneWay}" />
-                        <Rectangle Height="2"
-                                   VerticalAlignment="Center"
-                                   Fill="{x:Bind NameForeground, Mode=OneWay}"
-                                   Visibility="{x:Bind ExistsOnDisk, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}" />
+                        <TextBlock 
+                            Text="{x:Bind FileName}" 
+                            TextWrapping="NoWrap" 
+                            TextTrimming="CharacterEllipsis">
+                            <interactivity:Interaction.Behaviors>
+                                <!-- 当文件不存在时，使用固定的红色笔刷 -->
+                                <interactivity:DataTriggerBehavior Binding="{x:Bind ExistsOnDisk, Mode=OneWay}" Value="False">
+                                    <interactivity:ChangePropertyAction PropertyName="Foreground" Value="{x:Bind MissingBrush}" />
+                                </interactivity:DataTriggerBehavior>
+                            </interactivity:Interaction.Behaviors>
+                        </TextBlock>
+                        <Rectangle 
+                            Height="1"
+                            Margin="0 4 0 0"
+                            Fill="{x:Bind MissingBrush}"
+                            Visibility="{x:Bind ExistsOnDisk, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}" />
                     </Grid>
                 </StackPanel>
             </collection:ArcTreeViewItem>
@@ -73,21 +83,32 @@
                         <ColumnDefinition/>
                         <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                         <Image
-                            Width="16"
-                            Height="16"
-                            VerticalAlignment="Center"
+                            Width="18"
+                            Height="18"
                             Stretch="Uniform"
                             UseLayoutRounding="True"
                             Source="{x:Bind IconSource}"/>
                         <Grid>
-                            <TextBlock Text="{x:Bind FileName}"
-                                       Foreground="{x:Bind NameForeground, Mode=OneWay}" />
-                            <Rectangle Height="2"
-                                       VerticalAlignment="Center"
-                                       Fill="{x:Bind NameForeground, Mode=OneWay}"
-                                       Visibility="{x:Bind ExistsOnDisk, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}" />
+                            <TextBlock 
+                                Text="{x:Bind FileName}" 
+                                LineHeight="22"
+                                TextWrapping="NoWrap" 
+                                TextTrimming="CharacterEllipsis">
+                                <interactivity:Interaction.Behaviors>
+                                    <!-- 当文件不存在时，使用固定的红色笔刷 -->
+                                    <interactivity:DataTriggerBehavior Binding="{x:Bind ExistsOnDisk, Mode=OneWay}" Value="False">
+                                        <interactivity:ChangePropertyAction PropertyName="Foreground" Value="{x:Bind MissingBrush}" />
+                                    </interactivity:DataTriggerBehavior>
+                                </interactivity:Interaction.Behaviors>
+                            </TextBlock>
+                            <Rectangle 
+                                Height="1"
+                                Margin="0 4 0 0"
+                                VerticalAlignment="Center"
+                                Fill="{x:Bind MissingBrush}"
+                                Visibility="{x:Bind ExistsOnDisk, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}" />
                         </Grid>
                     </StackPanel>
                     <Border

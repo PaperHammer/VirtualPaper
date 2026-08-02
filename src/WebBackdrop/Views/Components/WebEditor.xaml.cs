@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -196,6 +198,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             propertyPanelControl.LoadProject(_session.DesignFileUtil);
             problemsPanel.SetProjectFolder(_session.DesignFileUtil.ProjectFolder);
 
+            editorContentView.TextEditor.FileOpenRequested += OnMonacoFileOpenRequested;
+            editorContentView.MarkdownEditor.MonacoEditor.FileOpenRequested += OnMonacoFileOpenRequested;
+
             UpdateStatusBar();
         }
 
@@ -208,6 +213,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
             }
 
+            editorContentView.TextEditor.FileOpenRequested -= OnMonacoFileOpenRequested;
+            editorContentView.MarkdownEditor.MonacoEditor.FileOpenRequested -= OnMonacoFileOpenRequested;
+
             editorContentView.ReleaseResources();
             _isLoaded = false;
         }
@@ -215,6 +223,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private void OnProjectFileRenamed(object? sender, string newPath) {
             _ = ViewModel?.UpdateRecentUsedAsync(newPath);
             SaveAllRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        private async void OnMonacoFileOpenRequested(object? sender, string filePath) {
+            if (ViewModel != null && File.Exists(filePath)) {
+                await ViewModel.OpenFileAsync(filePath);
+            }
         }
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
@@ -242,13 +256,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private void FileManager_Changed(ProjectChangedEvent e) {
             DispatcherQueue.TryEnqueue(() => {
-                switch (e.Type) {
-                    case ProjectChangeType.Created:
-                    case ProjectChangeType.Deleted:
-                    case ProjectChangeType.Renamed:
-                        leftFileTreeControl.ApplyChange(e);
-                        break;
+                // 所有文件系统变更统一交给文件树处理（增量更新）
+                leftFileTreeControl.ApplyChange(e);
 
+                switch (e.Type) {
                     case ProjectChangeType.Modified:
                     case ProjectChangeType.Reloaded:
                         HandleFileReloaded(e.Path);
@@ -275,7 +286,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 }
             }
             catch (Exception ex) {
+                openFile.SetLoadFailed();
                 ArcLog.GetLogger<WebEditor>().Error($"Failed to reload file: {filePath}", ex);
+                GlobalMessageUtil.ShowError($"Failed to reload file: {filePath}\nThe file may be corrupted or unreadable.\n{ex.Message}");
             }
         }
 
@@ -296,7 +309,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 var filePath = activeFile.FilePath;
                 if (!string.Equals(_activeEditorFilePath, filePath, StringComparison.OrdinalIgnoreCase)) {
                     _activeEditorFilePath = filePath;
-                    _ignoredEmptyMarkersFilePath = filePath;
                 }
 
                 ActiveFileLanguage = WebEditorFileUtil.GetLanguageFromExtension(activeFile.FileExtension);
@@ -376,6 +388,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     foreach (var file in ViewModel.OpenFiles) {
                         leftFileTreeControl.SetFileSaved(file.FilePath, file.IsSaved);
                     }
+                    // 若保存了项目文件 (.vpw)，增量同步文件树
+                    if (ViewModel.OpenFiles.Any(f => _session?.DesignFileUtil.IsProjectFile(f.FilePath) == true)) {
+                        leftFileTreeControl.SyncManifest(_session!.DesignFileUtil);
+                    }
                     _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
                 }
                 return result;
@@ -398,6 +414,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 if (result && activeFile != null) {
                     await editorContentView.MarkSavedAsync();
                     leftFileTreeControl.SetFileSaved(activeFile.FilePath, activeFile.IsSaved);
+                    // 若保存了项目文件 (.vpw)，增量同步文件树
+                    if (_session?.DesignFileUtil.IsProjectFile(activeFile.FilePath) == true) {
+                        leftFileTreeControl.SyncManifest(_session.DesignFileUtil);
+                    }
                     _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
                 }
                 return result;
@@ -427,14 +447,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void EditorContentView_MarkersChanged(object? sender, IReadOnlyList<MonacoMarker> markers) {
-            if (ViewModel?.ActiveFile != null
-                && markers.Count == 0
-                && string.Equals(_ignoredEmptyMarkersFilePath, ViewModel.ActiveFile.FilePath, StringComparison.OrdinalIgnoreCase)) {
-                _ignoredEmptyMarkersFilePath = null;
-                return;
-            }
-
-            _ignoredEmptyMarkersFilePath = null;
             UpdateProblems(markers);
         }
 
@@ -840,7 +852,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private int _propertyPanelRefreshVersion;
         private WebEditorBottomPanel _activeBottomPanel = WebEditorBottomPanel.Problems;
         private string? _activeEditorFilePath;
-        private string? _ignoredEmptyMarkersFilePath;
         private Dictionary<EditorPanelSlot, PanelLayoutState> _panelLayoutStates = null!;
         private Dictionary<object, Rectangle> _splitterLines = null!;
         private Dictionary<WebEditorCommand, Action> _commandActions = null!;

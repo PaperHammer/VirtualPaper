@@ -36,6 +36,7 @@
                 allowNonTsExtensions: true,
                 allowJs: true,
                 checkJs: true,
+                lib: ['dom', 'esnext'],
                 moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
                 jsx: monaco.languages.typescript.JsxEmit.React
             });
@@ -252,12 +253,117 @@
                 }
             });
 
-            window.setValue = function (value) {
+            // ---- Block F1-F12 and browser shortcuts ----
+            window.addEventListener('keydown', function (e) {
+                var key = e.keyCode;
+                var ctrl = e.ctrlKey;
+                var shift = e.shiftKey;
+                var alt = e.altKey;
+
+                // F3-F11 (keep F1=Help, F2=Rename)
+                if (key >= 114 && key <= 122) { e.preventDefault(); e.stopPropagation(); return; }
+                // F12: block browser DevTools but let Monaco handle Go to Definition
+                if (key === 123) { e.preventDefault(); return; }
+                // F5 / Ctrl+R (Refresh)
+                if (key === 116 || (ctrl && key === 82)) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+Shift+I/J (DevTools)
+                if (ctrl && shift && (key === 73 || key === 74)) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+U (View Source)
+                if (ctrl && key === 85) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+N (New Window), Ctrl+T (New Tab), Ctrl+W (Close Tab)
+                if (ctrl && (key === 78 || key === 84 || key === 87)) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+Shift+N (Incognito), Ctrl+Shift+T (Reopen Tab)
+                if (ctrl && shift && (key === 78 || key === 84)) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+H (History / Replace — let Monaco handle Replace)
+                if (ctrl && !shift && key === 72) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+G / Ctrl+Shift+G (Find Next/Prev in browser — Monaco has own)
+                if (ctrl && (key === 71)) { e.preventDefault(); e.stopPropagation(); return; }
+                // Alt+Left / Alt+Right (Back/Forward)
+                if (alt && (key === 37 || key === 39)) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+D (Bookmark)
+                if (ctrl && key === 68) { e.preventDefault(); e.stopPropagation(); return; }
+            }, true);
+
+            // ---- Ctrl+Click file navigation ----
+            // Intercept Ctrl+Click on any word; if it looks like a relative file
+            // path, resolve it against the current model URI and open it via C#.
+            editor.onMouseDown(function (e) {
+                if (!e.event.ctrlKey && !e.event.metaKey) return;
+                if (e.target.type !== monaco.editor.MouseTargetType.CONTENT_TEXT) return;
+                if (!e.target.position) return;
+
+                var model = editor.getModel();
+                if (!model) return;
+                var modelUri = model.uri;
+                if (!modelUri || modelUri.scheme !== 'file') return;
+
+                // Get the word at click position
+                var word = model.getWordAtPosition(e.target.position);
+                if (!word) return;
+                var clickedText = word.word;
+
+                // Always try to find the full quoted path first (e.g. "js/script.js"
+                // vs just "script.js" returned by getWordAtPosition)
+                var lineContent = model.getLineContent(e.target.position.lineNumber);
+                var col = e.target.position.column - 1; // 0-based
+                var quoteMatch = findQuotedPathAt(lineContent, col);
+                if (quoteMatch) {
+                    clickedText = quoteMatch;
+                } else if (!/\.(js|ts|mjs|cjs|css|scss|less|html|htm|json|xml|svg|png|jpg|jpeg|gif|webp|ico|md|txt)$/i.test(clickedText)) {
+                    // Word doesn't have a known extension and not inside a quoted path → ignore
+                    return;
+                }
+
+                // Resolve relative to model URI directory
+                var dir = monaco.Uri.parse(modelUri.toString().replace(/\/[^/]+$/, ''));
+                var resolved = monaco.Uri.joinPath(dir, clickedText);
+                var path = resolved.path;
+
+                // Normalize Windows path (remove leading '/')
+                if (path[0] === '/' && path[2] === ':') {
+                    path = path.substring(1);
+                }
+
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({
+                        type: 'openFile',
+                        filePath: path
+                    }));
+                }
+                e.event.preventDefault();
+            });
+
+            // Find a file path inside quotes at the given column
+            function findQuotedPathAt(line, col) {
+                var matches = line.matchAll(/(['"])((?:(?!\1).)+\.(?:js|ts|mjs|cjs|css|scss|less|html|htm|json|xml|svg|png|jpg|jpeg|gif|webp|ico|md|txt))\1/gi);
+                for (var m of matches) {
+                    var start = m.index + 1; // after opening quote
+                    var end = start + m[2].length;
+                    if (col >= start && col < end) {
+                        return m[2];
+                    }
+                }
+                return null;
+            }
+
+            window.setValue = function (value, filePath) {
                 var current = editor.getValue();
                 var isChanged = current !== value;
                 if (isChanged) {
                     window.isSettingValue = true;
-                    editor.setValue(value);
+                    if (filePath) {
+                        var normalizedPath = filePath.replace(/\\/g, '/');
+                        var uri = monaco.Uri.parse('file:///' + normalizedPath);
+                        var existingModel = monaco.editor.getModel(uri);
+                        if (existingModel) {
+                            existingModel.setValue(value);
+                        } else {
+                            existingModel = monaco.editor.createModel(value, undefined, uri);
+                        }
+                        editor.setModel(existingModel);
+                    } else {
+                        editor.setValue(value);
+                    }
                 }
                 var model = editor.getModel();
                 if (model) {
@@ -276,6 +382,23 @@
 
                 window.savedAlternativeVersionId = model.getAlternativeVersionId();
                 postEditorState();
+            };
+
+            // Register project files so TS service can resolve cross-file imports
+            window.registerExtraLibs = function (filesJson) {
+                try {
+                    var files = JSON.parse(filesJson);
+                    var defaults = monaco.languages.typescript.javascriptDefaults;
+                    files.forEach(function (file) {
+                        try {
+                            defaults.addExtraLib(file.content, 'file:///' + file.path);
+                        } catch (e) {
+                            // Ignore individual file registration failures
+                        }
+                    });
+                } catch (e) {
+                    // Ignore parse failures
+                }
             };
 
             window.undo = function () {

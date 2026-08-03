@@ -59,6 +59,13 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
             Applied?.Invoke(this, args);
         }
 
+        /// <summary>Reload the WebView2 content without reopening the window.</summary>
+        public void ReloadContent() {
+            if (NaviContent.Content is PageWithPlaying page) {
+                page.ReloadContent();
+            }
+        }
+
         private readonly StartArgsWeb? _startArgs;
         private readonly ArcWindowManagerKey _windowKey;
         private WpBasicData _wpBasicData;

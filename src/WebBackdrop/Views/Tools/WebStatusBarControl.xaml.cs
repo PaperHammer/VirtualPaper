@@ -2,6 +2,8 @@ using System;
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Views.Components;
 
@@ -22,6 +24,26 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public bool IsLeftSideBarVisible { get; set; } = true;
         public bool IsBottomPanelVisible { get; set; }
         public bool IsRightSideBarVisible { get; set; } = true;
+
+        public bool IsDebugRunning {
+            get => (bool)GetValue(IsDebugRunningProperty);
+            set => SetValue(IsDebugRunningProperty, value);
+        }
+        public static readonly DependencyProperty IsDebugRunningProperty =
+            DependencyProperty.Register(nameof(IsDebugRunning), typeof(bool), typeof(WebStatusBarControl),
+                new PropertyMetadata(false, OnIsDebugRunningChanged));
+
+        private static readonly SolidColorBrush _runningBrush = new(Color.FromArgb(255, 80, 140, 200));
+
+        private static void OnIsDebugRunningChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            var control = (WebStatusBarControl)d;
+            if ((bool)e.NewValue) {
+                control.rootGrid.Background = _runningBrush;
+            }
+            else {
+                control.rootGrid.ClearValue(Grid.BackgroundProperty); // revert to theme brush
+            }
+        }
 
         public Visibility LeftSideBarFillVisibility => IsLeftSideBarVisible ? Visibility.Visible : Visibility.Collapsed;
         public Visibility BottomPanelFillVisibility => IsBottomPanelVisible ? Visibility.Visible : Visibility.Collapsed;
@@ -158,7 +180,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
         private void Run_Click(object sender, RoutedEventArgs e) {
             RunRequested?.Invoke(this, e);
-        }      
+        }
 
         private void ToggleLeftSideBar_Click(object sender, RoutedEventArgs e) {
             ToggleLeftSideBarRequested?.Invoke(this, e);

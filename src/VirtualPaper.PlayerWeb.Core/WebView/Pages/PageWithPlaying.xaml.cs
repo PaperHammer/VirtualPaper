@@ -30,6 +30,21 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         public override Type ArcType => typeof(PageWithPlaying);
         protected override bool IsMultiInstance => true;
 
+        /// <summary>Reload the WebView2 content (used by editor live-reload).</summary>
+        public void ReloadContent() {
+            if (Webview2?.CoreWebView2 == null) return;
+            // Use Navigate to force a fresh load instead of Reload (which may use cache)
+            var currentUrl = Webview2.CoreWebView2.Source;
+            if (!string.IsNullOrEmpty(currentUrl)) {
+                // Strip existing cache-buster, add fresh one
+                var baseUrl = currentUrl.Split('?')[0];
+                Webview2.CoreWebView2.Navigate($"{baseUrl}?_t={DateTime.Now.Ticks}");
+            }
+            else {
+                Webview2.CoreWebView2.Reload();
+            }
+        }
+
         public PageWithPlaying() {
             this.InitializeComponent();
             ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
@@ -247,8 +262,8 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             Webview2.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
 
             string playingFile = GetPlayingFile();
-            string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, playingFile).Replace("\\", "/");
-            Webview2.CoreWebView2.Navigate(new Uri(fullPath).AbsoluteUri);
+            string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, playingFile);
+            Webview2.CoreWebView2.NavigateToLocalFile(fullPath);
         }
 
         private void CoreWebView2_ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e) {
@@ -276,7 +291,17 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                 case "RWeb":
                     Webview2.IsHitTestVisible = true;
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+                    {
+                        var resourcePath = _startArgs.FilePath ?? string.Empty;
+                        // For RWeb, map the project directory to a virtual host so the
+                        // shell's iframe can load it (avoids file:// cross-origin block).
+                        if (_startArgs.RuntimeType == "RWeb" && !string.IsNullOrEmpty(resourcePath)) {
+                            var host = Webview2.CoreWebView2.MapLocalFile(resourcePath);
+                            var fileName = Path.GetFileName(resourcePath);
+                            resourcePath = $"https://{host}/{fileName}";
+                        }
+                        _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, resourcePath);
+                    }
                     break;
                 case "RVideo":
                     UpdateRectToWebview();
@@ -302,6 +327,12 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
             Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
 #endif
+            // Runtime debug mode: open DevTools even in Release builds (for editor Debug button)
+            if (_startArgs.IsDebug) {
+                Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
+                Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+                Webview2.CoreWebView2.OpenDevToolsWindow();
+            }
 
             _loadedTcs.TrySetResult();
         }

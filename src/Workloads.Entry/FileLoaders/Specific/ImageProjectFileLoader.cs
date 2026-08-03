@@ -2,7 +2,6 @@ using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.UIComponent.Utils;
-using Workloads.Entry.FileLoaders;
 
 namespace Workloads.Entry.FileLoaders.Specific {
     public class ImageProjectFileLoader : IProjectFileLoader {

@@ -64,7 +64,7 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Height="28" Padding="6 0" Background="{ThemeResource LayerFillColorDefaultBrush}">
+    <Grid x:Name="rootGrid" Height="28" Padding="6 0" Background="{ThemeResource LayerFillColorDefaultBrush}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition/>
@@ -85,11 +85,21 @@
                 </StackPanel>
             </Button>
 
-            <Button Padding="8 2" Style="{StaticResource StatusBarButtonStyle}" VerticalAlignment="Stretch" ToolTipService.ToolTip="Run" Click="Run_Click">
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <FontIcon Glyph="&#xE768;" FontSize="14" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
-                    <TextBlock FontSize="11" Text="运行"/>
-                </StackPanel>
+            <Button Padding="8 2" Style="{StaticResource StatusBarButtonStyle}" VerticalAlignment="Stretch" Click="Run_Click">
+                <Grid>
+                    <!-- Run state -->
+                    <StackPanel Orientation="Horizontal" Spacing="4"
+                            Visibility="{x:Bind IsDebugRunning, Mode=OneWay, Converter={StaticResource VisibilityConverter}, ConverterParameter=!}">
+                        <FontIcon Glyph="&#xE768;" FontSize="14" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                        <TextBlock FontSize="11" Text="运行"/>
+                    </StackPanel>
+                    <!-- Stop state -->
+                    <StackPanel Orientation="Horizontal" Spacing="4"
+                            Visibility="{x:Bind IsDebugRunning, Mode=OneWay, Converter={StaticResource VisibilityConverter}}">
+                        <FontIcon Glyph="&#xE71A;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemErrorBrush}"/>
+                        <TextBlock FontSize="11" Text="停止" Foreground="{ThemeResource WebBackdropProblemErrorBrush}"/>
+                    </StackPanel>
+                </Grid>
             </Button>
             <!--<Button Padding="8 2" Style="{StaticResource StatusBarButtonStyle}" ToolTipService.ToolTip="Debug" Click="Debug_Click">
                 <StackPanel Orientation="Horizontal" Spacing="4">

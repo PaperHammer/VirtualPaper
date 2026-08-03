@@ -21,7 +21,6 @@ using Workloads.Creation.WebBackdrop.Models.SerializableData;
 using Workloads.Creation.WebBackdrop.ViewModels;
 
 /*
- * 修复 js/ html 误报、无法跳转文件的问题
  * 运行、调试
  * output 重定向
  * 导出为 zip、入库
@@ -64,6 +63,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
         public void SelectFile(string filePath) {
             _viewModel.SelectFile(filePath);
+            var item = _viewModel.FindItem(filePath.Replace('/', Path.DirectorySeparatorChar));
+            if (item != null) {
+                SelectedFileItem = item;
+                fileTreeView.SelectedItem = item;
+            }
         }
 
         public void SetFileSaved(string filePath, bool isSaved) {

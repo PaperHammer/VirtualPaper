@@ -158,10 +158,43 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         public void SelectFile(string filePath) {
+            // Normalize path separators (Monaco sends forward slashes)
+            filePath = filePath.Replace('/', Path.DirectorySeparatorChar);
+
+            // Lazily load ancestor folders so the target item is in _pathMap
+            EnsureAncestorsLoaded(filePath);
+
             var item = FindItem(filePath);
             if (item == null) return;
 
             ExpandParents(item);
+        }
+
+        /// <summary>
+        /// Walk from project root to the file's parent directory,
+        /// loading children of each ancestor folder lazily as needed.
+        /// </summary>
+        private void EnsureAncestorsLoaded(string filePath) {
+            var parentPath = Path.GetDirectoryName(filePath);
+            if (string.IsNullOrEmpty(parentPath)) return;
+            if (!parentPath.StartsWith(ProjectFolder, StringComparison.OrdinalIgnoreCase)) return;
+
+            // Collect all ancestor paths from project folder down to parent
+            var ancestors = new List<string>();
+            var current = parentPath;
+            while (current.Length > ProjectFolder.Length && current.StartsWith(ProjectFolder, StringComparison.OrdinalIgnoreCase)) {
+                ancestors.Add(current);
+                current = Path.GetDirectoryName(current);
+                if (string.IsNullOrEmpty(current)) break;
+            }
+            ancestors.Reverse(); // root-first
+
+            foreach (var ancestorPath in ancestors) {
+                var folder = FindItem(ancestorPath);
+                if (folder != null && !folder.IsChildrenLoaded) {
+                    LoadChildren(folder);
+                }
+            }
         }
 
         public void SetFileSaved(string filePath, bool isSaved) {
@@ -328,7 +361,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 string.Equals(item.Path, relativePath, StringComparison.OrdinalIgnoreCase));
         }
 
-        private WebFileItem? FindItem(string filePath) {
+        public WebFileItem? FindItem(string filePath) {
             return _pathMap.TryGetValue(filePath, out var item) ? item : null;
         }
 

@@ -228,6 +228,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private async void OnMonacoFileOpenRequested(object? sender, string filePath) {
             if (ViewModel != null && File.Exists(filePath)) {
                 await ViewModel.OpenFileAsync(filePath);
+                leftFileTreeControl.SelectFile(filePath);
             }
         }
 

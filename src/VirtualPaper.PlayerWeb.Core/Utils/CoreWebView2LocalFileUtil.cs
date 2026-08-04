@@ -18,9 +18,23 @@ namespace VirtualPaper.PlayerWeb.Core.Utils {
         public static string NavigateToLocalFile(this CoreWebView2 coreWebView2, string filePath, CoreWebView2HostResourceAccessKind accessKind = CoreWebView2HostResourceAccessKind.DenyCors) {
             var hostName = coreWebView2.MapLocalFile(filePath, accessKind);
             var fileName = Path.GetFileName(filePath);
-            var uri = $"https://{hostName}/{fileName}";
+            var uri = $"http://{hostName}/{fileName}";
             coreWebView2.Navigate(uri);
             return uri;
+        }
+
+        /// <summary>
+        /// Maps a local file's directory to a virtual host and returns a
+        /// http://{host}.localhost/{filename} URL that can be passed to
+        /// JavaScript for &lt;img&gt;, &lt;video&gt;, &lt;iframe&gt;, etc.
+        /// Returns <see cref="string.Empty"/> if <paramref name="filePath"/>
+        /// is null or empty.
+        /// </summary>
+        public static string GetVirtualHostUrl(this CoreWebView2 coreWebView2, string filePath, CoreWebView2HostResourceAccessKind accessKind = CoreWebView2HostResourceAccessKind.DenyCors) {
+            if (string.IsNullOrWhiteSpace(filePath)) return string.Empty;
+            var hostName = coreWebView2.MapLocalFile(filePath, accessKind);
+            var fileName = Path.GetFileName(filePath);
+            return $"https://{hostName}/{fileName}";
         }
 
         public static string GetStableHostName(string path) {

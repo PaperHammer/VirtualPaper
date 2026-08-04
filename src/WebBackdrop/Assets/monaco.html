@@ -195,6 +195,170 @@
                 postCursorPosition(e.position || editor.getPosition());
             });
 
+            // ======== Navigation History (Go Back / Go Forward) ========
+            var navigationHistory = [];
+            var navigationIndex = -1;
+            var MAX_NAVIGATION_HISTORY = 50;
+            var _navRecordTimer = null;
+            var _lastNavRecorded = null;
+            var NAV_RECORD_DELAY_MS = 300;
+            var NAV_RECORD_MIN_LINE_DELTA = 3;
+
+            function getCurrentFilePath() {
+                var model = editor.getModel();
+                if (!model || !model.uri || model.uri.scheme !== 'file') return null;
+                var path = model.uri.fsPath;
+                // Normalize Windows path (remove leading '/')
+                if (path[0] === '/' && path[2] === ':') {
+                    path = path.substring(1);
+                }
+                return path;
+            }
+
+            function pushNavigationPosition(filePath, lineNumber, column) {
+                if (!filePath) return;
+                var entry = { filePath: filePath, lineNumber: lineNumber, column: column };
+
+                // Skip duplicate adjacent entries
+                if (navigationIndex >= 0 && navigationIndex < navigationHistory.length) {
+                    var current = navigationHistory[navigationIndex];
+                    if (current.filePath === entry.filePath &&
+                        current.lineNumber === entry.lineNumber) {
+                        return;
+                    }
+                }
+
+                // Truncate forward history when pushing after a back-navigation
+                if (navigationIndex < navigationHistory.length - 1) {
+                    navigationHistory = navigationHistory.slice(0, navigationIndex + 1);
+                }
+
+                navigationHistory.push(entry);
+                if (navigationHistory.length > MAX_NAVIGATION_HISTORY) {
+                    navigationHistory.shift();
+                } else {
+                    navigationIndex = navigationHistory.length - 1;
+                }
+            }
+
+            function goBack() {
+                if (navigationIndex <= 0) return;
+
+                // Push current position at tip so we can come back via "goForward"
+                var pos = editor.getPosition();
+                var curPath = getCurrentFilePath();
+                if (pos && curPath && navigationIndex === navigationHistory.length - 1) {
+                    pushNavigationPosition(curPath, pos.lineNumber, pos.column);
+                    // After push, index points to the just-added entry.
+                    // Fall through to the decrement below.
+                }
+
+                // One step back: from mid-history, or from just-pushed tip entry
+                navigationIndex = Math.max(0, navigationIndex - 1);
+
+                var target = navigationHistory[navigationIndex];
+                if (target) navigateToHistoryEntry(target);
+            }
+
+            function goForward() {
+                if (navigationIndex >= navigationHistory.length - 1) return;
+
+                navigationIndex++;
+                var target = navigationHistory[navigationIndex];
+                if (target) navigateToHistoryEntry(target);
+            }
+
+            function navigateToHistoryEntry(entry) {
+                var currentPath = getCurrentFilePath();
+
+                if (currentPath === entry.filePath) {
+                    // Same file — navigate directly in editor
+                    editor.setPosition({ lineNumber: entry.lineNumber, column: entry.column });
+                    editor.revealPositionInCenter({ lineNumber: entry.lineNumber, column: entry.column });
+                    editor.focus();
+                } else {
+                    // Try switching to an already-loaded Monaco model first (avoids C# roundtrip + flicker)
+                    var normalizedPath = entry.filePath.replace(/\\/g, '/');
+                    var targetUri = monaco.Uri.parse('file:///' + normalizedPath);
+                    var existingModel = monaco.editor.getModel(targetUri);
+
+                    if (existingModel) {
+                        // Model cached — switch instantly in JS, no C# needed
+                        editor.setModel(existingModel);
+                        editor.setPosition({ lineNumber: entry.lineNumber, column: entry.column });
+                        editor.revealPositionInCenter({ lineNumber: entry.lineNumber, column: entry.column });
+                        editor.focus();
+                        // Notify C# to sync UI (file tree, tab, etc.)
+                        if (window.chrome && window.chrome.webview) {
+                            window.chrome.webview.postMessage(JSON.stringify({
+                                type: 'navigateBackForward',
+                                filePath: entry.filePath
+                            }));
+                        }
+                    } else {
+                        // Model not yet loaded — let C# load the file;
+                        // setValue() will apply the position after the new model is ready.
+                        window._pendingNavigation = { lineNumber: entry.lineNumber, column: entry.column };
+                        if (window.chrome && window.chrome.webview) {
+                            window.chrome.webview.postMessage(JSON.stringify({
+                                type: 'navigateBackForward',
+                                filePath: entry.filePath
+                            }));
+                        }
+                    }
+                }
+            }
+
+            // Timeout-based cursor position recording:
+            // Record the position after the cursor has been still for NAV_RECORD_DELAY_MS,
+            // but only if it's sufficiently far from the last recorded position.
+            function scheduleNavRecord() {
+                if (_navRecordTimer) clearTimeout(_navRecordTimer);
+                _navRecordTimer = setTimeout(function () {
+                    _navRecordTimer = null;
+                    var pos = editor.getPosition();
+                    var filePath = getCurrentFilePath();
+                    if (!pos || !filePath) return;
+
+                    // Skip if too close to the last recorded position in the same file
+                    if (_lastNavRecorded &&
+                        _lastNavRecorded.filePath === filePath &&
+                        Math.abs(pos.lineNumber - _lastNavRecorded.lineNumber) < NAV_RECORD_MIN_LINE_DELTA) {
+                        return;
+                    }
+
+                    pushNavigationPosition(filePath, pos.lineNumber, pos.column);
+                    _lastNavRecorded = { filePath: filePath, lineNumber: pos.lineNumber, column: pos.column };
+                }, NAV_RECORD_DELAY_MS);
+            }
+
+            editor.onDidChangeCursorPosition(function (e) {
+                scheduleNavRecord();
+            });
+
+            // Also record on mouse click (explicit navigation intent)
+            editor.onMouseDown(function (e) {
+                if (e.target.type === monaco.editor.MouseTargetType.CONTENT_TEXT ||
+                    e.target.type === monaco.editor.MouseTargetType.GUTTER_LINE_NUMBERS) {
+                    // Cancel pending timer and record the position BEFORE the click moves the cursor
+                    if (_navRecordTimer) clearTimeout(_navRecordTimer);
+                    _navRecordTimer = null;
+                    // Schedule a fresh record for the new position after the click takes effect
+                    setTimeout(function () {
+                        var pos = editor.getPosition();
+                        var filePath = getCurrentFilePath();
+                        if (pos && filePath) {
+                            if (!_lastNavRecorded ||
+                                _lastNavRecorded.filePath !== filePath ||
+                                Math.abs(pos.lineNumber - _lastNavRecorded.lineNumber) >= NAV_RECORD_MIN_LINE_DELTA) {
+                                pushNavigationPosition(filePath, pos.lineNumber, pos.column);
+                                _lastNavRecorded = { filePath: filePath, lineNumber: pos.lineNumber, column: pos.column };
+                            }
+                        }
+                    }, 50);
+                }
+            });
+
             function postCurrentMarkers() {
                 var model = editor.getModel();
                 if (!model || !window.chrome || !window.chrome.webview) {
@@ -278,10 +442,23 @@
                 if (ctrl && !shift && key === 72) { e.preventDefault(); e.stopPropagation(); return; }
                 // Ctrl+G / Ctrl+Shift+G (Find Next/Prev in browser — Monaco has own)
                 if (ctrl && (key === 71)) { e.preventDefault(); e.stopPropagation(); return; }
-                // Alt+Left / Alt+Right (Back/Forward)
-                if (alt && (key === 37 || key === 39)) { e.preventDefault(); e.stopPropagation(); return; }
+                // Alt+Left / Alt+Right (Go Back / Go Forward — VS Code style)
+                if (alt && !ctrl && !shift && key === 37) { e.preventDefault(); e.stopPropagation(); goBack(); return; }
+                if (alt && !ctrl && !shift && key === 39) { e.preventDefault(); e.stopPropagation(); goForward(); return; }
+                // Ctrl+Alt+- (Go Back)
+                if (ctrl && alt && !shift && key === 189) { e.preventDefault(); e.stopPropagation(); goBack(); return; }
+                // Ctrl+Shift+- (Go Forward)
+                if (ctrl && !alt && shift && key === 189) { e.preventDefault(); e.stopPropagation(); goForward(); return; }
                 // Ctrl+D (Bookmark)
                 if (ctrl && key === 68) { e.preventDefault(); e.stopPropagation(); return; }
+            }, true);
+
+            // ---- Mouse side buttons for Go Back / Go Forward ----
+            window.addEventListener('mouseup', function (e) {
+                // XButton1 (browser back)  → Go Back
+                // XButton2 (browser forward) → Go Forward
+                if (e.button === 3) { e.preventDefault(); e.stopPropagation(); goBack(); return; }
+                if (e.button === 4) { e.preventDefault(); e.stopPropagation(); goForward(); return; }
             }, true);
 
             // ---- Ctrl+Click file navigation ----
@@ -324,6 +501,12 @@
                     path = path.substring(1);
                 }
 
+                // Push current position to history before navigating away
+                var curPos = editor.getPosition();
+                if (curPos) {
+                    pushNavigationPosition(getCurrentFilePath(), curPos.lineNumber, curPos.column);
+                }
+
                 if (window.chrome && window.chrome.webview) {
                     window.chrome.webview.postMessage(JSON.stringify({
                         type: 'openFile',
@@ -351,6 +534,14 @@
                 var isChanged = current !== value;
                 if (isChanged) {
                     window.isSettingValue = true;
+
+                    // Record current position before switching to a different file
+                    var currentPath = getCurrentFilePath();
+                    var currentPos = editor.getPosition();
+                    if (filePath && currentPath && currentPath !== filePath && currentPos) {
+                        pushNavigationPosition(currentPath, currentPos.lineNumber, currentPos.column);
+                    }
+
                     if (filePath) {
                         var normalizedPath = filePath.replace(/\\/g, '/');
                         var uri = monaco.Uri.parse('file:///' + normalizedPath);
@@ -371,6 +562,16 @@
                     window.savedAlternativeVersionId = model.getAlternativeVersionId();
                 }
                 window.isSettingValue = false;
+
+                // Apply pending navigation position (from goBack/goForward cross-file)
+                if (window._pendingNavigation) {
+                    var nav = window._pendingNavigation;
+                    window._pendingNavigation = null;
+                    editor.setPosition({ lineNumber: nav.lineNumber, column: nav.column });
+                    editor.revealPositionInCenter({ lineNumber: nav.lineNumber, column: nav.column });
+                    editor.focus();
+                }
+
                 postEditorState();
             };
 

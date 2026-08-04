@@ -78,7 +78,11 @@ namespace Workloads.Creation.WebBackdrop.Models {
                 if (_content == value) return;
                 _content = value;
                 OnPropertyChanged();
-                IsSaved = false;
+                // IsSaved is managed by EditorStateChanged (Monaco's
+                // postEditorState), not by Content changes.  Otherwise
+                // undo back to saved state would first show "saved"
+                // (from editorStateChanged) and then flip back to
+                // "unsaved" (from here).
             }
         }
 

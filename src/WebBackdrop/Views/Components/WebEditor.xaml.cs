@@ -9,7 +9,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Shapes;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.ProjectSystem.Events;
 using VirtualPaper.UIComponent.Templates;
@@ -190,6 +189,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             _isLoaded = true;
             ViewModel = new WebEditorViewModel(_session);
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+            ViewModel.DebugSessionEnded += OnDebugSessionEnded;
 
             _session.FileManager.Changed += FileManager_Changed;
 
@@ -199,7 +199,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             problemsPanel.SetProjectFolder(_session.DesignFileUtil.ProjectFolder);
 
             editorContentView.TextEditor.FileOpenRequested += OnMonacoFileOpenRequested;
+            editorContentView.TextEditor.NavigationRequested += OnMonacoNavigationRequested;
             editorContentView.MarkdownEditor.MonacoEditor.FileOpenRequested += OnMonacoFileOpenRequested;
+            editorContentView.MarkdownEditor.MonacoEditor.NavigationRequested += OnMonacoNavigationRequested;
 
             UpdateStatusBar();
         }
@@ -211,12 +213,21 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             if (ViewModel != null) {
                 ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+                ViewModel.DebugSessionEnded -= OnDebugSessionEnded;
             }
 
             editorContentView.TextEditor.FileOpenRequested -= OnMonacoFileOpenRequested;
+            editorContentView.TextEditor.NavigationRequested -= OnMonacoNavigationRequested;
             editorContentView.MarkdownEditor.MonacoEditor.FileOpenRequested -= OnMonacoFileOpenRequested;
+            editorContentView.MarkdownEditor.MonacoEditor.NavigationRequested -= OnMonacoNavigationRequested;
 
             editorContentView.ReleaseResources();
+
+            // Clean up run/debug temp files
+            ViewModel?.CleanupSessions();
+            _isDebugRunning = false;
+            statusBar.IsDebugRunning = false;
+
             _isLoaded = false;
         }
 
@@ -226,6 +237,16 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private async void OnMonacoFileOpenRequested(object? sender, string filePath) {
+            if (ViewModel != null && File.Exists(filePath)) {
+                await ViewModel.OpenFileAsync(filePath);
+                leftFileTreeControl.SelectFile(filePath);
+            }
+        }
+
+        private async void OnMonacoNavigationRequested(object? sender, string filePath) {
+            // Handle Go Back / Go Forward cross-file navigation.
+            // JS has already stored the target line/column in _pendingNavigation;
+            // we just need to open the file, and setValue() will apply the position.
             if (ViewModel != null && File.Exists(filePath)) {
                 await ViewModel.OpenFileAsync(filePath);
                 leftFileTreeControl.SelectFile(filePath);
@@ -264,6 +285,14 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     case ProjectChangeType.Modified:
                     case ProjectChangeType.Reloaded:
                         HandleFileReloaded(e.Path);
+                        ViewModel?.SyncFileChange(e.Path);
+                        break;
+
+                    case ProjectChangeType.Created:
+                    case ProjectChangeType.Deleted:
+                    case ProjectChangeType.Renamed:
+                        ViewModel?.SyncFileChange(e.Path);
+                        if (e.OldPath != null) ViewModel?.SyncFileDelete(e.OldPath);
                         break;
 
                     case ProjectChangeType.Conflict:
@@ -349,6 +378,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private void EditorContentView_EditorStateChanged(object? sender, MonacoEditorState state) {
             if (ViewModel?.ActiveFile == null) return;
 
+            var wasSaved = ViewModel.ActiveFile.IsSaved;
             ViewModel.ActiveFile.SetSavedState(state.IsSaved);
             ViewModel.ActiveFile.SetLineEnding(state.LineEnding);
             ViewModel.ActiveFile.SetEncoding(state.Encoding);
@@ -356,6 +386,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             EncodingText = state.Encoding;
             LineEndingText = state.LineEnding;
             SyncFileSavedState(ViewModel.ActiveFile);
+
+            // Refresh the property panel when IsSaved toggles
+            // (e.g. after undo back to last-saved state).
+            if (wasSaved != ViewModel.ActiveFile.IsSaved) {
+                propertyPanelControl.Load(ViewModel.ActiveFile, ActiveFileLanguage);
+            }
         }
 
         private void SyncFileSavedState(WebEditorFile file) {
@@ -415,6 +451,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 if (result && activeFile != null) {
                     await editorContentView.MarkSavedAsync();
                     leftFileTreeControl.SetFileSaved(activeFile.FilePath, activeFile.IsSaved);
+                    // Refresh property panel to reflect updated Save state
+                    propertyPanelControl.Load(activeFile, ActiveFileLanguage);
                     // 若保存了项目文件 (.vpw)，增量同步文件树
                     if (_session?.DesignFileUtil.IsProjectFile(activeFile.FilePath) == true) {
                         leftFileTreeControl.SyncManifest(_session.DesignFileUtil);
@@ -553,7 +591,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     delta => -delta),
             };
 
-            _splitterLines = new Dictionary<object, Rectangle> {
+            _splitterLines = new Dictionary<object, Microsoft.UI.Xaml.Shapes.Rectangle> {
                 [leftSideBarSplitter] = leftSideBarSplitterLine,
                 [bottomSideBarSplitter] = bottomSideBarSplitterLine,
                 [rightSideBarSplitter] = rightSideBarSplitterLine,
@@ -686,7 +724,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private void Splitter_PointerExited(object sender, PointerRoutedEventArgs e) {
             if (_splitterLines.TryGetValue(sender, out var line)) {
-                line.ClearValue(Shape.FillProperty);
+                line.ClearValue(Microsoft.UI.Xaml.Shapes.Shape.FillProperty);
             }
         }
 
@@ -697,11 +735,30 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void StatusBar_RunRequested(object? sender, RoutedEventArgs e) {
-            ArcLog.GetLogger<WebEditor>().Info("Run requested");
+            if (_isDebugRunning) {
+                StopDebugSession();
+            }
+            else {
+                SaveAllRequested?.Invoke(this, EventArgs.Empty);
+                ViewModel?.DebugProject();
+                _isDebugRunning = true;
+                statusBar.IsDebugRunning = true;
+            }
+        }
+
+        private void OnDebugSessionEnded() {
+            StopDebugSession();
+        }
+
+        private void StopDebugSession() {
+            ViewModel?.CleanupSessions();
+            _isDebugRunning = false;
+            statusBar.IsDebugRunning = false;
         }
 
         private void StatusBar_DebugRequested(object? sender, RoutedEventArgs e) {
-            ArcLog.GetLogger<WebEditor>().Info("Debug requested");
+            SaveAllRequested?.Invoke(this, EventArgs.Empty);
+            ViewModel?.DebugProject();
         }
 
         private void StatusBar_ToggleLeftSideBarRequested(object? sender, RoutedEventArgs e) {
@@ -850,11 +907,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private WebProjectSession? _session;
         private bool _isLoaded;
+        private bool _isDebugRunning;
         private int _propertyPanelRefreshVersion;
         private WebEditorBottomPanel _activeBottomPanel = WebEditorBottomPanel.Problems;
         private string? _activeEditorFilePath;
         private Dictionary<EditorPanelSlot, PanelLayoutState> _panelLayoutStates = null!;
-        private Dictionary<object, Rectangle> _splitterLines = null!;
+        private Dictionary<object, Microsoft.UI.Xaml.Shapes.Rectangle> _splitterLines = null!;
         private Dictionary<WebEditorCommand, Action> _commandActions = null!;
         private Dictionary<(VirtualKey Key, VirtualKeyModifiers Modifiers), WebEditorCommand> _keyboardCommands = null!;
         private Dictionary<string, WebEditorCommand> _monacoCommands = null!;

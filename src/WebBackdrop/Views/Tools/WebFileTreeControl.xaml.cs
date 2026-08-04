@@ -21,9 +21,11 @@ using Workloads.Creation.WebBackdrop.Models.SerializableData;
 using Workloads.Creation.WebBackdrop.ViewModels;
 
 /*
+ * 回到上一个光标位置
  * 运行、调试
  * output 重定向
  * 导出为 zip、入库
+ * web 项目的 basicinfo 的显示
  * 
  */
 

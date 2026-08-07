@@ -65,6 +65,23 @@
     </UserControl.Resources>
 
     <Grid x:Name="rootGrid" Height="28" Padding="6 0" Background="{ThemeResource LayerFillColorDefaultBrush}">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="RunningStates">
+                <VisualState x:Name="Idle"/>
+                <VisualState x:Name="Running">
+                    <VisualState.Setters>
+                        <Setter Target="errorActiveIcon.Foreground"   Value="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                        <Setter Target="errorActiveText.Foreground"   Value="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                        <Setter Target="errorInactiveIcon.Foreground" Value="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                        <Setter Target="errorInactiveText.Foreground" Value="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                        <Setter Target="warnActiveIcon.Foreground"    Value="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                        <Setter Target="warnActiveText.Foreground"    Value="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                        <Setter Target="warnInactiveIcon.Foreground"  Value="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                        <Setter Target="warnInactiveText.Foreground"  Value="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition/>
@@ -74,14 +91,14 @@
         <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Stretch">
             <Button Padding="8 2" Style="{StaticResource StatusBarButtonStyle}" VerticalAlignment="Stretch" Click="Problems_Click">
                 <StackPanel Orientation="Horizontal" Spacing="5">
-                    <FontIcon Glyph="&#xEA39;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemErrorBrush}" Visibility="{x:Bind ProblemErrorActiveVisibility, Mode=OneWay}"/>
-                    <FontIcon Glyph="&#xEA39;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemErrorInactiveVisibility, Mode=OneWay}"/>
-                    <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemErrorText, Mode=OneWay}" Foreground="{ThemeResource WebBackdropProblemErrorBrush}" Visibility="{x:Bind ProblemErrorActiveVisibility, Mode=OneWay}"/>
-                    <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemErrorText, Mode=OneWay}" Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemErrorInactiveVisibility, Mode=OneWay}"/>
-                    <FontIcon Glyph="&#xE7BA;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemWarningBrush}" Visibility="{x:Bind ProblemWarningActiveVisibility, Mode=OneWay}"/>
-                    <FontIcon Glyph="&#xE7BA;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemWarningInactiveVisibility, Mode=OneWay}"/>
-                    <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemWarningText, Mode=OneWay}" Foreground="{ThemeResource WebBackdropProblemWarningBrush}" Visibility="{x:Bind ProblemWarningActiveVisibility, Mode=OneWay}"/>
-                    <TextBlock FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemWarningText, Mode=OneWay}" Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemWarningInactiveVisibility, Mode=OneWay}"/>
+                    <FontIcon x:Name="errorActiveIcon"   Glyph="&#xEA39;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemErrorBrush}"    Visibility="{x:Bind ProblemErrorActiveVisibility, Mode=OneWay}"/>
+                    <FontIcon x:Name="errorInactiveIcon" Glyph="&#xEA39;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemErrorInactiveVisibility, Mode=OneWay}"/>
+                    <TextBlock x:Name="errorActiveText"   FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemErrorText, Mode=OneWay}"   Foreground="{ThemeResource WebBackdropProblemErrorBrush}"    Visibility="{x:Bind ProblemErrorActiveVisibility, Mode=OneWay}"/>
+                    <TextBlock x:Name="errorInactiveText" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemErrorText, Mode=OneWay}"   Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemErrorInactiveVisibility, Mode=OneWay}"/>
+                    <FontIcon x:Name="warnActiveIcon"    Glyph="&#xE7BA;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemWarningBrush}"  Visibility="{x:Bind ProblemWarningActiveVisibility, Mode=OneWay}"/>
+                    <FontIcon x:Name="warnInactiveIcon"  Glyph="&#xE7BA;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemWarningInactiveVisibility, Mode=OneWay}"/>
+                    <TextBlock x:Name="warnActiveText"    FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemWarningText, Mode=OneWay}" Foreground="{ThemeResource WebBackdropProblemWarningBrush}"  Visibility="{x:Bind ProblemWarningActiveVisibility, Mode=OneWay}"/>
+                    <TextBlock x:Name="warnInactiveText"  FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" LineHeight="13" LineStackingStrategy="BlockLineHeight" Text="{x:Bind ProblemWarningText, Mode=OneWay}" Foreground="{ThemeResource WebBackdropProblemInactiveBrush}" Visibility="{x:Bind ProblemWarningInactiveVisibility, Mode=OneWay}"/>
                 </StackPanel>
             </Button>
 
@@ -96,8 +113,8 @@
                     <!-- Stop state -->
                     <StackPanel Orientation="Horizontal" Spacing="4"
                             Visibility="{x:Bind IsDebugRunning, Mode=OneWay, Converter={StaticResource VisibilityConverter}}">
-                        <FontIcon Glyph="&#xE71A;" FontSize="14" Foreground="{ThemeResource WebBackdropProblemErrorBrush}"/>
-                        <TextBlock FontSize="11" Text="停止" Foreground="{ThemeResource WebBackdropProblemErrorBrush}"/>
+                        <FontIcon Glyph="&#xE71A;" FontSize="14" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                        <TextBlock FontSize="11" Text="停止" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
                     </StackPanel>
                 </Grid>
             </Button>
@@ -117,22 +134,22 @@
             <Button Padding="5" Style="{StaticResource StatusBarButtonStyle}" Click="ToggleLeftSideBar_Click">
                 <Grid Width="14" Height="14">
                     <Border BorderBrush="{ThemeResource WebBackdropStatusBarForegroundBrush}" BorderThickness="1" CornerRadius="2"/>
-                    <Border Width="6" HorizontalAlignment="Left" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="2 0 0 2" Visibility="{x:Bind LeftSideBarFillVisibility, Mode=OneWay}"/>
-                    <Rectangle Width="1" HorizontalAlignment="Left" Margin="5,0,0,0" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind LeftSideBarLineVisibility, Mode=OneWay}"/>
+                    <Border Width="6" HorizontalAlignment="Left" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="2 0 0 2" Visibility="{x:Bind IsLeftSideBarVisible, Mode=OneWay, Converter={StaticResource VisibilityConverter}}"/>
+                    <Rectangle Width="1" HorizontalAlignment="Left" Margin="5,0,0,0" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind IsLeftSideBarVisible, Mode=OneWay, Converter={StaticResource VisibilityConverter}, ConverterParameter=!}"/>
                 </Grid>
             </Button>
             <Button Padding="5" Style="{StaticResource StatusBarButtonStyle}" Click="ToggleBottomPanel_Click">
                 <Grid Width="14" Height="14">
                     <Border BorderBrush="{ThemeResource WebBackdropStatusBarForegroundBrush}" BorderThickness="1" CornerRadius="2"/>
-                    <Border Height="6" VerticalAlignment="Bottom" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="0 0 2 2" Visibility="{x:Bind BottomPanelFillVisibility, Mode=OneWay}"/>
-                    <Rectangle Height="1" VerticalAlignment="Bottom" Margin="0,0,0,5" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind BottomPanelLineVisibility, Mode=OneWay}"/>
+                    <Border Height="6" VerticalAlignment="Bottom" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="0 0 2 2" Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource VisibilityConverter}}"/>
+                    <Rectangle Height="1" VerticalAlignment="Bottom" Margin="0,0,0,5" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource VisibilityConverter}, ConverterParameter=!}"/>
                 </Grid>
             </Button>
             <Button Padding="5" Style="{StaticResource StatusBarButtonStyle}" Click="ToggleRightSideBar_Click">
                 <Grid Width="14" Height="14">
                     <Border BorderBrush="{ThemeResource WebBackdropStatusBarForegroundBrush}" BorderThickness="1" CornerRadius="2"/>
-                    <Border Width="6" HorizontalAlignment="Right" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="0 2 2 0" Visibility="{x:Bind RightSideBarFillVisibility, Mode=OneWay}"/>
-                    <Rectangle Width="1" HorizontalAlignment="Right" Margin="0,0,5,0" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind RightSideBarLineVisibility, Mode=OneWay}"/>
+                    <Border Width="6" HorizontalAlignment="Right" Background="{ThemeResource WebBackdropStatusBarForegroundBrush}" CornerRadius="0 2 2 0" Visibility="{x:Bind IsRightSideBarVisible, Mode=OneWay, Converter={StaticResource VisibilityConverter}}"/>
+                    <Rectangle Width="1" HorizontalAlignment="Right" Margin="0,0,5,0" Fill="{ThemeResource WebBackdropStatusBarForegroundBrush}" Visibility="{x:Bind IsRightSideBarVisible, Mode=OneWay, Converter={StaticResource VisibilityConverter}, ConverterParameter=!}"/>
                 </Grid>
             </Button>
             <TextBlock Padding="8 0" FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind CursorPositionText, Mode=OneWay}" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}"/>

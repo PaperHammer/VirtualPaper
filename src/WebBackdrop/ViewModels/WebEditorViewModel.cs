@@ -22,6 +22,7 @@ using Workloads.Creation.WebBackdrop.Models;
 namespace Workloads.Creation.WebBackdrop.ViewModels {
     public partial class WebEditorViewModel : ObservableObject {
         public event Action? DebugSessionEnded;
+
         public IReadOnlyList<WebEditorFile> OpenFiles => _openFiles;
 
         public WebEditorFile? ActiveFile {
@@ -148,6 +149,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 await File.WriteAllTextAsync(file.FilePath, text, enc);
                 file.MarkAsSaved();
 
+                // Refresh the disk stamp so the FileSystemWatcher won't treat
+                // our own save as an external file change.
                 Session.FileManager.NotifySaved(file.FilePath);
 
                 // Trigger hot reload for active debug session
@@ -191,7 +194,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 _debugEntryPath = Path.Combine(debugTempDir, relativeEntry);
 
                 if (File.Exists(_debugEntryPath)) {
-                    // Build WpBasicData, save to disk, get StartArgsWeb via gRPC
                     var wpBasicDataPath = Path.Combine(debugTempDir, "wp_metadata_basic.json");
                     var basicData = new WpBasicData {
                         WallpaperUid = Guid.NewGuid().ToString(),
@@ -231,7 +233,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
                 if (File.Exists(srcPath)) {
                     File.Copy(srcPath, destPath, overwrite: true);
-                    ReloadPreviewWindow();
+                    ReloadPreviewWindow(relativePath);
                 }
             }
             catch (Exception ex) {
@@ -252,18 +254,14 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 if (File.Exists(destPath)) File.Delete(destPath);
                 if (Directory.Exists(destPath)) Directory.Delete(destPath, recursive: true);
 
-                ReloadPreviewWindow();
+                ReloadPreviewWindow(relativePath);
             }
             catch { /* ignore */ }
         }
 
-        public void CleanupSessions() {
-            CleanupDebugSession();
-        }
-
         private void OpenPreviewWindow() {
             if (_debugJsonString == null) return;
-            var previewWindow = new PreviewWithWeb(_debugJsonString);
+            var previewWindow = new PreviewWithWeb(_debugJsonString, enableHmr: true);
             previewWindow.Closed += (_, _) => {
                 _previewWindow = null;
                 DebugSessionEnded?.Invoke();
@@ -273,14 +271,17 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             _previewWindow = previewWindow;
         }
 
-        private void ReloadPreviewWindow() {
+        private void ReloadPreviewWindow(string relativePath) {
             if (_previewWindow == null) {
                 ArcLog.GetLogger<WebEditorViewModel>().Warn("ReloadPreviewWindow: _previewWindow is null");
                 return;
             }
             try {
-                _previewWindow.ReloadContent();
-                ArcLog.GetLogger<WebEditorViewModel>().Info("Preview reloaded");
+                // Use forward-slash for consistent cross-platform path matching
+                // in the JS hotreload handlers.
+                var normalized = relativePath.Replace('\\', '/');
+                _previewWindow.OnFileChanged(normalized);
+                ArcLog.GetLogger<WebEditorViewModel>().Info($"Preview reloaded: {normalized}");
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebEditorViewModel>().Error($"Reload failed: {ex.Message}");
@@ -311,6 +312,10 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 try { Directory.Delete(_debugTempDir, recursive: true); } catch { }
                 _debugTempDir = null;
             }
+        }
+
+        public void CleanupSessions() {
+            CleanupDebugSession();
         }
 
         #endregion

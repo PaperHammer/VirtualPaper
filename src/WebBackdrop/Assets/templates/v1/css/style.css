@@ -21,7 +21,6 @@ body {
 body {
     position: fixed;
     inset: 0;
-    cursor: crosshair;
     background:
         radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.22), transparent 28%),
         radial-gradient(circle at 80% 30%, rgba(168, 85, 247, 0.22), transparent 30%),

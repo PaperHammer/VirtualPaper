@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +18,8 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.PlayerWeb.Core.Utils;
 using VirtualPaper.PlayerWeb.Core.Utils.Interfaces;
+using VirtualPaper.PlayerWeb.Core.Utils.PreviewSystem;
+using VirtualPaper.PlayerWeb.Core.Utils.PreviewSystem.Server;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
@@ -30,18 +35,26 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         public override Type ArcType => typeof(PageWithPlaying);
         protected override bool IsMultiInstance => true;
 
-        /// <summary>Reload the WebView2 content (used by editor live-reload).</summary>
-        public void ReloadContent() {
-            if (Webview2?.CoreWebView2 == null) return;
-            // Use Navigate to force a fresh load instead of Reload (which may use cache)
-            var currentUrl = Webview2.CoreWebView2.Source;
-            if (!string.IsNullOrEmpty(currentUrl)) {
-                // Strip existing cache-buster, add fresh one
-                var baseUrl = currentUrl.Split('?')[0];
-                Webview2.CoreWebView2.Navigate($"{baseUrl}?_t={DateTime.Now.Ticks}");
+        /// <summary>
+        /// File-type-aware hot reload entry point.
+        /// The <paramref name="relativePath"/> should be relative to the
+        /// content root (e.g. "css/style.css", "js/app.js").  The
+        /// <see cref="PreviewManager"/> routes it to the correct handler
+        /// which sends a postMessage into the content iframe.
+        /// </summary>
+        public void OnFileChanged(string relativePath) {
+            if (_previewManager == null) {
+                ArcLog.GetLogger<PageWithPlaying>().Warn(
+                    $"HMR skipped (PreviewManager not ready): {relativePath}");
+                return;
             }
-            else {
-                Webview2.CoreWebView2.Reload();
+
+            try {
+                _previewManager.OnFileChanged(relativePath);
+                ArcLog.GetLogger<PageWithPlaying>().Info($"HMR: {relativePath}");
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<PageWithPlaying>().Error($"HMR failed for {relativePath}: {ex.Message}");
             }
         }
 
@@ -262,8 +275,13 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             Webview2.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
 
             string playingFile = GetPlayingFile();
-            string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, playingFile);
-            Webview2.CoreWebView2.NavigateToLocalFile(fullPath);
+            var shellDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PLAYER_Web");
+            var entry = Path.GetFileName(playingFile); // default.html or 3d_depth_map.html
+
+            _shellServer = new PreviewServer();
+            await _shellServer.StartAsync(shellDir);
+            var shellUrl = _shellServer.GetUrl(entry);
+            Webview2.CoreWebView2.Navigate(shellUrl);
         }
 
         private void CoreWebView2_ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e) {
@@ -280,37 +298,62 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             e.Cancel = true;
         }
 
-        private void Webview2_NavigationCompleted(WebView2 sender, CoreWebView2NavigationCompletedEventArgs args) {
+        private async void Webview2_NavigationCompleted(WebView2 sender, CoreWebView2NavigationCompletedEventArgs args) {
             if (!args.IsSuccess) {
                 ArcLog.GetLogger<PageWithPlaying>().Error($"WebView navigation failed: {args.WebErrorStatus}");
                 return;
             }
 
+            // Must be called BEFORE enqueuing ResourceLoad so the
+            // WebResourceRequested filter is registered in time to
+            // intercept the iframe's HTML response and inject hotreload.js.
+            if (EnableHmr) {
+                InitPreviewManager();
+            }
+
             switch (_startArgs.RuntimeType) {
                 case "RImage":
+                    Webview2.IsHitTestVisible = true;
+                    UpdateRectToWebview();
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType,
+                        await ServeFileAsync(_startArgs.FilePath));
+                    break;
                 case "RWeb":
                     Webview2.IsHitTestVisible = true;
                     UpdateRectToWebview();
                     {
-                        var resourcePath = _startArgs.FilePath ?? string.Empty;
-                        // For RWeb, map the project directory to a virtual host so the
-                        // shell's iframe can load it (avoids file:// cross-origin block).
-                        if (_startArgs.RuntimeType == "RWeb" && !string.IsNullOrEmpty(resourcePath)) {
-                            var host = Webview2.CoreWebView2.MapLocalFile(resourcePath);
-                            var fileName = Path.GetFileName(resourcePath);
-                            resourcePath = $"https://{host}/{fileName}";
+                        string url;
+                        if (EnableHmr && !string.IsNullOrEmpty(_hotReloadScriptContent)) {
+                            // Serve project via PreviewServer with HMR injection
+                            // middleware.  The shell page creates an iframe to load
+                            // this URL, preserving the shell UI.
+                            var dir = Path.GetDirectoryName(_startArgs.FilePath);
+                            var entry = Path.GetFileName(_startArgs.FilePath);
+                            _projectServer = new PreviewServer();
+                            await _projectServer.StartAsync(dir!, new PreviewServerOptions {
+                                InjectionScript = _hotReloadScriptContent
+                            });
+                            url = _projectServer.GetUrl(entry!);
                         }
-                        _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, resourcePath);
+                        else {
+                            url = Webview2.CoreWebView2.GetVirtualHostUrl(_startArgs.FilePath);
+                        }
+                        if (!string.IsNullOrEmpty(url))
+                            url += $"?_t={DateTime.Now.Ticks}";
+                        _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, url);
                     }
                     break;
                 case "RVideo":
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType,
+                        await ServeFileAsync(_startArgs.FilePath));
                     break;
                 case "RImage3D":
                     Webview2.IsHitTestVisible = true;
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad,
+                        await ServeFileAsync(_startArgs.FilePath),
+                        await ServeFileAsync(_startArgs.DepthFilePath));
                     break;
                 default:
                     break;
@@ -318,20 +361,23 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             LoadWpEffect(_startArgs.WpEffectFilePathUsing);
             _scriptExecutor?.EnqueueEvent(Fields.Play);
 
+            if (!_devToolsOpened) {
+                _devToolsOpened = true;
 #if DEBUG
-            Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
-            Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
-            Webview2.CoreWebView2.OpenDevToolsWindow();
-#else
-            // Don't allow contextmenu and devtools.
-            Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
-            Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
-#endif
-            // Runtime debug mode: open DevTools even in Release builds (for editor Debug button)
-            if (_startArgs.IsDebug) {
                 Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
                 Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
                 Webview2.CoreWebView2.OpenDevToolsWindow();
+#else
+                // Don't allow contextmenu and devtools.
+                Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+                Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+#endif
+                // Runtime debug mode: open DevTools even in Release builds (for editor Debug button)
+                if (_startArgs.IsDebug) {
+                    Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
+                    Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+                    Webview2.CoreWebView2.OpenDevToolsWindow();
+                }
             }
 
             _loadedTcs.TrySetResult();
@@ -340,6 +386,85 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         private void CoreWebView2_ProcessFailed(CoreWebView2 sender, CoreWebView2ProcessFailedEventArgs args) {
             ArcLog.GetLogger<PageWithPlaying>().Error(args.Reason.ToString());
         }
+        #endregion
+
+        #region preview / hmr
+        /// <summary>
+        /// Creates the PreviewManager and wires up hotreload.js injection
+        /// for the content iframe.  Must be called after the WebView2 has
+        /// finished its initial navigation.
+        ///
+        /// This is <b>not</b> called automatically — normal library previews
+        /// do not need HMR injection.  The WebBackdrop editor debug session
+        /// calls this via <see cref="PreviewWithWeb"/> after the page is
+        /// fully loaded.
+        /// </summary>
+        public void InitPreviewManager() {
+            if (_previewManager != null) return; // already initialised
+            if (Webview2?.CoreWebView2 == null) return;
+
+            try {
+                var bridge = new WebView2Bridge(Webview2.CoreWebView2);
+                _previewManager = new PreviewManager(bridge);
+                _bridge = bridge;
+
+                // Wire up WebResourceRequested filter to inject hotreload.js
+                // into HTML documents loaded via *.localhost virtual hosts.
+                InjectHotReloadScript();
+
+                // Inject shell-page listener that forwards WebView2
+                // postMessage → iframe postMessage for HMR.
+                _bridge.InitHmrBridge();
+
+                ArcLog.GetLogger<PageWithPlaying>().Info("PreviewManager initialised");
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<PageWithPlaying>().Error($"PreviewManager init failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Uses WebResourceRequested to intercept HTML responses on
+        /// *.localhost virtual hosts and injects hotreload.js.  This works
+        /// because WebView2's internal virtual host resolution triggers the
+        /// WebResourceRequested event (unlike real localhost HTTP requests).
+        /// </summary>
+        private void InjectHotReloadScript() {
+            if (Webview2?.CoreWebView2 == null) return;
+
+            try {
+                // Read hotreload.js from the assembly's embedded resources.
+                var asm = typeof(PageWithPlaying).Assembly;
+                var resourceName = $"{asm.GetName().Name}.Utils.PreviewSystem.HotReload.hotreload.js";
+
+                using var stream = asm.GetManifestResourceStream(resourceName);
+                if (stream == null) {
+                    var legacyNames = asm.GetManifestResourceNames();
+                    var match = legacyNames.FirstOrDefault(
+                        n => n.EndsWith("hotreload.js", StringComparison.OrdinalIgnoreCase));
+                    if (match == null) {
+                        ArcLog.GetLogger<PageWithPlaying>().Warn(
+                            "hotreload.js not found in embedded resources; HMR injection disabled");
+                        return;
+                    }
+                    resourceName = match;
+                    using var s2 = asm.GetManifestResourceStream(resourceName);
+                    if (s2 == null) return;
+                    using var r2 = new StreamReader(s2, Encoding.UTF8);
+                    _hotReloadScriptContent = r2.ReadToEnd();
+                }
+                else {
+                    using var reader = new StreamReader(stream, Encoding.UTF8);
+                    _hotReloadScriptContent = reader.ReadToEnd();
+                }
+
+                ArcLog.GetLogger<PageWithPlaying>().Info("HMR script loaded");
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<PageWithPlaying>().Warn($"HMR injection setup failed: {ex.Message}");
+            }
+        }
+
         #endregion
 
         #region utils
@@ -398,6 +523,11 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
 
         private void OnUnloaded() {
             Payload = null;
+            _ = _shellServer?.StopAsync();
+            _ = _previewManager?.DisposeAsync();
+            _ = _projectServer?.StopAsync();
+            foreach (var s in _resourceServers) _ = s.StopAsync();
+            _resourceServers.Clear();
             CrossThreadInvoker.InvokeOnUIThread(() => {
                 Webview2?.Close();
             });
@@ -411,9 +541,48 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         private Rect _pageRegion;
         //private volatile int _isParallaxRunning = 0; // 0 = stopped, 1 = running
         private bool _isPointerInsidePage;
+        private bool _devToolsOpened;
         private readonly TaskCompletionSource _loadedTcs = new();
+
+        /// <summary>
+        /// Completes when the WebView2 has finished its initial navigation.
+        /// External callers (e.g. <see cref="PreviewWithWeb"/>) can await
+        /// this to safely call <see cref="InitPreviewManager"/>.
+        /// </summary>
+        public Task LoadedTask => _loadedTcs.Task;
+
         private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
             AdditionalBrowserArguments = "--disk-cache-size=1 --autoplay-policy=no-user-gesture-required"
         };
+
+        // HMR / Preview system
+        private PreviewManager? _previewManager;
+        private WebView2Bridge? _bridge;
+        private string? _hotReloadScriptContent;
+        private PreviewServer? _shellServer;
+        private PreviewServer? _projectServer;
+        private readonly List<PreviewServer> _resourceServers = [];
+
+        /// <summary>
+        /// Starts a PreviewServer for the file's directory and returns an
+        /// http://127.0.0.1:{port}/{filename} URL.  The server is tracked
+        /// for cleanup in <see cref="OnUnloaded"/>.
+        /// </summary>
+        private async Task<string> ServeFileAsync(string? filePath) {
+            if (string.IsNullOrEmpty(filePath)) return string.Empty;
+            var dir = Path.GetDirectoryName(filePath)!;
+            var entry = Path.GetFileName(filePath);
+            var server = new PreviewServer();
+            await server.StartAsync(dir);
+            _resourceServers.Add(server);
+            return server.GetUrl(entry);
+        }
+
+        /// <summary>
+        /// Set by <see cref="PreviewWithWeb"/> before the page finishes
+        /// loading to enable hot-reload script injection for WebBackdrop
+        /// editor debug sessions.
+        /// </summary>
+        internal bool EnableHmr { get; set; }
     }
 }

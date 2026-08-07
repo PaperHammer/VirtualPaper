@@ -24,16 +24,17 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         public override ArcWindowHost ContentHost => this.MainHost;
         public override ArcWindowManagerKey Key => _windowKey;
 
-        public PreviewWithWeb(string jsonString) {
+        public PreviewWithWeb(string jsonString, bool enableHmr = false) {
             _startArgs = JsonSerializer.Deserialize<StartArgsWeb>(jsonString);
             _windowKey = new ArcWindowManagerKey(ArcWindowKey.PlayerWebCore, _startArgs.FilePath + _startArgs.RuntimeType);
+            _enableHmr = enableHmr;
             this.InitializeComponent();
             InitializeWindow();
 
             AfterFeReady();
         }
 
-        private void NaviContent_Loaded(object sender, RoutedEventArgs e) {
+        private async void NaviContent_Loaded(object sender, RoutedEventArgs e) {
             try {
                 var payload = new FrameworkPayload() {
                     [NaviPayloadKey.StartArgs.ToString()] = _startArgs,
@@ -42,6 +43,15 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
                     [NaviPayloadKey.ApplyService.ToString()] = this,
                 };
                 NaviContent.Navigate(typeof(PageWithPlaying), payload);
+
+                // Wire up HMR for WebBackdrop editor debug sessions.
+                // Set EnableHmr immediately so NavigationCompleted calls
+                // InitPreviewManager() before the ResourceLoad script runs.
+                if (_enableHmr
+                    && NaviContent.PageMap.TryGetValue(typeof(PageWithPlaying), out var page)
+                    && page is PageWithPlaying playingPage) {
+                    playingPage.EnableHmr = true;
+                }
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<PageWithPlaying>().Error(ex);
@@ -59,15 +69,20 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
             Applied?.Invoke(this, args);
         }
 
-        /// <summary>Reload the WebView2 content without reopening the window.</summary>
-        public void ReloadContent() {
-            if (NaviContent.Content is PageWithPlaying page) {
-                page.ReloadContent();
+        /// <summary>
+        /// File-type-aware hot reload.  <paramref name="relativePath"/> is
+        /// relative to the project root (e.g. "css/style.css").
+        /// </summary>
+        public void OnFileChanged(string relativePath) {
+            if (NaviContent.PageMap.TryGetValue(typeof(PageWithPlaying), out var page)
+                && page is PageWithPlaying playingPage) {
+                playingPage.OnFileChanged(relativePath);
             }
         }
 
         private readonly StartArgsWeb? _startArgs;
         private readonly ArcWindowManagerKey _windowKey;
+        private readonly bool _enableHmr;
         private WpBasicData _wpBasicData;
     }
 }

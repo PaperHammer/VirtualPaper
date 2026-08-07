@@ -13,7 +13,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils.ProjectSystem.Events;
@@ -388,6 +387,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private void EditorContentView_EditorStateChanged(object? sender, MonacoEditorState state) {
             if (ViewModel?.ActiveFile == null) return;
 
+            var wasSaved = ViewModel.ActiveFile.IsSaved;
             ViewModel.ActiveFile.SetSavedState(state.IsSaved);
             ViewModel.ActiveFile.SetLineEnding(state.LineEnding);
             ViewModel.ActiveFile.SetEncoding(state.Encoding);
@@ -395,6 +395,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             EncodingText = state.Encoding;
             LineEndingText = state.LineEnding;
             SyncFileSavedState(ViewModel.ActiveFile);
+
+            // Refresh the property panel when IsSaved toggles
+            // (e.g. after undo back to last-saved state).
+            if (wasSaved != ViewModel.ActiveFile.IsSaved) {
+                propertyPanelControl.Load(ViewModel.ActiveFile, ActiveFileLanguage);
+            }
         }
 
         private void SyncFileSavedState(WebEditorFile file) {
@@ -454,6 +460,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 if (result && activeFile != null) {
                     await editorContentView.MarkSavedAsync();
                     leftFileTreeControl.SetFileSaved(activeFile.FilePath, activeFile.IsSaved);
+                    // Refresh property panel to reflect updated Save state
+                    propertyPanelControl.Load(activeFile, ActiveFileLanguage);
                     // 若保存了项目文件 (.vpw)，增量同步文件树
                     if (_session?.DesignFileUtil.IsProjectFile(activeFile.FilePath) == true) {
                         leftFileTreeControl.SyncManifest(_session.DesignFileUtil);

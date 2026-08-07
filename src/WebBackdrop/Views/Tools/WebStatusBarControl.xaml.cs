@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -9,7 +8,6 @@ using Workloads.Creation.WebBackdrop.Views.Components;
 
 namespace Workloads.Creation.WebBackdrop.Views.Tools {
     public sealed partial class WebStatusBarControl : UserControl {
-        public event PropertyChangedEventHandler? PropertyChanged;
         public event EventHandler<RoutedEventArgs>? PreviewRequested;
         public event EventHandler<WebEditorBottomPanel>? PanelRequested;
         public event EventHandler<RoutedEventArgs>? RunRequested;
@@ -21,9 +19,29 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public event EventHandler<string>? EncodingChanged;
         public event EventHandler<string>? LineEndingChanged;
 
-        public bool IsLeftSideBarVisible { get; set; } = true;
-        public bool IsBottomPanelVisible { get; set; }
-        public bool IsRightSideBarVisible { get; set; } = true;
+        public bool IsLeftSideBarVisible {
+            get => (bool)GetValue(IsLeftSideBarVisibleProperty);
+            set => SetValue(IsLeftSideBarVisibleProperty, value);
+        }
+        public static readonly DependencyProperty IsLeftSideBarVisibleProperty =
+            DependencyProperty.Register(nameof(IsLeftSideBarVisible), typeof(bool), typeof(WebStatusBarControl),
+                new PropertyMetadata(true));
+
+        public bool IsBottomPanelVisible {
+            get => (bool)GetValue(IsBottomPanelVisibleProperty);
+            set => SetValue(IsBottomPanelVisibleProperty, value);
+        }
+        public static readonly DependencyProperty IsBottomPanelVisibleProperty =
+            DependencyProperty.Register(nameof(IsBottomPanelVisible), typeof(bool), typeof(WebStatusBarControl),
+                new PropertyMetadata(false));
+
+        public bool IsRightSideBarVisible {
+            get => (bool)GetValue(IsRightSideBarVisibleProperty);
+            set => SetValue(IsRightSideBarVisibleProperty, value);
+        }
+        public static readonly DependencyProperty IsRightSideBarVisibleProperty =
+            DependencyProperty.Register(nameof(IsRightSideBarVisible), typeof(bool), typeof(WebStatusBarControl),
+                new PropertyMetadata(true));
 
         public bool IsDebugRunning {
             get => (bool)GetValue(IsDebugRunningProperty);
@@ -39,18 +57,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             var control = (WebStatusBarControl)d;
             if ((bool)e.NewValue) {
                 control.rootGrid.Background = _runningBrush;
+                VisualStateManager.GoToState(control, "Running", true);
             }
             else {
-                control.rootGrid.ClearValue(Grid.BackgroundProperty); // revert to theme brush
+                control.rootGrid.ClearValue(Grid.BackgroundProperty);
+                VisualStateManager.GoToState(control, "Idle", true);
             }
         }
-
-        public Visibility LeftSideBarFillVisibility => IsLeftSideBarVisible ? Visibility.Visible : Visibility.Collapsed;
-        public Visibility BottomPanelFillVisibility => IsBottomPanelVisible ? Visibility.Visible : Visibility.Collapsed;
-        public Visibility RightSideBarFillVisibility => IsRightSideBarVisible ? Visibility.Visible : Visibility.Collapsed;
-        public Visibility LeftSideBarLineVisibility => IsLeftSideBarVisible ? Visibility.Collapsed : Visibility.Visible;
-        public Visibility BottomPanelLineVisibility => IsBottomPanelVisible ? Visibility.Collapsed : Visibility.Visible;
-        public Visibility RightSideBarLineVisibility => IsRightSideBarVisible ? Visibility.Collapsed : Visibility.Visible;
 
         public string ActiveFileLanguage {
             get => (string)GetValue(ActiveFileLanguageProperty);

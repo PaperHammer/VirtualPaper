@@ -118,9 +118,6 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
 
                 // 非 HTML 文件按类型原样返回，例如 CSS、JavaScript、图片和字体。
                 context.Response.ContentType = GetContentType(filePath);
-                if (!Path.GetExtension(filePath).Equals(".html", StringComparison.OrdinalIgnoreCase)) {
-                    context.Response.Headers[HttpResponseHeader.CacheControl] = "public, max-age=3600";
-                }
                 await using var stream = File.OpenRead(filePath);
                 context.Response.ContentLength64 = stream.Length;
                 await stream.CopyToAsync(context.Response.OutputStream, cancellationToken);

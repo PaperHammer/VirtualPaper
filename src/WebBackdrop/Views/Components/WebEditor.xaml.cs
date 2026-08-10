@@ -184,10 +184,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             if (_isLoaded || Payload == null) return;
 
             Payload.TryGet(NaviPayloadKey.WebProjectSession, out _session);
+            Payload.TryGet(NaviPayloadKey.ContextKey, out ArcPageContextKey contextKey);
             if (_session == null) return;
 
             _isLoaded = true;
-            ViewModel = new WebEditorViewModel(_session);
+            ViewModel = new WebEditorViewModel(_session, contextKey);
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
             ViewModel.DebugSessionEnded += OnDebugSessionEnded;
 
@@ -285,14 +286,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     case ProjectChangeType.Modified:
                     case ProjectChangeType.Reloaded:
                         HandleFileReloaded(e.Path);
-                        ViewModel?.SyncFileChange(e.Path);
                         break;
 
                     case ProjectChangeType.Created:
                     case ProjectChangeType.Deleted:
                     case ProjectChangeType.Renamed:
-                        ViewModel?.SyncFileChange(e.Path);
-                        if (e.OldPath != null) ViewModel?.SyncFileDelete(e.OldPath);
                         break;
 
                     case ProjectChangeType.Conflict:
@@ -405,10 +403,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         public Task RedoAsync() {
             return editorContentView.RedoAsync();
-        }
-
-        public Task<MonacoEditorState> GetEditorStateAsync() {
-            return editorContentView.GetEditorStateAsync();
         }
 
         public async Task<bool> SaveAllAsync() {

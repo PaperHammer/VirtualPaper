@@ -108,7 +108,7 @@
                     <StackPanel Orientation="Horizontal" Spacing="4"
                             Visibility="{x:Bind IsDebugRunning, Mode=OneWay, Converter={StaticResource VisibilityConverter}, ConverterParameter=!}">
                         <FontIcon Glyph="&#xE768;" FontSize="14" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
-                        <TextBlock FontSize="11" Text="运行"/>
+                        <TextBlock FontSize="11" Text="调试"/>
                     </StackPanel>
                     <!-- Stop state -->
                     <StackPanel Orientation="Horizontal" Spacing="4"
@@ -118,12 +118,6 @@
                     </StackPanel>
                 </Grid>
             </Button>
-            <!--<Button Padding="8 2" Style="{StaticResource StatusBarButtonStyle}" ToolTipService.ToolTip="Debug" Click="Debug_Click">
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <FontIcon Glyph="&#xEBE8;" FontSize="14" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
-                    <TextBlock FontSize="11" Text="调试"/>
-                </StackPanel>
-            </Button>-->
             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Visibility="{x:Bind SavingVisibility, Mode=OneWay}">
                 <ProgressRing Width="12" Height="12" IsActive="{x:Bind IsSaving, Mode=OneWay}" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
                 <TextBlock FontSize="11" Text="正在保存..." Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>

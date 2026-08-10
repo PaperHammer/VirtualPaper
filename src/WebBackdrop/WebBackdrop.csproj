@@ -99,8 +99,8 @@
 		<Content Include="Assets\templates\**\*">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Include="Assets\monaco-editor-0.55.1\package\**\*" Exclude="Assets\monaco-editor-0.55.1\package\dev\**\*;Assets\monaco-editor-0.55.1\package\README.md;Assets\monaco-editor-0.55.1\package\CHANGELOG.md">
-			<TargetPath>Assets\monaco-editor\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+		<Content Include="Assets\monaco-editor-*\package\**\*" Exclude="Assets\monaco-editor-*\package\dev\**\*;Assets\monaco-editor-*\package\README.md;Assets\monaco-editor-*\package\CHANGELOG.md">
+			<TargetPath>$([System.Text.RegularExpressions.Regex]::Replace('%(FullPath)', '^.*\\Assets\\monaco-editor-[^\\]+\\package\\', 'Assets\\monaco-editor\\'))</TargetPath>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<ExcludeFromResourceIndex>true</ExcludeFromResourceIndex>
 		</Content>

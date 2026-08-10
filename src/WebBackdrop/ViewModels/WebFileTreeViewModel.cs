@@ -207,10 +207,10 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         public void ToggleFolder(WebFileItem folder) {
             if (folder.Type != WebFileItemType.Folder) return;
 
-            if (!folder.IsExpanded) {
-                LoadChildren(folder);
-            }
-            folder.IsExpanded = !folder.IsExpanded;
+            // TreeView already toggles IsExpanded before ItemInvoked fires.
+            // Only load the lazy children here; toggling it again collapses the
+            // folder on its first expansion.
+            LoadChildren(folder);
         }
 
         public bool IsProjectFileItem(WebFileItem item) {

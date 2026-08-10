@@ -30,16 +30,6 @@ namespace Workloads.Creation.WebBackdrop.Models {
             EncodingText = encoding;
         }
 
-        public void ReopenWithEncoding(string encoding) {
-            if (!File.Exists(FilePath)) return;
-
-            var enc = GetEncodingFromText(encoding);
-            Content = ReadAllText(FilePath, enc);
-            LineEndingText = GetLineEndingText(_content);            
-            _isSaved = true;
-            IsSavedChanged?.Invoke(this, EventArgs.Empty);
-        }
-
         public async Task ReopenWithEncodingAsync(string encoding) {
             if (!File.Exists(FilePath)) return;
 
@@ -49,15 +39,6 @@ namespace Workloads.Creation.WebBackdrop.Models {
             _isSaved = true;
             IsSavedChanged?.Invoke(this, EventArgs.Empty);
         }
-
-        public void SetExternalDeleted() {
-            _isExternalDeleted = true;
-            _isSaved = false;
-            OnPropertyChanged(nameof(IsSaved));
-            IsSavedChanged?.Invoke(this, EventArgs.Empty);
-        }
-
-        private bool _isExternalDeleted;
 
         private static Encoding GetEncodingFromText(string encoding) {
             return encoding switch {

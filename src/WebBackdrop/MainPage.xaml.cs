@@ -39,8 +39,8 @@ namespace Workloads.Creation.WebBackdrop {
         public void Initialize(string identify, FileType fileType) {
             Session = new WebProjectSession(identify);
             Payload = new FrameworkPayload() {
-                [NaviPayloadKey.ArcPageContext] = this.ArcContext,
-                [NaviPayloadKey.WebProjectSession] = this.Session
+                [NaviPayloadKey.WebProjectSession] = this.Session,
+                [NaviPayloadKey.ContextKey] = this.ContextKey,
             };
             Session.IsSavedChanged += Session_IsSavedChanged;
         }

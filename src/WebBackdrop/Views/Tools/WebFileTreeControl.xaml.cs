@@ -87,6 +87,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         private void FileTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args) {
             if (args.InvokedItem is WebFileItem { Type: WebFileItemType.Folder } folder) {
                 _viewModel.ToggleFolder(folder);
+                folder.IsExpanded = !folder.IsExpanded;
                 FolderSelected?.Invoke(this, folder.FilePath);
                 return;
             }

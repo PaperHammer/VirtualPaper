@@ -9,6 +9,7 @@ using Workloads.Creation.WebBackdrop.Models;
 namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
     public sealed partial class WebEditorContentView : UserControl {
         public event EventHandler<string>? ContentChanged;
+        public event EventHandler? ContentModified;
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
         public event EventHandler<string>? ShortcutRequested;
@@ -163,6 +164,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
 
         private void TextEditor_ContentChanged(object? sender, string content) {
             ContentChanged?.Invoke(this, content);
+        }
+
+        private void TextEditor_ContentModified(object? sender, EventArgs e) {
+            ContentModified?.Invoke(this, EventArgs.Empty);
         }
 
         private void Editor_CursorPositionChanged(object? sender, MonacoCursorPosition position) {

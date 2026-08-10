@@ -15,7 +15,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
     public sealed partial class MarkdownEditorView : UserControl {
         private const double PaneMinWidth = 240;
 
+        // 完整内容已获取/同步的通知
         public event EventHandler<string>? ContentChanged;
+        // 内容被编辑过的轻量通知，不携带文本；用于立即标记 IsSaved = false、更新标签/文件树状态，输入路径不跨 WebView 传输全文
+        public event EventHandler? ContentModified;
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
         public event EventHandler<string>? ShortcutRequested;
@@ -184,6 +187,23 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             ContentChanged?.Invoke(this, content);
         }
 
+        private void MonacoEditor_ContentModified(object? sender, EventArgs e) {
+            ContentModified?.Invoke(this, EventArgs.Empty);
+            _previewUpdateVersion++;
+            _ = UpdatePreviewAsync(_previewUpdateVersion);
+        }
+
+        private async Task UpdatePreviewAsync(int version) {
+            await Task.Delay(150);
+            if (version != _previewUpdateVersion) return;
+
+            var content = await monacoEditor.GetContentAsync();
+            if (version != _previewUpdateVersion || _content == content) return;
+
+            _content = content;
+            UpdatePreviewBody(content);
+        }
+
         private void MonacoEditor_CursorPositionChanged(object? sender, MonacoCursorPosition position) {
             CursorPositionChanged?.Invoke(this, position);
         }
@@ -204,6 +224,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         private string? _pendingPreviewHtml;
         private bool _previewDocumentLoaded;
         private int _previewVersion;
+        private int _previewUpdateVersion;
         private Pointer? _resizePointer;
         private double _resizeStartX;
         private double _resizeStartLeftWidth;

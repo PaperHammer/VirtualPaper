@@ -31,8 +31,6 @@ namespace Workloads.Creation.WebBackdrop.Models {
         }
 
         public async Task ReopenWithEncodingAsync(string encoding) {
-            if (!File.Exists(FilePath)) return;
-
             var enc = GetEncodingFromText(encoding);
             Content = await ReadAllTextAsync(FilePath, enc);
             LineEndingText = GetLineEndingText(_content);
@@ -97,8 +95,11 @@ namespace Workloads.Creation.WebBackdrop.Models {
         }
 
         public static async Task<WebEditorFile> LoadAsync(string filePath) {
-            var content = await ReadContentAsync(filePath);
-            var encodingText = await GetEncodingTextAsync(filePath);
+            if (!File.Exists(filePath) || !WebEditorFileUtil.IsTextExtension(Path.GetExtension(filePath))) {
+                return new WebEditorFile(filePath, string.Empty, "UTF-8");
+            }
+
+            var (content, encodingText) = await ReadAllTextAndEncodingAsync(filePath);
             return new WebEditorFile(filePath, content, encodingText);
         }
 
@@ -141,17 +142,33 @@ namespace Workloads.Creation.WebBackdrop.Models {
             var tabCount = 0;
             var spaceCount = 0;
             var minSpaces = int.MaxValue;
-            foreach (var line in content.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n')) {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                if (line[0] == '\t') {
-                    tabCount++;
-                    continue;
+
+            for (var index = 0; index < content.Length;) {
+                var spaces = 0;
+                var hasContent = false;
+
+                while (index < content.Length && content[index] is not '\r' and not '\n') {
+                    var character = content[index++];
+                    if (!hasContent && character == '\t') {
+                        tabCount++;
+                        while (index < content.Length && content[index] is not '\r' and not '\n') index++;
+                        break;
+                    }
+                    if (!hasContent && character == ' ') {
+                        spaces++;
+                    }
+                    else if (!char.IsWhiteSpace(character)) {
+                        hasContent = true;
+                    }
                 }
 
-                var spaces = line.TakeWhile(ch => ch == ' ').Count();
-                if (spaces <= 0) continue;
-                spaceCount++;
-                minSpaces = Math.Min(minSpaces, spaces);
+                if (hasContent && spaces > 0) {
+                    spaceCount++;
+                    minSpaces = Math.Min(minSpaces, spaces);
+                }
+
+                if (index < content.Length && content[index] == '\r') index++;
+                if (index < content.Length && content[index] == '\n') index++;
             }
 
             if (tabCount > spaceCount) return "Tabs";
@@ -184,10 +201,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
         }
 
         private static string GetEncodingText(byte[] bytes) {
-            if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF) return "UTF-8 BOM";
-            if (bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE) return "UTF-16 LE";
-            if (bytes.Length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF) return "UTF-16 BE";
-            return "UTF-8";
+            return GetEncodingText(bytes.AsSpan());
         }
 
         public override bool Equals(object? obj) {
@@ -208,10 +222,31 @@ namespace Workloads.Creation.WebBackdrop.Models {
             return sr.ReadToEnd();
         }
 
+        private static async Task<(string Content, string EncodingText)> ReadAllTextAndEncodingAsync(string path) {
+            return await RetryReadAsync(async () => {
+                await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, useAsync: true);
+                var prefix = new byte[3];
+                var prefixLength = await fs.ReadAsync(prefix);
+                var encoding = GetEncodingFromText(GetEncodingText(prefix.AsSpan(0, prefixLength)));
+                fs.Position = 0;
+                using var sr = new StreamReader(fs, encoding, detectEncodingFromByteOrderMarks: true);
+                return (await sr.ReadToEndAsync(), GetEncodingText(prefix.AsSpan(0, prefixLength)));
+            });
+        }
+
+        private static string GetEncodingText(ReadOnlySpan<byte> bytes) {
+            if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF) return "UTF-8 BOM";
+            if (bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE) return "UTF-16 LE";
+            if (bytes.Length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF) return "UTF-16 BE";
+            return "UTF-8";
+        }
+
         private static async Task<string> ReadAllTextAsync(string path, Encoding? encoding = null) {
-            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, useAsync: true);
-            using var sr = encoding == null ? new StreamReader(fs) : new StreamReader(fs, encoding);
-            return await sr.ReadToEndAsync();
+            return await RetryReadAsync(async () => {
+                await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, useAsync: true);
+                using var sr = encoding == null ? new StreamReader(fs) : new StreamReader(fs, encoding);
+                return await sr.ReadToEndAsync();
+            });
         }
 
         private static byte[] ReadAllBytes(string path) {
@@ -222,10 +257,26 @@ namespace Workloads.Creation.WebBackdrop.Models {
         }
 
         private static async Task<byte[]> ReadAllBytesAsync(string path) {
-            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, useAsync: true);
-            var bytes = new byte[fs.Length];
-            await fs.ReadExactlyAsync(bytes);
-            return bytes;
+            return await RetryReadAsync(async () => {
+                await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, useAsync: true);
+                var bytes = new byte[fs.Length];
+                await fs.ReadExactlyAsync(bytes);
+                return bytes;
+            });
+        }
+
+        private static async Task<T> RetryReadAsync<T>(Func<Task<T>> read) {
+            for (var attempt = 0; ; attempt++) {
+                try {
+                    return await read();
+                }
+                catch (IOException) when (attempt < 3) {
+                    await Task.Delay(50 * (attempt + 1));
+                }
+                catch (UnauthorizedAccessException) when (attempt < 3) {
+                    await Task.Delay(50 * (attempt + 1));
+                }
+            }
         }
 
         private string _content;

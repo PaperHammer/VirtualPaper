@@ -208,6 +208,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void ArcUserControl_Unloaded(object sender, RoutedEventArgs e) {
+            _propertyPanelRefreshCancellation?.Cancel();
+            _propertyPanelRefreshCancellation?.Dispose();
+            _propertyPanelRefreshCancellation = null;
             if (_session != null) {
                 _session.FileManager.Changed -= FileManager_Changed;
             }
@@ -237,9 +240,16 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             SaveAllRequested?.Invoke(this, EventArgs.Empty);
         }
 
+        private async Task OpenFileAsync(string filePath) {
+            if (ViewModel == null) return;
+
+            await SyncActiveEditorContentAsync();
+            await ViewModel.OpenFileAsync(filePath);
+        }
+
         private async void OnMonacoFileOpenRequested(object? sender, string filePath) {
             if (ViewModel != null && File.Exists(filePath)) {
-                await ViewModel.OpenFileAsync(filePath);
+                await OpenFileAsync(filePath);
                 leftFileTreeControl.SelectFile(filePath);
             }
         }
@@ -249,7 +259,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             // JS has already stored the target line/column in _pendingNavigation;
             // we just need to open the file, and setValue() will apply the position.
             if (ViewModel != null && File.Exists(filePath)) {
-                await ViewModel.OpenFileAsync(filePath);
+                await OpenFileAsync(filePath);
                 leftFileTreeControl.SelectFile(filePath);
             }
         }
@@ -365,6 +375,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         #region editor content event handlers
+        private void EditorContentView_ContentModified(object? sender, EventArgs e) {
+            if (ViewModel?.ActiveFile is { } activeFile) {
+                activeFile.SetSavedState(false);
+                SyncFileSavedState(activeFile);
+            }
+        }
+
         private void EditorContentView_ContentChanged(object? sender, string content) {
             if (ViewModel?.ActiveFile != null && ViewModel.ActiveFile.Content != content) {
                 ViewModel.ActiveFile.Content = content;
@@ -489,9 +506,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         #endregion
 
         private async void FileTree_FileOpenRequested(object? sender, string filePath) {
-            if (ViewModel != null) {
-                await ViewModel.OpenFileAsync(filePath);
-            }
+            await OpenFileAsync(filePath);
         }
 
         private void FileTree_FolderSelected(object? sender, string folderPath) {
@@ -877,17 +892,25 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
          * 
          * 输入停止 250ms 后，只刷新当前文件一次。避免频繁刷新和旧文件回写
          */
-        private async void QueuePropertyPanelRefresh(WebEditorFile file, string language) {
-            _propertyPanelRefreshVersion++;
-            var version = _propertyPanelRefreshVersion;
-            await Task.Delay(250);
-            if (version == _propertyPanelRefreshVersion && ViewModel?.ActiveFile?.Equals(file) == true) {
-                propertyPanelControl.Load(file, language);
+        private void QueuePropertyPanelRefresh(WebEditorFile file, string language) {
+            _propertyPanelRefreshCancellation?.Cancel();
+            _propertyPanelRefreshCancellation?.Dispose();
+            _propertyPanelRefreshCancellation = new CancellationTokenSource();
+            _ = RefreshPropertyPanelAsync(file, language, _propertyPanelRefreshCancellation.Token);
+        }
+
+        private async Task RefreshPropertyPanelAsync(WebEditorFile file, string language, CancellationToken cancellationToken) {
+            try {
+                await Task.Delay(250, cancellationToken);
+                if (ViewModel?.ActiveFile?.Equals(file) == true) {
+                    propertyPanelControl.Load(file, language);
+                }
             }
+            catch (OperationCanceledException) { }
         }
 
         private async void ProblemsPanel_ProblemRequested(object? sender, ProblemItem item) {
-            await ViewModel.OpenFileAsync(item.FilePath);
+            await OpenFileAsync(item.FilePath);
             await Task.Delay(50);
             await editorContentView.RevealPositionAsync(item.LineNumber, item.ColumnNumber);
         }
@@ -902,7 +925,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private WebProjectSession? _session;
         private bool _isLoaded;
         private bool _isDebugRunning;
-        private int _propertyPanelRefreshVersion;
+        private CancellationTokenSource? _propertyPanelRefreshCancellation;
         private WebEditorBottomPanel _activeBottomPanel = WebEditorBottomPanel.Problems;
         private string? _activeEditorFilePath;
         private Dictionary<EditorPanelSlot, PanelLayoutState> _panelLayoutStates = null!;

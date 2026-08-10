@@ -155,7 +155,20 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         internal async Task ExportAsync(ExportImageFormat format) => await ExecuteRuntimeCommandAsync(x => x.ExportAsync(format));
         private async Task SaveAsync() => await ExecuteRuntimeCommandAsync(InternalSaveAsync);
         private async Task SaveAsAsync() => await ExecuteRuntimeCommandAsync(InternalSaveAsAsync);
-        private async Task SaveAllAsync() => await Task.WhenAll(TabViewItems.Select(item => ExecuteRuntimeCommandAsync(InternalSaveAsync, item)));
+        /*
+         * 原实现 Task.WhenAll 会并发保存全部运行时；
+         * 改串行是为避免多个运行时同时写文件、更新共享配置、触发 watcher 或占用同一底层资源，导致 I/O 峰值、事件交错、失败状态难以定位。
+         */
+        private async Task SaveAllAsync() {
+            var runtimes = TabViewItems
+                .Select(item => item.Tag as IRuntime)
+                .OfType<IRuntime>()
+                .ToList();
+
+            foreach (var runtime in runtimes) {
+                await InternalSaveAsync(runtime);
+            }
+        }
 
         private async Task UndoAsync() => await ExecuteRuntimeCommandAsync(x => x.UndoAsync());
         private async Task RedoAsync() => await ExecuteRuntimeCommandAsync(x => x.RedoAsync());

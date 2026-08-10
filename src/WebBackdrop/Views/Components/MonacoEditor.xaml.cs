@@ -15,6 +15,7 @@ using Workloads.Creation.WebBackdrop.Core.Theme;
 namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class MonacoEditor : UserControl {
         public event EventHandler<string>? ContentChanged;
+        public event EventHandler? ContentModified;
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
         public event EventHandler<string>? ShortcutRequested;
@@ -82,7 +83,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             monacoWebView.DefaultBackgroundColor = WebBackdropThemeResource.GetColor(this, backgroundRole);
             if (monacoWebView.CoreWebView2 != null && _isEditorReady) {
-                _ = monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setEditorTheme('{theme}')");
+                _ = monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setEditorTheme({JsonSerializer.Serialize(theme)})");
             }
         }
 
@@ -121,10 +122,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
-        private async void CoreWebView2_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e) {
+        private void CoreWebView2_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e) {
+            _ = HandleWebMessageAsync(e);
+        }
+
+        private async Task HandleWebMessageAsync(CoreWebView2WebMessageReceivedEventArgs e) {
             try {
                 var message = e.TryGetWebMessageAsString();
-                ArcLog.GetLogger<MonacoEditor>().Info($"Monaco message: {message}");
                 using var json = JsonDocument.Parse(message);
                 var type = json.RootElement.TryGetProperty("type", out var typeElement)
                     ? typeElement.GetString()
@@ -176,15 +180,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             return Task.CompletedTask;
         }
 
-        private async Task HandleContentChangeAsync() {
-            var content = await monacoWebView.CoreWebView2.ExecuteScriptAsync("window.getValue()");
-            if (content != null) {
-                content = JsonSerializer.Deserialize<string>(content) ?? string.Empty;
-                if (_content != content) {
-                    _content = content;
-                    ContentChanged?.Invoke(this, content);
-                }
-            }
+        private Task HandleContentChangeAsync() {
+            ContentModified?.Invoke(this, EventArgs.Empty);
+            return Task.CompletedTask;
         }
 
         private Task HandleEditorStateChangedAsync(JsonElement rootElement) {
@@ -373,7 +371,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 return;
             }
             try {
-                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setLanguage(\"{language}\")");
+                var serializedLanguage = JsonSerializer.Serialize(language);
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setLanguage({serializedLanguage})");
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
             }

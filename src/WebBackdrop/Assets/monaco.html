@@ -129,6 +129,7 @@
                 return options.insertSpaces ? 'Spaces: ' + options.tabSize : 'Tabs: ' + options.tabSize;
             }
 
+            var editorStateTimer = null;
             function postEditorState() {
                 if (!window.chrome || !window.chrome.webview) {
                     return;
@@ -152,13 +153,26 @@
                 }));
             }
 
+            function scheduleEditorState() {
+                if (editorStateTimer) clearTimeout(editorStateTimer);
+                editorStateTimer = setTimeout(function () {
+                    editorStateTimer = null;
+                    postEditorState();
+                }, 150);
+            }
+
+            var contentChangeTimer = null;
             editor.onDidChangeModelContent(function () {
                 if (!window.isSettingValue) {
-                    postEditorState();
+                    scheduleEditorState();
                 }
-                if (window.chrome && window.chrome.webview) {
-                    window.chrome.webview.postMessage(JSON.stringify({ type: 'contentChange' }));
-                }
+                if (contentChangeTimer) clearTimeout(contentChangeTimer);
+                contentChangeTimer = setTimeout(function () {
+                    contentChangeTimer = null;
+                    if (window.chrome && window.chrome.webview) {
+                        window.chrome.webview.postMessage(JSON.stringify({ type: 'contentChange' }));
+                    }
+                }, 150);
             });
 
             var lastCursorPositionPayload = null;
@@ -529,7 +543,23 @@
                 return null;
             }
 
+            function updateLargeFileOptions(contentLength) {
+                var isLargeFile = contentLength >= 200000;
+                editor.updateOptions({
+                    minimap: { enabled: !isLargeFile, scale: 1, showSlider: 'mouseover' },
+                    folding: !isLargeFile,
+                    stickyScroll: { enabled: !isLargeFile },
+                    smoothScrolling: !isLargeFile,
+                    cursorSmoothCaretAnimation: isLargeFile ? 'off' : 'on',
+                    semanticHighlighting: { enabled: !isLargeFile },
+                    occurrencesHighlight: isLargeFile ? 'off' : 'singleFile',
+                    colorDecorators: !isLargeFile,
+                    bracketPairColorization: { enabled: !isLargeFile }
+                });
+            }
+
             window.setValue = function (value, filePath) {
+                updateLargeFileOptions(value.length);
                 var current = editor.getValue();
                 var isChanged = current !== value;
                 if (isChanged) {

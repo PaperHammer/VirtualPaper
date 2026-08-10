@@ -16,6 +16,9 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
 
         public Task<string> StartAsync(string entryFilePath, CancellationToken cancellationToken = default) {
             cancellationToken.ThrowIfCancellationRequested();
+            if (!TryGetProjectRelativePath(entryFilePath, out _)) {
+                throw new ArgumentException("The entry file must be inside the project directory.", nameof(entryFilePath));
+            }
 
             if (_listener != null && _listener.IsListening)
                 return Task.FromResult(CreateShellUrl(entryFilePath));
@@ -45,6 +48,11 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             _listener = null;
             _watcher?.Dispose();
             _watcher = null;
+            lock (_changeLock) {
+                _changeDebounceCancellation?.Cancel();
+                _changeDebounceCancellation?.Dispose();
+                _changeDebounceCancellation = null;
+            }
 
             foreach (var socket in _sockets.Values) {
                 try { socket.Abort(); } catch { }
@@ -77,7 +85,13 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             try {
                 // 预览入口：返回包裹实际页面的壳页，用于接收刷新消息并重载 iframe。
                 if (context.Request.Url?.AbsolutePath == "/__preview_shell") {
-                    await WriteTextAsync(context.Response, CreateShellHtml(context.Request.QueryString["entry"] ?? "index.html"));
+                    var entry = context.Request.QueryString["entry"];
+                    if (entry == null || GetFilePath("/" + entry) == null) {
+                        context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                        context.Response.Close();
+                        return;
+                    }
+                    await WriteTextAsync(context.Response, CreateShellHtml(entry));
                     return;
                 }
 
@@ -104,6 +118,9 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
 
                 // 非 HTML 文件按类型原样返回，例如 CSS、JavaScript、图片和字体。
                 context.Response.ContentType = GetContentType(filePath);
+                if (!Path.GetExtension(filePath).Equals(".html", StringComparison.OrdinalIgnoreCase)) {
+                    context.Response.Headers[HttpResponseHeader.CacheControl] = "public, max-age=3600";
+                }
                 await using var stream = File.OpenRead(filePath);
                 context.Response.ContentLength64 = stream.Length;
                 await stream.CopyToAsync(context.Response.OutputStream, cancellationToken);
@@ -143,12 +160,39 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             }
         }
 
-        private void OnFileChanged(object sender, FileSystemEventArgs e) => BroadcastChange(e.FullPath);
-        private void OnFileRenamed(object sender, RenamedEventArgs e) => BroadcastChange(e.FullPath);
+        private void OnFileChanged(object sender, FileSystemEventArgs e) => ScheduleBroadcast(e.FullPath);
+        private void OnFileRenamed(object sender, RenamedEventArgs e) => ScheduleBroadcast(e.FullPath);
 
-        private void BroadcastChange(string path) {
-            var extension = Path.GetExtension(path);
-            var message = extension.Equals(".css", StringComparison.OrdinalIgnoreCase) ? "css" : "reload";
+        private void ScheduleBroadcast(string path) {
+            var refreshKind = Path.GetExtension(path).Equals(".css", StringComparison.OrdinalIgnoreCase)
+                ? PreviewRefreshKind.CssOnly
+                : PreviewRefreshKind.Reload;
+            CancellationToken token;
+            lock (_changeLock) {
+                _pendingRefreshKind = (PreviewRefreshKind)Math.Max((int)_pendingRefreshKind, (int)refreshKind);
+                _changeDebounceCancellation?.Cancel();
+                _changeDebounceCancellation?.Dispose();
+                _changeDebounceCancellation = new CancellationTokenSource();
+                token = _changeDebounceCancellation.Token;
+            }
+            _ = BroadcastPendingChangeAsync(token);
+        }
+
+        private async Task BroadcastPendingChangeAsync(CancellationToken cancellationToken) {
+            try {
+                await Task.Delay(150, cancellationToken);
+                PreviewRefreshKind refreshKind;
+                lock (_changeLock) {
+                    refreshKind = _pendingRefreshKind;
+                    _pendingRefreshKind = PreviewRefreshKind.CssOnly;
+                }
+                BroadcastChange(refreshKind);
+            }
+            catch (OperationCanceledException) { }
+        }
+
+        private void BroadcastChange(PreviewRefreshKind refreshKind) {
+            var message = refreshKind == PreviewRefreshKind.CssOnly ? "css" : "reload";
             var data = Encoding.UTF8.GetBytes(message);
             foreach (var pair in _sockets) {
                 if (pair.Value.State != WebSocketState.Open)
@@ -158,17 +202,32 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         }
 
         private string CreateShellUrl(string entryFilePath) {
-            var relativePath = Path.GetRelativePath(_projectRoot, entryFilePath).Replace('\\', '/');
+            if (!TryGetProjectRelativePath(entryFilePath, out var relativePath)) {
+                throw new ArgumentException("The entry file must be inside the project directory.", nameof(entryFilePath));
+            }
             return $"http://127.0.0.1:{_port}/__preview_shell?entry={Uri.EscapeDataString(relativePath)}";
         }
 
+        private bool TryGetProjectRelativePath(string path, out string relativePath) {
+            relativePath = Path.GetRelativePath(_projectRoot, Path.GetFullPath(path));
+            if (relativePath == ".." || relativePath.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) || Path.IsPathRooted(relativePath)) {
+                return false;
+            }
+
+            relativePath = relativePath.Replace('\\', '/');
+            return true;
+        }
+
         private string? GetFilePath(string requestPath) {
-            var relativePath = Uri.UnescapeDataString(requestPath.TrimStart('/')).Replace('/', Path.DirectorySeparatorChar);
+            string relativePath;
+            try {
+                relativePath = Uri.UnescapeDataString(requestPath.TrimStart('/')).Replace('/', Path.DirectorySeparatorChar);
+            }
+            catch (UriFormatException) {
+                return null;
+            }
             var path = Path.GetFullPath(Path.Combine(_projectRoot, relativePath));
-            return path.StartsWith(_projectRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(path, _projectRoot, StringComparison.OrdinalIgnoreCase)
-                ? path
-                : null;
+            return TryGetProjectRelativePath(path, out _) ? path : null;
         }
 
         private static async Task WriteTextAsync(HttpListenerResponse response, string text, string contentType = "text/html; charset=utf-8") {
@@ -210,9 +269,17 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             _ => "application/octet-stream",
         };
 
+        private enum PreviewRefreshKind {
+            CssOnly,
+            Reload,
+        }
+
         private readonly string _projectRoot;
         private readonly ConcurrentDictionary<Guid, WebSocket> _sockets = new();
+        private readonly object _changeLock = new();
         private HttpListener? _listener;
+        private CancellationTokenSource? _changeDebounceCancellation;
+        private PreviewRefreshKind _pendingRefreshKind;
         private int _port;
         private FileSystemWatcher? _watcher;
     }

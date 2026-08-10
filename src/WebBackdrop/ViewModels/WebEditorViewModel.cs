@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores;
@@ -112,7 +113,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                     _ => new UTF8Encoding(false),
                 };
 
-                await File.WriteAllTextAsync(file.FilePath, text, enc);
+                await FileUtil.WriteAllTextAsync(file.FilePath, text, enc);
                 file.MarkAsSaved();
 
                 // Refresh the disk stamp so the FileSystemWatcher won't treat

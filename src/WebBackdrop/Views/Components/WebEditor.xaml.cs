@@ -376,10 +376,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         #region editor content event handlers
         private void EditorContentView_ContentModified(object? sender, EventArgs e) {
-            if (ViewModel?.ActiveFile is { } activeFile) {
-                activeFile.SetSavedState(false);
-                SyncFileSavedState(activeFile);
-            }
+            // 图片等非文本文件没有编辑器内容，忽略 Monaco 的滞后消息，
+            // 避免它们被错误地标记为未保存。
+            if (ViewModel?.ActiveFile is not { CanOpenAsText: true } activeFile) return;
+            activeFile.SetSavedState(false);
+            SyncFileSavedState(activeFile);
         }
 
         private void EditorContentView_ContentChanged(object? sender, string content) {
@@ -391,21 +392,24 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void EditorContentView_EditorStateChanged(object? sender, MonacoEditorState state) {
-            if (ViewModel?.ActiveFile == null) return;
+            // Monaco 的状态（含 isSaved）只对文本类文件有效。图片等非文本文件
+            // 没有编辑器内容，忽略滞后/无关的 editorStateChanged 消息，
+            // 避免第一次打开图片时被错误地标记为未保存。
+            if (ViewModel?.ActiveFile is not { CanOpenAsText: true } activeFile) return;
 
-            var wasSaved = ViewModel.ActiveFile.IsSaved;
-            ViewModel.ActiveFile.SetSavedState(state.IsSaved);
-            ViewModel.ActiveFile.SetLineEnding(state.LineEnding);
-            ViewModel.ActiveFile.SetEncoding(state.Encoding);
+            var wasSaved = activeFile.IsSaved;
+            activeFile.SetSavedState(state.IsSaved);
+            activeFile.SetLineEnding(state.LineEnding);
+            activeFile.SetEncoding(state.Encoding);
             IndentText = state.Indent;
             EncodingText = state.Encoding;
             LineEndingText = state.LineEnding;
-            SyncFileSavedState(ViewModel.ActiveFile);
+            SyncFileSavedState(activeFile);
 
             // Refresh the property panel when IsSaved toggles
             // (e.g. after undo back to last-saved state).
-            if (wasSaved != ViewModel.ActiveFile.IsSaved) {
-                propertyPanelControl.Load(ViewModel.ActiveFile, ActiveFileLanguage);
+            if (wasSaved != activeFile.IsSaved) {
+                propertyPanelControl.Load(activeFile, ActiveFileLanguage);
             }
         }
 

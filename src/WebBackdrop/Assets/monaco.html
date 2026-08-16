@@ -118,6 +118,16 @@
                 multiCursorModifier: 'alt',
             });
 
+            // Initialize saved/initial version ids right after editor creation.
+            // Without this, postEditorState() would report isSaved=false until the
+            // first setValue() call, which can incorrectly mark non-text files
+            // (e.g. the first opened image) as unsaved.
+            var initialModel = editor.getModel();
+            if (initialModel) {
+                window.initialAlternativeVersionId = initialModel.getAlternativeVersionId();
+                window.savedAlternativeVersionId = initialModel.getAlternativeVersionId();
+            }
+
             function getLineEndingText(model) {
                 return model && model.getEOL && model.getEOL() === '\r\n' ? 'CRLF' : 'LF';
             }

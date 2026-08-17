@@ -1664,4 +1664,7 @@ The following words cannot be used as usernames:
   <data name="Settings_General_Version_PluginsReady" xml:space="preserve">
     <value>Plugin update ready. Click to install. The main window must be closed, please save your data.</value>
   </data>
+  <data name="Text_NoPreview" xml:space="preserve">
+    <value>No preview</value>
+  </data>
 </root>

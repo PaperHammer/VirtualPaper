@@ -58,7 +58,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         public void SaveProjectData(WpWebProjectData data) {
             _projectData = data;
             var json = JsonSerializer.Serialize(data, WpWebProjectDataContext.Default.WpWebProjectData);
-            File.WriteAllText(GetProjectDataFilePath(), json);
+            WriteAllTextAtomic(GetProjectDataFilePath(), json);
         }
 
         public void EnsureProjectStructure() {
@@ -75,43 +75,59 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         }
 
         public IReadOnlyList<WebProjectManifestItem> GetManifestItems() {
-            return GetManifestFiles()
-                .Select(item => new WebProjectManifestItem(
-                    item["path"]?.GetValue<string>() ?? string.Empty,
-                    item["type"]?.GetValue<string>() ?? "file",
-                    item["role"]?.GetValue<string>() ?? "asset"))
-                .Where(item => !string.IsNullOrWhiteSpace(item.Path))
-                .ToList();
+            // 导出等在后台线程执行，与 UI 线程的 manifest 写入并发；在锁内完成快照，避免竞态
+            lock (_manifestLock) {
+                return GetManifestFiles()
+                    .Select(item => new WebProjectManifestItem(
+                        item["path"]?.GetValue<string>() ?? string.Empty,
+                        item["type"]?.GetValue<string>() ?? "file",
+                        item["role"]?.GetValue<string>() ?? "asset"))
+                    .Where(item => !string.IsNullOrWhiteSpace(item.Path))
+                    .ToList();
+            }
         }
 
         public void AddManifestPath(string path, string? role = null) {
-            if (IsProjectFile(path) && role == null) return;
+            AddManifestPaths([path], role);
+        }
 
+        /// <summary>
+        /// 批量登记路径：一次加载、一次保存 manifest，避免逐文件读写造成 O(N²) 磁盘 IO。
+        /// </summary>
+        public void AddManifestPaths(IEnumerable<string> paths, string? role = null) {
             lock (_manifestLock) {
-                var relativePath = ToRelativePath(path);
                 var manifest = LoadOrCreateManifest();
                 var files = GetOrCreateFilesArray(manifest);
-                if (files.OfType<JsonObject>().Any(item => IsSameManifestPath(item["path"]?.GetValue<string>(), relativePath))) return;
+                var changed = false;
 
-                files.Add(new JsonObject {
-                    ["path"] = relativePath,
-                    ["type"] = Directory.Exists(path) ? "folder" : GetFileType(relativePath),
-                    ["role"] = role ?? GetFileRole(relativePath)
-                });
-                SaveManifest(manifest);
+                foreach (var path in paths) {
+                    if (IsProjectFile(path) && role == null) continue;
+
+                    var relativePath = ToRelativePath(path);
+                    if (files.OfType<JsonObject>().Any(item => IsSameManifestPath(item["path"]?.GetValue<string>(), relativePath))) continue;
+
+                    files.Add(new JsonObject {
+                        ["path"] = relativePath,
+                        ["type"] = Directory.Exists(path) ? "folder" : GetFileType(relativePath),
+                        ["role"] = role ?? GetFileRole(relativePath)
+                    });
+                    changed = true;
+                }
+
+                if (changed) SaveManifest(manifest);
             }
         }
 
         public void AddManifestPathRecursive(string path) {
-            AddManifestPath(path);
-            if (!Directory.Exists(path)) return;
+            if (!Directory.Exists(path)) {
+                AddManifestPath(path);
+                return;
+            }
 
-            foreach (var directory in Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories)) {
-                AddManifestPath(directory);
-            }
-            foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories)) {
-                AddManifestPath(file);
-            }
+            // 一次批量登记：目录自身 + 全部子目录与文件，只读写一次 manifest
+            AddManifestPaths(new[] { path }
+                .Concat(Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories))
+                .Concat(Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories)));
         }
 
         public void RemoveManifestPath(string path) {
@@ -182,11 +198,13 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             var templateProjectFile = Path.Combine(ProjectFolder, "template" + FileExtension.FE_WebDesign);
             if (File.Exists(templateProjectFile) && !templateProjectFile.Equals(ProjectFilePath, StringComparison.OrdinalIgnoreCase)) {
                 File.Move(templateProjectFile, ProjectFilePath);
+                _manifestCache = null; // 工程文件刚就位，丢弃旧缓存重新加载
                 IsSaveFromInit = true;
                 return;
             }
 
             File.WriteAllText(ProjectFilePath, CreateProjectManifest());
+            _manifestCache = null; // 新生成的清单与可能已缓存的空清单不一致，丢弃缓存
             IsSaveFromInit = true;
         }
 
@@ -254,17 +272,23 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         }
 
         private IEnumerable<JsonObject> GetManifestFiles() {
-            var manifest = LoadOrCreateManifest();
-            return manifest["files"] is JsonArray files
-                ? files.OfType<JsonObject>().ToList()
-                : [];
+            // 加锁保护：manifest 缓存会被后台线程（导出）与 UI 线程并发访问
+            lock (_manifestLock) {
+                var manifest = LoadOrCreateManifest();
+                return manifest["files"] is JsonArray files
+                    ? files.OfType<JsonObject>().ToList()
+                    : [];
+            }
         }
 
         private JsonObject LoadOrCreateManifest() {
+            if (_manifestCache != null) return _manifestCache;
+
             if (File.Exists(ProjectFilePath)) {
                 try {
                     if (JsonNode.Parse(File.ReadAllText(ProjectFilePath)) is JsonObject node) {
                         _parseFailed = false;
+                        _manifestCache = node;
                         return node;
                     }
                 }
@@ -276,7 +300,18 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
                 }
             }
 
-            return [];
+            _manifestCache = [];
+            return _manifestCache;
+        }
+
+        /// <summary>
+        /// 丢弃内存中的 manifest 缓存（如磁盘上的 .vpw 被外部修改后），下次访问时重新从磁盘加载。
+        /// </summary>
+        public void ReloadManifest() {
+            lock (_manifestLock) {
+                _manifestCache = null;
+                _parseFailed = false;
+            }
         }
 
         private static JsonArray GetOrCreateFilesArray(JsonObject manifest) {
@@ -308,7 +343,28 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
                 }
             }
 
-            File.WriteAllText(ProjectFilePath, manifest.ToJsonString(_jsonSerializerOptions));
+            WriteAllTextAtomic(ProjectFilePath, manifest.ToJsonString(_jsonSerializerOptions));
+            _manifestCache = manifest;
+        }
+
+        /// <summary>
+        /// 原子写入：先写临时文件再替换目标，避免写入中途崩溃留下损坏的 manifest/project.json。
+        /// 临时文件以 "." 开头、".tmp" 结尾，ProjectFileManager 会将其识别为瞬时文件而忽略。
+        /// </summary>
+        private static void WriteAllTextAtomic(string path, string content) {
+            var directory = Path.GetDirectoryName(path);
+            if (string.IsNullOrEmpty(directory)) throw new ArgumentException("Invalid file path.", nameof(path));
+
+            var tempPath = Path.Combine(directory, $".{Path.GetFileName(path)}.{Guid.NewGuid():N}.tmp");
+            try {
+                File.WriteAllText(tempPath, content);
+                File.Move(tempPath, path, overwrite: true);
+            }
+            finally {
+                if (File.Exists(tempPath)) {
+                    try { File.Delete(tempPath); } catch { /* 忽略清理失败 */ }
+                }
+            }
         }
 
         private string ToRelativePath(string path) {
@@ -322,6 +378,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         public void UpdateProjectFilePath(string newPath) {
             ProjectFilePath = newPath;
             ProjectFolder = Path.GetDirectoryName(newPath)!;
+            _manifestCache = null; // 项目文件路径变更，缓存失效
         }
 
         private static bool IsSameManifestPath(string? left, string right) {
@@ -386,6 +443,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
 
         private static readonly JsonSerializerOptions _jsonSerializerOptions = new() { WriteIndented = true };
         private readonly object _manifestLock = new();
+        private JsonObject? _manifestCache;
         private bool _parseFailed;
     }
 

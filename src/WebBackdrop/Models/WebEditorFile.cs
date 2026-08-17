@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualPaper.Models.Mvvm;
@@ -31,9 +30,13 @@ namespace Workloads.Creation.WebBackdrop.Models {
         }
 
         public async Task ReopenWithEncodingAsync(string encoding) {
-            var enc = GetEncodingFromText(encoding);
-            Content = await ReadAllTextAsync(FilePath, enc);
-            LineEndingText = GetLineEndingText(_content);
+            // 仅文本类文件重新读取内容；图片等非文本文件内容由文件路径驱动，不读二进制
+            if (CanOpenAsText) {
+                var enc = GetEncodingFromText(encoding);
+                Content = await ReadAllTextAsync(FilePath, enc);
+                LineEndingText = GetLineEndingText(_content);
+            }
+
             _isSaved = true;
             IsSavedChanged?.Invoke(this, EventArgs.Empty);
         }

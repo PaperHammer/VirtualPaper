@@ -34,9 +34,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             ActualThemeChanged += MarkdownEditorView_ActualThemeChanged;
         }
 
-        public void Load(string content, string language) {
+        public void Load(string filePath, string content, string language) {
             _content = content;
             ResetLayout();
+            // 关联文件 URI，使状态上报携带路径，保存状态（含 undo/redo）才能正确匹配
+            monacoEditor.FilePath = filePath;
             monacoEditor.EditorContent = content;
             monacoEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(language);
             LoadPreviewDocument(content);

@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.DraftPanel.Model;
@@ -134,6 +135,32 @@ namespace VirtualPaper.DraftPanel.Views {
             foreach (var kvp in _tabToHost) {
                 kvp.Value.Visibility = (kvp.Key as ArcTabViewItem == selectedItem) ? Visibility.Visible : Visibility.Collapsed;
             }
+
+            UpdateMenuForActiveRuntime();
+        }
+
+        /// <summary>
+        /// 根据当前选中 Tab 的项目类型调整共享菜单：
+        /// Web 项目仅可导出 zip 包、且隐藏“另存为”（改用文件树右键菜单的按文件保存/另存为）；
+        /// StaticImg 项目仅可导出图片格式。
+        /// </summary>
+        private void UpdateMenuForActiveRuntime() {
+            var runtime = GetSelectedRuntime();
+            var isWebProject = runtime?.RuntimeFileType == FileType.FWebDesign;
+
+            ExportPngMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
+            ExportBmpMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
+            ExportJpegMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
+            ExportJpegXrMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
+            ExportFullZipMenuItem.Visibility = isWebProject ? Visibility.Visible : Visibility.Collapsed;
+            ExportZipMenuItem.Visibility = isWebProject ? Visibility.Visible : Visibility.Collapsed;
+            saveAsMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private IRuntime? GetSelectedRuntime() {
+            var index = TabViewControl.SelectedIndex;
+            if (index < 0 || index >= _viewModel.TabViewItems.Count) return null;
+            return _viewModel.TabViewItems[index].Tag as IRuntime;
         }
         #endregion
 
@@ -252,6 +279,24 @@ namespace VirtualPaper.DraftPanel.Views {
                         }
                     });
             }
+        }
+
+        private async void OnAddToLibraryMenuItemClick(object sender, RoutedEventArgs e) {
+            var ctx = ArcPageContextManager.GetContext<Draft>();
+            var loadingCtx = ctx?.LoadingContext;
+            if (loadingCtx == null)
+                return;
+
+            await loadingCtx.RunAsync(
+                operation: async (token) => {
+                    try {
+                        await _viewModel.AddToLibraryAsync();
+                    }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<WorkSpace>().Error(ex);
+                        GlobalMessageUtil.ShowException(ex);
+                    }
+                });
         }
         #endregion
 

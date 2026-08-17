@@ -36,18 +36,21 @@
                         <KeyboardAccelerator Modifiers="Control" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="{markup:I18n Key=Text_Save_As}" Command="{x:Bind _viewModel.MFI_SaveAsCommand}"/>
+                <MenuFlyoutItem x:Name="saveAsMenuItem" Text="{markup:I18n Key=Text_Save_As}" Command="{x:Bind _viewModel.MFI_SaveAsCommand}"/>
                 <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_SaveAll}" Command="{x:Bind _viewModel.MFI_SaveAllCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control,Shift" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutSubItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Export}">
-                    <MenuFlyoutItem Text="PNG" Tag="Png" Click="OnExportMenuItemClick"/>
-                    <MenuFlyoutItem Text="BMP" Tag="Bmp" Click="OnExportMenuItemClick"/>
-                    <MenuFlyoutItem Text="JPEG" Tag="Jpeg" Click="OnExportMenuItemClick"/>
-                    <MenuFlyoutItem Text="JPEG XR" Tag="JpegXR" Click="OnExportMenuItemClick"/>
+                <MenuFlyoutSubItem x:Name="ExportMenuSubItem" Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Export}">
+                    <MenuFlyoutItem x:Name="ExportPngMenuItem" Text="PNG" Tag="Png" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem x:Name="ExportBmpMenuItem" Text="BMP" Tag="Bmp" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem x:Name="ExportJpegMenuItem" Text="JPEG" Tag="Jpeg" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem x:Name="ExportJpegXrMenuItem" Text="JPEG XR" Tag="JpegXR" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem x:Name="ExportFullZipMenuItem" Text="Full Project Archive (.zip)" Tag="FullZip" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem x:Name="ExportZipMenuItem" Text="Web Wallpaper Package (.zip)" Tag="Zip" Click="OnExportMenuItemClick"/>
                 </MenuFlyoutSubItem>
+                <MenuFlyoutItem Text="{markup:I18n Key=Text_ImportLib}" Click="OnAddToLibraryMenuItemClick"/>
                 <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Exit}" Click="MFI_Exit_Clicked">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="F4"/>

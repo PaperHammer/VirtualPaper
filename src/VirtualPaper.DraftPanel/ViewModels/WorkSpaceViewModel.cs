@@ -153,6 +153,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         internal async Task ExportAsync(ExportImageFormat format) => await ExecuteRuntimeCommandAsync(x => x.ExportAsync(format));
+        internal async Task<bool> AddToLibraryAsync() => await ExecuteRuntimeCommandAsync(x => x.AddToLibraryAsync());
         private async Task SaveAsync() => await ExecuteRuntimeCommandAsync(InternalSaveAsync);
         private async Task SaveAsAsync() => await ExecuteRuntimeCommandAsync(InternalSaveAsAsync);
         /*

@@ -201,7 +201,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             var indent = rootElement.TryGetProperty("indent", out var indentElement)
                 ? indentElement.GetString() ?? "Spaces: 2"
                 : "Spaces: 2";
-            EditorStateChanged?.Invoke(this, new MonacoEditorState(alternativeVersionId, isSaved, canUndo, canRedo, lineEnding, encoding, indent));
+            var filePath = rootElement.TryGetProperty("filePath", out var filePathElement)
+                ? filePathElement.GetString()
+                : null;
+            EditorStateChanged?.Invoke(this, new MonacoEditorState(alternativeVersionId, isSaved, canUndo, canRedo, lineEnding, encoding, indent, filePath));
             return Task.CompletedTask;
         }
 
@@ -264,6 +267,21 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         public Task MarkSavedAsync() {
             return ExecuteEditorCommandAsync("window.markSaved()");
+        }
+
+        /// <summary>
+        /// 释放指定文件对应的 Monaco 模型，避免一次会话打开过的文件模型持续累积。
+        /// </summary>
+        public async Task DisposeModelAsync(string filePath) {
+            if (monacoWebView.CoreWebView2 == null || !_isEditorReady) return;
+
+            try {
+                var serialized = JsonSerializer.Serialize(filePath);
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.disposeModel({serialized})");
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MonacoEditor>().Error(ex);
+            }
         }
 
         public async Task<string> GetContentAsync() {
@@ -419,7 +437,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
     public readonly record struct MonacoCursorPosition(int LineNumber, int Column, int SelectedCharacterCount, bool IsSelectedCharacterCountOverflow);
 
-    public sealed record MonacoEditorState(int AlternativeVersionId, bool IsSaved, bool CanUndo, bool CanRedo, string LineEnding, string Encoding, string Indent);
+    public sealed record MonacoEditorState(int AlternativeVersionId, bool IsSaved, bool CanUndo, bool CanRedo, string LineEnding, string Encoding, string Indent, string? FilePath = null);
 
     public sealed class MonacoMarker {
         public int Severity { get; set; }

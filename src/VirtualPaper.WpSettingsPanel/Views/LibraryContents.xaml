@@ -48,8 +48,25 @@
                 CornerRadius="8"
                 ContextFlyout="{StaticResource WallpaperContextFlyout}">
 
+                <!-- 原生占位缩略图：无 preview（ThumbnailPath 为空）或图片加载失败时显示 -->
+                <Grid x:Name="NoPreviewPlaceholder"
+                    Visibility="{x:Bind ThumbnailPath, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="6"
+                        Opacity="0.65">
+                        <FontIcon Glyph="&#xEB9F;" FontSize="36"/>
+                        <TextBlock
+                            Text="{markup:I18n Key=Text_NoPreview}"
+                            FontSize="12"
+                            TextAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+
                 <Image 
-                    Source="{x:Bind ThumbnailPath}"
+                    Source="{x:Bind ThumbnailPath, Converter={StaticResource StringToImageSourceConverter}}"
                     Stretch="UniformToFill"
                     ImageFailed="Image_ImageFailed"/>
 

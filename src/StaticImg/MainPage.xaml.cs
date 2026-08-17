@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -11,6 +12,7 @@ using VirtualPaper.Shader;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.PanelBus;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
@@ -38,6 +40,8 @@ namespace Workloads.Creation.StaticImg {
 
         public bool IsSavedFromInit => Session.DesignFileUtil.IsSaveFromInit;
 
+        public FileType RuntimeFileType { get; private set; }
+
         public MainPage() {
             this.InitializeComponent();
             ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
@@ -48,6 +52,7 @@ namespace Workloads.Creation.StaticImg {
         /// </summary>
         /// <param name="filePath">类型为 vpd 或静态图像的文件路径</param>
         public void Initialize(string filePath, FileType fileType) {
+            RuntimeFileType = fileType;
             Session = new InkProjectSession(filePath, fileType);
             Payload = new FrameworkPayload() {
                 [NaviPayloadKey.ArcPageContext] = this.ArcContext,
@@ -207,6 +212,55 @@ namespace Workloads.Creation.StaticImg {
             );
 
             return await inkCanvas.ExportAsync(exportData);
+        }
+
+        /// <summary>
+        /// 一键入库：渲染为临时 PNG → 通知库 Panel（WpSettings）导入 → 清理临时文件。
+        /// 与导出交互一致，由 DraftPanel 的“文件 → 入库”菜单触发。
+        /// </summary>
+        public async Task<bool> AddToLibraryAsync() {
+            var tempPngPath = string.Empty;
+            try {
+                tempPngPath = Path.Combine(
+                    Path.GetTempPath(),
+                    $"{Session.DesignFileUtil.FileNameWithoutEx}_{Guid.NewGuid():N}.png");
+                var exportData = new ExportDataStaticImg(
+                    Name: Path.GetFileName(tempPngPath),
+                    Path: tempPngPath,
+                    Format: ExportImageFormat.Png
+                );
+
+                var exported = await inkCanvas.ExportAsync(exportData);
+                if (string.IsNullOrEmpty(exported)) return false;
+
+                var (found, success) = await PanelMessageCenter.TryInvokeAsync<string, bool>(
+                    PanelContracts.WpSettings.Id,
+                    PanelContracts.WpSettings.Action_ImportWallpaper,
+                    exported);
+
+                if (!found) {
+                    GlobalMessageUtil.ShowError("Wallpaper library panel is not available.");
+                    return false;
+                }
+
+                if (success) {
+                    GlobalMessageUtil.ShowSuccess(LanguageUtil.GetI18n(nameof(Constants.I18n.Add_To_Lib_Success)));
+                    return true;
+                }
+
+                GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true);
+                return false;
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+                return false;
+            }
+            finally {
+                if (!string.IsNullOrEmpty(tempPngPath)) {
+                    try { if (File.Exists(tempPngPath)) File.Delete(tempPngPath); } catch { /* 忽略清理失败 */ }
+                }
+            }
         }
         #endregion
 

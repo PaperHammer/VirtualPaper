@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Utils.ProjectSystem;
@@ -43,14 +45,33 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             ProjectSystem.Documents.Get(filePath)?.RefreshDiskStamp();
         }
 
+        /// <summary>
+        /// 同步编辑器脏状态到文档跟踪器，使“外部修改 + 未保存编辑”能正确触发冲突而非静默覆盖。
+        /// </summary>
+        public void SetDirty(string filePath, bool isDirty) {
+            var document = ProjectSystem.Documents.Get(filePath);
+            if (document != null) {
+                document.IsDirty = isDirty;
+            }
+        }
+
         public bool TryConsumeExternalChange(string filePath, out FileChangeType changeType) {
-            if (_pendingExternalChanges.TryGetValue(filePath, out changeType)) {
-                _pendingExternalChanges.Remove(filePath);
+            // 写入方（watcher/防抖续体）与读取方（UI 线程）并发访问，使用原子移除避免竞态
+            if (_pendingExternalChanges.TryRemove(filePath, out changeType)) {
                 return true;
             }
 
             changeType = default;
             return false;
+        }
+
+        /// <summary>
+        /// 忽略目标路径的下一次 Created 事件：用于“另存为”等不希望自动登记进 manifest 的写入。
+        /// </summary>
+        public void IgnoreNextCreated(string filePath) {
+            lock (_changeLock) {
+                _ignoreNextCreated.Add(Path.GetFullPath(filePath));
+            }
         }
 
         public void CloseDocument(string filePath) {
@@ -99,6 +120,12 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         }
 
         private void ApplyProjectChange(ProjectChangedEvent e) {
+            // 原子写入产生的瞬时临时文件（".xxx.tmp"）不进入清单/UI，也不触发外部变更逻辑
+            if (IsTransientFile(e.Path) || (e.OldPath != null && IsTransientFile(e.OldPath))) return;
+
+            // “另存为”等写入的新文件不自动登记进 manifest
+            if (e.Type == ProjectChangeType.Created && TryConsumeIgnoredCreated(e.Path)) return;
+
             switch (e.Type) {
                 case ProjectChangeType.Created:
                     _addToManifest(e.Path);
@@ -106,6 +133,11 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
                     break;
 
                 case ProjectChangeType.Deleted:
+                    // “写临时文件 + File.Move 覆盖”的原子保存可能被 watcher 报成目标文件的 Deleted；
+                    // 文件实际仍在磁盘时按覆盖处理：不移除 manifest 条目、不触发 Changed 事件
+                    //（否则文件树会把它从列表移除，但 manifest 里还保留着条目）。
+                    if (File.Exists(e.Path)) return;
+
                     _removeFromManifest(e.Path);
                     _pendingExternalChanges[e.Path] = FileChangeType.Deleted;
                     break;
@@ -125,6 +157,23 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             }
 
             Changed?.Invoke(e);
+        }
+
+        /// <summary>
+        /// 判断是否为 WebDesignFileUtil 原子写入产生的瞬时临时文件（"." 开头、".tmp" 结尾）
+        /// </summary>
+        private static bool IsTransientFile(string path) {
+            var fileName = Path.GetFileName(path);
+            return fileName.StartsWith('.') && fileName.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// 消费一次性的 Created 忽略标记（命中即移除）。
+        /// </summary>
+        private bool TryConsumeIgnoredCreated(string path) {
+            lock (_changeLock) {
+                return _ignoreNextCreated.Remove(Path.GetFullPath(path));
+            }
         }
 
         private bool _isDisposed;
@@ -147,7 +196,8 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         private readonly Action<string> _addToManifest;
         private readonly Action<string> _removeFromManifest;
         private readonly Action<string, string> _renameInManifest;
-        private readonly Dictionary<string, FileChangeType> _pendingExternalChanges = new(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, FileChangeType> _pendingExternalChanges = new(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _ignoreNextCreated = new(StringComparer.OrdinalIgnoreCase);
         private readonly object _changeLock = new();
         private readonly Dictionary<string, ProjectChangedEvent> _pendingChangedEvents = new(StringComparer.OrdinalIgnoreCase);
         private CancellationTokenSource? _changeDebounceCancellation;

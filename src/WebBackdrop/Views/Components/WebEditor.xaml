@@ -47,6 +47,8 @@
                     <tools:WebFileTreeControl x:Name="leftFileTreeControl"
                         SelectedFileItem="{x:Bind ViewModel.SelectedFileItem, Mode=TwoWay}"
                         FileOpenRequested="FileTree_FileOpenRequested"
+                        FileSaveRequested="FileTree_FileSaveRequested"
+                        FileSaveAsRequested="FileTree_FileSaveAsRequested"
                         FolderSelected="FileTree_FolderSelected"/>
 
                     <Rectangle x:Name="leftSideBarBorderLine"
@@ -208,7 +210,6 @@
                 IsTextFile="{x:Bind ActiveFileIsText, Mode=OneWay}"
                 PanelRequested="StatusBar_PanelRequested"
                 RunRequested="StatusBar_RunRequested"
-                DebugRequested="StatusBar_DebugRequested"
                 ToggleLeftSideBarRequested="StatusBar_ToggleLeftSideBarRequested"
                 ToggleBottomPanelRequested="StatusBar_ToggleBottomPanelRequested"
                 ToggleRightSideBarRequested="StatusBar_ToggleRightSideBarRequested"

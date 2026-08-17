@@ -9,6 +9,10 @@ namespace Workloads.Utils.DraftUtils.Models {
         Bmp,
         Jpeg,
         JpegXR,
+        /// <summary>Web 壁纸包（FWebZip，.zip）——WebBackdrop 等 Web 项目导出用</summary>
+        Zip,
+        /// <summary>Web 项目全量归档（.zip，含 .vpw 工程文件）——用于备份/迁移</summary>
+        FullZip,
     }
 
     public partial class ScaleOption : ObservableObject {

@@ -152,8 +152,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
                 case ProjectChangeType.Modified:
                 case ProjectChangeType.Reloaded:
-                    // 项目清单 (.vpw) 被外部修改时，增量同步文件树
+                    // 项目清单 (.vpw) 被修改时，丢弃内存缓存并增量同步文件树
                     if (_designFileUtil?.IsProjectFile(e.Path) == true) {
+                        _designFileUtil.ReloadManifest();
                         SyncManifest(_designFileUtil);
                     }
                     break;

@@ -125,13 +125,24 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             }
             catch (OperationCanceledException) {
                 // 请求取消时中断连接，避免继续向已关闭的客户端写入数据。
-                context.Response.Abort();
+                TryAbort(context.Response);
             }
             catch {
                 // 未处理异常统一返回 500，避免监听循环因单个请求中断。
-                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                context.Response.Close();
+                // 连接可能已中断，Close 本身也可能抛异常，做兜底防御。
+                try {
+                    context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    context.Response.Close();
+                }
+                catch { /* 连接已中断，忽略 */ }
             }
+        }
+
+        private static void TryAbort(HttpListenerResponse response) {
+            try {
+                response.Abort();
+            }
+            catch { /* 连接已中断，忽略 */ }
         }
 
         private async Task HandleWebSocketAsync(HttpListenerContext context, CancellationToken cancellationToken) {
@@ -153,7 +164,8 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             catch (OperationCanceledException) { }
             finally {
                 _sockets.TryRemove(id, out _);
-                socketContext.WebSocket.Dispose();
+                try { socketContext.WebSocket.Dispose(); }
+                catch { /* 忽略释放异常 */ }
             }
         }
 
@@ -194,8 +206,20 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             foreach (var pair in _sockets) {
                 if (pair.Value.State != WebSocketState.Open)
                     continue;
-                _ = pair.Value.SendAsync(data, WebSocketMessageType.Text, true, CancellationToken.None);
+                _ = SendSafelyAsync(pair.Value, data);
             }
+        }
+
+        /// <summary>
+        /// 发送并观察异常：客户端断开时 SendAsync 会抛异常，避免产生未观察的 Task 异常。
+        /// </summary>
+        private static async Task SendSafelyAsync(WebSocket socket, byte[] data) {
+            try {
+                await socket.SendAsync(data, WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+            catch (WebSocketException) { }
+            catch (ObjectDisposedException) { }
+            catch (OperationCanceledException) { }
         }
 
         private string CreateShellUrl(string entryFilePath) {

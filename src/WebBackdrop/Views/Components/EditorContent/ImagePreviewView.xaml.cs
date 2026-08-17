@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -19,8 +20,22 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         public void Load(string filePath) {
             previewOverlay.Visibility = Visibility.Visible;
             _zoomScale = 1;
-            imagePreview.Source = new BitmapImage(new Uri(filePath));
+
+            // 按路径缓存 BitmapImage，避免每次切换文件都重新解码大图
+            if (!_imageCache.TryGetValue(filePath, out var bitmap)) {
+                bitmap = new BitmapImage(new Uri(filePath));
+                _imageCache[filePath] = bitmap;
+            }
+            imagePreview.Source = bitmap;
             UpdateImageSize();
+        }
+
+        /// <summary>
+        /// 文件被外部修改后重新加载预览：丢弃缓存并重新解码。
+        /// </summary>
+        public void Reload(string filePath) {
+            _imageCache.Remove(filePath);
+            Load(filePath);
         }
 
         public void ReleaseResources() {
@@ -48,7 +63,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
 
         private void UpdateImageSize() {
             if (imagePreview.Source is not BitmapImage bitmap || bitmap.PixelWidth <= 0 || bitmap.PixelHeight <= 0) return;
-
             var availableWidth = Math.Max(0, imageScrollViewer.ActualWidth - imagePreview.Margin.Left - imagePreview.Margin.Right);
             var availableHeight = Math.Max(0, imageScrollViewer.ActualHeight - imagePreview.Margin.Top - imagePreview.Margin.Bottom);
             if (availableWidth <= 0 || availableHeight <= 0) return;
@@ -100,5 +114,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         }
 
         private double _zoomScale = 1;
+        private static readonly Dictionary<string, BitmapImage> _imageCache = new(StringComparer.OrdinalIgnoreCase);
     }
 }

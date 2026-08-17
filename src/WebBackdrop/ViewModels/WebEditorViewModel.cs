@@ -58,7 +58,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         public async Task OpenFileAsync(string filePath) {
             if (_openFileMap.TryGetValue(filePath, out var existing)) {
                 ActiveFile = existing;
-                Session.FileManager.UpdateSnapshot(filePath);
+                if (existing.CanOpenAsText) {
+                    Session.FileManager.UpdateSnapshot(filePath);
+                }
                 return;
             }
 
@@ -67,7 +69,10 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 _openFiles.Add(file);
                 _openFileMap[filePath] = file;
                 ActiveFile = file;
-                Session.FileManager.UpdateSnapshot(filePath);
+                // 非文本文件（如图片）不建立文档跟踪，避免把二进制读进 Document.Text
+                if (file.CanOpenAsText) {
+                    Session.FileManager.UpdateSnapshot(filePath);
+                }
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
@@ -86,6 +91,21 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             return _openFileMap.TryGetValue(filePath, out var file) ? file : null;
         }
 
+        /// <summary>
+        /// 关闭已打开的文件：从内存集合移除，并停止 watcher 对该文档的跟踪。
+        /// 用于文件被删除等场景，避免一次会话中打开过的文件永久驻留内存。
+        /// </summary>
+        public void CloseOpenFile(string filePath) {
+            if (!_openFileMap.TryGetValue(filePath, out var file)) return;
+
+            _openFileMap.Remove(filePath);
+            _openFiles.Remove(file);
+            if (_activeFile == file) {
+                ActiveFile = null;
+            }
+            Session.FileManager.CloseDocument(filePath);
+        }
+
         public async Task<bool> SaveAllAsync() {
             var tasks = _openFiles
                 .Where(file => !file.IsSaved)
@@ -94,7 +114,10 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             return results.All(result => result);
         }
 
-        private async Task<bool> SaveFileAsync(WebEditorFile file) {
+        public async Task<bool> SaveFileAsync(WebEditorFile file) {
+            // 图片等非文本文件不参与编辑器保存，避免把空内容写回文件
+            if (!file.CanOpenAsText) return false;
+
             // 文件加载/重载失败时禁止保存，避免覆盖可能可恢复的原始数据
             if (file.IsLoadFailed) {
                 GlobalMessageUtil.ShowError(
@@ -120,6 +143,41 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 // our own save as an external file change.
                 Session.FileManager.NotifySaved(file.FilePath);
 
+                return true;
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 另存为（纯拷贝）：把当前内容写入新路径，原文件与编辑器当前文件均保持不变。
+        /// 新文件不自动登记进 manifest（不被项目跟踪）。
+        /// </summary>
+        public async Task<bool> SaveFileAsAsync(WebEditorFile file, string newPath) {
+            // 图片等非文本文件不参与编辑器另存为
+            if (!file.CanOpenAsText) return false;
+
+            if (file.IsLoadFailed) {
+                GlobalMessageUtil.ShowError(
+                    $"Cannot save file: {file.FilePath}\n" +
+                    "The file failed to load and may be corrupted. Please close and reopen it.",
+                    key: "FileLoadFailed");
+                return false;
+            }
+
+            try {
+                var enc = file.EncodingText switch {
+                    "UTF-8 BOM" => new UTF8Encoding(true),
+                    "UTF-16 LE" => Encoding.Unicode,
+                    "UTF-16 BE" => Encoding.BigEndianUnicode,
+                    _ => new UTF8Encoding(false),
+                };
+
+                // 另存为产生的新文件不自动登记进 manifest
+                Session.FileManager.IgnoreNextCreated(newPath);
+                await FileUtil.WriteAllTextAsync(newPath, file.Content, enc);
                 return true;
             }
             catch (Exception ex) {

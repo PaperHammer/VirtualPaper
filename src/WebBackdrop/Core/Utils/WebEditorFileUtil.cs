@@ -96,7 +96,13 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
 
         public static int CountLines(string content) {
             if (string.IsNullOrEmpty(content)) return 0;
-            return content.Split('\n').Length;
+
+            // 单遍扫描计数，避免 Split 分配整行数组（大文件时更省内存）
+            var count = 1;
+            foreach (var character in content) {
+                if (character == '\n') count++;
+            }
+            return count;
         }
 
         public static string RenderMarkdown(string markdown) {

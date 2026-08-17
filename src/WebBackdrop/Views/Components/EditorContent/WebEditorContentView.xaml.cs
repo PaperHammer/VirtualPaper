@@ -49,7 +49,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
                     imagePreview.Visibility = Visibility.Visible;
                     break;
                 case WebEditorFileKind.Markdown:
-                    markdownEditor.Load(file.Content, language);
+                    markdownEditor.Load(file.FilePath, file.Content, language);
                     markdownEditor.Visibility = Visibility.Visible;
                     break;
                 case WebEditorFileKind.Text:
@@ -78,7 +78,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
                     textEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(language);
                     break;
                 case WebEditorFileKind.Markdown:
-                    markdownEditor.Load(file.Content, language);
+                    markdownEditor.Load(file.FilePath, file.Content, language);
+                    break;
+                case WebEditorFileKind.Image:
+                    imagePreview.Reload(file.FilePath);
                     break;
             }
         }
@@ -122,6 +125,15 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         public void ReleaseResources() {
             imagePreview.ReleaseResources();
             markdownEditor.ReleaseResources();
+        }
+
+        /// <summary>
+        /// 释放指定文件对应的 Monaco 模型，避免一次会话打开过的文件模型持续累积。
+        /// </summary>
+        public Task DisposeModelAsync(string filePath) {
+            return Task.WhenAll(
+                textEditor.DisposeModelAsync(filePath),
+                markdownEditor.MonacoEditor.DisposeModelAsync(filePath));
         }
 
         private void ShowContentOverlay() {

@@ -9,6 +9,8 @@ using Windows.ApplicationModel.Core;
  * 分组循环播放
  * AI 生成壁纸	接入 Stable Diffusion / ComfyUI，本地生成动态壁纸
  * AI 静态图片动态化
+ * 
+ * diff-update 二期
  */
 
 namespace VirtualPaper.Common.Logging {

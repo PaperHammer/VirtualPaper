@@ -15,6 +15,7 @@ using Workloads.Creation.WebBackdrop.Core.Theme;
 namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class MonacoEditor : UserControl {
         public event EventHandler<string>? ContentChanged;
+        public event EventHandler? ContentModified;
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
         public event EventHandler<string>? ShortcutRequested;
@@ -82,7 +83,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             monacoWebView.DefaultBackgroundColor = WebBackdropThemeResource.GetColor(this, backgroundRole);
             if (monacoWebView.CoreWebView2 != null && _isEditorReady) {
-                _ = monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setEditorTheme('{theme}')");
+                _ = monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setEditorTheme({JsonSerializer.Serialize(theme)})");
             }
         }
 
@@ -121,10 +122,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
-        private async void CoreWebView2_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e) {
+        private void CoreWebView2_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e) {
+            _ = HandleWebMessageAsync(e);
+        }
+
+        private async Task HandleWebMessageAsync(CoreWebView2WebMessageReceivedEventArgs e) {
             try {
                 var message = e.TryGetWebMessageAsString();
-                ArcLog.GetLogger<MonacoEditor>().Info($"Monaco message: {message}");
                 using var json = JsonDocument.Parse(message);
                 var type = json.RootElement.TryGetProperty("type", out var typeElement)
                     ? typeElement.GetString()
@@ -176,15 +180,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             return Task.CompletedTask;
         }
 
-        private async Task HandleContentChangeAsync() {
-            var content = await monacoWebView.CoreWebView2.ExecuteScriptAsync("window.getValue()");
-            if (content != null) {
-                content = JsonSerializer.Deserialize<string>(content) ?? string.Empty;
-                if (_content != content) {
-                    _content = content;
-                    ContentChanged?.Invoke(this, content);
-                }
-            }
+        private Task HandleContentChangeAsync() {
+            ContentModified?.Invoke(this, EventArgs.Empty);
+            return Task.CompletedTask;
         }
 
         private Task HandleEditorStateChangedAsync(JsonElement rootElement) {
@@ -203,7 +201,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             var indent = rootElement.TryGetProperty("indent", out var indentElement)
                 ? indentElement.GetString() ?? "Spaces: 2"
                 : "Spaces: 2";
-            EditorStateChanged?.Invoke(this, new MonacoEditorState(alternativeVersionId, isSaved, canUndo, canRedo, lineEnding, encoding, indent));
+            var filePath = rootElement.TryGetProperty("filePath", out var filePathElement)
+                ? filePathElement.GetString()
+                : null;
+            EditorStateChanged?.Invoke(this, new MonacoEditorState(alternativeVersionId, isSaved, canUndo, canRedo, lineEnding, encoding, indent, filePath));
             return Task.CompletedTask;
         }
 
@@ -273,6 +274,21 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         public Task MarkSavedAsync() {
             return ExecuteEditorCommandAsync("window.markSaved()");
+        }
+
+        /// <summary>
+        /// 释放指定文件对应的 Monaco 模型，避免一次会话打开过的文件模型持续累积。
+        /// </summary>
+        public async Task DisposeModelAsync(string filePath) {
+            if (monacoWebView.CoreWebView2 == null || !_isEditorReady) return;
+
+            try {
+                var serialized = JsonSerializer.Serialize(filePath);
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.disposeModel({serialized})");
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MonacoEditor>().Error(ex);
+            }
         }
 
         public async Task<string> GetContentAsync() {
@@ -380,7 +396,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 return;
             }
             try {
-                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setLanguage(\"{language}\")");
+                var serializedLanguage = JsonSerializer.Serialize(language);
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setLanguage({serializedLanguage})");
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
             }
@@ -427,7 +444,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
     public readonly record struct MonacoCursorPosition(int LineNumber, int Column, int SelectedCharacterCount, bool IsSelectedCharacterCountOverflow);
 
-    public sealed record MonacoEditorState(int AlternativeVersionId, bool IsSaved, bool CanUndo, bool CanRedo, string LineEnding, string Encoding, string Indent);
+    public sealed record MonacoEditorState(int AlternativeVersionId, bool IsSaved, bool CanUndo, bool CanRedo, string LineEnding, string Encoding, string Indent, string? FilePath = null);
 
     public sealed class MonacoMarker {
         public int Severity { get; set; }

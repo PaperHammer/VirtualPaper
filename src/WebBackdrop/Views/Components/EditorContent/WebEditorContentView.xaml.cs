@@ -9,6 +9,7 @@ using Workloads.Creation.WebBackdrop.Models;
 namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
     public sealed partial class WebEditorContentView : UserControl {
         public event EventHandler<string>? ContentChanged;
+        public event EventHandler? ContentModified;
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
         public event EventHandler<string>? ShortcutRequested;
@@ -48,7 +49,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
                     imagePreview.Visibility = Visibility.Visible;
                     break;
                 case WebEditorFileKind.Markdown:
-                    markdownEditor.Load(file.Content, language);
+                    markdownEditor.Load(file.FilePath, file.Content, language);
                     markdownEditor.Visibility = Visibility.Visible;
                     break;
                 case WebEditorFileKind.Text:
@@ -77,7 +78,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
                     textEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(language);
                     break;
                 case WebEditorFileKind.Markdown:
-                    markdownEditor.Load(file.Content, language);
+                    markdownEditor.Load(file.FilePath, file.Content, language);
+                    break;
+                case WebEditorFileKind.Image:
+                    imagePreview.Reload(file.FilePath);
                     break;
             }
         }
@@ -123,6 +127,15 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             markdownEditor.ReleaseResources();
         }
 
+        /// <summary>
+        /// 释放指定文件对应的 Monaco 模型，避免一次会话打开过的文件模型持续累积。
+        /// </summary>
+        public Task DisposeModelAsync(string filePath) {
+            return Task.WhenAll(
+                textEditor.DisposeModelAsync(filePath),
+                markdownEditor.MonacoEditor.DisposeModelAsync(filePath));
+        }
+
         private void ShowContentOverlay() {
             _overlayVersion++;
             contentOverlay.Visibility = Visibility.Visible;
@@ -163,6 +176,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
 
         private void TextEditor_ContentChanged(object? sender, string content) {
             ContentChanged?.Invoke(this, content);
+        }
+
+        private void TextEditor_ContentModified(object? sender, EventArgs e) {
+            ContentModified?.Invoke(this, EventArgs.Empty);
         }
 
         private void Editor_CursorPositionChanged(object? sender, MonacoCursorPosition position) {

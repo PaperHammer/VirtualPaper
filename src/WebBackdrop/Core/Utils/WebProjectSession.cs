@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
 using Workloads.Creation.WebBackdrop.Models.SerializableData;
 
@@ -11,10 +10,12 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         public string SessionId { get; } = Guid.NewGuid().ToString();
         public WebDesignFileUtil DesignFileUtil { get; private set; }
         public ProjectFileManager FileManager { get; private set; }
+        public LocalPreviewServer PreviewServer { get; }
 
         public WebProjectSession(string identify) {
             DesignFileUtil = WebDesignFileUtil.Create(identify);
             DesignFileUtil.EnsureProjectStructure();
+            PreviewServer = new LocalPreviewServer(DesignFileUtil.ProjectFolder);
 
             FileManager = new ProjectFileManager(
                 DesignFileUtil.ProjectFolder,
@@ -36,6 +37,7 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             if (!_isDisposed) {
                 if (disposing) {
                     FileManager.Dispose();
+                    PreviewServer.Dispose();
                     SessionDisposed?.Invoke(this, EventArgs.Empty);
                 }
                 _isDisposed = true;

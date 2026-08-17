@@ -118,6 +118,16 @@
                 multiCursorModifier: 'alt',
             });
 
+            // Initialize saved/initial version ids right after editor creation.
+            // Without this, postEditorState() would report isSaved=false until the
+            // first setValue() call, which can incorrectly mark non-text files
+            // (e.g. the first opened image) as unsaved.
+            var initialModel = editor.getModel();
+            if (initialModel) {
+                window.initialAlternativeVersionId = initialModel.getAlternativeVersionId();
+                window.savedAlternativeVersionId = initialModel.getAlternativeVersionId();
+            }
+
             function getLineEndingText(model) {
                 return model && model.getEOL && model.getEOL() === '\r\n' ? 'CRLF' : 'LF';
             }
@@ -140,11 +150,18 @@
                 }
 
                 var alternativeVersionId = model.getAlternativeVersionId();
+                // 尚未通过 setValue/markSaved 初始化 savedAlternativeVersionId 时视为已保存，
+                // 避免把“模型初始状态/上一个文件的状态”误报为当前文件未保存。
+                var isSaved = window.savedAlternativeVersionId === undefined
+                    || alternativeVersionId === window.savedAlternativeVersionId;
+                var canUndo = window.initialAlternativeVersionId !== undefined
+                    && alternativeVersionId !== window.initialAlternativeVersionId;
                 window.chrome.webview.postMessage(JSON.stringify({
                     type: 'editorStateChanged',
+                    filePath: getCurrentFilePath(),
                     alternativeVersionId: alternativeVersionId,
-                    isSaved: alternativeVersionId === window.savedAlternativeVersionId,
-                    canUndo: alternativeVersionId !== window.initialAlternativeVersionId,
+                    isSaved: isSaved,
+                    canUndo: canUndo,
                     canRedo: false,
                     lineEnding: getLineEndingText(model),
                     encoding: window.editorEncoding || 'UTF-8',
@@ -152,13 +169,23 @@
                 }));
             }
 
+            var contentChangeTimer = null;
             editor.onDidChangeModelContent(function () {
-                if (!window.isSettingValue) {
-                    postEditorState();
+                // 程序化 setValue（打开/切换文件）引起的变更不是用户编辑：跳过状态与变更通知。
+                if (window.isSettingValue) {
+                    return;
                 }
-                if (window.chrome && window.chrome.webview) {
-                    window.chrome.webview.postMessage(JSON.stringify({ type: 'contentChange' }));
-                }
+
+                // 立即上报状态：isSaved 基于版本号对比，undo/redo 也能正确反映保存状态
+                postEditorState();
+
+                if (contentChangeTimer) clearTimeout(contentChangeTimer);
+                contentChangeTimer = setTimeout(function () {
+                    contentChangeTimer = null;
+                    if (window.chrome && window.chrome.webview) {
+                        window.chrome.webview.postMessage(JSON.stringify({ type: 'contentChange' }));
+                    }
+                }, 150);
             });
 
             var lastCursorPositionPayload = null;
@@ -285,6 +312,9 @@
                     if (existingModel) {
                         // Model cached — switch instantly in JS, no C# needed
                         editor.setModel(existingModel);
+                        // 切换到缓存模型后同步版本基线，避免 postEditorState 误报未保存
+                        window.initialAlternativeVersionId = existingModel.getAlternativeVersionId();
+                        window.savedAlternativeVersionId = existingModel.getAlternativeVersionId();
                         editor.setPosition({ lineNumber: entry.lineNumber, column: entry.column });
                         editor.revealPositionInCenter({ lineNumber: entry.lineNumber, column: entry.column });
                         editor.focus();
@@ -529,7 +559,23 @@
                 return null;
             }
 
+            function updateLargeFileOptions(contentLength) {
+                var isLargeFile = contentLength >= 200000;
+                editor.updateOptions({
+                    minimap: { enabled: !isLargeFile, scale: 1, showSlider: 'mouseover' },
+                    folding: !isLargeFile,
+                    stickyScroll: { enabled: !isLargeFile },
+                    smoothScrolling: !isLargeFile,
+                    cursorSmoothCaretAnimation: isLargeFile ? 'off' : 'on',
+                    semanticHighlighting: { enabled: !isLargeFile },
+                    occurrencesHighlight: isLargeFile ? 'off' : 'singleFile',
+                    colorDecorators: !isLargeFile,
+                    bracketPairColorization: { enabled: !isLargeFile }
+                });
+            }
+
             window.setValue = function (value, filePath) {
+                updateLargeFileOptions(value.length);
                 var current = editor.getValue();
                 var isChanged = current !== value;
                 if (isChanged) {
@@ -585,6 +631,22 @@
                 postEditorState();
             };
 
+            window.disposeModel = function (filePath) {
+                if (!filePath) {
+                    return;
+                }
+
+                var normalizedPath = filePath.replace(/\\/g, '/');
+                var uri = monaco.Uri.parse('file:///' + normalizedPath);
+                var model = monaco.editor.getModel(uri);
+                if (model) {
+                    if (editor.getModel() === model) {
+                        editor.setModel(null);
+                    }
+                    model.dispose();
+                }
+            };
+
             // Register project files so TS service can resolve cross-file imports
             window.registerExtraLibs = function (filesJson) {
                 try {
@@ -627,8 +689,11 @@
                 var alternativeVersionId = model.getAlternativeVersionId();
                 return JSON.stringify({
                     alternativeVersionId: alternativeVersionId,
-                    isSaved: alternativeVersionId === window.savedAlternativeVersionId,
-                    canUndo: alternativeVersionId !== window.initialAlternativeVersionId,
+                    filePath: getCurrentFilePath(),
+                    isSaved: window.savedAlternativeVersionId === undefined
+                        || alternativeVersionId === window.savedAlternativeVersionId,
+                    canUndo: window.initialAlternativeVersionId !== undefined
+                        && alternativeVersionId !== window.initialAlternativeVersionId,
                     canRedo: false,
                     lineEnding: getLineEndingText(model),
                     encoding: window.editorEncoding || 'UTF-8',

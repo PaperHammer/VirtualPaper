@@ -148,5 +148,6 @@ namespace VirtualPaper.UIComponent.Utils {
         SelectedIntelliPageIdx,
         IntelligentCTS,
         WebProjectSession,
+        ContextKey,
     }
 }

@@ -67,6 +67,9 @@
                 Visibility="{x:Bind IsPlaceholder, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}">
                 <collection:ArcTreeViewItem.ContextFlyout>
                     <MenuFlyout Opening="FileMenuFlyout_Opening">
+                        <MenuFlyoutItem x:Name="fileSaveMenuItem" Text="Save" Tag="{x:Bind}" Click="SaveMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileSaveAsMenuItem" Text="Save As..." Tag="{x:Bind}" Click="SaveAsMenuItem_Click"/>
+                        <MenuFlyoutSeparator x:Name="fileSaveSeparator"/>
                         <MenuFlyoutItem x:Name="fileCutMenuItem" Text="Cut" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
                         <MenuFlyoutItem x:Name="fileCopyMenuItem" Text="Copy" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
                         <MenuFlyoutItem x:Name="fileCopyPathMenuItem" Text="Copy Path" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>

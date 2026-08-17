@@ -47,6 +47,8 @@
                     <tools:WebFileTreeControl x:Name="leftFileTreeControl"
                         SelectedFileItem="{x:Bind ViewModel.SelectedFileItem, Mode=TwoWay}"
                         FileOpenRequested="FileTree_FileOpenRequested"
+                        FileSaveRequested="FileTree_FileSaveRequested"
+                        FileSaveAsRequested="FileTree_FileSaveAsRequested"
                         FolderSelected="FileTree_FolderSelected"/>
 
                     <Rectangle x:Name="leftSideBarBorderLine"
@@ -84,6 +86,7 @@
                 <Border BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0 0 0 1">
                     <editorContent:WebEditorContentView x:Name="editorContentView"
                         ContentChanged="EditorContentView_ContentChanged"
+                        ContentModified="EditorContentView_ContentModified"
                         CursorPositionChanged="EditorContentView_CursorPositionChanged"
                         MarkersChanged="EditorContentView_MarkersChanged"
                         ShortcutRequested="EditorContentView_ShortcutRequested"
@@ -207,7 +210,6 @@
                 IsTextFile="{x:Bind ActiveFileIsText, Mode=OneWay}"
                 PanelRequested="StatusBar_PanelRequested"
                 RunRequested="StatusBar_RunRequested"
-                DebugRequested="StatusBar_DebugRequested"
                 ToggleLeftSideBarRequested="StatusBar_ToggleLeftSideBarRequested"
                 ToggleBottomPanelRequested="StatusBar_ToggleBottomPanelRequested"
                 ToggleRightSideBarRequested="StatusBar_ToggleRightSideBarRequested"

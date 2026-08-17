@@ -1,25 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
-using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils.ProjectSystem.Events;
 using VirtualPaper.Common.Utils.Storage;
-using VirtualPaper.Grpc.Client.Interfaces;
-using VirtualPaper.Models.Cores;
-using VirtualPaper.PlayerWeb.Core.WebView.Windows;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Windows.System;
@@ -193,10 +187,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             if (_isLoaded || Payload == null) return;
 
             Payload.TryGet(NaviPayloadKey.WebProjectSession, out _session);
+            Payload.TryGet(NaviPayloadKey.ContextKey, out ArcPageContextKey contextKey);
             if (_session == null) return;
 
             _isLoaded = true;
-            ViewModel = new WebEditorViewModel(_session);
+            ViewModel = new WebEditorViewModel(_session, contextKey);
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
             ViewModel.DebugSessionEnded += OnDebugSessionEnded;
 
@@ -216,6 +211,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void ArcUserControl_Unloaded(object sender, RoutedEventArgs e) {
+            _propertyPanelRefreshCancellation?.Cancel();
+            _propertyPanelRefreshCancellation?.Dispose();
+            _propertyPanelRefreshCancellation = null;
             if (_session != null) {
                 _session.FileManager.Changed -= FileManager_Changed;
             }
@@ -238,6 +236,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             statusBar.IsDebugRunning = false;
 
             _isLoaded = false;
+
+            // 释放保存锁，避免工作区反复加载/卸载后旧锁泄漏
+            _saveLock.Dispose();
+            _saveLock = new SemaphoreSlim(1, 1);
         }
 
         private void OnProjectFileRenamed(object? sender, string newPath) {
@@ -245,9 +247,16 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             SaveAllRequested?.Invoke(this, EventArgs.Empty);
         }
 
+        private async Task OpenFileAsync(string filePath) {
+            if (ViewModel == null) return;
+
+            await SyncActiveEditorContentAsync();
+            await ViewModel.OpenFileAsync(filePath);
+        }
+
         private async void OnMonacoFileOpenRequested(object? sender, string filePath) {
             if (ViewModel != null && File.Exists(filePath)) {
-                await ViewModel.OpenFileAsync(filePath);
+                await OpenFileAsync(filePath);
                 leftFileTreeControl.SelectFile(filePath);
             }
         }
@@ -257,7 +266,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             // JS has already stored the target line/column in _pendingNavigation;
             // we just need to open the file, and setValue() will apply the position.
             if (ViewModel != null && File.Exists(filePath)) {
-                await ViewModel.OpenFileAsync(filePath);
+                await OpenFileAsync(filePath);
                 leftFileTreeControl.SelectFile(filePath);
             }
         }
@@ -272,12 +281,17 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private async void CheckAndRefreshActiveFile() {
             if (ViewModel?.ActiveFile == null || _session == null) return;
 
-            var filePath = ViewModel.ActiveFile.FilePath;
+            var file = ViewModel.ActiveFile;
+            var filePath = file.FilePath;
             var fileManager = _session.FileManager;
 
             if (fileManager.TryConsumeExternalChange(filePath, out var changeType) && changeType == FileChangeType.Changed) {
                 try {
-                    await ViewModel.ActiveFile.ReopenWithEncodingAsync(ViewModel.ActiveFile.EncodingText);
+                    await file.ReopenWithEncodingAsync(file.EncodingText);
+                    // 刷新编辑器/预览内容（期间若已切换文件则跳过）
+                    if (ViewModel.ActiveFile?.Equals(file) == true) {
+                        editorContentView.ReloadContent(file, ActiveFileLanguage);
+                    }
                 }
                 catch (Exception ex) {
                     ArcLog.GetLogger<WebEditor>().Error($"Failed to reload externally changed file: {filePath}", ex);
@@ -294,14 +308,14 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     case ProjectChangeType.Modified:
                     case ProjectChangeType.Reloaded:
                         HandleFileReloaded(e.Path);
-                        ViewModel?.SyncFileChange(e.Path);
+                        break;
+
+                    case ProjectChangeType.Deleted:
+                        HandleFileDeleted(e.Path);
                         break;
 
                     case ProjectChangeType.Created:
-                    case ProjectChangeType.Deleted:
                     case ProjectChangeType.Renamed:
-                        ViewModel?.SyncFileChange(e.Path);
-                        if (e.OldPath != null) ViewModel?.SyncFileDelete(e.OldPath);
                         break;
 
                     case ProjectChangeType.Conflict:
@@ -331,24 +345,62 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
-        private void HandleFileConflict(string filePath) {
+        /// <summary>
+        /// 文件被删除时：已保存的打开文件直接关闭并释放 Monaco 模型，避免一次会话打开过的
+        /// 文件永久驻留内存；有未保存内容的文件保留缓冲，防止丢数据。
+        /// </summary>
+        private void HandleFileDeleted(string filePath) {
+            if (ViewModel == null) return;
+
+            var openFile = ViewModel.GetOpenFile(filePath);
+            if (openFile == null || !openFile.IsSaved) return;
+
+            // 当前正在编辑的模型不主动释放（后续切换文件时由 setValue 覆盖）
+            if (ViewModel.ActiveFile?.Equals(openFile) != true) {
+                _ = editorContentView.DisposeModelAsync(filePath);
+            }
+            ViewModel.CloseOpenFile(filePath);
+        }
+
+        private async void HandleFileConflict(string filePath) {
             if (ViewModel == null) return;
 
             var openFile = ViewModel.GetOpenFile(filePath);
             if (openFile == null) return;
 
-            ArcLog.GetLogger<WebEditor>().Warn(
-                $"Conflict detected: {filePath} was modified externally while unsaved changes exist. " +
-                "User should be prompted to reload or keep.");
+            // 磁盘被外部修改且编辑器有未保存更改：让用户选择加载磁盘版本或保留编辑
+            var result = await GlobalDialogUtils.ShowDialogAsync(
+                $"The file \"{Path.GetFileName(filePath)}\" was modified on disk while it has unsaved changes.\n\nReload the disk version and discard your editor changes?",
+                "File Conflict",
+                "Reload from Disk",
+                "Keep My Changes",
+                isDefaultPrimary: false);
+
+            if (result == DialogResult.Primary) {
+                try {
+                    await openFile.ReopenWithEncodingAsync(openFile.EncodingText);
+                    _session?.FileManager.NotifySaved(filePath); // 刷新磁盘指纹，避免重复触发冲突
+                    if (ViewModel.ActiveFile?.Equals(openFile) == true) {
+                        editorContentView.ReloadContent(openFile, ActiveFileLanguage);
+                        propertyPanelControl.Load(openFile, ActiveFileLanguage);
+                    }
+                }
+                catch (Exception ex) {
+                    openFile.SetLoadFailed();
+                    ArcLog.GetLogger<WebEditor>().Error($"Failed to reload conflicted file: {filePath}", ex);
+                    GlobalMessageUtil.ShowError($"Failed to reload file: {filePath}\nThe file may be corrupted or unreadable.\n{ex.Message}");
+                }
+            }
+            else {
+                // 保留编辑器内容；下次保存将覆盖磁盘版本
+                ArcLog.GetLogger<WebEditor>().Warn($"Conflict kept by user: {filePath}");
+            }
         }
 
         private void UpdateStatusBar() {
             var activeFile = ViewModel?.ActiveFile;
             if (activeFile != null) {
                 var filePath = activeFile.FilePath;
-                if (!string.Equals(_activeEditorFilePath, filePath, StringComparison.OrdinalIgnoreCase)) {
-                    _activeEditorFilePath = filePath;
-                }
 
                 ActiveFileLanguage = WebEditorFileUtil.GetLanguageFromExtension(activeFile.FileExtension);
                 EncodingText = activeFile.EncodingText;
@@ -376,6 +428,22 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         #region editor content event handlers
+        private void EditorContentView_ContentModified(object? sender, EventArgs e) {
+            // 不再直接置“未保存”：改为拉取编辑器当前状态（基于版本号对比），
+            // 这样 undo/redo 回到保存点后标记也能正确恢复。
+            _ = RefreshSavedStateFromEditorAsync();
+        }
+
+        private async Task RefreshSavedStateFromEditorAsync() {
+            if (ViewModel?.ActiveFile is not { CanOpenAsText: true } activeFile) return;
+
+            var state = await editorContentView.GetEditorStateAsync();
+            // 期间若切换了文件则丢弃本次结果
+            if (ViewModel.ActiveFile?.Equals(activeFile) == true) {
+                ApplyEditorState(activeFile, state);
+            }
+        }
+
         private void EditorContentView_ContentChanged(object? sender, string content) {
             if (ViewModel?.ActiveFile != null && ViewModel.ActiveFile.Content != content) {
                 ViewModel.ActiveFile.Content = content;
@@ -385,26 +453,51 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void EditorContentView_EditorStateChanged(object? sender, MonacoEditorState state) {
-            if (ViewModel?.ActiveFile == null) return;
+            // Monaco 的状态（含 isSaved）只对文本类文件有效。图片等非文本文件
+            // 没有编辑器内容，忽略滞后/无关的 editorStateChanged 消息，
+            // 避免第一次打开图片时被错误地标记为未保存。
+            if (ViewModel?.ActiveFile is not { CanOpenAsText: true } activeFile) return;
+            ApplyEditorState(activeFile, state);
+        }
 
-            var wasSaved = ViewModel.ActiveFile.IsSaved;
-            ViewModel.ActiveFile.SetSavedState(state.IsSaved);
-            ViewModel.ActiveFile.SetLineEnding(state.LineEnding);
-            ViewModel.ActiveFile.SetEncoding(state.Encoding);
+        /// <summary>
+        /// 应用编辑器状态：仅当状态消息/拉取结果属于当前活动文件的模型时才生效。
+        ///  - 带路径的消息路径不匹配 → 滞后消息，直接忽略；
+        ///  - 无路径的消息（模型未关联文件 URI）只同步编码/缩进，不应用 isSaved。
+        /// </summary>
+        private void ApplyEditorState(WebEditorFile activeFile, MonacoEditorState state) {
+            var isActiveModelState = string.IsNullOrEmpty(state.FilePath)
+                ? (bool?)null
+                // Monaco 的 fsPath 使用正斜杠，统一成系统分隔符后再比较
+                : string.Equals(
+                    state.FilePath.Replace('/', Path.DirectorySeparatorChar),
+                    activeFile.FilePath,
+                    StringComparison.OrdinalIgnoreCase);
+            if (isActiveModelState == false) return;
+
+            activeFile.SetLineEnding(state.LineEnding);
+            activeFile.SetEncoding(state.Encoding);
             IndentText = state.Indent;
             EncodingText = state.Encoding;
             LineEndingText = state.LineEnding;
-            SyncFileSavedState(ViewModel.ActiveFile);
 
-            // Refresh the property panel when IsSaved toggles
-            // (e.g. after undo back to last-saved state).
-            if (wasSaved != ViewModel.ActiveFile.IsSaved) {
-                propertyPanelControl.Load(ViewModel.ActiveFile, ActiveFileLanguage);
+            if (isActiveModelState == true) {
+                var wasSaved = activeFile.IsSaved;
+                activeFile.SetSavedState(state.IsSaved);
+                SyncFileSavedState(activeFile);
+
+                // Refresh the property panel when IsSaved toggles
+                // (e.g. after undo back to last-saved state).
+                if (wasSaved != activeFile.IsSaved) {
+                    propertyPanelControl.Load(activeFile, ActiveFileLanguage);
+                }
             }
         }
 
         private void SyncFileSavedState(WebEditorFile file) {
             leftFileTreeControl.SetFileSaved(file.FilePath, file.IsSaved);
+            // 同步到文档跟踪器：外部修改时才能区分“直接重载”与“冲突需用户确认”
+            _session?.FileManager.SetDirty(file.FilePath, !file.IsSaved);
             _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
         }
 
@@ -414,10 +507,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         public Task RedoAsync() {
             return editorContentView.RedoAsync();
-        }
-
-        public Task<MonacoEditorState> GetEditorStateAsync() {
-            return editorContentView.GetEditorStateAsync();
         }
 
         public async Task<bool> SaveAllAsync() {
@@ -504,9 +593,61 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         #endregion
 
         private async void FileTree_FileOpenRequested(object? sender, string filePath) {
-            if (ViewModel != null) {
+            await OpenFileAsync(filePath);
+        }
+
+        /// <summary>
+        /// 文件树右键“保存”：只保存这一份文件
+        /// </summary>
+        private async void FileTree_FileSaveRequested(object? sender, string filePath) {
+            if (ViewModel == null) return;
+
+            var openFile = ViewModel.GetOpenFile(filePath);
+            if (openFile == null) {
                 await ViewModel.OpenFileAsync(filePath);
+                openFile = ViewModel.GetOpenFile(filePath);
+                if (openFile == null) return;
             }
+
+            // 若正是当前编辑中的文件，先把编辑器内容同步进内存
+            if (ViewModel.ActiveFile?.Equals(openFile) == true) {
+                await SyncActiveEditorContentAsync();
+            }
+
+            if (await ViewModel.SaveFileAsync(openFile)) {
+                leftFileTreeControl.SetFileSaved(filePath, true);
+                _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
+            }
+        }
+
+        /// <summary>
+        /// 文件树右键“另存为”：把当前内容另存到新路径，原文件保留，编辑器不切换（纯另存为）。
+        /// </summary>
+        private async void FileTree_FileSaveAsRequested(object? sender, string filePath) {
+            if (ViewModel == null) return;
+
+            var openFile = ViewModel.GetOpenFile(filePath);
+            if (openFile == null) {
+                await ViewModel.OpenFileAsync(filePath);
+                openFile = ViewModel.GetOpenFile(filePath);
+                if (openFile == null) return;
+            }
+
+            if (ViewModel.ActiveFile?.Equals(openFile) == true) {
+                await SyncActiveEditorContentAsync();
+            }
+
+            var ext = openFile.FileExtension;
+            var saveFile = await WindowsStoragePickers.PickSaveFileAsync(
+                WindowConsts.WindowHandle,
+                openFile.FileName,
+                new Dictionary<string, string[]> {
+                    [$"{ext.TrimStart('.').ToUpperInvariant()} (*{ext})"] = [ext],
+                });
+
+            if (saveFile == null || string.IsNullOrEmpty(saveFile.Path)) return;
+
+            await ViewModel.SaveFileAsAsync(openFile, saveFile.Path);
         }
 
         private void FileTree_FolderSelected(object? sender, string folderPath) {
@@ -748,10 +889,66 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 StopDebugSession();
             }
             else {
-                SaveAllRequested?.Invoke(this, EventArgs.Empty);
+                // DebugProject 内部会先 SaveAllAsync，避免重复保存
                 ViewModel?.DebugProject();
                 _isDebugRunning = true;
                 statusBar.IsDebugRunning = true;
+            }
+        }
+
+        /// <summary>
+        /// 一键入库：保存全部编辑 → 打包为 FWebZip 临时包 →
+        /// 通知库 Panel（WpSettings）导入 → 清理临时包。
+        /// 由 DraftPanel 的“文件 → 入库”菜单触发（与 StaticImg 交互一致）。
+        /// </summary>
+        public async Task<bool> AddToLibraryAsync() {
+            if (_isAddingToLibrary) return false;
+            if (ViewModel == null || _session == null) return false;
+
+            _isAddingToLibrary = true;
+            var tempZipPath = string.Empty;
+            try {
+                // 入库前先保存所有未保存的编辑，保证包内文件为最新内容
+                if (!await SaveAllAsync()) {
+                    GlobalMessageUtil.ShowError("Failed to save project files. Import aborted.");
+                    return false;
+                }
+
+                // 打包为临时 zip（FWebZip 标准包），导入成功后由库负责复制到库目录。
+                // 在后台线程执行，避免大项目压缩时阻塞 UI。
+                tempZipPath = Path.Combine(
+                    Path.GetTempPath(),
+                    $"{_session.DesignFileUtil.ProjectName}_{Guid.NewGuid():N}{WebProjectExporter.ExportExtension}");
+                await Task.Run(() => WebProjectExporter.Export(_session.DesignFileUtil, tempZipPath));
+
+                var (found, success) = await PanelMessageCenter.TryInvokeAsync<string, bool>(
+                    PanelContracts.WpSettings.Id,
+                    PanelContracts.WpSettings.Action_ImportWallpaper,
+                    tempZipPath);
+
+                if (!found) {
+                    GlobalMessageUtil.ShowError("Wallpaper library panel is not available.");
+                    return false;
+                }
+
+                if (success) {
+                    GlobalMessageUtil.ShowSuccess(LanguageUtil.GetI18n(nameof(Constants.I18n.Add_To_Lib_Success)));
+                    return true;
+                }
+
+                GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true);
+                return false;
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<WebEditor>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+                return false;
+            }
+            finally {
+                if (!string.IsNullOrEmpty(tempZipPath)) {
+                    try { File.Delete(tempZipPath); } catch { /* 忽略临时包清理失败 */ }
+                }
+                _isAddingToLibrary = false;
             }
         }
 
@@ -763,11 +960,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             ViewModel?.CleanupSessions();
             _isDebugRunning = false;
             statusBar.IsDebugRunning = false;
-        }
-
-        private void StatusBar_DebugRequested(object? sender, RoutedEventArgs e) {
-            SaveAllRequested?.Invoke(this, EventArgs.Empty);
-            ViewModel?.DebugProject();
         }
 
         private void StatusBar_ToggleLeftSideBarRequested(object? sender, RoutedEventArgs e) {
@@ -892,17 +1084,27 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
          * 
          * 输入停止 250ms 后，只刷新当前文件一次。避免频繁刷新和旧文件回写
          */
-        private async void QueuePropertyPanelRefresh(WebEditorFile file, string language) {
-            _propertyPanelRefreshVersion++;
-            var version = _propertyPanelRefreshVersion;
-            await Task.Delay(250);
-            if (version == _propertyPanelRefreshVersion && ViewModel?.ActiveFile?.Equals(file) == true) {
-                propertyPanelControl.Load(file, language);
+        private void QueuePropertyPanelRefresh(WebEditorFile file, string language) {
+            _propertyPanelRefreshCancellation?.Cancel();
+            _propertyPanelRefreshCancellation?.Dispose();
+            _propertyPanelRefreshCancellation = new CancellationTokenSource();
+            _ = RefreshPropertyPanelAsync(file, language, _propertyPanelRefreshCancellation.Token);
+        }
+
+        private async Task RefreshPropertyPanelAsync(WebEditorFile file, string language, CancellationToken cancellationToken) {
+            try {
+                // 延时不用 token，避免旧任务被取消时抛出首机会 TaskCanceledException（调试器可见的噪音）
+                await Task.Delay(250);
+                if (cancellationToken.IsCancellationRequested) return;
+                if (ViewModel?.ActiveFile?.Equals(file) == true) {
+                    propertyPanelControl.Load(file, language);
+                }
             }
+            catch (OperationCanceledException) { }
         }
 
         private async void ProblemsPanel_ProblemRequested(object? sender, ProblemItem item) {
-            await ViewModel.OpenFileAsync(item.FilePath);
+            await OpenFileAsync(item.FilePath);
             await Task.Delay(50);
             await editorContentView.RevealPositionAsync(item.LineNumber, item.ColumnNumber);
         }
@@ -917,15 +1119,15 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private WebProjectSession? _session;
         private bool _isLoaded;
         private bool _isDebugRunning;
-        private int _propertyPanelRefreshVersion;
+        private bool _isAddingToLibrary;
+        private CancellationTokenSource? _propertyPanelRefreshCancellation;
         private WebEditorBottomPanel _activeBottomPanel = WebEditorBottomPanel.Problems;
-        private string? _activeEditorFilePath;
         private Dictionary<EditorPanelSlot, PanelLayoutState> _panelLayoutStates = null!;
         private Dictionary<object, Microsoft.UI.Xaml.Shapes.Rectangle> _splitterLines = null!;
         private Dictionary<WebEditorCommand, Action> _commandActions = null!;
         private Dictionary<(VirtualKey Key, VirtualKeyModifiers Modifiers), WebEditorCommand> _keyboardCommands = null!;
         private Dictionary<string, WebEditorCommand> _monacoCommands = null!;
-        private readonly SemaphoreSlim _saveLock = new(1, 1);
+        private SemaphoreSlim _saveLock = new(1, 1);
         private EditorPanelSlot? _activeResizeSlot;
         private Pointer? _resizePointer;
         private double _resizeStartPointerPosition;

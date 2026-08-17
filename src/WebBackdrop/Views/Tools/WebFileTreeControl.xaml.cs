@@ -16,22 +16,23 @@ using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
 using VirtualPaper.UIComponent.ViewModels;
+using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.Models.SerializableData;
 using Workloads.Creation.WebBackdrop.ViewModels;
 
 /*
+ * TODO:
  * 回到上一个光标位置
- * 运行、调试
  * output 重定向
- * 导出为 zip、入库
  * web 项目的 basicinfo 的显示
- * 
  */
 
 namespace Workloads.Creation.WebBackdrop.Views.Tools {
     public sealed partial class WebFileTreeControl : UserControl {
         public event EventHandler<string>? FileOpenRequested;
+        public event EventHandler<string>? FileSaveRequested;
+        public event EventHandler<string>? FileSaveAsRequested;
         public event EventHandler<string>? FolderSelected;
         public event EventHandler<string>? NewFileRequested;
         public event EventHandler<string>? ProjectFileRenamed;
@@ -87,6 +88,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         private void FileTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args) {
             if (args.InvokedItem is WebFileItem { Type: WebFileItemType.Folder } folder) {
                 _viewModel.ToggleFolder(folder);
+                folder.IsExpanded = !folder.IsExpanded;
                 FolderSelected?.Invoke(this, folder.FilePath);
                 return;
             }
@@ -162,6 +164,20 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             ClipboardUtil.Copy(FileUtil.GetRelativePath(_viewModel.ProjectFolder, item.FilePath));
         }
 
+        private void SaveMenuItem_Click(object sender, RoutedEventArgs e) {
+            var item = GetMenuItemTarget(sender);
+            if (item == null) return;
+
+            FileSaveRequested?.Invoke(this, item.FilePath);
+        }
+
+        private void SaveAsMenuItem_Click(object sender, RoutedEventArgs e) {
+            var item = GetMenuItemTarget(sender);
+            if (item == null) return;
+
+            FileSaveAsRequested?.Invoke(this, item.FilePath);
+        }
+
         private async void RenameMenuItem_Click(object sender, RoutedEventArgs e) {
             var item = GetMenuItemTarget(sender);
             if (item == null) return;
@@ -220,6 +236,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
             var existsOnDisk = fileItem.ExistsOnDisk;
             var isProjectFile = _viewModel.IsProjectFileItem(fileItem);
+            var isEditableFile = WebEditorFileUtil.IsTextExtension(Path.GetExtension(fileItem.FilePath));
 
             foreach (var item in menuFlyout.Items) {
                 switch (item) {
@@ -228,6 +245,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
                         break;
                     case MenuFlyoutItem { Name: "fileDeleteMenuItem" } menuItem:
                         SetVisible(menuItem, !isProjectFile);
+                        break;
+                    case MenuFlyoutItem { Name: "fileSaveMenuItem" or "fileSaveAsMenuItem" } menuItem:
+                        SetVisible(menuItem, !isProjectFile && existsOnDisk && isEditableFile);
+                        break;
+                    case MenuFlyoutSeparator { Name: "fileSaveSeparator" } sep:
+                        sep.Visibility = !isProjectFile && existsOnDisk && isEditableFile ? Visibility.Visible : Visibility.Collapsed;
                         break;
                     case MenuFlyoutItem menuItem:
                         SetVisible(menuItem, !isProjectFile && existsOnDisk);

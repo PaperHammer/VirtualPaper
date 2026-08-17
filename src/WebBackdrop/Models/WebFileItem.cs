@@ -31,7 +31,11 @@ namespace Workloads.Creation.WebBackdrop.Models {
             }
         }
 
-        public SolidColorBrush MissingBrush => new(Windows.UI.Color.FromArgb(255, 220, 80, 80));
+        private static SolidColorBrush? _missingBrush;
+        /// <summary>
+        /// 缺失文件红色笔刷：绑定会频繁求值，共享同一个实例避免每次访问都 new。
+        /// </summary>
+        public SolidColorBrush MissingBrush => _missingBrush ??= new SolidColorBrush(Windows.UI.Color.FromArgb(255, 220, 80, 80));
 
         public bool IsSaved {
             get => _isSaved;

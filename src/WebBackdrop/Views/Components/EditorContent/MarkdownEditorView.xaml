@@ -26,6 +26,7 @@
 
         <local:MonacoEditor x:Name="monacoEditor"
             ContentChanged="MonacoEditor_ContentChanged"
+            ContentModified="MonacoEditor_ContentModified"
             CursorPositionChanged="MonacoEditor_CursorPositionChanged"
             MarkersChanged="MonacoEditor_MarkersChanged"
             ShortcutRequested="MonacoEditor_ShortcutRequested"

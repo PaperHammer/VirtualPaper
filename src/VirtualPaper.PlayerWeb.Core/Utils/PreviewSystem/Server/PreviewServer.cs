@@ -1,12 +1,9 @@
 using System;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
 
 namespace VirtualPaper.PlayerWeb.Core.Utils.PreviewSystem.Server {
@@ -27,41 +24,6 @@ namespace VirtualPaper.PlayerWeb.Core.Utils.PreviewSystem.Server {
 
             _app = builder.Build();
 
-            // Inject HMR script into HTML responses if configured.
-            if (!string.IsNullOrEmpty(options.InjectionScript)) {
-                var injection = options.InjectionScript;
-                var root = _root;
-
-                // Serve the injection script as a standalone file so browser
-                // DevTools shows a proper file name in error stacks.
-                _app.MapGet("/__hmr.js", async ctx => {
-                    ctx.Response.ContentType = "application/javascript; charset=utf-8";
-                    await ctx.Response.WriteAsync(injection);
-                });
-
-                _app.UseWhen(
-                    ctx => IsHtmlPath(ctx.Request.Path),
-                    branch => branch.Run(async ctx => {
-                        var relativePath = ctx.Request.Path.Value!.TrimStart('/');
-                        if (relativePath.Length == 0 || relativePath.EndsWith("/"))
-                            relativePath = Path.Combine(relativePath, "index.html").Replace('\\', '/');
-                        var filePath = Path.Combine(root, relativePath);
-                        if (!File.Exists(filePath)) { ctx.Response.StatusCode = 404; return; }
-
-                        var html = await File.ReadAllTextAsync(filePath);
-                        var tag = "<script src=\"/__hmr.js\"></script>";
-                        if (html.Contains("</body>"))
-                            html = html.Replace("</body>", tag + "</body>");
-                        else if (html.Contains("</head>"))
-                            html = html.Replace("</head>", tag + "</head>");
-                        else
-                            html += tag;
-
-                        ctx.Response.ContentType = "text/html; charset=utf-8";
-                        await ctx.Response.WriteAsync(html);
-                    }));
-            }
-
             _app.UseStaticFiles(new StaticFileOptions {
                 FileProvider = new PhysicalFileProvider(_root)
             });
@@ -78,15 +40,6 @@ namespace VirtualPaper.PlayerWeb.Core.Utils.PreviewSystem.Server {
             relativePath = relativePath.Replace("\\", "/");
 
             return $"http://127.0.0.1:{Port}/{relativePath}";
-        }
-
-        private static bool IsHtmlPath(string path) {
-            var ext = Path.GetExtension(path);
-            if (ext.Equals(".html", StringComparison.OrdinalIgnoreCase)
-                || ext.Equals(".htm", StringComparison.OrdinalIgnoreCase))
-                return true;
-            // Default document: / or /subdir/ → index.html
-            return path.EndsWith("/");
         }
 
         public async Task StopAsync() {

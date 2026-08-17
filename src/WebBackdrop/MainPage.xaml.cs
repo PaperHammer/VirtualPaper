@@ -1,9 +1,12 @@
 using Microsoft.UI.Xaml;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.WebBackdrop.Core.Utils;
@@ -27,6 +30,8 @@ namespace Workloads.Creation.WebBackdrop {
         public WebProjectSession Session { get; private set; } = null!;
         public bool IsSavedFromInit => Session.DesignFileUtil.IsSaveFromInit;
 
+        public FileType RuntimeFileType { get; private set; }
+
         public MainPage() {
             this.InitializeComponent();
             ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
@@ -37,10 +42,11 @@ namespace Workloads.Creation.WebBackdrop {
         /// </summary>
         /// <param name="identify">类型为 web 项目（zip/rar/7z）的文件路径或项目名称</param>
         public void Initialize(string identify, FileType fileType) {
+            RuntimeFileType = fileType;
             Session = new WebProjectSession(identify);
             Payload = new FrameworkPayload() {
-                [NaviPayloadKey.ArcPageContext] = this.ArcContext,
-                [NaviPayloadKey.WebProjectSession] = this.Session
+                [NaviPayloadKey.WebProjectSession] = this.Session,
+                [NaviPayloadKey.ContextKey] = this.ContextKey,
             };
             Session.IsSavedChanged += Session_IsSavedChanged;
         }
@@ -118,9 +124,44 @@ namespace Workloads.Creation.WebBackdrop {
             return webEditor.RedoAsync();
         }
 
-        public Task<string?> ExportAsync(ExportImageFormat format) {
-            // Web project doesn't export as image
-            return Task.FromResult<string?>(null);
+        public Task<bool> AddToLibraryAsync() {
+            return webEditor.AddToLibraryAsync();
+        }
+
+        public async Task<string?> ExportAsync(ExportImageFormat format) {
+            // Web 项目导出两种 zip（选择保存位置 → 打包 → 写入，与 StaticImg 导出流程一致）：
+            //  - Zip    ：库可导入的 FWebZip 标准 Web 壁纸包（剔除 .vpw，包内含 project.json）
+            //  - FullZip：全量项目归档（含 .vpw 工程文件，用于备份/迁移）
+            try {
+                var isFullExport = format == ExportImageFormat.FullZip;
+                Dictionary<string, string[]> fileTypeChoices = isFullExport
+                    ? new() { ["Full Project Archive (*.zip)"] = [".zip"] }
+                    : new() { ["Web Wallpaper Package (*.zip)"] = [".zip"] };
+
+                var saveFile = await WindowsStoragePickers.PickSaveFileAsync(
+                    WindowConsts.WindowHandle,
+                    string.Concat(Session.DesignFileUtil.ProjectName, isFullExport ? "_full" : string.Empty, WebProjectExporter.ExportExtension),
+                    fileTypeChoices
+                );
+
+                if (saveFile == null || string.IsNullOrEmpty(saveFile.Path))
+                    return null;
+
+                // 导出前先保存所有未保存的编辑，保证包内文件为最新内容
+                if (!await webEditor.SaveAllAsync()) {
+                    GlobalMessageUtil.ShowError("Failed to save project files. Export aborted.");
+                    return null;
+                }
+
+                return isFullExport
+                    ? await Task.Run(() => WebProjectExporter.ExportFull(Session.DesignFileUtil, saveFile.Path))
+                    : await Task.Run(() => WebProjectExporter.Export(Session.DesignFileUtil, saveFile.Path));
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+            }
+            return null;
         }
         #endregion
     }

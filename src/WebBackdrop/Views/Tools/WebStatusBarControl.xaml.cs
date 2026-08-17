@@ -8,10 +8,8 @@ using Workloads.Creation.WebBackdrop.Views.Components;
 
 namespace Workloads.Creation.WebBackdrop.Views.Tools {
     public sealed partial class WebStatusBarControl : UserControl {
-        public event EventHandler<RoutedEventArgs>? PreviewRequested;
         public event EventHandler<WebEditorBottomPanel>? PanelRequested;
         public event EventHandler<RoutedEventArgs>? RunRequested;
-        public event EventHandler<RoutedEventArgs>? DebugRequested;
         public event EventHandler<RoutedEventArgs>? ToggleLeftSideBarRequested;
         public event EventHandler<RoutedEventArgs>? ToggleBottomPanelRequested;
         public event EventHandler<RoutedEventArgs>? ToggleRightSideBarRequested;

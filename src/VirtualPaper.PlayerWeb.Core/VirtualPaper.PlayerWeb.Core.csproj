@@ -53,8 +53,6 @@
 		<None Update="PLAYER_Web\js\default\run.js">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
-		<!-- Debug-only: embedded so it never appears in the player output -->
-		<EmbeddedResource Include="Utils\PreviewSystem\HotReload\hotreload.js" />
 		<Page Update="WebView\Components\General\GeneralInfoEdit.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</Page>
@@ -87,9 +85,6 @@
 		<Page Update="WebView\Window\PreviewWithWeb.xaml">
 			<SubType>Designer</SubType>
 		</Page>
-	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Utils\PreviewSystem\HotReload\" />
 	</ItemGroup>
 
 </Project>

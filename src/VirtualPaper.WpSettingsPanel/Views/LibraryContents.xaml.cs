@@ -62,8 +62,16 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private void Image_ImageFailed(object sender, ExceptionRoutedEventArgs e) {
-            // TODO 兜底图片
-            ArcLog.GetLogger<LibraryContents>().Error($"RImage loading failed: {e.ErrorMessage}");
+            // 图片加载失败（文件缺失/损坏）时隐藏图片，显示原生占位缩略图
+            if (sender is Image image) {
+                image.Visibility = Visibility.Collapsed;
+                if (image.Parent is FrameworkElement parent
+                    && parent.FindName("NoPreviewPlaceholder") is UIElement placeholder) {
+                    placeholder.Visibility = Visibility.Visible;
+                }
+            }
+
+            ArcLog.GetLogger<LibraryContents>().Warn($"Image loading failed: {e.ErrorMessage}");
         }
 
         private async void WallpapersLibView_ItemClick(object sender, ItemClickEventArgs e) {

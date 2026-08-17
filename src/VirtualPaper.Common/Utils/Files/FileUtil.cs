@@ -84,34 +84,73 @@ namespace VirtualPaper.Common.Utils.Files {
         public static string NextAvailablePath(string path) {
             // Short-cut if already Available
             if (!File.Exists(path) && !Directory.Exists(path))
-                return path;
+                return path;
+
             var numberPattern = "({0})";
 
             // If path has extension then insert the number pattern just before the extension and return next filename
             if (Path.HasExtension(path))
-                return GetNextPath(path.Insert(path.LastIndexOf(Path.GetExtension(path)), numberPattern));
+                return GetNextPath(path.Insert(path.LastIndexOf(Path.GetExtension(path)), numberPattern));
+
             // Otherwise just append the pattern to the path and return next filename
             return GetNextPath(path + numberPattern);
-        }
+        }
+
         private static string GetNextPath(string pattern) {
             string tmp = string.Format(pattern, 1);
             if (tmp == pattern)
-                throw new ArgumentException("The pattern must include an index place-holder", nameof(pattern));
+                throw new ArgumentException("The pattern must include an index place-holder", nameof(pattern));
+
             if (!File.Exists(tmp) && !Directory.Exists(tmp))
-                return tmp;
+                return tmp;
+
             int min = 1, max = 2; // 最小值是包容性的，最大值是排他性/未经测试的
             while (File.Exists(string.Format(pattern, max)) || Directory.Exists(string.Format(pattern, max))) {
                 min = max;
                 max *= 2;
-            }
+            }
+
             while (max != min + 1) {
                 int pivot = (max + min) / 2;
                 if (File.Exists(string.Format(pattern, pivot)) || Directory.Exists(string.Format(pattern, pivot)))
                     min = pivot;
                 else
                     max = pivot;
-            }
+            }
+
             return string.Format(pattern, max);
+        }
+
+        public static async Task WriteAllTextAsync(string filePath, string content, Encoding encoding) {
+            var directory = Path.GetDirectoryName(filePath);
+            if (string.IsNullOrEmpty(directory)) {
+                throw new ArgumentException("The file path must have a directory.", nameof(filePath));
+            }
+
+            var tempPath = Path.Combine(directory, $".{Path.GetRandomFileName()}.tmp");
+            try {
+                await File.WriteAllTextAsync(tempPath, content, encoding);
+                File.Move(tempPath, filePath, overwrite: true);
+            }
+            finally {
+                if (File.Exists(tempPath)) {
+                    File.Delete(tempPath);
+                }
+            }
+        }
+
+        public static async Task<T> RetryReadAsync<T>(Func<Task<T>> read) {
+            for (var attempt = 0; ; attempt++) {
+                try {
+                    return await read();
+                }
+                catch (IOException) when (attempt < 3) {
+                    await Task.Delay(50 * (attempt + 1));
+                }
+                catch (UnauthorizedAccessException) when (attempt < 3) {
+                    await Task.Delay(50 * (attempt + 1));
+                }
+            }
         }
 
         /// <summary>
@@ -216,7 +255,7 @@ namespace VirtualPaper.Common.Utils.Files {
         public static async Task CopyFileAsync(string src, string dest) {
             if (string.IsNullOrEmpty(src) || string.IsNullOrEmpty(dest) || !File.Exists(src)) return;
             
-            string destDir = Path.GetDirectoryName(dest);
+            string? destDir = Path.GetDirectoryName(dest);
             if (!string.IsNullOrEmpty(destDir)) {
                 Directory.CreateDirectory(destDir);
             }
@@ -375,7 +414,8 @@ namespace VirtualPaper.Common.Utils.Files {
             return string.IsNullOrEmpty(basePath)
                 ? path
                 : Path.GetRelativePath(basePath, path);
-        }
+        }
+
         public static string GetFileSize(string filePath) {
             try {
                 FileInfo fi = new(filePath);

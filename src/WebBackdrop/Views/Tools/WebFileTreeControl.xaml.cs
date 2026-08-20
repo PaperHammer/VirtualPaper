@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
@@ -34,8 +36,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public event EventHandler<string>? FileSaveRequested;
         public event EventHandler<string>? FileSaveAsRequested;
         public event EventHandler<string>? FolderSelected;
-        public event EventHandler<string>? NewFileRequested;
-        public event EventHandler<string>? ProjectFileRenamed;
+        // [已废弃，暂注释] 从未触发
+        // public event EventHandler<string>? NewFileRequested;
+        // public event EventHandler<string>? ProjectFileRenamed;
 
         public WebFileItem? SelectedFileItem {
             get => (WebFileItem?)GetValue(SelectedFileItemProperty);
@@ -47,7 +50,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public WebFileTreeControl() {
             InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<WebFileTreeViewModel>();
-            _viewModel.ProjectFileRenamed += path => ProjectFileRenamed?.Invoke(this, path);
+            // [已废弃，暂注释] 上游事件从未触发
+            // _viewModel.ProjectFileRenamed += path => ProjectFileRenamed?.Invoke(this, path);
             DataContext = _viewModel;
             PreloadFolderOpenIcon();
         }
@@ -178,12 +182,86 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             FileSaveAsRequested?.Invoke(this, item.FilePath);
         }
 
-        private async void RenameMenuItem_Click(object sender, RoutedEventArgs e) {
+        private void RenameMenuItem_Click(object sender, RoutedEventArgs e) {
             var item = GetMenuItemTarget(sender);
             if (item == null) return;
 
-            await _viewModel.RenameAsync(item, GetRenamedPathAsync);
+            // VS Code 风格：不弹窗，直接在名称区进入行内重命名
+            _viewModel.BeginRename(item);
+
+            // 模板内的 TextBox 只在首次实例化时触发 Loaded，
+            // 进入重命名模式后手动聚焦并选中后缀名之前的部分
+            DispatcherQueue.TryEnqueue(() => FocusRenameTextBox(item));
         }
+
+        private void FocusRenameTextBox(WebFileItem item) {
+            var textBox = FindRenameTextBox(fileTreeView.ContainerFromItem(item), item);
+            if (textBox == null) return;
+
+            textBox.Focus(FocusState.Programmatic);
+            var extensionLength = item.Type == WebFileItemType.File
+                ? Path.GetExtension(item.RenameText).Length
+                : 0;
+            textBox.Select(0, Math.Max(0, textBox.Text.Length - extensionLength));
+        }
+
+        private static TextBox? FindRenameTextBox(DependencyObject? root, WebFileItem item) {
+            if (root == null) return null;
+
+            var count = VisualTreeHelper.GetChildrenCount(root);
+            for (var i = 0; i < count; i++) {
+                var child = VisualTreeHelper.GetChild(root, i);
+                if (child is TextBox textBox && ReferenceEquals(textBox.Tag, item)) return textBox;
+
+                var found = FindRenameTextBox(child, item);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        private void RenameTextBox_TextChanged(object sender, TextChangedEventArgs e) {
+            if (sender is not TextBox textBox || textBox.Tag is not WebFileItem item) return;
+
+            // 输入过程中实时校验：与提交时完全相同的判定逻辑
+            item.IsRenameInvalid = IsInvalidRenameName(textBox.Text.Trim());
+        }
+
+        private async void RenameTextBox_KeyDown(object sender, KeyRoutedEventArgs e) {
+            if (sender is not TextBox textBox || textBox.Tag is not WebFileItem item) return;
+
+            if (e.Key == Windows.System.VirtualKey.Enter) {
+                e.Handled = true;
+                await TryCommitRenameAsync(textBox, item);
+            }
+            else if (e.Key == Windows.System.VirtualKey.Escape) {
+                e.Handled = true;
+                _viewModel.CancelRename();
+            }
+        }
+
+        private async void RenameTextBox_LostFocus(object sender, RoutedEventArgs e) {
+            //if (sender is not TextBox textBox || textBox.Tag is not WebFileItem item) return;
+            //if (!item.IsRenaming) return; // 已提交或已取消
+
+            //// 失焦即提交；名称非法时保持重命名模式并重新聚焦
+            //await TryCommitRenameAsync(textBox, item);
+            //if (item.IsRenaming && item.IsRenameInvalid) {
+            //    textBox.Focus(FocusState.Programmatic);
+            //}
+        }
+
+        private async Task TryCommitRenameAsync(TextBox textBox, WebFileItem item) {
+            var name = textBox.Text.Trim();
+            if (IsInvalidRenameName(name)) {
+                item.IsRenameInvalid = true;
+                return;
+            }
+
+            await _viewModel.RenameToAsync(item, name);
+        }
+
+        private static bool IsInvalidRenameName(string name)
+            => string.IsNullOrWhiteSpace(name) || !ComplianceUtil.IsValidPathSegmentName(name);
 
         private void DeleteMenuItem_Click(object sender, RoutedEventArgs e) {
             var item = GetMenuItemTarget(sender);
@@ -264,31 +342,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
         private static void SetVisible(MenuFlyoutItem item, bool visible) {
             item.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private async Task<string?> GetRenamedPathAsync(string path) {
-            var oldName = Path.GetFileName(path);
-            var viewModel = new RenameViewModel(oldName, 255, false);
-            var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
-                new RenameView(viewModel),
-                "Rename",
-                "Confirm",
-                "Cancel");
-
-            if (dialogRes != DialogResult.Primary
-                || !ComplianceUtil.IsValidPathSegmentName(viewModel.NewName)
-                || string.Equals(oldName, viewModel.NewName, StringComparison.Ordinal)) {
-                return null;
-            }
-
-            var newName = viewModel.NewName!;
-            // 如果新名称没有后缀，则自动补上源文件的后缀
-            if (!string.IsNullOrEmpty(Path.GetExtension(oldName))
-                && string.IsNullOrEmpty(Path.GetExtension(newName))) {
-                newName += Path.GetExtension(oldName);
-            }
-
-            return FileUtil.NextAvailablePath(Path.Combine(Path.GetDirectoryName(path)!, newName));
         }
 
         private async Task<string?> GetAddFileOrFolderItemPathAsync(string path) {

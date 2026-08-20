@@ -20,7 +20,7 @@
                 Text="{markup:I18n Key=RenameDialog_Text_BeforeChange}"
                 FontWeight="Bold"
                 FontSize="16"/>
-            <TextBlock Text="{x:Bind _viewModel.OldName}" FontSize="16"/>
+            <TextBlock Text="{x:Bind _viewModel.OldName}" FontSize="16" IsTextSelectionEnabled="True"/>
         </StackPanel>
 
         <StackPanel

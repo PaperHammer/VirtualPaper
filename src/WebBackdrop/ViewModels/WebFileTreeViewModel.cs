@@ -12,7 +12,8 @@ using Workloads.Creation.WebBackdrop.Models.SerializableData;
 
 namespace Workloads.Creation.WebBackdrop.ViewModels {
     public partial class WebFileTreeViewModel : ObservableObject {
-        public event Action<string>? ProjectFileRenamed;
+        // [已废弃，暂注释] 事件从未触发，重命名链路未接
+        // public event Action<string>? ProjectFileRenamed;
 
         public ObservableCollection<WebFileItem> FileItems = [];
 
@@ -23,6 +24,45 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 _projectFolder = value;
                 OnPropertyChanged();
             }
+        }
+
+        /// <summary>文件树过滤文本（空则不过滤）。</summary>
+        public string FilterText {
+            get => _filterText;
+            set {
+                if (_filterText == value) return;
+                _filterText = value;
+                OnPropertyChanged();
+                ApplyFilter();
+            }
+        }
+
+        /// <summary>
+        /// 按名称过滤文件树：名称命中过滤词的节点保留；
+        /// 存在可见后代节点的目录也保留（保证命中文件的路径可见）。
+        /// </summary>
+        public void ApplyFilter() {
+            var filter = _filterText.Trim();
+            foreach (var item in FileItems) {
+                ApplyFilterToItem(item, filter);
+            }
+        }
+
+        private static bool ApplyFilterToItem(WebFileItem item, string filter) {
+            if (item.IsPlaceholder) {
+                item.IsVisible = false;
+                return false;
+            }
+
+            var childMatches = false;
+            foreach (var child in item.Children) {
+                childMatches |= ApplyFilterToItem(child, filter);
+            }
+
+            var matches = filter.Length == 0
+                || item.FileName.Contains(filter, StringComparison.OrdinalIgnoreCase);
+            item.IsVisible = matches || childMatches;
+            return item.IsVisible;
         }
 
         public void Refresh(WebDesignFileUtil designFileUtil) {
@@ -38,6 +78,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             FileItems.Clear();
             FileItems.Add(root);
             RebuildPathMap(root);
+            ApplyFilter();
         }
 
         public void Refresh(string projectFolder) {
@@ -53,6 +94,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             FileItems.Clear();
             FileItems.Add(root);
             RebuildPathMap(root);
+            ApplyFilter();
         }
 
         /// <summary>
@@ -131,6 +173,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                     AddItem(parent, new WebFileItem(path, WebFileItemType.File, parent));
                 }
             }
+            ApplyFilter();
         }
 
         /// <summary>
@@ -254,16 +297,57 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             var path = await getRenamedPathAsync(item.FilePath);
             if (path == null) return;
 
-            var oldPath = item.FilePath;
-            if (item.Type == WebFileItemType.File) {
-                File.Move(oldPath, path);
-            }
-            else {
-                Directory.Move(oldPath, path);
+            await RenameItemAsync(item, path);
+        }
+
+        /// <summary>进入行内重命名模式（名称区切换为输入框）。</summary>
+        public void BeginRename(WebFileItem item) {
+            CancelRename();
+
+            if (!item.ExistsOnDisk) return;
+            if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
+
+            _renamingItem = item;
+            item.RenameText = item.FileName;
+            item.IsRenameInvalid = false;
+            item.IsRenaming = true;
+        }
+
+        /// <summary>取消行内重命名。</summary>
+        public void CancelRename() {
+            if (_renamingItem == null) return;
+            _renamingItem.IsRenameInvalid = false;
+            _renamingItem.IsRenaming = false;
+            _renamingItem = null;
+        }
+
+        /// <summary>提交行内重命名（Enter/失焦提交，Esc 取消）。</summary>
+        public async Task RenameToAsync(WebFileItem item, string newName) {
+            if (!item.IsRenaming || _renamingItem != item) return;
+            if (string.IsNullOrWhiteSpace(newName) || string.Equals(newName, item.FileName, StringComparison.Ordinal)) {
+                CancelRename();
+                return;
             }
 
-            _designFileUtil?.RenameManifestPath(oldPath, path);
-            ReplaceItem(item, BuildItem(path, item.Type, item.Parent));
+            item.IsRenameInvalid = false;
+            item.IsRenaming = false;
+            _renamingItem = null;
+
+            var path = FileUtil.NextAvailablePath(Path.Combine(Path.GetDirectoryName(item.FilePath)!, newName.Trim()));
+            await RenameItemAsync(item, path);
+        }
+
+        private async Task RenameItemAsync(WebFileItem item, string newPath) {
+            var oldPath = item.FilePath;
+            if (item.Type == WebFileItemType.File) {
+                File.Move(oldPath, newPath);
+            }
+            else {
+                Directory.Move(oldPath, newPath);
+            }
+
+            _designFileUtil?.RenameManifestPath(oldPath, newPath);
+            ReplaceItem(item, BuildItem(newPath, item.Type, item.Parent));
         }
 
         public void Cut(WebFileItem item) {
@@ -382,6 +466,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             if (HasChildren(folderPath)) {
                 var placeholder = new WebFileItem(Path.Combine(folderPath, PlaceholderFileName), WebFileItemType.File, item) { IsPlaceholder = true };
                 placeholder.ExistsOnDisk = true;
+                placeholder.IsVisible = false;
                 item.Children.Add(placeholder);
             }
             return item;
@@ -401,6 +486,11 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             foreach (var child in folder.Children) {
                 _pathMap[child.FilePath] = child;
+            }
+
+            // 过滤状态下新展开的目录需要重新应用过滤
+            if (!string.IsNullOrWhiteSpace(FilterText)) {
+                ApplyFilter();
             }
         }
 
@@ -591,6 +681,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         private string _projectFolder = string.Empty;
+        private string _filterText = string.Empty;
         private const string PlaceholderFileName = ".__lazy_placeholder__";
         private readonly Dictionary<string, WebFileItem> _pathMap = new(StringComparer.OrdinalIgnoreCase);
         private WebDesignFileUtil? _designFileUtil;
@@ -598,6 +689,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         private Dictionary<string, List<WebProjectManifestItem>>? _manifestChildren;
         private WebFileItem? _clipboardItem;
         private WebFileTreeClipboardOperation _clipboardOperation;
+        private WebFileItem? _renamingItem;
     }
 
     public enum WebFileTreeClipboardOperation {

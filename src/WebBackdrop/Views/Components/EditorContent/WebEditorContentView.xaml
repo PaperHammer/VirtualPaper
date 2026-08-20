@@ -12,7 +12,6 @@
     <Grid>
         <local:MonacoEditor x:Name="textEditor"
             Visibility="Collapsed"
-            ContentChanged="TextEditor_ContentChanged"
             ContentModified="TextEditor_ContentModified"
             CursorPositionChanged="Editor_CursorPositionChanged"
             MarkersChanged="Editor_MarkersChanged"
@@ -20,7 +19,6 @@
             EditorStateChanged="Editor_EditorStateChanged"/>
         <editorContent:MarkdownEditorView x:Name="markdownEditor"
             Visibility="Collapsed"
-            ContentChanged="TextEditor_ContentChanged"
             ContentModified="TextEditor_ContentModified"
             CursorPositionChanged="Editor_CursorPositionChanged"
             MarkersChanged="Editor_MarkersChanged"

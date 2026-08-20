@@ -8,7 +8,8 @@ using Workloads.Creation.WebBackdrop.Models;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
     public sealed partial class WebEditorContentView : UserControl {
-        public event EventHandler<string>? ContentChanged;
+        // [已废弃，暂注释] 上游 MonacoEditor.ContentChanged 从未触发
+        // public event EventHandler<string>? ContentChanged;
         public event EventHandler? ContentModified;
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
@@ -104,16 +105,22 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
                 : textEditor.RedoAsync();
         }
 
-        public Task MarkSavedAsync() {
+        public Task MarkSavedAsync(int? versionId = null) {
             return _currentKind == WebEditorFileKind.Markdown
-                ? markdownEditor.MarkSavedAsync()
-                : textEditor.MarkSavedAsync();
+                ? markdownEditor.MarkSavedAsync(versionId)
+                : textEditor.MarkSavedAsync(versionId);
         }
 
         public Task<string> GetContentAsync() {
             return _currentKind == WebEditorFileKind.Markdown
                 ? markdownEditor.GetContentAsync()
                 : textEditor.GetContentAsync();
+        }
+
+        public Task<(string Content, int VersionId)> GetContentWithVersionAsync() {
+            return _currentKind == WebEditorFileKind.Markdown
+                ? markdownEditor.GetContentWithVersionAsync()
+                : textEditor.GetContentWithVersionAsync();
         }
 
         public Task<MonacoEditorState> GetEditorStateAsync() {
@@ -174,9 +181,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             welcomeView.Visibility = Visibility.Collapsed;
         }
 
+        // [已废弃，暂注释] 上游 MonacoEditor.ContentChanged 从未触发
+        /*
         private void TextEditor_ContentChanged(object? sender, string content) {
             ContentChanged?.Invoke(this, content);
         }
+        */
 
         private void TextEditor_ContentModified(object? sender, EventArgs e) {
             ContentModified?.Invoke(this, EventArgs.Empty);

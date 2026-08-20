@@ -35,18 +35,24 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
         }
 
+        // [已废弃，暂注释] 只写不读（绑定回写后无消费方）
+        /*
         private WebFileItem? _selectedFileItem;
         public WebFileItem? SelectedFileItem {
             get { return _selectedFileItem; }
             set { if (_selectedFileItem == value) return; _selectedFileItem = value; OnPropertyChanged(); }
         }
+        */
 
         public WebProjectSession Session { get; }
 
+        // [已废弃，暂注释] WebToolListControl 未被任何视图使用
+        /*
         public readonly List<WebToolItem> ToolItems = [
             new() { Type = WebToolType.FileTree,    ToolName = "Project_WebBackdrop_ToolName_FileTree",    Glyph = "\uE8B7" },
             new() { Type = WebToolType.ProjectInfo, ToolName = "Project_WebBackdrop_ToolName_ProjectInfo", Glyph = "\uE946" },
         ];
+        */
 
         public WebEditorViewModel(WebProjectSession session, ArcPageContextKey contextKey) {
             _contextKey = contextKey;
@@ -147,6 +153,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
+                GlobalMessageUtil.ShowError($"Failed to save file: {file.FilePath}\n{ex.Message}");
                 return false;
             }
         }
@@ -182,6 +189,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
+                GlobalMessageUtil.ShowError($"Failed to save file: {newPath}\n{ex.Message}");
                 return false;
             }
         }
@@ -245,9 +253,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                     FolderName = Path.GetFileName(projectDir),
                     FType = FileType.FWebZip,
                 };
-                var wpBasicDataPath = Path.Combine(projectDir, "wp_metadata_basic.json");
-                JsonSaver.Save(wpBasicDataPath, basicData, WpBasicDataContext.Default);
-
+                // 注意：不需要把 wp_metadata_basic.json 写入项目目录。
+                // GetPlayerStartArgsAsync 只序列化内存中的 basicData 生成启动参数；
+                // 预览的运行态数据（effect 文件、runtime 元数据）由核心写入 TempDir。
                 _debugJsonString = await _wpControlClient.GetPlayerStartArgsAsync(
                     basicData, RuntimeType.RWeb, null, cancellationToken);
 
@@ -275,6 +283,13 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             _previewWindow = null;
             _debugJsonString = null;
             _previewUrl = null;
+
+            // 清理调试时写入项目目录的临时元数据（不纳入项目管理）
+            var basicDataPath = Path.Combine(Session.DesignFileUtil.ProjectFolder, "wp_metadata_basic.json");
+            try {
+                if (File.Exists(basicDataPath)) File.Delete(basicDataPath);
+            }
+            catch { /* 忽略清理失败 */ }
         }
 
         public void CleanupSessions() {

@@ -82,7 +82,9 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
                         item["path"]?.GetValue<string>() ?? string.Empty,
                         item["type"]?.GetValue<string>() ?? "file",
                         item["role"]?.GetValue<string>() ?? "asset"))
-                    .Where(item => !string.IsNullOrWhiteSpace(item.Path))
+                    // 调试运行时生成的临时元数据不视为项目文件
+                    .Where(item => !string.IsNullOrWhiteSpace(item.Path)
+                        && !string.Equals(Path.GetFileName(item.Path), "wp_metadata_basic.json", StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
         }

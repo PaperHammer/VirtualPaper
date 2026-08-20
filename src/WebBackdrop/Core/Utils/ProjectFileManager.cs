@@ -123,6 +123,9 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             // 原子写入产生的瞬时临时文件（".xxx.tmp"）不进入清单/UI，也不触发外部变更逻辑
             if (IsTransientFile(e.Path) || (e.OldPath != null && IsTransientFile(e.OldPath))) return;
 
+            // 调试运行时写入的临时元数据不进入清单/UI
+            if (IsDebugArtifact(e.Path)) return;
+
             // “另存为”等写入的新文件不自动登记进 manifest
             if (e.Type == ProjectChangeType.Created && TryConsumeIgnoredCreated(e.Path)) return;
 
@@ -165,6 +168,13 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         private static bool IsTransientFile(string path) {
             var fileName = Path.GetFileName(path);
             return fileName.StartsWith('.') && fileName.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// 判断是否为调试运行时写入项目目录的临时元数据（不纳入项目管理）
+        /// </summary>
+        private static bool IsDebugArtifact(string path) {
+            return string.Equals(Path.GetFileName(path), "wp_metadata_basic.json", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

@@ -716,6 +716,9 @@ Author: PaperHammer</value>
   <data name="Project_NewName_InvalidTip" xml:space="preserve">
     <value>The name is empty or invalid (up to 30 characters).</value>
   </data>
+  <data name="WebBackdrop_FileTree_FilterPlaceholder" xml:space="preserve">
+    <value>Filter files...</value>
+  </data>
   <data name="Project_NewPosition_InvalidTip" xml:space="preserve">
     <value>The location is empty or invalid (up to 200 characters).</value>
   </data>

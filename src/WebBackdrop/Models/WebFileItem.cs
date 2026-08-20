@@ -56,6 +56,46 @@ namespace Workloads.Creation.WebBackdrop.Models {
             }
         }
 
+        /// <summary>是否处于行内重命名模式（名称区显示为输入框）。</summary>
+        public bool IsRenaming {
+            get => _isRenaming;
+            set {
+                if (_isRenaming == value) return;
+                _isRenaming = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>行内重命名输入框的当前文本。</summary>
+        public string RenameText {
+            get => _renameText;
+            set {
+                if (_renameText == value) return;
+                _renameText = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>重命名输入是否非法（名称非法时展示红框提示）。</summary>
+        public bool IsRenameInvalid {
+            get => _isRenameInvalid;
+            set {
+                if (_isRenameInvalid == value) return;
+                _isRenameInvalid = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>是否通过文件过滤（未命中过滤条件时隐藏）。</summary>
+        public bool IsVisible {
+            get => _isVisible;
+            set {
+                if (_isVisible == value) return;
+                _isVisible = value;
+                OnPropertyChanged();
+            }
+        }
+
         public BitmapImage? FolderIconSource => Application.Current.Resources.TryGetValue(
             IsExpanded ? "WebBackdrop_FileTree_FolderOpen" : "WebBackdrop_FileTree_Folder", out var resource) && resource is BitmapImage image
             ? image
@@ -92,5 +132,9 @@ namespace Workloads.Creation.WebBackdrop.Models {
         private bool _isSaved = true;
         private bool _isExpanded;
         private bool _existsOnDisk;
+        private bool _isRenaming;
+        private bool _isRenameInvalid;
+        private bool _isVisible = true;
+        private string _renameText = string.Empty;
     }
 }

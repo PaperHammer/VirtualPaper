@@ -198,7 +198,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             _session.FileManager.Changed += FileManager_Changed;
 
             leftFileTreeControl.Refresh(_session.DesignFileUtil);
-            leftFileTreeControl.ProjectFileRenamed += OnProjectFileRenamed;
+            // [已废弃，暂注释] 上游事件从未触发（重命名链路未接）
+            // leftFileTreeControl.ProjectFileRenamed += OnProjectFileRenamed;
             propertyPanelControl.LoadProject(_session.DesignFileUtil);
             problemsPanel.SetProjectFolder(_session.DesignFileUtil.ProjectFolder);
 
@@ -242,10 +243,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             _saveLock = new SemaphoreSlim(1, 1);
         }
 
+        // [已废弃，暂注释] 上游事件从未触发（重命名链路未接）
+        /*
         private void OnProjectFileRenamed(object? sender, string newPath) {
             _ = ViewModel?.UpdateRecentUsedAsync(newPath);
             SaveAllRequested?.Invoke(this, EventArgs.Empty);
         }
+        */
 
         private async Task OpenFileAsync(string filePath) {
             if (ViewModel == null) return;
@@ -444,6 +448,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
+        // [已废弃，暂注释] 上游 ContentChanged 从未触发；全文同步已改为保存时拉取
+        /*
         private void EditorContentView_ContentChanged(object? sender, string content) {
             if (ViewModel?.ActiveFile != null && ViewModel.ActiveFile.Content != content) {
                 ViewModel.ActiveFile.Content = content;
@@ -451,6 +457,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 QueuePropertyPanelRefresh(ViewModel.ActiveFile, ActiveFileLanguage);
             }
         }
+        */
 
         private void EditorContentView_EditorStateChanged(object? sender, MonacoEditorState state) {
             // Monaco 的状态（含 isSaved）只对文本类文件有效。图片等非文本文件
@@ -515,11 +522,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 IsSaving = true;
                 if (ViewModel == null) return false;
 
-                await SyncActiveEditorContentAsync();
+                var activeVersionId = await SyncActiveEditorContentAsync();
                 var activeFile = ViewModel.ActiveFile;
                 var result = await ViewModel.SaveAllAsync();
                 if (result && activeFile != null) {
-                    await editorContentView.MarkSavedAsync();
+                    await editorContentView.MarkSavedAsync(activeVersionId);
                     foreach (var file in ViewModel.OpenFiles) {
                         leftFileTreeControl.SetFileSaved(file.FilePath, file.IsSaved);
                     }
@@ -543,11 +550,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 IsSaving = true;
                 if (ViewModel == null) return false;
 
-                await SyncActiveEditorContentAsync();
+                var activeVersionId = await SyncActiveEditorContentAsync();
                 var activeFile = ViewModel.ActiveFile;
                 var result = await ViewModel.SaveActiveFileAsync();
                 if (result && activeFile != null) {
-                    await editorContentView.MarkSavedAsync();
+                    await editorContentView.MarkSavedAsync(activeVersionId);
                     leftFileTreeControl.SetFileSaved(activeFile.FilePath, activeFile.IsSaved);
                     // Refresh property panel to reflect updated Save state
                     propertyPanelControl.Load(activeFile, ActiveFileLanguage);
@@ -565,15 +572,16 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
-        private async Task SyncActiveEditorContentAsync() {
+        private async Task<int> SyncActiveEditorContentAsync() {
             var activeFile = ViewModel?.ActiveFile;
-            if (activeFile?.CanOpenAsText != true) return;
+            if (activeFile?.CanOpenAsText != true) return 0;
 
-            var content = await editorContentView.GetContentAsync();
+            var (content, versionId) = await editorContentView.GetContentWithVersionAsync();
             if (activeFile.Content != content) {
                 activeFile.Content = content;
                 QueuePropertyPanelRefresh(activeFile, ActiveFileLanguage);
             }
+            return versionId;
         }
 
         private void EditorContentView_CursorPositionChanged(object? sender, MonacoCursorPosition position) {
@@ -609,13 +617,18 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 if (openFile == null) return;
             }
 
-            // 若正是当前编辑中的文件，先把编辑器内容同步进内存
+            // 若正是当前编辑中的文件，先把编辑器内容同步进内存，并记录当前模型版本
+            var versionId = 0;
             if (ViewModel.ActiveFile?.Equals(openFile) == true) {
-                await SyncActiveEditorContentAsync();
+                versionId = await SyncActiveEditorContentAsync();
             }
 
             if (await ViewModel.SaveFileAsync(openFile)) {
                 leftFileTreeControl.SetFileSaved(filePath, true);
+                if (ViewModel.ActiveFile?.Equals(openFile) == true) {
+                    // 用保存时捕获的版本标记，避免保存与继续输入交错导致标记错乱
+                    await editorContentView.MarkSavedAsync(versionId);
+                }
                 _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
             }
         }

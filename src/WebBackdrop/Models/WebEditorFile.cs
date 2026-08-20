@@ -20,7 +20,8 @@ namespace Workloads.Creation.WebBackdrop.Models {
 
         public bool CanOpenAsText => Kind is WebEditorFileKind.Text or WebEditorFileKind.Markdown;
         public WebEditorFileKind Kind => GetKind(FileExtension);
-        public string IndentText => GetIndentText(Content);
+        // [已废弃，暂注释] 全文同步改为保存时拉取，IndentText 无消费方
+        // public string IndentText => GetIndentText(Content);
         public string EncodingText { get; private set; }
         public string LineEndingText { get; private set; }
 
@@ -89,6 +90,8 @@ namespace Workloads.Creation.WebBackdrop.Models {
 
         public event EventHandler? IsSavedChanged;
 
+        // [已废弃，暂注释] 无调用方（打开文件均走 LoadAsync）
+        /*
         public WebEditorFile(string filePath) {
             FilePath = filePath;
             _content = ReadContent(filePath);
@@ -96,6 +99,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
             LineEndingText = GetLineEndingText(_content);
             _isSaved = true;
         }
+        */
 
         public static async Task<WebEditorFile> LoadAsync(string filePath) {
             if (!File.Exists(filePath) || !WebEditorFileUtil.IsTextExtension(Path.GetExtension(filePath))) {
@@ -129,6 +133,8 @@ namespace Workloads.Creation.WebBackdrop.Models {
             return WebEditorFileKind.Unsupported;
         }
 
+        // [已废弃，暂注释] 仅被已注释的公共构造函数使用
+        /*
         private static string ReadContent(string filePath) {
             return File.Exists(filePath) && WebEditorFileUtil.IsTextExtension(Path.GetExtension(filePath))
                 ? ReadAllText(filePath)
@@ -140,7 +146,10 @@ namespace Workloads.Creation.WebBackdrop.Models {
                 ? await ReadAllTextAsync(filePath)
                 : string.Empty;
         }
+        */
 
+        // [已废弃，暂注释] 无消费方（缩进信息由 Monaco 的 editorStateChanged 提供）
+        /*
         private static string GetIndentText(string content) {
             var tabCount = 0;
             var spaceCount = 0;
@@ -177,6 +186,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
             if (tabCount > spaceCount) return "Tabs";
             return minSpaces == int.MaxValue ? "Spaces: 2" : $"Spaces: {Math.Clamp(minSpaces, 1, 8)}";
         }
+        */
 
         private static string GetLineEndingText(string content) {
             var crlfCount = 0;
@@ -189,6 +199,8 @@ namespace Workloads.Creation.WebBackdrop.Models {
             return crlfCount >= lfCount ? "CRLF" : "LF";
         }
 
+        // [已废弃，暂注释] 仅被已注释的公共构造函数使用
+        /*
         private static string GetEncodingText(string filePath) {
             if (!File.Exists(filePath) || !WebEditorFileUtil.IsTextExtension(Path.GetExtension(filePath))) return "UTF-8";
 
@@ -202,10 +214,14 @@ namespace Workloads.Creation.WebBackdrop.Models {
             var bytes = await ReadAllBytesAsync(filePath);
             return GetEncodingText(bytes);
         }
+        */
 
+        // [已废弃，暂注释] 仅被已注释的方法使用
+        /*
         private static string GetEncodingText(byte[] bytes) {
             return GetEncodingText(bytes.AsSpan());
         }
+        */
 
         public override bool Equals(object? obj) {
             return Equals(obj as WebEditorFile);
@@ -219,11 +235,14 @@ namespace Workloads.Creation.WebBackdrop.Models {
             return FilePath.GetHashCode();
         }
 
+        // [已废弃，暂注释] 仅被已注释的方法使用
+        /*
         private static string ReadAllText(string path, Encoding? encoding = null) {
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var sr = encoding == null ? new StreamReader(fs) : new StreamReader(fs, encoding);
             return sr.ReadToEnd();
         }
+        */
 
         private static async Task<(string Content, string EncodingText)> ReadAllTextAndEncodingAsync(string path) {
             return await RetryReadAsync(async () => {
@@ -252,6 +271,8 @@ namespace Workloads.Creation.WebBackdrop.Models {
             });
         }
 
+        // [已废弃，暂注释] 仅被已注释的方法使用
+        /*
         private static byte[] ReadAllBytes(string path) {
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             var bytes = new byte[fs.Length];
@@ -267,6 +288,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
                 return bytes;
             });
         }
+        */
 
         private static async Task<T> RetryReadAsync<T>(Func<Task<T>> read) {
             for (var attempt = 0; ; attempt++) {

@@ -25,6 +25,7 @@
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/ComboBox/ArcComboBox.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/Button/ArcButton.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/Slider/ArcSlider.xaml" />
+                <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Input/TextBox/ArcTextBox.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Navigation/TabView/ArcTabViewItem.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Navigation/RootView/ArcNavigationview.xaml" />
                 <ResourceDictionary Source="ms-appx:///VirtualPaper.UIComponent/Navigation/RootView/ArcNavigationviewStyle.xaml" />

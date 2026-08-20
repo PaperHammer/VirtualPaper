@@ -15,8 +15,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
     public sealed partial class MarkdownEditorView : UserControl {
         private const double PaneMinWidth = 240;
 
+        // [已废弃，暂注释] 上游 MonacoEditor.ContentChanged 从未触发
         // 完整内容已获取/同步的通知
-        public event EventHandler<string>? ContentChanged;
+        // public event EventHandler<string>? ContentChanged;
         // 内容被编辑过的轻量通知，不携带文本；用于立即标记 IsSaved = false、更新标签/文件树状态，输入路径不跨 WebView 传输全文
         public event EventHandler? ContentModified;
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
@@ -56,12 +57,16 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             return monacoEditor.RedoAsync();
         }
 
-        public Task MarkSavedAsync() {
-            return monacoEditor.MarkSavedAsync();
+        public Task MarkSavedAsync(int? versionId = null) {
+            return monacoEditor.MarkSavedAsync(versionId);
         }
 
         public Task<string> GetContentAsync() {
             return monacoEditor.GetContentAsync();
+        }
+
+        public Task<(string Content, int VersionId)> GetContentWithVersionAsync() {
+            return monacoEditor.GetContentWithVersionAsync();
         }
 
         public Task<MonacoEditorState> GetEditorStateAsync() {
@@ -183,11 +188,14 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             }
         }
 
+        // [已废弃，暂注释] 上游 MonacoEditor.ContentChanged 从未触发
+        /*
         private void MonacoEditor_ContentChanged(object? sender, string content) {
             _content = content;
             UpdatePreviewBody(content);
             ContentChanged?.Invoke(this, content);
         }
+        */
 
         private void MonacoEditor_ContentModified(object? sender, EventArgs e) {
             ContentModified?.Invoke(this, EventArgs.Empty);

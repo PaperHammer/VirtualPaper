@@ -14,7 +14,8 @@ using Workloads.Creation.WebBackdrop.Core.Theme;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class MonacoEditor : UserControl {
-        public event EventHandler<string>? ContentChanged;
+        // [已废弃，暂注释] 从未触发；全文同步已改为保存时 GetContentAsync 拉取
+        // public event EventHandler<string>? ContentChanged;
         public event EventHandler? ContentModified;
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;
@@ -186,12 +187,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private Task HandleEditorStateChangedAsync(JsonElement rootElement) {
-            var alternativeVersionId = rootElement.TryGetProperty("alternativeVersionId", out var alternativeVersionIdElement)
-                ? alternativeVersionIdElement.GetInt32()
-                : 0;
             var isSaved = rootElement.TryGetProperty("isSaved", out var isSavedElement) && isSavedElement.GetBoolean();
-            var canUndo = rootElement.TryGetProperty("canUndo", out var canUndoElement) && canUndoElement.GetBoolean();
-            var canRedo = rootElement.TryGetProperty("canRedo", out var canRedoElement) && canRedoElement.GetBoolean();
             var lineEnding = rootElement.TryGetProperty("lineEnding", out var lineEndingElement)
                 ? lineEndingElement.GetString() ?? "LF"
                 : "LF";
@@ -204,7 +200,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             var filePath = rootElement.TryGetProperty("filePath", out var filePathElement)
                 ? filePathElement.GetString()
                 : null;
-            EditorStateChanged?.Invoke(this, new MonacoEditorState(alternativeVersionId, isSaved, canUndo, canRedo, lineEnding, encoding, indent, filePath));
+            EditorStateChanged?.Invoke(this, new MonacoEditorState(isSaved, lineEnding, encoding, indent, filePath));
             return Task.CompletedTask;
         }
 
@@ -272,8 +268,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             return ExecuteEditorCommandAsync("window.redo()");
         }
 
-        public Task MarkSavedAsync() {
-            return ExecuteEditorCommandAsync("window.markSaved()");
+        public Task MarkSavedAsync(int? versionId = null) {
+            var script = versionId.HasValue
+                ? $"window.markSaved({versionId.Value})"
+                : "window.markSaved()";
+            return ExecuteEditorCommandAsync(script);
         }
 
         /// <summary>
@@ -302,6 +301,27 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
                 return _content;
+            }
+        }
+
+        /// <summary>
+        /// 一次性获取编辑器内容与模型版本号，供保存时精确标记“已保存版本”，
+        /// 避免保存与继续输入交错时把尚未落盘的内容误标为已保存。
+        /// </summary>
+        public async Task<(string Content, int VersionId)> GetContentWithVersionAsync() {
+            if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
+                return (_content, 0);
+            }
+
+            try {
+                var result = await monacoWebView.CoreWebView2.ExecuteScriptAsync("window.getValueWithVersion()");
+                var json = JsonSerializer.Deserialize<string>(result) ?? string.Empty;
+                var pair = JsonSerializer.Deserialize<(string content, int version)>(json, _jsonSerializerOptions);
+                return (pair.content, pair.version);
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MonacoEditor>().Error(ex);
+                return (_content, 0);
             }
         }
 
@@ -341,7 +361,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
-        private static MonacoEditorState DefaultEditorState => new(0, true, false, false, "LF", "UTF-8", "Spaces: 2");
+        private static MonacoEditorState DefaultEditorState => new(true, "LF", "UTF-8", "Spaces: 2");
 
         public async Task<MonacoEditorState> GetEditorStateAsync() {
             if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
@@ -444,7 +464,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
     public readonly record struct MonacoCursorPosition(int LineNumber, int Column, int SelectedCharacterCount, bool IsSelectedCharacterCountOverflow);
 
-    public sealed record MonacoEditorState(int AlternativeVersionId, bool IsSaved, bool CanUndo, bool CanRedo, string LineEnding, string Encoding, string Indent, string? FilePath = null);
+    public sealed record MonacoEditorState(bool IsSaved, string LineEnding, string Encoding, string Indent, string? FilePath = null);
 
     public sealed class MonacoMarker {
         public int Severity { get; set; }

@@ -45,7 +45,6 @@
             <Grid>
                 <Grid x:Name="leftSideBar" Background="{ThemeResource LayerFillColorDefaultBrush}">
                     <tools:WebFileTreeControl x:Name="leftFileTreeControl"
-                        SelectedFileItem="{x:Bind ViewModel.SelectedFileItem, Mode=TwoWay}"
                         FileOpenRequested="FileTree_FileOpenRequested"
                         FileSaveRequested="FileTree_FileSaveRequested"
                         FileSaveAsRequested="FileTree_FileSaveAsRequested"
@@ -85,7 +84,6 @@
 
                 <Border BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0 0 0 1">
                     <editorContent:WebEditorContentView x:Name="editorContentView"
-                        ContentChanged="EditorContentView_ContentChanged"
                         ContentModified="EditorContentView_ContentModified"
                         CursorPositionChanged="EditorContentView_CursorPositionChanged"
                         MarkersChanged="EditorContentView_MarkersChanged"

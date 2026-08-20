@@ -118,13 +118,12 @@
                 multiCursorModifier: 'alt',
             });
 
-            // Initialize saved/initial version ids right after editor creation.
+            // Initialize saved version id right after editor creation.
             // Without this, postEditorState() would report isSaved=false until the
             // first setValue() call, which can incorrectly mark non-text files
             // (e.g. the first opened image) as unsaved.
             var initialModel = editor.getModel();
             if (initialModel) {
-                window.initialAlternativeVersionId = initialModel.getAlternativeVersionId();
                 window.savedAlternativeVersionId = initialModel.getAlternativeVersionId();
             }
 
@@ -154,15 +153,10 @@
                 // 避免把“模型初始状态/上一个文件的状态”误报为当前文件未保存。
                 var isSaved = window.savedAlternativeVersionId === undefined
                     || alternativeVersionId === window.savedAlternativeVersionId;
-                var canUndo = window.initialAlternativeVersionId !== undefined
-                    && alternativeVersionId !== window.initialAlternativeVersionId;
                 window.chrome.webview.postMessage(JSON.stringify({
                     type: 'editorStateChanged',
                     filePath: getCurrentFilePath(),
-                    alternativeVersionId: alternativeVersionId,
                     isSaved: isSaved,
-                    canUndo: canUndo,
-                    canRedo: false,
                     lineEnding: getLineEndingText(model),
                     encoding: window.editorEncoding || 'UTF-8',
                     indent: getIndentText(model)
@@ -216,6 +210,7 @@
 
             editor.onDidChangeCursorPosition(function (e) {
                 postCursorPosition(e.position);
+                scheduleNavRecord();
             });
 
             editor.onDidChangeCursorSelection(function (e) {
@@ -313,7 +308,6 @@
                         // Model cached — switch instantly in JS, no C# needed
                         editor.setModel(existingModel);
                         // 切换到缓存模型后同步版本基线，避免 postEditorState 误报未保存
-                        window.initialAlternativeVersionId = existingModel.getAlternativeVersionId();
                         window.savedAlternativeVersionId = existingModel.getAlternativeVersionId();
                         editor.setPosition({ lineNumber: entry.lineNumber, column: entry.column });
                         editor.revealPositionInCenter({ lineNumber: entry.lineNumber, column: entry.column });
@@ -361,10 +355,6 @@
                     _lastNavRecorded = { filePath: filePath, lineNumber: pos.lineNumber, column: pos.column };
                 }, NAV_RECORD_DELAY_MS);
             }
-
-            editor.onDidChangeCursorPosition(function (e) {
-                scheduleNavRecord();
-            });
 
             // Also record on mouse click (explicit navigation intent)
             editor.onMouseDown(function (e) {
@@ -604,7 +594,6 @@
                 }
                 var model = editor.getModel();
                 if (model) {
-                    window.initialAlternativeVersionId = model.getAlternativeVersionId();
                     window.savedAlternativeVersionId = model.getAlternativeVersionId();
                 }
                 window.isSettingValue = false;
@@ -621,13 +610,15 @@
                 postEditorState();
             };
 
-            window.markSaved = function () {
+            window.markSaved = function (alternativeVersionId) {
                 var model = editor.getModel();
                 if (!model) {
                     return;
                 }
 
-                window.savedAlternativeVersionId = model.getAlternativeVersionId();
+                window.savedAlternativeVersionId = typeof alternativeVersionId === 'number'
+                    ? alternativeVersionId
+                    : model.getAlternativeVersionId();
                 postEditorState();
             };
 
@@ -647,23 +638,6 @@
                 }
             };
 
-            // Register project files so TS service can resolve cross-file imports
-            window.registerExtraLibs = function (filesJson) {
-                try {
-                    var files = JSON.parse(filesJson);
-                    var defaults = monaco.languages.typescript.javascriptDefaults;
-                    files.forEach(function (file) {
-                        try {
-                            defaults.addExtraLib(file.content, 'file:///' + file.path);
-                        } catch (e) {
-                            // Ignore individual file registration failures
-                        }
-                    });
-                } catch (e) {
-                    // Ignore parse failures
-                }
-            };
-
             window.undo = function () {
                 editor.trigger('host', 'undo', null);
             };
@@ -676,10 +650,7 @@
                 var model = editor.getModel();
                 if (!model) {
                     return JSON.stringify({
-                        alternativeVersionId: 0,
                         isSaved: true,
-                        canUndo: false,
-                        canRedo: false,
                         lineEnding: 'LF',
                         encoding: window.editorEncoding || 'UTF-8',
                         indent: 'Spaces: 2'
@@ -688,13 +659,9 @@
 
                 var alternativeVersionId = model.getAlternativeVersionId();
                 return JSON.stringify({
-                    alternativeVersionId: alternativeVersionId,
                     filePath: getCurrentFilePath(),
                     isSaved: window.savedAlternativeVersionId === undefined
                         || alternativeVersionId === window.savedAlternativeVersionId,
-                    canUndo: window.initialAlternativeVersionId !== undefined
-                        && alternativeVersionId !== window.initialAlternativeVersionId,
-                    canRedo: false,
                     lineEnding: getLineEndingText(model),
                     encoding: window.editorEncoding || 'UTF-8',
                     indent: getIndentText(model)
@@ -703,6 +670,17 @@
 
             window.getValue = function () {
                 return editor.getValue();
+            };
+
+            window.getValueWithVersion = function () {
+                var model = editor.getModel();
+                if (!model) {
+                    return JSON.stringify({ content: '', version: 0 });
+                }
+                return JSON.stringify({
+                    content: model.getValue(),
+                    version: model.getAlternativeVersionId()
+                });
             };
 
             window.revealPosition = function (lineNumber, column) {
@@ -802,10 +780,6 @@
                 window.chrome.webview.postMessage(JSON.stringify({ type: 'ready' }));
             }
 
-            window.formatDocument = function () {
-                editor.getAction('editor.action.formatDocument').run();
-            };
-
             window.setEncoding = function (encoding) {
                 window.editorEncoding = encoding || 'UTF-8';
                 postEditorState();
@@ -830,16 +804,6 @@
                 postEditorState();
             };
 
-            window.getIndentOptions = function () {
-                var options = editor.getOptions();
-                var model = editor.getModel();
-                var tabSize = model ? model.getOptions().tabSize : options.get(monaco.editor.EditorOption.tabSize);
-                var insertSpaces = model ? model.getOptions().insertSpaces : options.get(monaco.editor.EditorOption.insertSpaces);
-                return JSON.stringify({
-                    tabSize: tabSize,
-                    insertSpaces: insertSpaces
-                });
-            };
             window.replaceLineEndings = function (targetEnding) {
                 var model = editor.getModel();
                 if (!model) return;

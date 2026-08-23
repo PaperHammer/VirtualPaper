@@ -35,7 +35,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
             if (CanOpenAsText) {
                 var enc = GetEncodingFromText(encoding);
                 Content = await ReadAllTextAsync(FilePath, enc);
-                LineEndingText = GetLineEndingText(_content);
+                LineEndingText = GetLineEndingText(Content);
             }
 
             _isSaved = true;
@@ -58,6 +58,9 @@ namespace Workloads.Creation.WebBackdrop.Models {
         public string Content {
             get => _content;
             set {
+                // 防止上游把 null 写进来：_openFileMap 缓存的是同一个实例引用，
+                // 一旦 Content 被置 null，再次切回该文件时编辑器就无内容可显示。
+                value ??= string.Empty;
                 if (_content == value) return;
                 _content = value;
                 OnPropertyChanged();
@@ -112,7 +115,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
 
         private WebEditorFile(string filePath, string content, string encodingText) {
             FilePath = filePath;
-            _content = content;
+            Content = content;
             EncodingText = encodingText;
             LineEndingText = GetLineEndingText(content);
             _isSaved = true;
@@ -304,7 +307,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
             }
         }
 
-        private string _content;
+        private string _content = string.Empty;
         private bool _isSaved;
     }
 }

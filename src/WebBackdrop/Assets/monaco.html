@@ -566,37 +566,52 @@
 
             window.setValue = function (value, filePath) {
                 updateLargeFileOptions(value.length);
-                var current = editor.getValue();
-                var isChanged = current !== value;
-                if (isChanged) {
-                    window.isSettingValue = true;
 
-                    // Record current position before switching to a different file
-                    var currentPath = getCurrentFilePath();
-                    var currentPos = editor.getPosition();
-                    if (filePath && currentPath && currentPath !== filePath && currentPos) {
-                        pushNavigationPosition(currentPath, currentPos.lineNumber, currentPos.column);
-                    }
+                var currentPath = getCurrentFilePath();
+                var currentPos = editor.getPosition();
+                var isModelSwitch = false;
 
+                // 以“模型归属（URI）”而不是“文本内容”决定是否切换模型：
+                // 内容相同的两个文件也必须切换到各自的模型，否则切文件后仍显示旧文件。
+                window.isSettingValue = true;
+                try {
                     if (filePath) {
                         var normalizedPath = filePath.replace(/\\/g, '/');
                         var uri = monaco.Uri.parse('file:///' + normalizedPath);
-                        var existingModel = monaco.editor.getModel(uri);
-                        if (existingModel) {
-                            existingModel.setValue(value);
-                        } else {
-                            existingModel = monaco.editor.createModel(value, undefined, uri);
+                        var model = monaco.editor.getModel(uri);
+                        if (!model) {
+                            model = monaco.editor.createModel(value, undefined, uri);
+                        } else if (model.getValue() !== value) {
+                            model.setValue(value);
                         }
-                        editor.setModel(existingModel);
+
+                        if (editor.getModel() !== model) {
+                            isModelSwitch = true;
+                            editor.setModel(model);
+                        }
                     } else {
-                        editor.setValue(value);
+                        var model = editor.getModel();
+                        if (!model || model.uri.scheme !== 'inmemory') {
+                            isModelSwitch = true;
+                            editor.setModel(monaco.editor.createModel('', undefined, monaco.Uri.parse('inmemory://model')));
+                        }
+                        if (editor.getValue() !== value) {
+                            editor.setValue(value);
+                        }
                     }
+                } finally {
+                    window.isSettingValue = false;
                 }
+
+                // Record current position after switching away from a different file
+                if (isModelSwitch && filePath && currentPath && currentPath !== filePath && currentPos) {
+                    pushNavigationPosition(currentPath, currentPos.lineNumber, currentPos.column);
+                }
+
                 var model = editor.getModel();
                 if (model) {
                     window.savedAlternativeVersionId = model.getAlternativeVersionId();
                 }
-                window.isSettingValue = false;
 
                 // Apply pending navigation position (from goBack/goForward cross-file)
                 if (window._pendingNavigation) {

@@ -37,6 +37,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             HideAll();
 
             if (file == null) {
+                // 清空关联路径，避免用空内容覆盖上一个文件的缓存模型
+                textEditor.FilePath = string.Empty;
                 textEditor.EditorContent = string.Empty;
                 textEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(language);
                 welcomeView.Visibility = Visibility.Visible;

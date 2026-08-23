@@ -36,13 +36,15 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         }
 
         public void Load(string filePath, string content, string language) {
-            _content = content;
+            _content = content ?? string.Empty;
+            // 丢弃上一文件遗留的防抖更新任务，避免旧文件的预览内容覆盖新文件
+            _previewUpdateVersion++;
             ResetLayout();
             // 关联文件 URI，使状态上报携带路径，保存状态（含 undo/redo）才能正确匹配
             monacoEditor.FilePath = filePath;
-            monacoEditor.EditorContent = content;
+            monacoEditor.EditorContent = _content;
             monacoEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(language);
-            LoadPreviewDocument(content);
+            LoadPreviewDocument(_content);
         }
 
         public Task RevealPositionAsync(int lineNumber, int columnNumber) {
@@ -75,6 +77,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
 
         public void ReleaseResources() {
             ResetLayout();
+            // 同时使在途的防抖预览更新任务失效
+            _previewUpdateVersion++;
             _previewVersion++;
             _pendingPreviewHtml = null;
             _previewDocumentLoaded = false;
@@ -107,10 +111,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         }
 
         private void LoadPreviewDocument(string content) {
-            NavigatePreview(MarkdownPreviewRenderer.Render(content, MarkdownPreviewTheme.FromElement(this)));
+            NavigatePreview(MarkdownPreviewRenderer.Render(content ?? string.Empty, MarkdownPreviewTheme.FromElement(this)));
         }
 
         private void UpdatePreviewBody(string content) {
+            content ??= string.Empty;
             if (!_previewDocumentLoaded || previewWebView.CoreWebView2 == null) {
                 LoadPreviewDocument(content);
                 return;
@@ -207,7 +212,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             await Task.Delay(150);
             if (version != _previewUpdateVersion) return;
 
-            var content = await monacoEditor.GetContentAsync();
+            var content = await monacoEditor.GetContentAsync() ?? string.Empty;
             if (version != _previewUpdateVersion || _content == content) return;
 
             _content = content;

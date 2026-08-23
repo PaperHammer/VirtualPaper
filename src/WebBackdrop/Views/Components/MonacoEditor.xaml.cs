@@ -27,10 +27,24 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         public string EditorContent {
             get => _content;
             set {
-                if (_content == value) return;
+                // null 内容一律按空文本处理，避免缓存 null 并下发给 JS
+                //（JS 端 window.setValue 会直接对 value.length 报错）。
+                value ??= string.Empty;
+
+                // 只有“内容”和“关联文件”都未变化时才去重。仅内容相同但文件路径
+                // 已变化时仍必须推送到 JS 切换模型，否则切文件后编辑器会继续显示
+                // 上一个文件的内容（区域与高亮却照常刷新）。
+                if (_content == value && _contentFilePath == FilePath) return;
+
+                var contentChanged = _content != value;
                 _content = value;
+                _contentFilePath = FilePath;
                 SetValue(EditorContentProperty, value);
-                _ = SetContentAsync(value);
+
+                // 内容未变化时 DP 值不变、回调不会触发，这里补一次推送完成模型切换。
+                if (!contentChanged) {
+                    _ = SetContentAsync(value, FilePath);
+                }
             }
         }
         public static readonly DependencyProperty EditorContentProperty =
@@ -39,7 +53,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private static void OnEditorContentPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is MonacoEditor editor && e.NewValue is string newContent) {
-                _ = editor.SetContentAsync(newContent);
+                _ = editor.SetContentAsync(newContent, editor.FilePath);
             }
         }
 
@@ -156,7 +170,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             if (_isEditorReady) return Task.CompletedTask;
             _isEditorReady = true;
             if (_pendingContent != null) {
-                _ = SetContentAsync(_pendingContent);
+                _ = SetContentAsync(_pendingContent, FilePath);
                 _pendingContent = null;
             }
             if (_pendingLanguage != null) {
@@ -310,18 +324,17 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         /// </summary>
         public async Task<(string Content, int VersionId)> GetContentWithVersionAsync() {
             if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
-                return (_content, 0);
+                return (_content ?? string.Empty, 0);
             }
 
             try {
                 var result = await monacoWebView.CoreWebView2.ExecuteScriptAsync("window.getValueWithVersion()");
-                var json = JsonSerializer.Deserialize<string>(result) ?? string.Empty;
-                var pair = JsonSerializer.Deserialize<(string content, int version)>(json, _jsonSerializerOptions);
-                return (pair.content, pair.version);
+                var payload = JsonSerializer.Deserialize<ContentVersionPayload>(result, _jsonSerializerOptions);
+                return (payload?.Content ?? string.Empty, payload?.Version ?? 0);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
-                return (_content, 0);
+                return (_content ?? string.Empty, 0);
             }
         }
 
@@ -391,14 +404,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
-        private async Task SetContentAsync(string content) {
+        private async Task SetContentAsync(string content, string filePath) {
             if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
                 _pendingContent = content;
                 return;
             }
             try {
                 var serialized = JsonSerializer.Serialize(content);
-                var filePath = FilePath;
                 if (!string.IsNullOrEmpty(filePath)) {
                     var filePathSerialized = JsonSerializer.Serialize(filePath);
                     await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setValue({serialized}, {filePathSerialized})");
@@ -440,8 +452,18 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private string _content = string.Empty;
+        // 记录 _content 所属文件路径：内容相同但文件不同时必须重新推送 setValue 切换模型
+        private string _contentFilePath = string.Empty;
         private string? _pendingContent;
         private string? _pendingLanguage;
+
+        /// <summary>
+        /// window.getValueWithVersion() 的返回结构：{ content, version }。
+        /// </summary>
+        private sealed class ContentVersionPayload {
+            public string Content { get; set; } = string.Empty;
+            public int Version { get; set; }
+        }
         private string? _pendingEncoding;
         private (int TabSize, bool InsertSpaces)? _pendingIndentOptions;
         private bool _isEditorReady;

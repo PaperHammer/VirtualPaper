@@ -106,6 +106,10 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         }
 
         public static string RenderMarkdown(string markdown) {
+            // 快速切换文件时上游可能传入 null（编辑器尚未就绪/内容尚未同步），
+            // 统一按空文档处理，避免 NullReferenceException。
+            markdown ??= string.Empty;
+
             var html = new StringBuilder();
             var inCodeBlock = false;
 

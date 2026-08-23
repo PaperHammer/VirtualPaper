@@ -254,8 +254,17 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private async Task OpenFileAsync(string filePath) {
             if (ViewModel == null) return;
 
-            await SyncActiveEditorContentAsync();
-            await ViewModel.OpenFileAsync(filePath);
+            // 快速连续切换文件时串行化“同步旧文件 → 打开新文件”整段流程，
+            // 避免两次切换交错：前一次的同步任务完成时 ActiveFile/_currentKind
+            // 已被后一次切换改变，从而把新文件（或 null）内容写进旧文件缓存。
+            await _openFileLock.WaitAsync();
+            try {
+                await SyncActiveEditorContentAsync();
+                await ViewModel.OpenFileAsync(filePath);
+            }
+            finally {
+                _openFileLock.Release();
+            }
         }
 
         private async void OnMonacoFileOpenRequested(object? sender, string filePath) {
@@ -578,7 +587,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             var (content, versionId) = await editorContentView.GetContentWithVersionAsync();
             if (activeFile.Content != content) {
-                activeFile.Content = content;
+                activeFile.Content = content ?? string.Empty;
                 QueuePropertyPanelRefresh(activeFile, ActiveFileLanguage);
             }
             return versionId;
@@ -1141,6 +1150,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private Dictionary<(VirtualKey Key, VirtualKeyModifiers Modifiers), WebEditorCommand> _keyboardCommands = null!;
         private Dictionary<string, WebEditorCommand> _monacoCommands = null!;
         private SemaphoreSlim _saveLock = new(1, 1);
+        private SemaphoreSlim _openFileLock = new(1, 1);
         private EditorPanelSlot? _activeResizeSlot;
         private Pointer? _resizePointer;
         private double _resizeStartPointerPosition;

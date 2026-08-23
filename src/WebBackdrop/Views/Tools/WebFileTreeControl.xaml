@@ -123,6 +123,7 @@
 
         <DataTemplate x:Key="FileTemplate" x:DataType="models:WebFileItem">
             <collection:ArcTreeViewItem Margin="2 0 0 0" AutomationProperties.Name="{x:Bind FileName}" HorizontalContentAlignment="Stretch"
+                ItemsSource="{x:Bind Children}"
                 Visibility="{x:Bind IsVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
                 <collection:ArcTreeViewItem.ContextFlyout>
                     <MenuFlyout Opening="FileMenuFlyout_Opening">
@@ -259,6 +260,11 @@
         <collection:ArcTreeView x:Name="fileTreeView"
             Grid.Row="1"
             CancelSelectionEnable="False"
+            AllowDrop="True"
+            DragOver="FileTreeView_DragOver"
+            Drop="FileTreeView_Drop"
+            DragItemsStarting="FileTreeView_DragItemsStarting"
+            DragItemsCompleted="FileTreeView_DragItemsCompleted"
             SelectedItem="{x:Bind SelectedFileItem, Mode=TwoWay}"
             ItemsSource="{x:Bind _viewModel.FileItems}"
             ItemTemplateSelector="{StaticResource WebFileItemTemplateSelector}"

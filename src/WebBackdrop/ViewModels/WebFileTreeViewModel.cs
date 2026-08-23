@@ -431,14 +431,103 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             return true;
         }
 
-        public async Task ImportExternalFileAsync(string sourcePath, string targetFolder) {
-            var destinationPath = FileUtil.NextAvailablePath(Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
-            if (IsPathInManifest(destinationPath)) return;
+        /// <summary>
+        /// 外部导入（拖放 / Add Items 菜单）：文件或文件夹复制进目标目录，并登记进 vpw 清单。
+        /// </summary>
+        public async Task ImportExternalAsync(string sourcePath, string targetFolder) {
+            if (Directory.Exists(sourcePath)) {
+                var destinationPath = FileUtil.NextAvailablePath(Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
+                if (IsPathInManifest(destinationPath)) return;
 
-            File.Copy(sourcePath, destinationPath, overwrite: false);
-            _designFileUtil?.AddManifestPath(destinationPath);
-            var parent = FindItem(targetFolder);
-            AddItem(parent, new WebFileItem(destinationPath, WebFileItemType.File, parent));
+                // 大目录拷贝放后台线程，避免阻塞 UI
+                await Task.Run(() => FileUtil.CopyDirectory(sourcePath, destinationPath, true));
+                _designFileUtil?.AddManifestPathRecursive(destinationPath);
+                var parent = FindItem(targetFolder);
+                AddItem(parent, CreateDirectoryItem(destinationPath, parent));
+                return;
+            }
+
+            if (!File.Exists(sourcePath)) return;
+
+            var destinationFilePath = FileUtil.NextAvailablePath(Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
+            if (IsPathInManifest(destinationFilePath)) return;
+
+            File.Copy(sourcePath, destinationFilePath, overwrite: false);
+            _designFileUtil?.AddManifestPath(destinationFilePath);
+            var fileParent = FindItem(targetFolder);
+            AddItem(fileParent, new WebFileItem(destinationFilePath, WebFileItemType.File, fileParent));
+        }
+
+        /// <summary>
+        /// 拖拽移动：处理 TreeView 原生拖拽留下的数据变更并真正移动磁盘文件、同步 vpw。
+        /// 原生拖拽已把 item 从原父集合移除、追加到落点条目（target）的集合；
+        /// 这里按“有效目标目录”重新落位，目标不合法的回退到原始父目录。
+        /// </summary>
+        public void MoveItemAsync(WebFileItem item, WebFileItem? target, WebFileItem? originalParent) {
+            if (item.IsPlaceholder || !item.ExistsOnDisk) return;
+            if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
+
+            // 落点是文件夹 → 该文件夹；落点是文件 → 其父目录（文件不能当父节点）；null → 项目根目录
+            var targetFolder = target?.Type == WebFileItemType.Folder ? target : target?.Parent;
+            if (targetFolder == item) return;
+
+            if (item.Type == WebFileItemType.Folder && targetFolder != null && IsDescendantOf(targetFolder, item)) {
+                RestoreItemToParent(item, target, originalParent);
+                return;
+            }
+
+            var destinationFolder = targetFolder?.FilePath ?? ProjectFolder;
+            var originalFolderPath = originalParent?.FilePath ?? ProjectFolder;
+            var isSameFolder = string.Equals(destinationFolder, originalFolderPath, StringComparison.OrdinalIgnoreCase);
+            if (isSameFolder) {
+                // 没有真正换目录（或落点不合法）：把条目放回原父目录
+                RestoreItemToParent(item, target, originalParent);
+                return;
+            }
+
+            // 真实移动：磁盘 + vpw 清单 + 数据模型
+            var newPath = FileUtil.NextAvailablePath(Path.Combine(destinationFolder, item.FileName));
+            var oldPath = item.FilePath;
+            if (item.Type == WebFileItemType.File) {
+                File.Move(oldPath, newPath);
+            }
+            else {
+                Directory.Move(oldPath, newPath);
+            }
+
+            _designFileUtil?.RenameManifestPath(oldPath, newPath);
+
+            RemoveItemFromCollections(item, target, originalParent);
+            AddItem(targetFolder, BuildItem(newPath, item.Type, targetFolder));
+        }
+
+        /// <summary>
+        /// 把被拖条目放回原始父目录：从落点集合与原始集合中移除旧实例，再按原位置重新插入。
+        /// </summary>
+        private void RestoreItemToParent(WebFileItem item, WebFileItem? dropTarget, WebFileItem? originalParent) {
+            RemoveItemFromCollections(item, dropTarget, originalParent);
+            AddItem(originalParent, item);
+        }
+
+        /// <summary>
+        /// 清除旧实例在数据模型中的残留：原生拖拽把条目追加到了落点集合，
+        /// 这里从落点集合与原始集合中统一移除，并清理路径索引。
+        /// </summary>
+        private void RemoveItemFromCollections(WebFileItem item, WebFileItem? dropTarget, WebFileItem? originalParent) {
+            dropTarget?.Children.Remove(item);
+            (originalParent?.Children ?? FileItems).Remove(item);
+
+            _pathMap.Remove(item.FilePath);
+            if (item.Type == WebFileItemType.Folder) {
+                RemoveDescendantsFromPathMap(item);
+            }
+        }
+
+        private static bool IsDescendantOf(WebFileItem item, WebFileItem ancestor) {
+            for (var current = item.Parent; current != null; current = current.Parent) {
+                if (current == ancestor) return true;
+            }
+            return false;
         }
 
         private bool IsPathInManifest(string path) {

@@ -28,6 +28,7 @@
             'vs/language/html/monaco.contribution',
             'vs/language/css/monaco.contribution',
             'vs/language/typescript/monaco.contribution',
+            'vs/language/json/monaco.contribution',
             'vs/basic-languages/monaco.contribution'
         ], function () {
             // Configure TS/JS with full intellisense
@@ -60,6 +61,9 @@
             monaco.languages.css.cssDefaults.setDiagnosticsOptions({ validate: true });
             monaco.languages.css.lessDefaults.setDiagnosticsOptions({ validate: true });
             monaco.languages.css.scssDefaults.setDiagnosticsOptions({ validate: true });
+
+            // JSON diagnostics（.json / .vpw 项目清单）：语法高亮 + 语法检查
+            monaco.languages.json.jsonDefaults.setDiagnosticsOptions({ validate: true });
 
             editor = monaco.editor.create(document.getElementById('container'), {
                 value: '',

@@ -103,20 +103,22 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             _ = FlushChangedEventsAsync(token);
         }
 
-        // 等待 150ms 无新事件后，取出队列内事件，逐个交给实际处理逻辑；取消时直接退出
+        // 等待 150ms 无新事件后，取出队列内事件，逐个交给实际处理逻辑；取消时直接退出。
+        // 延时不用 token：Task.Delay(token) 被取消时会抛调试器可见的 TaskCanceledException 噪音
+        //（与 RefreshPropertyPanelAsync 的处理方式保持一致），改为延迟后检查取消标记。
         private async Task FlushChangedEventsAsync(CancellationToken cancellationToken) {
-            try {
-                await Task.Delay(150, cancellationToken);
-                List<ProjectChangedEvent> events;
-                lock (_changeLock) {
-                    events = [.. _pendingChangedEvents.Values];
-                    _pendingChangedEvents.Clear();
-                }
-                foreach (var projectChangedEvent in events) {
-                    ApplyProjectChange(projectChangedEvent);
-                }
+            await Task.Delay(150);
+            if (cancellationToken.IsCancellationRequested) return;
+
+            List<ProjectChangedEvent> events;
+            lock (_changeLock) {
+                events = [.. _pendingChangedEvents.Values];
+                _pendingChangedEvents.Clear();
             }
-            catch (OperationCanceledException) { }
+
+            foreach (var projectChangedEvent in events) {
+                ApplyProjectChange(projectChangedEvent);
+            }
         }
 
         private void ApplyProjectChange(ProjectChangedEvent e) {

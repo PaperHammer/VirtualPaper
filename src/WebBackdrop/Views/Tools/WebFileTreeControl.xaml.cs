@@ -20,6 +20,7 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
 using VirtualPaper.UIComponent.ViewModels;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Foundation;
 using Windows.Storage;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
@@ -39,9 +40,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public event EventHandler<string>? FileSaveRequested;
         public event EventHandler<string>? FileSaveAsRequested;
         public event EventHandler<string>? FolderSelected;
-        // [已废弃，暂注释] 从未触发
-        // public event EventHandler<string>? NewFileRequested;
-        // public event EventHandler<string>? ProjectFileRenamed;
 
         public WebFileItem? SelectedFileItem {
             get => (WebFileItem?)GetValue(SelectedFileItemProperty);
@@ -53,8 +51,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public WebFileTreeControl() {
             InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<WebFileTreeViewModel>();
-            // [已废弃，暂注释] 上游事件从未触发
-            // _viewModel.ProjectFileRenamed += path => ProjectFileRenamed?.Invoke(this, path);
             DataContext = _viewModel;
             PreloadFolderOpenIcon();
         }
@@ -114,13 +110,16 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             }
         }
 
+        /// <summary>
+        /// 处理外部文件/文件夹拖拽到 TreeView 的导入逻辑
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void FileTreeView_Drop(object sender, DragEventArgs e) {
             if (!e.DataView.Contains(StandardDataFormats.StorageItems)) return;
 
             // 命中目录则导入到该目录，否则导入到项目根目录
-            var targetFolder = GetDropTargetFolder(e.GetPosition(fileTreeView))?.FilePath
-                ?? _viewModel.ProjectFolder;
-
+            var targetFolder = GetDropTargetFolder(e.GetPosition(fileTreeView))?.FilePath ?? _viewModel.ProjectFolder;
             var items = await e.DataView.GetStorageItemsAsync();
             foreach (var storageItem in items) {
                 if (storageItem is StorageFile or StorageFolder) {
@@ -129,40 +128,92 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             }
         }
 
-        private void FileTreeView_DragItemsStarting(TreeView sender, TreeViewDragItemsStartingEventArgs args) {
-            // 记录每个被拖条目的原始父级：原生拖拽会把条目从原集合移除并追加到落点集合，
-            // 完成后需要凭原始父级判断“是否真的换了目录”并做回退。
-            _dragOriginalParents.Clear();
-            foreach (var dragged in args.Items.OfType<WebFileItem>()) {
-                _dragOriginalParents[dragged] = dragged.Parent;
-            }
-        }
-
-        private void FileTreeView_DragItemsCompleted(TreeView sender, TreeViewDragItemsCompletedEventArgs args) {
-            // Esc/右键取消的拖拽没有落点，原生未做任何变更，无需处理
-            if (args.DropResult == DataPackageOperation.None) {
-                _dragOriginalParents.Clear();
-                return;
-            }
-
-            foreach (var dragged in args.Items.OfType<WebFileItem>()) {
-                _dragOriginalParents.TryGetValue(dragged, out var originalParent);
-                _viewModel.MoveItemAsync(dragged, args.NewParentItem as WebFileItem, originalParent);
-            }
-            _dragOriginalParents.Clear();
-        }
-
         /// <summary>
-        /// 命中测试：找到拖放点下方的文件夹条目（命中文件时取其父目录）。
+        /// 处理 TreeView 内部条目拖拽的移动逻辑
         /// </summary>
-        private WebFileItem? GetDropTargetFolder(Windows.Foundation.Point position) {
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        private void FileTreeView_DragItemsCompleted(TreeView sender, TreeViewDragItemsCompletedEventArgs args) {
+            if (args.DropResult == DataPackageOperation.None) return;
+            if (args.NewParentItem is not WebFileItem targetItem) return;
+
+            var draggedItems = args.Items.OfType<WebFileItem>().Distinct().ToArray();
+            if (draggedItems.Length == 0) return;
+
+            // 原生拖拽只改视觉节点、不动数据源：摘掉旧节点 → VM 真实移动 → 按数据顺序回插节点
+            var originalParents = draggedItems.ToDictionary(item => item, item => item.Parent);
+            var nodeMap = BuildNodeMap(sender.RootNodes);
+
+            var draggedNodes = draggedItems
+                .Where(nodeMap.ContainsKey)
+                .Select(item => (Item: item, Node: nodeMap[item]))
+                .ToList();
+
+            foreach (var (_, node) in draggedNodes) {
+                node.Parent?.Children.Remove(node);
+            }
+
+            _viewModel.MoveItems(draggedItems, targetItem, originalParents);
+
+            foreach (var (item, node) in draggedNodes) {
+                var parentItem = item.Parent;
+                var parentNode = parentItem != null
+                    ? (nodeMap.TryGetValue(parentItem, out var parentNodeOfItem) ? parentNodeOfItem : null)
+                    : sender.RootNodes.FirstOrDefault();
+                if (parentNode == null) continue;
+
+                // VM 修改数据集合后，TreeView 会按“数量差”自动为新条目创建节点
+                //（我们已把旧节点摘除，数据侧 Add 时节点数少 1 → 自动补建）。
+                // 此时无需再插回旧节点，否则同一文件会出现两行。
+                var alreadyInserted = false;
+                foreach (var child in parentNode.Children) {
+                    if (child.Content is WebFileItem childItem && childItem.Equals(item)) {
+                        alreadyInserted = true;
+                        break;
+                    }
+                }
+                if (alreadyInserted) continue;
+
+                var collection = parentItem?.Children ?? _viewModel.FileItems;
+                var index = collection.IndexOf(item);
+                if (index < 0) index = collection.Count;
+
+                parentNode.Children.Insert(Math.Min(index, parentNode.Children.Count), node);
+            }
+        }
+
+        private WebFileItem? GetDropTargetFolder(Point position) {
             var elements = VisualTreeHelper.FindElementsInHostCoordinates(position, fileTreeView);
             foreach (var element in elements) {
-                if (element is TreeViewItem { DataContext: WebFileItem item }) {
+                if (element is TreeViewItem treeViewItem && treeViewItem.DataContext is WebFileItem item) {
                     return item.Type == WebFileItemType.Folder ? item : item.Parent;
                 }
             }
+
             return null;
+        }
+
+        /// <summary>
+        /// 一次性构建 数据条目 → TreeViewNode 映射，避免每次查找都递归遍历整棵树。
+        /// </summary>
+        private static Dictionary<WebFileItem, TreeViewNode> BuildNodeMap(IList<TreeViewNode> nodes) {
+            var map = new Dictionary<WebFileItem, TreeViewNode>(ReferenceEqualityComparer.Instance);
+
+            void Visit(TreeViewNode node) {
+                if (node.Content is WebFileItem item && !map.ContainsKey(item)) {
+                    map[item] = node;
+                }
+
+                foreach (var child in node.Children) {
+                    Visit(child);
+                }
+            }
+
+            foreach (var root in nodes) {
+                Visit(root);
+            }
+
+            return map;
         }
 
         private async void NewFileMenuItem_Click(object sender, RoutedEventArgs e) {
@@ -182,7 +233,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         private async void AddItemsMenuItem_Click(object sender, RoutedEventArgs e) {
             var target = GetMenuItemTarget(sender);
             if (target == null) return;
-            
+
             var hwnd = VirtualPaper.Common.Constants.Runtime.MainWindowHwnd;
             if (hwnd == IntPtr.Zero) {
                 hwnd = AppServiceLocator.Services.GetRequiredService<Microsoft.UI.Xaml.Window>().GetWindowHandleEx();
@@ -428,10 +479,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         private static WebFileItem? GetMenuItemTarget(object sender) {
             return sender is FrameworkElement { Tag: WebFileItem item } ? item : null;
         }
-        
+
         private readonly WebFileTreeViewModel _viewModel;
-        // 拖拽开始时的条目原始父级（条目 → 父级），完成后凭此判断是否需要移动/回退
-        private readonly Dictionary<WebFileItem, WebFileItem?> _dragOriginalParents = [];
     }
 
     partial class WebFileItemTemplateSelector : DataTemplateSelector {

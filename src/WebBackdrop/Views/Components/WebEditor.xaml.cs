@@ -16,12 +16,14 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
-using Windows.System;
 using Workloads.Creation.WebBackdrop.Core.Theme;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.ViewModels;
 using Workloads.Creation.WebBackdrop.Views.Components.BottomPanels;
+using DispatcherQueueTimer = Microsoft.UI.Dispatching.DispatcherQueueTimer;
+using VirtualKey = Windows.System.VirtualKey;
+using VirtualKeyModifiers = Windows.System.VirtualKeyModifiers;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class WebEditor : ArcUserControl {
@@ -209,6 +211,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             editorContentView.MarkdownEditor.MonacoEditor.NavigationRequested += OnMonacoNavigationRequested;
 
             UpdateStatusBar();
+
+            // 上次异常退出遗留的未保存编辑备份检测/恢复
+            _ = CheckCrashRecoveryAsync();
+
+            // 定期把未保存编辑备份到恢复目录，崩溃时不丢用户数据
+            StartBackupTimer();
         }
 
         private void ArcUserControl_Unloaded(object sender, RoutedEventArgs e) {
@@ -228,6 +236,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             editorContentView.TextEditor.NavigationRequested -= OnMonacoNavigationRequested;
             editorContentView.MarkdownEditor.MonacoEditor.FileOpenRequested -= OnMonacoFileOpenRequested;
             editorContentView.MarkdownEditor.MonacoEditor.NavigationRequested -= OnMonacoNavigationRequested;
+
+            StopBackupTimer();
 
             editorContentView.ReleaseResources();
 
@@ -267,13 +277,108 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
+        #region crash recovery
+
+        private void StartBackupTimer() {
+            StopBackupTimer();
+            _backupTimer = DispatcherQueue.CreateTimer();
+            _backupTimer.Interval = TimeSpan.FromSeconds(15);
+            _backupTimer.IsRepeating = true;
+            _backupTimer.Tick += BackupTimer_Tick;
+            _backupTimer.Start();
+        }
+
+        private void StopBackupTimer() {
+            if (_backupTimer == null) return;
+            _backupTimer.Tick -= BackupTimer_Tick;
+            _backupTimer.Stop();
+            _backupTimer = null;
+        }
+
+        /// <summary>
+        /// 定期把未保存文件的内存内容备份到恢复目录。Monaco 里的未保存编辑只存在于
+        /// WebView 中，应用崩溃时会全部丢失；这里每 15s 落盘一份，崩溃后下次启动可恢复。
+        /// </summary>
+        private async void BackupTimer_Tick(Microsoft.UI.Dispatching.DispatcherQueueTimer sender, object args) {
+            if (ViewModel == null || _session == null || IsSaving) return;
+
+            try {
+                // 活动文件的最新编辑可能尚未同步进内存，先拉取一次
+                if (ViewModel.ActiveFile is { CanOpenAsText: true } && !ViewModel.ActiveFile.IsSaved) {
+                    await SyncActiveEditorContentAsync();
+                }
+
+                if (ViewModel == null || _session == null) return;
+                var projectFolder = _session.DesignFileUtil.ProjectFolder;
+                foreach (var file in ViewModel.OpenFiles) {
+                    if (!file.IsSaved && file.CanOpenAsText) {
+                        await WebBackdropRecoveryStore.WriteBackupAsync(
+                            projectFolder, file.FilePath, file.Content, file.EncodingText);
+                    }
+                }
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<WebEditor>().Warn($"Editor backup failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 启动时检测上次异常退出遗留的备份：与磁盘一致的静默清理（说明后来保存过），
+        /// 不一致的提示用户恢复，避免崩溃造成编辑丢失。
+        /// </summary>
+        private async Task CheckCrashRecoveryAsync() {
+            if (_session == null) return;
+
+            var projectFolder = _session.DesignFileUtil.ProjectFolder;
+            var backups = WebBackdropRecoveryStore.ListBackupPaths(projectFolder);
+            if (backups.Count == 0) return;
+
+            var recoverable = new List<string>();
+            foreach (var backupPath in backups) {
+                var originalPath = WebBackdropRecoveryStore.GetOriginalPath(projectFolder, backupPath);
+                if (WebBackdropRecoveryStore.AreFilesEqual(backupPath, originalPath)) {
+                    try { File.Delete(backupPath); } catch { }
+                }
+                else {
+                    recoverable.Add(backupPath);
+                }
+            }
+
+            if (recoverable.Count == 0) return;
+
+            var result = await GlobalDialogUtils.ShowDialogAsync(
+                $"检测到上次异常退出前未保存的编辑（{recoverable.Count} 个文件）。\n是否恢复这些编辑？",
+                "恢复未保存的编辑",
+                "恢复",
+                "放弃编辑",
+                isDefaultPrimary: true);
+
+            if (result == DialogResult.Primary) {
+                foreach (var backupPath in recoverable) {
+                    try {
+                        await WebBackdropRecoveryStore.RestoreAsync(projectFolder, backupPath);
+                        File.Delete(backupPath);
+                    }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<WebEditor>().Error($"Failed to restore backup: {backupPath}", ex);
+                    }
+                }
+            }
+            else {
+                foreach (var backupPath in recoverable) {
+                    try { File.Delete(backupPath); } catch { }
+                }
+            }
+        }
+
+        #endregion
+
         private async void OnMonacoFileOpenRequested(object? sender, string filePath) {
             if (ViewModel != null && File.Exists(filePath)) {
                 await OpenFileAsync(filePath);
                 leftFileTreeControl.SelectFile(filePath);
             }
         }
-
         private async void OnMonacoNavigationRequested(object? sender, string filePath) {
             // Handle Go Back / Go Forward cross-file navigation.
             // JS has already stored the target line/column in _pendingNavigation;
@@ -538,6 +643,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     await editorContentView.MarkSavedAsync(activeVersionId);
                     foreach (var file in ViewModel.OpenFiles) {
                         leftFileTreeControl.SetFileSaved(file.FilePath, file.IsSaved);
+                        // 保存成功：清理对应备份，避免下次启动误判为未保存编辑
+                        if (_session != null) {
+                            WebBackdropRecoveryStore.DeleteBackup(_session.DesignFileUtil.ProjectFolder, file.FilePath);
+                        }
                     }
                     // 若保存了项目文件 (.vpw)，增量同步文件树
                     if (ViewModel.OpenFiles.Any(f => _session?.DesignFileUtil.IsProjectFile(f.FilePath) == true)) {
@@ -565,6 +674,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 if (result && activeFile != null) {
                     await editorContentView.MarkSavedAsync(activeVersionId);
                     leftFileTreeControl.SetFileSaved(activeFile.FilePath, activeFile.IsSaved);
+                    // 保存成功：清理对应备份
+                    if (_session != null) {
+                        WebBackdropRecoveryStore.DeleteBackup(_session.DesignFileUtil.ProjectFolder, activeFile.FilePath);
+                    }
                     // Refresh property panel to reflect updated Save state
                     propertyPanelControl.Load(activeFile, ActiveFileLanguage);
                     // 若保存了项目文件 (.vpw)，增量同步文件树
@@ -634,6 +747,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             if (await ViewModel.SaveFileAsync(openFile)) {
                 leftFileTreeControl.SetFileSaved(filePath, true);
+                // 保存成功：清理对应备份
+                if (_session != null) {
+                    WebBackdropRecoveryStore.DeleteBackup(_session.DesignFileUtil.ProjectFolder, filePath);
+                }
                 if (ViewModel.ActiveFile?.Equals(openFile) == true) {
                     // 用保存时捕获的版本标记，避免保存与继续输入交错导致标记错乱
                     await editorContentView.MarkSavedAsync(versionId);
@@ -1150,7 +1267,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private Dictionary<(VirtualKey Key, VirtualKeyModifiers Modifiers), WebEditorCommand> _keyboardCommands = null!;
         private Dictionary<string, WebEditorCommand> _monacoCommands = null!;
         private SemaphoreSlim _saveLock = new(1, 1);
-        private SemaphoreSlim _openFileLock = new(1, 1);
+        private readonly SemaphoreSlim _openFileLock = new(1, 1);
+        private DispatcherQueueTimer? _backupTimer;
         private EditorPanelSlot? _activeResizeSlot;
         private Pointer? _resizePointer;
         private double _resizeStartPointerPosition;

@@ -263,7 +263,6 @@
             AllowDrop="True"
             DragOver="FileTreeView_DragOver"
             Drop="FileTreeView_Drop"
-            DragItemsStarting="FileTreeView_DragItemsStarting"
             DragItemsCompleted="FileTreeView_DragItemsCompleted"
             SelectedItem="{x:Bind SelectedFileItem, Mode=TwoWay}"
             ItemsSource="{x:Bind _viewModel.FileItems}"

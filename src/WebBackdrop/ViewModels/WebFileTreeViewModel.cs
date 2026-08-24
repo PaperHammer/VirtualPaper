@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.ProjectSystem.Events;
 using VirtualPaper.Models.Mvvm;
@@ -12,10 +14,7 @@ using Workloads.Creation.WebBackdrop.Models.SerializableData;
 
 namespace Workloads.Creation.WebBackdrop.ViewModels {
     public partial class WebFileTreeViewModel : ObservableObject {
-        // [已废弃，暂注释] 事件从未触发，重命名链路未接
-        // public event Action<string>? ProjectFileRenamed;
-
-        public ObservableCollection<WebFileItem> FileItems = [];
+        public ObservableCollection<WebFileItem> FileItems { get; } = [];
 
         public string ProjectFolder {
             get => _projectFolder;
@@ -26,20 +25,31 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
         }
 
-        /// <summary>文件树过滤文本（空则不过滤）。</summary>
+        /// <summary>文件树过滤文本。</summary>
         public string FilterText {
             get => _filterText;
             set {
                 if (_filterText == value) return;
                 _filterText = value;
                 OnPropertyChanged();
-                ApplyFilter();
+
+                // 防抖后应用过滤，避免每个按键都全树刷新
+                _filterDebounce?.Cancel();
+                _filterDebounce = new CancellationTokenSource();
+                _ = ApplyFilterDebouncedAsync(_filterDebounce.Token);
             }
         }
 
+        private async Task ApplyFilterDebouncedAsync(CancellationToken token) {
+            //延时不用 token（取消时 Task.Delay(token) 会抛调试器可见的取消异常噪音）    
+            await Task.Delay(200);
+            if (token.IsCancellationRequested) return;
+
+            ApplyFilter();
+        }
+
         /// <summary>
-        /// 按名称过滤文件树：名称命中过滤词的节点保留；
-        /// 存在可见后代节点的目录也保留（保证命中文件的路径可见）。
+        /// 按名称过滤文件树：命中自身，或者存在命中的后代节点时显示。
         /// </summary>
         public void ApplyFilter() {
             var filter = _filterText.Trim();
@@ -65,6 +75,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             return item.IsVisible;
         }
 
+        // Refresh
+
         public void Refresh(WebDesignFileUtil designFileUtil) {
             if (!Directory.Exists(designFileUtil.ProjectFolder)) return;
 
@@ -72,12 +84,14 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             _manifestItems = designFileUtil.GetManifestItems();
             RebuildManifestChildrenIndex();
             ProjectFolder = designFileUtil.ProjectFolder;
+
             var root = CreateDirectoryItem(ProjectFolder, null);
             LoadChildren(root);
             root.IsExpanded = true;
+
             FileItems.Clear();
             FileItems.Add(root);
-            RebuildPathMap(root);
+
             ApplyFilter();
         }
 
@@ -88,20 +102,20 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             _manifestItems = null;
             _manifestChildren = null;
             ProjectFolder = projectFolder;
+
             var root = CreateDirectoryItem(projectFolder, null);
             LoadChildren(root);
             root.IsExpanded = true;
+
             FileItems.Clear();
             FileItems.Add(root);
-            RebuildPathMap(root);
+
             ApplyFilter();
         }
 
-        /// <summary>
-        /// 项目清单 (.vpw) 变更时，增量同步文件树
-        /// 
-        /// 对比新清单与当前文件树，只增删差异项，避免全量刷新导致的闪烁和性能问题
-        /// </summary>
+        // Manifest
+
+        /// <summary>项目清单发生变化时增量同步文件树。</summary>
         public void SyncManifest(WebDesignFileUtil designFileUtil) {
             if (_designFileUtil == null || _manifestItems == null) {
                 Refresh(designFileUtil);
@@ -109,31 +123,28 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
 
             _designFileUtil = designFileUtil;
-            IReadOnlyList<WebProjectManifestItem> newManifestItems;
-            newManifestItems = designFileUtil.GetManifestItems();
-            if (ProjectFolder != designFileUtil.ProjectFolder) {
-                ProjectFolder = designFileUtil.ProjectFolder;
-            }
 
-            // 构建新旧路径集合（绝对路径）
-            var newPathSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var item in newManifestItems) {
-                newPathSet.Add(Path.Combine(ProjectFolder, item.Path.Replace('/', Path.DirectorySeparatorChar)));
-            }
+            var newManifestItems = designFileUtil.GetManifestItems();
+            ProjectFolder = designFileUtil.ProjectFolder;
 
-            var oldPathSet = new HashSet<string>(_pathMap.Keys, StringComparer.OrdinalIgnoreCase);
+            var oldManifestItems = _manifestItems;
 
-            // 1. 先更新清单引用（后续 HasChildren / CreateDirectoryItem 依赖新清单）
+            var oldPathSet = new HashSet<string>(
+                oldManifestItems.Select(GetManifestAbsolutePath),
+                StringComparer.OrdinalIgnoreCase);
+            var newPathSet = new HashSet<string>(
+                newManifestItems.Select(GetManifestAbsolutePath),
+                StringComparer.OrdinalIgnoreCase);
+
+            // 先更新 manifest。
             _manifestItems = newManifestItems;
             RebuildManifestChildrenIndex();
 
-            // 2. 移除不在新清单中的项（按路径深度降序：先删子项再删父项）
-            //    排除根目录和占位项
-            var removedPaths = oldPathSet.Except(newPathSet)
-                .Where(p => !string.Equals(p, ProjectFolder, StringComparison.OrdinalIgnoreCase))
+            var removedPaths = oldPathSet
+                .Except(newPathSet)
+                .Where(path => !string.Equals(path, ProjectFolder, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(GetPathDepth)
                 .ToList();
-            removedPaths.Sort((a, b) => b.Count(c => c == Path.DirectorySeparatorChar)
-                .CompareTo(a.Count(c => c == Path.DirectorySeparatorChar)));
 
             foreach (var path in removedPaths) {
                 var item = FindItem(path);
@@ -142,24 +153,25 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 }
             }
 
-            // 3. 添加新清单中有但树中没有的项（按路径深度升序：先加父项再加子项）
-            var addedPaths = newPathSet.Except(oldPathSet).ToList();
-            addedPaths.Sort((a, b) => a.Count(c => c == Path.DirectorySeparatorChar)
-                .CompareTo(b.Count(c => c == Path.DirectorySeparatorChar)));
+            var addedPaths = newPathSet
+                .Except(oldPathSet)
+                .OrderBy(GetPathDepth)
+                .ToList();
 
-            var manifestItemMap = new Dictionary<string, WebProjectManifestItem>(StringComparer.OrdinalIgnoreCase);
-            foreach (var mi in newManifestItems) {
-                manifestItemMap[Path.Combine(ProjectFolder, mi.Path.Replace('/', Path.DirectorySeparatorChar))] = mi;
+            var manifestItemMap = new Dictionary<string, WebProjectManifestItem>(
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (var manifestItem in newManifestItems) {
+                manifestItemMap[GetManifestAbsolutePath(manifestItem)] = manifestItem;
             }
 
             foreach (var path in addedPaths) {
                 var parentPath = Path.GetDirectoryName(path);
-                if (parentPath == null) continue;
+                if (string.IsNullOrEmpty(parentPath)) continue;
 
                 var parent = FindItem(parentPath);
-                if (parent == null) continue;
+                if (parent == null || parent.Type != WebFileItemType.Folder) continue;
 
-                // 确保父节点的子项已展开加载
                 if (!parent.IsChildrenLoaded) {
                     LoadChildren(parent);
                 }
@@ -173,12 +185,26 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                     AddItem(parent, new WebFileItem(path, WebFileItemType.File, parent));
                 }
             }
+
             ApplyFilter();
         }
 
-        /// <summary>
-        /// 应用 ProjectSystemManager 的变化事件——所有文件系统变更的统一入口
-        /// </summary>
+        private string GetManifestAbsolutePath(WebProjectManifestItem item) {
+            return Path.Combine(ProjectFolder, item.Path.Replace('/', Path.DirectorySeparatorChar));
+        }
+
+        private static int GetPathDepth(string path) {
+            return path.Count(c => c == Path.DirectorySeparatorChar);
+        }
+
+        private void RefreshManifestSnapshot() {
+            if (_designFileUtil == null) return;
+            _manifestItems = _designFileUtil.GetManifestItems();
+            RebuildManifestChildrenIndex();
+        }
+
+        // Project change
+
         public void ApplyChange(ProjectChangedEvent e) {
             switch (e.Type) {
                 case ProjectChangeType.Created:
@@ -195,7 +221,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
                 case ProjectChangeType.Modified:
                 case ProjectChangeType.Reloaded:
-                    // 项目清单 (.vpw) 被修改时，丢弃内存缓存并增量同步文件树
                     if (_designFileUtil?.IsProjectFile(e.Path) == true) {
                         _designFileUtil.ReloadManifest();
                         SyncManifest(_designFileUtil);
@@ -204,11 +229,10 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
         }
 
-        public void SelectFile(string filePath) {
-            // Normalize path separators (Monaco sends forward slashes)
-            filePath = filePath.Replace('/', Path.DirectorySeparatorChar);
+        // Selection
 
-            // Lazily load ancestor folders so the target item is in _pathMap
+        public void SelectFile(string filePath) {
+            filePath = filePath.Replace('/', Path.DirectorySeparatorChar);
             EnsureAncestorsLoaded(filePath);
 
             var item = FindItem(filePath);
@@ -217,46 +241,52 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             ExpandParents(item);
         }
 
-        /// <summary>
-        /// Walk from project root to the file's parent directory,
-        /// loading children of each ancestor folder lazily as needed.
-        /// </summary>
         private void EnsureAncestorsLoaded(string filePath) {
             var parentPath = Path.GetDirectoryName(filePath);
             if (string.IsNullOrEmpty(parentPath)) return;
-            if (!parentPath.StartsWith(ProjectFolder, StringComparison.OrdinalIgnoreCase)) return;
+            if (!IsPathInsideProject(parentPath)) return;
 
-            // Collect all ancestor paths from project folder down to parent
             var ancestors = new List<string>();
             var current = parentPath;
-            while (current.Length > ProjectFolder.Length && current.StartsWith(ProjectFolder, StringComparison.OrdinalIgnoreCase)) {
+
+            while (current.Length > ProjectFolder.Length && IsPathInsideProject(current)) {
                 ancestors.Add(current);
                 current = Path.GetDirectoryName(current);
                 if (string.IsNullOrEmpty(current)) break;
             }
-            ancestors.Reverse(); // root-first
+
+            ancestors.Reverse();
 
             foreach (var ancestorPath in ancestors) {
                 var folder = FindItem(ancestorPath);
-                if (folder != null && !folder.IsChildrenLoaded) {
+                if (folder != null
+                    && folder.Type == WebFileItemType.Folder
+                    && !folder.IsChildrenLoaded) {
                     LoadChildren(folder);
                 }
             }
         }
 
+        private bool IsPathInsideProject(string path) {
+            var fullProject = Path.GetFullPath(ProjectFolder).TrimEnd(Path.DirectorySeparatorChar);
+            var fullPath = Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar);
+
+            return string.Equals(fullPath, fullProject, StringComparison.OrdinalIgnoreCase)
+                || fullPath.StartsWith(
+                    fullProject + Path.DirectorySeparatorChar,
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Basic operations
+
         public void SetFileSaved(string filePath, bool isSaved) {
             var item = FindItem(filePath);
             if (item == null) return;
-
             item.IsSaved = isSaved;
         }
 
         public void ToggleFolder(WebFileItem folder) {
             if (folder.Type != WebFileItemType.Folder) return;
-
-            // TreeView already toggles IsExpanded before ItemInvoked fires.
-            // Only load the lazy children here; toggling it again collapses the
-            // folder on its first expansion.
             LoadChildren(folder);
         }
 
@@ -264,31 +294,45 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             return _designFileUtil?.IsProjectFile(item.FilePath) == true;
         }
 
+        // Create
+
         public async Task CreateFileAsync(string folderPath, Func<string, Task<string?>> getRenamedPathAsync) {
             var path = await getRenamedPathAsync(Path.Combine(folderPath, "New File.txt"));
             if (path == null) return;
-
             if (IsPathInManifest(path)) return;
             if (_designFileUtil?.IsProjectFile(path) == true) return;
 
             File.WriteAllText(path, string.Empty);
+
             _designFileUtil?.AddManifestPath(path);
+            RefreshManifestSnapshot();
+
             var parent = FindItem(folderPath);
+            if (parent == null) return;
+
+            EnsureChildrenLoaded(parent);
             AddItem(parent, new WebFileItem(path, WebFileItemType.File, parent));
         }
 
         public async Task CreateFolderAsync(string folderPath, Func<string, Task<string?>> getRenamedPathAsync) {
             var path = await getRenamedPathAsync(Path.Combine(folderPath, "New Folder"));
             if (path == null) return;
-
             if (IsPathInManifest(path)) return;
             if (_designFileUtil?.IsProjectFile(path) == true) return;
 
             Directory.CreateDirectory(path);
+
             _designFileUtil?.AddManifestPath(path);
+            RefreshManifestSnapshot();
+
             var parent = FindItem(folderPath);
+            if (parent == null) return;
+
+            EnsureChildrenLoaded(parent);
             AddItem(parent, CreateDirectoryItem(path, parent));
         }
+
+        // Rename
 
         public async Task RenameAsync(WebFileItem item, Func<string, Task<string?>> getRenamedPathAsync) {
             if (!item.ExistsOnDisk) return;
@@ -300,7 +344,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             await RenameItemAsync(item, path);
         }
 
-        /// <summary>进入行内重命名模式（名称区切换为输入框）。</summary>
         public void BeginRename(WebFileItem item) {
             CancelRename();
 
@@ -313,18 +356,19 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             item.IsRenaming = true;
         }
 
-        /// <summary>取消行内重命名。</summary>
         public void CancelRename() {
             if (_renamingItem == null) return;
+
             _renamingItem.IsRenameInvalid = false;
             _renamingItem.IsRenaming = false;
             _renamingItem = null;
         }
 
-        /// <summary>提交行内重命名（Enter/失焦提交，Esc 取消）。</summary>
         public async Task RenameToAsync(WebFileItem item, string newName) {
-            if (!item.IsRenaming || _renamingItem != item) return;
-            if (string.IsNullOrWhiteSpace(newName) || string.Equals(newName, item.FileName, StringComparison.Ordinal)) {
+            if (!item.IsRenaming || !ReferenceEquals(_renamingItem, item)) return;
+
+            if (string.IsNullOrWhiteSpace(newName)
+                || string.Equals(newName, item.FileName, StringComparison.Ordinal)) {
                 CancelRename();
                 return;
             }
@@ -333,22 +377,43 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             item.IsRenaming = false;
             _renamingItem = null;
 
-            var path = FileUtil.NextAvailablePath(Path.Combine(Path.GetDirectoryName(item.FilePath)!, newName.Trim()));
+            var parentPath = Path.GetDirectoryName(item.FilePath);
+            if (string.IsNullOrEmpty(parentPath)) return;
+
+            var path = FileUtil.NextAvailablePath(Path.Combine(parentPath, newName.Trim()));
             await RenameItemAsync(item, path);
         }
 
         private async Task RenameItemAsync(WebFileItem item, string newPath) {
             var oldPath = item.FilePath;
-            if (item.Type == WebFileItemType.File) {
-                File.Move(oldPath, newPath);
+
+            if (string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase)) return;
+
+            try {
+                if (item.Type == WebFileItemType.File) {
+                    File.Move(oldPath, newPath);
+                }
+                else {
+                    Directory.Move(oldPath, newPath);
+                }
             }
-            else {
-                Directory.Move(oldPath, newPath);
+            catch (Exception ex) {
+                ArcLog.GetLogger<WebFileTreeViewModel>()
+                    .Error($"Failed to rename: {oldPath} -> {newPath}", ex);
+                return;
             }
 
             _designFileUtil?.RenameManifestPath(oldPath, newPath);
-            ReplaceItem(item, BuildItem(newPath, item.Type, item.Parent));
+            RefreshManifestSnapshot();
+
+            RebindItemPath(item, newPath, item.Parent);
+            SortItemInParent(item);
+            ApplyFilter();
+
+            await Task.CompletedTask;
         }
+
+        // Cut / Copy / Paste
 
         public void Cut(WebFileItem item) {
             if (!item.ExistsOnDisk) return;
@@ -372,58 +437,99 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             var source = _clipboardItem!;
             var destinationPath = FileUtil.NextAvailablePath(Path.Combine(target.FilePath, source.FileName));
+
             if (_designFileUtil?.IsProjectFile(destinationPath) == true) return;
 
-            if (source.Type == WebFileItemType.File) {
-                File.Copy(source.FilePath, destinationPath);
+            try {
+                if (source.Type == WebFileItemType.File) {
+                    File.Copy(source.FilePath, destinationPath);
+                }
+                else if (_clipboardOperation == WebFileTreeClipboardOperation.Cut) {
+                    Directory.Move(source.FilePath, destinationPath);
+                }
+                else {
+                    FileUtil.CopyDirectory(source.FilePath, destinationPath, true);
+                }
             }
-            else if (_clipboardOperation == WebFileTreeClipboardOperation.Cut) {
-                Directory.Move(source.FilePath, destinationPath);
-            }
-            else {
-                FileUtil.CopyDirectory(source.FilePath, destinationPath, true);
+            catch (Exception ex) {
+                ArcLog.GetLogger<WebFileTreeViewModel>()
+                    .Error($"Failed to paste: {source.FilePath} -> {destinationPath}", ex);
+                return;
             }
 
             if (_clipboardOperation == WebFileTreeClipboardOperation.Cut) {
                 _designFileUtil?.RenameManifestPath(source.FilePath, destinationPath);
-                if (source.Type == WebFileItemType.File) {
-                    File.Delete(source.FilePath);
-                }
-                RemoveItem(source);
+                RefreshManifestSnapshot();
+
+                var oldParent = source.Parent;
+                RebindItemPath(source, destinationPath, target);
+                oldParent?.Children.Remove(source);
+
+                EnsureChildrenLoaded(target);
+                AddItem(target, source);
+
                 ClearClipboard();
             }
             else {
                 _designFileUtil?.AddManifestPathRecursive(destinationPath);
-                _clipboardItem = BuildItem(source.FilePath, source.Type, source.Parent);
+                RefreshManifestSnapshot();
+
+                EnsureChildrenLoaded(target);
+                AddItem(target, BuildItem(destinationPath, source.Type, target));
             }
 
-            AddItem(target, BuildItem(destinationPath, source.Type, target));
-            LoadChildren(target);
             target.IsExpanded = true;
+            ApplyFilter();
         }
 
         public void Delete(WebFileItem item) {
             if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
 
             _designFileUtil?.RemoveManifestPath(item.FilePath);
+
             if (item.ExistsOnDisk) {
-                DeletePath(item);
+                try {
+                    DeletePath(item);
+                }
+                catch (Exception ex) {
+                    ArcLog.GetLogger<WebFileTreeViewModel>()
+                        .Error($"Failed to delete: {item.FilePath}", ex);
+                    return;
+                }
             }
+
             RemoveItem(item);
-            if (_clipboardItem == item) {
+
+            if (ReferenceEquals(_clipboardItem, item)) {
                 ClearClipboard();
             }
+
+            RefreshManifestSnapshot();
         }
 
         public bool CanPasteTo(WebFileItem target) {
-            if (_clipboardItem == null || _clipboardOperation == WebFileTreeClipboardOperation.None) return false;
+            if (_clipboardItem == null
+                || _clipboardOperation == WebFileTreeClipboardOperation.None) {
+                return false;
+            }
+
             if (target.Type != WebFileItemType.Folder) return false;
-            if (!File.Exists(_clipboardItem.FilePath) && !Directory.Exists(_clipboardItem.FilePath)) return false;
+
+            if (!File.Exists(_clipboardItem.FilePath)
+                && !Directory.Exists(_clipboardItem.FilePath)) {
+                return false;
+            }
+
             if (_clipboardOperation == WebFileTreeClipboardOperation.Copy) return true;
-            if (string.Equals(_clipboardItem.FilePath, target.FilePath, StringComparison.OrdinalIgnoreCase)) return false;
+
+            if (string.Equals(_clipboardItem.FilePath, target.FilePath, StringComparison.OrdinalIgnoreCase)) {
+                return false;
+            }
+
             if (_clipboardItem.Type == WebFileItemType.Folder) {
                 var relativePath = Path.GetRelativePath(_clipboardItem.FilePath, target.FilePath);
-                if (relativePath == "." || (!relativePath.StartsWith("..") && !Path.IsPathRooted(relativePath))) {
+                if (relativePath == "."
+                    || (!relativePath.StartsWith("..") && !Path.IsPathRooted(relativePath))) {
                     return false;
                 }
             }
@@ -431,115 +537,230 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             return true;
         }
 
-        /// <summary>
-        /// 外部导入（拖放 / Add Items 菜单）：文件或文件夹复制进目标目录，并登记进 vpw 清单。
-        /// </summary>
+        // External import
+
         public async Task ImportExternalAsync(string sourcePath, string targetFolder) {
+            var parent = FindItem(targetFolder);
+            if (parent == null || parent.Type != WebFileItemType.Folder) return;
+
+            EnsureChildrenLoaded(parent);
+
             if (Directory.Exists(sourcePath)) {
-                var destinationPath = FileUtil.NextAvailablePath(Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
+                var destinationPath = FileUtil.NextAvailablePath(
+                    Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
                 if (IsPathInManifest(destinationPath)) return;
 
                 // 大目录拷贝放后台线程，避免阻塞 UI
                 await Task.Run(() => FileUtil.CopyDirectory(sourcePath, destinationPath, true));
+
                 _designFileUtil?.AddManifestPathRecursive(destinationPath);
-                var parent = FindItem(targetFolder);
+                RefreshManifestSnapshot();
+
                 AddItem(parent, CreateDirectoryItem(destinationPath, parent));
                 return;
             }
 
             if (!File.Exists(sourcePath)) return;
 
-            var destinationFilePath = FileUtil.NextAvailablePath(Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
+            var destinationFilePath = FileUtil.NextAvailablePath(
+                Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
             if (IsPathInManifest(destinationFilePath)) return;
 
             File.Copy(sourcePath, destinationFilePath, overwrite: false);
+
             _designFileUtil?.AddManifestPath(destinationFilePath);
-            var fileParent = FindItem(targetFolder);
-            AddItem(fileParent, new WebFileItem(destinationFilePath, WebFileItemType.File, fileParent));
+            RefreshManifestSnapshot();
+
+            AddItem(parent, new WebFileItem(destinationFilePath, WebFileItemType.File, parent));
         }
 
+        // Move
+
         /// <summary>
-        /// 拖拽移动：处理 TreeView 原生拖拽留下的数据变更并真正移动磁盘文件、同步 vpw。
-        /// 原生拖拽已把 item 从原父集合移除、追加到落点条目（target）的集合；
-        /// 这里按“有效目标目录”重新落位，目标不合法的回退到原始父目录。
+        /// 多选移动：所有移动都复用同一套 RebindItemPath 逻辑。
         /// </summary>
-        public void MoveItemAsync(WebFileItem item, WebFileItem? target, WebFileItem? originalParent) {
-            if (item.IsPlaceholder || !item.ExistsOnDisk) return;
-            if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
+        public IReadOnlyList<WebFileItem> MoveItems(IEnumerable<WebFileItem> items, WebFileItem? target, IReadOnlyDictionary<WebFileItem, WebFileItem?> originalParents) {
+            var result = new List<WebFileItem>();
 
-            // 落点是文件夹 → 该文件夹；落点是文件 → 其父目录（文件不能当父节点）；null → 项目根目录
-            var targetFolder = target?.Type == WebFileItemType.Folder ? target : target?.Parent;
-            if (targetFolder == item) return;
-
-            if (item.Type == WebFileItemType.Folder && targetFolder != null && IsDescendantOf(targetFolder, item)) {
-                RestoreItemToParent(item, target, originalParent);
-                return;
+            var targetFolder = ResolveDropTargetFolder(target);
+            if (targetFolder != null) {
+                EnsureChildrenLoaded(targetFolder);
             }
 
-            var destinationFolder = targetFolder?.FilePath ?? ProjectFolder;
-            var originalFolderPath = originalParent?.FilePath ?? ProjectFolder;
-            var isSameFolder = string.Equals(destinationFolder, originalFolderPath, StringComparison.OrdinalIgnoreCase);
-            if (isSameFolder) {
-                // 没有真正换目录（或落点不合法）：把条目放回原父目录
-                RestoreItemToParent(item, target, originalParent);
-                return;
+            // 可移动性校验统一走 CanMove（占位节点、磁盘不存在、项目文件、自拖、拖入子孙目录）
+            var validItems = items
+                .Where(item => CanMove(item, targetFolder))
+                .Distinct()
+                .ToList();
+            if (validItems.Count == 0) return result;
+            validItems.Sort((a, b) => string.Compare(a.FilePath, b.FilePath, StringComparison.OrdinalIgnoreCase));
+
+            foreach (var item in validItems) {
+                originalParents.TryGetValue(item, out var originalParent);
+                originalParent ??= item.Parent;
+
+                var sourceFolderPath = originalParent?.FilePath ?? ProjectFolder;
+                var destinationFolderPath = targetFolder?.FilePath ?? ProjectFolder;
+
+                // 同目录移动实际上没有发生变化。
+                if (string.Equals(sourceFolderPath, destinationFolderPath, StringComparison.OrdinalIgnoreCase)) {
+                    result.Add(item);
+                    continue;
+                }
+
+                var oldPath = item.FilePath;
+                var newPath = FileUtil.NextAvailablePath(Path.Combine(destinationFolderPath, item.FileName));
+
+                if (string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase)) {
+                    result.Add(item);
+                    continue;
+                }
+
+                if (!MoveOnDisk(item, oldPath, newPath)) continue;
+
+                _designFileUtil?.RenameManifestPath(oldPath, newPath);
+                originalParent?.Children.Remove(item);
+                RebindItemPath(item, newPath, targetFolder);
+                AddItem(targetFolder, item);
+
+                result.Add(item);
             }
 
-            // 真实移动：磁盘 + vpw 清单 + 数据模型
-            var newPath = FileUtil.NextAvailablePath(Path.Combine(destinationFolder, item.FileName));
+            RefreshManifestSnapshot();
+
+            if (targetFolder != null) {
+                targetFolder.IsExpanded = true;
+            }
+
+            ApplyFilter();
+            return result;
+        }
+
+        private bool CanMove(WebFileItem item, WebFileItem? targetFolder) {
+            // 占位节点不能移动
+            if (item.IsPlaceholder) return false;
+            // 磁盘上不存在的节点不能移动
+            if (!item.ExistsOnDisk) return false;
+            // 项目文件不能移动
+            if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return false;
+            // 不能拖入自身
+            if (ReferenceEquals(item, targetFolder)) return false;
+            // 不能拖入自身的后代目录
+            if (item.Type == WebFileItemType.Folder
+                && targetFolder != null
+                && IsDescendantOf(targetFolder, item)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool MoveOnDisk(WebFileItem item, string oldPath, string newPath) {
+            try {
+                if (item.Type == WebFileItemType.File) {
+                    File.Move(oldPath, newPath);
+                }
+                else {
+                    Directory.Move(oldPath, newPath);
+                }
+
+                return true;
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<WebFileTreeViewModel>().Error($"Failed to move file: {oldPath} -> {newPath}", ex);
+                return false;
+            }
+        }
+
+        // Rebind
+
+        /// <summary>
+        /// 修改 WebFileItem 的路径和 Parent。
+        /// 对文件夹：同时递归修改已经加载到内存中的所有后代节点。
+        /// 对未加载的目录：不需要提前创建子节点，后续 LoadChildren 会根据最新 manifest 加载。
+        /// 这是新的文件树模型中最核心的路径同步入口。
+        /// </summary>
+        private void RebindItemPath(WebFileItem item, string newPath, WebFileItem? newParent) {
             var oldPath = item.FilePath;
-            if (item.Type == WebFileItemType.File) {
-                File.Move(oldPath, newPath);
-            }
-            else {
-                Directory.Move(oldPath, newPath);
-            }
 
-            _designFileUtil?.RenameManifestPath(oldPath, newPath);
+            item.RebindLocation(newPath, newParent);
 
-            RemoveItemFromCollections(item, target, originalParent);
-            AddItem(targetFolder, BuildItem(newPath, item.Type, targetFolder));
+            if (item.Type != WebFileItemType.Folder) return;
+
+            RebindLoadedDescendants(item, oldPath, newPath);
         }
 
-        /// <summary>
-        /// 把被拖条目放回原始父目录：从落点集合与原始集合中移除旧实例，再按原位置重新插入。
-        /// </summary>
-        private void RestoreItemToParent(WebFileItem item, WebFileItem? dropTarget, WebFileItem? originalParent) {
-            RemoveItemFromCollections(item, dropTarget, originalParent);
-            AddItem(originalParent, item);
+        private void RebindLoadedDescendants(WebFileItem folder, string oldFolderPath, string newFolderPath) {
+            foreach (var child in folder.Children) {
+                if (child.IsPlaceholder) {
+                    child.RebindLocation(Path.Combine(newFolderPath, PlaceholderFileName), folder);
+                    continue;
+                }
+
+                var relativePath = Path.GetRelativePath(oldFolderPath, child.FilePath);
+                var newChildPath = Path.Combine(newFolderPath, relativePath);
+
+                child.RebindLocation(newChildPath, folder);
+
+                if (child.Type == WebFileItemType.Folder) {
+                    RebindLoadedDescendants(child, Path.Combine(oldFolderPath, relativePath), newChildPath);
+                }
+            }
         }
 
-        /// <summary>
-        /// 清除旧实例在数据模型中的残留：原生拖拽把条目追加到了落点集合，
-        /// 这里从落点集合与原始集合中统一移除，并清理路径索引。
-        /// </summary>
-        private void RemoveItemFromCollections(WebFileItem item, WebFileItem? dropTarget, WebFileItem? originalParent) {
-            dropTarget?.Children.Remove(item);
-            (originalParent?.Children ?? FileItems).Remove(item);
+        // Tree operations
 
-            _pathMap.Remove(item.FilePath);
-            if (item.Type == WebFileItemType.Folder) {
-                RemoveDescendantsFromPathMap(item);
+        private WebFileItem? ResolveDropTargetFolder(WebFileItem? target) {
+            if (target == null) return null;
+
+            return target.Type == WebFileItemType.Folder
+                ? target
+                : target.Parent;
+        }
+
+        private void EnsureChildrenLoaded(WebFileItem? folder) {
+            if (folder == null || folder.Type != WebFileItemType.Folder) return;
+
+            if (!folder.IsChildrenLoaded) {
+                LoadChildren(folder);
             }
         }
 
         private static bool IsDescendantOf(WebFileItem item, WebFileItem ancestor) {
             for (var current = item.Parent; current != null; current = current.Parent) {
-                if (current == ancestor) return true;
+                if (ReferenceEquals(current, ancestor)) return true;
             }
+
             return false;
         }
 
-        private bool IsPathInManifest(string path) {
-            if (_manifestItems == null) return false;
+        /// <summary>
+        /// 根据树结构寻找节点（不再维护独立 _pathMap）。
+        /// </summary>
+        public WebFileItem? FindItem(string filePath) {
+            if (string.IsNullOrEmpty(filePath)) return null;
 
-            var relativePath = Path.GetRelativePath(ProjectFolder, path).Replace(Path.DirectorySeparatorChar, '/');
-            return _manifestItems.Any(item =>
-                string.Equals(item.Path, relativePath, StringComparison.OrdinalIgnoreCase));
+            filePath = Path.GetFullPath(filePath);
+
+            foreach (var root in FileItems) {
+                var found = FindItemRecursive(root, filePath);
+                if (found != null) return found;
+            }
+
+            return null;
         }
 
-        public WebFileItem? FindItem(string filePath) {
-            return _pathMap.TryGetValue(filePath, out var item) ? item : null;
+        private static WebFileItem? FindItemRecursive(WebFileItem item, string filePath) {
+            if (string.Equals(item.FilePath, filePath, StringComparison.OrdinalIgnoreCase)) {
+                return item;
+            }
+
+            foreach (var child in item.Children) {
+                var found = FindItemRecursive(child, filePath);
+                if (found != null) return found;
+            }
+
+            return null;
         }
 
         private static void ExpandParents(WebFileItem item) {
@@ -550,14 +771,23 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
         }
 
+        // Lazy loading
+
         private WebFileItem CreateDirectoryItem(string folderPath, WebFileItem? parent) {
             var item = new WebFileItem(folderPath, WebFileItemType.Folder, parent);
+
             if (HasChildren(folderPath)) {
-                var placeholder = new WebFileItem(Path.Combine(folderPath, PlaceholderFileName), WebFileItemType.File, item) { IsPlaceholder = true };
+                var placeholder = new WebFileItem(
+                    Path.Combine(folderPath, PlaceholderFileName),
+                    WebFileItemType.File,
+                    item) {
+                    IsPlaceholder = true
+                };
                 placeholder.ExistsOnDisk = true;
                 placeholder.IsVisible = false;
                 item.Children.Add(placeholder);
             }
+
             return item;
         }
 
@@ -565,19 +795,16 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             if (folder.Type != WebFileItemType.Folder || folder.IsChildrenLoaded) return;
 
             folder.Children.Clear();
+
             if (_manifestItems != null) {
                 LoadManifestChildren(folder);
             }
             else {
                 LoadDirectoryChildren(folder);
             }
+
             folder.IsChildrenLoaded = true;
 
-            foreach (var child in folder.Children) {
-                _pathMap[child.FilePath] = child;
-            }
-
-            // 过滤状态下新展开的目录需要重新应用过滤
             if (!string.IsNullOrWhiteSpace(FilterText)) {
                 ApplyFilter();
             }
@@ -600,13 +827,15 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 : [];
 
             foreach (var manifestItem in directItems) {
-                var path = Path.Combine(ProjectFolder, manifestItem.Path.Replace('/', Path.DirectorySeparatorChar));
+                var path = Path.Combine(
+                    ProjectFolder,
+                    manifestItem.Path.Replace('/', Path.DirectorySeparatorChar));
+
                 if (manifestItem.Type == "folder") {
                     folder.Children.Add(CreateDirectoryItem(path, folder));
                 }
                 else {
-                    var fileItem = new WebFileItem(path, WebFileItemType.File, folder);
-                    folder.Children.Add(fileItem);
+                    folder.Children.Add(new WebFileItem(path, WebFileItemType.File, folder));
                 }
             }
         }
@@ -621,7 +850,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         private string GetRelativeFolderPath(string folderPath) {
-            var relativeFolder = Path.GetRelativePath(ProjectFolder, folderPath).Replace(Path.DirectorySeparatorChar, '/');
+            var relativeFolder = Path.GetRelativePath(ProjectFolder, folderPath)
+                .Replace(Path.DirectorySeparatorChar, '/');
+
             return relativeFolder == "." ? string.Empty : relativeFolder;
         }
 
@@ -631,15 +862,22 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 return;
             }
 
-            _manifestChildren = new Dictionary<string, List<WebProjectManifestItem>>(StringComparer.OrdinalIgnoreCase);
+            _manifestChildren = new Dictionary<string, List<WebProjectManifestItem>>(
+                StringComparer.OrdinalIgnoreCase);
+
             foreach (var item in _manifestItems) {
-                var parentPath = Path.GetDirectoryName(item.Path)?.Replace(Path.DirectorySeparatorChar, '/') ?? string.Empty;
+                var parentPath = Path.GetDirectoryName(item.Path)?
+                    .Replace(Path.DirectorySeparatorChar, '/')
+                    ?? string.Empty;
+
                 if (!_manifestChildren.TryGetValue(parentPath, out var children)) {
                     children = [];
                     _manifestChildren[parentPath] = children;
                 }
+
                 children.Add(item);
             }
+
             foreach (var children in _manifestChildren.Values) {
                 children.Sort(CompareManifestItems);
             }
@@ -648,65 +886,60 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         private static int CompareManifestItems(WebProjectManifestItem left, WebProjectManifestItem right) {
             var typeOrder = string.Equals(left.Type, "folder", StringComparison.Ordinal) ? 0 : 1;
             var otherTypeOrder = string.Equals(right.Type, "folder", StringComparison.Ordinal) ? 0 : 1;
-            if (typeOrder != otherTypeOrder) return typeOrder - otherTypeOrder;
-            return string.Compare(Path.GetFileName(left.Path), Path.GetFileName(right.Path), StringComparison.OrdinalIgnoreCase);
+
+            if (typeOrder != otherTypeOrder) {
+                return typeOrder - otherTypeOrder;
+            }
+
+            return string.Compare(
+                Path.GetFileName(left.Path),
+                Path.GetFileName(right.Path),
+                StringComparison.OrdinalIgnoreCase);
         }
+
+        // Tree modification
 
         private void AddItem(WebFileItem? parent, WebFileItem item) {
             var collection = parent?.Children ?? FileItems;
-            if (collection == null) return;
 
-            // 防止文件系统监控器触发的重复添加
-            if (_pathMap.ContainsKey(item.FilePath)) return;
+            if (collection.Contains(item)) return;
+
+            var existing = collection.FirstOrDefault(
+                x => string.Equals(x.FilePath, item.FilePath, StringComparison.OrdinalIgnoreCase));
+            if (existing != null) return;
 
             var index = 0;
             while (index < collection.Count && CompareFileItems(collection[index], item) <= 0) {
                 index++;
             }
+
             collection.Insert(index, item);
-            _pathMap[item.FilePath] = item;
+
             if (parent != null) {
                 parent.IsExpanded = true;
             }
         }
 
-        private void ReplaceItem(WebFileItem oldItem, WebFileItem newItem) {
-            var collection = oldItem.Parent?.Children ?? FileItems;
-            if (collection == null) return;
-
-            var index = collection.IndexOf(oldItem);
-            if (index < 0) return;
-
-            _pathMap.Remove(oldItem.FilePath);
-            collection.RemoveAt(index);
-            AddItem(oldItem.Parent, newItem);
-        }
-
         private void RemoveItem(WebFileItem item) {
-            _pathMap.Remove(item.FilePath);
-            RemoveDescendantsFromPathMap(item);
-
             var collection = item.Parent?.Children ?? FileItems;
-            collection?.Remove(item);
+            collection.Remove(item);
         }
 
-        private void RemoveDescendantsFromPathMap(WebFileItem item) {
-            foreach (var child in item.Children) {
-                _pathMap.Remove(child.FilePath);
-                RemoveDescendantsFromPathMap(child);
+        private void SortItemInParent(WebFileItem item) {
+            var parent = item.Parent;
+            var collection = parent?.Children ?? FileItems;
+
+            var oldIndex = collection.IndexOf(item);
+            if (oldIndex < 0) return;
+
+            collection.RemoveAt(oldIndex);
+
+            var newIndex = 0;
+            while (newIndex < collection.Count && CompareFileItems(collection[newIndex], item) <= 0) {
+                newIndex++;
             }
-        }
 
-        private void RebuildPathMap(WebFileItem root) {
-            _pathMap.Clear();
-            AddToPathMap(root);
-        }
-
-        private void AddToPathMap(WebFileItem item) {
-            _pathMap[item.FilePath] = item;
-            foreach (var child in item.Children) {
-                AddToPathMap(child);
-            }
+            collection.Insert(newIndex, item);
         }
 
         private static int CompareFileItems(WebFileItem left, WebFileItem right) {
@@ -718,9 +951,54 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         private static WebFileItem BuildItem(string path, WebFileItemType type, WebFileItem? parent) {
-            return type == WebFileItemType.Folder
-                ? new WebFileItem(path, WebFileItemType.Folder, parent)
-                : new WebFileItem(path, WebFileItemType.File, parent);
+            return new WebFileItem(path, type, parent);
+        }
+
+        // File system events
+
+        private void ApplyCreated(string path) {
+            var parentPath = Path.GetDirectoryName(path);
+            if (string.IsNullOrEmpty(parentPath)) return;
+
+            var parent = FindItem(parentPath);
+            if (parent == null) return;
+
+            EnsureChildrenLoaded(parent);
+
+            if (Directory.Exists(path)) {
+                AddItem(parent, CreateDirectoryItem(path, parent));
+            }
+            else if (File.Exists(path)) {
+                AddItem(parent, new WebFileItem(path, WebFileItemType.File, parent));
+            }
+        }
+
+        private void ApplyDeleted(string path) {
+            var item = FindItem(path);
+            if (item == null) return;
+
+            RemoveItem(item);
+        }
+
+        private void ApplyRenamed(string oldPath, string newPath) {
+            var item = FindItem(oldPath);
+            if (item == null) return;
+
+            RebindItemPath(item, newPath, item.Parent);
+            SortItemInParent(item);
+            ApplyFilter();
+        }
+
+        // Helpers
+
+        private bool IsPathInManifest(string path) {
+            if (_manifestItems == null) return false;
+
+            var relativePath = Path.GetRelativePath(ProjectFolder, path)
+                .Replace(Path.DirectorySeparatorChar, '/');
+
+            return _manifestItems.Any(
+                item => string.Equals(item.Path, relativePath, StringComparison.OrdinalIgnoreCase));
         }
 
         private static void DeletePath(WebFileItem item) {
@@ -737,42 +1015,12 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             _clipboardOperation = WebFileTreeClipboardOperation.None;
         }
 
-        private void ApplyCreated(string path) {
-            var parentPath = Path.GetDirectoryName(path);
-            if (parentPath == null) return;
-
-            var parent = FindItem(parentPath);
-            if (parent == null) return;
-
-            if (Directory.Exists(path)) {
-                var folderItem = CreateDirectoryItem(path, parent);
-                AddItem(parent, folderItem);
-            }
-            else {
-                var fileItem = new WebFileItem(path, WebFileItemType.File, parent);
-                AddItem(parent, fileItem);
-            }
-        }
-
-        private void ApplyDeleted(string path) {
-            var item = FindItem(path);
-            if (item == null) return;
-
-            RemoveItem(item);
-        }
-
-        private void ApplyRenamed(string oldPath, string newPath) {
-            var oldItem = FindItem(oldPath);
-            if (oldItem == null) return;
-
-            var newItem = BuildItem(newPath, oldItem.Type, oldItem.Parent);
-            ReplaceItem(oldItem, newItem);
-        }
+        // Fields
 
         private string _projectFolder = string.Empty;
         private string _filterText = string.Empty;
         private const string PlaceholderFileName = ".__lazy_placeholder__";
-        private readonly Dictionary<string, WebFileItem> _pathMap = new(StringComparer.OrdinalIgnoreCase);
+        private CancellationTokenSource? _filterDebounce;
         private WebDesignFileUtil? _designFileUtil;
         private IReadOnlyList<WebProjectManifestItem>? _manifestItems;
         private Dictionary<string, List<WebProjectManifestItem>>? _manifestChildren;

@@ -8,7 +8,7 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         public const string DefaultLanguage = "plaintext";
         public const string DefaultIconResourceKey = "WebBackdrop_FileTree_File";
 
-        private static readonly IReadOnlyDictionary<string, string> ExtensionLanguageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+        private static readonly Dictionary<string, string> ExtensionLanguageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             [".html"] = "html",
             [".htm"] = "html",
             [".css"] = "css",
@@ -22,7 +22,7 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             [".txt"] = DefaultLanguage,
         };
 
-        private static readonly IReadOnlyDictionary<string, string> ExtensionIconResourceKeyMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+        private static readonly Dictionary<string, string> ExtensionIconResourceKeyMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             [".html"] = "WebBackdrop_FileTree_Html",
             [".htm"] = "WebBackdrop_FileTree_Html",
             [".css"] = "WebBackdrop_FileTree_Css",
@@ -42,7 +42,7 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             [".markdown"] = "WebBackdrop_FileTree_Md",
         };
 
-        private static readonly ISet<string> PreviewImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+        private static readonly HashSet<string> PreviewImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
             ".png",
             ".jpg",
             ".jpeg",

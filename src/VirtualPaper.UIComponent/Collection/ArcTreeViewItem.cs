@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -5,6 +6,18 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace VirtualPaper.UIComponent.Collection {
     public sealed partial class ArcTreeViewItem : TreeViewItem {
+        public Visibility ExpandCollapseGlyphVisibility {
+            get => (Visibility)GetValue(ExpandCollapseGlyphVisibilityProperty);
+            set => SetValue(ExpandCollapseGlyphVisibilityProperty, value);
+        }
+
+        public static readonly DependencyProperty ExpandCollapseGlyphVisibilityProperty =
+            DependencyProperty.Register(
+                nameof(ExpandCollapseGlyphVisibility),
+                typeof(Visibility),
+                typeof(ArcTreeViewItem),
+                new PropertyMetadata(Visibility.Visible));
+
         public ArcTreeViewItem() {
             DefaultStyleKey = typeof(TreeViewItem);
         }

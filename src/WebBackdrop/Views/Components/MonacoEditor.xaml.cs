@@ -329,7 +329,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             try {
                 var result = await monacoWebView.CoreWebView2.ExecuteScriptAsync("window.getValueWithVersion()");
-                var payload = JsonSerializer.Deserialize<ContentVersionPayload>(result, _jsonSerializerOptions);
+                // getValueWithVersion() 返回 JSON.stringify(...)；ExecuteScriptAsync 会再把这个
+                // JavaScript 字符串编码为 JSON，因此需要先解出内层 JSON，再解析对象。
+                var json = JsonSerializer.Deserialize<string>(result) ?? string.Empty;
+                var payload = JsonSerializer.Deserialize<ContentVersionPayload>(json, _jsonSerializerOptions);
                 return (payload?.Content ?? string.Empty, payload?.Version ?? 0);
             }
             catch (Exception ex) {

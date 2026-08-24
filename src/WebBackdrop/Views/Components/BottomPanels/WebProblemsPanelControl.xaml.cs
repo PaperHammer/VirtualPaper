@@ -5,7 +5,8 @@ using System.IO;
 using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Markup;
+using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 
@@ -206,12 +207,27 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
         public int TotalCount { get; private set; }
         public int ErrorCount { get; private set; }
         public int WarningCount { get; private set; }
-        public BitmapImage? IconSource => Application.Current.Resources.TryGetValue(IconResourceKey, out var resource) && resource is BitmapImage image
-            ? image
-            : null;
         private string IconResourceKey => WebEditorFileUtil.GetIconResourceKeyFromExtension(Path.GetExtension(FilePath));
+        public Geometry? IconGeometry =>
+            _iconGeometry ??= CreateGeometry($"{IconResourceKey}_Data");
+        public Brush? IconBrush =>
+            _iconBrush ??= GetResource<Brush>($"{IconResourceKey}_Brush");
         public ObservableCollection<object> Items { get; }
         public string CountText => IsOverflow ? string.Empty : TotalCount.ToString();
+
+        private static T? GetResource<T>(string resourceKey) where T : class =>
+            Application.Current.Resources.TryGetValue(resourceKey, out var resource)
+            && resource is T typedResource
+                ? typedResource
+                : null;
+
+        private static Geometry? CreateGeometry(string resourceKey) =>
+            GetResource<string>(resourceKey) is { Length: > 0 } pathData
+                ? XamlBindingHelper.ConvertValue(typeof(Geometry), pathData) as Geometry
+                : null;
+
+        private Geometry? _iconGeometry;
+        private Brush? _iconBrush;
 
         public bool HasSameItems(ProblemSummary summary) {
             if (TotalCount != summary.TotalCount

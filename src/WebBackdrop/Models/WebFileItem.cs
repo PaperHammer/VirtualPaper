@@ -2,8 +2,8 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
 using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 
@@ -24,10 +24,13 @@ namespace Workloads.Creation.WebBackdrop.Models {
                 }
 
                 _filePath = value;
+                _iconGeometry = null;
+                _iconBrush = null;
 
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(FileName));
-                OnPropertyChanged(nameof(IconSource));
+                OnPropertyChanged(nameof(IconGeometry));
+                OnPropertyChanged(nameof(IconBrush));
             }
         }
 
@@ -90,7 +93,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
                 _isExpanded = value;
 
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(FolderIconSource));
+                OnPropertyChanged(nameof(FolderIconGeometry));
             }
         }
 
@@ -137,27 +140,31 @@ namespace Workloads.Creation.WebBackdrop.Models {
             }
         }
 
-        public BitmapImage? FolderIconSource =>
-            Application.Current.Resources.TryGetValue(
-                IsExpanded
-                    ? "WebBackdrop_FileTree_FolderOpen"
-                    : "WebBackdrop_FileTree_Folder",
-                out var resource)
-            && resource is BitmapImage image
-                ? image
-                : null;
+        public Geometry? FolderIconGeometry =>
+            IsExpanded
+                ? _folderOpenIconGeometry ??= CreateGeometry("WebBackdrop_FileTree_FolderOpen_Data")
+                : _folderIconGeometry ??= CreateGeometry("WebBackdrop_FileTree_Folder_Data");
 
-        public BitmapImage? IconSource =>
-            Application.Current.Resources.TryGetValue(
-                IconResourceKey,
-                out var resource)
-            && resource is BitmapImage image
-                ? image
-                : null;
+        public Geometry? IconGeometry =>
+            _iconGeometry ??= CreateGeometry($"{IconResourceKey}_Data");
+
+        public Brush? IconBrush =>
+            _iconBrush ??= GetResource<Brush>($"{IconResourceKey}_Brush");
 
         private string IconResourceKey =>
             WebEditorFileUtil.GetIconResourceKeyFromExtension(
                 Path.GetExtension(FilePath));
+
+        private static T? GetResource<T>(string resourceKey) where T : class =>
+            Application.Current.Resources.TryGetValue(resourceKey, out var resource)
+            && resource is T typedResource
+                ? typedResource
+                : null;
+
+        private static Geometry? CreateGeometry(string resourceKey) =>
+            GetResource<string>(resourceKey) is { Length: > 0 } pathData
+                ? XamlBindingHelper.ConvertValue(typeof(Geometry), pathData) as Geometry
+                : null;
 
         public WebFileItem(
             string filePath,
@@ -209,6 +216,10 @@ namespace Workloads.Creation.WebBackdrop.Models {
 
         private bool _isSaved = true;
         private bool _isExpanded;
+        private Geometry? _folderIconGeometry;
+        private Geometry? _folderOpenIconGeometry;
+        private Geometry? _iconGeometry;
+        private Brush? _iconBrush;
         private bool _existsOnDisk;
         private bool _isRenaming;
         private bool _isRenameInvalid;

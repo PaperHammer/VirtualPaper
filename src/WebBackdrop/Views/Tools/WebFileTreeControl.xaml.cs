@@ -51,7 +51,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<WebFileTreeViewModel>();
             DataContext = _viewModel;
-            PreloadFolderOpenIcon();
 
             // TreeView 内部（TreeViewList / TreeViewItem）会先处理并标记 Handled 拖拽事件，
             // XAML 属性绑定（handledEventsToo=false）的外部 Drop 因此不触发；
@@ -87,10 +86,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
         public void ApplyChange(ProjectChangedEvent e) {
             _viewModel.ApplyChange(e);
-        }
-
-        private static void PreloadFolderOpenIcon() {
-            _ = Application.Current.Resources.TryGetValue("WebBackdrop_FileTree_FolderOpen", out _);
         }
 
         private void FileTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args) {

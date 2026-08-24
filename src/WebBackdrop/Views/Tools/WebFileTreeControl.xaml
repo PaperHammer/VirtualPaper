@@ -47,12 +47,13 @@
                     </MenuFlyout>
                 </collection:ArcTreeViewItem.ContextFlyout>
                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <Image
+                    <Path
                         Width="18"
                         Height="18"
+                        Data="{x:Bind FolderIconGeometry, Mode=OneWay}"
+                        Fill="{StaticResource WebBackdrop_FileTree_Folder_Brush}"
                         Stretch="Uniform"
-                        UseLayoutRounding="True"
-                        Source="{x:Bind FolderIconSource, Mode=OneWay}"/>
+                        UseLayoutRounding="True"/>
                     <StackPanel>
                         <Grid>
                             <TextBlock 
@@ -148,12 +149,13 @@
                         <ColumnDefinition Width="auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                        <Image
+                        <Path
                             Width="18"
                             Height="18"
+                            Data="{x:Bind IconGeometry, Mode=OneWay}"
+                            Fill="{x:Bind IconBrush, Mode=OneWay}"
                             Stretch="Uniform"
-                            UseLayoutRounding="True"
-                            Source="{x:Bind IconSource}"/>
+                            UseLayoutRounding="True"/>
                         <StackPanel>
                             <Grid>
                                 <TextBlock 

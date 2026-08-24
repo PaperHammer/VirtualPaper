@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -53,6 +52,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             _viewModel = AppServiceLocator.Services.GetRequiredService<WebFileTreeViewModel>();
             DataContext = _viewModel;
             PreloadFolderOpenIcon();
+
+            // TreeView 内部（TreeViewList / TreeViewItem）会先处理并标记 Handled 拖拽事件，
+            // XAML 属性绑定（handledEventsToo=false）的外部 Drop 因此不触发；
+            // 这里用 handledEventsToo=true 注册，确保外部文件拖入的 DragOver / Drop 一定能收到。
+            fileTreeView.AddHandler(UIElement.DragOverEvent, new DragEventHandler(FileTreeView_DragOver), true);
+            fileTreeView.AddHandler(UIElement.DropEvent, new DragEventHandler(FileTreeView_Drop), true);
         }
 
         public void Refresh(WebDesignFileUtil designFileUtil) {
@@ -133,52 +138,34 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="args"></param>
+        private void FileTreeView_DragItemsStarting(TreeView sender, TreeViewDragItemsStartingEventArgs args) {
+            // 源头校验：项目文件、占位节点、磁盘缺失的条目禁止拖拽，直接取消整个拖拽
+            if (args.Items.OfType<WebFileItem>().Any(item => !_viewModel.CanDragItem(item))) {
+                args.Cancel = true;
+            }
+        }
+
+        /// <summary>
+        /// 处理 TreeView 内部条目拖拽的移动逻辑
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
         private void FileTreeView_DragItemsCompleted(TreeView sender, TreeViewDragItemsCompletedEventArgs args) {
             if (args.DropResult == DataPackageOperation.None) return;
-            if (args.NewParentItem is not WebFileItem targetItem) return;
 
             var draggedItems = args.Items.OfType<WebFileItem>().Distinct().ToArray();
             if (draggedItems.Length == 0) return;
 
-            // 原生拖拽只改视觉节点、不动数据源：摘掉旧节点 → VM 真实移动 → 按数据顺序回插节点
-            var originalParents = draggedItems.ToDictionary(item => item, item => item.Parent);
-            var nodeMap = BuildNodeMap(sender.RootNodes);
+            // 原生拖拽通过节点向量回写已同步数据源（条目已从原集合移除、追加到落点集合），
+            // 这里只做数据层的最终落位（跨目录移动或同目录重新排序），
+            // 集合变更事件会驱动 TreeView 自动重建对应节点，无需手工操作视觉节点。
+            // NewParentItem 为 null 表示落点在根层级（同层重排），按项目根目录处理。
+            _viewModel.MoveItems(draggedItems, args.NewParentItem as WebFileItem);
 
-            var draggedNodes = draggedItems
-                .Where(nodeMap.ContainsKey)
-                .Select(item => (Item: item, Node: nodeMap[item]))
-                .ToList();
-
-            foreach (var (_, node) in draggedNodes) {
-                node.Parent?.Children.Remove(node);
-            }
-
-            _viewModel.MoveItems(draggedItems, targetItem, originalParents);
-
-            foreach (var (item, node) in draggedNodes) {
-                var parentItem = item.Parent;
-                var parentNode = parentItem != null
-                    ? (nodeMap.TryGetValue(parentItem, out var parentNodeOfItem) ? parentNodeOfItem : null)
-                    : sender.RootNodes.FirstOrDefault();
-                if (parentNode == null) continue;
-
-                // VM 修改数据集合后，TreeView 会按“数量差”自动为新条目创建节点
-                //（我们已把旧节点摘除，数据侧 Add 时节点数少 1 → 自动补建）。
-                // 此时无需再插回旧节点，否则同一文件会出现两行。
-                var alreadyInserted = false;
-                foreach (var child in parentNode.Children) {
-                    if (child.Content is WebFileItem childItem && childItem.Equals(item)) {
-                        alreadyInserted = true;
-                        break;
-                    }
-                }
-                if (alreadyInserted) continue;
-
-                var collection = parentItem?.Children ?? _viewModel.FileItems;
-                var index = collection.IndexOf(item);
-                if (index < 0) index = collection.Count;
-
-                parentNode.Children.Insert(Math.Min(index, parentNode.Children.Count), node);
+            // 移动后保持选中跟随（节点可能被重建，需重新设置选中项）
+            if (SelectedFileItem is { } selected && draggedItems.Contains(selected)) {
+                fileTreeView.SelectedItem = selected;
+                SelectedFileItem = selected;
             }
         }
 
@@ -191,29 +178,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// 一次性构建 数据条目 → TreeViewNode 映射，避免每次查找都递归遍历整棵树。
-        /// </summary>
-        private static Dictionary<WebFileItem, TreeViewNode> BuildNodeMap(IList<TreeViewNode> nodes) {
-            var map = new Dictionary<WebFileItem, TreeViewNode>(ReferenceEqualityComparer.Instance);
-
-            void Visit(TreeViewNode node) {
-                if (node.Content is WebFileItem item && !map.ContainsKey(item)) {
-                    map[item] = node;
-                }
-
-                foreach (var child in node.Children) {
-                    Visit(child);
-                }
-            }
-
-            foreach (var root in nodes) {
-                Visit(root);
-            }
-
-            return map;
         }
 
         private async void NewFileMenuItem_Click(object sender, RoutedEventArgs e) {

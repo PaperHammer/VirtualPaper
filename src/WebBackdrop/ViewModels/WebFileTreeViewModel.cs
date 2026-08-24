@@ -577,9 +577,11 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         // Move
 
         /// <summary>
-        /// 多选移动：所有移动都复用同一套 RebindItemPath 逻辑。
+        /// 多选移动：原生拖拽已把条目从原集合移除、追加到落点集合（节点向量会回写数据源），
+        /// 这里只做数据层最终落位：跨目录移动（磁盘 + manifest + 路径重绑）或同目录重新排序。
+        /// 集合变更事件会驱动 TreeView 自动重建对应节点。
         /// </summary>
-        public IReadOnlyList<WebFileItem> MoveItems(IEnumerable<WebFileItem> items, WebFileItem? target, IReadOnlyDictionary<WebFileItem, WebFileItem?> originalParents) {
+        public IReadOnlyList<WebFileItem> MoveItems(IEnumerable<WebFileItem> items, WebFileItem? target) {
             var result = new List<WebFileItem>();
 
             var targetFolder = ResolveDropTargetFolder(target);
@@ -587,43 +589,47 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 EnsureChildrenLoaded(targetFolder);
             }
 
-            // 可移动性校验统一走 CanMove（占位节点、磁盘不存在、项目文件、自拖、拖入子孙目录）
-            var validItems = items
+            var allItems = items.Distinct().ToList();
+            var validItems = allItems
                 .Where(item => CanMove(item, targetFolder))
-                .Distinct()
                 .ToList();
-            if (validItems.Count == 0) return result;
             validItems.Sort((a, b) => string.Compare(a.FilePath, b.FilePath, StringComparison.OrdinalIgnoreCase));
 
             foreach (var item in validItems) {
-                originalParents.TryGetValue(item, out var originalParent);
-                originalParent ??= item.Parent;
-
+                // 原生拖拽不改 item 对象，Parent 仍是原父级
+                var originalParent = item.Parent;
                 var sourceFolderPath = originalParent?.FilePath ?? ProjectFolder;
                 var destinationFolderPath = targetFolder?.FilePath ?? ProjectFolder;
+                var isSameFolder = string.Equals(sourceFolderPath, destinationFolderPath, StringComparison.OrdinalIgnoreCase);
 
-                // 同目录移动实际上没有发生变化。
-                if (string.Equals(sourceFolderPath, destinationFolderPath, StringComparison.OrdinalIgnoreCase)) {
-                    result.Add(item);
-                    continue;
+                // 跨目录：真实移动（磁盘 + manifest + 路径重绑）
+                if (!isSameFolder) {
+                    var oldPath = item.FilePath;
+                    var newPath = FileUtil.NextAvailablePath(Path.Combine(destinationFolderPath, item.FileName));
+                    if (!string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase)) {
+                        if (!MoveOnDisk(item, oldPath, newPath)) continue;
+                        _designFileUtil?.RenameManifestPath(oldPath, newPath);
+                        RebindItemPath(item, newPath, targetFolder);
+                    }
                 }
 
-                var oldPath = item.FilePath;
-                var newPath = FileUtil.NextAvailablePath(Path.Combine(destinationFolderPath, item.FileName));
-
-                if (string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase)) {
-                    result.Add(item);
-                    continue;
-                }
-
-                if (!MoveOnDisk(item, oldPath, newPath)) continue;
-
-                _designFileUtil?.RenameManifestPath(oldPath, newPath);
+                // 数据落位：从落点集合与原集合移除（原生已把条目追加到落点集合），
+                // 再按排序插入目标集合；同目录时这一步实现“重新排序”。
+                target?.Children.Remove(item);
                 originalParent?.Children.Remove(item);
-                RebindItemPath(item, newPath, targetFolder);
                 AddItem(targetFolder, item);
 
                 result.Add(item);
+            }
+
+            // 不可移动的条目（项目文件/占位/磁盘缺失/自拖/拖入子孙目录）：
+            // 原生拖拽可能已把它们挂到落点集合（甚至文件条目下），
+            // 统一放回原父集合，避免被挂载到文件下或遗留在非法位置。
+            foreach (var item in allItems) {
+                if (validItems.Contains(item)) continue;
+
+                target?.Children.Remove(item);
+                AddItem(item.Parent, item);
             }
 
             RefreshManifestSnapshot();
@@ -654,6 +660,12 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             return true;
         }
+
+        /// <summary>
+        /// 源头校验：条目是否允许被拖拽（项目文件/占位/磁盘缺失不可拖拽）。
+        /// 供视图在 DragItemsStarting 里取消拖拽，避免完成后再回退。
+        /// </summary>
+        public bool CanDragItem(WebFileItem item) => CanMove(item, null);
 
         private static bool MoveOnDisk(WebFileItem item, string oldPath, string newPath) {
             try {

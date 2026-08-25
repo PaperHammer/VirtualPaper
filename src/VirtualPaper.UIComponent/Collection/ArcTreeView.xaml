@@ -23,7 +23,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:ArcTreeView">
-                    <controls:TreeViewList x:Name="ListControl" Background="{TemplateBinding Background}" ItemTemplate="{TemplateBinding ItemTemplate}" ItemTemplateSelector="{TemplateBinding ItemTemplateSelector}" ItemContainerStyle="{TemplateBinding ItemContainerStyle}" ItemContainerStyleSelector="{TemplateBinding ItemContainerStyleSelector}" ItemContainerTransitions="{TemplateBinding ItemContainerTransitions}" CanDragItems="{TemplateBinding CanDragItems}" AllowDrop="{TemplateBinding AllowDrop}" CanReorderItems="{TemplateBinding CanReorderItems}" />
+                    <controls:TreeViewList x:Name="ListControl" Padding="4 0 0 0" Background="{TemplateBinding Background}" ItemTemplate="{TemplateBinding ItemTemplate}" ItemTemplateSelector="{TemplateBinding ItemTemplateSelector}" ItemContainerStyle="{TemplateBinding ItemContainerStyle}" ItemContainerStyleSelector="{TemplateBinding ItemContainerStyleSelector}" ItemContainerTransitions="{TemplateBinding ItemContainerTransitions}" CanDragItems="{TemplateBinding CanDragItems}" AllowDrop="{TemplateBinding AllowDrop}" CanReorderItems="{TemplateBinding CanReorderItems}" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

@@ -140,6 +140,16 @@ namespace Workloads.Creation.WebBackdrop.Models {
             }
         }
 
+        /// <summary>是否为中间编辑器当前显示的活动文件。</summary>
+        public bool IsActiveFile {
+            get => _isActiveFile;
+            set {
+                if (_isActiveFile == value) return;
+                _isActiveFile = value;
+                OnPropertyChanged();
+            }
+        }
+
         public Geometry? FolderIconGeometry =>
             IsExpanded
                 ? _folderOpenIconGeometry ??= CreateGeometry("WebBackdrop_FileTree_FolderOpen_Data")
@@ -224,6 +234,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
         private bool _isRenaming;
         private bool _isRenameInvalid;
         private bool _isVisible = true;
+        private bool _isActiveFile;
 
         private string _renameText = string.Empty;
     }

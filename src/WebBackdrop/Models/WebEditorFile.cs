@@ -14,7 +14,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
     }
 
     public partial class WebEditorFile : ObservableObject, IEquatable<WebEditorFile> {
-        public string FilePath { get; }
+        public string FilePath { get; private set; }
         public string FileName => Path.GetFileName(FilePath);
         public string FileExtension => Path.GetExtension(FilePath).ToLowerInvariant();
 
@@ -28,6 +28,17 @@ namespace Workloads.Creation.WebBackdrop.Models {
         public void SetEncoding(string encoding) {
             if (EncodingText == encoding) return;
             EncodingText = encoding;
+        }
+
+        internal void RebindPath(string newPath) {
+            if (string.Equals(FilePath, newPath, StringComparison.OrdinalIgnoreCase)) return;
+
+            FilePath = newPath;
+            OnPropertyChanged(nameof(FilePath));
+            OnPropertyChanged(nameof(FileName));
+            OnPropertyChanged(nameof(FileExtension));
+            OnPropertyChanged(nameof(Kind));
+            OnPropertyChanged(nameof(CanOpenAsText));
         }
 
         public async Task ReopenWithEncodingAsync(string encoding) {

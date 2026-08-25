@@ -9,12 +9,14 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.ProjectSystem.Events;
 using VirtualPaper.Models.Mvvm;
+using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.Models.SerializableData;
 
 namespace Workloads.Creation.WebBackdrop.ViewModels {
     public partial class WebFileTreeViewModel : ObservableObject {
         public ObservableCollection<WebFileItem> FileItems { get; } = [];
+        public ObservableCollection<WebContentSearchFileResult> SearchResults { get; } = [];
 
         public string ProjectFolder {
             get => _projectFolder;
@@ -25,18 +27,63 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
         }
 
-        /// <summary>文件树过滤文本。</summary>
+        /// <summary>项目全文搜索文本。</summary>
         public string FilterText {
             get => _filterText;
             set {
                 if (_filterText == value) return;
                 _filterText = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(IsSearchMode));
 
-                // 防抖后应用过滤，避免每个按键都全树刷新
+                SearchResults.Clear();
+                // 防抖后搜索，避免每个按键都读取项目文件
                 _filterDebounce?.Cancel();
                 _filterDebounce = new CancellationTokenSource();
+                IsSearching = !string.IsNullOrWhiteSpace(value);
                 _ = ApplyFilterDebouncedAsync(_filterDebounce.Token);
+            }
+        }
+
+        public bool IsSearchMode => !string.IsNullOrWhiteSpace(FilterText);
+
+        public bool IsCaseSensitive {
+            get => _isCaseSensitive;
+            set {
+                if (_isCaseSensitive == value) return;
+                _isCaseSensitive = value;
+                OnPropertyChanged();
+                RestartSearch();
+            }
+        }
+
+        public bool IsWholeWord {
+            get => _isWholeWord;
+            set {
+                if (_isWholeWord == value) return;
+                _isWholeWord = value;
+                OnPropertyChanged();
+                RestartSearch();
+            }
+        }
+
+        private void RestartSearch() {
+            if (!IsSearchMode) return;
+
+            SearchResults.Clear();
+            _filterDebounce?.Cancel();
+            _filterDebounce = new CancellationTokenSource();
+            IsSearching = true;
+            _ = ApplyFilterDebouncedAsync(_filterDebounce.Token);
+        }
+
+        /// <summary>是否正在后台搜索文件内容。</summary>
+        public bool IsSearching {
+            get => _isSearching;
+            private set {
+                if (_isSearching == value) return;
+                _isSearching = value;
+                OnPropertyChanged();
             }
         }
 
@@ -45,16 +92,172 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             await Task.Delay(200);
             if (token.IsCancellationRequested) return;
 
-            ApplyFilter();
+            var filter = _filterText.Trim();
+            if (filter.Length == 0) {
+                ApplyFilter();
+                if (!token.IsCancellationRequested) IsSearching = false;
+                return;
+            }
+
+            try {
+                var isCaseSensitive = IsCaseSensitive;
+                var isWholeWord = IsWholeWord;
+                // 文件读取放到线程池；搜索结果集合仍只在 UI 线程更新。
+                var results = await Task.Run(
+                    () => FindContentMatches(filter, isCaseSensitive, isWholeWord, token),
+                    token);
+                token.ThrowIfCancellationRequested();
+
+                SearchResults.Clear();
+                for (var resultIndex = 0; resultIndex < results.Count; resultIndex++) {
+                    var result = results[resultIndex];
+                    var fileResult = new WebContentSearchFileResult {
+                        FilePath = result.FilePath,
+                        RelativePath = Path.GetRelativePath(ProjectFolder, result.FilePath),
+                    };
+                    foreach (var match in result.Matches) {
+                        fileResult.Matches.Add(new WebContentSearchMatch {
+                            FilePath = result.FilePath,
+                            LineNumber = match.LineNumber,
+                            ColumnNumber = match.ColumnNumber,
+                            PreviewText = match.PreviewText,
+                        });
+                    }
+                    SearchResults.Add(fileResult);
+
+                    // 分批回填，避免大量命中文件一次性占满 UI 线程。
+                    if ((resultIndex + 1) % SearchResultUiBatchSize == 0) {
+                        await Task.Yield();
+                        token.ThrowIfCancellationRequested();
+                    }
+                }
+            }
+            catch (OperationCanceledException) {
+                // 新的搜索词会取消本次扫描。
+            }
+            finally {
+                if (!token.IsCancellationRequested) IsSearching = false;
+            }
         }
 
+        private List<ContentSearchFileData> FindContentMatches(
+            string filter,
+            bool isCaseSensitive,
+            bool isWholeWord,
+            CancellationToken token) {
+            var results = new List<ContentSearchFileData>();
+            var paths = GetSearchableFilePaths(token);
+            var totalMatches = 0;
+            var comparison = isCaseSensitive
+                ? StringComparison.Ordinal
+                : StringComparison.OrdinalIgnoreCase;
+
+            foreach (var path in paths) {
+                token.ThrowIfCancellationRequested();
+                try {
+                    var fileInfo = new FileInfo(path);
+                    if (!fileInfo.Exists || fileInfo.Length > MaxContentSearchFileSize) continue;
+
+                    var fileMatches = new List<ContentSearchMatchData>();
+                    var lineNumber = 0;
+                    foreach (var line in File.ReadLines(path)) {
+                        token.ThrowIfCancellationRequested();
+                        lineNumber++;
+                        var column = FindMatchColumn(line, filter, comparison, isWholeWord);
+                        if (column < 0) continue;
+
+                        fileMatches.Add(new ContentSearchMatchData(
+                            lineNumber,
+                            column + 1,
+                            CreateMatchPreview(line, column, filter.Length)));
+                        totalMatches++;
+                        if (totalMatches >= MaxContentSearchMatches) break;
+                    }
+
+                    if (fileMatches.Count > 0) {
+                        results.Add(new ContentSearchFileData(path, fileMatches));
+                    }
+                    if (totalMatches >= MaxContentSearchMatches) {
+                        break;
+                    }
+                }
+                catch (UnauthorizedAccessException) {
+                    // 跳过无法读取的文件。
+                }
+                catch (IOException) {
+                    // 文件可能在搜索过程中被移动或删除。
+                }
+            }
+
+            return results;
+        }
+
+        private static int FindMatchColumn(
+            string line,
+            string filter,
+            StringComparison comparison,
+            bool isWholeWord) {
+            var searchStart = 0;
+            while (searchStart <= line.Length - filter.Length) {
+                var column = line.IndexOf(filter, searchStart, comparison);
+                if (column < 0) return -1;
+                if (!isWholeWord || IsWholeWordMatch(line, column, filter.Length)) return column;
+                searchStart = column + 1;
+            }
+            return -1;
+        }
+
+        private static bool IsWholeWordMatch(string line, int start, int length) {
+            var hasWordCharacterBefore = start > 0 && IsWordCharacter(line[start - 1]);
+            var end = start + length;
+            var hasWordCharacterAfter = end < line.Length && IsWordCharacter(line[end]);
+            return !hasWordCharacterBefore && !hasWordCharacterAfter;
+        }
+
+        private static bool IsWordCharacter(char value) => char.IsLetterOrDigit(value) || value == '_';
+
+        private static string CreateMatchPreview(string line, int matchStart, int matchLength) {
+            var trimmedStart = 0;
+            while (trimmedStart < line.Length && char.IsWhiteSpace(line[trimmedStart])) {
+                trimmedStart++;
+            }
+
+            if (line.Length - trimmedStart <= MaxContentSearchPreviewLength) {
+                return line[trimmedStart..];
+            }
+
+            var contextStart = Math.Max(trimmedStart, matchStart - ContentSearchPreviewContextLength);
+            var contextEnd = Math.Min(
+                line.Length,
+                Math.Max(matchStart + matchLength + ContentSearchPreviewContextLength,
+                    contextStart + MaxContentSearchPreviewLength));
+            contextEnd = Math.Min(contextEnd, contextStart + MaxContentSearchPreviewLength);
+
+            var prefix = contextStart > trimmedStart ? "…" : string.Empty;
+            var suffix = contextEnd < line.Length ? "…" : string.Empty;
+            return prefix + line[contextStart..contextEnd] + suffix;
+        }
+
+        private IEnumerable<string> GetSearchableFilePaths(CancellationToken token) =>
+            WebProjectFileEnumerator
+                .EnumerateFiles(ProjectFolder, token)
+                .Where(path => WebEditorFileUtil.IsTextExtension(Path.GetExtension(path)));
+
+        private sealed record ContentSearchFileData(
+            string FilePath,
+            List<ContentSearchMatchData> Matches);
+
+        private sealed record ContentSearchMatchData(
+            int LineNumber,
+            int ColumnNumber,
+            string PreviewText);
+
         /// <summary>
-        /// 按名称过滤文件树：命中自身，或者存在命中的后代节点时显示。
+        /// 恢复文件树节点的可见状态。
         /// </summary>
         public void ApplyFilter() {
-            var filter = _filterText.Trim();
             foreach (var item in FileItems) {
-                ApplyFilterToItem(item, filter);
+                ApplyFilterToItem(item, string.Empty);
             }
         }
 
@@ -232,39 +435,58 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         // Selection
 
         public void SelectFile(string filePath) {
-            filePath = filePath.Replace('/', Path.DirectorySeparatorChar);
-            EnsureAncestorsLoaded(filePath);
-
-            var item = FindItem(filePath);
+            var item = EnsurePathLoaded(filePath.Replace('/', Path.DirectorySeparatorChar));
             if (item == null) return;
 
             ExpandParents(item);
         }
 
-        private void EnsureAncestorsLoaded(string filePath) {
-            var parentPath = Path.GetDirectoryName(filePath);
-            if (string.IsNullOrEmpty(parentPath)) return;
-            if (!IsPathInsideProject(parentPath)) return;
+        private WebFileItem? EnsurePathLoaded(string filePath) {
+            var fullPath = Path.GetFullPath(filePath);
+            if (!IsPathInsideProject(fullPath)) return null;
 
-            var ancestors = new List<string>();
-            var current = parentPath;
-
-            while (current.Length > ProjectFolder.Length && IsPathInsideProject(current)) {
-                ancestors.Add(current);
-                current = Path.GetDirectoryName(current);
-                if (string.IsNullOrEmpty(current)) break;
+            var root = FindItem(ProjectFolder);
+            if (root == null) return null;
+            if (string.Equals(fullPath, Path.GetFullPath(ProjectFolder), StringComparison.OrdinalIgnoreCase)) {
+                return root;
             }
 
-            ancestors.Reverse();
+            var relativePath = Path.GetRelativePath(ProjectFolder, fullPath);
+            var segments = relativePath.Split(
+                [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
+                StringSplitOptions.RemoveEmptyEntries);
+            var current = root;
+            var currentPath = Path.GetFullPath(ProjectFolder);
 
-            foreach (var ancestorPath in ancestors) {
-                var folder = FindItem(ancestorPath);
-                if (folder != null
-                    && folder.Type == WebFileItemType.Folder
-                    && !folder.IsChildrenLoaded) {
-                    LoadChildren(folder);
+            for (var index = 0; index < segments.Length; index++) {
+                if (current.Type != WebFileItemType.Folder) return null;
+                EnsureChildrenLoaded(current);
+
+                currentPath = Path.Combine(currentPath, segments[index]);
+                var child = current.Children.FirstOrDefault(item =>
+                    !item.IsPlaceholder
+                    && string.Equals(item.FilePath, currentPath, StringComparison.OrdinalIgnoreCase));
+
+                if (child == null) {
+                    // 搜索器直接扫描磁盘，目标可能尚未进入 manifest/懒加载树。
+                    // 这里只补齐目标路径链，不枚举或常驻整个目录，控制内存开销。
+                    if (Directory.Exists(currentPath)) {
+                        child = CreateDirectoryItem(currentPath, current);
+                    }
+                    else if (index == segments.Length - 1 && File.Exists(currentPath)) {
+                        child = new WebFileItem(currentPath, WebFileItemType.File, current);
+                    }
+                    else {
+                        return null;
+                    }
+
+                    AddItem(current, child);
                 }
+
+                current = child;
             }
+
+            return current;
         }
 
         private bool IsPathInsideProject(string path) {
@@ -817,9 +1039,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             folder.IsChildrenLoaded = true;
 
-            if (!string.IsNullOrWhiteSpace(FilterText)) {
-                ApplyFilter();
-            }
         }
 
         private void LoadDirectoryChildren(WebFileItem folder) {
@@ -1031,6 +1250,14 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
         private string _projectFolder = string.Empty;
         private string _filterText = string.Empty;
+        private bool _isSearching;
+        private bool _isCaseSensitive;
+        private bool _isWholeWord;
+        private const int MaxContentSearchMatches = 2000;
+        private const long MaxContentSearchFileSize = 10 * 1024 * 1024;
+        private const int MaxContentSearchPreviewLength = 240;
+        private const int ContentSearchPreviewContextLength = 80;
+        private const int SearchResultUiBatchSize = 25;
         private const string PlaceholderFileName = ".__lazy_placeholder__";
         private CancellationTokenSource? _filterDebounce;
         private WebDesignFileUtil? _designFileUtil;

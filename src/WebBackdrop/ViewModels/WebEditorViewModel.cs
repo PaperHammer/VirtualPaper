@@ -97,6 +97,26 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             return _openFileMap.TryGetValue(filePath, out var file) ? file : null;
         }
 
+        /// <summary>文件移动后保留已打开实例、内存内容和活动状态，仅重绑定路径。</summary>
+        public WebEditorFile? RebindOpenFilePath(string oldPath, string newPath) {
+            if (!_openFileMap.Remove(oldPath, out var file)) return null;
+
+            file.RebindPath(newPath);
+            _openFileMap[newPath] = file;
+
+            Session.FileManager.CloseDocument(oldPath);
+            if (file.CanOpenAsText) {
+                Session.FileManager.UpdateSnapshot(newPath);
+                Session.FileManager.SetDirty(newPath, !file.IsSaved);
+            }
+
+            if (ReferenceEquals(ActiveFile, file)) {
+                // 实例没有变化，显式通知视图刷新 Monaco 路径和文件树选择。
+                OnPropertyChanged(nameof(ActiveFile));
+            }
+            return file;
+        }
+
         /// <summary>
         /// 关闭已打开的文件：从内存集合移除，并停止 watcher 对该文档的跟踪。
         /// 用于文件被删除等场景，避免一次会话中打开过的文件永久驻留内存。

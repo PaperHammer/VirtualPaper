@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -200,6 +201,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             _session.FileManager.Changed += FileManager_Changed;
 
             leftFileTreeControl.Refresh(_session.DesignFileUtil);
+            QueueQuickOpenRefresh();
             // [已废弃，暂注释] 上游事件从未触发（重命名链路未接）
             // leftFileTreeControl.ProjectFileRenamed += OnProjectFileRenamed;
             propertyPanelControl.LoadProject(_session.DesignFileUtil);
@@ -223,6 +225,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             _propertyPanelRefreshCancellation?.Cancel();
             _propertyPanelRefreshCancellation?.Dispose();
             _propertyPanelRefreshCancellation = null;
+            _quickOpenRefreshCancellation?.Cancel();
+            _quickOpenRefreshCancellation?.Dispose();
+            _quickOpenRefreshCancellation = null;
             if (_session != null) {
                 _session.FileManager.Changed -= FileManager_Changed;
             }
@@ -430,10 +435,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
                     case ProjectChangeType.Deleted:
                         HandleFileDeleted(e.Path);
+                        QueueQuickOpenRefresh();
                         break;
 
                     case ProjectChangeType.Created:
                     case ProjectChangeType.Renamed:
+                        QueueQuickOpenRefresh();
                         break;
 
                     case ProjectChangeType.Conflict:
@@ -529,6 +536,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 SyncEncodingToMonaco(activeFile.EncodingText);
             }
             else {
+                leftFileTreeControl.ClearActiveFileSelection();
                 ActiveFileLanguage = WebEditorFileUtil.DefaultLanguage;
                 IndentText = string.Empty;
                 EncodingText = string.Empty;
@@ -724,6 +732,119 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private async void FileTree_FileOpenRequested(object? sender, string filePath) {
             await OpenFileAsync(filePath);
+        }
+
+        private async void FileTree_ContentMatchOpenRequested(object? sender, WebContentSearchMatch match) {
+            await OpenFileAsync(match.FilePath);
+            leftFileTreeControl.SelectFile(match.FilePath);
+            await Task.Delay(50);
+            await editorContentView.RevealPositionAsync(match.LineNumber, match.ColumnNumber);
+        }
+
+        private void FileTree_ActiveFileMoved(object? sender, WebFileMovedEventArgs e) {
+            if (ViewModel == null) return;
+
+            var movedFile = ViewModel.RebindOpenFilePath(e.OldPath, e.NewPath);
+            if (movedFile != null && ReferenceEquals(ViewModel.ActiveFile, movedFile)) {
+                leftFileTreeControl.SelectFile(e.NewPath);
+            }
+            _ = editorContentView.DisposeModelAsync(e.OldPath);
+        }
+
+        private void QueueQuickOpenRefresh() {
+            _quickOpenRefreshCancellation?.Cancel();
+            _quickOpenRefreshCancellation?.Dispose();
+            _quickOpenRefreshCancellation = new CancellationTokenSource();
+            _ = LoadQuickOpenFilesAsync(_quickOpenRefreshCancellation.Token);
+        }
+
+        private async Task LoadQuickOpenFilesAsync(CancellationToken token) {
+            if (_session == null) return;
+
+            // 文件监听器在批量导入时会连续触发，合并成一次索引刷新。
+            await Task.Delay(150);
+            if (token.IsCancellationRequested || _session == null) return;
+
+            var projectFolder = _session.DesignFileUtil.ProjectFolder;
+            var items = await Task.Run(() => WebProjectFileEnumerator
+                .EnumerateFiles(projectFolder, token, MaxQuickOpenIndexedFiles)
+                .Select(filePath => new WebQuickOpenItem {
+                    FilePath = filePath,
+                    RelativePath = Path.GetRelativePath(projectFolder, filePath),
+                })
+                .OrderBy(item => item.FileName, StringComparer.OrdinalIgnoreCase)
+                .ToList());
+            if (token.IsCancellationRequested) return;
+
+            _quickOpenFiles.Clear();
+            foreach (var item in items) {
+                _quickOpenFiles.Add(item);
+            }
+
+            // 只在用户当前主动展开快速打开列表时刷新候选 UI。
+            // 索引后台更新不能反向打开一个已关闭但仍保留焦点的 AutoSuggestBox。
+            if (quickOpenBox.IsSuggestionListOpen) {
+                UpdateQuickOpenSuggestions(quickOpenBox.Text);
+            }
+        }
+
+        private void QuickOpenBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) {
+            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput) {
+                UpdateQuickOpenSuggestions(sender.Text);
+            }
+        }
+
+        private void UpdateQuickOpenSuggestions(string query) {
+            IEnumerable<WebQuickOpenItem> matches = _quickOpenFiles;
+            if (!string.IsNullOrWhiteSpace(query)) {
+                matches = matches
+                    .Select(item => (Item: item, Rank: GetQuickOpenRank(item, query)))
+                    .Where(result => result.Rank < int.MaxValue)
+                    .OrderBy(result => result.Rank)
+                    .ThenBy(result => result.Item.FileName, StringComparer.OrdinalIgnoreCase)
+                    .Select(result => result.Item);
+            }
+
+            quickOpenBox.ItemsSource = matches.Take(100).ToList();
+        }
+
+        private static int GetQuickOpenRank(WebQuickOpenItem item, string query) {
+            if (item.FileName.StartsWith(query, StringComparison.OrdinalIgnoreCase)) return 0;
+            if (item.FileName.Contains(query, StringComparison.OrdinalIgnoreCase)) return 100;
+
+            var candidate = item.RelativePath;
+            var queryIndex = 0;
+            var gapScore = 0;
+            var lastMatchIndex = -1;
+            for (var i = 0; i < candidate.Length && queryIndex < query.Length; i++) {
+                if (char.ToUpperInvariant(candidate[i]) != char.ToUpperInvariant(query[queryIndex])) continue;
+
+                if (lastMatchIndex >= 0) gapScore += i - lastMatchIndex - 1;
+                lastMatchIndex = i;
+                queryIndex++;
+            }
+
+            return queryIndex == query.Length ? 200 + gapScore : int.MaxValue;
+        }
+
+        private async void QuickOpenBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args) {
+            var item = args.ChosenSuggestion as WebQuickOpenItem
+                ?? (sender.ItemsSource as IEnumerable<WebQuickOpenItem>)?.FirstOrDefault();
+            if (item == null) return;
+
+            sender.Text = string.Empty;
+            sender.IsSuggestionListOpen = false;
+            await OpenFileAsync(item.FilePath);
+            leftFileTreeControl.SelectFile(item.FilePath);
+        }
+
+        private void QuickOpenKeyboardAccelerator_Invoked(
+            KeyboardAccelerator sender,
+            KeyboardAcceleratorInvokedEventArgs args) {
+            args.Handled = true;
+            UpdateQuickOpenSuggestions(string.Empty);
+            quickOpenBox.Focus(FocusState.Programmatic);
+            quickOpenBox.IsSuggestionListOpen = true;
         }
 
         /// <summary>
@@ -1256,10 +1377,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private WebProjectSession? _session;
+        private readonly ObservableCollection<WebQuickOpenItem> _quickOpenFiles = [];
+        private const int MaxQuickOpenIndexedFiles = 50000;
         private bool _isLoaded;
         private bool _isDebugRunning;
         private bool _isAddingToLibrary;
         private CancellationTokenSource? _propertyPanelRefreshCancellation;
+        private CancellationTokenSource? _quickOpenRefreshCancellation;
         private WebEditorBottomPanel _activeBottomPanel = WebEditorBottomPanel.Problems;
         private Dictionary<EditorPanelSlot, PanelLayoutState> _panelLayoutStates = null!;
         private Dictionary<object, Microsoft.UI.Xaml.Shapes.Rectangle> _splitterLines = null!;

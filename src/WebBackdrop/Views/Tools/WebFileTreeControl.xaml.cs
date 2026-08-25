@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -39,6 +40,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         public event EventHandler<string>? FileSaveRequested;
         public event EventHandler<string>? FileSaveAsRequested;
         public event EventHandler<string>? FolderSelected;
+        public event EventHandler<WebContentSearchMatch>? ContentMatchOpenRequested;
+        public event EventHandler<WebFileMovedEventArgs>? ActiveFileMoved;
 
         public WebFileItem? SelectedFileItem {
             get => (WebFileItem?)GetValue(SelectedFileItemProperty);
@@ -51,6 +54,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<WebFileTreeViewModel>();
             DataContext = _viewModel;
+            Loaded += WebFileTreeControl_Loaded;
+            Unloaded += WebFileTreeControl_Unloaded;
 
             // TreeView 内部（TreeViewList / TreeViewItem）会先处理并标记 Handled 拖拽事件，
             // XAML 属性绑定（handledEventsToo=false）的外部 Drop 因此不触发；
@@ -61,22 +66,104 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
         public void Refresh(WebDesignFileUtil designFileUtil) {
             _viewModel.Refresh(designFileUtil);
+            RestoreActiveFileSelection();
         }
 
         public void Refresh(string projectFolder) {
             _viewModel.Refresh(projectFolder);
+            RestoreActiveFileSelection();
         }
 
         public void SyncManifest(WebDesignFileUtil designFileUtil) {
             _viewModel.SyncManifest(designFileUtil);
+            RestoreActiveFileSelection();
         }
 
         public void SelectFile(string filePath) {
-            _viewModel.SelectFile(filePath);
-            var item = _viewModel.FindItem(filePath.Replace('/', Path.DirectorySeparatorChar));
-            if (item != null) {
+            _activeFilePath = Path.GetFullPath(filePath.Replace('/', Path.DirectorySeparatorChar));
+            RestoreActiveFileSelection();
+        }
+
+        public void ClearActiveFileSelection() {
+            _activeFilePath = null;
+            if (_activeFileItem != null) {
+                _activeFileItem.IsActiveFile = false;
+                _activeFileItem = null;
+            }
+            SelectedFileItem = null;
+            fileTreeView.SelectedItem = null;
+        }
+
+        private void RestoreActiveFileSelection() {
+            if (string.IsNullOrEmpty(_activeFilePath) || _isRestoringSelection) return;
+
+            _viewModel.SelectFile(_activeFilePath);
+            var item = _viewModel.FindItem(_activeFilePath);
+            if (item == null) return;
+
+            SetActiveFileSelection(item);
+
+            // 深层懒加载目录虽然已经进入数据树并设置为展开，但 TreeView 容器需要下一轮
+            // 布局才会生成。低优先级再次选择，避免首次选择落在尚未实现的节点上而丢失。
+            QueueRealizedActiveFileSelection(_activeFilePath, 0);
+        }
+
+        private void QueueRealizedActiveFileSelection(string expectedPath, int attempt) {
+            DispatcherQueue.TryEnqueue(
+                Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
+                () => {
+                    if (!string.Equals(expectedPath, _activeFilePath, StringComparison.OrdinalIgnoreCase)) return;
+
+                    _viewModel.SelectFile(expectedPath);
+                    var realizedItem = _viewModel.FindItem(expectedPath);
+                    if (realizedItem == null) return;
+
+                    SetActiveFileSelection(realizedItem);
+                    fileTreeView.UpdateLayout();
+                    if (fileTreeView.ContainerFromItem(realizedItem) is UIElement container) {
+                        container.StartBringIntoView();
+                        return;
+                    }
+
+                    // 每一轮最多实现下一层展开容器；深目录有限次跨帧重试，不阻塞 UI。
+                    if (attempt + 1 < MaxSelectionRealizationAttempts) {
+                        QueueRealizedActiveFileSelection(expectedPath, attempt + 1);
+                    }
+                });
+        }
+
+        private void SetActiveFileSelection(WebFileItem item) {
+            if (!ReferenceEquals(_activeFileItem, item)) {
+                if (_activeFileItem != null) {
+                    _activeFileItem.IsActiveFile = false;
+                }
+                _activeFileItem = item;
+            }
+            item.IsActiveFile = true;
+
+            _isRestoringSelection = true;
+            try {
                 SelectedFileItem = item;
                 fileTreeView.SelectedItem = item;
+            }
+            finally {
+                _isRestoringSelection = false;
+            }
+        }
+
+        private void WebFileTreeControl_Loaded(object sender, RoutedEventArgs e) {
+            _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+            RestoreActiveFileSelection();
+        }
+
+        private void WebFileTreeControl_Unloaded(object sender, RoutedEventArgs e) {
+            _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        }
+
+        private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
+            if (e.PropertyName == nameof(WebFileTreeViewModel.IsSearchMode)) {
+                DispatcherQueue.TryEnqueue(RestoreActiveFileSelection);
             }
         }
 
@@ -85,7 +172,14 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         }
 
         public void ApplyChange(ProjectChangedEvent e) {
+            if (e.Type == ProjectChangeType.Renamed
+                && !string.IsNullOrEmpty(_activeFilePath)
+                && string.Equals(e.OldPath, _activeFilePath, StringComparison.OrdinalIgnoreCase)) {
+                _activeFilePath = Path.GetFullPath(e.Path);
+            }
+
             _viewModel.ApplyChange(e);
+            RestoreActiveFileSelection();
         }
 
         private void FileTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args) {
@@ -93,12 +187,30 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
                 _viewModel.ToggleFolder(folder);
                 folder.IsExpanded = !folder.IsExpanded;
                 FolderSelected?.Invoke(this, folder.FilePath);
+                DispatcherQueue.TryEnqueue(RestoreActiveFileSelection);
                 return;
             }
 
             if (args.InvokedItem is WebFileItem { Type: WebFileItemType.File } item) {
-                if (!item.ExistsOnDisk) return;
+                if (!item.ExistsOnDisk) {
+                    DispatcherQueue.TryEnqueue(RestoreActiveFileSelection);
+                    return;
+                }
                 FileOpenRequested?.Invoke(this, item.FilePath);
+            }
+        }
+
+        private void FileTreeView_SelectionChanged(TreeView sender, TreeViewSelectionChangedEventArgs args) {
+            if (_isRestoringSelection || string.IsNullOrEmpty(_activeFilePath)) return;
+
+            // 文件点击将驱动编辑器切换，允许它暂时成为选择；目录或空选择不能覆盖活动文件。
+            if (fileTreeView.SelectedItem is WebFileItem { Type: WebFileItemType.File }) return;
+            DispatcherQueue.TryEnqueue(RestoreActiveFileSelection);
+        }
+
+        private void ContentSearchMatch_Click(object sender, RoutedEventArgs e) {
+            if (sender is FrameworkElement { Tag: WebContentSearchMatch match }) {
+                ContentMatchOpenRequested?.Invoke(this, match);
             }
         }
 
@@ -137,6 +249,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             // 源头校验：项目文件、占位节点、磁盘缺失的条目禁止拖拽，直接取消整个拖拽
             if (args.Items.OfType<WebFileItem>().Any(item => !_viewModel.CanDragItem(item))) {
                 args.Cancel = true;
+                DispatcherQueue.TryEnqueue(RestoreActiveFileSelection);
             }
         }
 
@@ -146,10 +259,17 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         /// <param name="sender"></param>
         /// <param name="args"></param>
         private void FileTreeView_DragItemsCompleted(TreeView sender, TreeViewDragItemsCompletedEventArgs args) {
-            if (args.DropResult == DataPackageOperation.None) return;
+            if (args.DropResult == DataPackageOperation.None) {
+                RestoreActiveFileSelection();
+                return;
+            }
 
             var draggedItems = args.Items.OfType<WebFileItem>().Distinct().ToArray();
             if (draggedItems.Length == 0) return;
+            var activeItem = !string.IsNullOrEmpty(_activeFilePath)
+                ? _viewModel.FindItem(_activeFilePath)
+                : null;
+            var oldActiveFilePath = _activeFilePath;
 
             // 原生拖拽通过节点向量回写已同步数据源（条目已从原集合移除、追加到落点集合），
             // 这里只做数据层的最终落位（跨目录移动或同目录重新排序），
@@ -157,11 +277,16 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             // NewParentItem 为 null 表示落点在根层级（同层重排），按项目根目录处理。
             _viewModel.MoveItems(draggedItems, args.NewParentItem as WebFileItem);
 
-            // 移动后保持选中跟随（节点可能被重建，需重新设置选中项）
-            if (SelectedFileItem is { } selected && draggedItems.Contains(selected)) {
-                fileTreeView.SelectedItem = selected;
-                SelectedFileItem = selected;
+            if (activeItem != null) {
+                _activeFilePath = activeItem.FilePath;
+                if (!string.IsNullOrEmpty(oldActiveFilePath)
+                    && !string.Equals(oldActiveFilePath, _activeFilePath, StringComparison.OrdinalIgnoreCase)) {
+                    ActiveFileMoved?.Invoke(
+                        this,
+                        new WebFileMovedEventArgs(oldActiveFilePath, _activeFilePath));
+                }
             }
+            RestoreActiveFileSelection();
         }
 
         private WebFileItem? GetDropTargetFolder(Point position) {
@@ -440,6 +565,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
         }
 
         private readonly WebFileTreeViewModel _viewModel;
+        private string? _activeFilePath;
+        private WebFileItem? _activeFileItem;
+        private bool _isRestoringSelection;
+        private const int MaxSelectionRealizationAttempts = 8;
     }
 
     partial class WebFileItemTemplateSelector : DataTemplateSelector {

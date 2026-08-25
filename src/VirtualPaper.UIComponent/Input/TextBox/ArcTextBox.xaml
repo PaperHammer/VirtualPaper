@@ -2,11 +2,19 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:input="using:VirtualPaper.UIComponent.Input">
+    xmlns:input="using:VirtualPaper.UIComponent.Input"
+    xmlns:cvs="using:VirtualPaper.UIComponent.Converters">
 
-    <Style TargetType="input:ArcTextBox">
+    <cvs:VisibilityByValueConverter x:Key="ArcTextBoxPlaceholderVisibilityConverter"/>
+
+    <!--
+        标准 TextBox / AutoSuggestBox 内部 TextBox 共用的紧凑模板。
+        Placeholder 在模板内与输入层共用 Padding，避免业务视图叠加额外 TextBlock。
+    -->
+    <Style x:Key="ArcCompactTextBoxDefaultStyle" TargetType="TextBox">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{ThemeResource TextControlForeground}"/>
+        <Setter Property="FontFamily" Value="{StaticResource DefaultInputFontFamily}"/>
         <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}"/>
@@ -15,6 +23,90 @@
         <Setter Property="IsSpellCheckEnabled" Value="False"/>
         <Setter Property="ContextFlyout" Value="{x:Null}"/>
         <Setter Property="UseSystemFocusVisuals" Value="False"/>
+        <Setter Property="XYFocusKeyboardNavigation" Value="Disabled"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Grid>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal"/>
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="BorderElement.BorderBrush" Value="{ThemeResource ControlStrokeColorSecondaryBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Focused">
+                                    <VisualState.Setters>
+                                        <Setter Target="BorderElement.BorderBrush" Value="{ThemeResource AccentFillColorDefaultBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="BorderElement.Opacity" Value="0.4"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Border x:Name="BorderElement"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}"/>
+
+                        <ScrollViewer x:Name="ContentElement"
+                            AutomationProperties.AccessibilityView="Raw"
+                            Foreground="{TemplateBinding Foreground}"
+                            Padding="{TemplateBinding Padding}"
+                            HorizontalScrollMode="{TemplateBinding ScrollViewer.HorizontalScrollMode}"
+                            HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                            VerticalScrollMode="{TemplateBinding ScrollViewer.VerticalScrollMode}"
+                            VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"
+                            IsTabStop="False"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
+                            <ScrollViewer.RenderTransform>
+                                <TranslateTransform Y="1"/>
+                            </ScrollViewer.RenderTransform>
+                        </ScrollViewer>
+
+                        <TextBlock
+                            Padding="{TemplateBinding Padding}"
+                            Foreground="{ThemeResource TextControlPlaceholderForeground}"
+                            FontFamily="{TemplateBinding FontFamily}"
+                            FontSize="{TemplateBinding FontSize}"
+                            FontStyle="{TemplateBinding FontStyle}"
+                            FontWeight="{TemplateBinding FontWeight}"
+                            CharacterSpacing="{TemplateBinding CharacterSpacing}"
+                            IsHitTestVisible="False"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Text="{TemplateBinding PlaceholderText}"
+                            TextTrimming="CharacterEllipsis"
+                            TextWrapping="NoWrap"
+                            Visibility="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ArcTextBoxPlaceholderVisibilityConverter}, ConverterParameter=!HasValue}"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ArcTextBoxDefaultStyle" TargetType="input:ArcTextBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{ThemeResource TextControlForeground}"/>
+        <Setter Property="FontFamily" Value="{StaticResource DefaultInputFontFamily}"/>
+        <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}"/>
+        <Setter Property="Padding" Value="{ThemeResource TextControlThemePadding}"/>
+        <Setter Property="MinHeight" Value="20"/>
+        <Setter Property="IsSpellCheckEnabled" Value="False"/>
+        <Setter Property="ContextFlyout" Value="{x:Null}"/>
+        <Setter Property="UseSystemFocusVisuals" Value="False"/>
+        <Setter Property="XYFocusKeyboardNavigation" Value="Disabled"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="input:ArcTextBox">
@@ -68,6 +160,7 @@
                             IsTabStop="False"
                             Margin="{TemplateBinding BorderThickness}"
                             Padding="{TemplateBinding Padding}"
+                            VerticalAlignment="Center"
                             HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
                             VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Grid>
@@ -75,4 +168,8 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <Style
+        TargetType="input:ArcTextBox"
+        BasedOn="{StaticResource ArcTextBoxDefaultStyle}"/>
 </ResourceDictionary>

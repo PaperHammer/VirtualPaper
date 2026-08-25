@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.WebBackdrop.Core.Utils;
@@ -208,8 +207,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
         public int ErrorCount { get; private set; }
         public int WarningCount { get; private set; }
         private string IconResourceKey => WebEditorFileUtil.GetIconResourceKeyFromExtension(Path.GetExtension(FilePath));
-        public Geometry? IconGeometry =>
-            _iconGeometry ??= CreateGeometry($"{IconResourceKey}_Data");
+        public string IconDataResourceKey => $"{IconResourceKey}_Data";
         public Brush? IconBrush =>
             _iconBrush ??= GetResource<Brush>($"{IconResourceKey}_Brush");
         public ObservableCollection<object> Items { get; }
@@ -221,12 +219,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
                 ? typedResource
                 : null;
 
-        private static Geometry? CreateGeometry(string resourceKey) =>
-            GetResource<string>(resourceKey) is { Length: > 0 } pathData
-                ? XamlBindingHelper.ConvertValue(typeof(Geometry), pathData) as Geometry
-                : null;
-
-        private Geometry? _iconGeometry;
         private Brush? _iconBrush;
 
         public bool HasSameItems(ProblemSummary summary) {

@@ -21,6 +21,7 @@ using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.ViewModels;
 using Workloads.Creation.WebBackdrop.Views.Components.BottomPanels;
+using Workloads.Utils.DraftUtils.Interfaces;
 using DispatcherQueueTimer = Microsoft.UI.Dispatching.DispatcherQueueTimer;
 using VirtualKey = Windows.System.VirtualKey;
 using VirtualKeyModifiers = Windows.System.VirtualKeyModifiers;
@@ -29,6 +30,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
     public sealed partial class WebEditor : ArcUserControl {
         public event EventHandler? SaveRequested;
         public event EventHandler? SaveAllRequested;
+        public event EventHandler? EditCommandStateChanged;
 
         public WebEditorViewModel ViewModel { get; private set; } = null!;
 
@@ -181,8 +183,30 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         public WebEditor() {
             InitializeComponent();
+            _quickOpenControl = new WebQuickOpenControl();
+            QuickOpenBox.TextChanged += QuickOpenBox_TextChanged;
+            QuickOpenBox.QuerySubmitted += QuickOpenBox_QuerySubmitted;
             InitializePanelLayoutStates();
             RegisterCommands();
+        }
+
+        public FrameworkElement TopBarContent => _quickOpenControl;
+
+        private AutoSuggestBox QuickOpenBox => _quickOpenControl.Input;
+
+        public void SetQuickOpenActive(bool isActive) {
+            if (_isQuickOpenActive == isActive) return;
+            _isQuickOpenActive = isActive;
+
+            if (isActive) {
+                if (_isQuickOpenIndexDirty) QueueQuickOpenRefresh();
+                return;
+            }
+
+            _quickOpenRefreshCancellation?.Cancel();
+            _quickOpenRefreshCancellation?.Dispose();
+            _quickOpenRefreshCancellation = null;
+            QuickOpenBox.IsSuggestionListOpen = false;
         }
 
         private void ArcUserControl_Loaded(object sender, RoutedEventArgs e) {
@@ -200,6 +224,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             _session.FileManager.Changed += FileManager_Changed;
 
             leftFileTreeControl.Refresh(_session.DesignFileUtil);
+            QuickOpenBox.PlaceholderText = _session.DesignFileUtil.ProjectName;
             QueueQuickOpenRefresh();
             // [已废弃，暂注释] 上游事件从未触发（重命名链路未接）
             // leftFileTreeControl.ProjectFileRenamed += OnProjectFileRenamed;
@@ -637,6 +662,54 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             return editorContentView.RedoAsync();
         }
 
+        public Task ExecuteEditCommandAsync(RuntimeEditCommand command) {
+            if (!CanExecuteEditCommand(command)) return Task.CompletedTask;
+
+            switch (command) {
+                case RuntimeEditCommand.Cut:
+                    return leftFileTreeControl.CutCommandAsync();
+                case RuntimeEditCommand.Copy:
+                    return leftFileTreeControl.CopyCommandAsync();
+                case RuntimeEditCommand.Paste:
+                    return leftFileTreeControl.PasteCommandAsync();
+                case RuntimeEditCommand.CopyPath:
+                    leftFileTreeControl.CopyPathCommand();
+                    break;
+                case RuntimeEditCommand.CopyRelativePath:
+                    leftFileTreeControl.CopyRelativePathCommand();
+                    break;
+                case RuntimeEditCommand.Rename:
+                    leftFileTreeControl.RenameCommand();
+                    break;
+                case RuntimeEditCommand.Delete:
+                    leftFileTreeControl.DeleteCommand();
+                    break;
+                case RuntimeEditCommand.Find:
+                    // 菜单 Flyout 会在 Click 返回后收回焦点，因此延后一帧再聚焦顶部文件搜索器。
+                    DispatcherQueue.TryEnqueue(OpenQuickOpen);
+                    break;
+                case RuntimeEditCommand.FindInFiles:
+                    SetPanelVisibility(EditorPanelSlot.Left, true);
+                    DispatcherQueue.TryEnqueue(leftFileTreeControl.FocusContentSearch);
+                    break;
+            }
+            return Task.CompletedTask;
+        }
+
+        public bool CanExecuteEditCommand(RuntimeEditCommand command) {
+            return command switch {
+                RuntimeEditCommand.Cut or
+                RuntimeEditCommand.Copy or
+                RuntimeEditCommand.Paste or
+                RuntimeEditCommand.CopyPath or
+                RuntimeEditCommand.CopyRelativePath or
+                RuntimeEditCommand.Rename or
+                RuntimeEditCommand.Delete => leftFileTreeControl.CanExecuteCommand(command),
+                RuntimeEditCommand.Find or RuntimeEditCommand.FindInFiles => true,
+                _ => false,
+            };
+        }
+
         public async Task<bool> SaveAllAsync() {
             await _saveLock.WaitAsync();
             try {
@@ -751,6 +824,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void QueueQuickOpenRefresh() {
+            _isQuickOpenIndexDirty = true;
+            if (!_isQuickOpenActive) return;
+
             _quickOpenRefreshCancellation?.Cancel();
             _quickOpenRefreshCancellation?.Dispose();
             _quickOpenRefreshCancellation = new CancellationTokenSource();
@@ -765,22 +841,29 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             if (token.IsCancellationRequested || _session == null) return;
 
             var projectFolder = _session.DesignFileUtil.ProjectFolder;
-            var items = await Task.Run(() => WebProjectFileEnumerator
-                .EnumerateFiles(projectFolder, token, MaxQuickOpenIndexedFiles)
-                .Select(filePath => new WebQuickOpenItem {
-                    FilePath = filePath,
-                    RelativePath = Path.GetRelativePath(projectFolder, filePath),
-                })
-                .OrderBy(item => item.FileName, StringComparer.OrdinalIgnoreCase)
-                .ToList());
+            List<WebQuickOpenItem> items;
+            try {
+                items = await Task.Run(() => WebProjectFileEnumerator
+                    .EnumerateFiles(projectFolder, token, MaxQuickOpenIndexedFiles)
+                    .Select(filePath => new WebQuickOpenItem {
+                        FilePath = filePath,
+                        RelativePath = Path.GetRelativePath(projectFolder, filePath),
+                    })
+                    .OrderBy(item => item.FileName, StringComparer.OrdinalIgnoreCase)
+                    .ToList(), token);
+            }
+            catch (OperationCanceledException) {
+                return;
+            }
             if (token.IsCancellationRequested) return;
 
             _quickOpenFiles = items;
+            _isQuickOpenIndexDirty = false;
 
             // 只在用户当前主动展开快速打开列表时刷新候选 UI。
             // 索引后台更新不能反向打开一个已关闭但仍保留焦点的 AutoSuggestBox。
-            if (quickOpenBox.IsSuggestionListOpen) {
-                UpdateQuickOpenSuggestions(quickOpenBox.Text);
+            if (QuickOpenBox.IsSuggestionListOpen) {
+                UpdateQuickOpenSuggestions(QuickOpenBox.Text);
             }
         }
 
@@ -801,7 +884,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     .Select(result => result.Item);
             }
 
-            quickOpenBox.ItemsSource = matches.Take(100).ToList();
+            QuickOpenBox.ItemsSource = matches.Take(100).ToList();
         }
 
         private static int GetQuickOpenRank(WebQuickOpenItem item, string query) {
@@ -838,9 +921,14 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             KeyboardAccelerator sender,
             KeyboardAcceleratorInvokedEventArgs args) {
             args.Handled = true;
-            UpdateQuickOpenSuggestions(string.Empty);
-            quickOpenBox.Focus(FocusState.Programmatic);
-            quickOpenBox.IsSuggestionListOpen = true;
+            OpenQuickOpen();
+        }
+
+        private void OpenQuickOpen() {
+            if (_isQuickOpenIndexDirty) QueueQuickOpenRefresh();
+            UpdateQuickOpenSuggestions(QuickOpenBox.Text);
+            QuickOpenBox.Focus(FocusState.Programmatic);
+            QuickOpenBox.IsSuggestionListOpen = true;
         }
 
         /// <summary>
@@ -908,6 +996,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private void FileTree_FolderSelected(object? sender, string folderPath) {
             propertyPanelControl.LoadFolder(folderPath);
+        }
+
+        private void FileTree_CommandStateChanged(object? sender, EventArgs e) {
+            EditCommandStateChanged?.Invoke(this, EventArgs.Empty);
         }
 
         #region commands
@@ -1373,9 +1465,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private WebProjectSession? _session;
+        private readonly WebQuickOpenControl _quickOpenControl;
         private IReadOnlyList<WebQuickOpenItem> _quickOpenFiles = [];
         private const int MaxQuickOpenIndexedFiles = 50000;
         private bool _isLoaded;
+        private bool _isQuickOpenActive;
+        private bool _isQuickOpenIndexDirty = true;
         private bool _isDebugRunning;
         private bool _isAddingToLibrary;
         private CancellationTokenSource? _propertyPanelRefreshCancellation;

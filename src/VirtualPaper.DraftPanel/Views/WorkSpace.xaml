@@ -58,7 +58,8 @@
                 </MenuFlyoutItem>
             </MenuBarItem>
 
-            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Edit}" KeyboardAcceleratorPlacementMode="Hidden">
+            <MenuBarItem x:Name="EditMenuBarItem" Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Edit}"
+                KeyboardAcceleratorPlacementMode="Hidden" PointerEntered="EditMenuBarItem_PointerEntered">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="E"/>
                 </MenuBarItem.KeyboardAccelerators>
@@ -74,23 +75,63 @@
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
 
-                <!--<MenuFlyoutSeparator />-->
-
-                <!--<MenuFlyoutItem Text="剪切">
+                <MenuFlyoutSeparator x:Name="WebEditFileSeparator" Visibility="Collapsed"/>
+                <MenuFlyoutItem x:Name="WebCutMenuItem" Text="Cut" Tag="Cut" Visibility="Collapsed"
+                    KeyboardAcceleratorTextOverride="Ctrl+X" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="X"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="复制">
+                <MenuFlyoutItem x:Name="WebCopyMenuItem" Text="Copy" Tag="Copy" Visibility="Collapsed"
+                    KeyboardAcceleratorTextOverride="Ctrl+C" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="C"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="粘贴">
+                <MenuFlyoutItem x:Name="WebPasteMenuItem" Text="Paste" Tag="Paste" Visibility="Collapsed"
+                    KeyboardAcceleratorTextOverride="Ctrl+V" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="V"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>-->
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="WebCopyPathMenuItem" Text="Copy Path" Tag="CopyPath" Visibility="Collapsed"
+                    KeyboardAcceleratorTextOverride="Shift+Alt+C" Click="WebEditMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu, Shift" Key="C"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="WebCopyRelativePathMenuItem" Text="Copy Relative Path" Tag="CopyRelativePath" Visibility="Collapsed"
+                    KeyboardAcceleratorTextOverride="Ctrl+Shift+C" Click="WebEditMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control, Shift" Key="C"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator x:Name="WebEditModifySeparator" Visibility="Collapsed"/>
+                <MenuFlyoutItem x:Name="WebRenameMenuItem" Text="Rename..." Tag="Rename" Visibility="Collapsed"
+                    KeyboardAcceleratorTextOverride="F2" Click="WebEditMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="F2"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="WebDeleteMenuItem" Text="Delete" Tag="Delete" Visibility="Collapsed"
+                    KeyboardAcceleratorTextOverride="Del" Click="WebEditMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="Delete"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator x:Name="WebEditFindSeparator" Visibility="Collapsed"/>
+                <MenuFlyoutItem x:Name="WebFindMenuItem" Text="Find" Tag="Find" Visibility="Collapsed"
+                    KeyboardAcceleratorTextOverride="Ctrl+P" Click="WebEditMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="P"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="WebFindInFilesMenuItem" Text="Find in Files" Tag="FindInFiles" Visibility="Collapsed"
+                    KeyboardAcceleratorTextOverride="Ctrl+Shift+F" Click="WebEditMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control, Shift" Key="F"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
             </MenuBarItem>
         </cmd:KeepToLeft>
 
@@ -121,11 +162,25 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <ContentControl x:Name="menuContent">
-            <cmd:ObservableMenuBar
-                KeepToLeft="{StaticResource LeftMenuItems}"
-                KeepToRight="{StaticResource RightMenuItems}"
-                MiddleItems="{x:Bind _viewModel._middleMenuItems}"/>
+        <ContentControl x:Name="menuContent"
+            HorizontalContentAlignment="Stretch"
+            VerticalContentAlignment="Stretch">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <cmd:ObservableMenuBar
+                    Grid.ColumnSpan="3"
+                    KeepToLeft="{StaticResource LeftMenuItems}"
+                    KeepToRight="{StaticResource RightMenuItems}"
+                    MiddleItems="{x:Bind _viewModel._middleMenuItems}"/>
+                <ContentControl x:Name="runtimeTopBarContent"
+                    Grid.Column="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"/>
+            </Grid>
         </ContentControl>
 
         <Grid x:Name="contentGrid" Grid.Row="1">

@@ -1,5 +1,6 @@
 <!-- Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License. See LICENSE in the project root for license information. -->
-<ResourceDictionary xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:VirtualPaper.UIComponent.Collection" xmlns:media="using:Microsoft.UI.Xaml.Media" xmlns:controls="using:Microsoft.UI.Xaml.Controls" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+<ResourceDictionary xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:VirtualPaper.UIComponent.Collection" xmlns:media="using:Microsoft.UI.Xaml.Media" xmlns:controls="using:Microsoft.UI.Xaml.Controls" xmlns:cvs="using:VirtualPaper.UIComponent.Converters" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+    <cvs:VisibilityByValueConverter x:Key="TreeViewItemContextTargetVisibilityConverter" />
     <Style TargetType="local:ArcTreeViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}" x:Key="MUX_TreeViewItemStyle">
         <Setter Property="Padding" Value="0" />
         <Setter Property="Background" Value="{ThemeResource TreeViewItemBackground}" />
@@ -7,6 +8,8 @@
         <Setter Property="BorderThickness" Value="{ThemeResource TreeViewItemBorderThemeThickness}" />
         <Setter Property="GlyphBrush" Value="{ThemeResource TreeViewItemForeground}" />
         <Setter Property="GlyphSize" Value="14" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="XYFocusKeyboardNavigation" Value="Disabled" />
         <Setter Property="MinHeight" Value="{ThemeResource TreeViewItemMinHeight}" />
         <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}" />
         <Setter Property="FocusVisualMargin" Value="0,-1,0,-1" />
@@ -149,6 +152,15 @@
                             </Grid>
                             <ContentPresenter x:Name="ContentPresenter" Grid.Column="2" ContentTransitions="{TemplateBinding ContentTransitions}" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" MinHeight="{ThemeResource TreeViewItemContentHeight}" Margin="{TemplateBinding Padding}" />
                         </Grid>
+                        <Rectangle
+                            Margin="1"
+                            RadiusX="2"
+                            RadiusY="2"
+                            Stroke="{ThemeResource TextFillColorSecondaryBrush}"
+                            StrokeThickness="1"
+                            StrokeDashArray="2,2"
+                            IsHitTestVisible="False"
+                            Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=IsContextMenuTarget, Converter={StaticResource TreeViewItemContextTargetVisibilityConverter}}" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

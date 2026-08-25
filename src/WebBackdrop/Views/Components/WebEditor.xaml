@@ -7,7 +7,6 @@
     xmlns:editorContent="using:Workloads.Creation.WebBackdrop.Views.Components.EditorContent"
     xmlns:bottomPanels="using:Workloads.Creation.WebBackdrop.Views.Components.BottomPanels"
     xmlns:tools="using:Workloads.Creation.WebBackdrop.Views.Tools"
-    xmlns:models="using:Workloads.Creation.WebBackdrop.Models"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:utils="using:VirtualPaper.UIComponent.Utils"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -33,39 +32,11 @@
 
     <Grid x:Name="rootGrid">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition/>
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Height="38" Background="{ThemeResource LayerFillColorDefaultBrush}">
-            <AutoSuggestBox
-                x:Name="quickOpenBox"
-                Width="480"
-                MaxWidth="560"
-                Height="30"
-                HorizontalAlignment="Center"
-                PlaceholderText="Search files by name (Ctrl+P)"
-                TextMemberPath="FileName"
-                TextChanged="QuickOpenBox_TextChanged"
-                QuerySubmitted="QuickOpenBox_QuerySubmitted">
-                <AutoSuggestBox.ItemTemplate>
-                    <DataTemplate x:DataType="models:WebQuickOpenItem">
-                        <Grid MinWidth="400" ColumnSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="{x:Bind FileName}" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="1" Text="{x:Bind RelativePath}" Opacity="0.55" TextTrimming="CharacterEllipsis"/>
-                        </Grid>
-                    </DataTemplate>
-                </AutoSuggestBox.ItemTemplate>
-            </AutoSuggestBox>
-            <Rectangle Height="1" VerticalAlignment="Bottom" Fill="{ThemeResource CardStrokeColorDefaultBrush}"/>
-        </Grid>
-
-        <Grid x:Name="editorGrid" Grid.Row="1">
+        <Grid x:Name="editorGrid">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="leftSideBarColumn" Width="260"/>
                 <ColumnDefinition/>
@@ -80,6 +51,7 @@
                         FileSaveAsRequested="FileTree_FileSaveAsRequested"
                         ContentMatchOpenRequested="FileTree_ContentMatchOpenRequested"
                         ActiveFileMoved="FileTree_ActiveFileMoved"
+                        CommandStateChanged="FileTree_CommandStateChanged"
                         FolderSelected="FileTree_FolderSelected"/>
 
                     <Rectangle x:Name="leftSideBarBorderLine"
@@ -225,7 +197,7 @@
             </Grid>
         </Grid>
 
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="1">
             <tools:WebStatusBarControl x:Name="statusBar"                
                 ActiveFileLanguage="{x:Bind ActiveFileLanguage, Mode=OneWay}"
                 LineNumber="{x:Bind CursorLineNumber, Mode=OneWay}"

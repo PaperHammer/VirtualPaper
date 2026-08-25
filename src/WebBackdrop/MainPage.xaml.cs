@@ -20,7 +20,7 @@ namespace Workloads.Creation.WebBackdrop {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainPage : ArcPage, IRuntime {
+    public sealed partial class MainPage : ArcPage, IRuntime, IRuntimeTopBarContentProvider, IRuntimeEditCommandProvider {
         public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
         public string FileName => Session.DesignFileUtil.ProjectFilePath;
         public string FileNameWithoutEx => Session.DesignFileUtil.ProjectName;
@@ -31,6 +31,14 @@ namespace Workloads.Creation.WebBackdrop {
         public bool IsSavedFromInit => Session.DesignFileUtil.IsSaveFromInit;
 
         public FileType RuntimeFileType { get; private set; }
+        public FrameworkElement TopBarContent => webEditor.TopBarContent;
+        public void SetTopBarContentActive(bool isActive) => webEditor.SetQuickOpenActive(isActive);
+        public event EventHandler? EditCommandStateChanged {
+            add => webEditor.EditCommandStateChanged += value;
+            remove => webEditor.EditCommandStateChanged -= value;
+        }
+        public bool CanExecuteEditCommand(RuntimeEditCommand command) => webEditor.CanExecuteEditCommand(command);
+        public Task ExecuteEditCommandAsync(RuntimeEditCommand command) => webEditor.ExecuteEditCommandAsync(command);
 
         public MainPage() {
             this.InitializeComponent();

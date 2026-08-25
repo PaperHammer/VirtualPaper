@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Workloads.Creation.WebBackdrop.Views.Components.WebQuickOpenControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:Workloads.Creation.WebBackdrop.Models"
+    Height="32"
+    VerticalAlignment="Center">
+
+    <UserControl.Resources>
+        <Style
+            x:Key="WebBackdropQuickOpenInnerTextBoxStyle"
+            TargetType="TextBox"
+            BasedOn="{StaticResource ArcCompactTextBoxDefaultStyle}">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="8 6 8 5"/>
+            <Setter Property="XYFocusKeyboardNavigation" Value="Disabled"/>
+            <Setter Property="TextAlignment" Value="Left"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="WebBackdropQuickOpenTextBoxStyle" TargetType="AutoSuggestBox">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Width="480" MaxWidth="560">
+        <AutoSuggestBox x:Name="quickOpenBox"
+            Style="{StaticResource WebBackdropQuickOpenTextBoxStyle}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Center"
+            TextBoxStyle="{StaticResource WebBackdropQuickOpenInnerTextBoxStyle}"
+            AutomationProperties.Name="Search files by name"
+            PlaceholderText="Search files by name (Ctrl+P)"
+            TextMemberPath="FileName">
+            <AutoSuggestBox.ItemTemplate>
+                <DataTemplate x:DataType="models:WebQuickOpenItem">
+                    <Grid MinWidth="400" MinHeight="28" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{x:Bind FileName}" FontWeight="SemiBold"/>
+                        <TextBlock
+                            Grid.Column="1"
+                            Text="{x:Bind RelativePath}"
+                            Opacity="0.55"
+                            TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+                </DataTemplate>
+            </AutoSuggestBox.ItemTemplate>
+        </AutoSuggestBox>
+    </Grid>
+</UserControl>

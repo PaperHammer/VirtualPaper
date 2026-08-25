@@ -8,6 +8,7 @@
     <Style TargetType="local:ArcTreeView" BasedOn="{StaticResource DefaultTreeViewStyle}" />
     <Style x:Key="DefaultTreeViewStyle" TargetType="local:ArcTreeView">
         <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Padding" Value="4 0 0 0" />
         <Setter Property="CanDragItems" Value="True" />
         <Setter Property="CanReorderItems" Value="True" />
         <Setter Property="AllowDrop" Value="True" />
@@ -23,7 +24,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:ArcTreeView">
-                    <controls:TreeViewList x:Name="ListControl" Padding="4 0 0 0" Background="{TemplateBinding Background}" ItemTemplate="{TemplateBinding ItemTemplate}" ItemTemplateSelector="{TemplateBinding ItemTemplateSelector}" ItemContainerStyle="{TemplateBinding ItemContainerStyle}" ItemContainerStyleSelector="{TemplateBinding ItemContainerStyleSelector}" ItemContainerTransitions="{TemplateBinding ItemContainerTransitions}" CanDragItems="{TemplateBinding CanDragItems}" AllowDrop="{TemplateBinding AllowDrop}" CanReorderItems="{TemplateBinding CanReorderItems}" />
+                    <controls:TreeViewList x:Name="ListControl" Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}" ItemTemplate="{TemplateBinding ItemTemplate}" ItemTemplateSelector="{TemplateBinding ItemTemplateSelector}" ItemContainerStyle="{TemplateBinding ItemContainerStyle}" ItemContainerStyleSelector="{TemplateBinding ItemContainerStyleSelector}" ItemContainerTransitions="{TemplateBinding ItemContainerTransitions}" CanDragItems="{TemplateBinding CanDragItems}" AllowDrop="{TemplateBinding AllowDrop}" CanReorderItems="{TemplateBinding CanReorderItems}" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

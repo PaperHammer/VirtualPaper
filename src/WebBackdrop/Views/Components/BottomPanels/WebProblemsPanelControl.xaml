@@ -30,7 +30,7 @@
                     <Path
                         Width="18"
                         Height="18"
-                        Data="{x:Bind IconGeometry, Mode=OneWay}"
+                        Data="{x:Bind IconDataResourceKey, Mode=OneWay, Converter={StaticResource ResourceKeyToGeometryConverter}}"
                         Fill="{x:Bind IconBrush, Mode=OneWay}"
                         Stretch="Uniform"
                         UseLayoutRounding="True"/>

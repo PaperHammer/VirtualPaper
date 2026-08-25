@@ -2,7 +2,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.WebBackdrop.Core.Utils;
@@ -24,12 +23,11 @@ namespace Workloads.Creation.WebBackdrop.Models {
                 }
 
                 _filePath = value;
-                _iconGeometry = null;
                 _iconBrush = null;
 
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(FileName));
-                OnPropertyChanged(nameof(IconGeometry));
+                OnPropertyChanged(nameof(IconDataResourceKey));
                 OnPropertyChanged(nameof(IconBrush));
             }
         }
@@ -93,7 +91,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
                 _isExpanded = value;
 
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(FolderIconGeometry));
+                OnPropertyChanged(nameof(FolderIconDataResourceKey));
             }
         }
 
@@ -150,13 +148,35 @@ namespace Workloads.Creation.WebBackdrop.Models {
             }
         }
 
-        public Geometry? FolderIconGeometry =>
-            IsExpanded
-                ? _folderOpenIconGeometry ??= CreateGeometry("WebBackdrop_FileTree_FolderOpen_Data")
-                : _folderIconGeometry ??= CreateGeometry("WebBackdrop_FileTree_Folder_Data");
+        /// <summary>是否为当前右键菜单的目标。</summary>
+        public bool IsContextMenuTarget {
+            get => _isContextMenuTarget;
+            set {
+                if (_isContextMenuTarget == value) return;
+                _isContextMenuTarget = value;
+                OnPropertyChanged();
+            }
+        }
 
-        public Geometry? IconGeometry =>
-            _iconGeometry ??= CreateGeometry($"{IconResourceKey}_Data");
+        /// <summary>是否处于待剪切状态。</summary>
+        public bool IsCut {
+            get => _isCut;
+            set {
+                if (_isCut == value) return;
+                _isCut = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CutOpacity));
+            }
+        }
+
+        public double CutOpacity => IsCut ? 0.5 : 1.0;
+
+        public string FolderIconDataResourceKey =>
+            IsExpanded
+                ? "WebBackdrop_FileTree_FolderOpen_Data"
+                : "WebBackdrop_FileTree_Folder_Data";
+
+        public string IconDataResourceKey => $"{IconResourceKey}_Data";
 
         public Brush? IconBrush =>
             _iconBrush ??= GetResource<Brush>($"{IconResourceKey}_Brush");
@@ -169,11 +189,6 @@ namespace Workloads.Creation.WebBackdrop.Models {
             Application.Current.Resources.TryGetValue(resourceKey, out var resource)
             && resource is T typedResource
                 ? typedResource
-                : null;
-
-        private static Geometry? CreateGeometry(string resourceKey) =>
-            GetResource<string>(resourceKey) is { Length: > 0 } pathData
-                ? XamlBindingHelper.ConvertValue(typeof(Geometry), pathData) as Geometry
                 : null;
 
         public WebFileItem(
@@ -226,15 +241,14 @@ namespace Workloads.Creation.WebBackdrop.Models {
 
         private bool _isSaved = true;
         private bool _isExpanded;
-        private Geometry? _folderIconGeometry;
-        private Geometry? _folderOpenIconGeometry;
-        private Geometry? _iconGeometry;
         private Brush? _iconBrush;
         private bool _existsOnDisk;
         private bool _isRenaming;
         private bool _isRenameInvalid;
         private bool _isVisible = true;
         private bool _isActiveFile;
+        private bool _isContextMenuTarget;
+        private bool _isCut;
 
         private string _renameText = string.Empty;
     }

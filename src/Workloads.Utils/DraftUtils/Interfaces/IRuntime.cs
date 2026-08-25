@@ -1,10 +1,40 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.UndoRedo.Events;
 using Workloads.Utils.DraftUtils.Models;
 
 namespace Workloads.Utils.DraftUtils.Interfaces {
+    public enum RuntimeEditCommand {
+        Cut,
+        Copy,
+        Paste,
+        CopyPath,
+        CopyRelativePath,
+        Rename,
+        Delete,
+        Find,
+        FindInFiles,
+    }
+
+    /// <summary>
+    /// 可选的运行时编辑命令提供者，由工作区共享的 Edit 菜单调用。
+    /// </summary>
+    public interface IRuntimeEditCommandProvider {
+        event EventHandler? EditCommandStateChanged;
+        bool CanExecuteEditCommand(RuntimeEditCommand command);
+        Task ExecuteEditCommandAsync(RuntimeEditCommand command);
+    }
+
+    /// <summary>
+    /// 可选的工作区顶部栏内容提供者。
+    /// </summary>
+    public interface IRuntimeTopBarContentProvider {
+        FrameworkElement TopBarContent { get; }
+        void SetTopBarContentActive(bool isActive);
+    }
+
     public interface IRuntime {
         event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
         string FileName { get; }

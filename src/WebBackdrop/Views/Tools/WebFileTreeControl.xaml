@@ -14,48 +14,74 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <Style x:Key="RenameTextBoxStyle" TargetType="TextBox">
-            <Setter Property="FontSize" Value="14"/>
+        <Thickness x:Key="ScrollViewerScrollBarMargin">1 1 8 1</Thickness>
+        <Style
+            x:Key="WebBackdropSearchTextBoxStyle"
+            TargetType="TextBox"
+            BasedOn="{StaticResource ArcCompactTextBoxDefaultStyle}">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="8 4 66 3"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}"/>
+        </Style>
+        <Style
+            x:Key="WebBackdropRenameTextBoxStyle"
+            TargetType="input:ArcTextBox"
+            BasedOn="{StaticResource ArcTextBoxDefaultStyle}">
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="MinHeight" Value="22"/>
             <Setter Property="MinWidth" Value="120"/>
             <Setter Property="MaxWidth" Value="480"/>
-            <Setter Property="MinHeight" Value="22"/>
-            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="3 2 3 0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="Background" Value="{ThemeResource TextControlBackground}"/>
+            <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}"/>
         </Style>
         <DataTemplate x:Key="FolderTemplate" x:DataType="models:WebFileItem">
             <collection:ArcTreeViewItem AutomationProperties.Name="{x:Bind FileName}"
+                HorizontalContentAlignment="Stretch"
+                Opacity="{x:Bind CutOpacity, Mode=OneWay}"
+                IsContextMenuTarget="{x:Bind IsContextMenuTarget, Mode=OneWay}"
                 ItemsSource="{x:Bind Children}" IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}"
                 Visibility="{x:Bind IsVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
                 <collection:ArcTreeViewItem.ContextFlyout>
-                    <MenuFlyout Opening="FolderMenuFlyout_Opening">
+                    <MenuFlyout Opening="FolderMenuFlyout_Opening" Closed="ContextMenuFlyout_Closed">
                         <MenuFlyoutItem x:Name="folderNewFileMenuItem" Text="New File" Tag="{x:Bind}" Click="NewFileMenuItem_Click"/>
                         <MenuFlyoutItem x:Name="folderNewFolderMenuItem" Text="New Folder" Tag="{x:Bind}" Click="NewFolderMenuItem_Click"/>
                         <MenuFlyoutItem x:Name="folderAddItemsMenuItem" Text="Add Items" Tag="{x:Bind}" Click="AddItemsMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="folderEditSeparator1"/>
-                        <MenuFlyoutItem x:Name="folderCutMenuItem" Text="Cut" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="folderCopyMenuItem" Text="Copy" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="pasteMenuItem" Text="Paste" Tag="{x:Bind}" Click="PasteMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="folderCopyPathMenuItem" Text="Copy Path" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="folderCopyRelativePathMenuItem" Text="Copy Relative Path" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderCutMenuItem" Text="Cut" KeyboardAcceleratorTextOverride="Ctrl+X" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderCopyMenuItem" Text="Copy" KeyboardAcceleratorTextOverride="Ctrl+C" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="pasteMenuItem" Text="Paste" KeyboardAcceleratorTextOverride="Ctrl+V" Tag="{x:Bind}" Click="PasteMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderCopyPathMenuItem" Text="Copy Path" KeyboardAcceleratorTextOverride="Shift+Alt+C" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderCopyRelativePathMenuItem" Text="Copy Relative Path" KeyboardAcceleratorTextOverride="Ctrl+Shift+C" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="folderEditSeparator2"/>
-                        <MenuFlyoutItem x:Name="folderRenameMenuItem" Text="Rename" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="folderDeleteMenuItem" Text="Delete" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderRenameMenuItem" Text="Rename..." KeyboardAcceleratorTextOverride="F2" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderDeleteMenuItem" Text="Delete" KeyboardAcceleratorTextOverride="Del" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="folderExplorerSeparator"/>
                         <MenuFlyoutItem x:Name="folderRevealMenuItem" Text="Reveal in Explorer" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
                     </MenuFlyout>
                 </collection:ArcTreeViewItem.ContextFlyout>
                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <Path
+                        <Path
                         Width="18"
                         Height="18"
-                        Data="{x:Bind FolderIconGeometry, Mode=OneWay}"
+                        Data="{x:Bind FolderIconDataResourceKey, Mode=OneWay, Converter={StaticResource ResourceKeyToGeometryConverter}}"
                         Fill="{StaticResource WebBackdrop_FileTree_Folder_Brush}"
                         Stretch="Uniform"
                         UseLayoutRounding="True"/>
-                    <StackPanel>
-                        <Grid>
+                        <StackPanel>
+                            <Grid>
                             <TextBlock 
                                 Text="{x:Bind FileName}" 
                                 LineHeight="22"
@@ -70,15 +96,7 @@
                                 </interactivity:Interaction.Behaviors>
                             </TextBlock>
                             <input:ArcTextBox
-                                Height="24"
-                                Padding="4 0"
-                                FontSize="14"
-                                MinWidth="120"
-                                MaxWidth="480"
-                                BorderThickness="1"
-                                CornerRadius="4"
-                                Background="{ThemeResource TextControlBackground}"
-                                VerticalContentAlignment="Center"
+                                Style="{StaticResource WebBackdropRenameTextBoxStyle}"
                                 Text="{x:Bind RenameText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 Visibility="{x:Bind IsRenaming, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
                                 Tag="{x:Bind}"
@@ -88,7 +106,7 @@
                             <Border
                                 BorderThickness="1"
                                 BorderBrush="#FFFF4D4D"
-                                CornerRadius="4"
+                                CornerRadius="2"
                                 IsHitTestVisible="False"
                                 Visibility="{x:Bind IsRenameInvalid, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"/>
                             <Rectangle 
@@ -96,8 +114,8 @@
                                 Margin="0 4 0 0"
                                 Fill="{x:Bind MissingBrush}"
                                 Visibility="{x:Bind ExistsOnDisk, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}" />
-                        </Grid>
-                        <Popup
+                            </Grid>
+                            <Popup
                             IsOpen="{x:Bind IsRenameInvalid, Mode=OneWay}"
                             IsLightDismissEnabled="False"
                             HorizontalOffset="0"
@@ -116,30 +134,32 @@
                                     TextWrapping="Wrap"
                                     Foreground="#FFFF4D4D"/>
                             </Border>
-                        </Popup>
+                            </Popup>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
             </collection:ArcTreeViewItem>
         </DataTemplate>
 
         <DataTemplate x:Key="FileTemplate" x:DataType="models:WebFileItem">
             <collection:ArcTreeViewItem AutomationProperties.Name="{x:Bind FileName}" HorizontalContentAlignment="Stretch"
                 ExpandCollapseGlyphVisibility="Collapsed"
+                Opacity="{x:Bind CutOpacity, Mode=OneWay}"
                 ItemsSource="{x:Bind Children}"
                 IsSelected="{x:Bind IsActiveFile, Mode=OneWay}"
+                IsContextMenuTarget="{x:Bind IsContextMenuTarget, Mode=OneWay}"
                 Visibility="{x:Bind IsVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
                 <collection:ArcTreeViewItem.ContextFlyout>
-                    <MenuFlyout Opening="FileMenuFlyout_Opening">
+                    <MenuFlyout Opening="FileMenuFlyout_Opening" Closed="ContextMenuFlyout_Closed">
                         <MenuFlyoutItem x:Name="fileSaveMenuItem" Text="Save" Tag="{x:Bind}" Click="SaveMenuItem_Click"/>
                         <MenuFlyoutItem x:Name="fileSaveAsMenuItem" Text="Save As..." Tag="{x:Bind}" Click="SaveAsMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="fileSaveSeparator"/>
-                        <MenuFlyoutItem x:Name="fileCutMenuItem" Text="Cut" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="fileCopyMenuItem" Text="Copy" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="fileCopyPathMenuItem" Text="Copy Path" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="fileCopyRelativePathMenuItem" Text="Copy Relative Path" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileCutMenuItem" Text="Cut" KeyboardAcceleratorTextOverride="Ctrl+X" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileCopyMenuItem" Text="Copy" KeyboardAcceleratorTextOverride="Ctrl+C" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileCopyPathMenuItem" Text="Copy Path" KeyboardAcceleratorTextOverride="Shift+Alt+C" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileCopyRelativePathMenuItem" Text="Copy Relative Path" KeyboardAcceleratorTextOverride="Ctrl+Shift+C" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="fileEditSeparator"/>
-                        <MenuFlyoutItem x:Name="fileRenameMenuItem" Text="Rename" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="fileDeleteMenuItem" Text="Delete" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileRenameMenuItem" Text="Rename..." KeyboardAcceleratorTextOverride="F2" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileDeleteMenuItem" Text="Delete" KeyboardAcceleratorTextOverride="Del" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="fileExplorerSeparator"/>
                         <MenuFlyoutItem x:Name="fileRevealMenuItem" Text="Reveal in Explorer" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
                     </MenuFlyout>
@@ -153,7 +173,7 @@
                         <Path
                             Width="18"
                             Height="18"
-                            Data="{x:Bind IconGeometry, Mode=OneWay}"
+                            Data="{x:Bind IconDataResourceKey, Mode=OneWay, Converter={StaticResource ResourceKeyToGeometryConverter}}"
                             Fill="{x:Bind IconBrush, Mode=OneWay}"
                             Stretch="Uniform"
                             UseLayoutRounding="True"/>
@@ -173,15 +193,7 @@
                                     </interactivity:Interaction.Behaviors>
                                 </TextBlock>
                                 <input:ArcTextBox
-                                    Height="22"
-                                    Padding="0"
-                                    FontSize="14"
-                                    MinWidth="120"
-                                    MaxWidth="480"
-                                    BorderThickness="1"
-                                    CornerRadius="4"
-                                    Background="{ThemeResource TextControlBackground}"
-                                    VerticalContentAlignment="Center"
+                                    Style="{StaticResource WebBackdropRenameTextBoxStyle}"
                                     Text="{x:Bind RenameText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                     Visibility="{x:Bind IsRenaming, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
                                     Tag="{x:Bind}"
@@ -191,7 +203,7 @@
                                 <Border
                                     BorderThickness="1"
                                     BorderBrush="#FFFF4D4D"
-                                    CornerRadius="4"
+                                    CornerRadius="2"
                                     IsHitTestVisible="False"
                                     Visibility="{x:Bind IsRenameInvalid, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"/>
                                 <Rectangle 
@@ -308,7 +320,10 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <Grid>
+    <Grid
+        x:Name="leftPanelRoot"
+        PointerEntered="LeftPanel_PointerEntered"
+        PointerExited="LeftPanel_PointerExited">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -317,10 +332,11 @@
         <Grid
             Grid.Row="0"
             Margin="8 6 8 4">
-            <input:ArcTextBox
-                Padding="8 0 66 0"
-                HorizontalContentAlignment="Left"
+            <TextBox x:Name="contentSearchBox"
+                Style="{StaticResource WebBackdropSearchTextBoxStyle}"
+                AutomationProperties.Name="Search in files"
                 PlaceholderText="Search in files"
+                KeyDown="ContentSearchBox_KeyDown"
                 Text="{x:Bind _viewModel.FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
             <StackPanel
                 Orientation="Horizontal"
@@ -365,6 +381,7 @@
             Visibility="{x:Bind _viewModel.IsSearching, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"/>
         <collection:ArcTreeView x:Name="fileTreeView"
             Grid.Row="2"
+            Padding="4 0 0 48"
             CancelSelectionEnable="False"
             AllowDrop="True"
             DragItemsStarting="FileTreeView_DragItemsStarting"
@@ -374,9 +391,74 @@
             ItemsSource="{x:Bind _viewModel.FileItems}"
             ItemTemplateSelector="{StaticResource WebFileItemTemplateSelector}"
             ItemInvoked="FileTreeView_ItemInvoked"
-            Visibility="{x:Bind _viewModel.IsSearchMode, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}"/>
-        <ListView
+            Visibility="{x:Bind _viewModel.IsSearchMode, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}">
+        </collection:ArcTreeView>
+        <Border
+            x:Name="stickyFoldersPanel"
             Grid.Row="2"
+            Canvas.ZIndex="2"
+            VerticalAlignment="Top"
+            Visibility="Collapsed"
+            Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0 0 0 1">
+            <ItemsControl
+                ItemsSource="{x:Bind _stickyFolders}"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:WebFileItem">
+                        <Button
+                            Tag="{x:Bind}"
+                            Click="StickyFolder_Click"
+                            Height="24"
+                            Padding="8 0"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            Background="Transparent"
+                            BorderThickness="0">
+                            <Grid ColumnSpacing="6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="28"/>
+                                    <ColumnDefinition Width="18"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid Padding="6 0" Width="28">
+                                    <TextBlock
+                                        Width="16"
+                                        Height="16"
+                                        Padding="1"
+                                        Text="&#xE70D;"
+                                        FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                        FontSize="14"
+                                        Foreground="{ThemeResource TreeViewItemForeground}"
+                                        VerticalAlignment="Center"
+                                        IsTextScaleFactorEnabled="False"
+                                        IsHitTestVisible="False"
+                                        AutomationProperties.AccessibilityView="Raw"/>
+                                </Grid>
+                                <Path
+                                    Grid.Column="1"
+                                    Width="18"
+                                    Height="18"
+                                    Data="{x:Bind FolderIconDataResourceKey, Mode=OneWay, Converter={StaticResource ResourceKeyToGeometryConverter}}"
+                                    Fill="{StaticResource WebBackdrop_FileTree_Folder_Brush}"
+                                    Stretch="Uniform"/>
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Text="{x:Bind FileName}"
+                                    VerticalAlignment="Center"
+                                    TextTrimming="CharacterEllipsis"/>
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+        <ListView
+            x:Name="contentSearchResultsList"
+            Grid.Row="2"
+            Padding="0 0 0 48"
             ItemsSource="{x:Bind _viewModel.SearchResults}"
             ItemTemplate="{StaticResource ContentSearchFileTemplate}"
             SelectionMode="None"

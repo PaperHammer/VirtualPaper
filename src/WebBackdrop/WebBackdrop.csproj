@@ -11,6 +11,7 @@
 	<ItemGroup>
 		<None Remove="MainPage.xaml" />
 		<None Remove="Views\Components\WebEditor.xaml" />
+		<None Remove="Views\Components\WebQuickOpenControl.xaml" />
 		<None Remove="Views\Components\EditorContent\WebEditorContentView.xaml" />
 		<None Remove="Views\Components\EditorContent\MarkdownEditorView.xaml" />
 		<None Remove="Views\Components\EditorContent\ImagePreviewView.xaml" />
@@ -40,6 +41,9 @@
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Components\WebEditor.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\WebQuickOpenControl.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Update="Views\Components\EditorContent\WebEditorContentView.xaml">

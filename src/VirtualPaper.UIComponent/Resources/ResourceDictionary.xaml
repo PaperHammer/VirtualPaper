@@ -11,6 +11,10 @@
     <cvs:LocalizeConv x:Key="LocalizeConv"/>
     <cvs:ByteArrayToBrushConverter x:Key="ByteArrayToBrushConverter"/>
     <cvs:ResourceKeyToImageConverter x:Key="ResourceKeyToImageConverter"/>
+    <cvs:ResourceKeyToGeometryConverter x:Key="ResourceKeyToGeometryConverter"/>
+
+    <!-- 全局输入框默认字体；具体控件可通过 FontFamily 本地值或局部 Style 覆盖。 -->
+    <FontFamily x:Key="DefaultInputFontFamily">Microsoft YaHei UI</FontFamily>
 
     <BitmapImage x:Key="AppIcon" UriSource="ms-appx:///Assets/icon-vp-512.png"/>
     <BitmapImage x:Key="NaviIcon_ThemeLight" UriSource="ms-appx:///Assets/ui_components/Light/theme_light.png"/>
@@ -20,7 +24,7 @@
     <BitmapImage x:Key="DraftPanel_Create_StaticImge_Desc" UriSource="ms-appx:///Assets/ui_components/project-create-static-image-desc.png"/>
     <BitmapImage x:Key="DraftPanel_Create_WebBackdrop_Desc" UriSource="ms-appx:///Assets/ui_components/project-create-webbackdrop-desc.png"/>
     <BitmapImage x:Key="DraftPanel_Create_StaticImge_LayerThu" UriSource="ms-appx:///Assets/staticImg/layer_thu_grid.png"/>
-    <!-- 文件树矢量图标：共享路径数据；Geometry 由各节点分别创建并缓存。 -->
+    <!-- 文件树矢量图标：共享路径字符串；Geometry 由各个可视容器分别创建。 -->
     <x:String x:Key="WebBackdrop_FileTree_Folder_Data">M 1,4 L 7,4 L 8.5,5.5 L 17,5.5 L 17,15 L 1,15 Z</x:String>
     <x:String x:Key="WebBackdrop_FileTree_FolderOpen_Data">M 1,4 L 7,4 L 8.5,5.5 L 16,5.5 L 16,7 L 17.5,7 L 15,15 L 0.5,15 L 1,7 Z</x:String>
     <SolidColorBrush x:Key="WebBackdrop_FileTree_Folder_Brush" Color="#D7BA7D"/>
@@ -88,12 +92,15 @@
     
     <Style TargetType="Control" BasedOn="{StaticResource DefaultControlStyle}">
         <Setter Property="KeyboardAcceleratorPlacementMode" Value="Hidden"/>
-        <Setter Property="IsTabStop" Value="True"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="XYFocusKeyboardNavigation" Value="Disabled"/>
     </Style>
 
     <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
+        <Setter Property="FontFamily" Value="{StaticResource DefaultInputFontFamily}"/>
         <Setter Property="ContextFlyout" Value="{x:Null}"/>
         <Setter Property="IsSpellCheckEnabled" Value="False"/>
+        <Setter Property="XYFocusKeyboardNavigation" Value="Disabled"/>
     </Style>
 
     <Style x:Key="MorePronouncedButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">

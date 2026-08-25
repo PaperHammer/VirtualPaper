@@ -18,6 +18,18 @@ namespace VirtualPaper.UIComponent.Collection {
                 typeof(ArcTreeViewItem),
                 new PropertyMetadata(Visibility.Visible));
 
+        public bool IsContextMenuTarget {
+            get => (bool)GetValue(IsContextMenuTargetProperty);
+            set => SetValue(IsContextMenuTargetProperty, value);
+        }
+
+        public static readonly DependencyProperty IsContextMenuTargetProperty =
+            DependencyProperty.Register(
+                nameof(IsContextMenuTarget),
+                typeof(bool),
+                typeof(ArcTreeViewItem),
+                new PropertyMetadata(false));
+
         public ArcTreeViewItem() {
             DefaultStyleKey = typeof(TreeViewItem);
         }

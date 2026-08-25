@@ -41,6 +41,13 @@ namespace VirtualPaper.DraftPanel.Views {
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
             _viewModel.TabViewItems.CollectionChanged -= TabViewItems_CollectionChanged;
+            _activeTopBarContentProvider?.SetTopBarContentActive(false);
+            _activeTopBarContentProvider = null;
+            if (_activeEditCommandProvider != null) {
+                _activeEditCommandProvider.EditCommandStateChanged -= ActiveEditCommandProvider_StateChanged;
+                _activeEditCommandProvider = null;
+            }
+            runtimeTopBarContent.Content = null;
             _preProjectDatas = null;
             _tabToHost.Clear();
             _viewModel.Dispose();
@@ -147,6 +154,28 @@ namespace VirtualPaper.DraftPanel.Views {
         private void UpdateMenuForActiveRuntime() {
             var runtime = GetSelectedRuntime();
             var isWebProject = runtime?.RuntimeFileType == FileType.FWebDesign;
+            var topBarContentProvider = runtime as IRuntimeTopBarContentProvider;
+            var editCommandProvider = runtime as IRuntimeEditCommandProvider;
+
+            if (!ReferenceEquals(_activeTopBarContentProvider, topBarContentProvider)) {
+                _activeTopBarContentProvider?.SetTopBarContentActive(false);
+                runtimeTopBarContent.Content = null;
+                _activeTopBarContentProvider = topBarContentProvider;
+            }
+            if (topBarContentProvider != null && runtimeTopBarContent.Content == null) {
+                runtimeTopBarContent.Content = topBarContentProvider.TopBarContent;
+                topBarContentProvider.SetTopBarContentActive(true);
+            }
+
+            if (!ReferenceEquals(_activeEditCommandProvider, editCommandProvider)) {
+                if (_activeEditCommandProvider != null) {
+                    _activeEditCommandProvider.EditCommandStateChanged -= ActiveEditCommandProvider_StateChanged;
+                }
+                _activeEditCommandProvider = editCommandProvider;
+                if (_activeEditCommandProvider != null) {
+                    _activeEditCommandProvider.EditCommandStateChanged += ActiveEditCommandProvider_StateChanged;
+                }
+            }
 
             ExportPngMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
             ExportBmpMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
@@ -155,6 +184,55 @@ namespace VirtualPaper.DraftPanel.Views {
             ExportFullZipMenuItem.Visibility = isWebProject ? Visibility.Visible : Visibility.Collapsed;
             ExportZipMenuItem.Visibility = isWebProject ? Visibility.Visible : Visibility.Collapsed;
             saveAsMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
+
+            var webEditVisibility = runtime is IRuntimeEditCommandProvider
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+            WebEditFileSeparator.Visibility = webEditVisibility;
+            WebCutMenuItem.Visibility = webEditVisibility;
+            WebCopyMenuItem.Visibility = webEditVisibility;
+            WebPasteMenuItem.Visibility = webEditVisibility;
+            WebCopyPathMenuItem.Visibility = webEditVisibility;
+            WebCopyRelativePathMenuItem.Visibility = webEditVisibility;
+            WebEditModifySeparator.Visibility = webEditVisibility;
+            WebRenameMenuItem.Visibility = webEditVisibility;
+            WebDeleteMenuItem.Visibility = webEditVisibility;
+            WebEditFindSeparator.Visibility = webEditVisibility;
+            WebFindMenuItem.Visibility = webEditVisibility;
+            WebFindInFilesMenuItem.Visibility = webEditVisibility;
+            UpdateWebEditMenuEnabledState();
+        }
+
+        private void EditMenuBarItem_PointerEntered(object sender, PointerRoutedEventArgs e) {
+            UpdateWebEditMenuEnabledState();
+        }
+
+        private void ActiveEditCommandProvider_StateChanged(object? sender, EventArgs e) {
+            UpdateWebEditMenuEnabledState();
+        }
+
+        private void UpdateWebEditMenuEnabledState() {
+            var provider = GetSelectedRuntime() as IRuntimeEditCommandProvider;
+            WebCutMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Cut) == true;
+            WebCopyMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Copy) == true;
+            WebPasteMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Paste) == true;
+            WebCopyPathMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.CopyPath) == true;
+            WebCopyRelativePathMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.CopyRelativePath) == true;
+            WebRenameMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Rename) == true;
+            WebDeleteMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Delete) == true;
+            WebFindMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Find) == true;
+            WebFindInFilesMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.FindInFiles) == true;
+        }
+
+        private async void WebEditMenuItem_Click(object sender, RoutedEventArgs e) {
+            if (sender is not FrameworkElement { Tag: string commandName }
+                || !Enum.TryParse(commandName, out RuntimeEditCommand command)
+                || GetSelectedRuntime() is not IRuntimeEditCommandProvider provider
+                || !provider.CanExecuteEditCommand(command)) {
+                return;
+            }
+
+            await provider.ExecuteEditCommandAsync(command);
         }
 
         private IRuntime? GetSelectedRuntime() {
@@ -162,6 +240,9 @@ namespace VirtualPaper.DraftPanel.Views {
             if (index < 0 || index >= _viewModel.TabViewItems.Count) return null;
             return _viewModel.TabViewItems[index].Tag as IRuntime;
         }
+
+        private IRuntimeTopBarContentProvider? _activeTopBarContentProvider;
+        private IRuntimeEditCommandProvider? _activeEditCommandProvider;
         #endregion
 
         #region overlay page

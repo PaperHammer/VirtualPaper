@@ -35,13 +35,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 _filterText = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsSearchMode));
-
-                SearchResults.Clear();
-                // 防抖后搜索，避免每个按键都读取项目文件
-                _filterDebounce?.Cancel();
-                _filterDebounce = new CancellationTokenSource();
-                IsSearching = !string.IsNullOrWhiteSpace(value);
-                _ = ApplyFilterDebouncedAsync(_filterDebounce.Token);
+                QueueSearch();
             }
         }
 
@@ -69,12 +63,33 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
         private void RestartSearch() {
             if (!IsSearchMode) return;
+            QueueSearch();
+        }
 
+        private void QueueSearch() {
             SearchResults.Clear();
-            _filterDebounce?.Cancel();
+            ReleaseSearchCancellation();
+
+            if (!IsSearchMode) {
+                IsSearching = false;
+                return;
+            }
+
+            // 防抖后搜索，避免每个按键都读取项目文件。
             _filterDebounce = new CancellationTokenSource();
             IsSearching = true;
             _ = ApplyFilterDebouncedAsync(_filterDebounce.Token);
+        }
+
+        public void CancelPendingSearch() {
+            ReleaseSearchCancellation();
+            IsSearching = false;
+        }
+
+        private void ReleaseSearchCancellation() {
+            _filterDebounce?.Cancel();
+            _filterDebounce?.Dispose();
+            _filterDebounce = null;
         }
 
         /// <summary>是否正在后台搜索文件内容。</summary>
@@ -256,6 +271,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         public void Refresh(WebDesignFileUtil designFileUtil) {
             if (!Directory.Exists(designFileUtil.ProjectFolder)) return;
 
+            ClearClipboard();
+
             _designFileUtil = designFileUtil;
             _manifestItems = designFileUtil.GetManifestItems();
             RebuildManifestChildrenIndex();
@@ -271,6 +288,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
         public void Refresh(string projectFolder) {
             if (!Directory.Exists(projectFolder)) return;
+
+            ClearClipboard();
 
             _designFileUtil = null;
             _manifestItems = null;
@@ -608,30 +627,46 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             if (!item.ExistsOnDisk) return;
             if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
 
+            ClearClipboard();
             _clipboardItem = item;
             _clipboardOperation = WebFileTreeClipboardOperation.Cut;
+            item.IsCut = true;
         }
 
         public void Copy(WebFileItem item) {
             if (!item.ExistsOnDisk && item.Type == WebFileItemType.Folder) return;
             if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
 
+            ClearClipboard();
             _clipboardItem = item;
             _clipboardOperation = WebFileTreeClipboardOperation.Copy;
         }
 
-        public void PasteTo(WebFileItem target) {
-            if (!CanPasteTo(target)) return;
-            if (!target.ExistsOnDisk) return;
+        public bool CancelCut() {
+            if (_clipboardOperation != WebFileTreeClipboardOperation.Cut) return false;
+            ClearClipboard();
+            return true;
+        }
+
+        public bool HasCutItem => _clipboardOperation == WebFileTreeClipboardOperation.Cut;
+
+        public bool PasteTo(WebFileItem target) {
+            if (!CanPasteTo(target)) return false;
+            if (!target.ExistsOnDisk) return false;
 
             var source = _clipboardItem!;
             var destinationPath = FileUtil.NextAvailablePath(Path.Combine(target.FilePath, source.FileName));
 
-            if (_designFileUtil?.IsProjectFile(destinationPath) == true) return;
+            if (_designFileUtil?.IsProjectFile(destinationPath) == true) return false;
 
             try {
                 if (source.Type == WebFileItemType.File) {
-                    File.Copy(source.FilePath, destinationPath);
+                    if (_clipboardOperation == WebFileTreeClipboardOperation.Cut) {
+                        File.Move(source.FilePath, destinationPath);
+                    }
+                    else {
+                        File.Copy(source.FilePath, destinationPath);
+                    }
                 }
                 else if (_clipboardOperation == WebFileTreeClipboardOperation.Cut) {
                     Directory.Move(source.FilePath, destinationPath);
@@ -643,7 +678,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             catch (Exception ex) {
                 ArcLog.GetLogger<WebFileTreeViewModel>()
                     .Error($"Failed to paste: {source.FilePath} -> {destinationPath}", ex);
-                return;
+                return false;
             }
 
             if (_clipboardOperation == WebFileTreeClipboardOperation.Cut) {
@@ -668,6 +703,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
 
             target.IsExpanded = true;
+            return true;
         }
 
         public void Delete(WebFileItem item) {
@@ -728,38 +764,96 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         // External import
 
         public async Task ImportExternalAsync(string sourcePath, string targetFolder) {
+            _ = await TransferExternalAsync(sourcePath, targetFolder, move: false);
+        }
+
+        public async Task<bool> TransferExternalAsync(string sourcePath, string targetFolder, bool move) {
             var parent = FindItem(targetFolder);
-            if (parent == null || parent.Type != WebFileItemType.Folder) return;
+            if (parent == null || parent.Type != WebFileItemType.Folder) return false;
+
+            var sourceWasInProject = IsPathInsideProject(sourcePath);
+
+            // 资源管理器中剪切的项也可能来自当前项目；已加载节点直接走内部移动，保留对象和选中状态。
+            var existingItem = move ? FindItem(sourcePath) : null;
+            if (existingItem != null) {
+                return MoveItems([existingItem], parent).Count == 1;
+            }
 
             EnsureChildrenLoaded(parent);
 
-            if (Directory.Exists(sourcePath)) {
-                var destinationPath = FileUtil.NextAvailablePath(
+            try {
+                if (Directory.Exists(sourcePath)) {
+                    var relativeTarget = Path.GetRelativePath(sourcePath, targetFolder);
+                    if (move && (relativeTarget == "." || (!relativeTarget.StartsWith("..") && !Path.IsPathRooted(relativeTarget)))) {
+                        return false;
+                    }
+
+                    var destinationPath = FileUtil.NextAvailablePath(
+                        Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
+                    if (IsPathInManifest(destinationPath)) return false;
+
+                    // 大目录操作放后台线程，避免阻塞 UI。跨磁盘 Directory.Move 失败时回退为复制后删除。
+                    await Task.Run(() => {
+                        if (!move) {
+                            FileUtil.CopyDirectory(sourcePath, destinationPath, true);
+                            return;
+                        }
+                        try {
+                            Directory.Move(sourcePath, destinationPath);
+                        }
+                        catch (IOException) {
+                            FileUtil.CopyDirectory(sourcePath, destinationPath, true);
+                            FileUtil.RemoveDirectory(sourcePath);
+                        }
+                    });
+
+                    if (move && sourceWasInProject) {
+                        _designFileUtil?.RenameManifestPath(sourcePath, destinationPath);
+                    }
+                    else {
+                        _designFileUtil?.AddManifestPathRecursive(destinationPath);
+                    }
+                    RefreshManifestSnapshot();
+
+                    AddItem(parent, CreateDirectoryItem(destinationPath, parent));
+                    return true;
+                }
+
+                if (!File.Exists(sourcePath)) return false;
+
+                var destinationFilePath = FileUtil.NextAvailablePath(
                     Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
-                if (IsPathInManifest(destinationPath)) return;
+                if (IsPathInManifest(destinationFilePath)) return false;
 
-                // 大目录拷贝放后台线程，避免阻塞 UI
-                await Task.Run(() => FileUtil.CopyDirectory(sourcePath, destinationPath, true));
+                if (move) {
+                    try {
+                        File.Move(sourcePath, destinationFilePath);
+                    }
+                    catch (IOException) {
+                        File.Copy(sourcePath, destinationFilePath, overwrite: false);
+                        File.Delete(sourcePath);
+                    }
+                }
+                else {
+                    File.Copy(sourcePath, destinationFilePath, overwrite: false);
+                }
 
-                _designFileUtil?.AddManifestPathRecursive(destinationPath);
+                if (move && sourceWasInProject) {
+                    _designFileUtil?.RenameManifestPath(sourcePath, destinationFilePath);
+                }
+                else {
+                    _designFileUtil?.AddManifestPath(destinationFilePath);
+                }
                 RefreshManifestSnapshot();
 
-                AddItem(parent, CreateDirectoryItem(destinationPath, parent));
-                return;
+                AddItem(parent, new WebFileItem(destinationFilePath, WebFileItemType.File, parent));
+                return true;
             }
-
-            if (!File.Exists(sourcePath)) return;
-
-            var destinationFilePath = FileUtil.NextAvailablePath(
-                Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
-            if (IsPathInManifest(destinationFilePath)) return;
-
-            File.Copy(sourcePath, destinationFilePath, overwrite: false);
-
-            _designFileUtil?.AddManifestPath(destinationFilePath);
-            RefreshManifestSnapshot();
-
-            AddItem(parent, new WebFileItem(destinationFilePath, WebFileItemType.File, parent));
+            catch (Exception ex) {
+                ArcLog.GetLogger<WebFileTreeViewModel>()
+                    .Error($"Failed to transfer external item: {sourcePath} -> {targetFolder}", ex);
+                return false;
+            }
         }
 
         // Move
@@ -1206,6 +1300,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         private void ClearClipboard() {
+            if (_clipboardOperation == WebFileTreeClipboardOperation.Cut && _clipboardItem != null) {
+                _clipboardItem.IsCut = false;
+            }
             _clipboardItem = null;
             _clipboardOperation = WebFileTreeClipboardOperation.None;
         }

@@ -94,7 +94,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             var filter = _filterText.Trim();
             if (filter.Length == 0) {
-                ApplyFilter();
                 if (!token.IsCancellationRequested) IsSearching = false;
                 return;
             }
@@ -252,32 +251,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             int ColumnNumber,
             string PreviewText);
 
-        /// <summary>
-        /// 恢复文件树节点的可见状态。
-        /// </summary>
-        public void ApplyFilter() {
-            foreach (var item in FileItems) {
-                ApplyFilterToItem(item, string.Empty);
-            }
-        }
-
-        private static bool ApplyFilterToItem(WebFileItem item, string filter) {
-            if (item.IsPlaceholder) {
-                item.IsVisible = false;
-                return false;
-            }
-
-            var childMatches = false;
-            foreach (var child in item.Children) {
-                childMatches |= ApplyFilterToItem(child, filter);
-            }
-
-            var matches = filter.Length == 0
-                || item.FileName.Contains(filter, StringComparison.OrdinalIgnoreCase);
-            item.IsVisible = matches || childMatches;
-            return item.IsVisible;
-        }
-
         // Refresh
 
         public void Refresh(WebDesignFileUtil designFileUtil) {
@@ -294,8 +267,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             FileItems.Clear();
             FileItems.Add(root);
-
-            ApplyFilter();
         }
 
         public void Refresh(string projectFolder) {
@@ -312,8 +283,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             FileItems.Clear();
             FileItems.Add(root);
-
-            ApplyFilter();
         }
 
         // Manifest
@@ -389,7 +358,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 }
             }
 
-            ApplyFilter();
         }
 
         private string GetManifestAbsolutePath(WebProjectManifestItem item) {
@@ -630,7 +598,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             RebindItemPath(item, newPath, item.Parent);
             SortItemInParent(item);
-            ApplyFilter();
 
             await Task.CompletedTask;
         }
@@ -701,7 +668,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
 
             target.IsExpanded = true;
-            ApplyFilter();
         }
 
         public void Delete(WebFileItem item) {
@@ -860,7 +826,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 targetFolder.IsExpanded = true;
             }
 
-            ApplyFilter();
             return result;
         }
 
@@ -1217,7 +1182,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             RebindItemPath(item, newPath, item.Parent);
             SortItemInParent(item);
-            ApplyFilter();
         }
 
         // Helpers

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -776,10 +775,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 .ToList());
             if (token.IsCancellationRequested) return;
 
-            _quickOpenFiles.Clear();
-            foreach (var item in items) {
-                _quickOpenFiles.Add(item);
-            }
+            _quickOpenFiles = items;
 
             // 只在用户当前主动展开快速打开列表时刷新候选 UI。
             // 索引后台更新不能反向打开一个已关闭但仍保留焦点的 AutoSuggestBox。
@@ -1377,7 +1373,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private WebProjectSession? _session;
-        private readonly ObservableCollection<WebQuickOpenItem> _quickOpenFiles = [];
+        private IReadOnlyList<WebQuickOpenItem> _quickOpenFiles = [];
         private const int MaxQuickOpenIndexedFiles = 50000;
         private bool _isLoaded;
         private bool _isDebugRunning;

@@ -103,22 +103,19 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
             SetActiveFileSelection(item);
 
-            // 深层懒加载目录虽然已经进入数据树并设置为展开，但 TreeView 容器需要下一轮
-            // 布局才会生成。低优先级再次选择，避免首次选择落在尚未实现的节点上而丢失。
-            QueueRealizedActiveFileSelection(_activeFilePath, 0);
+            // 活动样式由 IsActiveFile 直接驱动；这里只等待深层容器生成并滚动到可视区域。
+            QueueActiveFileBringIntoView(_activeFilePath, 0);
         }
 
-        private void QueueRealizedActiveFileSelection(string expectedPath, int attempt) {
+        private void QueueActiveFileBringIntoView(string expectedPath, int attempt) {
             DispatcherQueue.TryEnqueue(
                 Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
                 () => {
                     if (!string.Equals(expectedPath, _activeFilePath, StringComparison.OrdinalIgnoreCase)) return;
 
-                    _viewModel.SelectFile(expectedPath);
                     var realizedItem = _viewModel.FindItem(expectedPath);
                     if (realizedItem == null) return;
 
-                    SetActiveFileSelection(realizedItem);
                     fileTreeView.UpdateLayout();
                     if (fileTreeView.ContainerFromItem(realizedItem) is UIElement container) {
                         container.StartBringIntoView();
@@ -127,7 +124,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
 
                     // 每一轮最多实现下一层展开容器；深目录有限次跨帧重试，不阻塞 UI。
                     if (attempt + 1 < MaxSelectionRealizationAttempts) {
-                        QueueRealizedActiveFileSelection(expectedPath, attempt + 1);
+                        QueueActiveFileBringIntoView(expectedPath, attempt + 1);
                     }
                 });
         }

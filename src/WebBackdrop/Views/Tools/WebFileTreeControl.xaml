@@ -320,8 +320,7 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <Grid
-        x:Name="leftPanelRoot"
+    <Grid x:Name="leftPanelRoot"
         PointerEntered="LeftPanel_PointerEntered"
         PointerExited="LeftPanel_PointerExited">
         <Grid.RowDefinitions>
@@ -329,9 +328,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Grid
-            Grid.Row="0"
-            Margin="8 6 8 4">
+        
+        <Grid Margin="8 6 8 4">
             <TextBox x:Name="contentSearchBox"
                 Style="{StaticResource WebBackdropSearchTextBoxStyle}"
                 AutomationProperties.Name="Search in files"
@@ -372,6 +370,7 @@
                 </ToggleButton>
             </StackPanel>
         </Grid>
+        
         <ProgressBar
             Grid.Row="1"
             Height="2"
@@ -379,6 +378,7 @@
             IsIndeterminate="True"
             IsHitTestVisible="False"
             Visibility="{x:Bind _viewModel.IsSearching, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"/>
+        
         <collection:ArcTreeView x:Name="fileTreeView"
             Grid.Row="2"
             Padding="4 0 0 48"
@@ -393,8 +393,8 @@
             ItemInvoked="FileTreeView_ItemInvoked"
             Visibility="{x:Bind _viewModel.IsSearchMode, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}">
         </collection:ArcTreeView>
-        <Border
-            x:Name="stickyFoldersPanel"
+        
+        <Border x:Name="stickyFoldersPanel"
             Grid.Row="2"
             Canvas.ZIndex="2"
             VerticalAlignment="Top"
@@ -455,8 +455,8 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </Border>
-        <ListView
-            x:Name="contentSearchResultsList"
+        
+        <ListView x:Name="contentSearchResultsList"
             Grid.Row="2"
             Padding="0 0 0 48"
             ItemsSource="{x:Bind _viewModel.SearchResults}"

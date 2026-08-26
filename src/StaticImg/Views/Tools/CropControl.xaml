@@ -64,7 +64,7 @@
                             Orientation="Vertical"
                             Spacing="4">
                             <TextBlock 
-                                Text="宽度(像素)" 
+                                Text="{markup:I18n Key=StaticImg_EffectParam_WidthPixels}"
                                 VerticalAlignment="Center"/>
                             <TextBox
                                 Text="1135"
@@ -76,7 +76,7 @@
                             Orientation="Vertical"
                             Spacing="4">
                             <TextBlock 
-                                Text="高度(像素)" 
+                                Text="{markup:I18n Key=StaticImg_EffectParam_HeightPixels}"
                                 VerticalAlignment="Center"/>
                             <TextBox
                                 Text="638"

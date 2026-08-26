@@ -240,7 +240,7 @@ namespace Workloads.Creation.StaticImg {
                     exported);
 
                 if (!found) {
-                    GlobalMessageUtil.ShowError("Wallpaper library panel is not available.");
+                    GlobalMessageUtil.ShowError("Text_PanelUnavailable", isNeedLocalizer: true);
                     return false;
                 }
 

@@ -188,7 +188,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 new PreviewFileArgs(taskItem.Data.ResultFilePath, ArcPageContextManager.GetContext<Intelligent>()));
 
             if (!found) {
-                GlobalMessageUtil.ShowError("Panel is not available.", isNeedLocalizer: false);
+                GlobalMessageUtil.ShowError("Text_PanelUnavailable", isNeedLocalizer: true);
                 ArcLog.GetLogger<StyleTranferViewModel>().Error("WpSettings panel is not available for previewing file.");
             }
         }
@@ -233,7 +233,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 taskItem.Data.ResultFilePath);
 
             if (!found) {
-                GlobalMessageUtil.ShowError("Panel is not available.", isNeedLocalizer: false);
+                GlobalMessageUtil.ShowError("Text_PanelUnavailable", isNeedLocalizer: true);
                 ArcLog.GetLogger<StyleTranferViewModel>().Error("WpSettings panel is not available for previewing file.");
                 return;
             }

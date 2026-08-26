@@ -304,4 +304,13 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   <data name="PluginUpdate_ReplacedPlugin" xml:space="preserve">
     <value>Replaced {0}</value>
   </data>
+  <data name="Startup_AutoStartDisabledByUser" xml:space="preserve">
+    <value>You have disabled Virtual Paper from running when you sign in. To enable it again, open Startup apps in Task Manager.</value>
+  </data>
+  <data name="Startup_AppDataCreateFailedTitle" xml:space="preserve">
+    <value>Unable to create the app data directory. Virtual Paper will exit.</value>
+  </data>
+  <data name="Startup_CoreRuntimeFailed" xml:space="preserve">
+    <value>Core runtime initialization failed. Please restart or reinstall Virtual Paper.&#x0A;{0}</value>
+  </data>
 </root>

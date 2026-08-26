@@ -405,10 +405,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             if (recoverable.Count == 0) return;
 
             var result = await GlobalDialogUtils.ShowDialogAsync(
-                $"检测到上次异常退出前未保存的编辑（{recoverable.Count} 个文件）。\n是否恢复这些编辑？",
-                "恢复未保存的编辑",
-                "恢复",
-                "放弃编辑",
+                string.Format(LanguageUtil.GetI18n("WebBackdrop_RecoveryMessage"), recoverable.Count),
+                LanguageUtil.GetI18n("WebBackdrop_RecoveryTitle"),
+                LanguageUtil.GetI18n("WebBackdrop_Recover"),
+                LanguageUtil.GetI18n("WebBackdrop_DiscardEdits"),
                 isDefaultPrimary: true);
 
             if (result == DialogResult.Primary) {
@@ -1584,8 +1584,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             problemsPanel.Visibility = showProblems ? Visibility.Visible : Visibility.Collapsed;
             bottomPanelContent.Visibility = showProblems ? Visibility.Collapsed : Visibility.Visible;
             bottomPanelContent.Text = panel switch {
-                WebEditorBottomPanel.Problems => "当前没有检测到问题。",
-                WebEditorBottomPanel.Output => "暂无输出。",
+                WebEditorBottomPanel.Problems => LanguageUtil.GetI18n("WebBackdrop_NoProblems"),
+                WebEditorBottomPanel.Output => LanguageUtil.GetI18n("WebBackdrop_NoOutput"),
                 _ => string.Empty,
             };
         }

@@ -60,9 +60,9 @@ namespace VirtualPaper.WpSettingsPanel {
             _viewModel.InitFlyoutData();
         }
 
-        private void OnFilterChanged(object sender, TextChangedEventArgs e) {
-            if (sender is TextBox tb && tb.Tag is FilterKey fk) {
-                _viewModel.OnFilterChanged(fk, tb.Text);
+        private void OnFilterChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) {
+            if (sender.Tag is FilterKey fk) {
+                _viewModel.OnFilterChanged(fk, sender.Text);
             }
         }
 

@@ -30,16 +30,15 @@ namespace VirtualPaper.UIComponent.Styles {
         public ArcImage() {
             DefaultStyleKey = typeof(ArcImage);
             Loaded += ArcImage_Loaded;
-            Unloaded += ArcImage_Unloaded;
+            ActualThemeChanged += ArcImage_ActualThemeChanged;
         }
 
         private void ArcImage_Loaded(object sender, RoutedEventArgs e) {
             UpdateSource();
         }
 
-        private void ArcImage_Unloaded(object sender, RoutedEventArgs e) {
-            Loaded -= ArcImage_Loaded;
-            Unloaded -= ArcImage_Unloaded;
+        private void ArcImage_ActualThemeChanged(FrameworkElement sender, object args) {
+            UpdateSource();
         }
 
         private static void OnThemeResourceKeyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {

@@ -173,7 +173,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
         public void ResizeAndSetPixels(ArcSize newSize, byte[]? pixels) {
             if (pixels == null) {
-                GlobalMessageUtil.ShowError("Resize data is null");
+                GlobalMessageUtil.ShowError("Text_ResizeDataUnavailable", isNeedLocalizer: true);
                 ArcLog.GetLogger<InkRenderData>().Error("Resize data is null");
                 return;
             }

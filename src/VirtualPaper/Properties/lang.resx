@@ -304,4 +304,13 @@ Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virt
   <data name="PluginUpdate_ReplacedPlugin" xml:space="preserve">
     <value>已替换 {0}</value>
   </data>
+  <data name="Startup_AutoStartDisabledByUser" xml:space="preserve">
+    <value>你已禁止 Virtual Paper 在登录时自动运行。如需重新启用，请前往任务管理器的“启动应用”页面。</value>
+  </data>
+  <data name="Startup_AppDataCreateFailedTitle" xml:space="preserve">
+    <value>无法创建应用数据目录，Virtual Paper 即将退出</value>
+  </data>
+  <data name="Startup_CoreRuntimeFailed" xml:space="preserve">
+    <value>核心运行时初始化失败，请重启或重新安装 Virtual Paper。&#x0A;{0}</value>
+  </data>
 </root>

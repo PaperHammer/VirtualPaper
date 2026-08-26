@@ -1708,7 +1708,6 @@ The following words cannot be used as usernames:
   <data name="WebBackdrop_Unsaved" xml:space="preserve"><value>Unsaved</value></data>
   <data name="WebBackdrop_Folder" xml:space="preserve"><value>Folder</value></data>
   <data name="WebBackdrop_Problems" xml:space="preserve"><value>PROBLEMS</value></data>
-  <data name="WebBackdrop_PreviewUnavailable" xml:space="preserve"><value>Preview unavailable</value></data>
   <data name="WebBackdrop_FileTypeCannotOpen" xml:space="preserve"><value>This file type cannot be opened directly.</value></data>
   <data name="WebBackdrop_SelectFileToStart" xml:space="preserve"><value>Select a file to start</value></data>
   <data name="WebBackdrop_OpenFileHint" xml:space="preserve"><value>Open a file from the explorer to edit and preview.</value></data>
@@ -1753,4 +1752,67 @@ The following words cannot be used as usernames:
   <data name="WebBackdrop_CopyLineDown" xml:space="preserve"><value>Copy Line Down</value></data>
   <data name="WebBackdrop_MoveLineUp" xml:space="preserve"><value>Move Line Up</value></data>
   <data name="WebBackdrop_MoveLineDown" xml:space="preserve"><value>Move Line Down</value></data>
+  <data name="WebBackdrop_Debug" xml:space="preserve"><value>Debug</value></data>
+  <data name="WebBackdrop_Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="WebBackdrop_Saving" xml:space="preserve"><value>Saving...</value></data>
+  <data name="WebBackdrop_RecoveryMessage" xml:space="preserve"><value>Unsaved edits from the previous unexpected exit were found ({0} files).&#x0A;Do you want to recover them?</value></data>
+  <data name="WebBackdrop_RecoveryTitle" xml:space="preserve"><value>Recover Unsaved Edits</value></data>
+  <data name="WebBackdrop_Recover" xml:space="preserve"><value>Recover</value></data>
+  <data name="WebBackdrop_DiscardEdits" xml:space="preserve"><value>Discard Edits</value></data>
+  <data name="WebBackdrop_NoProblems" xml:space="preserve"><value>No problems have been detected.</value></data>
+  <data name="WebBackdrop_NoOutput" xml:space="preserve"><value>No output.</value></data>
+  <data name="WebBackdrop_HiddenFiles" xml:space="preserve"><value>{0} more files are not shown</value></data>
+  <data name="WebBackdrop_HiddenProblems" xml:space="preserve"><value>… {0} more problems are not shown</value></data>
+  <data name="Text_PanelUnavailable" xml:space="preserve"><value>The panel is not available.</value></data>
+  <data name="Text_ResizeDataUnavailable" xml:space="preserve"><value>Resize data is unavailable.</value></data>
+  <data name="StaticImg_EffectParam_Intensity" xml:space="preserve"><value>Intensity</value></data>
+  <data name="StaticImg_EffectParam_Blur" xml:space="preserve"><value>Blur</value></data>
+  <data name="StaticImg_EffectParam_Hue" xml:space="preserve"><value>Hue</value></data>
+  <data name="StaticImg_EffectParam_Angle" xml:space="preserve"><value>Angle</value></data>
+  <data name="StaticImg_EffectParam_Opacity" xml:space="preserve"><value>Opacity</value></data>
+  <data name="StaticImg_EffectParam_Width" xml:space="preserve"><value>Width</value></data>
+  <data name="StaticImg_EffectParam_Height" xml:space="preserve"><value>Height</value></data>
+  <data name="StaticImg_EffectParam_Mode" xml:space="preserve"><value>Mode</value></data>
+  <data name="StaticImg_EffectParam_Exposure" xml:space="preserve"><value>Exposure</value></data>
+  <data name="StaticImg_EffectParam_Brightness" xml:space="preserve"><value>Brightness</value></data>
+  <data name="StaticImg_EffectParam_Saturation" xml:space="preserve"><value>Saturation</value></data>
+  <data name="StaticImg_EffectParam_Contrast" xml:space="preserve"><value>Contrast</value></data>
+  <data name="StaticImg_EffectParam_Vignette" xml:space="preserve"><value>Vignette</value></data>
+  <data name="StaticImg_EffectParam_Sharpen" xml:space="preserve"><value>Sharpen</value></data>
+  <data name="StaticImg_EffectParam_Temperature" xml:space="preserve"><value>Temperature</value></data>
+  <data name="StaticImg_EffectParam_Tint" xml:space="preserve"><value>Tint</value></data>
+  <data name="StaticImg_EffectParam_Shadows" xml:space="preserve"><value>Shadows</value></data>
+  <data name="StaticImg_EffectParam_Highlights" xml:space="preserve"><value>Highlights</value></data>
+  <data name="StaticImg_EffectParam_Clarity" xml:space="preserve"><value>Clarity</value></data>
+  <data name="StaticImg_EffectParam_MaskBlur" xml:space="preserve"><value>Mask blur</value></data>
+  <data name="StaticImg_EffectParam_Threshold" xml:space="preserve"><value>Threshold</value></data>
+  <data name="StaticImg_EffectParam_Frequency" xml:space="preserve"><value>Frequency</value></data>
+  <data name="StaticImg_EffectParam_Phase" xml:space="preserve"><value>Phase</value></data>
+  <data name="StaticImg_EffectParam_Amplitude" xml:space="preserve"><value>Amplitude</value></data>
+  <data name="StaticImg_EffectParam_Spread" xml:space="preserve"><value>Spread</value></data>
+  <data name="StaticImg_EffectParam_Radius" xml:space="preserve"><value>Radius</value></data>
+  <data name="StaticImg_EffectParam_Pressure" xml:space="preserve"><value>Pressure</value></data>
+  <data name="StaticImg_EffectParam_Lightness" xml:space="preserve"><value>Lightness</value></data>
+  <data name="StaticImg_EffectParam_Density" xml:space="preserve"><value>Density</value></data>
+  <data name="StaticImg_EffectParam_Scale" xml:space="preserve"><value>Scale</value></data>
+  <data name="StaticImg_EffectParam_Tolerance" xml:space="preserve"><value>Tolerance</value></data>
+  <data name="StaticImg_EffectParam_Offset" xml:space="preserve"><value>Offset</value></data>
+  <data name="StaticImg_EffectParam_Exponent" xml:space="preserve"><value>Exponent</value></data>
+  <data name="StaticImg_EffectParam_OffsetX" xml:space="preserve"><value>Offset X</value></data>
+  <data name="StaticImg_EffectParam_OffsetY" xml:space="preserve"><value>Offset Y</value></data>
+  <data name="StaticImg_EffectParam_Levels" xml:space="preserve"><value>Levels</value></data>
+  <data name="StaticImg_EffectParam_LevelsGreen" xml:space="preserve"><value>Green levels</value></data>
+  <data name="StaticImg_EffectParam_BlackPoint" xml:space="preserve"><value>Black point</value></data>
+  <data name="StaticImg_EffectParam_WhitePoint" xml:space="preserve"><value>White point</value></data>
+  <data name="StaticImg_EffectParam_InvertAlpha" xml:space="preserve"><value>Invert alpha</value></data>
+  <data name="StaticImg_EffectParam_Feather" xml:space="preserve"><value>Feather</value></data>
+  <data name="StaticImg_EffectParam_OverlayEdges" xml:space="preserve"><value>Overlay edges</value></data>
+  <data name="StaticImg_EffectParam_Previewing" xml:space="preserve"><value>Previewing</value></data>
+  <data name="StaticImg_EffectParam_WidthPixels" xml:space="preserve"><value>Width (pixels)</value></data>
+  <data name="StaticImg_EffectParam_HeightPixels" xml:space="preserve"><value>Height (pixels)</value></data>
+  <data name="Text_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Text_More" xml:space="preserve"><value>More</value></data>
+  <data name="PlayerWeb_DetailsWindowTitle" xml:space="preserve"><value>Virtual Paper Web Details</value></data>
+  <data name="PlayerWeb_AdjustWindowTitle" xml:space="preserve"><value>Adjust Web Wallpaper</value></data>
+  <data name="WebBackdrop_MonacoLoading" xml:space="preserve"><value>Monaco Editor is loading...</value></data>
 </root>

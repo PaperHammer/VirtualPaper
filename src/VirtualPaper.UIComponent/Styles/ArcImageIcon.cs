@@ -14,16 +14,15 @@ namespace VirtualPaper.UIComponent.Styles {
 
         public ArcImageIcon() {
             Loaded += ArcImageIcon_Loaded;
-            Unloaded += ArcImageIcon_Unloaded;
+            ActualThemeChanged += ArcImageIcon_ActualThemeChanged;
         }
 
         private void ArcImageIcon_Loaded(object sender, RoutedEventArgs e) {
             UpdateSource();
         }
 
-        private void ArcImageIcon_Unloaded(object sender, RoutedEventArgs e) {
-            Loaded -= ArcImageIcon_Loaded;
-            Unloaded -= ArcImageIcon_Unloaded;
+        private void ArcImageIcon_ActualThemeChanged(FrameworkElement sender, object args) {
+            UpdateSource();
         }
 
         private static void OnThemeResourceKeyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {

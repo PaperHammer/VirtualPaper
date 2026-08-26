@@ -20,7 +20,7 @@
             HorizontalAlignment="Left"
             Spacing="6">
             <TextBlock
-                Text="Name"
+                Text="{markup:I18n Key=Text_Name}"
                 FontWeight="Bold"
                 FontSize="16"/>
 

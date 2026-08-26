@@ -58,7 +58,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {            
             await _viewModel.InitContentAsync();
-            _viewModel.RefreshWpTitleForeground();
         }
 
         private void Image_ImageFailed(object sender, ExceptionRoutedEventArgs e) {

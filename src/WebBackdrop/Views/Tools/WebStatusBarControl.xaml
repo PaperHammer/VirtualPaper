@@ -109,19 +109,19 @@
                     <StackPanel Orientation="Horizontal" Spacing="4"
                             Visibility="{x:Bind IsDebugRunning, Mode=OneWay, Converter={StaticResource VisibilityConverter}, ConverterParameter=!}">
                         <FontIcon Glyph="&#xE768;" FontSize="14" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
-                        <TextBlock FontSize="11" Text="调试"/>
+                        <TextBlock FontSize="11" Text="{markup:I18n Key=WebBackdrop_Debug}"/>
                     </StackPanel>
                     <!-- Stop state -->
                     <StackPanel Orientation="Horizontal" Spacing="4"
                             Visibility="{x:Bind IsDebugRunning, Mode=OneWay, Converter={StaticResource VisibilityConverter}}">
                         <FontIcon Glyph="&#xE71A;" FontSize="14" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
-                        <TextBlock FontSize="11" Text="停止" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                        <TextBlock FontSize="11" Text="{markup:I18n Key=WebBackdrop_Stop}" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
                     </StackPanel>
                 </Grid>
             </Button>
             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Visibility="{x:Bind SavingVisibility, Mode=OneWay}">
                 <ProgressRing Width="12" Height="12" IsActive="{x:Bind IsSaving, Mode=OneWay}" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
-                <TextBlock FontSize="11" Text="正在保存..." Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
+                <TextBlock FontSize="11" Text="{markup:I18n Key=WebBackdrop_Saving}" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}"/>
             </StackPanel>
         </StackPanel>
 

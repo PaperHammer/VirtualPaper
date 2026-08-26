@@ -38,12 +38,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class LibraryContentsViewModel : ObservableObject, IFilterable {
         public ObservableCollection<IWpBasicData> LibraryWallpapers { get; private set; } = null!;
 
-        private byte[] _wpTitleForeground = [255, 255, 255, 255];
-        public byte[] WpTitleForeground {
-            get => _wpTitleForeground;
-            set { _wpTitleForeground = value; OnPropertyChanged(); }
-        }
-
         private LoadingStatus _libLoadingStatus;
         public LoadingStatus LibLoadingStatus {
             get { return _libLoadingStatus; }
@@ -60,7 +54,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             _wpSettingsViewModel = wpSettingsViewModel;
             _wallpaperIndexService = wallpaperIndexService;
 
-            InitEvent();
             InitColletions();
             InitOthers();
         }
@@ -69,18 +62,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             _wallpaperIndexService.Initialize(_wallpaperInstallFolders);
             _wpSettingsViewModel.RegisterLibraryContents(this);
             RegisterPanelActions();
-        }
-
-        private void InitEvent() {
-            ArcThemeUtil.AppThemeChanged += (s, e) => {
-                RefreshWpTitleForeground();
-            };
-        }
-
-        internal void RefreshWpTitleForeground() {
-            WpTitleForeground = ArcThemeUtil.GetFormatMainWindowTheme() == AppTheme.Light
-                ? [255, 255, 255, 255]   // White: A=255, R=255, G=255, B=255
-                : [255, 0, 0, 0];        // Black: A=255, R=0, G=0, B=0
         }
 
         private void InitColletions() {

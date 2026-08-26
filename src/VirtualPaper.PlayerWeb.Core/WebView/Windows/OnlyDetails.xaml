@@ -9,14 +9,15 @@
     xmlns:comp="using:VirtualPaper.PlayerWeb.Core.WebView.Components"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     Width="370"
     Height="620"
     IsMaximizable="False"
     IsResizable="False"
-    Title="Virtual Paper Details for Web">
+    Title="{markup:I18n Key=PlayerWeb_DetailsWindowTitle}">
 
-    <arc:ArcWindowHost x:Name="MainHost" Title="Details">
+    <arc:ArcWindowHost x:Name="MainHost" Title="{markup:I18n Key=Text_Details}">
         <navi:ArcNavigationContentView x:Name="NaviContent" Loaded="NaviContent_Loaded"/>
     </arc:ArcWindowHost>
 </arc:ArcWindow>

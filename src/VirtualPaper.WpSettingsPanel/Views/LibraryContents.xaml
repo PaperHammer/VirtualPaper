@@ -11,8 +11,7 @@
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
-    NavigationCacheMode="Enabled"
-    x:Name="rootPage">
+    NavigationCacheMode="Enabled">
 
     <arc:ArcPage.Resources>
         <Style x:Key="LibGridViewItemStyle" TargetType="GridViewItem">
@@ -72,15 +71,23 @@
 
                 <Border 
                     VerticalAlignment="Bottom"
-                    Padding="6"
-                    Height="48"
-                    Background="{ThemeResource SystemControlBackgroundBaseMediumLowBrush}">
+                    Padding="10 18 10 10"
+                    Height="72">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="Transparent" Offset="0"/>
+                            <GradientStop Color="#D9000000" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
                     <TextBlock
                         Text="{x:Bind Title, Mode=OneWay}"
                         MaxLines="2"
                         FontSize="16"
-                        Foreground="{Binding DataContext.WpTitleForeground, ElementName=rootPage, Converter={StaticResource ByteArrayToBrushConverter}}"
-                        TextTrimming="CharacterEllipsis"/>
+                        LineHeight="20"
+                        VerticalAlignment="Bottom"
+                        Foreground="White"
+                        TextTrimming="CharacterEllipsis"
+                        ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}"/>
                 </Border>
             </Grid>
         </DataTemplate>

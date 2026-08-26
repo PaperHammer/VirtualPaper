@@ -11,6 +11,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.PlayerWeb.Core.Utils;
+using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.WebBackdrop.Core.Theme;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components {
@@ -543,7 +544,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 .Replace("{{LightBackground}}", WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackLightBackground))
                 .Replace("{{DarkBackground}}", WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackDarkBackground))
                 .Replace("{{LightForeground}}", WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackLightForeground))
-                .Replace("{{DarkForeground}}", WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackDarkForeground));
+                .Replace("{{DarkForeground}}", WebBackdropThemeResource.GetString(this, WebBackdropStringRole.MonacoFallbackDarkForeground))
+                .Replace("{{LoadingPlaceholder}}", System.Net.WebUtility.HtmlEncode(
+                    LanguageUtil.GetI18n("WebBackdrop_MonacoLoading")));
         }
     }
 

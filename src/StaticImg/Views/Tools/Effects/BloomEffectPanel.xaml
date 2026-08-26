@@ -3,6 +3,7 @@
     x:Class="Workloads.Creation.StaticImg.Views.Tools.Effects.BloomEffectPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -15,7 +16,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="强度" FontSize="12" VerticalAlignment="Center"/>
+            <TextBlock Text="{markup:I18n Key=StaticImg_EffectParam_Intensity}" FontSize="12" VerticalAlignment="Center"/>
             <TextBlock x:Name="ValueText" Grid.Column="1" FontSize="12"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </Grid>

@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
@@ -102,7 +103,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
                 return;
             }
 
-            var text = $"还有 {_hiddenProblemFiles.Count} 个文件未显示";
+            var text = string.Format(LanguageUtil.GetI18n("WebBackdrop_HiddenFiles"), _hiddenProblemFiles.Count);
             if (_fileOverflowGroup == null) {
                 _fileOverflowGroup = ProblemFileGroup.CreateOverflow(text);
                 Items.Add(_fileOverflowGroup);
@@ -249,7 +250,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.BottomPanels {
                 Items.Add(item);
             }
             if (summary.HasMore) {
-                Items.Add(new ProblemOverflowItem($"… 还有 {TotalCount - summary.DisplayedItems.Count} 个问题未显示"));
+                Items.Add(new ProblemOverflowItem(string.Format(
+                    LanguageUtil.GetI18n("WebBackdrop_HiddenProblems"),
+                    TotalCount - summary.DisplayedItems.Count)));
             }
 
             OnPropertyChanged(nameof(CountText));

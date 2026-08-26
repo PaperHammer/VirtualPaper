@@ -9,14 +9,15 @@
     xmlns:comp="using:VirtualPaper.PlayerWeb.Core.WebView.Components"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:navi="using:VirtualPaper.UIComponent.Navigation"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     Width="370"
     Height="560"
     IsResizable="False"
     IsMaximizable="False"    
-    Title="Virtual Paper Adjust for Web">
+    Title="{markup:I18n Key=PlayerWeb_AdjustWindowTitle}">
 
-    <arc:ArcWindowHost x:Name="MainHost" Title="Adjust wallpaper">
+    <arc:ArcWindowHost x:Name="MainHost" Title="{markup:I18n Key=Text_Adjust}">
         <navi:ArcNavigationContentView x:Name="NaviContent" 
             Loaded="NaviContent_Loaded"
             InfobarMessages="{x:Bind InfobarMessages}"/>

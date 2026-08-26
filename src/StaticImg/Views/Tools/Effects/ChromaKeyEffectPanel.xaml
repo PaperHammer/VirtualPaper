@@ -3,6 +3,7 @@
     x:Class="Workloads.Creation.StaticImg.Views.Tools.Effects.ChromaKeyEffectPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -16,7 +17,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="容差" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock Text="{markup:I18n Key=StaticImg_EffectParam_Tolerance}" FontSize="14" VerticalAlignment="Center"/>
             <TextBlock x:Name="ToleranceValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </Grid>
@@ -28,13 +29,13 @@
 
         <!-- 反转 Alpha -->
         <ToggleSwitch x:Name="InvertToggle"
-            Header="反转 Alpha"
+            Header="{markup:I18n Key=StaticImg_EffectParam_InvertAlpha}"
             IsOn="False"
             Toggled="InvertToggle_Toggled"/>
 
         <!-- 羽化 -->
         <ToggleSwitch x:Name="FeatherToggle"
-            Header="羽化"
+            Header="{markup:I18n Key=StaticImg_EffectParam_Feather}"
             IsOn="False"
             Toggled="FeatherToggle_Toggled"/>
     </StackPanel>

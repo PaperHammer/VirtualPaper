@@ -3,6 +3,7 @@
     x:Class="Workloads.Creation.StaticImg.Views.Tools.Effects.HighlightsShadowsEffectPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -26,7 +27,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="阴影" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock Text="{markup:I18n Key=StaticImg_EffectParam_Shadows}" FontSize="14" VerticalAlignment="Center"/>
                 <TextBlock x:Name="ShadowsValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </Grid>
@@ -44,7 +45,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="高光" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock Text="{markup:I18n Key=StaticImg_EffectParam_Highlights}" FontSize="14" VerticalAlignment="Center"/>
                 <TextBlock x:Name="HighlightsValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </Grid>
@@ -62,7 +63,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="清晰度" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock Text="{markup:I18n Key=StaticImg_EffectParam_Clarity}" FontSize="14" VerticalAlignment="Center"/>
                 <TextBlock x:Name="ClarityValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </Grid>
@@ -80,7 +81,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="蒙版模糊" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock Text="{markup:I18n Key=StaticImg_EffectParam_MaskBlur}" FontSize="14" VerticalAlignment="Center"/>
                 <TextBlock x:Name="BlurValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </Grid>

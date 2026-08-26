@@ -70,7 +70,11 @@ namespace VirtualPaper {
             try {
                 // 保证全局只有一个实例
                 if (!_mutex.WaitOne(TimeSpan.FromSeconds(1), false)) {
-                    MessageBox.Show("已存在正在运行的程序，请检查托盘或任务管理器\nThere are already running programs, check the tray or Task Manager", "Virtual Paper", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show(
+                        LanguageManager.Instance["Virtual_Paper_isRunning"],
+                        "Virtual Paper",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
                     _ = ShutDownAsync();
                     return;
                 }
@@ -106,7 +110,11 @@ namespace VirtualPaper {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<App>().Error("Failed to create AppData directory.", ex);
-                MessageBox.Show(ex.Message, "AppData directory creation failed, exiting..", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(
+                    ex.Message,
+                    LanguageManager.Instance["Startup_AppDataCreateFailedTitle"],
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
                 _ = ShutDownAsync();
                 return;
             }
@@ -160,7 +168,9 @@ namespace VirtualPaper {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<App>().Error(ex);
-                MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
+                MessageBox.Show(string.Format(
+                    LanguageManager.Instance["Startup_CoreRuntimeFailed"],
+                    ex.Message));
                 return;
             }
             #endregion
@@ -185,7 +195,9 @@ namespace VirtualPaper {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<App>().Error(ex);
-                MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
+                MessageBox.Show(string.Format(
+                    LanguageManager.Instance["Startup_CoreRuntimeFailed"],
+                    ex.Message));
                 return;
             }
 

@@ -21,7 +21,7 @@
                 HorizontalAlignment="Center"
                 FontSize="18"
                 FontWeight="SemiBold"
-                Text="{markup:I18n Key=WebBackdrop_PreviewUnavailable}"/>
+                Text="{markup:I18n Key=Text_NoPreview}"/>
             <TextBlock
                 HorizontalAlignment="Center"
                 Opacity="0.6"

@@ -1708,7 +1708,6 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="WebBackdrop_Unsaved" xml:space="preserve"><value>未保存</value></data>
   <data name="WebBackdrop_Folder" xml:space="preserve"><value>文件夹</value></data>
   <data name="WebBackdrop_Problems" xml:space="preserve"><value>问题</value></data>
-  <data name="WebBackdrop_PreviewUnavailable" xml:space="preserve"><value>无法预览</value></data>
   <data name="WebBackdrop_FileTypeCannotOpen" xml:space="preserve"><value>无法直接打开此文件类型。</value></data>
   <data name="WebBackdrop_SelectFileToStart" xml:space="preserve"><value>选择一个文件以开始</value></data>
   <data name="WebBackdrop_OpenFileHint" xml:space="preserve"><value>从文件资源管理器中打开文件以编辑和预览。</value></data>
@@ -1753,4 +1752,67 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="WebBackdrop_CopyLineDown" xml:space="preserve"><value>向下复制行</value></data>
   <data name="WebBackdrop_MoveLineUp" xml:space="preserve"><value>向上移动行</value></data>
   <data name="WebBackdrop_MoveLineDown" xml:space="preserve"><value>向下移动行</value></data>
+  <data name="WebBackdrop_Debug" xml:space="preserve"><value>调试</value></data>
+  <data name="WebBackdrop_Stop" xml:space="preserve"><value>停止</value></data>
+  <data name="WebBackdrop_Saving" xml:space="preserve"><value>正在保存...</value></data>
+  <data name="WebBackdrop_RecoveryMessage" xml:space="preserve"><value>检测到上次异常退出前未保存的编辑（{0} 个文件）。&#x0A;是否恢复这些编辑？</value></data>
+  <data name="WebBackdrop_RecoveryTitle" xml:space="preserve"><value>恢复未保存的编辑</value></data>
+  <data name="WebBackdrop_Recover" xml:space="preserve"><value>恢复</value></data>
+  <data name="WebBackdrop_DiscardEdits" xml:space="preserve"><value>放弃编辑</value></data>
+  <data name="WebBackdrop_NoProblems" xml:space="preserve"><value>当前没有检测到问题。</value></data>
+  <data name="WebBackdrop_NoOutput" xml:space="preserve"><value>暂无输出。</value></data>
+  <data name="WebBackdrop_HiddenFiles" xml:space="preserve"><value>还有 {0} 个文件未显示</value></data>
+  <data name="WebBackdrop_HiddenProblems" xml:space="preserve"><value>… 还有 {0} 个问题未显示</value></data>
+  <data name="Text_PanelUnavailable" xml:space="preserve"><value>面板不可用。</value></data>
+  <data name="Text_ResizeDataUnavailable" xml:space="preserve"><value>缩放数据不可用。</value></data>
+  <data name="StaticImg_EffectParam_Intensity" xml:space="preserve"><value>强度</value></data>
+  <data name="StaticImg_EffectParam_Blur" xml:space="preserve"><value>模糊</value></data>
+  <data name="StaticImg_EffectParam_Hue" xml:space="preserve"><value>色相</value></data>
+  <data name="StaticImg_EffectParam_Angle" xml:space="preserve"><value>角度</value></data>
+  <data name="StaticImg_EffectParam_Opacity" xml:space="preserve"><value>透明度</value></data>
+  <data name="StaticImg_EffectParam_Width" xml:space="preserve"><value>宽度</value></data>
+  <data name="StaticImg_EffectParam_Height" xml:space="preserve"><value>高度</value></data>
+  <data name="StaticImg_EffectParam_Mode" xml:space="preserve"><value>模式</value></data>
+  <data name="StaticImg_EffectParam_Exposure" xml:space="preserve"><value>曝光</value></data>
+  <data name="StaticImg_EffectParam_Brightness" xml:space="preserve"><value>亮度</value></data>
+  <data name="StaticImg_EffectParam_Saturation" xml:space="preserve"><value>饱和度</value></data>
+  <data name="StaticImg_EffectParam_Contrast" xml:space="preserve"><value>对比度</value></data>
+  <data name="StaticImg_EffectParam_Vignette" xml:space="preserve"><value>暗角</value></data>
+  <data name="StaticImg_EffectParam_Sharpen" xml:space="preserve"><value>锐化</value></data>
+  <data name="StaticImg_EffectParam_Temperature" xml:space="preserve"><value>色温</value></data>
+  <data name="StaticImg_EffectParam_Tint" xml:space="preserve"><value>色调</value></data>
+  <data name="StaticImg_EffectParam_Shadows" xml:space="preserve"><value>阴影</value></data>
+  <data name="StaticImg_EffectParam_Highlights" xml:space="preserve"><value>高光</value></data>
+  <data name="StaticImg_EffectParam_Clarity" xml:space="preserve"><value>清晰度</value></data>
+  <data name="StaticImg_EffectParam_MaskBlur" xml:space="preserve"><value>蒙版模糊</value></data>
+  <data name="StaticImg_EffectParam_Threshold" xml:space="preserve"><value>阈值</value></data>
+  <data name="StaticImg_EffectParam_Frequency" xml:space="preserve"><value>频率</value></data>
+  <data name="StaticImg_EffectParam_Phase" xml:space="preserve"><value>相位</value></data>
+  <data name="StaticImg_EffectParam_Amplitude" xml:space="preserve"><value>振幅</value></data>
+  <data name="StaticImg_EffectParam_Spread" xml:space="preserve"><value>扩散</value></data>
+  <data name="StaticImg_EffectParam_Radius" xml:space="preserve"><value>半径</value></data>
+  <data name="StaticImg_EffectParam_Pressure" xml:space="preserve"><value>压力</value></data>
+  <data name="StaticImg_EffectParam_Lightness" xml:space="preserve"><value>明度</value></data>
+  <data name="StaticImg_EffectParam_Density" xml:space="preserve"><value>浓度</value></data>
+  <data name="StaticImg_EffectParam_Scale" xml:space="preserve"><value>缩放</value></data>
+  <data name="StaticImg_EffectParam_Tolerance" xml:space="preserve"><value>容差</value></data>
+  <data name="StaticImg_EffectParam_Offset" xml:space="preserve"><value>偏移</value></data>
+  <data name="StaticImg_EffectParam_Exponent" xml:space="preserve"><value>指数</value></data>
+  <data name="StaticImg_EffectParam_OffsetX" xml:space="preserve"><value>偏移 X</value></data>
+  <data name="StaticImg_EffectParam_OffsetY" xml:space="preserve"><value>偏移 Y</value></data>
+  <data name="StaticImg_EffectParam_Levels" xml:space="preserve"><value>色阶</value></data>
+  <data name="StaticImg_EffectParam_LevelsGreen" xml:space="preserve"><value>绿色色阶</value></data>
+  <data name="StaticImg_EffectParam_BlackPoint" xml:space="preserve"><value>黑场</value></data>
+  <data name="StaticImg_EffectParam_WhitePoint" xml:space="preserve"><value>白场</value></data>
+  <data name="StaticImg_EffectParam_InvertAlpha" xml:space="preserve"><value>反转 Alpha</value></data>
+  <data name="StaticImg_EffectParam_Feather" xml:space="preserve"><value>羽化</value></data>
+  <data name="StaticImg_EffectParam_OverlayEdges" xml:space="preserve"><value>叠加边缘</value></data>
+  <data name="StaticImg_EffectParam_Previewing" xml:space="preserve"><value>预览中</value></data>
+  <data name="StaticImg_EffectParam_WidthPixels" xml:space="preserve"><value>宽度（像素）</value></data>
+  <data name="StaticImg_EffectParam_HeightPixels" xml:space="preserve"><value>高度（像素）</value></data>
+  <data name="Text_Name" xml:space="preserve"><value>名称</value></data>
+  <data name="Text_More" xml:space="preserve"><value>更多</value></data>
+  <data name="PlayerWeb_DetailsWindowTitle" xml:space="preserve"><value>Virtual Paper 网页壁纸详细信息</value></data>
+  <data name="PlayerWeb_AdjustWindowTitle" xml:space="preserve"><value>调整网页壁纸</value></data>
+  <data name="WebBackdrop_MonacoLoading" xml:space="preserve"><value>Monaco 编辑器正在加载...</value></data>
 </root>
